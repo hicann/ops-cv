@@ -1,0 +1,152 @@
+{
+    "op_type": "UpsampleNearest",
+    "op_list": [
+        {
+            "bin_filename": "UpsampleNearest_f1fa530bc832b44f2f474299daf17f01",
+            "inputs": [
+                {
+                    "name": "x",
+                    "index": 0,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "y",
+                    "index": 0,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "output_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "scales_h",
+                    "dtype": "float",
+                    "value": 0.0
+                },
+                {
+                    "name": "scales_w",
+                    "dtype": "float",
+                    "value": 0.0
+                },
+                {
+                    "name": "exact_mode",
+                    "dtype": "bool",
+                    "value": false
+                }
+            ]
+        },
+        {
+            "bin_filename": "UpsampleNearest_fd9ef0fdcdb9cf4685f2bec33535dc90",
+            "inputs": [
+                {
+                    "name": "x",
+                    "index": 0,
+                    "dtype": "bfloat16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "y",
+                    "index": 0,
+                    "dtype": "bfloat16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "output_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "scales_h",
+                    "dtype": "float",
+                    "value": 0.0
+                },
+                {
+                    "name": "scales_w",
+                    "dtype": "float",
+                    "value": 0.0
+                },
+                {
+                    "name": "exact_mode",
+                    "dtype": "bool",
+                    "value": false
+                }
+            ]
+        },
+        {
+            "bin_filename": "UpsampleNearest_7f2192a14be78713a6a49ffb7824c605",
+            "inputs": [
+                {
+                    "name": "x",
+                    "index": 0,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "y",
+                    "index": 0,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "output_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "scales_h",
+                    "dtype": "float",
+                    "value": 0.0
+                },
+                {
+                    "name": "scales_w",
+                    "dtype": "float",
+                    "value": 0.0
+                },
+                {
+                    "name": "exact_mode",
+                    "dtype": "bool",
+                    "value": false
+                }
+            ]
+        }
+    ]
+}

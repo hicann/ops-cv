@@ -1,0 +1,182 @@
+{
+    "op_type": "UpsampleTrilinear3dBackward",
+    "op_list": [
+      {
+        "bin_filename": "UpsampleTrilinear3dBackward_186dec8a379a9741051cb7b64dd1e555",
+        "inputs": [
+            {
+                "name": "grad_output",
+                "index": 0,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ]
+            }
+        ],
+        "outputs": [
+            {
+                "name": "grad_input",
+                "index": 0,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ]
+            }
+        ],
+        "attrs": [
+            {
+                "name": "output_size",
+                "dtype": "list_int",
+                "value": []
+            },
+            {
+                "name": "input_size",
+                "dtype": "list_int",
+                "value": []
+            },
+            {
+                "name": "align_corners",
+                "dtype": "bool",
+                "value": false
+            },
+            {
+                "name": "scale_d",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "scale_h",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "scale_w",
+                "dtype": "float",
+                "value": 0.0
+            }
+        ]
+      },
+      {
+        "bin_filename": "UpsampleTrilinear3dBackward_a068fa04a12a8725a37e5404a1da19dc",
+        "inputs": [
+            {
+                "name": "grad_output",
+                "index": 0,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ]
+            }
+        ],
+        "outputs": [
+            {
+                "name": "grad_input",
+                "index": 0,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ]
+            }
+        ],
+        "attrs": [
+            {
+                "name": "output_size",
+                "dtype": "list_int",
+                "value": []
+            },
+            {
+                "name": "input_size",
+                "dtype": "list_int",
+                "value": []
+            },
+            {
+                "name": "align_corners",
+                "dtype": "bool",
+                "value": false
+            },
+            {
+                "name": "scale_d",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "scale_h",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "scale_w",
+                "dtype": "float",
+                "value": 0.0
+            }
+        ]
+      },
+      {
+        "bin_filename": "UpsampleTrilinear3dBackward_913b948b0f65f5c6bfeeb3c0e355579e",
+        "inputs": [
+            {
+                "name": "grad_output",
+                "index": 0,
+                "dtype": "float16",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ]
+            }
+        ],
+        "outputs": [
+            {
+                "name": "grad_input",
+                "index": 0,
+                "dtype": "float16",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ]
+            }
+        ],
+        "attrs": [
+            {
+                "name": "output_size",
+                "dtype": "list_int",
+                "value": []
+            },
+            {
+                "name": "input_size",
+                "dtype": "list_int",
+                "value": []
+            },
+            {
+                "name": "align_corners",
+                "dtype": "bool",
+                "value": false
+            },
+            {
+                "name": "scale_d",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "scale_h",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "scale_w",
+                "dtype": "float",
+                "value": 0.0
+            }
+        ]
+      }
+    ]
+  }

@@ -1,0 +1,225 @@
+{
+    "op_type": "ThreeInterpolateBackward",
+    "op_list": [
+      {
+        "bin_filename": "ThreeInterpolateBackward_fp32_int32",
+        "inputs": [
+          {
+            "name": "grad_x",
+            "index": 0,
+            "dtype": "float32",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "idx",
+            "index": 1,
+            "dtype": "int32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "weight",
+            "index": 1,
+            "dtype": "float32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "grad_y",
+            "index": 0,
+            "dtype": "float32",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "attrs": [
+          {
+            "name": "m",
+            "paramType": "required",
+            "dtype": "int",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "bin_filename": "ThreeInterpolateBackward_fp32_int64",
+        "inputs": [
+          {
+            "name": "grad_x",
+            "index": 0,
+            "dtype": "float32",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "idx",
+            "index": 1,
+            "dtype": "int64",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "weight",
+            "index": 1,
+            "dtype": "float32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "grad_y",
+            "index": 0,
+            "dtype": "float32",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "attrs": [
+          {
+            "name": "m",
+            "paramType": "required",
+            "dtype": "int",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "bin_filename": "ThreeInterpolateBackward_fp16_int32",
+        "inputs": [
+          {
+            "name": "grad_x",
+            "index": 0,
+            "dtype": "float16",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "idx",
+            "index": 1,
+            "dtype": "int32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "weight",
+            "index": 1,
+            "dtype": "float16",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "grad_y",
+            "index": 0,
+            "dtype": "float16",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "attrs": [
+          {
+            "name": "m",
+            "paramType": "required",
+            "dtype": "int",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "bin_filename": "ThreeInterpolateBackward_fp16_int64",
+        "inputs": [
+          {
+            "name": "grad_x",
+            "index": 0,
+            "dtype": "float16",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "idx",
+            "index": 1,
+            "dtype": "int64",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          },
+          {
+            "name": "weight",
+            "index": 1,
+            "dtype": "float16",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "grad_y",
+            "index": 0,
+            "dtype": "float16",
+            "format": "NC1HWC0",
+            "paramType": "required",
+            "shape": [
+              -2
+            ]
+          }
+        ],
+        "attrs": [
+          {
+            "name": "m",
+            "paramType": "required",
+            "dtype": "int",
+            "value": 0
+          }
+        ]
+      }
+    ]
+}

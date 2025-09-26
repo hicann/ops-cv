@@ -1,0 +1,137 @@
+{
+    "op_type": "UpsampleNearestExact3dGrad",
+    "op_list": [
+        {
+            "bin_filename": "UpsampleNearestExact3dGrad_62432a0746d9a889107fdd09ddfd5a3e",
+            "inputs": [
+                {
+                    "name": "grad_output",
+                    "index": 0,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "grad_input",
+                    "index": 0,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "input_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "output_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "scales",
+                    "dtype": "list_float",
+                    "value": []
+                }
+            ]
+        },
+        {
+            "bin_filename": "UpsampleNearestExact3dGrad_b991b67506d3fa184c83c66f31fb736e",
+            "inputs": [
+                {
+                    "name": "grad_output",
+                    "index": 0,
+                    "dtype": "bfloat16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "grad_input",
+                    "index": 0,
+                    "dtype": "bfloat16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "input_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "output_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "scales",
+                    "dtype": "list_float",
+                    "value": []
+                }
+            ]
+        },
+        {
+            "bin_filename": "UpsampleNearestExact3dGrad_97559e96f66e2006b9f3fb086f5725ce",
+            "inputs": [
+                {
+                    "name": "grad_output",
+                    "index": 0,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "grad_input",
+                    "index": 0,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ]
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "input_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "output_size",
+                    "dtype": "list_int",
+                    "value": []
+                },
+                {
+                    "name": "scales",
+                    "dtype": "list_float",
+                    "value": []
+                }
+            ]
+        }
+    ]
+}

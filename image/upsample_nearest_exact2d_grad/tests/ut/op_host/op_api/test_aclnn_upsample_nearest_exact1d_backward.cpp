@@ -1,0 +1,178 @@
+/**
+ * This program is free software, you can redistribute it and/or modify.
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This file is a part of the CANN Open Software.
+ * Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+#include "gtest/gtest.h"
+#include "image/upsample_nearest_exact2d_grad/op_host/op_api/aclnn_upsample_nearest_exact1d_backward.h"
+#include "op_api_ut_common/tensor_desc.h"
+#include "op_api_ut_common/op_api_ut.h"
+
+class l2_upsample_nearest_exact1d_backward_test : public testing::Test
+{
+protected:
+    static void SetUpTestCase()
+    {
+        std::cout << "l2_upsample_nearest_exact1d_backward_test SetUp" << std::endl;
+    }
+
+    static void TearDownTestCase()
+    {
+        std::cout << "l2_upsample_nearest_exact1d_backward_test TearDown" << std::endl;
+    }
+};
+
+// out nullptr
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_out_nullptr)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(nullptr));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
+}
+
+// inputsize nullptr
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_outputsize_nullptr)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, nullptr, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
+}
+
+// dtype float16
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_dtype_float16)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5}, ACL_FLOAT16, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT16, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    // EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
+// dtype float32
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_dtype_float32)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    // EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
+// gradOutput empty N
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_gradOutput_empty_n)
+{
+    auto gradOutput_desc = TensorDesc({0, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// gradOutput empty C
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_gradOutput_empty_c)
+{
+    auto gradOutput_desc = TensorDesc({1, 0, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// gradOutput empty H
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_gradOutput_empty_h)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 0}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// inputsize size 5
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_inputsize_size_5)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// gradOutput and out dtype different
+TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_backward_test_dtype_different)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto out_desc = TensorDesc({1, 1, 3}, ACL_FLOAT16, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
+    const double_t scales = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
