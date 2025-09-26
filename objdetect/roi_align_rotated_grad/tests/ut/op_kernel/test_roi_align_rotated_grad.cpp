@@ -21,6 +21,7 @@
 #include "tikicpulib.h"
 #include "data_utils.h"
 #include <cstdint>
+#include "../../../op_host/roi_align_rotated_grad_tiling.h"
 
 using namespace std;
 
@@ -44,12 +45,11 @@ protected:
   }
 
 private:
-  const static std::string rootPath;
   const static std::string dataPath;
 };
 
-const std::string IsFiniteTest::rootPath = "../../../../../../../";
-const std::string IsFiniteTest::dataPath = rootPath + "ops/objdetect/roi_align_rotated_grad/tests/ut/op_kernel/roi_align_rotated_grad_data";
+const std::string roi_align_rotated_grad_test::dataPath = "../../../../objdetect/roi_align_rotated_grad/op_kernel/roi_align_rotated_data_grad";
+
 
 TEST_F(roi_align_rotated_grad_test, test_case_0)
 {
@@ -83,7 +83,6 @@ TEST_F(roi_align_rotated_grad_test, test_case_0)
   AscendC::GmFree(grad_input);
   AscendC::GmFree(workspace);
   AscendC::GmFree(tiling);
-  free(path_);
 }
 
 TEST_F(roi_align_rotated_grad_test, test_case_1)
@@ -118,7 +117,6 @@ TEST_F(roi_align_rotated_grad_test, test_case_1)
   AscendC::GmFree(grad_input);
   AscendC::GmFree(workspace);
   AscendC::GmFree(tiling);
-  free(path_);
 }
 
 TEST_F(roi_align_rotated_grad_test, test_case_2)
@@ -153,5 +151,4 @@ TEST_F(roi_align_rotated_grad_test, test_case_2)
   AscendC::GmFree(grad_input);
   AscendC::GmFree(workspace);
   AscendC::GmFree(tiling);
-  free(path_);
 }
