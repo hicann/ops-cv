@@ -1,6 +1,6 @@
 # ops-cv
 
-## 🔥Latest News
+## 🔥Latest News 
 
 - [2025/09] ops-cv项目首次上线。
 
