@@ -56,15 +56,12 @@ if(UT_TEST_ALL OR OP_HOST_UT)
   function(add_infershape_ut_modules OP_INFERSHAPE_MODULE_NAME)
     # add opinfershape ut common object: cv_op_infershape_ut_common_obj
     add_library(${OP_INFERSHAPE_MODULE_NAME}_common_obj OBJECT)
-    file(GLOB OP_INFERSHAPE_UT_COMMON_SRC ${UT_COMMON_INC}/infershape_context_faker.cpp
-      ${UT_COMMON_INC}/infershape_case_executor.cpp
-      )
     target_sources(${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE ${OP_INFERSHAPE_UT_COMMON_SRC})
     target_include_directories(
-      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE ${GTEST_INCLUDE} ${ASCEND_DIR}/include/base/context_builder
+      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE ${ASCEND_DIR}/include/base/context_builder
       )
     target_link_libraries(
-      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest c_sec
+      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> c_sec
       )
 
     # add opinfershape ut cases object: cv_op_infershape_ut_cases_obj
