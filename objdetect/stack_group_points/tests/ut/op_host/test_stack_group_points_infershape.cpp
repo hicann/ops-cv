@@ -10,8 +10,8 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
-#include "op_proto_test_util.h"
-#include "common/utils/ut_op_common.h"
+#include "infershape_context_faker.h"
+#include "base/registry/op_impl_space_registry_v2.h"
 #include "../../../op_graph/stack_group_points_proto.h"
 
 class StackGroupPoints : public testing::Test
@@ -28,46 +28,86 @@ protected:
     }
 };
 
-TEST_F(StackGroupPoints, StackGroupPoints_infershape_case_0)
+static std::vector<int64_t> ToVectorForStackGroupPoints(const gert::Shape& shape)
 {
-    ge::op::StackGroupPoints op;
-    op.UpdateInputDesc("features", create_desc({32, 64}, ge::DT_FLOAT));
-    op.UpdateInputDesc("indices", create_desc({20, 3}, ge::DT_INT32));
-
-    op.UpdateInputDesc("indfeatures_batch_cntices", create_desc({4}, ge::DT_INT32));
-    op.UpdateInputDesc("indices_batch_cnt", create_desc({4}, ge::DT_INT32));
-
-    EXPECT_EQ(InferShapeTest(op), ge::GRAPH_SUCCESS);
-
-    auto output_desc = op.GetOutputDesc("y");
-    std::vector<int64_t> expected_output_shape = {20, 64, 3};
-    EXPECT_EQ(output_desc.GetShape().GetDims(), expected_output_shape);
+    size_t shapeSize = shape.GetDimNum();
+    std::vector<int64_t> shapeVec(shapeSize, 0);
+    for (size_t i = 0; i < shapeSize; i++) {
+        shapeVec[i] = shape.GetDim(i);
+    }
+    return shapeVec;
 }
 
-TEST_F(StackGroupPoints, StackGroupPoints_InferDtype_case_0)
+static void ExeTestCaseForStackGroupPoints(
+    const std::vector<gert::StorageShape>& inputShapes,  // 存储所有输入StorageShape参数
+    const std::vector<ge::DataType>& dtypes,             // 存储所有DataType参数
+    gert::StorageShape& outStorageShape,
+    ge::graphStatus testCaseResult = ge::GRAPH_SUCCESS)
 {
-    ASSERT_NE(gert::OpImplRegistry::GetInstance().GetOpImpl("StackGroupPoints"), nullptr);
-    auto data_type_func = gert::OpImplRegistry::GetInstance().GetOpImpl("StackGroupPoints")->infer_datatype;
-    if (data_type_func != nullptr)
-    {
-        ge::DataType features_ref = ge::DT_FLOAT;
-        ge::DataType indices_ref = ge::DT_INT32;
-        ge::DataType output_ref = ge::DT_FLOAT;
-        auto context_holder = gert::InferDataTypeContextFaker()
-                                  .IrInputNum(4)
-                                  .NodeIoNum(4, 1)
-                                  .NodeInputTd(0, ge::DT_FLOAT, ge::FORMAT_ND, ge::FORMAT_ND)
-                                  .NodeInputTd(1, ge::DT_FLOAT, ge::FORMAT_ND, ge::FORMAT_ND)
-                                  .NodeOutputTd(0, ge::DT_FLOAT, ge::FORMAT_ND, ge::FORMAT_ND)
-                                  .InputDataTypes({&features_ref, &indices_ref})
-                                  .OutputDataTypes({&output_ref})
-                                  .Build();
-        auto context = context_holder.GetContext<gert::InferDataTypeContext>();
-        EXPECT_EQ(data_type_func(context), ge::GRAPH_SUCCESS);
-        ASSERT_NE(context, nullptr);
+    // 从vector中取出对应参数（保持原顺序）
+    const auto& featuresStorageShape = inputShapes[0];
+    const auto& featuresBatchCntStorageShape = inputShapes[1];
+    const auto& indicesStorageShape = inputShapes[2];
+    const auto& indicesBatchCntStorageShape = inputShapes[3];
+    
+    ge::DataType input1Dtype = dtypes[0];
+    ge::DataType input2Dtype = dtypes[1];
+    ge::DataType input3Dtype = dtypes[2];
+    ge::DataType input4Dtype = dtypes[3];
+    ge::DataType outputDtype = dtypes[4];
 
-        EXPECT_EQ(context->GetInputDataType(0), features_ref);
-        EXPECT_EQ(context->GetInputDataType(1), indices_ref);
-        EXPECT_EQ(context->GetOutputDataType(0), output_ref);
-    }
+    /* make infershape context */
+    std::vector<gert::Tensor *> inputTensors = {
+        (gert::Tensor *)&featuresStorageShape,
+        (gert::Tensor *)&featuresBatchCntStorageShape,
+        (gert::Tensor *)&indicesStorageShape,
+        (gert::Tensor *)&indicesBatchCntStorageShape,
+        (gert::Tensor *)&indicesBatchCntStorageShape
+    };
+    std::vector<gert::StorageShape *> outputShapes = {&outStorageShape};
+    auto contextHolder = gert::InferShapeContextFaker()
+        .SetOpType("StackGroupPoints")
+        .NodeIoNum(4, 1)
+        .NodeInputTd(0, input1Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeInputTd(1, input2Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeInputTd(2, input3Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeInputTd(3, input4Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeOutputTd(0, outputDtype, ge::FORMAT_ND, ge::FORMAT_ND)
+        .InputTensors(inputTensors)
+        .OutputShapes(outputShapes)
+        .Build();
+
+    /* get infershape func */
+    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
+    auto inferShapeFunc = spaceRegistry->GetOpImpl("StackGroupPoints")->infer_shape;
+    ASSERT_NE(inferShapeFunc, nullptr);
+
+    /* do infershape */
+    EXPECT_EQ(inferShapeFunc(contextHolder.GetContext()), testCaseResult);
+}
+
+TEST_F(StackGroupPoints, StackGroupPoints_infershape_case_0)
+{
+    // 用vector存储同类型参数（顺序与原参数列表一致）
+    std::vector<gert::StorageShape> inputShapes = {
+        {{32, 64}, {32, 64}},    // self_shape
+        {{4,}, {4,}},                  // feeds_shape
+        {{20, 3}, {20, 3}},
+        {{4,}, {4,}},
+        {{4,}, {4,}},
+    };
+    std::vector<ge::DataType> dtypes = {
+        ge::DT_FLOAT,  // input1Dtype
+        ge::DT_INT32,    // input2Dtype
+        ge::DT_INT32,    // input2Dtype
+        ge::DT_INT32,    // input2Dtype
+        ge::DT_FLOAT   // outputDtype
+    };
+
+    std::vector<int64_t> expectResult = {20, 64, 3};
+    gert::StorageShape outStorageShape = {};
+    // 简化后的函数调用
+    ExeTestCaseForStackGroupPoints(inputShapes, dtypes, outStorageShape, ge::GRAPH_SUCCESS);
+    EXPECT_EQ(ToVectorForStackGroupPoints(outStorageShape.GetOriginShape()), expectResult);
+
 }
