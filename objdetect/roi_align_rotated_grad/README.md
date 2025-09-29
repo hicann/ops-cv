@@ -108,4 +108,6 @@
 
 ## 调用说明
 
-待上线
+| 调用方式   | 样例代码           | 说明                                         |
+| ---------------- | --------------------------- | --------------------------------------------------- |
+| aclnn接口 | [test_aclnn_roi_align_rotated_grad](examples/test_aclnn_roi_align_rotated_grad.cpp) | 通过[aclnnRoiAlignRotatedGrad](docs/aclnnRoiAlignRotatedGrad.md)接口方式调用RoiAlignRotatedGrad算子。 |

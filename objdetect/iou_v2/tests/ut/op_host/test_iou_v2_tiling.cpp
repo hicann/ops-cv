@@ -56,10 +56,10 @@ TEST_F(IouV2Tiling, test_tiling_iou_aligned_f32)
                                                 gert::TilingContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
                                                 gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
                                                 &compileInfo);
-    uint64_t expectTilingKey = 4;
-    string expectTilingData = "1 1 1 1 1 1 1";
-    std::vector<size_t> expectWorkspaces = {16777216};
-    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
+    uint64_t expectTilingKey = 7;
+    string expectTilingData = "1024 1024 0 1 16 16 1065353216 ";
+    std::vector<size_t> expectWorkspaces = {0};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
 
