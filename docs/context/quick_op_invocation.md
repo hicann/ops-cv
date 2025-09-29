@@ -22,9 +22,9 @@
    bash install_deps.sh
    ```
 
-2. **安装驱动与固件（可选）**
+2. **安装驱动与固件（运行态依赖）**
 
-   如需本地运行项目算子，请参见《[CANN 软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstSoftware)》，按要求完成NPU驱动和固件软件包安装；否则可跳过本操作。
+   运行算子时必须安装驱动与固件，若仅编译算子，可跳过本操作，安装指导详见《[CANN 软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstSoftware)》。
 
 ## 环境准备
 
@@ -42,9 +42,9 @@
     - \$\{arch\}：表示CPU架构，如aarch64、x86_64。
     - \$\{install\_path\}：表示指定安装路径，默认安装在`/usr/local/Ascend`目录。
 
-2. **安装社区版CANN legacy包（可选）**
+2. **安装社区版CANN legacy包（运行态依赖）**
 
-    如需本地运行项目算子，需额外安装此包，否则跳过本操作。
+    运行算子时必须安装本包，若仅编译算子，可跳过本操作。
 
     根据产品型号和环境架构，下载对应`cann-${soc_version}-opp_legacy-${cann_version}-linux-${arch}.run`包，下载链接如下：
 
@@ -145,7 +145,7 @@
     ```bash
     bash build.sh --pkg [--jit] --soc=${soc_version}
     ```
-    - --jit（可选）：推荐设置，表示不编译算子的二进制文件。
+    - --jit（可选）：设置后表示不编译算子二进制文件，如需使用aclnn调用算子，该选项无需设置。
     - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件使用"ascend910b"（默认），Atlas A3 训练系列产品/Atlas A3 推理系列产品使用"ascend910_93"。
 
     若提示如下信息，说明编译成功。
