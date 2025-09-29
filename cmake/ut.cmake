@@ -109,6 +109,26 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       ${PKG_NAME}_op_kernel_ut
       CACHE STRING "op_kernel ut module name" FORCE
     )
+  
+  # ######################################################################################################################
+  # get op_type from *_binary.json
+  # ######################################################################################################################
+  function(get_op_type_from_binary_json BINARY_JSON OP_TYPE)
+  execute_process(
+    COMMAND
+      grep op_type ${BINARY_JSON}
+    OUTPUT_VARIABLE op_type
+    )
+  string(REGEX REPLACE "\"op_type\"" "" op_type ${op_type})
+  string(REGEX MATCH "\".+\"" op_type ${op_type})
+  string(REGEX REPLACE "\"" "" op_type ${op_type})
+
+  set(OP_TYPE
+      ${op_type}
+      PARENT_SCOPE
+    )
+  endfunction()
+
   function(add_opkernel_ut_modules OP_KERNEL_MODULE_NAME)
     # add opkernel ut common object: cv_op_kernel_ut_common_obj
     add_library(${OP_KERNEL_MODULE_NAME}_common_obj OBJECT)
@@ -234,15 +254,25 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
     file(GLOB KernelFile "${PROJECT_SOURCE_DIR}/*/${opName}/op_kernel/${opName}.cpp")
 
     # standardize opType
-    set(opType "")
-    string(REPLACE "_" ";" opTypeTemp "${opName}")
-    foreach(word IN LISTS opTypeTemp)
-      string(SUBSTRING "${word}" 0 1 firstLetter)
-      string(SUBSTRING "${word}" 1 -1 restOfWord)
-      string(TOUPPER "${firstLetter}" firstLetter)
-      string(TOLOWER "${restOfWord}" restOfWord)
-      set(opType "${opType}${firstLetter}${restOfWord}")
-    endforeach()
+    set(OP_TYPE "")
+    file(GLOB jsonFiles "${PROJECT_SOURCE_DIR}/*/${opName}/op_host/config/*/${opName}_binary.json")
+    list(LENGTH jsonFiles numFiles)
+    if(numFiles EQUAL 0)
+        string(REPLACE "_" ";" opTypeTemp "${opName}")
+        foreach(word IN LISTS opTypeTemp)
+            string(SUBSTRING "${word}" 0 1 firstLetter)
+            string(SUBSTRING "${word}" 1 -1 restOfWord)
+            string(TOUPPER "${firstLetter}" firstLetter)
+            string(TOLOWER "${restOfWord}" restOfWord)
+            set(OP_TYPE "${OP_TYPE}${firstLetter}${restOfWord}")
+        endforeach()
+    endif()
+    if(NOT numFiles EQUAL 0)
+        foreach(jsonFile ${jsonFiles})
+            get_op_type_from_binary_json(${jsonFile} OP_TYPE)
+            message(STATUS "Current file OP_TYPE: ${OP_TYPE}")
+        endforeach()
+    endif()
 
     # standardize tiling files
     string(REPLACE "," ";" tilingSrc "${tilingSrcFiles}")
@@ -262,7 +292,7 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       target_link_libraries(
         ${opName}_${socVersion}_tiling_tmp
         PRIVATE -Wl,--no-as-needed $<$<TARGET_EXISTS:opsbase>:opsbase> -Wl,--as-needed -Wl,--whole-archive tiling_api
-                -Wl,--no-whole-archive
+                -Wl,--no-whole-archive 
         )
 
       # gen ascendc tiling head files
@@ -287,7 +317,7 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       set(gen_tiling_head_file ${OPS_CV_DIR}/tests/ut/op_kernel/scripts/gen_tiling_head_file.sh)
       set(gen_tiling_so_path ${CMAKE_CURRENT_BINARY_DIR}/lib${opName}_${socVersion}_tiling_tmp.so)
       set(gen_tiling_head_tag ${opName}_${socVersion}_gen_head)
-      set(gen_cmd "bash ${gen_tiling_head_file} ${opType} ${opName} ${gen_tiling_so_path} ${CUSTOM_TILING_DATA_KEYS}")
+      set(gen_cmd "bash ${gen_tiling_head_file} ${OP_TYPE} ${opName} ${gen_tiling_so_path} ${CUSTOM_TILING_DATA_KEYS}")
       message("gen tiling head file to ${tilingFile}, command:")
       message("${gen_cmd}")
       add_custom_command(

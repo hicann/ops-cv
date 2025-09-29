@@ -125,6 +125,7 @@ private:
     TBuf<QuePosition::VECCALC> centerQueue;
     TBuf<QuePosition::VECCALC> xMinQueue;
     TBuf<QuePosition::VECCALC> xSizeQueue;
+    TBuf<QuePosition::VECCALC> floorQueue;
     TBuf<QuePosition::VECCALC> weightQueue;
     TQue<QuePosition::VECOUT, NO_BUFFER_NUM> radioQueue;
     TQue<QuePosition::VECOUT, NO_BUFFER_NUM> radioCastQueue;
@@ -343,6 +344,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::Init(
     pipe.InitBuffer(centerQueue, (queueSize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(xMinQueue, (queueSize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(xSizeQueue, (queueSize * sizeof(float) + 31) / 32 * 32);
+    pipe.InitBuffer(floorQueue, (queueSize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(radioQueue, NO_BUFFER_NUM, (radioSize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(weightQueue, (interpsize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(radioCastQueue, NO_BUFFER_NUM, (radioSize * sizeof(T) + 31) / 32 * 32);
@@ -384,6 +386,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
     if (instart_w < 0) {
         instart_w = 0;
     }
+    LocalTensor<float> floorTensor = floorQueue.Get<float>();
 
     int64_t length = static_cast<int64_t>(centerTensor.GetSize());
     // 先计算影响范围和中心点对应的位置，对象为输入矩阵中所有的列
@@ -395,16 +398,16 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
     Muls(centerTensor, centerTensor, scale_w, length);
     PipeBarrier<PIPE_V>();
     // 计算每个下标最小映射值
-    Adds(xMinTensor, centerTensor, (float)0.5 - support_w, length);
+    Adds(floorTensor, centerTensor, (float)0.5 - support_w, length);
     PipeBarrier<PIPE_V>();
-    Floor(xMinTensor, xMinTensor, length);
+    Floor(xMinTensor, floorTensor, length);
     PipeBarrier<PIPE_V>();
     Maxs(xMinTensor, xMinTensor, (float)0.0, length);
     PipeBarrier<PIPE_V>();
     // 计算每个下标映射的范围
-    Adds(xSizeTensor, centerTensor, (float)0.5 + support_w, length);
+    Adds(floorTensor, centerTensor, (float)0.5 + support_w, length);
     PipeBarrier<PIPE_V>();
-    Floor(xSizeTensor, xSizeTensor, length);
+    Floor(xSizeTensor, floorTensor, length);
     PipeBarrier<PIPE_V>();
     Mins(xSizeTensor, xSizeTensor, static_cast<float>(output_shapes[3]), length);
     PipeBarrier<PIPE_V>();
@@ -426,6 +429,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
     if (instart_h < 0) {
         instart_h = 0;
     }
+    LocalTensor<float> floorTensor_h = floorQueue.Get<float>();
     // 先计算影响范围和中心点对应的位置，对象为输入矩阵中所有的列
     ArithProgression(centerTensor_h, static_cast<float>(instart_h), static_cast<float>(1), length);
     PipeBarrier<PIPE_V>();
@@ -436,18 +440,18 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
     PipeBarrier<PIPE_V>();
 
     // 计算每个下标最小映射值
-    Adds(xMinTensor_h, centerTensor_h, (float)0.5 - support_h, length);
+    Adds(floorTensor_h, centerTensor_h, (float)0.5 - support_h, length);
     PipeBarrier<PIPE_V>();
-    Floor(xMinTensor_h, xMinTensor_h, length);
+    Floor(xMinTensor_h, floorTensor_h, length);
     PipeBarrier<PIPE_V>();
     Maxs(xMinTensor_h, xMinTensor_h, (float)0.0, length);
     PipeBarrier<PIPE_V>();
 
     // 计算每个下标映射的范围
-    Adds(xSizeTensor_h, centerTensor_h, (float)0.5 + support_h, length);
+    Adds(floorTensor_h, centerTensor_h, (float)0.5 + support_h, length);
     PipeBarrier<PIPE_V>();
 
-    Floor(xSizeTensor_h, xSizeTensor_h, length);
+    Floor(xSizeTensor_h, floorTensor_h, length);
     PipeBarrier<PIPE_V>();
 
     Mins(xSizeTensor_h, xSizeTensor_h, static_cast<float>(output_shapes[2]), length);
