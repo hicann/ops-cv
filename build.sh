@@ -780,10 +780,6 @@ assemble_cmake_args() {
       print_error "The soc [${COMPUTE_UNIT}] is not support."
       usage
       exit 1
-    elif [[ "$ENABLE_BINARY" == "FALSE" ]]; then
-      print_error "The soc [${COMPUTE_UNIT}] need to be used with --pkg or --opkernel."
-      usage
-      exit 1
     fi
     echo "COMPUTE_UNIT: ${COMPUTE_UNIT_SHORT}"
     CMAKE_ARGS="$CMAKE_ARGS -DASCEND_COMPUTE_UNIT=$COMPUTE_UNIT_SHORT"

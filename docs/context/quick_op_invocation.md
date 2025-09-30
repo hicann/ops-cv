@@ -233,13 +233,13 @@
   # 方式1: 编译并执行指定算子和对应功能的UT测试用例（选其一）
   bash build.sh -u --[opapi|ophost|opkernel] --ops=iou_v2
   # 方式2: 编译并执行所有的UT测试用例
-  # bash build.sh -u
+  bash build.sh -u
   # 方式3: 编译所有的UT测试用例但不执行
-  # bash build.sh -u --noexec
+  bash build.sh -u --noexec
   # 方式4: 编译并执行对应功能的UT测试用例（选其一）
-  # bash build.sh -u --[opapi|ophost|opkernel]
+  bash build.sh -u --[opapi|ophost|opkernel]
   # 方式5: 编译对应功能的UT测试用例但不执行（选其一）
-  # bash build.sh -u --noexec --[opapi|ophost|opkernel]
+  bash build.sh -u --noexec --[opapi|ophost|opkernel]
     ```
 
     假设验证ophost功能是否正常，执行如下命令：
