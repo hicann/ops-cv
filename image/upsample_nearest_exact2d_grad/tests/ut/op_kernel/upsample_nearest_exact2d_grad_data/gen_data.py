@@ -34,18 +34,18 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
 
     size = np.prod(input_shape)
     tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
-    x_tensor = torch.tensor(tmp_input, dtype=torch.float32).requires_grad_(True)
-    y_tensor = interpolate(x_tensor, output_size, mode='bicubic', align_corners=False, antialias=True)
+    x_tensor = torch.rand(tuple(input_shape)).requires_grad_(True)
+    y_tensor = interpolate(x_tensor, output_size, mode='nearest-exact')
     
-    grad_output = torch.rand_like(y_tensor)
+    grad_output = torch.ones_like(y_tensor)
     y_tensor.backward(grad_output)
     y_golden = x_tensor.grad
 
     tmp_grad_output = np.array(grad_output).astype(np_type)
     tmp_golden = np.array(y_golden).astype(np_type)
 
-    tmp_grad_output.tofile(f"{d_type}_input_bicubic2d_aa_grad.bin")
-    tmp_golden.tofile(f"{d_type}_golden_bicubic2d_aa_grad.bin")
+    tmp_grad_output.tofile(f"{d_type}_input_nearest_exact2d_grad.bin")
+    tmp_golden.tofile(f"{d_type}_golden_nearest_exact2d_grad.bin")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
