@@ -81,14 +81,15 @@ def generate_operator_json_content(input_json, kernel_output, json_content):
                           f"{kernel_output}{opc_json_file_name}_deterministic.json"]
         opc_json_outputs = list(filter(lambda fname: os.path.isfile(fname), expect_outputs))
         if len(opc_json_outputs) == 0:
-            print(f"[WARNING]the kernel {opc_json_file_name} not generate output json")
-            print(f"[WARNING]the kernel {opc_json_file_name} is {item}")
+            print(f"[ERROR]the kernel {opc_json_file_name} not generate output json")
+            print(f"[ERROR]the kernel {opc_json_file_name} is {item}")
+            print(f"ERROR REASON: opc_json_file_name:{kernel_output}{opc_json_file_name}.json generation failed")
 
             failed_json_file_name = opc_json_file_name + "_failed"
             failed_json_file = kernel_output + failed_json_file_name + ".json"
             if os.path.exists(failed_json_file):
                 os.remove(failed_json_file)
-            continue
+            raise FileNotFoundError()
         for opc_json_file_path in opc_json_outputs:
             with open(opc_json_file_path, "r") as file_opc:
                 opc_info_json = json.load(file_opc)
