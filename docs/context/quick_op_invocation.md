@@ -17,7 +17,7 @@
    - Gawk
    - googletest（仅执行UT时依赖，建议版本 [release-1.11.0](https://github.com/google/googletest/releases/tag/release-1.11.0)）
 
-   上述依赖包可通过项目根目录install\_deps.sh安装，命令如下，如遇到不支持系统，请参考该文件自行适配。
+   上述依赖包可通过项目根目录install\_deps.sh安装，命令如下，若遇到不支持系统，请参考该文件自行适配。
    ```bash
    bash install_deps.sh
    ```
@@ -30,7 +30,7 @@
 
 1. **安装社区版CANN toolkit包**
 
-    根据实际环境，下载对应`Ascend-cann-toolkit_${cann_version}_linux-${arch}.run`包，下载链接为[toolkit x86_64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/Ascend-cann-toolkit_8.3.RC1_linux-x86_64.run)、[toolkit aarch64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/Ascend-cann-toolkit_8.3.RC1_linux-aarch64.run)。
+    根据实际环境，下载对应`Ascend-cann-toolkit_${cann_version}_linux-${arch}.run`包，下载链接为[toolkit x86_64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/8.5.0.alpha001/Ascend-cann-toolkit_8.5.0.alpha001_linux-x86_64.run)、[toolkit aarch64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/8.5.0.alpha001/Ascend-cann-toolkit_8.5.0.alpha001_linux-aarch64.run)。
     
     ```bash
     # 确保安装包具有可执行权限
@@ -46,18 +46,18 @@
 
     运行算子时必须安装本包，若仅编译算子，可跳过本操作。
 
-    根据产品型号和环境架构，下载对应`cann-${soc_version}-opp_legacy-${cann_version}-linux-${arch}.run`包，下载链接如下：
+    根据产品型号和环境架构，下载对应`cann-${soc_name}-opp_legacy-${cann_version}-linux-${arch}.run`包，下载链接如下：
 
-    - Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件：[legacy x86_64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/cann-910b-opp_legacy-8.3.RC1-linux-x86_64.run)、[legacy aarch64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/cann-910b-opp_legacy-8.3.RC1-linux-aarch64.run)。
-    - Atlas A3 训练系列产品/Atlas A3 推理系列产品：[legacy x86_64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/cann-910_93-opp_legacy-8.3.RC1-linux-x86_64.run)、[legacy aarch64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/cann-910_93-opp_legacy-8.3.RC1-linux-aarch64.run)。
+    - Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件：[legacy x86_64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/8.5.0.alpha001/cann-910b-opp_legacy-8.5.0.alpha001-linux-86_64.run)、[legacy aarch64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/8.5.0.alpha001/cann-910b-opp_legacy-8.5.0.alpha001-linux-aarch64.run)。
+    - Atlas A3 训练系列产品/Atlas A3 推理系列产品：[legacy x86_64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/8.5.0.alpha001/cann-910_93-opp_legacy-8.5.0.alpha001-linux-x86_64.run)、[legacy aarch64包](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/community/8.5.0.alpha001/cann-910_93-opp_legacy-8.5.0.alpha001-linux-aarch64.run)。
 
     ```bash
     # 确保安装包具有可执行权限
-    chmod +x cann-${soc_version}-opp_legacy-${cann_version}-linux-${arch}.run
+    chmod +x cann-${soc_name}-opp_legacy-${cann_version}-linux-${arch}.run
     # 安装命令
-    ./cann-${soc_version}-opp_legacy-${cann_version}-linux-${arch}.run --full --install-path=${install_path}
+    ./cann-${soc_name}-opp_legacy-${cann_version}-linux-${arch}.run --full --install-path=${install_path}
     ```
-    - \$\{soc\_version\}：表示NPU型号。
+    - \$\{soc\_name\}：表示NPU型号名称，即\$\{soc\_version\}删除“ascend”后剩余的内容。
     - \$\{install\_path\}：表示指定安装路径，需要与toolkit包安装在相同路径，默认安装在`/usr/local/Ascend`目录。
 
 3. **安装社区版CANN ops-math包（可选）**
@@ -172,8 +172,6 @@
 
 - **执行算子样例**
   
-    不同算子包使用不同执行命令，执行完成后会打印算子执行结果。
-    
     - 完成ops-cv包安装后，执行命令如下：
         ```bash
         bash build.sh --run_example ${op} ${mode}
@@ -182,7 +180,7 @@
         ```
         
         - \$\{op\}：表示待执行算子（参见[算子列表](./op_list.md)），算子名小写下划线形式，如grid_sample。
-        - \$\{mode\}: 表示算子执行模式，目前支持eager（aclnn调用）、graph（图模式调用）。
+        - \$\{mode\}：表示算子执行模式，目前支持eager（aclnn调用）、graph（图模式调用）。
     
     - 完成自定义算子包安装后，执行命令如下：
         ```bash
@@ -190,7 +188,7 @@
         # 以GridSample算子example执行为例
         # bash build.sh --run_example grid_sample eager cust --vendor_name=custom
         ```
-        
+    
         - \$\{op\}：表示待执行算子，算子名小写下划线形式，如grid_sample。
         - \$\{mode\}：表示执行模式，目前支持eager（aclnn调用）、graph（图模式调用）。
         - \$\{pkg_mode\}：表示包模式，目前仅支持cust，即自定义算子包。         
@@ -200,29 +198,30 @@
 
     执行算子样例后会打印执行结果，以GridSample算子为例，结果如下：
 
-        This environment does not have the ASAN library, no need enable ASAN
-        CMAKE_ARGS: -DENABLE_UT_EXEC=TRUE
-        ----------------------------------------------------------------
-        Start to run examples,name:grid_sample mode:eager
-        Start compile and run examples file: ../image/grid_sample/examples/test_aclnn_grid_sample2_d.cpp
-        pkg_mode:cust vendor_name:custom
-        resultData[0] is: 0.250000
-        resultData[1] is: 2.250000
-        resultData[2] is: 2.000000
-        resultData[3] is: 8.500000
-        resultData[4] is: 20.500000
-        resultData[5] is: 12.000000
-        resultData[6] is: 8.250000
-        resultData[7] is: 18.250000
-        resultData[8] is: 10.000000
-        Start compile and run examples file: 
-        ../image/grid_sample/examples/test_aclnn_grid_sample3_d.cpp
-        pkg_mode:cust vendor_name:custom
-        resultData[0] is: 0.250000
-        resultData[1] is: 0.875000
-        resultData[2] is: 2.000000
-        resultData[3] is: 4.000000
-    
+    ```
+    This environment does not have the ASAN library, no need enable ASAN
+    CMAKE_ARGS: -DENABLE_UT_EXEC=TRUE
+    ----------------------------------------------------------------
+    Start to run examples,name:grid_sample mode:eager
+    Start compile and run examples file: ../image/grid_sample/examples/test_aclnn_grid_sample2_d.cpp
+    pkg_mode:cust vendor_name:custom
+    resultData[0] is: 0.250000
+    resultData[1] is: 2.250000
+    resultData[2] is: 2.000000
+    resultData[3] is: 8.500000
+    resultData[4] is: 20.500000
+    resultData[5] is: 12.000000
+    resultData[6] is: 8.250000
+    resultData[7] is: 18.250000
+    resultData[8] is: 10.000000
+    Start compile and run examples file: 
+    ../image/grid_sample/examples/test_aclnn_grid_sample3_d.cpp
+    pkg_mode:cust vendor_name:custom
+    resultData[0] is: 0.250000
+    resultData[1] is: 0.875000
+    resultData[2] is: 2.000000
+    resultData[3] is: 4.000000
+    ```
 - **执行算子UT**
 
 	> 说明：执行UT用例依赖googletest单元测试框架，详细介绍参见[googletest官网](https://google.github.io/googletest/advanced.html#running-a-subset-of-the-tests)。
