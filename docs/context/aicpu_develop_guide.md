@@ -396,7 +396,6 @@ REG_OP(AddExample)
     │               └── libcust_opsproto_rt2.0.so
     └── version.info                                             # 包信息
     ```
-
 ## 算子验证
 
 开发好的算子完成编译部署后，可通过aclnn方式（推荐）或图模式验证功能，方法请参考[算子调用方式](./op_invocation.md)。
