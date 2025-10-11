@@ -53,7 +53,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test01)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -68,7 +68,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test01)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -116,7 +118,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test02)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -131,7 +133,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test02)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -179,7 +183,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test03)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -194,7 +198,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test03)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -242,7 +248,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test04)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -257,7 +263,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test04)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -305,7 +313,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test05)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -320,7 +328,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test05)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -368,7 +378,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test06)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -383,7 +393,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test06)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -431,7 +443,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test07)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -446,7 +458,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test07)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -494,7 +508,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test08)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -509,7 +523,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test08)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -557,7 +573,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test09)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -572,7 +588,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test09)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -620,7 +638,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test10)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -635,7 +653,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test10)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 1;
     tilingDatafromBin->xD = 1;
@@ -683,7 +703,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test11)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -698,7 +718,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test11)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 800;
     tilingDatafromBin->xD = 1;
@@ -746,7 +768,7 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test12)
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingData);
+    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -761,7 +783,9 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test12)
     char* path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampler3DGradTilingData* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingData*>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
     tilingDatafromBin->batch = 2;
     tilingDatafromBin->channel = 500;
     tilingDatafromBin->xD = 1;

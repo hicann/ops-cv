@@ -18,7 +18,7 @@
 
 constexpr uint16_t MAX_CORE_COUNT = 48;
 
-struct UpsampleTrilinearTilingData {
+struct UpsampleTrilinearTilingDataTest {
     float scale_w;
     float scale_h;
     float scale_d;
@@ -45,17 +45,17 @@ struct UpsampleTrilinearTilingData {
 #pragma pack()
 
 #ifdef __NPU_TILING__
-inline[aicore] void InitTilingData(const __gm__ uint8_t* tiling, UpsampleTrilinearTilingData* constData)
+inline[aicore] void InitTilingData(const __gm__ uint8_t* tiling, UpsampleTrilinearTilingDataTest* constData)
 {
     const __gm__ uint32_t* src = (const __gm__ uint32_t*)tiling;
     uint32_t* dst = (uint32_t*)constData;
-    for (auto i = 0; i < sizeof(UpsampleTrilinearTilingData) / 4; i++)
+    for (auto i = 0; i < sizeof(UpsampleTrilinearTilingDataTest) / 4; i++)
         *(dst + i) = *(src + i);
 }
 #else
-inline void InitTilingData(uint8_t* tiling, UpsampleTrilinearTilingData* constData)
+inline void InitTilingData(uint8_t* tiling, UpsampleTrilinearTilingDataTest* constData)
 {
-    memcpy(constData, tiling, sizeof(UpsampleTrilinearTilingData));
+    memcpy(constData, tiling, sizeof(UpsampleTrilinearTilingDataTest));
 }
 #endif
 
@@ -71,7 +71,7 @@ inline void InitTilingData(uint8_t* tiling, UpsampleTrilinearTilingData* constDa
     InitTilingData(tilingArg, &tilingData)
 
 #define GET_TILING_DATA(tilingData, tilingArg) \
-    UpsampleTrilinearTilingData tilingData;    \
+    UpsampleTrilinearTilingDataTest tilingData;    \
     InitTilingData(tilingArg, &tilingData)
 
 #endif

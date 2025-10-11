@@ -39,7 +39,7 @@ TEST_F(grid_sampler_2d_grad_test, test_float_case)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
+        "../../../../image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
     system("chmod -R 755 ./gen_data/");
     system("cd ./gen_data/ && rm -rf ./*bin");
     system("cd ./gen_data/ && python3 gen_data.py");
@@ -55,7 +55,7 @@ TEST_F(grid_sampler_2d_grad_test, test_float_case)
     int32_t op_code = 1;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(sysWorkspaceSize);
-    size_t tilingSize = sizeof(GridSampler2DGradTilingData);
+    size_t tilingSize = sizeof(GridSampler2DGradTilingDataTest);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
     size_t x_size = N * C * H * W * sizeof(float);
     size_t grad_size = N * C * gH * gW * sizeof(float);
@@ -80,8 +80,8 @@ TEST_F(grid_sampler_2d_grad_test, test_float_case)
     WriteFile("./gen_data/dx.bin", dx, dx_size);
     WriteFile("./gen_data/dgrid.bin", dgrid, dgrid_size);
 
-    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingData, 4>(
-        reinterpret_cast<GridSampler2DGradTilingData*>(tiling), params, blockDim, ubSize);
+    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingDataTest, 4>(
+        reinterpret_cast<GridSampler2DGradTilingDataTest*>(tiling), params, blockDim, ubSize);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(1);
     ICPU_RUN_KF(
@@ -100,7 +100,7 @@ TEST_F(grid_sampler_2d_grad_test, test_float1_case)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
+        "../../../../image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
     system("chmod -R 755 ./gen_data/");
     system("cd ./gen_data/ && rm -rf ./*bin");
     system("cd ./gen_data/ && python3 gen_data.py");
@@ -116,7 +116,7 @@ TEST_F(grid_sampler_2d_grad_test, test_float1_case)
     int32_t op_code = 1;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(sysWorkspaceSize);
-    size_t tilingSize = sizeof(GridSampler2DGradTilingData);
+    size_t tilingSize = sizeof(GridSampler2DGradTilingDataTest);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
     size_t x_size = N * C * H * W * sizeof(float);
     size_t grad_size = N * C * gH * gW * sizeof(float);
@@ -141,8 +141,8 @@ TEST_F(grid_sampler_2d_grad_test, test_float1_case)
     WriteFile("./gen_data/dx.bin", dx, dx_size);
     WriteFile("./gen_data/dgrid.bin", dgrid, dgrid_size);
 
-    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingData, 4>(
-        reinterpret_cast<GridSampler2DGradTilingData*>(tiling), params, blockDim, ubSize);
+    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingDataTest, 4>(
+        reinterpret_cast<GridSampler2DGradTilingDataTest*>(tiling), params, blockDim, ubSize);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(2);
     ICPU_RUN_KF(
@@ -161,7 +161,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half_case)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
+        "../../../../image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
     system("chmod -R 755 ./gen_data/");
     system("cd ./gen_data/ && rm -rf ./*bin");
     system("cd ./gen_data/ && python3 gen_data_fp16.py");
@@ -177,7 +177,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half_case)
     int32_t op_code = 1;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(sysWorkspaceSize);
-    size_t tilingSize = sizeof(GridSampler2DGradTilingData);
+    size_t tilingSize = sizeof(GridSampler2DGradTilingDataTest);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
     size_t x_size = N * C * H * W * sizeof(half);
     size_t grad_size = N * C * gH * gW * sizeof(half);
@@ -202,8 +202,8 @@ TEST_F(grid_sampler_2d_grad_test, test_half_case)
     WriteFile("./gen_data/dx_16.bin", dx, dx_size);
     WriteFile("./gen_data/dgrid_16.bin", dgrid, dgrid_size);
 
-    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingData, 2>(
-        reinterpret_cast<GridSampler2DGradTilingData*>(tiling), params, blockDim, ubSize);
+    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingDataTest, 2>(
+        reinterpret_cast<GridSampler2DGradTilingDataTest*>(tiling), params, blockDim, ubSize);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(3);
     ICPU_RUN_KF(
@@ -222,7 +222,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half1_case)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
+        "../../../../image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
     system("chmod -R 755 ./gen_data/");
     system("cd ./gen_data/ && rm -rf ./*bin");
     system("cd ./gen_data/ && python3 gen_data_fp16.py");
@@ -238,7 +238,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half1_case)
     int32_t op_code = 1;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(sysWorkspaceSize);
-    size_t tilingSize = sizeof(GridSampler2DGradTilingData);
+    size_t tilingSize = sizeof(GridSampler2DGradTilingDataTest);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
     size_t x_size = N * C * H * W * sizeof(half);
     size_t grad_size = N * C * gH * gW * sizeof(half);
@@ -263,8 +263,8 @@ TEST_F(grid_sampler_2d_grad_test, test_half1_case)
     WriteFile("./gen_data/dx_16.bin", dx, dx_size);
     WriteFile("./gen_data/dgrid_16.bin", dgrid, dgrid_size);
 
-    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingData, 2>(
-        reinterpret_cast<GridSampler2DGradTilingData*>(tiling), params, blockDim, ubSize);
+    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingDataTest, 2>(
+        reinterpret_cast<GridSampler2DGradTilingDataTest*>(tiling), params, blockDim, ubSize);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(4);
     ICPU_RUN_KF(
@@ -283,7 +283,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half2_case)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
+        "../../../../image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
     system("chmod -R 755 ./gen_data/");
     system("cd ./gen_data/ && rm -rf ./*bin");
     system("cd ./gen_data/ && python3 gen_data_bf16.py");
@@ -299,7 +299,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half2_case)
     int32_t op_code = 1;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(sysWorkspaceSize);
-    size_t tilingSize = sizeof(GridSampler2DGradTilingData);
+    size_t tilingSize = sizeof(GridSampler2DGradTilingDataTest);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
     size_t x_size = N * C * H * W * sizeof(half);
     size_t grad_size = N * C * gH * gW * sizeof(half);
@@ -324,8 +324,8 @@ TEST_F(grid_sampler_2d_grad_test, test_half2_case)
     WriteFile("./gen_data/dx_16.bin", dx, dx_size);
     WriteFile("./gen_data/dgrid_16.bin", dgrid, dgrid_size);
 
-    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingData, 2>(
-        reinterpret_cast<GridSampler2DGradTilingData*>(tiling), params, blockDim, ubSize);
+    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingDataTest, 2>(
+        reinterpret_cast<GridSampler2DGradTilingDataTest*>(tiling), params, blockDim, ubSize);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(5);
     ICPU_RUN_KF(
@@ -344,7 +344,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half3_case)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
+        "../../../../image/grid_sampler2_d_grad/tests/ut/op_kernel/gen_data ./");
     system("chmod -R 755 ./gen_data/");
     system("cd ./gen_data/ && rm -rf ./*bin");
     system("cd ./gen_data/ && python3 gen_data_bf16.py");
@@ -360,7 +360,7 @@ TEST_F(grid_sampler_2d_grad_test, test_half3_case)
     int32_t op_code = 1;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(sysWorkspaceSize);
-    size_t tilingSize = sizeof(GridSampler2DGradTilingData);
+    size_t tilingSize = sizeof(GridSampler2DGradTilingDataTest);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
     size_t x_size = N * C * H * W * sizeof(half);
     size_t grad_size = N * C * gH * gW * sizeof(half);
@@ -385,8 +385,8 @@ TEST_F(grid_sampler_2d_grad_test, test_half3_case)
     WriteFile("./gen_data/dx_16.bin", dx, dx_size);
     WriteFile("./gen_data/dgrid_16.bin", dgrid, dgrid_size);
 
-    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingData, 2>(
-        reinterpret_cast<GridSampler2DGradTilingData*>(tiling), params, blockDim, ubSize);
+    optiling::GetGridSampler2DGradTiling<GridSampler2DGradTilingDataTest, 2>(
+        reinterpret_cast<GridSampler2DGradTilingDataTest*>(tiling), params, blockDim, ubSize);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(6);
     ICPU_RUN_KF(

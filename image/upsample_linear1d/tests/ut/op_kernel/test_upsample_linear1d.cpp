@@ -20,7 +20,8 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../data_utils.h"
+#include "../../../op_host/upsample_linear1d_tiling.h"
+#include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_linear1d(
     GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
@@ -39,9 +40,8 @@ protected:
 
 TEST_F(upsample_linear1d_test, test_case_float_1)
 {
-    printf("1111");
     system("cp -rf "
-           "../../../../../../../ops/image/upsample_linear1d/tests/ut/op_kernel/upsample_linear1d_data ./");
+           "../../../../image/upsample_linear1d/tests/ut/op_kernel/upsample_linear1d_data ./");
     system("chmod -R 755 ./upsample_linear1d_data/");
     system("cd ./upsample_linear1d_data/ && python3 gen_data.py '(1, 1, 4)' '(16)' 'float32'");
 
@@ -128,33 +128,33 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
 
     tilingDatafromBin->matmulTiling_h.usedCoreNum = 0;
-    tilingDatafromBin->matmulTiling_h.M = 0;
-    tilingDatafromBin->matmulTiling_h.N = 0;
-    tilingDatafromBin->matmulTiling_h.Ka = 0;
-    tilingDatafromBin->matmulTiling_h.Kb = 0;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 0;
-    tilingDatafromBin->matmulTiling_h.singleCoreN = 0;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 0;
-    tilingDatafromBin->matmulTiling_h.baseM = 0;
-    tilingDatafromBin->matmulTiling_h.baseN = 0;
-    tilingDatafromBin->matmulTiling_h.baseK = 0;
-    tilingDatafromBin->matmulTiling_h.depthA1 = 0;
-    tilingDatafromBin->matmulTiling_h.depthB1 = 0;
-    tilingDatafromBin->matmulTiling_h.stepM = 0;
-    tilingDatafromBin->matmulTiling_h.stepN = 0;
-    tilingDatafromBin->matmulTiling_h.stepKa = 0;
-    tilingDatafromBin->matmulTiling_h.stepKb = 0;
+    tilingDatafromBin->matmulTiling_h.M = 1;
+    tilingDatafromBin->matmulTiling_h.N = 16;
+    tilingDatafromBin->matmulTiling_h.Ka = 4;
+    tilingDatafromBin->matmulTiling_h.Kb = 4;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 1;
+    tilingDatafromBin->matmulTiling_h.singleCoreN = 128;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 4;
+    tilingDatafromBin->matmulTiling_h.baseM = 16;
+    tilingDatafromBin->matmulTiling_h.baseN = 128;
+    tilingDatafromBin->matmulTiling_h.baseK = 8;
+    tilingDatafromBin->matmulTiling_h.depthA1 = 1;
+    tilingDatafromBin->matmulTiling_h.depthB1 = 1;
+    tilingDatafromBin->matmulTiling_h.stepM = 1;
+    tilingDatafromBin->matmulTiling_h.stepN = 1;
+    tilingDatafromBin->matmulTiling_h.stepKa = 1;
+    tilingDatafromBin->matmulTiling_h.stepKb = 1;
     tilingDatafromBin->matmulTiling_h.isBias = 0;
     tilingDatafromBin->matmulTiling_h.transLength = 0;
     tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 0;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 0;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 8192;
     tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
-    tilingDatafromBin->matmulTiling_h.batchM = 0;
-    tilingDatafromBin->matmulTiling_h.batchN = 0;
-    tilingDatafromBin->matmulTiling_h.singleBatchM = 0;
-    tilingDatafromBin->matmulTiling_h.singleBatchN = 0;
+    tilingDatafromBin->matmulTiling_h.batchM = 1;
+    tilingDatafromBin->matmulTiling_h.batchN = 1;
+    tilingDatafromBin->matmulTiling_h.singleBatchM = 1;
+    tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
 

@@ -19,7 +19,7 @@
 
 #pragma pack(1)
 
-struct GridSampler3DGradTilingData {
+struct GridSampler3DGradTilingDataTest {
     int64_t batch = 0;
     int64_t channel = 0;
     int64_t xD = 0;
@@ -49,8 +49,8 @@ struct GridSampler3DGradTilingData {
     CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer);
 
 #define GET_TILING_DATA(tilingData, tilingPointer)                                   \
-    GridSampler3DGradTilingData tilingData;                                          \
-    INIT_TILING_DATA(GridSampler3DGradTilingData, tilingDataPointer, tilingPointer); \
+    GridSampler3DGradTilingDataTest tilingData;                                          \
+    INIT_TILING_DATA(GridSampler3DGradTilingDataTest, tilingDataPointer, tilingPointer); \
     (tilingData).batch = tilingDataPointer->batch;                                   \
     (tilingData).channel = tilingDataPointer->channel;                               \
     (tilingData).xD = tilingDataPointer->xD;                                         \
