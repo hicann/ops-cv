@@ -19,7 +19,7 @@
 
 #pragma pack(1)
 
-struct GridSampleTilingData {
+struct GridSampleTilingDataTestB {
     uint32_t coreNumVar = 0;
     uint32_t inN = 0;
     uint32_t inC = 0;
@@ -47,8 +47,8 @@ struct GridSampleTilingData {
     CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer);
 
 #define GET_TILING_DATA(tilingData, tilingPointer)                            \
-    GridSampleTilingData tilingData;                                          \
-    INIT_TILING_DATA(GridSampleTilingData, tilingDataPointer, tilingPointer); \
+    GridSampleTilingDataTestB tilingData;                                          \
+    INIT_TILING_DATA(GridSampleTilingDataTestB, tilingDataPointer, tilingPointer); \
     (tilingData).coreNumVar = tilingDataPointer->coreNumVar;                  \
     (tilingData).inN = tilingDataPointer->inN;                                \
     (tilingData).inC = tilingDataPointer->inC;                                \

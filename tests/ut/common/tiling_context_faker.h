@@ -96,20 +96,39 @@ public:
     TilingContextFaker& NodeOutputTd(int32_t index, ge::DataType dtype, ge::Format originFormat,
                                      ge::Format storageFormat);
 
-    template<typename T, typename = typename std::enable_if<
-        std::disjunction<
-            std::is_same<T, bool>,
-            std::is_same<T, int64_t>,
-            std::is_same<T, float>,
-            std::is_same<T, const AscendString &>,
-            std::is_same<T, const std::vector<bool> &>,
-            std::is_same<T, const std::vector<int64_t> &>,
-            std::is_same<T, const std::vector<float> &>,
-            std::is_same<T, const std::vector<AscendString> &>,
-            std::is_same<T, const std::vector<std::vector<int64_t>> &>
-        >::value
-    >::type>
-    TilingContextFaker& Attr(const std::string& attrName, T attr) {
+    TilingContextFaker& Attr(const std::string& attrName, bool attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, int64_t attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, float attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, const AscendString& attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, const std::vector<bool>& attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, const std::vector<int64_t>& attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, const std::vector<float>& attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, const std::vector<AscendString>& attr) {
+        OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
+        return *this;
+    }
+    TilingContextFaker& Attr(const std::string& attrName, const std::vector<std::vector<int64_t>>& attr) {
         OpTilingContextBuilder::MutableOpInfo().Attr(attrName.c_str(), attr);
         return *this;
     }
