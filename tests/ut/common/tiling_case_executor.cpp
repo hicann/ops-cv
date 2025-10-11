@@ -14,7 +14,7 @@
 #include "platform/platform_infos_def.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
-#define DO_TILING(tilingPara)                                                                                          \
+#define DO_TILING(tilingContextPara)                                                                                          \
     auto contextFaker = gert::TilingContextFaker();                                                                    \
     /* 1. input/output information */                                                                                  \
     size_t inputNum = tilingContextPara.inputTensorDesc_.size();                                                       \
@@ -37,6 +37,36 @@
         outputTensors.push_back((gert::Tensor *)&tilingContextPara.outputTensorDesc_[index].shape_);                   \
     }                                                                                                                  \
     contextFaker.InputTensors(inputTensors).OutputTensors(outputTensors);                                              \
+    for (auto& attrInfo : tilingContextPara.attrs_) {                                                                  \
+        switch (attrInfo.attr_.type_) {                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                            \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<bool*>(attrInfo.attr_.valuePtr_.get()));       \
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                             \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<int64_t*>(attrInfo.attr_.valuePtr_.get()));    \
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                           \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<float*>(attrInfo.attr_.valuePtr_.get()));      \
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_STRING: {                                                          \
+                contextFaker.Attr(attrInfo.attrName_, AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));\
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_BOOL: {                                                       \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<bool>*>(attrInfo.attr_.valuePtr_.get()));\
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_INT: {                                                        \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<int64_t>*>(attrInfo.attr_.valuePtr_.get()));\
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_LIST_INT: {                                                   \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<std::vector<int64_t>>*>(attrInfo.attr_.valuePtr_.get()));\
+                break;}                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_FLOAT: {                                                      \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<float>*>(attrInfo.attr_.valuePtr_.get()));\
+                break;}                                                                                                \
+            default:                                                                                                   \
+                std::cout << "[ERROR]" << __FILE__ << ":" << __LINE__ << "The ValueType " << attrInfo.attr_.type_ << "is not supported!" << std::endl;\
+        }                                                                                                              \
+    }                                                                                                                  \
     /* 2. base information */                                                                                          \
     fe::PlatFormInfos platformInfo;                                                                                    \
     platformInfo.Init();                                                                                               \

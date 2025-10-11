@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
 #include "upsample_bicubic2d_tiling.h"
-#include "../data_utils.h"
+#include "data_utils.h"
 
 #include <cstdint>
 
@@ -39,9 +39,10 @@ protected:
 TEST_F(upsample_bicubic2d_test, test_case_float32_1)
 {
     system("cp -rf "
-           "../../../../../../../ops/image/upsample_bicubic2d/tests/ut/op_kernel/upsample_bicubic2d_data ./");
+           "../../../../image/upsample_bicubic2d/tests/ut/op_kernel/upsample_bicubic2d_data ./");
     system("chmod -R 755 ./upsample_bicubic2d_data/");
     system("cd ./upsample_bicubic2d_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float32'");
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     size_t inputByteSize = 4 * 4 * sizeof(float);
     size_t outputByteSize = 16 * 16 * sizeof(float);
@@ -165,9 +166,10 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_1)
 TEST_F(upsample_bicubic2d_test, test_case_float32_2)
 {
     system("cp -rf "
-           "../../../../../../../ops/image/upsample_bicubic2d/tests/ut/op_kernel/upsample_bicubic2d_data ./");
+           "../../../../image/upsample_bicubic2d/tests/ut/op_kernel/upsample_bicubic2d_data ./");
     system("chmod -R 755 ./upsample_bicubic2d_data/");
     system("cd ./upsample_bicubic2d_data/ && python3 gen_data.py '(1, 1, 21, 21)' '(3, 3)' 'float32'");
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     size_t inputByteSize = 21 * 21 * sizeof(float);
     size_t outputByteSize = 3 * 3 * sizeof(float);
@@ -291,9 +293,10 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_2)
 TEST_F(upsample_bicubic2d_test, test_case_float16)
 {
     system("cp -rf "
-           "../../../../../../../ops/image/upsample_bicubic2d/tests/ut/op_kernel/upsample_bicubic2d_data ./");
+           "../../../../image/upsample_bicubic2d/tests/ut/op_kernel/upsample_bicubic2d_data ./");
     system("chmod -R 755 ./upsample_bicubic2d_data/");
     system("cd ./upsample_bicubic2d_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float16'");
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     size_t inputByteSize = 4 * 4 * sizeof(half);
     size_t outputByteSize = 16 * 16 * sizeof(half);

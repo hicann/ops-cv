@@ -40,15 +40,16 @@ TEST_F(resize_upsample_trilinear_310p_test, test1_case_float32)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/resize_upsample_trilinear/tests/ut/op_kernel/"
+        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
         "resize_upsample_trilinear_310p_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_310p_data/");
     system(
         "cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 32, 1, 16)' '(1, 4, 64)' 'float32'");
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     size_t inputByteSize = 1 * 2 * 32 * 16 * sizeof(float);
     size_t outputByteSize = 1 * 4 * 64 * 16 * sizeof(float);
-    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingData);
+    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingDataTest);
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t blockDim = 4;
 
@@ -61,7 +62,7 @@ TEST_F(resize_upsample_trilinear_310p_test, test1_case_float32)
     std::string fileName = "./resize_upsample_trilinear_310p_data/float32_input_trilinear.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleTrilinearTilingData* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingData*>(tiling);
+    UpsampleTrilinearTilingDataTest* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingDataTest*>(tiling);
 
     tilingDatafromBin->scale_w = 0.5;
     tilingDatafromBin->scale_h = 0.5;
@@ -103,14 +104,15 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/resize_upsample_trilinear/tests/ut/op_kernel/"
+        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
         "resize_upsample_trilinear_310p_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_310p_data/");
     system("cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 2, 1, 16)' '(1, 2, 4)' 'float32'");
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     size_t inputByteSize = 1 * 2 * 2 * 16 * sizeof(float);
     size_t outputByteSize = 1 * 2 * 4 * 16 * sizeof(float);
-    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingData);
+    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingDataTest);
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t blockDim = 2;
 
@@ -123,7 +125,7 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
     std::string fileName = "./resize_upsample_trilinear_310p_data/float32_input_trilinear.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleTrilinearTilingData* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingData*>(tiling);
+    UpsampleTrilinearTilingDataTest* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingDataTest*>(tiling);
 
     tilingDatafromBin->scale_w = 0.5;
     tilingDatafromBin->scale_h = 1;
@@ -165,14 +167,15 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float16)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/resize_upsample_trilinear/tests/ut/op_kernel/"
+        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
         "resize_upsample_trilinear_310p_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_310p_data/");
     system("cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 2, 1, 16)' '(1, 2, 4)' 'float16'");
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     size_t inputByteSize = 1 * 2 * 2 * 16 * sizeof(half);
     size_t outputByteSize = 1 * 2 * 4 * 16 * sizeof(half);
-    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingData);
+    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingDataTest);
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t blockDim = 2;
 
@@ -186,7 +189,7 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float16)
     ;
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleTrilinearTilingData* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingData*>(tiling);
+    UpsampleTrilinearTilingDataTest* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingDataTest*>(tiling);
 
     tilingDatafromBin->scale_w = 0.5;
     tilingDatafromBin->scale_h = 1;

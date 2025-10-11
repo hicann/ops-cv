@@ -38,7 +38,7 @@ typedef struct {
     uint32_t pNumPerCoreCast = 0;
     uint32_t tailPNumCast = 0;
     uint32_t castElement = 0;
-} GridSampler2DGradTilingData;
+} GridSampler2DGradTilingDataTest;
 
 struct InputParamsInfo {
     uint32_t batch;
@@ -73,8 +73,8 @@ inline __aicore__ int32_t AlignDiv32(int32_t n)
 
 #define GET_TILING_DATA(tilingData, tilingPointer)                                   \
     do {                                                                             \
-        GridSampler2DGradTilingData tilingData;                                          \
-        INIT_TILING_DATA(GridSampler2DGradTilingData, tilingDataPointer, tilingPointer); \
+        GridSampler2DGradTilingDataTest tilingData;                                          \
+        INIT_TILING_DATA(GridSampler2DGradTilingDataTest, tilingDataPointer, tilingPointer); \
         (tilingData).batch = tilingDataPointer->batch;                                   \
         (tilingData).pNumPerCore = tilingDataPointer->pNumPerCore;                       \
         (tilingData).tailPNum = tilingDataPointer->tailPNum;                             \

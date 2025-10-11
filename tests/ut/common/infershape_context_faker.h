@@ -12,8 +12,55 @@
 #define OPS_CV_DEV_TESTS_UT_COMMON_INFERSHAPE_CONTEXT_FAKER_H
 
 #include "op_infer_shape_context_builder.h"
+#include "any_value.h"
 
 namespace gert {
+    class InfershapeContextPara {
+public:
+    class TensorDescription {
+    public:
+        TensorDescription(const gert::StorageShape& shape, ge::DataType dtype, ge::Format format, bool isConst = false,
+            void* constValue = nullptr) :
+            shape_(shape), dtype_(dtype), format_(format), isConst_(isConst), constValue_(constValue) {}
+    public:
+        gert::StorageShape shape_;
+        ge::DataType dtype_ = ge::DT_FLOAT;
+        ge::Format format_ = ge::FORMAT_ND;
+        bool isConst_ = false;
+        void* constValue_ = nullptr;
+    };
+
+    class OpAttr {
+    public:
+        OpAttr(const std::string& attrName, const Ops::Cv::AnyValue& attr) : attrName_(attrName), attr_(attr) {}
+    public:
+        std::string attrName_;
+        Ops::Cv::AnyValue attr_;
+    };
+public:
+    InfershapeContextPara(const std::string& opName,
+                          const std::vector<TensorDescription>& inputTensorDesc,
+                          const std::vector<TensorDescription>& outputTensorDesc,
+                          const std::vector<OpAttr>& attrs) : 
+                          opName_(opName),
+                          inputTensorDesc_(inputTensorDesc),
+                          outputTensorDesc_(outputTensorDesc),
+                          attrs_(attrs) {}
+
+    InfershapeContextPara(const std::string& opName,
+                          const std::vector<TensorDescription>& inputTensorDesc,
+                          const std::vector<TensorDescription>& outputTensorDesc) : 
+                          opName_(opName),
+                          inputTensorDesc_(inputTensorDesc),
+                          outputTensorDesc_(outputTensorDesc) {}
+
+public:
+    std::string opName_;
+    std::vector<TensorDescription> inputTensorDesc_;
+    std::vector<TensorDescription> outputTensorDesc_;
+    std::vector<OpAttr> attrs_;
+};
+
 
 class InferShapeContextFaker : public OpInferShapeContextBuilder {
 public:

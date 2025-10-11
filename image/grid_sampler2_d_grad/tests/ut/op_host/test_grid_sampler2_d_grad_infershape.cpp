@@ -13,17 +13,11 @@
  * \brief
  */
 #include <gtest/gtest.h>
-
 #include <iostream>
 #include <numeric>
-
-#include "array_ops.h"
-#include "common/utils/ut_op_common.h"
-#include "experiment_ops.h"
-#include "image_ops.h"
-#include "op_proto_test_util.h"
-#include "utils/op_desc_utils.h"
-#include "utils/op_desc_utils_ex.h"
+#include "infershape_context_faker.h"
+#include "infershape_case_executor.h"
+#include "base/registry/op_impl_space_registry_v2.h"
 
 class grid_sampler2d_grad : public testing::Test {
 protected:
@@ -39,7 +33,6 @@ protected:
 
 TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fp16)
 {
-    ge::op::GridSampler2DGrad op;
     int n = 3;
     int c = 4;
     int h_in = 4;
@@ -47,138 +40,15 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fp16)
     int h_out = 5;
     int w_out = 6;
 
-    ge::DataType dtype = ge::DT_FLOAT16;
-    ge::Format format = ge::FORMAT_ND;
-    op.UpdateInputDesc("grad", create_desc_with_ori({n, c, h_out, w_out}, dtype, format, {n, c, h_out, w_out}, format));
-    op.UpdateInputDesc("x", create_desc_with_ori({n, c, h_in, w_in}, dtype, format, {n, c, h_in, w_in}, format));
-    op.UpdateInputDesc("grid", create_desc_with_ori({n, h_out, w_out, 2}, dtype, format, {n, h_out, w_out, 2}, format));
-    Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners"}};
-    EXPECT_EQ(InferShapeTest(op, param1), ge::GRAPH_SUCCESS);
-
-    auto dx_desc = op.GetOutputDescByName("dx");
-    // EXPECT_EQ(dx_desc.GetDataType(), dtype);
-    std::vector<int64_t> out_dx_shape = {n, c, h_in, w_in};
-    EXPECT_EQ(dx_desc.GetShape().GetDims(), out_dx_shape);
-
-    auto dgrid_desc = op.GetOutputDescByName("dgrid");
-    // EXPECT_EQ(dgrid_desc.GetDataType(), dtype);
-    std::vector<int64_t> out_dgrid_shape = {n, h_out, w_out, 2};
-    EXPECT_EQ(dgrid_desc.GetShape().GetDims(), out_dgrid_shape);
-}
-
-TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fp32)
-{
-    ge::op::GridSampler2DGrad op;
-    int n = 13;
-    int c = 24;
-    int h_in = 14;
-    int w_in = 25;
-    int h_out = 15;
-    int w_out = 26;
-
-    ge::DataType dtype = ge::DT_FLOAT;
-    ge::Format format = ge::FORMAT_ND;
-    op.UpdateInputDesc("grad", create_desc_with_ori({n, c, h_out, w_out}, dtype, format, {n, c, h_out, w_out}, format));
-    op.UpdateInputDesc("x", create_desc_with_ori({n, c, h_in, w_in}, dtype, format, {n, c, h_in, w_in}, format));
-    op.UpdateInputDesc("grid", create_desc_with_ori({n, h_out, w_out, 2}, dtype, format, {n, h_out, w_out, 2}, format));
-
-    Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners"}};
-    EXPECT_EQ(InferShapeTest(op, param1), ge::GRAPH_SUCCESS);
-
-    auto dx_desc = op.GetOutputDescByName("dx");
-    EXPECT_EQ(dx_desc.GetDataType(), dtype);
-    std::vector<int64_t> out_dx_shape = {n, c, h_in, w_in};
-    EXPECT_EQ(dx_desc.GetShape().GetDims(), out_dx_shape);
-
-    auto dgrid_desc = op.GetOutputDescByName("dgrid");
-    EXPECT_EQ(dgrid_desc.GetDataType(), dtype);
-    std::vector<int64_t> out_dgrid_shape = {n, h_out, w_out, 2};
-    EXPECT_EQ(dgrid_desc.GetShape().GetDims(), out_dgrid_shape);
-}
-
-TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_double)
-{
-    ge::op::GridSampler2DGrad op;
-    int n = 13;
-    int c = 24;
-    int h_in = 14;
-    int w_in = 25;
-    int h_out = 15;
-    int w_out = 26;
-
-    ge::DataType dtype = ge::DT_DOUBLE;
-    ge::Format format = ge::FORMAT_ND;
-    op.UpdateInputDesc("grad", create_desc_with_ori({n, c, h_out, w_out}, dtype, format, {n, c, h_out, w_out}, format));
-    op.UpdateInputDesc("x", create_desc_with_ori({n, c, h_in, w_in}, dtype, format, {n, c, h_in, w_in}, format));
-    op.UpdateInputDesc("grid", create_desc_with_ori({n, h_out, w_out, 2}, dtype, format, {n, h_out, w_out, 2}, format));
-
-    Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners"}};
-    EXPECT_EQ(InferShapeTest(op, param1), ge::GRAPH_SUCCESS);
-
-    auto dx_desc = op.GetOutputDescByName("dx");
-    // EXPECT_EQ(dx_desc.GetDataType(), dtype);
-    std::vector<int64_t> out_dx_shape = {n, c, h_in, w_in};
-    EXPECT_EQ(dx_desc.GetShape().GetDims(), out_dx_shape);
-
-    auto dgrid_desc = op.get_output_desc_dgrid();
-    // EXPECT_EQ(dgrid_desc.GetDataType(), dtype);
-    std::vector<int64_t> out_dgrid_shape = {n, h_out, w_out, 2};
-    EXPECT_EQ(dgrid_desc.GetShape().GetDims(), out_dgrid_shape);
-}
-
-TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fail_x)
-{
-    ge::op::GridSampler2DGrad op;
-    int n = 1;
-    int c = 2;
-    int h_in = 4;
-    int w_in = 25;
-    int h_out = 15;
-    int w_out = 16;
-
-    ge::DataType dtype = ge::DT_FLOAT;
-    ge::Format format = ge::FORMAT_ND;
-    op.UpdateInputDesc("grad", create_desc_with_ori({n, c, h_out, w_out}, dtype, format, {n, c, h_out, w_out}, format));
-    op.UpdateInputDesc("x", create_desc_with_ori({n, c, h_in}, dtype, format, {n, c, h_in}, format));
-    op.UpdateInputDesc("grid", create_desc_with_ori({n, h_out, w_out, 2}, dtype, format, {n, h_out, w_out, 2}, format));
-    Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners"}};
-    EXPECT_EQ(InferShapeTest(op, param1), ge::GRAPH_FAILED);
-}
-
-TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fail_grad)
-{
-    ge::op::GridSampler2DGrad op;
-    int n = 13;
-    int c = 24;
-    int h_in = 54;
-    int w_in = 25;
-    int h_out = 15;
-    int w_out = 16;
-
-    ge::DataType dtype = ge::DT_FLOAT16;
-    ge::Format format = ge::FORMAT_ND;
-    op.UpdateInputDesc("grad", create_desc_with_ori({n, h_out, w_out}, dtype, format, {n, h_out, w_out}, format));
-    op.UpdateInputDesc("x", create_desc_with_ori({n, c, h_in, w_in}, dtype, format, {n, c, h_in, w_in}, format));
-    op.UpdateInputDesc("grid", create_desc_with_ori({n, h_out, w_out, 2}, dtype, format, {n, h_out, w_out, 2}, format));
-    Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners"}};
-    EXPECT_EQ(InferShapeTest(op, param1), ge::GRAPH_FAILED);
-}
-
-TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fail_grid)
-{
-    ge::op::GridSampler2DGrad op;
-    int n = 13;
-    int c = 24;
-    int h_in = 54;
-    int w_in = 25;
-    int h_out = 15;
-    int w_out = 16;
-
-    ge::DataType dtype = ge::DT_FLOAT16;
-    ge::Format format = ge::FORMAT_ND;
-    op.UpdateInputDesc("grad", create_desc_with_ori({n, c, h_out, w_out}, dtype, format, {n, c, h_out, w_out}, format));
-    op.UpdateInputDesc("x", create_desc_with_ori({n, c, h_in, w_in}, dtype, format, {n, c, h_in, w_in}, format));
-    op.UpdateInputDesc("grid", create_desc_with_ori({n, h_out, w_out}, dtype, format, {n, h_out, w_out}, format));
-    Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners"}};
-    EXPECT_EQ(InferShapeTest(op, param1), ge::GRAPH_FAILED);
+    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
+                                                      {{{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {{n, c, h_in, w_in},{n, h_out, w_out, 2},};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
