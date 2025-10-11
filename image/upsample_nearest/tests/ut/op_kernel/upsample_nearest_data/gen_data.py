@@ -34,7 +34,7 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
 
     size = np.prod(input_shape)
     tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
-    x_tensor = torch.tensor(tmp_input, dtype=torch.float32)
+    x_tensor = torch.tensor(tmp_input, dtype=torch.float32).permute([0, 3, 1, 2])
     y_golden = interpolate(x_tensor, output_size, mode='nearest-exact')
     tmp_golden = np.array(y_golden).astype(np_type)
 

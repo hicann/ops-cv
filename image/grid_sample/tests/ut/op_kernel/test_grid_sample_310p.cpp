@@ -48,7 +48,7 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test08)
     size_t inputByteSize = N * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_h * grid_w * dim * sizeof(int32_t);
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampleTilingData);
+    size_t tiling_data_size = sizeof(GridSampleTilingDataTestP);
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
@@ -61,7 +61,9 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test08)
     char *path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampleTilingData *tilingDatafromBin = reinterpret_cast<GridSampleTilingData *>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampleTilingDataTestP *tilingDatafromBin = reinterpret_cast<GridSampleTilingDataTestP *>(tiling);
     tilingDatafromBin->coreNumVar = 48;
     tilingDatafromBin->inN = 2;
     tilingDatafromBin->inC = 1;
@@ -101,7 +103,7 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test11)
     size_t inputByteSize = N * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_h * grid_w * dim * sizeof(int32_t);
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampleTilingData);
+    size_t tiling_data_size = sizeof(GridSampleTilingDataTestP);
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
@@ -114,7 +116,9 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test11)
     char *path_ = get_current_dir_name();
     string path(path_);
 
-    GridSampleTilingData *tilingDatafromBin = reinterpret_cast<GridSampleTilingData *>(tiling);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    GridSampleTilingDataTestP *tilingDatafromBin = reinterpret_cast<GridSampleTilingDataTestP *>(tiling);
     tilingDatafromBin->coreNumVar = 48;
     tilingDatafromBin->inN = 2;
     tilingDatafromBin->inC = 64;
