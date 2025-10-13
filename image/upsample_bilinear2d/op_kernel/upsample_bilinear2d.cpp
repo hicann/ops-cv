@@ -12,8 +12,11 @@
  * \file upsample_bilinear2d.cpp
  * \brief
  */
-
+#ifdef __CCE_KT_TEST__
+#include "../../upsample_linear1d/op_kernel/upsample_linear1d.h"
+#else
 #include "../upsample_linear1d/upsample_linear1d.h"
+#endif
 
 using namespace UpsampleLinear1d;
 

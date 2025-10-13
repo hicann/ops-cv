@@ -207,8 +207,6 @@ aclnnStatus aclnnUpsampleBicubic2dAAGradGetWorkspaceSize(const aclTensor *gradOu
     auto out_contiguous = l0op::Contiguous(out, uniqueExecutor.get());
     CHECK_RET(out_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto dtype = gradOutput->GetDataType();
-
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失

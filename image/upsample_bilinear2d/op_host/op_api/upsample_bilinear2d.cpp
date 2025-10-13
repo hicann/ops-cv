@@ -44,7 +44,6 @@ const aclTensor *UpsampleBilinear2dNcdhw(const aclTensor *x, const aclTensor *si
 {
     L0_DFX(UpsampleBilinear2dNcdhw, x, size, alignCorners, scalesH, scalesW, y);
 
-    auto dataType = x->GetDataType();
     auto inputShape = x->GetViewShape();
     auto outputShape = y->GetViewShape();
     auto input_h = inputShape.GetDim(DIM_TWO);
@@ -71,6 +70,9 @@ const aclTensor *UpsampleBilinear2dNcdhw(const aclTensor *x, const aclTensor *si
     // AICORE
     auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
         UpsampleBilinear2d, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(alignCorners, realScales));
+    OP_CHECK(
+        ret == ACLNN_SUCCESS,
+        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
     return y;
 }
 }  // namespace l0op

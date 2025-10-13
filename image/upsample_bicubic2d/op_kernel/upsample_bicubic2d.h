@@ -217,7 +217,7 @@ private:
     __aicore__ inline int64_t getHeightTensorSize();
 
 private:
-    // ϵ�������±����
+    // 系数矩阵下标队列
     TBuf<QuePosition::VECCALC> centerQueue_w;
     TBuf<QuePosition::VECCALC> xIntQueue_w;
     TBuf<QuePosition::VECCALC> xMinQueue_w;
@@ -335,12 +335,12 @@ __aicore__ inline void UpsampleBicubic2dND<T>::Process()
         return;
     }
 
-    // �Ⱥ�����չ
+    // 先横向扩展
     WDirectionExpansion();
 
     SyncAll();
 
-    // ��������չ
+    // 再纵向扩展
     HDirectionExpansion();
 }
 
@@ -354,20 +354,20 @@ __aicore__ inline void UpsampleBicubic2dND<T>::WDirectionExpansion()
             xMinTensor = xMinQueue_w.Get<float>();
             xVTensor = xVQueue_w.Get<float>();
 
-            // ��ȡҪ����ϵ��������±�
-            // �����������������
+            // 获取要计算系数矩阵的下标
+            // 计算批量分组的数据
             if (slideStart_w < slideEnd_w) {
                 for (int64_t index = slideStart_w; index < slideEnd_w; index += slide_size) {
                     int16_t length = Min(slide_size, slideEnd_w - index);
                     calculateIntermediateTensor(index, length, W_DIRECTION);
-                    // ����ϵ������
+                    // 计算系数矩阵
                     calculateRatioTensorW(0, length);
                     copyRatioTensorToGm(0);
                     calculateWidthExtension(index, 0, 0);
                 }
             }
 
-            // ����β�鲿������
+            // 处理尾块部分数据
             if (tailSlideStart_w < tailSlideEnd_w) {
                 calculateIntermediateTensor(tailSlideStart_w, tailSlideEnd_w - tailSlideStart_w, W_DIRECTION);
                 for (int64_t index = tailSlideStart_w; index < tailSlideEnd_w; index += slide_size) {
@@ -391,20 +391,20 @@ __aicore__ inline void UpsampleBicubic2dND<T>::HDirectionExpansion()
             xMinTensor = xMinQueue_h.Get<float>();
             xVTensor = xVQueue_h.Get<float>();
 
-            // ��ȡҪ����ϵ��������±�
-            // �����������������
+            // 获取要计算系数矩阵的下标
+            // 计算批量分组的数据
             if (slideStart_h < slideEnd_h) {
                 for (int64_t index = slideStart_h; index < slideEnd_h; index += slide_size) {
                     int16_t length = Min(slide_size, slideEnd_h - index);
                     calculateIntermediateTensor(index, length, H_DIRECTION);
-                    // ����ϵ������
+                    // 计算系数矩阵
                     calculateRatioTensorH(0, length);
                     copyRatioTensorToGm(1);
                     calculateHeightExtension(index, 0, 0);
                 }
             }
 
-            // ����β�鲿������
+            // 处理尾块部分数据
             if (tailSlideStart_h < tailSlideEnd_h) {
                 calculateIntermediateTensor(tailSlideStart_h, tailSlideEnd_h - tailSlideStart_h, H_DIRECTION);
                 for (int64_t index = tailSlideStart_h; index < tailSlideEnd_h; index += slide_size) {
@@ -448,13 +448,13 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateIntermediateTensor(
     ArithProgression(centerTensor, static_cast<float>(index), static_cast<float>(1), length);
     PipeBarrier<PIPE_V>();
 
-    // ����center�±�
+    // 计算center下标
     if (align_corners) {
-        // �Ƕ���
+        // 角对齐
         Muls(centerTensor, centerTensor, scale, length);
         PipeBarrier<PIPE_V>();
     } else {
-        // �߶���
+        // 边对齐
         for (int64_t i = 0; i < length; i++) {
             float center = (static_cast<float>(0.5) + static_cast<float>(index + i)) * scale - static_cast<float>(0.5);
             centerTensor.SetValue(i, center);
@@ -462,16 +462,16 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateIntermediateTensor(
         PipeBarrier<PIPE_V>();
     }
 
-    // ����ÿ���±��int
+    // 计算每个下标的int
     Floor(xIntTensor, centerTensor, length);
 
-    // ����ÿ���±����Сӳ��ֵ
+    // 计算每个下标的最小映射值
     Adds(xMinTensor, xIntTensor, (float)(-1.0), length);
     PipeBarrier<PIPE_V>();
     Maxs(xMinTensor, xMinTensor, (float)0.0, length);
     PipeBarrier<PIPE_V>();
 
-    // ����ÿ���±��v
+    // 计算每个下标的v
     Sub(xVTensor, centerTensor, xIntTensor, length);
     PipeBarrier<PIPE_V>();
 }
@@ -481,7 +481,7 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateRatioTensorW(int64_t xIn
 {
     LocalTensor<float> ratioTensor = ratioQueue_w.AllocTensor<float>();
     singleCoreK = 0;
-    // �������ϵ������
+    // 计算横向系数矩阵
     Duplicate(ratioTensor, (float)0.0, ratioTensor.GetSize());
 
     event_t eventIDVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
@@ -517,7 +517,7 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateRatioTensorH(int64_t yIn
 {
     LocalTensor<float> ratioTensor = ratioQueue_h.AllocTensor<float>();
     xMin = static_cast<int64_t>(xMinTensor.GetValue(yIndex));
-    // ��������ϵ������
+    // 计算纵向系数矩阵
     Duplicate(ratioTensor, (float)0.0, ratioTensor.GetSize());
     for (int64_t i = yIndex; i < yIndex + length; i++) {
         int64_t xSize = 4;
@@ -545,7 +545,7 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateRatioTensorH(int64_t yIn
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dND<T>::copyRatioTensorToGm(int8_t direction)
 {
-    // ϵ�������ub������GM
+    // 系数矩阵从ub拷贝到GM
     if (direction == 0) {
         workSpaceRatioOffset = intermediate_matrix_size + ratio_matrix_size_w * blockIdx;
     } else {
@@ -599,7 +599,7 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateWidthExtension(
 {
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
-    // β��batch��������
+    // 尾块batch分批处理
     if (rowEnd != 0) {
         singleCoreM = rowEnd - rowStart;
     }

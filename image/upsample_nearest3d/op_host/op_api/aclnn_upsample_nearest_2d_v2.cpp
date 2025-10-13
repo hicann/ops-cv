@@ -266,10 +266,10 @@ const aclTensor *upsampleNearest2dV2AiCpuCompute(
     }
 }
 
-const float computeScale(const aclTensor *selfContiguous, int64_t input, int64_t output, int64_t output2, float scale) {
+float computeScale(const aclTensor *selfContiguous, int64_t input, int64_t output, int64_t output2, float scale) {
     if (input == output) {
         return 1.0f;
-    } else if (TWO * input == output) {
+    } else if (static_cast<int64_t>(TWO) * input == output) {
         //此处对标cpu，当输出是输入的两倍且满足一下两个条件之一时，传入的scale无效且固定为0.5：
         // 1. Format为NHWC且channel大于3
         // 2. 输出的H和W之和小于128

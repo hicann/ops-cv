@@ -291,14 +291,14 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::CalculateIdxTensor(int64_t in
     ArithProgression(centerTensor, static_cast<float>(index), (float)1.0, length);
     PipeBarrier<PIPE_V>();
 
-    // ����center�±�
+    // 计算center下标
     if (exactMode) {
-        // exactģʽ
+        // exact模式
         Adds(centerTensor, centerTensor, (float)0.5, length);
         Muls(centerTensor, centerTensor, scale, length);
         PipeBarrier<PIPE_V>();
     } else {
-        // ��ͨģʽ
+        // 普通模式
         Muls(centerTensor, centerTensor, scale, length);
         PipeBarrier<PIPE_V>();
     }

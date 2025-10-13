@@ -15,6 +15,9 @@
 
 #if __CCE_AICORE__ == 200
 #include "../upsample_nearest3d/upsample_nearest3d_310p.h"
+#endif
+#ifdef __CCE_KT_TEST__
+#include "../../upsample_nearest3d/op_kernel/upsample_nearest3d.h"
 #else
 #include "../upsample_nearest3d/upsample_nearest3d.h"
 #endif

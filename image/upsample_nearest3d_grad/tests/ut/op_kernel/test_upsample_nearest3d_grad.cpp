@@ -19,7 +19,7 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../data_utils.h"
+#include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_nearest3d_grad(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
@@ -40,7 +40,7 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
+        "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest3d_grad_data/");
     system("cd ./upsample_nearest3d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'float32'");
 
@@ -64,9 +64,9 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
 
     tilingDatafromBin->dataType = 2;
     tilingDatafromBin->batches = 1;
-    tilingDatafromBin->scaleW = 0.25;
-    tilingDatafromBin->scaleH = 0.25;
-    tilingDatafromBin->scaleD = 0.25;
+    tilingDatafromBin->scaleW = 4;
+    tilingDatafromBin->scaleH = 4;
+    tilingDatafromBin->scaleD = 4;
     tilingDatafromBin->needResizeH = true;
     tilingDatafromBin->needResizeW = true;
     tilingDatafromBin->needResizeD = true;
@@ -198,6 +198,7 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(1);
 
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_nearest3d_grad, blockDim, gradOutput, gradInput, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest3d_grad_data/float32_output_upsample_nearest3d_grad.bin";
     WriteFile(fileName, gradInput, gradInputByteSize);

@@ -109,7 +109,7 @@ private:
     __aicore__ inline int64_t getHeightTensorSize();
 
 private:
-    // ϵ�������±����
+    // 系数矩阵下标队列
 
     TBuf<QuePosition::VECCALC> centerQueue_w;
     TBuf<QuePosition::VECCALC> xMinQueue_w;
@@ -123,6 +123,9 @@ private:
     TBuf<QuePosition::VECCALC> weightQueue_h;
     TQue<QuePosition::VECOUT, BUFFER_NUM> radioQueue_h;
 
+    TBuf<QuePosition::VECCALC> floorQueue_w;
+    TBuf<QuePosition::VECCALC> floorQueue_h;
+
     const TCubeTiling *__restrict matmulTiling_w;
     const TCubeTiling *__restrict matmulTiling_h;
 
@@ -134,6 +137,7 @@ private:
     LocalTensor<float> xMinTensor;
     LocalTensor<float> xSizeTensor;
     LocalTensor<float> weightTensor;
+    LocalTensor<float> floorTensor;
 
     GM_ADDR inTensorsPtr = nullptr;
     GM_ADDR outTensorsPtr = nullptr;
@@ -214,6 +218,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::Init(
         pipe.InitBuffer(centerQueue_w, tensorWidthSize);
         pipe.InitBuffer(xMinQueue_w, tensorWidthSize);
         pipe.InitBuffer(xSizeQueue_w, tensorWidthSize);
+        pipe.InitBuffer(floorQueue_w, tensorWidthSize);
         pipe.InitBuffer(weightQueue_w, (max_interp_size_w * sizeof(float) + 31) / 32 * 32);
         pipe.InitBuffer(radioQueue_w, BUFFER_NUM, radio_matrix_size_w * sizeof(float));
     }
@@ -222,6 +227,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::Init(
         pipe.InitBuffer(centerQueue_h, tensorHeightSize);
         pipe.InitBuffer(xMinQueue_h, tensorHeightSize);
         pipe.InitBuffer(xSizeQueue_h, tensorHeightSize);
+        pipe.InitBuffer(floorQueue_h, tensorHeightSize);
         pipe.InitBuffer(weightQueue_h, (max_interp_size_h * sizeof(float) + 31) / 32 * 32);
         pipe.InitBuffer(radioQueue_h, BUFFER_NUM, radio_matrix_size_h * sizeof(float));
     }
@@ -239,12 +245,12 @@ __aicore__ inline void UpsampleBilinearAAND<T>::Process()
         return;
     }
 
-    // �Ⱥ�����չ
+    // 先横向扩展
     WDirectionExpansion();
 
     SyncAll();
 
-    // ��������չ
+    // 再纵向扩展
     HDirectionExpansion();
 }
 
@@ -273,21 +279,22 @@ __aicore__ inline void UpsampleBilinearAAND<T>::WDirectionExpansion()
             xMinTensor = xMinQueue_w.Get<float>();
             xSizeTensor = xSizeQueue_w.Get<float>();
             weightTensor = weightQueue_w.Get<float>();
-            // ��ȡҪ����ϵ��������±�
-            // �����������������
+            floorTensor = floorQueue_w.Get<float>();
+            // 获取要计算系数矩阵的下标
+            // 计算批量分组的数据
             if (slideStart_w < slideEnd_w) {
                 for (int64_t index = slideStart_w; index < slideEnd_w; index += slide_size) {
                     int16_t length = Min(slide_size, slideEnd_w - index);
                     calculateIntermediateTensor(index, length, W_DIRECTION);
 
-                    // ����ϵ������
+                    // 计算系数矩阵
                     calculateRadioTensorW(index - slideStart_w, length, invscale_w);
                     copyRadioTensorToGm(0);
                     calculateWidthExtension(index, 0, 0);
                 }
             }
 
-            // ����β�鲿������
+            // 处理尾块部分数据
             if (tailSlideStart_w < tailSlideEnd_w) {
                 calculateIntermediateTensor(tailSlideStart_w, tailSlideEnd_w - tailSlideStart_w, W_DIRECTION);
                 for (int64_t index = tailSlideStart_w; index < tailSlideEnd_w; index += slide_size) {
@@ -310,21 +317,22 @@ __aicore__ inline void UpsampleBilinearAAND<T>::HDirectionExpansion()
             xMinTensor = xMinQueue_h.Get<float>();
             xSizeTensor = xSizeQueue_h.Get<float>();
             weightTensor = weightQueue_h.Get<float>();
+            floorTensor = floorQueue_h.Get<float>();
 
-            // ��ȡҪ����ϵ��������±�
-            // �����������������
+            // 获取要计算系数矩阵的下标
+            // 计算批量分组的数据
             if (slideStart_h < slideEnd_h) {
                 for (int64_t index = slideStart_h; index < slideEnd_h; index += slide_size) {
                     int16_t length = Min(slide_size, slideEnd_h - index);
                     calculateIntermediateTensor(index, length, H_DIRECTION);
-                    // ����ϵ������
+                    // 计算系数矩阵
                     calculateRadioTensorH(index - slideStart_h, length, invscale_h);
                     copyRadioTensorToGm(1);
                     calculateHeightExtension(index, 0, 0);
                 }
             }
 
-            // ����β�鲿������
+            // 处理尾块部分数据
             if (tailSlideStart_h < tailSlideEnd_h) {
                 calculateIntermediateTensor(tailSlideStart_h, tailSlideEnd_h - tailSlideStart_h, H_DIRECTION);
                 for (int64_t index = tailSlideStart_h; index < tailSlideEnd_h; index += slide_size) {
@@ -356,26 +364,26 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateIntermediateTensor(
     ArithProgression(centerTensor, static_cast<float>(index), static_cast<float>(1), length);
     PipeBarrier<PIPE_V>();
 
-    // ����center�±�
+    // 计算center下标
     Adds(centerTensor, centerTensor, (float)0.5, length);
     PipeBarrier<PIPE_V>();
     Muls(centerTensor, centerTensor, scale, length);
     PipeBarrier<PIPE_V>();
 
-    // ����ÿ���±���Сӳ��ֵ
+    // 计算每个下标最小映射值
     Adds(xMinTensor, centerTensor, (float)0.5 - support, length);
     PipeBarrier<PIPE_V>();
-    Floor(xMinTensor, xMinTensor, length);
+    Floor(floorTensor, xMinTensor, length);
     PipeBarrier<PIPE_V>();
-    Maxs(xMinTensor, xMinTensor, (float)0.0, length);
+    Maxs(xMinTensor, floorTensor, (float)0.0, length);
     PipeBarrier<PIPE_V>();
 
-    // ����ÿ���±�ӳ��ķ�Χ
+    // 计算每个下标映射的范围
     Adds(xSizeTensor, centerTensor, (float)0.5 + support, length);
     PipeBarrier<PIPE_V>();
-    Floor(xSizeTensor, xSizeTensor, length);
+    Floor(floorTensor, xSizeTensor, length);
     PipeBarrier<PIPE_V>();
-    Mins(xSizeTensor, xSizeTensor, static_cast<float>(maxSize), length);
+    Mins(xSizeTensor, floorTensor, static_cast<float>(maxSize), length);
     PipeBarrier<PIPE_V>();
     Sub(xSizeTensor, xSizeTensor, xMinTensor, length);
     PipeBarrier<PIPE_V>();
@@ -392,7 +400,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorW(int64_t xI
 
     xIndex = 0;
     singleCoreK = 0;
-    // �������ϵ������
+    // 计算横向系数矩阵
     Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
 
     event_t eventIDVToS = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_S));
@@ -436,7 +444,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorH(int64_t xI
     LocalTensor<float> radioTensor = radioQueue_h.AllocTensor<float>();
 
     xIndex = 0;
-    // �������ϵ������
+    // 计算横向系数矩阵
     Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
     xMin = static_cast<int64_t>(xMinTensor.GetValue(xIndex));
     singleCoreK = xMinTensor.GetValue(xIndex + length - 1) - xMinTensor.GetValue(xIndex) +
@@ -474,7 +482,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorH(int64_t xI
 template <typename T>
 __aicore__ inline void UpsampleBilinearAAND<T>::copyRadioTensorToGm(int8_t direction)
 {
-    // ϵ�������ub������GM
+    // 系数矩阵从ub拷贝到GM
     if (direction == 0) {
         workSpaceRadioOffset = intermediate_matrix_size + radio_matrix_size_w * blockIdx;
     } else {
@@ -528,7 +536,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateWidthExtension(
 {
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
-    // β��batch��������
+    // 尾块batch分批处理
     if (rowEnd != 0) {
         singleCoreM = rowEnd - rowStart;
     }

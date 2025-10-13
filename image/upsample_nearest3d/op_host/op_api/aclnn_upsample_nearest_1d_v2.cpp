@@ -89,7 +89,6 @@ static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclInt
     OP_CHECK(size > ZERO,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The size of outputSize should be greater than 0,but got %zu", size),
         return false);
-    auto selfShape = self->GetViewShape();
     auto outShape = out->GetViewShape();
     if (self->GetViewShape().GetDimNum() != THREEDIMS) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,

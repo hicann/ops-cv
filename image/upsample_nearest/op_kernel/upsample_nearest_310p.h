@@ -109,13 +109,13 @@ private:
     int64_t dataTypeSize = 4;
     int64_t blockSize = 8;
 
-    // ����batch��ƫ��
+    // 计算batch的偏移
     int64_t outputNBatchOffset = 0;
     int64_t outputHBatchOffset = 0;
     int64_t inputNBatchOffset = 0;
     int64_t inputHBatchOffset = 0;
 
-    // c�����ϵ��и������
+    // c方向上的切割块数量
     int64_t cTilingLoopCnt = 0;
     int64_t cTailCnt = 0;
 
@@ -135,13 +135,13 @@ template <typename T, int32_t MODE>
 __aicore__ inline void UpsampleNearestND310p<T, MODE>::Init(
     GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleNearestTilingData* tilingData)
 {
-    // ��ȡ��ǰ�˵�����
+    // 获取当前核的索引
     blockIdx = GetBlockIdx();
 
-    // ���ش���Ĳ���
+    // 加载传入的参数
     ParseTilingData(tilingData);
 
-    // �����ڴ���䣬ʹ��˫buffer
+    // 进行内存分配，使用双buffer
     pipe.InitBuffer(inputQueue, BUFFER_NUM, maxDataCount * sizeof(float));
     pipe.InitBuffer(outputQueue, BUFFER_NUM, maxDataCount * sizeof(float));
     pipe.InitBuffer(syncWorkQueue, 1, 8 * 32 * sizeof(int32_t));
@@ -154,7 +154,7 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::Init(
 
     pipe.InitBuffer(clearTensorBuff, DEFAULT_CLEAR_UB_SIZE * sizeof(T));
 
-    // �������������洢
+    // 设置输入和输出存储
     inTensorsGM.SetGlobalBuffer((__gm__ T*)input);
     outTensorsGM.SetGlobalBuffer((__gm__ T*)output);
 
@@ -177,7 +177,7 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::Process()
 template <typename T, int32_t MODE>
 __aicore__ inline void UpsampleNearestND310p<T, MODE>::ClearGM()
 {
-    // clear gm �𵽸��������Ϸֿ�����
+    // clear gm 拆到各工作核上分开处理
     if (blockIdx >= needCoreNum) {
         return;
     }
@@ -186,23 +186,23 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::ClearGM()
 
     Duplicate(clearUb, (T)0, DEFAULT_CLEAR_UB_SIZE);
 
-    // ��������Ԫ�ظ���
+    // 计算数据元素个数
     int64_t totalNum = inputN * inputC * outputH * outputW;
-    // ����������������32byte���ܿ���
+    // 计算须正常处理的32byte的总块数
     int64_t totalBlockNum = totalNum / blockSize;
-    // ������������β��
+    // 处理完块数后的尾块
     int64_t tailCnt = totalNum % blockSize;
-    // ��Ҫ���������һ�����ݿ�ĺ�����
+    // 需要额外多清理一个数据块的核数量
     int64_t needExtraBlockCoreCnt = totalBlockNum % needCoreNum;
-    // ��������������յ����ݿ���
+    // 单个核至少须清空的数据块量
     int64_t perCoreBlockCnt = totalBlockNum / needCoreNum;
-    // ������������յ�Ԫ����������Ϊ32byte��������
+    // 单个核至少清空的元素数量，已为32byte的整数倍
     int64_t perCoreEleCnt = perCoreBlockCnt * blockSize;
 
-    // clear�ڴ�ĳ�ʼƫ��
+    // clear内存的初始偏移
     int64_t offset = blockIdx * perCoreEleCnt;
     int64_t nextCoreOffset = offset + perCoreEleCnt;
-    // ����������ƽ����������ݿ�
+    // 处理单个核平均分配的数据块
     for (int64_t clearOffset = offset; clearOffset < nextCoreOffset; clearOffset += DEFAULT_CLEAR_UB_SIZE) {
         int64_t clearLength = DEFAULT_CLEAR_UB_SIZE;
         if (clearOffset + DEFAULT_CLEAR_UB_SIZE >= nextCoreOffset) {
@@ -211,13 +211,13 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::ClearGM()
         DataCopy(outTensorsGM[clearOffset], clearUb, clearLength);
     }
 
-    // ����ʣ������ݿ�β������
+    // 处理剩余的数据块尾块数量
     if (blockIdx < needExtraBlockCoreCnt) {
         offset = needCoreNum * perCoreEleCnt + blockIdx * blockSize;
         DataCopy(outTensorsGM[offset], clearUb, blockSize);
     }
 
-    // ʣ���Ԫ����0��ͳһ����
+    // 剩余的元素由0核统一处理
     if (tailCnt > 0 && blockIdx == 0) {
         tailCnt = Ceil(float(tailCnt) / blockSize) * blockSize;
         offset = Max(int64_t(0), totalNum - tailCnt);

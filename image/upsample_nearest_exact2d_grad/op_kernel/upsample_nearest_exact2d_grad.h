@@ -331,9 +331,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTen
         Adds(downTensor, downTensor, -(float)0.5, length);
         PipeBarrier<PIPE_V>();
     }
-    Ceil(downTensor, downTensor, length);
+    Ceil(centerTensor, downTensor, length);
     PipeBarrier<PIPE_V>();
-    Mins(downTensor, downTensor, static_cast<float>(wSize), length);
+    Mins(downTensor, centerTensor, static_cast<float>(wSize), length);
     // 计算center下标映射上界
     ArithProgression(upTensor, static_cast<float>(instart_w + 1), static_cast<float>(1), length);
     PipeBarrier<PIPE_V>();
@@ -343,9 +343,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTen
         Adds(upTensor, upTensor, -(float)0.5, length);
         PipeBarrier<PIPE_V>();
     }
-    Ceil(upTensor, upTensor, length);
+    Ceil(centerTensor, upTensor, length);
     PipeBarrier<PIPE_V>();
-    Mins(upTensor, upTensor, static_cast<float>(wSize), length);
+    Mins(upTensor, centerTensor, static_cast<float>(wSize), length);
 }
 
 template <typename T>
@@ -367,9 +367,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTen
         Adds(downTensor, downTensor, -(float)0.5, length);
         PipeBarrier<PIPE_V>();
     }
-    Ceil(downTensor, downTensor, length);
+    Ceil(centerTensor, downTensor, length);
     PipeBarrier<PIPE_V>();
-    Mins(downTensor, downTensor, static_cast<float>(hSize), length);
+    Mins(downTensor, centerTensor, static_cast<float>(hSize), length);
     // 计算center下标映射上界
     ArithProgression(upTensor, static_cast<float>(instart_h + 1), static_cast<float>(1), length);
     PipeBarrier<PIPE_V>();
@@ -379,9 +379,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTen
         Adds(upTensor, upTensor, -(float)0.5, length);
         PipeBarrier<PIPE_V>();
     }
-    Ceil(upTensor, upTensor, length);
+    Ceil(centerTensor, upTensor, length);
     PipeBarrier<PIPE_V>();
-    Mins(upTensor, upTensor, static_cast<float>(hSize), length);
+    Mins(upTensor, centerTensor, static_cast<float>(hSize), length);
 }
 
 template <typename T>

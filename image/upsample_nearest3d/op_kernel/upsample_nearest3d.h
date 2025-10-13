@@ -165,7 +165,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::Process()
 
     int64_t slideStart = blockIdx * eachCoreSlideNum;
     int64_t slideEnd = slideStart + eachCoreSlideNum;
-    // �����������������
+    // 计算批量分组的数据
     if (slideStart < slideEnd) {
         for (int64_t slideIndex = slideStart; slideIndex < slideEnd; slideIndex++) {
             GatherData(slideIndex, 0, inputRow);
@@ -174,7 +174,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::Process()
 
     int64_t groupIndex = blockIdx / groupCoreNum;
     if (groupIndex < remainder) {
-        // ����β�鲿������
+        // 处理尾块部分数据
         int64_t slideIndex = tailStartSlideNum + groupIndex;
         int64_t blockIdxInGroup = blockIdx % groupCoreNum;
         int64_t tailRowStart = blockIdxInGroup * tailAvergingRow;
@@ -275,7 +275,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeW(int64_t slideIndex)
         }
         CalculateGatherOffsetW();
         srcDataLength = CeilA2B(srcDataCount * sizeof(T), BYTE_BLOCK) * BYTE_BLOCK;
-        // ��������ʱ����һ���԰��˶��batch
+        // 搬入数据时可以一次性搬运多个batch
         batchNum = CeilA2B(tensorSizeW * sizeof(T), BYTE_BLOCK) * BYTE_BLOCK / srcDataLength;
 
         srcBlockLen = srcDataCount * sizeof(T);
@@ -375,7 +375,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::CalculateSrcIndexTensor(
     }
     Muls(srcIndexTensor, srcIndexTensor, scales[direction], length);
     PipeBarrier<PIPE_V>();
-    Floor(srcIndexTensor, srcIndexTensor, length);
+    Cast(srcIndexTensor, srcIndexTensor, RoundMode::CAST_FLOOR, length);
     PipeBarrier<PIPE_V>();
     Mins(srcIndexTensor, srcIndexTensor, static_cast<float>(inputShapes[direction] - 1), length);
     PipeBarrier<PIPE_V>();

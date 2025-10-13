@@ -109,6 +109,7 @@ private:
     TBuf<> centerTensorBuff;
     TBuf<> xMinTensorBuff;
     TBuf<> xSizeTensorBuff;
+    TBuf<> floorTensorBuff;
     TBuf<> weightTensorBuff;
 
     const TCubeTiling *__restrict matmulTilingW;
@@ -121,6 +122,7 @@ private:
     LocalTensor<float> centerTensor;
     LocalTensor<float> xMinTensor;
     LocalTensor<float> xSizeTensor;
+    LocalTensor<float> floorTensor;
     LocalTensor<float> weightTensor;
 
     int64_t blockIdx = 0;
@@ -183,6 +185,7 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::Init(
     pipe.InitBuffer(centerTensorBuff, cacheBufferSize);
     pipe.InitBuffer(xMinTensorBuff, cacheBufferSize);
     pipe.InitBuffer(xSizeTensorBuff, cacheBufferSize);
+    pipe.InitBuffer(floorTensorBuff, cacheBufferSize);
 
     pipe.InitBuffer(weightTensorBuff, CeilA2B(maxInterpSize * sizeof(float), 32));
 
@@ -281,6 +284,7 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateIndexTensor(
     centerTensor = centerTensorBuff.Get<float>();
     xMinTensor = xMinTensorBuff.Get<float>();
     xSizeTensor = xSizeTensorBuff.Get<float>();
+    floorTensor = floorTensorBuff.Get<float>();
     float scale = scaleW;
     float support = supportW;
     int32_t interpSize = maxInterpSizeW;
@@ -295,12 +299,12 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateIndexTensor(
     Adds(centerTensor, centerTensor, (float)0.5, realDataCount);
     Muls(centerTensor, centerTensor, scale, realDataCount);
 
-    Adds(xMinTensor, centerTensor, (float)0.5 - support, realDataCount);
-    Floor(xMinTensor, xMinTensor, realDataCount);
+    Adds(floorTensor, centerTensor, (float)0.5 - support, realDataCount);
+    Floor(xMinTensor, floorTensor, realDataCount);
     Maxs(xMinTensor, xMinTensor, (float)0.0, realDataCount);
 
-    Adds(xSizeTensor, centerTensor, (float)0.5 + support, realDataCount);
-    Floor(xSizeTensor, xSizeTensor, realDataCount);
+    Adds(floorTensor, centerTensor, (float)0.5 + support, realDataCount);
+    Floor(xSizeTensor, floorTensor, realDataCount);
     Mins(xSizeTensor, xSizeTensor, static_cast<float>(inputSize), realDataCount);
     Sub(xSizeTensor, xSizeTensor, xMinTensor, realDataCount);
     Mins(xSizeTensor, xSizeTensor, static_cast<float>(interpSize), realDataCount);

@@ -74,7 +74,7 @@ private:
 private:
     TBuf<TPosition::VECCALC> UbBuf;
 
-    // ϵ�������±����
+    // 系数矩阵下标队列
 
     TBuf<QuePosition::VECCALC> centerQueue_w;
     TBuf<QuePosition::VECCALC> xMinQueue_w;
@@ -213,10 +213,10 @@ __aicore__ inline void UpsampleLinear1dND<T>::Process()
         SyncAll();
         return;
     }
-    // �Ⱥ�����չ
+    // 先横向扩展
     WDirectionExpansion();
     SyncAll();
-    // ��������չ
+    // 再纵向扩展
     HDirectionExpansion();
 }
 
@@ -241,19 +241,19 @@ __aicore__ inline void UpsampleLinear1dND<T>::WDirectionExpansion()
 {
     if (!FloatEqual(scale_w, 1.0) || mode == 1) {
         if (blockIdx < need_core_num_w) {
-            // ��ȡҪ����ϵ��������±�
-            // �����������������
+            // 获取要计算系数矩阵的下标
+            // 计算批量分组的数据
             if (slideStart_w < slideEnd_w) {
                 for (int64_t index = slideStart_w; index < slideEnd_w; index += slide_size_w) {
                     int16_t length = Min(slide_size_w, slideEnd_w - index);
-                    // ����ϵ������
+                    // 计算系数矩阵
                     calculateRadioTensorW(index, length);
                     copyRadioTensorToGm(0);
                     calculateWidthExtension(index, 0, 0);
                 }
             }
 
-            // ����β�鲿������
+            // 处理尾块部分数据
             if (tailSlideStart_w < tailSlideEnd_w) {
                 for (int64_t index = tailSlideStart_w; index < tailSlideEnd_w; index += slide_size_w) {
                     int16_t length = Min(slide_size_w, tailSlideEnd_w - index);
@@ -273,19 +273,19 @@ __aicore__ inline void UpsampleLinear1dND<T>::HDirectionExpansion()
         if (blockIdx < need_core_num_h) {
             centerTensor = centerQueue_h.Get<float>();
             xMinTensor = xMinQueue_h.Get<float>();
-            // ��ȡҪ����ϵ��������±�
-            // �����������������
+            // 获取要计算系数矩阵的下标
+            // 计算批量分组的数据
             if (slideStart_h < slideEnd_h) {
                 for (int64_t index = slideStart_h; index < slideEnd_h; index += slide_size_h) {
                     int16_t length = Min(slide_size_h, slideEnd_h - index);
-                    // ����ϵ������
+                    // 计算系数矩阵
                     calculateRadioTensorH(index, length);
                     copyRadioTensorToGm(1);
                     calculateHeightExtension(index, 0, 0);
                 }
             }
 
-            // ����β�鲿������
+            // 处理尾块部分数据
             if (tailSlideStart_h < tailSlideEnd_h) {
                 for (int64_t index = tailSlideStart_h; index < tailSlideEnd_h; index += slide_size_h) {
                     int16_t length = Min(slide_size_h, tailSlideEnd_h - index);
@@ -303,7 +303,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::calculateRadioTensorW(int64_t loop
 {
     LocalTensor<float> radioTensor = radioQueue_w.AllocTensor<float>();
     singleCoreK = 0;
-    // �������ϵ������
+    // 计算横向系数矩阵
     Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
     event_t eventIDVToS = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIDVToS);
@@ -347,7 +347,7 @@ template <typename T>
 __aicore__ inline void UpsampleLinear1dND<T>::calculateRadioTensorH(int64_t loopIndex, int64_t length)
 {
     LocalTensor<float> radioTensor = radioQueue_h.AllocTensor<float>();
-    // �������ϵ������
+    // 计算纵向系数矩阵
     Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
     event_t eventIDVToS = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIDVToS);
@@ -390,7 +390,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::calculateRadioTensorH(int64_t loop
 template <typename T>
 __aicore__ inline void UpsampleLinear1dND<T>::copyRadioTensorToGm(int8_t direction)
 {
-    // ϵ�������ub������GM
+    // 系数矩阵从ub拷贝到GM
     if (direction == 0) {
         workSpaceRadioOffset = intermediate_matrix_size + radio_matrix_size_w * blockIdx;
     } else {
@@ -445,7 +445,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::calculateWidthExtension(
     if (singleCoreK > 0) {
         int64_t singleCoreM = matmulTiling_w->singleCoreM;
         int64_t singleCoreN = matmulTiling_w->singleCoreN;
-        // β��batch��������
+        // 尾块batch分批处理
         if (rowEnd != 0) {
             singleCoreM = rowEnd - rowStart;
         }

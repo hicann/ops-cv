@@ -20,7 +20,7 @@
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
 #include "upsample_trilinear3d_backward_tiling.h"
-#include "../data_utils.h"
+#include "data_utils.h"
 
 #include <cstdint>
 
@@ -46,7 +46,7 @@ TEST_F(UpsampleTrilinear3dBackwardTest, test_case_float32)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/upsample_trilinear3d_backward/tests/ut/op_kernel/"
+        "../../../../image/upsample_trilinear3d_backward/tests/ut/op_kernel/"
         "upsample_trilinear3d_backward_data ./");
     system("chmod -R 755 ./upsample_trilinear3d_backward_data/");
     system("cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 2, 2, 4, 4)' '(8, 8, 16)' 'float32'");
@@ -203,7 +203,8 @@ TEST_F(UpsampleTrilinear3dBackwardTest, test_case_float32)
     tilingDatafromBin->matmulTilingD.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
-
+    
+	AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_trilinear3d_backward, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_trilinear3d_backward_data/float32_output_trilinear3d_grad.bin";
     WriteFile(fileName, y, grad_inputByteSize);

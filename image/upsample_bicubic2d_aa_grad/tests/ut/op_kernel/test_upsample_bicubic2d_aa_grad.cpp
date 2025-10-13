@@ -15,8 +15,9 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "upsample_bicubic2d_aa_grad_tiling.h"
-#include "../data_utils.h"
+#include "data_utils.h"
+#include "tiling_case_executor.h"
+#include "../../../op_host/upsample_bicubic2d_aa_grad_tiling.h"
 
 #include <cstdint>
 
@@ -39,12 +40,26 @@ protected:
 
 TEST_F(upsample_bicubic2d_aa_grad_test, test_case_float32)
 {
-    system(
-        "cp -rf "
-        "../../../../../../../ops/image/upsample_bicubic2d_aa_grad/tests/ut/op_kernel/upsample_bicubic2d_aa_grad_data "
-        "./");
+    system("cp -rf ../../../../image/upsample_bicubic2d_aa_grad/tests/ut/op_kernel/upsample_bicubic2d_aa_grad_data ./");
     system("chmod -R 755 ./upsample_bicubic2d_aa_grad_data/");
     system("cd ./upsample_bicubic2d_aa_grad_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float32'");
+
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 24;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAAGrad",
+                                                {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({16, 16})),
+                                                gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1, 4, 4})),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+                                                &compile_info, 48, 192*1024, 8192);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     size_t inputByteSize = 4 * 4 * sizeof(float);
     size_t outputByteSize = 16 * 16 * sizeof(float);
@@ -54,106 +69,14 @@ TEST_F(upsample_bicubic2d_aa_grad_test, test_case_float32)
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(outputByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-
     std::string fileName = "./upsample_bicubic2d_aa_grad_data/float32_input_bicubic2d_aa_grad.bin";
-    ;
     ReadFile(fileName, outputByteSize, x, outputByteSize);
 
-    UpsampleBicubicAAGradTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBicubicAAGradTilingData *>(tiling);
-
-    tilingDatafromBin->scale_w = 0.25;
-    tilingDatafromBin->scale_h = 0.25;
-    tilingDatafromBin->slide_size = 16;
-    tilingDatafromBin->invscale_w = 1.0;
-    tilingDatafromBin->invscale_h = 1.0;
-    tilingDatafromBin->support_w = 2;
-    tilingDatafromBin->support_h = 2;
-    tilingDatafromBin->max_interp_size_w = 5;
-    tilingDatafromBin->max_interp_size_h = 5;
-    tilingDatafromBin->radio_matrix_size = 2208;    //
-    tilingDatafromBin->radio_matrix_size_h = 2208;  //
-    tilingDatafromBin->need_core_num_w = 1;
-    tilingDatafromBin->need_core_num_h = 1;
-    tilingDatafromBin->intermediate_matrix_size = 256;  //
-
-    tilingDatafromBin->input_shapes[0] = 1;
-    tilingDatafromBin->input_shapes[1] = 1;
-    tilingDatafromBin->input_shapes[2] = 16;
-    tilingDatafromBin->input_shapes[3] = 16;
-    tilingDatafromBin->output_shapes[0] = 1;
-    tilingDatafromBin->output_shapes[1] = 1;
-    tilingDatafromBin->output_shapes[2] = 4;
-    tilingDatafromBin->output_shapes[3] = 4;
-    tilingDatafromBin->tailSlideStartList_w[0] = 0;
-    tilingDatafromBin->tailSlideEndList_w[0] = 4;
-    tilingDatafromBin->tailRowStartList_w[0] = 0;
-    // tilingDatafromBin->tailRowEndList_w[0] = 4;
-    tilingDatafromBin->tailRowEndList_w[0] = 16;
-    tilingDatafromBin->tailSlideStartList_h[0] = 0;
-    tilingDatafromBin->tailSlideEndList_h[0] = 4;
-    tilingDatafromBin->tailRowStartList_h[0] = 0;
-    tilingDatafromBin->tailRowEndList_h[0] = 0;
-
-    tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
-    tilingDatafromBin->matmulTiling_w.M = 16;
-    tilingDatafromBin->matmulTiling_w.N = 4;
-    tilingDatafromBin->matmulTiling_w.Ka = 16;
-    tilingDatafromBin->matmulTiling_w.Kb = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreM = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreN = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreK = 170;
-    tilingDatafromBin->matmulTiling_w.baseM = 16;
-    tilingDatafromBin->matmulTiling_w.baseN = 16;
-    tilingDatafromBin->matmulTiling_w.baseK = 176;
-    tilingDatafromBin->matmulTiling_w.depthA1 = 1;
-    tilingDatafromBin->matmulTiling_w.depthB1 = 1;
-    tilingDatafromBin->matmulTiling_w.stepM = 1;
-    tilingDatafromBin->matmulTiling_w.stepN = 1;
-    tilingDatafromBin->matmulTiling_w.isBias = 0;
-    tilingDatafromBin->matmulTiling_w.transLength = 0;
-    tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
-    tilingDatafromBin->matmulTiling_w.shareMode = 0;
-    tilingDatafromBin->matmulTiling_w.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_w.shareL0CSize = 1024;
-    tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
-    tilingDatafromBin->matmulTiling_w.batchM = 1;
-    tilingDatafromBin->matmulTiling_w.batchN = 1;
-    tilingDatafromBin->matmulTiling_w.singleBatchM = 1;
-    tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
-
-    tilingDatafromBin->matmulTiling_h.usedCoreNum = 1;
-    tilingDatafromBin->matmulTiling_h.M = 4;
-    tilingDatafromBin->matmulTiling_h.N = 4;
-    tilingDatafromBin->matmulTiling_h.Ka = 16;
-    tilingDatafromBin->matmulTiling_h.Kb = 16;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 16;
-    tilingDatafromBin->matmulTiling_h.singleCoreN = 4;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 170;
-    tilingDatafromBin->matmulTiling_h.baseM = 16;
-    tilingDatafromBin->matmulTiling_h.baseN = 16;
-    tilingDatafromBin->matmulTiling_h.baseK = 176;
-    tilingDatafromBin->matmulTiling_h.depthA1 = 1;
-    tilingDatafromBin->matmulTiling_h.depthB1 = 1;
-    tilingDatafromBin->matmulTiling_h.stepM = 1;
-    tilingDatafromBin->matmulTiling_h.stepN = 1;
-    tilingDatafromBin->matmulTiling_h.isBias = 0;
-    tilingDatafromBin->matmulTiling_h.transLength = 0;
-    tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
-    tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 1024;
-    tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
-    tilingDatafromBin->matmulTiling_h.batchM = 1;
-    tilingDatafromBin->matmulTiling_h.batchN = 1;
-    tilingDatafromBin->matmulTiling_h.singleBatchM = 1;
-    tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
-
-    ICPU_SET_TILING_KEY(2);
-
-    ICPU_RUN_KF(upsample_bicubic2d_aa_grad, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
+    ICPU_RUN_KF(upsample_bicubic2d_aa_grad, blockDim, x, y, workspace, tiling);
     fileName = "./upsample_bicubic2d_aa_grad_data/float32_output_bicubic2d_aa_grad.bin";
     WriteFile(fileName, y, inputByteSize);
 

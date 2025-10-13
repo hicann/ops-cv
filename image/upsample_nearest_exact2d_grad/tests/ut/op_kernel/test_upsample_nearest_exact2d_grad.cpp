@@ -15,8 +15,8 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "upsample_nearest_exact2d_grad_tiling.h"
-#include "../data_utils.h"
+#include "../../../op_host/upsample_nearest_exact2d_grad_tiling.h"
+#include "data_utils.h"
 
 #include <cstdint>
 
@@ -42,7 +42,7 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
 {
     system(
         "cp -rf "
-        "../../../../../../../ops/image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
+        "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
         "upsample_nearest_exact2d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest_exact2d_grad_data/");
     system("cd ./upsample_nearest_exact2d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float32'");
@@ -60,14 +60,14 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
 
     std::string fileName = "./upsample_nearest_exact2d_grad_data/float32_input_nearest_exact2d_grad.bin";
-    ;
     ReadFile(fileName, outputByteSize, x, outputByteSize);
 
     UpsampleNearestExact2dGradTilingData* tilingDatafromBin =
         reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
 
-    tilingDatafromBin->scale_w = 0.25;
-    tilingDatafromBin->scale_h = 0.25;
+    tilingDatafromBin->dataType = 2;
+    tilingDatafromBin->scale_w = 4;
+    tilingDatafromBin->scale_h = 4;
     tilingDatafromBin->slide_size = 16;
     tilingDatafromBin->invscale_w = 1.0;
     tilingDatafromBin->invscale_h = 1.0;
@@ -75,11 +75,11 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->support_h = 2;
     tilingDatafromBin->max_interp_size_w = 5;
     tilingDatafromBin->max_interp_size_h = 5;
-    tilingDatafromBin->radio_matrix_size = 2208;   //
-    tilingDatafromBin->radio_matrix_size_h = 2208; //
+    tilingDatafromBin->radio_matrix_size = 2208;
+    tilingDatafromBin->radio_matrix_size_h = 2208;
     tilingDatafromBin->need_core_num_w = 1;
     tilingDatafromBin->need_core_num_h = 1;
-    tilingDatafromBin->intermediate_matrix_size = 256; //
+    tilingDatafromBin->intermediate_matrix_size = 256;
 
     tilingDatafromBin->input_shapes[0] = 1;
     tilingDatafromBin->input_shapes[1] = 1;
@@ -116,6 +116,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_w.depthB1 = 1;
     tilingDatafromBin->matmulTiling_w.stepM = 1;
     tilingDatafromBin->matmulTiling_w.stepN = 1;
+    tilingDatafromBin->matmulTiling_w.stepKa = 1;
+    tilingDatafromBin->matmulTiling_w.stepKb = 1;
     tilingDatafromBin->matmulTiling_w.isBias = 0;
     tilingDatafromBin->matmulTiling_w.transLength = 0;
     tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
@@ -143,6 +145,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_h.depthB1 = 1;
     tilingDatafromBin->matmulTiling_h.stepM = 1;
     tilingDatafromBin->matmulTiling_h.stepN = 1;
+    tilingDatafromBin->matmulTiling_h.stepKa = 1;
+    tilingDatafromBin->matmulTiling_h.stepKb = 1;
     tilingDatafromBin->matmulTiling_h.isBias = 0;
     tilingDatafromBin->matmulTiling_h.transLength = 0;
     tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
@@ -155,7 +159,7 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_h.singleBatchM = 1;
     tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
 
-    ICPU_SET_TILING_KEY(2);
+    ICPU_SET_TILING_KEY(1);
 
     ICPU_RUN_KF(upsample_nearest_exact2d_grad, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact2d_grad_data/float32_output_nearest_exact2d_grad.bin";

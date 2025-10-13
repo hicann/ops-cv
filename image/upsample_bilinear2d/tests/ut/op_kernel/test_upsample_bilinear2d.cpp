@@ -20,7 +20,7 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../data_utils.h"
+#include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_bilinear2d(
     GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
@@ -39,9 +39,7 @@ protected:
 
 TEST_F(upsample_bilinear2d_test, test_case_float_1)
 {
-    printf("1111");
-    system("cp -rf "
-           "../../../../../../../ops/image/upsample_bilinear2d/tests/ut/op_kernel/upsample_bilinear2d_data ./");
+    system("cp -rf ../../../../image/upsample_bilinear2d/tests/ut/op_kernel/upsample_bilinear2d_data ./");
     system("chmod -R 755 ./upsample_bilinear2d_data/");
     system("cd ./upsample_bilinear2d_data/ && python3 gen_data.py '(1, 1, 4)' '(16)' 'float32'");
 

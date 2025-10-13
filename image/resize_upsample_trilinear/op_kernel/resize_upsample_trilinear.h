@@ -213,7 +213,7 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::Init(
         slide_end_indx_d = 0;
     }
 
-    // ���ջ�������ÿ������h��������ֵ�����ʼ�ͽ���λ��
+    // 按照滑块分组后，每个核在h方向上面分到的起始和结束位置
     tail_group_block_start_indx_w = tilingData->tail_group_start_inx_w_list[blockIdx];
     tail_group_block_end_indx_w = tilingData->tail_group_end_inx_w_list[blockIdx];
     tail_group_slide_start_inx_w = tilingData->tail_group_slide_start_inx_w_list[blockIdx];
@@ -241,17 +241,17 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::Process()
         SyncAll();
         return;
     }
-    // ��������
+    // 横向缩放
     if (!widthZoom) {
         CalcInputOffsetW();
     }
     SyncAll();
-    // ��������
+    // 纵向缩放
     if (!heightZoom) {
         CalcInputOffsetH();
     }
     SyncAll();
-    // �������
+    // 深度缩放
     if (!depthZoom || (widthZoom && heightZoom && depthZoom)) {
         CalcInputOffsetD();
     }
@@ -267,7 +267,7 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetD()
         batch_start = 0;
         batch_end = batches;
         if (i == slide_num_d) {
-            // ����β��
+            // 处理尾块
             batch_start = tail_group_batch_start_inx_d;
             batch_end = tail_group_batch_end_inx_d;
             if (batch_start >= batch_end && output_d != 1) {
@@ -309,7 +309,7 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetH()
         batch_start = 0;
         batch_end = batches * input_d;
         if (i == slide_num_h) {
-            // ����β��
+            // 处理尾块
             batch_start = tail_group_batch_start_inx_h;
             batch_end = tail_group_batch_end_inx_h;
             if (batch_start >= batch_end && output_h != 1) {
@@ -377,7 +377,7 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetW()
         CalcRatioMetrixInRight(
             output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_w, input_start_idx, input_end_idx);
         CopyRatioMetrix2Gm();
-        // matmul����֮����һ��ϵ�����������gm����copyҪ�����������Ƿ�����������
+        // matmul算完之后，下一个系数矩阵才能往gm上面copy要看下这块后续是否有性能问题
         CalcMatMulInW(input_start_idx, output_start_idx, row_start, row_end, omega_metrix_h, omega_metrix_w);
     }
 }
@@ -392,8 +392,8 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInD(
     input_index = (output_w * output_h * input_d) * batch_index + input_col_start * (output_w * output_h);
     output_index = (output_w * output_h * output_d) * batch_index + output_col_start * (output_w * output_h);
 
-    // m���η�Χ��n���η�Χ(B��ԭʼn�����С)��kԭʼ��Χ��k���η�Χ��nԭʼ��Χ�����ԭʼn�����С��
-    // SetOrgShapeҪ��������
+    // m本次范围, n本次范围(B的原始n方向大小), k原始范围, k本次范围, n原始范围(结果原始n方向大小)
+    // SetOrgShape要放最上面
     matmul_d.SetOrgShape(singleCoreM, output_w * output_h, k, input_d, output_w * output_h);
     matmul_d.SetSingleShape(singleCoreM, singleCoreN, k);
     matmul_d.SetTensorA(intermediate_gm[workspace_offset], false);

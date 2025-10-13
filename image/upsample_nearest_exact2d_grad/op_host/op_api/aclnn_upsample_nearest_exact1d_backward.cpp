@@ -234,8 +234,6 @@ aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
     auto outContiguous = View3dAs4d(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto dtype = gradOutput->GetDataType();
-
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const int64_t inputSizeList[] = {(*inputSize)[DIM_ZERO], (*inputSize)[DIM_ONE], 1, (*inputSize)[DIM_TWO]};

@@ -604,7 +604,7 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
         OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dAAGrad GetHardwareInfo Failed, vectorCoreNum:%d",
+            "UpsampleBicubic2dAAGrad GetHardwareInfo Failed, vectorCoreNum:%u",
             compileInfo->coreNum),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;

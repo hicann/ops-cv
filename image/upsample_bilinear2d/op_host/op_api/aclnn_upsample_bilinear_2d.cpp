@@ -68,9 +68,8 @@ static bool CheckNotNull(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor *self)
 {
-    (void) out;
     OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_ALL, return false);
     return true;
 }
@@ -175,7 +174,7 @@ static aclnnStatus CheckParams(const aclTensor *selfRef, const aclTensor *out, c
     CHECK_RET(CheckNotNull(selfRef, out), ACLNN_ERR_INNER_NULLPTR);
 
     // 2. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
-    CHECK_RET(CheckDtypeValid(selfRef, out), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckDtypeValid(selfRef), ACLNN_ERR_PARAM_INVALID);
 
     // 3. 检查selfRef和other能否做数据类型推导以及推导的数据类型能否转换为输出数据类型
     CHECK_RET(CheckDtypeEqual(selfRef, out), ACLNN_ERR_PARAM_INVALID);
@@ -215,10 +214,9 @@ static double GetBilinearScales(int64_t input_size, int64_t output_size, double 
     return real_scale;
 }
 
-static bool CheckBilinear2dScales(const aclTensor *x, const aclTensor *y, const aclIntArray *size, const double scaleH,
+static bool CheckBilinear2dScales(const aclTensor *x, const aclTensor *y, const double scaleH,
     const double scaleW, const bool alignCorners)
 {
-    (void) size;
     auto dataType = x->GetDataType();
     auto inputShape = x->GetViewShape();
     auto outputShape = y->GetViewShape();
@@ -295,9 +293,8 @@ static const aclTensor *GoResizeBilinearV2AICORE(const aclTensor *selfRefContigu
 
 static const aclTensor *GoResizeBilinearV2AiCoreWith4d(const aclTensor *selfRefContiguous,
     const aclIntArray *outputSize, const bool alignCorners, const aclFloatArray *scales, const aclTensor *outContiguous,
-    const aclTensor *out, aclOpExecutor *executor)
+    aclOpExecutor *executor)
 {
-    auto dstFormat = out->GetStorageFormat();
     auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
     auto castSize = l0op::Cast(size, op::DataType::DT_INT32, executor);
 
@@ -417,14 +414,14 @@ aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor *self, const
     auto socVer = GetCurrentPlatformInfo().GetSocVersion();
     if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
         CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE) &&
-        CheckBilinear2dScales(self, out, outputSize, scalesH, scalesW, alignCorners) &&
+        CheckBilinear2dScales(self, out, scalesH, scalesW, alignCorners) &&
         CheckScalesAndShapeValid(self, out, scalesH, scalesW)) {
         castOut = GoUpsampleBilinear2DAICORE(
             selfRefContiguous, outputSize, alignCorners, scalesH, scalesW, outContiguous, uniqueExecutor.get());
     } else if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE)) {
         if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
             castOut = GoResizeBilinearV2AiCoreWith4d(
-                selfRefContiguous, outputSize, alignCorners, scales, outContiguous, out, uniqueExecutor.get());
+                selfRefContiguous, outputSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
         } else {
             castOut = GoResizeBilinearV2AICORE(
                 selfRefContiguous, outputSize, alignCorners, outContiguous, out, uniqueExecutor.get());

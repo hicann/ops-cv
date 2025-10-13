@@ -73,8 +73,8 @@ private:
     uint32_t GetNeedCoreNumW(uint32_t coreNumPlatform);
     uint32_t GetNeedCoreNumH(uint32_t coreNumPlatform);
     void FillTilingData();
-    void getTCubeTiling_w(uint32_t needCoreNum);
-    void getTCubeTiling_h(uint32_t needCoreNum);
+    void getTCubeTiling_w();
+    void getTCubeTiling_h();
     void setSingleCoreK();
 
     template <typename T1, typename T2>
@@ -297,7 +297,7 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNumH(uint32_t coreNumPlatf
     return needCoreNum_h;
 }
 
-void UpsampleNearestExact2dGradTiling::getTCubeTiling_h(uint32_t needCoreNum)
+void UpsampleNearestExact2dGradTiling::getTCubeTiling_h()
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_h;
@@ -311,7 +311,7 @@ void UpsampleNearestExact2dGradTiling::getTCubeTiling_h(uint32_t needCoreNum)
     }
 }
 
-void UpsampleNearestExact2dGradTiling::getTCubeTiling_w(uint32_t needCoreNum)
+void UpsampleNearestExact2dGradTiling::getTCubeTiling_w()
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_w;
@@ -435,14 +435,14 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNum(uint32_t coreNumPlatfo
     if (!FloatEqual(realScale_w, 1.0)) {
         needCoreNumW = GetNeedCoreNumW(coreNumPlatform);
 
-        getTCubeTiling_w(needCoreNumW);
+        getTCubeTiling_w();
         tilingData.set_need_core_num_w(needCoreNumW);
     }
 
     if ((!FloatEqual(realScale_h, 1.0)) || (FloatEqual(realScale_w, 1.0))) {
         needCoreNumH = GetNeedCoreNumH(coreNumPlatform);
         tilingData.set_need_core_num_h(needCoreNumH);
-        getTCubeTiling_h(needCoreNumH);
+        getTCubeTiling_h();
     }
 
     uint32_t needCoreNum = std::max(needCoreNumW, needCoreNumH);

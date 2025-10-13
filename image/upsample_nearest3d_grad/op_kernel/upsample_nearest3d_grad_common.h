@@ -40,8 +40,8 @@ __aicore__ inline void InitGmZero(
     WaitFlag<HardEvent::V_MTE3>(EVENT_ID0);
 
     DataCopy(outGm[outOffset], temp_zero_tensor, ROUND_UP(zeroLen, alignLen_));
-    SetFlag<HardEvent::MTE3_S>(EVENT_ID0);
-    WaitFlag<HardEvent::MTE3_S>(EVENT_ID0);
+    SetFlag<HardEvent::MTE3_S>(EVENT_ID1);
+    WaitFlag<HardEvent::MTE3_S>(EVENT_ID1);
 
     PipeBarrier<PIPE_ALL>();
 }
