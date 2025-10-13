@@ -556,9 +556,11 @@ __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
     Self-extractable archive "cann-ops-cv-${vendor_name}_linux-${arch}.run" successfully created.
     ```
 
-   若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build\_out目录。
+    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build\_out目录。
+    
+    说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传入编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
 
-   说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传入编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
+    注意，构建过程文件在`build`目录，关键文件如下：
 
     - `libcust_opapi.so`：包含aclnn接口相关实现。
     - `libcust_opmaster_rt2.0.so`：包含Tiling相关实现。
