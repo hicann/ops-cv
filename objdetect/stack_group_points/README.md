@@ -65,5 +65,5 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| 图模式 | [test_geir_stack_group_points](./example/test_geir_stack_group_points.cpp)  | 通过[算子IR](./op_graph/stack_group_points_proto.h)构图方式调用StackGroupPoints算子。         |
+| 图模式 | [test_geir_stack_group_points](./examples/test_geir_stack_group_points.cpp)  | 通过[算子IR](./op_graph/stack_group_points_proto.h)构图方式调用StackGroupPoints算子。         |
 
