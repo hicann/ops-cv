@@ -20,7 +20,8 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../data_utils.h"
+#include "../../../../upsample_nearest3d/op_host/upsample_nearest3d_tiling.h"
+#include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_nearest_exact3d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
@@ -39,10 +40,11 @@ protected:
 TEST_F(upsample_nearest_exact3d_test, test_case_float_1)
 {
     system("cp -rf "
-           "../../../../../../../ops/image/upsample_nearest_exact3d/tests/ut/op_kernel/upsample_nearest_exact3d_data "
+           "../../../../image/upsample_nearest_exact3d/tests/ut/op_kernel/upsample_nearest_exact3d_data "
            "./");
     system("chmod -R 755 ./upsample_nearest_exact3d_data/");
     system("cd ./upsample_nearest_exact3d_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'float32'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
     size_t inputByteSize = 4 * 4 * 4 * sizeof(float);
     size_t outputByteSize = 16 * 16 * 16 * sizeof(float);
@@ -91,7 +93,7 @@ TEST_F(upsample_nearest_exact3d_test, test_case_float_1)
     tilingDatafromBin->outputShapes[2] = 16;
 
     ICPU_SET_TILING_KEY(1);
-
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(upsample_nearest_exact3d, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact3d_data/float32_output_upsample_nearest_exact3d.bin";
     WriteFile(fileName, y, outputByteSize);

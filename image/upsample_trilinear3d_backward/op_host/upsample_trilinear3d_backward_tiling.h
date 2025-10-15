@@ -16,6 +16,7 @@
 #define UPSAMPLE_TRILINEAR3D_BACKWARD_TILING_DEF_H
 
 #include "register/tilingdata_base.h"
+#include "tiling/tiling_api.h"
 
 namespace optiling {
 

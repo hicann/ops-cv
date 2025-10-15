@@ -13,7 +13,11 @@
  * \brief
  */
 
+#ifdef __CCE_KT_TEST__
+#include "../../upsample_nearest_exact2d_grad/op_kernel/upsample_nearest_exact2d_grad.h"
+#else
 #include "../upsample_nearest_exact2d_grad/upsample_nearest_exact2d_grad.h"
+#endif
 
 using namespace UpSampleNearestExact2dGrad;
 

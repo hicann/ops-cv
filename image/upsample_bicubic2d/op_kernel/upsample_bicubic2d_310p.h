@@ -351,7 +351,7 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::ClearGM()
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dND310p<T>::BicubicComputeBatch()
 {
-    // �����������������
+    // 计算批量分组的数据
     if (slideStartW >= slideEndW) {
         return;
     }
@@ -385,7 +385,7 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::BicubicComputeBatch()
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dND310p<T>::BicubicComputeTail()
 {
-    // ����β�鲿������
+    // 处理尾块部分数据
     if (tailSlideStartW >= tailSlideEndW) {
         return;
     }
@@ -442,13 +442,13 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateIntermediateTensor(
     }
 #endif
 
-    // ����center�±�
+    // 计算center下标
     if (alignCorners) {
-        // �Ƕ���
+        // 角对齐
         Muls(centerTensor, centerTensor, scale, length);
         PipeBarrier<PIPE_V>();
     } else {
-        // �߶���
+        // 边对齐
         for (int64_t i = 0; i < length; i++) {
             float center = ((float)0.5 + static_cast<float>(index + i)) * scale - (float)0.5;
             centerTensor.SetValue(i, center);
@@ -483,7 +483,7 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateRatioTensor(
         boundSize = inputH;
     }
 
-    // ����ϵ������
+    // 计算系数矩阵
     Duplicate(ratioTensor, (float)0.0, ratioTensor.GetSize());
 
     int64_t xMin = static_cast<int64_t>(xMinTensor.GetValue(xIndex));

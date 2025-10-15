@@ -543,7 +543,7 @@ static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext *context)
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
         OP_LOGE(context->GetNodeName(),
-            "UpsampleBilinear2dAABackward GetHardwareInfo Failed, vectorCoreNum:%d",
+            "UpsampleBilinear2dAABackward GetHardwareInfo Failed, vectorCoreNum:%u",
             compileInfo->coreNum),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;

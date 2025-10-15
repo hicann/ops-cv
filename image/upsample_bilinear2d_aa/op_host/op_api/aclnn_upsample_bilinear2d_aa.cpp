@@ -92,9 +92,8 @@ static bool CheckScalesValid(const double weight, const double high)
     return true;
 }
 
-static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSize)
 {
-    (void) out;
     auto selfShape = self->GetViewShape();
     int64_t outN = 0;
     int64_t outC = 0;
@@ -163,7 +162,7 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckScalesValid(scalesW, scalesH), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 检查输入元素是否合法
-    CHECK_RET(CheckInputElement(input, outputSize, out), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckInputElement(input, outputSize), ACLNN_ERR_PARAM_INVALID);
 
     CHECK_RET(CheckMaxScaleSupport(input, outputSize, scalesH, scalesW), ACLNN_ERR_PARAM_INVALID);
 

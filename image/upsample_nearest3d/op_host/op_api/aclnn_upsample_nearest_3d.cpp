@@ -87,8 +87,6 @@ static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, con
 static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSize)
 {
     auto selfShape = self->GetViewShape();
-    size_t dimNum = selfShape.GetDimNum();
-    int64_t outN = selfShape.GetDim(DIM_ZERO);
     int64_t outC = selfShape.GetDim(DIM_ONE);
     int64_t inputD = selfShape.GetDim(DIM_TWO);
     int64_t inputH = selfShape.GetDim(DIM_THREE);

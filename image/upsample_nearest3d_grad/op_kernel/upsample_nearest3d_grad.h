@@ -246,7 +246,7 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::DirectionExpansion(int8_t dir
 
     int64_t slideStart = slideStarts[direction];
     int64_t slideEnd = slideEnds[direction];
-    // �����������������
+    // 计算批量分组的数据
     if (slideStart < slideEnd) {
         CalculateIntermediateTensor(direction, slideStart, slideEnd - slideStart, scale);
         for (int64_t index = slideStart; index < slideEnd; index += slideSize) {
@@ -267,7 +267,7 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::DirectionExpansion(int8_t dir
     int64_t tailSlideEnd = tailSlideEnds[direction];
     int64_t tailRowStart = tailRowStarts[direction];
     int64_t tailRowEnd = tailRowEnds[direction];
-    // ����β�鲿������
+    // 处理尾块部分数据
     if (tailSlideStart < tailSlideEnd) {
         int64_t length = tailSlideEnd - tailSlideStart;
         CalculateIntermediateTensor(direction, tailSlideStart, length, scale);
@@ -305,7 +305,7 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateIntermediateTensor(
         PipeBarrier<PIPE_V>();
     }
 
-    Ceil(srcIndexTensor, srcIndexTensor, actualLength);
+    Cast(srcIndexTensor, srcIndexTensor, RoundMode::CAST_CEIL, actualLength);
     PipeBarrier<PIPE_V>();
     Mins(srcIndexTensor, srcIndexTensor, static_cast<float>(outputSize), actualLength);
     PipeBarrier<PIPE_V>();
@@ -326,7 +326,7 @@ template <typename T>
 __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateRadioTensor(
     int8_t direction, int64_t xIndex, int64_t length, int64_t startIdx)
 {
-    // ����Ȩ�ؾ���
+    // 计算权重矩阵
     xMin = static_cast<int64_t>(srcIndexTensor.GetValue(xIndex));
     int64_t xOutIndex = xMin - weightMin;
     if (xOutIndex < 0) {

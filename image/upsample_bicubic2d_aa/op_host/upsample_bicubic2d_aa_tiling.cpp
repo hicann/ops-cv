@@ -319,7 +319,7 @@ void UpsampleBicubic2dAATiling::GetWorkSpace(uint32_t needCoreNum)
 void UpsampleBicubic2dAATiling::GetOutputShape()
 {
     const int64_t *outputSizeArray = reinterpret_cast<const int64_t *>(outputSizeVevtor->GetData());
-    for (int8_t i = 0; i < MAX_ATTR_COUNT; i++) {
+    for (int8_t i = 0; static_cast<uint32_t>(i) < MAX_ATTR_COUNT; i++) {
         inputShapes[i] = inputShape.GetDim(i);
         outputShapes[i] = inputShape.GetDim(i);
         if (i > 1) {
@@ -523,7 +523,7 @@ static ge::graphStatus TilingPrepare4Bicubic2DAA(gert::TilingParseContext *conte
 
     OP_CHECK_IF(compileInfo->totalCoreNum <= 0,
         OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dAA GetHardwareInfo Failed, vectorCoreNum:%d",
+            "UpsampleBicubic2dAA GetHardwareInfo Failed, vectorCoreNum:%u",
             compileInfo->totalCoreNum),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;

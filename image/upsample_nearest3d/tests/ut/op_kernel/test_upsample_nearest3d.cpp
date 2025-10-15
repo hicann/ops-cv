@@ -20,7 +20,7 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../data_utils.h"
+#include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_nearest3d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
@@ -39,7 +39,7 @@ protected:
 TEST_F(upsample_nearest3d_test, test_case_float_1)
 {
     system("cp -rf "
-           "../../../../../../../ops/image/upsample_nearest3d/tests/ut/op_kernel/upsample_nearest3d_data ./");
+           "../../../../image/upsample_nearest3d/tests/ut/op_kernel/upsample_nearest3d_data ./");
     system("chmod -R 755 ./upsample_nearest3d_data/");
     system("cd ./upsample_nearest3d_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'float32'");
 
@@ -90,7 +90,7 @@ TEST_F(upsample_nearest3d_test, test_case_float_1)
     tilingDatafromBin->outputShapes[2] = 16;
 
     ICPU_SET_TILING_KEY(1);
-
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(upsample_nearest3d, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_nearest3d_data/float32_output_upsample_nearest3d.bin";
     WriteFile(fileName, y, outputByteSize);

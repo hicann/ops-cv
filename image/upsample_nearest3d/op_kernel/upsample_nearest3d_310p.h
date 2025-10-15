@@ -195,7 +195,7 @@ __aicore__ inline void UpsampleNearest3dND310p<T>::Process()
 
     int64_t slideStart = blockIdx * eachCoreSlideNum;
     int64_t slideEnd = slideStart + eachCoreSlideNum;
-    // �����������������
+    // 计算批量分组的数据
     if (slideStart < slideEnd) {
         for (int64_t slideIndex = slideStart; slideIndex < slideEnd; slideIndex++) {
             GatherData(slideIndex, 0, inputRow);
@@ -204,7 +204,7 @@ __aicore__ inline void UpsampleNearest3dND310p<T>::Process()
 
     int64_t groupIndex = blockIdx / groupCoreNum;
     if (groupIndex < remainder) {
-        // ����β�鲿������
+        // 处理尾块部分数据
         int64_t slideIndex = tailStartSlideNum + groupIndex;
         int64_t blockIdxInGroup = blockIdx % groupCoreNum;
         int64_t tailRowStart = blockIdxInGroup * tailAvergingRow;
@@ -221,7 +221,7 @@ __aicore__ inline void UpsampleNearest3dND310p<T>::Process()
 template <typename T>
 __aicore__ inline void UpsampleNearest3dND310p<T>::ClearGM()
 {
-    // ����GM
+    // 清理GM
     int64_t totalBlockNum = (totalNum + blockSize - 1) / blockSize;
     int64_t preCoreBlockCnt = totalBlockNum / needCoreNum;
     int64_t tailBlockCnt = totalBlockNum % needCoreNum;
@@ -336,12 +336,12 @@ __aicore__ inline void UpsampleNearest3dND310p<T>::CopyOutProcess(int64_t offset
     int64_t copyOutCnt = copyOutBlock * blockSize;
     int64_t offset = offsetTemp;
     if ((offset + copyOutCnt) > totalNum) {
-        // ������������ݿ鳬��1�����飬��ǰ��n-1�������ȿ���
+        // 如果拷贝的数据块超过1个整块，把前面n-1个整块先拷出
         if (copyOutBlock > 1) {
             CopyOut(offset, dstLocal, (copyOutBlock - 1) * blockSize);
             offset += (copyOutBlock - 1) * blockSize;
         }
-        // �������һ����
+        // 处理最后一个块
         LocalTensor<T> tailTensor = clearTensorBuff.Get<T>();
         Duplicate(tailTensor, (T)0, blockSize);
         int64_t copyOutTailCnt = dataCount - (copyOutBlock - 1) * blockSize;
