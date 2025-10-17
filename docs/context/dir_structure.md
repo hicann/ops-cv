@@ -1,8 +1,7 @@
 # 项目目录
 
-## 目录介绍
+详细目录层级介绍如下：
 
-详细目录介绍说明如下：
 > 本章罗列的部分目录是可选的，请以实际交付件为准。尤其**单算子目录**，不同场景下交付件有差异，具体说明如下：
 >
 > - 若缺少op_host目录，可能是调用了其他算子op_host实现，调用逻辑参见该算子op_api或op_graph目录下源码实现；也可能是Kernel暂无Ascend C实现，如有需要，欢迎开发者参考[贡献指南](../../CONTRIBUTING.md)补充贡献该算子。
@@ -16,7 +15,7 @@
 │   ├── CMakeLists.txt
 │   ├── inc                                             # 公共头文件目录
 │   └── src                                             # 公共代码目录
-├── ${op_class}                                         # 算子分类，如conversion、math、 random类算子
+├── ${op_class}                                         # 算子分类，如image、objdetect类算子
 │   ├${op_name}                                         # 算子工程目录，${op_name}表示算子名（小写下划线形式）
 │   │   ├── CMakeLists.txt                              # 算子cmakelist入口
 │   │   ├── README.md                                   # 算子介绍文档

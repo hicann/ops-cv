@@ -60,7 +60,7 @@
     - \$\{soc\_name\}：表示NPU型号名称，即\$\{soc\_version\}删除“ascend”后剩余的内容。
     - \$\{install\_path\}：表示指定安装路径，需要与toolkit包安装在相同路径，默认安装在`/usr/local/Ascend`目录。
 
-3. **安装社区版CANN ops-math包（可选）**
+3. **安装社区版CANN ops-math包（运行态依赖）**
 
     如需本地运行项目算子，需额外安装此包，否则跳过本操作。
 
