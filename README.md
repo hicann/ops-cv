@@ -11,7 +11,7 @@ ops-cv是[CANN](https://hiascend.com/software/cann) （Compute Architecture for 
 <img src="docs/figures/architecture.png" alt="架构图"  width="750px" height="400px">
 
 ## 🔍目录结构
-
+关键目录如下，详细目录介绍参见[目录介绍](./docs/context/dir_structure.md#目录介绍)。
 ```
 ├── build.sh                       # 项目工程编译脚本
 ├── cmake                          # 项目工程编译目录
@@ -29,7 +29,7 @@ ops-cv是[CANN](https://hiascend.com/software/cann) （Compute Architecture for 
 │   │   ├── op_graph               # 算子构图相关目录
 │   │   ├── op_host                # 算子信息库、Tiling、InferShape相关实现目录
 │   │   │   └── op_api             # 算子aclnn接口实现目录
-│   │   ├── op_kernel              # 算子kernel目录
+│   │   ├── op_kernel              # 算子Kernel目录
 │   │   └── README.md              # 算子介绍文档
 │   ├── ...
 │   └── CMakeLists.txt             # 算子编译配置文件

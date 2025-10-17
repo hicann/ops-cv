@@ -126,7 +126,7 @@ bash build.sh --genop=${op_class}/${op_name}
 ```bash
 Create the initial directory for ${op_name} under ${op_class} success
 ```
-创建完成后，目录结构如下所示：
+创建完成后，关键目录结构如下所示：
 
 ```
 ${op_name}                              # 替换为实际算子名的小写下划线形式
@@ -155,7 +155,7 @@ ${op_name}                              # 替换为实际算子名的小写下�
 
 因NPU中AI Core内部存储空间有限，无法一次性将整个张量数据加载到计算单元中处理，因此需要将输入张量切分为多个小块（Tile），逐块进行计算，这一过程称为Tiling。
 
-用于指导数据切分的算法称为Tiling策略或Tiling算法，其决定了如何将输入数据切分为多个计算快，并指导Kernel如何分配内存、调度计算任务。Tiling与Kernel之间通过`TilingData`结构体进行信息传递。
+用于指导数据切分的算法称为Tiling策略或Tiling算法，其决定了如何将输入数据切分为多个计算块，并指导Kernel如何分配内存、调度计算任务。Tiling与Kernel之间通过`TilingData`结构体进行信息传递。
 
 Tiling流程如下图所示：
 
@@ -352,7 +352,7 @@ ASCENDC_TPL_SEL(
 #endif
 ```
 
-如需实现复杂参数组合完成分支选择（涉及多TilingKey场景），请参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中"算子实现 > Host侧Tiling实现 >  Tiling模板编程"。
+如需实现复杂参数组合完成分支选择（涉及多TilingKey场景），请参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“算子实现 > Host侧Tiling实现 >  Tiling模板编程”。
 
 ## Kernel实现
 
@@ -468,7 +468,7 @@ private:
 
     // 总数据长度
     int64_t blockLength_ = 0;
-    // 每个blocal被划分多少块
+    // 每个block被划分多少块
     int64_t tileNum_ = 0;
     // 每个tile处理数据长度
     uint32_t tileLength_ = 0;
@@ -517,15 +517,15 @@ __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
 ```
 ## aclnn适配
 
-完成算子开发和编译后，会自动生成aclnn接口（一套基于C 的API），可在应用程序中调用aclnn接口实现调用算子的目的。该方式依赖算子的二进制包，为了生成对应的二进制包，需要增加二进制编译json：
+通常算子开发和编译完成后，会自动生成aclnn接口（一套基于C 的API），可直接在应用程序中调用aclnn接口实现调用算子。
 
-以`AddExample`算子为例：
+为实现该调用方式，需提前生成算子对应的二进制包，增加二进制编译json文件，以`AddExample`算子为例：
 
-1. 在`examples/add_example/op_host`目录新建`config/${soc_version}`文件夹，用于存放配置文件。
+1. 在`examples/add_example/op_host`目录下新建`config/${soc_version}`文件夹，用于存放配置文件。
 
-2. 在`${soc_version}`目录新建json文件，命名为`${op_name}_binary.json`，用于描述算子相关信息，包括算子输入、输出、shape、data type、format等信息，完整定义请参考[add_example_binary.json](../../examples/add_example/op_host/config/ascend910b/add_example_binary.json)。
+2. 在`${soc_version}`目录下新建json文件，命名为`${op_name}_binary.json`，用于描述算子相关信息，包括算子输入、输出、shape、data type、format等信息，完整定义请参考[add_example_binary.json](../../examples/add_example/op_host/config/ascend910b/add_example_binary.json)。
 
-3. 在`scripts/kernel/binary_config`目录[ascendc_config.json](../../scripts/kernel/binary_config/ascendc_config.json)中，注册算子的NPU型号和实现模式，示例如下：
+3. 在`scripts/kernel/binary_config`目录[ascendc_config.json](../../scripts/kernel/binary_config/ascendc_config.json)中，注册算子的NPU型号和实现模式，示例如下，输入实际name和compute_units即可。
 
     ```json
     {"name":"AddExample", "compute_units": ["${soc_version}"], "auto_sync":true, "impl_mode" : "high_performance"},
@@ -556,9 +556,8 @@ __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
     Self-extractable archive "cann-ops-cv-${vendor_name}_linux-${arch}.run" successfully created.
     ```
 
-    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build\_out目录。
-    
-    说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传入编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
+    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build_out目录。
+    说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
 
     注意，构建过程文件在`build`目录，关键文件如下：
 
@@ -573,7 +572,7 @@ __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
     ```bash
     ./cann-ops-cv-${vendor_name}_linux-${arch}.run
     ```
-   自定义算子包安装在`${ASCEND_HOME_PATH}/latest/opp/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。自定义算子包不支持卸载。
+    自定义算子包安装在`${ASCEND_HOME_PATH}/latest/opp/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。自定义算子包不支持卸载。
     
     自定义算子包的目录结构示例如下：
     ```

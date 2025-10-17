@@ -134,7 +134,7 @@ bash build.sh --genop_aicpu=${op_class}/${op_name}
 ```bash
 Create the initial directory for ${op_name} under ${op_class} success
 ```
-创建完成后，目录结构如下所示：
+创建完成后，关键目录结构如下所示：
 
 ```
 ${op_name}                              # 替换为实际算子名的小写下划线形式
@@ -151,7 +151,7 @@ ${op_name}                              # 替换为实际算子名的小写下�
 │   └── ${op_name}_aicpu.h              # Kernel头文件，包含函数声明、结构定义、逻辑实现
 └── CMakeLists.txt                      # 算子Cmakelist入口
 ```
-使用上述命令行创建算子工程后，若要手动删除新创建出的算子工程，需要同时删除与算子工程同目录CMakeLists.txt中新添加的add_subdirectory(${op_class})
+使用上述命令行创建算子工程后，若要手动删除新创建出的算子工程，需要同时删除与算子工程同目录的CMakeLists.txt中新添加的add_subdirectory(${op_class})。
 
 ## Kernel实现
 
@@ -354,9 +354,8 @@ REG_OP(AddExample)
     ```
 
    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build_out目录。
+   说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
 
-   说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传入编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
-   
    注意，构建过程文件在`build`目录，关键文件如下：
 
     - `libcust_opapi.so`：包含aclnn接口相关实现。

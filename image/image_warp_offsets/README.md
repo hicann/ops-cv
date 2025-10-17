@@ -22,7 +22,7 @@
 
 ## 约束说明
 
-- 当 offsets 的数据类型为 int32 时，images 必须为 float16。
+- 当 offsets 的数据类型为 INT32 时，images 必须为 FLOAT16。
 
 ## 调用说明
 
