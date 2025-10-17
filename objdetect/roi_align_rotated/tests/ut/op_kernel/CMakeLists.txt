@@ -7,25 +7,14 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ============================================================================
 
-
-file(GLOB CURRENT_SOURCE_DIRS LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/*)
-foreach(SUB_DIR ${CURRENT_SOURCE_DIRS})
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}/CMakeLists.txt")
-        add_subdirectory(${SUB_DIR})
-    endif()
-endforeach()
-
-
-# 需要将Tiling依赖的文件添加到CMakeLists.txt中
-# 算子自己的tiling文件路径
+if (UT_TEST_ALL OR OP_KERNEL_UT)
 set(roi_align_rotated_tiling_files
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/roi_align_rotated_tiling.cpp
     )
-# 使用AddOpTestCase
-# param1：算子名称，以kernel方式命名
-# param2：soc版本，多个以分号分隔，例如："ascend910;AscendB1"
-# param3：自定义编译选项，一般填写测试的一种典型数据类型组合，不需要则传入空字符串，例如："-DDTYPE_X=float"，多个使用空格分隔，例如："-DDTYPE_X=float -DDTYPE_Y=float"
-# param4：该算子依赖的所有tiling源码文件
-#if (UT_TEST_ALL OR FAST_OP_UT)
-#    AddOpTestCase(roi_align_rotated "ascend910_93;ascend910b;ascend910;ascend310p" "-DDTYPE_X=float" "${roi_align_rotated_tiling_files}")
-#endif()
+    # 使用AddOpTestCase
+    # param1：算子名称，以kernel方式命名
+    # param2：soc版本，多个以分号分隔，例如："ascend910_9599;AscendB1"
+    # param3：自定义编译选项，一般填写测试的一种典型数据类型组合，不需要则传入空字符串，例如："-DDTYPE_X=float"，多个使用空格分隔，例如："-DDTYPE_X=float -DDTYPE_Y=float"
+    # param4：该算子依赖的所有tiling源码文件
+    AddOpTestCase(roi_align_rotated "ascend910B1" "" "${roi_align_rotated_tiling_files}")
+endif()

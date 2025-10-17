@@ -14,16 +14,17 @@
 
 #ifdef __CCE_KT_TEST__
 #include "tikicpulib.h"
-#include "../data_utils.h"
+#include "data_utils.h"
 #include "string.h"
 #include <iostream>
 #include <string>
 #endif
 
 #include <cstdint>
+#include "../../../op_host/stack_group_points_tiling.h"
 
 using namespace std;
-extern "c" __global__ __aicore__ void stack_group_points(
+extern "C" __global__ __aicore__ void stack_group_points(
     GM_ADDR features, GM_ADDR features_batch_cnt, GM_ADDR indices, GM_ADDR indices_batch_cnt, GM_ADDR y,
     GM_ADDR workspace, GM_ADDR tiling);
 
@@ -40,24 +41,6 @@ protected:
         cout << "StackGroupPointsTest TearDown\n"
              << endl;
     }
-};
-
-struct StackGroupPointsTilingData
-{
-    int64_t b;
-    int64_t m;
-    int64_t c;
-    int64_t nsample;
-    int64_t res;
-    int64_t featuresSize;
-    int64_t indicesSize;
-    int64_t fbcSize;
-    int64_t ibcSize;
-    int64_t reminder;
-    int64_t outLength;
-    int64_t n;
-    int64_t standard;
-    int64_t actCore;
 };
 
 TEST_F(StackGroupPointsTest, test_case_fp32)
@@ -86,7 +69,7 @@ TEST_F(StackGroupPointsTest, test_case_fp32)
     uint64_t block_dim = 48;
 
     system(
-        "cp -r ../../../../../../../ops/built-in/tests/ut/fast_op_test/stack_group_points/stack_group_points_data ./");
+        "cp -r ../../../../objdetect/stack_group_points/op_kernel/stack_group_points_data ./");
     system("chmod -R 755 ./stack_group_points_data/");
     system("cd ./stack_group_points_data/ && rm -rf ./*bin");
     system("cd ./stack_group_points_data/ && python3 gen_data.py 10 6 5 12 2 np.float32");
@@ -107,7 +90,6 @@ TEST_F(StackGroupPointsTest, test_case_fp32)
     AscendC::GmFree((void *)y);
     AscendC::GmFree((void *)tiling);
     AscendC::GmFree((void *)workspace);
-    free(path_);
 }
 
 TEST_F(StackGroupPointsTest, test_case_fp16)
@@ -136,7 +118,7 @@ TEST_F(StackGroupPointsTest, test_case_fp16)
     uint64_t block_dim = 48;
 
     system(
-        "cp -r ../../../../../../../ops/built-in/tests/ut/fast_op_test/stack_group_points/stack_group_points_data ./");
+        "cp -r ../../../../objdetect/stack_group_points/op_kernel/stack_group_points_data ./");
     system("chmod -R 755 ./stack_group_points_data/");
     system("cd ./stack_group_points_data/ && rm -rf ./*bin");
     system("cd ./stack_group_points_data/ && python3 gen_data.py 10 6 5 12 2 np.float16");
@@ -157,5 +139,4 @@ TEST_F(StackGroupPointsTest, test_case_fp16)
     AscendC::GmFree((void *)y);
     AscendC::GmFree((void *)tiling);
     AscendC::GmFree((void *)workspace);
-    free(path_);
 }

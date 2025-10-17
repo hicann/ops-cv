@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：根据特征点所属的组，重组点云中的特征点。
+- 算子功能：根据特征点所属的组，重组点云的特征。
 - 计算公式：点云数据`features`形状为$(N1 + N2 ..., C)$，根据`features_batch_cnt`形状$(N1, N2, ...)$将其分组，同样地，`indices`形状为$(M1 + M2 ..., nsample)$，根据`indices_batch_cnt`形状$(M1, M2, ...)$将其分组。算子根据`indices`分组从对应的`features`组中抽取特征成输出`out`，实现如下功能：
   $$
   out[m:c:np] = features[indices[m:np]:c]
@@ -63,5 +63,7 @@
 
 ## 调用说明
 
-待上线
+| 调用方式   | 样例代码           | 说明                                         |
+| ---------------- | --------------------------- | --------------------------------------------------- |
+| 图模式 | [test_geir_stack_group_points](./examples/test_geir_stack_group_points.cpp)  | 通过[算子IR](./op_graph/stack_group_points_proto.h)构图方式调用StackGroupPoints算子。         |
 
