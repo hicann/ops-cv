@@ -15,11 +15,12 @@
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
 #include "data_utils.h"
-#include "resize_upsample_trilinear_310p_tiling.h"
-
-#include <cstdint>
+#include "../../../op_host/resize_upsample_trilinear_tiling.h"
+#include "tiling_context_faker.h"
+#include "tiling_case_executor.h"
 
 using namespace std;
+using namespace optiling;
 
 extern "C" __global__ __aicore__ void resize_upsample_trilinear(
     GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
@@ -36,70 +37,6 @@ protected:
     }
 };
 
-TEST_F(resize_upsample_trilinear_310p_test, test1_case_float32)
-{
-    system(
-        "cp -rf "
-        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
-        "resize_upsample_trilinear_310p_data ./");
-    system("chmod -R 755 ./resize_upsample_trilinear_310p_data/");
-    system(
-        "cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 32, 1, 16)' '(1, 4, 64)' 'float32'");
-    AscendC::SetKernelMode(KernelMode::MIX_MODE);
-
-    size_t inputByteSize = 1 * 2 * 32 * 16 * sizeof(float);
-    size_t outputByteSize = 1 * 4 * 64 * 16 * sizeof(float);
-    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingDataTest);
-    size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 4;
-
-    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
-    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
-
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-
-    std::string fileName = "./resize_upsample_trilinear_310p_data/float32_input_trilinear.bin";
-    ReadFile(fileName, inputByteSize, x, inputByteSize);
-
-    UpsampleTrilinearTilingDataTest* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingDataTest*>(tiling);
-
-    tilingDatafromBin->scale_w = 0.5;
-    tilingDatafromBin->scale_h = 0.5;
-    tilingDatafromBin->scale_d = 1;
-    tilingDatafromBin->total_core_num = 8;
-    tilingDatafromBin->real_core_num = 4;
-
-    tilingDatafromBin->output_w = 64;
-    tilingDatafromBin->output_h = 4;
-    tilingDatafromBin->output_d = 1;
-    tilingDatafromBin->input_w = 32;
-    tilingDatafromBin->input_h = 2;
-    tilingDatafromBin->input_d = 1;
-    tilingDatafromBin->batches = 16;
-    tilingDatafromBin->align_corners = 1;
-
-    tilingDatafromBin->each_core_slide_num = 0;
-    tilingDatafromBin->remainder = 4;
-    tilingDatafromBin->tail_start_slide_num = 0;
-    tilingDatafromBin->slide_size = 254;
-    tilingDatafromBin->batch_size = 16;
-    tilingDatafromBin->tensor_size = 131;
-
-    ICPU_SET_TILING_KEY(3000);
-
-    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
-    fileName = "././resize_upsample_trilinear_310p_data/float32_output_trilinear.bin";
-    WriteFile(fileName, y, outputByteSize);
-
-    AscendC::GmFree((void*)(x));
-    AscendC::GmFree((void*)(y));
-    AscendC::GmFree((void*)workspace);
-    AscendC::GmFree((void*)tiling);
-
-    system("cd ./resize_upsample_trilinear_310p_data/ && python3 compare_data.py 'float32'");
-}
-
 TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
 {
     system(
@@ -107,52 +44,43 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
         "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
         "resize_upsample_trilinear_310p_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_310p_data/");
-    system("cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 2, 1, 16)' '(1, 2, 4)' 'float32'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+
+    struct ResizeUpsampleTrilinearCompileInfo {
+        uint32_t totalCoreNum = 48;
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
+                                                {{{{1, 2, 2, 1, 16}, {1, 2, 2, 1, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{1, 2, 1, 2, 4}, {1, 2, 1, 2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 4})),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+                                                &compileInfo, 48, 192 * 1024, 16384);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
+
+    system("cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 2, 1, 16)' '(1, 2, 4)' 'float32'");
 
     size_t inputByteSize = 1 * 2 * 2 * 16 * sizeof(float);
     size_t outputByteSize = 1 * 2 * 4 * 16 * sizeof(float);
-    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingDataTest);
-    size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 2;
+    uint32_t blockDim = tilingInfo.blockNum;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-
     std::string fileName = "./resize_upsample_trilinear_310p_data/float32_input_trilinear.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleTrilinearTilingDataTest* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingDataTest*>(tiling);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    tilingDatafromBin->scale_w = 0.5;
-    tilingDatafromBin->scale_h = 1;
-    tilingDatafromBin->scale_d = 1;
-    tilingDatafromBin->total_core_num = 8;
-    tilingDatafromBin->real_core_num = 2;
-
-    tilingDatafromBin->output_w = 4;
-    tilingDatafromBin->output_h = 2;
-    tilingDatafromBin->output_d = 1;
-    tilingDatafromBin->input_w = 2;
-    tilingDatafromBin->input_h = 2;
-    tilingDatafromBin->input_d = 1;
-    tilingDatafromBin->batches = 16;
-    tilingDatafromBin->align_corners = 0;
-
-    tilingDatafromBin->each_core_slide_num = 0;
-    tilingDatafromBin->remainder = 2;
-    tilingDatafromBin->tail_start_slide_num = 0;
-    tilingDatafromBin->slide_size = 254;
-    tilingDatafromBin->batch_size = 16;
-    tilingDatafromBin->tensor_size = 131;
-
-    ICPU_SET_TILING_KEY(3000);
-
-    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
-    fileName = "././resize_upsample_trilinear_310p_data/float32_output_trilinear.bin";
+    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, tiling);
+    fileName = "./resize_upsample_trilinear_310p_data/float32_output_trilinear.bin";
     WriteFile(fileName, y, outputByteSize);
 
     AscendC::GmFree((void*)(x));
@@ -165,57 +93,48 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
 
 TEST_F(resize_upsample_trilinear_310p_test, test_case_float16)
 {
-    system(
+system(
         "cp -rf "
         "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
         "resize_upsample_trilinear_310p_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_310p_data/");
-    system("cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 2, 1, 16)' '(1, 2, 4)' 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
-    size_t inputByteSize = 1 * 2 * 2 * 16 * sizeof(half);
-    size_t outputByteSize = 1 * 2 * 4 * 16 * sizeof(half);
-    size_t tiling_data_size = sizeof(UpsampleTrilinearTilingDataTest);
-    size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 2;
+    struct ResizeUpsampleTrilinearCompileInfo {
+        uint32_t totalCoreNum = 48;
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
+                                                {{{{1, 2, 2, 1, 16}, {1, 2, 2, 1, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                                {{{{1, 2, 1, 2, 4}, {1, 2, 1, 2, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 4})),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+                                                &compileInfo, 48, 192 * 1024, 16384);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
+
+    system("cd ./resize_upsample_trilinear_310p_data/ && python3 gen_data.py '(1, 2, 2, 1, 16)' '(1, 2, 4)' 'float16'");
+
+    size_t inputByteSize = 1 * 2 * 2 * 16 * sizeof(float);
+    size_t outputByteSize = 1 * 2 * 4 * 16 * sizeof(float);
+    uint32_t blockDim = tilingInfo.blockNum;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-
     std::string fileName = "./resize_upsample_trilinear_310p_data/float16_input_trilinear.bin";
-    ;
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleTrilinearTilingDataTest* tilingDatafromBin = reinterpret_cast<UpsampleTrilinearTilingDataTest*>(tiling);
 
-    tilingDatafromBin->scale_w = 0.5;
-    tilingDatafromBin->scale_h = 1;
-    tilingDatafromBin->scale_d = 1;
-    tilingDatafromBin->total_core_num = 8;
-    tilingDatafromBin->real_core_num = 2;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    tilingDatafromBin->output_w = 4;
-    tilingDatafromBin->output_h = 2;
-    tilingDatafromBin->output_d = 1;
-    tilingDatafromBin->input_w = 2;
-    tilingDatafromBin->input_h = 2;
-    tilingDatafromBin->input_d = 1;
-    tilingDatafromBin->batches = 16;
-    tilingDatafromBin->align_corners = 0;
-
-    tilingDatafromBin->each_core_slide_num = 0;
-    tilingDatafromBin->remainder = 2;
-    tilingDatafromBin->tail_start_slide_num = 0;
-    tilingDatafromBin->slide_size = 254;
-    tilingDatafromBin->batch_size = 16;
-    tilingDatafromBin->tensor_size = 131;
-
-    ICPU_SET_TILING_KEY(1000);
-
-    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, tiling);
     fileName = "./resize_upsample_trilinear_310p_data/float16_output_trilinear.bin";
     WriteFile(fileName, y, outputByteSize);
 

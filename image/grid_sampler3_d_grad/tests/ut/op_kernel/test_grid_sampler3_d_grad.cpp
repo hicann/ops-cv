@@ -15,12 +15,13 @@
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
 #include "impl/dav_c220/kfc/kfc_log.h"
-#include "test_grid_sampler3_d_grad.h"
+#include "../../../op_host/grid_sampler3_d_grad_tiling.h"
 #include "data_utils.h"
-
-#include <cstdint>
+#include "tiling_context_faker.h"
+#include "tiling_case_executor.h"
 
 using namespace std;
+using namespace optiling;
 
 extern "C" void grid_sampler3_d_grad(
     uint8_t* grad, uint8_t* x, uint8_t* grid, uint8_t* dx, uint8_t* dgrid, uint8_t* workspace, uint8_t* tiling);
@@ -52,8 +53,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test01)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -61,36 +75,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test01)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 0;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -117,8 +113,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test02)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -126,36 +135,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test02)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 1;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -182,8 +173,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test03)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -191,36 +195,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test03)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 2;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -247,8 +233,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test04)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -256,36 +255,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test04)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 1;
-    tilingDatafromBin->padding = 0;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -312,8 +293,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test05)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -321,36 +315,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test05)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 1;
-    tilingDatafromBin->padding = 1;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -377,8 +353,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test06)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -386,36 +375,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test06)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 1;
-    tilingDatafromBin->padding = 2;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -442,8 +413,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test07)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -451,36 +435,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test07)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 0;
-    tilingDatafromBin->alignCorners = 0;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -507,8 +473,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test08)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -516,36 +495,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test08)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 1;
-    tilingDatafromBin->alignCorners = 0;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -572,8 +533,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test09)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -581,36 +555,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test09)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 2;
-    tilingDatafromBin->alignCorners = 0;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -637,8 +593,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test10)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -646,36 +615,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test10)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 1;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 0;
-    tilingDatafromBin->padding = 0;
-    tilingDatafromBin->alignCorners = 1;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -702,8 +653,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test11)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 800}, {2, 1, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 800}, {2, 1, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 800, 1, 2, 2}, {2, 800, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -711,36 +675,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test11)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 800;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 1;
-    tilingDatafromBin->padding = 1;
-    tilingDatafromBin->alignCorners = 0;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
@@ -767,8 +713,21 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test12)
     size_t xByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
     size_t gridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
     size_t dxByteSize = N * x_d * x_h * x_w * C * sizeof(int32_t);
-    size_t dgridByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
-    size_t tiling_data_size = sizeof(GridSampler3DGradTilingDataTest);
+    size_t dgridByteSize = N * grid_d * grid_h * grid_w * dim * sizeof(int32_t);
+    Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("GridSampler3DGrad",
+                                                {{{{2, 1, 2, 2, 500}, {2, 1, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 1, 2, 2, 500}, {2, 1, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 500, 1, 2, 2}, {2, 500, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
 
     uint8_t* grad = (uint8_t*)AscendC::GmAlloc(gradByteSize);
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(xByteSize);
@@ -776,36 +735,18 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test12)
     uint8_t* dx = (uint8_t*)AscendC::GmAlloc(dxByteSize);
     uint8_t* dgrid = (uint8_t*)AscendC::GmAlloc(dgridByteSize);
 
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 2);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = tilingInfo.blockNum;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    GridSampler3DGradTilingDataTest* tilingDatafromBin = reinterpret_cast<GridSampler3DGradTilingDataTest*>(tiling);
-    tilingDatafromBin->batch = 2;
-    tilingDatafromBin->channel = 500;
-    tilingDatafromBin->xD = 1;
-    tilingDatafromBin->xH = 2;
-    tilingDatafromBin->xW = 2;
-    tilingDatafromBin->gridD = 2;
-    tilingDatafromBin->gridH = 2;
-    tilingDatafromBin->gridW = 2;
-    tilingDatafromBin->interpolation = 1;
-    tilingDatafromBin->padding = 2;
-    tilingDatafromBin->alignCorners = 0;
-    tilingDatafromBin->blockNum = 16;
-    tilingDatafromBin->pNumPerCore = 1;
-    tilingDatafromBin->dxNumPerCore = 1;
-    tilingDatafromBin->tailPNum = 0;
-    tilingDatafromBin->group = 1;
-    tilingDatafromBin->ubFactorElement = 256;
-
-    ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(grid_sampler3_d_grad, blockDim, grad, x, grid, dx, dgrid, workspace, tiling);
 
     AscendC::GmFree(grad);
     AscendC::GmFree(x);
