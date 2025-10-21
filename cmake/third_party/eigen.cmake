@@ -17,6 +17,8 @@ ExternalProject_Add(external_eigen_cv
   URL               ${REQ_URL}
   DOWNLOAD_DIR      download/eigen
   PREFIX            third_party
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
   INSTALL_COMMAND   ""
 )
 
