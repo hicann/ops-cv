@@ -31,7 +31,10 @@ if(UT_TEST_ALL OR OP_HOST_UT)
                                                   ${ASCEND_DIR}/include/base/context_builder ${ASCEND_DIR}/pkg_inc
       )
     target_link_libraries(
-      ${OP_TILING_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> json gtest c_sec
+      ${OP_TILING_MODULE_NAME}_common_obj PRIVATE
+      $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+      $<BUILD_INTERFACE:dlog_headers>
+      json gtest c_sec
       )
 
     # add optiling ut cases object: cv_op_tiling_ut_cases_obj
@@ -43,6 +46,8 @@ if(UT_TEST_ALL OR OP_HOST_UT)
                                                  ${JSON_INCLUDE_DIR} ${ASCEND_DIR}/include/base/context_builder ${PROJECT_SOURCE_DIR}/common/inc
                                                  ${ASCEND_DIR}/include/op_common ${ASCEND_DIR}/include/tiling
                                                  ${ASCEND_DIR}/include/op_common/op_host
+                                                 ${ASCEND_DIR}/pkg_inc/base
+                                                 ${ASCEND_DIR}/include/toolchain
       )
     target_link_libraries(${OP_TILING_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest json)
 
@@ -76,7 +81,10 @@ if(UT_TEST_ALL OR OP_HOST_UT)
                                                      ${ASCEND_DIR}/pkg_inc ${ASCEND_DIR}/include/base/context_builder
       )
     target_link_libraries(
-      ${OP_INFERSHAPE_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest
+      ${OP_INFERSHAPE_MODULE_NAME}_cases_obj PRIVATE
+      $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+      $<BUILD_INTERFACE:dlog_headers>
+      gtest
       )
 
     # add op infershape ut cases static lib: libcv_op_infershape_ut_cases.a
@@ -104,7 +112,11 @@ if(UT_TEST_ALL OR OP_API_UT)
       PRIVATE ${JSON_INCLUDE_DIR} ${HI_PYTHON_INC_TEMP} ${UT_PATH}/op_api/stub ${OP_API_UT_COMMON_INC}
               ${ASCEND_DIR}/include ${ASCEND_DIR}/include/aclnn ${ASCEND_DIR}/include/aclnnop
       )
-    target_link_libraries(${OP_API_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest)
+    target_link_libraries(${OP_API_MODULE_NAME}_cases_obj PRIVATE
+      $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+      $<BUILD_INTERFACE:dlog_headers>
+      gtest
+      )
   endfunction()
 endif()
 
@@ -292,12 +304,17 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
         PRIVATE ${ASCEND_DIR}/include/op_common/atvoss ${ASCEND_DIR}/include/op_common
                 ${ASCEND_DIR}/include/op_common/op_host ${PROJECT_SOURCE_DIR}/common/inc
                 ${ASCEND_DIR}/include/tiling ${ASCEND_DIR}/include/op_common/op_host
+                ${ASCEND_DIR}/pkg_inc/base
+                ${ASCEND_DIR}/include/toolchain
         )
       target_compile_definitions(${opName}_${socVersion}_tiling_tmp PRIVATE LOG_CPP _GLIBCXX_USE_CXX11_ABI=0)
       target_link_libraries(
-        ${opName}_${socVersion}_tiling_tmp
-        PRIVATE -Wl,--no-as-needed $<$<TARGET_EXISTS:opsbase>:opsbase> -Wl,--as-needed -Wl,--whole-archive tiling_api rt2_registry_static
-                -Wl,--no-whole-archive 
+        ${opName}_${socVersion}_tiling_tmp PRIVATE
+        -Wl,--no-as-needed $<$<TARGET_EXISTS:opsbase>:opsbase> -Wl,--as-needed
+        $<BUILD_INTERFACE:dlog_headers>
+        -Wl,--whole-archive
+        tiling_api rt2_registry_static
+        -Wl,--no-whole-archive
         )
 
       # gen ascendc tiling head files
@@ -347,6 +364,8 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
                 ${PROJECT_SOURCE_DIR}/tests/ut/common ${PROJECT_SOURCE_DIR}/common/inc
                 ${ASCEND_DIR}/include/op_common ${ASCEND_DIR}/include/tiling
                 ${ASCEND_DIR}/include/op_common/op_host
+                ${ASCEND_DIR}/pkg_inc/base
+                ${ASCEND_DIR}/include/toolchain
         )
       target_link_libraries(
         ${opName}_${socVersion}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> tikicpulib::${socVersion}

@@ -937,7 +937,10 @@ build_example() {
         echo "pkg_mode:${PKG_MODE} vendor_name:${VENDOR}"
         export CUST_LIBRARY_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/lib"     # 仅自定义算子需要
         export CUST_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include" # 仅自定义算子需要
-        g++ ${f} -I ${INCLUDE_PATH} -I ${CUST_INCLUDE_PATH} -L ${CUST_LIBRARY_PATH} -L ${EAGER_LIBRARY_PATH} -lcust_opapi -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME} -Wl,-rpath=${CUST_LIBRARY_PATH}
+        CUST_ACLNNOP_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include/aclnnop"
+        ln -s ${CUST_INCLUDE_PATH} ${CUST_ACLNNOP_INCLUDE_PATH}
+        g++ ${f} -I ${INCLUDE_PATH} -I ${INCLUDE_PATH}/aclnnop -I ${CUST_INCLUDE_PATH} -L ${CUST_LIBRARY_PATH} -L ${EAGER_LIBRARY_PATH} -lcust_opapi -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME} -Wl,-rpath=${CUST_LIBRARY_PATH}
+        rm ${CUST_ACLNNOP_INCLUDE_PATH}
       else
         echo "Error: pkg_mode(${PKG_MODE}) must be cust."
         exit 1
