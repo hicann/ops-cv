@@ -739,7 +739,7 @@ del_latest_softlink() {
     __set_abs_path "${latest_dirpath}" "${target}" "latest_filepath"
 
     if [ "${softlink}" != "NA" ]; then
-        remove_softlinks "${install_path}" "${softlink}"
+        remove_softlinks "${latest_dirpath}" "${softlink}"
         ret="$?" && [ ${ret} -ne 0 ] && return ${ret}
     fi
 

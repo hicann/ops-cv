@@ -120,6 +120,59 @@ if(UT_TEST_ALL OR OP_API_UT)
   endfunction()
 endif()
 
+if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
+  set(AICPU_OP_KERNEL_MODULE_NAME ${PKG_NAME}_aicpu_op_kernel_ut CACHE STRING "aicpu_op_kernel ut module name" FORCE)
+  message("******************* ${AICPU_OP_KERNEL_MODULE_NAME}" )
+  function(add_aicpu_opkernel_ut_modules AICPU_OP_KERNEL_MODULE_NAME)
+    ## add opkernel ut common object: cv_aicpu_op_kernel_ut_common_obj
+    add_library(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj OBJECT)
+    file(GLOB OP_KERNEL_UT_COMMON_SRC
+        ./stub/*.cpp
+    )
+    target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE ${OP_KERNEL_UT_COMMON_SRC})
+    target_include_directories(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE
+        ${GTEST_INCLUDE}
+    )
+    target_compile_definitions(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE _GLIBCXX_USE_CXX11_ABI=1)
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE
+        $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+        gtest
+        c_sec
+    )
+
+    ## add opkernel ut cases object: cv_aicpu_op_kernel_ut_cases_obj
+    if(NOT TARGET ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj)
+        add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
+    endif()
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl)
+
+    ## add opkernel ut cases shared lib: libcv_aicpu_op_kernel_ut_cases.so
+    add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases SHARED
+        $<TARGET_OBJECTS:${AICPU_OP_KERNEL_MODULE_NAME}_common_obj>
+        $<TARGET_OBJECTS:${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj>
+    )
+    message(STATUS ">>>> ut.cmake Defined targets: ${AICPU_OP_KERNEL_MODULE_NAME}_cases, ${ASCEND_DIR}")
+
+    # 链接静态库时使用 whole-archive，保证 RegistCpuKernel 被拉入
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases PRIVATE
+        $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+        gtest
+        c_sec
+        -ldl
+        -Wl,--whole-archive
+            ${ASCEND_DIR}/ops_base/lib64/libaicpu_context_host.a
+            ${ASCEND_DIR}/ops_base/lib64/libaicpu_nodedef_host.a
+            ${ASCEND_DIR}/ops_base/lib64/libhost_ascend_protobuf.a
+        -Wl,--no-whole-archive
+        -Wl,-Bsymbolic
+        -Wl,--exclude-libs=libhost_ascend_protobuf.a
+        Eigen3::EigenCv
+        ${AICPU_OP_KERNEL_MODULE_NAME}_common_obj
+        ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj
+    )
+  endfunction()
+endif()
+
 if(UT_TEST_ALL OR OP_KERNEL_UT)
   set(OP_KERNEL_MODULE_NAME
       ${PKG_NAME}_op_kernel_ut
@@ -394,5 +447,69 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
           )
       endif()
     endforeach()
+  endfunction()
+endif()
+
+if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
+  include(${PROJECT_SOURCE_DIR}/cmake/third_party/gtest.cmake)
+  function(AddAicpuOpTestCase opName)
+    get_filename_component(UT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+    get_filename_component(OP_NAME ${UT_DIR} NAME)
+    list(FIND ASCEND_OP_NAME ${OP_NAME} INDEX)
+    # if "--ops" is not NULL, opName not include, jump over. if "--ops" is NULL, include all.
+    if(NOT "${ASCEND_OP_NAME}" STREQUAL "" AND INDEX EQUAL -1)
+      return()
+    endif()
+
+    ## find kernel file
+    file(GLOB KernelFile "${PROJECT_SOURCE_DIR}/*/${opName}/op_kernel_aicpu/${opName}_aicpu.cpp")
+
+    ## add object: ${opName}_cases_obj
+    file(GLOB OPKERNEL_CASES_SRC ${UT_DIR}/tests/ut/op_kernel_aicpu/test_${opName}*.cpp)
+
+    message(STATUS "aicpu kernel info: {opName}, ${KernelFile}, ${OPKERNEL_CASES_SRC}")
+
+    add_library(${opName}_cases_obj OBJECT
+            ${KernelFile}
+            ${OPKERNEL_CASES_SRC}
+            )
+    target_compile_options(${opName}_cases_obj PRIVATE 
+            -g
+            )
+    message(STATUS "111******************** ${AICPU_INCLUDE}")
+    target_include_directories(${opName}_cases_obj PRIVATE
+            ${AICPU_INCLUDE}
+            ${OPBASE_INC_DIRS}
+            ${AICPU_INC_DIRS}
+            )
+    target_link_libraries(${opName}_cases_obj PRIVATE
+            $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+            -ldl
+            gtest
+            c_sec
+            Eigen3::EigenCv
+            $<$<TARGET_EXISTS:opsbase>:opsbase>
+            )
+
+    ## add object: cv_op_kernel_ut_cases_obj
+    if(NOT TARGET ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj)
+      add_library(
+        ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj OBJECT
+        $<TARGET_OBJECTS:${opName}_cases_obj>
+        )
+    else()
+      target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE $<TARGET_OBJECTS:${opName}_cases_obj>)
+    endif()
+
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE
+        $<BUILD_INTERFACE:intf_llt_pub_asan>
+            $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+            -ldl
+            $<TARGET_OBJECTS:${opName}_cases_obj>
+            gtest
+            c_sec
+            Eigen3::EigenCv
+      $<$<TARGET_EXISTS:opsbase>:opsbase>
+            )
   endfunction()
 endif()

@@ -322,6 +322,14 @@ def get_cann_version(version_dir: str) -> str:
             int(matched.group(1)), int(matched.group(2)), None, None, None, None
         )
 
+    release_alpha_pattern_new = re.compile(r'(\d+)\.(\d+)\.(\d+)\-[a-z]*\.(\d+)', re.IGNORECASE)
+    matched = release_alpha_pattern_new.fullmatch(version_dir)
+    if matched:
+        return render_cann_version(
+            int(matched.group(1)), int(matched.group(2)), int(matched.group(3)), None, None,
+            int(matched.group(4))
+        )
+
     raise IllegalVersionDir(version_dir)
 
 

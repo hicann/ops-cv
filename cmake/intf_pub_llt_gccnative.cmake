@@ -17,7 +17,7 @@ if(NOT TARGET intf_llt_pub)
   target_include_directories(intf_llt_pub INTERFACE ${GTEST_INCLUDE} ${GMOCK_INCLUDE})
   target_compile_definitions(intf_llt_pub INTERFACE _GLIBCXX_USE_CXX11_ABI=0 CFG_BUILD_DEBUG)
   target_compile_options(
-    intf_llt_pub INTERFACE -g --coverage -fprofile-arcs -ftest-coverage -w $<$<COMPILE_LANGUAGE:CXX>:-std=c++11> -fPIC
+    intf_llt_pub INTERFACE -g --coverage -fprofile-arcs -ftest-coverage -w $<$<COMPILE_LANGUAGE:CXX>:-std=c++17> -fPIC
     )
   target_link_options(intf_llt_pub INTERFACE -fprofile-arcs -ftest-coverage)
   target_link_libraries(intf_llt_pub INTERFACE gcov pthread)
@@ -30,7 +30,7 @@ if(NOT TARGET intf_llt_pub_asan)
   target_compile_definitions(intf_llt_pub_asan INTERFACE _GLIBCXX_USE_CXX11_ABI=0 CFG_BUILD_DEBUG)
   target_compile_options(
     intf_llt_pub_asan
-    INTERFACE -g --coverage -fprofile-arcs -ftest-coverage -w $<$<COMPILE_LANGUAGE:CXX>:-std=c++11>
+    INTERFACE -g --coverage -fprofile-arcs -ftest-coverage -w $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
               $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize-recover=address,all -fno-omit-frame-pointer -g>
               -fPIC
     )

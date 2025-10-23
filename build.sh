@@ -21,7 +21,7 @@ SUPPORTED_LONG_OPTS=(
   "help" "ops=" "soc=" "vendor_name=" "debug" "cov" "noexec" "aicpu" "opkernel" "jit"
   "pkg" "disable_asan" "valgrind" "make_clean"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test"
-  "run_example" "genop=" "genop_aicpu="
+  "run_example" "genop=" "genop_aicpu=" "experimental"
 )
 
 in_array() {
@@ -129,10 +129,12 @@ usage() {
         echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
         echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
         echo "    --debug                Build with debug mode"
+        echo "    --experimental         Build experimental version"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --pkg --soc=ascend910b --vendor_name=customize -j16 -O3"
         echo "    bash build.sh --pkg --ops=add,sub --debug"
+        echo "    bash build.sh --pkg --experimental --soc=ascend910b"
         return
         ;;
       opkernel)
@@ -325,6 +327,7 @@ usage() {
   echo "    --opkernel build binary kernel"
   echo "    --jit build run package without kernel bin"
   echo "    --pkg build run package with kernel bin"
+  echo "    --experimental Build experimental version"
   echo "    --opapi_test build and run opapi unit tests"
   echo "    --ophost_test build and run ophost unit tests"
   echo "    --opgraph_test build and run opgraph unit tests"
@@ -386,6 +389,16 @@ check_param() {
 
     if [[ "$OP_HOST" == "TRUE" || "$OP_API" == "TRUE" || "$OP_GRAPH" == "TRUE" ]]; then
       echo "[ERROR] --pkg cannot be used with --ophost, --opapi, --opgraph"
+      exit 1
+    fi
+
+    if [[ "$ENABLE_GENOP" == "TRUE" ]]; then
+      echo "[ERROR] --pkg cannot be used with --genop"
+      exit 1
+    fi
+
+    if [[ "$ENABLE_GENOP_AICPU" == "TRUE" ]]; then
+      echo "[ERROR] --pkg cannot be used with --genop_aicpu"
       exit 1
     fi
 
@@ -501,6 +514,7 @@ checkopts() {
   ENABLE_BINARY=FALSE
   ENABLE_CUSTOM=FALSE
   ENABLE_PACKAGE=FALSE
+  ENABLE_EXPERIMENTAL=FALSE
   ENABLE_TEST=FALSE
   AICPU_ONLY=FALSE
   OP_API_UT=FALSE
@@ -643,6 +657,7 @@ checkopts() {
           ENABLE_ASAN=FALSE
           ;;
         run_example) ENABLE_RUN_EXAMPLE=TRUE ;;
+        experimental) ENABLE_EXPERIMENTAL=TRUE ;;
         make_clean)
           clean_build
           clean_build_out
@@ -745,6 +760,9 @@ assemble_cmake_args() {
   fi
   if [[ "$ENABLE_PACKAGE" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_PACKAGE=TRUE"
+  fi
+  if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DENABLE_EXPERIMENTAL=TRUE"
   fi
   if [[ "x$BUILD_MODE" != "x" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DBUILD_MODE=${BUILD_MODE}"
@@ -1039,12 +1057,13 @@ gen_aicpu_op() {
     sed -i "s/add_example_aicpu/${GENOP_NAME}/g" "$file"
   done
 
-  for file in $(find "${BASE_DIR}" -name "add_example_aicpu*"); do
+  cd ${BASE_DIR}
+  for file in $(find ./ -name "add_example_aicpu*"); do
     new_file=$(echo "$file" | sed "s/add_example_aicpu/${GENOP_NAME}_aicpu/g")
     mv "$file" "$new_file"
   done
 
-  for file in $(find "${BASE_DIR}" -name "add_example*"); do
+  for file in $(find ./ -name "add_example*"); do
     new_file=$(echo "$file" | sed "s/add_example/${GENOP_NAME}/g")
     mv "$file" "$new_file"
   done

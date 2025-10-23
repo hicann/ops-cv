@@ -158,7 +158,7 @@ set(AICPU_INCLUDE
 
 set(AICPU_DEFINITIONS
   -O2
-  -std=c++14
+  -std=c++17
   -fstack-protector-all
   -fvisibility-inlines-hidden
   -fvisibility=hidden
