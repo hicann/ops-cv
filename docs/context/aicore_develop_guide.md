@@ -352,7 +352,7 @@ ASCENDC_TPL_SEL(
 #endif
 ```
 
-如需实现复杂参数组合完成分支选择（涉及多TilingKey场景），请参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“算子实现 > Host侧Tiling实现 >  Tiling模板编程”。
+如需实现复杂参数组合完成分支选择（涉及多TilingKey场景），请参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“算子实现 > 工程化算子开发 > Host侧Tiling实现 > Tiling模板编程”。
 
 ## Kernel实现
 
@@ -523,9 +523,11 @@ __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
 
 1. 在`examples/add_example/op_host`目录下新建`config/${soc_version}`文件夹，用于存放配置文件。
 
-2. 在`${soc_version}`目录下新建json文件，命名为`${op_name}_binary.json`，用于描述算子相关信息，包括算子输入、输出、shape、data type、format等信息，完整定义请参考[add_example_binary.json](../../examples/add_example/op_host/config/ascend910b/add_example_binary.json)。
+2. 在`${soc_version}`目录下新建json文件，命名为`${op_name}_binary.json`，用于描述算子相关信息，包括二进制文件名称(命名无要求，当前是以`${op_type}`_哈希码命名)及算子输入、输出、shape、data type、format等信息，完整定义请参考[add_example_binary.json](../../examples/add_example/op_host/config/ascend910b/add_example_binary.json)。
 
-3. 在`scripts/kernel/binary_config`目录[ascendc_config.json](../../scripts/kernel/binary_config/ascendc_config.json)中，注册算子的NPU型号和实现模式，示例如下，输入实际name和compute_units即可。
+3. 在`${soc_version}`目录下新建ini文件，命名为`${op_name}_simplified_key.ini`，与二进制匹配逻辑相关，默认是0，示例参考[add_example_simplified_key.ini](../../examples/add_example/op_host/config/ascend910b/add_example_simplified_key.ini)。
+
+4. 在`scripts/kernel/binary_config`目录[ascendc_config.json](../../scripts/kernel/binary_config/ascendc_config.json)中，注册算子的NPU型号和实现模式，示例如下，输入实际name和compute_units即可。
 
     ```json
     {"name":"AddExample", "compute_units": ["${soc_version}"], "auto_sync":true, "impl_mode" : "high_performance"},
@@ -556,8 +558,9 @@ __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
     Self-extractable archive "cann-ops-cv-${vendor_name}_linux-${arch}.run" successfully created.
     ```
 
-    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build_out目录。
-    说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
+    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build\_out目录。
+    
+    说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传入编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
 
     注意，构建过程文件在`build`目录，关键文件如下：
 
