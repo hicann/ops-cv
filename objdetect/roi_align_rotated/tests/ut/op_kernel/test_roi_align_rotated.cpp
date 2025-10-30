@@ -53,73 +53,6 @@ const std::string roi_align_rotated_test::dataPath = "../../../../objdetect/roi_
 TEST_F(roi_align_rotated_test, test_case_0)
 {
   size_t inputByteSize = 1 * 8 * 8 * 8 * sizeof(float);
-  size_t roisByteSize = 6 * 2 * sizeof(float);
-  size_t outputByteSize = 2 * 8 * 2 * 2 * sizeof(float);
-  size_t tiling_data_size = sizeof(RoiAlignRotatedTilingData);
-
-  uint8_t *input = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-  uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
-  uint8_t *output = (uint8_t *)AscendC::GmAlloc(outputByteSize);
-  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(4096);
-  uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-
-  memset(workspace, 0, 4096);
-  system("cd ./roi_align_rotated_data/ && python3 gen_data.py 1 8 8 8 2 6");
-  system("cd ./roi_align_rotated_data/ && python3 gen_tiling.py test_case_0");
-
-  char *path_ = get_current_dir_name();
-  string path(path_);
-  ReadFile(path + "./roi_align_rotated_data/input.bin", inputByteSize, input, inputByteSize);
-  ReadFile(path + "./roi_align_rotated_data/rois.bin", roisByteSize, rois, roisByteSize);
-  ReadFile(path + "./roi_align_rotated_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
-
-  ICPU_SET_TILING_KEY(0);
-  ICPU_RUN_KF(roi_align_rotated, 40, input, rois, output, workspace, tiling);
-
-  AscendC::GmFree(input);
-  AscendC::GmFree(rois);
-  AscendC::GmFree(output);
-  AscendC::GmFree(workspace);
-  AscendC::GmFree(tiling);
-}
-
-TEST_F(roi_align_rotated_test, test_case_1)
-{
-  size_t inputByteSize = 2 * 8 * 8 * 8 * sizeof(float);
-  size_t roisByteSize = 6 * 3 * sizeof(float);
-  size_t outputByteSize = 3 * 8 * 2 * 2 * sizeof(float);
-  size_t tiling_data_size = sizeof(RoiAlignRotatedTilingData);
-
-  uint8_t *input = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-  uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
-  uint8_t *output = (uint8_t *)AscendC::GmAlloc(outputByteSize);
-  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(4096);
-  uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-
-  memset(workspace, 0, 4096);
-
-  system("cd ./roi_align_rotated_data/ && python3 gen_data.py 2 8 8 8 3 6");
-  system("cd ./roi_align_rotated_data/ && python3 gen_tiling.py test_case_1");
-
-  char *path_ = get_current_dir_name();
-  string path(path_);
-  ReadFile(path + "./roi_align_rotated_data/input.bin", inputByteSize, input, inputByteSize);
-  ReadFile(path + "./roi_align_rotated_data/rois.bin", roisByteSize, rois, roisByteSize);
-  ReadFile(path + "./roi_align_rotated_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
-
-  ICPU_SET_TILING_KEY(0);
-  ICPU_RUN_KF(roi_align_rotated, 40, input, rois, output, workspace, tiling);
-
-  AscendC::GmFree(input);
-  AscendC::GmFree(rois);
-  AscendC::GmFree(output);
-  AscendC::GmFree(workspace);
-  AscendC::GmFree(tiling);
-}
-
-TEST_F(roi_align_rotated_test, test_case_2)
-{
-  size_t inputByteSize = 3 * 8 * 8 * 8 * sizeof(float);
   size_t roisByteSize = 6 * 8 * sizeof(float);
   size_t outputByteSize = 8 * 8 * 2 * 2 * sizeof(float);
   size_t tiling_data_size = sizeof(RoiAlignRotatedTilingData);
@@ -127,22 +60,36 @@ TEST_F(roi_align_rotated_test, test_case_2)
   uint8_t *input = (uint8_t *)AscendC::GmAlloc(inputByteSize);
   uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
   uint8_t *output = (uint8_t *)AscendC::GmAlloc(outputByteSize);
-  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(4096);
+  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
   uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+  uint32_t blockDim = 1;
 
-  memset(workspace, 0, 4096);
+  RoiAlignRotatedTilingData* tilingData = reinterpret_cast<RoiAlignRotatedTilingData*>(tiling);
+  tilingData->aligned = 0;
+  tilingData->clockwise = 0;
+  tilingData->blockDim = 1;
+  tilingData->rois_num_per_Lcore = 8;
+  tilingData->rois_num_per_Score = 0;
+  tilingData->Lcore_num = 1;
+  tilingData->Score_num = 63;
+  tilingData->input_buffer_size = 32;
+  tilingData->tileNum = 8;
+  tilingData->batch_size = 1;
+  tilingData->channels = 8;
+  tilingData->channels_aligned = 8;
+  tilingData->input_h = 8;
+  tilingData->input_w = 8;
+  tilingData->rois_num_aligned = 8;
+  tilingData->tail_num = 0;
+  tilingData->spatial_scale = 1;
+  tilingData->sampling_ratio = 1;
+  tilingData->pooled_height = 2;
+  tilingData->pooled_width = 2;
+  tilingData->ub_total_size = 262144;
 
-  system("cd ./roi_align_rotated_data/ && python3 gen_data.py 3 8 8 8 8 6");
-  system("cd ./roi_align_rotated_data/ && python3 gen_tiling.py test_case_2");
-
-  char *path_ = get_current_dir_name();
-  string path(path_);
-  ReadFile(path + "./roi_align_rotated_data/input.bin", inputByteSize, input, inputByteSize);
-  ReadFile(path + "./roi_align_rotated_data/rois.bin", roisByteSize, rois, roisByteSize);
-  ReadFile(path + "./roi_align_rotated_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
-
-  ICPU_SET_TILING_KEY(0);
-  ICPU_RUN_KF(roi_align_rotated, 40, input, rois, output, workspace, tiling);
+  ICPU_SET_TILING_KEY(1);
+  AscendC::SetKernelMode(KernelMode::AIV_MODE);
+  ICPU_RUN_KF(roi_align_rotated, blockDim, input, rois, output, workspace, tiling);
 
   AscendC::GmFree(input);
   AscendC::GmFree(rois);

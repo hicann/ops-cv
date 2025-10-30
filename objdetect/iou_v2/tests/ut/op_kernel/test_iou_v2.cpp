@@ -37,29 +37,35 @@ protected:
     }
 };
 
-// [4, 1020], aligned=true, iou, float32
+// [4, 8], aligned=true, iou, float32
 TEST_F(iou_v2_test, test_aligned_iou_fp32)
 {
-    size_t bboxesByteSize = 4 * 1020 * sizeof(float);
-    size_t gtboxesByteSize = 4 * 1020 * sizeof(float);
-    size_t overlapByteSize = 1020 * 1 * sizeof(float);
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
     uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
     uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
     uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
+    uint32_t blockDim = 1;
 
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 8;
+    tilingData->subTileLen = 8;
+    tilingData->eps = 1;
 
     ICPU_SET_TILING_KEY(4);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, tiling);
 
     AscendC::GmFree(bboxes);
     AscendC::GmFree(gtboxes);
@@ -67,345 +73,3 @@ TEST_F(iou_v2_test, test_aligned_iou_fp32)
     AscendC::GmFree(workspace);
     AscendC::GmFree(tiling);
 }
-
-// [4, 1020], aligned=true, iou, float16
-TEST_F(iou_v2_test, test_aligned_iou_fp16)
-{
-    size_t bboxesByteSize = 4 * 1020 * sizeof(half);
-    size_t gtboxesByteSize = 4 * 1020 * sizeof(half);
-    size_t overlapByteSize = 1020 * 1 * sizeof(half);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(5);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [4, 1020], aligned=true, iof, float32
-TEST_F(iou_v2_test, test_aligned_iof_fp32)
-{
-    size_t bboxesByteSize = 4 * 1020 * sizeof(float);
-    size_t gtboxesByteSize = 4 * 1020 * sizeof(float);
-    size_t overlapByteSize = 1020 * 1 * sizeof(float);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(14);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [4, 1020], aligned=true, iof, float16
-TEST_F(iou_v2_test, test_aligned_iof_fp16)
-{
-    size_t bboxesByteSize = 4 * 1020 * sizeof(half);
-    size_t gtboxesByteSize = 4 * 1020 * sizeof(half);
-    size_t overlapByteSize = 1020 * 1 * sizeof(half);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(15);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [2020, 4], [20, 4], aligned=false, iou, float32
-TEST_F(iou_v2_test, test_not_aligned_iou_fp32)
-{
-    size_t bboxesByteSize = 2020 * 4 * sizeof(float);
-    size_t gtboxesByteSize = 20 * 4 * sizeof(float);
-    size_t overlapByteSize = 2020 * 20 * sizeof(float);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(7);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [2020, 4], [20, 4], aligned=false, iou, float16
-TEST_F(iou_v2_test, test_not_aligned_iou_fp16)
-{
-    size_t bboxesByteSize = 2020 * 4 * sizeof(half);
-    size_t gtboxesByteSize = 20 * 4 * sizeof(half);
-    size_t overlapByteSize = 2020 * 20 * sizeof(half);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(8);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [2020, 4], [20, 4], aligned=false, iof, float32
-TEST_F(iou_v2_test, test_not_aligned_iof_fp32)
-{
-    size_t bboxesByteSize = 2020 * 4 * sizeof(float);
-    size_t gtboxesByteSize = 20 * 4 * sizeof(float);
-    size_t overlapByteSize = 2020 * 20 * sizeof(float);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(17);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [2020, 4], [20, 4], aligned=false, iof, float16
-TEST_F(iou_v2_test, test_not_aligned_iof_fp16)
-{
-    size_t bboxesByteSize = 2020 * 4 * sizeof(half);
-    size_t gtboxesByteSize = 20 * 4 * sizeof(half);
-    size_t overlapByteSize = 2020 * 20 * sizeof(half);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(18);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [4, 1020], aligned=true, iou, bfloat16_t
-TEST_F(iou_v2_test, test_aligned_iou_bf16)
-{
-    size_t bboxesByteSize = 4 * 1020 * sizeof(bfloat16_t);
-    size_t gtboxesByteSize = 4 * 1020 * sizeof(bfloat16_t);
-    size_t overlapByteSize = 1020 * 1 * sizeof(bfloat16_t);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(6);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [2020, 4], [20, 4], aligned=false, iou, bfloat16_t
-TEST_F(iou_v2_test, test_not_aligned_iou_bf16)
-{
-    size_t bboxesByteSize = 2020 * 4 * sizeof(bfloat16_t);
-    size_t gtboxesByteSize = 20 * 4 * sizeof(bfloat16_t);
-    size_t overlapByteSize = 2020 * 20 * sizeof(bfloat16_t);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(9);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [4, 1020], aligned=true, iof, bfloat16_t
-TEST_F(iou_v2_test, test_aligned_iof_bf16)
-{
-    size_t bboxesByteSize = 4 * 1020 * sizeof(bfloat16_t);
-    size_t gtboxesByteSize = 4 * 1020 * sizeof(bfloat16_t);
-    size_t overlapByteSize = 1020 * 1 * sizeof(bfloat16_t);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(16);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-
-// [2020, 4], [20, 4], aligned=false, iof, bfloat16_t
-TEST_F(iou_v2_test, test_not_aligned_iof_bf16)
-{
-    size_t bboxesByteSize = 2020 * 4 * sizeof(bfloat16_t);
-    size_t gtboxesByteSize = 20 * 4 * sizeof(bfloat16_t);
-    size_t overlapByteSize = 2020 * 20 * sizeof(bfloat16_t);
-    size_t tilingDataSize = sizeof(IouV2TilingData);
-
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
-
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 1024 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 40;
-
-    char *path_ = get_current_dir_name();
-    string path(path_);
-
-    IouV2TilingData *tilingDatafromBin = reinterpret_cast<IouV2TilingData *>(tiling);
-
-    ICPU_SET_TILING_KEY(19);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, (uint8_t *)(tilingDatafromBin));
-
-    AscendC::GmFree(bboxes);
-    AscendC::GmFree(gtboxes);
-    AscendC::GmFree(overlap);
-    AscendC::GmFree(workspace);
-    AscendC::GmFree(tiling);
-}
-

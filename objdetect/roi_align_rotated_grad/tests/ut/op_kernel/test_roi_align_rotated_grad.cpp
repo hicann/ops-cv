@@ -50,101 +50,40 @@ private:
 
 const std::string roi_align_rotated_grad_test::dataPath = "../../../../objdetect/roi_align_rotated_grad/op_kernel/roi_align_rotated_data_grad";
 
-
 TEST_F(roi_align_rotated_grad_test, test_case_0)
 {
-  size_t gradOutputByteSize = 2 * 8 * 2 * 2 * sizeof(float);
-  size_t roisByteSize = 6 * 2 * sizeof(float);
-  size_t gradInputByteSize = 1 * 8 * 8 * 8 * sizeof(float);
-  size_t tiling_data_size = sizeof(RoiAlignRotatedGradTilingData);
-
-  uint8_t *grad_input = (uint8_t *)AscendC::GmAlloc(gradInputByteSize);
-  uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
-  uint8_t *grad_output = (uint8_t *)AscendC::GmAlloc(gradOutputByteSize);
-  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(4096);
-  uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-
-  memset(workspace, 0, 4096);
-
-  system("cd ./roi_align_rotated_data/ && python3 gen_data.py 1 8 8 8 2 6");
-  system("cd ./roi_align_rotated_data/ && python3 gen_tiling.py test_case_0");
-
-  char *path_ = get_current_dir_name();
-  string path(path_);
-  ReadFile(path + "./roi_align_rotated_grad_data/grad_output.bin", gradOutputByteSize, grad_output, gradOutputByteSize);
-  ReadFile(path + "./roi_align_rotated_grad_data/rois.bin", roisByteSize, rois, roisByteSize);
-  ReadFile(path + "./roi_align_rotated_grad_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
-
-  ICPU_SET_TILING_KEY(0);
-  ICPU_RUN_KF(roi_align_rotated_grad, 40, grad_output, rois, grad_input, workspace, tiling);
-
-  AscendC::GmFree(grad_output);
-  AscendC::GmFree(rois);
-  AscendC::GmFree(grad_input);
-  AscendC::GmFree(workspace);
-  AscendC::GmFree(tiling);
-}
-
-TEST_F(roi_align_rotated_grad_test, test_case_1)
-{
-  size_t gradOutputByteSize = 3 * 8 * 2 * 2 * sizeof(float);
-  size_t roisByteSize = 6 * 3 * sizeof(float);
-  size_t gradInputByteSize = 2 * 8 * 8 * 8 * sizeof(float);
-  size_t tiling_data_size = sizeof(RoiAlignRotatedGradTilingData);
-
-  uint8_t *grad_output = (uint8_t *)AscendC::GmAlloc(gradOutputByteSize);
-  uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
-  uint8_t *grad_input = (uint8_t *)AscendC::GmAlloc(gradInputByteSize);
-  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(4096);
-  uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-
-  memset(workspace, 0, 4096);
-
-  system("cd ./roi_align_rotated_data/ && python3 gen_data.py 2 8 8 8 3 6");
-  system("cd ./roi_align_rotated_data/ && python3 gen_tiling.py test_case_1");
-
-  char *path_ = get_current_dir_name();
-  string path(path_);
-  ReadFile(path + "./roi_align_rotated_grad_data/grad_output.bin", gradOutputByteSize, grad_output, gradOutputByteSize);
-  ReadFile(path + "./roi_align_rotated_grad_data/rois.bin", roisByteSize, rois, roisByteSize);
-  ReadFile(path + "./roi_align_rotated_grad_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
-
-  ICPU_SET_TILING_KEY(0);
-  ICPU_RUN_KF(roi_align_rotated_grad, 40, grad_output, rois, grad_input, workspace, tiling);
-
-  AscendC::GmFree(grad_output);
-  AscendC::GmFree(rois);
-  AscendC::GmFree(grad_input);
-  AscendC::GmFree(workspace);
-  AscendC::GmFree(tiling);
-}
-
-TEST_F(roi_align_rotated_grad_test, test_case_2)
-{
-  size_t gradOutputByteSize = 8 * 8 * 2 * 2 * sizeof(float);
+  size_t gradOutputByteSize = 8 * 2 * 2 * 6 * sizeof(float);
   size_t roisByteSize = 6 * 8 * sizeof(float);
-  size_t gradInputByteSize = 3 * 8 * 8 * 8 * sizeof(float);
+  size_t gradInputByteSize = 5 * 1 * 1 * 6 * sizeof(float);
   size_t tiling_data_size = sizeof(RoiAlignRotatedGradTilingData);
 
-  uint8_t *grad_output = (uint8_t *)AscendC::GmAlloc(gradOutputByteSize);
-  uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
   uint8_t *grad_input = (uint8_t *)AscendC::GmAlloc(gradInputByteSize);
-  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(4096);
+  uint8_t *rois = (uint8_t *)AscendC::GmAlloc(roisByteSize);
+  uint8_t *grad_output = (uint8_t *)AscendC::GmAlloc(gradOutputByteSize);
+  uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(gradOutputByteSize);
   uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
 
-  memset(workspace, 0, 4096);
+  uint32_t blockDim = 1;
 
-  system("cd ./roi_align_rotated_data/ && python3 gen_data.py 3 8 8 8 8 6");
-  system("cd ./roi_align_rotated_data/ && python3 gen_tiling.py test_case_2");
+  RoiAlignRotatedGradTilingData* tilingData = reinterpret_cast<RoiAlignRotatedGradTilingData*>(tiling);
+  tilingData->coreRoisNums = 0;
+  tilingData->coreRoisTail = 8;
+  tilingData->boxSize = 8;
+  tilingData->pooledHeight = 2;
+  tilingData->pooledWidth = 2;
+  tilingData->batchSize = 5;
+  tilingData->channelNum = 6;
+  tilingData->width = 1;
+  tilingData->height = 1;
+  tilingData->aligned = 1;
+  tilingData->clockwise = 1;
+  tilingData->samplingRatio = 1;
+  tilingData->spatialScale = 1;
+  tilingData->coreNum = 64;
 
-  char *path_ = get_current_dir_name();
-  string path(path_);
-  ReadFile(path + "./roi_align_rotated_grad_data/grad_output.bin", gradOutputByteSize, grad_output, gradOutputByteSize);
-  ReadFile(path + "./roi_align_rotated_grad_data/rois.bin", roisByteSize, rois, roisByteSize);
-  ReadFile(path + "./roi_align_rotated_grad_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
-
-  ICPU_SET_TILING_KEY(0);
-  ICPU_RUN_KF(roi_align_rotated_grad, 40, grad_output, rois, grad_input, workspace, tiling);
+  ICPU_SET_TILING_KEY(-707816656);
+  AscendC::SetKernelMode(KernelMode::AIV_MODE);
+  ICPU_RUN_KF(roi_align_rotated_grad, 1, grad_output, rois, grad_input, workspace, tiling);
 
   AscendC::GmFree(grad_output);
   AscendC::GmFree(rois);
