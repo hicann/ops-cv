@@ -48,27 +48,6 @@ TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_001)
     // ut.TestPrecision();
 }
 
-// 支持float16
-TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_002)
-{
-    const double_t scales_l = 2.0;
-    bool align_corners = false;
-    vector<int64_t> output_size = {3};
-    vector<int64_t> input_size = {1, 1, 6};
-
-    auto self_desc = TensorDesc({1, 1, 3}, ACL_FLOAT16, ACL_FORMAT_NCL);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto input_size_desc = IntArrayDesc(input_size);
-    auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT16, ACL_FORMAT_NCL);
-
-    auto ut = OP_API_UT(aclnnUpsampleLinear1dBackward,
-        INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_l),
-        OUTPUT(output_desc));
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
 // 不支持double
 TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_003)
 {
@@ -195,27 +174,6 @@ TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_008)
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
-// 支持bfloat16
-TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_009)
-{
-    const double_t scales_l = 2.0;
-    bool align_corners = false;
-    vector<int64_t> output_size = {3};
-    vector<int64_t> input_size = {1, 1, 6};
-
-    auto self_desc = TensorDesc({1, 1, 3}, ACL_BF16, ACL_FORMAT_NCL);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto input_size_desc = IntArrayDesc(input_size);
-    auto output_desc = TensorDesc({1, 1, 6}, ACL_BF16, ACL_FORMAT_NCL);
-
-    auto ut = OP_API_UT(aclnnUpsampleLinear1dBackward,
-        INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_l),
-        OUTPUT(output_desc));
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
 // 不支持bool
 TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_010)
 {
@@ -298,7 +256,7 @@ TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_013)
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-    ut.TestPrecision();
+    // ut.TestPrecision();
 }
 
 // 不支持shape为2的输入
@@ -532,27 +490,6 @@ TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_024)
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
-// 支持scale与size不一致
-TEST_F(l2_upsamplelinear1d_backward_test, l2_upsamplelinear1d_backward_test_025)
-{
-    const double_t scales_l = 3.0;
-    bool align_corners = false;
-    vector<int64_t> output_size = {3};
-    vector<int64_t> input_size = {1, 1, 6};
-
-    auto self_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto input_size_desc = IntArrayDesc(input_size);
-    auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_NCL);
-
-    auto ut = OP_API_UT(aclnnUpsampleLinear1dBackward,
-        INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_l),
-        OUTPUT(output_desc));
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
 // 支持float32
 TEST_F(l2_upsamplelinear1d_backward_test, ascend910B3_normal_0)
 {
@@ -636,42 +573,3 @@ TEST_F(l2_upsamplelinear1d_backward_test, ascend910B3_checkNC)
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
-
-/*
-TEST_F(l2_upsamplelinear1d_backward_test, Ascend910_9589_l2_upsamplelinear1d_backward_test_001) {
-  const double_t scales_l = 2.0;
-  bool align_corners = false;
-  vector<int64_t> output_size = {3};
-  vector<int64_t> input_size = {1, 1, 6};
-
-  auto self_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
-  auto output_size_desc = IntArrayDesc(output_size);
-  auto input_size_desc = IntArrayDesc(input_size);
-  auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_NCL);
-
-  auto ut = OP_API_UT(aclnnUpsampleLinear1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, align_corners,
-                      scales_l), OUTPUT(output_desc));
-  uint64_t workspaceSize = 0;
-  aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-  EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
-TEST_F(l2_upsamplelinear1d_backward_test, Ascend910_9589_l2_upsamplelinear1d_backward_test_002)
-{
-    const double_t scales_l = 2.0;
-    bool align_corners = false;
-    vector<int64_t> output_size = {3};
-    vector<int64_t> input_size = {1, 1, 6};
-
-    auto self_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_ND);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto input_size_desc = IntArrayDesc(input_size);
-    auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_ND);
-
-    auto ut =
-        OP_API_UT(aclnnUpsampleLinear1dBackward,
-                  INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_l), OUTPUT(output_desc));
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-}
-*/

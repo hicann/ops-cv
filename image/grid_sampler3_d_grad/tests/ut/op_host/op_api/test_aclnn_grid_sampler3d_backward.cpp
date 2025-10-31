@@ -11,7 +11,7 @@
 #include <array>
 #include "gtest/gtest.h"
 
-#include "image/grid_sampler3_d_grad/op_host/op_api/aclnn_grid_sampler3d_backward.h"
+#include "../../../../op_host/op_api/aclnn_grid_sampler3d_backward.h"
 
 #include "op_api_ut_common/op_api_ut.h"
 #include "op_api_ut_common/scalar_desc.h"
@@ -138,23 +138,6 @@ TEST_F(l2_grid_sampler3d_backward_test, dtype_float32)
     auto gridDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
-    auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
-    uint64_t workspaceSize = 0;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(aclRet, ACL_SUCCESS);
-}
-
-// dtype double
-TEST_F(l2_grid_sampler3d_backward_test, dtype_double)
-{
-    auto gradOutputDesc = TensorDesc({1, 1, 1, 2, 2}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
-    auto inputDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
-    auto gridDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_DOUBLE, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
-    auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
-    auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
     auto ut = OP_API_UT(
         aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),

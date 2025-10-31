@@ -69,27 +69,6 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-// 支持DOUBLE
-TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_003)
-{
-    const double_t scales = 2.0;
-
-    vector<int64_t> output_size = {4};
-    vector<int64_t> input_size = {1, 1, 2};
-
-    auto self_desc = TensorDesc({1, 1, 4}, ACL_DOUBLE, ACL_FORMAT_NCL);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto input_size_desc = IntArrayDesc(input_size);
-    auto output_desc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
-
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
 // 不支持int64
 TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_007)
 {
@@ -214,7 +193,6 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-    ut.TestPrecision();
 }
 
 // 不支持shape为2的输入

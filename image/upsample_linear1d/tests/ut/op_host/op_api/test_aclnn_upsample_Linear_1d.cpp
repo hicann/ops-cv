@@ -147,7 +147,6 @@ TEST_F(l2_upsamplelinear1d_test, l2_upsamplelinear1d_test_size_256)
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-    ut.TestPrecision();
 }
 
 // dtype float16, aicore

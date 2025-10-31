@@ -42,9 +42,14 @@ static constexpr size_t DIM_LIMIT = 4;
 static constexpr int64_t EXPECT_SIZE = 2;
 static const double MIN_SUPPORT_SCALE = 0.01;
 
-// 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
+namespace {
+    // 根据API定义，需要列出所能支持的所有dtype
+    static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
+        op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
+
+    static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_310P = {
+        op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+}
 
 static bool CheckIOSizesIsSame(const aclTensor *gradOutput, const aclIntArray *inputSize)
 {
@@ -67,24 +72,6 @@ static bool CheckNotNull(
     OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(out, return false);
     return true;
-}
-
-const inline std::initializer_list<DataType> &GetSupportDtypeList(SocVersion socVersion)
-{
-    static const std::initializer_list<DataType> emptyDtypes = {};
-    static const std::map<SocVersion, std::initializer_list<DataType>> dataTypeSupportedMap = {
-        {SocVersion::ASCEND310P, {DataType::DT_FLOAT, DataType::DT_FLOAT16}},
-        {SocVersion::ASCEND910, {DataType::DT_FLOAT, DataType::DT_FLOAT16}},
-        {SocVersion::ASCEND910B, {DataType::DT_FLOAT, DataType::DT_FLOAT16, DataType::DT_BF16}},
-        {SocVersion::ASCEND910_93, {DataType::DT_FLOAT, DataType::DT_FLOAT16, DataType::DT_BF16}},
-    };
-
-    auto found = dataTypeSupportedMap.find(socVersion);
-    if (found == dataTypeSupportedMap.end()) {
-        return emptyDtypes;
-    }
-
-    return found->second;
 }
 
 bool CheckInputsElement(const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize)
@@ -137,12 +124,16 @@ static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *out, cons
 {
     if (!CheckIOSizesIsSame(gradOut, inputSize)) {
         auto socVersion = GetCurrentPlatformInfo().GetSocVersion();
-        const auto &DTYPE_SUPPORT_LIST_CURRENT = GetSupportDtypeList(socVersion);
-        if (DTYPE_SUPPORT_LIST_CURRENT.size() == 0) {
+        bool bf16Support = socVersion == op::SocVersion::ASCEND910B || socVersion == op::SocVersion::ASCEND910_93;
+        bool bf16NoSupport = socVersion == op::SocVersion::ASCEND310P || socVersion == op::SocVersion::ASCEND910;
+        if (bf16Support) {
+            OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
+        } else if (bf16NoSupport) {
+            OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_310P, return false);
+        } else {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "support for %s is not implemented", op::ToString(socVersion).GetString());
             return false;
         }
-        OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_CURRENT, return false);
     }
     OP_CHECK_DTYPE_NOT_MATCH(out, gradOut->GetDataType(), return false);
     return true;

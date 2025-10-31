@@ -253,6 +253,10 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
+    // 固定写法，参数检查
+    auto ret = CheckParams(input, grid, interpolationMode, paddingMode, out);
+    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+
     // gridsampler2d算子的空tensor在kernel中支持
     if (input->IsEmpty() || grid->IsEmpty()) {
         // 根据实际支持情况补充
@@ -260,10 +264,6 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
-
-    // 固定写法，参数检查
-    auto ret = CheckParams(input, grid, interpolationMode, paddingMode, out);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     // 固定写法，将输入input转换成连续的tensor
     auto inputContiguous = l0op::Contiguous(input, uniqueExecutor.get());

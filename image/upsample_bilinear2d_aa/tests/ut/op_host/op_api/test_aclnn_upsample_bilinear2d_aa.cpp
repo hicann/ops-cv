@@ -9,7 +9,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "image/upsample_bilinear2d_aa/op_host/op_api/aclnn_upsample_bilinear2d_aa.h"
+#include "../../../../op_host/op_api/aclnn_upsample_bilinear2d_aa.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
 

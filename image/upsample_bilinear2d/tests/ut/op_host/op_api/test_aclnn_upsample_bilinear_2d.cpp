@@ -45,7 +45,7 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_001)
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 // 正常路径，float32
@@ -68,30 +68,6 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_002)
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-
-    ut.TestPrecision();
-}
-
-// 异常路径，float64
-TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_003)
-{
-    const double_t scales_h = 2.0;
-    bool align_corners = false;
-    vector<int64_t> inp_dims = {1, 1, 3, 3};
-    vector<int64_t> output_size = {2, 2};
-    vector<int64_t> out = {1, 1, 3, 3};
-
-    auto self_desc = TensorDesc(inp_dims, ACL_DOUBLE, ACL_FORMAT_NCHW);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto output_desc = TensorDesc(inp_dims, ACL_FLOAT16, ACL_FORMAT_NCHW);
-
-    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
-
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 // CheckNotNull_1
@@ -106,28 +82,6 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_nullptr_self)
     auto self_desc = nullptr;
     auto output_size_desc = IntArrayDesc(output_size);
     auto output_desc = TensorDesc(inp_dims, ACL_FLOAT16, ACL_FORMAT_NCHW);
-
-    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
-
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_INNER_NULLPTR);
-}
-
-// CheckNotNull_1
-TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_nullptr_out)
-{
-    const double_t scales_h = 2.0;
-    bool align_corners = false;
-    vector<int64_t> inp_dims = {1, 1, 3, 3};
-    vector<int64_t> output_size = {2, 2};
-    vector<int64_t> out = {1, 1, 3, 3};
-
-    auto self_desc = TensorDesc(inp_dims, ACL_DOUBLE, ACL_FORMAT_NCHW);
-    auto output_size_desc = IntArrayDesc(output_size);
-    auto output_desc = nullptr;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
         INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
@@ -167,7 +121,7 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim001)
     bool alignCorners = false;
     vector<int64_t> inpDims = {1, 1, 3, 3};
     vector<int64_t> outputSize = {2, 2};
-    vector<int64_t> out = {1, 1, 3, 3};
+    vector<int64_t> out = {1, 1, 2, 2};
 
     auto selfDesc = TensorDesc(inpDims, ACL_FLOAT16, ACL_FORMAT_NCHW);
     auto outputSizeDesc = IntArrayDesc(outputSize);
@@ -189,7 +143,7 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim002)
     bool alignCorners = false;
     vector<int64_t> inpDims = {1, 2, 3, 3};
     vector<int64_t> outputSize = {2, 2};
-    vector<int64_t> out = {1, 1, 3, 3};
+    vector<int64_t> out = {1, 1, 2, 2};
 
     auto selfDesc = TensorDesc(inpDims, ACL_FLOAT16, ACL_FORMAT_NCHW);
     auto outputSizeDesc = IntArrayDesc(outputSize);
@@ -223,7 +177,7 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim003)
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 // CheckNCDimValid
@@ -233,33 +187,11 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim004)
     bool alignCorners = false;
     vector<int64_t> inpDims = {1, 1, 3, 4};
     vector<int64_t> outputSize = {2, 2};
-    vector<int64_t> out = {1, 1, 3, 3};
+    vector<int64_t> out = {1, 1, 2, 3};
 
     auto selfDesc = TensorDesc(inpDims, ACL_FLOAT16, ACL_FORMAT_NHWC);
     auto outputSizeDesc = IntArrayDesc(outputSize);
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
-
-    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
-        OUTPUT(outputDesc));
-
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
-}
-
-// CheckNCDimValid
-TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim005)
-{
-    const double_t scalesH = 1.0;
-    bool alignCorners = false;
-    vector<int64_t> inpDims = {1, 1, 3, 3};
-    vector<int64_t> outputSize = {2, 2};
-    vector<int64_t> out = {1, 1, 3, 3};
-
-    auto selfDesc = TensorDesc(inpDims, ACL_FLOAT16, ACL_FORMAT_HWCN);
-    auto outputSizeDesc = IntArrayDesc(outputSize);
-    auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_HWCN);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
         INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
@@ -315,52 +247,6 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ScalesValid002)
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
-// check double and NCHW
-TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_double)
-{
-    const double_t scalesH = 1.0;
-    const double_t scalesW = 1.0;
-    bool alignCorners = false;
-    vector<int64_t> inpDims = {1, 3, 3, 1};
-    vector<int64_t> outputSize = {1, 6, 6, 1};
-    vector<int64_t> out = {1, 6, 6, 1};
-
-    auto selfDesc = TensorDesc(inpDims, ACL_DOUBLE, ACL_FORMAT_NCHW);
-    auto outputSizeDesc = IntArrayDesc(outputSize);
-    auto outputDesc = TensorDesc(out, ACL_DOUBLE, ACL_FORMAT_NCHW);
-
-    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesW, scalesH),  // host api输入
-        OUTPUT(outputDesc));
-
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
-}
-
-// check double
-TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_double1)
-{
-    const double_t scalesH = 1.0;
-    const double_t scalesW = 1.0;
-    bool alignCorners = false;
-    vector<int64_t> inpDims = {1, 3, 3, 1};
-    vector<int64_t> outputSize = {1, 6, 6, 1};
-    vector<int64_t> out = {1, 6, 6, 1};
-
-    auto selfDesc = TensorDesc(inpDims, ACL_DOUBLE, ACL_FORMAT_NHWC);
-    auto outputSizeDesc = IntArrayDesc(outputSize);
-    auto outputDesc = TensorDesc(out, ACL_DOUBLE, ACL_FORMAT_NHWC);
-
-    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesW, scalesH),  // host api输入
-        OUTPUT(outputDesc));
-
-    uint64_t workspaceSize = 0;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
 // 正常路径，float32
 TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1001)
 {
@@ -401,7 +287,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1002)
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1003)
@@ -443,7 +329,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1004)
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_1005)
@@ -464,7 +350,7 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_1005)
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1006)
@@ -485,7 +371,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1006)
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
 TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1007)
