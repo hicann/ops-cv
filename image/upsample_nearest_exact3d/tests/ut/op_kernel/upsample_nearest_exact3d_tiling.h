@@ -9,16 +9,16 @@
  */
 
 /*!
- * \file upsample_nearest3d_tiling.h
+ * \file upsample_nearest_exact3d_tiling.h
  * \brief
  */
 
-#ifndef UPSAMPLE_NEAREST3D_TILING_DEFH
-#define UPSAMPLE_NEAREST3D_TILING_DEFH
+#ifndef UPSAMPLE_NEAREST_EXACT3D_TILING_DEFH
+#define UPSAMPLE_NEAREST_EXACT3D_TILING_DEFH
 
 #include <cstdint>
 
-#include "../../../op_kernel/upsample_nearest3d_struct.h"
+#include "../../../../upsample_nearest3d/op_kernel/upsample_nearest3d_struct.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 using namespace UpsampleNearest3d;
@@ -37,7 +37,7 @@ inline void InitTilingData(uint8_t *tiling, UpsampleNearest3dTilingData *constDa
 {
     memcpy(constData, tiling, sizeof(UpsampleNearest3dTilingData));
 }
-#endif // __NPU_TILING__
+#endif
 
 #define CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer) \
     __ubuf__ tilingStruct *tilingDataPointer =                              \
@@ -54,4 +54,4 @@ inline void InitTilingData(uint8_t *tiling, UpsampleNearest3dTilingData *constDa
     UpsampleNearest3dTilingData tilingData;    \
     InitTilingData(tilingArg, &tilingData)
 
-#endif // UPSAMPLE_NEAREST3D_TILING_DEFH
+#endif // UPSAMPLE_NEAREST_EXACT3D_TILING_DEFH

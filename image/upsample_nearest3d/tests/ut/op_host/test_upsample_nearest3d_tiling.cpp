@@ -46,9 +46,9 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_001)
             gert::TilingContextPara::OpAttr("scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
             gert::TilingContextPara::OpAttr("scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
         &compileInfo);
-    uint64_t expectTilingKey = 1;
+    uint64_t expectTilingKey = 5140;
     string expectTilingData =
-        "2 1 128 128 128 256 256 256 4539628425446424576 1056964608 2048 1028 4 4 128 128 341 16 16368 1 1 1 48 ";
+        "0 1 128 128 128 256 256 256 4539628425446424576 1056964608 2048 1028 4 4 128 128 341 16 16368 1 1 1 48 ";
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

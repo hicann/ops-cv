@@ -53,4 +53,4 @@ REGISTER_TILING_DATA_CLASS(UpsampleNearest3d, UpsampleNearest3dTilingData)
 REGISTER_TILING_DATA_CLASS(UpsampleNearestExact3d, UpsampleNearest3dTilingData)
 }  // namespace optiling
 
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BILINEAR2D_AA_BACKWARD_TILING_H
+#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_NEAREST3D_TILING_H

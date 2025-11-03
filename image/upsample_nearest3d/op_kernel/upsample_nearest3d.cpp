@@ -18,42 +18,21 @@
 #else
 #include "upsample_nearest3d.h"
 #endif
+#include "upsample_nearest3d_struct.h"
 
 using namespace UpsampleNearest3d;
 
-extern "C" __global__ __aicore__ void upsample_nearest3d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
+template <int D_T_X, int D_T_Y>
+__global__ __aicore__ void upsample_nearest3d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
 {
-    GET_TILING_DATA(tilingData, tiling);
-    const UpsampleNearest3dTilingData *__restrict tiling_data = &tilingData;
-
-    GM_ADDR userWS = GetUserWorkspace(workspace);
-
-#define INIT_AND_PROCESS                       \
-    op.Init(x, y, false, userWS, &tilingData); \
-    op.Process()
-
 #if __CCE_AICORE__ == 200
-    if (TILING_KEY_IS(1)) {
-        if (tiling_data->dataType == 1) {
-            UpsampleNearest3dND310p<half> op;
-            INIT_AND_PROCESS;
-        } else if (tiling_data->dataType == 2) {
-            UpsampleNearest3dND310p<float> op;
-            INIT_AND_PROCESS;
-        }
-    }
+    GM_ADDR userWS = GetUserWorkspace(workspace);
+    REGISTER_TILING_DEFAULT(UpsampleNearest3dTilingData);
+    GET_TILING_DATA_WITH_STRUCT(UpsampleNearest3dTilingData, tilingData, tiling);
+    UpsampleNearest3d310pKernelImpl<D_T_X, D_T_Y>(x, y, false, userWS, &tilingData);
 #else
-    if (TILING_KEY_IS(1)) {
-        if (tiling_data->dataType == 1) {
-            UpsampleNearest3dND<half> op;
-            INIT_AND_PROCESS;
-        } else if (tiling_data->dataType == 2) {
-            UpsampleNearest3dND<float> op;
-            INIT_AND_PROCESS;
-        } else if (tiling_data->dataType == 3) {
-            UpsampleNearest3dND<bfloat16_t> op;
-            INIT_AND_PROCESS;
-        }
-    }
+    REGISTER_TILING_DEFAULT(UpsampleNearest3dTilingData);
+    GET_TILING_DATA_WITH_STRUCT(UpsampleNearest3dTilingData, tilingData, tiling);
+    UpsampleNearest3dKernelImpl<D_T_X, D_T_Y>(x, y, false, &tilingData);
 #endif
 }

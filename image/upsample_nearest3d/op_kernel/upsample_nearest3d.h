@@ -16,6 +16,8 @@
 #define UPSAMPLE_NEAREST3D_H
 
 #include <type_traits>
+#include "upsample_nearest3d_struct.h"
+#include "upsample_nearest3d_common.h"
 #include "kernel_operator.h"
 
 namespace UpsampleNearest3d {
@@ -38,29 +40,11 @@ public:
 
     __aicore__ inline UpsampleNearest3dND(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR y, bool isNearestExact, GM_ADDR workspace, UpsampleNearest3dTilingData *tilingData);
+        GM_ADDR x, GM_ADDR y, bool isNearestExact, GM_ADDR workspace, const UpsampleNearest3dTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
-    template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
-    {
-        if (b == 0) {
-            return a;
-        }
-        return (a + b - 1) / b;
-    };
-    template <typename T1>
-    __aicore__ inline T1 Min(T1 a, T1 b)
-    {
-        return a < b ? a : b;
-    };
-    template <typename T1>
-    __aicore__ inline T1 Max(T1 a, T1 b)
-    {
-        return a > b ? a : b;
-    };
-    __aicore__ inline void ParseTilingData(UpsampleNearest3dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleNearest3dTilingData* tilingData);
     __aicore__ inline void GatherData(int64_t slideIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void CopyIn(int64_t inputOffset, DataCopyExtParams copyParams);
     __aicore__ inline void ComputeAndCopyOut(
@@ -100,9 +84,9 @@ private:
     int64_t tensorSizeW = 0;
     int64_t tensorSizeH = 0;
     int64_t tensorSizeD = 0;
-
     int64_t slideNumH = 0;
     int64_t slideNumD = 0;
+
     int64_t eachCoreSlideNum = 0;
     int64_t remainder = 0;
     int64_t tailStartSlideNum = 0;
@@ -134,7 +118,7 @@ private:
 
 template <typename T>
 __aicore__ inline void UpsampleNearest3dND<T>::Init(
-    GM_ADDR x, GM_ADDR y, bool isNearestExact, GM_ADDR workspace, UpsampleNearest3dTilingData *tilingData)
+    GM_ADDR x, GM_ADDR y, bool isNearestExact, GM_ADDR workspace, const UpsampleNearest3dTilingData* tilingData)
 {
     blockIdx = GetBlockIdx();
     isExact = isNearestExact;
@@ -147,8 +131,8 @@ __aicore__ inline void UpsampleNearest3dND<T>::Init(
     pipe.InitBuffer(inQueue, BUFFER_NUM, CeilA2B(tensorSizeW * sizeof(T), BYTE_BLOCK) * BYTE_BLOCK);
     pipe.InitBuffer(outQueue, BUFFER_NUM, slideSizeW * sizeof(T));
 
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)x);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)y);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)x);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)y);
 }
 
 template <typename T>
@@ -394,7 +378,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::CalculateGatherOffsetW()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dND<T>::ParseTilingData(UpsampleNearest3dTilingData *tilingData)
+__aicore__ inline void UpsampleNearest3dND<T>::ParseTilingData(const UpsampleNearest3dTilingData* tilingData)
 {
     batches = tilingData->batches;
     for (int8_t i = 0; i < 3; i++) {
@@ -420,6 +404,25 @@ __aicore__ inline void UpsampleNearest3dND<T>::ParseTilingData(UpsampleNearest3d
     tailAvergingRow = tilingData->tailAvergingRow;
     needCoreNum = tilingData->needCoreNum;
 }
-}  // namespace UpsampleNearest3d
 
-#endif  // UPSAMPLE_NEAREST3D
+template <int D_T_X, int D_T_Y>
+__aicore__ inline void UpsampleNearest3dKernelImpl(
+    __gm__ uint8_t* x, __gm__ uint8_t* y, bool isNearestExact, const UpsampleNearest3dTilingData* tilingData)
+{
+    GM_ADDR userWS = nullptr;
+    if constexpr (D_T_X == UPSAMPLE_NEAREST3D_TPL_FP16 && D_T_Y == UPSAMPLE_NEAREST3D_TPL_FP16) {
+        UpsampleNearest3d::UpsampleNearest3dND<half> op;
+        op.Init(x, y, isNearestExact, userWS, tilingData);
+        op.Process();
+    } else if constexpr (D_T_X == UPSAMPLE_NEAREST3D_TPL_FP32 && D_T_Y == UPSAMPLE_NEAREST3D_TPL_FP32) {
+        UpsampleNearest3d::UpsampleNearest3dND<float> op;
+        op.Init(x, y, isNearestExact, userWS, tilingData);
+        op.Process();
+    } else if constexpr (D_T_X == UPSAMPLE_NEAREST3D_TPL_BF16 && D_T_Y == UPSAMPLE_NEAREST3D_TPL_BF16) {
+        UpsampleNearest3d::UpsampleNearest3dND<bfloat16_t> op;
+        op.Init(x, y, isNearestExact, userWS, tilingData);
+        op.Process();
+    }
+}
+} // namespace UpsampleNearest3d
+#endif // UPSAMPLE_NEAREST3D

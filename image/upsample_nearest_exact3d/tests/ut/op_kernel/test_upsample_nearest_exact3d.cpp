@@ -20,7 +20,7 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../../../../upsample_nearest3d/op_host/upsample_nearest3d_tiling.h"
+#include "../../../op_kernel/upsample_nearest_exact3d.cpp"
 #include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_nearest_exact3d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
@@ -92,9 +92,10 @@ TEST_F(upsample_nearest_exact3d_test, test_case_float_1)
     tilingDatafromBin->outputShapes[1] = 16;
     tilingDatafromBin->outputShapes[2] = 16;
 
-    ICPU_SET_TILING_KEY(1);
+    ICPU_SET_TILING_KEY(5140);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-    ICPU_RUN_KF(upsample_nearest_exact3d, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    auto func = upsample_nearest_exact3d<UPSAMPLE_NEAREST3D_TPL_FP32, UPSAMPLE_NEAREST3D_TPL_FP32>; 
+    ICPU_RUN_KF(func, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact3d_data/float32_output_upsample_nearest_exact3d.bin";
     WriteFile(fileName, y, outputByteSize);
 
