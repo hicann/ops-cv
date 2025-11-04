@@ -1,7 +1,5 @@
 # 项目目录
 
-详细目录层级介绍如下：
-
 > 本章罗列的部分目录是可选的，请以实际交付件为准。尤其**单算子目录**，不同场景下交付件有差异，具体说明如下：
 >
 > - 若缺少op_host目录，可能是调用了其他算子op_host实现，调用逻辑参见该算子op_api或op_graph目录下源码实现；也可能是Kernel暂无Ascend C实现，如有需要，欢迎开发者参考[贡献指南](../../CONTRIBUTING.md)补充贡献该算子。
@@ -9,12 +7,18 @@
 > - 若缺少op_api目录，说明该算子暂不支持aclnn调用。
 > - 若缺少op_graph目录，说明该算子暂不支持图模式调用。
 
+项目全量目录层级介绍如下：
 ```
 ├── cmake                                               # 项目工程编译目录
 ├── common                                              # 项目公共头文件和公共代码
 │   ├── CMakeLists.txt
 │   ├── inc                                             # 公共头文件目录
 │   └── src                                             # 公共代码目录
+├── experimental                                        # 用户自定义算子存放目录
+│   ├── image                                           # 可选，用户开发的image类算子目录
+│   │   └── CMakeLists.txt
+│   └── objdetect                                       # 可选，用户开发的objdetect类算子目录
+│       └── CMakeLists.txt
 ├── ${op_class}                                         # 算子分类，如image、objdetect类算子
 │   ├${op_name}                                         # 算子工程目录，${op_name}表示算子名（小写下划线形式）
 │   │   ├── CMakeLists.txt                              # 算子cmakelist入口
@@ -101,6 +105,12 @@
 │   │   ├── op_kernel_aicpu                             # 算子Kernel目录
 │   │   └── tests                                       # 算子测试用例目录
 │   ├── CMakeLists.txt
+│   ├── fast_kernel_launch_example                      # 轻量级，高性能的算子开发工程模板
+│   │   ├── ascend_ops                                  # 示例算子实现目录
+│   │   ├── CMakeLists.txt                              # 算子编译配置文件
+│   │   ├── README.md                                   # 轻量级，高性能的算子开发工程说明资料
+│   │   ├── requirements.txt
+│   │   └── setup.py                                    # 构建脚本
 │   └── README.md                                       # 项目示例介绍文档
 ├── scripts                                             # 脚本目录，包含自定义算子、Kernel构建相关配置文件
 ├── tests                                               # 项目级测试目录

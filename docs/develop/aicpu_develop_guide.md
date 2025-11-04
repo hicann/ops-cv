@@ -35,7 +35,7 @@ graph LR
 ##  前提条件
 **1. 环境部署**
 
-开发算子前，请参考[环境准备](./quick_op_invocation.md#环境准备)完成环境搭建。
+开发算子前，请参考[环境准备](../invocation/quick_op_invocation.md#环境准备)完成环境搭建。
 
 **2. 算子设计**
 
@@ -340,7 +340,7 @@ REG_OP(AddExample)
 
    以`AddExample`算子为例，假设开发交付件在`examples`目录，完整代码参见[add_example_aicpu](../../examples/add_example_aicpu)目录。
 
-   进入项目根目录，执行如下编译命令（命令介绍参见[build参数说明](./build.md)）：
+   进入项目根目录，执行如下编译命令：
 
     ```bash
    # 编译指定算子，如--ops=add_example
@@ -369,9 +369,8 @@ REG_OP(AddExample)
    ./cann-ops-cv-${vendor_name}_linux-${arch}.run
     ```
    自定义算子包安装在`${ASCEND_HOME_PATH}/latest/opp/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。自定义算子包不支持卸载。
-
-
-    自定义算子包的目录结构示例如下：
+   
+   自定义算子包的目录结构示例如下：
     ```
     ├── cann-ops-cv-${vendor_name}_linux-${arch}.run           # 包名
     ├── op_api
@@ -397,4 +396,4 @@ REG_OP(AddExample)
     ```
 ## 算子验证
 
-开发好的算子完成编译部署后，可通过aclnn方式（推荐）或图模式验证功能，方法请参考[算子调用方式](./op_invocation.md)。
+开发好的算子完成编译部署后，可通过aclnn方式（推荐）或图模式验证功能，方法请参考[算子调用方式](../invocation/op_invocation.md)。
