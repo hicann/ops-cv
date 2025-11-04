@@ -14,8 +14,8 @@
 - 计算公式：
 
   - 计算流程：
-    1. 根据grid存储的(x,y)值，计算出映射到x上坐标，坐标和alignCorner、  paddingMode有关。
-    2. 坐标根据输入的interpolateMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
+    1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，坐标和align_corners、padding_mode有关。
+    2. 坐标根据输入的interpolation_mode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
@@ -24,26 +24,26 @@
       grad、input、grid、dx、dgrid的尺寸如下：
   
       $$
-      grad: (N,C,D_{in},H_{in},W_{in})\\
-      input: (N,C,D_{in},H_{in},W_{in})\\
-      grid: (N,D_{out},H_{out},W_{out},3)\\
-      dx: (N,C,D_{in},H_{in},W_{in})\\
-      dgrid: (N,D_{out},H_{out},W_{out},3)
+      grad: (N, C, D_{in}, H_{in}, W_{in})\\
+      input: (N, C, D_{in}, H_{in}, W_{in})\\
+      grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
+      dx: (N, C, D_{in}, H_{in}, W_{in})\\
+      dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，input和dx中的C是一致的，grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示x像素位置信息为(x,y,z)，一般会将x、y、z的取值范围归一化到[-1,1]之间。
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，grad、input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示x像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
    
     
-    - 对于超出范围的坐标，会根据paddingMode进行不同处理：
+    - 对于超出范围的坐标，会根据padding_mode进行不同处理：
   
-      - paddingMode="zeros"，表示对越界位置用0填充。
-      - paddingMode="border"，表示对越界位置用边界值填充。
-      - paddingMode="reflection"，表示对越界位置用边界值的对称值填充。
+      - padding_mode="zeros"，表示对越界位置用0填充。
+      - padding_mode="border"，表示对越界位置用边界值填充。
+      - padding_mode="reflection"，表示对越界位置用边界值的对称值填充。
   
-    - 对input采样时，会根据interpolationMode进行不同处理：
+    - 对input采样时，会根据interpolation_mode进行不同处理：
   
-      - interpolationMode="bilinear"，取(x,y)周围四个坐标的加权平均值。
-      - interpolationMode="nearest"，表示取input中距离(x,y)最近的坐标值。
+      - interpolation_mode="bilinear"，表示取input中(x, y, z)周围四个坐标的加权平均值。
+      - interpolation_mode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
 
 
 ## 参数说明
@@ -74,14 +74,14 @@
     <tr>
       <td>x</td>
       <td>输入</td>
-      <td>表示反向传播的输入张量，对应公式描述中的`input`。shape仅支持五维，且需满足x、grid、grad的N轴、D轴、H轴、W轴的值保持一致，x和grad的C轴的值保持一致，x的D，H，W值不可为0。</td>
+      <td>表示反向传播的输入张量，对应公式描述中的`input`。shape仅支持五维，且需满足`x`和`grad`的shape保持一致，x的D，H，W值不可为0。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
     </tr>
     <tr>
       <td>grid</td>
       <td>输入</td>
-      <td>表示采用像素位置的张量，对应公式描述中的`grid`。C维的值必须为3，shape仅支持五维，且需满足grid和grad的D轴的值保持一致，grid和grad的H轴的值保持一致，grid和grad的W轴的值保持一致。</td><!--IR中最后一维是2？-->
+      <td>表示采用像素位置的张量，对应公式描述中的`grid`。C轴的值必须为3，shape仅支持五维，且需满足`grid`和`grad`的N轴的值保持一致。</td><!--IR中最后一维是2？-->
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
       <td>ND</td><!--参考aclnn的数据格式是：NDHWC，这个怎么写？，IR原型中是NDHW3-->
     </tr>
@@ -122,8 +122,6 @@
       <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
     </tr>
   </tbody></table>
-
-<term>Atlas 训练系列产品</term>：输入参数和输出参数的数据类型不支持DOUBLE、BFLOAT16。
 
 ## 约束说明
 

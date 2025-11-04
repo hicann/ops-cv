@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleBicubic2dAA](../../upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。
+- 算子功能：[aclnnUpsampleBicubic2dAA](../../upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
   
   $$
@@ -33,6 +33,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - $f(h_i, w_j)$是gradOutput在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
     
@@ -103,7 +104,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -112,7 +113,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入`gradOutput`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size大小为2，且各元素均大于零。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -122,7 +123,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出`out`分别在N、C、H和W维度上的空间大小。对应公式中的`inputSize`。</td>
-      <td>size大小为4，且各元素均大于零。</td>
+      <td>size为4，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -163,7 +164,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOutput`一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -374,7 +375,7 @@ int main() {
   bool alignCorners = true;
   double scalesH = 2.0;
   double scalesW = 2.0;
-// 创建input aclTensor
+  // 创建input aclTensor
   ret = CreateAclNchTensor(inputHostData, inputShape, &inputDeviceAddr, aclDataType::ACL_FLOAT, &input);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
   // 创建input aclIntArray

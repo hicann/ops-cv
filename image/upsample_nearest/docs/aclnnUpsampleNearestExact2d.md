@@ -76,8 +76,8 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的输入`self`。</td>
-      <td><ul><li>支持空tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td><ul><li>支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC、ND</td>
       <td>4</td>
       <td>√</td>
@@ -86,7 +86,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示指定`out`在H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td><ul><li>size大小为2。</li></ul></td>
+      <td><ul><li>size为2。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -116,8 +116,8 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
-      <td><ul><li>支持空tensor。</li><li>数据类型与入参`self`的数据类型保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`self`的数据类型保持一致。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC、ND</td>
       <td>4</td>
       <td>√</td>
@@ -145,9 +145,6 @@ aclnnStatus aclnnUpsampleNearestExact2d(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>：
-  
-    参数self、out的数据类型仅支持FLOAT、FLOAT16。
   
 - **返回值：**
 

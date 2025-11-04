@@ -27,7 +27,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x)，映射回原始图像中的点记为q(x')，则有关系: 
+    那么，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -75,14 +75,14 @@
     <tr>
       <td>size</td>
       <td>输入</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`outputSize`。size大小为1，且取值大于0。表示指定`y`在H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>指定输出空间大小，对应公式中的`outputSize`。size为1，且取值大于0。表示指定`y`在H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
       <td>INT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。如果设置为true，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值。</li><li>默认值为false。</li></ul></td><!--并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小`scales`。(来源于aclnn约束）-->
+      <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。如果设置为true，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
@@ -90,7 +90,7 @@
       <td>scales</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`y`的L维度乘数，对应公式中的`scales`。</li><li>无默认值。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

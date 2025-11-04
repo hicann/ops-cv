@@ -44,14 +44,14 @@
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输出`y`分别在N、C、D、H和W维度上的空间大小。size大小为5，且各元素均大于零。必须满足：input_size[0] == grad_output_tensor_size[0]；input_size[1] == grad_output_tensor_size[1]。 </td><!--这个IR原型和aclnn中的解释有冲突，非问题-->
+      <td>表示输出`y`分别在N、C、D、H和W维度上的空间大小。size为5，且各元素均大于零。必须满足：input_size[0] == grad_output_tensor_size[0]；input_size[1] == grad_output_tensor_size[1]。 </td><!--这个IR原型和aclnn中的解释有冲突，非问题-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>output_size</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>表示输入`gradOut`在D、H和W维度上的空间大小。size大小为3，且各元素均大于零。必须满足：grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]；grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]；grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2]。</li><li>默认值为{0, 0, 0}。</li></ul></td><!--这个IR原型和aclnn中的解释有冲突，非问题-->
+      <td><ul><li>表示输入`grad_output`在D、H和W维度上的空间大小。size为3，且各元素均大于零。必须满足：grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]；grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]；grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2]。</li><li>默认值为{0, 0, 0}。</li></ul></td><!--这个IR原型和aclnn中的解释有冲突，非问题-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>

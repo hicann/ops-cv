@@ -7,6 +7,7 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - **算子功能**：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上
@@ -68,9 +69,9 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
     <tr>
       <td>gradOutput</td>
       <td>输入</td>
-      <td>公式中的输入`gradOutput`，表示反向计算的的梯度Tensor。</td>
-      <td><ul><li>不支持空tensor。</li><li>当数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>公式中的输入`gradOutput`，表示反向计算的梯度Tensor。</td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
       <td>√</td>
@@ -109,8 +110,8 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>公式中的输出`gradInput`，表示反向计算的输出张量。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
       <td>√</td>

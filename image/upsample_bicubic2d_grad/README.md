@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[UpsampleBicubic2d](../upsample_bicubic2d/README.md)的反向传播。如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。
+- 算子功能：[UpsampleBicubic2d](../upsample_bicubic2d/README.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
   
@@ -34,6 +34,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - $f(h_i, w_j)$是gradOutput在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
     
@@ -86,14 +87,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为0.0。</li></ul></td><!--aclnn有次约束，看看是否合入：不能传入负值。-->
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为0.0。</li></ul></td><!--aclnn有次约束，看看是否合入：不能传入负值。-->
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleBicubic2d](../../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)的反向传播。如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。
+- 算子功能：[aclnnUpsampleBicubic2d](../../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
   
@@ -34,7 +34,8 @@
   $$
   
   其中：
-  - $f(h_i, w_j)$是gradOutput在$(h_i, w_j)$的像素值。
+  - i和j是$W(i, j)$的索引变量。
+  - $f(h_i, w_j)$是gradOut在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
     
     $$
@@ -103,9 +104,9 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     <tr>
       <td>gradOut</td>
       <td>输入</td>
-      <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。</td>
+      <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOut`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -114,7 +115,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入`gradOut`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size大小为2，且各元素均大于零。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -124,7 +125,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出`gradInput`分别在N、C、H、W或N、H、W、C维度上的空间大小。对应公式中的`inputSize`。</td>
-      <td>size大小为4，且各元素均大于零。</td>
+      <td>size为4，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -165,7 +166,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -193,9 +194,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-    - 参数`gradOut`、`gradInput`的数据类型不支持BFLOAT16。
-    - 参数`gradOut`、`gradInput`的数据格式不支持NHWC。
+
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     参数`gradOut`、`gradInput`的数据格式不支持NHWC。
@@ -237,24 +236,24 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     </tr>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于2。</td>
+      <td>outputSize的size不等于2。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值小于1。</td>
     </tr>
     </tr>
     <tr>
-      <td>inputSize的size大小不等于4。</td>
+      <td>inputSize的size不等于4。</td>
     </tr>
     <tr>
       <td>inputSize的某个元素值小于1。</td>
     </tr>
     </tr>
     <tr>
-      <td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+      <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在H、W维度上的size大小与outputSize[0]和outputSize[1]未完全相同。</td>
+      <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
     </tr>
     </tr>
     <tr>

@@ -42,7 +42,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -138,8 +138,8 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE</td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
       <td>√</td>
@@ -148,7 +148,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示出参`out`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td>指定输出Tensor大小，size大小为3，且各元素均大于零。</td>
+      <td>指定输出Tensor大小，size为3，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -198,8 +198,8 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE</td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
       <td>√</td>
@@ -227,12 +227,6 @@ aclnnStatus aclnnUpsampleTrilinear3d(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>：
-    - 入参`self`的数据类型仅支持FLOAT、FLOAT16，不支持inf、-inf输入。
-    - 出参`out`的数据类型仅支持FLOAT、FLOAT16。
-  - <term>Atlas 训练系列产品</term>：
-    
-    入参`self`和出参`out`的数据类型支持FLOAT、FLOAT16、DOUBLE。
 
 - **返回值**：
 
@@ -266,7 +260,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>self的shape不是5维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于3。</td>
+      <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
       <td>self在D、H、W维度上的size不大于0。</td>

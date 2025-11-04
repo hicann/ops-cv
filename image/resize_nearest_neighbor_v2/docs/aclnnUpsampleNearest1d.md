@@ -8,6 +8,7 @@
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
 
+
 ## 功能说明
 
 - 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
@@ -70,7 +71,7 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。
       <li>输入维度必须是3维。当数据类型是DOUBLE、UINT8时，输入shape的`L`维度需要小于2^24。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
       <td>√</td>
@@ -79,7 +80,7 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输出out在L维度上的空间大小。</td>
-      <td><ul><li>size大小为1，且取值大于0。</li></ul></td>
+      <td><ul><li>size为1，且取值大于0。</li></ul></td>
       <td>INT32、INT64</td>
       <td>-</td>
       <td>-</td>
@@ -90,7 +91,7 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>输出</td>
       <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
       <td><ul><li>不支持空Tensor<li>数据类型与入参`self`的数据类型保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
       <td>√</td>
@@ -118,9 +119,6 @@ aclnnStatus aclnnUpsampleNearest1d(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
-    入参`self`和出参`out`的数据类型不支持BFLOAT16。
   
 - **返回值：**
 

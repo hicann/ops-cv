@@ -13,7 +13,7 @@
 - 计算公式：
 
   - 计算流程：
-    1. 根据grid存储的（x，y）值，计算出映射到x上坐标，坐标和alignCorner、  paddingMode有关。
+    1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，坐标和alignCorners、paddingMode有关。
     2. 坐标根据输入的interpolateMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
   
   - 其中：
@@ -22,23 +22,24 @@
       输入input、grid网格、输出output的尺寸如下：
   
       $$
-      input: (N,C,D_{in},H_{in},W_{in})\\
-      grid: (N,D_{out},H_{out},W_{out},3)\\
-      output: (N,C,D_{out},H_{out},W_{out})
+      input: (N, C, D_{in}, H_{in}, W_{in})\\
+      grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
+      output: (N, C, D_{out}, H_{out}, W_{out})
       $$
   
-      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和  output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示  input像素位置信息为(x,y,z)，一般会将x、y、z的取值范围归一化到[-1,1]之间。
+      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
   
     - 2D场景：
-      input、grid、output的尺寸如下：
+      
+      输入input、grid网格、输出output的尺寸如下：
     
       $$
-      input: (N,C,H_{in},W_{in})\\
-      grid: (N,H_{out},W_{out},2)\\
-      output: (N,C,H_{out},W_{out})
+      input: (N, C, H_{in}, W_{in})\\
+      grid: (N, H_{out}, W_{out}, 2)\\
+      output: (N, C, H_{out}, W_{out})
       $$
   
-      其中input、grid、out中的N是一致的，input和output中的C是一致的，grid和output  中的H_{out}、W_{out}是一致的，grid最后一维大小为2，表示input像素位置信息为(x,  y)，一般会将x和y的取值范围归一化到[-1,1]之间，(-1,1)表示左上角坐标，(1,1)表示  右下角坐标。
+      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
     
     
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -49,9 +50,9 @@
   
     - 对input采样时，会根据interpolationMode进行不同处理：
   
-      - interpolationMode="bilinear"，取(x,y)周围四个坐标的加权平均值。
-      - interpolationMode="nearest"，表示取input中距离(x,y)最近的坐标值。
-      - interpolationMode="bicubic"，取(x,y)周围十六个坐标的加权平均值。
+      - interpolationMode="bilinear"，表示取input中(x, y)或者(x, y, z)周围四个坐标的加权平均值。
+      - interpolationMode="nearest"，表示取input中距离(x, y)或者(x, y, z)最近的坐标值。
+      - interpolationMode="bicubic"，表示取input中(x, y)或者(x, y, z)周围十六个坐标的加权平均值。
 
 ## 参数说明
 
@@ -90,12 +91,14 @@
       <td>可选属性</td>
       <td><ul><li>表示插值模式，对应公式描述中的`interpolationMode`。支持bilinear（双线性插值）、nearest（最邻近插值）、bicubic（双三次插值）。</li><li>默认值为"bilinear"。</li></ul></td><!--aclnn是三种 0：bilinear（双线性插值），1：nearest（最邻近插值），2：bicubic（双三次插值） -->
       <td>STRING</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>padding_mode</td>
       <td>可选属性</td>
       <td><ul><li>表示填充模式，对应公式描述中的`paddingMode`。支持zeros(0)、border(1)、reflection(2)三种模式。</li><li>默认值为"zeros"。</li></ul></td>
       <td>STRING</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
@@ -114,7 +117,7 @@
     <tr>
       <td>scheduler_mode</td>
       <td>可选属性</td>
-      <td><ul><li>调度模式，执行执行的操作方式。0：一般；1：滑动窗口。仅当channel_last的值为true时，配置为1有效。</li><li>默认值为1。</li></ul></td><!--IR中接口中默认值是1，描述中默认值是0，aclnn没有这个参数-->
+      <td><ul><li>调度模式，执行的操作方式。0：一般；1：滑动窗口。仅当channel_last的值为true时，配置为1有效。</li><li>默认值为1。</li></ul></td><!--IR中接口中默认值是1，描述中默认值是0，aclnn没有这个参数-->
       <td>INT</td>
       <td>-</td>
     </tr>
@@ -129,14 +132,6 @@
     <tr>
   </tbody></table>
 
-- <term>Atlas 推理系列产品 </term>：
-
-  - 2D场景下，需要同时满足以下条件：
-    - 输入和输出的数据类型仅支持FLOAT32。
-    - 属性`interpolation_mode`需要设置为`bilinear`。
-    - 属性`padding_mode`设置为`zeros`。
-    - 输入`x`的C轴的值为32或者(C轴的大小 * H轴的大小 * W轴的大小) < 20k。
-  - 不支持3D场景。
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>：2D场景下，数据类型不支持BFLOAT16。
 
@@ -149,7 +144,7 @@
 - `x`和`grid`的shape，所有维度都必须大于0。
 - 输入`x`的（D轴的大小 * H轴的大小 * W轴的大小） < INT32的最大值。
 - grid的输入值*图片（长或宽）大于24位的二进制数（16777216），采样点可能存在误差，精度可能产生偏差。
-- <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：如果grid存在超出[-1,1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
+- <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：如果grid存在超出[-1, 1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
 
 
 ## 调用说明

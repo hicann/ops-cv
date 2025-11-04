@@ -18,17 +18,17 @@
   
   $$
   scaleH =\begin{cases}
-  (x.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
+  (input.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
   1 / scalesH & alignCorners=false\&scalesH>0\\
-  x.dim(2) / outputSize[0] & otherwise
+  input.dim(2) / outputSize[0] & otherwise
   \end{cases}
   $$
   
   $$
   scaleW =\begin{cases}
-  (x.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
+  (input.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
   1 / scalesW & alignCorners=false\&scalesW>0\\
-  x.dim(3) / outputSize[1] & otherwise
+  input.dim(3) / outputSize[1] & otherwise
   \end{cases}
   $$
   
@@ -74,7 +74,7 @@
     <tr>
       <td>input</td>
       <td>输入</td>
-      <td>表示进行采样的输入张量，对应公式中的`x`。</td>
+      <td>表示进行采样的输入张量，对应公式中的`input`。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND</td><!--aclnn多增了一个NCHW-->
     </tr>

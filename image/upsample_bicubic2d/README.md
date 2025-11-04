@@ -33,6 +33,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - $f(h_i, w_j)$是原图像在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
     
@@ -77,7 +78,7 @@
       <td>output_size</td>
       <td>属性</td><!--aclnn是必选输入-->
       <td>指定输出空间大小，对应公式中的`outputSize`。size需要等于2，且各元素均大于0。表示指定`output`在H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
-      <td>LISTINT</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
@@ -91,14 +92,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
@@ -109,6 +110,7 @@
       <td>ND</td>
     </tr>
   </tbody></table>
+
 
 ## 约束说明
 

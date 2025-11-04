@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由四个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。<!--本接口相较于[aclnnUpsampleNearest2d](aclnnUpsampleNearest2d.md)，增加入参scalesH、scalesW，请根据实际情况选择合适的接口。 -->
+- 算子功能：对由四个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。如果输入shape为(N, C, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1])。<!--本接口相较于[aclnnUpsampleNearest2d](aclnnUpsampleNearest2d.md)，增加入参scalesH、scalesW，请根据实际情况选择合适的接口。 -->
 
 - 计算公式：
 
@@ -77,7 +77,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
     <tr>
       <td>self</td>
       <td>输入</td>
-      <td>公式中的`self`，表示进行上采样的输入数据。</td>
+      <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
       <td><ul><li>支持空Tensor。</li><li>当数据类型为DOUBLE、UINT8时，self的H轴和W轴均要满足小于2^24。</li><li>其他数据类型时，self的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
@@ -88,7 +88,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示指定`out`在H和W维度上的空间大小。</td>
-      <td><ul><li>各元素均不等于零</li></ul></td>
+      <td><ul><li>各元素均不等于零。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
       <td>2</td>
@@ -97,7 +97,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
     <tr>
       <td>scalesH</td>
       <td>输入</td>
-      <td>公式中的`scalesH`，指定空间大小纵轴的乘数。</td>
+      <td>表示指定空间大小纵轴的乘数，对应公式中的`scalesH`。</td>
       <td>-</td>
       <td>FLOAT32</td>
       <td>-</td>
@@ -107,7 +107,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
     <tr>
       <td>scalesW</td>
       <td>输入</td>
-      <td>公式中的`scalesW`，指定空间大小横轴的乘数。</td>
+      <td>表示指定空间大小横轴的乘数，对应公式中的`scalesW`。</td>
       <td>-</td>
       <td>FLOAT32</td>
       <td>-</td>
@@ -117,9 +117,9 @@ aclnnStatus aclnnUpsampleNearest2dV2(
     <tr>
       <td>out</td>
       <td>输出</td>
-      <td>公式中的`out`，表示进行上采样的输出结果。</td>
-      <td><ul><li>支持空tensor。</li><li>数据类型和数据格式需要与入参self的数据类型和数据格式保持一致。</li><li>当数据类型为FLOAT、BFLOAT16、FLOAT16时，out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
-      <td>FLOAT、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
+      <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式需要与入参self的数据类型和数据格式保持一致。</li><li>当数据类型为FLOAT32、BFLOAT16、FLOAT16时，out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -148,9 +148,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
-    入参`self`和出参`out`的数据类型不支持FLOAT、BFLOAT16。
 
 - **返回值**：
 

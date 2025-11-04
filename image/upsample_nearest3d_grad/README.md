@@ -44,14 +44,14 @@
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输出`grad_input`分别在N、C、D、H、和W维度上的空间大小。包含5个元素：[min_batch, channels, depth, height, width]。必须满足：input_size[0] == grad_output_tensor_size[0]；input_size[1] == grad_output_tensor_size[1]。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>表示输出`grad_input`分别在N、C、D、H和W维度上的空间大小。包含5个元素：[min_batch, channels, depth, height, width]。必须满足：input_size[0] == grad_output_tensor_size[0]；input_size[1] == grad_output_tensor_size[1]。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>output_size</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>表示输入`grad_output`在D、H和W维度上的空间大小。size大小为3，且各元素均大于零。 包含3个元素：[depth, height, width]。只能指定'scales'和'output_size'中的一个。必须满足：grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]；grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]；grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2]。</li><li>默认为空。</li></ul></td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td><ul><li>表示输入`grad_output`在D、H和W维度上的空间大小。size为3，且各元素均大于零。 包含3个元素：[depth, height, width]。只能指定'scales'和'output_size'中的一个。必须满足：grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]；grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]；grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2]。</li><li>默认为空。</li></ul></td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
@@ -59,7 +59,7 @@
       <td>scales</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width。对应公式中的`scales_d`和`scales_h`。</li><li>默认为空。</li></ul></td><!--aclnn删除只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

@@ -7,6 +7,7 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - **算子功能**：对由三个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
@@ -67,7 +68,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>self</td>
       <td>输入</td>
       <td>公式中的输入`self`，表示进行上采样的输入张量。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -97,7 +98,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>out</td>
       <td>输出</td>
       <td>公式中的输出`out`，表示采样后的输出张量。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式需要与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -127,9 +128,6 @@ aclnnStatus aclnnUpsampleNearestExact1d(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>：
-  
-    入参`self`和出参`out`的数据类型不支持BFLOAT16。
 
 - **返回值**：
 

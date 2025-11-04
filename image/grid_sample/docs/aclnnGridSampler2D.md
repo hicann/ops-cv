@@ -9,17 +9,18 @@
 
 ## 功能说明
 
-- 算子功能：提供一个输入tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。
+- 算子功能：提供一个输入Tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。
 - 计算公式：
-  input、grid、output的尺寸如下：
+  
+  输入input、grid网格、输出output的尺寸如下：
 
   $$
-  input: (N,C,H_{in},W_{in})\\
-  grid: (N,H_{out},W_{out},2)\\
-  output: (N,C,H_{out},W_{out})
+  input: (N, C, H_{in}, W_{in})\\
+  grid: (N, H_{out}, W_{out}, 2)\\
+  output: (N, C, H_{out}, W_{out})
   $$
 
-  其中input、grid、out中的N是一致的，input和output中的C是一致的，grid和output中的H_{out}、W_{out}是一致的，grid最后一维大小为2，表示input像素位置信息为(x,y)，一般会将x和y的取值范围归一化到[-1,1]之间，(-1,1)表示左上角坐标，(1,1)表示右下角坐标。
+  其中input、grid、out中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, 1)表示右下角坐标。
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
 
     - paddingMode=0，表示对越界位置用0填充。
@@ -28,9 +29,9 @@
 
   - 对input采样时，会根据interpolationMode进行不同处理：
 
-    - interpolationMode=0，如果(x,y)没有input对应坐标，则取(x,y)周围四个坐标的加权平均值。
-    - interpolationMode=1，表示取input中距离(x,y)最近的坐标值。
-    - interpolationMode=2，如果(x,y)没有input对应坐标，则取(x,y)周围十六个坐标的加权平均值。
+    - interpolationMode=0，如果(x, y)没有input对应坐标，则取(x, y)周围四个坐标的加权平均值。
+    - interpolationMode=1，表示取input中距离(x, y)最近的坐标值。
+    - interpolationMode=2，如果(x, y)没有input对应坐标，则取(x, y)周围十六个坐标的加权平均值。
 
 ## 函数原型
 
@@ -86,7 +87,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>input</td>
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>支持shape为(N,C,<em style='font-size: 14px'>H</em><em style='font-size: 10px'>in</em>,<em style='font-size: 14px'>W</em><em style='font-size: 10px'>in</em>)。H*W的最大值只支持INT32上界。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>in</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>in</em>)。H*W的最大值只支持INT32上界。`input`的shape最后两维的维度值不能为0。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -96,7 +97,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>grid</td>
       <td>输入</td>
       <td>采样的网络，对应公式中描述的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N,<em style='font-size: 14px'>H</em><em style='font-size: 10px'>out</em>,<em style='font-size: 14px'>W</em><em style='font-size: 10px'>out</em>,2)，且N与入参`input`的shape中的N一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 2)，且N与入参`input`的shape中的N一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -115,7 +116,7 @@ aclnnStatus aclnnGridSampler2D(
     <tr>
       <td>paddingMode</td>
       <td>输入</td>
-      <td>表示填充模式，即当（x,y）取值超过输入特征图采样范围时，返回一个特定值。对应公式描述中的`paddingMode`。</td>
+      <td>表示填充模式，即当(x, y)取值超过输入特征图采样范围时，返回一个特定值。对应公式描述中的`paddingMode`。</td>
       <td>支持0：zeros、1：border、2：reflection三种模式。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
@@ -136,7 +137,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>out</td>
       <td>输出</td>
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与input的数据类型一致。</li><li>支持shape为(N,C,<em style='font-size: 14px'>H</em><em style='font-size: 10px'>out</em>,<em style='font-size: 14px'>W</em><em style='font-size: 10px'>out</em>)，且N、C与input的shape中的N、C一致，<em style='font-size: 14px'>H</em><em style='font-size: 10px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 10px'>out</em>与grid的shape中的<em style='font-size: 14px'>H</em><em style='font-size: 10px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 10px'>out</em>一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与input的数据类型一致。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>)，且N、C与input的shape中的N、C一致，<em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>与grid的shape中的<em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -165,9 +166,6 @@ aclnnStatus aclnnGridSampler2D(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-  
-    入参`interpolationMode`不支持的插值模式2：bicubic（双三次插值）。
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     入参`interpolationMode`，仅当input数据类型为FLOAT32或者FLOAT16时支持2：bicubic（双三次插值）。
@@ -261,14 +259,13 @@ aclnnStatus aclnnGridSampler2D(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
 
 ## 约束说明
-- input的shape，后两维不能为0。
 - 输入`input`的（H轴的大小 * W轴的大小） < INT32的最大值。
 - grid的输入值*图片（长或宽）大于24位的二进制数（16777216），采样点可能存在误差，精度可能产生偏差。
-- 如果grid含有大量超过[-1,1]范围的数据，使用zeros或者border的填充策略时，计算结果中的值会大量重复。
+- 如果grid含有大量超过[-1, 1]范围的数据，使用zeros或者border的填充策略时，计算结果中的值会大量重复。
 - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-  - 如果grid存在超出[-1,1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
+  - 如果grid存在超出[-1, 1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
   - 使用bilinear或者bicubic插值时，针对FLOAT16数据类型，需要使用workspace内存。
-- <term>Atlas 训练系列产品</term>：使用bilinear插值时，针对FLOAT16数据类型，需要使用workspace内存。
+
 
 ## 调用示例
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。

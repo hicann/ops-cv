@@ -44,7 +44,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -120,14 +120,14 @@
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小，对应公式中的`inputSize`。size大小为5，且各元素均大于零。 </td><!--这个IR原型和aclnn中的解释有冲突，待确认-->
+      <td>表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小，对应公式中的`inputSize`。size为5，且各元素均大于零。 </td><!--这个IR原型和aclnn中的解释有冲突，待确认-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>output_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输入`gradOut`在D、H和W维度上的空间大小，对应公式中的`outputSize`。size大小为3，且各元素均大于零。</td>
+      <td>表示输入`grad_output`在D、H和W维度上的空间大小，对应公式中的`outputSize`。size为3，且各元素均大于零。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>

@@ -33,6 +33,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - $f(h_i, w_j)$是原图像在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
     
@@ -103,7 +104,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -153,7 +154,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与`self`的数据类型和数据格式一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -180,6 +181,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
     </tr>
   </tbody>
   </table>
+  
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     参数`self`、`out`的数据格式不支持NHWC。
@@ -226,7 +228,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>self和out的shape不是4维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于2。</td>
+      <td>outputSize的size不等于2。</td>
     </tr>
     <tr>
       <td>self在C、H、W维度上的大小不大于0。</td>

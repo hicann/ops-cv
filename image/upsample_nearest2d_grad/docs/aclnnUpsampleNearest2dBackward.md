@@ -70,11 +70,11 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>gradOut</td>
       <td>输入</td>
-      <td>表示反向计算的的梯度Tensor，对应公式中的`gradOutput`。</td>
+      <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
       <td><ul><li>H / W轴不支持空Tensor
       <li>支持NCHW和NHWC。
       <li>输入维度必须是4维</td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -83,7 +83,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入gradOut在H和W维度上的空间大小。</td>
-      <td>size大小为2，且各元素均大于零。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -93,7 +93,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示指定`grad_input`在H和W维度上的空间大小。</td>
-      <td><ul><li>size大小为4，且最后两个元素均大于零。
+      <td><ul><li>size为4，且最后两个元素均大于零。
       <li>当输入gradOut的数据格式为NCHW时，表示输出gradInput分别在N、C、H和W维度上的空间大小；当输入gradOut的数据格式为NHWC时，表示输出gradInput分别在N、H、W和C维度上的空间大小。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
@@ -103,7 +103,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>scalesH</td>
       <td>输入</td>
-      <td>表示输出gradInput的height维度乘数,对应公式中的`scalesH`。</td>
+      <td>表示输出gradInput的height维度乘数，对应公式中的`scalesH`。</td>
       <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
@@ -113,7 +113,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>scalesW</td>
       <td>输入</td>
-      <td>表示输出gradInput的width维度乘数,对应公式中的`scalesW`。</td>
+      <td>表示输出gradInput的width维度乘数，对应公式中的`scalesW`。</td>
       <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
@@ -125,7 +125,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`</td>
       <td><ul><li>H/W轴不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li><li>支持NCHW和NHWC。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -153,9 +153,6 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
-    入参`gradOut`和出参`gradInput`的数据类型仅支持FLOAT16。
   
 - **返回值：**
 
@@ -192,17 +189,17 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     </tr>
     <tr><td>gradOut的维度不为4维。</td>
     </tr>
-    <tr><td>outputSize的size大小不等于2。</td>
+    <tr><td>outputSize的size不等于2。</td>
     </tr>
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>inputSize的size大小不等于4。</td>
+    <tr><td>inputSize的size不等于4。</td>
     </tr>
     <tr> <td>inputSize最后两个元素中的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
-    <tr><td>gradOut在H、W维度上的size大小与outputSize[0]和outputSize[1]未完全相同。</td>
+    <tr><td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
     </tr>
     <tr><td>gradOut和gradInput的N/C轴的维度大小不相等。</td>
     </tr>

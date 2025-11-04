@@ -73,7 +73,7 @@ aclnnStatus aclnnUpsampleNearest2d(
       <td>self</td>
       <td>输入</td>
       <td>公式中的`self`，表示进行上采样的输入数据。</td>
-      <td><ul><li>不支持空tensor。</li><li>当数据类型为DOUBLE、UINT8时，self的H轴和W轴均要满足小于2^24。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据类型为DOUBLE、UINT8时，self的H轴和W轴均要满足小于2^24。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -93,7 +93,7 @@ aclnnStatus aclnnUpsampleNearest2d(
       <td>out</td>
       <td>输出</td>
       <td>公式中的`out`，表示进行上采样的输出结果。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式需要与入参self的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参self的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -122,10 +122,6 @@ aclnnStatus aclnnUpsampleNearest2d(
     </tr>
   </tbody>
   </table>
-
-- <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-
-  入参`self`和出参`out`的数据类型不支持FLOAT、BFLOAT16。
 
   
 - **返回值**：

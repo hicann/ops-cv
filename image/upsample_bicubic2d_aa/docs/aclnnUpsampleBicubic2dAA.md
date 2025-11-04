@@ -33,6 +33,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - 如果$scaleH >= 1$，则$kH = 1/scaleH$，否则$kH = 4$
   - 如果$scaleW >= 1$，则$kW = 1/scaleW$，否则$kW = 4$
   - $h_i = |h| + i$
@@ -107,7 +108,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`x`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -116,7 +117,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>outputSize</td>
       <td>输入</td>
       <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size需要等于2。</td><!--，且各元素均大于0，不加aa的有这个限制，这个是否保留-->
+      <td>outputSize的size为2。</td><!--，且各元素均大于0，不加aa的有这个限制，这个是否保留-->
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -157,7 +158,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`x`的数据类型一致。</li></ul></td>
-      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
+      <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>

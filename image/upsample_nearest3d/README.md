@@ -21,7 +21,7 @@
     scale = self.dim / outputSize
     $$
     
-    那么，对于out的某个方向上面的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
     x' = \min(\lfloor x * scale \rfloor, self.dim(2) - 1)
@@ -69,7 +69,7 @@
     <tr>
       <td>output_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`outputSize`。size大小为3，各元素均大于零。表示输出`y`在D、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，删除：只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
+      <td>指定输出空间大小，对应公式中的`outputSize`。size为3，各元素均大于零。表示输出`y`在D、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，删除：只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
@@ -89,8 +89,7 @@
     </tr>
   </tbody></table>
 
-<!--aclnn对比IR少了UINT8，差异是否要体现-->
-<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
+
 
 ## 约束说明
 

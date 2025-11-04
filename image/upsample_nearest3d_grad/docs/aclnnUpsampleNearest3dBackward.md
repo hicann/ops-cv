@@ -7,13 +7,14 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：[aclnnUpsampleNearest3d](../../upsample_nearest3d/docs/aclnnUpsampleNearest3d.md)的反向计算。
 - 计算公式：
 
   $$
-  gradInput(N, C, D, H, W) += gradOutput( N, C, ceil ( scalesD * D ), ceil ( scalesH * H  ),  ceil ( scalesW * W ))
+  gradInput(N, C, D, H, W) += gradOut( N, C, ceil ( scalesD * D ), ceil ( scalesH * H  ),  ceil ( scalesW * W ))
   $$
 
 ## 函数原型
@@ -68,8 +69,8 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>gradOut</td>
       <td>输入</td>
-      <td>公式中的`gradOutput`，表示反向计算的梯度Tensor。</td>
-      <td><ul><li>不支持空tensor。</li></ul></td>
+      <td>表示反向计算的梯度Tensor，对应公式中的`gradOut`。</td>
+      <td><ul><li>不支持空Tensor。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -78,7 +79,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>表示输入`grad_output`在D、H和W维度上的空间大小。size大小为3，且各元素均大于零。</td>
+      <td>表示输入`gradOut`在D、H和W维度上的空间大小。size为3，且各元素均大于零。</td>
       <td>-</td>
       <td>INT64</td>
       <td>-</td>
@@ -88,7 +89,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>inputSize</td>
       <td>输入</td>
-      <td>表示输出`grad_input`分别在N、C、D、H、和W维度上的空间大小。</td>
+      <td>表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小。</td>
       <td>-</td>
       <td>INT64</td>
       <td>-</td>
@@ -98,7 +99,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>scalesD</td>
       <td>输入</td>
-      <td>公式中的`scalesD`，表示输出gradInput的depth维度乘数。</td>
+      <td>表示输出`gradInput`的depth维度乘数，对应公式中的`scalesD`。</td>
       <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
@@ -108,7 +109,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>scalesH</td>
       <td>输入</td>
-      <td>公式中的`scalesH`，表示输出gradInput的height维度乘数。</td>
+      <td>表示输出`gradInput`的height维度乘数，对应公式中的`scalesH`。</td>
       <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
@@ -118,7 +119,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>scalesW</td>
       <td>输入</td>
-      <td>公式中的`scalesW`，表示输出gradInput的width维度乘数。</td>
+      <td>表示输出`gradInput`的width维度乘数，对应公式中的`scalesW`。</td>
       <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
@@ -128,8 +129,8 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     <tr>
       <td>gradInput</td>
       <td>输出</td>
-      <td>公式中的`gradInput`，表示反向计算的输出张量。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式与入参gradOut的数据类型和数据格式保持一致。</li></ul></td>
+      <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -194,28 +195,28 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
       <td>gradOut的维度不为5维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于3。</td>
+      <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
     </tr>
     <tr>
-      <td>inputSize的size大小不等于5。</td>
+      <td>inputSize的size不等于5。</td>
     </tr>
     <tr>
       <td>inputSize的某个元素值不大于0。</td>
     </tr>
     <tr>
-      <td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+      <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在D、H、W维度上的size大小与outputSize[0]、outputSize[1]和outputSize[2]未完全相同。</td>
+      <td>gradOut在D、H、W维度上的size与outputSize[0]、outputSize[1]、outputSize[2]不完全相同。</td>
     </tr>
     <tr>
-      <td>gradInput在N、C维度的size大小与inputSize[0]、inputSize[1]未完全相同。</td>
+      <td>gradInput在N、C维度的size与inputSize[0]、inputSize[1]不完全相同。</td>
     </tr>
     <tr>
-      <td>gradInput在D、H、W维度的size大小与inputSize[2]、inputSize[3]、inputSize[4]未完全相同。</td>
+      <td>gradInput在D、H、W维度上的size与inputSize[2]、inputSize[3]、inputSize[4]不完全相同。</td>
     </tr>                                    
   </tbody></table>
 

@@ -7,10 +7,9 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
-
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
+- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。
 
 - 计算公式：
   
@@ -68,10 +67,10 @@ aclnnStatus aclnnUpsampleNearest1dV2(
     <tr>
       <td>self</td>
       <td>输入</td>
-      <td>表示进行上采样的输入数据，对应公式中的`self`</td>
+      <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。</li>
       <li>输入维度必须是3维。self的所有轴取值均要满足小于等于(2^31-1)，当数据类型为DOUBLE、UINT8时，self的L轴还需要同时满足小于等于(2^24)。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
       <td>√</td>
@@ -80,7 +79,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输出out在L维度上的空间大小。</td>
-      <td>size大小为1，且取值大于0。</td>
+      <td>size为1，且取值大于0。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -89,7 +88,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
     <tr>
       <td>scaleL</td>
       <td>输入</td>
-      <td>指定空间大小的乘数，公式中的`scales`</td>
+      <td>表示指定空间大小的乘数，对应公式中的`scales`。</td>
       <td>-</td>
       <td>FLOAT</td>
       <td>-</td>
@@ -99,9 +98,9 @@ aclnnStatus aclnnUpsampleNearest1dV2(
     <tr>
       <td>out</td>
       <td>输出</td>
-      <td>表示进行上采样的输出结果，对应公式中的`out`</td>
+      <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型与入参`self`的数据类型保持一致。out的所有轴取值均要满足小于等于(2^31-1)，当数据类型为DOUBLE、UINT8时，out的L轴还需要同时满足小于等于(2^24)。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
       <td>√</td>
@@ -129,9 +128,6 @@ aclnnStatus aclnnUpsampleNearest1dV2(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品、Atlas 训练系列产品</term>：
-  
-    入参`self`和出参`Out`的数据类型不支持BFLOAT16。
   
 - **返回值：**
 

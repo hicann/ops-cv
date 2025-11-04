@@ -7,20 +7,22 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：提供一个输入张量input，以及一个对应的grid网格，根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到grid指定的位置，得到最终的输出。
 - 计算公式：
+  
   输入input、grid网格、输出output的尺寸如下：
 
   $$
-  input: (N,C,D_{in},H_{in},W_{in})\\
-  grid: (N,D_{out},H_{out},W_{out},3)\\
-  output: (N,C,D_{out},H_{out},W_{out})
+  input: (N, C, D_{in}, H_{in}, W_{in})\\
+  grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
+  output: (N, C, D_{out}, H_{out}, W_{out})
   $$
 
 
-  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x,y,z)，一般会将x、y、z的取值范围归一化到[-1,1]之间。对于超出范围的坐标，会根据paddingMode进行不同处理：
+  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。对于超出范围的坐标，会根据paddingMode进行不同处理：
   - paddingMode=0，表示对越界位置用0填充。
   - paddingMode=1，表示对越界位置用边界值填充。
   - paddingMode=2，表示对越界位置用边界值的对称值填充。
@@ -89,7 +91,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>grid</td>
       <td>输入</td>
       <td>采样的网络，对应公式中描述的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N,<em style='font-size: 14px'>D</em><em style='font-size: 10px'>out</em>,<em style='font-size: 14px'>H</em><em style='font-size: 10px'>out</em>,<em style='font-size: 14px'>W</em><em style='font-size: 10px'>out</em>,3)，且N与入参`input`的shape中的N一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>D</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 3)，且N与入参`input`的shape中的N一致。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>5</td>
@@ -157,10 +159,6 @@ aclnnStatus aclnnGridSampler3D(
     </tr>
   </tbody>
   </table>
-
-  - <term>Atlas 训练系列产品</term>：
-  
-    参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
   
 - **返回值**：
 

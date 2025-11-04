@@ -77,8 +77,8 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     <tr>
       <td>gradOutput</td>
       <td>输入</td>
-      <td>表示反向计算的的梯度Tensor，对应公式中的`gradOutput`。</td>
-      <td>不支持空tensor。</td>
+      <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
+      <td>不支持空Tensor。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -87,8 +87,8 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>表示输入`gradOut`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td>size大小为3，且各元素均大于零。</td>
+      <td>表示输入`gradOutput`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
+      <td>size为3，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -98,7 +98,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小，对应公式中的`inputSize`。</td>
-      <td>size大小为5，且各元素均大于零。</td>
+      <td>size为5，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -138,7 +138,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的输出`gradInput`。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -202,25 +202,25 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>gradOut的维度不为5维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于3。</td>
+      <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
     </tr>
     <tr>
-      <td>inputSize的size大小不等于5。</td>
+      <td>inputSize的size不等于5。</td>
     </tr>
     <tr>
-      <td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+      <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在D、H、W维度上的size大小与outputSize[0]、outputSize[1]和outputSize[2]未完全相同。</td>
+      <td>gradOut在D、H、W维度上的size与outputSize[0]、outputSize[1]、outputSize[2]不完全相同。</td>
     </tr>
     <tr>
-      <td>gradInput在N、C维度的size大小与inputSize[0]、inputSize[1]未完全相同。</td>
+      <td>gradInput在N、C维度的size与inputSize[0]、inputSize[1]不完全相同。</td>
     </tr>
     <tr>
-      <td>gradInput在D、H、W维度的size大小与inputSize[2]、inputSize[3]、inputSize[4]未完全相同。</td>
+      <td>gradInput在D、H、W维度上的size与inputSize[2]、inputSize[3]、inputSize[4]不完全相同。</td>
     </function>
   </body>
 </html>

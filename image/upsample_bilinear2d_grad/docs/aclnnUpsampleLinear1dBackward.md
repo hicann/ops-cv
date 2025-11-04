@@ -27,7 +27,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: <!--这个点是不是只有x啊？-->
+    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: <!--这个点是不是只有x啊？-->
     
     $$
     x' =\begin{cases}
@@ -50,7 +50,7 @@
     - 假设：正向插值的输出图像out $(x)$受原图像input $(x_i)$影响，则有:
   
       $$
-      gradInput(x_i) += gradOutput(x) * lambd(x_i)
+      gradInput(x_i) += gradOut(x) * lambd(x_i)
       $$
 
 ## 函数原型
@@ -105,10 +105,10 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     <tr>
       <td>gradOut</td>
       <td>输入</td>
-      <td>表示进行上采样的输入张量，对应公式中的`gradOutput`。</td>
+      <td>表示进行上采样的输入张量，对应公式中的`gradOut`。</td>
       <td><ul><li>不支持空Tensor。</li>
       <li>当数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
       <td>3</td>
       <td>√</td>
@@ -117,7 +117,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入`gradOut`在L维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td><ul><li>size大小为1，且取值大于0。</li></ul></td>
+      <td><ul><li>size为1，且取值大于0。</li></ul></td>
       <td>INT64、INT32</td>
       <td>-</td>
       <td>-</td>
@@ -127,7 +127,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出out分别在N、C、L维度上的空间大小，对应公式中的`inputSize`</td>
-      <td><ul><li>size大小为3，且各元素均大于零。</td>
+      <td><ul><li>size为3，且各元素均大于零。</td>
       <td>INT64、INT32</td>
       <td>-</td>
       <td>-</td>
@@ -159,7 +159,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor<li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL</td>
       <td>3</td>
       <td>√</td>
@@ -187,12 +187,9 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>:
-    - 入参`gradOut`和出参`Out`的数据类型仅支持FLOAT、FLOAT16。
-    - 入参`gradOut`的数据类型不支持ND。
   
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>:
-    - 入参`gradOut`：当gradOut的shape与inputSize的shape不相同时，数据类型仅支持FLOAT、FLOAT16。
+    - 入参`gradOut`：当gradOut的shape与inputSize的shape不相同时，数据类型仅支持FLOAT32、FLOAT16。
     - 入参`gradOut`的数据类型不支持ND。
   
 
@@ -231,17 +228,17 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     </tr>
     <tr><td>gradOut的维度不为3维。</td>
     </tr>
-    <tr><td>outputSize的size大小不等于1。</td>
+    <tr><td>outputSize的size不等于1。</td>
     </tr>
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>inputSize的size大小不等于3。</td>
+    <tr><td>inputSize的size不等于3。</td>
     </tr>
     <tr><td>inputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
-    <tr><td>gradOut在L维度上的size大小与outputSize[0]不同。</td>
+    <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>
     <tr><td>gradOut和out的N/C轴的维度大小不相等。</td>
     </tr>

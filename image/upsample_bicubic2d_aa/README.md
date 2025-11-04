@@ -33,6 +33,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - 如果$scaleH >= 1$，则$kH = 1/scaleH$，否则$kH = 4$
   - 如果$scaleW >= 1$，则$kW = 1/scaleW$，否则$kW = 4$
   - $h_i = |h| + i$
@@ -81,7 +82,7 @@
       <td>output_size</td>
       <td>属性</td><!--aclnn是必选输入-->
       <td>指定输出空间大小，对应公式中的`outputSize`。size需要等于2。表示指定`y`在H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
-      <td>LISTINT</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
@@ -95,14 +96,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为0.0。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为0.0。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

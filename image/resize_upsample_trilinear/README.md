@@ -42,7 +42,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -112,7 +112,7 @@
     <tr>
       <td>output_size</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>表示指定`output`在H和W维度上的空间大小，对应公式中的`outputSize`。size大小为3，且各元素均大于零。</li><li>默认值为空。</li></ul></td>
+      <td><ul><li>表示指定`output`在H和W维度上的空间大小，对应公式中的`outputSize`。size为3，且各元素均大于零。</li><li>默认值为空。</li></ul></td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
@@ -127,21 +127,21 @@
       <td>scales_d</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的depth维度乘数，对应公式中的`scales_d`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scales_h`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scales_w`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
@@ -153,9 +153,6 @@
     </tr>
   </tbody></table>
 
-<term>Atlas 推理系列产品</term>：
-- 输入和输出的数据类型不支持BFLOAT16。
-- 入参`input`不支持输入inf、-inf。<!--aclnn中的约束-->
 
 ## 约束说明
 

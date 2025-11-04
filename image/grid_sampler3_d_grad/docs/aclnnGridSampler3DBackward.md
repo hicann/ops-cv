@@ -7,14 +7,15 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：[aclnnGridSampler3D](../../grid_sample/docs/aclnnGridSampler3D.md)的反向传播，完成张量input与张量grid的梯度计算。
 - 计算公式：
 
   - 计算流程：
-    1. 根据grid存储的(x,y)值，计算出映射到x上坐标，坐标和alignCorner、  paddingMode有关。
-    2. 坐标根据输入的interpolateMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
+    1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，坐标和alignCorners、paddingMode有关。
+    2. 坐标根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
@@ -23,14 +24,14 @@
       grad、input、grid、dx、dgrid的尺寸如下：
   
       $$
-      grad: (N,C,D_{in},H_{in},W_{in})\\
-      input: (N,C,D_{in},H_{in},W_{in})\\
-      grid: (N,D_{out},H_{out},W_{out},3)\\
-      dx: (N,C,D_{in},H_{in},W_{in})\\
-      dgrid: (N,D_{out},H_{out},W_{out},3)
+      grad: (N, C, D_{in}, H_{in}, W_{in})\\
+      input: (N, C, D_{in}, H_{in}, W_{in})\\
+      grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
+      dx: (N, C, D_{in}, H_{in}, W_{in})\\
+      dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，input和dx中的C是一致的，grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示x像素位置信息为(x,y,z)，一般会将x、y、z的取值范围归一化到[-1,1]之间。
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，grad、input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
    
     
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -41,8 +42,8 @@
   
     - 对input采样时，会根据interpolationMode进行不同处理：
   
-      - interpolationMode="bilinear"，取(x,y)周围四个坐标的加权平均值。
-      - interpolationMode="nearest"，表示取input中距离(x,y)最近的坐标值。
+      - interpolationMode="bilinear"，表示取input中(x, y, z)周围四个坐标的加权平均值。
+      - interpolationMode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
 
 ## 函数原型
 
@@ -110,7 +111,7 @@ aclnnStatus aclnnGridSampler3DBackward(
       <td>input</td>
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>当数据类型为DOUBLE时，数据格式不支持NDHWC。</li><li>input、grid、gradOutput的N轴的值保持一致，input和gradOutput的C轴的值保持一致，input的D，H，W值不可为0。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>当数据类型为DOUBLE时，数据格式不支持NDHWC。</li><li>`input`和`gradOutput`的shape保持一致，且`input`的D，H，W值不可为0。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -120,7 +121,7 @@ aclnnStatus aclnnGridSampler3DBackward(
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与input的数据类型一致。</li><li>C维的值必须为3，且需满足grid和gradOutput的D轴的值保持一致，grid和gradOutput的H轴的值保持一致，grid和gradOutput的W轴的值保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>`grid`的N轴和`gradOutput`的N轴值相同，C轴的值必须为3。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>NDHWC</td>
       <td>5</td>
@@ -129,7 +130,7 @@ aclnnStatus aclnnGridSampler3DBackward(
     <tr>
       <td>interpolationMode</td>
       <td>输入</td>
-      <td>表示插值模式，对应公式描述中的`interpolation_mode`。</td>
+      <td>表示插值模式，对应公式描述中的`interpolationMode`。</td>
      <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）两种模式。</td>
       <td>INT64</td>
       <td>-</td>
@@ -139,7 +140,7 @@ aclnnStatus aclnnGridSampler3DBackward(
     <tr>
       <td>paddingMode</td>
       <td>输入</td>
-      <td>表示填充模式，即当grid有超过[-1，1]范围的值，则按照paddingMode定义的方式处理相应的输出。对应公式描述中的`padding_mode`。</td>
+      <td>表示填充模式，即当grid有超过[-1，1]范围的值，则按照paddingMode定义的方式处理相应的输出。对应公式描述中的`paddingMode`。</td>
       <td>支持0：zeros、1：border、2：reflection三种模式。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
@@ -149,7 +150,7 @@ aclnnStatus aclnnGridSampler3DBackward(
     <tr>
       <td>alignCorners</td>
       <td>输入</td>
-      <td>表示设定特征图坐标与特征值的对应方式，对应公式描述中的`align_corners`。</td>
+      <td>表示设定特征图坐标与特征值的对应方式，对应公式描述中的`alignCorners`。</td>
       <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
@@ -209,9 +210,6 @@ aclnnStatus aclnnGridSampler3DBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-  
-    参数`gradOutput`、`input`、`grid`、`inputGrad`、`gridGrad`的数据类型不支持BFLOAT16。
 
 - **返回值**：
 

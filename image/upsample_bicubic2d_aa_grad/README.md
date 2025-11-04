@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[UpsampleBicubic2dAA](../upsample_bicubic2d_aa/README.md)的反向传播。如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。
+- 算子功能：[UpsampleBicubic2dAA](../upsample_bicubic2d_aa/README.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
   
@@ -34,6 +34,7 @@
   $$
   
   其中：
+  - i和j是$W(i, j)$的索引变量。
   - $f(h_i, w_j)$是gradOutput在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
     
@@ -77,15 +78,15 @@
     <tr>
       <td>output_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输入`grad_output`在H和W维度上的空间大小，对应公式中的`outputSize`。size大小为2，且各元素均大于零。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
-      <td>LISTINT</td>
+      <td>表示输入`grad_output`在H和W维度上的空间大小，对应公式中的`outputSize`。size为2，且各元素均大于零。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输出`grad_input`分别在N、C、H和W维度上的空间大小，对应公式中的`inputSize`。size大小为4，且各元素均大于零。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
-      <td>LISTINT</td>
+      <td>表示输出`grad_input`分别在N、C、H和W维度上的空间大小，对应公式中的`inputSize`。size为4，且各元素均大于零。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
@@ -99,14 +100,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td><!--aclnn有次约束，看看是否合入：不能传入负值。-->
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td><!--aclnn有次约束，看看是否合入：不能传入负值。-->
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

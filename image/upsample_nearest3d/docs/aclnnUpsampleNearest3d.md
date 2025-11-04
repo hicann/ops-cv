@@ -7,6 +7,7 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
@@ -21,7 +22,7 @@
     scale = self.dim / outputSize
     $$
     
-    那么，对于out的某个方向上面的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
     x' = \min(\lfloor x * scaleD \rfloor, self.dim(2) - 1)
@@ -94,8 +95,8 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量。对应公式中的`self`。</td>
-      <td><ul><li>不支持空tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
-      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
       <td>√</td>
@@ -144,8 +145,8 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中`out`的点p坐标。</td>
-      <td><ul><li>不支持空tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE</td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>输入和输出的N轴和C轴相同。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
       <td>√</td>
@@ -174,13 +175,7 @@ aclnnStatus aclnnUpsampleNearest3d(
   </tbody>
   </table>
 
-    - <term>Atlas 推理系列产品</term>：
-    
-      入参`self`和出参`out`的数据类型不支持BFLOAT16、DOUBLE。
-    - <term>Atlas 训练系列产品</term>：
-    
-      入参`self`和出参`out`的数据类型不支持BFLOAT16。
-
+  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：参数`x`、`out`的数据类型不支持UINT8。
   
 - **返回值：**
 
@@ -214,7 +209,7 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>self的shape不是5维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于3。</td>
+      <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
       <td>self在D、H、W维度上的size不大于0。</td>
@@ -226,7 +221,7 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>self的C维度为0。</td>
     </tr>
     <tr>
-      <td>out的shape不等于由self和outputSize推导得到shape。</td>
+      <td>out的shape中D、H、W不等于outputSize。</td>
     </tr>                    
   </tbody></table>
 
@@ -275,9 +270,7 @@ aclnnStatus aclnnUpsampleNearest3d(
 
 ## 约束说明
 
-参数outputSize与参数scalesD、scalesH、scalesW，在使用时二选一，即：
-- 当入参scalesD、scalesH、scalesW，其中一个参数的值小于等于0时，使用入参outputSize的参数值。
-- 当入参scalesD、scalesH、scalesW的值都大于0时，使用入参scalesD、scalesH、scalesW的参数值，且$outputSize=[floor(self\_D * scalesD)，floor(self\_H * scalesH)，floor(self\_W * scalesW)]$。
+无。
 
 ## 调用示例
 

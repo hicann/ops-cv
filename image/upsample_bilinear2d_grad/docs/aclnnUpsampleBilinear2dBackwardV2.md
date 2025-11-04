@@ -11,8 +11,8 @@
 
 - 算子功能：[aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。
 
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，支持使用scale计算，以及增加outputSize与scale的约束，请根据实际情况选择合适的接口。
-  - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，无变更。
+  本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，支持使用scale计算，以及增加outputSize与scale的约束，请根据实际情况选择合适的接口。
+
 
 - 计算公式：
   - 正向的核心算法逻辑：
@@ -38,7 +38,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -131,7 +131,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
       <td>不支持空Tensor。</td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -140,7 +140,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入`gradOutput`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size大小为2，且各元素均大于零。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -150,7 +150,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出`out`分别在N、C、H和W维度上的空间大小。对应公式中的`inputSize`。</td>
-      <td>size大小为4，且各元素均大于零。</td>
+      <td>size为4，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -191,7 +191,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式需要与入参`gradOut`的数据类型、数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -219,10 +219,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：
-  
-    参数`gradOut`、`out`的数据类型不支持BFLOAT16.
-  
+
 
 - **返回值**
 
@@ -260,22 +257,22 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>gradOut的维度不为4维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于2。</td>
+      <td>outputSize的size不等于2。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值小于1。</td>
     </tr>
     <tr>
-      <td>inputSize的size大小不等于4。</td>
+      <td>inputSize的size不等于4。</td>
     </tr>
     <tr>
       <td>inputSize的某个元素值小于1。</td>
     </tr>
     <tr>
-      <td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+      <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在H、W维度上的size大小与outputSize[0]和outputSize[1]未完全相同。</td>
+      <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
     </tr>
     <tr>
       <td>gradOut和out的N/C轴的维度大小不相等。</td>

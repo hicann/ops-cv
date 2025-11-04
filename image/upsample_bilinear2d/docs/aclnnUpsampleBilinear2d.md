@@ -7,6 +7,7 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：对由多个输入通道组成的输入信号应用2D双线性上采样。
@@ -37,7 +38,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -123,7 +124,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。</li><li>当数据类型为DOUBLE时，仅支持NHWC格式。</li></ul></td>
-      <td>FLOAT、BFLOAT16、FLOAT16、DOUBLE</td>
+      <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -132,7 +133,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
       <td>outputSize</td>
       <td>输入</td>
       <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size大小为2。</td><!--，且各元素均大于0-->
+      <td>size为2。</td><!--，且各元素均大于0-->
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -173,7 +174,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li><li>当数据类型为DOUBLE时，仅支持NHWC格式。</li><li>shape仅支持4维，且N轴和C轴与输入self shape的N轴和C轴保持一致；当outputSize输入的值有效时，H轴和W轴与参数outputSize对应轴的值保持一致；当outputSize输入的值不生效时（不生效的场景请参见<a href="#约束说明">约束说明</a>），H轴和W轴与计算后得到的outputSize对应轴的值保持一致。</li></ul></td>
-      <td>FLOAT、BFLOAT16、FLOAT16、DOUBLE</td>
+      <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
       <td>√</td>
@@ -201,9 +202,6 @@ aclnnStatus aclnnUpsampleBilinear2d(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-    
-    参数`self`、`out`的数据类型不支持BFLOAT16。
 
 - **返回值**：
 

@@ -7,9 +7,10 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
+- 算子功能：对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。
 
 - 计算公式：
   - 核心算法逻辑：
@@ -27,7 +28,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x)，映射回原始图像中的点记为q(x')，则有关系: 
+    那么，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -99,10 +100,10 @@ aclnnStatus aclnnUpsampleLinear1d(
     <tr>
       <td>self</td>
       <td>输入</td>
-      <td>表示进行上采样的输入张量,对应公式中的`self`。</td>
+      <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。
-      <li>当数据格式为ND时，默认按照NCL格式处理</td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <li>当数据格式为ND时，默认按照NCL格式处理。</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
       <td>3</td>
       <td>√</td>
@@ -110,8 +111,8 @@ aclnnStatus aclnnUpsampleLinear1d(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>表示输出out在L维度上的空间大小,对应公式中的`outputSize`。</td>
-      <td><ul><li>size大小为1，且取值大于0。</li></ul></td>
+      <td>表示输出out在L维度上的空间大小，对应公式中的`outputSize`。</td>
+      <td><ul><li>size为1，且取值大于0。</li></ul></td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -120,8 +121,8 @@ aclnnStatus aclnnUpsampleLinear1d(
     <tr>
       <td>alignCorners</td>
       <td>输入</td>
-      <td>bool类型参数,决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；
+      <td>bool类型参数，决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
+      <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。</li>
       <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
       <td>-</td>
       <td>-</td>
@@ -142,8 +143,8 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor<li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td><ul><li>不支持空Tensor。<li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
       <td>3</td>
       <td>√</td>
@@ -171,9 +172,6 @@ aclnnStatus aclnnUpsampleLinear1d(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-    
-    入参`x`和出参`Out`的数据类型不支持BFLOAT16。
   
 - **返回值：**
 
@@ -207,9 +205,9 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>self的数据类型和数据格式不在支持的范围之内。 </li>
       <tr> <td>self和out的数据类型不一致。 </li>
        <tr><td>self和out的维度不为3维。 </li>
-       <tr><td>outputSize的size大小不等于1。 </li>
+       <tr><td>outputSize的size不等于1。 </li>
        <tr><td>outputSize的某个元素值小于1。 </li>
-       <tr><td>out在L维度上的size大小与outputSize[0]不完全相同。 </li>
+       <tr><td>out在L维度上的size与outputSize[0]不完全相同。 </li>
       </td>
     </tr>
   </tbody></table>

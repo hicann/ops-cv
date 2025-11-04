@@ -7,6 +7,7 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：[aclnnUpsampleBilinear2dAA](../../upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md)的反向传播。
@@ -87,7 +88,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 ## aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize
 
-* **参数说明**：
+- **参数说明**：
 
   <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
   <col style="width: 146px">
@@ -116,7 +117,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -125,7 +126,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入`gradOutput`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size大小为2，且各元素均大于零。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -135,7 +136,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出`out`分别在N、C、H和W维度上的空间大小。对应公式中的`inputSize`。</td>
-      <td>size大小为4，且各元素均大于零。</td>
+      <td>size为4，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -176,7 +177,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -240,13 +241,13 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>gradOutput的shape不是4维。</td>
     </tr>
     <tr>
-      <td>outputSize的size大小不等于2。</td>
+      <td>outputSize的size不等于2。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
     </tr>
     <tr>
-      <td>inputSize的size大小不等于4。</td>
+      <td>inputSize的size不等于4。</td>
     </tr>
     <tr>
       <td>inputSize的某个元素值不大于0。</td>

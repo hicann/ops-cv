@@ -4,7 +4,6 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
@@ -22,7 +21,7 @@
     scale = self.dim / outputSize
     $$
     
-    那么，对于out的某个方向上面的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
     x' = \min(\lfloor (x+0.5) * scale \rfloor, self.dim(2) - 1)
@@ -68,7 +67,7 @@
     <tr>
       <td>output_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出`out`的Tensor大小，对应公式中的`outputSize`。size大小为3，各元素均大于零。表示输出`out`在D、H和W维度上的空间大小。</td><!--opdef中是否是3维不确定，这个参考的是aclnn，待确认-->
+      <td>指定输出`out`的Tensor大小，对应公式中的`outputSize`。size为3，各元素均大于零。表示输出`out`在D、H和W维度上的空间大小。</td><!--opdef中是否是3维不确定，这个参考的是aclnn，待确认-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
@@ -88,7 +87,6 @@
     </tr>
   </tbody></table>
 
-<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
 
 ## 约束说明
 

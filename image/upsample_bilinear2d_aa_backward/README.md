@@ -96,7 +96,7 @@
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`inputSize`。size大小为4，且各元素均大于零。表示输出`grad_input`分别在N、C、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>指定输出空间大小，对应公式中的`inputSize`。size为4，且各元素均大于零。表示输出`grad_input`分别在N、C、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
@@ -110,15 +110,15 @@
     <tr>
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td><!--值为正数才生效。(aclnn的约束，待确认是否保留）-->
-      <td>FLOAT</td>
+      <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td><!--值为正数才生效。(aclnn的约束，待确认是否保留）-->
-      <td>FLOAT</td>
+      <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

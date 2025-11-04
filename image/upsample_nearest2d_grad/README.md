@@ -51,7 +51,7 @@
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>表示指定`grad_input`在H和W维度上的空间大小。size大小为4，且最后两个元素均大于零。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认(ize大小为4，且最后两个元素均大于零。当输入gradOut的数据格式为NCHW时，表示输出gradInput分别在N、C、H和W维度上的空间大小；当输入gradOut的数据格式为NHWC时，表示输出gradInput分别在N、H、W和C维度上的空间大小。)-->
+      <td>表示指定`grad_input`在H和W维度上的空间大小。size为4，且最后两个元素均大于零。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认(ize大小为4，且最后两个元素均大于零。当输入gradOut的数据格式为NCHW时，表示输出gradInput分别在N、C、H和W维度上的空间大小；当输入gradOut的数据格式为NHWC时，表示输出gradInput分别在N、H、W和C维度上的空间大小。)-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
@@ -59,14 +59,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scales_h`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scales_w`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>

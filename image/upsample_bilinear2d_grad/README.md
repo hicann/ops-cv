@@ -1,7 +1,6 @@
 # UpsampleBilinear2dGrad
 
 ## 产品支持情况
-<!--opdef里面只有910B/C,310P/310B，aclnn的还有910-->
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
@@ -35,7 +34,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上面的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
     
     $$
     x' =\begin{cases}
@@ -107,14 +106,14 @@
     <tr>
       <td>input_size</td>
       <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`inputSize`。size大小为4，且各元素均大于零。表示输出`grad_input`分别在N、C、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>指定输出空间大小，对应公式中的`inputSize`。size为4，且各元素均大于零。表示输出`grad_input`分别在N、C、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。如果设置为true，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值。</li><li>默认值为false。</li></ul></td><!--并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小`scales_h`和`scales_w`。(是aclnn中的约束，是否删除）-->
+      <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。如果设置为true，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
@@ -122,14 +121,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scales_h`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scales_w`。</li><li>默认值为空。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
@@ -140,6 +139,7 @@
       <td>ND</td>
     </tr>
   </tbody></table>
+
 
 ## 约束说明
 

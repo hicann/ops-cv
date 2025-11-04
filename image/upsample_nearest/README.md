@@ -82,14 +82,14 @@
       <td>scales_h</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为0.0。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td><!--aclnn是必选输入-->
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为0.0。</li></ul></td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
@@ -108,7 +108,6 @@
     </tr>
   </tbody></table>
 
-<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
 
 ## 约束说明
 

@@ -69,11 +69,11 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     <tr>
       <td>gradOut</td>
       <td>输入</td>
-      <td>表示反向计算的的梯度Tensor,对应公式中的'gradOut'。</td>
+      <td>表示反向计算的梯度Tensor,对应公式中的'gradOut'。</td>
       <td><ul><li>L轴不支持空Tensor。</li>
       <li>当数据格式为ND时，默认按照NCL格式处理。</li>
       <li>输入必须是3维。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCL、ND</td>
       <td>3</td>
       <td>√</td>
@@ -82,7 +82,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输入`gradOut`在L维度上的空间大小。</td>
-      <td>size大小为1，且取值大于0。</td>
+      <td>size为1，且取值大于0。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -92,7 +92,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>inputSize</td>
       <td>输入</td>
       <td>表示输出`out`分别在N、C、L维度上的空间大小。</td>
-      <td>size大小为3，且第三个元素的取值大于零。</td>
+      <td>size为3，且第三个元素的取值大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -113,7 +113,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的'out'。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`的数据类型一致。</li><li>输入必须是3维。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16、DOUBLE</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCL、ND</td>
       <td>3</td>
       <td>√</td>
@@ -141,7 +141,6 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品、Atlas 训练系列产品</term>：入参`gradOut`和出参`Out`的数据类型仅支持FLOAT16。
   
 - **返回值：**
 
@@ -178,17 +177,17 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     </tr>
     <tr><td>gradOut的维度不为3维。</td>
     </tr>
-    <tr><td>outputSize的size大小不等于1。</td>
+    <tr><td>outputSize的size不等于1。</td>
     </tr>
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>inputSize的size大小不等于3。</td>
+    <tr><td>inputSize的size不等于3。</td>
     </tr>
     <tr><td>inputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size大小不同。</td>
+    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
-    <tr><td>gradOut在L维度上的size大小与outputSize[0]不同。</td>
+    <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>
     <tr><td>gradOut和out的N/C轴的维度大小不相等。
       </td>

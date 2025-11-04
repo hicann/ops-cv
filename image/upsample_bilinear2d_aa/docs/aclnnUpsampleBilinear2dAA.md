@@ -7,6 +7,7 @@
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
 
+
 ## 功能说明
 
 - 算子功能：对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。
@@ -18,17 +19,17 @@
   
   $$
   scaleH =\begin{cases}
-  (x.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
+  (input.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
   1 / scalesH & alignCorners=false\&scalesH>0\\
-  x.dim(2) / outputSize[0] & otherwise
+  input.dim(2) / outputSize[0] & otherwise
   \end{cases}
   $$
   
   $$
   scaleW =\begin{cases}
-  (x.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
+  (input.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
   1 / scalesW & alignCorners=false\&scalesW>0\\
-  x.dim(3) / outputSize[1] & otherwise
+  input.dim(3) / outputSize[1] & otherwise
   \end{cases}
   $$
   
@@ -79,7 +80,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
 
 ## aclnnUpsampleBilinear2dAAGetWorkspaceSize
 
-* **参数说明**：
+- **参数说明**：
 
   <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
   <col style="width: 146px">
@@ -106,9 +107,9 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
     <tr>
       <td>input</td>
       <td>输入</td>
-      <td>表示进行采样的输入张量，对应公式中的`x`。</td>
+      <td>表示进行采样的输入张量，对应公式中的`input`。</td>
       <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -117,7 +118,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>outputSize</td>
       <td>输入</td>
       <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size大小为2，且各元素均大于零。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -158,7 +159,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`I`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`input`的数据类型和数据格式保持一致。</li></ul></td>
-      <td>FLOAT、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
