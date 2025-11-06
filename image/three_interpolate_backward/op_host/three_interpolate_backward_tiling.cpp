@@ -214,25 +214,27 @@ ge::graphStatus TilingMainProcess(
     gert::TilingContext* context, ge::DataType grad_x_dtype, ge::DataType idx_dtype)
 {
     uint64_t tiling_key = 0;
+    auto ret = context->GetDeterministic();
+    auto aicore_num_used = (ret == 0) ? compileInfo->aicore_num : 1;
     ge::graphStatus tiling_ret = ge::GRAPH_FAILED;
     if (grad_x_dtype == ge::DT_FLOAT && idx_dtype == ge::DT_INT32) {
         tiling_ret = TilingProcess<float, int32_t>(
-            tiling_host, compileInfo->aicore_num, compileInfo->ub_platform_byte_size, false, context);
+            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, false, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP32_INT32);
     } else if (grad_x_dtype == ge::DT_FLOAT && idx_dtype == ge::DT_INT64) {
         tiling_ret = TilingProcess<float, int64_t>(
-            tiling_host, compileInfo->aicore_num, compileInfo->ub_platform_byte_size, false, context);
+            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, false, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP32_INT64);
     } else if (grad_x_dtype == ge::DT_FLOAT16 && idx_dtype == ge::DT_INT32) {
         tiling_ret = TilingProcess<uint16_t, int32_t>(
-            tiling_host, compileInfo->aicore_num, compileInfo->ub_platform_byte_size, true, context);
+            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, true, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP16_INT32);
     } else if (grad_x_dtype == ge::DT_FLOAT16 && idx_dtype == ge::DT_INT64) {
         tiling_ret = TilingProcess<uint16_t, int64_t>(
-            tiling_host, compileInfo->aicore_num, compileInfo->ub_platform_byte_size, true, context);
+            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, true, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP16_INT64);
     } else {
