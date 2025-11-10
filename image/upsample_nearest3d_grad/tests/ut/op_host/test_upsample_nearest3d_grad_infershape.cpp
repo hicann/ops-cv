@@ -32,9 +32,11 @@ protected:
 TEST_F(UpsampleNearest3dGradTest, UpsampleNearest3dGrad_infer_test1_failed)
 {
     gert::InfershapeContextPara infershapeContextPara("UpsampleNearest3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
                                                       {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
                                                       {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+                                                      gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
                                                        gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0}))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
