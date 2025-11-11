@@ -22,14 +22,14 @@
       grad、input、grid、dx、dgrid的尺寸如下：
     
       $$
-      grad: (N, C, H_{in}, W_{in})\\
+      grad: (N, C, H_{out}, W_{out})\\
       input: (N, C, H_{in}, W_{in})\\
       grid: (N, H_{out}, W_{out}, 2)\\
       dx: (N, C, H_{in}, W_{in})\\
       dgrid: (N, H_{out}, W_{out}, 2)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，grad、input和dx中的$H_{in}$、$W_{in}$是一致的，grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
     
     
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -109,7 +109,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>input</td>
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>`input`的shape和`gradOutput`的shape相同，且`input`最后两维的维度值不可为0。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>`input`和`gradOutput`的N轴和C轴的值保持一致，且`input`最后两维的维度值不可为0。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -119,7 +119,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li><li>`grid`的第一个维度和`gradOutput`的第一个维度值相同，`grid`最后一维的值等于2。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>

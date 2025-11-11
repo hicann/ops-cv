@@ -13,7 +13,7 @@
 - 计算公式：
   
   $$
-  gradInput(N, C, D, H, W) += gradOutput( N, C, ceil ( scales_d * D - 0.5 ), ceil ( scales_h * H - 0.5 ),  ceil ( scales_w * W - 0.5 ))
+  gradInput(N, C, D, H, W) += gradOutput( N, C, ceil ( scales\_d * D - 0.5 ), ceil ( scales\_h * H - 0.5 ),  ceil ( scales\_w * W - 0.5 ))
   $$
 
 ## 参数说明
@@ -58,7 +58,7 @@
     <tr>
       <td>scales</td>
       <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scale_d`、`scale_h`、`scale_w`。</li><li>默认值为{0.0f, 0.0f, 0.0f}。</li></ul></td><!--删除aclnn中的此限制：只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
+      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scales_depth, scales_height, scales_width，对应公式中的`scales_d`、`scales_h`、`scales_w`。</li><li>默认值为{0.0f, 0.0f, 0.0f}。</li></ul></td><!--删除aclnn中的此限制：只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
       <td>LISTFLOAT</td>
       <td>-</td>
     </tr>

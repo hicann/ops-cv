@@ -19,7 +19,7 @@
   
   $$
   scaleH =\begin{cases}
-  (inputSize[2]-1 / outputSize[0]-1) & alignCorners=true \\
+  (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
   1 / scalesH & alignCorners=false\&scalesH>0\\
   inputSize[2] / outputSize[0] & otherwise
   \end{cases}
@@ -27,7 +27,7 @@
   
   $$
   scaleW =\begin{cases}
-  (inputSize[3]-1 / outputSize[1]-1) & alignCorners=true \\
+  (inputSize[3]-1) / (outputSize[1]-1) & alignCorners=true \\
   1 / scalesW & alignCorners=false\&scalesW>0\\
   inputSize[3] / outputSize[1] & otherwise
   \end{cases}

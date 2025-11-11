@@ -19,19 +19,18 @@
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
-    - 3D场景：
-  
+      
       grad、input、grid、dx、dgrid的尺寸如下：
   
       $$
-      grad: (N, C, D_{in}, H_{in}, W_{in})\\
+      grad: (N, C, D_{out}, H_{out}, W_{out})\\
       input: (N, C, D_{in}, H_{in}, W_{in})\\
       grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
       dx: (N, C, D_{in}, H_{in}, W_{in})\\
       dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，grad、input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示x像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
    
     
     - 对于超出范围的坐标，会根据padding_mode进行不同处理：
@@ -74,14 +73,14 @@
     <tr>
       <td>x</td>
       <td>输入</td>
-      <td>表示反向传播的输入张量，对应公式描述中的`input`。shape仅支持五维，且需满足`x`和`grad`的shape保持一致，x的D，H，W值不可为0。</td>
+      <td>表示反向传播的输入张量，对应公式描述中的`input`。shape仅支持五维，且需满足`x`和`grad`的N轴和C轴的值保持一致，x的D，H，W值不可为0。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
     </tr>
     <tr>
       <td>grid</td>
       <td>输入</td>
-      <td>表示采用像素位置的张量，对应公式描述中的`grid`。C轴的值必须为3，shape仅支持五维，且需满足`grid`和`grad`的N轴的值保持一致。</td><!--IR中最后一维是2？-->
+      <td>表示采用像素位置的张量，对应公式描述中的`grid`。shape仅支持五维，且需满足`grid`和`grad`的N轴、D轴、H轴、W轴的值保持一致，最后一维的值等于3。</td><!--IR中最后一维是2？-->
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
       <td>ND</td><!--参考aclnn的数据格式是：NDHWC，这个怎么写？，IR原型中是NDHW3-->
     </tr>
@@ -89,7 +88,6 @@
       <td>interpolation_mode</td>
       <td>可选属性</td>
       <td><ul><li>表示插值模式，对应公式描述中的`interpolation_mode`。支持bilinear（0：双线性插值）和nearest（1：最邻近插值）。</li><li>默认值为"bilinear"。</li></ul></td>
-      <td>STRING</td>
       <td>STRING</td>
       <td>-</td>
     </tr>

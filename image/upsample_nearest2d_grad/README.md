@@ -13,7 +13,7 @@
 - 计算公式：
 
   $$
-  gradInput(N, C, H, W) += gradOutput( N, C, ceil ( scales_h * H ),  ceil ( scales_w * W )) 
+  gradInput(N, C, H, W) += gradOutput( N, C, ceil ( scales\_h * H ),  ceil ( scales\_w * W )) 
   $$
 
 ## 参数说明

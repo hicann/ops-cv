@@ -19,20 +19,18 @@
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
-    - 3D场景：
-  
+      
       grad、input、grid、dx、dgrid的尺寸如下：
   
       $$
-      grad: (N, C, D_{in}, H_{in}, W_{in})\\
+      grad: (N, C, D_{out}, H_{out}, W_{out})\\
       input: (N, C, D_{in}, H_{in}, W_{in})\\
       grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
       dx: (N, C, D_{in}, H_{in}, W_{in})\\
       dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，grad、input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
-   
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
     
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
@@ -111,7 +109,7 @@ aclnnStatus aclnnGridSampler3DBackward(
       <td>input</td>
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>当数据类型为DOUBLE时，数据格式不支持NDHWC。</li><li>`input`和`gradOutput`的shape保持一致，且`input`的D，H，W值不可为0。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>当数据类型为DOUBLE时，数据格式不支持NDHWC。</li><li>`input`和`gradOutput`的N轴和C轴的值保持一致，且`input`的D，H，W值不可为0。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -121,7 +119,7 @@ aclnnStatus aclnnGridSampler3DBackward(
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>`grid`的N轴和`gradOutput`的N轴值相同，C轴的值必须为3。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>`grid`和`gradOutput`的N轴、D轴、H轴、W轴的值保持一致，C轴的值必须为3。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>NDHWC</td>
       <td>5</td>

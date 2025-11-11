@@ -158,7 +158,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor<li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor<li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`的数据类型、数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL</td>
       <td>3</td>
