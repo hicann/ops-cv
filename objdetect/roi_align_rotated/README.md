@@ -66,24 +66,24 @@
     </tr>
     <tr>
       <td>pooled_w</td>
-      <td>输出</td>
+      <td>属性</td>
       <td>RoiAlign输出时池化特征图的宽。</td>
       <td>INT</td>
-      <td>ND</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>aligned</td>
-      <td>输出</td>
-      <td>是否量化。</td>
+      <td>属性</td>
+      <td>是否量化，true则将目标框中心坐标值-0.5。</td>
       <td>BOOL</td>
-      <td>ND</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>clockwise</td>
-      <td>输出</td>
-      <td>时钟方向。</td>
+      <td>属性</td>
+      <td>时钟方向，true为顺时针。</td>
       <td>BOOL</td>
-      <td>ND</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>output</td>
@@ -97,7 +97,7 @@
 ## 约束说明
 
 * 输入shape必须为[N,C,W,H]的Tensor，其中N、C、W和H均为INT32类型正整数。C的取值在[0, 1024]之间。
-* Rois的shape必须为[n, 6]的Tensor。n的取值范围为[1, 8192]。对于每个ROI而言，其组成为[batch_idx, center_x, center_y, w, h, angle]，其中batch_idx取值范围在[0, N)之间，会进行强制类型转换(float->int)，center_x、center_y、w、h为FLOAT32类型正浮点数，center_x与w的取值范围为[0, W)，center_y与h的取值范围为[0, H)，angle的取值为FLOAT32类型浮点数，取值范围为[0, π)。
+* rois的shape必须为[n, 6]的Tensor。n的取值范围为[1, 8192]。对于每个ROI而言，其组成为[batch_idx, center_x, center_y, w, h, angle]，其中batch_idx取值范围在[0, N)之间，会进行强制类型转换(float->int)，center_x、center_y、w、h为FLOAT32类型正浮点数，center_x与w的取值范围为[0, W)，center_y与h的取值范围为[0, H)，angle的取值为FLOAT32类型浮点数，取值范围为[0, π)。
 
 ## 调用说明
 

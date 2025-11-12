@@ -51,7 +51,7 @@ BinPackArguments: true
 BreakBeforeTernaryOperators: false
 SpacesBeforeTrailingComments: 1
 
-# poniter aligment
+# pointer alignment
 DerivePointerAlignment: false
 PointerAlignment: Left
 

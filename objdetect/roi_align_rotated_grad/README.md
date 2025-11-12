@@ -81,14 +81,14 @@
     <tr>
       <td>aligned</td>
       <td>属性</td>
-      <td>是否量化。</td>
+      <td>是否量化，true则将目标框中心坐标值-0.5。</td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
     <tr>
       <td>clockwise</td>
       <td>属性</td>
-      <td>时钟方向。</td>
+      <td>时钟方向，true为顺时针。</td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
@@ -104,7 +104,7 @@
 ## 约束说明
 
 * 输入x_grad的shape必须为[N,C,pooled_h,pooled_w]的Tensor。C的取值在[0, 1024]之间，pooled_h、pooled_w的取值在[0, 1024]之间。
-* Rois的shape必须为[n, 6]的Tensor。
+* rois的shape必须为[n, 6]的Tensor。
 
 ## 调用说明
 

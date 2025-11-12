@@ -62,30 +62,30 @@ int main()
     ret = aclnnAddExampleGetWorkspaceSize(selfX, selfY, out, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnAddExampleGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
 
-    // 根据第一段接口计算出的workspaceSize申请device内存
+    // 5. 根据第一段接口计算出的workspaceSize申请device内存
     void* workspaceAddr = nullptr;
     if (workspaceSize > static_cast<uint64_t>(0)) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
 
-    // 5. 调用aclnnAddExample第二段接口
+    // 6. 调用aclnnAddExample第二段接口
     ret = aclnnAddExample(workspaceAddr, workspaceSize, executor, stream);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnAddExample failed. ERROR: %d\n", ret); return ret);
 
-    // 6. （固定写法）同步等待任务执行结束
+    // 7. （固定写法）同步等待任务执行结束
     ret = aclrtSynchronizeStream(stream);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
 
-    // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
+    // 8. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
     PrintOutResult(outShape, &outDeviceAddr);
 
-    // 7. 释放aclTensor，需要根据具体API的接口定义修改
+    // 9. 释放aclTensor，需要根据具体API的接口定义修改
     aclDestroyTensor(selfX);
     aclDestroyTensor(selfY);
     aclDestroyTensor(out);
 
-    // 8. 释放device资源
+    // 10. 释放device资源
     aclrtFree(selfXDeviceAddr);
     aclrtFree(selfYDeviceAddr);
     aclrtFree(outDeviceAddr);
@@ -95,7 +95,7 @@ int main()
     aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
 
-    // 9. acl去初始化
+    // 11. acl去初始化
     aclFinalize();
     return 0;
 }
@@ -108,9 +108,9 @@ int main()
 1. 前提条件。
    请参考本项目[编译执行](./quick_op_invocation.md#编译执行)完成目标算子的编译部署。
 
-2. 创建CMakelist文件。
+2. 创建CMakeLists文件。
 
-   在test\_aclnn\_\$\{op\_name\}.cpp同级目录下创建CMakelist文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
+   在test\_aclnn\_\$\{op\_name\}.cpp同级目录下创建CMakeLists文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
 
     ```bash
    cmake_minimum_required(VERSION 3.14)
@@ -286,9 +286,9 @@ int main() {
 1. 前提条件。
    请参考本项目[编译执行](./quick_op_invocation.md#编译执行)完成目标算子的编译部署。
 
-2. 创建CMakelist文件。
+2. 创建CMakeLists文件。
 
-   在test\_geir\_\$\{op\_name\}.cpp同级目录下创建CMakelist文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
+   在test\_geir\_\$\{op\_name\}.cpp同级目录下创建CMakeLists文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
 
     ```bash
    cmake_minimum_required(VERSION 3.14)

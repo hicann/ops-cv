@@ -66,7 +66,7 @@
 
   int64_t num_elements = input0->NumElements();
   // 打印输入元素个数
-  KERNEL_LOG_INFO("Num of elements is %ld", data_size);
+  KERNEL_LOG_INFO("Num of elements is %ld", num_elements);
   ```
 
 ## 性能调优
