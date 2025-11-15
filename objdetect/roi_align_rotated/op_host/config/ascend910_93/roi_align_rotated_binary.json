@@ -3,12 +3,12 @@
     "op_type": "RoiAlignRotated",
     "op_list": [
     {
-      "bin_filename": "roi_align_rotated",
+      "bin_filename": "RoiAlignRotated",
       "inputs": [
         {
             "name": "x",
             "index": 0,
-            "param_type": "required",
+            "paramType": "required",
             "format": "ND",
             "dtype": "float32",
             "shape": [
@@ -18,7 +18,7 @@
         {
             "name": "rois",
             "index": 1,
-            "param_type": "required",
+            "paramType": "required",
             "format": "ND",
             "dtype": "float32",
             "shape": [
@@ -30,7 +30,7 @@
         {
             "name": "y",
             "index": 0,
-            "param_type": "required",
+            "paramType": "required",
             "format": "ND",
             "dtype": "float32",
             "shape": [

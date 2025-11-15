@@ -3,12 +3,12 @@
     "op_type": "RoiAlignRotatedGrad",
     "op_list": [
     {
-      "bin_filename": "roi_align_rotated_grad",
+      "bin_filename": "RoiAlignRotatedGrad",
       "inputs": [
         {
             "name": "x_grad",
             "index": 0,
-            "param_type": "required",
+            "paramType": "required",
             "format": "ND",
             "dtype": "float32",
             "shape": [
@@ -18,7 +18,7 @@
         {
             "name": "rois",
             "index": 1,
-            "param_type": "required",
+            "paramType": "required",
             "format": "ND",
             "dtype": "float32",
             "shape": [
@@ -30,7 +30,7 @@
         {
             "name": "y_grad",
             "index": 0,
-            "param_type": "required",
+            "paramType": "required",
             "format": "ND",
             "dtype": "float32",
             "shape": [
