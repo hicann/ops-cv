@@ -28,9 +28,9 @@ graph LR
 
 4. [图模式适配](#图模式适配)：AI CPU算子目前仅支持图模式调用，需完成InferShape和InferDataType，后续会支持aclnn接口调用。
 
-6. [编译部署](#编译部署)：通过工程编译脚本完成自定义算子的编译和安装。
+5. [编译部署](#编译部署)：通过工程编译脚本完成自定义算子的编译和安装。
 
-7. [算子验证](#算子验证)：通过常见算子调用方式，验证自定义算子功能。  
+6. [算子验证](#算子验证)：通过常见算子调用方式，验证自定义算子功能。  
 
 ##  前提条件
 **1. 环境部署**
@@ -134,7 +134,7 @@ bash build.sh --genop_aicpu=${op_class}/${op_name}
 ```bash
 Create the initial directory for ${op_name} under ${op_class} success
 ```
-创建完成后，关键目录结构如下所示：
+创建完成后，目录结构如下所示：
 
 ```
 ${op_name}                              # 替换为实际算子名的小写下划线形式
@@ -354,7 +354,8 @@ REG_OP(AddExample)
     ```
 
    若未指定\$\{vendor\_name\}默认使用custom作为包名。编译成功后，生成的自定义算子\*\.run包存放于build_out目录。
-   说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
+   
+   说明：当前自定义算子包\$\{vendor\_name\}和\$\{op\_list\}均为可选，若都不传入编译的是built-in包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。
 
    注意，构建过程文件在`build`目录，关键文件如下：
 
@@ -368,11 +369,12 @@ REG_OP(AddExample)
     ```bash
    ./cann-ops-cv-${vendor_name}_linux-${arch}.run
     ```
-   自定义算子包安装在`${ASCEND_HOME_PATH}/latest/opp/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。自定义算子包不支持卸载。
+   自定义算子包安装在`${ASCEND_HOME_PATH}/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。自定义算子包不支持卸载。
    
-   自定义算子包的目录结构示例如下：
+
+    自定义算子包的目录结构示例如下：
     ```
-    ├── cann-ops-cv-${vendor_name}_linux-${arch}.run           # 包名
+    ├── cann-ops-cv-${vendor_name}_linux-${arch}.run             # 包名
     ├── op_api
     │   ├── include
     │   │   ├── aclnn_add_example.h                              # aclnn头文件
