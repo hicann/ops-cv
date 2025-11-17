@@ -45,21 +45,21 @@
     <tr>
       <td>idx</td>
       <td>输入</td>
-      <td>目标特征的三个最近临特征索引，对应公式中的`idx`。</td>
+      <td>目标特征三个相邻点的特征索引，对应公式中的`idx`。</td>
       <td>INT32、INT64</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>weight</td>
       <td>输入</td>
-      <td>目标特征的三个最近临特征权重，对应公式中的`weight`。</td>
+      <td>目标特征三个相邻点的特征权重，对应公式中的`weight`。</td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>grad_y</td>
       <td>输出</td>
-      <td>梯度计算结果，对应公式中的`grad_y`。数据类型和数据格式需要与`self`的数据类型和数据格式一致。</td>
+      <td>梯度计算结果，对应公式中的`grad_y`。数据类型和数据格式需要与`grad_x`的数据类型和数据格式一致。</td>
       <td>FLOAT32、FLOAT16</td>
       <td>5HD</td>
     </tr>
