@@ -13,33 +13,23 @@
 - 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
 - 计算公式：
   - 核心算法逻辑：
-    1.将目标图像缩放到和原始图像一样大的尺寸。
-    2.对于缩放之后的目标图像的点，计算距离最近的原始图像的点，后者的值直接复制给前者。
+    1. 将目标图像缩放到和原始图像一样大的尺寸。
+    2. 对于缩放之后的目标图像的点，计算距离最近的原始图像的点，后者的值直接复制给前者。
   - 具体计算逻辑：
-    则计算缩放系数有以下公式：
-    
     $$
-    scale = self.dim / outputSize
-    $$
-    
-    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
-    
-    $$
-    x' = \min(\lfloor x * scaleD \rfloor, self.dim(2) - 1)
+    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1),scalesD = outputSize[0] / self\_D
     $$
 
     $$
-    y' = \min(\lfloor y * scaleH \rfloor, self.dim(3) - 1)
+    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1),scalesH = outputSize[1] / self\_H
     $$
-    
+
     $$
-    z' = \min(\lfloor z * scaleW \rfloor, self.dim(4) - 1)
+    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1),scalesW = outputSize[2] / self\_W
     $$
-    
-    则有以下公式：
-    
+
     $$
-    {V(p_{x,y,z})} = {V(q_{x',y',z'})}
+    out(N, C, d_{dst},h_{dst}, w_{dst}) = self(N, C, d_{src},h_{src}, w_{src})
     $$
     
 ## 函数原型

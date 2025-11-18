@@ -80,9 +80,9 @@
     <tr>
       <td>grid</td>
       <td>输入</td>
-      <td>表示采用像素位置的张量，对应公式描述中的`grid`。shape仅支持五维，且需满足`grid`和`grad`的N轴、D轴、H轴、W轴的值保持一致，最后一维的值等于3。</td><!--IR中最后一维是2？-->
+      <td>表示采用像素位置的张量，对应公式描述中的`grid`。shape仅支持五维，且需满足`grid`和`grad`的N轴、D轴、H轴、W轴的值保持一致，最后一维的值等于3。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
-      <td>ND</td><!--参考aclnn的数据格式是：NDHWC，这个怎么写？，IR原型中是NDHW3-->
+      <td>NDHWC</td>
     </tr>
     <tr>
       <td>interpolation_mode</td>
@@ -110,14 +110,14 @@
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。数据类型、数据格式和shape与`x`的数据类型、数据格式和shape保持一致。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
-      <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
+      <td>NCDHW、NDHWC</td>
     </tr>
     <tr>
       <td>dgrid</td>
       <td>输出</td>
       <td>表示`grid`梯度，对应公式描述中的`dgrid`。数据类型、数据格式和shape与`grid`的数据类型、数据格式和shape保持一致。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
-      <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
+      <td>NDHWC</td>
     </tr>
   </tbody></table>
 

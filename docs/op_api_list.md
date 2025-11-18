@@ -25,12 +25,12 @@
 | [aclnnUpsampleBilinear2dBackwardV2](../image/upsample_bilinear2d_grad/docs/aclnnUpsampleBilinear2dBackwardV2.md) | [aclnnUpsampleBilinear2d](../image/upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。 |
 | [aclnnUpsampleLinear1d](../image/upsample_linear1d/docs/aclnnUpsampleLinear1d.md) | 对由多个输入通道组成的输入信号应用线性插值算法进行上采样。   |
 | [aclnnUpsampleLinear1dBackward](../image/upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md) | [aclnnUpsampleLinear1d](../image/upsample_linear1d/docs/aclnnUpsampleLinear1d.md)的反向传播。 |
-| [aclnnUpsampleNearestExact1d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact1d.md) | 对由三个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。 |
-| [aclnnUpsampleNearestExact2d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact2d.md) | 对由四个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。 |
+| [aclnnUpsampleNearestExact1d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact1d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |
+| [aclnnUpsampleNearestExact2d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact2d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |
 | [aclnnUpsampleNearest1dBackward](../image/upsample_nearest2d_grad/docs/aclnnUpsampleNearest1dBackward.md) | [aclnnUpsampleNearestExact1d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。 |
 | [aclnnUpsampleNearest2dBackward](../image/upsample_nearest2d_grad/docs/aclnnUpsampleNearest2dBackward.md) | [aclnnUpsampleNearestExact2d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact2d.md)的反向传播。 |
 | [aclnnUpsampleNearest1dV2](../image/upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |
-| [aclnnUpsampleNearest2dV2](../image/upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md) | 对由四个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。 |
+| [aclnnUpsampleNearest2dV2](../image/upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |
 | [aclnnUpsampleNearest3d](../image/upsample_nearest3d/docs/aclnnUpsampleNearest3d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |
 | [aclnnUpsampleNearest3dBackward](../image/upsample_nearest3d_grad/docs/aclnnUpsampleNearest3dBackward.md) | [aclnnUpsampleNearest3d](../image/upsample_nearest3d/docs/aclnnUpsampleNearest3d.md)的反向传播。 |
 | [aclnnUpsampleNearestExact1dBackward](../image/upsample_nearest_exact2d_grad/docs/aclnnUpsampleNearestExact1dBackward.md) | [aclnnUpsampleNearestExact1d](../image/upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。 |

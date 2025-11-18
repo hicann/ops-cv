@@ -15,24 +15,22 @@
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 对于缩放之后的目标图像的点，计算距离最近的原始图像的点，后者的值直接复制给前者。
   - 具体计算逻辑：
-    则计算缩放系数有以下公式：
+    
+    对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
     
     $$
-    scale = self.dim / outputSize
-    $$
-    
-    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
-    
-    $$
-    x' = \min(\lfloor x * scale \rfloor, self.dim(2) - 1)
+    x' = \min(\lfloor x * scale\_depth \rfloor, self\_D - 1) ,\ 
+    scale\_depth = self\_D / outputSize[0]
     $$
 
     $$
-    y' = \min(\lfloor y * scale \rfloor, self.dim(3) - 1)
+    y' = \min(\lfloor y * scale\_height \rfloor, self\_H - 1) ,\ 
+    scale\_height = self\_H / outputSize[1]
     $$
     
     $$
-    z' = \min(\lfloor z * scale \rfloor, self.dim(4) - 1)
+    z' = \min(\lfloor z * scale\_width \rfloor, self\_W - 1) ,\ 
+    scale\_width = self\_W / outputSize[2]
     $$
     
     则有以下公式：

@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由四个输入通道组成的输入信号应用最近邻精确插值算法进行上采样。如果输入shape为(N, C, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1])。<!--本接口相较于[aclnnUpsampleNearest2d](aclnnUpsampleNearest2d.md)，增加入参scalesH、scalesW，请根据实际情况选择合适的接口。 -->
+- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1])。<!--本接口相较于[aclnnUpsampleNearest2d](aclnnUpsampleNearest2d.md)，增加入参scalesH、scalesW，请根据实际情况选择合适的接口。 -->
 
 - 计算公式：
 
