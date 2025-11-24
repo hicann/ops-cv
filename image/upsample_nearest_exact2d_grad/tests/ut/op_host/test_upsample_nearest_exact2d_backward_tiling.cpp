@@ -34,6 +34,7 @@ protected:
 TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_tiling_001)
 {
     optiling::UpsampleNearestExact2dGradCompileInfo compileInfo = {1};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleNearestExact2dGrad",
         {
             {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -47,6 +48,7 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
             gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1))},
         &compileInfo,
+		socVersion,
         20,
         192 * 1024,
         10240);

@@ -35,7 +35,7 @@ TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_001)
     struct UpsampleBicubic2dAAGradCompileInfo {
         uint32_t coreNum = 24;
     } compile_info;
-
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAAGrad",
         {{{{1, 1, 256, 256}, {1, 1, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -46,6 +46,7 @@ TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_001)
             gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
             gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
         &compile_info,
+		socVersion,
         48,
         192 * 1024,
         8192);
@@ -78,7 +79,7 @@ TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_002)
     struct UpsampleBicubic2dAAGradCompileInfo {
         uint32_t coreNum = 0;
     } compile_info;
-
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAAGrad",
         {{{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -89,6 +90,7 @@ TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_002)
             gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
             gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
         &compile_info,
+		socVersion,
         48,
         192 * 1024,
         8192);

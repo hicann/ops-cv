@@ -42,6 +42,7 @@ TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tilin
     UpsampleBilinear2dAABackwardCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {256, 256};
     std::vector<int64_t> input_size = {1, 1, 256, 256};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAABackward",
         {
             {{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -55,6 +56,7 @@ TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tilin
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);

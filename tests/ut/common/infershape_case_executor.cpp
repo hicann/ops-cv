@@ -3,8 +3,8 @@
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -17,15 +17,14 @@
     /* 1. input/output information */                                                                                  \
     size_t inputNum = infershapeContextPara.inputTensorDesc_.size();                                                   \
     size_t outputNum = infershapeContextPara.outputTensorDesc_.size();                                                 \
-    contextFaker.NodeIoNum(inputNum, outputNum);                                                                       \
+    if (infershapeContextPara.inputInstanceNum_.size() != 0 || infershapeContextPara.outputInstanceNum_.size() != 0) { \
+        contextFaker.IrInstanceNum(infershapeContextPara.inputInstanceNum_, infershapeContextPara.outputInstanceNum_); \
+    } else {                                                                                                           \
+        contextFaker.NodeIoNum(inputNum, outputNum);                                                                       \
+    }                                                                                                                  \
     std::vector<gert::Tensor *> inputTensors = {};                                                                     \
-    std::vector<gert::StorageShape *> outputShapes = {};                                                               \
     std::vector<std::unique_ptr<gert::Tensor>> inputTensorsKeepAlive = {};                                             \
     for (size_t index = 0; index < inputNum; index++) {                                                                \
-        contextFaker.NodeInputTd(index,                                                                                \
-                                 infershapeContextPara.inputTensorDesc_[index].dtype_,                                 \
-                                 infershapeContextPara.inputTensorDesc_[index].format_,                                \
-                                 infershapeContextPara.inputTensorDesc_[index].format_);                               \
         std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                      \
             infershapeContextPara.inputTensorDesc_[index].shape_,                                                      \
             gert::StorageFormat(infershapeContextPara.inputTensorDesc_[index].format_,                                 \
@@ -44,22 +43,21 @@
                                   infershapeContextPara.outputTensorDesc_[index].dtype_,                               \
                                   infershapeContextPara.outputTensorDesc_[index].format_,                              \
                                   infershapeContextPara.outputTensorDesc_[index].format_);                             \
-        outputShapes.push_back(&infershapeContextPara.outputTensorDesc_[index].shape_);                                \
     }                                                                                                                  \
-    contextFaker.InputTensors(inputTensors).OutputShapes(outputShapes);                                                \
+    contextFaker.InputTensors(inputTensors);                                                                           \
     for (auto& attrInfo : infershapeContextPara.attrs_) {                                                              \
         switch (attrInfo.attr_.type_) {                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                            \
+            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                              \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<bool*>(attrInfo.attr_.valuePtr_.get()));       \
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                             \
+            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                               \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<int64_t*>(attrInfo.attr_.valuePtr_.get()));    \
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                           \
+            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                             \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<float*>(attrInfo.attr_.valuePtr_.get()));      \
                 break;}                                                                                                \
             case Ops::Cv::AnyValue::ValueType::VT_STRING: {                                                          \
-                contextFaker.Attr(attrInfo.attrName_, AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));\
+                contextFaker.Attr(attrInfo.attrName_, ge::AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));\
                 break;}                                                                                                \
             case Ops::Cv::AnyValue::ValueType::VT_LIST_BOOL: {                                                       \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<bool>*>(attrInfo.attr_.valuePtr_.get()));\
@@ -108,6 +106,6 @@ void ExecuteTestCase(gert::InfershapeContextPara&             infershapeContextP
 
     // check output shape
     for (int i = 0; i < expectOutputShape.size(); i++) {
-        // EXPECT_EQ(ToVector(*contextHolder.GetContext()->GetOutputShape(i)), expectOutputShape[i]);
+        EXPECT_EQ(ToVector(*contextHolder.GetContext()->GetOutputShape(i)), expectOutputShape[i]);
     }
 }

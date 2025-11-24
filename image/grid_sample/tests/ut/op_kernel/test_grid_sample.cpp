@@ -62,7 +62,7 @@ TEST_F(grid_sample_test, test_case_fp32_test01)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -117,7 +117,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -170,7 +170,7 @@ TEST_F(grid_sample_test, test_case_fp32_test03)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -224,7 +224,7 @@ TEST_F(grid_sample_test, test_case_fp32_test04)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -278,7 +278,7 @@ TEST_F(grid_sample_test, test_case_fp32_test05)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -332,7 +332,7 @@ TEST_F(grid_sample_test, test_case_fp32_test06)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -386,7 +386,7 @@ TEST_F(grid_sample_test, test_case_fp32_test07)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -440,7 +440,7 @@ TEST_F(grid_sample_test, test_case_fp16_test08)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -494,7 +494,7 @@ TEST_F(grid_sample_test, test_case_fp16_test09)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -547,7 +547,7 @@ TEST_F(grid_sample_test, test_case_fp16_test10)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -600,7 +600,7 @@ TEST_F(grid_sample_test, test_case_fp32_test11)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -653,7 +653,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp16_yunzhuduan)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -706,7 +706,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp16_codetr)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -760,7 +760,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp32_yunzhuduan)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -813,7 +813,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp16_fullLoad)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -867,7 +867,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp32_fullLoad)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -921,7 +921,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_fullLoad_c1)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -975,7 +975,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c1)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -1029,7 +1029,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_fullLoad_c32)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -1083,7 +1083,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c32)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -1139,7 +1139,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_test01)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -1195,7 +1195,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_test02)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -1252,7 +1252,7 @@ TEST_F(grid_sample_test, test_case_nearest_fp32_test03)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -1308,7 +1308,7 @@ TEST_F(grid_sample_test, test_case_nearest_fp16_test04)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);

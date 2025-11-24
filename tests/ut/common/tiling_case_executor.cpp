@@ -14,53 +14,73 @@
 #include "platform/platform_infos_def.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
-#define DO_TILING(tilingContextPara)                                                                                          \
+#define DO_TILING(tilingContextPara)                                                                                   \
     auto contextFaker = gert::TilingContextFaker();                                                                    \
     /* 1. input/output information */                                                                                  \
     size_t inputNum = tilingContextPara.inputTensorDesc_.size();                                                       \
     size_t outputNum = tilingContextPara.outputTensorDesc_.size();                                                     \
-    contextFaker.NodeIoNum(inputNum, outputNum);                                                                       \
+    if (tilingContextPara.inputInstanceNum_.size() != 0 || tilingContextPara.outputInstanceNum_.size() != 0) {         \
+        contextFaker.IrInstanceNum(tilingContextPara.inputInstanceNum_, tilingContextPara.outputInstanceNum_);         \
+    } else {                                                                                                           \
+        contextFaker.NodeIoNum(inputNum, outputNum);                                                                   \
+    }                                                                                                                  \
     std::vector<gert::Tensor *> inputTensors = {};                                                                     \
     std::vector<gert::Tensor *> outputTensors = {};                                                                    \
+    std::vector<std::unique_ptr<gert::Tensor>> inputTensorsKeepAlive = {};                                             \
+    std::vector<std::unique_ptr<gert::Tensor>> outputTensorsKeepAlive = {};                                            \
     for (size_t index = 0; index < inputNum; index++) {                                                                \
-        contextFaker.NodeInputTd(index,                                                                                \
-                                 tilingContextPara.inputTensorDesc_[index].dtype_,                                     \
-                                 tilingContextPara.inputTensorDesc_[index].format_,                                    \
-                                 tilingContextPara.inputTensorDesc_[index].format_);                                   \
-        inputTensors.push_back((gert::Tensor *)&tilingContextPara.inputTensorDesc_[index].shape_);                     \
+        std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                      \
+            tilingContextPara.inputTensorDesc_[index].shape_,                                                          \
+            gert::StorageFormat(tilingContextPara.inputTensorDesc_[index].format_,                                     \
+             tilingContextPara.inputTensorDesc_[index].format_,                                                        \
+             gert::ExpandDimsType()),                                                                                  \
+            gert::TensorPlacement::kOnHost,                                                                            \
+            tilingContextPara.inputTensorDesc_[index].dtype_,                                                          \
+            tilingContextPara.inputTensorDesc_[index].isConst_ ?                                                       \
+            tilingContextPara.inputTensorDesc_[index].constValue_:                                                     \
+            nullptr);                                                                                                  \
+        inputTensors.push_back(curTensor.get());                                                                       \
+        inputTensorsKeepAlive.push_back(std::move(curTensor));                                                         \
     }                                                                                                                  \
     for (size_t index = 0; index < outputNum; index++) {                                                               \
-        contextFaker.NodeOutputTd(index,                                                                               \
-                                  tilingContextPara.outputTensorDesc_[index].dtype_,                                   \
-                                  tilingContextPara.outputTensorDesc_[index].format_,                                  \
-                                  tilingContextPara.outputTensorDesc_[index].format_);                                 \
-        outputTensors.push_back((gert::Tensor *)&tilingContextPara.outputTensorDesc_[index].shape_);                   \
+        std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                      \
+            tilingContextPara.outputTensorDesc_[index].shape_,                                                         \
+            gert::StorageFormat(tilingContextPara.outputTensorDesc_[index].format_,                                    \
+             tilingContextPara.outputTensorDesc_[index].format_,                                                       \
+             gert::ExpandDimsType()),                                                                                  \
+            gert::TensorPlacement::kOnHost,                                                                            \
+            tilingContextPara.outputTensorDesc_[index].dtype_,                                                         \
+            tilingContextPara.outputTensorDesc_[index].isConst_ ?                                                      \
+            tilingContextPara.outputTensorDesc_[index].constValue_:                                                    \
+            nullptr);                                                                                                  \
+        outputTensors.push_back(curTensor.get());                                                                      \
+        outputTensorsKeepAlive.push_back(std::move(curTensor));                                                        \
     }                                                                                                                  \
     contextFaker.InputTensors(inputTensors).OutputTensors(outputTensors);                                              \
     for (auto& attrInfo : tilingContextPara.attrs_) {                                                                  \
         switch (attrInfo.attr_.type_) {                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                            \
+            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                              \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<bool*>(attrInfo.attr_.valuePtr_.get()));       \
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                             \
+            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                               \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<int64_t*>(attrInfo.attr_.valuePtr_.get()));    \
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                           \
+            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                             \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<float*>(attrInfo.attr_.valuePtr_.get()));      \
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_STRING: {                                                          \
-                contextFaker.Attr(attrInfo.attrName_, AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));\
+            case Ops::Cv::AnyValue::ValueType::VT_STRING: {                                                            \
+                contextFaker.Attr(attrInfo.attrName_, ge::AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));\
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_BOOL: {                                                       \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_BOOL: {                                                         \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<bool>*>(attrInfo.attr_.valuePtr_.get()));\
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_INT: {                                                        \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_INT: {                                                          \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<int64_t>*>(attrInfo.attr_.valuePtr_.get()));\
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_LIST_INT: {                                                   \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_LIST_INT: {                                                     \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<std::vector<int64_t>>*>(attrInfo.attr_.valuePtr_.get()));\
                 break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_FLOAT: {                                                      \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_FLOAT: {                                                        \
                 contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<float>*>(attrInfo.attr_.valuePtr_.get()));\
                 break;}                                                                                                \
             default:                                                                                                   \
@@ -71,16 +91,16 @@
     fe::PlatFormInfos platformInfo;                                                                                    \
     platformInfo.Init();                                                                                               \
     auto tilingData = gert::TilingData::CreateCap(tilingContextPara.tilingDataSize_);                                  \
-    gert::ContinuousVector workspace;                                                                                  \
+    auto workspace = gert::ContinuousVector::Create<size_t>(4096);                                                     \
     auto contextHolder = contextFaker.SetOpType(tilingContextPara.opName_.c_str())                                     \
                                      .CompileInfo(tilingContextPara.compileInfo_)                                      \
                                      .PlatformInfo(reinterpret_cast<char*>(&platformInfo))                             \
                                      .TilingData(tilingData.get())                                                     \
-                                     .Workspace(&workspace)                                                            \
+                                     .Workspace(reinterpret_cast<gert::ContinuousVector *>(workspace.get()))           \
                                      .Build();                                                                         \
     string compileInfoStringPrefix = R"({"hardware_info": {"BT_SIZE": 0, "load3d_constraints": "1", "Intrinsic_fix_pipe_l0c2out": false, "Intrinsic_data_move_l12ub": true, "Intrinsic_data_move_l0c2ub": true, "Intrinsic_data_move_out2l1_nd2nz": false, "UB_SIZE": )";\
     string compileInfoStringMiddle = R"(, "L2_SIZE": 33554432, "L1_SIZE": 524288, "L0A_SIZE": 65536, "L0B_SIZE": 65536, "L0C_SIZE": 131072, "CORE_NUM": )";\
-    string compileInfoStringSuffix = R"(, "socVersion": "Ascend910_95"} })";\
+    string compileInfoStringSuffix = R"(} })";\
     string compileInfoString = compileInfoStringPrefix +                                                               \
                                std::to_string(tilingContextPara.ubSize_) +                                             \
                                compileInfoStringMiddle +                                                               \
@@ -89,7 +109,7 @@
     map<string, string> socInfos;                                                                                      \
     map<string, string> aicoreSpec;                                                                                    \
     map<string, string> intrinsics;                                                                                    \
-    map<string, string> socversions = {{"Short_SoC_version", "Ascend910_95"}};                                         \
+    map<string, string> socversions = {{"Short_SoC_version", tilingContextPara.socVersion_}};                          \
     GetPlatFormInfos(compileInfoString.c_str(), socInfos, aicoreSpec, intrinsics);                                     \
     auto tilingContext = contextHolder.GetContext();                                                                   \
     tilingContext->GetPlatformInfo()->SetPlatformRes("SoCInfo", socInfos);                                             \
@@ -218,7 +238,7 @@ bool ExecuteTiling(const gert::TilingContextPara& tilingContextPara, TilingInfo&
     if (tilingRet != ge::GRAPH_SUCCESS) {
         return false;
     }
-    
+
     tilingInfo.tilingKey = tilingContext->GetTilingKey();
     tilingInfo.blockNum = tilingContext->GetBlockDim();
     size_t workspaceCount = tilingContext->GetWorkspaceNum();
@@ -232,6 +252,6 @@ bool ExecuteTiling(const gert::TilingContextPara& tilingContextPara, TilingInfo&
     tilingInfo.tilingData = std::make_unique<uint8_t[]>(rawTilingData->GetDataSize());
     tilingInfo.tilingDataSize = rawTilingData->GetDataSize();
     std::memcpy(tilingInfo.tilingData.get(), rawTilingData->GetData(), rawTilingData->GetDataSize());
-    
+
     return true;
 }

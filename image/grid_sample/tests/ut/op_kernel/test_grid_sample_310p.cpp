@@ -53,6 +53,7 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test08)
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
     }compileInfo;
+    string socVersion = "Ascend310p";
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{2, 2, 2, 1}, {2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                 {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -62,7 +63,7 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test08)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo, socVersion);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -106,6 +107,7 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test11)
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
     }compileInfo;
+    string socVersion = "Ascend310p";
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                 {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -115,7 +117,7 @@ TEST_F(grid_sample_310p_test, test_case_fp32_test11)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo, socVersion);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);

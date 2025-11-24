@@ -59,6 +59,7 @@ TEST_F(upsample_bilinear2d_aa_backward_test, test_case_float_1) {
     UpsampleBilinear2dAABackwardCompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16};
     std::vector<int64_t> input_size = {1, 1, 4, 4};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAABackward",
                                               {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},},
                                               {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},},
@@ -67,7 +68,7 @@ TEST_F(upsample_bilinear2d_aa_backward_test, test_case_float_1) {
                                                 {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
                                                 {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
                                                 {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
-                                              &compileInfo, 24, 192*1024,8192);
+                                              &compileInfo, socVersion, 24, 192*1024,8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -102,6 +103,7 @@ TEST_F(upsample_bilinear2d_aa_backward_test, test_case_float16_2) {
     UpsampleBilinear2dAABackwardCompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16};
     std::vector<int64_t> input_size = {1, 1, 4, 4};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAABackward",
                                               {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
                                               {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
@@ -110,7 +112,7 @@ TEST_F(upsample_bilinear2d_aa_backward_test, test_case_float16_2) {
                                                 {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
                                                 {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
                                                 {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
-                                              &compileInfo, 24, 192*1024,8192);
+                                              &compileInfo, socVersion, 24, 192*1024,8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);

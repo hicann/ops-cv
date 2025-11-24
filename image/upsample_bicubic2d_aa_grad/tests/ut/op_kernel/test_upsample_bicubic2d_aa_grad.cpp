@@ -47,7 +47,7 @@ TEST_F(upsample_bicubic2d_aa_grad_test, test_case_float32)
     struct UpsampleBicubic2dAAGradCompileInfo {
         uint32_t coreNum = 24;
     } compile_info;
-
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAAGrad",
                                                 {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
                                                 {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -56,7 +56,7 @@ TEST_F(upsample_bicubic2d_aa_grad_test, test_case_float32)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
                                                 gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
                                                 gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compile_info, 48, 192*1024, 8192);
+                                                &compile_info, socVersion, 48, 192*1024, 8192);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);

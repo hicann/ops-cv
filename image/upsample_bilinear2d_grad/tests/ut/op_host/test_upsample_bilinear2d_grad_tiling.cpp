@@ -39,6 +39,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_001)
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {256, 256};
     std::vector<int64_t> input_size = {1, 1, 128, 128};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
         {
             {{{1, 1, 256, 256}, {1, 1, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -52,6 +53,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_001)
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);
@@ -85,6 +87,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_002)
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {128, 128};
     std::vector<int64_t> input_size = {1, 1, 128, 128};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
         {
             {{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -98,6 +101,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_002)
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);
@@ -128,6 +132,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_003)
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {128, 128};
     std::vector<int64_t> input_size = {1, 1, 256, 256};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
         {
             {{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -141,6 +146,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_003)
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);
@@ -175,6 +181,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_004)
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {12, 12};
     std::vector<int64_t> input_size = {1, 1, 1, 1};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
         {
             {{{1, 1, 12, 12}, {1, 1, 12, 12}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -188,6 +195,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_004)
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);
@@ -218,6 +226,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_005)
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {1, 1};
     std::vector<int64_t> input_size = {1, 1, 20, 20};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
         {
             {{{1, 1, 1, 1}, {1, 1, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -231,6 +240,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_005)
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);
@@ -261,6 +271,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_006)
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {1, 1};
     std::vector<int64_t> input_size = {1, 1, 1, 1};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
         {
             {{{1, 1, 1, 1}, {1, 1, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -274,6 +285,7 @@ TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_006)
             {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
             {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
         &compileInfo,
+		socVersion,
         48,
         192 * 1024,
         8192);

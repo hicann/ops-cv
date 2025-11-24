@@ -58,22 +58,16 @@ TEST_F(upsample_bilinear2d_grad_test, test_case_float_1)
     optiling::UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {4, 4};
     std::vector<int64_t> input_size = {1, 1, 16, 16};
+    string socVersion = "Ascend910b";
     gert::TilingContextPara tilingContextPara("UpsampleBilinear2dGrad",
-        {
-            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
-        },
-        {
-            {{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-        },
-        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-            {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
-            {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)},
-            {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
-            {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
-        &compileInfo,
-        48,
-        196608,
-        8192);
+                                              {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                              {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+                                              {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)},
+                                                {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+                                                {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+                                              &compileInfo, socVersion,48,196608,8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);

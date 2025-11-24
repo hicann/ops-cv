@@ -50,6 +50,7 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
     struct ResizeUpsampleTrilinearCompileInfo {
         uint32_t totalCoreNum = 48;
     } compileInfo;
+    string socVersion = "Ascend310p";
     gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
                                                 {{{{1, 2, 2, 1, 16}, {1, 2, 2, 1, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
                                                 {{{{1, 2, 1, 2, 4}, {1, 2, 1, 2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -58,7 +59,7 @@ TEST_F(resize_upsample_trilinear_310p_test, test_case_float32)
                                                 gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
                                                 gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
                                                 gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo, socVersion, 48, 192 * 1024, 16384);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -104,6 +105,7 @@ system(
     struct ResizeUpsampleTrilinearCompileInfo {
         uint32_t totalCoreNum = 48;
     } compileInfo;
+    string socVersion = "Ascend310p";
     gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
                                                 {{{{1, 2, 2, 1, 16}, {1, 2, 2, 1, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
                                                 {{{{1, 2, 1, 2, 4}, {1, 2, 1, 2, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
@@ -112,7 +114,7 @@ system(
                                                 gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
                                                 gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
                                                 gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo, 48, 192 * 1024, 16384);
+                                                &compileInfo, socVersion, 48, 192 * 1024, 16384);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);

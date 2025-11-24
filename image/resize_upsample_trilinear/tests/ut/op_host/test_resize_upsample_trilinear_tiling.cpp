@@ -52,10 +52,7 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_001)
             gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
             gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
             gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        48,
-        192 * 1024,
-        16384);
+            &compileInfo);
     uint64_t expectTilingKey = 3000;
 
     string expectTilingData =
