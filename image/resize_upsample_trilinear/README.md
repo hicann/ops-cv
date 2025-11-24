@@ -162,7 +162,7 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_upsample_trillinear3d](examples/test_aclnn_upsample_trillinear3d.cpp) | 通过[aclnnUpsampleTrilinear3d](docs/aclnnUpsampleTrilinear3d.md)接口方式调用ResizeUpsampleTrilinear算子。 |
+| aclnn接口  | [test_aclnn_upsample_trilinear3d](examples/test_aclnn_upsample_trilinear3d.cpp) | 通过[aclnnUpsampleTrilinear3d](docs/aclnnUpsampleTrilinear3d.md)接口方式调用ResizeUpsampleTrilinear算子。 |
 <!--
-| 图模式 | [test_geir_upsample_trillinear3d](examples/test_geir_upsample_trillinear3d.cpp)  | 通过[算子IR](op_graph/upsample_trillinear3d_proto.h)构图方式调用ResizeUpsampleTrilinear算子。         |
+| 图模式 | [test_geir_upsample_trilinear3d](examples/test_geir_upsample_trilinear3d.cpp)  | 通过[算子IR](op_graph/upsample_trilinear3d_proto.h)构图方式调用ResizeUpsampleTrilinear算子。         |
 -->

@@ -53,7 +53,7 @@ AscendOps 是一个轻量级，高性能的算子开发工程模板，它集成�
    # 默认路径安装，以root用户为例（非root用户，将/usr/local替换为${HOME}）
    source /usr/local/Ascend/ascend-toolkit/set_env.sh
    # 指定路径安装
-   # source ${install-path}/ascend-toolkit/set_env.sh
+   # source ${install_path}/ascend-toolkit/set_env.sh
     ```  
 3. **安装torch与torch_npu包**
    
@@ -100,7 +100,7 @@ AscendOps 是一个轻量级，高性能的算子开发工程模板，它集成�
     pip install dist/xxx.whl --force-reinstall --no-deps
     ```
 
-4. (可选)再次构建前建议先执行以下命令清理编译缓存
+4. （可选）再次构建前建议先执行以下命令清理编译缓存
    ```sh
     python setup.py clean
     ```
@@ -131,11 +131,11 @@ for data_type in supported_dtypes:
         cpu_result = torch.nn.functional.interpolate(x, size=size, mode='nearest')
     else :
         cpu_result = torch.nn.functional.interpolate(x.float(), size=size, mode='nearest').to(data_type)
-    print(f"cpu: upsamplenearest3d(x, size) = {cpu_result}")
+    print(f"cpu: upsample_nearest3d(x, size) = {cpu_result}")
     x_npu = x.npu()
     npu_result = torch.ops.ascend_ops.upsample_nearest3d(x_npu, size).cpu()
     print(f"[OK] torch.ops.ascend_ops.upsample_nearest3d<{data_type}> successfully!")
-    print(f"npu: upsamplenearest3d(x, size) = {npu_result}")
+    print(f"npu: upsample_nearest3d(x, size) = {npu_result}")
     print(f"compare CPU Result vs NPU Result: {torch.allclose(cpu_result, npu_result)}\n\n")
 ```
 
@@ -204,7 +204,7 @@ compare CPU Result vs NPU Result: True
     }
     ```
 
-4. (可选)在 `ascend_ops/ops.py`中封装自定义接口
+4. （可选）在 `ascend_ops/ops.py`中封装自定义接口
     ```python
     def mykernel(x: Tensor) -> Tensor:
         return torch.ops.ascend_ops.mykernel.default(x)

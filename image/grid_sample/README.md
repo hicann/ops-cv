@@ -14,7 +14,7 @@
 
   - 计算流程：
     1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，坐标和alignCorners、paddingMode有关。
-    2. 坐标根据输入的interpolateMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
+    2. 坐标根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
   
   - 其中：
     - 3D场景：

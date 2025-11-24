@@ -71,9 +71,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>gradOut</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
-      <td><ul><li>H / W轴不支持空Tensor
-      <li>支持NCHW和NHWC。
-      <li>输入维度必须是4维</td>
+      <td><ul><li>H / W轴不支持空Tensor。</li><li>支持NCHW和NHWC。</li><li>输入维度必须是4维。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -82,7 +80,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>表示输入gradOut在H和W维度上的空间大小。</td>
+      <td>表示输入`gradOut`在H和W维度上的空间大小。</td>
       <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
@@ -92,9 +90,8 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>inputSize</td>
       <td>输入</td>
-      <td>表示指定`grad_input`在H和W维度上的空间大小。</td>
-      <td><ul><li>size为4，且最后两个元素均大于零。
-      <li>当输入gradOut的数据格式为NCHW时，表示输出gradInput分别在N、C、H和W维度上的空间大小；当输入gradOut的数据格式为NHWC时，表示输出gradInput分别在N、H、W和C维度上的空间大小。</li></ul></td>
+      <td>表示指定`gradInput`在H和W维度上的空间大小。</td>
+      <td><ul><li>size为4，且最后两个元素均大于零。</li><li>当输入`gradOut`的数据格式为NCHW时，表示输出`gradInput`分别在N、C、H和W维度上的空间大小；当输入`gradOut`的数据格式为NHWC时，表示输出`gradInput`分别在N、H、W和C维度上的空间大小。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>

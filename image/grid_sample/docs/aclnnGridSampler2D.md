@@ -20,7 +20,7 @@
   output: (N, C, H_{out}, W_{out})
   $$
 
-  其中input、grid、out中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, 1)表示右下角坐标。
+  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, 1)表示右下角坐标。
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
 
     - paddingMode=0，表示对越界位置用0填充。

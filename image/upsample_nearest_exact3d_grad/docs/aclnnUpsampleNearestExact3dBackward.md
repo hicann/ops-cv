@@ -75,7 +75,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     </tr></thead>
   <tbody>
     <tr>
-      <td>gradOutput</td>
+      <td>gradOut</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
       <td>不支持空Tensor。</td>
@@ -87,7 +87,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>表示输入`gradOutput`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
+      <td>表示输入`gradOut`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
       <td>size为3，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>

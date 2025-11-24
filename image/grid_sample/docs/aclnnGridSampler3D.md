@@ -22,10 +22,14 @@
   $$
 
 
-  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。对于超出范围的坐标，会根据paddingMode进行不同处理：
-  - paddingMode=0，表示对越界位置用0填充。
-  - paddingMode=1，表示对越界位置用边界值填充。
-  - paddingMode=2，表示对越界位置用边界值的对称值填充。
+  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
+  - 对于超出范围的坐标，会根据paddingMode进行不同处理：
+    - paddingMode=0，表示对越界位置用0填充。
+    - paddingMode=1，表示对越界位置用边界值填充。
+    - paddingMode=2，表示对越界位置用边界值的对称值填充。
+  - 对input采样时，会根据interpolationMode进行不同处理：
+    - interpolationMode="bilinear"，表示取input中(x, y, z)周围四个坐标的加权平均值。
+    - interpolationMode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
 
 ## 函数原型
 
