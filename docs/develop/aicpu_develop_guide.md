@@ -101,7 +101,7 @@ graph LR
 <td colspan="4" >AttrValue类：包含了Cpu Kernels的属性定义以及方法</td>
 </tr>
 <tr>
-<td colspan="4" >NodeDefBuilder类：包含了Cpu kernels的NodeDef定义以及方法</td>
+<td colspan="4" >NodeDefBuilder类：包含了Cpu Kernels的NodeDef定义以及方法</td>
 </tr>
 <tr>
 <td colspan="4" >CpuKernelRegister类：AI CPU算子的Kernel注册类，用于框架获取算子Kernel的Compute函数相关信息，以及执行算子Kernel的Compute函数</td>
@@ -263,7 +263,7 @@ REGISTER_CPU_KERNEL(kAddExample, AddExampleCpuKernel);
 
 **2. InferShape推导实现。**
 
-Infershape函数的作用是根据输入的shape推导输出的shape。
+InferShape函数的作用是根据输入的shape推导输出的shape。
 
 **3. InferDataType推导实现。**
 

@@ -64,7 +64,7 @@
     <tr>
       <td>eps</td>
       <td>属性</td>
-      <td>防止除零，计算面积时长和宽都会加上eps。</td>
+      <td>防止除零，计算面积时，长和宽都会加上eps。</td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>

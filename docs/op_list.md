@@ -35,5 +35,5 @@
 | image | [upsample_nearest_exact3d](../image/upsample_nearest_exact3d/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。                                                                                            |
 | image | [upsample_nearest_exact3d_grad](../image/upsample_nearest_exact3d_grad/README.md) | AI Core          | [UpsampleNearestExact3d](../image/upsample_nearest_exact3d/README.md)的反向计算。                                      |
 | image | [upsample_trilinear3d_backward](../image/upsample_trilinear3d_backward/README.md) | AI Core          | [ResizeUpsampleTrilinear](../image/resize_upsample_trilinear/README.md)的反向计算。                                   |
-| image     | [crop_and_resize](../image/crop_and_resize/README.md)     | AI CPU           | 从输入图像中提取多个裁剪区域, 并将他们统一调整为指定大小，支持双线性插值和最近邻插值。                                                                              |
+| image     | [crop_and_resize](../image/crop_and_resize/README.md)     | AI CPU           | 从输入图像中提取多个裁剪区域, 并将它们统一调整为指定大小，支持双线性插值和最近邻插值。                                                                              |
 | image     | [image_warp_offsets](../image/image_warp_offsets/README.md) | AI CPU           | 根据偏移量选取图像并进行扭曲变换。                                                                                                         |
