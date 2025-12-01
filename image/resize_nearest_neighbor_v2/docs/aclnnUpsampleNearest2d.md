@@ -73,7 +73,7 @@ aclnnStatus aclnnUpsampleNearest2d(
       <td>self</td>
       <td>输入</td>
       <td>公式中的`self`，表示进行上采样的输入数据。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据类型为DOUBLE、UINT8时，self的H轴和W轴均要满足小于2^24。</li></ul></td>
+      <td>不支持空Tensor。</td><!--当数据类型为DOUBLE、UINT8时，self的H轴和W轴均要满足小于2^24。-->
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -83,10 +83,10 @@ aclnnStatus aclnnUpsampleNearest2d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示指定`out`在H和W维度上的空间大小。</td>
-      <td><ul><li>各元素均不等于零</li></ul></td>
+      <td><ul><li>各元素均不等于零。</li><li>size为2。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
-      <td>2</td>
+      <td>-</td>
       <td>-</td>
     </tr>
     <tr>
@@ -122,8 +122,7 @@ aclnnStatus aclnnUpsampleNearest2d(
     </tr>
   </tbody>
   </table>
-
-  
+ 
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
@@ -216,7 +215,17 @@ aclnnStatus aclnnUpsampleNearest2d(
 
 ## 约束说明
 
-无。
+参数`self`、`out`的shape约束：
+- 每个维度的取值小于等于2^20。
+- 参数`out`的N轴和C轴与`self`保持一致。
+- 占用内存小于60G。内存占用的计算公式如下：
+  
+  $$
+  N *  (ceil(C/16) * 16) * (self\_H * self\_W + out\_H * out\_D) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
+  $$
+  其中：
+  - N代表输入和输出的N轴。
+  - C代表输入和输出的C轴。
 
 ## 调用示例
 
@@ -284,7 +293,7 @@ int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& 
 }
 
 int main() {
-  // 1. （固定写法）device/stream初始化, 参考acl API手册
+  // 1. （固定写法）device/stream初始化，参考acl API手册
   // 根据自己的实际device填写deviceId
   int32_t deviceId = 0;
   aclrtStream stream;

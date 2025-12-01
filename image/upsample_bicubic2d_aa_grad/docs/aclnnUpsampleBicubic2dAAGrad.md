@@ -133,7 +133,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</li></ul></td>
+      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -228,7 +228,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>gradOutput的shape不是4维。</td>
     </tr>
     <tr>
-      <td>outputSize或inputSize的取值小于1。</td>
+      <td>inputSize的H轴或W轴的取值小于1。</td>
     </tr>
     <tr>
       <td>scalesH或scalesW的值为负数。</td>
@@ -280,6 +280,19 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
 
 ## 约束说明
 
+- 参数`gradOutput`、`out`的shape约束：
+  - 每个维度的取值小于等于2^20。
+  - 参数`out`的N轴和C轴与`gradOutput`保持一致。
+  - 内存占用需要满足如下条件：
+    
+    $$
+    (gradOutput\_H * gradOutput\_W + out\_H * out\_W + gradOutput\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
+    $$
+
+    其中：
+    - N代表输入和输出的N轴。
+    - C代表输入和输出的C轴。
+  - N * C * gradOutput_H < 2^31
 - 输入数据缩放场景放大倍数必须小于等于50，即$outputSize[0]/输出shape的高度H$以及$outputSize[1]/输出shape的宽度W$必须小于等于50。
 - 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
   - 当alignCorners为True时：

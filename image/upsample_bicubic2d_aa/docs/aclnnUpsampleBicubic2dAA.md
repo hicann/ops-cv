@@ -117,7 +117,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>outputSize</td>
       <td>输入</td>
       <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>outputSize的size为2。</td><!--，且各元素均大于0，不加aa的有这个限制，这个是否保留-->
+      <td>size为2。</td><!--，且各元素均大于0，不加aa的有这个限制，这个是否保留-->
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -127,7 +127,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</li></ul></td>
+      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -268,6 +268,19 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
 
 ## 约束说明
 
+- 参数`x`、`out`的shape约束：
+  - 每个维度的取值小于等于2^20。
+  - 参数`out`的N轴和C轴与`self`保持一致。
+  - 占用内存小于60G。内存占用的计算公式如下：
+    
+    $$
+    (x\_H * x\_W + out\_H * out\_W + x\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
+    $$
+
+    其中：
+    - N代表输入和输出的N轴。
+    - C代表输入和输出的C轴。
+  - N * C * x_H < 2^31
 - 输入数据缩放场景缩小倍数必须小于等于50，即输入shape的高度H/outputSize[0]以及宽度W/outputSize[1]必须小于等于50。
 - 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
   - 当alignCorners为True时：
