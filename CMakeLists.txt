@@ -28,7 +28,6 @@ set(OPS_CV_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # 外部传参
 option(ENABLE_ASAN "Enable asan" OFF)
 option(ENABLE_VALGRIND "Enable valgrind" OFF)
-option(ENABLE_DEBUG "Enable debug" OFF)
 option(ENABLE_TEST "Enable test" OFF)
 option(ENABLE_UT_EXEC "Enable exec ut" OFF)
 option(ENABLE_BINARY "Enable build binary" OFF)
@@ -47,6 +46,19 @@ set(ASCEND_ALL_COMPUTE_UNIT "ascend310p;ascend910;ascend910b;ascend910_93" CACHE
 set(ASCEND_OP_NAME "" CACHE STRING "operators that need to be compiled")
 set(VENDOR_NAME "custom" CACHE STRING "vendor name")
 
+if(ENABLE_TEST)
+  set(DEFAULT_BUILD_TYPE "Debug")
+else()
+  set(DEFAULT_BUILD_TYPE "Release")
+endif ()
+
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the build type: Release/Debug" FORCE)
+endif ()
+
+if(ENABLE_TEST)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the build type: Release/Debug" FORCE)
+endif ()
 
 if("${BUILD_MODE}" STREQUAL "-O0" OR "${BUILD_MODE}" STREQUAL "-O1" OR
    "${BUILD_MODE}" STREQUAL "-O2" OR "${BUILD_MODE}" STREQUAL "-O3"
@@ -59,8 +71,12 @@ else()
     set(COMPILE_OP_MODE "-O2")
   endif()
 endif()
-if(ENABLE_DEBUG OR ENABLE_TEST)
+
+if(ENABLE_TEST)
   set(COMPILE_OP_MODE "${COMPILE_OP_MODE} -g")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "cmake build type")
+else ()
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "cmake build type")
 endif()
 
 # Cmake Compile配置

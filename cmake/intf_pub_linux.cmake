@@ -14,6 +14,7 @@ if(NOT TARGET intf_pub)
     -Wall
     -fPIC
     $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
+    $<$<CONFIG:Debug>:-g>
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++14>
   )
   target_compile_definitions(intf_pub INTERFACE
@@ -40,6 +41,7 @@ if(NOT TARGET intf_pub_cxx14)
     -Wall
     -fPIC
     $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
+    $<$<CONFIG:Debug>:-g>
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++14>
   )
   target_compile_definitions(intf_pub_cxx14 INTERFACE
@@ -66,6 +68,7 @@ if(NOT TARGET intf_pub_cxx17)
       -Wall
       -fPIC
       $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
+      $<$<CONFIG:Debug>:-g>
       $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
   )
   target_compile_definitions(intf_pub_cxx17 INTERFACE

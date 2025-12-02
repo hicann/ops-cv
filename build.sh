@@ -19,7 +19,7 @@ SUPPORTED_SHORT_OPTS="hj:vO:uf:-:"
 
 # 所有支持的长选项
 SUPPORTED_LONG_OPTS=(
-  "help" "ops=" "soc=" "vendor_name=" "debug" "cov" "noexec" "aicpu" "opkernel" "jit"
+  "help" "ops=" "soc=" "vendor_name=" "build-type=" "cov" "noexec" "aicpu" "opkernel" "jit"
   "pkg" "disable_asan" "valgrind" "make_clean"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test"
   "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path" "experimental"
@@ -130,14 +130,15 @@ usage() {
         echo "    --ops=op1,op2,...      Compile specified operators (comma-separated for multiple)"
         echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
         echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
-        echo "    --debug                Build with debug mode"
+        echo "    --build-type=<TYPE>"
+        echo "                           Specify build type(TYPE options: Release/Debug), Default:Release"
         echo "    --experimental         Build experimental version"
         echo "    --cann_3rd_lib_path=<PATH>"
         echo "                           Set ascend third_party package install path, default ./third_party"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --pkg --soc=ascend910b --vendor_name=customize -j16 -O3"
-        echo "    bash build.sh --pkg --ops=add,sub --debug"
+        echo "    bash build.sh --pkg --ops=add,sub --build-type=Debug"
         echo "    bash build.sh --pkg --experimental --soc=ascend910b"
         return
         ;;
@@ -192,11 +193,12 @@ usage() {
         echo "    --ophost               Build ophost library"
         echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
         echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
-        echo "    --debug                Build with debug mode"
+        echo "    --build-type=<TYPE>"
+        echo "                           Specify build type(TYPE options: Release/Debug), Default:Release"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --ophost -j16 -O3"
-        echo "    bash build.sh --ophost --debug"
+        echo "    bash build.sh --ophost --build-type=Debug"
         return
         ;;
       opapi)
@@ -205,11 +207,12 @@ usage() {
         echo "    --opapi                Build opapi library"
         echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
         echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
-        echo "    --debug                Build with debug mode"
+        echo "    --build-type=<TYPE>"
+        echo "                           Specify build type(TYPE options: Release/Debug), Default:Release"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --opapi -j16 -O3"
-        echo "    bash build.sh --opapi --debug"
+        echo "    bash build.sh --opapi --build-type=Debug"
         return
         ;;
       opgraph)
@@ -218,11 +221,12 @@ usage() {
         echo "    --opgraph              Build opgraph library"
         echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
         echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
-        echo "    --debug                Build with debug mode"
+        echo "    --build-type=<TYPE>"
+        echo "                           Specify build type(TYPE options: Release/Debug), Default:Release"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --opgraph -j16 -O3"
-        echo "    bash build.sh --opgraph --debug"
+        echo "    bash build.sh --opgraph --build-type=Debug"
         return
         ;;
       ophost_test)
@@ -314,7 +318,7 @@ usage() {
   echo $dotted_line
   echo "    The following are all supported arguments:"
   echo $dotted_line
-  echo "    --debug build with debug mode"
+  echo "    --build-type Specify build type(TYPE options: Release/Debug), Default:Release"
   echo "    --cov When building uTest locally, count the coverage."
   echo "    --noexec Only compile ut, do not execute the compiled executable file"
   echo "    --make_clean make clean"
@@ -404,6 +408,13 @@ check_param() {
     if [[ "$ENABLE_GENOP_AICPU" == "TRUE" ]]; then
       echo "[ERROR] --pkg cannot be used with --genop_aicpu"
       exit 1
+    fi
+
+    if [[ -n "${BUILD_TYPE}" ]]; then
+      if [[ "${BUILD_TYPE}" != "Release" && "${BUILD_TYPE}" != "Debug" ]]; then
+        echo "[ERROR] --build-type only support Release/Debug Mode"
+        exit 1
+      fi
     fi
 
     if $(echo ${USE_CMD} | grep -wq "jit"); then
@@ -510,7 +521,7 @@ checkopts() {
   EXAMPLE_MODE=""
   USE_CMD="$*"
 
-  ENABLE_DEBUG=FALSE
+  BUILD_TYPE="Release"
   ENABLE_CONVERAGE=FALSE
   ENABLE_UT_EXEC=TRUE
   ENABLE_ASAN=TRUE
@@ -656,7 +667,9 @@ checkopts() {
           VENDOR_NAME=${OPTARG#*=}
           ENABLE_CUSTOM=TRUE
           ;;
-        debug) ENABLE_DEBUG=TRUE ;;
+        build-type=*)
+          BUILD_TYPE=${OPTARG#*=}
+          ;;
         cov) ENABLE_CONVERAGE=TRUE ;;
         noexec) ENABLE_UT_EXEC=FALSE ;;
         aicpu) AICPU_ONLY=TRUE ;;
@@ -672,7 +685,7 @@ checkopts() {
         valgrind)
           ENABLE_VALGRIND=TRUE
           ENABLE_UT_EXEC=FALSE
-          ENABLE_DEBUG=TRUE
+          BUILD_TYPE="Debug"
           ENABLE_ASAN=FALSE
           ;;
         run_example) ENABLE_RUN_EXAMPLE=TRUE ;;
@@ -761,8 +774,8 @@ assemble_cmake_args() {
   if [[ "$ENABLE_VALGRIND" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_VALGRIND=TRUE"
   fi
-  if [[ "$ENABLE_DEBUG" == "TRUE" ]]; then
-    CMAKE_ARGS="$CMAKE_ARGS -DENABLE_DEBUG=TRUE"
+  if [[ -n "$BUILD_TYPE" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DCMKAE_BUILD_TYPE=${BUILD_TYPE}"
   fi
   if [[ "$ENABLE_TEST" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_TEST=TRUE"
