@@ -11,7 +11,12 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/3.4.0/eigen-3.4.0.tar.gz")
+if (IS_DIRECTORY "${CANN_3RD_LIB_PATH}/eigen")
+    set(REQ_URL "${CANN_3RD_LIB_PATH}/eigen")
+else()
+    set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/3.4.0/eigen-3.4.0.tar.gz")
+endif()
+
 include(ExternalProject)
 ExternalProject_Add(external_eigen_cv
   URL               ${REQ_URL}

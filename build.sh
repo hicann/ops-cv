@@ -22,7 +22,7 @@ SUPPORTED_LONG_OPTS=(
   "help" "ops=" "soc=" "vendor_name=" "debug" "cov" "noexec" "aicpu" "opkernel" "jit"
   "pkg" "disable_asan" "valgrind" "make_clean"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test"
-  "run_example" "genop=" "genop_aicpu=" "experimental"
+  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path" "experimental"
 )
 
 in_array() {
@@ -112,6 +112,7 @@ export INC_INCLUDE_PATH="${ASCEND_OPP_PATH}/built-in/op_proto/inc"
 export EAGER_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
 export GRAPH_LIBRARY_STUB_PATH="${ASCEND_HOME_PATH}/compiler/lib64/stub"
 export GRAPH_LIBRARY_PATH="${ASCEND_HOME_PATH}/compiler/lib64"
+CANN_3RD_LIB_PATH="${BASE_PATH}/third_party"
 
 # print usage message
 usage() {
@@ -131,6 +132,8 @@ usage() {
         echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
         echo "    --debug                Build with debug mode"
         echo "    --experimental         Build experimental version"
+        echo "    --cann_3rd_lib_path=<PATH>"
+        echo "                           Set ascend third_party package install path, default ./third_party"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --pkg --soc=ascend910b --vendor_name=customize -j16 -O3"
@@ -661,6 +664,9 @@ checkopts() {
           ENABLE_BINARY=TRUE
           ENABLE_PACKAGE=TRUE
           ;;
+        cann_3rd_lib_path=*)
+          CANN_3RD_LIB_PATH="$(realpath ${OPTARG#*=})"
+          ;;
         jit) ENABLE_BINARY=FALSE ;;
         disable_asan) ENABLE_ASAN=FALSE ;;
         valgrind)
@@ -815,6 +821,7 @@ assemble_cmake_args() {
     echo "COMPUTE_UNIT: ${COMPUTE_UNIT_SHORT}"
     CMAKE_ARGS="$CMAKE_ARGS -DASCEND_COMPUTE_UNIT=$COMPUTE_UNIT_SHORT"
   fi
+  CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
 }
 
 clean_build() {
