@@ -125,7 +125,7 @@ usage() {
         echo $dotted_line
         echo "    --pkg                  Build run package with kernel bin"
         echo "    --jit                  Build run package without kernel bin"
-        echo "    --soc=soc_version      Compile for specified Ascend SoC (comma-separated for multiple)"
+        echo "    --soc=soc_version      Compile for specified Ascend SoC"
         echo "    --vendor_name=name     Specify custom operator package vendor name"
         echo "    --ops=op1,op2,...      Compile specified operators (comma-separated for multiple)"
         echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
@@ -146,7 +146,7 @@ usage() {
         echo "Opkernel Build Options:"
         echo $dotted_line
         echo "    --opkernel             Build binary kernel"
-        echo "    --soc=soc_version      Compile for specified Ascend SoC (comma-separated for multiple)"
+        echo "    --soc=soc_version      Compile for specified Ascend SoC"
         echo "    --ops=op1,op2,...      Compile specified operators (comma-separated for multiple)"
         echo $dotted_line
         echo "Examples:"
@@ -326,7 +326,7 @@ usage() {
   echo "    --valgrind run ut with valgrind. This option will disable asan, noexec and run utest by valgrind"
   echo ""
   echo "    --ops Compile specified operator, use snake name, like: --ops=add,add_lora, use ',' to separate different operator"
-  echo "    --soc Compile binary with specified Ascend SoC, like: --soc=ascend310p,ascend910b, use ',' to separate different SoC"
+  echo "    --soc Compile binary with specified Ascend SoC, like: --soc=ascend910b"
   echo "    --vendor_name Specify the custom operator package vendor name, like: --vendor_name=customize, default to customize-cv"
   echo "    --aicpu build aicpu task"
   echo "    --opgraph build op_graph_cv.so"

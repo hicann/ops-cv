@@ -25,7 +25,6 @@ run_command() {
     fi
 }
 
-
 version_ge() {
     # 版本比较，版本形式：xx.xx.xx
     IFS='.' read -r -a curr_arr <<< "$1"
@@ -69,6 +68,36 @@ detect_os() {
         PKG_MANAGER="brew"
     else
         echo "不支持的OS类型"
+        exit 1
+    fi
+}
+
+install_gawk() {
+    echo -e "\n==== 检查Gawk ===="
+
+    if command -v gawk &> /dev/null; then
+        echo "Gawk已安装"
+        return
+    fi
+
+    echo "安装Gawk..."
+    case "$OS" in
+        debian)
+            run_command sudo $PKG_MANAGER update
+            run_command sudo $PKG_MANAGER install -y gawk
+            ;;
+        rhel)
+            run_command sudo $PKG_MANAGER install -y gawk
+            ;;
+        macos)
+            run_command brew install gawk
+            ;;
+    esac
+
+    if command -v gawk &> /dev/null; then
+        echo "Gawk安装成功"
+    else
+        echo "Gawk安装失败"
         exit 1
     fi
 }
@@ -282,7 +311,6 @@ install_pigz() {
     fi
 }
 
-
 install_dos2unix() {
     echo -e "\n==== 检查dos2unix ===="
 
@@ -380,6 +408,7 @@ main() {
     echo "===================================================="
 
     detect_os
+    install_gawk
     install_python
     install_gcc
     install_cmake
