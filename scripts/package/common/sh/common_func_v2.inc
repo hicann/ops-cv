@@ -306,11 +306,15 @@ get_package_dir() {
     local _package="$2"
     local _is_under_tools _result
 
-    is_package_under_tools "_is_under_tools" "${_package}"
-    if [ "${_is_under_tools}" = "true" ]; then
-        _result="tools"
+    if [ "${USE_SHARE_INFO}" == "y" ]; then
+        _result="share/info"
     else
-        _result=""
+        is_package_under_tools "_is_under_tools" "${_package}"
+        if [ "${_is_under_tools}" = "true" ]; then
+            _result="tools"
+        else
+            _result=""
+        fi
     fi
     eval "${_outvar}=\"${_result}\""
 }
@@ -321,11 +325,15 @@ get_package_dirpath() {
     local _package="$2"
     local _is_under_tools _result
 
-    is_package_under_tools "_is_under_tools" "${_package}"
-    if [ "${_is_under_tools}" = "true" ]; then
-        _result="tools/${_package}"
+    if [ "${USE_SHARE_INFO}" == "y" ]; then
+        _result="share/info/${_package}"
     else
-        _result="${_package}"
+        is_package_under_tools "_is_under_tools" "${_package}"
+        if [ "${_is_under_tools}" = "true" ]; then
+            _result="tools/${_package}"
+        else
+            _result="${_package}"
+        fi
     fi
     eval "${_outvar}=\"${_result}\""
 }
@@ -608,12 +616,7 @@ normalize_feature() {
     local _feature_nf="$2"
     local _operation="$3"
 
-    if [ "$_operation" = "uninstall" ]; then
-        eval "${_outvar}=\"all\""
-        return 0
-    fi
-
-    if [ "$_feature_nf" = "" ]; then
+    if [ "$_operation" = "uninstall" ] || [ "$_feature_nf" = "" ]; then
         eval "${_outvar}=\"all\""
         return 0
     fi
@@ -857,10 +860,7 @@ create_softlink_by_install_path() {
     local target="$2"
     local softlinks_str="$3"
     local softlinks softlink
-    local target_abs
-    local softlink_abs
-    local is_abs_path
-    local ret
+    local target_abs softlink_abs is_abs_path ret
 
     if [ "${softlinks_str}" = "NA" ]; then
         return 0
@@ -945,10 +945,7 @@ change_mod_and_own(){
 change_mod_and_own_dirs() {
     local install_path="$1"
     local line="$2"
-    local target
-    local mod
-    local own
-    local is_abs_path
+    local target mod own is_abs_path
 
     __index_list "${line}" 1 "target" 2 "mod" 3 "own"
 

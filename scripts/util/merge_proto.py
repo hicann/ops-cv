@@ -20,7 +20,7 @@ def match_op_proto(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    op_def_pattern = re.compile(r"REG_OP\((.+)\).*OP_END_FACTORY_REG\(\1\)\;", re.DOTALL)
+    op_def_pattern = re.compile(r"REG_OP\((.+)\).*OP_END_FACTORY_REG\(\1\)", re.DOTALL)
     match = op_def_pattern.search(content)
 
     if match:
@@ -29,17 +29,36 @@ def match_op_proto(file_path):
         return op_name, op_def
     else:
         return None, None
-    
+
+
+# 收集op_cv_proto_extend.h中的原型定义，可能有多个，返回数组
+def match_op_proto_extend(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    op_def_pattern = re.compile(r"REG_OP\((.+)\).*OP_END_FACTORY_REG\(\1\)", re.DOTALL)
+    matches = op_def_pattern.finditer(content)
+
+    results = []
+    for match in matches:
+        op_name = match.group(1)
+        op_def = match.group(0)
+        results.append((op_name, op_def))
+    return results
+
 
 def merge_op_proto(protos_path, output_file):
     op_defs = []
     for proto_path in protos_path:
-        if not proto_path.endswith("_proto.h"):
-            continue
         print(f"proto_path: {proto_path}")
-        op_name, op_def = match_op_proto(proto_path)
-        if op_def:
-            op_defs.append(op_def)
+        if proto_path.endswith("_proto.h"):
+            _, op_def = match_op_proto(proto_path)
+            if op_def:
+                op_defs.append(op_def)
+        if proto_path.endswith("_proto_extend.h"):
+            results = match_op_proto_extend(proto_path)
+            for _, op_def in results:
+                op_defs.append(op_def)
 
     # merge op_proto
     merged_content = f"""#ifndef OP_CV_PROTO_H_

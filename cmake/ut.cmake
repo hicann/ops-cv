@@ -1,12 +1,12 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 include_guard(GLOBAL)
 
@@ -42,12 +42,13 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       add_library(${OP_TILING_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
     target_include_directories(
-      ${OP_TILING_MODULE_NAME}_cases_obj PRIVATE ${UT_COMMON_INC} ${GTEST_INCLUDE} ${ASCEND_DIR}/include
+      ${OP_TILING_MODULE_NAME}_cases_obj PRIVATE ${UT_COMMON_INC} ${GTEST_INCLUDE} ${ASCEND_DIR}/include ${ASCEND_DIR}/pkg_inc
                                                  ${JSON_INCLUDE_DIR} ${ASCEND_DIR}/include/base/context_builder ${PROJECT_SOURCE_DIR}/common/inc
                                                  ${ASCEND_DIR}/include/op_common ${ASCEND_DIR}/include/tiling
                                                  ${ASCEND_DIR}/include/op_common/op_host
                                                  ${ASCEND_DIR}/pkg_inc/base
-                                                 ${ASCEND_DIR}/include/toolchain
+                                                 ${ASCEND_DIR}/pkg_inc/op_common 
+                                                 ${ASCEND_DIR}/pkg_inc/op_common/op_host
       )
     target_link_libraries(${OP_TILING_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest json)
 
@@ -66,8 +67,11 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       )
     target_sources(${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE ${OP_INFERSHAPE_UT_COMMON_SRC})
     target_include_directories(
-      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE ${GTEST_INCLUDE} ${ASCEND_DIR}/include/base/context_builder
-      )
+      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE
+      ${GTEST_INCLUDE} ${ASCEND_DIR}/include/base/context_builder
+      ${ASCEND_DIR}/pkg_inc
+      ${ASCEND_DIR}/pkg_inc/base
+    )
     target_link_libraries(
       ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest c_sec
       )
@@ -107,10 +111,19 @@ if(UT_TEST_ALL OR OP_API_UT)
       add_library(${OP_API_MODULE_NAME}_cases_obj OBJECT)
     endif()
     target_sources(${OP_API_MODULE_NAME}_cases_obj PRIVATE ${UT_PATH}/op_api/stub/opdev/platform.cpp)
+    file(GLOB ACLNN_SRC_DIRS
+          ${PROJECT_SOURCE_DIR}/image/*/op_host/op_api
+          ${PROJECT_SOURCE_DIR}/objdetect/*/op_host/op_api
+          ${PROJECT_SOURCE_DIR}/image/*/op_api
+          ${PROJECT_SOURCE_DIR}/objdetect/*/op_api 
+        )
     target_include_directories(
       ${OP_API_MODULE_NAME}_cases_obj
       PRIVATE ${JSON_INCLUDE_DIR} ${HI_PYTHON_INC_TEMP} ${UT_PATH}/op_api/stub ${OP_API_UT_COMMON_INC}
               ${ASCEND_DIR}/include ${ASCEND_DIR}/include/aclnn ${ASCEND_DIR}/include/aclnnop
+              ${ASCEND_DIR}/pkg_inc
+              ${ASCEND_DIR}/pkg_inc/base
+              ${OPAPI_INCLUDE}
       )
     target_link_libraries(${OP_API_MODULE_NAME}_cases_obj PRIVATE
       $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
@@ -128,14 +141,24 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     add_library(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj OBJECT)
     file(GLOB OP_KERNEL_UT_COMMON_SRC
         ./stub/*.cpp
+        ${PROJECT_SOURCE_DIR}/common/src/common/*.cpp
     )
+    
+    file(GLOB OP_KERNEL_AICPU_UT_UTILS_SRC
+        utils/*.cpp
+    )
+
     target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE ${OP_KERNEL_UT_COMMON_SRC})
     target_include_directories(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE
         ${GTEST_INCLUDE}
+        ${PROJECT_SOURCE_DIR}/common/inc/common
+        ${ASCEND_DIR}/pkg_inc/base
+        ${AICPU_INC_DIRS}
     )
     target_compile_definitions(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE _GLIBCXX_USE_CXX11_ABI=1)
     target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE
         $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+        $<BUILD_INTERFACE:dlog_headers>
         gtest
         c_sec
     )
@@ -144,7 +167,8 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     if(NOT TARGET ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj)
         add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
-    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl)
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl Eigen3::EigenCv)
+    target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE ${OP_KERNEL_AICPU_UT_UTILS_SRC})
 
     ## add opkernel ut cases shared lib: libcv_aicpu_op_kernel_ut_cases.so
     add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases SHARED
@@ -160,9 +184,9 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
         c_sec
         -ldl
         -Wl,--whole-archive
-            ${ASCEND_DIR}/ops_base/lib64/libaicpu_context_host.a
-            ${ASCEND_DIR}/ops_base/lib64/libaicpu_nodedef_host.a
-            ${ASCEND_DIR}/ops_base/lib64/libhost_ascend_protobuf.a
+            ${ASCEND_DIR}/lib64/libaicpu_context_host.a
+            ${ASCEND_DIR}/lib64/libaicpu_nodedef_host.a
+            ${ASCEND_DIR}/lib64/libhost_ascend_protobuf.a
         -Wl,--no-whole-archive
         -Wl,-Bsymbolic
         -Wl,--exclude-libs=libhost_ascend_protobuf.a
@@ -358,7 +382,9 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
                 ${ASCEND_DIR}/include/op_common/op_host ${PROJECT_SOURCE_DIR}/common/inc
                 ${ASCEND_DIR}/include/tiling ${ASCEND_DIR}/include/op_common/op_host
                 ${ASCEND_DIR}/pkg_inc/base
-                ${ASCEND_DIR}/include/toolchain
+                ${ASCEND_DIR}/pkg_inc/op_common
+                ${ASCEND_DIR}/pkg_inc/op_common/op_host
+                ${PROJECT_SOURCE_DIR}
         )
       target_compile_definitions(${opName}_${socVersion}_tiling_tmp PRIVATE LOG_CPP _GLIBCXX_USE_CXX11_ABI=0)
       target_link_libraries(
@@ -413,12 +439,13 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
         )
       target_include_directories(
         ${opName}_${socVersion}_cases_obj
-        PRIVATE ${ASCEND_DIR}/include/base/context_builder ${PROJECT_SOURCE_DIR}/tests/ut/op_kernel
+        PRIVATE ${ASCEND_DIR}/include/base/context_builder ${PROJECT_SOURCE_DIR}/tests/ut/op_kernel ${ASCEND_DIR}/pkg_inc
                 ${PROJECT_SOURCE_DIR}/tests/ut/common ${PROJECT_SOURCE_DIR}/common/inc
                 ${ASCEND_DIR}/include/op_common ${ASCEND_DIR}/include/tiling
                 ${ASCEND_DIR}/include/op_common/op_host
                 ${ASCEND_DIR}/pkg_inc/base
-                ${ASCEND_DIR}/include/toolchain
+                ${ASCEND_DIR}/pkg_inc/op_common
+                ${ASCEND_DIR}/pkg_inc/op_common/op_host
         )
       target_link_libraries(
         ${opName}_${socVersion}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> tikicpulib::${socVersion}
@@ -476,14 +503,17 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     target_compile_options(${opName}_cases_obj PRIVATE 
             -g
             )
-    message(STATUS "111******************** ${AICPU_INCLUDE}")
     target_include_directories(${opName}_cases_obj PRIVATE
             ${AICPU_INCLUDE}
             ${OPBASE_INC_DIRS}
             ${AICPU_INC_DIRS}
+            ${ASCEND_DIR}/pkg_inc/base
+            ${PROJECT_SOURCE_DIR}/tests/ut/op_kernel_aicpu
             )
+            
     target_link_libraries(${opName}_cases_obj PRIVATE
             $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+            $<BUILD_INTERFACE:dlog_headers>
             -ldl
             gtest
             c_sec

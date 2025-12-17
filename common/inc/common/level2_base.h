@@ -31,14 +31,6 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 
-// 检查1个输入和1个输出是否是空指针
-static bool CheckNotNull2Tensor(const aclTensor *t0, const aclTensor *t1)
-{
-    OP_CHECK_NULL(t0, return false);
-    OP_CHECK_NULL(t1, return false);
-
-    return true;
-}
 static bool CheckNotNull3Tensor(const aclTensor *t0, const aclTensor *t1, const aclTensor *t2)
 {
     // 检查输入是否是空指针
@@ -109,28 +101,9 @@ static bool CheckShapeCumMinMax(const aclTensor *self, const aclTensor *valuesOu
     return true;
 }
 
-static bool CheckSameShapeNotlimit1In1Out(const aclTensor *self, const aclTensor *out)
-{
-    // self和out的shape必须一致
-    OP_CHECK_SHAPE_NOT_EQUAL(self, out, return false);
-    return true;
-}
-
 static bool CheckShapeNotlimitDim1In1Out(const aclTensor *self)
 {
     OP_CHECK_MAX_DIM(self, MAX_SUPPORT_DIMS_NUMS, return false);
-    return true;
-}
-
-// 检查1个输入和1个输出的数据类型是否在算子的支持列表内
-static bool CheckDtypeValid1In1Out(const aclTensor *self, const aclTensor *out,
-    const std::initializer_list<op::DataType> &dtypeSupportList,
-    const std::initializer_list<op::DataType> &dtypeOutList)
-{
-    OP_CHECK_DTYPE_NOT_SUPPORT(self, dtypeSupportList, return false);
-    // 检查输出的数据类型是否在算子的支持列表内
-    OP_CHECK_DTYPE_NOT_SUPPORT(out, dtypeOutList, return false);
-
     return true;
 }
 
@@ -193,21 +166,6 @@ static bool CheckDtypeValid1In1OutMatch(const aclTensor *self, const aclTensor *
 }
 
 /**
- * l1: ASCEND910B 或者 ASCEND910_93芯片，该算子支持的数据类型列表
- * l2: 其他芯片，该算子支持的数据类型列表
- */
-static const std::initializer_list<DataType> &GetDtypeSupportListV1(
-    const std::initializer_list<op::DataType> &l1, const std::initializer_list<op::DataType> &l2)
-{
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93) {
-        return l1;
-    } else {
-        return l2;
-    }
-}
-
-/**
  * l1: ASCEND910B ~ ASCEND910E芯片，该算子支持的数据类型列表
  * l2: 其他芯片，该算子支持的数据类型列表
  */
@@ -228,6 +186,7 @@ static const std::initializer_list<op::DataType> GetDtypeSupportListV3(
     auto socVersion = GetCurrentPlatformInfo().GetSocVersion();
     switch (socVersion) {
         case SocVersion::ASCEND910_93:
+        case SocVersion::ASCEND910_95:
         case SocVersion::ASCEND910B: {
             return l1;
         }
@@ -281,41 +240,6 @@ static aclnnStatus CheckArrayDataAvgPoolBackWard(
         }
     }
     return ACLNN_SUCCESS;
-}
-
-static bool CheckPaddingValidAvgPool2D(const aclIntArray *kernelSize, const aclIntArray *padding)
-{
-    const int64_t kKernelSizeHIdx = 0;
-    const int64_t kKernelSizeWIdx = 1;
-    const int64_t kPaddingUpIdx = 0;
-    const int64_t kPaddingLeftIdx = 1;
-    const int64_t kernelH = (*kernelSize)[kKernelSizeHIdx];
-    const int64_t kernelPaddingSize = 1;
-    const int64_t MULTIPLIER = 2;
-    // 1表示kernelSize长度为1
-    const int64_t kernelW =
-        kernelSize->Size() == kernelPaddingSize ? (*kernelSize)[kKernelSizeHIdx] : (*kernelSize)[kKernelSizeWIdx];
-    OP_CHECK(padding->Size() != 0, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "padding is empty"), return false);
-    const int64_t paddingH = (*padding)[kPaddingUpIdx];
-    const int64_t paddingW =
-        padding->Size() == kernelPaddingSize ? (*padding)[kPaddingUpIdx] : (*padding)[kPaddingLeftIdx];
-    // MULTIPLIER 表示paddingH不能大于kernelH的一半，下同
-    if (kernelH < MULTIPLIER * paddingH) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "value of paddingH should be at most half of kernelH. Actual: paddingH is [%ld],kernelH is [%ld].",
-            paddingH,
-            kernelH);
-        return false;
-    }
-    if (kernelW < MULTIPLIER * paddingW) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "value of paddingW should be at most half of kernelW. Actual: paddingW is [%ld],"
-            "kernelW is [%ld].",
-            paddingW,
-            kernelW);
-        return false;
-    }
-    return true;
 }
 
 static bool CheckDtypeValid1Out1In(const aclTensor *gradOut, const aclTensor *gradInput)

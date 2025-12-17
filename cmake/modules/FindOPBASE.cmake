@@ -1,4 +1,4 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -6,7 +6,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 if(OPBASE_FOUND)
   message(STATUS "OpBase has been found")
@@ -63,6 +63,5 @@ if(OPBASE_FOUND)
     ${OPBASE_INC_DIR}
     ${OPBASE_INC_DIR}/op_common
     ${OPBASE_INC_DIR}/op_common/op_host
-    ${OPBASE_INC_DIR}/op_common/atvoss
   )
 endif()

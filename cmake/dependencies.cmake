@@ -1,12 +1,12 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 # Ascend mode
 if(DEFINED ENV{ASCEND_HOME_PATH})
@@ -33,6 +33,7 @@ set(CMAKE_PREFIX_PATH ${ASCEND_DIR}/)
 
 set(CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules
+  ${ASCEND_DIR}/include/ge/cmake
   ${CMAKE_MODULE_PATH}
 )
 message(STATUS "CMAKE_MODULE_PATH            :${CMAKE_MODULE_PATH}")
@@ -48,6 +49,11 @@ string(APPEND OPS_CV_CXX_FLAGS " -Wno-format -Wno-ignored-qualifiers -Wno-maybe-
 string(APPEND OPS_CV_CXX_FLAGS " -Wno-return-type -Wno-sign-compare -Wno-unused-but-set-variable")
 string(APPEND OPS_CV_CXX_FLAGS " -Wno-unused-parameter -Wno-unused-value -Wno-unused-variable")
 if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  if(${ENABLE_ASAN})
+    string(APPEND OPS_MATH_CXX_FLAGS " -Wno-error")
+  else()
+    string(APPEND OPS_MATH_CXX_FLAGS " -Werror")
+  endif()
   string(APPEND OPS_CV_CXX_FLAGS " -Wformat-signedness")
   string(APPEND OPS_CV_CXX_FLAGS " -Wno-unused-function")
   string(APPEND OPS_CV_CXX_FLAGS " -Wno-missing-include-dirs")

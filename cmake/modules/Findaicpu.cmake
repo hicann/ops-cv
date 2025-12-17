@@ -1,4 +1,4 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -6,7 +6,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 if(aicpu_FOUND)
   message(STATUS "aicpu has been found")
   return()
@@ -17,12 +17,15 @@ include(FindPackageHandleStandardArgs)
 if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
   set(AICPU_INC_DIRS
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/experiment
+    ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/experiment/cce
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/experiment/msprof
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/aicpu_common/context
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/aicpu_common/context/common
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/aicpu_common/context/cpu_proto
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/aicpu_common/context/utils
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/experiment/datagw/aicpu/common
+    ${ASCEND_DIR}/${SYSTEM_PREFIX}/pkg_inc
+    ${ASCEND_DIR}/${SYSTEM_PREFIX}/pkg_inc/aicpu
   )
 else()
   set(AICPU_INC_DIRS

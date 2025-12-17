@@ -32,9 +32,9 @@ from tbe.common.utils.op_tiling import do_op_tiling, _ASCEND_OPP_PATH_ENV, _ASCE
 from tbe.tvm.error_mgr import raise_tbe_python_err, TBE_DEFAULT_PYTHON_ERROR_CODE
 import tbe.tikcpp.get_op_tiling as tiling_help
 
-OpInfo = namedtuple('OpInfo', ['kernel_name', 'op_type', 'inputs', 'outputs', 'attrs', 'impl_mode', 'origin_inputs',\
-                    'origin_outputs', 'param_type_dynamic', 'mc2_ctx', 'param_type_list', 'init_value_list',\
-                    'output_shape_depend_on_compute'])
+OpInfo = namedtuple('OpInfo', ['kernel_name', 'op_type', 'inputs', 'outputs', 'attrs', 'impl_mode', 'origin_inputs', \
+                               'origin_outputs', 'param_type_dynamic', 'mc2_ctx', 'param_type_list', 'init_value_list', \
+                               'output_shape_depend_on_compute'])
 
 OpInfo.__new__.__defaults__ = (None, None, None, None, None, None, None, None, None, None, None, None, None)
 

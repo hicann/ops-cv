@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
@@ -123,7 +123,7 @@ def compose_makeself_command(params: MakeselfPkgParams) -> str:
             '--tar-extra', '--numeric-owner', '--tar-quietly'
         ],
         get_cleanup_commands(),
-        ['./', params.package_name, params.comments]
+        [params.package_name, params.comments]
     )
     
     command = ' '.join(commands)

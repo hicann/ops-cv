@@ -1,15 +1,16 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 set(COMMON_NAME common_${PKG_NAME})
 set(OPHOST_NAME ophost_${PKG_NAME})
+set(OPSTATIC_NAME cann_${PKG_NAME}_static)
 set(OPAPI_NAME opapi_${PKG_NAME})
 set(OPGRAPH_NAME opgraph_${PKG_NAME})
 set(OP_GRAPH_NAME op_graph_${PKG_NAME})
@@ -57,13 +58,14 @@ if(ENABLE_CUSTOM)
   set(IMPL_INSTALL_DIR                packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/${PATH_NAME}_impl/ascendc)
   set(IMPL_DYNAMIC_INSTALL_DIR        packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/${PATH_NAME}_impl/dynamic)
   set(BIN_KERNEL_INSTALL_DIR          packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/kernel)
+  set(BIN_STATIC_INSTALL_DIR          packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/static)
   set(BIN_KERNEL_CONFIG_INSTALL_DIR   packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/kernel/config)
   set(OPTILING_INSTALL_DIR            packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/op_tiling/)
   set(OPTILING_LIB_INSTALL_DIR        packages/vendors/${PATH_NAME}/op_impl/ai_core/tbe/op_tiling/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
   set(OPPROTO_INC_INSTALL_DIR         packages/vendors/${PATH_NAME}/op_proto/inc)
   set(OPPROTO_LIB_INSTALL_DIR         packages/vendors/${PATH_NAME}/op_proto/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
-  set(CUST_AICPU_KERNEL_IMPL          packages/vendors/${PATH_NAME}/op_impl/cpu/aicpu_kernel/impl)
-  set(CUST_AICPU_KERNEL_CONFIG        packages/vendors/${PATH_NAME}/op_impl/cpu/config)
+  set(AICPU_KERNEL_IMPL               packages/vendors/${PATH_NAME}/op_impl/cpu/aicpu_kernel/impl)
+  set(AICPU_JSON_CONFIG               packages/vendors/${PATH_NAME}/op_impl/cpu/config)
   set(CUST_AICPU_OP_PROTO             packages/vendors/${PATH_NAME}/op_proto)
   set(VERSION_INFO_INSTALL_DIR        packages/vendors/${PATH_NAME}/)
 else()
@@ -72,18 +74,35 @@ else()
   set(ACLNN_INC_LEVEL2_INSTALL_DIR    ops_cv/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop/level2)
   set(ACLNN_LIB_INSTALL_DIR           ops_cv/built-in/op_impl/ai_core/tbe/op_api/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
   set(OPS_INFO_INSTALL_DIR            ops_cv/built-in/op_impl/ai_core/tbe/config)
-  set(IMPL_INSTALL_DIR                ops_cv/built-in/op_impl/ai_core/tbe/impl/ascendc)
-  set(IMPL_DYNAMIC_INSTALL_DIR        ops_cv/built-in/op_impl/ai_core/tbe/impl/dynamic)
+  set(IMPL_INSTALL_DIR                ops_cv/built-in/op_impl/ai_core/tbe/impl/ops_cv/ascendc)
+  set(IMPL_DYNAMIC_INSTALL_DIR        ops_cv/built-in/op_impl/ai_core/tbe/impl/ops_cv/dynamic)
   set(BIN_KERNEL_INSTALL_DIR          ops_cv/built-in/op_impl/ai_core/tbe/kernel)
+  set(BIN_STATIC_INSTALL_DIR          ops_cv/built-in/op_impl/ai_core/tbe/static)
   set(BIN_KERNEL_CONFIG_INSTALL_DIR   ops_cv/built-in/op_impl/ai_core/tbe/kernel/config)
-  set(OPHOST_INC_INSTALL_PATH         ops_cv/built-in/op_impl/ai_core/tbe/op_tiling/include)
-  set(OPHOST_LIB_INSTALL_PATH         ops_cv/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
+  set(OPHOST_INC_INSTALL_PATH         ops_cv/built-in/op_impl/ai_core/tbe/op_host/include)
+  set(OPHOST_LIB_INSTALL_PATH         ops_cv/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
+  set(AICPU_KERNEL_IMPL               ops_cv/built-in/op_impl/aicpu/kernel)
+  set(AICPU_JSON_CONFIG               ops_cv/built-in/op_impl/aicpu/config)
   set(OPTILING_LIB_INSTALL_DIR        ${OPHOST_LIB_INSTALL_PATH})
   set(OPGRAPH_INC_INSTALL_DIR         ops_cv/built-in/op_graph/inc)
   set(OPGRAPH_LIB_INSTALL_DIR         ops_cv/built-in/op_graph/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
   set(COMMON_INC_INSTALL_DIR          ops_cv/include)
   set(COMMON_LIB_INSTALL_DIR          ops_cv/lib)
   set(VERSION_INFO_INSTALL_DIR        ops_cv)
+endif()
+
+if(ENABLE_STATIC)
+  set(STATIC_LIBRARY_FILES_DIR ${CMAKE_BINARY_DIR}/static_library_files)
+  set(STATIC_BIN_INSTALL_DIR ${CMAKE_BINARY_DIR}/static_library_files/lib64)
+  set(STATIC_ACLNN_INC_INSTALL_DIR ${CMAKE_BINARY_DIR}/static_library_files/include)
+  set(STATIC_ACLNN_INC_LEVEL2_INSTALL_DIR ${CMAKE_BINARY_DIR}/static_library_files/include)
+  set(STATIC_OPHOST_INC_INSTALL_PATH ${CMAKE_BINARY_DIR}/static_library_files/include)
+  set(STATIC_COMMON_INC_INSTALL_DIR ${CMAKE_BINARY_DIR}/static_library_files/include)
+  set(STATIC_ES_INC_INSTALL_DIR ${CMAKE_BINARY_DIR}/static_library_files/include)
+  file(REMOVE_RECURSE ${STATIC_LIBRARY_FILES_DIR})
+  file(MAKE_DIRECTORY ${STATIC_LIBRARY_FILES_DIR})
+  file(MAKE_DIRECTORY ${STATIC_BIN_INSTALL_DIR})
+  file(MAKE_DIRECTORY ${STATIC_ACLNN_INC_INSTALL_DIR})
 endif()
 
 # util path
@@ -124,8 +143,10 @@ set(OPAPI_INCLUDE
   ${OPBASE_INC_DIRS}
   ${OPS_CV_DIR}/
   ${OPS_CV_DIR}/common/inc
+  ${OPS_CV_DIR}/common/inc/common
   ${OPS_CV_DIR}/common/inc/external
   ${TOP_DIR}/output/${PRODUCT}/aclnnop_resource
+  ${ASCEND_DIR}/${SYSTEM_PREFIX}/pkg_inc/profiling  # include profiling/prof_common.h
 )
 
 set(OP_TILING_INCLUDE
@@ -144,6 +165,7 @@ set(OP_PROTO_INCLUDE
   ${METADEF_INCLUDE_DIRS}
   ${OPBASE_INC_DIRS}
   ${NPURUNTIME_INCLUDE_DIRS}
+  ${OPS_CV_DIR}/common/inc/common
 )
 
 set(AICPU_INCLUDE
@@ -158,7 +180,7 @@ set(AICPU_INCLUDE
 
 set(AICPU_DEFINITIONS
   -O2
-  -std=c++17
+  -std=c++14
   -fstack-protector-all
   -fvisibility-inlines-hidden
   -fvisibility=hidden
@@ -189,3 +211,7 @@ set(AICPU_LINK
   -Wl,--as-needed
   $<$<STREQUAL:${PRODUCT_SIDE},device>:malblas_static>
 )
+
+# mapping of soc full name and short name
+set(SHORT_NAME_LIST "ascend910_93" "ascend910_95" "ascend910b" "ascend910" "ascend310p")
+set(FULL_NAME_LIST "ascend910_9391" "ascend910_9599" "ascend910B1" "ascend910A" "ascend310P1")

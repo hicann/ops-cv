@@ -115,6 +115,5 @@ setup(
     cmdclass={'build_ext': CMakeBuild, 'clean': CleanCommand},
     zip_safe=False,
     install_requires=["torch"],
-    options={"bdist_wheel": {"py_limited_api": "cp38"}},
     description="Example of PyTorch C++ and Ascend extensions (with CMake)",
 )

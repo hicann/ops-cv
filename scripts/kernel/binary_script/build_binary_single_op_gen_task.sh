@@ -1,13 +1,13 @@
 #!/bin/bash
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 SCRIPT_NAME_OF_GEN_OPCINFO="gen_opcinfo_for_socversion.sh"
 IMPL_FILE_NAME="all_ops_impl_mode.ini"
@@ -91,7 +91,7 @@ function get_simplified_key_config_file() {
 }
 
 main() {
-  echo "[INFO]excute file: $0"
+  echo "[INFO]execute file: $0"
   if [ $# -lt 4 ]; then
     echo "[ERROR]input error"
     echo "[ERROR]bash $0 {op_type} {soc_version} {output_path} {task_path}"
@@ -108,6 +108,9 @@ main() {
   local soc_version_lower=${soc_version,,}
   local output_path=$3
   local task_path=$4
+  local enable_mssanitizer=$5
+  local enable_debug=$6
+  local enable_oom=$7
   local is_need_gen_opc_info=TRUE
   local python_arg=${HI_PYTHON}
   if [ "${python_arg}" = "" ]; then
@@ -181,10 +184,11 @@ main() {
   if [ -z ${simplified_key_file} ];then
     key_mode_default=""
   else
-    dos2unix $simplified_key_file
     if [ -f ${simplified_key_file} ]; then
+      dos2unix $simplified_key_file >/dev/null 2>&1
       # if no file binary_simplified_key_mode.ini use mode=0
       key_mode_default=$(awk -F "=" '/\['${op_type}'\]/{flag=1;next}/\[/{flag=0} flag && /default/{print $2}' $simplified_key_file)
+      key_mode_default=$(echo $key_mode_default | tr -d '[:space:]')
     fi
   fi
   local ascendc_config_file="${workdir}/../binary_config/ascendc_config.json"
@@ -257,9 +261,26 @@ main() {
         new_file="${binary_config_new_full_path}_${i}"
         if [ "${val}" = "${impl_mode}" ]; then
           impl_mode_default="${impl_mode},optional"
-          cmd="opc ${op_python_path} --main_func=${op_func} --input_param=${new_file} --soc_version=${opc_soc_version} --output=${binary_bin_path} --impl_mode=${impl_mode_default} ${simplified_key_param} --op_mode=dynamic"
+          cmd="asc_opc ${op_python_path} --main_func=${op_func} --input_param=${new_file} --soc_version=${opc_soc_version} --output=${binary_bin_path} --impl_mode=${impl_mode_default} ${simplified_key_param} --op_mode=dynamic"
         else
-          cmd="opc ${op_python_path} --main_func=${op_func} --input_param=${new_file} --soc_version=${opc_soc_version} --output=${binary_bin_path} --impl_mode=${impl_mode} ${simplified_key_param} --op_mode=dynamic"
+          cmd="asc_opc ${op_python_path} --main_func=${op_func} --input_param=${new_file} --soc_version=${opc_soc_version} --output=${binary_bin_path} --impl_mode=${impl_mode} ${simplified_key_param} --op_mode=dynamic"
+        fi
+        if [ "${enable_mssanitizer}" = "TRUE" ]; then
+
+          cmd="${cmd} --op_debug_config=sanitizer"
+
+        fi
+
+        if [ "${enable_debug}" = "Debug" ]; then
+
+          cmd="${cmd} --op_debug_config=debug"
+
+        fi
+
+        if [ "${enable_oom}" = "TRUE" ]; then
+
+          cmd="${cmd} --op_debug_config=oom"
+
         fi
         echo "[INFO] op:${op_type} do opc cmd is ${cmd}"
         echo ${cmd} >> ${opc_task_cmd_file}

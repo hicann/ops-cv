@@ -1,12 +1,13 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+
 #### CPACK to package run #####
 
 # download makeself package
@@ -48,6 +49,7 @@ function(pack_custom)
         cust_proto
     )
   endif()
+  
   if (TARGET cust_opmaster)
     npu_op_package_add(${PACK_CUSTOM_NAME}
         LIBRARY
@@ -71,7 +73,7 @@ function(pack_built_in)
 
   set(script_prefix ${CMAKE_SOURCE_DIR}/scripts/package/ops_cv/scripts)
   install(DIRECTORY ${script_prefix}/
-      DESTINATION ops_cv/script
+      DESTINATION share/info/ops_cv/script
       FILE_PERMISSIONS
       OWNER_READ OWNER_WRITE OWNER_EXECUTE  # 文件权限
       GROUP_READ GROUP_EXECUTE
@@ -90,11 +92,10 @@ function(pack_built_in)
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/common_interface.csh
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/common_interface.fish
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/version_compatiable.inc
-      ${CMAKE_SOURCE_DIR}/scripts/package/common/py/merge_binary_info_config.py
   )
 
   install(FILES ${SCRIPTS_FILES}
-      DESTINATION ops_cv/script
+      DESTINATION share/info/ops_cv/script
   )
   set(COMMON_FILES
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/install_common_parser.sh
@@ -118,13 +119,13 @@ function(pack_built_in)
       ${CMAKE_SOURCE_DIR}/scripts/package/common/cfg/path.cfg
   )
   install(FILES ${CMAKE_SOURCE_DIR}/version.info
-      DESTINATION .
+      DESTINATION share/info/ops_cv
   )
   install(FILES ${CONF_FILES}
       DESTINATION ops_cv/conf
   )
   install(FILES ${PACKAGE_FILES}
-      DESTINATION ops_cv/script
+      DESTINATION share/info/ops_cv/script
   )
   install(FILES ${LATEST_MANGER_FILES}
       DESTINATION latest_manager
@@ -141,7 +142,7 @@ function(pack_built_in)
       ${CMAKE_SOURCE_DIR}/scripts/package/ops_cv/scripts/setenv.fish
   )
   install(FILES ${BIN_FILES}
-      DESTINATION ops_cv/bin
+      DESTINATION share/info/ops_cv/bin
   )
 
   string(FIND "${ASCEND_COMPUTE_UNIT}" ";" SEMICOLON_INDEX)

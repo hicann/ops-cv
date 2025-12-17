@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file add_example_aicpu_def.cpp
+ * \file add_example_def.cpp
  * \brief
  */
 #include "register/op_def_registry.h"

@@ -1,12 +1,13 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+
 # intf_pub for c++11
 if(NOT TARGET intf_pub)
   add_library(intf_pub INTERFACE)
@@ -14,6 +15,9 @@ if(NOT TARGET intf_pub)
     -Wall
     -fPIC
     $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
+    $<$<BOOL:${ENABLE_PKG_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
+    -fno-stack-protector -fno-omit-frame-pointer -g>
+    $<$<BOOL:${ENABLE_COVERAGE}>:-fprofile-arcs -ftest-coverage>
     $<$<CONFIG:Debug>:-g>
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++14>
   )
@@ -41,6 +45,9 @@ if(NOT TARGET intf_pub_cxx14)
     -Wall
     -fPIC
     $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
+    $<$<BOOL:${ENABLE_PKG_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
+    -fno-stack-protector -fno-omit-frame-pointer -g>
+    $<$<BOOL:${ENABLE_COVERAGE}>:-fprofile-arcs -ftest-coverage>
     $<$<CONFIG:Debug>:-g>
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++14>
   )
@@ -61,13 +68,16 @@ if(NOT TARGET intf_pub_cxx14)
   )
 endif()
 
-# intf_pub_cxx14 for c++17
+# intf_pub_cxx17 for c++17
 if(NOT TARGET intf_pub_cxx17)
   add_library(intf_pub_cxx17 INTERFACE)
   target_compile_options(intf_pub_cxx17 INTERFACE
       -Wall
       -fPIC
       $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
+      $<$<BOOL:${ENABLE_PKG_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
+      -fno-stack-protector -fno-omit-frame-pointer -g>
+      $<$<BOOL:${ENABLE_COVERAGE}>:-fprofile-arcs -ftest-coverage>
       $<$<CONFIG:Debug>:-g>
       $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
   )

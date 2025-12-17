@@ -32,6 +32,7 @@ namespace UpsampleNearest3dFastKernel {
 
 using namespace UpsampleNearest3d;
 
+// 算子kernel实现，需要根据具体API的接口定义修改
 template <typename T>
 __global__ __aicore__ void upsample_nearest3d_kernel(
     __gm__ uint8_t* x, __gm__ uint8_t* y, const UpsampleNearest3dTilingData tilingData)
@@ -50,6 +51,7 @@ __global__ __aicore__ void upsample_nearest3d_kernel(
     }
 }
 
+// 算子入口实现，在该方法中使用<<<>>>的方式调用算子kernel，需要根据具体API的接口定义修改
 template <typename T>
 void upsample_nearest3d_api(aclrtStream stream, const at::Tensor& x, const int64_t* output_size, const at::Tensor& y)
 {
@@ -72,6 +74,7 @@ void upsample_nearest3d_api<double>(
     throw std::runtime_error("double is not supported on aicore!");
 }
 
+// 算子wrapper接口，用于向pytorch注册自定义接口，需要根据具体API的接口定义修改
 torch::Tensor upsample_nearest3d_npu(const torch::Tensor& x, at::IntArrayRef output_size)
 {
     TORCH_CHECK(torch_npu::utils::is_npu(x), "Input tensor must be on NPU device");
@@ -100,13 +103,12 @@ torch::Tensor upsample_nearest3d_meta(const torch::Tensor& x, at::IntArrayRef ou
         shape, torch::TensorOptions().dtype(x.dtype()).device(torch::kMeta).memory_format(x.suggest_memory_format()));
 }
 
-// Register Ascend implementations for upsample_nearest3d
+// PyTorch提供的宏，用于在后端注册算子，需要根据具体API的接口定义修改
 TORCH_LIBRARY_IMPL(ascend_ops, PrivateUse1, m)
 {
     m.impl("upsample_nearest3d", upsample_nearest3d_npu);
 }
 
-// Register Meta Function for upsample_nearest3d
 TORCH_LIBRARY_IMPL(ascend_ops, Meta, m)
 {
     m.impl("upsample_nearest3d", TORCH_FN(upsample_nearest3d_meta));

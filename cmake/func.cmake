@@ -1,14 +1,14 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
-# 为target link依赖库 useage: add_modules(MODE SUB_LIBS EXTERNAL_LIBS) SUB_LIBS 为内部创建的target, EXTERNAL_LIBS为外部依赖的target
+# 为target link依赖库 usage: add_modules(MODE SUB_LIBS EXTERNAL_LIBS) SUB_LIBS 为内部创建的target, EXTERNAL_LIBS为外部依赖的target
 function(add_modules)
   set(oneValueArgs MODE)
   set(multiValueArgs TARGETS SUB_LIBS EXTERNAL_LIBS)
@@ -193,7 +193,7 @@ function(add_op_graph_modules)
   endif()
 endfunction()
 
-# useage: add_modules_sources(OPTYPE ACLNNTYPE) ACLNNTYPE 支持类型aclnn/aclnn_inner/aclnn_exclude OPTYPE 和 ACLNNTYPE
+# usage: add_modules_sources(OPTYPE ACLNNTYPE) ACLNNTYPE 支持类型aclnn/aclnn_inner/aclnn_exclude OPTYPE 和 ACLNNTYPE
 # 需一一对应
 macro(add_modules_sources)
   set(multiValueArgs OPTYPE ACLNNTYPE)
@@ -217,7 +217,14 @@ macro(add_modules_sources)
     # ASCEND_OP_NAME 为空表示全部编译
     return()
   endif()
-  # 记录全局的COMPILED_OPS和COMPILED_OP_DIRS，其中COMPILED_OP_DIRS只记录到算子名，例如image/abs
+  
+  if(OP_NAME IN_LIST COMPILED_OPS)
+    # 已经编译过，忽略
+    message(STATUS "already compiled ${OP_NAME}, skip")
+    return()
+  endif()
+  
+  # 记录全局的COMPILED_OPS和COMPILED_OP_DIRS，其中COMPILED_OP_DIRS只记录到算子名，例如image/crop_and_resize
   set(COMPILED_OPS
       ${COMPILED_OPS} ${OP_NAME}
       CACHE STRING "Compiled Ops" FORCE
@@ -293,7 +300,207 @@ macro(add_modules_sources)
   endif()
 endmacro()
 
-# useage: add_op_graph_sources()
+function(add_dependent_ops dependent_ops)
+  foreach(dep_op ${dependent_ops})
+    # 查询依赖算子所在目录
+    file(GLOB
+      dep_op_path_list
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../image/${dep_op}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../objdetect/${dep_op}"
+    )
+    # 检查依赖存在
+    if(NOT dep_op_path_list)
+      message(FATAL_ERROR "dependent operator(${dep_op}) not exists")
+    endif()
+    list(LENGTH ${dep_op_path_list} find_dep_ops_count)
+    if(find_dep_ops_count GREATER 1)
+      message(FATAL_ERROR "dependent operator(${dep_op}) is not unique, the found operators:${dep_op_path_list}")
+    endif()
+
+    # 不在编译列表则加入，ASCEND_OP_NAME 为空表示全部编译，则不单独编译
+    if(ASCEND_OP_NAME AND (NOT (dep_op IN_LIST ASCEND_OP_NAME)))
+      # 加入依赖并去重
+      set(NEW_OP_NAMES ${ASCEND_OP_NAME} ${dep_op})
+      list(REMOVE_DUPLICATES NEW_OP_NAMES)
+      set(ASCEND_OP_NAME
+          ${NEW_OP_NAMES}
+          CACHE STRING "Ascend op names to compile" FORCE
+        )
+      # 添加目录
+      get_filename_component(dep_op_path "${dep_op_path_list}" ABSOLUTE)
+      get_filename_component(dep_op_parent "${dep_op_path}" DIRECTORY)
+      get_filename_component(parent_path "${dep_op_parent}" NAME)
+      message(STATUS "add dependent operator: ${parent_path}/${dep_op}, path: ${dep_op_path}")
+      add_subdirectory("${dep_op_path}" "${CMAKE_BINARY_DIR}/dependent-ops/${parent_path}/${dep_op}")
+    endif()
+  endforeach()
+endfunction()
+
+# 从两个长度一致的列表中查找相同位置的元素
+function(find_value_by_key key_list value_list search_key result)
+  list(LENGTH key_list key_list_length)
+  list(LENGTH value_list value_list_length)
+  if(NOT ${key_list_length} EQUAL ${value_list_length})
+    message(FATAL_ERROR "key_list length is ${key_list_length}, value_list length is ${value_list_length}, not equal")
+  endif()
+  set(found_value "")
+  if(key_list_length GREATER 0)
+    list(FIND key_list ${search_key} index)
+    if(NOT ${index} EQUAL -1)
+      list(GET value_list ${index} found_value)
+    endif()
+  endif()
+  set(${result} ${found_value} PARENT_SCOPE)
+endfunction()
+
+function(add_tiling_sources tiling_dir disable_in_opp)
+  if(NOT disable_in_opp)
+    set(disable_in_opp FALSE)
+  endif()
+  if(NOT BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG AND disable_in_opp)
+    message(STATUS "don't need add tiling sources")
+    return()
+  endif()
+
+  set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  if("${tiling_dir}" STREQUAL "")
+    file(GLOB OPTILING_SRCS ${SOURCE_DIR}/op_host/*_tiling*.cpp)
+  else()
+    file(GLOB OPTILING_SRCS ${SOURCE_DIR}/op_host/*_tiling*.cpp ${SOURCE_DIR}/op_host/${tiling_dir}/*_tiling*.cpp)
+  endif()
+
+  if(OPTILING_SRCS)
+    add_tiling_modules()
+    target_sources(${OPHOST_NAME}_tiling_obj PRIVATE ${OPTILING_SRCS})
+  endif()
+endfunction()
+
+# usage: add_all_modules_sources(OPTYPE ACLNNTYPE DEPENDENCIES COMPUTE_UNIT TILING_DIR DISABLE_IN_OPP)
+# ACLNNTYPE 支持类型aclnn/aclnn_inner/aclnn_exclude
+# OPTYPE 和 ACLNNTYPE 需一一对应
+# DEPENDENCIES 指定依赖的算子名称列表
+# COMPUTE_UNIT 设置支持芯片版本号，必须与TILING_DIR一一对应，示例：ascend910b ascend910_95
+# TILING_DIR 设置所支持芯片类型对应的tiling文件目录，必须与COMPUTE_UNIT一一对应，示例：arch32 arch35
+# DISABLE_IN_OPP 设置是否在opp包中编译tiling文件，布尔类型：TRUE，FALSE
+macro(add_all_modules_sources)
+  set(oneValueArgs DISABLE_IN_OPP)
+  set(multiValueArgs OPTYPE ACLNNTYPE DEPENDENCIES COMPUTE_UNIT TILING_DIR)
+
+  cmake_parse_arguments(MODULE "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})  
+
+  # opapi l0 默认全部编译
+  file(GLOB OPAPI_L0_SRCS ${SOURCE_DIR}/op_api/*.cpp)
+  list(FILTER OPAPI_L0_SRCS EXCLUDE REGEX "aclnn_")
+  if(OPAPI_L0_SRCS)
+    add_opapi_modules() 
+    target_sources(${OPHOST_NAME}_opapi_obj PRIVATE ${OPAPI_L0_SRCS})
+  endif()
+
+  # 获取算子层级目录名称，判断是否编译该算子
+  get_filename_component(OP_NAME ${SOURCE_DIR} NAME)
+  list(FIND ASCEND_OP_NAME ${OP_NAME} INDEX)
+  if(NOT "${ASCEND_OP_NAME}" STREQUAL "" AND INDEX EQUAL -1)
+    # ASCEND_OP_NAME 为空表示全部编译
+    return()
+  endif()
+
+  if(OP_NAME IN_LIST COMPILED_OPS)
+    # 已经编译过，忽略
+    message(STATUS "already compiled ${OP_NAME}, skip")
+    return()
+  endif()
+  # 记录全局的COMPILED_OPS和COMPILED_OP_DIRS，其中COMPILED_OP_DIRS只记录到算子名，例如image/resize_bilinear_v2
+  set(COMPILED_OPS
+      ${COMPILED_OPS} ${OP_NAME}
+      CACHE STRING "Compiled Ops" FORCE
+    )
+  set(COMPILED_OP_DIRS
+      ${COMPILED_OP_DIRS} ${SOURCE_DIR}
+      CACHE STRING "Compiled Ops Dirs" FORCE
+    )
+
+  # 添加依赖算子
+  add_dependent_ops("${MODULE_DEPENDENCIES}")
+
+  file(GLOB OPAPI_HEADERS ${SOURCE_DIR}/op_api/aclnn_*.h)
+  if(OPAPI_HEADERS)
+    target_sources(${OPHOST_NAME}_aclnn_exclude_headers INTERFACE ${OPAPI_HEADERS})
+  endif()
+  file(GLOB OPAPI_L2_SRCS ${SOURCE_DIR}/op_api/aclnn_*.cpp)
+  if(OPAPI_L2_SRCS)
+    add_opapi_modules()
+    target_sources(${OPHOST_NAME}_opapi_obj PRIVATE ${OPAPI_L2_SRCS})
+  endif()
+
+  file(GLOB OPINFER_SRCS ${SOURCE_DIR}/op_host/*_infershape*.cpp)
+  if(OPINFER_SRCS)
+    add_infer_modules() 
+    target_sources(${OPHOST_NAME}_infer_obj PRIVATE ${OPINFER_SRCS})
+  endif()
+
+  # 添加tiling文件
+  find_value_by_key("${MODULE_COMPUTE_UNIT}" "${MODULE_TILING_DIR}" "${ASCEND_COMPUTE_UNIT}" tiling_dir)
+  add_tiling_sources("${tiling_dir}" "${MODULE_DISABLE_IN_OPP}")
+
+  if(NOT BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
+    file(GLOB AICPU_SRCS ${SOURCE_DIR}/op_kernel_aicpu/*_aicpu*.cpp)
+    if(AICPU_SRCS)
+      add_aicpu_kernel_modules()
+      target_sources(${OPHOST_NAME}_aicpu_obj PRIVATE ${AICPU_SRCS})
+    endif()
+  endif()
+
+  if(MODULE_OPTYPE)
+    list(LENGTH MODULE_OPTYPE OpTypeLen)
+    list(LENGTH MODULE_ACLNNTYPE AclnnTypeLen)
+    if(NOT ${OpTypeLen} EQUAL ${AclnnTypeLen})
+      message(FATAL_ERROR "OPTYPE AND ACLNNTYPE Should be One-to-One (cv op: ${OP_NAME})")
+    endif()
+    
+    math(EXPR index "${OpTypeLen} - 1")
+    foreach(i RANGE ${index})
+      list(GET MODULE_OPTYPE ${i} OpType)
+      list(GET MODULE_ACLNNTYPE ${i} AclnnType)
+
+      if(${AclnnType} STREQUAL "aclnn"
+         OR ${AclnnType} STREQUAL "aclnn_inner"
+         OR ${AclnnType} STREQUAL "aclnn_exclude"
+        )
+        file(GLOB OPDEF_SRCS ${SOURCE_DIR}/op_host/${OpType}_def*.cpp)
+        if(OPDEF_SRCS)
+          target_sources(${OPHOST_NAME}_opdef_${AclnnType}_obj INTERFACE ${OPDEF_SRCS})
+        endif()
+      else()
+        message(FATAL_ERROR "ACLNN TYPE UNSUPPORTED (cv op: ${OP_NAME})! Only support aclnn/aclnn_inner/aclnn_exclude")
+      endif()
+    endforeach()
+  else()
+    file(GLOB OPDEF_SRCS ${SOURCE_DIR}/op_host/*_def*.cpp)
+    if(OPDEF_SRCS)
+      message(
+        FATAL_ERROR
+          "cv op ${OP_NAME}: Should Manually specify aclnn/aclnn_inner/aclnn_exclude\n"
+          "usage: add_all_modules_sources(OPTYPE [op1 op2] ACLNNTYPE [type1 type2])\n"
+          "example: add_all_modules_sources(OPTYPE resize_bilinear_v2 ACLNNTYPE aclnn_exclude)"
+        )
+    endif()
+  endif()
+
+  file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/op_graph/*_graph_*.cpp)
+  if(OP_GRAPH_SRCS)
+    add_op_graph_modules() 
+    target_sources(${OP_GRAPH_NAME}_obj PRIVATE ${OP_GRAPH_SRCS})
+  endif()
+
+  file(GLOB OP_GRAPH_PROTO_HEADERS ${SOURCE_DIR}/op_graph/*_proto*.h)
+  if(OP_GRAPH_PROTO_HEADERS)
+    target_sources(${OP_GRAPH_NAME}_proto_headers INTERFACE ${OP_GRAPH_PROTO_HEADERS})
+  endif()
+endmacro()
+
+
+# usage: add_op_graph_sources()
 macro(add_op_graph_sources)
   set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -302,8 +509,6 @@ macro(add_op_graph_sources)
   get_filename_component(OP_NAME ${PARENT_DIR} NAME)
   if(DEFINED ASCEND_OP_NAME
      AND NOT "${ASCEND_OP_NAME}" STREQUAL ""
-     AND NOT "${ASCEND_OP_NAME}" STREQUAL "all"
-     AND NOT "${ASCEND_OP_NAME}" STREQUAL "ALL"
     )
     if(NOT ${OP_NAME} IN_LIST ASCEND_OP_NAME)
       return()

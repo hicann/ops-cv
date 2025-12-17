@@ -22,6 +22,8 @@ target_include_directories(op_api_ut_common PRIVATE
         ${HI_PYTHON_INC}
         ${ASCEND_DIR}/include
         ${ASCEND_DIR}/include/aclnn
+        ${ASCEND_DIR}/pkg_inc
+        ${ASCEND_DIR}/pkg_inc/base
         )
 
 target_link_libraries(op_api_ut_common PRIVATE

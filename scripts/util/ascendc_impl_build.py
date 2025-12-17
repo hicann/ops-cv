@@ -33,13 +33,15 @@ import os, sys
 import ctypes
 import json
 import shutil
-from tbe.common.platform import get_soc_spec
-from tbe.common.utils import para_check
-from tbe.tikcpp import compile_op, replay_op, check_op_cap, generalize_op_params, get_code_channel, OpInfo
-from tbe.common.buildcfg import get_default_build_config
-from tbe.common.buildcfg import get_current_build_config
-import tbe.common.register as tbe_register
+from asc_op_compile_base.common.platform import get_soc_spec
+from asc_op_compile_base.common.utils import para_check
+from asc_op_compile_base.asc_op_compiler import compile_op, replay_op, check_op_cap, generalize_op_params, get_code_channel, OpInfo
+from asc_op_compile_base.common.buildcfg import get_default_build_config
+from asc_op_compile_base.common.buildcfg import get_current_build_config
+from asc_op_compile_base.common import register as tbe_register
 PYF_PATH = os.path.dirname(os.path.realpath(__file__))
+
+__version__ = '2.0.0'
 
 DTYPE_MAP = {{"float32": ["DT_FLOAT", "float"],
     "float16": ["DT_FLOAT16", "half"],
@@ -170,6 +172,12 @@ def {}({}, kernel_name="{}", impl_mode=""):
     options.append("-I" + os.path.join(tikcpp_path, "tikcfw", "impl"))
     options.append("-I" + os.path.join(tikcpp_path, "tikcfw", "interface"))
     options.append("-I" + os.path.join(PYF_PATH, "..", "ascendc", "common"))
+
+    ascend_home_path = os.environ.get('ASCEND_HOME_PATH')
+    if ascend_home_path is None:
+        ascend_home_path = os.path.realpath("/usr/local/Ascend/latest")
+    options.append("-I" + os.path.join(ascend_home_path, "pkg_inc", "op_common"))
+
     if impl_mode == "high_performance":
         options.append("-DHIGH_PERFORMANCE=1")
     elif impl_mode == "high_precision":

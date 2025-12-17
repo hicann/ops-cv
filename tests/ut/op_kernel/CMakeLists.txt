@@ -69,18 +69,7 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
                 if(NOT result EQUAL 0)
                     message(FATAL_ERROR "compiler not support asan, please disable asan")
                 endif()
-
-                execute_process(
-                    COMMAND ${CMAKE_C_COMPILER} -print-file-name=libstdc++.so
-                    OUTPUT_VARIABLE LIBSTDC_PATH
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    RESULT_VARIABLE stdc_result
-                  )
-                if(NOT stdc_result EQUAL 0)
-                    message(FATAL_ERROR "not find libstdc++.so, please confirm.")
-                endif()
-
-                set(PRELOAD "LD_PRELOAD=${LIBASAN_PATH}:${LIBSTDC_PATH}")
+                set(PRELOAD "LD_PRELOAD=${LIBASAN_PATH}:/usr/lib/x86_64-linux-gnu/libstdc++.so.6")
                 add_custom_command(
                         TARGET ${OP_KERNEL_UT_EXE}_${socVersion} POST_BUILD
                         COMMAND

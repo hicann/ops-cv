@@ -12,7 +12,7 @@
 #include <unordered_set>
 #include "securec.h"
 
-#include "cce/fwk_adpt_struct.h"
+#include "fwk_adpt_struct.h"
 #include "log.h"
 #include "status.h"
 

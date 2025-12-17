@@ -24,6 +24,7 @@ target_include_directories(${COMMON_NAME}_obj
   ${TILINGAPI_INC_DIRS}
   ${METADEF_INCLUDE_DIRS}
   ${OPS_CV_DIR}/common/inc
+  ${ASCEND_DIR}/pkg_inc
 )
 
 target_link_libraries(${COMMON_NAME}_obj

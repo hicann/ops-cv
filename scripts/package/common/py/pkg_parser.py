@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
@@ -591,13 +591,6 @@ def evaluate_info(info: Dict[str, str],
 
     def replace_pkg_inner_softlink(key: str, value: str) -> Tuple[str, str]:
         if key == 'pkg_inner_softlink':
-            inner_softlink_new = [
-                join_pkg_inner_softlink(link_str.split(':'))
-                for link_str in value.split(';')
-                if ':' not in link_str or link_str.split(':')[0] == loaded_block.dst_path
-            ]
-            if inner_softlink_new:
-                return key, ';'.join(inner_softlink_new)
             return key, 'NA'
         return key, value
 

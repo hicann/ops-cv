@@ -12,7 +12,7 @@
 
 """
 Function:
-The replay funtion entry
+The replay function entry
 Copyright Information:
 Huawei Technologies Co., Ltd. All Rights Reserved © 2020
 """

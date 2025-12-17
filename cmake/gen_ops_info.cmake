@@ -1,12 +1,12 @@
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 # ######################################################################################################################
 # copy kernel src to tbe/ascendc path
@@ -272,7 +272,7 @@ function(compile_from_config)
     config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME}
     COMMAND
       ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_single_op.sh ${OP_TYPE} ${CONFCMP_COMPUTE_UNIT}
-      ${CONFCMP_OUT_DIR}/bin
+      ${CONFCMP_OUT_DIR}/bin ${ENABLE_MSSANITIZER} ${CMAKE_BUILD_TYPE} ${ENABLE_OOM}
     WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
     DEPENDS ${ASCEND_KERNEL_CONF_DST}/aic-${CONFCMP_COMPUTE_UNIT}-ops-info.ini ascendc_kernel_src_copy
             bin_conf_${CONFCMP_OP_NAME}_${CONFCMP_COMPUTE_UNIT}_copy
@@ -286,19 +286,34 @@ function(compile_from_config)
     COMMAND
       cp -r ${CONFCMP_IMPL_DIR}/*.* ${CONFCMP_OUT_DIR}/src
     COMMAND
-      cp ${CONFCMP_OP_PYTHON_DIR}/${CONFCMP_OP_NAME}.py ${CONFCMP_OUT_DIR}/src
+      cp ${CONFCMP_OP_PYTHON_DIR}/${CONFCMP_OP_NAME}*.py ${CONFCMP_OUT_DIR}/src
     )
   add_dependencies(binary config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME} ${CONFCMP_TARGET})
 
   if(ENABLE_PACKAGE)
+    if(ENABLE_CUSTOM)
+      set(_KERNEL_CONFIG_INSTALL_DIR ${BIN_KERNEL_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT})
+    else()
+      set(_KERNEL_CONFIG_INSTALL_DIR ${BIN_KERNEL_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}/ops_cv)
+    endif()
     install(
       DIRECTORY ${CONFCMP_OUT_DIR}/bin/${CONFCMP_COMPUTE_UNIT}/${CONFCMP_OP_NAME}
-      DESTINATION ${BIN_KERNEL_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}
+      DESTINATION ${BIN_KERNEL_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}/ops_cv
       OPTIONAL
       )
     install(
       FILES ${CONFCMP_OUT_DIR}/bin/config/${CONFCMP_COMPUTE_UNIT}/${CONFCMP_OP_NAME}.json
-      DESTINATION ${BIN_KERNEL_CONFIG_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}
+      DESTINATION ${BIN_KERNEL_CONFIG_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}/ops_cv
+      OPTIONAL
+      )
+    install(
+      DIRECTORY ${CONFCMP_OUT_DIR}/bin/${CONFCMP_COMPUTE_UNIT}/${CONFCMP_OP_NAME}_apt
+      DESTINATION ${BIN_KERNEL_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}/ops_cv
+      OPTIONAL
+      )
+    install(
+      FILES ${CONFCMP_OUT_DIR}/bin/config/${CONFCMP_COMPUTE_UNIT}/${CONFCMP_OP_NAME}_apt.json
+      DESTINATION ${BIN_KERNEL_CONFIG_INSTALL_DIR}/${CONFCMP_COMPUTE_UNIT}/ops_cv
       OPTIONAL
       )
   endif()
@@ -330,12 +345,41 @@ function(gen_binary_info_config_json)
   add_dependencies(gen_bin_info_config ${GENBIN_INFOCFG_TARGET})
 
   if(ENABLE_PACKAGE)
+    if(ENABLE_CUSTOM)
+      set(_KERNEL_CONFIG_INSTALL_DIR ${BIN_KERNEL_CONFIG_INSTALL_DIR}/${GENBIN_INFOCFG_COMPUTE_UNIT})
+    else()
+      set(_KERNEL_CONFIG_INSTALL_DIR ${BIN_KERNEL_CONFIG_INSTALL_DIR}/${GENBIN_INFOCFG_COMPUTE_UNIT}/ops_cv)
+    endif()
     install(
       FILES ${GENBIN_INFOCFG_BIN_DIR}/bin/config/${GENBIN_INFOCFG_COMPUTE_UNIT}/binary_info_config.json
-      DESTINATION ${BIN_KERNEL_CONFIG_INSTALL_DIR}/${GENBIN_INFOCFG_COMPUTE_UNIT}
+      DESTINATION ${_KERNEL_CONFIG_INSTALL_DIR}
       OPTIONAL
       )
   endif()
+endfunction()
+
+# ######################################################################################################################
+# get op_type from *_def.cpp
+# ######################################################################################################################
+function(check_op_supported OP_NAME COMPUTE_UNIT OP_SUPPORTED_COMPUTE_UNIT)
+  if(ENABLE_EXPERIMENTAL)
+    set(cmd "find ${CMAKE_CURRENT_SOURCE_DIR} -name ${OP_NAME}_def.cpp -path '*/experimental/*' -exec grep '\.AddConfig(\\s*\"${COMPUTE_UNIT}\"' {} \;")
+  else()
+   set(cmd "find ${CMAKE_CURRENT_SOURCE_DIR} -name ${OP_NAME}_def.cpp ! -path '*/experimental/*' -exec grep '\.AddConfig(\\s*\"${COMPUTE_UNIT}\"' {} \;")
+  endif()
+  execute_process(
+    COMMAND bash -c "${cmd}"
+    OUTPUT_VARIABLE op_supported_compute_unit
+    )
+  if(NOT op_supported_compute_unit)
+    set(op_supported_compute_unit FALSE)
+  else()
+    set(op_supported_compute_unit TRUE)
+  endif()
+  set(${OP_SUPPORTED_COMPUTE_UNIT}
+      ${op_supported_compute_unit}
+      PARENT_SCOPE
+    )
 endfunction()
 
 # binary compile
@@ -380,6 +424,7 @@ function(gen_ops_info_and_python)
 
   if(ENABLE_BINARY OR ENABLE_CUSTOM)
     foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
+      set(HAS_OP_COMPILE_OF_COMPUTE_UNIT FALSE)
       foreach(OP_DIR ${COMPILED_OP_DIRS})
         get_filename_component(op_name ${OP_DIR} NAME)
         set(op_type)
@@ -388,6 +433,15 @@ function(gen_ops_info_and_python)
           message(STATUS "[INFO] On [${compute_unit}], [${op_name}] not need to compile.")
           continue()
         endif()
+
+        set(check_op_supported_result)
+        check_op_supported("${op_name}" "${compute_unit}" check_op_supported_result)
+        if(NOT check_op_supported_result)
+          message(STATUS "[INFO] On [${compute_unit}], [${op_name}] not supported.")
+          continue()
+        endif()
+
+        set(HAS_OP_COMPILE_OF_COMPUTE_UNIT TRUE)
 
         # generate opc shell scripts for autogen binary config ops
         generate_bin_scripts(
@@ -424,11 +478,15 @@ function(gen_ops_info_and_python)
         add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen)
       endforeach()
 
-      # generate binary_info_config.json
-      gen_binary_info_config_json(
-        TARGET gen_bin_info_config_${compute_unit} BIN_DIR ${CMAKE_BINARY_DIR}/binary/${compute_unit} COMPUTE_UNIT
-        ${compute_unit}
-        )
+      if(HAS_OP_COMPILE_OF_COMPUTE_UNIT)
+        # generate binary_info_config.json
+        gen_binary_info_config_json(
+          TARGET gen_bin_info_config_${compute_unit} BIN_DIR ${CMAKE_BINARY_DIR}/binary/${compute_unit} COMPUTE_UNIT
+          ${compute_unit}
+          )
+      else()
+        message(WARNING "[ERROR] There is no operator support for ${compute_unit}.")
+      endif()
     endforeach()
   endif()
 endfunction()
