@@ -7,33 +7,402 @@
 
 项目提供的所有算子分类和算子列表如下：
 
-|  算子分类  |   算子目录   |    算子执行位置   | 说明                                                                                                                        |
-| --------- | ------------------------------------------------------------ | ---------------- |---------------------------------------------------------------------------------------------------------------------------|
-| image | [grid_sample](../image/grid_sample/README.md) | AI Core          | 提供一个输入tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。                                         |
-| image | [grid_sampler2_d_grad](../image/grid_sampler2_d_grad/README.md) | AI Core          | GridSampler中2D场景的反向传播，完成张量input与张量grid的梯度计算。                                                                              |
-| image | [grid_sampler3_d_grad](../image/grid_sampler3_d_grad/README.md) | AI Core          | GridSampler中3D场景的反向传播，完成张量input与张量grid的梯度计算。                                                                              |
-| objdetect | [iou_v2](../objdetect/iou_v2/README.md) | AI Core          | 计算两个矩阵的重叠面积占两个矩阵总面积的比例，设预测框的左上角坐标为（X1，Y1），右下角坐标为（X2，Y2），真实框的左上角坐标为（X3，Y3），右下角坐标为（X4，Y4）。                                  |
-| image | [resize_upsample_trilinear](../image/resize_upsample_trilinear/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。                                                                                            |
-| objdetect | [roi_align_rotated](../objdetect/roi_align_rotated/README.md) | AI Core          | 用于旋转候选框的ROI对齐池化层。                                                                                                         |
-| objdetect | [roi_align_rotated_grad](../objdetect/roi_align_rotated_grad/README.md) | AI Core          | 通过旋转框各点坐标将梯度回传至对应位置。                                                                                                      |
-| objdetect | [stack_group_points](../objdetect/stack_group_points/README.md) | AI Core          | 根据特征点所属的组，重组点云中的特征点。                                                                                                      |
-| image | [three_interpolate_backward](../image/three_interpolate_backward/README.md) | AI Core          | 根据grad_x, idx, weight进行三点插值计算梯度得到grad_y。                                                                                  |
-| image | [upsample_bicubic2d](../image/upsample_bicubic2d/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。       |
-| image | [upsample_bicubic2d_aa](../image/upsample_bicubic2d_aa/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensor x的shape为(N, C, H, W) ，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。 |
-| image | [upsample_bicubic2d_aa_grad](../image/upsample_bicubic2d_aa_grad/README.md) | AI Core          | 如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。                            |
-| image | [upsample_bicubic2d_grad](../image/upsample_bicubic2d_grad/README.md) | AI Core          | 如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。                            |
-| image | [upsample_bilinear2d](../image/upsample_bilinear2d/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用2D双线性上采样。                                                                                          |
-| image | [upsample_bilinear2d_aa](../image/upsample_bilinear2d_aa/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。                                                                                              |
-| image | [upsample_bilinear2d_aa_backward](../image/upsample_bilinear2d_aa_backward/README.md) | AI Core          | UpsampleBilinear2dAA的反向传播。                                                                                                |
-| image | [upsample_bilinear2d_grad](../image/upsample_bilinear2d_grad/README.md) | AI Core          | UpsampleBilinear2d的反向传播。                                                                              |
-| image | [upsample_linear1d](../image/upsample_linear1d/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。                                                 |
-| image | [upsample_nearest](../image/upsample_nearest/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。                                                                                      |
-| image | [upsample_nearest2d_grad](../image/upsample_nearest2d_grad/README.md) | AI Core          | UpsampleNearest在exact_mode为false时的反向传播。                                                                                   |
-| image | [upsample_nearest3d](../image/upsample_nearest3d/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。                                                                                            |
-| image | [upsample_nearest3d_grad](../image/upsample_nearest3d_grad/README.md) | AI Core          | [UpsampleNearest3d](../image/upsample_nearest3d/README.md)的反向计算。                                            |
-| image | [upsample_nearest_exact2d_grad](../image/upsample_nearest_exact2d_grad/README.md) | AI Core          | [UpsampleNearest](../image/upsample_nearest/README.md)在exact_mode为true时的反向传播。                                           |
-| image | [upsample_nearest_exact3d](../image/upsample_nearest_exact3d/README.md) | AI Core          | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。                                                                                            |
-| image | [upsample_nearest_exact3d_grad](../image/upsample_nearest_exact3d_grad/README.md) | AI Core          | [UpsampleNearestExact3d](../image/upsample_nearest_exact3d/README.md)的反向计算。                                      |
-| image | [upsample_trilinear3d_backward](../image/upsample_trilinear3d_backward/README.md) | AI Core          | [ResizeUpsampleTrilinear](../image/resize_upsample_trilinear/README.md)的反向计算。                                   |
-| image     | [crop_and_resize](../image/crop_and_resize/README.md)     | AI CPU           | 从输入图像中提取多个裁剪区域, 并将它们统一调整为指定大小，支持双线性插值和最近邻插值。                                                                              |
-| image     | [image_warp_offsets](../image/image_warp_offsets/README.md) | AI CPU           | 根据偏移量选取图像并进行扭曲变换。                                                                                                         |
+<table><thead>
+  <tr>
+    <th rowspan="2">算子分类</th>
+    <th rowspan="2">算子目录</th>
+    <th colspan="2">算子实现</th>
+    <th>aclnn调用</th>
+    <th>图模式调用</th>
+    <th rowspan="2">算子执行硬件单元</th>
+    <th rowspan="2">说明</th>
+  </tr>
+  <tr>
+    <th>op_kernel</th>
+    <th>op_host</th>
+    <th>op_api</th>
+    <th>op_graph</th>
+  </tr></thead>
+<tbody>
+
+
+<tr>
+<td> image</td>
+ <td><a href="../image/crop_and_resize/README.md">crop_and_resize</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>×</td>
+ <td>√</td>
+ <td>AI CPU</td>
+ <td>从输入图像中提取多个裁剪区域, 并将它们统一调整为指定大小，支持双线性插值和最近邻插值。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/grid_sample/README.md">grid_sample</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>提供一个输入tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/grid_sampler2_d_grad/README.md">grid_sampler2_d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>GridSampler中2D场景的反向传播，完成张量input与张量grid的梯度计算。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/grid_sampler3_d_grad/README.md">grid_sampler3_d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>GridSampler中3D场景的反向传播，完成张量input与张量grid的梯度计算。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/image_warp_offsets/README.md">image_warp_offsets</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>×</td>
+ <td>√</td>
+ <td>AI CPU</td>
+ <td>根据偏移量选取图像并进行扭曲变换。</td>
+</tr>
+<tr>
+    <td>image</td>
+    <td><a href="../../image/resize_bicubic_v2/README.md">resize_bicubic_v2</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>使用双三次插值调整图像大小到指定的大小。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_bicubic_v2_grad/README.md">resize_bicubic_v2_grad</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>计算输入图像在双三次插值基础下的梯度。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_bilinear_v2/README.md">resize_bilinear_v2</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_bilinear_v2_grad/README.md">resize_bilinear_v2_grad</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_linear/README.md">resize_linear</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>使用单线性插值调整图像大小到指定的大小。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_linear_grad/README.md">resize_linear_grad</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>计算输入图像在单线性插值基础下的梯度。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_nearest_neighbor_v2/README.md">resize_nearest_neighbor_v2</a></td>
+    <td>√</td>
+    <td>√</td>
+    <td>√</td>
+    <td>×</td>
+    <td>AI Core</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+  </tr>
+<tr>
+<td> image</td>
+ <td><a href="../image/resize_upsample_trilinear/README.md">resize_upsample_trilinear</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/three_interpolate_backward/README.md">three_interpolate_backward</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>根据grad_x, idx, weight进行三点插值计算梯度得到grad_y。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bicubic2d/README.md">upsample_bicubic2d</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bicubic2d_aa/README.md">upsample_bicubic2d_aa</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensor x的shape为(N, C, H, W) ，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bicubic2d_aa_grad/README.md">upsample_bicubic2d_aa_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bicubic2d_grad/README.md">upsample_bicubic2d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>如果输入张量grad_output的shape为(N, C, H, W)，则输出张量grad_input的shape为(N, C, inputSize[2], inputSize[3])。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bilinear2d/README.md">upsample_bilinear2d</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用2D双线性上采样。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bilinear2d_aa/README.md">upsample_bilinear2d_aa</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bilinear2d_aa_backward/README.md">upsample_bilinear2d_aa_backward</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>UpsampleBilinear2dAA的反向传播。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_bilinear2d_grad/README.md">upsample_bilinear2d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>UpsampleBilinear2d的反向传播。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_linear1d/README.md">upsample_linear1d</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest/README.md">upsample_nearest</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest2d_grad/README.md">upsample_nearest2d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>UpsampleNearest在exact_mode为false时的反向传播。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest3d/README.md">upsample_nearest3d</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest3d_grad/README.md">upsample_nearest3d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td><a href="../image/upsample_nearest3d/README.md">UpsampleNearest3d</a>的反向计算。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest_exact2d_grad/README.md">upsample_nearest_exact2d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td><a href="../image/upsample_nearest/README.md">UpsampleNearest</a>在exact_mode为true时的反向传播。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest_exact3d/README.md">upsample_nearest_exact3d</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_nearest_exact3d_grad/README.md">upsample_nearest_exact3d_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td><a href="../image/upsample_nearest_exact3d/README.md">UpsampleNearestExact3d</a>的反向计算。</td>
+</tr>
+
+<tr>
+<td> image</td>
+ <td><a href="../image/upsample_trilinear3d_backward/README.md">upsample_trilinear3d_backward</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td><a href="../image/resize_upsample_trilinear/README.md">ResizeUpsampleTrilinear</a>的反向计算。</td>
+</tr>
+
+<tr>
+<td> objdetect</td>
+ <td><a href="../objdetect/iou_v2/README.md">iou_v2</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>×</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>计算两个矩阵的重叠面积占两个矩阵总面积的比例，设预测框的左上角坐标为（X1，Y1），右下角坐标为（X2，Y2），真实框的左上角坐标为（X3，Y3），右下角坐标为（X4，Y4）。</td>
+</tr>
+
+<tr>
+<td> objdetect</td>
+ <td><a href="../objdetect/roi_align_rotated/README.md">roi_align_rotated</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>×</td>
+ <td>×</td>
+ <td>AI Core</td>
+ <td>用于旋转候选框的ROI对齐池化层。</td>
+</tr>
+
+<tr>
+<td> objdetect</td>
+ <td><a href="../objdetect/roi_align_rotated_grad/README.md">roi_align_rotated_grad</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>×</td>
+ <td>×</td>
+ <td>AI Core</td>
+ <td>通过旋转框各点坐标将梯度回传至对应位置。</td>
+</tr>
+
+<tr>
+<td> objdetect</td>
+ <td><a href="../objdetect/stack_group_points/README.md">stack_group_points</a></td>
+ <td>√</td>
+ <td>√</td>
+ <td>×</td>
+ <td>√</td>
+ <td>AI Core</td>
+ <td>根据特征点所属的组，重组点云中的特征点。</td>
+</tr>
+
+
+</tbody>
+</table>

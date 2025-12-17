@@ -22,6 +22,7 @@
 | [aclnnUpsampleBilinear2d](../image/upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md) | 对由多个输入通道组成的输入信号应用2D双线性上采样。           |
 | [aclnnUpsampleBilinear2dAA](../image/upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md) | 对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。       |
 | [aclnnUpsampleBilinear2dAABackward](../image/upsample_bilinear2d_aa_backward/docs/aclnnUpsampleBilinear2dAABackward.md) | [aclnnUpsampleBilinear2dAA](../image/upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md)的反向传播。 |
+| [aclnnUpsampleBilinear2dBackward](../image/resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md) | [aclnnUpsampleBilinear2d](../image/upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。 |
 | [aclnnUpsampleBilinear2dBackwardV2](../image/upsample_bilinear2d_grad/docs/aclnnUpsampleBilinear2dBackwardV2.md) | [aclnnUpsampleBilinear2d](../image/upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。 |
 | [aclnnUpsampleLinear1d](../image/upsample_linear1d/docs/aclnnUpsampleLinear1d.md) | 对由多个输入通道组成的输入信号应用线性插值算法进行上采样。   |
 | [aclnnUpsampleLinear1dBackward](../image/upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md) | [aclnnUpsampleLinear1d](../image/upsample_linear1d/docs/aclnnUpsampleLinear1d.md)的反向传播。 |
