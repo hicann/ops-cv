@@ -80,7 +80,7 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_upsample_nearest3d_backward](examples/test_aclnn_upsample_nearest3d_backward.cpp) | 通过[aclnnUpsampleNearest3dBackward](docs/aclnnUpsampleNearest3dBackward.md)接口方式调用UpsampleNearest3dGrad算子。 |
+| aclnn接口  | [test_aclnn_upsample_nearest3d_grad](examples/test_aclnn_upsample_nearest3d_grad.cpp) | 通过[aclnnUpsampleNearest3dBackward](docs/aclnnUpsampleNearest3dBackward.md)接口方式调用UpsampleNearest3dGrad算子。 |
 | 图模式 | -  | 通过[算子IR](op_graph/upsample_nearest3d_grad_proto.h)构图方式调用UpsampleNearest3dGrad算子。         |
 
 <!--[test_geir_upsample_nearest3d_grad](examples/test_geir_upsample_nearest3d_grad.cpp)-->
