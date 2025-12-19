@@ -367,9 +367,9 @@ REG_OP(AddExample)
    执行以下命令进行安装：
 
     ```bash
-   ./cann-ops-cv-${vendor_name}_linux-${arch}.run
+   ./build_out/cann-ops-cv-${vendor_name}_linux-${arch}.run
     ```
-   自定义算子包安装在`${ASCEND_HOME_PATH}/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。自定义算子包不支持卸载。
+   自定义算子包安装在`${ASCEND_HOME_PATH}/opp/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。
    
 
     自定义算子包的目录结构示例如下：
@@ -396,6 +396,13 @@ REG_OP(AddExample)
     │               └── libcust_opsproto_rt2.0.so
     └── version.info                                             # 包信息
     ```
+
+4. **（可选）删除自定义算子包**
+
+    注意自定义算子包不支持卸载，可通过如下操作删除：
+
+    请删除vendors/${vendor_name}目录，并删除vendors/config.ini中load_priority对应${vendor_name}的配置项。
+
 ## 算子验证
 
 开发好的算子完成编译部署后，可通过aclnn方式（推荐）或图模式验证功能，方法请参考[算子调用方式](../invocation/op_invocation.md)。

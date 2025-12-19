@@ -160,7 +160,7 @@ int main()
    if(NOT "$ENV{ASCEND_HOME_PATH}" STREQUAL "")      
        set(ASCEND_PATH $ENV{ASCEND_HOME_PATH})
    else()
-       set(ASCEND_PATH "/usr/local/Ascend/ascend-toolkit/latest")
+       set(ASCEND_PATH "/usr/local/Ascend/cann")
    endif()
 
    # 设置头文件路径
@@ -191,12 +191,12 @@ int main()
     在test\_aclnn\_\$\{op\_name\}.cpp同级目录下创建run.sh文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
     
     ```bash
-    if [ -n "$ASCEND_INSTALL_PATH" ]; then
+    if [ -n "$ASCEND_INSTALL_PATH" ]; then                      # 实际CANN包安装路径
         _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH
     elif [ -n "$ASCEND_HOME_PATH" ]; then
         _ASCEND_INSTALL_PATH=$ASCEND_HOME_PATH
     else
-        _ASCEND_INSTALL_PATH="/usr/local/Ascend/latest"
+        _ASCEND_INSTALL_PATH="/usr/local/Ascend/cann"
     fi
 
     source ${_ASCEND_INSTALL_PATH}/bin/setenv.bash
@@ -204,7 +204,7 @@ int main()
     rm -rf build
     mkdir -p build 
     cd build
-    cmake ../ -DCMAKE_CXX_COMPILER=g++ -DCMAKE_SKIP_RPATH=TRUE
+    cmake ../ -DCMAKE_CXX_COMPILER=g++ -DCMAKE_SKIP_RPATH=TRUE  # 执行构建命令
     make
     cd bin
     ./test_aclnn_add_example            # 替换为实际算子可执行文件名
@@ -229,7 +229,7 @@ int main()
 
 ![原理图](../figures/IR调用.png)
 
-构图流程介绍请参考[《Ascend Graph开发指南》](https://hiascend.com/document/redirect/CannCommunityAscendGraph)中“构建Graph> 通过算子原型构建Graph”章节。
+构图流程介绍请参考[《图模式开发指南》](https://hiascend.com/document/redirect/CannCommunityAscendGraph)中”构建Graph > 使用图开发接口全新构建Graph > 通过算子原型构建Graph“章节。
 ### 示例代码
 
 `AddExample`算子以图方式调用的示例代码如下（详细代码参见[test_geir_add_example.cpp](../../examples/add_example/examples/test_geir_add_example.cpp)），**仅为参考**，其他算子的调用过程类似，请替换为实际的算子原型。
@@ -301,7 +301,7 @@ int main() {
    elseif(NOT "$ENV{ASCEND_HOME_PATH}" STREQUAL "")
        set(ASCEND_PATH $ENV{ASCEND_HOME_PATH})
    else()
-       set(ASCEND_PATH "/usr/local/Ascend/latest")
+       set(ASCEND_PATH "/usr/local/Ascend/cann")
    endif()
    
    set(FWK_INCLUDE_DIR "${ASCEND_PATH}/compiler/include")
@@ -341,12 +341,12 @@ int main() {
    在test\_geir\_\$\{op\_name\}.cpp同级目录下创建run.sh文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
 
     ```bash
-    if [ -n "$ASCEND_INSTALL_PATH" ]; then
+    if [ -n "$ASCEND_INSTALL_PATH" ]; then                      # 实际CANN包安装路径
         _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH
     elif [ -n "$ASCEND_HOME_PATH" ]; then
         _ASCEND_INSTALL_PATH=$ASCEND_HOME_PATH
     else
-        _ASCEND_INSTALL_PATH="/usr/local/Ascend/latest"
+        _ASCEND_INSTALL_PATH="/usr/local/Ascend/cann"
     fi
 
     source ${_ASCEND_INSTALL_PATH}/bin/setenv.bash
@@ -354,7 +354,7 @@ int main() {
     rm -rf build
     mkdir -p build 
     cd build
-    cmake ../ -DCMAKE_CXX_COMPILER=g++ -DCMAKE_SKIP_RPATH=TRUE
+    cmake ../ -DCMAKE_CXX_COMPILER=g++ -DCMAKE_SKIP_RPATH=TRUE  # 执行构建命令
     make
     ./test_geir_add_example                  # 替换为实际算子可执行文件名
     ```

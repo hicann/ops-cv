@@ -38,10 +38,16 @@
 2. **安装自定义算子包**
    
     ```bash
-    ./cann-ops-cv-${vendor_name}_linux-${arch}.run
+    ./build_out/cann-ops-cv-${vendor_name}_linux-${arch}.run
     ```
     
-    自定义算子包安装路径为`${ASCEND_HOME_PATH}/opp/vendors`，\$\{ASCEND\_HOME\_PATH\}已通过环境变量配置，表示CANN toolkit包安装路径，一般为\$\{install\_path\}/latest。注意自定义算子包不支持卸载。
+    自定义算子包安装路径为`${ASCEND_HOME_PATH}/opp/vendors`，\$\{ASCEND\_HOME\_PATH\}已通过环境变量配置，表示CANN toolkit包安装路径，一般为\$\{install\_path\}/cann。
+
+3. **（可选）删除自定义算子包**
+
+    注意自定义算子包不支持卸载，可通过如下操作删除：
+
+    请删除vendors/${vendor_name}目录，并删除vendors/config.ini中load_priority对应${vendor_name}的配置项。
 
 ### ops-cv包
 
@@ -50,12 +56,14 @@
     进入项目根目录，执行如下编译命令：
 
     ```bash
+    # 编译除experimental目录外的所有算子
     bash build.sh --pkg [--jit] --soc=${soc_version}
     # 编译experimental目录下的用户算子
     # bash build.sh --pkg --experimental [--jit] --soc=${soc_version}
     ```
     - --jit（可选）：设置后表示不编译算子二进制文件，如需使用aclnn调用算子，该选项无需设置。
     - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件使用"ascend910b"（默认），Atlas A3 训练系列产品/Atlas A3 推理系列产品使用"ascend910_93"。
+    - --experimental（可选）：表示编译用户保存在experimental目录下的算子。
 
     若提示如下信息，说明编译成功。
 
@@ -68,11 +76,17 @@
 2. **安装ops-cv包**
 
     ```bash
-    ./cann-${soc_name}-ops-cv_${cann_version}_linux-${arch}.run --full --install-path=${install_path}
+    ./build_out/cann-${soc_name}-ops-cv_${cann_version}_linux-${arch}.run --full --install-path=${install_path}
     ```
 
     \$\{install\_path\}：表示指定安装路径，需要与toolkit包安装在相同路径，默认安装在`/usr/local/Ascend`目录。
 
+3. **（可选）卸载ops-cv包**
+
+    ```bash
+    # 卸载命令
+    ./${install_path}/cann/share/info/ops_cv/script/uninstall.sh
+    ```
 ## 本地验证 
 
 通过项目根目录build.sh脚本，可快速调用算子和UT用例，验证项目功能是否正常，build参数介绍参见[build参数说明](../context/build.md)。目前算子支持API方式（aclnn接口）和图模式调用，**推荐aclnn调用**。
