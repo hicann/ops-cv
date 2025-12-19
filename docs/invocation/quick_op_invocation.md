@@ -47,7 +47,7 @@
 
     注意自定义算子包不支持卸载，可通过如下操作删除：
 
-    请删除vendors/${vendor_name}目录，并删除vendors/config.ini中load_priority对应${vendor_name}的配置项。
+    请删除`vendors/${vendor_name}_cv`目录，并删除vendors/config.ini中load\_priority对应\${vendor_name}\_cv的配置项。
 
 ### ops-cv包
 
