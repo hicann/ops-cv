@@ -16,7 +16,6 @@
 #define UPSAMPLE_BICUBIC2D_AA_DATA_COPY_H
 
 #include "kernel_operator.h"
-#include "../inc/platform.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_bicubic2d_aa_tiling_data.h"
 
