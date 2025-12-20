@@ -30,7 +30,7 @@ class OpGenerator:
         if template_variant == "aicpu":
             self.template_dir = os.path.abspath(os.path.join(self.script_dir, 'template', 'add_example_aicpu'))
         else:
-            self.template_dir = os.path.abspath(os.path.join(self.script_dir, 'template', 'add_example'))
+            self.template_dir = os.path.abspath(os.path.join(self.script_dir, 'template', 'add'))
 
         self.dest_dir = os.path.abspath(os.path.join(self.output_path, self.op_type, self.op_name))
 
