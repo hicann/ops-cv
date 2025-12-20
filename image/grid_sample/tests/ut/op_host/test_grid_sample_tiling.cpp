@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include <gtest/gtest.h>
 #include <stdint.h>
 #include <iostream>
@@ -36,11 +35,12 @@ protected:
 struct GridSampleCompileInfo {
     uint32_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
+    bool isDavid = false;
 };
 
 TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_1)
 {
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{2, 200, 200, 1}, {2, 200, 200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -69,7 +69,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_2)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -98,7 +98,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_3)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -127,7 +127,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float16)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
@@ -156,7 +156,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_nearest)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -185,7 +185,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_bicubic)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -214,7 +214,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_slicing_window)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -243,7 +243,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_full_load_c2)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -272,7 +272,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_full_load_c1)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -301,7 +301,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_full_load_c32)
     std::initializer_list<int64_t> xShape = {N, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_h, x_w, C}, {N, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_h, grid_w, dim}, {N, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -332,7 +332,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_1)
     std::initializer_list<int64_t> xShape = {N, x_d, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_d, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_d, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_d, x_h, x_w, C}, {N, x_d, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_d, grid_h, grid_w, dim}, {N, grid_d, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -363,7 +363,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float16_2)
     std::initializer_list<int64_t> xShape = {N, x_d, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_d, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_d, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_d, x_h, x_w, C}, {N, x_d, x_h, x_w, C}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
                                                 {{{N, grid_d, grid_h, grid_w, dim}, {N, grid_d, grid_h, grid_w, dim}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
@@ -394,7 +394,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_nearest)
     std::initializer_list<int64_t> xShape = {N, x_d, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_d, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_d, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_d, x_h, x_w, C}, {N, x_d, x_h, x_w, C}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_d, grid_h, grid_w, dim}, {N, grid_d, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -425,7 +425,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float16_nearest)
     std::initializer_list<int64_t> xShape = {N, x_d, x_h, x_w, C};
     std::initializer_list<int64_t> gridShape = {N, grid_d, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, grid_d, grid_h, grid_w, C};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, x_d, x_h, x_w, C}, {N, x_d, x_h, x_w, C}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
                                                 {{{N, grid_d, grid_h, grid_w, dim}, {N, grid_d, grid_h, grid_w, dim}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
@@ -456,7 +456,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float16_bilinear_te)
     std::initializer_list<int64_t> xShape = {N, C, x_d, x_h, x_w};
     std::initializer_list<int64_t> gridShape = {N, grid_d, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, C, grid_d, grid_h, grid_w};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, C, x_d, x_h, x_w}, {N, C, x_d, x_h, x_w}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
                                                 {{{N, grid_d, grid_h, grid_w, dim}, {N, grid_d, grid_h, grid_w, dim}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
@@ -487,7 +487,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_bilinear_te)
     std::initializer_list<int64_t> xShape = {N, C, x_d, x_h, x_w};
     std::initializer_list<int64_t> gridShape = {N, grid_d, grid_h, grid_w, dim};
     std::initializer_list<int64_t> outShape = {N, C, grid_d, grid_h, grid_w};
-    GridSampleCompileInfo compileInfo = {48, 196608};
+    GridSampleCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSample",
                                                 {{{{N, C, x_d, x_h, x_w}, {N, C, x_d, x_h, x_w}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {{{N, grid_d, grid_h, grid_w, dim}, {N, grid_d, grid_h, grid_w, dim}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -500,6 +500,25 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_bilinear_te)
                                                 &compileInfo);
     uint64_t expectTilingKey = 1011320;
     string expectTilingData = "64 22 4 16 64 64 16 64 64 0 0 1 0 64 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(GridSampleTiling, grid_sample_tiling_david_test_float32_1)
+{
+    GridSampleCompileInfo compileInfo = {56, 196608, true};
+    gert::TilingContextPara tilingContextPara("GridSample",
+                                                {{{{2, 1, 200, 200}, {2, 1, 200, 200}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
+                                                {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+                                                &compileInfo);
+    uint64_t expectTilingKey = 1000;
+    string expectTilingData = "64 2 1 200 200 2 2 0 0 1 0 1 1 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

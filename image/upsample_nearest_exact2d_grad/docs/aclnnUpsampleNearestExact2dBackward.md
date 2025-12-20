@@ -1,11 +1,18 @@
 # aclnnUpsampleNearestExact2dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -18,7 +25,7 @@
   
 ## 函数原型
 
-- 每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearestExact2dBackward”接口执行计算。
+- 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearestExact2dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
@@ -31,6 +38,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
   uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
+
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2dBackward(
   void          *workspace, 
@@ -43,14 +51,14 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -119,7 +127,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`保持一致。</li><li>shape的N轴、C轴与入参`gradOutput`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -150,12 +158,12 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
   
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -173,8 +181,8 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
       <td>传入的gradOutput、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="6">161002</td>
+      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="7">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
@@ -188,6 +196,9 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
     </tr>
     <tr>
       <td>scalesH或scalesW的取值小于0。</td>
+    </tr>
+    <tr>
+      <td>gradOutput和out的数据格式不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -232,7 +243,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 
 - **返回值：**
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -240,10 +251,12 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 - 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
   - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值。
   - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+- 确定性计算：
+  - aclnnUpsampleNearestExact2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

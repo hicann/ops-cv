@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file upsample_trilinear_3d_grad.cpp
@@ -82,6 +82,7 @@ const aclTensor* UpsampleTrilinear3dGradNcdhw(
         CheckType(gradOut->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) && CheckScalesGrad(scaleW, scaleH, scaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
             gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
+            CHECK_RET(gradOut != nullptr, nullptr);
         }
         const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, gradOut->GetStorageFormat());
         auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
@@ -93,14 +94,17 @@ const aclTensor* UpsampleTrilinear3dGradNcdhw(
             return nullptr);
         if (op::DataType::DT_FLOAT16 == dataType) {
             out = l0op::Cast(out, op::DataType::DT_FLOAT16, executor);
+            CHECK_RET(out != nullptr, nullptr);
         } else if (op::DataType::DT_BF16 == dataType) {
             // cast back to bf16
             out = l0op::Cast(out, op::DataType::DT_BF16, executor);
+            CHECK_RET(out != nullptr, nullptr);
         }
         return out;
     } else {
         if (op::DataType::DT_BF16 == dataType) {
             gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
+            CHECK_RET(gradOut != nullptr, nullptr);
         }
         const aclTensor* out = executor->AllocTensor(outShape, gradOut->GetDataType(), gradOut->GetStorageFormat());
         CHECK_RET(out != nullptr, nullptr);
@@ -112,6 +116,7 @@ const aclTensor* UpsampleTrilinear3dGradNcdhw(
         if (op::DataType::DT_BF16 == dataType) {
             // cast back to bf16
             out = l0op::Cast(out, op::DataType::DT_BF16, executor);
+            CHECK_RET(out != nullptr, nullptr);
         }
         return out;
     }

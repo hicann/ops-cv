@@ -1,13 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 #include "aclnn_upsample_nearest_1d.h"
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/transdata.h"
@@ -36,7 +35,6 @@ extern "C" {
 static const size_t THREEDIMS = 3;
 static const size_t DIM_IDX_2 = 2;
 static const int64_t ZERO = 0;
-static const uint64_t ONE = 1;
 static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8};
 
@@ -81,14 +79,12 @@ static bool CheckDtypeEqual(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclIntArray *outputSize)
+static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize)
 {
     uint64_t size = outputSize->Size();
     OP_CHECK(size > ZERO,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The size of outputSize should be greater than 0,but got %zu", size),
         return false);
-    auto selfShape = self->GetViewShape();
-    auto outShape = out->GetViewShape();
     if (self->GetViewShape().GetDimNum() != THREEDIMS) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "It is expected input size equals to %zu, but got sizes %zu.",
@@ -143,7 +139,7 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     CHECK_RET(CheckDtypeEqual(self, out), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 检查shape是否支持
-    CHECK_RET(CheckShape(self, out, outputSize), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckShape(self, outputSize), ACLNN_ERR_PARAM_INVALID);
 
     // 5. 检查format是否支持
     CHECK_RET(CheckFormat(self, out), ACLNN_ERR_PARAM_INVALID);
@@ -204,7 +200,7 @@ const aclTensor *upsampleNearest1dAiCpuCompute(
         CHECK_RET(outTranspose != nullptr, nullptr);
 
         const aclTensor *resizeNearestOutAiCpu =
-            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, outTranspose, executor);
+            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, false, false, outTranspose, executor);
         CHECK_RET(resizeNearestOutAiCpu != nullptr, nullptr);
 
         const int64_t permuteNCHWList[] = {0, 3, 1, 2};
@@ -213,7 +209,7 @@ const aclTensor *upsampleNearest1dAiCpuCompute(
 
         return l0op::Transpose(resizeNearestOutAiCpu, permuteNCHWArray, executor);
     } else {
-        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, outContiguous, executor);
+        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, executor);
     }
 }
 
@@ -251,7 +247,7 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
     if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
         if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
             resizeNearestOut =
-                l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, outContiguous, uniqueExecutor.get());
+                l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, uniqueExecutor.get());
         } else {
             auto selfTransdata =
                 l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
@@ -262,7 +258,7 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
             CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             const aclTensor *resizeNearestOutAiCore =
-                l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, outTransdata, uniqueExecutor.get());
+                l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, uniqueExecutor.get());
             CHECK_RET(resizeNearestOutAiCore != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             resizeNearestOut =

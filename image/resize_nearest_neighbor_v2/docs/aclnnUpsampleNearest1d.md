@@ -1,12 +1,18 @@
 # aclnnUpsampleNearest1d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_nearest_neighbor_v2)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 
 ## 功能说明
@@ -16,14 +22,13 @@
 - 计算公式：
   
   $$
-  out(N, C, l) = self(N, C, min(floor(l * scales),  L-1))
-  $$
+  out(N, C, l) = self(N, C, min(floor(l * scale),  L-1)), \ scale = outputSize[0] / self\_L
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest1dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearest1d”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest1dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearest1d”接口执行计算。
 
-```cpp
+```Cpp
 aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(
   const aclTensor   *self, 
   const aclIntArray *outputSize, 
@@ -31,7 +36,8 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(
   uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
-```cpp
+
+```Cpp
 aclnnStatus aclnnUpsampleNearest1d(
   void          *workspace, 
   uint64_t       workspaceSize, 
@@ -43,14 +49,14 @@ aclnnStatus aclnnUpsampleNearest1d(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -69,8 +75,7 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。
-      <li>输入维度必须是3维。当数据类型是DOUBLE、UINT8时，输入shape的`L`维度需要小于2^24。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>输入维度必须是3维。当数据类型是DOUBLE、UINT8时，输入shape的`L`维度需要小于2^24。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
@@ -80,8 +85,8 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输出out在L维度上的空间大小。</td>
-      <td><ul><li>size为1，且取值大于0。</li></ul></td>
-      <td>INT32、INT64</td>
+      <td>size为1，且取值大于0。</td>
+      <td>INT64</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -90,7 +95,7 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>out</td>
       <td>输出</td>
       <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor<li>数据类型与入参`self`的数据类型保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor</li><li>数据类型与入参`self`的数据类型保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
@@ -119,15 +124,18 @@ aclnnStatus aclnnUpsampleNearest1d(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
+  
+    入参`self`和出参`out`的数据类型不支持BFLOAT16。
   
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -157,7 +165,7 @@ aclnnStatus aclnnUpsampleNearest1d(
     </tr>
   </tbody></table>
 
-## aclnnUpsampleLinear1d
+## aclnnUpsampleNearest1d
 
 - **参数说明：**
 
@@ -198,14 +206,16 @@ aclnnStatus aclnnUpsampleNearest1d(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
-无。
+
+- 确定性计算：
+  - aclnnUpsampleNearest1d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

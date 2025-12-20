@@ -49,6 +49,8 @@ public:
     constexpr static uint8_t H_INDEX = 1;
     constexpr static uint8_t W_INDEX = 2;
 
+    constexpr static size_t SHAPE_SIZE = 3;
+
     template <typename T>
     static void UpsampleNearest3dCommonTiling(
         T x, float* scales, const int64_t* outputShape, UpsampleNearest3dTilingData& tilingData, uint32_t coreNum)
@@ -92,8 +94,11 @@ public:
         tilingData.scaleW = realScaleW;
         tilingData.slideSizeW = slideSizeW;
 
+        size_t inputShapeSize = sizeof(inputShapes) / sizeof(inputShapes[0]);
+        size_t outputShapeSize = sizeof(outputShapes) / sizeof(outputShapes[0]);
+
         // GetNeedCoreNum
-        GetTensorSize(inputShapes, outputShapes, tilingData);
+        GetTensorSize(inputShapes, inputShapeSize, outputShapes, outputShapeSize, tilingData);
         GetNeedCoreNum(static_cast<int64_t>(coreNum), outputShapes, tilingData);
     }
 
@@ -107,8 +112,12 @@ public:
     }
 
     static void GetTensorSize(
-        int64_t* inputShapes, int64_t* outputShapes, UpsampleNearest3dTilingData& tilingData)
+        int64_t* inputShapes, size_t inputShapeSize, const int64_t* outputShapes, size_t outputShapeSize, UpsampleNearest3dTilingData& tilingData)
     {
+        if (inputShapeSize < SHAPE_SIZE || outputShapeSize < SHAPE_SIZE) {
+            return;
+        }
+
         float realScaleD = tilingData.scaleD;
         float realScaleH = tilingData.scaleH;
 

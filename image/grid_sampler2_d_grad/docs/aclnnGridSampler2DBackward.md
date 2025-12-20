@@ -1,13 +1,19 @@
 
 # aclnnGridSampler2DBackward
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/grid_sampler2_d_grad)
+
 
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -21,7 +27,7 @@
   
   - 其中：
       grad、input、grid、dx、dgrid的尺寸如下：
-    
+
       $$
       grad: (N, C, H_{out}, W_{out})\\
       input: (N, C, H_{in}, W_{in})\\
@@ -31,8 +37,8 @@
       $$
   
       其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
-    
-    
+
+
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
       - paddingMode="zeros"，表示对越界位置用0填充。
@@ -45,7 +51,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnGridSampler2DBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnGridSampler2DBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnGridSampler2DBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnGridSampler2DBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(
@@ -74,14 +80,14 @@ aclnnStatus aclnnGridSampler2DBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -100,7 +106,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gradOutput</td>
       <td>输入</td>
       <td>表示反向传播过程中上一层的输出梯度，对应公式描述中的`grad`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -120,7 +126,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -170,7 +176,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>inputGrad</td>
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape需要与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`input`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -180,7 +186,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gridGrad</td>
       <td>输出</td>
       <td>表示grid梯度，对应公式描述中的`dgrid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape需要与`grid`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`grid`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -209,14 +215,18 @@ aclnnStatus aclnnGridSampler2DBackward(
   </tbody>
   </table>
 
+  - <term>Atlas 训练系列产品</term>：
+  
+    参数`gradOutput`、`input`、`grid`、`inputGrad`、`gridGrad`的数据类型不支持BFLOAT16、DOUBLE。
+
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -307,15 +317,16 @@ aclnnStatus aclnnGridSampler2DBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
-aclnnGridSampler2DBackward默认为非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
+- 确定性计算：
+  - aclnnGridSampler2DBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

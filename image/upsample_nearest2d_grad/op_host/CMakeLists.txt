@@ -8,7 +8,4 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
 
-#
-
-
 add_modules_sources(OPTYPE upsample_nearest2d_grad ACLNNTYPE aclnn_exclude)

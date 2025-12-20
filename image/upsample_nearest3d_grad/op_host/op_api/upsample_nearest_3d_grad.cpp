@@ -41,17 +41,17 @@ static constexpr float MAX_SUPPORT_SCALE = 50;
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
-float ComputeNearest3dGradScales(int64_t input_size, int64_t output_size, float scale)
+static float ComputeNearest3dGradScales(int64_t input_size, int64_t output_size, float scale)
 {
     auto zero = static_cast<float>(0.);
-    if (scale != zero && scale > zero) {
+    if (scale > zero) {
         return scale;
     } else {
         return input_size != 0 ? (static_cast<float>(output_size) / input_size) : zero;
     }
 }
 
-bool CheckNearest3dGradScales(const aclTensor* gradOut, const aclIntArray* inputSize, const aclFloatArray* castScales)
+static bool CheckNearest3dGradScales(const aclTensor* gradOut, const aclIntArray* inputSize, const aclFloatArray* castScales)
 {
     float scales_d = 0.0, scales_h = 0.0, scales_w = 0.0;
     if (castScales->Size() == DIM_THREE) {

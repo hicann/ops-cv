@@ -356,7 +356,6 @@ static ge::graphStatus tiling4UpsampleNearestTiling(gert::TilingContext* context
 {
     UpsampleNearestTiling tilingObject(context);
     return tilingObject.RunBigKernelTiling();
-    return ge::GRAPH_FAILED;
 }
 
 static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)

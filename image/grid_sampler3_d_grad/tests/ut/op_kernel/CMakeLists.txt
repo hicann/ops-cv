@@ -8,7 +8,6 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
 
-#/
 if (UT_TEST_ALL OR OP_KERNEL_UT)
     # 需要将Tiling依赖的文件添加到CMakeLists.txt中
     # set(elewise_common_tiling_files

@@ -33,6 +33,9 @@ extern "C" {
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_95 = {
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE,
+    op::DataType::DT_BF16, op::DataType::DT_UINT8};
 static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
 
@@ -49,6 +52,8 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
     if (curSoc == op::SocVersion::ASCEND310P) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
+    } else if (curSoc == SocVersion::ASCEND910_95) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_95, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     }
@@ -60,6 +65,7 @@ static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, con
 {
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, UPSAMPLE_DIM_LIMIT, return false);
+    OP_CHECK_WRONG_DIMENSION(out, UPSAMPLE_DIM_LIMIT, return false);
     OP_CHECK(outputSizeNum == UPSAMPLE_EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 3, but got size %zu", outputSizeNum),
         return false);
@@ -138,7 +144,7 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     return ACLNN_SUCCESS;
 }
 
-const aclTensor *upsampleNearest3dCompute(const aclTensor *selfContiguous, const aclIntArray *outputSize,
+static const aclTensor *upsampleNearest3dCompute(const aclTensor *selfContiguous, const aclIntArray *outputSize,
     const aclFloatArray *scales, const aclFloatArray *castScales, aclOpExecutor *executor)
 {
     if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {

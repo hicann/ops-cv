@@ -284,6 +284,66 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float_02)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
+// TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_01)
+// {
+//     vector<int64_t> inp_dims = {1, 1, 3, 3};
+//     vector<int64_t> output_size = {6, 6};
+//     vector<int64_t> out = {1, 1, 6, 6};
+
+//     auto self_desc = TensorDesc(inp_dims, ACL_DOUBLE, ACL_FORMAT_NCHW);
+//     auto output_size_desc = IntArrayDesc(output_size);
+//     auto output_desc = TensorDesc(out, ACL_DOUBLE, ACL_FORMAT_NCHW);
+//     float scalesH = -99.0;
+//     float scalesW = -99.0;
+
+//     auto ut =
+//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+// }
+
+// TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_02)
+// {
+//     vector<int64_t> inp_dims = {3, 3, 64, 128};
+//     vector<int64_t> output_size = {128, 256};
+//     vector<int64_t> out = {3, 3, 128, 256};
+
+//     auto self_desc = TensorDesc(inp_dims, ACL_DOUBLE, ACL_FORMAT_NCHW);
+//     auto output_size_desc = IntArrayDesc(output_size);
+//     auto output_desc = TensorDesc(out, ACL_DOUBLE, ACL_FORMAT_NCHW);
+//     float scalesH = -99.0;
+//     float scalesW = -99.0;
+
+//     auto ut =
+//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+// }
+
+// TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_uint8)
+// {
+//     vector<int64_t> inp_dims = {1, 1, 3, 3};
+//     vector<int64_t> output_size = {6, 6};
+//     vector<int64_t> out = {1, 1, 6, 6};
+
+//     auto self_desc = TensorDesc(inp_dims, ACL_UINT8, ACL_FORMAT_NCHW);
+//     auto output_size_desc = IntArrayDesc(output_size);
+//     auto output_desc = TensorDesc(out, ACL_UINT8, ACL_FORMAT_NCHW);
+//     float scalesH = -99.0;
+//     float scalesW = -99.0;
+
+//     auto ut =
+//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+// }
+
 TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float_transpose)
 {
     vector<int64_t> inp_dims = {1, 1, 3, 4};

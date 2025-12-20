@@ -34,6 +34,7 @@ using namespace op;
 extern "C" {
 #endif
 
+namespace {
 static constexpr size_t DIM_ZERO = 0;
 static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
@@ -163,6 +164,30 @@ static bool CheckShape(const aclTensor *gradOut, const aclIntArray *outputSize, 
     return true;
 }
 
+static bool CheckUplimit(const aclTensor* gradOut, const aclTensor* out)
+{
+    int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t gradOutH = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t gradOutW = gradOut->GetViewShape().GetDim(DIM_THREE);
+    int64_t outN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t outC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t outH = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t outW = gradOut->GetViewShape().GetDim(DIM_THREE);
+
+    OP_CHECK(gradOutN < INT32_MAX && gradOutC < INT32_MAX && gradOutH < INT32_MAX && gradOutW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld)",
+            INT32_MAX, gradOutN, gradOutC, gradOutH, gradOutW),
+        return false);
+    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld, %ld)",
+            INT32_MAX, outN, outC, outH, outW),
+        return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(
     const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *out)
 {
@@ -183,6 +208,8 @@ static aclnnStatus CheckParams(
     // 6. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验 输入输出格式校验
     CHECK_RET(CheckDtypeValid(gradOut, out, inputSize), ACLNN_ERR_PARAM_INVALID);
 
+    // 7. 校验上边界
+    CHECK_RET(CheckUplimit(gradOut, out), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;
 }
 
@@ -195,20 +222,15 @@ static double ComputeBilinear2dBackwardScales(const int64_t input_size, const in
     }
 }
 
-static bool CheckMinScale(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclTensor *out,
+static bool CheckMinScale(const aclTensor *gradOutput, const aclIntArray *inputSize,
     const double scalesH, const double scalesW)
 {
-    (void) out;
     auto gradOutputShape = gradOutput->GetViewShape();
-    int64_t outN = 0;
-    int64_t outC = 0;
     int64_t outH = 0;
     int64_t outW = 0;
     int64_t inputH = (*inputSize)[DIM_TWO];
     int64_t inputW = (*inputSize)[DIM_THREE];
 
-    outN = gradOutputShape.GetDim(DIM_ZERO);
-    outC = gradOutputShape.GetDim(DIM_ONE);
     outH = gradOutputShape.GetDim(DIM_TWO);
     outW = gradOutputShape.GetDim(DIM_THREE);
 
@@ -326,6 +348,7 @@ bool ComputeCheckScale(const aclTensor *gradOut, const aclIntArray *outputSize, 
     }
     return check_scale;
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleBilinear2dBackwardV2GetWorkspaceSize(const aclTensor *gradOut, const aclIntArray *outputSize,
     const aclIntArray *inputSize, bool alignCorners, double scalesH, double scalesW, aclTensor *out,
@@ -362,7 +385,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2GetWorkspaceSize(const aclTensor *g
     check_scale = ComputeCheckScale(gradOut, outputSize, inputSize, scalesH, scalesW);
     if (!CheckIOSizesIsSame(gradOut, inputSize) &&
         (!((socVer == SocVersion::ASCEND910B) || (socVer == SocVersion::ASCEND910_93)) || !check_scale ||
-            !CheckMinScale(gradOut, inputSize, out, scalesH, scalesW))) {
+            !CheckMinScale(gradOut, inputSize, scalesH, scalesW))) {
         aclnnStatus status =
             DoResizeBilinearV2Grad(inputSize, alignCorners, gradOutContiguous, outTransdata, out, uniqueExecutor.get());
         if (status != ACLNN_SUCCESS) {

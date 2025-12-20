@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include "aclnn_upsample_nearest_1d_v2.h"
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/transdata.h"
@@ -35,7 +34,6 @@ using namespace op;
 extern "C" {
 #endif
 
-static const size_t FOURDIMS = 4;
 static const size_t THREEDIMS = 3;
 static const size_t DIM_IDX_2 = 2;
 static const int64_t ZERO = 0;
@@ -221,7 +219,7 @@ static const aclTensor *View5dAs4d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
-const aclTensor *upsampleNearest1dV2AiCpuCompute(
+static const aclTensor *upsampleNearest1dV2AiCpuCompute(
     const aclTensor *selfContiguous, const aclTensor *outContiguous, const aclTensor *size, aclOpExecutor *executor)
 {
     if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCHW) {
@@ -235,7 +233,7 @@ const aclTensor *upsampleNearest1dV2AiCpuCompute(
         CHECK_RET(outTranspose != nullptr, nullptr);
 
         const aclTensor *resizeNearestOutAiCpu =
-            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, outTranspose, executor);
+            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, false, false, outTranspose, executor);
         CHECK_RET(resizeNearestOutAiCpu != nullptr, nullptr);
 
         const int64_t permuteNCHWList[] = {0, 3, 1, 2};
@@ -244,11 +242,11 @@ const aclTensor *upsampleNearest1dV2AiCpuCompute(
 
         return l0op::Transpose(resizeNearestOutAiCpu, permuteNCHWArray, executor);
     } else {
-        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, outContiguous, executor);
+        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, executor);
     }
 }
 
-const aclTensor *upsampleNearest1dAiCoreCompute(
+static const aclTensor *upsampleNearest1dAiCoreCompute(
     const aclTensor *selfContiguous, const aclIntArray *outputSize, float scaleL, aclOpExecutor *executor)
 {
     auto self = View4dAs5d(selfContiguous, executor);
@@ -328,7 +326,7 @@ aclnnStatus aclnnUpsampleNearest1dV2GetWorkspaceSize(const aclTensor *self, cons
                 CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 resizeNearestOut =
-                    l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, outContiguous, uniqueExecutor.get());
+                    l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, false, outContiguous, uniqueExecutor.get());
             } else {
                 auto selfTransdata =
                     l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
@@ -339,7 +337,7 @@ aclnnStatus aclnnUpsampleNearest1dV2GetWorkspaceSize(const aclTensor *self, cons
                 CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 const aclTensor *resizeNearestOutAiCore =
-                    l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, outTransdata, uniqueExecutor.get());
+                    l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, uniqueExecutor.get());
                 CHECK_RET(resizeNearestOutAiCore != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 resizeNearestOut = l0op::TransData(

@@ -57,8 +57,6 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
     float scalesW = 0.0;
 
     auto socVer = GetCurrentPlatformInfo().GetSocVersion();
-    auto dimZero = DIM_ZERO;
-    auto dimOne = DIM_ONE;
     auto dimTwo = DIM_TWO;
     auto dimThree = DIM_THREE;
     auto dimFour = DIM_FOUR;
@@ -70,14 +68,13 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
         dimFour = DIM_TWO;
     }
 
-    if (outputSize->Size() == DIM_THREE) {
-        selfShape[dimTwo] = (*outputSize)[DIM_ZERO];
-        selfShape[dimThree] = (*outputSize)[DIM_ONE];
-        selfShape[dimFour] = (*outputSize)[DIM_TWO];
-    } else {
-        selfShape[dimTwo] *= (*scales)[DIM_ZERO];
-        selfShape[dimThree] *= (*scales)[DIM_ONE];
-        selfShape[dimFour] *= (*scales)[DIM_TWO];
+    selfShape[dimTwo] = (*outputSize)[DIM_ZERO];
+    selfShape[dimThree] = (*outputSize)[DIM_ONE];
+    selfShape[dimFour] = (*outputSize)[DIM_TWO];
+
+    uint64_t size = 0;
+    auto ret = aclGetFloatArraySize(castScales, &size);
+    if (ret == ACLNN_SUCCESS && size == DIM_THREE) {
         scalesD = (*castScales)[DIM_ZERO];
         scalesH = (*castScales)[DIM_ONE];
         scalesW = (*castScales)[DIM_TWO];
@@ -90,9 +87,12 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
         CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
             self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
+            OP_CHECK(
+                self != nullptr, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
+                return nullptr);
         }
         const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, self->GetStorageFormat());
-        auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        ret = ADD_TO_LAUNCHER_LIST_AICORE(
             ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
             OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
         OP_CHECK(
@@ -112,13 +112,16 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
         CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType) {
             self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
+            OP_CHECK(
+                self != nullptr, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
+                return nullptr);
         }
         const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, self->GetStorageFormat());
-        auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        auto aicoreRet = ADD_TO_LAUNCHER_LIST_AICORE(
             ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
             OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
         OP_CHECK(
-            ret == ACLNN_SUCCESS,
+            aicoreRet == ACLNN_SUCCESS,
             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinear310PAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
             return nullptr);
         if (op::DataType::DT_FLOAT16 == dataType) {
@@ -128,12 +131,19 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
     } else {
         if (op::DataType::DT_BF16 == dataType) {
             self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
+            OP_CHECK(
+                self != nullptr, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
+                return nullptr);
+        }
+        ret = aclGetFloatArraySize(scales, &size);
+        if (ret == ACLNN_SUCCESS && size == DIM_THREE) {
+            outputSize = executor->AllocIntArray({}, 0);
         }
 
         const aclTensor* out = executor->AllocTensor(outShape, self->GetDataType(), self->GetStorageFormat());
         CHECK_RET(out != nullptr, nullptr);
         static internal::AicpuTaskSpace space("UpsampleTrilinear3d");
-        auto ret = ADD_TO_LAUNCHER_LIST_AICPU(
+        ret = ADD_TO_LAUNCHER_LIST_AICPU(
             UpsampleTrilinear3d, OP_ATTR_NAMES({"output_size", "scales", "align_corners"}), OP_INPUT(self),
             OP_OUTPUT(out), OP_ATTR(outputSize, scales, alignCorners));
         CHECK_RET(ret == ACLNN_SUCCESS, nullptr);

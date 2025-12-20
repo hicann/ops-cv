@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file resize_nearest_neighbor_v2.cpp
@@ -48,7 +48,7 @@ static bool IsAiCoreSupport(const aclTensor *self)
 
 // AICPU算子kernel
 static const aclTensor *ResizeNearestNeighborV2AICPU(
-    const aclTensor *x, const aclTensor *size, aclTensor *y, aclOpExecutor *executor)
+    const aclTensor *x, const aclTensor *size, bool alignCorners, bool halfPixelCenters, const aclTensor *y, aclOpExecutor *executor)
 {
     L0_DFX(ResizeNearestNeighborV2AICPU, x, size, y);
 
@@ -57,23 +57,23 @@ static const aclTensor *ResizeNearestNeighborV2AICPU(
         OP_ATTR_NAMES({"align_corners", "half_pixel_centers"}),
         OP_INPUT(x, size),
         OP_OUTPUT(y),
-        OP_ATTR(false, false));
+        OP_ATTR(alignCorners, halfPixelCenters));
     CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
     return y;
 }
 
 // AICORE算子kernel
 static const aclTensor *ResizeNearestNeighborV2AICORE(
-    const aclTensor *x, const aclTensor *size, const aclFloatArray *scales, aclTensor *y, aclOpExecutor *executor)
+    const aclTensor *x, const aclTensor *size, const aclFloatArray *scales, bool alignCorners, bool halfPixelCenters, const aclTensor *y, aclOpExecutor *executor)
 {
     L0_DFX(ResizeNearestNeighborV2AICORE, x, size, y);
     auto ret = ACLNN_SUCCESS;
     if (scales == nullptr) {
         ret = ADD_TO_LAUNCHER_LIST_AICORE(
-            ResizeNearestNeighborV2, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(false, false));
+            ResizeNearestNeighborV2, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(alignCorners, halfPixelCenters));
     } else {
         ret = ADD_TO_LAUNCHER_LIST_AICORE(
-            ResizeNearestNeighborV2, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(false, false, scales));
+            ResizeNearestNeighborV2, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(alignCorners, halfPixelCenters, scales));
     }
 
     OP_CHECK(ret == ACLNN_SUCCESS,
@@ -83,13 +83,12 @@ static const aclTensor *ResizeNearestNeighborV2AICORE(
 }
 
 const aclTensor *ResizeNearestNeighborV2(
-    const aclTensor *x, const aclTensor *size, const aclFloatArray *scales, const aclTensor *y, aclOpExecutor *executor)
+    const aclTensor *x, const aclTensor *size, const aclFloatArray *scales, bool alignCorners, bool halfPixelCenters, const aclTensor *y, aclOpExecutor *executor)
 {
-    aclTensor *out = const_cast<aclTensor *>(y);
     if (IsAiCoreSupport(x)) {
-        return ResizeNearestNeighborV2AICORE(x, size, scales, out, executor);
+        return ResizeNearestNeighborV2AICORE(x, size, scales, alignCorners, halfPixelCenters, y, executor);
     } else {
-        return ResizeNearestNeighborV2AICPU(x, size, out, executor);
+        return ResizeNearestNeighborV2AICPU(x, size, alignCorners, halfPixelCenters, y, executor);
     }
 }
 }  // namespace l0op

@@ -6,10 +6,30 @@
             "flagAsync":"False",
             "flagPartial":"False",
             "functionName":"RunCpuKernel",
-            "kernelSo":"libcust_aicpu_kernels.so",
+            "kernelSo":"libcv_aicpu_kernels.so",
             "opKernelLib":"CUSTAICPUKernel",
             "userDefined":"True",
             "workspaceSize":"100"
+        },
+        "input0":{
+            "name":"x",
+            "type":"DT_FLOAT,DT_FLOAT16,DT_DOUBLE,DT_UINT8,DT_INT8,DT_UINT16,DT_INT16,DT_INT32,DT_INT64"
+        },
+        "input1":{
+            "name":"boxes",
+            "type":"DT_FLOAT"
+        },
+        "input2":{
+            "name":"box_index",
+            "type":"DT_INT32"
+        },
+        "input3":{
+            "name":"crop_size",
+            "type":"DT_INT32"
+        },
+        "output0":{
+            "name":"y",
+            "type":"DT_FLOAT"
         }
     }
 }

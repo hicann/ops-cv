@@ -16,6 +16,14 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
+static const std::vector<ge::DataType> xDtype = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16,
+                                                 ge::DT_UINT8, ge::DT_DOUBLE, ge::DT_FLOAT16,
+                                                 ge::DT_FLOAT, ge::DT_BF16, ge::DT_UINT8,
+                                                 ge::DT_DOUBLE};
+static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                                                ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_NCDHW,
+                                                ge::FORMAT_NCDHW, ge::FORMAT_NCDHW, ge::FORMAT_NCDHW,
+                                                ge::FORMAT_NCDHW};
 class UpsampleNearest3d : public OpDef {
 public:
     explicit UpsampleNearest3d(const char *name) : OpDef(name)
@@ -33,9 +41,9 @@ public:
             .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Attr("output_size").AttrType(OPTIONAL).ListInt();
-        this->Attr("scale_d").AttrType(OPTIONAL).Float();
-        this->Attr("scale_h").AttrType(OPTIONAL).Float();
-        this->Attr("scale_w").AttrType(OPTIONAL).Float();
+        this->Attr("scale_d").AttrType(OPTIONAL).Float(0.0);
+        this->Attr("scale_h").AttrType(OPTIONAL).Float(0.0);
+        this->Attr("scale_w").AttrType(OPTIONAL).Float(0.0);
 
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
@@ -58,6 +66,22 @@ public:
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
             .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
         this->AICore().AddConfig("ascend310p", config310p);
+        OpAICoreConfig regbaseConfig;
+        regbaseConfig.Input("x")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("y")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "upsample_nearest3d_apt");
+        this->AICore().AddConfig("ascend910_95", regbaseConfig); 
     }
 };
 

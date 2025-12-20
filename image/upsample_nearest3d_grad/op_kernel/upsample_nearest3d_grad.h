@@ -24,7 +24,6 @@ namespace UpsampleNearest3dGrad {
 using namespace AscendC;
 
 constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
-
 constexpr int32_t BUFFER_NUM = 1;
 constexpr int8_t D_DIRECTION = 0;
 constexpr int8_t H_DIRECTION = 1;
@@ -249,10 +248,10 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::DirectionExpansion(int8_t dir
     int64_t slideEnd = slideEnds[direction];
     // 计算批量分组的数据
     if (slideStart < slideEnd) {
-        CalculateIntermediateTensor(direction, slideStart, slideEnd - slideStart, scale);
         for (int64_t index = slideStart; index < slideEnd; index += slideSize) {
             int64_t length = Min(slideSize, slideEnd - index);
-            CalculateRadioTensor(direction, index - slideStart, length, index);
+            CalculateIntermediateTensor(direction, index, length, scale);
+            CalculateRadioTensor(direction, 0, length, index);
             CopyRadioTensorToGm();
             if (singleCoreK > 0 && direction == W_DIRECTION) {
                 CalculateWidthExtension(index, 0, inputRows[direction], length);

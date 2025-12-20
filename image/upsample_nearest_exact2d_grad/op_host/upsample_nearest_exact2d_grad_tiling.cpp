@@ -177,9 +177,13 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
     }
 
     input_size = attrs->GetAttrPointer<gert::ContinuousVector>(0);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, input_size);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(1);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, output_size);
     scale_h = attrs->GetAttrPointer<float>(H_INDEX);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scale_h);
     scale_w = attrs->GetAttrPointer<float>(W_INDEX);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scale_w);
     auto temp = tilingContext->GetInputDesc(0);
     if (temp == nullptr) {
         return ge::GRAPH_FAILED;

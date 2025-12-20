@@ -1,13 +1,21 @@
 # aclnnUpsampleNearestExact3d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact3d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
+
 - 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
 - 计算公式：
 
@@ -28,7 +36,8 @@
   $$
 
 ## 函数原型
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact3dGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearestExact3d”接口执行计算。
+
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact3dGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearestExact3d”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dGetWorkspaceSize(
@@ -41,6 +50,7 @@ aclnnStatus aclnnUpsampleNearestExact3dGetWorkspaceSize(
   uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
+
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3d(
   void          *workspace, 
@@ -53,14 +63,14 @@ aclnnStatus aclnnUpsampleNearestExact3d(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -88,8 +98,8 @@ aclnnStatus aclnnUpsampleNearestExact3d(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>表示输入self在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td><ul><li>size为3，各元素均大于零。</li><li>指定输出`out`的Tensor大小。</li></ul></td>
+      <td>表示输出out在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
+      <td>size为3，各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -129,7 +139,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参`self`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参`self`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -158,14 +168,18 @@ aclnnStatus aclnnUpsampleNearestExact3d(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>：
+  
+    参数`self`、`out`的数据类型仅支持FLOAT32、FLOAT16。
+
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -194,7 +208,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在D、H、W维度上的size不大于0。</td>
+      <td>self在C、D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
@@ -248,17 +262,19 @@ aclnnStatus aclnnUpsampleNearestExact3d(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
-参数outputSize与参数scalesD、scalesH、scalesW，在使用时二选一，即：
-- 当入参scalesD、scalesH、scalesW，其中一个参数的值小于等于0时，使用入参outputSize的参数值。
-- 当入参scalesD、scalesH、scalesW的值都大于0时，使用入参scalesD、scalesH、scalesW的参数值，且$outputSize=[floor(self\_D * scalesD)，floor(self\_H * scalesH)，floor(self\_W * scalesW)]$。
+- 参数outputSize与参数scalesD、scalesH、scalesW，在使用时二选一，即：
+  - 当入参scalesD、scalesH、scalesW，其中一个参数的值小于等于0时，使用入参outputSize的参数值。
+  - 当入参scalesD、scalesH、scalesW的值都大于0时，使用入参scalesD、scalesH、scalesW的参数值，且$outputSize=[floor(self\_D * scalesD)，floor(self\_H * scalesH)，floor(self\_W * scalesW)]$。
+- 确定性计算：
+  - aclnnUpsampleNearestExact3d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

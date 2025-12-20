@@ -16,8 +16,10 @@
 #ifndef OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_AA_TILING_H
 #define OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_AA_TILING_H
 
+#include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
+#include "tiling/platform/platform_ascendc.h"
 
 namespace optiling {
 
@@ -67,6 +69,7 @@ TILING_DATA_FIELD_DEF_STRUCT(TCubeTiling, matmulTilingH);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleBicubic2dAA, UpsampleBicubic2dAATilingData)
+ge::graphStatus Tiling4UpsampleBicubic2dAARegbase(gert::TilingContext* context);
 }  // namespace optiling
 
 #endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_AA_TILING_H

@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include "aclnn_upsample_nearest_2d_v2.h"
 #include <iomanip>
 #include "image/resize_nearest_neighbor_v2/op_host/op_api/resize_nearest_neighbor_v2.h"
@@ -254,7 +253,7 @@ const aclTensor *upsampleNearest2dV2AiCpuCompute(
         CHECK_RET(outTranspose != nullptr, nullptr);
 
         const aclTensor *resizeNearestOutAiCpu =
-            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, outTranspose, executor);
+            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, false, false, outTranspose, executor);
         CHECK_RET(resizeNearestOutAiCpu != nullptr, nullptr);
 
         const int64_t permuteNCHWList[] = {0, 3, 1, 2};
@@ -263,7 +262,7 @@ const aclTensor *upsampleNearest2dV2AiCpuCompute(
 
         return l0op::Transpose(resizeNearestOutAiCpu, permuteNCHWArray, executor);
     } else {
-        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, outContiguous, executor);
+        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, executor);
     }
 }
 
@@ -383,7 +382,7 @@ aclnnStatus aclnnUpsampleNearest2dV2GetWorkspaceSize(const aclTensor *self, cons
                 CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 resizeNearestOut =
-                    l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, outContiguous, uniqueExecutor.get());
+                    l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, false, outContiguous, uniqueExecutor.get());
             } else {
                 auto selfTransdata =
                     l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
@@ -394,7 +393,7 @@ aclnnStatus aclnnUpsampleNearest2dV2GetWorkspaceSize(const aclTensor *self, cons
                 CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 auto outAiCore =
-                    l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, outTransdata, uniqueExecutor.get());
+                    l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, uniqueExecutor.get());
                 CHECK_RET(outAiCore != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 resizeNearestOut = l0op::TransData(outAiCore, self->GetStorageFormat(), 0, uniqueExecutor.get());

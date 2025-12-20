@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 /*!
  * \file resize_bicubic_v2_grad.cpp
  * \brief resize_bicubic_v2_grad
@@ -28,6 +27,7 @@ using namespace AscendC;
 extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(
     GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
 {
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIV_1_0);
     TPipe pipe;
 
     if (TILING_KEY_IS(TILING_KEY_ALL_COPY)) {

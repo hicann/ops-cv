@@ -1,12 +1,18 @@
 # aclnnUpsampleBilinear2dAABackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_aa_backward)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -39,14 +45,14 @@
     - 如果$scaleW >= 1$，则$kW = floor(scaleW) * 2 + 1$，否则$kW = 3$
     - $f(h_i, w_j)$是原图像在$(h_i, w_j)$的像素值
     - $w(i)$、$w(j)$是双线性抗锯齿插值的W方向和H方向权重，计算公式为：
-      
+
       $$
         w(i) = \begin{cases}
         1 - |h_i - h| & |h_i -h| < 1 \\
         0 & otherwise
         \end{cases}
       $$
-      
+
       $$
         w(j) = \begin{cases}
         1 - |w_j - w| & |w_j -w| < 1 \\
@@ -63,7 +69,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2dAABackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2dAABackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize(
@@ -90,14 +96,14 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 - **参数说明**：
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -146,7 +152,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>如果为true，则输入和输出张量的角像素点会被对齐，否则不对齐。</li></ul></td>
+      <td>如果为true，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -207,12 +213,12 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 * **返回值**：
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -230,15 +236,15 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>传入的gradOutput、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="7">161002</td>
+      <td rowspan="8">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="8">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
       <td>gradOutput和out的数据类型不一致。</td>
     </tr>
     <tr>
-      <td>gradOutput的shape不是4维。</td>
+      <td>gradOutput、out的shape不是4维。</td>
     </tr>
     <tr>
       <td>outputSize的size不等于2。</td>
@@ -251,6 +257,9 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
     </tr>
     <tr>
       <td>inputSize的某个元素值不大于0。</td>
+    </tr>
+    <tr>
+      <td>scalesH、scalesW的取值为负数。</td>
     </tr>
   </tbody></table>
 
@@ -295,7 +304,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 - **返回值**：
 
-aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -307,10 +316,12 @@ aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/conte
   - 当alignCorners为False时：
     - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
     - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+- 确定性计算：
+  - aclnnUpsampleBilinear2dAABackward默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

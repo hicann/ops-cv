@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include "aclnn/aclnn_base.h"
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
@@ -28,6 +27,7 @@ using namespace op;
 extern "C" {
 #endif
 
+namespace {
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
@@ -144,6 +144,33 @@ static bool CheckInputElement(
     return true;
 }
 
+static bool CheckUplimit(const aclTensor* gradOut, const aclTensor* gradInput)
+{
+    int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t gradOutD = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t gradOutH = gradOut->GetViewShape().GetDim(DIM_THREE);
+    int64_t gradOutW = gradOut->GetViewShape().GetDim(DIM_FOUR);
+    int64_t inputN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t inputC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t inputD = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t inputH = gradOut->GetViewShape().GetDim(DIM_THREE);
+    int64_t inputW = gradOut->GetViewShape().GetDim(DIM_FOUR);
+
+    OP_CHECK(gradOutN < INT32_MAX && gradOutC < INT32_MAX && gradOutD < INT32_MAX && gradOutH < INT32_MAX && gradOutW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, gradOutN, gradOutC, gradOutD, gradOutH, gradOutW),
+        return false);
+    OP_CHECK(inputN < INT32_MAX && inputC < INT32_MAX && inputD < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, inputN, inputC, inputD, inputH , inputW),
+        return false);
+    return true;
+}
+
+
 static aclnnStatus CheckParams(
     const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesD,
     double scalesH, double scalesW, const aclTensor* gradInput)
@@ -162,8 +189,12 @@ static aclnnStatus CheckParams(
         CheckInputElement(gradOut, gradInput, outputSize, inputSize, scalesD, scalesH, scalesW),
         ACLNN_ERR_PARAM_INVALID);
 
+    // 5. 校验上边界
+    CHECK_RET(CheckUplimit(gradOut, gradInput), ACLNN_ERR_PARAM_INVALID);
+
     return ACLNN_SUCCESS;
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
     const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesD,

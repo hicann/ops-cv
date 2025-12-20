@@ -296,8 +296,11 @@ bool UpsampleBicubic2dGradTiling::SetLaunchInfo(gert::TilingContext *context)
             GetDtypeSize() +
         (_Params.batch * _Params.inputH * _Params.outputW + GetNumPerBlock() - 1) / GetNumPerBlock() * BLOCK_SIZE +
         _Params.CoreNum * BLOCK_SIZE * NUM_TWO + 16 * 1024 * 1024;
-    AddWorkspaces(context, workspaceSize);
-    return true;
+    if (AddWorkspaces(context, workspaceSize)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool UpsampleBicubic2dGradTiling::IsDeterministicCalc(const gert::TilingContext *context)
@@ -534,8 +537,11 @@ bool UpsampleBicubic2dGradTiling::SetLaunchInfoDC(gert::TilingContext *context)
     uint64_t workspaceSize =
         (_Params.intermediateMatrixSize + _Params.radioMatrixSize * _Params.CoreNum * NUM_TWO) * GetDtypeSize() +
         16 * 1024 * 1024;
-    AddWorkspaces(context, workspaceSize);
-    return true;
+    if (AddWorkspaces(context, workspaceSize)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 ge::graphStatus UpsampleBicubic2dGradTiling::runTiling(gert::TilingContext *context)

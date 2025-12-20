@@ -142,10 +142,18 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     }
     size_t idx = 0;
     outputSize = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSize == nullptr"),
+        return ge::GRAPH_FAILED);
     inputSize = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "inputSize == nullptr"),
+        return ge::GRAPH_FAILED);
     alignCorners = attrs->GetAttrPointer<bool>(idx++);
+    OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"),
+        return ge::GRAPH_FAILED);
     scaleH = attrs->GetAttrPointer<float>(idx++);
+    OP_CHECK_IF(scaleH == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleH == nullptr"), return ge::GRAPH_FAILED);
     scaleW = attrs->GetAttrPointer<float>(idx++);
+    OP_CHECK_IF(scaleW == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleW == nullptr"), return ge::GRAPH_FAILED);
 
     // 获取数据类型
     auto temp = tilingContext->GetInputDesc(0);
@@ -439,6 +447,7 @@ void UpsampleBilinear2dAABackwardTiling::GetTCubeTilingW()
         inputShapes[N_INDEX] * inputShapes[C_INDEX] * inputShape[H_INDEX], outputShapes[W_INDEX], inputShapes[W_INDEX]);
     mmTilingW.SetShape(inputShapes[N_INDEX] * inputShapes[C_INDEX] * inputShape[H_INDEX], slideSize, singleCoreKW);
     if (mmTilingW.GetTiling(tilingData.matmulTilingW) == -1) {
+        OP_LOGE(tilingContext->GetNodeName(), "GetTCubeTilingW Error, please Check inputShapes.");
         return;
     }
 }
@@ -453,6 +462,7 @@ void UpsampleBilinear2dAABackwardTiling::GetTCubeTilingH()
     mmTilingH.SetOrgShape(outputShapes[H_INDEX], outputShapes[W_INDEX], inputShapes[H_INDEX]);
     mmTilingH.SetShape(slideSize, outputShapes[W_INDEX], singleCoreKH);
     if (mmTilingH.GetTiling(tilingData.matmulTilingH) == -1) {
+        OP_LOGE(tilingContext->GetNodeName(), "GetTCubeTilingH Error, please Check inputShapes.");
         return;
     }
 }

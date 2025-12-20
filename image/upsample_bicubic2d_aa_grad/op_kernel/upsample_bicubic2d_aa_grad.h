@@ -167,6 +167,8 @@ private:
     int64_t slidelen;
     int64_t slidelen_h;
     int64_t queueSize = 0;
+    int64_t queueSizeW = 0;
+    int64_t queueSizeH = 0;
 
     int64_t slideStart_h;
     int64_t slideEnd_h;
@@ -217,29 +219,15 @@ private:
 template <typename T>
 __aicore__ inline void UpSampleBicubic2dAAGradND<T>::getQueueSize()
 {
-    // 输入切块的长度
-    int64_t xSlideSize = slideEnd_w - slideStart_w;
-    if (tailSlideEnd_w - tailSlideStart_w > xSlideSize) {
-        xSlideSize = tailSlideEnd_w - tailSlideStart_w;
-    }
-    int64_t ySlideSize = slideEnd_h - slideStart_h;
-    if (tailSlideEnd_h - tailSlideStart_h > ySlideSize) {
-        ySlideSize = tailSlideEnd_h - tailSlideStart_h;
-    }
-
     zeroScaleW = input_shapes[3] > 0 ? static_cast<float>(output_shapes[3]) / input_shapes[3] : 1;
     zeroScaleH = input_shapes[2] > 0 ? static_cast<float>(output_shapes[2]) / input_shapes[2] : 1;
 
-    int64_t inSlide_w = scale_w > 0 ? static_cast<int64_t>(2 * (xSlideSize + support_w) / scale_w) + 1
-                                    : static_cast<int64_t>(2 * (xSlideSize + support_w) / zeroScaleW) + 1;
-    int64_t inSlide_h = scale_h > 0 ? static_cast<int64_t>(2 * (ySlideSize + support_h) / scale_h) + 1
-                                    : static_cast<int64_t>(2 * (ySlideSize + support_h) / zeroScaleH) + 1;
+    queueSizeW = scale_w > 0 ? static_cast<int64_t>(2 * (slide_size + support_w) / scale_w) + 1
+                                    : static_cast<int64_t>(2 * (slide_size + support_w) / zeroScaleW) + 1;
+    queueSizeH = scale_h > 0 ? static_cast<int64_t>(2 * (slide_size + support_h) / scale_h) + 1
+                                    : static_cast<int64_t>(2 * (slide_size + support_h) / zeroScaleH) + 1;
 
-    if (inSlide_w > inSlide_h) {
-        queueSize = inSlide_w;
-    } else {
-        queueSize = inSlide_h;
-    }
+    queueSize = getMax(static_cast<int64_t>(1), getMax(queueSizeW, queueSizeH));
 };
 
 template <typename T>
@@ -253,21 +241,21 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::WDirectionExpansion()
 
         // 计算滑块映射范围
         if (slideStart_w < slideEnd_w) {
-            calculateIntermediateTensorX(centerTensor, xMinTensor, xSizeTensor, weightTensor, slideStart_w, slideEnd_w);
             for (int64_t index = slideStart_w; index < slideEnd_w; index += slide_size) {
                 int64_t length = Min(slide_size, slideEnd_w - index);
                 slidelen = length;
+                calculateIntermediateTensorX(centerTensor, xMinTensor, xSizeTensor, weightTensor, index, slideEnd_w);
                 calculateRadioTensor(centerTensor, xMinTensor, xSizeTensor, weightTensor, index, length);
                 copyRadioTensorToGm();
                 calculateWidthExtension(index, 0, 0);
             }
         }
         if (tailSlideStart_w < tailSlideEnd_w) {
-            calculateIntermediateTensorX(
-                centerTensor, xMinTensor, xSizeTensor, weightTensor, tailSlideStart_w, tailSlideEnd_w);
             for (int64_t index = tailSlideStart_w; index < tailSlideEnd_w; index += slide_size) {
                 int64_t length = Min(slide_size, tailSlideEnd_w - index);
                 slidelen = length;
+                calculateIntermediateTensorX(
+                    centerTensor, xMinTensor, xSizeTensor, weightTensor, index, tailSlideEnd_w);
                 calculateRadioTensor(centerTensor, xMinTensor, xSizeTensor, weightTensor, index, length);
                 copyRadioTensorToGm();
                 calculateWidthExtension(index, tailRowStart_w, tailRowEnd_w);
@@ -293,11 +281,11 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::HDirectionExpansion()
         LocalTensor<float> xSizeTensor_h = xSizeQueue.Get<float>();
         LocalTensor<float> weightTensor_h = weightQueue.Get<float>();
         if (slideStart_h < slideEnd_h) {
-            calculateIntermediateTensorY(
-                centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, slideStart_h, slideEnd_h);
             for (int64_t index = slideStart_h; index < slideEnd_h; index += slide_size) {
                 int64_t length = Min(slide_size, slideEnd_h + 1 - index);
                 slidelen_h = length;
+                calculateIntermediateTensorY(
+                    centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, slideEnd_h);
                 calculateRadioTensorH(centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, length);
                 copyRadioTensorToGm();
                 calculateHeightExtension(index, 0, 0);
@@ -305,11 +293,11 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::HDirectionExpansion()
         }
 
         if (tailSlideStart_h < tailSlideEnd_h) {
-            calculateIntermediateTensorY(
-                centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, tailSlideStart_h, tailSlideEnd_h);
             for (int64_t index = tailSlideStart_h; index < tailSlideEnd_h; index += slide_size) {
                 int64_t length = Min(slide_size, tailSlideEnd_h + 1 - index);
                 slidelen_h = length;
+                calculateIntermediateTensorY(
+                    centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, tailSlideEnd_h);
                 calculateRadioTensorH(centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, length);
                 copyRadioTensorToGm();
                 calculateHeightExtension(index, tailRowStart_h, tailRowEnd_h);
@@ -388,7 +376,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
     }
     LocalTensor<float> floorTensor = floorQueue.Get<float>();
 
-    int64_t length = static_cast<int64_t>(centerTensor.GetSize());
+    int64_t length = queueSizeW;
     // 先计算影响范围和中心点对应的位置，对象为输入矩阵中所有的列
     ArithProgression(centerTensor, static_cast<float>(instart_w), static_cast<float>(1), length);
     PipeBarrier<PIPE_V>();
@@ -425,7 +413,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
 {
     instart_h = scale_h > 0 ? static_cast<int64_t>((float)(slideStart_h - support_h) / scale_h) - 1
                             : static_cast<int64_t>((float)(slideStart_h - support_h) / zeroScaleH) - 1;
-    int64_t length = static_cast<int64_t>(centerTensor_h.GetSize());
+    int64_t length = queueSizeH;
     if (instart_h < 0) {
         instart_h = 0;
     }
@@ -473,13 +461,13 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueH(
 {
     instartIndex = 0;
     inendIndex = 0;
-    for (; instartIndex < xMinTensor_h.GetSize(); instartIndex++) {
+    for (; instartIndex < queueSizeH; instartIndex++) {
         int64_t ymax = xMinTensor_h.GetValue(instartIndex) + xSizeTensor_h.GetValue(instartIndex);
         if (ymax >= index) {
             break;
         }
     }
-    for (inendIndex = instartIndex; inendIndex < xMinTensor_h.GetSize(); inendIndex++) {
+    for (inendIndex = instartIndex; inendIndex < queueSizeH; inendIndex++) {
         if (xMinTensor_h.GetValue(inendIndex) > index + length - 1) {
             break;
         } else if (inendIndex + instart_h > input_shapes[2] - 1) {
@@ -545,14 +533,14 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueW(
 {
     instartIndex = 0;
     inendIndex = 0;
-    for (; instartIndex < xMinTensor.GetSize(); instartIndex++) {
+    for (; instartIndex < queueSizeW; instartIndex++) {
         int64_t xmax = xMinTensor.GetValue(instartIndex) + xSizeTensor.GetValue(instartIndex);
         if (xmax >= index) {
             break;
         }
     }
 
-    for (inendIndex = instartIndex; inendIndex < xMinTensor.GetSize(); inendIndex++) {
+    for (inendIndex = instartIndex; inendIndex < queueSizeW; inendIndex++) {
         if (xMinTensor.GetValue(inendIndex) > index + length - 1) {
             break;
         } else if (inendIndex + instart_w > input_shapes[3] - 1) {

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file upsample_bicubic2d_aa_grad_tiling.cpp
@@ -393,12 +393,12 @@ void UpsampleBicubic2dAAGradTiling::getWorkSpace(uint32_t needCoreNum)
     size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
     // 中间tensor
     uint64_t intermediate_matrix_size =
-        output_shapes[0] * output_shapes[1] * input_shape.GetDim(2) * output_shapes[3] * dataTypeSize;
+        output_shapes[0] * output_shapes[1] * input_shape.GetDim(2) * output_shapes[3] ;
 
     uint32_t radioMatrixWorkspaceSize = slide_size * singleCoreK_w;
     uint32_t radioMatrixWorkspaceSize_h = slide_size * singleCoreK_h;
     if (workspaces != nullptr) {
-        workspaces[0] = (intermediate_matrix_size + radioMatrixWorkspaceSize * needCoreNum) * BYTE + WORK_SPACE_SIZE;
+        workspaces[0] = intermediate_matrix_size * dataTypeSize + (radioMatrixWorkspaceSize * needCoreNum) * BYTE + WORK_SPACE_SIZE;
     }
     tilingData.set_radio_matrix_size(radioMatrixWorkspaceSize);
     tilingData.set_radio_matrix_size_h(radioMatrixWorkspaceSize_h);

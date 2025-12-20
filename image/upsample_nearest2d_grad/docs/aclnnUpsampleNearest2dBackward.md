@@ -1,11 +1,19 @@
 # aclnnUpsampleNearest2dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+
 
 ## 功能说明
 
@@ -19,9 +27,9 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest2dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearest2dBackward”接口执行计算。
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest2dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearest2dBackward”接口执行计算。
 
-```cpp
+```Cpp
 aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
   const aclTensor   *gradOut, 
   const aclIntArray *outputSize, 
@@ -32,7 +40,8 @@ aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
   int64_t           *workspaceSize, 
   aclOpExecutor    **executor)
 ```
-```cpp
+
+```Cpp
 aclnnStatus aclnnUpsampleNearest2dBackward(
   void          *workspace, 
   uint64_t       workspaceSize, 
@@ -44,14 +53,14 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -89,7 +98,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>inputSize</td>
       <td>输入</td>
-      <td>表示指定`gradInput`在H和W维度上的空间大小。</td>
+      <td>表示指定`gradInput`的空间大小。</td>
       <td><ul><li>size为4，且最后两个元素均大于零。</li><li>当输入`gradOut`的数据格式为NCHW时，表示输出`gradInput`分别在N、C、H和W维度上的空间大小；当输入`gradOut`的数据格式为NHWC时，表示输出`gradInput`分别在N、H、W和C维度上的空间大小。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
@@ -120,7 +129,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`</td>
-      <td><ul><li>H/W轴不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li><li>支持NCHW和NHWC。</li></ul></td>
+      <td><ul><li>H/W轴不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`保持一致。</li><li>shape的N轴、C轴与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -149,15 +158,18 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
   </tbody>
   </table>
 
- 
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
+  
+    入参`gradOut`和出参`gradInput`的数据类型仅支持FLOAT16。
+  
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -175,11 +187,11 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="12">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="12">161002</td>
+      <td rowspan="9">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="9">161002</td>
     </tr>
     <tr>
-      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型不在支持的范围之内。</td>
     </tr>
     <tr><td>gradOut和gradInput的数据类型不一致。</td>
     </tr>
@@ -193,14 +205,9 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     </tr>
     <tr> <td>inputSize最后两个元素中的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
-    </tr>
     <tr><td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
     </tr>
     <tr><td>gradOut和gradInput的N/C轴的维度大小不相等。</td>
-    </tr>
-    <tr><td>gradOut和gradInput的数据格式不在支持的范围之内。
-      </td>
     </tr>
   </tbody></table>
 
@@ -245,16 +252,19 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
-参数outputSize与参数scalesH、scalesW，在使用时二选一，即：
-- 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize的参数值。
-- 当入参scalesH和入参scalesW的值都大于0时，使用入参scalesH和入参scalesW的参数值，且$outputSize=[floor(inputSize\_H * scalesH)，floor(inputSize\_W * scalesW)]$。
+
+- 参数outputSize与参数scalesH、scalesW，在使用时二选一，即：
+  - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize的参数值。
+  - 当入参scalesH和入参scalesW的值都大于0时，使用入参scalesH和入参scalesW的参数值，且$outputSize=[floor(inputSize\_H * scalesH)，floor(inputSize\_W * scalesW)]$。
+- 确定性计算：
+  - aclnnUpsampleNearest2dBackward默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

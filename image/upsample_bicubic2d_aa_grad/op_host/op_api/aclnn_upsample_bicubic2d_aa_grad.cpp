@@ -110,6 +110,8 @@ static bool CheckInputElement(
     int64_t outC = 0;
     int64_t outH = 0;
     int64_t outW = 0;
+    int64_t inputN = (*inputSize)[DIM_ZERO];
+    int64_t inputC = (*inputSize)[DIM_ONE];
     int64_t inputH = (*inputSize)[DIM_TWO];
     int64_t inputW = (*inputSize)[DIM_THREE];
 
@@ -123,20 +125,14 @@ static bool CheckInputElement(
     OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].",
-            realScalesH,
-            realScalesW),
+            realScalesH, realScalesW),
         return false);
 
     OP_CHECK(outN > 0 && inputH > 0 && inputW > 0 && outC > 0 && outH > 0 && outW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
             " H: %ld, W: %ld) output (H: %ld, W: %ld)",
-            outN,
-            outC,
-            inputH,
-            inputW,
-            outH,
-            outW),
+            outN, outC, inputH, inputW, outH, outW),
         return false);
     OP_CHECK(
         (gradOutput->GetStorageFormat() == op::Format::FORMAT_ND ||
@@ -146,6 +142,16 @@ static bool CheckInputElement(
             "Input and output storage format only support NCHW, but got Input %s and output %s.",
             op::ToString(gradOutput->GetStorageFormat()).GetString(),
             op::ToString(out->GetStorageFormat()).GetString()),
+        return false);
+    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradOutput sizes should not be greater than %d, bug got gradOutput(%ld, %ld, %ld, %ld)",
+            INT32_MAX, outN, outC, outH, outW),
+        return false);
+    OP_CHECK(inputN < INT32_MAX && inputC < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "InputSize should not be greater than %d, bug got inputSize[%ld, %ld, %ld, %ld]",
+            INT32_MAX, inputN, inputC, inputH, inputW),
         return false);
     return true;
 }

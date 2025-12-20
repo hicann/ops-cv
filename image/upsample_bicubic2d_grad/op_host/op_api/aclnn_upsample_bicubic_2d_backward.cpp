@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aclnn_kernels/common/op_error_check.h"
 #include "image/resize_grad_d/op_host/op_api/resize_grad_d.h"
@@ -252,7 +252,7 @@ static const aclTensor *ContiguousCast(const aclTensor *input, op::DataType dstD
     return outputContiguous;
 }
 
-static const aclTensor *adaptOutput(const aclTensor *gradOut, const aclTensor *ResizeGradDOut,
+static const aclTensor *adaptOutput(const aclTensor *ResizeGradDOut,
     aclIntArray *permuteHWNCArray, aclOpExecutor *executor, const int64_t *newReverseShape, int64_t castFp32Condition)
 {
     const aclTensor *resizeGradDOutContiguous = nullptr;
@@ -469,7 +469,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
 
         const int64_t newReverseShape[4] = {inputH, inputW, batch, channels};
         auto adaptResult = adaptOutput(
-            gradOut, ResizeGradDOut, permuteHWNCArray, uniqueExecutor.get(), newReverseShape, castFp32Condition);
+            ResizeGradDOut, permuteHWNCArray, uniqueExecutor.get(), newReverseShape, castFp32Condition);
 
         // view copy out
         auto viewCopyResult = l0op::ViewCopy(adaptResult, gradInput, uniqueExecutor.get());

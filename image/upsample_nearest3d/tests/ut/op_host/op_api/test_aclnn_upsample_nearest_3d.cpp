@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include <array>
 #include <vector>
 #include "gtest/gtest.h"
@@ -49,6 +48,9 @@ TEST_F(l2_upsample_nearest_3d_test, case_float_normal)
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+    // SAMPLE: precision simulate
+    // ut.TestPrecision();
 }
 
 TEST_F(l2_upsample_nearest_3d_test, case_float_out_shape_fail)
@@ -87,6 +89,27 @@ TEST_F(l2_upsample_nearest_3d_test, case_float16_normal)
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
+
+// TEST_F(l2_upsample_nearest_3d_test, case_double_normal)
+// {
+//     auto self_desc = TensorDesc({2, 2, 3, 4, 5}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
+//     vector<int64_t> output_size = {6, 8, 10};
+//     auto output_size_desc = IntArrayDesc(output_size);
+//     const double_t scales_d = 0.0;
+//     const double_t scales_h = 0.0;
+//     const double_t scales_w = 0.0;
+//     auto out_desc = TensorDesc({2, 2, 6, 8, 10}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
+
+//     auto ut = OP_API_UT(
+//         aclnnUpsampleNearest3d, INPUT(self_desc, output_size_desc, scales_d, scales_h, scales_w), OUTPUT(out_desc));
+
+//     uint64_t workspace_size = 0;
+//     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+//     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+//     // SAMPLE: precision simulate
+//     ut.TestPrecision();
+// }
 
 TEST_F(l2_upsample_nearest_3d_test, case_invalid_dtype_abnormal)
 {
@@ -329,6 +352,9 @@ TEST_F(l2_upsample_nearest_3d_test, case_NDHWC_normal)
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+    // SAMPLE: precision simulate
+    // ut.TestPrecision();
 }
 
 TEST_F(l2_upsample_nearest_3d_test, case_scales_normal)
@@ -347,6 +373,9 @@ TEST_F(l2_upsample_nearest_3d_test, case_scales_normal)
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+    // SAMPLE: precision simulate
+    // ut.TestPrecision();
 }
 
 TEST_F(l2_upsample_nearest_3d_test, ascend310P_case_NCDHW_normal)

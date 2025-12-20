@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -289,6 +289,7 @@ TEST_F(l2_upsample_bilinear2d_backward_v2_test, l2_upsample_bilinear2d_backward_
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    // ut.TestPrecision();
 }
 
 // 不支持shape为2的输入
@@ -574,6 +575,27 @@ TEST_F(l2_upsample_bilinear2d_backward_v2_test, l2_upsample_bilinear2d_backward_
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
+
+// TEST_F(l2_upsample_bilinear2d_backward_v2_test, ascend910B3_upsamplebilinear2d_backward_test_027)
+// {
+//     const double_t scales_h = 0.0;
+//     const double_t scales_w = 0.0;
+//     bool align_corners = false;
+//     vector<int64_t> output_size = {6, 6};
+//     vector<int64_t> input_size = {1, 3, 3, 1};
+
+//     auto self_desc = TensorDesc({1, 6, 6, 1}, ACL_FLOAT16, ACL_FORMAT_NHWC);
+//     auto output_size_desc = IntArrayDesc(output_size);
+//     auto input_size_desc = IntArrayDesc(input_size);
+//     auto output_desc = TensorDesc({1, 3, 3, 1}, ACL_FLOAT16, ACL_FORMAT_NHWC);
+
+//     auto ut = OP_API_UT(aclnnUpsampleBilinear2dBackwardV2,
+//         INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+//         OUTPUT(output_desc));
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+// }
 
 // 不支持空指针
 TEST_F(l2_upsample_bilinear2d_backward_v2_test, l2_upsample_bilinear2d_backward_v2_test_028)

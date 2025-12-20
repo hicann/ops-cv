@@ -147,6 +147,24 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_ascend910B_upsample_bicubic_2d_test_dtype
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
+// // dtype bfloat16 910A
+// TEST_F(l2_upsample_bicubic_2d_test, l2_ascend910A_upsample_bicubic_2d_test_dtype_bfloat16)
+// {
+//     auto self_desc = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_NCHW);
+//     auto output_desc = TensorDesc({1, 1, 5, 5}, ACL_BF16, ACL_FORMAT_NCHW);
+//     auto output_size_desc = IntArrayDesc(vector<int64_t>{5, 5});
+//     bool align_corners = false;
+//     const double_t scales_h = 0.0;
+//     const double_t scales_w = 0.0;
+
+//     auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
+//         INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+//         OUTPUT(output_desc));
+//     uint64_t workspace_size = 0;
+//     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+//     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+// }
+
 // self empty N
 TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_self_empty_n)
 {

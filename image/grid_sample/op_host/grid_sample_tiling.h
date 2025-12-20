@@ -33,6 +33,7 @@ namespace optiling {
 struct GridSampleCompileInfo {
     int64_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
+    bool isDavid {false};
 };
 
 BEGIN_TILING_DATA_DEF(GridSampleTilingData)
@@ -58,7 +59,57 @@ END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(GridSample, GridSampleTilingData)
 
+
+BEGIN_TILING_DATA_DEF(GridSampler2dTilingDataSimt)
+TILING_DATA_FIELD_DEF(int64_t, coreNumVar);
+TILING_DATA_FIELD_DEF(int64_t, inN);
+TILING_DATA_FIELD_DEF(int64_t, inC);
+TILING_DATA_FIELD_DEF(int64_t, inH);
+TILING_DATA_FIELD_DEF(int64_t, inW);
+TILING_DATA_FIELD_DEF(int64_t, outH);
+TILING_DATA_FIELD_DEF(int64_t, outW);
+TILING_DATA_FIELD_DEF(int64_t, interpolationMode);
+TILING_DATA_FIELD_DEF(int64_t, paddingMode);
+TILING_DATA_FIELD_DEF(int64_t, alignCorners);
+TILING_DATA_FIELD_DEF(int64_t, channelLast);
+TILING_DATA_FIELD_DEF(int64_t, needCoreNum);
+TILING_DATA_FIELD_DEF(int64_t, blockNum);
+END_TILING_DATA_DEF;
+REGISTER_TILING_DATA_CLASS(GridSample_1000, GridSampler2dTilingDataSimt)
+
 enum class GridSampleDtypeKey : int32_t { FLOAT16 = 1, FLOAT32 = 2, BFLOAT16 = 3 };
+
+static const size_t DIM_NUM_4D = 4;
+static const size_t DIM_NUM_5D = 5;
+static const size_t DIM_2 = 2;
+static const size_t DIM_3 = 3;
+static const size_t DIM_4 = 4;
+static const size_t INT_16 = 16;
+static const size_t INT_22 = 22;
+static const size_t INT_64 = 64;
+static const size_t INT_88 = 88;
+static const int64_t INTERPOLATION_MODE_BILINEAR = 0;
+static const int64_t INTERPOLATION_MODE_NEAREST = 1;
+static const int64_t INTERPOLATION_MODE_BICUBIC = 2;
+static const int64_t PADDING_MODE_ZEROS = 0;
+static const int64_t PADDING_MODE_BORDER = 1;
+static const int64_t PADDING_MODE_REFLECTION = 2;
+static const int64_t ALIGN_CORNERS_FALSE = 0;
+static const int64_t ALIGN_CORNERS_TRUE = 1;
+static const int64_t MINI_IH_IW_MAX_SIZE = 65536;
+static const int64_t MINI_IH_IW_MAX_SIZE_FP16 = 32768;
+static const int64_t TILING_HW_FACTOR = 1024;
+static const int64_t CHANEL_LAST_TRUE = 1;
+static const int64_t CHANEL_LAST_FALSE = 0;
+const static int64_t SIZE_16 = 16;
+const static int64_t LENGTH_1024 = 1024;
+const static int64_t FULL_LOAD_TYPE = 2;
+const static int64_t X_MAX_HWC_FACTOR = 20480;  // 20k
+const static int64_t C1_X_COUNT = 4096;
+const static int64_t NUM_C32 = 32;
+const static int64_t MIN_HW_C32 = 8;
+const static int64_t TEMPLATE_C32 = 2;
+const static int64_t DOUBLE = 2;
 
 class GridSampleTiling : public Ops::Cv::OpTiling::TilingBaseClass {
 public:
@@ -82,7 +133,7 @@ protected:
     // 7、保存Tiling数据
     ge::graphStatus PostTiling() override;
 
-private:
+protected:
     ge::DataType xDtype{ge::DT_FLOAT};
     int64_t coreNumVar{0};
     int64_t inN{0};
@@ -104,6 +155,9 @@ private:
     int64_t templateCNum{0};
     int64_t hwFactor{512};
     int64_t dimension{0};
+    bool isDavid {false};
+
+private:
     GridSampleTilingData tilingData;
 };
 

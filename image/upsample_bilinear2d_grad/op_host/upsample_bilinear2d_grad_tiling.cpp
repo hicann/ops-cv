@@ -58,7 +58,7 @@ public:
 
 private:
     void setScale();
-    inline float compute_scale_value(const int64_t input_size, const int64_t output_size,
+    inline float compute_scale_value(const int64_t in_size, const int64_t out_size,
                                      const bool align_corner, const float *scale);
     void getWorkSpace(uint32_t needCoreNum);
     void getOutputShape();
@@ -72,8 +72,8 @@ private:
 
     void setSingleCoreK();
     void FillTilingData();
-    void getTCubeTiling_w(const uint32_t needCoreNum);
-    void getTCubeTiling_h(const uint32_t needCoreNum);
+    void getTCubeTiling_w();
+    void getTCubeTiling_h();
 
     template <typename T1, typename T2>
     inline T1 CeilA2B(T1 a, T2 b) const;
@@ -215,12 +215,20 @@ ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
     }
 
     input_size = attrs->GetAttrPointer<gert::ContinuousVector>(0);
+    OP_CHECK_IF(input_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "input_size == nullptr"),
+        return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(1);
+    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+        return ge::GRAPH_FAILED);
 
     align_corners = attrs->GetAttrPointer<bool>(H_INDEX);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
+        return ge::GRAPH_FAILED);
 
     scale_h = attrs->GetAttrPointer<float>(W_INDEX);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(RESERVED_VALUE);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
     auto temp = tilingContext->GetInputDesc(0);
     if (temp == nullptr) {
         return ge::GRAPH_FAILED;
@@ -327,9 +335,8 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNumH(const uint32_t coreNumPla
     return needCoreNum_h;
 }
 
-void UpsampleBilinear2dGradTiling::getTCubeTiling_h(const uint32_t needCoreNum)
+void UpsampleBilinear2dGradTiling::getTCubeTiling_h()
 {
-    (void) needCoreNum;
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
 
     matmul_tiling::MatmulApiTiling mmTiling_h;
@@ -344,9 +351,8 @@ void UpsampleBilinear2dGradTiling::getTCubeTiling_h(const uint32_t needCoreNum)
     }
 }
 
-void UpsampleBilinear2dGradTiling::getTCubeTiling_w(const uint32_t needCoreNum)
+void UpsampleBilinear2dGradTiling::getTCubeTiling_w()
 {
-    (void) needCoreNum;
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_w;
     mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
@@ -463,14 +469,14 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNum(const uint32_t coreNumPlat
     if (!FloatEqual(realScale_w, 1.0)) {
         needCoreNumW = GetNeedCoreNumW(coreNumPlatForm);
 
-        getTCubeTiling_w(needCoreNumW);
+        getTCubeTiling_w();
         tilingData.set_need_core_num_w(needCoreNumW);
     }
 
     if ((!FloatEqual(realScale_h, 1.0)) || (FloatEqual(realScale_w, 1.0))) {
         needCoreNumH = GetNeedCoreNumH(coreNumPlatForm);
 
-        getTCubeTiling_h(needCoreNumH);
+        getTCubeTiling_h();
     }
 
     uint32_t needCoreNum = std::max(needCoreNumW, needCoreNumH);
@@ -569,7 +575,7 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
         OP_LOGE(context->GetNodeName(),
-            "UpsampleBilinear2dGrad GetHardwareInfo Failed, vectorCoreNum:%d",
+            "UpsampleBilinear2dGrad GetHardwareInfo Failed, vectorCoreNum:%u",
             compileInfo->coreNum),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;

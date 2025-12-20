@@ -11,7 +11,9 @@
 #include <vector>
 #include <array>
 #include "gtest/gtest.h"
+
 #include "../../../../op_host/op_api/aclnn_grid_sampler3d.h"
+
 #include "op_api_ut_common/op_api_ut.h"
 #include "op_api_ut_common/scalar_desc.h"
 #include "op_api_ut_common/tensor_desc.h"
@@ -67,6 +69,7 @@ TEST_F(l2_grid_sampler3d_test, input_empty) {
   uint64_t workspaceSize = 0;
   aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
   EXPECT_EQ(aclRet, ACL_SUCCESS);
+  // ut.TestPrecision();
 }
 
 // dtype float16
@@ -89,7 +92,20 @@ TEST_F(l2_grid_sampler3d_test, dtype_float32) {
   uint64_t workspaceSize = 0;
   aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
   EXPECT_EQ(aclRet, ACL_SUCCESS);
+  // ut.TestPrecision();
 }
+
+// dtype double
+// TEST_F(l2_grid_sampler3d_test, dtype_double) {
+//   auto inputDesc = TensorDesc({2, 1, 1, 3, 3}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
+//   auto gridDesc = TensorDesc({2, 1, 2, 2, 3}, ACL_DOUBLE, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+//   auto outDesc = TensorDesc({2, 1, 1, 2, 2}, ACL_DOUBLE, ACL_FORMAT_NCDHW);
+//   auto ut = OP_API_UT(aclnnGridSampler3D, INPUT(inputDesc, gridDesc, 0, 0, false), OUTPUT(outDesc));
+//   uint64_t workspaceSize = 0;
+//   aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+//   EXPECT_EQ(aclRet, ACL_SUCCESS);
+//   // ut.TestPrecision();
+// }
 
 // invalid dtype int8
 TEST_F(l2_grid_sampler3d_test, dtype_int8) {

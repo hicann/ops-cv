@@ -17,7 +17,6 @@
 
 #include <type_traits>
 #include "upsample_nearest3d_struct.h"
-#include "upsample_nearest3d_common.h"
 #include "kernel_operator.h"
 
 namespace UpsampleNearest3d {
@@ -44,6 +43,24 @@ public:
     __aicore__ inline void Process();
 
 private:
+    template <typename T1, typename T2>
+    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    {
+        if (b == 0) {
+            return a;
+        }
+        return (a + b - 1) / b;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Min(T1 a, T1 b)
+    {
+        return a < b ? a : b;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Max(T1 a, T1 b)
+    {
+        return a > b ? a : b;
+    };
     __aicore__ inline void ParseTilingData(const UpsampleNearest3dTilingData* tilingData);
     __aicore__ inline void GatherData(int64_t slideIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void CopyIn(int64_t inputOffset, DataCopyExtParams copyParams);
@@ -84,9 +101,9 @@ private:
     int64_t tensorSizeW = 0;
     int64_t tensorSizeH = 0;
     int64_t tensorSizeD = 0;
+
     int64_t slideNumH = 0;
     int64_t slideNumD = 0;
-
     int64_t eachCoreSlideNum = 0;
     int64_t remainder = 0;
     int64_t tailStartSlideNum = 0;

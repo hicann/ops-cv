@@ -37,24 +37,20 @@ protected:
     {
         cout << "upsample_bilinear2d_grad_test TearDown\n" << endl;
     }
-
 private:
     const static std::string rootPath;
     const static std::string dataPath;
 };
 
 const std::string upsample_bilinear2d_grad_test::rootPath = "../../../../";
-const std::string upsample_bilinear2d_grad_test::dataPath =
-    rootPath + "image/upsample_bilinear2d_grad/tests/ut/op_kernel/upsample_bilinear2d_grad_data";
+const std::string upsample_bilinear2d_grad_test::dataPath = rootPath + "image/upsample_bilinear2d_grad/tests/ut/op_kernel/upsample_bilinear2d_grad_data";
 
 template <typename T1, typename T2>
-inline T1 CeilAlign(T1 a, T2 b)
-{
+inline T1 CeilAlign(T1 a, T2 b) {
     return (a + b - 1) / b * b;
 }
 
-TEST_F(upsample_bilinear2d_grad_test, test_case_float_1)
-{
+TEST_F(upsample_bilinear2d_grad_test, test_case_float_1) {
     optiling::UpsampleBilinear2dGradCompileInfo compileInfo = {48};
     std::vector<int64_t> output_size = {4, 4};
     std::vector<int64_t> input_size = {1, 1, 16, 16};
@@ -76,12 +72,12 @@ TEST_F(upsample_bilinear2d_grad_test, test_case_float_1)
     system("cd ./upsample_bilinear2d_grad_data/ && python3 gen_data.py '(1, 1, 16, 16)' '(4, 4)'  'float32'");
     size_t inputByteSize = 1 * 1 * 4 * 4 * sizeof(float);
     std::string fileName = "./upsample_bilinear2d_grad_data/float32_input_upsample_bilinear2d_grad.bin";
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     ReadFile(fileName, inputByteSize, x, inputByteSize);
     size_t outputByteSize = 1 * 1 * 16 * 16 * sizeof(float);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
     ICPU_RUN_KF(upsample_bilinear2d_grad, tilingInfo.blockNum, x, y, workspace, tiling);
@@ -89,10 +85,10 @@ TEST_F(upsample_bilinear2d_grad_test, test_case_float_1)
     fileName = "./upsample_bilinear2d_grad_data/float32_output_bilinear2d_grad.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bilinear2d_grad_data/ && python3 compare_data.py 'float32'");
 }

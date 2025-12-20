@@ -40,6 +40,10 @@ static constexpr size_t DIM_FOUR = 4;
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
+static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_95 = {
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16,
+    op::DataType::DT_UINT8, op::DataType::DT_DOUBLE};
+
 static const std::initializer_list<op::DataType> ASCEND310P_AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
 
@@ -52,13 +56,17 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
     const int64_t sizeD = (*outputSize)[DIM_ZERO];
     const int64_t sizeH = (*outputSize)[DIM_ONE];
     const int64_t sizeW = (*outputSize)[DIM_TWO];
-    float scales_d = 0.0;
-    float scales_h = 0.0;
-    float scales_w = 0.0;
+    float scales_d = 0.0, scales_h = 0.0,  scales_w = 0.0;
     if (castScales->Size() == DIM_THREE) {
         scales_d = (*castScales)[DIM_ZERO];
         scales_h = (*castScales)[DIM_ONE];
         scales_w = (*castScales)[DIM_TWO];
+    }
+    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
+    if (socVer == SocVersion::ASCEND910_95 && scales->Size() == DIM_THREE) {
+        scales_d = (*scales)[DIM_ZERO];
+        scales_h = (*scales)[DIM_ONE];
+        scales_w = (*scales)[DIM_TWO];
     }
     // 生成out shape为 (N，C，outputSize[0], outputSize[1], outputSize[2])
     op::Shape selfStorageShape = self->GetStorageShape();
@@ -73,10 +81,14 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
     const aclTensor *out = executor->AllocTensor(
         selfStorageShape, selfOriginalShape, self->GetDataType(), self->GetStorageFormat(), self->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
-
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
     if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
         CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
+        ADD_TO_LAUNCHER_LIST_AICORE(
+            UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
+        return out;
+    }
+    if ((socVer == SocVersion::ASCEND910_95) &&
+        CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_95)) {
         ADD_TO_LAUNCHER_LIST_AICORE(
             UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;

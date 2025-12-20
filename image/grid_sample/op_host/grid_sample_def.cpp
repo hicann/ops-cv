@@ -107,6 +107,15 @@ public:
             .NeedCheckSupportFlag(false);
         this->AICore().AddConfig("ascend910b", aicore_config);
         this->AICore().AddConfig("ascend910_93", aicore_config);
+        OpAICoreConfig aicore95_config;
+        aicore95_config.DynamicCompileStaticFlag(true)
+            .DynamicFormatFlag(false)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .NeedCheckSupportFlag(false)
+            .ExtendCfgInfo("opFile.value", "grid_sample_apt");;
+        this->AICore().AddConfig("mc62cm12a", aicore95_config);
+        this->AICore().AddConfig("ascend910_95", aicore95_config);
 
         OpAICoreConfig config_310p = Get310PCoreConfig();
         this->AICore().AddConfig("ascend310p", config_310p);

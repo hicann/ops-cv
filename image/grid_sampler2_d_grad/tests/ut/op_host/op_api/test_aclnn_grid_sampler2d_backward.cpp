@@ -63,6 +63,30 @@ TEST_F(l2_grid_sampler2d_backward_test, case_1)
     // ut.TestPrecision();
 }
 
+// // bicubic goes to aicpu
+// TEST_F(l2_grid_sampler2d_backward_test, ascend910B2_case_1_BF16)
+// {
+//     auto gradOutput = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_ND);
+//     auto input =
+//         TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+//                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+//                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+//                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+//     auto grid = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND)
+//                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
+//     auto inputGrad = TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND);
+//     auto gridGrad = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND);
+//     bool alignCorners = false;
+//     auto outputMask = BoolArrayDesc(vector<bool>{true, true});
+//     auto ut = OP_API_UT(
+//         aclnnGridSampler2DBackward, INPUT(gradOutput, input, grid, 0, 2, alignCorners, outputMask),
+//         OUTPUT(inputGrad, gridGrad));
+
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(aclRet, ACL_SUCCESS);
+// }
+
 // input nullptr
 TEST_F(l2_grid_sampler2d_backward_test, case_2)
 {
@@ -203,6 +227,31 @@ TEST_F(l2_grid_sampler2d_backward_test, case_7)
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
+// // bicubic goes to aicpu
+// TEST_F(l2_grid_sampler2d_backward_test, case_7_padding_2)
+// {
+//     aclDataType dtype = aclDataType::ACL_BF16;
+//     auto gradOutput = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
+//     auto input =
+//         TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+//                                                                            10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+//                                                                            20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+//                                                                            30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+//     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
+//                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
+//     auto inputGrad = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND);
+//     auto gridGrad = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND);
+//     bool alignCorners = false;
+//     auto outputMask = BoolArrayDesc(vector<bool>{true, true});
+//     auto ut = OP_API_UT(
+//         aclnnGridSampler2DBackward, INPUT(gradOutput, input, grid, 0, 2, alignCorners, outputMask),
+//         OUTPUT(inputGrad, gridGrad));
+
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+// }
+
 // float16
 TEST_F(l2_grid_sampler2d_backward_test, case_8)
 {
@@ -226,7 +275,36 @@ TEST_F(l2_grid_sampler2d_backward_test, case_8)
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+    // ut.TestPrecision();
 }
+
+// // double
+// TEST_F(l2_grid_sampler2d_backward_test, case_9)
+// {
+//     aclDataType dtype = aclDataType::ACL_DOUBLE;
+//     auto gradOutput = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
+//     auto input =
+//         TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+//                                                                            10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+//                                                                            20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+//                                                                            30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+//     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
+//                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
+//     auto inputGrad = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND);
+//     auto gridGrad = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND);
+//     bool alignCorners = false;
+//     auto outputMask = BoolArrayDesc(vector<bool>{true, true});
+//     auto ut = OP_API_UT(
+//         aclnnGridSampler2DBackward, INPUT(gradOutput, input, grid, 0, 0, alignCorners, outputMask),
+//         OUTPUT(inputGrad, gridGrad));
+
+//     uint64_t workspaceSize = 0;
+//     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+//     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+//     // ut.TestPrecision();
+// }
 
 // uint8
 TEST_F(l2_grid_sampler2d_backward_test, case_10)
@@ -450,6 +528,8 @@ TEST_F(l2_grid_sampler2d_backward_test, case_18)
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+    // ut.TestPrecision();
 }
 
 // shape not match 1
@@ -527,6 +607,8 @@ TEST_F(l2_grid_sampler2d_backward_test, case_22)
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
+
+    // ut.TestPrecision();
 }
 
 // mode is not illegal

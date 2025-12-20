@@ -15,6 +15,7 @@
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
+#include "opdev/platform.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "aclnn_kernels/contiguous.h"
@@ -23,12 +24,14 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "upsample_nearest_exact2d.h"
 #include "aclnn_upsample_nearest_exact2d.h"
+#include "image/resize_nearest_neighbor_v2/op_host/op_api/resize_nearest_neighbor_v2.h"
 
 using namespace op;
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+namespace{
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
@@ -72,7 +75,6 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
 {
     auto selfShape = self->GetViewShape();
     auto outShape = out->GetViewShape();
-    size_t dimNum = selfShape.GetDimNum();
     int64_t inputN = selfShape.GetDim(DIM_ZERO);
     int64_t inputC = selfShape.GetDim(DIM_ONE);
     int64_t inputH = selfShape.GetDim(DIM_TWO);
@@ -109,6 +111,27 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
     return true;
 }
 
+static bool CheckFormat(const aclTensor* self, const aclTensor* out)
+{
+    auto selfFormat = self->GetStorageFormat();
+    auto outFormat = out->GetStorageFormat();
+    if (selfFormat != op::Format::FORMAT_NCHW && selfFormat != op::Format::FORMAT_NHWC &&
+        selfFormat != op::Format::FORMAT_ND) {
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID, "Format of self only supports [NCHW, NHWC, ND], but format is [%s]",
+            op::ToString(selfFormat).GetString());
+        return false;
+    }
+
+    if (selfFormat != outFormat) {
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID, "Format of self and out should be equal, self [%s], out [%s].",
+            op::ToString(selfFormat).GetString(), op::ToString(outFormat).GetString());
+        return false;
+    }
+    return true;
+}
+
 static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
 {
     CHECK_RET(CheckDtypeValid(self, out), ACLNN_ERR_PARAM_INVALID);
@@ -116,44 +139,53 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     CHECK_RET(CheckShape(self, outputSize), ACLNN_ERR_PARAM_INVALID);
 
     CHECK_RET(CheckInputElement(self, outputSize, out), ACLNN_ERR_PARAM_INVALID);
+    // 检查输入输出的Format
+    CHECK_RET(CheckFormat(self, out), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }
 
 static const aclTensor *upsampleNearestExact2dCompute(const aclTensor *selfContiguous, const aclIntArray *outputSize,
-    const aclFloatArray *scales, aclOpExecutor *executor)
+    const aclFloatArray *scales, const aclTensor* outContiguous, aclOpExecutor *executor)
 {
     float scalesH = (*scales)[DIM_ZERO];
     float scalesW = (*scales)[DIM_ONE];
-    if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCHW ||
+    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
+    if (curSoc == op::SocVersion::ASCEND910_95) {
+        auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT32));
+        return l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, true, outContiguous, executor);
+    } else {
+        if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCHW ||
         selfContiguous->GetStorageFormat() == op::Format::FORMAT_ND) {
-        const int64_t permuteNCHWList[] = {DIM_ZERO, DIM_TWO, DIM_THREE, DIM_ONE};
-        auto permuteNCHWArray = executor->AllocIntArray(permuteNCHWList, DIM_LIMIT);
-        CHECK_RET(permuteNCHWArray != nullptr, nullptr);
+            const int64_t permuteNCHWList[] = {DIM_ZERO, DIM_TWO, DIM_THREE, DIM_ONE};
+            auto permuteNCHWArray = executor->AllocIntArray(permuteNCHWList, DIM_LIMIT);
+            CHECK_RET(permuteNCHWArray != nullptr, nullptr);
 
-        auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCHWArray, executor);
-        CHECK_RET(selfTranspose != nullptr, nullptr);
+            auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCHWArray, executor);
+            CHECK_RET(selfTranspose != nullptr, nullptr);
 
-        auto self = l0op::ReFormat(selfTranspose, op::Format::FORMAT_NHWC);
-        CHECK_RET(self != nullptr, nullptr);
+            auto self = l0op::ReFormat(selfTranspose, op::Format::FORMAT_NHWC);
+            CHECK_RET(self != nullptr, nullptr);
 
-        auto selfUpsampleNearestExact =
-            l0op::UpsampleNearestExact2d(self, outputSize, scalesH, scalesW, true, executor);
-        CHECK_RET(selfUpsampleNearestExact != nullptr, nullptr);
+            auto selfUpsampleNearestExact =
+                l0op::UpsampleNearestExact2d(self, outputSize, scalesH, scalesW, true, executor);
+            CHECK_RET(selfUpsampleNearestExact != nullptr, nullptr);
 
-        const int64_t permuteNHWCList[] = {DIM_ZERO, DIM_THREE, DIM_ONE, DIM_TWO};
-        auto permuteNHWCArray = executor->AllocIntArray(permuteNHWCList, DIM_LIMIT);
-        CHECK_RET(permuteNHWCArray != nullptr, nullptr);
+            const int64_t permuteNHWCList[] = {DIM_ZERO, DIM_THREE, DIM_ONE, DIM_TWO};
+            auto permuteNHWCArray = executor->AllocIntArray(permuteNHWCList, DIM_LIMIT);
+            CHECK_RET(permuteNHWCArray != nullptr, nullptr);
 
-        auto outReformat = l0op::ReFormat(selfUpsampleNearestExact, selfContiguous->GetStorageFormat());
-        CHECK_RET(outReformat != nullptr, nullptr);
+            auto outReformat = l0op::ReFormat(selfUpsampleNearestExact, selfContiguous->GetStorageFormat());
+            CHECK_RET(outReformat != nullptr, nullptr);
 
-        return l0op::Transpose(outReformat, permuteNHWCArray, executor);
-    } else if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NHWC) {
-        return l0op::UpsampleNearestExact2d(selfContiguous, outputSize, scalesH, scalesW, true, executor);
+            return l0op::Transpose(outReformat, permuteNHWCArray, executor);
+        } else {
+            return l0op::UpsampleNearestExact2d(selfContiguous, outputSize, scalesH, scalesW, true, executor);
+        }
     }
     return nullptr;
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleNearestExact2dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize,
     double scalesH, double scalesW, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
@@ -180,13 +212,20 @@ aclnnStatus aclnnUpsampleNearestExact2dGetWorkspaceSize(const aclTensor *self, c
     auto ret = CheckParams(self, outputSize, out);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
-    // 固定写法，将输入self转换成连续的tensor
+    // 固定写法，将输入self、输出out转换成连续的tensor
     auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
+    CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
-    float realScalesH = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
-    float realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
+    float realScalesH = scalesH > 0 ? static_cast<float>(scalesH) : 0;
+    float realScalesW = scalesW > 0 ? static_cast<float>(scalesW) : 0;
+    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
+    if (curSoc != op::SocVersion::ASCEND910_95) {
+        // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
+        realScalesH = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
+        realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
+    }
 
     // 调用upsampleNearestExact2dCompute计算
     vector<float> scalesList{};
@@ -194,7 +233,7 @@ aclnnStatus aclnnUpsampleNearestExact2dGetWorkspaceSize(const aclTensor *self, c
     scalesList.push_back(realScalesW);
     const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    auto result = upsampleNearestExact2dCompute(selfContiguous, outputSize, scales, uniqueExecutor.get());
+    auto result = upsampleNearestExact2dCompute(selfContiguous, outputSize, scales, outContiguous, uniqueExecutor.get());
     CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor

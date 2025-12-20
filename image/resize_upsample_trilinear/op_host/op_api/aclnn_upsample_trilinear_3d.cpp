@@ -31,6 +31,7 @@ using namespace op;
 extern "C" {
 #endif
 
+namespace {
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
 static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {
@@ -143,7 +144,7 @@ static float ComputeScales(float scale, uint32_t inputSize, uint32_t outputSize)
         if (outputSize != 0) {
             return (static_cast<float>(inputSize) / outputSize);
         } else {
-            static_cast<float>(0);
+            return static_cast<float>(0);
         }
     }
 }
@@ -164,6 +165,34 @@ static float AsComputeScale(bool alignCorners, int64_t inputSize, int64_t output
     }
 }
 
+static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
+{
+    int64_t inN = self->GetViewShape().GetDim(DIM_ZERO);
+    int64_t inC = self->GetViewShape().GetDim(DIM_ONE);
+    int64_t inD = self->GetViewShape().GetDim(DIM_TWO);
+    int64_t inH = self->GetViewShape().GetDim(DIM_THREE);
+    int64_t inW = self->GetViewShape().GetDim(DIM_FOUR);
+    int64_t outN = out->GetViewShape().GetDim(DIM_ZERO);
+    int64_t outC = out->GetViewShape().GetDim(DIM_ONE);
+    int64_t outD = out->GetViewShape().GetDim(DIM_TWO);
+    int64_t outH = out->GetViewShape().GetDim(DIM_THREE);
+    int64_t outW = out->GetViewShape().GetDim(DIM_THREE);
+
+    OP_CHECK(
+        inN < INT32_MAX && inC < INT32_MAX && inD < INT32_MAX && inH < INT32_MAX && inW < INT32_MAX,
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID, "Self sizes should not be greater than %d, bug got self(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, inN, inC, inD, inH, inW),
+        return false);
+    OP_CHECK(
+        outN < INT32_MAX && outC < INT32_MAX && outD < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID, "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, outN, outC, outD, outH, outW),
+        return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
@@ -178,6 +207,8 @@ static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputS
     // 4. 检查输入元素是否合法
     CHECK_RET(CheckInputElement(self, outputSize, out), ACLNN_ERR_PARAM_INVALID);
 
+    // 5. 校验上边界
+    CHECK_RET(CheckUplimit(self, out), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;
 }
 
@@ -211,6 +242,7 @@ static bool CheckScales(float scaleW, float scaleH, float scaleD)
 {
     return (scaleW <= MAX_SUPPORT_SCALE && scaleH <= MAX_SUPPORT_SCALE && scaleD <= MAX_SUPPORT_SCALE);
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
     const aclTensor* self, const aclIntArray* outputSize, bool alignCorners, double scalesD, double scalesH,
@@ -241,7 +273,6 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
         scalesList.push_back(scalesD);
         scalesList.push_back(scalesH);
         scalesList.push_back(scalesW);
-        outputSize = uniqueExecutor.get()->AllocIntArray({}, 0);
     }
     const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -260,14 +291,13 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
     float scalesH1 = 0.0;
     float scalesW1 = 0.0;
 
-    if (outputSize->Size() == DIM_THREE) {
-        selfShape[DIM_TWO] = (*outputSize)[DIM_ZERO];
-        selfShape[DIM_THREE] = (*outputSize)[DIM_ONE];
-        selfShape[DIM_FOUR] = (*outputSize)[DIM_TWO];
-    } else {
-        selfShape[DIM_TWO] *= (*scales)[DIM_ZERO];
-        selfShape[DIM_THREE] *= (*scales)[DIM_ONE];
-        selfShape[DIM_FOUR] *= (*scales)[DIM_TWO];
+    selfShape[DIM_TWO] = (*outputSize)[DIM_ZERO];
+    selfShape[DIM_THREE] = (*outputSize)[DIM_ONE];
+    selfShape[DIM_FOUR] = (*outputSize)[DIM_TWO];
+
+    uint64_t size = 0;
+    ret = aclGetFloatArraySize(castScales, &size);
+    if (ret == ACLNN_SUCCESS && size == DIM_THREE) {
         scalesD1 = (*castScales)[DIM_ZERO];
         scalesH1 = (*castScales)[DIM_ONE];
         scalesW1 = (*castScales)[DIM_TWO];

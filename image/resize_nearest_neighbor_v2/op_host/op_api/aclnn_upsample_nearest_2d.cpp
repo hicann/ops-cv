@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "resize_nearest_neighbor_v2.h"
 #include "aclnn_kernels/transpose.h"
@@ -30,6 +30,7 @@ using namespace op;
 extern "C" {
 #endif
 
+namespace {
 static const int64_t FOURDIMS = 4;
 static const int64_t ZERO = 0;
 static const int64_t ONE = 1;
@@ -169,6 +170,30 @@ static bool CheckOutputSize(const aclTensor *out, const aclIntArray *outputSize)
     return true;
 }
 
+static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
+{
+    int64_t inN = self->GetViewShape().GetDim(ZERO);
+    int64_t inC = self->GetViewShape().GetDim(ONE);
+    int64_t inH = self->GetViewShape().GetDim(TWO);
+    int64_t inW = self->GetViewShape().GetDim(THREE);
+    int64_t outN = out->GetViewShape().GetDim(ZERO);
+    int64_t outC = out->GetViewShape().GetDim(ONE);
+    int64_t outH = out->GetViewShape().GetDim(TWO);
+    int64_t outW = out->GetViewShape().GetDim(THREE);
+
+    OP_CHECK(inN < INT32_MAX && inC < INT32_MAX && inH < INT32_MAX && inW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "Self sizes should not be greater than %d, bug got self(%ld, %ld, %ld, %ld)",
+            INT32_MAX, inN, inC, inH, inW),
+        return false);
+    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld, %ld)",
+            INT32_MAX, outN, outC, outH, outW),
+        return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
 {
     // 1. 检查参数是否为空指针
@@ -195,6 +220,8 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     // 9.检查out和outputSize的H和W的大小是否一致
     CHECK_RET(CheckOutputSize(out, outputSize), ACLNN_ERR_PARAM_INVALID);
 
+    // 10. 校验上边界
+    CHECK_RET(CheckUplimit(self, out), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;
 }
 
@@ -213,7 +240,7 @@ const aclTensor *upsampleNearest2dAiCpuCompute(
         CHECK_RET(outTranspose != nullptr, nullptr);
 
         const aclTensor *resizeNearestOutAiCpu =
-            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, outTranspose, executor);
+            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, false, false, outTranspose, executor);
         CHECK_RET(resizeNearestOutAiCpu != nullptr, nullptr);
 
         const int64_t permuteNCHWList[] = {0, 3, 1, 2};
@@ -222,9 +249,10 @@ const aclTensor *upsampleNearest2dAiCpuCompute(
 
         return l0op::Transpose(resizeNearestOutAiCpu, permuteNCHWArray, executor);
     } else {
-        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, outContiguous, executor);
+        return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, executor);
     }
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleNearest2dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize, aclTensor *out,
     uint64_t *workspaceSize, aclOpExecutor **executor)
@@ -255,7 +283,7 @@ aclnnStatus aclnnUpsampleNearest2dGetWorkspaceSize(const aclTensor *self, const 
     if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
         if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
             resizeNearestOut =
-                l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, outContiguous, uniqueExecutor.get());
+                l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, uniqueExecutor.get());
         } else {
             auto selfTransdata =
                 l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
@@ -266,7 +294,7 @@ aclnnStatus aclnnUpsampleNearest2dGetWorkspaceSize(const aclTensor *self, const 
             CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             const aclTensor *resizeNearestOutAiCore =
-                l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, outTransdata, uniqueExecutor.get());
+                l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, uniqueExecutor.get());
             CHECK_RET(resizeNearestOutAiCore != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             resizeNearestOut =

@@ -106,7 +106,7 @@ private:
     __aicore__ inline void ComputeGridPointIndex(int32_t gridPointIndex);
 
     __aicore__ inline void CopyIn(const int64_t offset, const int32_t calCount, const int32_t inputIndex);
-    __aicore__ inline void CopyOut(const int32_t offset, const int32_t calCount);
+    __aicore__ inline void CopyOut(const int64_t offset, const int32_t calCount);
     __aicore__ inline void Compute(const int32_t computeCount, const int64_t curGridPointIndex);
 
     template <typename T1, typename T2>
@@ -166,21 +166,6 @@ private:
     TBuf<TPosition::VECCALC> computeIndexBuf1;
     TBuf<TPosition::VECCALC> computeIndexBuf2;
     TBuf<TPosition::VECCALC> computeIndexBuf3;
-    TBuf<TPosition::VECCALC> computeIndexBuf4;
-    TBuf<TPosition::VECCALC> computeIndexBuf5;
-    TBuf<TPosition::VECCALC> computeIndexBuf6;
-    TBuf<TPosition::VECCALC> computeIndexBuf7;
-    TBuf<TPosition::VECCALC> computeIndexBuf8;
-    TBuf<TPosition::VECCALC> computeIndexBuf9;
-    TBuf<TPosition::VECCALC> computeIndexBuf10;
-    TBuf<TPosition::VECCALC> computeIndexBuf11;
-    TBuf<TPosition::VECCALC> computeIndexBuf12;
-    TBuf<TPosition::VECCALC> computeIndexBuf13;
-    TBuf<TPosition::VECCALC> computeIndexBuf14;
-    TBuf<TPosition::VECCALC> computeIndexBuf15;
-    TBuf<TPosition::VECCALC> computeIndexBuf16;
-    TBuf<TPosition::VECCALC> computeIndexBuf17;
-    TBuf<TPosition::VECCALC> computeIndexBuf18;
 
     TBuf<TPosition::VECCALC> gixBuf;
     TBuf<TPosition::VECCALC> giyBuf;
@@ -383,6 +368,8 @@ private:
     uint32_t blockIdx = 0;
     uint32_t alignChannel = 0;
     uint32_t group = 0;
+    uint32_t isDeterministic = 0;
+    uint32_t tailBNum = 0;
 
     int32_t inputStrideN = 0;
     int32_t inputStrideD = 0;
@@ -498,6 +485,8 @@ __aicore__ inline void GridSampler3DGradNS<T>::ParseTilingData(const GridSampler
     tailPNum = tilingData->tailPNum;
     ubFactorElement = tilingData->ubFactorElement;
     group = tilingData->group;
+    isDeterministic = tilingData->isDeterministic;
+    tailBNum = tilingData->tailBNum;
 }
 
 template <typename T>
@@ -567,22 +556,7 @@ __aicore__ inline void GridSampler3DGradNS<T>::InitBilinearBufferExtend()
 
     pipe.InitBuffer(computeIndexBuf1, ubFactorElement * sizeof(int32_t));
     pipe.InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf3, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf4, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf5, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf6, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf7, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf8, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf9, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf10, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf11, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf12, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf13, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf14, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf15, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf16, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf17, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf18, ubFactorElement * sizeof(int32_t));
+    pipe.InitBuffer(computeIndexBuf3, ubFactorElement * sizeof(int32_t) * 16);
 
     pipe.InitBuffer(gixBuf, alignChannel * sizeof(T));
     pipe.InitBuffer(giyBuf, alignChannel * sizeof(T));
@@ -626,7 +600,7 @@ __aicore__ inline void GridSampler3DGradNS<T>::InitNearestBuffer()
 
     pipe.InitBuffer(computeIndexBuf, ubFactorElement * sizeof(int32_t));
     pipe.InitBuffer(computeIndexBuf1, ubFactorElement * sizeof(int32_t));
-    pipe.InitBuffer(computeIndexBuf18, ubFactorElement * sizeof(int32_t));
+    pipe.InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(int32_t));
 
     pipe.InitBuffer(ixNearIntBuf, ubFactorElement * sizeof(int32_t));
     pipe.InitBuffer(iyNearIntBuf, ubFactorElement * sizeof(int32_t));
@@ -655,7 +629,7 @@ __aicore__ inline void GridSampler3DGradNS<T>::InitLocalTensor()
     mask6Tensor = mask6Buf.Get<uint8_t>(maskNum);
     dupOneTensor = dupOneBuf.Get<T>(ubFactorElement);
     tmpIndex1 = computeIndexBuf1.Get<int32_t>(ubFactorElement);
-    tmpIndex2 = computeIndexBuf18.Get<int32_t>(ubFactorElement);
+    tmpIndex2 = computeIndexBuf2.Get<int32_t>(ubFactorElement);
     clipLimit = clipLimitBuf.Get<T>(ubFactorElement);
 }
 
@@ -687,22 +661,22 @@ __aicore__ inline void GridSampler3DGradNS<T>::InitBilinearLocalTensor()
     bsw = tnw[ubFactorElement * 6];
     bse = tnw[ubFactorElement * 7];
 
-    tNwIndex = computeIndexBuf2.Get<int32_t>(ubFactorElement);
-    tNeIndex = computeIndexBuf3.Get<int32_t>(ubFactorElement);
-    tSwIndex = computeIndexBuf4.Get<int32_t>(ubFactorElement);
-    tSeIndex = computeIndexBuf5.Get<int32_t>(ubFactorElement);
-    bNwIndex = computeIndexBuf6.Get<int32_t>(ubFactorElement);
-    bNeIndex = computeIndexBuf7.Get<int32_t>(ubFactorElement);
-    bSwIndex = computeIndexBuf8.Get<int32_t>(ubFactorElement);
-    bSeIndex = computeIndexBuf9.Get<int32_t>(ubFactorElement);
-    tnwIndex2 = computeIndexBuf10.Get<int32_t>(ubFactorElement);
-    tneIndex2 = computeIndexBuf11.Get<int32_t>(ubFactorElement);
-    tswIndex2 = computeIndexBuf12.Get<int32_t>(ubFactorElement);
-    tseIndex2 = computeIndexBuf13.Get<int32_t>(ubFactorElement);
-    bnwIndex2 = computeIndexBuf14.Get<int32_t>(ubFactorElement);
-    bneIndex2 = computeIndexBuf15.Get<int32_t>(ubFactorElement);
-    bswIndex2 = computeIndexBuf16.Get<int32_t>(ubFactorElement);
-    bseIndex2 = computeIndexBuf17.Get<int32_t>(ubFactorElement);
+    tNwIndex = computeIndexBuf3.Get<int32_t>();
+    tNeIndex = tNwIndex[ubFactorElement * 1];
+    tSwIndex = tNwIndex[ubFactorElement * 2];
+    tSeIndex = tNwIndex[ubFactorElement * 3];
+    bNwIndex = tNwIndex[ubFactorElement * 4];
+    bNeIndex = tNwIndex[ubFactorElement * 5];
+    bSwIndex = tNwIndex[ubFactorElement * 6];
+    bSeIndex = tNwIndex[ubFactorElement * 7];
+    tnwIndex2 = tNwIndex[ubFactorElement * 8];
+    tneIndex2 = tNwIndex[ubFactorElement * 9];
+    tswIndex2 = tNwIndex[ubFactorElement * 10];
+    tseIndex2 = tNwIndex[ubFactorElement * 11];
+    bnwIndex2 = tNwIndex[ubFactorElement * 12];
+    bneIndex2 = tNwIndex[ubFactorElement * 13];
+    bswIndex2 = tNwIndex[ubFactorElement * 14];
+    bseIndex2 = tNwIndex[ubFactorElement * 15];
 
     gixLocalTensor = gixBuf.Get<T>(alignChannel);
     giyLocalTensor = giyBuf.Get<T>(alignChannel);
@@ -1129,7 +1103,7 @@ __aicore__ inline void GridSampler3DGradNS<T>::CopyIn(
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DGradNS<T>::CopyOut(const int32_t offset, const int32_t calCount)
+__aicore__ inline void GridSampler3DGradNS<T>::CopyOut(const int64_t offset, const int32_t calCount)
 {
     LocalTensor<T> dstLocal = dataOutQueue[DGRID_OUTPUT_INDEX].DeQue<T>();
     DataCopyExtParams copyParams = {1, 0, 0, 0, 0};
@@ -1509,6 +1483,16 @@ __aicore__ inline void GridSampler3DGradNS<T>::Process()
     } else {
         computePNum = pNumPerCore;
         gridOffset = blockIdx * pNumPerCore + tailPNum;
+        // 确定性计算处理N的尾块
+        int64_t gridStride = gridD * gridH * gridW;
+        int64_t tailCorePNum = pNumPerCore + gridStride;
+        if (isDeterministic == 1 && blockIdx < tailBNum) {
+            computePNum = tailCorePNum;
+            gridOffset = blockIdx * computePNum;
+        } else if (isDeterministic == 1 && blockIdx >= tailBNum) {
+            computePNum = pNumPerCore;
+            gridOffset = (blockIdx - tailBNum) * pNumPerCore + tailBNum * tailCorePNum;
+        }
     }
 
     int32_t copyCountPerTime = 3 * ubFactorElement;

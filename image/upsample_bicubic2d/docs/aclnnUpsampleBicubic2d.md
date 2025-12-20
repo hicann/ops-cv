@@ -1,11 +1,18 @@
 # aclnnUpsampleBicubic2d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bicubic2d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -36,7 +43,7 @@
   - i和j是$W(i, j)$的索引变量。
   - $f(h_i, w_j)$是原图像在$(h_i, w_j)$的像素值。
   - $W(i, j)$是双三次抗锯齿插值的权重，定义为：
-    
+
     $$
     W(d) =\begin{cases}
     (a+2)|d|^3-(a+3)|d|^2+1 & |d|\leq1 \\
@@ -44,14 +51,14 @@
     0 & otherwise
     \end{cases}
     $$
-    
+
     其中：
     - $a=-0.75$
     - $d = |(h, w) - (h_i, w_j)|$
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBicubic2d”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBicubic2d”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(
@@ -77,14 +84,14 @@ aclnnStatus aclnnUpsampleBicubic2d(
 
 - **参数说明**：
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -103,7 +110,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -123,7 +130,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
+      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则输入和输出张量的边像素点会被对齐。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -153,7 +160,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与`self`的数据类型和数据格式一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与`self`保持一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -182,18 +189,21 @@ aclnnStatus aclnnUpsampleBicubic2d(
   </tbody>
   </table>
   
+  - <term>Atlas 200I/500 A2 推理产品</term>、<term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
+    - 数据格式：参数`self`、`out`不支持BFLOAT16。
+    - 数据类型：参数`self`、`out`不支持NHWC。
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     参数`self`、`out`的数据格式不支持NHWC。
   
 - **返回值**：
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -285,7 +295,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -293,7 +303,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
   - 占用内存小于60G。内存占用的计算公式如下：
-    
+
     $$
     (self\_H * self\_W + out\_H * out\_W + self\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
     $$
@@ -301,7 +311,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
-  - N * C * self_H < 2^31
+  - N \* C \* self_H < 2^31
 - 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
   - 当alignCorners为True时：
     - outputSize对应轴的值等于1，scales对应轴的值为0。
@@ -309,10 +319,12 @@ aclnnStatus aclnnUpsampleBicubic2d(
   - 当alignCorners为False时：
     - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(outputSize/self)$。
     - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(self\_H * scalesH)$，或者$floor(self\_W * scalesW)$。
+- 确定性计算：
+  - aclnnUpsampleBicubic2d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

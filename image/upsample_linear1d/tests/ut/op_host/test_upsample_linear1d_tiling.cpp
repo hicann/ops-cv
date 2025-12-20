@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>
@@ -31,24 +30,16 @@ protected:
     }
 };
 
-TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_001)
-{
+TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_001) {
     optiling::UpsampleLinear1dCompileInfo compileInfo = {1};
     gert::TilingContextPara tilingContextPara("UpsampleLinear1d",
-        {
-            {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-        },
-        {
-            {{{2}, {2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-        },
-        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-            gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(2))},
-        &compileInfo);
+                                              {{{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
+                                              {{{{2}, {2}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
+                                              {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                               gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(2))},
+                                              &compileInfo);
     uint64_t expectTilingKey = 1;
-    string expectTilingData =
-        "1 0 64 16 1 4575657222482165760 0 8192 0 0 0 0 1 64 0 0 0 0 0 0 0 1 1 1 128 1 1 1 0 4294967297 549755813888 "
-        "4294967424 549755813952 274877906960 4294967424 4294967297 1 0 87960930222080 4096 4294967297 4294967297 "
-        "4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+    string expectTilingData = "1 0 64 16 1 4575657222482165760 0 8192 0 0 0 0 1 64 0 0 0 0 0 0 0 1 1 1 128 1 1 1 0 4294967297 549755813888 4294967424 549755813952 274877906960 4294967424 4294967297 1 0 87960930222080 4096 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33570816};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

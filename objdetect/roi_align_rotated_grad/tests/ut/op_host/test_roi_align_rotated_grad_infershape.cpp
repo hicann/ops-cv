@@ -15,6 +15,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include "infershape_context_faker.h"
+#include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
 class RoiAlignRotatedGrad : public testing::Test
@@ -31,93 +32,22 @@ protected:
   }
 };
 
-static std::vector<int64_t> ToVectorForRoiAlignRotatedGrad(const gert::Shape& shape)
+TEST_F(RoiAlignRotatedGrad, RoiAlignRotatedGrad_infershape_iou_false_case_0)
 {
-    size_t shapeSize = shape.GetDimNum();
-    std::vector<int64_t> shapeVec(shapeSize, 0);
-    for (size_t i = 0; i < shapeSize; i++) {
-        shapeVec[i] = shape.GetDim(i);
-    }
-    return shapeVec;
+    gert::InfershapeContextPara infershapeContextPara("RoiAlignRotatedGrad",
+                                                      {{{{8, 2, 2, 1}, {8, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {gert::InfershapeContextPara::OpAttr("y_grad_shape", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({4, 8, 8, 1})),
+                                                       gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+                                                       gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+                                                       gert::InfershapeContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+                                                       gert::InfershapeContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+                                                       gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                       gert::InfershapeContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {{4, 8, 8, 1},};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
-
-static void ExeTestCaseForRoiAlignRotatedGrad(
-    const std::vector<gert::StorageShape>& inputShapes,  // 存储所有输入StorageShape参数
-    const std::vector<ge::DataType>& dtypes,             // 存储所有DataType参数
-    gert::StorageShape& outStorageShape,
-    ge::graphStatus testCaseResult = ge::GRAPH_SUCCESS,
-    const std::vector<int64_t>& yGradShape = {4, 8, 8, 1},
-    int64_t pooledH = 2,
-    int64_t pooledW = 2,
-    float spatialScale = 1.0,
-    int64_t samplingRatio = 0,
-    bool aligned = true,
-    bool clockwise = false)
-{
-    // 从vector中取出对应参数（保持原顺序）
-    const auto& xGradStorageShape = inputShapes[0];
-    const auto& roisStorageShape = inputShapes[1];
-    
-    ge::DataType input1Dtype = dtypes[0];
-    ge::DataType input2Dtype = dtypes[1];
-
-    /* make infershape context */
-    std::vector<gert::Tensor *> inputTensors = {
-        (gert::Tensor *)&xGradStorageShape,
-        (gert::Tensor *)&roisStorageShape,
-    };
-    std::vector<gert::StorageShape *> outputShapes = {&outStorageShape};
-    auto contextHolder = gert::InferShapeContextFaker()
-        .SetOpType("RoiAlignRotatedGrad")
-        .NodeIoNum(2, 1)
-        .NodeInputTd(0, input1Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
-        .NodeInputTd(1, input2Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
-        .InputTensors(inputTensors)
-        .OutputShapes(outputShapes)
-        .Attr("y_grad_shape", yGradShape)
-        .Attr("pooled_h", pooledH)
-        .Attr("pooled_w", pooledW)
-        .Attr("spatial_scale", spatialScale)
-        .Attr("sampling_ratio", samplingRatio)
-        .Attr("aligned", aligned)
-        .Attr("clockwise", clockwise)
-        .Build();
-
-    /* get infershape func */
-    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
-    auto inferShapeFunc = spaceRegistry->GetOpImpl("RoiAlignRotatedGrad")->infer_shape;
-    ASSERT_NE(inferShapeFunc, nullptr);
-
-    /* do infershape */
-    EXPECT_EQ(inferShapeFunc(contextHolder.GetContext()), testCaseResult);
-}
-// TODO fixme
-// TEST_F(RoiAlignRotatedGrad, RoiAlignRotatedGrad_infershape_iou_false_case_0)
-// {
-//     // size_t size1 = 4;
-//     // size_t size2 = 5;
-//     // size_t size3 = 6;
-//     // size_t size4 = 7;
-//     // size_t feeds_size = 4;
-//     // size_t out_size = 15;
-
-//     // 用vector存储同类型参数（顺序与原参数列表一致）
-//     std::vector<gert::StorageShape> inputShapes = {
-//         {{8, 2, 2, 1}, {8, 2, 2, 1}},    // self_shape
-//         {{6, 8}, {6, 8}},                  // feeds_shape
-//     };
-//     std::vector<ge::DataType> dtypes = {
-//         ge::DT_FLOAT,  // input1Dtype
-//         ge::DT_FLOAT,    // input2Dtype
-//     };
-
-//     std::vector<int64_t> expectResult = {4, 8, 8, 1};
-//     gert::StorageShape outStorageShape = {};
-//     // 简化后的函数调用
-//     const std::vector<int64_t> yGradShape = {4, 8, 8, 1};
-//     ExeTestCaseForRoiAlignRotatedGrad(inputShapes, dtypes, outStorageShape, ge::GRAPH_SUCCESS, yGradShape, 2, 2, 1.0, 0, true, false);
-//     EXPECT_EQ(ToVectorForRoiAlignRotatedGrad(outStorageShape.GetOriginShape()), expectResult);
-// }
 
 // TEST_F(RoiAlignRotatedGrad, RoiAlignRotatedGrad_infershape_case_0)
 // {

@@ -1,0 +1,75 @@
+
+{
+    "op_type": "RoiAlignRotated",
+    "op_list": [
+    {
+      "bin_filename": "RoiAlignRotated",
+      "inputs": [
+        {
+            "name": "x",
+            "index": 0,
+            "paramType": "required",
+            "format": "ND",
+            "dtype": "float32",
+            "shape": [
+            -2
+          ]
+        },
+        {
+            "name": "rois",
+            "index": 1,
+            "paramType": "required",
+            "format": "ND",
+            "dtype": "float32",
+            "shape": [
+            -2
+          ]
+        }
+    ],
+    "outputs": [
+        {
+            "name": "y",
+            "index": 0,
+            "paramType": "required",
+            "format": "ND",
+            "dtype": "float32",
+            "shape": [
+            -2
+          ]
+        }
+    ],
+    "attrs": [
+        {
+            "name": "pooled_h",
+            "dtype": "int",
+            "value": 2
+        },
+        {
+            "name": "pooled_w",
+            "dtype": "int",
+            "value": 2
+        },
+        {
+            "name": "spatial_scale",
+            "dtype": "float",
+            "value": 0.5
+        },
+        {
+            "name": "sampling_ratio",
+            "dtype": "int",
+            "value": 1
+        },
+        {
+            "name": "aligned",
+            "dtype": "bool",
+            "value": false
+        },
+        {
+            "name": "clockwise",
+            "dtype": "bool",
+            "value": false
+        }
+    ]
+    }
+    ]
+}

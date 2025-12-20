@@ -7,11 +7,12 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include <vector>
 #include <array>
 #include "gtest/gtest.h"
+
 #include "../../../../op_host/op_api/aclnn_resize.h"
+
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/scalar_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
@@ -305,6 +306,75 @@ TEST_F(l2_resize_test, case_16)
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
 
+/*
+// unmatch shape
+TEST_F(l2_resize_test, case_17)
+{
+    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>{1,2,3,4});
+
+    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
+    auto out = TensorDesc({1,1,4,8}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>(16));
+    const char *mode="nearest";
+    auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
+    // SAMPLE: only test GetWorkspaceSize
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// unmatch shape
+TEST_F(l2_resize_test, case_18)
+{
+    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>{1,2,3,4});
+
+    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
+    auto out = TensorDesc({1,1,4,8}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>(16));
+    const char *mode="nearest";
+    auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
+    // SAMPLE: only test GetWorkspaceSize
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// check shape
+TEST_F(l2_resize_test, case_19)
+{
+    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>{1,2,3,4});
+
+    auto scales = FloatArrayDesc(vector<float>{1,1,2.6,2});
+    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>(16));
+    const char *mode="nearest";
+    auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
+    // SAMPLE: only test GetWorkspaceSize
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_resize_test, case_20)
+{
+    auto self = TensorDesc({1,1}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>{1,2});
+
+    auto scales = FloatArrayDesc(vector<float>{1,1,2.6,2});
+    auto out = TensorDesc({1,1}, ACL_FLOAT, ACL_FORMAT_NHWC)
+        .Value(vector<float>(16));
+    const char *mode="nearest";
+    auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
+    // SAMPLE: only test GetWorkspaceSize
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+*/
+
 TEST_F(l2_resize_test, case_21)
 {
     auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
@@ -336,6 +406,24 @@ TEST_F(l2_resize_test, case_22)
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
+
+/*
+TEST_F(l2_resize_test, case_23)
+{
+    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>{1,2,3,4});
+
+    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
+    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
+        .Value(vector<float>(16));
+    const char *mode="nearest";
+    auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
+    // SAMPLE: only test GetWorkspaceSize
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+*/
 
 TEST_F(l2_resize_test, case_24)
 {

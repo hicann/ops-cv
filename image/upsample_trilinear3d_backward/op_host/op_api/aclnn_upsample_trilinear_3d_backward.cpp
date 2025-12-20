@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "upsample_trilinear_3d_grad.h"
 #include "aclnn_kernels/contiguous.h"
@@ -30,6 +30,7 @@ using namespace op;
 extern "C" {
 #endif
 
+namespace {
 static bool CheckFormat(const aclTensor* gradOut)
 {
     const op::Format gradOutFormat = gradOut->GetStorageFormat();
@@ -98,6 +99,32 @@ static bool CheckInputElement(
     return true;
 }
 
+static bool CheckUplimit(const aclTensor* gradOut, const aclTensor* gradInput)
+{
+    int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t outD = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t outH = gradOut->GetViewShape().GetDim(DIM_THREE);
+    int64_t outW = gradOut->GetViewShape().GetDim(DIM_FOUR);
+    int64_t inputN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t inputC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t inputD = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t inputH = gradOut->GetViewShape().GetDim(DIM_THREE);
+    int64_t inputW = gradOut->GetViewShape().GetDim(DIM_FOUR);
+
+    OP_CHECK(gradOutN < INT32_MAX && gradOutC < INT32_MAX && outD < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, gradOutN, gradOutC, outD, outH, outW),
+        return false);
+    OP_CHECK(inputN < INT32_MAX && inputC < INT32_MAX && inputD < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, inputN, inputC, inputD , inputH , inputW),
+        return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(
     const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* gradInput)
 {
@@ -114,6 +141,8 @@ static aclnnStatus CheckParams(
     // 4. 检查输入元素是否合法
     CHECK_RET(CheckInputElement(gradOut, outputSize, inputSize, gradInput), ACLNN_ERR_PARAM_INVALID);
 
+    // 5. 校验上边界
+    CHECK_RET(CheckUplimit(gradOut, gradInput), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;
 }
 
@@ -142,6 +171,7 @@ const aclTensor* upsampleTrilinear3dBackwardCompute(
     return l0op::UpsampleTrilinear3dGradNcdhw(
         gradOutContiguous, outputSize, inputSize, alignCorners, scales, castScales, executor);
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize(
     const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, bool alignCorners,

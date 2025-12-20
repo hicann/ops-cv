@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 /*!
  * \file test_upsample_trilinear3d_backward.cpp
  * \brief
@@ -204,9 +203,9 @@ TEST_F(UpsampleTrilinear3dBackwardTest, test_case_float32)
     tilingDatafromBin->matmulTilingD.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
-    
 	AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_trilinear3d_backward, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+
     fileName = "./upsample_trilinear3d_backward_data/float32_output_trilinear3d_grad.bin";
     WriteFile(fileName, y, grad_inputByteSize);
 

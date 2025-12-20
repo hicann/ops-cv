@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -110,7 +115,7 @@
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。数据类型、数据格式和shape与`x`的数据类型、数据格式和shape保持一致。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
-      <td>NCDHW、NDHWC</td>
+      <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
     </tr>
     <tr>
       <td>dgrid</td>
@@ -121,11 +126,13 @@
     </tr>
   </tbody></table>
 
+<term>Atlas 训练系列产品</term>：输入参数和输出参数的数据类型不支持DOUBLE、BFLOAT16。
+
 ## 约束说明
 
 无
 <!--
-GridSampler3DGrad默认为非确定性实现，暂不支持确定性实现，[确定性计算](./docs/context/确定性计算.md)配置后不会生效。
+GridSampler3DGrad默认为非确定性实现，暂不支持确定性实现，[确定性计算](./docs/zh/context/确定性计算.md)配置后不会生效。
 -->
 
 ## 调用说明

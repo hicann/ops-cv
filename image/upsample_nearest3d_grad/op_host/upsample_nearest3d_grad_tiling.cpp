@@ -165,8 +165,11 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
 
     size_t idx = 0;
     inputSizeAttr = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, inputSizeAttr);
     outputSizeAttr = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outputSizeAttr);
     scalesAttr = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scalesAttr);
     const float* scalesArray = reinterpret_cast<const float*>(scalesAttr->GetData());
     scaleD = scalesArray[D_INDEX];
     scaleH = scalesArray[H_INDEX];
@@ -333,7 +336,7 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumW(int64_t coreNumPlatform)
     int64_t slideNum = CeilA2B(gradInputShapes[W_INDEX], slideSize);
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
     int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
-    tensorSizeW = std::max(eachCoreSlideNum, static_cast<int64_t>(1)) * slideSize;
+    tensorSizeW = slideSize + 1;
     tensorSizeMappingW = Ceil(static_cast<float>(tensorSizeW) * realScaleW) + slideSize;
 
     inputRows[W_INDEX] = batches * gradOutputShapes[D_INDEX] * gradOutputShapes[H_INDEX];
@@ -364,7 +367,7 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumH(int64_t coreNumPlatform)
     int64_t slideNum = CeilA2B(gradInputShapes[H_INDEX], slideSize);
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
     int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
-    tensorSizeH = std::max(eachCoreSlideNum, static_cast<int64_t>(1)) * slideSize;
+    tensorSizeH = slideSize + 1;
     tensorSizeMappingH = Ceil(static_cast<float>(tensorSizeH) * realScaleH) + slideSize;
 
     if (batches * gradOutputShapes[D_INDEX] > gradInputShapes[W_INDEX]) {
@@ -399,7 +402,7 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumD(int64_t coreNumPlatform)
     int64_t slideNum = CeilA2B(gradInputShapes[D_INDEX], slideSize);
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
     int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
-    tensorSizeD = std::max(eachCoreSlideNum, static_cast<int64_t>(1)) * slideSize;
+    tensorSizeD = slideSize + 1;
     tensorSizeMappingD = Ceil(static_cast<float>(tensorSizeD) * realScaleD) + slideSize;
 
     if (batches > gradInputShapes[H_INDEX] * gradInputShapes[W_INDEX]) {
@@ -595,6 +598,7 @@ static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext* context)
     auto compileInfo = context->GetCompiledInfo<UpsampleNearest3dGradCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
     auto platformInfo = context->GetPlatformInfo();
+    OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 

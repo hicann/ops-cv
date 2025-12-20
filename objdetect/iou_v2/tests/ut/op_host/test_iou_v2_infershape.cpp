@@ -7,10 +7,10 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include <gtest/gtest.h>
 #include <iostream>
 #include "infershape_context_faker.h"
+#include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
 class IouV2 : public testing::Test
@@ -27,84 +27,18 @@ protected:
     }
 };
 
-static std::vector<int64_t> ToVectorForIouV2(const gert::Shape& shape)
+TEST_F(IouV2, IouV2_infershape_iou_false_case_0)
 {
-    size_t shapeSize = shape.GetDimNum();
-    std::vector<int64_t> shapeVec(shapeSize, 0);
-    for (size_t i = 0; i < shapeSize; i++) {
-        shapeVec[i] = shape.GetDim(i);
-    }
-    return shapeVec;
+    gert::InfershapeContextPara infershapeContextPara("IouV2",
+                                                      {{{{1024, 4}, {1024, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{1024, 4}, {1024, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+                                                       gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+                                                       gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {{1024, 1024},};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
-
-static void ExeTestCaseForIouV2(
-    const std::vector<gert::StorageShape>& inputShapes,  // 存储所有输入StorageShape参数
-    const std::vector<ge::DataType>& dtypes,             // 存储所有DataType参数
-    gert::StorageShape& outStorageShape,
-    ge::graphStatus testCaseResult = ge::GRAPH_SUCCESS,
-    const ge::AscendString& modeAttr = "iou",
-    float epsAttr = 1.0,
-    bool alignedAttr = false)
-{
-    // 从vector中取出对应参数（保持原顺序）
-    const auto& bboxesStorageShape = inputShapes[0];
-    const auto& gtboxesStorageShape = inputShapes[1];
-    
-    ge::DataType input1Dtype = dtypes[0];
-    ge::DataType input2Dtype = dtypes[1];
-
-    /* make infershape context */
-    std::vector<gert::Tensor *> inputTensors = {
-        (gert::Tensor *)&bboxesStorageShape,
-        (gert::Tensor *)&gtboxesStorageShape,
-    };
-    std::vector<gert::StorageShape *> outputShapes = {&outStorageShape};
-    auto contextHolder = gert::InferShapeContextFaker()
-        .SetOpType("IouV2")
-        .NodeIoNum(2, 1)
-        .NodeInputTd(0, input1Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
-        .NodeInputTd(1, input2Dtype, ge::FORMAT_ND, ge::FORMAT_ND)
-        .InputTensors(inputTensors)
-        .OutputShapes(outputShapes)
-        .Attr("mode", modeAttr)
-        .Attr("eps", epsAttr)
-        .Attr("aligned", alignedAttr)
-        .Build();
-
-    /* get infershape func */
-    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
-    auto inferShapeFunc = spaceRegistry->GetOpImpl("IouV2")->infer_shape;
-    ASSERT_NE(inferShapeFunc, nullptr);
-
-    /* do infershape */
-    EXPECT_EQ(inferShapeFunc(contextHolder.GetContext()), testCaseResult);
-}
-// TODO fixme
-// TEST_F(IouV2, IouV2_infershape_iou_false_case_0)
-// {
-//     // size_t size1 = 4;
-//     // size_t size2 = 5;
-//     // size_t size3 = 6;
-//     // size_t size4 = 7;
-//     // size_t feeds_size = 4;
-//     // size_t out_size = 15;
-
-//     // 用vector存储同类型参数（顺序与原参数列表一致）
-//     std::vector<gert::StorageShape> inputShapes = {
-//         {{1024, 4}, {1024, 4}},    // self_shape
-//         {{1024, 4}, {1024, 4}},                  // feeds_shape
-//     };
-//     std::vector<ge::DataType> dtypes = {
-//         ge::DT_FLOAT,  // input1Dtype
-//         ge::DT_FLOAT,    // input2Dtype
-//     };
-
-//     std::vector<int64_t> expectResult = {1024, 1024};
-//     gert::StorageShape outStorageShape = {};
-//     // 简化后的函数调用
-//     ExeTestCaseForIouV2(inputShapes, dtypes, outStorageShape, ge::GRAPH_SUCCESS, "iou", 1.0, false);
-//     EXPECT_EQ(ToVectorForIouV2(outStorageShape.GetOriginShape()), expectResult);
-// }
 
 // TEST_F(IouV2, IouV2_infershape_iof_false_case_2)
 // {

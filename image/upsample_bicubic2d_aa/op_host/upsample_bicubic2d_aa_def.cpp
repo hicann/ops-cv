@@ -16,7 +16,8 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-
+static const std::vector<ge::DataType> xDtype = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
+static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 class UpsampleBicubic2dAA : public OpDef {
 public:
     explicit UpsampleBicubic2dAA(const char *name) : OpDef(name)
@@ -38,6 +39,23 @@ public:
 
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+
+        OpAICoreConfig regbaseConfig;
+        regbaseConfig.Input("x")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("y")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "upsample_bicubic2d_aa_apt");
+        this->AICore().AddConfig("ascend910_95", regbaseConfig); 
     }
 };
 

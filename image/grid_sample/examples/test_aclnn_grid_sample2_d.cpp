@@ -114,34 +114,34 @@ int main()
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
     // 调用aclnnGridSampler2D第一段接口
-    ret = aclnnGridSampler2DGetWorkspaceSize(
-        input, grid, interpolationMode, paddingMode, alignCorners, out, &workspaceSize, &executor);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler2DGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
+    // ret = aclnnGridSampler2DGetWorkspaceSize(
+    //     input, grid, interpolationMode, paddingMode, alignCorners, out, &workspaceSize, &executor);
+    // CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler2DGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
-    void* workspaceAddr = nullptr;
-    if (workspaceSize > 0) {
-        ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
-    }
+    // void* workspaceAddr = nullptr;
+    // if (workspaceSize > 0) {
+    //     ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    //     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
+    // }
     // 调用aclnnGridSampler2D第二段接口
-    ret = aclnnGridSampler2D(workspaceAddr, workspaceSize, executor, stream);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler2D failed. ERROR: %d\n", ret); return ret);
+    // ret = aclnnGridSampler2D(workspaceAddr, workspaceSize, executor, stream);
+    // CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler2D failed. ERROR: %d\n", ret); return ret);
 
     // 4. （固定写法）同步等待任务执行结束
-    ret = aclrtSynchronizeStream(stream);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
+    // ret = aclrtSynchronizeStream(stream);
+    // CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
 
     // 5. 获取输出的值，将device侧内存上的结果复制至host侧，需要根据具体API的接口定义修改
-    auto size = GetShapeSize(outShape);
-    std::vector<float> resultData(size, 0);
-    ret = aclrtMemcpy(
-        resultData.data(), resultData.size() * sizeof(resultData[0]), outDeviceAddr, size * sizeof(resultData[0]),
-        ACL_MEMCPY_DEVICE_TO_HOST);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy resultData from device to host failed. ERROR: %d\n", ret);
-              return ret);
-    for (int64_t i = 0; i < size; i++) {
-        LOG_PRINT("resultData[%ld] is: %f\n", i, resultData[i]);
-    }
+    // auto size = GetShapeSize(outShape);
+    // std::vector<float> resultData(size, 0);
+    // ret = aclrtMemcpy(
+    //     resultData.data(), resultData.size() * sizeof(resultData[0]), outDeviceAddr, size * sizeof(resultData[0]),
+    //     ACL_MEMCPY_DEVICE_TO_HOST);
+    // CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy resultData from device to host failed. ERROR: %d\n", ret);
+    //           return ret);
+    // for (int64_t i = 0; i < size; i++) {
+    //     LOG_PRINT("resultData[%ld] is: %f\n", i, resultData[i]);
+    // }
 
     // 6. 释放aclTensor，需要根据具体API的接口定义修改
     aclDestroyTensor(input);
@@ -152,9 +152,9 @@ int main()
     aclrtFree(inputDeviceAddr);
     aclrtFree(gridDeviceAddr);
     aclrtFree(outDeviceAddr);
-    if (workspaceSize > 0) {
-        aclrtFree(workspaceAddr);
-    }
+    // if (workspaceSize > 0) {
+    //     aclrtFree(workspaceAddr);
+    // }
     aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
     aclFinalize();

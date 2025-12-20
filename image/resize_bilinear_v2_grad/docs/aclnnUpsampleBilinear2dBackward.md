@@ -1,11 +1,18 @@
 # aclnnUpsampleBilinear2dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_bilinear_v2_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -33,25 +40,25 @@
     inputSize[3] / outputSize[1] & alignCorners=false
     \end{cases}
     $$
-   
+
     那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: 
-    
+
     $$
     x' =\begin{cases}
     x * scaleH & alignCorners=true \\
     MAX(0,{(x+0.5)*scaleH-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     $$
     y' =\begin{cases}
     y * scaleW & alignCorners=true \\
     MAX(0,{(y+0.5)*scaleW-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
@@ -59,7 +66,7 @@
       $$
       y_{0} =int(y'),y_{1} =int(y')+1, lambdb_{0} = y_{1}-y', lambdb_{1} =   1-lambdb_{0}
       $$
-   
+
     - 则有以下公式：
       $$
       {V(p_{x, y})} = {V(p_{x0, y0})} * {lambda_{0}} * {lambdb_{0}} + {V(p_{x0, y1})} * {lambda_{0}} * {lambdb_{1}} + {V(p_{x1, y0})} * {lambda_{1}} * {lambdb_{0}} + {V(p_{x1, y1})} * {lambda_{1}} * {lambdb_{1}}
@@ -73,7 +80,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBilinear2dBackwardGetWorkspaceSize(
@@ -100,14 +107,14 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
 
 - **参数说明**：
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -156,7 +163,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scalesH和scalesW。</li></ul></td>
+      <td>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scalesH和scalesW。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -186,7 +193,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据格式需要与入参`gradOut`的数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据格式与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -215,19 +222,21 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>、<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     - 参数`gradOut`、`out`的数据类型不支持BFLOAT16.
-    - 参数`out`的数据类型需要与`gradOut`的数据类型一致。
-
+    - 参数`out`的数据类型与`gradOut`的数据类型保持一致。
+  - <term>昇腾910_95 AI处理器</term>：
+    - 当`gradOut`的数据类型不是FLOAT时，`out`的数据类型与`gradOut`的数据类型保持一致。
+    - 当`gradOut`的数据类型是FLOAT时，`out`的数据类型可以是FLOAT32、FLOAT16和BFLOAT16。
 
 - **返回值**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -247,7 +256,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
     <tr>
       <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
       <td rowspan="11">161002</td>
-      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
       <td>gradOut和out的数据类型不一致。</td>
@@ -322,15 +331,16 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
 
 - **返回值**：
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
-无。
+- 确定性计算：
+  - aclnnUpsampleBilinear2dBackward默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

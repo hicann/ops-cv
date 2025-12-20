@@ -169,18 +169,33 @@ inline float UpsampleBicubic2dAATiling::ComputeScaleValue(
 
 ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling()
 {
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(tilingContext->GetPlatformInfo());
+    auto socVersion = ascendcPlatform.GetSocVersion();
+    bool regBase = socVersion == platform_ascendc::SocVersion::ASCEND910_95;
+    if (regBase) {
+        OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleBicubic2dAARegbase");
+        return Tiling4UpsampleBicubic2dAARegbase(tilingContext);
+    }
+
     const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
     if (attrs == nullptr) {
         return ge::GRAPH_FAILED;
     }
     outputSizeVevtor = attrs->GetAttrPointer<gert::ContinuousVector>(0);
+    OP_CHECK_IF(outputSizeVevtor == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSizeVevtor == nullptr"),
+        return ge::GRAPH_FAILED);
     alignCorners = attrs->GetAttrPointer<bool>(1);
+    OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"),
+        return ge::GRAPH_FAILED);
     scaleH = attrs->GetAttrPointer<float>(H_INDEX);
+    OP_CHECK_IF(scaleH == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleH == nullptr"),
+        return ge::GRAPH_FAILED);
     scaleW = attrs->GetAttrPointer<float>(W_INDEX);
+    OP_CHECK_IF(scaleW == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleW == nullptr"),
+        return ge::GRAPH_FAILED);
 
     auto tempInputDesc = tilingContext->GetInputDesc(0);
-    OP_CHECK_IF(tempInputDesc == nullptr,
-        OP_LOGE(tilingContext->GetNodeName(), "InputDesc == nullptr"),
+    OP_CHECK_IF(tempInputDesc == nullptr, OP_LOGE(tilingContext->GetNodeName(), "InputDesc == nullptr"),
         return ge::GRAPH_FAILED);
     dataType = tempInputDesc->GetDataType();
     dataTypeSize = GetDataTypeSize();
@@ -203,8 +218,7 @@ ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling()
     SetSliceSize();
 
     auto compileInfo = reinterpret_cast<const UpsampleBicubic2dAACompileInfo *>(tilingContext->GetCompileInfo());
-    OP_CHECK_IF(compileInfo == nullptr,
-        OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
+    OP_CHECK_IF(compileInfo == nullptr, OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
         return ge::GRAPH_FAILED);
     uint32_t coreNumPlatForm = compileInfo->totalCoreNum;
 

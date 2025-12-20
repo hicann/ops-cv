@@ -18,37 +18,6 @@ using Ops::Cv::OpTiling::GET_TILINGKEY;
 
 namespace optiling {
 constexpr uint64_t TILING_OFFSET = 1000000000000UL;
-static const size_t DIM_NUM_4D = 4;
-static const size_t DIM_NUM_5D = 5;
-static const size_t DIM_2 = 2;
-static const size_t DIM_3 = 3;
-static const size_t DIM_4 = 4;
-static const size_t INT_16 = 16;
-static const size_t INT_22 = 22;
-static const size_t INT_64 = 64;
-static const size_t INT_88 = 88;
-static const int64_t INTERPOLATION_MODE_BILNEAR = 0;
-static const int64_t INTERPOLATION_MODE_NEAREST = 1;
-static const int64_t INTERPOLATION_MODE_BICUBIC = 2;
-static const int64_t PADDING_MODE_ZEROS = 0;
-static const int64_t PADDING_MODE_BORDER = 1;
-static const int64_t PADDING_MODE_REFLECTION = 2;
-static const int64_t ALIGN_CORNERS_FALSE = 0;
-static const int64_t ALIGN_CORNERS_TRUE = 1;
-static const int64_t MINI_IH_IW_MAX_SIZE = 65536;
-static const int64_t MINI_IH_IW_MAX_SIZE_FP16 = 32768;
-static const int64_t TILING_HW_FACTOR = 1024;
-static const int64_t CHANEL_LAST_TRUE = 1;
-static const int64_t CHANEL_LAST_FALSE = 0;
-const static int64_t SIZE_16 = 16;
-const static int64_t LENGTH_1024 = 1024;
-const static int64_t FULL_LOAD_TYPE = 2;
-const static int64_t X_MAX_HWC_FACTOR = 20480;  // 20k
-const static int64_t C1_X_COUNT = 4096;
-const static int64_t NUM_C32 = 32;
-const static int64_t MIN_HW_C32 = 8;
-const static int64_t TEMPLATE_C32 = 2;
-const static int64_t DOUBLE = 2;
 
 uint64_t GridSampleTiling::GetTilingKey() const
 {
@@ -132,7 +101,7 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     const char *pInterpolationMode = attrs->GetAttrPointer<char>(0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, pInterpolationMode);
     if (strcmp(pInterpolationMode, "bilinear") == 0) {
-        interpolationMode = INTERPOLATION_MODE_BILNEAR;
+        interpolationMode = INTERPOLATION_MODE_BILINEAR;
     } else if (strcmp(pInterpolationMode, "bicubic") == 0) {
         interpolationMode = INTERPOLATION_MODE_BICUBIC;
     } else if (strcmp(pInterpolationMode, "nearest") == 0) {
@@ -265,11 +234,16 @@ ge::graphStatus GridSampleTiling::GetPlatformInfo()
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
         coreNumVar = ascendcPlatform.GetCoreNumAiv();
     }
+    isDavid = compileInfo->isDavid;
     return ge::GRAPH_SUCCESS;
 }
 
 bool GridSampleTiling::IsCapable()
 {
+    if (isDavid && interpolationMode == INTERPOLATION_MODE_BILINEAR && channelLast == 0) {
+        OP_LOGD(context_->GetNodeName(),"GridSampleTiling template is not capabled, enter next template.");
+        return false;
+    }
     return true;
 }
 
@@ -335,7 +309,7 @@ ge::graphStatus GridSampleTiling::PostTiling()
 
     gert::TilingData *rawTilingData = context_->GetRawTilingData();
     OP_CHECK_IF(
-        rawTilingData == nullptr, OP_LOGE(context_->GetNodeType(), "GetRawTilingData failed."), ge::GRAPH_FAILED);
+        rawTilingData == nullptr, OP_LOGE(context_->GetNodeType(), "GetRawTilingData failed."), return ge::GRAPH_FAILED);
     OP_CHECK_IF(tilingData.GetDataSize() > rawTilingData->GetCapacity(),
         OP_LOGE(context_,
             "actual tiling data size %zu > context tiling data size %zu",
@@ -350,10 +324,7 @@ ge::graphStatus GridSampleTiling::PostTiling()
 
 static ge::graphStatus Tiling4GridSample(gert::TilingContext *context)
 {
-    // 初始化算子Tiling类
-    GridSampleTiling tiling(context);
-    // 执行算子tiling框架
-    return tiling.DoTiling();
+    return Ops::Cv::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context);
 }
 
 static ge::graphStatus TilingPrepare4GridSample(gert::TilingParseContext *context)
@@ -366,6 +337,7 @@ static ge::graphStatus TilingPrepare4GridSample(gert::TilingParseContext *contex
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAiv();
+    compileInfo->isDavid = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     OP_CHECK_IF((compileInfo->coreNum <= 0),
         OP_LOGE(
             context->GetNodeName(), "Get core num failed, core num: %u", static_cast<uint32_t>(compileInfo->coreNum)),
@@ -382,6 +354,7 @@ static ge::graphStatus TilingPrepare4GridSample(gert::TilingParseContext *contex
     OP_LOGD(context->GetNodeName(), "TilingPrepare4GridSample end.");
     return ge::GRAPH_SUCCESS;
 }
+REGISTER_TILING_TEMPLATE("GridSample", GridSampleTiling, 1000);
 
 IMPL_OP_OPTILING(GridSample).Tiling(Tiling4GridSample).TilingParse<GridSampleCompileInfo>(TilingPrepare4GridSample);
 }  // namespace optiling

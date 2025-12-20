@@ -1,11 +1,18 @@
 # aclnnUpsampleLinear1d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_linear1d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -26,22 +33,22 @@
     self.dim[2] / outputSize[0] & alignCorners=false
     \end{cases}
     $$
-   
+
     那么，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系: 
-    
+
     $$
     x' =\begin{cases}
     x * scale\_h & alignCorners=true \\
     MAX(0,{(x+0.5)*scale\_h-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
-   
+
     - 则有以下公式：
       $$
       {V(p_{x})} = {V(p_{x0})} * {lambda_{0}}  + {V(p_{x1})} * {lambda_{1}} 
@@ -50,9 +57,9 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleLinear1d”接口执行计算。
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleLinear1d”接口执行计算。
 
-```cpp
+```Cpp
 aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(
   const aclTensor   *self, 
   const aclIntArray *outputSize,
@@ -62,7 +69,8 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(
   uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
-```cpp
+
+```Cpp
 aclnnStatus aclnnUpsampleLinear1d(
   void          *workspace, 
   uint64_t       workspaceSize, 
@@ -74,14 +82,14 @@ aclnnStatus aclnnUpsampleLinear1d(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -142,7 +150,7 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
       <td>3</td>
@@ -171,15 +179,19 @@ aclnnStatus aclnnUpsampleLinear1d(
   </tbody>
   </table>
 
- 
+  - <term>Atlas 训练系列产品</term>：
+
+    入参`self`和出参`out`的数据类型不支持BFLOAT16。
+
+  
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -255,7 +267,7 @@ aclnnStatus aclnnUpsampleLinear1d(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -267,10 +279,12 @@ aclnnStatus aclnnUpsampleLinear1d(
   - 当alignCorners为False时：
     - 当入参scales的值小于等于0时，使用入参outputSize的参数值，即：$scales=  (self\_L / outputSize)$。
     - 当入参scales的值都大于0时，使用入参scales的参数值，即$outputSize=[floor(self\_L * scales)]$。
+- 确定性计算：
+  - aclnnUpsampleLinear1d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

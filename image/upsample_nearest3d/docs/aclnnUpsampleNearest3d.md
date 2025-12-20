@@ -1,40 +1,49 @@
 # aclnnUpsampleNearest3d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest3d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
+- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D, H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
 - 计算公式：
   - 核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 对于缩放之后的目标图像的点，计算距离最近的原始图像的点，后者的值直接复制给前者。
   - 具体计算逻辑：
+
     $$
-    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1),scalesD = outputSize[0] / self\_D
+    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1), \ scalesD = outputSize[0] / self\_D
     $$
 
     $$
-    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1),scalesH = outputSize[1] / self\_H
+    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1), \ scalesH = outputSize[1] / self\_H
     $$
 
     $$
-    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1),scalesW = outputSize[2] / self\_W
+    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1), \ scalesW = outputSize[2] / self\_W
     $$
 
     $$
     out(N, C, d_{dst},h_{dst}, w_{dst}) = self(N, C, d_{src},h_{src}, w_{src})
     $$
-    
-## 函数原型
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用`aclnnUpsampleNearest3dGetWorkspaceSize`接口获取入参并根据计算流程计算所需workspace大小，再调用`aclnnUpsampleNearest3d`接口执行计算。
 
-```cpp
+## 函数原型
+
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用`aclnnUpsampleNearest3dGetWorkspaceSize`接口获取入参并根据计算流程计算所需workspace大小，再调用`aclnnUpsampleNearest3d`接口执行计算。
+
+```Cpp
 aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(
   const aclTensor   *self, 
   const aclIntArray *outputSize, 
@@ -46,7 +55,7 @@ aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(
   aclOpExecutor    **executor)
 ```
 
-```cpp
+```Cpp
 aclnnStatus aclnnUpsampleNearest3d(
   void             *workspace, 
   uint64_t          workspaceSize, 
@@ -58,14 +67,14 @@ aclnnStatus aclnnUpsampleNearest3d(
 ## aclnnUpsampleNearest3dGetWorkspaceSize
 
 - **参数说明**
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -84,7 +93,7 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量。对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li><li>shape的C、D、H、W维的size大于0。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -93,7 +102,7 @@ aclnnStatus aclnnUpsampleNearest3d(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>指定输出out的Tensor大小，对应公式中的`outputSize`。</td>
+      <td>指定输出out在D、H、W维度上的空间大小。对应公式中的`outputSize`。</td>
       <td>size为3，各元素取值均大于零。</td>
       <td>INT64</td>
       <td>-</td>
@@ -129,18 +138,17 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>-</td>
       <td>-</td>
       <td>-</td>
-    </tr>            
+    </tr>
     <tr>
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中`out`的点p坐标。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>输入和输出的N、C必须相同。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>输入和输出shape的N、C轴必须相同。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
       <td>√</td>
     </tr>
-    <tr>            
     <tr>
       <td>workspaceSize</td>
       <td>输出</td>
@@ -164,18 +172,24 @@ aclnnStatus aclnnUpsampleNearest3d(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>：
+
+    入参`self`和出参`out`的数据类型不支持BFLOAT16、DOUBLE、UINT8。
+  - <term>Atlas 训练系列产品</term>：
+
+    入参`self`和出参`out`的数据类型不支持BFLOAT16、UINT8。
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-    
+
     入参`self`和出参`out`的数据类型不支持UINT8。
 
   
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -204,17 +218,14 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在D、H、W维度上的size不大于0。</td>
+      <td>self在C、D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
     </tr>
     <tr>
-      <td>self的C维度为0。</td>
-    </tr>
-    <tr>
       <td>out的shape中D、H、W不等于outputSize。</td>
-    </tr>              
+    </tr>
   </tbody></table>
 
 ## aclnnUpsampleNearest3d
@@ -258,14 +269,16 @@ aclnnStatus aclnnUpsampleNearest3d(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
-无
+
+- 确定性计算：
+  - aclnnUpsampleNearest3d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

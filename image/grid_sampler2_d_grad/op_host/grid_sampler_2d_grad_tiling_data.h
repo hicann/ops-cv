@@ -47,6 +47,8 @@ TILING_DATA_FIELD_DEF(uint32_t, usedCoreNumCast);
 TILING_DATA_FIELD_DEF(uint32_t, pNumPerCoreCast);
 TILING_DATA_FIELD_DEF(uint32_t, tailPNumCast);
 TILING_DATA_FIELD_DEF(uint32_t, castElement);
+TILING_DATA_FIELD_DEF(uint32_t, isDeterministic);
+TILING_DATA_FIELD_DEF(uint32_t, tailBNum);
 END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(GridSampler2DGrad, GridSampler2DGradTilingData)
 

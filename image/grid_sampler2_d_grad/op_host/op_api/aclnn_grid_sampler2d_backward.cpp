@@ -122,16 +122,14 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
     const auto &gradOutputShape = gradOutput->GetViewShape();
     const auto &inputShape = input->GetViewShape();
     const auto &gridShape = grid->GetViewShape();
-    const auto &inputGradShape = inputGrad->GetViewShape();
-    const auto &gridGradShape = gridGrad->GetViewShape();
     OP_CHECK_WRONG_DIMENSION(input, SPATIAL_DIM_NUM, return false);
     OP_CHECK_WRONG_DIMENSION(grid, SPATIAL_DIM_NUM, return false);
     OP_CHECK_WRONG_DIMENSION(gradOutput, SPATIAL_DIM_NUM, return false);
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != gradOutputShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input grid and gridOutput to have same batch size, but got input with \
-            shape [%s] grid with shape [%s] and gridOutput with shape [%s]",
+            "expect input grid and gradOutput to have same batch size, but got input with \
+            shape [%s] grid with shape [%s] and gradOutput with shape [%s]",
             op::ToString(inputShape).GetString(),
             op::ToString(gridShape).GetString(),
             op::ToString(gradOutputShape).GetString());
@@ -139,8 +137,8 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
     }
     if (inputShape.GetDim(SECOND_DIM) != gradOutputShape.GetDim(SECOND_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input and gridOutput to have same channel size, but got input with shape \
-            [%s] and gridOutput with shape [%s]",
+            "expect input and gradOutput to have same channel size, but got input with shape \
+            [%s] and gradOutput with shape [%s]",
             op::ToString(inputShape).GetString(),
             op::ToString(gradOutputShape).GetString());
         return false;
@@ -154,8 +152,8 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
     if (gridShape.GetDim(SECOND_DIM) != gradOutputShape.GetDim(THIRD_DIM) ||
         gridShape.GetDim(THIRD_DIM) != gradOutputShape.GetDim(FOURTH_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect grid and gridOutput to have same H and W size, but got grid with shape \
-            [%s] and gridOutput with shape [%s]",
+            "expect grid and gradOutput to have same H and W size, but got grid with shape \
+            [%s] and gradOutput with shape [%s]",
             op::ToString(gridShape).GetString(),
             op::ToString(gradOutputShape).GetString());
         return false;
@@ -175,7 +173,6 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
 static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
 {
     return input->GetDataType() != op::DataType::DT_DOUBLE && (interpolationMode == 0 || interpolationMode == 1) &&
-           (paddingMode == 0 || paddingMode == 1) &&
            GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B &&
            input->GetViewShape().GetDim(SECOND_DIM) <= MAX_CHANNEL_SIZE;
 }

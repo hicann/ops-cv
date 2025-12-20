@@ -15,8 +15,10 @@
 #ifndef OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_NEAREST3D_TILING_H
 #define OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_NEAREST3D_TILING_H
 
+#include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
+#include "tiling/platform/platform_ascendc.h"
 
 namespace optiling {
 
@@ -51,6 +53,7 @@ END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleNearest3d, UpsampleNearest3dTilingData)
 REGISTER_TILING_DATA_CLASS(UpsampleNearestExact3d, UpsampleNearest3dTilingData)
+ge::graphStatus Tiling4UpsampleNearest3dRegbase(gert::TilingContext* context);
 }  // namespace optiling
 
 #endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_NEAREST3D_TILING_H

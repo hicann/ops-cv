@@ -25,6 +25,7 @@ template <uint64_t schId, uint64_t format, uint64_t alignCorners, uint64_t halfP
 __global__ __aicore__ void resize_nearest_neighbor_v2(
     GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
 {
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     if (workspace == nullptr) {
         return;
     }

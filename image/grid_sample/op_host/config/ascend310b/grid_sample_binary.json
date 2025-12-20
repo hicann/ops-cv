@@ -1,0 +1,72 @@
+{
+    "op_type": "GridSample",
+    "op_list": [
+        {
+            "bin_filename": "GridSample_123a4650723a46883a86035d5750563a",
+            "inputs": [
+                {
+                    "name": "x",
+                    "index": 0,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ],
+                    "format_match_mode": "FormatAgnostic"
+                },
+                {
+                    "name": "grid",
+                    "index": 1,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ],
+                    "format_match_mode": "FormatAgnostic"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "y",
+                    "index": 0,
+                    "dtype": "float16",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [
+                        -2
+                    ],
+                    "format_match_mode": "FormatAgnostic"
+                }
+            ],
+            "attrs": [
+                {
+                    "name": "interpolation_mode",
+                    "dtype": "string",
+                    "value": ""
+                },
+                {
+                    "name": "padding_mode",
+                    "dtype": "string",
+                    "value": ""
+                },
+                {
+                    "name": "align_corners",
+                    "dtype": "bool",
+                    "value": false
+                },
+                {
+                    "name": "channel_last",
+                    "dtype": "bool",
+                    "value": false
+                },
+                {
+                    "name": "scheduler_mode",
+                    "dtype": "int",
+                    "value": 0
+                }
+            ]
+        }
+    ]
+}

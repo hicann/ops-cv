@@ -178,13 +178,18 @@ ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"), return ge::GRAPH_FAILED);
 
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
+    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+        return ge::GRAPH_FAILED);
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
+        return ge::GRAPH_FAILED);
     scale_h = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(SCALE_W_ATTR);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
 
     auto tempInputDesc = tilingContext->GetInputDesc(0);
-    OP_CHECK_IF(tempInputDesc == nullptr,
-        OP_LOGE(tilingContext->GetNodeName(), "InputDesc == nullptr"),
+    OP_CHECK_IF(tempInputDesc == nullptr, OP_LOGE(tilingContext->GetNodeName(), "InputDesc == nullptr"),
         return ge::GRAPH_FAILED);
 
     ge::DataType srcDtype = ge::DT_UNDEFINED;
@@ -205,15 +210,13 @@ ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
 
     input_shape = src_shape->GetOriginShape();
 
-    OP_CHECK_IF(CheckShapes() == false,
-        OP_LOGE(tilingContext->GetNodeName(), "CheckShapes() == false"),
+    OP_CHECK_IF(CheckShapes() == false, OP_LOGE(tilingContext->GetNodeName(), "CheckShapes() == false"),
         return ge::GRAPH_FAILED);
 
     tilingContext->SetTilingKey(1);
 
     auto compileInfo = reinterpret_cast<const UpsampleBicubic2dCompileInfo *>(tilingContext->GetCompileInfo());
-    OP_CHECK_IF(compileInfo == nullptr,
-        OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
+    OP_CHECK_IF(compileInfo == nullptr, OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
         return ge::GRAPH_FAILED);
     socVersionType = compileInfo->socVersionType;
     if (socVersionType == SOC_VERSION_310P) {
@@ -317,12 +320,12 @@ void UpsampleBicubic2dTiling::getTCubeTiling_w()
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
     mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX],
-        output_shapes[W_INDEX],
-        input_shapes[W_INDEX]);
+        output_shapes[W_INDEX], input_shapes[W_INDEX]);
     mmTiling_w.SetShape(
         input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], slide_size, singleCoreK_w);
 
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
+        OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_w Error, please Check inputShapes.");
         return;
     }
 }
@@ -338,6 +341,7 @@ void UpsampleBicubic2dTiling::getTCubeTiling_h()
     mmTiling_h.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
 
     if (mmTiling_h.GetTiling(tilingData.matmulTiling_h) == -1) {
+        OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_h Error, please Check inputShapes.");
         return;
     }
 }

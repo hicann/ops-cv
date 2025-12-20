@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 /*!
  * \file test_upsample_nearest3d_grad.cpp
  * \brief
@@ -198,9 +197,9 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
     tilingDatafromBin->matmulTilingD.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
-
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_nearest3d_grad, blockDim, gradOutput, gradInput, workspace, (uint8_t*)(tilingDatafromBin));
+
     fileName = "./upsample_nearest3d_grad_data/float32_output_upsample_nearest3d_grad.bin";
     WriteFile(fileName, gradInput, gradInputByteSize);
 

@@ -68,7 +68,7 @@ static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inpu
     return true;
 }
 
-bool ChecksInputElement(const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize)
+static bool ChecksInputElement(const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize)
 {
     int64_t outH = (*outputSize)[DIM_ZERO];
     int64_t outW = (*outputSize)[DIM_ONE];

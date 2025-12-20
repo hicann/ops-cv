@@ -1,11 +1,18 @@
 # aclnnUpsampleTrilinear3dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_trilinear3d_backward)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -16,10 +23,10 @@
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
-    
+
   - 具体计算逻辑：
     缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
-    
+
     $$
     scale\_d =\begin{cases}
     (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -43,16 +50,16 @@
     inputSize[4] / outputSize[2] & alignCorners=false
     \end{cases}
     $$
-   
+
     那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
-    
+
     $$
     x' =\begin{cases}
     x * scale\_d & alignCorners=true \\
     MAX(0,{(x+0.5)*scale\_d-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     $$
     y' =\begin{cases}
     y * scale\_h & alignCorners=true \\
@@ -66,9 +73,9 @@
     MAX(0,{(z+0.5)*scale\_w-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
@@ -80,8 +87,9 @@
       $$
       z_{0} =int(z'),z_{1} =int(z')+1, lambdc_{0} = z_{1}-z', lambdc_{1} =   1-lambdc_{0}
       $$
-    
+
     - 则有以下公式：
+
       $$
       {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}} 
       $$
@@ -94,7 +102,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleTrilinear3dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleTrilinear3dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize(
@@ -109,6 +117,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize(
   uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
+
 ```Cpp
 aclnnStatus aclnnUpsampleTrilinear3dBackward(
   void          *workspace, 
@@ -121,14 +130,14 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -217,7 +226,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>shape在N、C、D、H和W维度上的大小需与`inputSize`中给定的N、C、D、H和W维度上的空间大小一致。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>shape在N、C、D、H和W维度上的大小需与`inputSize`中给定的N、C、D、H和W维度上的空间大小一致。</li><li>数据类型、数据格式、shape与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -246,13 +255,17 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   </tbody>
   </table>
 
+  - <term>Atlas 训练系列产品</term>：
+  
+    参数`gradOut`和`gradInput`的数据类型不支持BFLOAT16。
+
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -344,7 +357,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -352,7 +365,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   - 每个维度的取值小于等于2^20。
   - 参数`gradInput`的N轴和C轴与`gradOut`保持一致。
   - 占用内存小于60G。内存占用的计算公式如下：
-    
+
     $$
     N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
     $$
@@ -360,7 +373,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
-  - N * C * gradOut_D * gradOut_H < 2^31
+  - N \* C \* gradOut_D \* gradOut_H < 2^31
   - gradInput_W * gradInput_H < 2^31
 - 参数outputSize的D轴、H轴、W轴与参数scalesD、scalesH、scalesW，在使用时二选一，即：
   - 当alignCorners为True时：
@@ -369,10 +382,12 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   - 当alignCorners为False时：
     - 当入参scalesD或入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
     - 当入参scalesD或入参scalesH或入参scalesW的值大于0时，使用入参scalesD、入参scalesH、入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_D * scalesD)$，或者$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+- 确定性计算：
+  - aclnnUpsampleTrilinear3dBackward默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

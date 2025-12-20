@@ -51,7 +51,7 @@ constexpr uint32_t CHECK_DIM_NUM = 5;
 constexpr uint32_t INTERPOLATION_MODE_INDEX = 0;
 constexpr uint32_t PADDING_MODE_INDEX = 1;
 constexpr uint32_t ALIGN_CORNERS_INDEX = 2;
-constexpr uint32_t INTERPOLATION_MODE_BILNEAR = 0;
+constexpr uint32_t INTERPOLATION_MODE_BILINEAR = 0;
 constexpr uint32_t INTERPOLATION_MODE_NEAREST = 1;
 constexpr uint32_t PADDING_MODE_ZEROS = 0;
 constexpr uint32_t PADDING_MODE_BORDER = 1;
@@ -62,7 +62,8 @@ constexpr uint32_t ALIGN_CORNERS_TRUE = 1;
 template <typename TilingData>
 class GridSampler3DGradTiling {
 public:
-    explicit GridSampler3DGradTiling(InputParamsInfo& param, const uint32_t inputCoreNum, const uint32_t inputUbSize)
+    explicit GridSampler3DGradTiling(InputParamsInfo& param, const uint32_t inputCoreNum, const uint32_t inputUbSize,
+        const uint32_t deterministic)
     {
         this->coreNum = inputCoreNum;
         this->batch = param.batch;
@@ -78,6 +79,7 @@ public:
         this->alignCorners = param.alignCorners;
         this->tilingKey = param.tilingKey;
         this->ubSize = FloorAlign(inputUbSize, BYTE_BLOCK);
+        this->isDeterministic = deterministic;
         return;
     }
 
@@ -135,21 +137,35 @@ private:
     uint32_t divideUbNum = 1;
     uint32_t extraUbSize = 0;
     uint32_t ubFactorElement = 0;
+    uint32_t isDeterministic = 0;
+    uint32_t tailBNum = 0;
 };
 
 template <typename TilingData>
 void GridSampler3DGradTiling<TilingData>::GetUsedCore()
 {
-    uint64_t mulNDHW = static_cast<uint64_t>(batch * gridD * gridH * gridW);
-    if (mulNDHW <= coreNum) {
-        usedCoreNum = mulNDHW;
-        pNumPerCore = static_cast<uint32_t>(1);
-        tailPNum = static_cast<uint32_t>(0);
-        return;
+    if (isDeterministic == 0) {
+        uint64_t mulNDHW = static_cast<uint64_t>(batch * gridD * gridH * gridW);
+        if (mulNDHW <= coreNum) {
+            usedCoreNum = mulNDHW;
+            pNumPerCore = static_cast<uint32_t>(1);
+            tailPNum = static_cast<uint32_t>(0);
+            return;
+        }
+        usedCoreNum = coreNum;
+        pNumPerCore = FloorDiv(mulNDHW, coreNum);
+        tailPNum = static_cast<uint32_t>(mulNDHW % usedCoreNum);
+    } else {
+        if (batch > coreNum) {
+            usedCoreNum = coreNum;
+            uint32_t bNumPerCore = FloorDiv(batch, usedCoreNum);
+            tailBNum = static_cast<uint32_t>(batch % usedCoreNum);
+            pNumPerCore = gridD * gridH * gridW * bNumPerCore;
+            return;
+        }
+        usedCoreNum = batch;
+        pNumPerCore = gridD * gridH * gridW;
     }
-    usedCoreNum = coreNum;
-    pNumPerCore = FloorDiv(mulNDHW, coreNum);
-    tailPNum = static_cast<uint32_t>(mulNDHW % usedCoreNum);
 }
 
 template <typename TilingData>
@@ -206,6 +222,8 @@ void GridSampler3DGradTiling<TilingData>::FillTilingData(TilingData* tilingData)
     tilingData->set_tailPNum(tailPNum);
     tilingData->set_ubFactorElement(ubFactorElement);
     tilingData->set_group(group);
+    tilingData->set_isDeterministic(isDeterministic);
+    tilingData->set_tailBNum(tailBNum);
 }
 
 template <typename TilingData>
@@ -217,9 +235,10 @@ void GridSampler3DGradTiling<TilingData>::GetTiling(TilingData* tilingData)
 }
 
 template <typename TilingData>
-void GetGridSampler3DGradTiling(TilingData* tilingData, InputParamsInfo& params, uint32_t coreNum, uint32_t ubSize)
+void GetGridSampler3DGradTiling(TilingData* tilingData, InputParamsInfo& params, uint32_t coreNum, uint32_t ubSize,
+    uint32_t deterministic)
 {
-    class GridSampler3DGradTiling<TilingData> tilingObj(params, coreNum, ubSize);
+    class GridSampler3DGradTiling<TilingData> tilingObj(params, coreNum, ubSize, deterministic);
     tilingObj.GetTiling(tilingData);
 }
 
@@ -267,7 +286,7 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     const char* pInterpolationMode = attrs->GetAttrPointer<char>(static_cast<std::uint32_t>(INTERPOLATION_MODE_INDEX));
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, pInterpolationMode);
     if (strcmp(pInterpolationMode, "bilinear") == 0) {
-        params.interpolation = INTERPOLATION_MODE_BILNEAR;
+        params.interpolation = INTERPOLATION_MODE_BILINEAR;
     } else if (strcmp(pInterpolationMode, "nearest") == 0) {
         params.interpolation = INTERPOLATION_MODE_NEAREST;
     } else {
@@ -308,12 +327,11 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
 static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilingContext)
 {
     OP_LOGI(tilingContext->GetNodeName(), "Tiling4GridSampler3DGradTiling start.");
-    int32_t ret = tilingContext->GetDeterministic();
-    if (ret == 1) {
-        OP_LOGW(
-            tilingContext->GetNodeName(), "GridSampler3DGrad does not support deterministic computation on AiCore.");
-    } else {
+    uint32_t deterministic = tilingContext->GetDeterministic();
+    if (deterministic == 0) {
         OP_LOGI(tilingContext->GetNodeName(), "Deterministic status is closed.");
+    } else {
+        OP_LOGI(tilingContext->GetNodeName(), "Deterministic status is open.");
     }
     auto compileInfo = reinterpret_cast<const Tiling4GridSampler3DGradCompileInfo*>(tilingContext->GetCompileInfo());
     uint64_t ubSizePlatForm = compileInfo->ubSizePlatForm;
@@ -321,7 +339,6 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
     uint32_t ubSize = static_cast<uint32_t>(ubSizePlatForm);
     uint32_t availableUb = ubSize - RESERVED_UB;
     uint32_t coreNum = 0;
-    OP_LOGI(tilingContext->GetNodeName(), "ubSizePlatForm: %lu, coreNum: %u", ubSizePlatForm, coreNum);
 
     ge::DataType inputDatatype = tilingContext->GetInputDesc(GRAD_INPUT_INDEX)->GetDataType();
     if (inputDatatype == ge::DT_FLOAT) {
@@ -329,6 +346,7 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
     } else {
         coreNum = static_cast<uint32_t>(1);
     }
+    OP_LOGI(tilingContext->GetNodeName(), "ubSizePlatForm: %lu, coreNum: %u", ubSizePlatForm, coreNum);
 
     InputParamsInfo params;
     if (GetInputInfo(tilingContext, params) != ge::GRAPH_SUCCESS) {
@@ -337,7 +355,7 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
     }
 
     GridSampler3DGradTilingData tilingData;
-    GetGridSampler3DGradTiling<GridSampler3DGradTilingData>(&tilingData, params, coreNum, availableUb);
+    GetGridSampler3DGradTiling<GridSampler3DGradTilingData>(&tilingData, params, coreNum, availableUb, deterministic);
 
     tilingContext->SetTilingKey(1);
     tilingContext->SetBlockDim(tilingData.get_blockNum());

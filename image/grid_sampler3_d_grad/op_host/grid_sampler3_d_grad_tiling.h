@@ -67,6 +67,8 @@ TILING_DATA_FIELD_DEF(uint32_t, pNumPerCore);
 TILING_DATA_FIELD_DEF(uint32_t, tailPNum);
 TILING_DATA_FIELD_DEF(uint32_t, group);
 TILING_DATA_FIELD_DEF(uint32_t, ubFactorElement);
+TILING_DATA_FIELD_DEF(uint32_t, isDeterministic);
+TILING_DATA_FIELD_DEF(uint32_t, tailBNum);
 
 END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(GridSampler3DGrad, GridSampler3DGradTilingData)

@@ -47,6 +47,9 @@ const aclTensor *UpsampleLinear1dNcdhw(const aclTensor *x, const aclTensor *outp
     }
     auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
         UpsampleLinear1d, OP_INPUT(x, outputSize), OP_OUTPUT(y), OP_ATTR(alignCorners, realScale));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleLinear1dAICORE ADD_TO_LAUNCHER_LIST_AICORE failed."),
+        return nullptr);
     return y;
 }
 }  // namespace l0op

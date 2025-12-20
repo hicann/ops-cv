@@ -65,6 +65,17 @@ static bool CheckInputElement(
         expectShape = op::Shape{batch, inputD, inputH, inputW, channels};
     }
     OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gradInput, expectShape, return false);
+    
+    OP_CHECK(batch < INT32_MAX && channels < INT32_MAX && outD < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld, %ld)",
+            INT32_MAX, batch, channels, outD, outH, outW),
+        return false);
+    OP_CHECK(batch < INT32_MAX && channels < INT32_MAX && inputD < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "InputSize should not be greater than %d, bug got inputSize[%ld, %ld, %ld, %ld, %ld]",
+            INT32_MAX, batch, channels, inputD , inputH , inputW),
+        return false);
     return true;
 }
 

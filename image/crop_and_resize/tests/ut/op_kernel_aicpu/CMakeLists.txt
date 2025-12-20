@@ -14,6 +14,3 @@ foreach(SUB_DIR ${CURRENT_SOURCE_DIRS})
         add_subdirectory(${SUB_DIR})
     endif()
 endforeach()
-
-if(UT_TEST_ALL OR CPU_UT)
-endif()

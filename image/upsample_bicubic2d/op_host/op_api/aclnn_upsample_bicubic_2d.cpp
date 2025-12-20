@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -80,7 +80,7 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
     auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc >= op::SocVersion::ASCEND910B && curSoc <= op::SocVersion::ASCEND910E ||
+    if ((curSoc >= op::SocVersion::ASCEND910B && curSoc <= op::SocVersion::ASCEND910E) ||
         curSoc == op::SocVersion::ASCEND910_93) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
     } else if (curSoc == op::SocVersion::ASCEND910_95) {
@@ -116,51 +116,47 @@ static bool CheckShapeValid(const aclTensor *self, const aclIntArray *outputSize
         return false);
     auto selfShape = self->GetViewShape();
     int64_t n = selfShape.GetDim(NCHW_DIM_ZERO);
-    int64_t c = 0;
-    int64_t inputH = 0;
-    int64_t inputW = 0;
+    int64_t c = selfShape.GetDim(NCHW_DIM_ONE);
+    int64_t inputH = selfShape.GetDim(NCHW_DIM_TWO);
+    int64_t inputW = selfShape.GetDim(NCHW_DIM_THREE);
     int64_t outputH = (*outputSize)[NCHW_DIM_ZERO];
     int64_t outputW = (*outputSize)[NCHW_DIM_ONE];
-    FVector<int64_t> fullOutputSize = {0, 0, 0, 0};
-    if (self->GetStorageFormat() == op::Format::FORMAT_NCHW || self->GetStorageFormat() == op::Format::FORMAT_ND) {
-        c = selfShape.GetDim(NCHW_DIM_ONE);
-        inputH = selfShape.GetDim(NCHW_DIM_TWO);
-        inputW = selfShape.GetDim(NCHW_DIM_THREE);
-        fullOutputSize = {n, c, outputH, outputW};
-    } else {
+    FVector<int64_t> fullOutputSize = {n, c, outputH, outputW};
+    if (self->GetStorageFormat() == op::Format::FORMAT_NHWC) {
         inputH = selfShape.GetDim(NCHW_DIM_ONE);
         inputW = selfShape.GetDim(NCHW_DIM_TWO);
         c = selfShape.GetDim(NCHW_DIM_THREE);
         fullOutputSize = {n, outputH, outputW, c};
     }
-
     OP_CHECK(c > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "Non-empty 4D data tensor expected but got a tensor with sizes %s.",
             op::ToString(selfShape).GetString()),
         return false);
-
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), "
-            "output (H: %ld, W: %ld)",
-            inputH,
-            inputW,
-            outputH,
-            outputW),
+            "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
+            inputH, inputW, outputH, outputW),
         return false);
-
     auto outShape = out->GetViewShape();
     for (size_t i = 0; i < DIM_LIMIT; ++i) {
         OP_CHECK(outShape.GetDim(i) == fullOutputSize[i],
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "The dim %zu of out should be %ld, but got %ld",
-                i,
-                fullOutputSize[i],
-                outShape.GetDim(i)),
+                i, fullOutputSize[i], outShape.GetDim(i)),
             return false);
     }
-
+    // 校验上边界
+    OP_CHECK(n < INT32_MAX && c < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)",
+            INT32_MAX, n, c, inputH, inputW),
+        return false);
+    OP_CHECK(outputH < INT32_MAX && outputW < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
+            INT32_MAX, outputH, outputW),
+        return false);
     return true;
 }
 
@@ -295,22 +291,11 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeAscend910_95(const aclTensor *
         return ACLNN_SUCCESS;
     }
 
-    auto selfCopy = (uniqueExecutor.get())->CreateView(self, self->GetViewShape(), self->GetViewOffset());
-    CHECK_RET(selfCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    auto outCopy = (uniqueExecutor.get())->CreateView(out, out->GetViewShape(), out->GetViewOffset());
-    CHECK_RET(outCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
     // 固定写法，将输入self转换成连续的tensor
-    auto selfContiguous = l0op::Contiguous(selfCopy, uniqueExecutor.get());
+    auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    auto outContiguous = l0op::Contiguous(outCopy, uniqueExecutor.get());
+    auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-    if (self->GetStorageFormat() == op::Format::FORMAT_ND) {
-        selfContiguous = l0op::ReFormat(selfContiguous, static_cast<op::Format>(ACL_FORMAT_NCHW));
-        outContiguous = l0op::ReFormat(outContiguous, static_cast<op::Format>(ACL_FORMAT_NCHW));
-    }
-
     const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
     const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, NCHW_DIM_TWO);
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -319,15 +304,8 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeAscend910_95(const aclTensor *
         l0op::ResizeBicubicV2(selfContiguous, outputSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
     CHECK_RET(resizeOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto resizeOutCopy =
-        (uniqueExecutor.get())->CreateView(resizeOut, resizeOut->GetViewShape(), resizeOut->GetViewOffset());
-    CHECK_RET(resizeOutCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    if (out->GetStorageFormat() == op::Format::FORMAT_ND) {
-        resizeOutCopy = const_cast<aclTensor *>(l0op::ReFormat(resizeOutCopy, static_cast<op::Format>(ACL_FORMAT_ND)));
-    }
-
     // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
-    auto viewCopyResult = l0op::ViewCopy(resizeOutCopy, out, uniqueExecutor.get());
+    auto viewCopyResult = l0op::ViewCopy(resizeOut, out, uniqueExecutor.get());
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，获取计算过程中需要使用的workspace大小

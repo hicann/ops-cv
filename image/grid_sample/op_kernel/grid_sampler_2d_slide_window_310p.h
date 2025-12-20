@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file grid_sampler_2d_slide_window_310p.h
@@ -848,36 +848,8 @@ template <typename T>
 __aicore__ inline void GridSampler2DSlideWindow310P<T>::OutTranspose(
     int32_t channelAlign, LocalTensor<float> xLocal, LocalTensor<float> outValueUb)
 {
-    uint64_t dstList[16];
-    uint64_t srcList[16];
-
-    event_t eventVS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
-    event_t eventSV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
-
-    TransDataTo5HDParams transDataParams;
-    transDataParams.srcHighHalf = false;
-    transDataParams.dstHighHalf = false;
-    transDataParams.repeatTimes = channelAlign * NUM_4 / BLOCK_NUM;
-    transDataParams.srcRepStride = 1;
-    transDataParams.dstRepStride = TRANSE_REP_STRIDE;
-    for (int32_t j = 0; j < NUM_8; j++) {
-        for (int32_t i = 0; i < NUM_8; i++) {
-            dstList[i * NUM_2] = (uint64_t)(outValueUb[i * TRANSE_REP_STRIDE + j * NUM_16].GetPhyAddr());
-            dstList[i * NUM_2 + 1] =
-                (uint64_t)(outValueUb[i * TRANSE_REP_STRIDE + NUM_8 + j * NUM_16].GetPhyAddr());
-        }
-
-        for (int32_t i = 0; i < NUM_16; i++) {
-            srcList[i] =
-                (uint64_t)(xLocal[i * channelAlign * NUM_4 + j * NUM_16 * channelAlign * NUM_4].GetPhyAddr());
-        }
-
-        SetFlag<HardEvent::S_V>(eventSV);
-        WaitFlag<HardEvent::S_V>(eventSV);
-        TransDataTo5HD<float>(dstList, srcList, transDataParams);
-        SetFlag<HardEvent::V_S>(eventVS);
-        WaitFlag<HardEvent::V_S>(eventVS);
-    }
+    TransposeParamsExt transposeParams {1, (uint16_t)(channelAlign * 4), 1, (uint16_t)TRANSE_REP_STRIDE, TransposeType::TRANSPOSE_NHWC2NCHW};
+    Transpose<float>(outValueUb, xLocal, xLocal.ReinterpretCast<uint8_t>(), transposeParams);
 }
 
 template <typename T>

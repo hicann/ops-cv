@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include "aclnn_upsample_linear_1d.h"
 #include <cmath>
 #include "upsample_linear1d.h"
@@ -77,7 +76,6 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 
 static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclIntArray *outputSize, const double scale)
 {
-    size_t selfDimNum = self->GetViewShape().GetDimNum();
     size_t outDimNum = out->GetViewShape().GetDimNum();
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
@@ -249,14 +247,13 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
         CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // scale转为aclFloatArray
-        auto sclaesRes = (scale < 0) ? 0 : scale;
-        const float scalesList[] = {static_cast<float>(sclaesRes)};
+        auto scalesRes = (scale < 0) ? 0 : scale;
+        const float scalesList[] = {static_cast<float>(scalesRes)};
         const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, 1);
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         auto socVer = GetCurrentPlatformInfo().GetSocVersion();
         auto dataType = selfRefContiguous->GetDataType();
-        auto inputShape = selfRefContiguous->GetViewShape();
         const aclTensor *ResizeDOut;
 
         if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&

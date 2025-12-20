@@ -72,7 +72,8 @@ static std::map<ge::DataType, uint64_t> TILINGKEY_MAP = {{ge::DT_FLOAT16, 1}, {g
 template <typename TilingData, int32_t dataTypeLen>
 class GridSampler2DGradTiling {
 public:
-    explicit GridSampler2DGradTiling(InputParamsInfo& param, const uint32_t inputCoreNum, const uint32_t inputUbSize)
+    explicit GridSampler2DGradTiling(InputParamsInfo& param, const uint32_t inputCoreNum, const uint32_t inputUbSize,
+        const uint32_t deterministic)
     {
         this->batch = param.batch;
         this->coreNum = inputCoreNum;
@@ -88,6 +89,7 @@ public:
         this->ubSize = FloorAlign(inputUbSize, BYTE_BLOCK);
         this->dataTypeSize = dataTypeLen;
         this->elementsPerBlock = BYTE_BLOCK / dataTypeSize;
+        this->isDeterministic = deterministic;
         return;
     }
 
@@ -154,21 +156,35 @@ private:
     uint8_t elementsPerBlock = 0;
     uint32_t divideUbNum = 1;
     uint32_t extraUbSize = 0;
+    uint32_t isDeterministic = 0;
+    uint32_t tailBNum = 0;
 };
 
 template <typename TilingData, int32_t dataTypeLen>
 void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
 {
-    uint64_t mulBHW = static_cast<uint64_t>(batch) * static_cast<uint64_t>(gridH) * static_cast<uint64_t>(gridW);
-    if (mulBHW <= this->coreNum) {
-        this->usedCoreNum = mulBHW;
-        this->pNumPerCore = 1;
-        this->tailPNum = 0;
-        return;
+    if (isDeterministic == 0) {
+        uint64_t mulBHW = static_cast<uint64_t>(batch) * static_cast<uint64_t>(gridH) * static_cast<uint64_t>(gridW);
+        if (mulBHW <= this->coreNum) {
+            this->usedCoreNum = mulBHW;
+            this->pNumPerCore = 1;
+            this->tailPNum = 0;
+            return;
+        }
+        this->pNumPerCore = FloorDiv(mulBHW, this->coreNum);
+        this->usedCoreNum = this->coreNum;
+        this->tailPNum = mulBHW % usedCoreNum;
+    } else {
+        if (batch > coreNum) {
+            usedCoreNum = coreNum;
+            uint32_t bNumPerCore = FloorDiv(batch, usedCoreNum);
+            tailBNum = static_cast<uint32_t>(batch % usedCoreNum);
+            pNumPerCore = gridH * gridW * bNumPerCore;
+            return;
+        }
+        usedCoreNum = batch;
+        pNumPerCore = gridH * gridW;
     }
-    this->pNumPerCore = FloorDiv(mulBHW, this->coreNum);
-    this->usedCoreNum = this->coreNum;
-    this->tailPNum = mulBHW % usedCoreNum;
 }
 
 template <typename TilingData, int32_t dataTypeLen>
@@ -252,6 +268,8 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::FillTilingData(TilingData
     tilingData->set_pNumPerCoreCast(pNumPerCoreCast);
     tilingData->set_tailPNumCast(tailPNumCast);
     tilingData->set_castElement(castElement);
+    tilingData->set_isDeterministic(isDeterministic);
+    tilingData->set_tailBNum(tailBNum);
 }
 
 template <typename TilingData, int32_t dataTypeLen>
@@ -264,9 +282,10 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetTiling(TilingData* til
 }
 
 template <typename TilingData, int32_t dataTypeLen>
-void GetGridSampler2DGradTiling(TilingData* tilingData, InputParamsInfo& params, uint32_t coreNum, uint32_t ubSize)
+void GetGridSampler2DGradTiling(TilingData* tilingData, InputParamsInfo& params, uint32_t coreNum, uint32_t ubSize,
+    uint32_t deterministic)
 {
-    class GridSampler2DGradTiling<TilingData, dataTypeLen> tilingObj(params, coreNum, ubSize);
+    class GridSampler2DGradTiling<TilingData, dataTypeLen> tilingObj(params, coreNum, ubSize, deterministic);
     tilingObj.GetTiling(tilingData);
 }
 
@@ -329,14 +348,15 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
         return ge::GRAPH_FAILED;
     }
     const string paddingMode = string(attrs->GetAttrPointer<char>(PADDING_MODE_INDEX));
-    if (paddingMode != "zeros" && paddingMode != "border") {
-        OP_LOGW(tilingContext->GetNodeName(), "%s is not supported", paddingMode.c_str());
-        return ge::GRAPH_FAILED;
-    }
     bool alignCorners = *tilingContext->GetAttrs()->GetAttrPointer<bool>(ALIGN_CORNERS_INDEX);
     params.interpolation = INTER_MODE_MAP[interpolationMode];
     params.padding = PADDING_MODE_MAP[paddingMode];
     params.alignCorners = ALIGN_MODE_MAP[alignCorners];
+
+    if (params.padding < ZEROS || params.padding > REFLECTION) {
+        OP_LOGW(tilingContext->GetNodeName(), "paddingMode %d is not supported", params.padding);
+        return ge::GRAPH_FAILED;
+    }
 
     size_t xWorkspaceSize = params.batch * params.channel * params.height * params.width * sizeof(float);
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
@@ -370,12 +390,11 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
 static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingContext)
 {
     OP_LOGI(tilingContext->GetNodeName(), "Tiling4GridSampler2DGrad start.");
-    int32_t ret = tilingContext->GetDeterministic();
-    if (ret == 1) {
-        OP_LOGW(
-            tilingContext->GetNodeName(), "GridSampler2DGrad does not support deterministic computation on AiCore.");
-    } else {
+    uint32_t deterministic = tilingContext->GetDeterministic();
+    if (deterministic == 0) {
         OP_LOGI(tilingContext->GetNodeName(), "Deterministic status is closed.");
+    } else {
+        OP_LOGI(tilingContext->GetNodeName(), "Deterministic status is open.");
     }
     // get corenum and ubsize
     auto compileInfo = reinterpret_cast<const Tiling4GridSampler2DGradCompileInfo*>(tilingContext->GetCompileInfo());
@@ -401,13 +420,13 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
     GridSampler2DGradTilingData tilingData;
     if (inputDatatype == ge::DT_FLOAT16) {
         GetGridSampler2DGradTiling<GridSampler2DGradTilingData, DTYPE_SIZE_16>(
-            &tilingData, params, coreNum, availableUb);
+            &tilingData, params, coreNum, availableUb, deterministic);
     } else if (inputDatatype == ge::DT_FLOAT) {
         GetGridSampler2DGradTiling<GridSampler2DGradTilingData, DTYPE_SIZE_32>(
-            &tilingData, params, coreNum, availableUb);
+            &tilingData, params, coreNum, availableUb, deterministic);
     } else if (inputDatatype == ge::DT_BF16) {
         GetGridSampler2DGradTiling<GridSampler2DGradTilingData, DTYPE_SIZE_16>(
-            &tilingData, params, coreNum, availableUb);
+            &tilingData, params, coreNum, availableUb, deterministic);
     }
     OP_CHECK_IF(
         tilingData.get_ubFactorElement() <= 0,

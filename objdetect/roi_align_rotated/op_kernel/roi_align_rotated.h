@@ -15,7 +15,6 @@
 #ifndef _ROI_ALIGN_ROTATED_H_
 #define _ROI_ALIGN_ROTATED_H_
 
-#include <cmath>
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "kernel_utils.h"

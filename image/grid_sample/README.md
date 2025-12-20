@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -132,6 +137,14 @@
     <tr>
   </tbody></table>
 
+- <term>Atlas 推理系列产品 </term>：
+
+  - 2D场景下，需要同时满足以下条件：
+    - 输入和输出的数据类型仅支持FLOAT32。
+    - 属性`interpolation_mode`需要设置为`bilinear`。
+    - 属性`padding_mode`设置为`zeros`。
+    - 输入`x`的C轴的值为32或者(C轴的大小 * H轴的大小 * W轴的大小) < 20k。
+  - 不支持3D场景。
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>：2D场景下，数据类型不支持BFLOAT16。
 

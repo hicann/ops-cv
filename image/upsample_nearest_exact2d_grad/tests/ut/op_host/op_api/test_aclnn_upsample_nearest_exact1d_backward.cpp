@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include "gtest/gtest.h"
 #include "../../../../op_host/op_api/aclnn_upsample_nearest_exact1d_backward.h"
 #include "op_api_ut_common/tensor_desc.h"

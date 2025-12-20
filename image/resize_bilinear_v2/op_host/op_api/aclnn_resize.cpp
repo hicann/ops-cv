@@ -37,10 +37,6 @@ extern "C" {
 #endif
 
 static constexpr size_t NCHW_DIM_NUM = 4;
-static constexpr size_t DIM_BATCH = 0;
-static constexpr size_t DIM_CHANNEL = 1;
-static constexpr size_t DIM_HEIGHT = 2;
-static constexpr size_t DIM_WIDTH = 3;
 
 static constexpr size_t DIM_BATCH_NCHW = 0;
 static constexpr size_t DIM_CHANNEL_NCHW = 1;
@@ -51,6 +47,7 @@ static constexpr size_t DIM_HEIGHT_NHWC = 1;
 static constexpr size_t DIM_WIDTH_NHWC = 2;
 static constexpr size_t DIM_CHANNEL_NHWC = 3;
 static constexpr size_t SCALES_SIZE = 2;
+static constexpr double EPSILON = 1e-5;
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
@@ -58,7 +55,7 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA = {
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA_ASCEND910_95 = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
-static bool CheckShape(const aclTensor *self, const aclFloatArray *scales, const aclTensor *out, bool extendFlag)
+static bool CheckShape(const aclTensor *self, const aclFloatArray *scales, const aclTensor *out)
 {
     // The scale parameter is retained for interface consistency and is currently not used in computations.
     auto selfShape = self->GetViewShape();
@@ -78,34 +75,48 @@ static bool CheckShape(const aclTensor *self, const aclFloatArray *scales, const
         return false;
     }
 
+    return true;
+}
+
+static bool CheckInputElement(const aclTensor *self, const aclFloatArray *scales, const aclTensor *out, bool extendFlag)
+{
+    // The scale parameter is retained for interface consistency and is currently not used in computations.
+    auto selfShape = self->GetViewShape();
+    auto outShape = out->GetViewShape();
+
     size_t dimBatch = DIM_BATCH_NCHW;
-    size_t dimChanel = DIM_CHANNEL_NCHW;
+    size_t dimChanel = DIM_CHANNEL_NCHW;    
     size_t dimHeight = DIM_HEIGHT_NCHW;
     size_t dimWidth = DIM_WIDTH_NCHW;
+
     if (extendFlag && self->GetStorageFormat() == op::Format::FORMAT_NHWC) {
         dimBatch = DIM_BATCH_NHWC;
-        dimChanel = DIM_CHANNEL_NHWC;
+        dimChanel = DIM_CHANNEL_NHWC;        
         dimHeight = DIM_HEIGHT_NHWC;
         dimWidth = DIM_WIDTH_NHWC;
-    }
+    }    
 
     if (selfShape.GetDim(dimBatch) != outShape.GetDim(dimBatch) ||
         selfShape.GetDim(dimChanel) != outShape.GetDim(dimChanel)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of batch or channel is not matched.");
         return false;
     }
-
+    
     if (extendFlag) {
-        int64_t dstDimHeight = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(dimHeight)) * static_cast<double>((*scales)[dimHeight]));
-        if (outShape.GetDim(dimHeight) != dstDimHeight) {
+        int64_t dstDimHeightMax = static_cast<int64_t>(
+            static_cast<double>(selfShape.GetDim(dimHeight)) * (static_cast<double>((*scales)[dimHeight]) + EPSILON));
+        int64_t dstDimHeightMin = static_cast<int64_t>(
+            static_cast<double>(selfShape.GetDim(dimHeight)) * (static_cast<double>((*scales)[dimHeight]) - EPSILON));            
+        if ((outShape.GetDim(dimHeight) < dstDimHeightMin) || (outShape.GetDim(dimHeight) > dstDimHeightMax)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of height is not matched.");
             return false;
         }
 
-        int64_t dstDimWidth = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(dimWidth)) * static_cast<double>((*scales)[dimWidth]));
-        if (outShape.GetDim(dimWidth) != dstDimWidth) {
+        int64_t dstDimWidthMax = static_cast<int64_t>(
+            static_cast<double>(selfShape.GetDim(dimWidth)) * (static_cast<double>((*scales)[dimWidth]) + EPSILON));
+        int64_t dstDimWidthMin = static_cast<int64_t>(
+            static_cast<double>(selfShape.GetDim(dimWidth)) * (static_cast<double>((*scales)[dimWidth]) - EPSILON));            
+        if ((outShape.GetDim(dimWidth) < dstDimWidthMin) || (outShape.GetDim(dimWidth) > dstDimWidthMax)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of width is not matched.");
             return false;
         }
@@ -182,8 +193,10 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckDtypeValid(self, out, extendFlag), ACLNN_ERR_PARAM_INVALID);
     // 4. 检查输入格式是否为NCHW
     CHECK_RET(CheckFormat(self, out, extendFlag), ACLNN_ERR_PARAM_INVALID);
-    // 5. 检查输入tensor的shape
-    CHECK_RET(CheckShape(self, scales, out, extendFlag), ACLNN_ERR_PARAM_INVALID);
+    // 5. 检查输入元素是否合法
+    CHECK_RET(CheckInputElement(self, scales, out, extendFlag), ACLNN_ERR_PARAM_INVALID);    
+    // 6. 检查输入tensor的shape
+    CHECK_RET(CheckShape(self, scales, out), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;
 }
 
@@ -232,7 +245,11 @@ static const aclTensor *CreateSizesAscend910_95(
 
 static bool GetExtendPathFlag()
 {
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
+    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95 ||
+        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910B   ||
+        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_93 ||
+        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910    ||
+        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND310P) {
         return true;
     }
     return false;
@@ -259,13 +276,13 @@ aclnnStatus aclnnResizeGetWorkspaceSize(const aclTensor *self, const aclFloatArr
     auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    if (extendFlag) {
+    if (extendFlag && op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
         auto sizes = CreateSizesAscend910_95(self, scales, uniqueExecutor.get());
         CHECK_RET(sizes != nullptr, ACLNN_ERR_INNER_NULLPTR);
         // 不必转到5HD，直接执行L0算子 带scales参数
         const aclTensor *resizeRet = nullptr;
         if (strncmp(mode, "nearest", strlen("nearest")) == 0) {
-            resizeRet = l0op::ResizeNearestNeighborV2(self, sizes, nullptr, outContiguous, uniqueExecutor.get());
+            resizeRet = l0op::ResizeNearestNeighborV2(self, sizes, nullptr, false, false, outContiguous, uniqueExecutor.get());
         } else {
             resizeRet = l0op::ResizeBilinearV2With4d(self, sizes, false, nullptr, outContiguous, uniqueExecutor.get());
         }
@@ -286,7 +303,7 @@ aclnnStatus aclnnResizeGetWorkspaceSize(const aclTensor *self, const aclFloatArr
         // 执行L0算子
         const aclTensor *resizeRet = nullptr;
         if (strncmp(mode, "nearest", strlen("nearest")) == 0) {
-            resizeRet = l0op::ResizeNearestNeighborV2(selfData, sizes, nullptr, outData, uniqueExecutor.get());
+            resizeRet = l0op::ResizeNearestNeighborV2(selfData, sizes, nullptr, false, false, outData, uniqueExecutor.get());
         } else if (strncmp(mode, "bilinear", strlen("bilinear")) == 0) {
             resizeRet = l0op::ResizeBilinearV2(selfData, sizes, false, outData, uniqueExecutor.get());
         }

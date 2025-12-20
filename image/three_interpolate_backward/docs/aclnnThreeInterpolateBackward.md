@@ -1,14 +1,21 @@
 # aclnnThreeInterpolateBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/three_interpolate_backward)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 函数原型
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnThreeInterpolateBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnThreeInterpolateBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnThreeInterpolateBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnThreeInterpolateBackward”接口执行计算。
 
 
 * `aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor *grad_x, const aclTensor *idx, const aclTensor *weight, int m, aclTensor *grad_y, uint64_t *workspaceSize, aclOpExecutor **executor)`
@@ -30,17 +37,17 @@
 
 - **参数说明：**
 
-  - grad_x（aclTensor\*, 计算输入）：网络反向传播前一步的梯度值，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, c, n），支持[非连续的Tensor](../../../docs/context/非连续的Tensor.md)，[数据格式](../../../docs/context/数据格式.md)支持NCHW。
-  - idx（aclTensor\*, 计算输入）：目标特征的三个最近临特征索引，Device侧的aclTensor。数据类型支持INT32、INT64，shape支持（b, n, 3）。支持[非连续的Tensor](../../../docs/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/context/数据格式.md)支持ND。
-  - weight（aclTensor\*, 计算输入）：目标特征的三个最近临特征权重，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, n, 3）。支持[非连续的Tensor](../../../docs/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/context/数据格式.md)支持ND。
+  - grad_x（aclTensor\*, 计算输入）：网络反向传播前一步的梯度值，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, c, n），支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。
+  - idx（aclTensor\*, 计算输入）：目标特征的三个最近邻特征索引，Device侧的aclTensor。数据类型支持INT32、INT64，shape支持（b, n, 3）。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
+  - weight（aclTensor\*, 计算输入）：目标特征的三个最近邻特征权重，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, n, 3）。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
   - m（uint32_t\*, 计算输入）：输入特征最低维度的大小，用于指导infershape的时候推导grad_y的形状。数据类型支持INT32。
-  - grad_y（aclTensor\*, 计算输出）：梯度计算结果，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, c, m）。支持[非连续的Tensor](../../../docs/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/context/数据格式.md)支持NCHW。
+  - grad_y（aclTensor\*, 计算输出）：梯度计算结果，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, c, m）。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。
   - workspaceSize（uint64_t\*, 出参）: 返回需要在Device侧申请的workspace大小。
   - executor（aclOpExecutor\*\*, 出参）: 返回op执行器，包含了算子计算流程。 
 
 - **返回值：**
 
-  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ```
 第一段接口完成入参校验，出现以下场景时报错：
@@ -59,14 +66,16 @@
 
 - **返回值：**
 
-  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
-idx中的取值应该小于m。
+- idx中的取值应该小于m。
+- 确定性计算：
+  - aclnnThreeInterpolateBackward默认非确定性实现，不支持配置开启。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```
 #include <iostream>

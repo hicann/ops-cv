@@ -17,7 +17,6 @@
 #define UPSAMPLE_NEAREST_EXACT2D_GRAD
 
 #include <type_traits>
-#include <cmath>
 #include "kernel_operator.h"
 #include "lib/matmul_intf.h"
 

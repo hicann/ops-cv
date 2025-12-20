@@ -1,11 +1,18 @@
 # aclnnUpsampleLinear1dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -26,23 +33,24 @@
     inputSize[2] / outputSize[0] & alignCorners=false
     \end{cases}
     $$
-   
-    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系: <!--这个点是不是只有x啊？-->
-    
+
+    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：<!--这个点是不是只有x啊？-->
+
     $$
     x' =\begin{cases}
     x * scale & alignCorners=true \\
     MAX(0,{(x+0.5)*scale-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
-   
+
     - 则有以下公式：
+
       $$
       {V(p_{x})} = {V(p_{x0})} * {lambda_{0}} * {lambdb_{0}}+ {V(p_{x1})} * {lambda_{1}} * {lambdb_{0}}
       $$
@@ -55,9 +63,9 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleLinear1dBackward”接口执行计算。
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleLinear1dBackward”接口执行计算。
 
-```cpp
+```Cpp
 aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(
   const aclTensor   * gradOut, 
   const aclIntArray * outputSize, 
@@ -68,7 +76,8 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(
   uint64_t          * workspaceSize, 
   aclOpExecutor    ** executor)
 ```
-```cpp
+
+```Cpp
 aclnnStatus aclnnUpsampleLinear1dBackward(
   void          * workspace, 
   uint64_t        workspaceSize, 
@@ -80,14 +89,14 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -135,10 +144,10 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     <tr>
       <td>alignCorners</td>
       <td>输入</td>
-      <td>bool类型参数，对应公式中的`alignCorners`。</td>
+      <td>BOOL类型参数，对应公式中的`alignCorners`。</td>
       <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；
       <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
-      <td>-</td>
+      <td>BOOL</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -147,7 +156,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>scales</td>
       <td>输入</td>
       <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
-      <td>-</li></ul></td>
+      <td>取值不大于500。</li></ul></td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -157,7 +166,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`的数据类型、数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL</td>
       <td>3</td>
@@ -185,19 +194,23 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     </tr>
   </tbody>
   </table>
+
+  - <term>Atlas 训练系列产品</term>:
+
+    入参`gradOut`和出参`out`的数据类型仅支持FLOAT32、FLOAT16。
   
   - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>:
-    
-    入参`gradOut`：当gradOut的shape与inputSize的shape不相同时，数据类型仅支持FLOAT32、FLOAT16。
+
+    入参`gradOut`：当gradOut的shape对应轴的值与inputSize对应轴的值不相同时，数据类型仅支持FLOAT32、FLOAT16。
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -215,8 +228,8 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="13">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="13">161002</td>
+      <td rowspan="14">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="14">161002</td>
     </tr>
     <tr>
       <td>gradOut的数据类型不在支持的范围之内。</td>
@@ -233,17 +246,17 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     </tr>
     <tr><td>inputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
-    </tr>
     <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>
     <tr><td>gradOut和out的N/C轴的维度大小不相等。</td>
     </tr>
     <tr><td>out的shape在各个维度上的大小与inputSize里对应元素值大小不同。</td>
     </tr>
+    <tr><td>scales的取值不满足约束。</td>
+    </tr>
   </tbody></table>
 
-## aclnnUpsampleLinear1d
+## aclnnUpsampleLinear1dBackward
 
 - **参数说明：**
 
@@ -284,7 +297,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -292,7 +305,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`gradOut`保持一致。
   - 占用内存小于60G。内存占用的计算公式如下：
-    
+
     $$
     (gradOut\_L + out\_L + out\_L) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
@@ -310,11 +323,12 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   - 当alignCorners为False：
     - 当入参scales的值小于等于0时，使用入参outputSize的参数值，即：$scales=(inputSize\_L / outputSize)$。
     - 当入参scales的值大于0时，当$outputSize=[floor(inputSize\_L * scales)]$不成立时，使用入参outputSize的参数值；否则使用入参scales的值。
-
+- 确定性计算：
+  - aclnnUpsampleLinear1dBackward默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

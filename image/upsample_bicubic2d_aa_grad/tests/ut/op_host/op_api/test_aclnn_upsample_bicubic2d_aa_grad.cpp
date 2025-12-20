@@ -26,6 +26,23 @@ protected:
     }
 };
 
+// // gradOutput nullptr
+// TEST_F(l2_upsample_bicubic2d_aa_grad_test, l2_upsample_bicubic2d_aa_grad_test_gradOutput_nullptr) {
+//   auto output_size_desc = IntArrayDesc(vector<int64_t>{5, 5});
+//   auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+//   auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCHW);
+//   bool align_corners = false;
+//   const double_t scales_h = 0.0;
+//   const double_t scales_w = 0.0;
+
+//   auto ut = OP_API_UT(aclnnUpsampleBicubic2dAAGrad,
+//                       INPUT(nullptr, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+//                       OUTPUT(out_desc));
+//   uint64_t workspace_size = 0;
+//   aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+//   EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
+// }
+
 // out nullptr
 TEST_F(l2_upsample_bicubic2d_aa_grad_test, l2_upsample_bicubic2d_aa_grad_test_out_nullptr)
 {

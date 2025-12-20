@@ -8,9 +8,6 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
 
-#
-
-
 if (UT_TEST_ALL OR OP_KERNEL_UT)
     # 需要将Tiling依赖的文件添加到CMakeLists.txt中
     # set(elewise_common_tiling_files
@@ -19,6 +16,7 @@ if (UT_TEST_ALL OR OP_KERNEL_UT)
     # 算子自己的tiling文件路径
     set(upsample_nearest_exact3d_tiling_files
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../../upsample_nearest3d/op_host/upsample_nearest3d_tiling.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../../upsample_nearest3d/op_host/upsample_nearest3d_tiling_arch35.cpp
         )
     # 使用AddOpTestCase
     # param1：算子名称，以kernel方式命名

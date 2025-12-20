@@ -22,22 +22,22 @@ namespace ge {
 
 *@par Inputs:
 *One inputs, including: \n
-*x: A 5-D input tensor. The format must be NCDHW. Must be one of the following types:
-* float16, float32, float64, uint8, bfloat16. \n
+*x: A 5-D input tensor. The format must be NCDHW. Must be one of the following dtype:
+* float16, float32, double, uint8, bfloat16. \n
 
 *@par Attributes:
 *@li output_size: An optional listInt. Defaults to none.
 * Contain 3 elements: output_depth, output_height, output_width. The number of elements of 'output_size'
-* should be the same as the rank of input 'x'. Only one of 'scales' and 'output_size' can be specified. \n
+* must be three.And it must have the same d h w dimensions as the output y. \n
 *@li scales: An optional listFloat. Defaults to none.
 * The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-* The number of elements of 'scales' should be the same as the rank of input 'x'. One of 'scales' and
-* 'output_size' must be specified and it is an error if both are specified. \n
+* The number of elements of 'scales' must be three.
+*At least one of scales and output_size must exist; both cannot be None.
 
 *@par Outputs:
-*y: A 5-D tensor. The format must be NCDHW. Must be one of the following types:
-* float16, float32, float64, uint8, bfloat16.
-* Has the same type as input x, shape depends on x and output_size/scales. \n
+*y: A 5-D tensor. The format must be NCDHW. Must be one of the following dtypes:
+* float16, float32, double, uint8, bfloat16.
+* Has the same dtype and format as input x, shape depends on x and output_size/scales. \n
 
 */
 

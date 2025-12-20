@@ -162,6 +162,29 @@ static bool CheckShapes(gert::TilingContext* context, int64_t w, int64_t h, int6
     return true;
 }
 
+static bool CheckShapeMaxLimit(gert::TilingContext* context, UpsampleTrilinearTilingData& tiling)
+{
+    OP_CHECK_IF(
+        tiling.get_input_w() > INT32_MAX,
+        OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Input_w must less than 2147483647."),
+        return false);
+    OP_CHECK_IF(
+        tiling.get_output_d() > INT32_MAX,
+        OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_d must less than 2147483647."),
+        return false);
+    OP_CHECK_IF(
+        tiling.get_output_w() * tiling.get_output_h() > INT32_MAX,
+        OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_h * output_w must less than 2147483647."),
+        return false);
+    OP_CHECK_IF(
+        tiling.get_batches() * tiling.get_input_d() * tiling.get_input_h() > INT32_MAX,
+        OP_LOGE(
+            context->GetNodeName(),
+            "The shape exceeds the limit. Output_n * output_c * output_d * output_h must less than 2147483647."),
+        return false);
+    return true;
+}
+
 static bool CheckScales(gert::TilingContext* context, float scalesW, float scalesH, float scalesD)
 {
     OP_CHECK_IF(
@@ -400,7 +423,7 @@ static uint32_t calcIndxPerCoreInTailBlock(
     return coreRealNeedNum;
 }
 
-static uint32_t calcIndxPerCore(UpsampleTrilinearTilingData& tiling, uint32_t core_num, int64_t batches, int direction)
+static uint32_t calcIndxPerCore(UpsampleTrilinearTilingData& tiling, uint32_t core_num, int direction)
 {
     int64_t direc_length;
     vector<uint32_t> tailGroupBlockStartInxList(core_num, 0);
@@ -559,8 +582,9 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
     const auto align_corners = GetOptionalAttr<bool>(attrs, SCALES_IDX, false);
 
     auto output_storage_shape = context->GetOutputShape(0)->GetStorageShape();
-    if (!CheckShapes(context, output_storage_shape.GetDim(outwIdx), output_storage_shape.GetDim(outhIdx),
-        output_storage_shape.GetDim(outdIdx))) {
+    if (!CheckShapes(
+            context, output_storage_shape.GetDim(outwIdx), output_storage_shape.GetDim(outhIdx),
+            output_storage_shape.GetDim(outdIdx))) {
         return ge::GRAPH_FAILED;
     }
     tiling.set_output_w(output_storage_shape.GetDim(outwIdx));
@@ -607,6 +631,9 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
     const int64_t channel = input_storage_shape.GetDim(channelIdx);
     tiling.set_batches(batch * channel);
 
+    if (!CheckShapeMaxLimit(context, tiling)) {
+        return ge::GRAPH_FAILED;
+    }
     uint32_t coreRealNeedNum = 0;
     if (socVersionType == SOC_VERSION_310) {
         coreRealNeedNum = GetNeedCoreNum(tiling, maxCoreNum);
@@ -614,11 +641,9 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
         context->SetBlockDim(maxCoreNum);
         tiling.set_real_core_num(coreRealNeedNum);
     } else {
-        uint32_t core_real_need_num_w = calcIndxPerCore(
-            tiling, maxCoreNum, batch * channel * tiling.get_input_d() * tiling.get_input_h(), DIREC_WIDTH);
-        uint32_t core_real_need_num_h =
-            calcIndxPerCore(tiling, maxCoreNum, batch * channel * tiling.get_input_d(), DIREC_HEIGHT);
-        uint32_t core_real_need_num_d = calcIndxPerCore(tiling, maxCoreNum, batch * channel, DIREC_DEEPTH);
+        uint32_t core_real_need_num_w = calcIndxPerCore(tiling, maxCoreNum, DIREC_WIDTH);
+        uint32_t core_real_need_num_h = calcIndxPerCore(tiling, maxCoreNum, DIREC_HEIGHT);
+        uint32_t core_real_need_num_d = calcIndxPerCore(tiling, maxCoreNum, DIREC_DEEPTH);
         coreRealNeedNum = std::max(core_real_need_num_w, std::max(core_real_need_num_h, core_real_need_num_d));
 
         if (!SetTCubeTilingW(context, batch * channel, tiling, dataType)) {

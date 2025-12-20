@@ -7,16 +7,15 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 #include "gtest/gtest.h"
 #ifndef private
 #define private public
 #define protected public
 #endif
-#include "aicpu_test_utils.h"
+#include "utils/aicpu_test_utils.h"
 #include "cpu_kernel_utils.h"
 #include "node_def_builder.h"
-#include "aicpu_read_file.h"
+#include "utils/aicpu_read_file.h"
 #undef private
 #undef protected
 #include <fstream>
@@ -24,6 +23,9 @@
 
 using namespace std;
 using namespace aicpu;
+
+const std::string ktestcaseFilePath =
+    "../../../../image/crop_and_resize/tests/ut/op_kernel_aicpu/";
 
 class TEST_CropAndResize_UTest : public testing::Test {};
 
@@ -42,9 +44,15 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Success) {
   int32_t crop_size[2] = {24, 24};
   int32_t box_index[5] = {0};
 
-  std::ifstream in_image(ktestcaseFilePath + "crop_and_resize/data/image_data");
+  char path[256] = {};
+  if (!getcwd(path, 256)) {
+    cout << "Get path fail" << endl;
+  }
+  cout << "path is " << path << endl;
+ 
+  std::ifstream in_image(ktestcaseFilePath + "data/image_data");
   if (!in_image.is_open()) {
-    std::cout << "open image_data error" << std::endl;
+    std::cout << "open image_data errorm, path is " << ktestcaseFilePath + "data/image_data" << std::endl;
     exit(1);
   }
 
@@ -61,7 +69,7 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Success) {
   }
   in_image.close();
 
-  std::ifstream in_boxes(ktestcaseFilePath + "crop_and_resize/data/boxes_data");
+  std::ifstream in_boxes(ktestcaseFilePath + "data/boxes_data");
   if (!in_boxes.is_open()) {
     std::cout << "open boxes_data error" << std::endl;
     exit(1);
@@ -75,7 +83,7 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Success) {
   }
   in_boxes.close();
 
-  std::ifstream in_expected(ktestcaseFilePath + "crop_and_resize/data/expected_output_data");
+  std::ifstream in_expected(ktestcaseFilePath + "data/expected_output_data");
   if (!in_expected.is_open()) {
     std::cout << "open expected_output_data error." << std::endl;
     exit(1);
@@ -179,7 +187,7 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_V2_Success) {
   int32_t crop_size[2] = {24, 24};
   int32_t box_index[5] = {0};
 
-  std::ifstream in_image(ktestcaseFilePath + "crop_and_resize/data/image_data");
+  std::ifstream in_image(ktestcaseFilePath + "data/image_data");
   if (!in_image.is_open()) {
     std::cout << "open image_data error" << std::endl;
     exit(1);
@@ -198,7 +206,7 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_V2_Success) {
   }
   in_image.close();
 
-  std::ifstream in_boxes(ktestcaseFilePath + "crop_and_resize/data/boxes_data");
+  std::ifstream in_boxes(ktestcaseFilePath + "data/boxes_data");
   if (!in_boxes.is_open()) {
     std::cout << "open boxes_data error" << std::endl;
     exit(1);
@@ -212,7 +220,7 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_V2_Success) {
   }
   in_boxes.close();
 
-  std::ifstream in_expected(ktestcaseFilePath + "crop_and_resize/data/expected_output_data_v2");
+  std::ifstream in_expected(ktestcaseFilePath + "data/expected_output_data_v2");
   if (!in_expected.is_open()) {
     std::cout << "open expected_output_data error" << std::endl;
     exit(1);

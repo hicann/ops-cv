@@ -195,7 +195,7 @@ static ge::graphStatus InferGridSampleShapeRange(const gert::InferShapeRangeCont
     OP_LOGD(context->GetNodeName(), "InferGridSampleShapeRange begin");
 
     size_t xDimNum = xRange->GetMax()->GetDimNum();
-    size_t gridDimNum = xRange->GetMax()->GetDimNum();
+    size_t gridDimNum = gridRange->GetMax()->GetDimNum();
     if (xDimNum == 0 || gridDimNum == 0) {
         yRange->GetMin()->SetDimNum(0);
         yRange->GetMax()->SetDimNum(0);

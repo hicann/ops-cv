@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file grid_sampler2_d_grad_fp16.h
@@ -40,6 +40,14 @@ public:
         LocalTensor<int32_t> xCoor, const int32_t calCount);
     __aicore__ inline void ComputeSourceIndexSetGrad(
         LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size, const int32_t calCount);
+    __aicore__ inline void ReflectCoordinatesCommon(
+        LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size, int32_t newCalCount);
+    __aicore__ inline void ClipCoordinatesSetGrad(
+        LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size, int32_t newCalCount);
+    __aicore__ inline void ReflectCoordinatesSetGrad(
+        LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, LocalTensor<T> tmpDataTensor, LocalTensor<T> tmpDupTensor,
+        LocalTensor<int32_t> tmpIntTensor, LocalTensor<T> extraTensor, LocalTensor<T> flipTensor, int64_t twiceLow,
+        int64_t twiceHigh, int32_t calCount);
     __aicore__ inline void ComputeAfterTransposeGridGrad(
         LocalTensor<int32_t> srcIndex, LocalTensor<T> yCoor1, LocalTensor<T> yCoor2, LocalTensor<T> xCoor1,
         LocalTensor<T> xCoor2, LocalTensor<T> gOutLocalTensor, LocalTensor<T> selTensor, const int32_t coorIndex,
@@ -109,6 +117,12 @@ private:
     TBuf<TPosition::VECCALC> selBuf2;
     TBuf<TPosition::VECCALC> selBuf3;
     TBuf<TPosition::VECCALC> selBuf4;
+
+    TBuf<TPosition::VECCALC> tmp5Buf;
+    TBuf<TPosition::VECCALC> tmp6Buf;
+    TBuf<TPosition::VECCALC> tmp7Buf;
+    TBuf<TPosition::VECCALC> tmp8Buf;
+    TBuf<TPosition::VECCALC> tmp9Buf;
 
     TBuf<TPosition::VECCALC> computeIndexBuf;
     TBuf<TPosition::VECCALC> computeIndexBuf1;
@@ -312,6 +326,12 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
         pipe->InitBuffer(selBuf3, ubFactorElement * sizeof(T));
         pipe->InitBuffer(selBuf4, ubFactorElement * sizeof(T));
 
+        pipe->InitBuffer(tmp5Buf, ubFactorElement * sizeof(int32_t));
+        pipe->InitBuffer(tmp6Buf, ubFactorElement * sizeof(T));
+        pipe->InitBuffer(tmp7Buf, ubFactorElement * sizeof(T));
+        pipe->InitBuffer(tmp8Buf, ubFactorElement * sizeof(T));
+        pipe->InitBuffer(tmp9Buf, ubFactorElement * sizeof(T));
+
         pipe->InitBuffer(computeIndexBuf1, ubFactorElement * sizeof(int32_t));
         pipe->InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(int32_t));
         pipe->InitBuffer(computeIndexBuf3, ubFactorElement * sizeof(int32_t));
@@ -356,6 +376,12 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 
         pipe->InitBuffer(dupOneBuf, ubFactorElement * sizeof(T));
         pipe->InitBuffer(clipLimitBuf, ubFactorElement * sizeof(T));
+
+        pipe->InitBuffer(tmp5Buf, ubFactorElement * sizeof(int32_t));
+        pipe->InitBuffer(tmp6Buf, ubFactorElement * sizeof(T));
+        pipe->InitBuffer(tmp7Buf, ubFactorElement * sizeof(T));
+        pipe->InitBuffer(tmp8Buf, ubFactorElement * sizeof(T));
+        pipe->InitBuffer(tmp9Buf, ubFactorElement * sizeof(T));
 
         pipe->InitBuffer(gOutLocalTensor2Buf, alignChannel * sizeof(T) * group);
         pipe->InitBuffer(localTensor2Buf, alignChannel * sizeof(T));
@@ -422,6 +448,8 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
             dataTensor, mask1Tensor, dataTensor, static_cast<T>(size - 1), SELMODE::VSEL_TENSOR_SCALAR_MODE,
             newCalCount);
         Select(dupTensor, mask1Tensor, dupTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+    } else if (padding == 2) {
+        ReflectCoordinatesCommon(dataTensor, dupTensor, size, newCalCount);
     }
     // If the data is inf/-inf/nan, convert the data to -100.
     CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MAX - 1), CMPMODE::LE, newCalCount);
@@ -430,6 +458,103 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
     Compare(mask1Tensor, dataTensor, dataTensor, CMPMODE::EQ, newCalCount);
     Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+}
+
+template <typename T, typename Dtype, typename GridSamplerGradTilingData>
+__aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData>::ReflectCoordinatesCommon(
+    LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size, int32_t newCalCount)
+{
+    // init Reflect localTensor
+    LocalTensor<int32_t> tmpIntTensor = tmp5Buf.Get<int32_t>();
+    LocalTensor<T> tmpDataTensor = tmp6Buf.Get<T>();
+    LocalTensor<T> extraTensor = tmp7Buf.Get<T>();
+    LocalTensor<T> flipTensor = tmp8Buf.Get<T>();
+    LocalTensor<T> tmpDupTensor = tmp9Buf.Get<T>();
+
+    if (alignCorners == 1) {
+        int64_t twiceLow = 0;
+        int64_t twiceHigh = 2 * (size - 1);
+        ReflectCoordinatesSetGrad(
+            dataTensor, dupTensor, tmpDataTensor, tmpDupTensor, tmpIntTensor, extraTensor, flipTensor, twiceLow,
+            twiceHigh, newCalCount);
+    } else {
+        int64_t twiceLow = -1;
+        int64_t twiceHigh = 2 * size - 1;
+        ReflectCoordinatesSetGrad(
+            dataTensor, dupTensor, tmpDataTensor, tmpDupTensor, tmpIntTensor, extraTensor, flipTensor, twiceLow,
+            twiceHigh, newCalCount);
+    }
+    ClipCoordinatesSetGrad(dataTensor, dupTensor, size, newCalCount);
+}
+
+template <typename T, typename Dtype, typename GridSamplerGradTilingData>
+__aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData>::ClipCoordinatesSetGrad(LocalTensor<T> dataTensor,
+    LocalTensor<T> dupTensor, const T size, int32_t newCalCount)
+{
+    CompareScalar(mask1Tensor, dataTensor, static_cast<T>(0), CMPMODE::GT, newCalCount);
+    Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+    Select(dupTensor, mask1Tensor, dupTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+
+    CompareScalar(mask1Tensor, dataTensor, static_cast<T>(size - 1), CMPMODE::LT, newCalCount);
+    Select(
+        dataTensor, mask1Tensor, dataTensor, static_cast<T>(size - 1), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+    Select(dupTensor, mask1Tensor, dupTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+}
+
+template <typename T, typename Dtype, typename GridSamplerGradTilingData>
+__aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData>::ReflectCoordinatesSetGrad(
+    LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, LocalTensor<T> tmpDataTensor, LocalTensor<T> tmpDupTensor,
+    LocalTensor<int32_t> tmpIntTensor, LocalTensor<T> extraTensor, LocalTensor<T> flipTensor, int64_t twiceLow,
+    int64_t twiceHigh, int32_t newCalCount)
+{
+    if (twiceLow == twiceHigh) {
+        Duplicate(dataTensor, (float)0.0, newCalCount);
+        Duplicate(dupTensor, (float)0.0, newCalCount);
+        return;
+    }
+
+    T min = static_cast<T>(twiceLow) / 2;
+    T span = static_cast<T>(twiceHigh - twiceLow) / 2;
+
+    Duplicate(tmpDupTensor, (float)(1.0), newCalCount);
+    Adds(tmpDataTensor, dataTensor, static_cast<T>(-1) * min, newCalCount);
+    Abs(tmpDataTensor, tmpDataTensor, newCalCount);
+    CompareScalar(mask1Tensor, dataTensor, static_cast<T>(min), CMPMODE::GE, newCalCount);
+    Select(tmpDupTensor, mask1Tensor, tmpDupTensor, static_cast<T>(-1), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+
+    // extra = x - Cast(x / span) * span
+    Muls(extraTensor, tmpDataTensor, static_cast<T>(static_cast<T>(1.0) / span), newCalCount);
+    Cast(tmpIntTensor, extraTensor, RoundMode::CAST_FLOOR, newCalCount);
+    Cast(extraTensor, tmpIntTensor, RoundMode::CAST_NONE, newCalCount);
+    Muls(extraTensor, extraTensor, span, newCalCount);
+    Sub(extraTensor, tmpDataTensor, extraTensor, newCalCount);
+
+    // flips = floor(x / span)
+    Muls(tmpDataTensor, tmpDataTensor, (static_cast<T>(1) / span), newCalCount);
+    Cast(tmpIntTensor, tmpDataTensor, RoundMode::CAST_FLOOR, newCalCount);
+    Cast(tmpDataTensor, tmpIntTensor, RoundMode::CAST_NONE, newCalCount);
+
+    // flips % 2
+    Muls(flipTensor, tmpDataTensor, static_cast<T>(0.5), newCalCount);
+    Cast(tmpIntTensor, flipTensor, RoundMode::CAST_FLOOR, newCalCount);
+    Cast(flipTensor, tmpIntTensor, RoundMode::CAST_NONE, newCalCount);
+    Muls(flipTensor, flipTensor, static_cast<T>(2), newCalCount);
+    Sub(flipTensor, tmpDataTensor, flipTensor, newCalCount);
+    CompareScalar(mask2Tensor, flipTensor, static_cast<float>(0.0), CMPMODE::EQ, newCalCount);
+
+    // x = extra + min
+    Adds(tmpDataTensor, extraTensor, min, newCalCount);
+
+    // x = (span - extra) + min
+    Muls(extraTensor, extraTensor, static_cast<T>(-1), newCalCount);
+    Adds(extraTensor, extraTensor, span, newCalCount);
+    Adds(extraTensor, extraTensor, min, newCalCount);
+
+    // flips % 2 == 0 ?
+    Select(dataTensor, mask2Tensor, tmpDataTensor, extraTensor, SELMODE::VSEL_TENSOR_TENSOR_MODE, newCalCount);
+    Muls(flipTensor, tmpDupTensor, static_cast<T>(-1), newCalCount);
+    Select(tmpDupTensor, mask2Tensor, tmpDupTensor, flipTensor, SELMODE::VSEL_TENSOR_TENSOR_MODE, newCalCount);
+    Mul(dupTensor, dupTensor, tmpDupTensor, newCalCount);
 }
 
 // confirm coor is in range [0,h] or [0,w]

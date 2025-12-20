@@ -1,11 +1,18 @@
 # aclnnUpsampleNearestExact3dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact3d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
 
 ## 功能说明
 
@@ -26,7 +33,8 @@
   $$
 
 ## 函数原型
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearestExact3dBackward”接口执行计算。
+
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearestExact3dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
@@ -40,6 +48,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
   uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
+
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dBackward(
   void          *workspace, 
@@ -52,14 +61,14 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -108,7 +117,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>scalesD</td>
       <td>输入</td>
       <td>表示输出`gradInput`的depth维度乘数，对应公式中的`scalesD`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -118,7 +127,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>scalesH</td>
       <td>输入</td>
       <td>表示输出`gradInput`的height维度乘数，对应公式中的`scalesH`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -128,7 +137,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>scalesW</td>
       <td>输入</td>
       <td>表示输出`gradInput`的width维度乘数，对应公式中的`scalesW`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -138,7 +147,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的输出`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li><li>gradInput的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式、shape与入参`gradOut`保持一致。</li><li>gradInput的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -169,11 +178,11 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -191,8 +200,8 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>传入的gradOut、outputSize、inputSize或gradInput是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="10">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="10">161002</td>
+      <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="11">161002</td>
       <td>gradOut的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
@@ -221,9 +230,10 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     </tr>
     <tr>
       <td>gradInput在D、H、W维度上的size与inputSize[2]、inputSize[3]、inputSize[4]不完全相同。</td>
-    </function>
-  </body>
-</html>
+    </tr>
+    <tr>
+      <td>scalesD、scalesH、scalesW的取值不满足约束要求。</td>
+    </tr>
   </tbody></table>
 
 ## aclnnUpsampleNearestExact3dBackward
@@ -267,7 +277,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -275,7 +285,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   - 每个维度的取值小于等于2^20。
   - 参数`gradInput`的N轴和C轴与`gradOut`保持一致。
   - 占用内存小于60G。内存占用的计算公式如下：
-    
+
     $$
     N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
     $$
@@ -283,17 +293,19 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
-  - N * C * gradOut_D * gradOut_H < 2^31
+  - N \* C \* gradOut_D \* gradOut_H < 2^31
   - gradInput_W * gradInput_H < 2^31
 - 参数gradOut、gradInput的数据格式不为NCDHW或NDHWC时，输入其他数据格式默认按NCDHW处理。
 - 输入数据缩放场景放大倍数必须小于等于50，即$outputSize[0]/输出shape的高度H$、$outputSize[1]/输出shape的宽度W$以及$outputSize[2]/输出shape的深度D$必须小于等于50。
 - 参数outputSize与参数scalesD、scalesH、scalesW，在使用时二选一，即：
   - 当入参scalesD、scalesH、scalesW，其中一个参数的值小于等于0时，使用入参outputSize的参数值。
   - 当入参scalesD、scalesH、scalesW的值都大于0时，使用入参scalesD、scalesH、scalesW的参数值，且$outputSize=[floor(inputSize\_D * scalesD)，floor(inputSize\_H * scalesH)，floor(inputSize\_W * scalesW)]$。
+- 确定性计算：
+  - aclnnUpsampleNearestExact3dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

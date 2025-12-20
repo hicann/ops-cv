@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -188,47 +188,49 @@ inline bool FloatEqual(float a, float b)
 ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling()
 {
     auto srcTensor = tilingContext->GetInputTensor(0);
-    if (srcTensor == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
+    OP_CHECK_IF(srcTensor == nullptr, OP_LOGE(tilingContext->GetNodeName(), "srcTensor == nullptr"),
+        return ge::GRAPH_FAILED);
 
     const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
-    if (attrs == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
+    OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"),
+        return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
+    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+        return ge::GRAPH_FAILED);
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
+        return ge::GRAPH_FAILED);
     scale_h = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(SCALE_W_ATTR);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
 
     auto temp = tilingContext->GetInputDesc(0);
-    if (temp == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
+    OP_CHECK_IF(temp == nullptr, OP_LOGE(tilingContext->GetNodeName(), "temp == nullptr"),
+        return ge::GRAPH_FAILED);
 
     ge::DataType srcDtype = ge::DT_UNDEFINED;
     srcDtype = temp->GetDataType();
 
     // Determine whether all data types are consistent.
     if (dataType == ge::DT_UNDEFINED) {
-        dataType = srcDtype;
         dataTypeSize = GetDataTypeSize();
+        dataType = srcDtype;
     } else if (srcDtype != dataType) {
         return ge::GRAPH_FAILED;
     }
 
     auto src_shape = tilingContext->GetInputShape(0);
+    input_shape = src_shape->GetOriginShape();
     dim = src_shape->GetStorageShape().GetDimNum() - 2;  // 其实固定是2
 
-    input_shape = src_shape->GetOriginShape();
     if (!CheckScales(tilingContext, *scale_w, *scale_h)) {
         return ge::GRAPH_FAILED;
     }
 
     auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAACompileInfo *>(tilingContext->GetCompileInfo());
-    if (compileInfo == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
+    OP_CHECK_IF(compileInfo == nullptr, OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
+        return ge::GRAPH_FAILED);
     uint32_t coreNumPlatForm = compileInfo->coreNum;
 
     tilingContext->SetTilingKey(1);
@@ -287,6 +289,7 @@ void UpsampleBilinearAATiling::getTCubeTiling_w()
     mmTiling_w.SetShape(
         input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], slide_size, singleCoreK_w);
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
+        OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_w Error, please Check inputShapes.");
         return;
     }
 }
@@ -302,6 +305,7 @@ void UpsampleBilinearAATiling::getTCubeTiling_h()
     mmTiling_h.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
 
     if (mmTiling_h.GetTiling(tilingData.matmulTiling_h) == -1) {
+        OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_h Error, please Check inputShapes.");
         return;
     }
 }

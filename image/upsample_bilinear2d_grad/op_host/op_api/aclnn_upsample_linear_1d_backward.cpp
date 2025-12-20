@@ -35,6 +35,7 @@ using namespace op;
 extern "C" {
 #endif
 
+namespace {
 static constexpr size_t DIM_LIMIT = 3;
 static constexpr size_t DIM_ZERO = 0;
 static constexpr size_t DIM_ONE = 1;
@@ -95,7 +96,7 @@ static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *out, cons
     if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_ASCEND910_95, return false);
     }
-    if (!CheckIOSizesIsSame(gradOut, inputSize)) {
+    if (CheckIOSizesIsSame(gradOut, inputSize)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
     }
     OP_CHECK_DTYPE_NOT_MATCH(out, gradOut->GetDataType(), return false);
@@ -220,6 +221,28 @@ static bool CheckNCValid(const aclTensor *gradOut, const aclTensor *out)
     return true;
 }
 
+static bool CheckUplimit(const aclTensor *gradOut, const aclTensor *out)
+{
+    int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t gradOutH = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t outN = out->GetViewShape().GetDim(DIM_ZERO);
+    int64_t outC = out->GetViewShape().GetDim(DIM_ONE);
+    int64_t outH = out->GetViewShape().GetDim(DIM_TWO);
+
+    OP_CHECK(gradOutN < INT32_MAX && gradOutC < INT32_MAX && gradOutH < INT32_MAX ,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld)",
+            INT32_MAX, gradOutN, gradOutC, gradOutH),
+        return false);
+    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld)",
+            INT32_MAX, outN, outC, outH),
+        return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(
     const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *out)
 {
@@ -242,6 +265,9 @@ static aclnnStatus CheckParams(
 
     // 5. 校验NC是否一致
     CHECK_RET(CheckNCValid(gradOut, out), ACLNN_ERR_PARAM_INVALID);
+
+    // 6. 校验上边界
+    CHECK_RET(CheckUplimit(gradOut, out), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }
@@ -312,9 +338,8 @@ static bool Check_scales(const int64_t input_size, const int64_t output_size, co
 }
 
 static bool ComputeCheckScale(
-    const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, double scales)
+    const aclIntArray *outputSize, const aclIntArray *inputSize, double scales)
 {
-    (void) gradOut;
     bool check_scale = true;
     if (std::abs(scales) > 1e-9) {
         int64_t output_L = (*outputSize)[DIM_ZERO];
@@ -323,6 +348,7 @@ static bool ComputeCheckScale(
     }
     return check_scale;
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor *gradOut, const aclIntArray *outputSize,
     const aclIntArray *inputSize, bool alignCorners, double scales, aclTensor *out, uint64_t *workspaceSize,
@@ -391,7 +417,7 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor *gradO
         bool checkSize = CheckIOSizesIsSame(gradOutContiguous, originSizeArray);
         bool checkSocVer = socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93;
         bool check_scale = true;
-        check_scale = ComputeCheckScale(gradOut, outputSize, inputSize, scales);
+        check_scale = ComputeCheckScale(outputSize, inputSize, scales);
         const int64_t MAX_GRAD_SIZE = 1000000;
         bool isBigSize = (*outputSize)[DIM_ZERO] >= MAX_GRAD_SIZE ? true : false;
         if (isBigSize || (!checkSize && (!checkSocVer || !check_scale))) {

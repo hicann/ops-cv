@@ -55,9 +55,8 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize)
 {
-    (void) out;
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
     OP_CHECK(outputSizeNum == EXPECT_SIZE,
@@ -70,7 +69,6 @@ static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, con
 static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSize)
 {
     auto selfShape = self->GetViewShape();
-    size_t dimNum = selfShape.GetDimNum();
     int64_t outN = selfShape.GetDim(DIM_ZERO);
     int64_t outC = selfShape.GetDim(DIM_ONE);
     int64_t inputL = selfShape.GetDim(DIM_TWO);
@@ -78,8 +76,8 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
 
     OP_CHECK(outN > 0 && outC > 0 && inputL > 0 && outL > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (N: %ld,"
-            " C: %ld, L: %ld) output (N: %ld, C: %ld, L: %ld)",
+            "Input and output sizes should greater than 0, bug got input (N: %lld,"
+            " C: %lld, L: %lld) output (N: %lld, C: %lld, L: %lld)",
             outN,
             outC,
             inputL,
@@ -102,7 +100,7 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     CHECK_RET(CheckInputElement(self, outputSize), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 检查shape是否支持
-    CHECK_RET(CheckShape(self, outputSize, out), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckShape(self, outputSize), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }

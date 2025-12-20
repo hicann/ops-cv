@@ -4,8 +4,13 @@
 
 | 产品 | 是否支持 |
 | ---- | :----: |
+| 昇腾910_95 AI处理器 | x |
 | Atlas A3 训练系列产品/Atlas A3 推理系列产品 | √ |
 | Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件 | √ |
+| Atlas 200I/500 A2 推理产品 | x |
+| Atlas 推理系列产品  | x |
+| Atlas 训练系列产品 | x |
+| Atlas 200/300/500 推理产品 | x |
 
 ## 功能说明
 
@@ -36,21 +41,21 @@
     <tr>
       <td>features</td>
       <td>输入</td>
-      <td>公式中的输入features。</td>
+      <td>待重组的点云特征。</td>
       <td>FLOAT、FLOAT16、DOUBLE、INT32、INT64、INT16、INT8、UINT8、BOOL</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>indices</td>
       <td>输入</td>
-      <td>公式中的输入indices。</td>
+      <td>重组indices。</td>
       <td>INT32</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>out</td>
       <td>输出</td>
-      <td>公式中的out。</td>
+      <td>输出点云特征。</td>
       <td>FLOAT、FLOAT16、DOUBLE、INT32、INT64、INT16、INT8、UINT8、BOOL</td>
       <td>ND</td>
     </tr>
@@ -63,7 +68,6 @@
 
 ## 调用说明
 
-| 调用方式   | 样例代码           | 说明                                         |
-| ---------------- | --------------------------- | --------------------------------------------------- |
-| 图模式 | [test_geir_stack_group_points](./examples/test_geir_stack_group_points.cpp)  | 通过[算子IR](./op_graph/stack_group_points_proto.h)构图方式调用StackGroupPoints算子。         |
-
+| 调用方式   | 样例代码                                                                        | 说明                                         |
+| ---------------- |-----------------------------------------------------------------------------| --------------------------------------------------- |
+| 图模式 | [test_geir_stack_group_points](./examples/test_geir_stack_group_points.cpp) | 通过[算子IR](./op_graph/stack_group_points_proto.h)构图方式调用StackGroupPoints算子。         |

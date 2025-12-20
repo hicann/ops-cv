@@ -17,16 +17,15 @@
 
 #include <type_traits>
 #include "upsample_nearest3d_struct.h"
-#include "upsample_nearest3d_common.h"
 #include "kernel_operator.h"
 
 namespace UpsampleNearest3d {
 using namespace AscendC;
 
+constexpr int32_t BUFFER_NUM = 2;
 constexpr int8_t D_INDEX = 0;
 constexpr int8_t H_INDEX = 1;
 constexpr int8_t W_INDEX = 2;
-constexpr int32_t BUFFER_NUM = 2;
 
 constexpr uint32_t BYTE_BLOCK = 32;
 constexpr float BEST_PERFORMANCE_SCALE = 100.0f;
@@ -47,6 +46,24 @@ public:
     __aicore__ inline void Process();
 
 private:
+    template <typename T1, typename T2>
+    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    {
+        if (b == 0) {
+            return a;
+        }
+        return (a + b - 1) / b;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Min(T1 a, T1 b)
+    {
+        return a < b ? a : b;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Max(T1 a, T1 b)
+    {
+        return a > b ? a : b;
+    };
     __aicore__ inline void ClearGM();
     __aicore__ inline void ParseTilingData(const UpsampleNearest3dTilingData* tilingData);
     __aicore__ inline void GatherData(int64_t slideIndex, int64_t rowStart, int64_t rowEnd);

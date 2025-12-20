@@ -1,11 +1,19 @@
 # aclnnUpsampleNearest1dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品 </term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+
 
 ## 功能说明
 
@@ -19,9 +27,9 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest1dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearest1dBackward”接口执行计算。
+每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest1dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearest1dBackward”接口执行计算。
 
-```cpp
+```Cpp
 aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
   const aclTensor   *gradOut, 
   const aclIntArray *outputSize, 
@@ -31,7 +39,8 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
   int64_t           *workspaceSize, 
   aclOpExecutor    **executor)
 ```
-```cpp
+
+```Cpp
 aclnnStatus aclnnUpsampleNearest1dBackward(
   void          *workspace, 
   uint64_t       workspaceSize, 
@@ -43,14 +52,14 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1503px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 170px">
   <col style="width: 120px">
   <col style="width: 271px">
-  <col style="width: 392px">
-  <col style="width: 228px">
+  <col style="width: 330px">
+  <col style="width: 223px">
   <col style="width: 101px">
-  <col style="width: 100px">
+  <col style="width: 190px">
   <col style="width: 145px">
   </colgroup>
   <thead>
@@ -111,7 +120,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的'out'。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`的数据类型一致。</li><li>输入必须是3维。</li></ul></td>
+      <td><ul><li>L轴不支持空Tensor。</li><li>数据类型与`gradOut`的数据类型一致。</li><li>输入必须是3维。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -139,15 +148,17 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     </tr>
   </tbody>
   </table>
+
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：入参`gradOut`和出参`out`的数据类型仅支持FLOAT16。
   
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 253px">
+  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
+  <col style="width: 268px">
   <col style="width: 140px">
   <col style="width: 762px">
   </colgroup>
@@ -169,7 +180,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td rowspan="11">161002</td>
     </tr>
     <tr>
-      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型不在支持的范围之内。</td>
     </tr>
     <tr><td>gradOut和out的数据类型不一致。</td>
     </tr>
@@ -180,10 +191,6 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
     <tr><td>inputSize的size不等于3。</td>
-    </tr>
-    <tr><td>inputSize的某个元素值小于1。</td>
-    </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>
@@ -233,16 +240,19 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
-参数outputSize与参数scales，在使用时二选一，即：
-- 当入参scales的值小于等于0时，使用入参outputSize的参数值。
-- 当入参scales的值大于0时，使用入参scales参数值，且$outputSize=[floor(inputSize\_L * scales)]$。
+
+- 参数outputSize与参数scales，在使用时二选一，即：
+  - 当入参scales的值小于等于0时，使用入参outputSize的参数值。
+  - 当入参scales的值大于0时，使用入参scales参数值，且$outputSize=[floor(inputSize\_L * scales)]$。
+- 确定性计算：
+  - aclnnUpsampleNearest1dBackward默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>
