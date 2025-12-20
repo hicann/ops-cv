@@ -45,7 +45,6 @@ unset(_cmake_targets_not_defined)
 unset(_cmake_expected_targets)
 
 set(DLOG_HEAD_SEARCH_PATHS
-  ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/toolchain
   ${ASCEND_DIR}/pkg_inc/base         # new slog directory structure
   ${TOP_DIR}/abl/slog/inc/toolchain  # compile with ci
 )
@@ -55,8 +54,6 @@ find_path(dlog_CV_INCLUDE_DIR
   NO_CMAKE_SYSTEM_PATH
   NO_CMAKE_FIND_ROOT_PATH
   PATHS ${DLOG_HEAD_SEARCH_PATHS})
-
-message(STATUS "dlog_CV_INCLUDE_DIR : ${dlog_CV_INCLUDE_DIR}")
 
 find_library(dlog_SHARED_LIBRARY
   NAMES libascendalog.so

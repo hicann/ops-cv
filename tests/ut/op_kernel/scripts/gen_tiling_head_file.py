@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
@@ -25,16 +23,16 @@ import subprocess
 import re
 from pathlib import Path
 from collections import namedtuple
-import tbe
-from tbe.common.platform.platform_info import get_soc_spec
-from tbe.common.utils.op_tiling import do_op_tiling, _ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT, \
+import asc_op_compile_base
+from asc_op_compile_base.common.platform import get_soc_spec
+from asc_op_compile_base.asc_op_compiler.op_tiling import do_op_tiling, _ASCEND_OPP_PATH_ENV, _ASCEND_OPP_PATH_DEFAULT, \
     _BUILTIN_TILING_PATH, _CUSTOM_TILING_PATH_DEFAULT, so_arch_path2
-from tbe.tvm.error_mgr import raise_tbe_python_err, TBE_DEFAULT_PYTHON_ERROR_CODE
-import tbe.tikcpp.get_op_tiling as tiling_help
+from asc_op_compile_base.common.error_mgr import raise_tbe_python_err, TBE_DEFAULT_PYTHON_ERROR_CODE
+import asc_op_compile_base.asc_op_compiler.get_op_tiling as tiling_help
 
-OpInfo = namedtuple('OpInfo', ['kernel_name', 'op_type', 'inputs', 'outputs', 'attrs', 'impl_mode', 'origin_inputs', \
-                               'origin_outputs', 'param_type_dynamic', 'mc2_ctx', 'param_type_list', 'init_value_list', \
-                               'output_shape_depend_on_compute'])
+OpInfo = namedtuple('OpInfo', ['kernel_name', 'op_type', 'inputs', 'outputs', 'attrs', 'impl_mode', 'origin_inputs',\
+                    'origin_outputs', 'param_type_dynamic', 'mc2_ctx', 'param_type_list', 'init_value_list',\
+                    'output_shape_depend_on_compute'])
 
 OpInfo.__new__.__defaults__ = (None, None, None, None, None, None, None, None, None, None, None, None, None)
 
@@ -171,7 +169,7 @@ if __name__ == "__main__":
     op_info_dict["outputs"] = [{"shape": [-1]}]
     op_info_dict["attrs"] = []
     op_info2 = OpInfo(**op_info_dict)
-    with tbe.common.context.op_context.OpContext("dynamic"):
+    with asc_op_compile_base.common.context.op_context.OpContext("dynamic"):
         tiling_struct = get_default_tiling_struct(op_name)
         if tiling_struct:
             tiling_info.file_content = tiling_help.gen_dynamic_shape_v2(op_name, tiling_struct)

@@ -118,7 +118,7 @@ function(pack_built_in)
   set(CONF_FILES
       ${CMAKE_SOURCE_DIR}/scripts/package/common/cfg/path.cfg
   )
-  install(FILES ${CMAKE_SOURCE_DIR}/version.info
+  install(FILES ${OPS_CV_VERSION_FILE}
       DESTINATION share/info/ops_cv
   )
   install(FILES ${CONF_FILES}

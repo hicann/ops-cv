@@ -58,9 +58,10 @@ private:
 template <typename T>
 __aicore__ inline void AddExample<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, const AddExampleTilingData* tilingData)
 {
-    blockLength_ = tilingData->totalLength / AscendC::GetBlockNum();
+    blockLength_ = (tilingData->totalLength + AscendC::GetBlockNum() - 1) / AscendC::GetBlockNum();
     tileNum_ = tilingData->tileNum;
-    tileLength_ = blockLength_ / tileNum_ / BUFFER_NUM;
+    tileLength_ = ((blockLength_ + tileNum_ - 1) / tileNum_ / BUFFER_NUM) ?
+        ((blockLength_ + tileNum_ - 1) / tileNum_ / BUFFER_NUM) : 1;
 
     inputGMX.SetGlobalBuffer((__gm__ T*)x + blockLength_ * AscendC::GetBlockIdx(), blockLength_);
     inputGMY.SetGlobalBuffer((__gm__ T*)y + blockLength_ * AscendC::GetBlockIdx(), blockLength_);
@@ -76,8 +77,13 @@ __aicore__ inline void AddExample<T>::CopyIn(int32_t progress)
 {
     AscendC::LocalTensor<T> xLocal = inputQueueX.AllocTensor<T>();
     AscendC::LocalTensor<T> yLocal = inputQueueY.AllocTensor<T>();
-    AscendC::DataCopy(xLocal, inputGMX[progress * tileLength_], tileLength_);
-    AscendC::DataCopy(yLocal, inputGMY[progress * tileLength_], tileLength_);
+    AscendC::DataCopyParams copyParams;
+    copyParams.blockCount = 1;
+    copyParams.blockLen = tileLength_ * sizeof(T);
+    copyParams.srcStride = 0;
+    copyParams.dstStride = 0;
+    AscendC::DataCopyPad(xLocal, inputGMX[progress * tileLength_], copyParams, {false, 0, 0, 0});
+    AscendC::DataCopyPad(yLocal, inputGMY[progress * tileLength_], copyParams, {false, 0, 0, 0});
     inputQueueX.EnQue(xLocal);
     inputQueueY.EnQue(yLocal);
 }
@@ -86,7 +92,12 @@ template <typename T>
 __aicore__ inline void AddExample<T>::CopyOut(int32_t progress)
 {
     AscendC::LocalTensor<T> zLocal = outputQueueZ.DeQue<T>();
-    AscendC::DataCopy(outputGMZ[progress * tileLength_], zLocal, tileLength_);
+    AscendC::DataCopyParams copyParams;
+    copyParams.blockCount = 1;
+    copyParams.blockLen = tileLength_ * sizeof(T);
+    copyParams.srcStride = 0;
+    copyParams.dstStride = 0;
+    AscendC::DataCopyPad(outputGMZ[progress * tileLength_], zLocal, copyParams);
     outputQueueZ.FreeTensor(zLocal);
 }
 

@@ -20,3 +20,4 @@ __all__ = ["upsample_nearest3d", ]
 def upsample_nearest3d(x: Tensor, size: List[int]) -> Tensor:
     """Performs upsample_nearest3d(x) in an efficient fused kernel"""
     return torch.ops.ascend_ops.upsample_nearest3d.default(x, size)
+

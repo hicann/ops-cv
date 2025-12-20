@@ -9,6 +9,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 set -e
 SCRIPT_NAME_OF_GEN_OPINFO="gen_opinfo_json_from_ini.sh"
 SCRIPT_NAME_OF_GEN_OPCINFO="gen_opcinfo_from_opinfo.py"

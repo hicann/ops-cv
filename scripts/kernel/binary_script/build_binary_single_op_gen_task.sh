@@ -9,6 +9,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 SCRIPT_NAME_OF_GEN_OPCINFO="gen_opcinfo_for_socversion.sh"
 IMPL_FILE_NAME="all_ops_impl_mode.ini"
 FILE_NAME="$(basename $0)"

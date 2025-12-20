@@ -251,10 +251,6 @@ function(gen_norm_symbol)
   gen_opgraph_symbol()
 
   gen_opapi_symbol()
-
-  gen_aicpu_json_symbol(TRUE)
-
-  gen_aicpu_kernel_symbol(TRUE)
 endfunction()
 
 function(gen_cust_symbol)

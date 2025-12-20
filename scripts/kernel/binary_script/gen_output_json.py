@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -8,7 +8,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 """
 gen_output_json.py
@@ -55,7 +55,10 @@ DATA_TYPE_DICT = {
     'uint2': 32
 }
 BFLOAT16_SUPPORT_MAP = {
-    "All": ["ascend910b", "ascend910_93", "ascend310b"]
+    "All": ["ascend910_95", "ascend910b", "ascend910_93", "ascend310b"],
+    "Conv2DBackpropFilter": ["ascend910b", "ascend910_93", "ascend910_95"],
+    "Conv3DBackpropFilter": ["ascend910b", "ascend910_93", "ascend910_95"],
+    "MatMul": ["ascend910b", "ascend910_93", "ascend910_95"]
 }
 OPS_REUSE_BINARY = ["Conv2DBackpropFilter", "Conv3DBackpropFilter"]
 ReuseBinary = [
@@ -63,7 +66,7 @@ ReuseBinary = [
     {"opp": "SplitV", "new_dtype": "int64", "reuse_dtype": "int32",
      "input_args": [2],  # the input argument which need replace
      "output_args": [],  # the output argument which need replace
-     "support_map": ["ascend910_93", "ascend910b", "ascend910", "ascend310p"]}
+     "support_map": ["ascend910_95", "ascend910_93", "ascend910b", "ascend910", "ascend310p"]}
 ]
 
 
@@ -89,7 +92,7 @@ def generate_operator_json_content(input_json, kernel_output, json_content):
             failed_json_file = kernel_output + failed_json_file_name + ".json"
             if os.path.exists(failed_json_file):
                 os.remove(failed_json_file)
-            raise FileNotFoundError()
+            continue
         for opc_json_file_path in opc_json_outputs:
             with open(opc_json_file_path, "r") as file_opc:
                 opc_info_json = json.load(file_opc)

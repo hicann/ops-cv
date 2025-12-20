@@ -8,6 +8,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 include_guard(GLOBAL)
 
 if(UT_TEST_ALL OR OP_HOST_UT)
@@ -167,7 +168,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     if(NOT TARGET ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj)
         add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
-    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl Eigen3::EigenCv)
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl)
     target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE ${OP_KERNEL_AICPU_UT_UTILS_SRC})
 
     ## add opkernel ut cases shared lib: libcv_aicpu_op_kernel_ut_cases.so

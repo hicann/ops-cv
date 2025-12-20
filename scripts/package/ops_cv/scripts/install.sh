@@ -7,7 +7,8 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
 # See LICENSE in the root of the software repository for the full text of the License.
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+
 # error number and description
 OPERATE_FAILED="0x0001"
 PARAM_INVALID="0x0002"
@@ -298,13 +299,6 @@ get_run_path() {
 
 check_arch() {
   local architecture=$(uname -m)
-  # check platform
-  if [ "${architecture}" != "${ARCH_INFO}" ]; then
-    logandprint "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:the architecture of the run package arch:${ARCH_INFO}\
-  is inconsistent with that of the current environment ${architecture}. "
-    exitlog
-    exit 1
-  fi
 }
 
 get_opts() {
@@ -497,6 +491,24 @@ install_package() {
     interact_pre_check
   fi
 
+  architecture=$(uname -m)
+  graph_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${ARCH_INFO}"
+  ophost_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}"
+  if [ "$architecture" != "$ARCH_INFO" ]; then
+    logandprint "[INFO]: The architecture of the run package is inconsistent with that of the current environment, just copy the graph and host so file to the correct directory."
+    echo "CURR_PATH is ${CURR_PATH}"
+    chmod u+w ${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux
+    chmod u+w ${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux
+    mkdir -p "${graph_so_dir_path}"
+    cp -f "${CURR_PATH}/../../../../${OPP_PLATFORM_DIR}/built-in/op_graph/lib/linux/${ARCH_INFO}/libopgraph_cv.so" "${graph_so_dir_path}"
+    mkdir -p "${ophost_so_dir_path}"
+    cp -f "${CURR_PATH}/../../../../${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}/libophost_cv.so" "${ophost_so_dir_path}"
+    chmod 755 ${graph_so_dir_path}/*
+    chmod 755 ${ophost_so_dir_path}/*
+    chmod u-w ${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux
+    chmod u-w ${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux
+    exit 0
+  fi
   # use uninstall to clean the install folder
   clean_before_reinstall
   if [ "$?" != 0 ]; then
@@ -536,6 +548,49 @@ uninstall_package() {
     comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "OpsCv" "$?" "${CMD_LIST}"
     exit 0
   fi
+
+  # 卸载异构
+  local architecture=$(uname -m)
+  if [ "${architecture}" != "${ARCH_INFO}" ]; then
+    target_arch="${ARCH_INFO}"
+  else
+    # 判断异构so文件是否存在，存在则删除
+    if [ "${architecture}" == "x86_64" ]; then
+      target_arch="aarch64"
+    else
+      target_arch="x86_64"
+    fi
+  fi
+  
+  graph_so_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${target_arch}/libopgraph_cv.so"
+  graph_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${target_arch}"
+  if [ -f "${graph_so_path}" ]; then
+    rm -f "${graph_so_path}"
+  fi
+  # 判断目录是否存在且为空
+  if [ -d "${graph_so_dir_path}" ]; then
+    if [ -z "$(ls -A ${graph_so_dir_path})" ]; then
+      rm -rf "${graph_so_dir_path}"
+    fi
+  fi
+
+  ophost_so_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${target_arch}/libophost_cv.so"
+  ophost_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${target_arch}"
+  
+  if [ -f "${ophost_so_path}" ]; then
+    rm -f "${ophost_so_path}"
+  fi
+  # 判断目录是否存在且为空
+  if [ -d "${ophost_so_dir_path}" ]; then
+    if [ -z "$(ls -A ${ophost_so_dir_path})" ]; then
+      rm -rf "${ophost_so_dir_path}"
+    fi
+  fi
+
+  if [ "${architecture}" != "${ARCH_INFO}" ]; then
+    return
+  fi
+
   bash "${UNINSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "uninstall" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}"
   # remove precheck info in ${TARGET_VERSION_DIR}/bin/prereq_check.bash
   logandprint "[INFO]: Remove precheck info."

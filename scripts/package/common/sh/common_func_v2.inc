@@ -308,6 +308,7 @@ get_package_dir() {
 
     if [ "${USE_SHARE_INFO}" == "y" ]; then
         _result="share/info"
+
     else
         is_package_under_tools "_is_under_tools" "${_package}"
         if [ "${_is_under_tools}" = "true" ]; then
@@ -327,6 +328,7 @@ get_package_dirpath() {
 
     if [ "${USE_SHARE_INFO}" == "y" ]; then
         _result="share/info/${_package}"
+
     else
         is_package_under_tools "_is_under_tools" "${_package}"
         if [ "${_is_under_tools}" = "true" ]; then
@@ -616,7 +618,12 @@ normalize_feature() {
     local _feature_nf="$2"
     local _operation="$3"
 
-    if [ "$_operation" = "uninstall" ] || [ "$_feature_nf" = "" ]; then
+    if [ "$_operation" = "uninstall" ]; then
+        eval "${_outvar}=\"all\""
+        return 0
+    fi
+
+    if [ "$_feature_nf" = "" ]; then
         eval "${_outvar}=\"all\""
         return 0
     fi
@@ -860,7 +867,10 @@ create_softlink_by_install_path() {
     local target="$2"
     local softlinks_str="$3"
     local softlinks softlink
-    local target_abs softlink_abs is_abs_path ret
+    local target_abs
+    local softlink_abs
+    local is_abs_path
+    local ret
 
     if [ "${softlinks_str}" = "NA" ]; then
         return 0
@@ -945,7 +955,10 @@ change_mod_and_own(){
 change_mod_and_own_dirs() {
     local install_path="$1"
     local line="$2"
-    local target mod own is_abs_path
+    local target
+    local mod
+    local own
+    local is_abs_path
 
     __index_list "${line}" 1 "target" 2 "mod" 3 "own"
 

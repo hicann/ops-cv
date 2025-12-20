@@ -30,11 +30,13 @@ if(NOT TARGET intf_pub)
     -Wl,-z,relro
     -Wl,-z,now
     -Wl,-z,noexecstack
+    $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address>
     $<$<CONFIG:Release>:-Wl,--build-id=none>
   )
   target_link_directories(intf_pub INTERFACE)
   target_link_libraries(intf_pub INTERFACE
     -lpthread
+    $<$<BOOL:${ENABLE_COVERAGE}>:gcov>
   )
 endif()
 
@@ -60,11 +62,13 @@ if(NOT TARGET intf_pub_cxx14)
     -Wl,-z,relro
     -Wl,-z,now
     -Wl,-z,noexecstack
+    $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address>
     $<$<CONFIG:Release>:-Wl,--build-id=none>
   )
   target_link_directories(intf_pub_cxx14 INTERFACE)
   target_link_libraries(intf_pub_cxx14 INTERFACE
     -lpthread
+    $<$<BOOL:${ENABLE_COVERAGE}>:gcov>
   )
 endif()
 
@@ -90,10 +94,12 @@ if(NOT TARGET intf_pub_cxx17)
       -Wl,-z,relro
       -Wl,-z,now
       -Wl,-z,noexecstack
+      $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address>
       $<$<CONFIG:Release>:-Wl,--build-id=none>
       $<$<CONFIG:Release>:-s>)
   target_link_directories(intf_pub_cxx17 INTERFACE)
   target_link_libraries(intf_pub_cxx17 INTERFACE
     -lpthread
+    $<$<BOOL:${ENABLE_COVERAGE}>:gcov>
   )
 endif()

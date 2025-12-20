@@ -10,6 +10,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 import os
 import sys
 import json
@@ -232,6 +233,8 @@ def gen_ops_config(json_file, soc, config):
 
 
 def del_params_info_not_same_op(config):
+    if not need_to_cut_op:
+        return
     print('[WARNING] op_type[{}] params info is not same, cannot be write into \
           binary_info_config.json'.format(need_to_cut_op))
     for op in need_to_cut_op:
@@ -240,6 +243,8 @@ def del_params_info_not_same_op(config):
 
 
 def del_simply_mode_not_same(config):
+    if not simplified_mode_not_same_op:
+        return
     print(f'[WARNING] op_type[{simplified_mode_not_same_op}] simplifiedKeyMode is not same, cannot be write into \
           binary_info_config.json')
     for op in simplified_mode_not_same_op:
@@ -248,6 +253,8 @@ def del_simply_mode_not_same(config):
 
 
 def del_null_simply_key_op(config):
+    if not no_simpliy_key_op:
+        return
     print('[WARNING] op_type[{}] simplifiedKey is none, cannot be write into \
           binary_info_config.json'.format(no_simpliy_key_op))
     for op in no_simpliy_key_op:
@@ -258,8 +265,8 @@ def del_null_simply_key_op(config):
 def correct_optional_op_params_info(config):
     for op_type in optional_op:
         if op_type not in optional_op_dict.keys():
-            print('[WARNING] op_type[{}] contain null inputs/output/attrs, cannot be written into \
-                    binary_info_config.json'.format(op_type))
+            print(f'[WARNING] op_type[{op_type}] contain null inputs/output/attrs, cannot be written into \
+                    binary_info_config.json')
             if config.get(op_type) is not None:
                 del config[op_type]
         else:
@@ -271,8 +278,10 @@ def correct_optional_op_params_info(config):
 
 
 def del_optional_mode_not_same_op(config):
-    print('[WARNING] op_type[{}] optionalInputMode is none, cannot be write into \
-            binary_info_config.json'.format(optional_mode_not_same_op))
+    if not optional_mode_not_same_op:
+        return
+    print(f'[WARNING] op_type[{optional_mode_not_same_op}] optionalInputMode is none, cannot be write into \
+            binary_info_config.json')
     for op in optional_mode_not_same_op:
         if config.get(op) is not None:
             del config[op]
@@ -315,7 +324,6 @@ def modify_binary_list_with_config(binary_cfg: dict, cfg_dir: str):
 
 
 def gen_binary_info_config(kernel_dir, soc):
-    suffix = 'json'
     config = {}
     bin_dir = os.path.join(kernel_dir, soc)
     cfg_dir = os.path.join(kernel_dir, 'config', soc)

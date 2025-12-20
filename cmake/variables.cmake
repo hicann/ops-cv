@@ -8,6 +8,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 set(COMMON_NAME common_${PKG_NAME})
 set(OPHOST_NAME ophost_${PKG_NAME})
 set(OPSTATIC_NAME cann_${PKG_NAME}_static)
@@ -194,22 +195,6 @@ set(AICPU_DEFINITIONS
   -DEigen=ascend_Eigen
   -fno-common
   -fPIC
-)
-
-set(AICPU_LINK
-  -Wl,--whole-archive
-  # todo ops-base
-  cpu_kernels_context_static
-  -Wl,--no-whole-archive
-  ascend_protobuf_static
-  -Wl,--no-as-needed
-  $<IF:$<STREQUAL:${x86_aarch64_host},x86_or_aarch64_on_host>,alog,slog>
-  c_sec
-  -ldl
-  $<$<STREQUAL:${PRODUCT_SIDE},host>:ascend_hal_stub>
-  $<$<STREQUAL:${PRODUCT_SIDE},device>:ascend_hal>
-  -Wl,--as-needed
-  $<$<STREQUAL:${PRODUCT_SIDE},device>:malblas_static>
 )
 
 # mapping of soc full name and short name

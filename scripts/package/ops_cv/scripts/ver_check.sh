@@ -92,8 +92,8 @@ check_version_file() {
 }
 
 check_opp_version_file() {
-  if [ -f "${_CURR_PATH}/../../version.info" ]; then
-    ver_info="${_CURR_PATH}/../../version.info"
+  if [ -f "${_CURR_PATH}/../version.info" ]; then
+    ver_info="${_CURR_PATH}/../version.info"
   # ops_cv/version.info -> ops_cv
   elif [ -f "${_DEFAULT_INSTALL_PATH}/ops_cv/version.info" ]; then
     ver_info="${_DEFAULT_INSTALL_PATH}/ops_cv/version.info"

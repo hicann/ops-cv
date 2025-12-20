@@ -25,6 +25,21 @@ if(UNIX)
 endif()
 set(OPS_CV_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(OPS_CV_VERSION_FILE ${CMAKE_CURRENT_BINARY_DIR}/version/version.info)
+add_custom_command(
+    OUTPUT ${OPS_CV_VERSION_FILE}
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/update_version_info/update_version_info.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.info
+    ${OPS_CV_VERSION_FILE}
+    DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.info
+    VERBATIM
+)
+
+add_custom_target(generate_ops_cv_version_file ALL
+    DEPENDS ${OPS_CV_VERSION_FILE}
+)
+
 # 外部传参
 option(ENABLE_ASAN "Enable asan" OFF)
 option(ENABLE_VALGRIND "Enable valgrind" OFF)
@@ -64,8 +79,8 @@ if(ENABLE_TEST)
 endif ()
 
 if("${BUILD_MODE}" STREQUAL "-O0" OR "${BUILD_MODE}" STREQUAL "-O1" OR
-        "${BUILD_MODE}" STREQUAL "-O2" OR "${BUILD_MODE}" STREQUAL "-O3"
-)
+   "${BUILD_MODE}" STREQUAL "-O2" OR "${BUILD_MODE}" STREQUAL "-O3"
+  )
   set(COMPILE_OP_MODE ${BUILD_MODE})
 else()
   if(ENABLE_TEST)
@@ -100,13 +115,13 @@ include(${PROJECT_SOURCE_DIR}/cmake/ut.cmake)
 
 add_subdirectory(common)
 if(ENABLE_EXPERIMENTAL)
-  message(STATUS "Build experimental module")
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/experimental/image")
-    add_subdirectory(experimental/image)
-  endif()
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/experimental/objdetect")
-    add_subdirectory(experimental/objdetect)
-  endif()
+    message(STATUS "Build experimental module")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/experimental/image")
+      add_subdirectory(experimental/image)
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/experimental/objdetect")
+      add_subdirectory(experimental/objdetect)
+    endif()
 else()
   add_subdirectory(image)
   add_subdirectory(objdetect)

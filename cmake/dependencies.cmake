@@ -8,6 +8,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 # Ascend mode
 if(DEFINED ENV{ASCEND_HOME_PATH})
   set(ASCEND_DIR $ENV{ASCEND_HOME_PATH})
@@ -64,6 +65,16 @@ message(STATUS "compile option:${CMAKE_CXX_FLAGS}")
 
 if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
   find_package(ASC REQUIRED HINTS ${ASCEND_DIR}/${SYSTEM_PREFIX}/tikcpp/ascendc_kernel_cmake)
+  find_package(GenerateEsPackage MODULE QUIET)
+  if(NOT GenerateEsPackage_FOUND)
+      message("")
+      message("================================================================")
+      message("   找不到 GenerateEsPackage 包！")
+      message("================================================================")
+      message("请参考README“算子调用”章节的环境准备部分更新 toolkit 包到最新版本")
+      message("")
+      message(FATAL_ERROR "构建终止：缺少必需的依赖包 GenerateEsPackage")
+  endif()
 endif()
 find_package(dlog MODULE REQUIRED)
 find_package(securec MODULE)

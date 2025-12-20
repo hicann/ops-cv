@@ -20,7 +20,7 @@ OP_KERNEL_UT = "OP_KERNEL_UT"
 ALL_UT = "ALL_UT"
 
 NEW_OPS_PATH = ["image", "objdetect"]   # 添加更多算子路径
-COMM_FILES = ["tests", "common"]        # 添加更多算子路径
+COMM_FILES = ["tests", "common"]
 
 
 class FileChangeInfo:

@@ -55,7 +55,6 @@ def get_operator_info_from_ci(changed_file_info_from_ci):
         lines = or_f.readlines()
         changed_operators = set()
         operator_file_map = {}
-
         get_change_operators(changed_operators, lines, operator_file_map)
     return OperatorChangeInfo(changed_operators=list(changed_operators), operator_file_map=operator_file_map)
 

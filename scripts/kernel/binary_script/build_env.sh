@@ -9,6 +9,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
+
 declare -A SOC_MAP
 SOC_MAP=([Ascend310P]="Ascend310P3"
           [Ascend310B]="Ascend310B1"

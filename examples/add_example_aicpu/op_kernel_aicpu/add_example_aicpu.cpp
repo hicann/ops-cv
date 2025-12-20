@@ -52,8 +52,6 @@ uint32_t AddExampleCpuKernel::Compute(CpuKernelContext& ctx) {
       return AddCompute<float>(ctx);
     case DT_INT32:
       return AddCompute<int32_t>(ctx);
-    case DT_INT64:
-      return AddCompute<int64_t>(ctx);
     default:
       return kParamInvalid;
   }

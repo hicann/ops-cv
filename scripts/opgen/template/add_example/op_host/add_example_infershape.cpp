@@ -10,7 +10,7 @@
 
 
 /*!
- * \file add_example_infer.cpp
+ * \file add_example_infershape.cpp
  * \brief
  */
 #include "register/op_impl_registry.h"

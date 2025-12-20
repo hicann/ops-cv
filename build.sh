@@ -1030,7 +1030,6 @@ build_static_lib() {
 build_lib() {
   echo $dotted_line
   echo "Start to build libs ${BUILD_LIBS[@]}"
-  clean_build
 
   git submodule init && git submodule update
   if [ ! -d "${BUILD_PATH}" ]; then
@@ -1059,7 +1058,6 @@ build_binary() {
 
   echo $dotted_line
   echo "Start to build binary"
-  clean_build
 
   if [ ! -d "${BUILD_PATH}" ]; then
     mkdir -p "${BUILD_PATH}"
@@ -1132,7 +1130,6 @@ build_package() {
 build_ut() {
   echo $dotted_line
   echo "Start to build ut"
-  clean_build
 
   git submodule init && git submodule update
   if [ ! -d "${BUILD_PATH}" ]; then
@@ -1149,7 +1146,7 @@ build_ut() {
 build_example() {
   echo $dotted_line
   echo "Start to run examples,name:${EXAMPLE_NAME} mode:${EXAMPLE_MODE}"
-  clean_build
+
   if [ ! -d "${BUILD_PATH}" ]; then
     mkdir -p "${BUILD_PATH}"
   fi
@@ -1248,42 +1245,21 @@ gen_aicpu_op() {
   echo $dotted_line
   echo "Start to create the AI CPU initial directory for ${GENOP_NAME} under ${GENOP_TYPE}"
 
-  if [ ! -d "${GENOP_TYPE}" ]; then
-    mkdir -p "${GENOP_TYPE}"
-    cp examples/CMakeLists.txt "${GENOP_TYPE}/CMakeLists.txt"
-    sed -i '/add_subdirectory(conversion)/a add_subdirectory('"${GENOP_TYPE}"')' CMakeLists.txt
+  # 检查 python 或 python3 是否存在
+  local python_cmd=""
+  if command -v python3 &> /dev/null; then
+      python_cmd="python3"
+  elif command -v python &> /dev/null; then
+      python_cmd="python"
   fi
 
-  BASE_DIR=${GENOP_TYPE}/${GENOP_NAME}
-  mkdir -p "${BASE_DIR}"
-
-  cp -r examples/add_example_aicpu/* "${BASE_DIR}/"
-
-  rm -rf "${BASE_DIR}/examples"
-  rm -rf "${BASE_DIR}/op_host/config"
-
-  for file in $(find "${BASE_DIR}" -name "*.h" -o -name "*.cpp"); do
-    head -n 14 "$file" >"${file}.tmp"
-    cat "${file}.tmp" >"$file"
-    rm "${file}.tmp"
-  done
-
-  for file in $(find "${BASE_DIR}" -type f); do
-    sed -i "s/add_example_aicpu/${GENOP_NAME}/g" "$file"
-  done
-
-  cd ${BASE_DIR}
-  for file in $(find ./ -name "add_example_aicpu*"); do
-    new_file=$(echo "$file" | sed "s/add_example_aicpu/${GENOP_NAME}_aicpu/g")
-    mv "$file" "$new_file"
-  done
-
-  for file in $(find ./ -name "add_example*"); do
-    new_file=$(echo "$file" | sed "s/add_example/${GENOP_NAME}/g")
-    mv "$file" "$new_file"
-  done
-
-  echo "Create the AI CPU initial directory for ${GENOP_NAME} under ${GENOP_TYPE} success"
+  if [ -n "${python_cmd}" ]; then
+    ${python_cmd} "${BASE_PATH}/scripts/opgen/opgen_standalone.py" -t ${GENOP_TYPE} -n ${GENOP_NAME} -p ${GENOP_BASE} -v aicpu
+    echo "Create the AI CPU initial directory for ${GENOP_NAME} under ${GENOP_TYPE} success"
+    return $?
+  else
+    echo "Please install Python to generate op project framework."
+  fi
 }
 
 package_static() {
