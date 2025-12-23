@@ -1,9 +1,9 @@
 # 算子列表
 
 > 说明：
-> - **算子目录**：目录名为算子名小写下划线形式，每个目录承载该算子所有交付件，包括代码实现、examples、文档等，目录介绍参见[项目目录](context/dir_structure.md)。
-> - **算子执行位置**：大部分算子运行在AI Core上，少部分算子运行在AI CPU上。默认情况下，项目中提到的算子一般指AI Core算子。
-> - 关于AI Core和AI CPU详细介绍请参见[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“概念原理和术语 > 硬件架构与数据处理原理”。
+> - **算子目录**：目录名为算子名小写下划线形式，每个目录承载该算子所有交付件，包括代码实现、examples、文档等，目录介绍参见[项目目录](./context/dir_structure.md)。
+> - **算子执行硬件单元**：大部分算子运行在AI Core，少部分算子运行在AI CPU。默认情况下，项目中提到的算子一般指AI Core算子。关于AI Core和AI CPU详细介绍参见[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“概念原理和术语 > 硬件架构与数据处理原理”。
+> - **算子接口列表**：为方便调用算子，CANN提供一套C API执行算子，一般以aclnn为前缀，全量接口参见[aclnn列表](op_api_list.md)。
 
 项目提供的所有算子分类和算子列表如下：
 
@@ -28,7 +28,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/crop_and_resize/README.md">crop_and_resize</a></td>
+ <td><a href="../../image/crop_and_resize/README.md">crop_and_resize</a></td>
  <td>√</td>
  <td>√</td>
  <td>×</td>
@@ -39,7 +39,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/grid_sample/README.md">grid_sample</a></td>
+ <td><a href="../../image/grid_sample/README.md">grid_sample</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -50,7 +50,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/grid_sampler2_d_grad/README.md">grid_sampler2_d_grad</a></td>
+ <td><a href="../../image/grid_sampler2_d_grad/README.md">grid_sampler2_d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -61,7 +61,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/grid_sampler3_d_grad/README.md">grid_sampler3_d_grad</a></td>
+ <td><a href="../../image/grid_sampler3_d_grad/README.md">grid_sampler3_d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -72,7 +72,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/image_warp_offsets/README.md">image_warp_offsets</a></td>
+ <td><a href="../../image/image_warp_offsets/README.md">image_warp_offsets</a></td>
  <td>√</td>
  <td>√</td>
  <td>×</td>
@@ -152,7 +152,7 @@
   </tr>
 <tr>
 <td> image</td>
- <td><a href="../image/resize_upsample_trilinear/README.md">resize_upsample_trilinear</a></td>
+ <td><a href="../../image/resize_upsample_trilinear/README.md">resize_upsample_trilinear</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -163,7 +163,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/three_interpolate_backward/README.md">three_interpolate_backward</a></td>
+ <td><a href="../../image/three_interpolate_backward/README.md">three_interpolate_backward</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -174,7 +174,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bicubic2d/README.md">upsample_bicubic2d</a></td>
+ <td><a href="../../image/upsample_bicubic2d/README.md">upsample_bicubic2d</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -185,7 +185,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bicubic2d_aa/README.md">upsample_bicubic2d_aa</a></td>
+ <td><a href="../../image/upsample_bicubic2d_aa/README.md">upsample_bicubic2d_aa</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -196,7 +196,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bicubic2d_aa_grad/README.md">upsample_bicubic2d_aa_grad</a></td>
+ <td><a href="../../image/upsample_bicubic2d_aa_grad/README.md">upsample_bicubic2d_aa_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -207,7 +207,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bicubic2d_grad/README.md">upsample_bicubic2d_grad</a></td>
+ <td><a href="../../image/upsample_bicubic2d_grad/README.md">upsample_bicubic2d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -218,7 +218,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bilinear2d/README.md">upsample_bilinear2d</a></td>
+ <td><a href="../../image/upsample_bilinear2d/README.md">upsample_bilinear2d</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -229,7 +229,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bilinear2d_aa/README.md">upsample_bilinear2d_aa</a></td>
+ <td><a href="../../image/upsample_bilinear2d_aa/README.md">upsample_bilinear2d_aa</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -240,7 +240,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bilinear2d_aa_backward/README.md">upsample_bilinear2d_aa_backward</a></td>
+ <td><a href="../../image/upsample_bilinear2d_aa_backward/README.md">upsample_bilinear2d_aa_backward</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -251,7 +251,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_bilinear2d_grad/README.md">upsample_bilinear2d_grad</a></td>
+ <td><a href="../../image/upsample_bilinear2d_grad/README.md">upsample_bilinear2d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -262,7 +262,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_linear1d/README.md">upsample_linear1d</a></td>
+ <td><a href="../../image/upsample_linear1d/README.md">upsample_linear1d</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -273,7 +273,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest/README.md">upsample_nearest</a></td>
+ <td><a href="../../image/upsample_nearest/README.md">upsample_nearest</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -284,7 +284,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest2d_grad/README.md">upsample_nearest2d_grad</a></td>
+ <td><a href="../../image/upsample_nearest2d_grad/README.md">upsample_nearest2d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -295,7 +295,7 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest3d/README.md">upsample_nearest3d</a></td>
+ <td><a href="../../image/upsample_nearest3d/README.md">upsample_nearest3d</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -306,29 +306,29 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest3d_grad/README.md">upsample_nearest3d_grad</a></td>
+ <td><a href="../../image/upsample_nearest3d_grad/README.md">upsample_nearest3d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>AI Core</td>
- <td><a href="../image/upsample_nearest3d/README.md">UpsampleNearest3d</a>的反向计算。</td>
+ <td><a href="../../image/upsample_nearest3d/README.md">UpsampleNearest3d</a>的反向计算。</td>
 </tr>
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest_exact2d_grad/README.md">upsample_nearest_exact2d_grad</a></td>
+ <td><a href="../../image/upsample_nearest_exact2d_grad/README.md">upsample_nearest_exact2d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>AI Core</td>
- <td><a href="../image/upsample_nearest/README.md">UpsampleNearest</a>在exact_mode为true时的反向传播。</td>
+ <td><a href="../../image/upsample_nearest/README.md">UpsampleNearest</a>在exact_mode为true时的反向传播。</td>
 </tr>
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest_exact3d/README.md">upsample_nearest_exact3d</a></td>
+ <td><a href="../../image/upsample_nearest_exact3d/README.md">upsample_nearest_exact3d</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
@@ -339,29 +339,29 @@
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_nearest_exact3d_grad/README.md">upsample_nearest_exact3d_grad</a></td>
+ <td><a href="../../image/upsample_nearest_exact3d_grad/README.md">upsample_nearest_exact3d_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>AI Core</td>
- <td><a href="../image/upsample_nearest_exact3d/README.md">UpsampleNearestExact3d</a>的反向计算。</td>
+ <td><a href="../../image/upsample_nearest_exact3d/README.md">UpsampleNearestExact3d</a>的反向计算。</td>
 </tr>
 
 <tr>
 <td> image</td>
- <td><a href="../image/upsample_trilinear3d_backward/README.md">upsample_trilinear3d_backward</a></td>
+ <td><a href="../../image/upsample_trilinear3d_backward/README.md">upsample_trilinear3d_backward</a></td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>√</td>
  <td>AI Core</td>
- <td><a href="../image/resize_upsample_trilinear/README.md">ResizeUpsampleTrilinear</a>的反向计算。</td>
+ <td><a href="../../image/resize_upsample_trilinear/README.md">ResizeUpsampleTrilinear</a>的反向计算。</td>
 </tr>
 
 <tr>
 <td> objdetect</td>
- <td><a href="../objdetect/iou_v2/README.md">iou_v2</a></td>
+ <td><a href="../../objdetect/iou_v2/README.md">iou_v2</a></td>
  <td>√</td>
  <td>√</td>
  <td>×</td>
@@ -372,7 +372,7 @@
 
 <tr>
 <td> objdetect</td>
- <td><a href="../objdetect/roi_align_rotated/README.md">roi_align_rotated</a></td>
+ <td><a href="../../objdetect/roi_align_rotated/README.md">roi_align_rotated</a></td>
  <td>√</td>
  <td>√</td>
  <td>×</td>
@@ -383,7 +383,7 @@
 
 <tr>
 <td> objdetect</td>
- <td><a href="../objdetect/roi_align_rotated_grad/README.md">roi_align_rotated_grad</a></td>
+ <td><a href="../../objdetect/roi_align_rotated_grad/README.md">roi_align_rotated_grad</a></td>
  <td>√</td>
  <td>√</td>
  <td>×</td>
@@ -394,7 +394,7 @@
 
 <tr>
 <td> objdetect</td>
- <td><a href="../objdetect/stack_group_points/README.md">stack_group_points</a></td>
+ <td><a href="../../objdetect/stack_group_points/README.md">stack_group_points</a></td>
  <td>√</td>
  <td>√</td>
  <td>×</td>

@@ -19,7 +19,7 @@ aclnn接口调用流程介绍请参考[《应用开发（C&C++）》](https://hi
 
 ### 示例代码
 
-`AddExample`算子以aclnn接口形式调用的示例代码如下（详细代码参见[test_aclnn_add_example.cpp](../../examples/add_example/examples/test_aclnn_add_example.cpp)），**仅为参考**，其他算子接口调用过程类似，请替换为实际aclnn接口。调用前，请按照环境安装的提示信息设置环境变量。
+`AddExample`算子以aclnn接口形式调用的示例代码如下（详细代码参见[test_aclnn_add_example.cpp](../../../examples/add_example/examples/test_aclnn_add_example.cpp)），**仅为参考**，其他算子接口调用过程类似，请替换为实际aclnn接口。调用前，请按照环境安装的提示信息设置环境变量。
 
 注意：如需调用本项目其他算子，可访问对应算子`examples`目录下的test\_aclnn\_\$\{op\_name\}.cpp，\$\{op\_name\}表示算子名。
 
@@ -103,14 +103,14 @@ int main()
 
 ### 编译与运行
 
->说明：对于项目内已实现的算子（非自定义算子），可通过根目录下[build.sh](../../build.sh)直接运行算子，操作请参考[本地验证](./quick_op_invocation.md#本地验证)。
+>说明：对于项目内已实现的算子（非自定义算子），可通过根目录下[build.sh](../../../build.sh)直接运行算子，操作请参考[本地验证](./quick_op_invocation.md#本地验证)。
 
 1. 前提条件。
    请参考本项目[编译执行](./quick_op_invocation.md#编译执行)完成目标算子的编译部署。
 
-2. 创建CMakeLists文件。
+2. 创建CMakelist文件。
 
-   在test\_aclnn\_\$\{op\_name\}.cpp同级目录下创建CMakeLists文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
+   在test\_aclnn\_\$\{op\_name\}.cpp同级目录下创建CMakelist文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
 
     ```bash
    cmake_minimum_required(VERSION 3.14)
@@ -232,7 +232,7 @@ int main()
 构图流程介绍请参考[《图模式开发指南》](https://hiascend.com/document/redirect/CannCommunityAscendGraph)中”构建Graph > 使用图开发接口全新构建Graph > 通过算子原型构建Graph“章节。
 ### 示例代码
 
-`AddExample`算子以图方式调用的示例代码如下（详细代码参见[test_geir_add_example.cpp](../../examples/add_example/examples/test_geir_add_example.cpp)），**仅为参考**，其他算子的调用过程类似，请替换为实际的算子原型。
+`AddExample`算子以图方式调用的示例代码如下（详细代码参见[test_geir_add_example.cpp](../../../examples/add_example/examples/test_geir_add_example.cpp)），**仅为参考**，其他算子的调用过程类似，请替换为实际的算子原型。
 
 如需调用本项目其他算子，可访问对应算子`examples`目录下的test\_geir\_\$\{op\_name\}.cpp，$\{op\_name\}表示算子名。
 
@@ -281,14 +281,14 @@ int main() {
 
 ### 编译与运行
 
->说明：对于项目内已实现的算子（非自定义算子），可通过根目录下[build.sh](../../build.sh)直接运行算子，操作请参考[本地验证](./quick_op_invocation.md#本地验证)。
+>说明：对于项目内已实现的算子（非自定义算子），可通过根目录下[build.sh](../../../build.sh)直接运行算子，操作请参考[本地验证](quick_op_invocation.md#本地验证)。
 
 1. 前提条件。
    请参考本项目[编译执行](./quick_op_invocation.md#编译执行)完成目标算子的编译部署。
 
-2. 创建CMakeLists文件。
+2. 创建CMakelist文件。
 
-   在test\_geir\_\$\{op\_name\}.cpp同级目录下创建CMakeLists文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
+   在test\_geir\_\$\{op\_name\}.cpp同级目录下创建CMakeList文件，以`AddExample`算子为例，示例如下，请根据实际情况自行修改。
 
     ```bash
    cmake_minimum_required(VERSION 3.14)
