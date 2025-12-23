@@ -454,8 +454,7 @@ function(gen_ops_info_and_python)
         if(EXISTS ${binary_json})
           # binary compile from binary json config
           message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary with self config.")
-        endif()
-        compile_from_config(
+          compile_from_config(
               TARGET
               ascendc_bin_${compute_unit}_${op_name}
               OP_NAME
@@ -478,6 +477,7 @@ function(gen_ops_info_and_python)
               ${compute_unit}
         )
         add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen gen_bin_scripts)
+        endif()
       endforeach()
 
       if(HAS_OP_COMPILE_OF_COMPUTE_UNIT)
