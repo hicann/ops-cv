@@ -555,7 +555,7 @@ uninstall_package() {
     target_arch="${ARCH_INFO}"
   else
     # 判断异构so文件是否存在，存在则删除
-    if [ "${architecture}" == "x86_64" ]; then
+    if [ "${architecture}" = "x86_64" ]; then
       target_arch="aarch64"
     else
       target_arch="x86_64"
