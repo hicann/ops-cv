@@ -1046,9 +1046,6 @@ build_lib() {
     cmake --build . --target ${lib} -- ${VERBOSE} -j $THREAD_NUM
   done
 
-  if [[ "$ENABLE_CONVERAGE" =~ "TRUE" ]]; then
-    cmake --build . --target generate_ops_cpp_cov -- -j $THREAD_NUM
-  fi
   echo $dotted_line
   echo "Build libs ${BUILD_LIBS[@]} success"
   echo $dotted_line
