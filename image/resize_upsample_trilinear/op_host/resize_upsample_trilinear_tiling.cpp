@@ -293,10 +293,10 @@ static uint32_t calcIndxPerCoreInTailBlockW(
     uint32_t group_tail_w)
 {
     uint32_t batch = tiling.get_batches() * tiling.get_input_d() * tiling.get_input_h();
-    vector<uint32_t> tailGroupBlockStartInxList(core_num, 0);
-    vector<uint32_t> tailGroupBlockEndInxList(core_num, 0);
-    vector<uint32_t> tailGroupSlideStartInxList(core_num, 0);
-    vector<uint32_t> tailGroupSlideEndInxList(core_num, 0);
+    vector<uint32_t> tailGroupBlockStartInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupBlockEndInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupSlideStartInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupSlideEndInxList(MAX_CORE_COUNT, 0);
     uint32_t slide_num = tiling.get_output_w() / (SLIDE_SIZE * core_num);
     uint32_t tail_block_start;
     uint32_t last_slide_idx = slide_num > 0 ? core_num * slide_num * SLIDE_SIZE - 1 : 0;
@@ -355,10 +355,10 @@ static uint32_t calcIndxPerCoreInTailBlock(
         slide_num = tiling.get_output_d() / (SLIDE_SIZE * core_num);
     }
     last_slide_index = slide_num > 0 ? core_num * slide_num * SLIDE_SIZE - 1 : 0;
-    vector<uint32_t> tailGroupBlockStartInxList(core_num, 0);
-    vector<uint32_t> tailGroupBlockEndInxList(core_num, 0);
-    vector<uint32_t> tailGroupSlideStartInxList(core_num, 0);
-    vector<uint32_t> tailGroupSlideEndInxList(core_num, 0);
+    vector<uint32_t> tailGroupBlockStartInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupBlockEndInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupSlideStartInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupSlideEndInxList(MAX_CORE_COUNT, 0);
     uint32_t core_num_cur_group;
     uint32_t coreRealNeedNum = 0;
     size_t free_core = 0;
@@ -426,10 +426,10 @@ static uint32_t calcIndxPerCoreInTailBlock(
 static uint32_t calcIndxPerCore(UpsampleTrilinearTilingData& tiling, uint32_t core_num, int direction)
 {
     int64_t direc_length;
-    vector<uint32_t> tailGroupBlockStartInxList(core_num, 0);
-    vector<uint32_t> tailGroupBlockEndInxList(core_num, 0);
-    vector<uint32_t> tailGroupSlideStartInxList(core_num, 0);
-    vector<uint32_t> tailGroupSlideEndInxList(core_num, 0);
+    vector<uint32_t> tailGroupBlockStartInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupBlockEndInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupSlideStartInxList(MAX_CORE_COUNT, 0);
+    vector<uint32_t> tailGroupSlideEndInxList(MAX_CORE_COUNT, 0);
     if ((DIREC_WIDTH == direction && FloatEqual(tiling.get_scale_w(), 1.0)) ||
         (DIREC_HEIGHT == direction && FloatEqual(tiling.get_scale_h(), 1.0))) {
         SetTailGroupList(tiling, direction, tailGroupSlideStartInxList.data(), tailGroupSlideEndInxList.data());
