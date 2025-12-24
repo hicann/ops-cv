@@ -20,7 +20,6 @@
     </generate_info>
     <file_info value="ops_cv_script" copy_type="source" src_path="" dst_path="share/info/ops_cv" install_path="share/info/ops_cv">
         <file value="script" entity="true"/>
-        <file value="bin" entity="true"/>
         <file value="version.info"/>
     </file_info>
     <block_info dependtree="false" dst_path="ops_cv" block_conf_path="ascend">
@@ -33,7 +32,6 @@
         <path value="share" install_mod="550"/>
         <path value="share/info" install_mod="750"/>
         <path value="share/info/ops_cv" install_mod="550"/>
-        <path value="share/info/ops_cv/bin" install_mod="550"/>
         <path value="share/info/ops_cv/script" install_mod="550"/>
     </dir_info>
     <dir_info value="opp" install_path="opp" install_type="all">
