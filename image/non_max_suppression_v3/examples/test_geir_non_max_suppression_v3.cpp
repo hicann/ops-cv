@@ -37,7 +37,7 @@ using namespace ge;
 using std::map;
 using std::string;
 using std::vector;
-#define ADD_INPUT(intputIndex, intputName, intputDtype, inputShape)                          \
+#define ADD_INPUT(intputIndex, intputName, intputDtype, inputShape, value)                          \
     vector<int64_t> placeholder##intputIndex##_shape = inputShape;                           \
     auto placeholder##intputIndex = op::Data("placeholder" + intputIndex).set_attr_index(0); \
     TensorDesc placeholder##intputIndex##_desc =                                             \
@@ -48,7 +48,7 @@ using std::vector;
     ret = GenOnesDataFloat32(placeholder##intputIndex##_shape,                               \
         tensor_placeholder##intputIndex,                                                     \
         placeholder##intputIndex##_desc,                                                     \
-        2);                                                                                  \
+        value);                                                                                  \
     if (ret != SUCCESS) {                                                                    \
         printf("%s - ERROR - [XIR]: Generate input data failed\n", GetTime().c_str());       \
         return FAILED;                                                                       \
@@ -92,6 +92,8 @@ using std::vector;
   do {                              \
     printf(message, ##__VA_ARGS__); \
   } while (0)
+
+#define ADD_INPUT_ATTR(attrName, attrValue) add1.set_attr_##attrName(attrValue)
 
 string GetTime() {
     time_t timep;
@@ -174,24 +176,24 @@ int32_t WriteDataToFile(string bin_file, uint64_t data_size, uint8_t *inputData)
 }
 
 int CreateOppInGraph(DataType inDtype, std::vector <ge::Tensor> &input, std::vector <Operator> &inputs,
-                     std::vector <Operator> &outputs, Graph &graph) {
+                   std::vector <Operator> &outputs, Graph &graph) {
     Status ret = SUCCESS;
-    // 自定义代码：添加单算子定义到图中
+     // 自定义代码：添加单算子定义到图中
     auto add1 = op::NonMaxSuppressionV3("add1");
     std::vector <int64_t> boxesShape = {5, 4};
     std::vector <int64_t> scoresShape = {5};
     std::vector <int64_t> maxOutputSizeShape = {};
     std::vector <int64_t> iouThresholdShape = {};
     std::vector <int64_t> scoreThresholdShape = {};
-
-    ADD_INPUT(1, boxes, inDtype, boxesShape);
-    ADD_INPUT(2, scores, inDtype, scoresShape);
-    ADD_INPUT(3, max_output_size, DT_INT32, maxOutputSizeShape);
-    ADD_INPUT(4, iou_threshold, inDtype, iouThresholdShape);
-    ADD_INPUT(5, score_threshold, inDtype, scoreThresholdShape);
-
+                    
+    ADD_INPUT(1, boxes, inDtype, boxesShape, 2);
+    ADD_INPUT(2, scores, inDtype, scoresShape, 2);
+    ADD_INPUT(3, max_output_size, DT_INT32, maxOutputSizeShape, 3);	
+    ADD_INPUT(4, iou_threshold, inDtype, iouThresholdShape, 0.5f);	
+    ADD_INPUT(5, score_threshold, inDtype, scoreThresholdShape, 0.1f);
+   
     ADD_INPUT_ATTR(offset, 0);
-
+   
     ADD_OUTPUT(1, selected_indices, DT_INT32, std::vector < int64_t > {3});
     outputs.push_back(add1);
     // 添加完毕
