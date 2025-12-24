@@ -66,6 +66,8 @@ def get_file_change_info_from_ci(changed_file_info_from_ci):
             ext = os.path.splitext(line)[-1].lower()
             if ext in (".md",):
                 continue
+            if not os.path.exists(line):
+                continue
             if api_pattern.match(line) or api_test_pattern.match(line):
                 op_api_changed_files.append(line)
             elif host_pattern.match(line) or host_test_pattern.match(line):

@@ -35,7 +35,8 @@ def extract_operator_name(file_path):
     if len(path_parts) >= 2:
         domain = path_parts[0]
         operator_name = path_parts[1]
-
+        if operator_name == "common" or not os.path.exists(f'{domain}/{operator_name}'):
+            return default_name
         if domain in NEW_OPS_PATH:
             return operator_name
     return default_name
