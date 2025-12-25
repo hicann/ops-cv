@@ -22,10 +22,10 @@
     bash build.sh --pkg --soc=${soc_version} [--vendor_name=${vendor_name}] [--ops=${op_list}]
     # 以GridSample算子编译为例
     # bash build.sh --pkg --soc=ascend910b --ops=grid_sample
-    # 编译experimental贡献目录下的用户算子
+    # 编译experimental贡献目录下的用户算子（以GridSample算子编译为例，编译时请以实际贡献算子为准）
     # bash build.sh --pkg --experimental --soc=ascend910b --ops=grid_sample
     ```
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件使用"ascend910b"（默认），Atlas A3 训练系列产品/Atlas A3 推理系列产品使用"ascend910_93"。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend910_95”。
     - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
     - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"grid_sample,iou_v2,..."，多算子之间用英文逗号","分隔。
     - --experimental（可选）：表示编译experimental贡献目录下的算子。
@@ -48,9 +48,9 @@
 
 3. **（可选）卸载自定义算子包**
 
-   自定义算子包安装后在`${ASCEND_HOME_PATH}/opp/vendors/custom_cv/scripts`目录下会生成`uninstall.sh`脚本，通过执行该脚本可卸载自定义算子包，具体命令如下：
+   自定义算子包安装后在`${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts`目录下会生成`uninstall.sh`脚本，通过执行该脚本可卸载自定义算子包，具体命令如下：
     ```bash
-    bash ${ASCEND_HOME_PATH}/opp/vendors/custom_cv/scripts/uninstall.sh
+    bash ${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts/uninstall.sh
     ```
 
 ### ops-cv包
@@ -66,7 +66,7 @@
     # bash build.sh --pkg --experimental [--jit] --soc=${soc_version}
     ```
     - --jit（可选）：推荐设置，表示不编译算子的二进制文件。
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件使用"ascend910b"（默认），Atlas A3 训练系列产品/Atlas A3 推理系列产品使用"ascend910_93"。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend910_95”。
     - --experimental（可选）：表示编译experimental贡献目录下的算子。
 
     若提示如下信息，说明编译成功。
@@ -100,7 +100,7 @@
   
     - 完成自定义算子包安装后，执行如下命令：
         ```bash
-        bash build.sh --run_example ${op} ${mode} ${pkg_mode} [--vendor_name=${vendor_name}]
+        bash build.sh --run_example ${op} ${mode} ${pkg_mode} [--vendor_name=${vendor_name}] [--soc=${soc_version}]
         # 以GridSample算子example执行为例
         # bash build.sh --run_example grid_sample eager cust --vendor_name=custom
         ```
@@ -109,18 +109,20 @@
         - \$\{mode\}：表示执行模式，目前支持eager（aclnn调用）、graph（图模式调用）。
         - \$\{pkg_mode\}：表示包模式，目前仅支持cust，即自定义算子包。         
         - \$\{vendor\_name\}（可选）：与构建的自定义算子包设置一致，默认名为custom。        
+        - \$\{soc_version\}（可选）：表示NPU型号。当设置为"ascend950"时会额外运行"arch35"目录下的示例文件。
         
         说明：\$\{mode\}为graph时，不指定\$\{pkg_mode\}和\$\{vendor\_name\}
 
     - 完成ops-cv包安装后，执行命令如下：
         ```bash
-        bash build.sh --run_example ${op} ${mode}
+        bash build.sh --run_example ${op} ${mode} [--soc=${soc_version}]
         # 以GridSample算子example执行为例
         # bash build.sh --run_example grid_sample eager
         ```
         
         - \$\{op\}：表示待执行算子，算子名小写下划线形式，如grid_sample。       
         - \$\{mode\}：表示算子执行模式，目前支持eager（aclnn调用）、graph（图模式调用）。
+        - \$\{soc_version\}（可选）：表示NPU型号。当设置为"ascend950"时会额外运行"arch35"目录下的示例文件。
     
     执行算子样例后会打印结果，以GridSample算子执行为例：
 
@@ -165,6 +167,8 @@
   # bash build.sh -u --[opapi|ophost|opkernel]
   # 方式5: 编译对应功能的UT测试用例但不执行（选其一）
   # bash build.sh -u --noexec --[opapi|ophost|opkernel]
+  # 方式6: 执行UT测试用例时可指定soc编译
+  # bash build.sh -u --[opapi|ophost|opkernel] [--soc=${soc_version}]
     ```
 
     假设验证ophost功能是否正常，执行如下命令：
