@@ -25,7 +25,7 @@
     # 编译experimental贡献目录下的用户算子（以GridSample算子编译为例，编译时请以实际贡献算子为准）
     # bash build.sh --pkg --experimental --soc=ascend910b --ops=grid_sample
     ```
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend910_95”。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend950”。
     - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
     - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"grid_sample,iou_v2,..."，多算子之间用英文逗号","分隔。
     - --experimental（可选）：表示编译experimental贡献目录下的算子。
@@ -66,7 +66,7 @@
     # bash build.sh --pkg --experimental [--jit] --soc=${soc_version}
     ```
     - --jit（可选）：推荐设置，表示不编译算子的二进制文件。
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend910_95”。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend950”。
     - --experimental（可选）：表示编译experimental贡献目录下的算子。
 
     若提示如下信息，说明编译成功。
