@@ -60,3 +60,6 @@ ascend_download
 # tbetoolkits log files
 tbetoolkits-*.log
 *_result.csv
+
+# third_party
+third_party/
