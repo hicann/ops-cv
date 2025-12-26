@@ -1,18 +1,11 @@
 # aclnnResize
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_bilinear_v2)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -92,7 +85,7 @@ aclnnStatus aclnnResize(
       <td>输入</td>
       <td>指定self张量调整的倍数，对应公式中的`scales`。</td>
       <td><ul><li>长度和self维度相同。</li><li>当前仅支持调整self的H与W维，scales其他的N与C维度需保持为1。</li></ul></td>
-      <td>FloatArray</td>
+      <td>FLOAT32</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -111,7 +104,7 @@ aclnnStatus aclnnResize(
       <td>out</td>
       <td>输出</td>
       <td>输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据格式、数据类型与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li><li>shape的H轴和W轴符合output_dimension = floor(input_dimension * scales)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据格式与入参`self`的数据格式一致。</li><li>当mode=nearest时，shape符合output_dimension = floor(input_dimension * scales)。</li></ul></td>
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -140,10 +133,9 @@ aclnnStatus aclnnResize(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>、<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     - 参数`self`、`out`的数据类型不支持BFLOAT16。
     - 参数`self`、`out`的数据格式不支持NHWC。
-
 
 - **返回值：**
 
@@ -178,12 +170,11 @@ aclnnStatus aclnnResize(
       <td>数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>out与self的数据格式或者数据类型不一致。</tr>
+      <td>out与self的数据格式不一致。</tr>
     <tr>
       <td>shape不满足要求：<ol><li>self和out的shape必须4维。</li><li>self和out的N维和C维必须相同。</li><li>out在H维的size必须等于self的H维size乘以scales对应H维的值。</li><li>out在W维的size必须等于self的W维乘以scales对应W维的值。</li></ol></td>
     </tr>
   </tbody></table>
-
 
 ## aclnnResize
 

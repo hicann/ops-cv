@@ -4,13 +4,8 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -24,7 +19,7 @@
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
-      
+
       grad、input、grid、dx、dgrid的尺寸如下：
   
       $$
@@ -36,8 +31,7 @@
       $$
   
       其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
-   
-    
+
     - 对于超出范围的坐标，会根据padding_mode进行不同处理：
   
       - padding_mode="zeros"，表示对越界位置用0填充。
@@ -48,7 +42,6 @@
   
       - interpolation_mode="bilinear"，表示取input中(x, y, z)周围四个坐标的加权平均值。
       - interpolation_mode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
-
 
 ## 参数说明
 
@@ -126,14 +119,9 @@
     </tr>
   </tbody></table>
 
-<term>Atlas 训练系列产品</term>：输入参数和输出参数的数据类型不支持DOUBLE、BFLOAT16。
-
 ## 约束说明
 
 无
-<!--
-GridSampler3DGrad默认为非确定性实现，暂不支持确定性实现，[确定性计算](./docs/zh/context/确定性计算.md)配置后不会生效。
--->
 
 ## 调用说明
 

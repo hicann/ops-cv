@@ -3,13 +3,8 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>昇腾910_95 AI处理器</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
-| <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term> |    √     |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
-| <term>Atlas 推理系列产品 </term>                             |    ×     |
-| <term>Atlas 训练系列产品</term>                              |    √     |
-| <term>Atlas 200/300/500 推理产品</term>                      |    ×     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
 
 ## 功能说明
 
@@ -38,16 +33,14 @@ $L=\prod_d⌊{\frac{spatial_size[d]+2×padding[d]−dilation[d]×(kernel_size[d]
 - **参数说明：**
 
   - gradOutput(aclTensor*, 计算输入)：公式中的output张量，shape为$(C×\prod(kernel_size),L)$或$(N,C×\prod(kernel_size),L)$。Device侧的aclTensor，shape支持2维和3维。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-    - <term>Atlas 训练系列产品</term>：数据类型支持FLOAT16、FLOAT。
-    - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：数据类型支持BFLOAT16、FLOAT16、FLOAT。
+    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：数据类型支持BFLOAT16、FLOAT16、FLOAT。
   - inputSize(aclIntArray*, 计算输入): 公式中的参数$spatial_size$。host侧的aclIntArray，输入张量的形状，size为2，数据类型为int64。
   - kernelSize(aclIntArray*, 计算输入): 公式中的参数$kernel_size$。host侧的aclIntArray，卷积核的大小，size为2，数据类型为int64。
   - dilation(aclIntArray*, 计算输入): 公式中的参数$dilation$。host侧的aclIntArray，膨胀参数，size为2，数据类型为int64。
   - padding(aclIntArray*, 计算输入): 公式中的参数$padding$。host侧的aclIntArray，卷积的填充大小，size为2，数据类型为int64。
   - stride(aclIntArray*, 计算输入): 公式中的参数$stride$。host侧的aclIntArray，卷积的步长，size为2，数据类型为int64。
   - out(aclTensor*, 计算输出)：公式中的input张量，shape为$(C,spatial_size[0],spatial_size[1])$或$(N,C,spatial_size[0],spatial_size[1])$。Device侧的aclTensor，shape支持3维(gradOutput的shape是2维)和4维(gradOutput的shape是3维)。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-    - <term>Atlas 训练系列产品</term>：数据类型支持FLOAT16、FLOAT。
-    - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：数据类型支持BFLOAT16、FLOAT16、FLOAT。
+    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：数据类型支持BFLOAT16、FLOAT16、FLOAT。
   - workspaceSize(uint64_t*, 出参)：返回需要在Device侧申请的workspace大小。
   - executor(aclOpExecutor**, 出参)：返回op执行器，包含了算子计算流程。
 

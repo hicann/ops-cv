@@ -4,13 +4,8 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -26,14 +21,18 @@
     scale = self.dim / outputSize
     $$
     
-    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
     
     $$
     x' = \min(\lfloor (x+0.5) * scale \rfloor, self.dim(2) - 1)
     $$
+
+
     $$
     y' = \min(\lfloor (y+0.5) * scale \rfloor, self.dim(3) - 1)
     $$
+
+
     $$
     z' = \min(\lfloor (z+0.5) * scale \rfloor, self.dim(4) - 1)
     $$
@@ -91,8 +90,6 @@
       <td>NCDHW</td>
     </tr>
   </tbody></table>
-
-<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
 
 ## 约束说明
 

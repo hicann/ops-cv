@@ -1,26 +1,17 @@
 # aclnnUpsampleBilinear2dBackwardV2
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_grad)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
 - 算子功能：[aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。
 
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，支持使用scale计算，以及增加outputSize与scale的约束，请根据实际情况选择合适的接口。
-  - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，无变更。
-
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，支持使用scale计算，以及增加outputSize与scale的约束，请根据实际情况选择合适的接口。
 - 计算公式：
   - 正向的核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
@@ -198,7 +189,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式、shape与入参`gradOut`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式需要与入参`gradOut`的数据类型、数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -227,11 +218,6 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：
-  
-    参数`gradOut`、`out`的数据类型不支持BFLOAT16.
-  
-
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -259,10 +245,10 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
     <tr>
       <td rowspan="12">ACLNN_ERR_PARAM_INVALID</td>
       <td rowspan="12">161002</td>
-      <td>gradOut、out的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>gradOut和out的数据类型或shape不一致。</td>
+      <td>gradOut和out的数据类型不一致。</td>
     </tr>
     <tr>
       <td>gradOut的维度不为4维。</td>
@@ -287,6 +273,9 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
     </tr>
     <tr>
       <td>gradOut和out的N/C轴的维度大小不相等。</td>
+    </tr>
+    <tr>
+      <td>gradOut和out的数据格式不在支持的范围之内。</td>
     </tr>
   </tbody></table>
 
@@ -355,7 +344,6 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
   - 当alignCorners为False时：
     - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
     - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
-
 - 确定性计算：
   - aclnnUpsampleBilinear2dBackwardV2默认确定性实现。
 

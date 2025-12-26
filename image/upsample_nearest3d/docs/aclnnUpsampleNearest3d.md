@@ -1,22 +1,15 @@
 # aclnnUpsampleNearest3d
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest3d)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D, H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
+- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
 - 计算公式：
   - 核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
@@ -24,15 +17,15 @@
   - 具体计算逻辑：
 
     $$
-    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1), \ scalesD = outputSize[0] / self\_D
+    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1),scalesD = outputSize[0] / self\_D
     $$
 
     $$
-    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1), \ scalesH = outputSize[1] / self\_H
+    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1),scalesH = outputSize[1] / self\_H
     $$
 
     $$
-    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1), \ scalesW = outputSize[2] / self\_W
+    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1),scalesW = outputSize[2] / self\_W
     $$
 
     $$
@@ -60,9 +53,8 @@ aclnnStatus aclnnUpsampleNearest3d(
   void             *workspace, 
   uint64_t          workspaceSize, 
   aclOpExecutor    *executor, 
-  const aclrtStream stream)
+  aclrtStream       stream)
 ```
-
 
 ## aclnnUpsampleNearest3dGetWorkspaceSize
 
@@ -93,7 +85,7 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量。对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li><li>shape的C、D、H、W维的size大于0。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -102,7 +94,7 @@ aclnnStatus aclnnUpsampleNearest3d(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>指定输出out在D、H、W维度上的空间大小。对应公式中的`outputSize`。</td>
+      <td>指定输出out的Tensor大小，对应公式中的`outputSize`。</td>
       <td>size为3，各元素取值均大于零。</td>
       <td>INT64</td>
       <td>-</td>
@@ -143,7 +135,7 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中`out`的点p坐标。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>输入和输出shape的N、C轴必须相同。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>输入和输出的N、C必须相同。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -172,13 +164,7 @@ aclnnStatus aclnnUpsampleNearest3d(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>：
-
-    入参`self`和出参`out`的数据类型不支持BFLOAT16、DOUBLE、UINT8。
-  - <term>Atlas 训练系列产品</term>：
-
-    入参`self`和出参`out`的数据类型不支持BFLOAT16、UINT8。
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
 
     入参`self`和出参`out`的数据类型不支持UINT8。
 
@@ -218,10 +204,13 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在C、D、H、W维度上的size不大于0。</td>
+      <td>self在D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
+    </tr>
+    <tr>
+      <td>self的C维度为0。</td>
     </tr>
     <tr>
       <td>out的shape中D、H、W不等于outputSize。</td>
@@ -265,7 +254,6 @@ aclnnStatus aclnnUpsampleNearest3d(
     </tr>
   </tbody>
   </table>
-
 
 - **返回值：**
 

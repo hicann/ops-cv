@@ -1,30 +1,23 @@
 # aclnnUpsampleNearest2d
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_nearest_neighbor_v2)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。
+- **算子功能：**对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。
 - 计算公式：
 
   $$
-  h_{src} = min(floor(h_{dst} * scalesH),  H - 1), \ scalesH = outputSize[0] / self\_H
+  h_{src} = min(floor(h_{dst} * scalesH),  H - 1)
   $$
 
   $$
-  w_{src} = min(floor(w_{dst} * scalesW),  W - 1), \ scalesW = outputSize[1] / self\_W
+  w_{src} = min(floor(w_{dst} * scalesW),  W - 1)
   $$
 
   $$
@@ -101,7 +94,7 @@ aclnnStatus aclnnUpsampleNearest2d(
       <td>out</td>
       <td>输出</td>
       <td>公式中的`out`，表示进行上采样的输出结果。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参self保持一致。</li><li>shape的N轴、C轴与入参self保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参self的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -130,11 +123,6 @@ aclnnStatus aclnnUpsampleNearest2d(
   </tbody>
   </table>
 
-- <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-
-  入参`self`和出参`out`的数据类型不支持FLOAT、BFLOAT16。
-
-  
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -163,6 +151,9 @@ aclnnStatus aclnnUpsampleNearest2d(
       <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
       <td rowspan="6">161002</td>
       <td>self的数据类型不在支持的范围内或self与out数据类型不同。</td>
+    </tr>
+    <tr>
+      <td>self的数据格式不在支持范围内。</td>
     </tr>
     <tr>
       <td>self的shape不是4维。</td>
@@ -231,6 +222,7 @@ aclnnStatus aclnnUpsampleNearest2d(
     $$
     N *  (ceil(C/16) * 16) * (self\_H * self\_W + out\_H * out\_D) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
+
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。

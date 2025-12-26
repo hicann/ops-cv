@@ -1,18 +1,11 @@
 # aclnnUpsampleTrilinear3dBackward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_trilinear3d_backward)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -51,7 +44,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -226,7 +219,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>shape在N、C、D、H和W维度上的大小需与`inputSize`中给定的N、C、D、H和W维度上的空间大小一致。</li><li>数据类型、数据格式、shape与入参`gradOut`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>shape在N、C、D、H和W维度上的大小需与`inputSize`中给定的N、C、D、H和W维度上的空间大小一致。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -254,10 +247,6 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
     </tr>
   </tbody>
   </table>
-
-  - <term>Atlas 训练系列产品</term>：
-  
-    参数`gradOut`和`gradInput`的数据类型不支持BFLOAT16。
 
 - **返回值：**
 

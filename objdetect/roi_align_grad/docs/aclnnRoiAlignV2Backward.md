@@ -1,25 +1,18 @@
 # aclnnRoiAlignV2Backward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/objdetect/roi_align_grad)
-
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>昇腾910_95 AI处理器</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
-| <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term> |    √     |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
-| <term>Atlas 推理系列产品 </term>                             |    ×     |
-| <term>Atlas 训练系列产品</term>                              |    √     |
-| <term>Atlas 200/300/500 推理产品</term>                      |    ×     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
 
 ## 功能说明
 
 算子功能：[aclnnRoiAlignV2](./aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
 
 ## 函数原型
-每个算子分为[两段式接口](common/两段式接口.md)，必须先调用“aclnnRoiAlignV2BackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlignV2Backward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignV2BackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlignV2Backward”接口执行计算。
 
 - `aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape, int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio, bool aligned, aclTensor* gradInput, uint64_t* workspaceSize, aclOpExecutor** executor)`
 - `aclnnStatus aclnnRoiAlignV2Backward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)`
@@ -28,9 +21,9 @@
 
 - **参数说明：**
 
-  - gradOutput（aclTensor\*，计算输入）：反向传播的输入。Device侧的aclTensor，数据类型支持FLOAT，必须与boxes、gradInput数据类型一致。支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持NCHW。维度为4维，shape为（K，C，pooledHeight，pooledWidth），表示反向传播的输入梯度张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight \* pooledWidth的特征图，K需要与boxes第0维保持一致。
+  - gradOutput（aclTensor\*，计算输入）：反向传播的输入。Device侧的aclTensor，数据类型支持FLOAT，必须与boxes、gradInput数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为（K，C，pooledHeight，pooledWidth），表示反向传播的输入梯度张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight \* pooledWidth的特征图，K需要与boxes第0维保持一致。
 
-  - boxes（aclTensor\*，计算输入）：感兴趣区域box坐标。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、gradInput数据类型一致。支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。维度为2维，shape为（K，5），5代表box相关信息（image_id，x1，y1，x2，y2）。image_id取值范围\[0, B\)，向下取整到图像id，B为inputShape第一个值。坐标满足0 <= x1 <= x2 <= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。
+  - boxes（aclTensor\*，计算输入）：感兴趣区域box坐标。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、gradInput数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。维度为2维，shape为（K，5），5代表box相关信息（image_id，x1，y1，x2，y2）。image_id取值范围\[0, B\)，向下取整到图像id，B为inputShape第一个值。坐标满足0 <= x1 <= x2 <= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。
 
   - inputShape（aclIntArray\*，计算输入）：正向输入的shape，用来指定反向传播的输出shape。Host侧的aclIntArray，支持的数据类型为INT32、INT64。size大小为4，值为（B, C, inputHeight, inputWidth），表示正向RoiAlign的输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight \* inputWidth的特征图。
 
@@ -44,16 +37,15 @@
   
   - aligned（bool，计算输入）：如果为false，则对齐[aclnnRoiAlign](./aclnnRoiAlign.md)版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。Host侧的输入参数。
 
-  - gradInput（aclTensor\*，计算输出）：反向传播的输出。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、boxes数据类型一致。支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持NCHW。维度为4维，shape为（B, C, inputHeight, inputWidth）。
+  - gradInput（aclTensor\*，计算输出）：反向传播的输出。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、boxes数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为（B, C, inputHeight, inputWidth）。
 
   - workspaceSize（uint64_t*，出参）：返回需要在Device侧申请的workspace大小。
 
   - executor（aclOpExecutor**，出参）：返回op执行器，包含了算子计算流程。
 
-
 - **返回码：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](common/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ```
 第一段接口完成入参校验，出现以下场景时报错：
@@ -75,10 +67,9 @@
 
   - stream（aclrtStream, 入参）：指定执行任务的Stream。
 
-
 - **返回码：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](common/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -87,7 +78,7 @@
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](common/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 ```Cpp
 #include <iostream>
 #include <vector>

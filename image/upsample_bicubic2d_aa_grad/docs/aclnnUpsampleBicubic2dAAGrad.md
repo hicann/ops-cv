@@ -1,18 +1,11 @@
 # aclnnUpsampleBicubic2dAAGrad
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bicubic2d_aa_grad)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -79,7 +72,6 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
   aclrtStream    stream)
 ```
 
-
 ## aclnnUpsampleBicubic2dAAGradGetWorkspaceSize
 
 - **参数说明**：
@@ -110,7 +102,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>gradOutput</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -170,7 +162,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与`gradOutput`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOutput`一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -224,8 +216,8 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>传入的gradOutput、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="7">161002</td>
+      <td rowspan="5">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="5">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
@@ -236,12 +228,6 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
     </tr>
     <tr>
       <td>inputSize的H轴或W轴的取值小于1。</td>
-    </tr>
-    <tr>
-      <td>inputSize的size不为4。</td>
-    </tr>
-    <tr>
-      <td>outputSize的size不为2。</td>
     </tr>
     <tr>
       <td>scalesH或scalesW的值为负数。</td>

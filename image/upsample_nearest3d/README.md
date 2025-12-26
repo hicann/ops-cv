@@ -4,13 +4,8 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -21,7 +16,7 @@
     2. 对于缩放之后的目标图像的点，计算距离最近的原始图像的点，后者的值直接复制给前者。
   - 具体计算逻辑：
     
-    对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系: 
+    对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
     
     $$
     x' = \min(\lfloor x * scale\_depth \rfloor, self\_D - 1) ,\ 
@@ -93,8 +88,6 @@
   </tbody></table>
 
 <!--aclnn对比IR少了UINT8，差异是否要体现-->
-<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
-
 ## 约束说明
 
 无

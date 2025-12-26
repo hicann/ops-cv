@@ -1,18 +1,11 @@
 # aclnnUpsampleLinear1d
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_linear1d)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -34,7 +27,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系: 
+    那么，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -50,10 +43,10 @@
       $$
 
     - 则有以下公式：
+
       $$
       {V(p_{x})} = {V(p_{x0})} * {lambda_{0}}  + {V(p_{x1})} * {lambda_{1}} 
       $$
-
 
 ## 函数原型
 
@@ -150,7 +143,7 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
       <td>3</td>
@@ -179,11 +172,6 @@ aclnnStatus aclnnUpsampleLinear1d(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-
-    入参`self`和出参`out`的数据类型不支持BFLOAT16。
-
-  
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。

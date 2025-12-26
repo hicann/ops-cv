@@ -1,18 +1,11 @@
 # aclnnUpsampleLinear1dBackward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_grad)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -144,10 +137,10 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     <tr>
       <td>alignCorners</td>
       <td>输入</td>
-      <td>BOOL类型参数，对应公式中的`alignCorners`。</td>
+      <td>bool类型参数，对应公式中的`alignCorners`。</td>
       <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；
       <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -156,7 +149,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>scales</td>
       <td>输入</td>
       <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
-      <td>取值不大于500。</li></ul></td>
+      <td>-</li></ul></td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -166,7 +159,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`的数据类型、数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL</td>
       <td>3</td>
@@ -195,13 +188,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>:
-
-    入参`gradOut`和出参`out`的数据类型仅支持FLOAT32、FLOAT16。
-  
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>:
-
-    入参`gradOut`：当gradOut的shape对应轴的值与inputSize对应轴的值不相同时，数据类型仅支持FLOAT32、FLOAT16。
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：入参`gradOut`：当gradOut的shape与inputSize的shape不相同时，数据类型仅支持FLOAT32、FLOAT16。
 
 - **返回值：**
 
@@ -228,8 +215,8 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="14">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="14">161002</td>
+      <td rowspan="13">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="13">161002</td>
     </tr>
     <tr>
       <td>gradOut的数据类型不在支持的范围之内。</td>
@@ -246,13 +233,13 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     </tr>
     <tr><td>inputSize的某个元素值小于1。</td>
     </tr>
+    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
+    </tr>
     <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>
     <tr><td>gradOut和out的N/C轴的维度大小不相等。</td>
     </tr>
     <tr><td>out的shape在各个维度上的大小与inputSize里对应元素值大小不同。</td>
-    </tr>
-    <tr><td>scales的取值不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -315,7 +302,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     - C代表输入和输出的C轴。
   - N * C < 2^31
 - 入参`gradOut`和出参`out`的数据格式不为NCL或ND时，输入其他数据格式默认按照NCL处理。
-- <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：输入数据缩放场景放大倍数必须小于等于500，即：$outputSize[0]/(输出shape的长度L)<=500$。
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：输入数据缩放场景放大倍数必须小于等于500，即：$outputSize[0]/(输出shape的长度L)<=500$。
 - 参数outputSize与参数scales，在使用时二选一，即：
   - 当alignCorners为True：
     - outputSize等于1，scales的值为0。
@@ -324,6 +311,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     - 当入参scales的值小于等于0时，使用入参outputSize的参数值，即：$scales=(inputSize\_L / outputSize)$。
     - 当入参scales的值大于0时，当$outputSize=[floor(inputSize\_L * scales)]$不成立时，使用入参outputSize的参数值；否则使用入参scales的值。
 - 确定性计算：
+  
   - aclnnUpsampleLinear1dBackward默认确定性实现。
 
 ## 调用示例

@@ -1,18 +1,11 @@
 # aclnnUpsampleBicubic2dBackward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bicubic2d_grad)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -172,7 +165,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式与`gradOut`保持一致。</li><li>shape的N轴和C轴与`gradOut`保持一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -201,10 +194,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-    - 参数`gradOut`、`gradInput`的数据类型不支持BFLOAT16。
-    - 参数`gradOut`、`gradInput`的数据格式不支持NHWC。
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     参数`gradOut`、`gradInput`的数据格式不支持NHWC。
 
@@ -324,7 +314,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     - 其他情况下使用入参inputSize和outputSize中对应轴的参数值，且：$scales=(inputSize-1)/(outputSize-1)$。  
   - 当alignCorners为False时：
     - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
-    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H esH)$，或者$floor(inputSize\_W * scalesW)$。
 - 确定性计算：
   
   aclnnUpsampleBicubic2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。确定性实现需同时满足如下条件：

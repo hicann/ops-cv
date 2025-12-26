@@ -1,18 +1,11 @@
 # aclnnUpsampleTrilinear3d
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_upsample_trilinear)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -89,7 +82,7 @@
     - 则有以下公式：
 
       $$
-      {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}}
+      {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}} 
       $$
 
 ## 函数原型
@@ -147,7 +140,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>shape的C轴、D轴、H轴、W轴的取值大于0。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -157,7 +150,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示出参`out`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td>size为3，且各元素均大于零。</td>
+      <td>指定输出Tensor大小，size为3，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -177,7 +170,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>scalesD</td>
       <td>输入</td>
       <td>表示输出`out`的depth维度乘数，对应公式中的`scales_d`。</td>
-      <td>取值小于等于50。</td>
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -187,7 +180,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>scalesH</td>
       <td>输入</td>
       <td>表示输出`out`的height维度乘数，对应公式中的`scales_h`。</td>
-      <td>取值小于等于50。</td>
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -197,7 +190,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>scalesW</td>
       <td>输入</td>
       <td>表示输出`out`的width维度乘数，对应公式中的`scales_w`。</td>
-      <td>取值小于等于50。</td>
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -207,7 +200,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -235,13 +228,6 @@ aclnnStatus aclnnUpsampleTrilinear3d(
     </tr>
   </tbody>
   </table>
-
-  - <term>Atlas 推理系列产品</term>：
-    - 入参`self`的数据类型仅支持FLOAT32、FLOAT16，不支持inf、-inf输入。
-    - 出参`out`的数据类型仅支持FLOAT32、FLOAT16。
-  - <term>Atlas 训练系列产品</term>：
-
-    入参`self`和出参`out`的数据类型支持FLOAT32、FLOAT16、DOUBLE。
 
 - **返回值**：
 
@@ -278,10 +264,13 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在C、D、H、W维度上的size不大于0。</td>
+      <td>self在D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
+    </tr>
+    <tr>
+      <td>self的C维度为0。</td>
     </tr>
   </tbody></table>
 

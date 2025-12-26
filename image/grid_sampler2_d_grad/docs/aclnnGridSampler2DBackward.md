@@ -1,19 +1,12 @@
 
 # aclnnGridSampler2DBackward
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/grid_sampler2_d_grad)
-
 
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -38,11 +31,11 @@
   
       其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
 
-
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
       - paddingMode="zeros"，表示对越界位置用0填充。
       - paddingMode="border"，表示对越界位置用边界值填充。
+      - paddingMode="reflection"，表示对越界位置用边界值的对称值填充。
   
     - 对input采样时，会根据interpolationMode进行不同处理：
   
@@ -106,7 +99,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gradOutput</td>
       <td>输入</td>
       <td>表示反向传播过程中上一层的输出梯度，对应公式描述中的`grad`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -126,7 +119,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -136,7 +129,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>interpolationMode</td>
       <td>输入</td>
       <td>表示插值模式，对应公式描述中的`interpolationMode`。</td>
-     <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）两种模式。</td>
+      <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）两种模式。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -146,7 +139,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>paddingMode</td>
       <td>输入</td>
       <td>表示填充模式，即当(x, y)取值超过输入特征图采样范围时，返回一个特定值。对应公式描述中的`paddingMode`。</td>
-      <td>支持0：zeros、1：border两种模式。</li></ul></td>
+      <td>支持0：zeros、1：border、2：reflection三种模式。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -156,7 +149,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>alignCorners</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式，对应公式描述中的`alignCorners`。</td>
-      <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</li></ul></td>
+      <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -166,7 +159,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>outputMask</td>
       <td>输入</td>
       <td>用于表示输出的掩码。</td>
-      <td>outputMask[0]为true/false，表示是/否获取输出`inputGrad`；outputMask[1]为true/false，表示是/否获取输出`gridGrad`。</li></ul></td>
+      <td>outputMask[0]为true/false，表示是/否获取输出`inputGrad`；outputMask[1]为true/false，表示是/否获取输出`gridGrad`。</td>
       <td>BOOLARRAY</td>
       <td>-</td>
       <td>-</td>
@@ -176,7 +169,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>inputGrad</td>
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape需要与`input`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -186,7 +179,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gridGrad</td>
       <td>输出</td>
       <td>表示grid梯度，对应公式描述中的`dgrid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`grid`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape需要与`grid`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -214,10 +207,6 @@ aclnnStatus aclnnGridSampler2DBackward(
     </tr>
   </tbody>
   </table>
-
-  - <term>Atlas 训练系列产品</term>：
-  
-    参数`gradOutput`、`input`、`grid`、`inputGrad`、`gridGrad`的数据类型不支持BFLOAT16、DOUBLE。
 
 - **返回值：**
 
@@ -322,7 +311,9 @@ aclnnStatus aclnnGridSampler2DBackward(
 ## 约束说明
 
 - 确定性计算：
-  - aclnnGridSampler2DBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
+  - aclnnGridSampler2DBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。确定性实现需同时满足如下条件：
+    - 输入和输出的数据类型不为DOUBLE。
+    - 输入和输出的C轴取值小于等于2048。
 
 ## 调用示例
 

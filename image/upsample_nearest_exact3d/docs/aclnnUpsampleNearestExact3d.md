@@ -1,18 +1,11 @@
 # aclnnUpsampleNearestExact3d
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact3d)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -99,7 +92,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输出out在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td>size为3，各元素均大于零。</td>
+      <td><ul><li>size为3，各元素均大于零。</li><li>指定输出`out`的Tensor大小。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -139,7 +132,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参`self`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参`self`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -167,10 +160,6 @@ aclnnStatus aclnnUpsampleNearestExact3d(
     </tr>
   </tbody>
   </table>
-
-  - <term>Atlas 推理系列产品</term>：
-  
-    参数`self`、`out`的数据类型仅支持FLOAT32、FLOAT16。
 
 - **返回值：**
 
@@ -208,7 +197,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在C、D、H、W维度上的size不大于0。</td>
+      <td>self在D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>

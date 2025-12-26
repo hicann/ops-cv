@@ -4,13 +4,8 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  昇腾910_95 AI处理器   |     ×    |
 |  Atlas A3 训练系列产品/Atlas A3 推理系列产品   |     √    |
-|  Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件     |     √    |
-|  Atlas 200I/500 A2 推理产品    |     ×    |
-|  Atlas 推理系列产品     |     √    |
-|  Atlas 训练系列产品    |     ×    |
-|  Atlas 200/300/500 推理产品       |     ×    |
+|  Atlas A2 训练系列产品/Atlas A2 推理系列产品     |     √    |
 
 ## 功能说明
 
@@ -22,16 +17,21 @@
   IOU = \frac {Area_3} {Area_1 + Area_2 - Area_3} \\
   IOF = \frac {Area_3} {Area_2} 
   $$
+
   其中，Area_1为bBox的面积，Area_2为gtBox的面积，Area_3为两者重叠部分面积，x和y的定义见参数说明。
+
   $$
   Area_1 = (X_2 - X_1)(Y_2 - Y_1) \\
   Area_2 = (X_4 - X_3)(Y_4 - Y_3) \\
   Area_3 = max( min(X_2, X_4) - max(X_1, X_3), 0 ) * max( min(Y_2, Y_4) - max(Y_1, Y_3), 0 )
   $$
+
   IOF定义为前景交叉比，计算公式：
+
   $$
   IOF=\frac {Area_3} {前景面积}
   $$
+
   对于库上算子，前景面积为Area2；对于竞品mmcv，前景面积为Area1。
 
 ## 参数说明

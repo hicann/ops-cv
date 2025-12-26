@@ -1,18 +1,11 @@
 # aclnnGridSampler3D
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/grid_sample)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -26,7 +19,6 @@
   grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
   output: (N, C, D_{out}, H_{out}, W_{out})
   $$
-
 
   其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
   
@@ -142,7 +134,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>out</td>
       <td>输出</td>
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据格式和数据类型与input保持一致。</li><li>shape的N轴、C轴与input保持一致，shape的D轴、H轴、W轴与grid保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据格式和数据类型与input的数据格式和数据类型一致。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -171,10 +163,6 @@ aclnnStatus aclnnGridSampler3D(
   </tbody>
   </table>
 
-  - <term>Atlas 训练系列产品</term>：
-  
-    参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
-  
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。

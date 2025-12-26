@@ -1,18 +1,11 @@
 # aclnnUpsampleBicubic2d
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bicubic2d)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -110,7 +103,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -130,7 +123,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则输入和输出张量的边像素点会被对齐。</td>
+      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -160,7 +153,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与`self`保持一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与`self`的数据类型和数据格式一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -189,10 +182,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
   </tbody>
   </table>
   
-  - <term>Atlas 200I/500 A2 推理产品</term>、<term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-    - 数据格式：参数`self`、`out`不支持BFLOAT16。
-    - 数据类型：参数`self`、`out`不支持NHWC。
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     参数`self`、`out`的数据格式不支持NHWC。
   

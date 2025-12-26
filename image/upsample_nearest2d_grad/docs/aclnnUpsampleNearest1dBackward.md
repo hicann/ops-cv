@@ -1,19 +1,11 @@
 # aclnnUpsampleNearest1dBackward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest2d_grad)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
-
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -36,7 +28,7 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
   const aclIntArray *inputSize, 
   double             scales, 
   aclTensor         *out, 
-  int64_t           *workspaceSize, 
+  uint64_t          *workspaceSize, 
   aclOpExecutor    **executor)
 ```
 
@@ -120,7 +112,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的'out'。</td>
-      <td><ul><li>L轴不支持空Tensor。</li><li>数据类型与`gradOut`的数据类型一致。</li><li>输入必须是3维。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`的数据类型一致。</li><li>输入必须是3维。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -149,8 +141,6 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：入参`gradOut`和出参`out`的数据类型仅支持FLOAT16。
-  
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -180,7 +170,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td rowspan="11">161002</td>
     </tr>
     <tr>
-      <td>gradOut的数据类型不在支持的范围之内。</td>
+      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
     </tr>
     <tr><td>gradOut和out的数据类型不一致。</td>
     </tr>
@@ -191,6 +181,10 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
     <tr><td>inputSize的size不等于3。</td>
+    </tr>
+    <tr><td>inputSize的某个元素值小于1。</td>
+    </tr>
+    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>

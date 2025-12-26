@@ -1,18 +1,11 @@
 # aclnnUpsampleNearest2dV2
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest3d)
-
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>昇腾910_95 AI处理器</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
 ## 功能说明
 
@@ -21,11 +14,11 @@
 - 计算公式：
 
   $$
-  h_{src} = min(floor(h_{dst} * scalesH),  H - 1), \ scalesH = outputSize[0] / self\_H
+  h_{src} = min(floor(h_{dst} * scalesH),  H - 1)
   $$
 
   $$
-  w_{src} = min(floor(w_{dst} * scalesW),  W - 1), \ scalesW = outputSize[1] / self\_W
+  w_{src} = min(floor(w_{dst} * scalesW),  W - 1)
   $$
 
   $$
@@ -54,7 +47,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   aclOpExecutor *executor, 
   aclrtStream    stream)
 ```
-
 
 ## aclnnUpsampleNearest2dV2GetWorkspaceSize
 
@@ -126,7 +118,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
       <td>out</td>
       <td>输出</td>
       <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式与入参self保持一致。</li><li>当数据类型为FLOAT32、BFLOAT16、FLOAT16时，out的所有轴取值均要满足小于等于(2^31-1)。</li><li>shape的N轴、C轴与入参self保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式需要与入参self的数据类型和数据格式保持一致。</li><li>当数据类型为FLOAT32、BFLOAT16、FLOAT16时，out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE、UINT8</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -155,10 +147,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
     </tr>
   </tbody>
   </table>
-
-  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
-    入参`self`和出参`out`的数据类型不支持FLOAT32、BFLOAT16。
 
 - **返回值**：
 
@@ -199,7 +187,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
       <td>outputSize中存在值为0的元素。</td>
     </tr>
   </tbody></table>
-
 
 ## aclnnUpsampleNearest2dV2
 
