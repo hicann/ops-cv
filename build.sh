@@ -168,10 +168,10 @@ usage() {
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo $dotted_line
         echo "Examples:"
-        echo "    bash build.sh --opkernel --soc=ascend310p --ops=add,sub"
-        echo "    bash build.sh --opkernel --soc=ascend310p --ops=add,sub --build-type=Debug"
-        echo "    bash build.sh --opkernel --soc=ascend310p --ops=add,sub --mssanitizer"
-        echo "    bash build.sh --opkernel --soc=ascend310p --ops=add,sub --oom"
+        echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample"
+        echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --build-type=Debug"
+        echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --mssanitizer"
+        echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --oom"
         return
         ;;
       opkernel_aicpu)
@@ -180,9 +180,15 @@ usage() {
         echo "    --opkernel_aicpu       Build AICPU kernel"
         echo "    --soc=soc_version      Compile for specified Ascend SoC"
         echo "    --ops=op1,op2,...      Compile specified operators (comma-separated for multiple)"
+        echo "    --build-type=<Type>    Specify build-type (Type options: Release/Debug), Default:Release"
+        echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
+        echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo $dotted_line
         echo "Examples:"
-        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=add,sub"
+        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize"
+        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --build-type=Debug"
+        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --mssanitizer"
+        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --oom"
         return
         ;;
       test)
@@ -191,6 +197,7 @@ usage() {
         echo "    -u                     Build and run all unit tests"
         echo "    --noexec               Only compile ut, do not execute"
         echo "    --cov                  Enable code coverage for unit tests"
+        echo "    --soc=soc_version      Run unit tests for specified Ascend SoC"
         echo "    --ophost_test          Build and run ophost unit tests"
         echo "    --opapi_test           Build and run opapi unit tests"
         echo "    --opgraph_test         Build and run opgraph unit tests"
@@ -200,6 +207,7 @@ usage() {
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh -u --noexec --cov"
+        echo "    bash build.sh -u --ophost --soc=ascend910b --ops=grid_sample"
         echo "    bash build.sh --ophost_test --opapi_test --noexec"
         echo "    bash build.sh --ophost --opapi --opgraph -u --cov"
         return
@@ -970,24 +978,25 @@ assemble_cmake_args() {
     CMAKE_ARGS="$CMAKE_ARGS -DUT_TEST_ALL=TRUE"
   fi
   if [[ -n $COMPUTE_UNIT ]]; then
-    IFS=',' read -ra COMPUTE_UNIT <<<"$COMPUTE_UNIT"
-    COMPUTE_UNIT_SHORT=""
-    for unit in "${COMPUTE_UNIT[@]}"; do
-      for support_unit in "${SUPPORT_COMPUTE_UNIT_SHORT[@]}"; do
-        lowercase_word=$(echo "$unit" | tr '[:upper:]' '[:lower:]')
-        if [[ "$lowercase_word" == *"$support_unit"* ]]; then
-          COMPUTE_UNIT_SHORT="$COMPUTE_UNIT_SHORT$support_unit;"
-          break
-        fi
-      done
+    COMPUTE_UNIT=$(echo "$COMPUTE_UNIT" | tr '[:upper:]' '[:lower:]')
+    if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
+      COMPUTE_UNIT="ascend910_95"
+    fi
+    found=0
+    for support_unit in "${SUPPORT_COMPUTE_UNIT_SHORT[@]}"; do
+      if [[ "$COMPUTE_UNIT" == "$support_unit" ]]; then
+        COMPUTE_UNIT_SHORT=$support_unit
+        found=1
+        break
+      fi
     done
-    if [[ -z $COMPUTE_UNIT_SHORT ]]; then
-      print_error "The soc [${COMPUTE_UNIT}] is not support."
-      usage
+    if [[ $found -eq 0 ]]; then
+      echo "soc only support : ${SUPPORT_COMPUTE_UNIT_SHORT[@]}"
+
       exit 1
     fi
-    echo "COMPUTE_UNIT: ${COMPUTE_UNIT_SHORT}"
-    CMAKE_ARGS="$CMAKE_ARGS -DASCEND_COMPUTE_UNIT=$COMPUTE_UNIT_SHORT"
+    echo "COMPUTE_UNIT: ${COMPUTE_UNIT}"
+    CMAKE_ARGS="$CMAKE_ARGS -DASCEND_COMPUTE_UNIT=$COMPUTE_UNIT"
   fi
   CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
 }
