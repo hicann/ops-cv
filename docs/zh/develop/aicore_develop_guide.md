@@ -336,7 +336,7 @@ __aicore__ inline void AddExample<T>::Process()
 
 为实现该调用方式，需提前生成算子对应的二进制包，配置二进制编译json文件。
 
-以`AddExample`算子为例，在`scripts/kernel/binary_config`目录[ascendc_config.json](../../scripts/kernel/binary_config/ascendc_config.json)中，注册算子的NPU型号和实现模式，示例如下，输入实际name和compute_units即可。
+以`AddExample`算子为例，在`scripts/kernel/binary_config`目录[ascendc_config.json](../../../scripts/kernel/binary_config/ascendc_config.json)中，注册算子的NPU型号和实现模式，示例如下，输入实际name和compute_units即可。
 
 ```json
 {"name":"AddExample", "compute_units": ["${soc_version}"], "auto_sync":true, "impl_mode" : "high_performance"}
