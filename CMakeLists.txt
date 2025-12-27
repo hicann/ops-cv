@@ -135,7 +135,7 @@ if("${ASCEND_OP_NAME}" STREQUAL "add_example")
   add_subdirectory(examples)
 endif()
 
-message(STATUS "Ops for this compilation contains: ${COMPILED_OPS}")
+check_compiled_ops()
 
 if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
   include(cmake/gen_ops_info.cmake)

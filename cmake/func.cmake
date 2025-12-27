@@ -569,3 +569,42 @@ function(add_ops_compile_options OP_TYPE)
     message(FATAL_ERROR "add ops compile options failed!")
   endif()
 endfunction()
+
+# ######################################################################################################################
+# check whether the compiled operators meet expectations
+# ######################################################################################################################
+function(check_compiled_ops)
+  message(STATUS "Ops for this compilation contains: ${COMPILED_OPS}")
+  if(COMPILED_OPS STREQUAL "")
+    message(FATAL_ERROR "Specified ops not found in this depository, please check --ops paramater")
+  endif()
+
+  # 未指定算子，全部编译
+  if(NOT NEED_COMPILE_OPS)
+    return()
+  endif()
+
+  # 指定了但未参与编译的算子，即为无效算子名，应该报错
+  set(not_compiled_ops)
+  foreach(op_name IN LISTS NEED_COMPILE_OPS)
+    if(NOT op_name IN_LIST COMPILED_OPS)
+      list(APPEND not_compiled_ops ${op_name})
+    endif()
+  endforeach()
+
+  if(NOT not_compiled_ops)
+    return()
+  endif()
+
+  list(JOIN not_compiled_ops "," not_compiled_ops_str)
+  if(ENABLE_EXPERIMENTAL)
+    message(FATAL_ERROR
+        "Specified ops(${not_compiled_ops_str}) not found in experimental, please check --ops paramater"
+    )
+  else()
+    message(FATAL_ERROR
+        "Specified ops(${not_compiled_ops_str}) not found in this depository, please check --ops paramater"
+    )
+  endif()
+endfunction()
+
