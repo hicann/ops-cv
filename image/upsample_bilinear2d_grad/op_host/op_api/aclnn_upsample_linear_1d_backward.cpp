@@ -12,7 +12,7 @@
 #include <cmath>
 #include "image/resize_bilinear_v2_grad/op_host/op_api/resize_bilinear_v2_grad.h"
 #include "image/upsample_bilinear2d_grad/op_host/op_api/upsample_bilinear2d_grad.h"
-#include "image/resize_linear_grad/op_host/op_api/resize_linear_grad.h"
+#include "image/resize_linear_grad/op_api/resize_linear_grad.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transdata.h"

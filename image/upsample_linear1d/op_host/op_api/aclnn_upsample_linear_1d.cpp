@@ -11,7 +11,7 @@
 #include <cmath>
 #include "upsample_linear1d.h"
 #include "image/resize_d/op_host/op_api/resize_d.h"
-#include "image/resize_linear/op_host/op_api/resize_linear.h"
+#include "image/resize_linear/op_api/resize_linear.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/contiguous.h"
 #include "level0/squeeze.h"

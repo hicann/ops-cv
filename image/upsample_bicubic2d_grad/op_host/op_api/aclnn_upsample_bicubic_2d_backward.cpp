@@ -11,7 +11,7 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "image/resize_grad_d/op_host/op_api/resize_grad_d.h"
 #include "upsample_bicubic2d_grad.h"
-#include "image/resize_bicubic_v2_grad/op_host/op_api/resize_bicubic_v2_grad.h"
+#include "image/resize_bicubic_v2_grad/op_api/resize_bicubic_v2_grad.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/transdata.h"

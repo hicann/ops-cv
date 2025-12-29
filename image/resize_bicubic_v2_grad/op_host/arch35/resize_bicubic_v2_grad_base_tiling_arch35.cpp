@@ -118,8 +118,8 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckDtypeValid()
 ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckFormatValid()
 {
     OP_CHECK_IF(
-        inputInfo_.gradsFormat != ge::FORMAT_NCHW && inputInfo_.gradsFormat != ge::FORMAT_NHWC,
-        OP_LOGE(context_->GetNodeName(), "grads format must be NCHW or NHWC."), return ge::GRAPH_FAILED);
+        inputInfo_.gradsFormat != ge::FORMAT_NCHW && inputInfo_.gradsFormat != ge::FORMAT_NHWC && inputInfo_.gradsFormat != ge::FORMAT_ND,
+        OP_LOGE(context_->GetNodeName(), "grads format must be NCHW or NHWC or ND"), return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(
         inputInfo_.originalImageFormat != inputInfo_.gradsFormat ||
@@ -127,8 +127,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckFormatValid()
         OP_LOGE(context_->GetNodeName(), "Formats of grads, original_image and y must be same."),
         return ge::GRAPH_FAILED);
 
-    inputInfo_.format = inputInfo_.yFormat == ge::FORMAT_NCHW ? 0 : 1;
-
+    inputInfo_.format = inputInfo_.yFormat == ge::FORMAT_NHWC ? 1 : 0;
     return ge::GRAPH_SUCCESS;
 }
 
@@ -147,7 +146,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckShapeValid()
         OP_LOGE(context_->GetNodeName(), "N dims of grads and y must be same."), return ge::GRAPH_FAILED);
     inputInfo_.lenN = inputInfo_.gradsShape.GetDim(NUM_0);
 
-    if (inputInfo_.gradsFormat == ge::FORMAT_NCHW) {
+    if (inputInfo_.gradsFormat == ge::FORMAT_NCHW || inputInfo_.gradsFormat == ge::FORMAT_ND) {
         OP_CHECK_IF(
             inputInfo_.gradsShape.GetDim(NUM_1) != inputInfo_.yShape.GetDim(NUM_1),
             OP_LOGE(context_->GetNodeName(), "C dims of grads and y must be same."), return ge::GRAPH_FAILED);
