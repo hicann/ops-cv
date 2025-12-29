@@ -27,7 +27,7 @@ class GridSamplerBicubic2D {
 public:
     __aicore__ inline GridSamplerBicubic2D(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -195,8 +195,9 @@ __aicore__ inline void GridSamplerBicubic2D<T>::ParseTilingData(const GridSample
 
 template <typename T>
 __aicore__ inline void GridSamplerBicubic2D<T>::Init(
-    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
 
     ParseTilingData(tilingData);

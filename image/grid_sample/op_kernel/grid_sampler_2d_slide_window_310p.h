@@ -48,7 +48,7 @@ class GridSampler2DSlideWindow310P {
 public:
     __aicore__ inline GridSampler2DSlideWindow310P(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -279,8 +279,9 @@ __aicore__ inline void GridSampler2DSlideWindow310P<T>::ParseTilingData(const Gr
 
 template <typename T>
 __aicore__ inline void GridSampler2DSlideWindow310P<T>::Init(
-    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
     // 初始化tiling
     ParseTilingData(tilingData);

@@ -27,7 +27,7 @@ class GridSampler2DFullLoad {
 public:
     __aicore__ inline GridSampler2DFullLoad(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -222,8 +222,9 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::ParseTilingData(c
 
 template <typename T, int templateCNum>
 __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::Init(
-    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
     // 初始化tiling
     ParseTilingData(tilingData);

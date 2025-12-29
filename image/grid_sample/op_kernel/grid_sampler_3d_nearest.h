@@ -28,7 +28,7 @@ class GridSampler3DNearest {
 public:
     __aicore__ inline GridSampler3DNearest(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -102,8 +102,9 @@ private:
 
 template <typename T>
 __aicore__ inline void GridSampler3DNearest<T>::Init(
-    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
     // 初始化tiling
     ParseTilingData(tilingData, commonParam);

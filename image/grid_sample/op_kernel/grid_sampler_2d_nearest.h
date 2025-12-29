@@ -27,7 +27,7 @@ class GridSampler2DNearest {
 public:
     __aicore__ inline GridSampler2DNearest(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -182,16 +182,17 @@ __aicore__ inline void GridSampler2DNearest<T>::ParseTilingData(const GridSample
 
 template <typename T>
 __aicore__ inline void GridSampler2DNearest<T>::Init(
-    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
     // 初始化tiling
     ParseTilingData(tilingData);
 
     gmX_.SetGlobalBuffer((__gm__ T *)x);
+    gmY_.SetGlobalBuffer((__gm__ T *)y);
     gmGrid_.SetGlobalBuffer((__gm__ T *)gird);
     gmWorkspace_.SetGlobalBuffer((__gm__ float *)workspace);
-    gmY_.SetGlobalBuffer((__gm__ T *)y);
 
     // buffer initialize
     pipe.InitBuffer(xBuf_, X_UB_SIZE_4_GENERAL);                 // 32KB

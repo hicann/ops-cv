@@ -42,7 +42,7 @@ class GridSampler2DSlideWindow {
 public:
     __aicore__ inline GridSampler2DSlideWindow(){};
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -304,15 +304,16 @@ __aicore__ inline void GridSampler2DSlideWindow<T>::ParseTilingData(const GridSa
 
 template <typename T>
 __aicore__ inline void GridSampler2DSlideWindow<T>::Init(
-    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR x, GM_ADDR gird, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
     // 初始化tiling
     ParseTilingData(tilingData);
 
     gmX_.SetGlobalBuffer((__gm__ T *)x);
-    gmGrid_.SetGlobalBuffer((__gm__ T *)gird);
     gmWorkspace_.SetGlobalBuffer((__gm__ T *)workspace);
+    gmGrid_.SetGlobalBuffer((__gm__ T *)gird);
     gmY_.SetGlobalBuffer((__gm__ T *)y);
 
     // buffer申请初始化

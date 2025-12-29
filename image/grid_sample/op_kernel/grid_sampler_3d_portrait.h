@@ -25,7 +25,7 @@ class GridSampler3DPortrait {
 public:
     __aicore__ inline GridSampler3DPortrait(){};
     __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace, const GridSampleTilingData *tilingData);
+        GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
@@ -252,8 +252,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::ParseTilingData(const GridSampl
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::Init(
-    GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace, const GridSampleTilingData *tilingData)
+    GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
 {
+    pipe = pipeIn;
     blockIDX = GetBlockIdx();
 
     // 初始化tiling

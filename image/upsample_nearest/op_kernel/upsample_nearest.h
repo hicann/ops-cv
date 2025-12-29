@@ -39,7 +39,7 @@ public:
 
     __aicore__ inline UpsampleNearestND(){};
     __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleNearestTilingData* tilingData);
+        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleNearestTilingData* __restrict__ tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -55,7 +55,7 @@ private:
         return a > b ? a : b;
     };
 
-    __aicore__ inline void ParseTilingData(UpsampleNearestTilingData* tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleNearestTilingData* __restrict__ tilingData);
 
     __aicore__ inline void CalculateIdxTensor(int64_t index, int64_t length, int8_t direction);
     __aicore__ inline void NearestComputeBase();
@@ -116,7 +116,7 @@ private:
 
 template <typename T, int32_t MODE>
 __aicore__ inline void UpsampleNearestND<T, MODE>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleNearestTilingData* tilingData)
+    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleNearestTilingData* __restrict__ tilingData)
 {
     blockIdx = GetBlockIdx();
 
@@ -497,7 +497,7 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::CopyOutBatch(int64_t indexOut
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::ParseTilingData(UpsampleNearestTilingData* tilingData)
+__aicore__ inline void UpsampleNearestND<T, MODE>::ParseTilingData(const UpsampleNearestTilingData* __restrict__ tilingData)
 {
     slideSize = DEFAULT_UB_MAX_DATA_COUNT;
     dataType = tilingData->dataType;
