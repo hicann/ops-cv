@@ -1,0 +1,57 @@
+{
+  "op_type": "NMSWithMask",
+  "op_list": [
+    {
+      "bin_filename": "NMSWithMask_a1532827238e1555db7b997c7bce2928",
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],      
+      "attrs": [
+        {
+          "name": "iou_threshold",
+          "dtype": "float32",
+          "value": null
+        },
+        {
+          "name": "scores_threshold",
+          "dtype": "float32",
+          "value": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "uint8",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ]
+    }
+  ]
+}

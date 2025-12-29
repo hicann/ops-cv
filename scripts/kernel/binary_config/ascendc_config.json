@@ -585,5 +585,6 @@
     {"name":"QuantizedBatchNorm", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false},
     {"name":"UnfoldGrad", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync": true},
     {"name":"Bincount", "compute_units": ["ascend910_95"], "auto_sync" : false, "impl_mode" : ""},
-    {"name":"Addr", "compute_units": ["ascend910_95"], "auto_sync" : false, "impl_mode" : ""}
+    {"name":"Addr", "compute_units": ["ascend910_95"], "auto_sync" : false, "impl_mode" : ""},
+    {"name":"NMSWithMask", "compute_units": ["ascend910b"], "auto_sync" : false, "impl_mode" : ""}
 ]
