@@ -50,19 +50,18 @@ Create the initial directory for ${op_name} under ${op_class} success
 ```
 ${op_name}                              # 替换为实际算子名的小写下划线形式
 ├── examples                            # 算子调用示例
-│   ├── test_aclnn_${op_name}.cpp       # 算子aclnn调用示例
+│   └── test_aclnn_${op_name}.cpp       # 算子aclnn调用示例
 ├── op_host                             # Host侧实现
 │   ├── ${op_name}_def.cpp              # 算子信息库，定义算子基本信息，如名称、输入输出、数据类型等
 │   ├── ${op_name}_infershape.cpp       # InferShape实现，实现算子形状推导，在运行时推导输出shape
-│   ├── ${op_name}_tiling.cpp           # Tiling实现，将张量划分为多个小块，区分数据类型进行并行计算
-│   └── CMakeLists.txt                  # Host侧cmakelist文件
-└── op_kernel                           # Device侧Kernel实现
+│   └── ${op_name}_tiling.cpp           # Tiling实现，将张量划分为多个小块，区分数据类型进行并行计算
+├── op_kernel                           # Device侧Kernel实现
 │   ├── ${op_name}_tiling_key.h         # Tilingkey文件，定义Tiling策略的Key，标识不同的划分方式
 │   ├── ${op_name}_tiling_data.h        # Tilingdata文件，存储Tiling策略相关的配置数据，如块大小、并行度
 │   ├── ${op_name}.cpp                  # Kernel入口文件，包含主函数和调度逻辑
 │   └── ${op_name}.h                    # Kernel实现文件，定义Kernel头文件，包含函数声明、结构定义、逻辑实现
 ├── tests                               # UT实现
-│   ├── ut                              # tiling/kernel/aclnn UT实现
+│   └── ut                              # tiling/kernel/aclnn UT实现
 └── CMakeLists.txt                      # 算子cmakelist入口
 ```
 
