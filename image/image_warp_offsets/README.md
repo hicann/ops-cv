@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：该算子根据张量 offsets 对输入张量 images 图像进行偏移变换，将 images 转化为张量 warp_images。
+- 算子功能：该算子根据张量 offsets 对输入张量 images 进行偏移变换，生成warp_images张量。
 
 ## 参数说明
 
