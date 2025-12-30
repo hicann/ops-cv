@@ -55,6 +55,7 @@ if(UT_TEST_ALL OR OP_API_UT)
               op_api_ut_common
               ${OPAPI_NAME}_ut
               nnopbase
+              unified_dlog
           -Wl,--no-as-needed
           -Wl,--whole-archive
           graph
@@ -91,7 +92,7 @@ if(UT_TEST_ALL OR OP_API_UT)
           COMMAND
               ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}
               LD_PRELOAD=${LIBASAN_PATH}:${LIBSTDC_PATH} ASAN_OPTIONS=detect_leaks=0
-              ${PRELOAD} ./${OP_API_UT_EXE}
+              $<TARGET_FILE:${OP_API_UT_EXE}>
               COMMENT "Run ops op_api utest with asan"
       )
     else()
@@ -99,7 +100,7 @@ if(UT_TEST_ALL OR OP_API_UT)
               TARGET ${OP_API_UT_EXE}
               POST_BUILD
               COMMAND
-              ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} ./${OP_API_UT_EXE}
+              ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} $<TARGET_FILE:${OP_API_UT_EXE}>
               COMMENT "Run ops op_api utest"
       )
     endif()

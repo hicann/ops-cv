@@ -49,6 +49,7 @@ option(ENABLE_BINARY "Enable build binary" OFF)
 option(ENABLE_CUSTOM "Enable build custom" OFF)
 option(ENABLE_PACKAGE "Enable build package" OFF)
 option(ENABLE_EXPERIMENTAL "Enable experimental module" OFF)
+option(ENABLE_COVERAGE "Enable coverage" OFF)
 option(ENABLE_MSSANITIZER "Enable mssanitizer mode" OFF)
 option(ENABLE_OOM "Enable oom mode" OFF)
 

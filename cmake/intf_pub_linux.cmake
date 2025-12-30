@@ -15,7 +15,7 @@ if(NOT TARGET intf_pub)
     -Wall
     -fPIC
     $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
-    $<$<BOOL:${ENABLE_PKG_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
+    $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
     -fno-stack-protector -fno-omit-frame-pointer -g>
     $<$<BOOL:${ENABLE_COVERAGE}>:-fprofile-arcs -ftest-coverage>
     $<$<CONFIG:Debug>:-g>
@@ -47,7 +47,7 @@ if(NOT TARGET intf_pub_cxx14)
     -Wall
     -fPIC
     $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
-    $<$<BOOL:${ENABLE_PKG_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
+    $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
     -fno-stack-protector -fno-omit-frame-pointer -g>
     $<$<BOOL:${ENABLE_COVERAGE}>:-fprofile-arcs -ftest-coverage>
     $<$<CONFIG:Debug>:-g>
@@ -79,7 +79,7 @@ if(NOT TARGET intf_pub_cxx17)
       -Wall
       -fPIC
       $<IF:$<VERSION_GREATER:${CMAKE_C_COMPILER_VERSION},4.8.5>,-fstack-protector-strong,-fstack-protector-all>
-      $<$<BOOL:${ENABLE_PKG_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
+      $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fsanitize=leak -fsanitize-recover=address,all
       -fno-stack-protector -fno-omit-frame-pointer -g>
       $<$<BOOL:${ENABLE_COVERAGE}>:-fprofile-arcs -ftest-coverage>
       $<$<CONFIG:Debug>:-g>

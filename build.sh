@@ -602,7 +602,7 @@ checkopts() {
   BUILD_TYPE="Release"
   ENABLE_MSSANITIZER=FALSE
   ENABLE_OOM=FALSE
-  ENABLE_CONVERAGE=FALSE
+  ENABLE_COVERAGE=FALSE
   ENABLE_UT_EXEC=TRUE
   ENABLE_ASAN=FALSE
   ENABLE_VALGRIND=FALSE
@@ -757,7 +757,7 @@ checkopts() {
           ;;
         mssanitizer) ENABLE_MSSANITIZER=TRUE ;;
         oom) ENABLE_OOM=TRUE ;;
-        cov) ENABLE_CONVERAGE=TRUE ;;
+        cov) ENABLE_COVERAGE=TRUE ;;
         noexec) ENABLE_UT_EXEC=FALSE ;;
         aicpu) AICPU_ONLY=TRUE ;;
         static)
@@ -939,6 +939,9 @@ assemble_cmake_args() {
   fi
   if [[ "$ENABLE_UT_EXEC" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_UT_EXEC=TRUE"
+  fi
+  if [[ "$ENABLE_COVERAGE" == "TRUE" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DENABLE_COVERAGE=TRUE"
   fi
   if [[ "$ENABLE_BINARY" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_BINARY=TRUE"
@@ -1147,8 +1150,13 @@ build_ut() {
   fi
 
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
-  cmake --build . --target ${UT_TARGES[@]} -- ${VERBOSE} -j $THREAD_NUM
-  if [[ "$ENABLE_CONVERAGE" =~ "TRUE" ]]; then
+  
+  for lib in "${UT_TARGES[@]}"; do
+    `find . -name "${lib}*" -type f -delete`
+    cmake --build . --target ${lib} -- ${VERBOSE} -j $THREAD_NUM
+  done
+  
+  if [[ "$ENABLE_COVERAGE" =~ "TRUE" ]]; then
     cmake --build . --target generate_ops_cpp_cov -- -j $THREAD_NUM
   fi
 }

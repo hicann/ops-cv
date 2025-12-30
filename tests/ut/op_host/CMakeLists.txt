@@ -58,6 +58,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       -Wl,--no-whole-archive
       -Wl,--no-as-needed
           metadef
+          unified_dlog
       -Wl,--as-needed
       register
       opp_registry
@@ -96,7 +97,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
         COMMAND
           ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}
           LD_PRELOAD=${LIBASAN_PATH}:${LIBSTDC_PATH}
-          ASAN_OPTIONS=detect_leaks=0 ./${OP_HOST_UT_EXE}
+          ASAN_OPTIONS=detect_leaks=0 $<TARGET_FILE:${OP_HOST_UT_EXE}>
         COMMENT "Run ops op_host utest with asan"
         )
     else()
@@ -104,7 +105,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
         TARGET ${OP_HOST_UT_EXE}
         POST_BUILD
         COMMAND
-          ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} ./${OP_HOST_UT_EXE}
+          ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} $<TARGET_FILE:${OP_HOST_UT_EXE}>
         COMMENT "Run ops op_host utest"
         )
     endif()
@@ -116,7 +117,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       POST_BUILD
       COMMAND
         ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} && valgrind --undef-value-errors=no
-        --leak-check=full ./${OP_HOST_UT_EXE}
+        --leak-check=full $<TARGET_FILE:${OP_HOST_UT_EXE}>
       COMMENT "Run ops op_host utest by valgrind"
       )
   endif()

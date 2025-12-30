@@ -395,6 +395,7 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
         -Wl,--whole-archive
         tiling_api rt2_registry_static
         -Wl,--no-whole-archive
+        $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
         )
 
       # gen ascendc tiling head files
