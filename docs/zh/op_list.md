@@ -90,7 +90,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>使用双三次插值调整图像大小到指定的大小。</td>
   </tr>
@@ -100,7 +100,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>计算输入图像在双三次插值基础下的梯度。</td>
   </tr>
@@ -130,7 +130,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>使用单线性插值调整图像大小到指定的大小。</td>
   </tr>
@@ -140,7 +140,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>计算输入图像在单线性插值基础下的梯度。</td>
   </tr>
