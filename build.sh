@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 set -e
-RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu")
+RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin")
 UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
                             "ascend910_55" "ascend910_93" "ascend910_95" "ascend910b" "ascend910" "mc62cm12a" "kirinx90")
@@ -23,7 +23,7 @@ SUPPORTED_LONG_OPTS=(
   "help" "ops=" "soc=" "vendor_name=" "build-type=" "cov" "noexec" "aicpu" "opkernel" "opkernel_aicpu" "jit"
   "pkg" "asan" "valgrind" "make_clean" "static"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
-  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom"
+  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin"
 )
 
 in_array() {
@@ -268,6 +268,19 @@ usage() {
         echo "    bash build.sh --opgraph --build-type=Debug"
         return
         ;;
+      onnxplugin)
+        echo "ONNXPlugin Build Options:"
+        echo $dotted_line
+        echo "    --onnxplugin           Build onnxplugin library"
+        echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
+        echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
+        echo "    --debug                Build with debug mode"
+        echo $dotted_line
+        echo "Examples:"
+        echo "    bash build.sh --onnxplugin -j16 -O3"
+        echo "    bash build.sh --onnxplugin --debug"
+        return
+        ;;
       ophost_test)
         echo "Ophost Test Options:"
         echo $dotted_line
@@ -366,6 +379,7 @@ usage() {
   echo "    --vendor_name Specify the custom operator package vendor name, like: --vendor_name=customize, default to customize-cv"
   echo "    --aicpu build aicpu task"
   echo "    --opgraph build op_graph_cv.so"
+  echo "    --onnxplugin build op_cv_onnx_plugin.so"
   echo "    --opapi build opapi_cv.so"
   echo "    --ophost build ophost_cv.so"
   echo "    --opkernel build binary kernel"
@@ -399,7 +413,7 @@ check_help_combinations() {
   for arg in "${args[@]}"; do
     case "$arg" in
       -u) has_u=true ;;
-      --ophost_test | --opapi_test | --opgraph_test | --ophost | --opapi | --opgraph)
+      --ophost_test | --opapi_test | --opgraph_test | --ophost | --opapi | --opgraph | --onnxplugin)
         has_test_command=true
         has_build_command=true
         ;;
@@ -507,7 +521,7 @@ set_create_libs() {
     return
   fi
   if [[ "$ENABLE_PACKAGE" == "TRUE" && "$ENABLE_CUSTOM" != "TRUE" ]]; then
-    BUILD_LIBS=("ophost_${REPOSITORY_NAME}" "opapi_${REPOSITORY_NAME}" "opgraph_${REPOSITORY_NAME}")
+    BUILD_LIBS=("ophost_${REPOSITORY_NAME}" "opapi_${REPOSITORY_NAME}" "opgraph_${REPOSITORY_NAME}" "op_${REPOSITORY_NAME}_onnx_plugin")
     ENABLE_CREATE_LIB=TRUE
   else
     if [[ "$OP_HOST" == "TRUE" ]]; then
@@ -520,6 +534,10 @@ set_create_libs() {
     fi
     if [[ "$OP_GRAPH" == "TRUE" ]]; then
       BUILD_LIBS+=("opgraph_${REPOSITORY_NAME}")
+      ENABLE_CREATE_LIB=TRUE
+    fi
+    if [[ "$ONNX_PLUGIN" == "TRUE" ]]; then
+      BUILD_LIBS+=("op_${REPOSITORY_NAME}_onnx_plugin")
       ENABLE_CREATE_LIB=TRUE
     fi
     if [[ "$OP_KERNEL" == "TRUE" ]]; then
@@ -621,6 +639,7 @@ checkopts() {
   OP_API=FALSE
   OP_HOST=FALSE
   OP_GRAPH=FALSE
+  ONNX_PLUGIN=FALSE
   OP_KERNEL=FALSE
   OP_KERNEL_AICPU=FALSE
   ENABLE_CREATE_LIB=FALSE
@@ -667,6 +686,7 @@ checkopts() {
           --ophost) SHOW_HELP="ophost" ;;
           --opapi) SHOW_HELP="opapi" ;;
           --opgraph) SHOW_HELP="opgraph" ;;
+          --onnxplugin) SHOW_HELP="onnxplugin" ;;
           --ophost_test) SHOW_HELP="ophost_test" ;;
           --opapi_test) SHOW_HELP="opapi_test" ;;
           --opgraph_test) SHOW_HELP="opgraph_test" ;;
@@ -786,6 +806,7 @@ checkopts() {
         make_clean)
           clean_build
           clean_build_out
+          clean_third_party
           exit 0
           ;;
         *)
@@ -807,6 +828,8 @@ checkopts() {
             OP_API=TRUE
           elif [[ "$OPTARG" == "opgraph" ]]; then
             OP_GRAPH=TRUE
+          elif [[ "$OPTARG" == "onnxplugin" ]]; then
+            ONNX_PLUGIN=TRUE
           elif [[ "$OPTARG" == "opkernel" ]]; then
             OP_KERNEL=TRUE
           elif [[ "$OPTARG" == "opkernel_aicpu" ]]; then
@@ -1013,6 +1036,14 @@ clean_build() {
 clean_build_out() {
   if [ -d "${BUILD_OUT_PATH}" ]; then
     rm -rf ${BUILD_OUT_PATH}/*
+  fi
+}
+
+clean_third_party() {
+  THIRD_PARTY_PATH=${BASE_PATH}/third_party
+  if [ -d "${THIRD_PARTY_PATH}" ]; then
+    rm -rf ${THIRD_PARTY_PATH}/abseil-cpp
+    rm -rf ${THIRD_PARTY_PATH}/ascend_protobuf
   fi
 }
 

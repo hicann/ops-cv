@@ -15,6 +15,7 @@ set(OPSTATIC_NAME cann_${PKG_NAME}_static)
 set(OPAPI_NAME opapi_${PKG_NAME})
 set(OPGRAPH_NAME opgraph_${PKG_NAME})
 set(OP_GRAPH_NAME op_graph_${PKG_NAME})
+set(ONNX_PLUGIN_NAME op_${PKG_NAME}_onnx_plugin)
 if(NOT CANN_3RD_LIB_PATH)
   set(CANN_3RD_LIB_PATH ${PROJECT_SOURCE_DIR}/third_party)
 endif()
@@ -87,6 +88,7 @@ else()
   set(OPTILING_LIB_INSTALL_DIR        ${OPHOST_LIB_INSTALL_PATH})
   set(OPGRAPH_INC_INSTALL_DIR         ops_cv/built-in/op_graph/inc)
   set(OPGRAPH_LIB_INSTALL_DIR         ops_cv/built-in/op_graph/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
+  set(ONNX_PLUGIN_LIB_INSTALL_DIR     ops_cv/built-in/framework/onnx)
   set(COMMON_INC_INSTALL_DIR          ops_cv/include)
   set(COMMON_LIB_INSTALL_DIR          ops_cv/lib)
   set(VERSION_INFO_INSTALL_DIR        ops_cv)
@@ -167,6 +169,24 @@ set(OP_PROTO_INCLUDE
   ${OPBASE_INC_DIRS}
   ${NPURUNTIME_INCLUDE_DIRS}
   ${OPS_CV_DIR}/common/inc/common
+)
+
+set(OP_PROTO_PATH_LIST )
+
+file(GLOB_RECURSE OP_PROTO_FILES "*_proto.h")
+
+foreach(OP_PROTO_FILE ${OP_PROTO_FILES})
+  # message(STATUS "=== debug OP_PROTO_FILE: ${OP_PROTO_FILE}")
+  get_filename_component(OP_PROTO_PATH ${OP_PROTO_FILE} PATH)
+  # message(STATUS "=== debug OP_PROTO_PATH: ${OP_PROTO_PATH}")
+  list(APPEND OP_PROTO_PATH_LIST ${OP_PROTO_PATH})
+endforeach()
+
+set(ONNX_PLUGIN_COMMON_INCLUDE
+  ${OPS_CV_DIR}/common/inc/framework
+  ${OPS_CV_DIR}/common/inc/op_graph
+  ${OPS_CV_DIR}/common/stub/inc/framework
+  ${OP_PROTO_PATH_LIST}
 )
 
 set(AICPU_INCLUDE

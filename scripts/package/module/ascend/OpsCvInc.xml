@@ -11,6 +11,9 @@
     <file_info value="opgraph_cv_lib" copy_type="delivery" src_path="" dst_path="built-in/op_graph/lib/linux/$(ARCH)/" install_path="opp/built-in/op_graph/lib/linux/$(ARCH)">
         <file value="libopgraph_cv.so" install_mod="550"/>
     </file_info>
+    <file_info value="op_cv_onnx_plugin" copy_type="delivery" src_path="" dst_path="built-in/framework/onnx/" install_path="opp/built-in/framework/onnx">
+        <file value="libop_cv_onnx_plugin.so" install_mod="550"/>
+    </file_info>
     <file_info copy_type="delivery" src_path="" dst_path="built-in/op_impl/ai_core/tbe" install_path="opp/built-in/op_impl/ai_core/tbe" install_type="all">
         <file value="config" install_mod="550"/>
     </file_info>
