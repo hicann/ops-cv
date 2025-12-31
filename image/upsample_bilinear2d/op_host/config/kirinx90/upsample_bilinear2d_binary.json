@@ -1,0 +1,103 @@
+{
+  "op_type": "UpsampleBilinear2d",
+  "op_list": [
+    {
+      "bin_filename": "UpsampleBilinear2d_67bd56acf76139f047b50fcf4a255dbe",
+      "inputs": [
+        {
+          "name": "x",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        },
+        {
+            "name": "size",
+            "index": 1,
+            "dtype": "int32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+                -2
+            ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        }
+      ],
+      "attrs": [
+      {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+      },
+      {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+      }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleBilinear2d_c14dadc4cc100115ea9dcc9cf91e98a9",
+      "inputs": [
+        {
+          "name": "x",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        },
+        {
+            "name": "size",
+            "index": 1,
+            "dtype": "int32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+                -2
+            ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        }
+      ],
+      "attrs": [
+        {
+            "name": "align_corners",
+            "dtype": "bool",
+            "value": null
+        },
+        {
+            "name": "scales",
+            "dtype": "list_float",
+            "value": []
+        }
+      ]
+    }
+  ]
+}

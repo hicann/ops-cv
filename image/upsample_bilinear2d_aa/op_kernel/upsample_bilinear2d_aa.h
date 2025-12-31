@@ -49,7 +49,7 @@ public:
 
     __aicore__ inline UpsampleBilinearAAND(){};
     __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBilinearAATilingData *tilingData);
+        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBilinearAATilingData *tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -91,7 +91,7 @@ private:
             return b - a < closeTo0;
         }
     };
-    __aicore__ inline void ParseTilingData(UpsampleBilinearAATilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBilinearAATilingData *tilingData);
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
     __aicore__ inline void calculateIntermediateTensor(int64_t index, int64_t length, int8_t direction);
@@ -204,7 +204,7 @@ private:
 
 template <typename T>
 __aicore__ inline void UpsampleBilinearAAND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBilinearAATilingData *tilingData)
+    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBilinearAATilingData *tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
     inTensorsPtr = input;
@@ -606,7 +606,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::ParseTilingData(UpsampleBilinearAATilingData *tilingData)
+__aicore__ inline void UpsampleBilinearAAND<T>::ParseTilingData(const UpsampleBilinearAATilingData *tilingData)
 {
     slide_size = tilingData->slide_size;
     scale_w = tilingData->scale_w;

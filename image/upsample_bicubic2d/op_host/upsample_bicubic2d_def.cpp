@@ -35,10 +35,10 @@ public:
         this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
         this->Attr("scales_h").AttrType(OPTIONAL).Float();
         this->Attr("scales_w").AttrType(OPTIONAL).Float();
-
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
-	this->AICore().AddConfig("ascend910_95");
+
+	    this->AICore().AddConfig("ascend910_95");
         OpAICoreConfig config310p;
         config310p.DynamicCompileStaticFlag(true)
             .DynamicFormatFlag(true)
@@ -58,6 +58,7 @@ public:
             .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
         this->AICore().AddConfig("ascend310p", config310p);
         this->AICore().AddConfig("ascend310b", config310p);
+        this->AICore().AddConfig("kirinx90", config310p);
     }
 };
 

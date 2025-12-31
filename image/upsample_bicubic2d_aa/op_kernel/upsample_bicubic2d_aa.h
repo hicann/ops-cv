@@ -45,7 +45,7 @@ public:
         matmulH;
 
     __aicore__ inline UpsampleBicubic2dAAND(){};
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, UpsampleBicubic2dAATilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, const UpsampleBicubic2dAATilingData *tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -92,7 +92,7 @@ private:
         }
     };
 
-    __aicore__ inline void ParseTilingData(UpsampleBicubic2dAATilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dAATilingData *tilingData);
     __aicore__ inline void CalculateIndexTensor(int32_t index, int32_t length, uint8_t direction, int32_t inputSize);
     __aicore__ inline void CalculateRadioTensor(int32_t index, int32_t length, int32_t tensorLength, float invscale);
     __aicore__ inline void CalculateWidthExtension(int32_t tensorCIndex, int32_t rowStart, int32_t rowEnd);
@@ -171,7 +171,7 @@ private:
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dAAND<T>::Init(
-    GM_ADDR x, GM_ADDR y, GM_ADDR workspace, UpsampleBicubic2dAATilingData *tilingData)
+    GM_ADDR x, GM_ADDR y, GM_ADDR workspace, const UpsampleBicubic2dAATilingData *tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -443,7 +443,7 @@ __aicore__ inline int32_t UpsampleBicubic2dAAND<T>::GetHeightTensorSize()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::ParseTilingData(UpsampleBicubic2dAATilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::ParseTilingData(const UpsampleBicubic2dAATilingData *tilingData)
 {
     scaleW = tilingData->scaleW;
     scaleH = tilingData->scaleH;

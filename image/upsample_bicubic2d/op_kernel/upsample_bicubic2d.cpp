@@ -13,7 +13,7 @@
  * \brief
  */
 
-#if __CCE_AICORE__ == 200 || __CCE_AICORE__ == 300
+#if __CCE_AICORE__ == 200 || (__CCE_AICORE__ == 300 && !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003))
 #include "upsample_bicubic2d_310p.h"
 #else
 #include "upsample_bicubic2d.h"
@@ -32,7 +32,7 @@ extern "C" __global__ __aicore__ void upsample_bicubic2d(
         return;
     }
 
-#if __CCE_AICORE__ == 200 || __CCE_AICORE__ == 300
+#if __CCE_AICORE__ == 200 || (__CCE_AICORE__ == 300 && !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003))
     if constexpr (std::is_same<DTYPE_INPUT, half>::value) {
         if (TILING_KEY_IS(1)) {
             UpsampleBicubic2dND310p<half> op;
@@ -47,30 +47,30 @@ extern "C" __global__ __aicore__ void upsample_bicubic2d(
         }
     }
 #else
-    const TCubeTiling *__restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
-    const TCubeTiling *__restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
+    const TCubeTiling *__restrict matmulTilingW = &(tiling_data->matmulTiling_w);
+    const TCubeTiling *__restrict matmulTilingH = &(tiling_data->matmulTiling_h);
 
     if (TILING_KEY_IS(1)) {
         if (tiling_data->dataType == 1) {
             UpsampleBicubic2dND<half> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
+#if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
         }
         if (tiling_data->dataType == 2) {
+
             UpsampleBicubic2dND<float> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
         }
         if (tiling_data->dataType == 3) {
             UpsampleBicubic2dND<bfloat16_t> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
+#endif
         }
     }
 #endif

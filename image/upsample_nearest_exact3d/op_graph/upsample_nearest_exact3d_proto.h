@@ -45,7 +45,9 @@ REG_OP(UpsampleNearestExact3d)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_BF16}))
     .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_BF16}))
     .REQUIRED_ATTR(output_size, ListInt)
-    .ATTR(scales, ListFloat, {0.0f, 0.0f, 0.0f})
+    .ATTR(scale_d, Float, 0.0f)
+    .ATTR(scale_h, Float, 0.0f)
+    .ATTR(scale_w, Float, 0.0f)
     .OP_END_FACTORY_REG(UpsampleNearestExact3d)
 
 }  // namespace ge

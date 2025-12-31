@@ -18,6 +18,7 @@
 #include "grid_sampler_2d_slide_window_310p.h"
 #elif __CCE_AICORE__ == 300
 #include "grid_sampler_2d_fp16_slide_window_310b.h"
+#include "grid_sampler_2d_slide_window.h"
 #else
 #include "grid_sampler_2d.h"
 #include "grid_sampler_2d_bicubic.h"
@@ -60,6 +61,14 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
         op.Process();
     }
 #elif __CCE_AICORE__ == 300
+#if (defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+    if (TILING_KEY_IS(1001220)) {
+        // 2D Bilinear fp32 slide window
+        GridSample::GridSampler2DSlideWindow<float> op;
+        op.Init(x, grid, y, userWS, &tilingData);
+        op.Process();
+    }
+#endif
     if (TILING_KEY_IS(1001210) || TILING_KEY_IS(1100210) || TILING_KEY_IS(1101210) || TILING_KEY_IS(1200210) ||
         TILING_KEY_IS(1201210) || TILING_KEY_IS(2000210) || TILING_KEY_IS(2001210) || TILING_KEY_IS(2100210) ||
         TILING_KEY_IS(2101210) || TILING_KEY_IS(2200210) || TILING_KEY_IS(2201210)) {

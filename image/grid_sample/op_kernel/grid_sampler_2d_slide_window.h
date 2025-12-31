@@ -211,8 +211,14 @@ private:
     const int32_t TRANSE_MUL_WEGHT_LOOPS = 2;
     const int64_t CHANNEL_BLOCK_X_IN_LOCAL = 8;
 
+#if (defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+    const int64_t X_UB_SIZE_4_GENERAL = 40960;
+    const int64_t OUT_UB_SIZE_4_GENERAL = 16384; 
+#else
     const int64_t X_UB_SIZE_4_GENERAL = 81920;
     const int64_t OUT_UB_SIZE_4_GENERAL = 32768;
+#endif
+
     const int64_t GRID_UB_SIZE_4_GENERAL = 4096;
     const int64_t Y_UB_SIZE_4_GENERAL = 2048;
     const int64_t OUT_VAL_NUM = 4096;
@@ -1064,6 +1070,7 @@ __aicore__ inline void GridSampler2DSlideWindow<T>::PointBilinear(
             PointBilinearEachChannel(processParam, outValueUb, pointBilinearParam, xLocal, outValueTotalLocal);
         }
     }
+    PipeBarrier<PIPE_ALL>();
 }
 
 template <typename T>

@@ -38,12 +38,12 @@ public:
 
     __aicore__ inline UpsampleNearestND310p(){};
 
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, UpsampleNearestTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, const UpsampleNearestTilingData* tilingData);
 
     __aicore__ inline void Process();
 
 private:
-    __aicore__ inline void ParseTilingData(UpsampleNearestTilingData* tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleNearestTilingData* tilingData);
     __aicore__ inline void ComputeNearest();
     __aicore__ inline void ClearGM();
     __aicore__ inline void CalcTensors(int64_t nIdx, int64_t indexH, int64_t indexW, int64_t lengthH, int64_t lengthW);
@@ -133,7 +133,7 @@ private:
 
 template <typename T, int32_t MODE>
 __aicore__ inline void UpsampleNearestND310p<T, MODE>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleNearestTilingData* tilingData)
+    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleNearestTilingData* tilingData)
 {
     // 获取当前核的索引
     blockIdx = GetBlockIdx();
@@ -360,7 +360,7 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::CopyOut(
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND310p<T, MODE>::ParseTilingData(UpsampleNearestTilingData* tilingData)
+__aicore__ inline void UpsampleNearestND310p<T, MODE>::ParseTilingData(const UpsampleNearestTilingData* tilingData)
 {
     scaleH = tilingData->scaleH;
     scaleW = tilingData->scaleW;

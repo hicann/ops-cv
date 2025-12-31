@@ -44,7 +44,7 @@ public:
 
     __aicore__ inline UpsampleBicubic2dND310p(){};
     __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubic2dTilingData *tilingData);
+        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -193,7 +193,7 @@ private:
         }
     };
 
-    __aicore__ inline void ParseTilingData(UpsampleBicubic2dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dTilingData *tilingData);
 
     __aicore__ inline void CalculateIntermediateTensor(int64_t index, int64_t length, int8_t direction);
     __aicore__ inline void CalculateRatioTensor(int64_t index, int64_t length, int8_t direction);
@@ -268,7 +268,7 @@ private:
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dND310p<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubic2dTilingData *tilingData)
+    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData)
 {
     blockIdx = GetBlockIdx();
 
@@ -609,7 +609,7 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CubicInterp2d(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::ParseTilingData(UpsampleBicubic2dTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::ParseTilingData(const UpsampleBicubic2dTilingData *tilingData)
 {
     slideSize = DEFAULT_SLICE_SIZE;
     scaleW = tilingData->scale_w;

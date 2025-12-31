@@ -126,13 +126,17 @@ private:
                 outputLocal.SetValue(index - progress * actCore * BYTE_SIZE - GetBlockIdx() * BYTE_SIZE, result);
             }
         }
-        PipeBarrier<PIPE_ALL>();;
+        PipeBarrier<PIPE_ALL>();
+        #if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
         if (g_coreType == AIV)
         {
+        #endif
             DataCopy(
                 outputGm[progress * this->actCore * BYTE_SIZE + GetBlockIdx() * BYTE_SIZE], outputLocal[0], BYTE_SIZE);
             PipeBarrier<PIPE_ALL>();;
+        #if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
         }
+        #endif
     }
 
 private:

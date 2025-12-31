@@ -51,7 +51,7 @@ public:
 
     __aicore__ inline UpsampleBicubic2dND(){};
     __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubic2dTilingData *tilingData);
+        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -200,7 +200,7 @@ private:
         }
     };
 
-    __aicore__ inline void ParseTilingData(UpsampleBicubic2dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dTilingData *tilingData);
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
 
@@ -293,7 +293,7 @@ private:
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubic2dTilingData *tilingData)
+    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -669,7 +669,7 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(UpsampleBicubic2dTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(const UpsampleBicubic2dTilingData *tilingData)
 {
     slide_size = tilingData->slide_size;
     scale_w = tilingData->scale_w;

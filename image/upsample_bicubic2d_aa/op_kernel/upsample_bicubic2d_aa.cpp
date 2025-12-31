@@ -44,10 +44,12 @@ extern "C" __global__ __aicore__ void upsample_bicubic2d_aa(GM_ADDR x, GM_ADDR y
         op.Init(x, y, userWS, &tilingData);
         op.Process();
     } else if (TILING_KEY_IS(3)) {
+#if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
         UpsampleBicubic2dAAND<bfloat16_t> op;
         REGIST_MATMUL_OBJ(
             &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
         op.Init(x, y, userWS, &tilingData);
         op.Process();
+#endif
     }
 }

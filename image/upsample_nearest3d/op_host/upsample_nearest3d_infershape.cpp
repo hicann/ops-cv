@@ -81,4 +81,5 @@ static ge::graphStatus UpsampleNearest3dInferDtype(gert::InferDataTypeContext *c
 }
 
 IMPL_OP_INFERSHAPE(UpsampleNearest3d).InferShape(InferShape4UpsampleNearest3d).InferDataType(UpsampleNearest3dInferDtype);
+IMPL_OP_INFERSHAPE(UpsampleNearestExact3d).InferShape(InferShape4UpsampleNearest3d).InferDataType(UpsampleNearest3dInferDtype);
 }  // namespace ops
