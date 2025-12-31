@@ -489,7 +489,7 @@ function(gen_ops_info_and_python)
           ${compute_unit}
           )
       else()
-        message(WARNING "[ERROR] There is no operator support for ${compute_unit}.")
+        message(WARNING "[WARNING] There is no operator support for ${compute_unit}.")
       endif()
     endforeach()
   endif()
