@@ -129,12 +129,12 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::Init(
     pipe.InitBuffer(xIntQueueH, DEFAULT_UB_MAX_DATA_COUNT * sizeof(float));   // 8k
 
     maxCopyCount = DEFAULT_UB_MAX_COPY_SIZE / sizeof(T);
-    if (MODE == 1) {
+    if constexpr (MODE == 1) {
         maxCopyCount = maxCopyCount / 2;
         pipe.InitBuffer(dataQueue, NO_BUFFER_NUM, maxCopyCount * sizeof(T)); // 32k
         pipe.InitBuffer(outQueue, NO_BUFFER_NUM, maxCopyCount * sizeof(T));  // 32k
         pipe.InitBuffer(gatherQueue, maxCopyCount * sizeof(uint32_t));       // 32k
-    } else if (MODE == 3) {
+    } else if constexpr (MODE == 3) {
         maxCopyCount = maxCopyCount / 4;                                  // 4k
         pipe.InitBuffer(dataQueue, BUFFER_NUM, maxCopyCount * sizeof(T)); // 32k
         pipe.InitBuffer(outQueue, BUFFER_NUM, maxCopyCount * sizeof(T));  // 32k
@@ -155,9 +155,9 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::Process()
         return;
     }
 
-    if (MODE == 1) {
+    if constexpr (MODE == 1) {
         NearestComputeSmallCW();
-    } else if (MODE == 3) {
+    } else if constexpr (MODE == 3) {
         NearestComputeSmallNCH();
     } else {
         NearestComputeBase();
@@ -313,9 +313,9 @@ template <typename T, int32_t MODE>
 __aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutput(
     int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH)
 {
-    if (MODE == 1) {
+    if constexpr (MODE == 1) {
         ProcessOutputSmallCW(batchIdx, indexW, indexH, lengthW, lengthH);
-    } else if (MODE == 2) {
+    } else if constexpr (MODE == 2) {
         ProcessOutputSmallC(batchIdx, indexW, indexH, lengthW, lengthH);
     } else {
         ProcessOutputBase(batchIdx, indexW, indexH, lengthW, lengthH);
@@ -511,7 +511,7 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::ParseTilingData(const Upsampl
     inputC = tilingData->inputShapes[3];
     outputH = tilingData->outputShapes[1];
     outputW = tilingData->outputShapes[2];
-    if (MODE == 3) {
+    if constexpr (MODE == 3) {
         inputN = tilingData->inputShapes[0];
         inputC = tilingData->inputShapes[1];
         inputH = tilingData->inputShapes[2];
