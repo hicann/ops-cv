@@ -463,7 +463,8 @@ private:
     uint32_t alignChannelNum;
 
     uint32_t startOffset;
-    uint32_t baseOffset, w1Offset, w2Offset, w3Offset, w4Offset;
+    int64_t baseOffset;
+    uint32_t w1Offset, w2Offset, w3Offset, w4Offset;
     uint32_t constComputeBatchSize = 256;
 
     int32_t pIdx;
