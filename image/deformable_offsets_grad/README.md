@@ -8,7 +8,7 @@
 
 ## 功能说明
 
-- 算子功能：DeformableOffsets 算子的目的是根据 offsets（ kernel 采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便 Conv2d 算子进行卷积计算。而 DeformableOffsetsGrad 即为这一过程的反向。
+- 算子功能：DeformableOffsets算子的目的是根据offsets（kernel 采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便Conv2d算子进行卷积计算。而DeformableOffsetsGrad即为这一过程的反向。
 
 ## 参数说明
 
