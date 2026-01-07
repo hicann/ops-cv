@@ -18,7 +18,9 @@
 #include "grid_sampler_2d_slide_window_310p.h"
 #elif __CCE_AICORE__ == 300
 #include "grid_sampler_2d_fp16_slide_window_310b.h"
+#if (defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
 #include "grid_sampler_2d_slide_window.h"
+#endif
 #else
 #include "grid_sampler_2d.h"
 #include "grid_sampler_2d_bicubic.h"
