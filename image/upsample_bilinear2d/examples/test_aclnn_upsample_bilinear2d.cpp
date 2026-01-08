@@ -103,7 +103,7 @@ int main()
     ret = CreateAclNchTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &self);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
     // 创建self aclIntArray
-    auto outputSizeArray = aclCreateIntArray(outputSize.data(), 4);
+    auto outputSizeArray = aclCreateIntArray(outputSize.data(), 2);
     // 创建out aclTensor
     ret = CreateAclNchTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &out);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
