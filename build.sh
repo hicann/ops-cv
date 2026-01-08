@@ -1307,6 +1307,7 @@ gen_op() {
 
   if [ -n "${python_cmd}" ]; then
     ${python_cmd} "${BASE_PATH}/scripts/opgen/opgen_standalone.py" -t ${GENOP_TYPE} -n ${GENOP_NAME} -p ${GENOP_BASE}
+    echo "Create the initial directory for ${GENOP_NAME} under ${GENOP_TYPE} success"
     return $?
   else
     echo "Please install Python to generate op project framework."
