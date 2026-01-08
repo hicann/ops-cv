@@ -8,22 +8,4 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
-message(STATUS "BUILD_TORCH_OPS ON in upsample_nearest3d")
-# UPSAMPLE_NEAREST3D operation sources
-file(GLOB UPSAMPLE_NEAREST3D_NPU_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-
-# set(UPSAMPLE_NEAREST3D_SOURCES ${UPSAMPLE_NEAREST3D_CPP_HEADER} ${UPSAMPLE_NEAREST3D_CPP_SOURCES} ${UPSAMPLE_NEAREST3D_NPU_SOURCES})
-set(UPSAMPLE_NEAREST3D_SOURCES ${UPSAMPLE_NEAREST3D_NPU_SOURCES})
-# Mark .cpp files with special properties
-set_source_files_properties(
-    ${UPSAMPLE_NEAREST3D_NPU_SOURCES} PROPERTIES
-    LANGUAGE CXX
-    COMPILE_FLAGS "--npu-arch=dav-2201 -xasc"
-)
-
-# Create object library
-add_library(upsample_nearest3d_objects OBJECT ${UPSAMPLE_NEAREST3D_SOURCES})
-
-target_compile_options(upsample_nearest3d_objects PRIVATE ${COMMON_COMPILE_OPTIONS})
-target_include_directories(upsample_nearest3d_objects PRIVATE ${COMMON_INCLUDE_DIRS})
-return()
+add_sources("--npu-arch=dav-2201")

@@ -22,7 +22,7 @@
 #include "torch_npu/csrc/framework/OpCommand.h"
 #include "tiling/platform/platform_ascendc.h"
 
-// 直接调用math目录中已经实现的算子公共逻辑
+// 直接调用image目录中已经实现的算子公共逻辑
 #include "image/upsample_nearest3d/op_kernel/upsample_nearest3d.h"
 #include "image/upsample_nearest3d/op_host/upsample_nearest3d_tiling_common.h"
 
@@ -103,13 +103,18 @@ torch::Tensor upsample_nearest3d_meta(const torch::Tensor& x, at::IntArrayRef ou
         shape, torch::TensorOptions().dtype(x.dtype()).device(torch::kMeta).memory_format(x.suggest_memory_format()));
 }
 
+TORCH_LIBRARY_FRAGMENT(EXTENSION_MODULE_NAME, m)
+{
+    m.def("upsample_nearest3d(Tensor x, int[] size) -> Tensor");
+}
+
 // PyTorch提供的宏，用于在后端注册算子，需要根据具体API的接口定义修改
-TORCH_LIBRARY_IMPL(ascend_ops, PrivateUse1, m)
+TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, PrivateUse1, m)
 {
     m.impl("upsample_nearest3d", upsample_nearest3d_npu);
 }
 
-TORCH_LIBRARY_IMPL(ascend_ops, Meta, m)
+TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, Meta, m)
 {
     m.impl("upsample_nearest3d", TORCH_FN(upsample_nearest3d_meta));
 }
