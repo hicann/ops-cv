@@ -33,6 +33,6 @@ static ge::graphStatus InferDataTypeAddExample(gert::InferDataTypeContext* conte
     return GRAPH_SUCCESS;
 }
 
-IMPL_OP(AddExample).InferDataType(InferDataTypeAddExample);
+IMPL_OP(AddExampleAicpu).InferDataType(InferDataTypeAddExample);
 
 }; // namespace ops

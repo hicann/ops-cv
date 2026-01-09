@@ -214,6 +214,11 @@ macro(add_modules_sources)
   get_filename_component(PARENT_DIR ${SOURCE_DIR} DIRECTORY)
   get_filename_component(OP_NAME ${PARENT_DIR} NAME)
   list(FIND ASCEND_OP_NAME ${OP_NAME} INDEX)
+
+  if("${ASCEND_OP_NAME}" STREQUAL "add_example_aicpu" AND "${OP_NAME}" STREQUAL "add_example")
+    set(INDEX 0)
+  endif()
+
   if(NOT "${ASCEND_OP_NAME}" STREQUAL "" AND INDEX EQUAL -1)
     # ASCEND_OP_NAME 为空表示全部编译
     return()

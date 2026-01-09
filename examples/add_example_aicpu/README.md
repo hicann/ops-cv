@@ -1,4 +1,4 @@
-# AddExample
+# AddExampleAicpu
 
 ##  产品支持情况
 

@@ -140,7 +140,10 @@ if(ENABLE_TEST)
   add_subdirectory(tests/ut)
 endif()
 
-if("${ASCEND_OP_NAME}" STREQUAL "add_example")
+if("${ASCEND_OP_NAME}" STREQUAL "add_example"
+   OR "${ASCEND_OP_NAME}" STREQUAL "add_example_aicpu"
+   OR "${ASCEND_OP_NAME}" STREQUAL "add_example;add_example_aicpu"
+   OR "${ASCEND_OP_NAME}" STREQUAL "add_example_aicpu;add_example")
   add_subdirectory(examples)
 endif()
 
