@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleBicubic2dAA](../../upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
+- 接口功能：[aclnnUpsampleBicubic2dAA](../../upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
   
   $$
@@ -102,7 +102,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>gradOutput</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -162,7 +162,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOutput`一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与`gradOutput`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -216,18 +216,24 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
       <td>传入的gradOutput、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="5">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="5">161002</td>
+      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="7">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>gradOutput和out的数据类型不一致。</td>
+      <td>gradOutput与out的数据类型不一致。</td>
     </tr>
     <tr>
       <td>gradOutput的shape不是4维。</td>
     </tr>
     <tr>
-      <td>inputSize的H轴或W轴的取值小于1。</td>
+      <td>inputSize的H维或W维的取值小于1。</td>
+    </tr>
+    <tr>
+      <td>inputSize的size不为4。</td>
+    </tr>
+    <tr>
+      <td>outputSize的size不为2。</td>
     </tr>
     <tr>
       <td>scalesH或scalesW的值为负数。</td>

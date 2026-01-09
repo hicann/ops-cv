@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。
 - 计算公式：
 
   $$
@@ -117,7 +117,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`self`的数据类型保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC、ND</td>
       <td>4</td>
@@ -151,6 +151,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -167,15 +168,12 @@ aclnnStatus aclnnUpsampleNearestExact2d(
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
-      <td>传入的self或out是空指针。</td>
+      <td>传入的self、outputSize、out是空指针。</td>
     </tr>
     <tr>
       <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
       <td rowspan="6">161002</td>
       <td>self的数据类型不在支持的范围内或self与out数据类型不同。</td>
-    </tr>
-    <tr>
-      <td>self的数据格式不在支持范围内。</td>
     </tr>
     <tr>
       <td>self的shape不是4维。</td>
@@ -229,7 +227,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
 
 - **返回值：**
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

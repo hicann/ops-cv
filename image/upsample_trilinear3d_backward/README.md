@@ -18,7 +18,7 @@
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
     
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
     
     $$
     scale\_d =\begin{cases}
@@ -44,7 +44,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
+    因此，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
     
     $$
     x' =\begin{cases}
@@ -116,32 +116,32 @@
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
       <td>FLOAT32、FLOAT16、DOUBLE</td>
-      <td>NCDHW</td><!--aclnn多增了一个NCHW-->
+      <td>NCDHW</td>
     </tr>
     <tr>
       <td>input_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小，对应公式中的`inputSize`。size为5，且各元素均大于零。 </td><!--这个IR原型和aclnn中的解释有冲突，待确认-->
+      <td>属性</td>
+      <td>表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小，对应公式中的`inputSize`。size为5，且各元素均大于零。 </td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>output_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
+      <td>属性</td>
       <td>表示输入`grad_output`在D、H和W维度上的空间大小，对应公式中的`outputSize`。size为3，且各元素均大于零。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scales_d`、`scales_h`、`scales_w`。</li><li>默认值为空。</li></ul></td>
       <td>LISTFLOAT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。align_corners为true，则输入和输出张量的角像素点会被对齐，否则不对齐。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
@@ -150,7 +150,7 @@
       <td>y</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。数据类型和数据格式与入参`grad_output`的数据类型和数据格式保持一致。shape依赖`input_size`和`output_size/scales`。</td>
-      <td>FLOAT32、FLOAT16、DOUBLE</td><!--aclnn多了数据类型bf16-->
+      <td>FLOAT32、FLOAT16、DOUBLE</td>
       <td>NCDHW</td>
     </tr>
   </tbody></table>

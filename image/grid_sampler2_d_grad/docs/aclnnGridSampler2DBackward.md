@@ -10,11 +10,11 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnGridSampler2D](../../grid_sample/docs/aclnnGridSampler2D.md)的反向传播，完成张量input与张量grid的梯度计算。
+- 接口功能：[aclnnGridSampler2D](../../grid_sample/docs/aclnnGridSampler2D.md)的反向传播，完成张量input与张量grid的梯度计算。
 - 计算公式：
   - 计算流程：
 
-    1. 根据grid存储的(x, y)值，计算出映射到input上的坐标，坐标和alignCorners、paddingMode有关。
+    1. 根据grid存储的(x, y)值，计算出映射到input上的坐标，这些坐标和alignCorners、paddingMode有关。
     2. 根据输入的interpolationMode，选择使用bilinear、nearest不同插值模式计算该坐标周围点分配到梯度的权重值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
@@ -29,7 +29,7 @@
       dgrid: (N, H_{out}, W_{out}, 2)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
 
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
@@ -99,7 +99,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gradOutput</td>
       <td>输入</td>
       <td>表示反向传播过程中上一层的输出梯度，对应公式描述中的`grad`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -119,7 +119,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型需要与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -169,7 +169,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>inputGrad</td>
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape需要与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`input`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -179,7 +179,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gridGrad</td>
       <td>输出</td>
       <td>表示grid梯度，对应公式描述中的`dgrid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape需要与`grid`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`grid`保持一致。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>

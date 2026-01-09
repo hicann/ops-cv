@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleBicubic2d](../../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
+- 接口功能：[aclnnUpsampleBicubic2d](../../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
   
@@ -105,7 +105,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradOut</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOut`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li><li>gradOutput的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li><li>gradOutput的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -145,7 +145,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>scalesH</td>
       <td>输入</td>
       <td>表示输出`gradInput`的height维度乘数，对应公式中的`scalesH`。</td>
-      <td>-</td><!--是否有不能传入负值的约束？没有-->
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -155,7 +155,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>scalesW</td>
       <td>输入</td>
       <td>表示输出`gradInput`的width维度乘数，对应公式中的`scalesW`。</td>
-      <td>-</td><!--是否有不能传入负值的约束？没有-->
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -165,7 +165,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式与`gradOut`保持一致。</li><li>shape的N轴和C轴与`gradOut`保持一致。</li><li>out的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -252,7 +252,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
+      <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不一致。</td>
     </tr>
     </tr>
     <tr>
@@ -314,7 +314,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     - 其他情况下使用入参inputSize和outputSize中对应轴的参数值，且：$scales=(inputSize-1)/(outputSize-1)$。  
   - 当alignCorners为False时：
     - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
-    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H esH)$，或者$floor(inputSize\_W * scalesW)$。
+    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
 - 确定性计算：
   
   aclnnUpsampleBicubic2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。确定性实现需同时满足如下条件：

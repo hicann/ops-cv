@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
 - 计算公式：
 
   $$
@@ -82,7 +82,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>self的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -92,7 +92,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示输出out在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td><ul><li>size为3，各元素均大于零。</li><li>指定输出`out`的Tensor大小。</li></ul></td>
+      <td>size为3，各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -132,7 +132,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参`self`一致。</li><li>out的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参`self`一致。</li><li>out的所有维度取值均小于等于(2^31-1)。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -197,7 +197,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在D、H、W维度上的size不大于0。</td>
+      <td>self在C、D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>

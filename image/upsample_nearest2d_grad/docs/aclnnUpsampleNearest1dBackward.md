@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleNearest1dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md)的反向传播。<!--[aclnnUpsampleNearest1d](../../upsample_nearest3d/aclnnUpsampleNearest1d.md)的反向传播。-->
+- 接口功能：[aclnnUpsampleNearest1dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md)的反向传播。<!--[aclnnUpsampleNearest1d](../../upsample_nearest3d/aclnnUpsampleNearest1d.md)的反向传播。-->
 
 - 计算公式：
 
@@ -102,7 +102,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>scales</td>
       <td>输入</td>
       <td>表示输出`out`的L维度乘数，对应公式中的'scales'。</td>
-      <td>-</li></ul></td>
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -112,7 +112,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的'out'。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradOut`的数据类型一致。</li><li>输入必须是3维。</li></ul></td>
+      <td><ul><li>L轴不支持空Tensor。</li><li>数据类型与`gradOut`保持一致。</li><li>输入必须是3维。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -170,7 +170,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td rowspan="11">161002</td>
     </tr>
     <tr>
-      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型不在支持的范围之内。</td>
     </tr>
     <tr><td>gradOut和out的数据类型不一致。</td>
     </tr>
@@ -181,10 +181,6 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
     <tr><td>inputSize的size不等于3。</td>
-    </tr>
-    <tr><td>inputSize的某个元素值小于1。</td>
-    </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>

@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleTrilinear3d.md](../../resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md)的反向计算。
+- 接口功能：[aclnnUpsampleTrilinear3d.md](../../resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md)的反向计算。
 
 - 计算公式：
   - 正向核心算法逻辑：
@@ -18,7 +18,7 @@
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
 
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scale\_d =\begin{cases}
@@ -44,7 +44,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
+    因此，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -219,7 +219,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>shape在N、C、D、H和W维度上的大小需与`inputSize`中给定的N、C、D、H和W维度上的空间大小一致。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>shape在N、C、D、H和W维度上的大小需与`inputSize`中给定的N、C、D、H和W维度上的空间大小一致。</li><li>数据类型、数据格式、shape与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -253,6 +253,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -298,10 +299,10 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
       <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在D、H、W维度上的size与outputSize[0]、outputSize[1]、outputSize[2]不完全相同。</td>
+      <td>gradOut在D、H、W维度上的size与outputSize[0]、outputSize[1]、outputSize[2]不一致。</td>
     </tr>
     <tr>
-      <td>gradInput的shape与inputSize[0]、inputSize[1]、inputSize[2]、inputSize[3]和inputSize[4]不完全相同。</td>
+      <td>gradInput的shape与inputSize[0]、inputSize[1]、inputSize[2]、inputSize[3]和inputSize[4]不一致。</td>
     </tr>
   </tbody></table>
 
@@ -346,7 +347,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

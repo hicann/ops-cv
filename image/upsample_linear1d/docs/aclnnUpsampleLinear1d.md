@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。
+- 接口功能：对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。
 
 - 计算公式：
   - 核心算法逻辑：
@@ -17,7 +17,7 @@
     2.计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3.分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scale =\begin{cases}
@@ -27,7 +27,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系：
+    因此，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -143,7 +143,7 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`的数据类型、数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
       <td>3</td>
@@ -202,7 +202,7 @@ aclnnStatus aclnnUpsampleLinear1d(
     </tr>
     <tr><td>self的数据类型不在支持的范围之内。</td>
     </tr>
-    <tr><td>self和out的数据类型不一致。</td>
+    <tr><td>self与out的数据类型不一致。</td>
     </tr>
     <tr><td>self和out的维度不为3维。</td>
     </tr>
@@ -210,7 +210,7 @@ aclnnStatus aclnnUpsampleLinear1d(
     </tr>
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>out在L维度上的size与outputSize[0]不完全相同。</td>
+    <tr><td>out在L维度上的size与outputSize[0]不一致。</td>
     </tr>
   </tbody></table>
 

@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleNearest2dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md)的反向传播。<!--[aclnnUpsampleNearest2d](../../upsample_nearest3d/aclnnUpsampleNearest2d.md)的反向传播。-->
+- 接口功能：[aclnnUpsampleNearest2dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md)的反向传播。<!--[aclnnUpsampleNearest2d](../../upsample_nearest3d/aclnnUpsampleNearest2d.md)的反向传播。-->
 
 - 计算公式：
 
@@ -90,7 +90,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     <tr>
       <td>inputSize</td>
       <td>输入</td>
-      <td>表示指定`gradInput`在H和W维度上的空间大小。</td>
+      <td>表示指定`gradInput`的空间大小。</td>
       <td><ul><li>size为4，且最后两个元素均大于零。</li><li>当输入`gradOut`的数据格式为NCHW时，表示输出`gradInput`分别在N、C、H和W维度上的空间大小；当输入`gradOut`的数据格式为NHWC时，表示输出`gradInput`分别在N、H、W和C维度上的空间大小。</li></ul></td>
       <td>INT64</td>
       <td>-</td>
@@ -121,7 +121,7 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`</td>
-      <td><ul><li>H/W轴不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li><li>支持NCHW和NHWC。</li></ul></td>
+      <td><ul><li>H/W轴不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`保持一致。</li><li>shape的N轴、C轴与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -175,11 +175,11 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="12">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="12">161002</td>
+      <td rowspan="9">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="9">161002</td>
     </tr>
     <tr>
-      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型不在支持的范围之内。</td>
     </tr>
     <tr><td>gradOut和gradInput的数据类型不一致。</td>
     </tr>
@@ -193,14 +193,9 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
     </tr>
     <tr> <td>inputSize最后两个元素中的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
-    </tr>
-    <tr><td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
+    <tr><td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不一致。</td>
     </tr>
     <tr><td>gradOut和gradInput的N/C轴的维度大小不相等。</td>
-    </tr>
-    <tr><td>gradOut和gradInput的数据格式不在支持的范围之内。
-      </td>
     </tr>
   </tbody></table>
 

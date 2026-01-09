@@ -21,7 +21,7 @@
     scale = self.dim / outputSize
     $$
     
-    那么，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
+    因此，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
     
     $$
     x' = \min(\lfloor (x+0.5) * scale \rfloor, self.dim(2) - 1)
@@ -70,22 +70,22 @@
     </tr>
     <tr>
       <td>output_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出`out`的Tensor大小，对应公式中的`outputSize`。size为3，各元素均大于零。表示输出`out`在D、H和W维度上的空间大小。</td><!--opdef中是否是3维不确定，这个参考的是aclnn，待确认-->
+      <td>属性</td>
+      <td>指定输出`out`的Tensor大小，对应公式中的`outputSize`。size为3，各元素均大于零。表示输出`out`在D、H和W维度上的空间大小。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scale`。</li><li>默认值为[0.0, 0.0, 0.0]。</li></ul></td><!--算子侧不包含只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
+      <td>可选属性</td>
+      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scale`。</li><li>默认值为[0.0, 0.0, 0.0]。</li></ul></td>
       <td>LISTFLOAT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>y</td>
       <td>输出</td>
-      <td>表示采样后的输出张量，对应公式描述中的`out`。数据类型和数据格式需与入参`self`的数据类型和数据格式保持一致，shape取决于输入x和output_size/scales。</td><!--最后一句跟scales的参数说明中的二选一是不是有些矛盾啊-->
+      <td>表示采样后的输出张量，对应公式描述中的`out`。数据类型和数据格式需与入参`self`的数据类型和数据格式保持一致，shape取决于输入x和output_size/scales。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW</td>
     </tr>
@@ -100,6 +100,6 @@
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_upsample_nearest_exact3d](examples/test_aclnn_upsample_nearest_exact3d.cpp) | 通过[aclnnUpsampleNearestExact3d](docs/aclnnUpsampleNearestExact3d.md)接口方式调用UpsampleNearestExact3d算子。 |
-| 图模式 | -  | 通过[算子IR](op_graph/upsample_nearest_exact3d_proto.h)构图方式调用2UpsampleNearestExact3d算子。         |
+| 图模式 | -  | 通过[算子IR](op_graph/upsample_nearest_exact3d_proto.h)构图方式调用UpsampleNearestExact3d算子。         |
 
 <!--[test_geir_upsample_nearest_exact3d](examples/test_geir_upsample_nearest_exact3d.cpp)-->

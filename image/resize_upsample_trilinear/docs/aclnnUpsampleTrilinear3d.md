@@ -9,14 +9,14 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。
+- 接口功能：对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。
 - 计算公式：
   - 核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scale\_d =\begin{cases}
@@ -42,7 +42,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
+    因此，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -82,7 +82,7 @@
     - 则有以下公式：
 
       $$
-      {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}} 
+      {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}}
       $$
 
 ## 函数原型
@@ -140,7 +140,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>shape的C轴、D轴、H轴、W轴的取值大于0。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -150,7 +150,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示出参`out`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td>指定输出Tensor大小，size为3，且各元素均大于零。</td>
+      <td>size为3，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -170,7 +170,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>scalesD</td>
       <td>输入</td>
       <td>表示输出`out`的depth维度乘数，对应公式中的`scales_d`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -180,7 +180,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>scalesH</td>
       <td>输入</td>
       <td>表示输出`out`的height维度乘数，对应公式中的`scales_h`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -190,7 +190,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>scalesW</td>
       <td>输入</td>
       <td>表示输出`out`的width维度乘数，对应公式中的`scales_w`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -200,7 +200,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -234,6 +234,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -264,13 +265,10 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>outputSize的size不等于3。</td>
     </tr>
     <tr>
-      <td>self在D、H、W维度上的size不大于0。</td>
+      <td>self在C、D、H、W维度上的size不大于0。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值不大于0。</td>
-    </tr>
-    <tr>
-      <td>self的C维度为0。</td>
     </tr>
   </tbody></table>
 
@@ -315,7 +313,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
 
 - **返回值：**
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

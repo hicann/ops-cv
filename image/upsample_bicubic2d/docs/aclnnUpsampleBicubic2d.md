@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
+- 接口功能：对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$out(N, C, h, w)$可以表示为：
   
   $$
@@ -103,7 +103,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -112,8 +112,8 @@ aclnnStatus aclnnUpsampleBicubic2d(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size需要等于2，且各元素均大于0。</td>
+      <td>表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
+      <td>size为2，且各元素均大于0。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -123,7 +123,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
+      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则输入和输出张量的边像素点会被对齐。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -153,7 +153,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与`self`的数据类型和数据格式一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与`self`保持一致。</li><li>shape支持4维：(batch, channel, height, width)，其中batch与channel分别来源于入参`self`的第零维和第一维，height与width分别来源于`outputSize`的第一与第二个值。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -285,7 +285,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

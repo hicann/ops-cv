@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。
+- 接口功能：对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。
 - 计算公式：对于一个二维插值点$(N, C, H, W)$, 插值$I(N, C, H, W)$可以表示为：
   
   $$
@@ -18,7 +18,7 @@
   
   $$
   scaleH =\begin{cases}
-  (input.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
+  (input.dim(2)-1) / (outputSize[0]-1) & alignCorners=true \\
   1 / scalesH & alignCorners=false\&scalesH>0\\
   input.dim(2) / outputSize[0] & otherwise
   \end{cases}
@@ -26,7 +26,7 @@
   
   $$
   scaleW =\begin{cases}
-  (input.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
+  (input.dim(3)-1) / (outputSize[1]-1) & alignCorners=true \\
   1 / scalesW & alignCorners=false\&scalesW>0\\
   input.dim(3) / outputSize[1] & otherwise
   \end{cases}
@@ -157,7 +157,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`I`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`input`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式和shape与入参`input`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -211,12 +211,15 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>传入的input、outputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="5">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="5">161002</td>
+      <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="6">161002</td>
       <td>input或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
       <td>input和out的数据类型不一致。</td>
+    </tr>
+    <tr>
+      <td>input和out的数据格式不一致。</td>
     </tr>
     <tr>
       <td>input的shape不是4维。</td>
@@ -270,7 +273,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
 
 - **返回值**：
 
-aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
