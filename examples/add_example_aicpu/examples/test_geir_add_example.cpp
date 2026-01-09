@@ -28,7 +28,7 @@
 
 #include "experiment_ops.h"
 #include "nn_other.h"
-#include "../op_graph/add_example_aicpu_proto.h"
+#include "../op_graph/add_example_proto.h"
 
 #define FAILED -1
 #define SUCCESS 0
@@ -179,7 +179,7 @@ int CreateOppInGraph(DataType inDtype, std::vector<ge::Tensor> &input, std::vect
 {
     Status ret = SUCCESS;
     // 自定义代码：添加单算子定义到图中
-    auto add1 = op::AddExample("add1");
+    auto add1 = op::AddExampleAicpu("add1");
     std::vector<int64_t> xShape = {32,4,4,4};
     ADD_INPUT(1, x1, inDtype, xShape);
     ADD_INPUT(2, x2, inDtype, xShape);

@@ -32,11 +32,11 @@ namespace ge {
 *@par Third-party framework compatibility
 *Compatible with the TensorFlow operator Add.
 */
-REG_OP(AddExample)
+REG_OP(AddExampleAicpu)
     .INPUT(x1, TensorType({DT_FLOAT, DT_INT32}))
     .INPUT(x2, TensorType({DT_FLOAT, DT_INT32}))
     .OUTPUT(y, TensorType({DT_FLOAT, DT_INT32}))
-    .OP_END_FACTORY_REG(AddExample)
+    .OP_END_FACTORY_REG(AddExampleAicpu)
 
 } // namespace ge
 

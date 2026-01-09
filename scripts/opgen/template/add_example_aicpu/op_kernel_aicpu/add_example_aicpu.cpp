@@ -15,7 +15,7 @@
 #include "cust_cpu_utils.h"
 
 namespace {
-const char* const kAddExample = "AddExample";
+const char* const kAddExample = "AddExampleAicpu";
 const uint32_t kFirstInputIndex = 0;
 const uint32_t kSecondInputIndex = 1;
 const uint32_t kSuccess = 0;

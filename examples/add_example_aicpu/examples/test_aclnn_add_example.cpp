@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 #include "acl/acl.h"
-#include "aclnn_add_example_aicpu.h"
+#include "aclnn_add_example.h"
 
 #define CHECK_RET(cond, return_expr) \
     do {                             \

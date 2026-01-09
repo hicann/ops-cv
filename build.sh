@@ -1230,6 +1230,9 @@ build_example() {
     fi
 
     for f in $file; do
+      if [[ "${PKG_MODE}" == "cust" && "$f" == *add_example_aicpu* && "$f" == *opgen* ]]; then
+        continue
+      fi
       echo "Start compile and run examples file: $f"
       if [[ "${PKG_MODE}" == "" ]]; then
         g++ ${f} -I ${INCLUDE_PATH} -I ${ACLNN_INCLUDE_PATH} -L ${EAGER_LIBRARY_PATH} -lopapi_cv -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME}
