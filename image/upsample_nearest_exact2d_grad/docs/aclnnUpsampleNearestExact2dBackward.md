@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleNearestExact2d](../../upsample_nearest/docs/aclnnUpsampleNearestExact2d.md)的反向传播。
+- 接口功能：[aclnnUpsampleNearestExact2d](../../upsample_nearest/docs/aclnnUpsampleNearestExact2d.md)的反向传播。
 - 计算公式：
   
   $$
@@ -18,7 +18,7 @@
   
 ## 函数原型
 
-- 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearestExact2dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearestExact2dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
@@ -120,7 +120,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`保持一致。</li><li>shape的N轴、C轴与入参`gradOutput`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -174,21 +174,24 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
       <td>传入的gradOutput、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="6">161002</td>
+      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="7">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>gradOutput和out的数据类型不一致。</td>
+      <td>gradOutput与out的数据类型不一致。</td>
     </tr>
     <tr>
       <td>gradOutput的shape不是4维。</td>
     </tr>
     <tr>
-      <td>inputSize的H轴或W轴取值小于1。</td>
+      <td>inputSize的H维或W维取值小于1。</td>
     </tr>
     <tr>
       <td>scalesH或scalesW的取值小于0。</td>
+    </tr>
+    <tr>
+      <td>gradOutput和out的数据格式不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -233,7 +236,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 
 - **返回值：**
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

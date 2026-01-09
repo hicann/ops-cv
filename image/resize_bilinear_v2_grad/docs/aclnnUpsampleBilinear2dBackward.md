@@ -9,14 +9,14 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。
+- 接口功能：[aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。
 - 计算公式：
   - 正向的核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scaleH =\begin{cases}
@@ -34,7 +34,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
+    因此，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -167,7 +167,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
       <td>scalesH</td>
       <td>输入</td>
       <td>表示输出`out`的height维度乘数，对应公式中的`scalesH`。</td>
-      <td>-</td><!--有取值约束不？例如：值为正数才生效。-->
+      <td>-</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -187,7 +187,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据格式需要与入参`gradOut`的数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据格式与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -218,7 +218,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
 
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     - 参数`gradOut`、`out`的数据类型不支持BFLOAT16.
-    - 参数`out`的数据类型需要与`gradOut`的数据类型一致。
+    - 参数`out`的数据类型与`gradOut`的数据类型一致。
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -246,7 +246,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
     <tr>
       <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
       <td rowspan="11">161002</td>
-      <td>gradOut的数据类型和数据格式不在支持的范围之内。</td>
+      <td>gradOut的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
       <td>gradOut和out的数据类型不一致。</td>
@@ -270,7 +270,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
       <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不完全相同。</td>
+      <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不一致。</td>
     </tr>
     <tr>
       <td>gradOut和out的N/C轴的维度大小不相等。</td>
@@ -321,7 +321,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
 
 - **返回值**：
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

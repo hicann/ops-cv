@@ -9,8 +9,8 @@
 
 ## 功能说明
 
-- **算子功能**：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上
-- **计算公式**：
+- 接口功能：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上
+- 计算公式：
   
   $$
   gradInput(N, C, floor ( scales * ( L + 0.5 ))) +=  gradOutput( N, C, L)
@@ -18,7 +18,7 @@
 
 ## 函数原型
 
-- 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用`aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize`接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用`aclnnUpsampleNearestExact1dBackward`接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用`aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize`接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用`aclnnUpsampleNearestExact1dBackward`接口执行计算。
 
 ```cpp
 aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
@@ -108,7 +108,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>公式中的输出`gradInput`，表示反向计算的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -142,6 +142,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -161,12 +162,15 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="5">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="5">161002</td>
+      <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="6">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>gradOutput和out的数据类型不一致。</td>
+      <td>gradOutput与out的数据类型不一致。</td>
+    </tr>
+    <tr>
+      <td>gradOutput与out的数据格式不一致。</td>
     </tr>
     <tr>
       <td>gradOutput的shape不是3维。</td>
@@ -219,7 +223,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

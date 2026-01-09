@@ -9,12 +9,12 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
 
 - 计算公式：
   
   $$
-  out(N, C, l) = self(N, C, min(floor(l * scales),  L-1))
+  out(N, C, l) = self(N, C, min(floor(l * scale),  L-1)), \ scale = outputSize[0] / self\_L
   $$
 
 ## 函数原型
@@ -68,7 +68,7 @@ aclnnStatus aclnnUpsampleNearest1d(
       <td>self</td>
       <td>输入</td>
       <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>输入维度必须是3维。当数据类型是DOUBLE、UINT8时，输入shape的`L`维度需要小于2^24。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>输入维度必须是3维。当数据类型是DOUBLE、UINT8时，输入shape的`L`维度必须小于2^24。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>

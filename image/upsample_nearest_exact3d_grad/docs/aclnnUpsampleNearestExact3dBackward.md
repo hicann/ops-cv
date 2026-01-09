@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleNearestExact3d](../../upsample_nearest_exact3d/docs/aclnnUpsampleNearestExact3d.md)的反向计算。
+- 接口功能：[aclnnUpsampleNearestExact3d](../../upsample_nearest_exact3d/docs/aclnnUpsampleNearestExact3d.md)的反向计算。
 - 计算公式：
   
   $$
@@ -83,7 +83,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>gradOut</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>`gradOut`的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>`gradOut`的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -113,7 +113,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>scalesD</td>
       <td>输入</td>
       <td>表示输出`gradInput`的depth维度乘数，对应公式中的`scalesD`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -123,7 +123,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>scalesH</td>
       <td>输入</td>
       <td>表示输出`gradInput`的height维度乘数，对应公式中的`scalesH`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -133,7 +133,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>scalesW</td>
       <td>输入</td>
       <td>表示输出`gradInput`的width维度乘数，对应公式中的`scalesW`。</td>
-      <td>-</td>
+      <td>取值小于等于50。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -143,7 +143,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>gradInput</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的输出`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`的数据类型和数据格式保持一致。</li><li>gradInput的所有轴取值均要满足小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式、shape与入参`gradOut`保持一致。</li><li>gradInput的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>
       <td>5</td>
@@ -177,6 +177,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
+  
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -196,8 +197,8 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>传入的gradOut、outputSize、inputSize或gradInput是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="10">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="10">161002</td>
+      <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="11">161002</td>
       <td>gradOut的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
@@ -219,13 +220,17 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
       <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
-      <td>gradOut在D、H、W维度上的size与outputSize[0]、outputSize[1]、outputSize[2]不完全相同。</td>
+      <td>gradOut在D、H、W维度上的size与outputSize[0]、outputSize[1]、outputSize[2]不一致。</td>
     </tr>
     <tr>
-      <td>gradInput在N、C维度的size与inputSize[0]、inputSize[1]不完全相同。</td>
+      <td>gradInput在N、C维度的size与inputSize[0]、inputSize[1]不一致。</td>
     </tr>
     <tr>
-      <td>gradInput在D、H、W维度上的size与inputSize[2]、inputSize[3]、inputSize[4]不完全相同。</td>
+      <td>gradInput在D、H、W维度上的size与inputSize[2]、inputSize[3]、inputSize[4]不一致。</td>
+    </tr>
+    <tr>
+      <td>scalesD、scalesH、scalesW的取值不满足约束要求。</td>
+    </tr>
   </tbody></table>
 
 ## aclnnUpsampleNearestExact3dBackward

@@ -62,18 +62,18 @@
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>NCDHW</td><!--aclnn多增了一个NCHW-->
+      <td>NCDHW</td>
     </tr>
     <tr>
       <td>output_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`outputSize`。size为3，各元素均大于零。表示输出`y`在D、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，删除：只能指定'scales'和'output_size'中的一个。如果两者都指定则会产生错误。-->
+      <td>属性</td>
+      <td>指定输出空间大小，对应公式中的`outputSize`。size为3，各元素均大于零。表示输出`y`在D、H和W维度上的空间大小。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width。</li><li>默认为空。</li></ul></td>
       <td>LISTFLOAT</td>
       <td>-</td>
@@ -82,12 +82,11 @@
       <td>y</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。数据类型和数据格式需与入参`x`的数据类型和数据格式保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td><!--IR原型支持FLOAT32、FLOAT16、DOUBLE、UINT8、BFLOAT16，目前算子侧看代码不支持DOUBLE、UINT8，所以开发确认删除-->
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW</td>
     </tr>
   </tbody></table>
 
-<!--aclnn对比IR少了UINT8，差异是否要体现-->
 ## 约束说明
 
 无

@@ -13,7 +13,7 @@
 - 计算公式：
 
   - 计算流程：
-    1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，坐标和alignCorners、paddingMode有关。
+    1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，这些坐标和alignCorners、paddingMode有关。
     2. 坐标根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
   
   - 其中：
@@ -27,7 +27,7 @@
       output: (N, C, D_{out}, H_{out}, W_{out})
       $$
   
-      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
+      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
   
     - 2D场景：
       
@@ -39,7 +39,7 @@
       output: (N, C, H_{out}, W_{out})
       $$
   
-      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+      其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
     
     
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -50,9 +50,9 @@
   
     - 对input采样时，会根据interpolationMode进行不同处理：
   
-      - interpolationMode="bilinear"，表示取input中(x, y)或者(x, y, z)周围四个坐标的加权平均值。
+      - interpolationMode="bilinear"，表示取input中(x, y)或者(x, y, z)周围四个或八个坐标的加权平均值。
       - interpolationMode="nearest"，表示取input中距离(x, y)或者(x, y, z)最近的坐标值。
-      - interpolationMode="bicubic"，表示取input中(x, y)或者(x, y, z)周围十六个坐标的加权平均值。
+      - interpolationMode="bicubic"，表示取input中(x, y)周围十六个坐标的加权平均值。
 
 ## 参数说明
 
@@ -83,13 +83,13 @@
       <td>grid</td>
       <td>输入</td>
       <td>采样的网络，对应公式中描述的`grid`。</td>
-      <td>FLOAT16、FLOAT32、BFLOAT16</td><!--相对IR原型新增了BF16-->
+      <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>interpolation_mode</td>
       <td>可选属性</td>
-      <td><ul><li>表示插值模式，对应公式描述中的`interpolationMode`。支持bilinear（双线性插值）、nearest（最邻近插值）、bicubic（双三次插值）。</li><li>默认值为"bilinear"。</li></ul></td><!--aclnn是三种 0：bilinear（双线性插值），1：nearest（最邻近插值），2：bicubic（双三次插值） -->
+      <td><ul><li>表示插值模式，对应公式描述中的`interpolationMode`。支持bilinear（双线性插值）、nearest（最邻近插值）、bicubic（双三次插值）。</li><li>默认值为"bilinear"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>
@@ -117,7 +117,7 @@
     <tr>
       <td>scheduler_mode</td>
       <td>可选属性</td>
-      <td><ul><li>调度模式，执行的操作方式。0：一般；1：滑动窗口。仅当channel_last的值为true时，配置为1有效。</li><li>默认值为1。</li></ul></td><!--IR中接口中默认值是1，描述中默认值是0，aclnn没有这个参数-->
+      <td><ul><li>调度模式，执行的操作方式。0：一般；1：滑动窗口。仅当channel_last的值为true时，配置为1有效。</li><li>默认值为1。</li></ul></td>
       <td>INT</td>
       <td>-</td>
     </tr>

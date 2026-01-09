@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：提供一个输入张量input，以及一个对应的grid网格，根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到grid指定的位置，得到最终的输出。
+- 接口功能：提供一个输入张量input，以及一个对应的grid网格，根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到grid指定的位置，得到最终的输出。
 - 计算公式：
   
   输入input、grid网格、输出output的尺寸如下：
@@ -20,14 +20,14 @@
   output: (N, C, D_{out}, H_{out}, W_{out})
   $$
 
-  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
+  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
   
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
     - paddingMode=0，表示对越界位置用0填充。
     - paddingMode=1，表示对越界位置用边界值填充。
     - paddingMode=2，表示对越界位置用边界值的对称值填充。
   - 对input采样时，会根据interpolationMode进行不同处理：
-    - interpolationMode="bilinear"，表示取input中(x, y, z)周围四个坐标的加权平均值。
+    - interpolationMode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
     - interpolationMode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
 
 ## 函数原型
@@ -84,7 +84,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>input</td>
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>如果数据格式为ND则会按照NCDHW格式进行处理，仅在满足条件（数据类型为FLOAT32 && interpolationMode为0 && C轴为4的倍数）时支持NDHWC。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>当数据格式为ND时，会按照NCDHW格式进行处理；仅当满足条件（数据类型为FLOAT32 && interpolationMode为0 && C轴为4的倍数）时支持NDHWC。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -134,7 +134,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>out</td>
       <td>输出</td>
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据格式和数据类型与input的数据格式和数据类型一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据格式和数据类型与input保持一致。</li><li>shape的N轴、C轴与input保持一致，shape的D轴、H轴、W轴与grid保持一致。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -243,7 +243,7 @@ aclnnStatus aclnnGridSampler3D(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

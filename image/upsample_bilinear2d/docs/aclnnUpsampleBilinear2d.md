@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用2D双线性上采样。
+- 接口功能：对由多个输入通道组成的输入信号应用2D双线性上采样。
   - 对于输入shape：如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。
   - 对于中心对齐的选择：一般像素被视为网格。当alignCorners = True时，像素被视为网格左上角的点，输出拐角处的像素与原图像的拐角像素中心对齐，同方向点之间是等间距的；当alignCorners = False时, 像素被视为网格的交叉线上的点，输出拐角处的像素依然是原图像的拐角像素，但同方向点之间是不等距的。
 
@@ -19,7 +19,7 @@
     2.计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3.分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scaleH =\begin{cases}
@@ -37,7 +37,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
+    因此，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -133,7 +133,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
       <td>outputSize</td>
       <td>输入</td>
       <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size为2。</td>
+      <td>size为2，且各元素均大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -173,7 +173,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li><li>当数据类型为DOUBLE时，仅支持NHWC格式。</li><li>shape仅支持4维，且N轴和C轴与输入self shape的N轴和C轴保持一致；当outputSize输入的值有效时，H轴和W轴与参数outputSize对应轴的值保持一致；当outputSize输入的值不生效时（不生效的场景请参见<a href="#约束说明">约束说明</a>），H轴和W轴与计算后得到的outputSize对应轴的值保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li><li>当数据类型为DOUBLE时，仅支持NHWC格式。</li><li>shape仅支持4维，且N轴和C轴与输入self shape的N轴和C轴保持一致；当outputSize输入的值有效时，H轴和W轴与参数outputSize对应轴的值保持一致；当outputSize输入的值不生效时（不生效的场景请参见<a href="#约束说明">约束说明</a>），H轴和W轴与计算后得到的outputSize对应轴的值保持一致。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -283,7 +283,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
 
 - **返回值**：
 
-aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

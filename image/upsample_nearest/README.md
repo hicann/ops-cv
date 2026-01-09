@@ -69,33 +69,33 @@
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td><!--aclnn多增了一个NCHW-->
+      <td>ND</td>
     </tr>
     <tr>
       <td>output_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`outputSize`。size需要等于2，表示指定`y`在H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>属性</td>
+      <td>指定输出空间大小，对应公式中的`outputSize`。size为2，表示指定`y`在H和W维度上的空间大小。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_h</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为0.0。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为0.0。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>exact_mode</td>
-      <td>可选属性</td><!--aclnn没有这个参数-->
-      <td><ul><li>是否使用exact模式，对应公式描述中的`exact_mode`。</li><li>默认值为false。</li></ul></td><!--公式是否体现-->
+      <td>可选属性</td>
+      <td><ul><li>是否使用exact模式，对应公式描述中的`exact_mode`。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>

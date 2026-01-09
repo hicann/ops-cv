@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleLinear1d](../../upsample_linear1d/docs/aclnnUpsampleLinear1d.md)的反向传播。
+- 接口功能：[aclnnUpsampleLinear1d](../../upsample_linear1d/docs/aclnnUpsampleLinear1d.md)的反向传播。
 
 - 计算公式：
   - 正向的核心算法逻辑：
@@ -17,7 +17,7 @@
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scale =\begin{cases}
@@ -27,7 +27,7 @@
     \end{cases}
     $$
 
-    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：<!--这个点是不是只有x啊？-->
+    因此，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -137,10 +137,10 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     <tr>
       <td>alignCorners</td>
       <td>输入</td>
-      <td>bool类型参数，对应公式中的`alignCorners`。</td>
+      <td>BOOL类型参数，对应公式中的`alignCorners`。</td>
       <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；
-      <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
-      <td>-</td>
+      <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值对边界外的值进行填充。</li></ul></td>
+      <td>BOOL</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -149,7 +149,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>scales</td>
       <td>输入</td>
       <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
-      <td>-</li></ul></td>
+      <td>取值不大于500。</td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -159,7 +159,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`的数据类型、数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL</td>
       <td>3</td>
@@ -188,7 +188,9 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：入参`gradOut`：当gradOut的shape与inputSize的shape不相同时，数据类型仅支持FLOAT32、FLOAT16。
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  
+    入参`gradOut`：当gradOut的shape对应轴的值与inputSize对应轴的值不相同时，数据类型仅支持FLOAT32、FLOAT16。
 
 - **返回值：**
 
@@ -215,8 +217,8 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="13">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="13">161002</td>
+      <td rowspan="14">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="14">161002</td>
     </tr>
     <tr>
       <td>gradOut的数据类型不在支持的范围之内。</td>
@@ -233,13 +235,13 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     </tr>
     <tr><td>inputSize的某个元素值小于1。</td>
     </tr>
-    <tr><td>gradOut与inputSize在N、C维度上的size不同。</td>
-    </tr>
     <tr><td>gradOut在L维度上的size与outputSize[0]不同。</td>
     </tr>
     <tr><td>gradOut和out的N/C轴的维度大小不相等。</td>
     </tr>
     <tr><td>out的shape在各个维度上的大小与inputSize里对应元素值大小不同。</td>
+    </tr>
+    <tr><td>scales的取值不满足约束。</td>
     </tr>
   </tbody></table>
 

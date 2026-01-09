@@ -88,35 +88,35 @@
     </tr>
     <tr>
       <td>output_size</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>指定输出空间大小，对应公式中的`outputSize`。size需要等于2，且各元素均大于0。表示指定`grad_output`在H和W维度上的空间大小。</li><li>默认值为空。</li></ul></td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>可选属性</td>
+      <td><ul><li>指定输出空间大小，对应公式中的`outputSize`。size为2，且各元素均大于0。表示指定`grad_output`在H和W维度上的空间大小。</li><li>默认值为空。</li></ul></td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>input_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`inputSize`。size为4，且各元素均大于零。表示输出`grad_input`分别在N、C、H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>属性</td>
+      <td>指定输出空间大小，对应公式中的`inputSize`。size为4，且各元素均大于零。表示输出`grad_input`分别在N、C、H和W维度上的空间大小。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。align_corners为true，则输入和输出张量的角像素点会被对齐，否则输入和输出张量的左上角顶点及两条边对齐。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_h</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>

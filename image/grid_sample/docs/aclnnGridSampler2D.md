@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：提供一个输入Tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。
+- 接口功能：提供一个输入Tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。
 - 计算公式：
   
   输入input、grid网格、输出output的尺寸如下：
@@ -20,7 +20,7 @@
   output: (N, C, H_{out}, W_{out})
   $$
 
-  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，一般会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, 1)表示右下角坐标。
+  其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, 1)表示右下角坐标。
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
 
     - paddingMode=0，表示对越界位置用0填充。
@@ -29,9 +29,9 @@
 
   - 对input采样时，会根据interpolationMode进行不同处理：
 
-    - interpolationMode=0，如果(x, y)没有input对应坐标，则取(x, y)周围四个坐标的加权平均值。
+    - interpolationMode=0，表示取(x, y)周围四个坐标的加权平均值。
     - interpolationMode=1，表示取input中距离(x, y)最近的坐标值。
-    - interpolationMode=2，如果(x, y)没有input对应坐标，则取(x, y)周围十六个坐标的加权平均值。
+    - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。
 
 ## 函数原型
 
@@ -87,7 +87,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>input</td>
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>in</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>in</em>)。H*W的最大值只支持INT32上界。`input`的shape最后两维的维度值不能为0。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>in</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>in</em>)。H*W < INT32的最大值。`input`的shape最后两维的维度值不能为0。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE</td>
       <td>ND</td>
       <td>4</td>

@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensor x的shape为(N, C, H, W) ，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
+- 接口功能：对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensor x的shape为(N, C, H, W) ，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$out(N, C, h, w)$可以表示为：
   
   $$
@@ -18,7 +18,7 @@
   
   $$
   scaleH =\begin{cases}
-  (x.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
+  (x.dim(2)-1) / (outputSize[0]-1) & alignCorners=true \\
   1 / scalesH & alignCorners=false\&scalesH>0\\
   x.dim(2) / outputSize[0] & otherwise
   \end{cases}
@@ -26,7 +26,7 @@
   
   $$
   scaleW =\begin{cases}
-  (x.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
+  (x.dim(3)-1) / (outputSize[1]-1) & alignCorners=true \\
   1 / scalesW & alignCorners=false\&scalesW>0\\
   x.dim(3) / outputSize[1] & otherwise
   \end{cases}
@@ -44,7 +44,7 @@
     $$
     W(d) =\begin{cases}
     (a+2)|d|^3-(a+3)|d|^2+1 & |d|\leq1 \\
-    a|d|^3-5a|d|^2+8a|d|-4a & 1<|d|<1 \\
+    a|d|^3-5a|d|^2+8a|d|-4a & 1<|d|<2 \\
     0 & otherwise
     \end{cases}
     $$
@@ -55,7 +55,7 @@
 
 ## 函数原型
 
-- 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dAAGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBicubic2dAA”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dAAGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBicubic2dAA”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBicubic2dAAGetWorkspaceSize(
@@ -107,7 +107,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>x</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`x`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型需要与出参`out`的数据类型一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -116,8 +116,8 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     <tr>
       <td>outputSize</td>
       <td>输入</td>
-      <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
-      <td>size为2。</td><!--，且各元素均大于0，不加aa的有这个限制，这个是否保留-->
+      <td>表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
+      <td>size为2，且各元素均大于0。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -157,8 +157,8 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`x`的数据类型一致。</li></ul></td>
-      <td>FLOAT16、FLOAT32、BFLOAT16</td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`x`保持一致。</li></ul></td>
+      <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
       <td>√</td>
@@ -211,8 +211,8 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>传入的x、outputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="3">161002</td>
+      <td rowspan="4">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="4">161002</td>
       <td>x或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
@@ -220,6 +220,9 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     </tr>
     <tr>
       <td>x的shape不是4维。</td>
+    </tr>
+    <tr>
+      <td>outputSize的元素取值不大于0。</td>
     </tr>
   </tbody></table>
 
@@ -270,8 +273,8 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
 
 - 参数`x`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
-  - 参数`out`的N轴和C轴与`self`保持一致。
-  - 占用内存小于60G。内存占用的计算公式如下：
+  - 参数`out`的N轴和C轴与`self`保持一致，且C轴、H轴、W轴大于0。
+  - 内存占用需小于60G。内存占用的计算公式如下：
 
     $$
     (x\_H * x\_W + out\_H * out\_W + x\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
@@ -282,9 +285,8 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     - C代表输入和输出的C轴。
   - N \* C \* x_H < 2^31
 - 输入数据缩放场景缩小倍数必须小于等于50，即输入shape的高度H/outputSize[0]以及宽度W/outputSize[1]必须小于等于50。
-- 输入的N、C轴必须和输出的N、C轴保持相等，且C必须大于0
-- 参数outputSize包含的元素的元素必须为2，且和输出shape的H、W轴必须相同
-- 输入和输出的H、W轴都必须大于0
+- <term>昇腾910_95 AI处理器</term>：不限制缩放倍数。
+- 参数outputSize包含的元素个数必须为2，且和输出shape的H、W轴必须相同。
 - 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
   - 当alignCorners为True时：
     - outputSize对应轴的值小于等于1，scales对应轴的值为0。
@@ -293,7 +295,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值。
       - 当outputSize对应轴等于0，即对应的scales为0。
       - 当outputSize的对应轴不等于0时，即：$scales=(x/outputSize)$。
-    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(x\_H * scalesH)$，或者$floor(x\_W * scalesW)$。
+    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(x\_H  *  scalesH)$，或者$floor(x\_W * scalesW)$。
 - 确定性计算：
   - aclnnUpsampleBicubic2dAA默认确定性实现。
 

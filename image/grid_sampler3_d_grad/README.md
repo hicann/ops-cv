@@ -14,7 +14,7 @@
 - 计算公式：
 
   - 计算流程：
-    1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，坐标和align_corners、padding_mode有关。
+    1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，这些坐标和align_corners、padding_mode有关。
     2. 坐标根据输入的interpolation_mode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
@@ -30,7 +30,7 @@
       dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，一般会将x、y、z的取值范围归一化到[-1, 1]之间。
+      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
 
     - 对于超出范围的坐标，会根据padding_mode进行不同处理：
   
@@ -40,7 +40,7 @@
   
     - 对input采样时，会根据interpolation_mode进行不同处理：
   
-      - interpolation_mode="bilinear"，表示取input中(x, y, z)周围四个坐标的加权平均值。
+      - interpolation_mode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
       - interpolation_mode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
 
 ## 参数说明
@@ -66,20 +66,20 @@
       <td>输入</td>
       <td>表示反向传播过程中上一层的输出梯度，对应公式描述中的`grad`。数据类型与`x`的数据类型一致。当数据类型DOUBLE时，数据格式不支持NDHWC。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
-      <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
+      <td>NCDHW、NDHWC</td>
     </tr>
     <tr>
       <td>x</td>
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。shape仅支持五维，且需满足`x`和`grad`的N轴和C轴的值保持一致，x的D，H，W值不可为0。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
-      <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
+      <td>NCDHW、NDHWC</td>
     </tr>
     <tr>
       <td>grid</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。shape仅支持五维，且需满足`grid`和`grad`的N轴、D轴、H轴、W轴的值保持一致，最后一维的值等于3。</td>
-      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
+      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NDHWC</td>
     </tr>
     <tr>
@@ -107,14 +107,14 @@
       <td>dx</td>
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。数据类型、数据格式和shape与`x`的数据类型、数据格式和shape保持一致。</td>
-      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
-      <td>NCDHW、NDHWC</td><!--IR原型仅有NCDHW，补充了aclnn的NDHWC，补充了NDHWC的同样原理-->
+      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
+      <td>NCDHW、NDHWC</td>
     </tr>
     <tr>
       <td>dgrid</td>
       <td>输出</td>
       <td>表示`grid`梯度，对应公式描述中的`dgrid`。数据类型、数据格式和shape与`grid`的数据类型、数据格式和shape保持一致。</td>
-      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td><!--参考aclnn新增了double类型-->
+      <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>NDHWC</td>
     </tr>
   </tbody></table>

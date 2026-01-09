@@ -9,8 +9,8 @@
 
 ## 功能说明
 
-- **算子功能**：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
-- **计算公式**：
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
+- 计算公式：
   
   $$
   out(N, C, l) = self(N, C, min(floor((l + 0.5) * scales),  L-1))
@@ -77,7 +77,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>outputSize</td>
       <td>输入</td>
       <td>表示指定`out`在L维度上的空间大小。</td>
-      <td>size为1，取值不等于零。</li></ul></td>
+      <td>size为1，取值大于零。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -97,7 +97,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>out</td>
       <td>输出</td>
       <td>公式中的输出`out`，表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参`self`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -129,6 +129,9 @@ aclnnStatus aclnnUpsampleNearestExact1d(
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+
+  第一段接口完成入参校验，出现以下场景时报错：
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -148,9 +151,12 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="2">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="2">161002</td>
+      <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="3">161002</td>
       <td>self、out的数据类型不在支持的范围之内。</td>
+    </tr>
+    <tr>
+      <td>self和out的数据类型不一致。</td>
     </tr>
     <tr>
       <td>self的shape不是3维。</td>
@@ -197,7 +203,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
 
 - **返回值**：
 
-  **aclnnStatus**：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

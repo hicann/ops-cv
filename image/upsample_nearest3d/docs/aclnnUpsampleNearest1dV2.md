@@ -9,12 +9,12 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。本接口相较于[aclnnUpsampleNearest1d](../../resize_nearest_neighbor_v2/docs/aclnnUpsampleNearest1d.md)，增加入参scaleL，请根据实际情况选择合适的接口。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。本接口相较于[aclnnUpsampleNearest1d](../../resize_nearest_neighbor_v2/docs/aclnnUpsampleNearest1d.md)，增加入参scaleL，请根据实际情况选择合适的接口。
 
 - 计算公式：
   
   $$
-  out(N, C, l) = self(N, C, min(floor(l * scales),  L-1))
+  out(N, C, l) = self(N, C, min(floor(l * scaleL),  L-1)), \ scaleL = outputSize[0] / self\_L
   $$
 
 ## 函数原型
@@ -70,7 +70,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
       <td>输入</td>
       <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。</li>
-      <li>输入维度必须是3维。self的所有轴取值均要满足小于等于(2^31-1)，当数据类型为DOUBLE、UINT8时，self的L轴还需要同时满足小于等于(2^24)。</li></ul></td>
+      <li>输入维度必须是3维。self的所有维度取值均小于等于(2^31-1)，当数据类型为DOUBLE、UINT8时，self的L维取值必须同时小于等于(2^24)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
@@ -89,7 +89,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
     <tr>
       <td>scaleL</td>
       <td>输入</td>
-      <td>表示指定空间大小的乘数，对应公式中的`scales`。</td>
+      <td>表示指定空间大小的乘数，对应公式中的`scaleL`。</td>
       <td>-</td>
       <td>FLOAT32</td>
       <td>-</td>
@@ -100,7 +100,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
       <td>out</td>
       <td>输出</td>
       <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与入参`self`的数据类型保持一致。out的所有轴取值均要满足小于等于(2^31-1)，当数据类型为DOUBLE、UINT8时，out的L轴还需要同时满足小于等于(2^24)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与入参`self`的数据类型保持一致。out的所有维度取值均小于等于(2^31-1)，当数据类型为DOUBLE、UINT8时，out的L维取值必须同时小于等于(2^24)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCL</td>
       <td>3</td>
@@ -159,6 +159,9 @@ aclnnStatus aclnnUpsampleNearest1dV2(
     </tr>
     <tr>
       <td>self、out的数据类型不在支持的范围之内。</td>
+    </tr>
+    <tr>
+      <td>self、out的数据类型或数据格式不一致。</td>
     </tr>
     <tr><td>self的shape不是3维。</td>
     </tr>

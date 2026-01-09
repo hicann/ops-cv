@@ -72,28 +72,28 @@
     <tr>
       <td>grad_output</td>
       <td>输入</td>
-      <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。数据类型与输出`grad_input`的数据类型一致。</td><!--aclnn有仅支持4维的描述，待确认是否体现。-->
+      <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOutput`。数据类型与输出`grad_input`的数据类型一致。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td><!--aclnn多增了一个NCHW-->
+      <td>ND</td>
     </tr>
     <tr>
       <td>align_corners</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。align_corners为true，则输入和输出张量的角像素点会被对齐，否则不对齐。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_h</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为0.0。</li></ul></td><!--aclnn有次约束，看看是否合入：不能传入负值。-->
+      <td>可选属性</td>
+      <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为0.0。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
-      <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为0.0。</li></ul></td><!--aclnn有次约束，看看是否合入：不能传入负值。-->
+      <td>可选属性</td>
+      <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为0.0。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>

@@ -18,7 +18,7 @@
     2.计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3.分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时有不同。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
     scale\_h =\begin{cases}
@@ -36,7 +36,7 @@
     \end{cases}
     $$
    
-    那么，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
+    因此，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
     
     $$
     x' =\begin{cases}
@@ -91,25 +91,25 @@
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式描述中的`self`。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td><!--aclnn多增了一个NCHW-->
+      <td>ND</td>
     </tr>
     <tr>
       <td>size</td>
-      <td>输入</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`outputSize`。size需要等于2，表示指定`y`在H和W维度上的空间大小。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>输入</td>
+      <td>指定输出空间大小，对应公式中的`outputSize`。size为2，表示指定`y`在H和W维度上的空间大小。</td>
       <td>INT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。align_corners为true，则输入和输出张量的角像素点会被对齐，否则输入和输出张量的左上角顶点及两条边对齐。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的height和width维度乘数，对应公式中的`scales_h`、`scales_w`组成的数组[scales_h, scales_w]。</li><li>默认值为空。</li></ul></td>
       <td>LISTFLOAT</td>
       <td>-</td>

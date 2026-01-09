@@ -9,7 +9,7 @@
 
 ## 功能说明
 
-- 算子功能：[aclnnUpsampleBilinear2dAA](../../upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md)的反向传播。
+- 接口功能：[aclnnUpsampleBilinear2dAA](../../upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md)的反向传播。
 - 计算公式：对于一个二维插值点$(N, C, H, W)$, 插值$I(N, C, H, W)$可以表示为：
   
   $$
@@ -175,7 +175,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>out</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`的数据类型和数据格式保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND</td>
       <td>4</td>
@@ -229,15 +229,15 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
       <td>传入的gradOutput、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="7">161002</td>
+      <td rowspan="8">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="8">161002</td>
       <td>gradOutput或out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>gradOutput和out的数据类型不一致。</td>
+      <td>gradOutput与out的数据类型不一致。</td>
     </tr>
     <tr>
-      <td>gradOutput的shape不是4维。</td>
+      <td>gradOutput、out的shape不是4维。</td>
     </tr>
     <tr>
       <td>outputSize的size不等于2。</td>
@@ -250,6 +250,9 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
     </tr>
     <tr>
       <td>inputSize的某个元素值不大于0。</td>
+    </tr>
+    <tr>
+      <td>scalesH、scalesW的取值为负数。</td>
     </tr>
   </tbody></table>
 
@@ -294,7 +297,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 - **返回值**：
 
-aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

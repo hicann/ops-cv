@@ -18,7 +18,7 @@
   
   $$
   scaleH =\begin{cases}
-  (input.dim(2)-1 / outputSize[0]-1) & alignCorners=true \\
+  (input.dim(2)-1) / (outputSize[0]-1) & alignCorners=true \\
   1 / scalesH & alignCorners=false\&scalesH>0\\
   input.dim(2) / outputSize[0] & otherwise
   \end{cases}
@@ -26,7 +26,7 @@
   
   $$
   scaleW =\begin{cases}
-  (input.dim(3)-1 / outputSize[1]-1) & alignCorners=true \\
+  (input.dim(3)-1) / (outputSize[1]-1) & alignCorners=true \\
   1 / scalesW & alignCorners=false\&scalesW>0\\
   input.dim(3) / outputSize[1] & otherwise
   \end{cases}
@@ -76,32 +76,32 @@
       <td>输入</td>
       <td>表示进行采样的输入张量，对应公式中的`input`。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td><!--aclnn多增了一个NCHW-->
+      <td>ND</td>
     </tr>
     <tr>
       <td>output_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>指定输出空间大小，对应公式中的`outputSize`。size需要等于2，且各元素均大于0。表示指定`output`在H和W维度上的空间大小。</td>
+      <td>属性</td>
+      <td>指定输出空间大小，对应公式中的`outputSize`。size为2，且各元素均大于0。表示指定`output`在H和W维度上的空间大小。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>决定是否对齐角像素点，对应公式中的`alignCorners`。如果设置为`true`，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。如果设置为`false`，则输入和输出张量通过其角像素的角点对齐，并使用边缘值对边界外的值进行填充。</li><li>默认值为false。</li></ul></td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_h</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>指定空间大小的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
