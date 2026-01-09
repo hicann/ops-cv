@@ -12,6 +12,9 @@ cmake_minimum_required(VERSION 3.16)
 set(PKG_NAME cv)
 project(${PKG_NAME} VERSION 1.0.0)
 
+set(CMAKE_C_FLAGS_RELEASE "")
+set(CMAKE_CXX_FLAGS_RELEASE "")
+
 if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   message(STATUS "compile project with library")
   option(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG "Build ops-cv with cann pkg" ON)
