@@ -5,18 +5,16 @@
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
 | <term>Ascend 950PR/Ascend 950DT</term> |√|
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>   |     √    |
+
 
 ## 功能说明
 
 - 算子功能：使用单线性插值调整图像大小到指定的大小。
 - 计算公式：  
   对一维数据使用周围两个点进行加权插值
+  
   $$
   y = \frac{x_1 - x}{x_1 - x_0}y_0 + \frac{x - x_0}{x_1 - x_0}y_1
   $$
@@ -65,10 +63,10 @@
 
 ## 约束说明
 
-- 无
+无
 
 ## 调用说明
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_resize_linear](examples/test_aclnn_resize_linear.cpp) | 通过[aclnnUpsampleLinear1d](docs/aclnnUpsampleLinear1d.md)接口方式调用ResizeLinear算子。 |
+| aclnn接口  | [test_aclnn_resize_linear](examples/test_aclnn_resize_linear.cpp) | 通过[aclnnUpsampleLinear1d](../upsample_linear1d/docs/aclnnUpsampleLinear1d.md)接口方式调用ResizeLinear算子。 |
