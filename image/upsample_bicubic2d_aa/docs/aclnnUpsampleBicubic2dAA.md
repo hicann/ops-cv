@@ -285,7 +285,6 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     - C代表输入和输出的C轴。
   - N \* C \* x_H < 2^31
 - 输入数据缩放场景缩小倍数必须小于等于50，即输入shape的高度H/outputSize[0]以及宽度W/outputSize[1]必须小于等于50。
-- <term>昇腾910_95 AI处理器</term>：不限制缩放倍数。
 - 参数outputSize包含的元素个数必须为2，且和输出shape的H、W轴必须相同。
 - 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
   - 当alignCorners为True时：
