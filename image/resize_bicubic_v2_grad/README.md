@@ -5,17 +5,15 @@
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
 | <term>Ascend 950PR/Ascend 950DT</term> |√|
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品 </term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
-|  <term>Atlas 200/300/500 推理产品</term>       |     ×    |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>   |     √    |
+
 
 ## 功能说明
 
 - 算子功能：计算输入图像在双三次插值基础下的梯度。
 - 计算公式：
+  
   $$
   W(x) = \begin{cases}
   (a + 2)|x|^3 - (a + 3)|x|2 + 1 & \text{for } |x|\leq1 \\
@@ -72,10 +70,10 @@
 
 ## 约束说明
 
-- 无
+无
 
 ## 调用说明
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_resize_bicubic_v2_grad](examples/test_aclnn_resize_bicubic_v2_grad.cpp) | 通过[aclnnUpsampleBicubic2dBackward](image/upsample_bicubic2d_grad/docs/aclnnUpsampleBicubic2dBackward.md)接口方式调用ResizeBicubicV2Grad算子。 |
+| aclnn接口  | [test_aclnn_resize_bicubic_v2_grad](examples/test_aclnn_resize_bicubic_v2_grad.cpp) | 通过[aclnnUpsampleBicubic2dBackward](../upsample_bicubic2d_grad/docs/aclnnUpsampleBicubic2dBackward.md)接口方式调用ResizeBicubicV2Grad算子。 |
