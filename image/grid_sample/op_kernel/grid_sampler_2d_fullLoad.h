@@ -1344,9 +1344,13 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PerLoopCompute(
         PointBilinearC32(nIdx, hwIdx, calHWElems, coordinatesLocal, seWeightLocal, weightMaskUb, outValueLocal, true);
 
         if constexpr (IsSameType<T, half>::value) {
-            PipeBarrier<PIPE_ALL>();
+            event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+            SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+            WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
             CopyOut(nIdx, hwIdx, calHWElems);
-            PipeBarrier<PIPE_ALL>();
+            event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+            SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+            WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
         }
     } else {
         LocalTensor<float> outValueLocal = outValueBuf_.Get<float>();
@@ -1361,9 +1365,13 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PerLoopCompute(
         PointBilinear(nIdx, hwIdx, calHWElems, coordinatesLocal, seWeightLocal, weightMaskUb, outValueLocal, true);
 
         if constexpr (IsSameType<T, half>::value) {
-            PipeBarrier<PIPE_ALL>();
+            event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+            SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+            WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
             CopyOut(nIdx, hwIdx, calHWElems);
-            PipeBarrier<PIPE_ALL>();
+            event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+            SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+            WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
         }
     }
 }

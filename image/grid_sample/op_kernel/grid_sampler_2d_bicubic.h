@@ -1138,7 +1138,6 @@ __aicore__ inline void GridSamplerBicubic2D<T>::PerLoopCompute(int32_t nIdx, int
     int32_t loopElems = TRANSE_REP_STRIDE;
     int32_t loopOffset = 0;
     int64_t outBaseOffset = nIdx * outputH_ * outputW_ * inputC_ + hwIdx * CAL_H_W_BLOCK;
-    PipeBarrier<PIPE_ALL>();
     for (int32_t loopIdx = 0; loopIdx < transLoop; loopIdx++) {
         if (loopIdx == transLoop - 1) {
             loopElems = calHWElems - TRANSE_REP_STRIDE * (transLoop - 1);
@@ -1410,9 +1409,13 @@ __aicore__ inline void GridSamplerBicubic2D<T>::PerLoopCompute(int32_t nIdx, int
     }
 
     if constexpr (IsSameType<T, half>::value) {
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+        SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+        WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
         CopyOutFp16(nIdx, hwIdx, calHWElems);
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+        SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+        WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
     }
 }
 

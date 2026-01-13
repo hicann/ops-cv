@@ -691,7 +691,10 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 {
     T weigthVal = weight.GetValue(coorIndex);
     int64_t offset = ncOffset + srcIndex.GetValue(coorIndex);
-    PipeBarrier<PIPE_ALL>();
+    event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+    SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+    WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+
     LocalTensor<T> localTensor = dataOutQueue[0].AllocTensor<T>();
 
     Muls(localTensor, gOutLocalTensor[cycle * alignChannel], weigthVal, channel);
@@ -704,7 +707,6 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     DataCopyPad(inputGmT[offset], localTensor, copyParams);
     SetAtomicNone();
     dataOutQueue[0].FreeTensor(localTensor);
-    PipeBarrier<PIPE_ALL>();
 }
 
 template <typename T, typename Dtype, typename GridSamplerGradTilingData>

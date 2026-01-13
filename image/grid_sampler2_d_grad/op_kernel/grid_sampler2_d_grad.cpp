@@ -89,7 +89,6 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
         TPipe tpipe;
         GridSampler2DGradCast<half, GridSampler2DGradTilingData> castOp;
         castOp.Init(tilingData, gmTensor, &tpipe);
-        PipeBarrier<PIPE_ALL>();
         castOp.Process();
     }
     if (TILING_KEY_IS(5)) {

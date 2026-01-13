@@ -873,7 +873,6 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinear(int32_t nI
     int64_t outBaseOffset = (int64_t)nIdx * gridHW_ * inputC_ + hwIdx * CAL_H_W_BLOCK;
     int32_t ubOffset = 0;
     int32_t maskOffset = 0;
-    PipeBarrier<PIPE_ALL>();
     // 按vmask(128)分块，循环处理
     for (int32_t loop_idx = 0; loop_idx < trans_loop; loop_idx++) {
         if (loop_idx == trans_loop - 1) {
@@ -1283,9 +1282,13 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PerLoopCompute(int32_t n
         ClipCoordinates(
             inputXEFpLocal, inputYEFpLocal, inputXEIntLocal, inputYEIntLocal, coordinatesLocal, weightMaskUb);
         PointBilinear(nIdx, hwIdx, calHWElems, coordinatesLocal, seWeightLocal, weightMaskUb, outValueLocal, true);
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+        SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+        WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
         CopyOut(nIdx, hwIdx, calHWElems);
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+        SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+        WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
         gridQueue_.FreeTensor(gridLocal);
         return;
     }
@@ -1357,9 +1360,13 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PerLoopCompute(int32_t n
         yMax);
     PointBilinearXInLocal(
         nIdx, hwIdx, calHWElems, coordinatesLocal, seWeightLocal, weightMaskUb, outValueLocal, true, xLocal);
-    PipeBarrier<PIPE_ALL>();
+    event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+    SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+    WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
     CopyOut(nIdx, hwIdx, calHWElems);
-    PipeBarrier<PIPE_ALL>();
+    event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+    SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+    WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
     gridQueue_.FreeTensor(gridLocal);
 }
 

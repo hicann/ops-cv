@@ -823,7 +823,6 @@ __aicore__ inline void GridSampler2DNearest<T>::PointNearest(int32_t nIdx, int32
     int64_t outBaseOffset = nIdx * gridHW_ * inputC_ + hwIdx * CAL_H_W_BLOCK;
     int32_t ubOffset = 0;
     int32_t maskOffset = 0;
-    PipeBarrier<PIPE_ALL>();
     for (int32_t loop_idx = 0; loop_idx < trans_loop; loop_idx++) {
         if (loop_idx == trans_loop - 1) {
             loop_elems = calHWElems - TRANSE_REP_STRIDE * (trans_loop - 1);
@@ -1047,9 +1046,13 @@ __aicore__ inline void GridSampler2DNearest<T>::PerLoopCompute(int32_t nIdx, int
     PointNearest(nIdx, hwIdx, calHWElems, coordinatesLocal, weightLocal, weightMaskUb, outValueLocal, false);
 
     if constexpr (IsSameType<T, half>::value) {
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+        SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+        WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
         CopyOutFp16(nIdx, hwIdx, calHWElems);
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+        SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+        WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
     }
 }
 

@@ -683,7 +683,6 @@ __aicore__ inline void GridSampler2D<T>::PointBilinear(int32_t nIdx, int32_t hwI
     int64_t outBaseOffset = nIdx * gridHW_ * inputC_ + hwIdx * CAL_H_W_BLOCK;
     int32_t ubOffset = 0;
     int32_t maskOffset = 0;
-    PipeBarrier<PIPE_ALL>();
     for (int32_t loop_idx = 0; loop_idx < trans_loop; loop_idx++) {
         if (loop_idx == trans_loop - 1) {
             loop_elems = calHWElems - TRANSE_REP_STRIDE * (trans_loop - 1);

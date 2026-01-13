@@ -40,7 +40,7 @@ TEST_F(UpsampleBicubic2dGradTiling, test_tiling_float16_1)
         uint64_t l0CSize = 131072;
         uint64_t l0ASize = 65536;
         uint64_t l0BSize = 65536;
-        platform_ascendc::SocVersion socVersion;
+        platform_ascendc::SocVersion socVersion = platform_ascendc::SocVersion::ASCEND910B;
         std::string socVersionStr = "";
     } compile_info;
 
@@ -68,7 +68,7 @@ TEST_F(UpsampleBicubic2dGradTiling, test_tiling_float_1)
         uint64_t l0CSize = 131072;
         uint64_t l0ASize = 65536;
         uint64_t l0BSize = 65536;
-        platform_ascendc::SocVersion socVersion;
+        platform_ascendc::SocVersion socVersion = platform_ascendc::SocVersion::ASCEND910B;
         std::string socVersionStr = "";
     } compile_info;
 
@@ -96,7 +96,7 @@ TEST_F(UpsampleBicubic2dGradTiling, test_tiling_float_2)
         uint64_t l0CSize = 131072;
         uint64_t l0ASize = 65536;
         uint64_t l0BSize = 65536;
-        platform_ascendc::SocVersion socVersion;
+        platform_ascendc::SocVersion socVersion = platform_ascendc::SocVersion::ASCEND910B;
         std::string socVersionStr = "";
     } compile_info;
 

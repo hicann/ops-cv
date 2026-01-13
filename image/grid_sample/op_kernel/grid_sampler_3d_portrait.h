@@ -919,8 +919,13 @@ __aicore__ inline void GridSampler3DPortrait<T>::PerLoopCompute(int32_t nIdx, in
 
     ComputeWeightAndBilinear(nIdx, dhwIdx, calDHWElems, gridFp32Local, inputX1FpLocal);
     if constexpr (IsSameType<T, half>::value) {
+        event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+        SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+        WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
         CopyOutFp16(nIdx, dhwIdx, calDHWElems);
-        PipeBarrier<PIPE_ALL>();
+        event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+        SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
+        WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
     }
 }
 

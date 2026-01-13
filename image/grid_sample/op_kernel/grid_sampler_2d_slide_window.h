@@ -1049,7 +1049,6 @@ __aicore__ inline void GridSampler2DSlideWindow<T>::PointBilinear(
     pointBilinearParam.outBaseOffset =
         (int64_t)processParam.nIdx * gridHW_ * inputC_ + processParam.hwIdx * CAL_H_W_BLOCK;
     pointBilinearParam.maskOffset = 0;
-    PipeBarrier<PIPE_ALL>();
 
     // 按vmask(128)分块，循环处理
     for (int32_t loop_idx = 0; loop_idx < trans_loop; loop_idx++) {
@@ -1070,7 +1069,6 @@ __aicore__ inline void GridSampler2DSlideWindow<T>::PointBilinear(
             PointBilinearEachChannel(processParam, outValueUb, pointBilinearParam, xLocal, outValueTotalLocal);
         }
     }
-    PipeBarrier<PIPE_ALL>();
 }
 
 template <typename T>

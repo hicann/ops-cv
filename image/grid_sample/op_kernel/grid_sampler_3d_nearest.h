@@ -467,7 +467,6 @@ __aicore__ inline void GridSampler3DNearest<T>::PointNearest(ProcessParam proces
     pointNearestParam.loopElems = TRANSE_REP_STRIDE;
     pointNearestParam.outBaseOffset =
         processParam.nIdx * commonParam.gridDHW_ * commonParam.inputC_ + processParam.hwIdx * CAL_D_H_W_BLOCK;
-    PipeBarrier<PIPE_ALL>();
     for (int32_t loop_idx = 0; loop_idx < trans_loop; loop_idx++) {
         if (loop_idx == trans_loop - 1) {
             pointNearestParam.loopElems = processParam.calDHWElems - TRANSE_REP_STRIDE * (trans_loop - 1);
