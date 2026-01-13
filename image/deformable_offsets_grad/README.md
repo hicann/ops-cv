@@ -1,14 +1,16 @@
-# DeformableOffsets
+# DeformableOffsetsGrad
 
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT</term> |    √     |
+| <term>Ascend 950PR/Ascend 950DT</term>                       |    √     |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>       |    √     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>       |    √     |
 
 ## 功能说明
 
-- 算子功能：DeformableOffsets算子的目的是根据offsets（kernel 采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便Conv2d算子进行卷积计算。而DeformableOffsetsGrad即为这一过程的反向。
+- 算子功能：DeformableOffsets算子的目的是根据offsets（kernel采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便Conv2d算子进行卷积计算。而DeformableOffsetsGrad即为这一过程的反向。
 
 ## 参数说明
 
@@ -67,49 +69,49 @@
       <td>strides</td>
       <td>属性</td>
       <td>滑动窗口的步长，包含4个整数的列表。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>pads</td>
       <td>属性</td>
       <td>填充维度，包含4个整数的列表。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>ksize</td>
       <td>属性</td>
       <td>卷积核的大小，包含2个整数列表。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>dilations</td>
       <td>属性</td>
       <td>每个维度的伸缩因子，包含4个整数的列表。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>data_format</td>
       <td>属性</td>
       <td>输入 x 的数据格式。</td>
-      <td>String</td>
+      <td>STRING</td>
       <td>-</td>
     </tr>
     <tr>
       <td>deformable_groups</td>
       <td>属性</td>
       <td> C 轴上的分组。</td>
-      <td>Int</td>
+      <td>INT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>modulated</td>
       <td>属性</td>
       <td>可选 bool 指定 DeformableConv2D 的版本，true 表示 v2 ，false 表示 v1，只支持 " true "。</td>
-      <td>Bool</td>
+      <td>BOOL</td>
       <td>-</td>
     </tr>
   </tbody></table>

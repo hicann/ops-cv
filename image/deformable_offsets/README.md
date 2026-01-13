@@ -4,11 +4,13 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT</term> |    √     |
+| <term>Ascend 950PR/Ascend 950DT</term>                       |    √     |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>       |    √     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>       |    √     |
 
 ## 功能说明
 
-- 算子功能：用于计算变形卷积（Deformable Convolution）输出的函数。通过引入偏移参数offsets ，使得卷积核在输入特征图上的位置可以动态调整，从而适配不规则的集合变化。
+- 算子功能：用于计算变形卷积（Deformable Convolution）输出的函数。通过引入偏移参数offsets，使得卷积核在输入特征图上的位置可以动态调整，从而适配不规则的集合变化。
 
 ## 参数说明
 
@@ -53,49 +55,49 @@
       <td>strides</td>
       <td>属性</td>
       <td>指定卷积核在高度和宽度方向上的步幅。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>pads</td>
       <td>属性</td>
       <td>指定在输入的高度和宽度方向上添加的填充。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>ksize</td>
       <td>属性</td>
       <td>指定卷积核的大小。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>dilations</td>
       <td>属性</td>
       <td>指定每个维度上的膨胀因子。</td>
-      <td>ListInt</td>
+      <td>INT64</td>
       <td>-</td>
     </tr>
     <tr>
       <td>data_format</td>
       <td>属性</td>
       <td>指定输入 x 的数据格式。</td>
-      <td>String</td>
+      <td>STRING</td>
       <td>-</td>
     </tr>
     <tr>
       <td>deformable_groups</td>
       <td>属性</td>
       <td>指定输入 x 在 C 轴上的分组数。</td>
-      <td>Int</td>
+      <td>INT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>modulated</td>
       <td>属性</td>
       <td>指定变形卷积的版本。</td>
-      <td>Bool</td>
+      <td>BOOL</td>
       <td>-</td>
     </tr>
   </tbody></table>
