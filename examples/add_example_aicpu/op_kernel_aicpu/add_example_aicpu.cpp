@@ -19,7 +19,7 @@
 
 #include <cmath>
 #include <string>
-#include "cust_cpu_utils.h"
+#include "log.h"
 
 namespace {
 const char* const kAddExample = "AddExampleAicpu";
