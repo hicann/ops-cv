@@ -93,6 +93,7 @@ function(add_ops_info_target)
       ${OPINFO_OPS_INFO_DIR}/aic-${OPINFO_COMPUTE_UNIT}-ops-info.ini
       ${OPINFO_OPS_INFO_DIR}/inner/aic-${OPINFO_COMPUTE_UNIT}-ops-info.ini
       ${OPINFO_OPS_INFO_DIR}/exc/aic-${OPINFO_COMPUTE_UNIT}-ops-info.ini ${OPINFO_OUTPUT}
+    DEPENDS opbuild_custom_gen_aclnn_all
     )
   add_custom_target(${OPINFO_TARGET} ALL DEPENDS ${OPINFO_OUTPUT})
 
@@ -122,6 +123,7 @@ function(merge_ini_files)
       ${MGINI_OPS_INFO_DIR}/inner/aic-${MGINI_COMPUTE_UNIT}-ops-info.ini
       ${MGINI_OPS_INFO_DIR}/exc/aic-${MGINI_COMPUTE_UNIT}-ops-info.ini --output-file
       ${ASCEND_KERNEL_CONF_DST}/aic-${MGINI_COMPUTE_UNIT}-ops-info.ini
+    DEPENDS opbuild_custom_gen_aclnn_all
     )
   add_custom_target(${MGINI_TARGET} ALL DEPENDS ${ASCEND_KERNEL_CONF_DST}/aic-${MGINI_COMPUTE_UNIT}-ops-info.ini)
 endfunction()
@@ -170,7 +172,7 @@ function(generate_bin_scripts)
     COMMAND
       ${ASCEND_PYTHON_EXECUTABLE} ${OPS_KERNEL_BINARY_SCRIPT}/merge_ops_config_json.py
           ${GENBIN_OUT_DIR}/gen/${GENBIN_OP_NAME}
-      DEPENDS ascendc_impl_gen
+      DEPENDS ascendc_impl_gen  # this target depend ascendc_impl_gen to gen asc-xxx-ops-info.ini
     )
   if(NOT TARGET ${GENBIN_TARGET})
     add_custom_target(${GENBIN_TARGET})
@@ -238,7 +240,7 @@ endfunction()
 # compile binary from op_host/config binary json files generate outpath: ${CMAKE_BINARY_DIR}/binary/${compute_unit}/bin
 # install path: ${BIN_KERNEL_INSTALL_DIR}/${compute_unit}
 # ######################################################################################################################
-function(compile_from_config)
+function(prepare_compile_from_config)
   set(oneValueArgs TARGET OP_NAME BINARY_JSON OPS_INFO_DIR IMPL_DIR CONFIG_DIR OP_PYTHON_DIR OUT_DIR INSTALL_DIR
                    COMPUTE_UNIT
     )
@@ -270,18 +272,27 @@ function(compile_from_config)
     )
   endif()
 
+  if(NOT TARGET gen_opc_info_${CONFCMP_COMPUTE_UNIT})
+    add_custom_target(gen_opc_info_${CONFCMP_COMPUTE_UNIT}
+            COMMAND ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_gen_opc_info.sh
+            ${CONFCMP_COMPUTE_UNIT}
+            WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
+            DEPENDS ${ASCEND_KERNEL_CONF_DST}/aic-${CONFCMP_COMPUTE_UNIT}-ops-info.ini
+    )
+  endif()
   add_custom_target(
     config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME}
     COMMAND
-      ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_single_op.sh ${OP_TYPE} ${CONFCMP_COMPUTE_UNIT}
+      ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_opc.sh ${OP_TYPE} ${CONFCMP_COMPUTE_UNIT}
       ${CONFCMP_OUT_DIR}/bin ${ENABLE_MSSANITIZER} ${CMAKE_BUILD_TYPE} ${ENABLE_OOM}
     WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
     DEPENDS ${ASCEND_KERNEL_CONF_DST}/aic-${CONFCMP_COMPUTE_UNIT}-ops-info.ini ascendc_kernel_src_copy
             bin_conf_${CONFCMP_OP_NAME}_${CONFCMP_COMPUTE_UNIT}_copy
+          gen_opc_info_${CONFCMP_COMPUTE_UNIT}
     )
 
-  if(NOT TARGET binary)
-    add_custom_target(binary)
+  if(NOT TARGET prepare_binary_compile_${CONFCMP_COMPUTE_UNIT})
+    add_custom_target(prepare_binary_compile_${CONFCMP_COMPUTE_UNIT})
   endif()
   add_custom_target(
     ${CONFCMP_TARGET}
@@ -290,7 +301,7 @@ function(compile_from_config)
     COMMAND
       cp ${CONFCMP_OP_PYTHON_DIR}/${CONFCMP_OP_NAME}*.py ${CONFCMP_OUT_DIR}/src
     )
-  add_dependencies(binary config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME} ${CONFCMP_TARGET})
+  add_dependencies(prepare_binary_compile_${CONFCMP_COMPUTE_UNIT} config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME} ${CONFCMP_TARGET})
 
   if(ENABLE_PACKAGE)
     if(ENABLE_CUSTOM)
@@ -321,6 +332,48 @@ function(compile_from_config)
       OPTIONAL
       )
   endif()
+endfunction()
+
+###################################################################################################
+# compile binary from op_host/config binary json files
+# generate outpath: ${CMAKE_BINARY_DIR}/binary/${compute_unit}/bin
+# install path: ${BIN_KERNEL_INSTALL_DIR}/${compute_unit}
+###################################################################################################
+function(compile_from_config)
+  set(oneValueArgs TARGET OUT_DIR INSTALL_DIR COMPUTE_UNIT)
+  cmake_parse_arguments(CONFCMP "" "${oneValueArgs}" "" ${ARGN})
+  message(STATUS "start to compile unit: ${CONFCMP_COMPUTE_UNIT}")
+  set(_ASCENDC_ENV_VAR)
+  list(APPEND _ASCENDC_ENV_VAR export HI_PYTHON=${ASCEND_PYTHON_EXECUTABLE} &&)
+  if(CCACHE_PROGRAM)
+    list(APPEND _ASCENDC_ENV_VAR export ASCENDC_CCACHE_EXECUTABLE=${CCACHE_PROGRAM} &&)
+  endif()
+
+  if(NOT TARGET binary)
+    add_custom_target(binary)
+  endif()
+
+  add_custom_target(exe_compile_${CONFCMP_COMPUTE_UNIT}_out
+          COMMAND ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_op_exe_task_out.sh ${CONFCMP_OUT_DIR}/bin
+          WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
+  )
+
+  set(OPC_NUM_UNIT "OPC_NUM_${CONFCMP_COMPUTE_UNIT}")
+  foreach(idx RANGE 1 ${${OPC_NUM_UNIT}})
+    set(_BUILD_COMMAND)
+    List(APPEND _BUILD_COMMAND export TILINGKEY_PAR_COMPILE=1 &&)
+    List(APPEND _BUILD_COMMAND export BIN_FILENAME_HASHED=1 &&)
+    List(APPEND _BUILD_COMMAND ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_op_exe.sh ${CONFCMP_OUT_DIR}/bin ${idx})
+    List(APPEND _BUILD_COMMAND && echo $(MAKE))
+    add_custom_target(exe_compile_${CONFCMP_COMPUTE_UNIT}_${idx}
+            COMMAND ${_BUILD_COMMAND}
+            WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
+    )
+    add_dependencies(exe_compile_${CONFCMP_COMPUTE_UNIT}_out exe_compile_${CONFCMP_COMPUTE_UNIT}_${idx})
+  endforeach()
+
+  add_dependencies(binary exe_compile_${CONFCMP_COMPUTE_UNIT}_out)
+
 endfunction()
 
 # ######################################################################################################################
@@ -456,31 +509,38 @@ function(gen_ops_info_and_python)
         if(EXISTS ${binary_json})
           # binary compile from binary json config
           message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary with self config.")
-          compile_from_config(
-              TARGET
-              ascendc_bin_${compute_unit}_${op_name}
-              OP_NAME
-              ${op_name}
-              BINARY_JSON
-              ${binary_json}
-              OPS_INFO_DIR
-              ${ASCEND_AUTOGEN_PATH}
-              IMPL_DIR
-              ${OP_DIR}/op_kernel
-              CONFIG_DIR
-              ${OP_DIR}/op_host/config
-              OP_PYTHON_DIR
-              ${CMAKE_BINARY_DIR}/tbe/dynamic
-              OUT_DIR
-              ${CMAKE_BINARY_DIR}/binary/${compute_unit}
-              INSTALL_DIR
-              ${BIN_KERNEL_INSTALL_DIR}
-              COMPUTE_UNIT
-              ${compute_unit}
-        )
-        add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen gen_bin_scripts)
+          prepare_compile_from_config(
+                TARGET
+                ascendc_bin_${compute_unit}_${op_name}
+                OP_NAME
+                ${op_name}
+                BINARY_JSON
+                ${binary_json}
+                OPS_INFO_DIR
+                ${ASCEND_AUTOGEN_PATH}
+                IMPL_DIR
+                ${OP_DIR}/op_kernel
+                CONFIG_DIR
+                ${OP_DIR}/op_host/config
+                OP_PYTHON_DIR
+                ${CMAKE_BINARY_DIR}/tbe/dynamic
+                OUT_DIR
+                ${CMAKE_BINARY_DIR}/binary/${compute_unit}
+                INSTALL_DIR
+                ${BIN_KERNEL_INSTALL_DIR}
+                COMPUTE_UNIT
+                ${compute_unit}
+          )
+          add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen)
         endif()
       endforeach()
+      # binary compile from binary json config
+      compile_from_config(
+              TARGET ascendc_bin_${compute_unit}_${op_name}
+              OUT_DIR ${CMAKE_BINARY_DIR}/binary/${compute_unit}
+              INSTALL_DIR ${BIN_KERNEL_INSTALL_DIR}
+              COMPUTE_UNIT ${compute_unit}
+      )
 
       if(HAS_OP_COMPILE_OF_COMPUTE_UNIT)
         # generate binary_info_config.json
@@ -491,6 +551,11 @@ function(gen_ops_info_and_python)
       else()
         message(WARNING "[WARNING] There is no operator support for ${compute_unit}.")
       endif()
+      set(LOCK_CLEANUP_CMD "rm -f '${CMAKE_BINARY_DIR}/binary/${compute_unit}/bin/.*.cleaned.lock'")
+      add_custom_command(TARGET binary
+              POST_BUILD
+              COMMAND sh -c "${LOCK_CLEANUP_CMD}"
+              COMMENT "Executing cleanup: ${LOCK_CLEANUP_CMD}")
     endforeach()
   endif()
 endfunction()

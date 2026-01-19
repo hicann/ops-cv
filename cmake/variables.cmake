@@ -23,6 +23,8 @@ if(NOT CANN_3RD_PKG_PATH)
   set(CANN_3RD_PKG_PATH ${PROJECT_SOURCE_DIR}/third_party/pkg)
 endif()
 
+set(OP_CATEGORY_LIST "image" "objdetect" "examples")
+
 # interface, 用于收集aclnn/aclnn_inner/aclnn_exclude的def文件
 add_library(${OPHOST_NAME}_opdef_aclnn_obj INTERFACE)
 add_library(${OPHOST_NAME}_opdef_aclnn_inner_obj INTERFACE)

@@ -14,6 +14,8 @@ RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplu
 UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
                             "ascend910_55" "ascend910_93" "ascend910_95" "ascend910b" "ascend910" "mc62cm12a" "kirinx90")
+SUPPORT_COMPUTE_UNIT_SHORT_PRINT=("ascend910b" "ascend910_93" "ascend950" "ascend310p" "ascend910" "ascend310b" "ascend630"
+                                  "ascend610lite" "ascend031" "ascend035" "kirinx90")
 
 # 所有支持的短选项
 SUPPORTED_SHORT_OPTS="hj:vO:uf:-:"
@@ -1031,8 +1033,7 @@ assemble_cmake_args() {
       fi
     done
     if [[ $found -eq 0 ]]; then
-      echo "soc only support : ${SUPPORT_COMPUTE_UNIT_SHORT[@]}"
-
+      echo "soc only support : ${SUPPORT_COMPUTE_UNIT_SHORT_PRINT[@]}"
       exit 1
     fi
     echo "COMPUTE_UNIT: ${COMPUTE_UNIT}"
@@ -1136,6 +1137,25 @@ build_binary() {
   echo "--------------- prepare build end ---------------"
 
   echo "--------------- binary build start ---------------"
+  local UNITS=(${COMPUTE_UNIT_SHORT//;/ })
+  if [[ ${#UNITS[@]} -eq 0 ]]; then
+    UNITS+=("ascend910b")
+  fi
+  for unit in "${UNITS[@]}"; do
+    remove_opc_cmd="rm -rf ${BUILD_PATH}/binary/${unit}/bin/opc_cmd"
+    ${remove_opc_cmd}
+    if grep -wq "prepare_binary_compile_${unit}" <<< "${all_targets}"; then
+      cmake --build . --target prepare_binary_compile_${unit} -- ${VERBOSE} -j 1
+      if [ $? -ne 0 ]; then
+        print_error "opc gen failed!" && exit 1
+      fi
+    fi
+    OPC_CMD_FILE="${BUILD_PATH}/binary/${unit}/bin/opc_cmd/opc_cmd.sh"
+    [[ -f "$OPC_CMD_FILE" ]] && opc_list_num=$(wc -l < "$OPC_CMD_FILE") || opc_list_num=0
+    CMAKE_ARGS="${CMAKE_ARGS} -DOPC_NUM_${unit}=${opc_list_num}"
+  done
+  cd "$BUILD_PATH" && cmake .. ${CMAKE_ARGS}
+
   local cur_path=$(pwd)
   mkdir -p ${cur_path}/op_impl/ai_core/tbe/op_tiling
   if [ ! -L op_impl/ai_core/tbe/op_tiling/liboptiling.so ]; then
@@ -1148,7 +1168,7 @@ build_binary() {
   fi
   export ASCEND_CUSTOM_OPP_PATH=${cur_path}
   if echo "${all_targets}" | grep -wq "binary"; then
-    cmake --build . --target binary -- ${VERBOSE} -j1 # TODO: fix -j1
+    cmake --build . --target binary -- ${VERBOSE} -j $THREAD_NUM
     if [ $? -ne 0 ]; then
       echo "[ERROR] Kernel compile failed!" && exit 1
     fi
@@ -1195,12 +1215,12 @@ build_ut() {
   fi
 
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
-  
+
   for lib in "${UT_TARGES[@]}"; do
     `find . -name "${lib}*" -type f -delete`
     cmake --build . --target ${lib} -- ${VERBOSE} -j $THREAD_NUM
   done
-  
+
   if [[ "$ENABLE_COVERAGE" =~ "TRUE" ]]; then
     cmake --build . --target generate_ops_cpp_cov -- -j $THREAD_NUM
   fi
@@ -1230,9 +1250,6 @@ build_example() {
     fi
 
     for f in $file; do
-      if [[ "${PKG_MODE}" == "cust" && "$f" == *add_example_aicpu* && "$f" == *opgen* ]]; then
-        continue
-      fi
       echo "Start compile and run examples file: $f"
       if [[ "${PKG_MODE}" == "" ]]; then
         g++ ${f} -I ${INCLUDE_PATH} -I ${ACLNN_INCLUDE_PATH} -L ${EAGER_LIBRARY_PATH} -lopapi_cv -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME}
