@@ -29,7 +29,7 @@
         <block name="OpsCvInc"/>
     </block_info>
     <dir_info value="ops_cv" install_path="ops_cv" install_type="all">
-        <path value="share" install_mod="550"/>
+        <path value="share" install_mod="750"/>
         <path value="share/info" install_mod="750"/>
         <path value="share/info/ops_cv" install_mod="550"/>
         <path value="share/info/ops_cv/script" install_mod="550"/>
