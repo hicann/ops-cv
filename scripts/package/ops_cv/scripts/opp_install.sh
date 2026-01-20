@@ -70,6 +70,7 @@ get_opts() {
   IS_DOCKER_INSTALL="$8"
   DOCKER_ROOT="$9"
   PYLOCAL="${10}"
+  PKG_VERSION_DIR="${11}"
 
   if [ "${TARGET_INSTALL_PATH}" = "" ] || [ "${TARGET_USERNAME}" = "" ] ||
     [ "${TARGET_USERGROUP}" = "" ] || [ "${INSTALL_TYPE}" = "" ]; then
@@ -84,7 +85,6 @@ get_opts() {
 }
 
 init_install_env() {
-  get_version_dir "PKG_VERSION_DIR" "$VERSION_INFO_FILE"
   get_package_version "RUN_PKG_VERSION" "$VERSION_INFO_FILE"
   if [ "${PKG_VERSION_DIR}" = "" ]; then
     TARGET_VERSION_DIR=${TARGET_INSTALL_PATH}

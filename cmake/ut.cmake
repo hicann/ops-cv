@@ -496,7 +496,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     ## add object: ${opName}_cases_obj
     file(GLOB OPKERNEL_CASES_SRC ${UT_DIR}/tests/ut/op_kernel_aicpu/test_${opName}*.cpp)
 
-    message(STATUS "aicpu kernel info: {opName}, ${KernelFile}, ${OPKERNEL_CASES_SRC}")
+    message(STATUS "aicpu kernel info: ${opName}, ${KernelFile}, ${OPKERNEL_CASES_SRC}")
 
     add_library(${opName}_cases_obj OBJECT
             ${KernelFile}

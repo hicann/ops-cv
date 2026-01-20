@@ -122,10 +122,6 @@ main() {
     mkdir -p "${binary_temp_conf_dir}"
   fi
   local opc_info_csv="${binary_temp_conf_dir}/_${soc_version_lower}_tmp.csv"
-  local gen_file="${workdir}/${SCRIPT_NAME_OF_GEN_OPCINFO}"
-  local cmd="bash ${gen_file} ${soc_version} ${opc_info_csv}"
-  ${cmd}
-  echo "[INFO] end to gen opcinfo use ${SCRIPT_NAME_OF_GEN_OPCINFO}"
 
   # step0: gen task
   opc_task_cmd_file="${task_path}/${OPC_TASK_NAME}"
@@ -239,9 +235,7 @@ main() {
   opc_soc_version=$(trans_soc ${soc_version})
 
   # 所有算子的kernel  onebyone 进行编译
-  get_thread_num_with_json_config ${binary_config_file}
-  local thread_num=$?
-  echo "[INFO] op:${op_type} thread_num = ${thread_num}"
+  local thread_num=$(cat ${binary_config_file} | grep bin_filename | wc -l)
 
   for impl_mode in ${impl_list_array[@]}; do
     impl_mode_name=$impl_mode

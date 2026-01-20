@@ -30,16 +30,25 @@ main() {
     pwd
   )
 
-  local task_path=$output_path/opc_cmd/$op_type
+  local task_path=$output_path/opc_cmd
   test -d "$task_path/" || mkdir -p $task_path/
-  rm -f $task_path/*
+  local lock_file="$output_path/.$soc_version.cleaned.lock"
+  if [[ ! -f "$lock_file" ]]; then
+    rm -f $task_path/*.sh
+    touch "$lock_file" || {
+      echo "[WARNING] Failed to create lock file"
+    }
+  fi
 
-  bash build_binary_single_op_gen_task.sh $op_type $soc_version $output_path $task_path $enable_mssanitizer $enable_debug $enable_oom
-
-  get_thread_num
-  thread_num=$?
-
-  bash build_binary_single_op_exe_task.sh $task_path $thread_num $output_path
+  result=$(bash build_binary_opc_gen_task.sh $op_type $soc_version $output_path $task_path $enable_debug $enable_oom)
+  local gen_res=$?
+  if [ $gen_res -ne 0 ]; then
+    echo -e "[ERROR] [$op_type]build binary single op gen task failed with ErrorCode[$gen_res]."
+    echo -e "Command executed: build_binary_single_op_gen_task.sh $op_type $soc_version $output_path $task_path $enable_debug $enable_oom"
+    echo -e "Error output: \n $result"
+    return
+  fi
+  echo "$result\n"
 }
 set -o pipefail
 main "$@" | gawk '{print strftime("[%Y-%m-%d %H:%M:%S]"), $0}'
