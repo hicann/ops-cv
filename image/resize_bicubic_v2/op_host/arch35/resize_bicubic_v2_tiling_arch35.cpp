@@ -265,13 +265,13 @@ void ResizeBicubicV2Tiling::SetDimsByFormat()
     yShape_ = Ops::Cv::OpTiling::EnsureNotScalar(yStorage->GetStorageShape());
     lenN_ = xShape_.GetDim(N_DIM_IDX);
 
-    if (dataFormat == ge::FORMAT_NCHW) {
+    if (dataFormat == ge::FORMAT_NCHW || dataFormat == ge::FORMAT_ND) {
         lenC_ = xShape_.GetDim(C_DIM_IDX_NCHW);
     } else {
         lenC_ = xShape_.GetDim(C_DIM_IDX_NHWC);
     }
 
-    if (dataFormat == ge::FORMAT_NCHW) {
+    if (dataFormat == ge::FORMAT_NCHW || dataFormat == ge::FORMAT_ND) {
         lenSrcH_ = xShape_.GetDim(H_DIM_IDX_NCHW);
         lenDesH_ = yShape_.GetDim(H_DIM_IDX_NCHW);
         lenSrcW_ = xShape_.GetDim(H_DIM_IDX_NCHW + 1);
