@@ -346,7 +346,8 @@ private:
 // op_type: 算子名称， class_name: 注册的 tiling 类,
 // priority: tiling 类的优先级, 越小表示优先级越高, 即被选中的概率越大
 // 取代 REGISTER_TILING_TEMPLATE , 传入的op_type如果是字符串常量，需要去掉引号
-#define REGISTER_OPS_TILING_TEMPLATE(op_type, class_name, priority)                       \
-    static Ops::Cv::OpTiling::Register                                                  \
-        __attribute__((unused)) tiling_##op_type##_##class_name##_##priority##_register = \
+#define REGISTER_OPS_TILING_TEMPLATE(op_type, class_name, priority)                         \
+    [[maybe_unused]] uint32_t op_impl_register_template_##op_type##_##class_name##priority; \
+    static Ops::Cv::OpTiling::Register                                                    \
+        __attribute__((unused)) tiling_##op_type##_##class_name##_##priority##_register =   \
             Ops::Cv::OpTiling::Register(#op_type).tiling<class_name>(priority)
