@@ -15,7 +15,7 @@ UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
                             "ascend910_55" "ascend910_93" "ascend910_95" "ascend910b" "ascend910" "mc62cm12a" "kirinx90")
 SUPPORT_COMPUTE_UNIT_SHORT_PRINT=("ascend910b" "ascend910_93" "ascend950" "ascend310p" "ascend910" "ascend310b" "ascend630"
-                                  "ascend610lite" "ascend031" "ascend035" "kirinx90")
+                                  "ascend610lite" "ascend031" "ascend035" "kirinx90" "mc62cm12a")
 
 # 所有支持的短选项
 SUPPORTED_SHORT_OPTS="hj:vO:uf:-:"
@@ -1250,6 +1250,9 @@ build_example() {
     fi
 
     for f in $file; do
+      if [[ "${PKG_MODE}" == "cust" && "$f" == *add_example_aicpu* && "$f" == *opgen* ]]; then
+        continue
+      fi
       echo "Start compile and run examples file: $f"
       if [[ "${PKG_MODE}" == "" ]]; then
         g++ ${f} -I ${INCLUDE_PATH} -I ${ACLNN_INCLUDE_PATH} -L ${EAGER_LIBRARY_PATH} -lopapi_cv -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME}

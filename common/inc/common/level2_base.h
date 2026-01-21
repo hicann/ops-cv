@@ -11,7 +11,9 @@
 #ifndef CV_COMMON_LEVEL2_BASE_H_
 #define CV_COMMON_LEVEL2_BASE_H_
 
+#include <stdio.h>
 #include "common/op_api_def.h"
+#include "common/aclnn_check.h"
 #include "aclnn/aclnn_base.h"
 
 #ifdef __cplusplus
@@ -172,8 +174,8 @@ static bool CheckDtypeValid1In1OutMatch(const aclTensor *self, const aclTensor *
 static const std::initializer_list<DataType> &GetDtypeSupportListV2(
     const std::initializer_list<op::DataType> &l1, const std::initializer_list<op::DataType> &l2)
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B &&
-        GetCurrentPlatformInfo().GetSocVersion() <= SocVersion::ASCEND910E) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if(curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
         return l1;
     } else {
         return l2;
@@ -183,14 +185,13 @@ static const std::initializer_list<DataType> &GetDtypeSupportListV2(
 static const std::initializer_list<op::DataType> GetDtypeSupportListV3(
     const std::initializer_list<op::DataType> &l1, const std::initializer_list<op::DataType> &l2)
 {
-    auto socVersion = GetCurrentPlatformInfo().GetSocVersion();
-    switch (socVersion) {
-        case SocVersion::ASCEND910_93:
-        case SocVersion::ASCEND910_95:
-        case SocVersion::ASCEND910B: {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    switch (curArch) {
+        case NpuArch::DAV_2201:
+        case NpuArch::DAV_3510: {
             return l1;
         }
-        case SocVersion::ASCEND910: {
+        case NpuArch::DAV_1001: {
             return l2;
         }
         default: {

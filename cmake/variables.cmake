@@ -170,6 +170,7 @@ set(OP_PROTO_INCLUDE
   ${METADEF_INCLUDE_DIRS}
   ${OPBASE_INC_DIRS}
   ${NPURUNTIME_INCLUDE_DIRS}
+  ${TOP_DIR}/runtime/pkg_inc
   ${OPS_CV_DIR}/common/inc/common
 )
 
