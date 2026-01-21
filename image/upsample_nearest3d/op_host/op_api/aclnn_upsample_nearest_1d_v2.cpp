@@ -26,6 +26,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "common/aclnn_check.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
 
@@ -33,11 +34,13 @@ using namespace op;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+namespace {
 static const size_t THREEDIMS = 3;
 static const size_t DIM_IDX_2 = 2;
 static const int64_t ZERO = 0;
 static const uint64_t ONE = 1;
+static const double DOUBLE_ONE = 1.0;
+
 static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8};
 
@@ -60,9 +63,8 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
 
 static const std::initializer_list<DataType> &GetDtypeSupportList()
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93 ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
         return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
     } else {
         return ASCEND910_DTYPE_DTYPE_SUPPORT_LIST;
@@ -251,16 +253,12 @@ static const aclTensor *upsampleNearest1dAiCoreCompute(
 {
     auto self = View4dAs5d(selfContiguous, executor);
     CHECK_RET(self != nullptr, nullptr);
-
-    std::stringstream scaleLStream;
-    scaleLStream << scaleL;
-    std::string scaleLStr = scaleLStream.str();
-    float scalesW = static_cast<float>(1.0 / std::stod(scaleLStr));
+    float scalesW = static_cast<float>(DOUBLE_ONE / static_cast<double>(scaleL));
 
     vector<float> scalesList{};
     scalesList.push_back(1.0);
     scalesList.push_back(1.0);
-    scalesList.push_back(static_cast<float>(std::stod(scaleLStr)));
+    scalesList.push_back(scaleL);
     const aclFloatArray *scales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
     CHECK_RET(scales != nullptr, nullptr);
 
@@ -282,6 +280,7 @@ static const aclTensor *upsampleNearest1dAiCoreCompute(
 
     return View5dAs4d(outUpsampleNearest, executor);
 }
+} // namespace
 
 aclnnStatus aclnnUpsampleNearest1dV2GetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize, float scaleL,
     aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
@@ -310,15 +309,14 @@ aclnnStatus aclnnUpsampleNearest1dV2GetWorkspaceSize(const aclTensor *self, cons
     CHECK_RET(size != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const aclTensor *resizeNearestOut = nullptr;
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
-        bool isAscendCSupport = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-                                GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93 ||
-                                GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND310P;
-        if (scaleL > 0 && isAscendCSupport) {
+        bool isAscendCSupport = curArch == NpuArch::DAV_2201 || (curArch == NpuArch::DAV_2002 && scaleL > 0);
+        if (isAscendCSupport) {
             resizeNearestOut =
                 upsampleNearest1dAiCoreCompute(selfContiguous, outputSizeArray, scaleL, uniqueExecutor.get());
         } else {
-            if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+            if (IsRegBase(curArch)) {
                 vector<float> scalesList{};
                 scalesList.push_back(1.0f);
                 scalesList.push_back(scaleL);

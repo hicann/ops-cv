@@ -19,6 +19,7 @@
 #include "log/log.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "register/op_impl_registry.h"
+#include "tiling_base/tiling_util.h"
 #include "upsample_nearest3d_tiling.h"
 
 using namespace ge;
@@ -27,6 +28,7 @@ using namespace UpsampleNearest3d;
 namespace optiling {
 constexpr uint8_t BATCH_DIM = 2;
 constexpr uint8_t DIM = 3;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
 const std::string EXACT_3D_TYPE = "UpsampleNearestExact3d";
@@ -35,11 +37,12 @@ class UpsampleNearest3dTiling {
 public:
     explicit UpsampleNearest3dTiling(gert::TilingContext* context) : tilingContext(context){};
     ge::graphStatus Init() const;
-    ge::graphStatus RunBigKernelTiling();
+    ge::graphStatus RunBigKernelTiling(gert::TilingContext* context);
 
 private:
     inline bool CheckMaxSizes(const gert::TilingContext* context);
     void GetTilingKey() const;
+    void getWorkSpace();
 
 private:
     gert::TilingContext* tilingContext = nullptr;
@@ -58,11 +61,9 @@ ge::graphStatus UpsampleNearest3dTiling::Init() const
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling()
+ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling(gert::TilingContext* context)
 {
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(tilingContext->GetPlatformInfo());
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    bool regBase = socVersion == platform_ascendc::SocVersion::ASCEND910_95;
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     std::string opType(tilingContext->GetNodeType());
     if (regBase && (opType != EXACT_3D_TYPE)) {
         OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleNearest3dRegbase");
@@ -114,9 +115,7 @@ ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling()
 
     GetTilingKey();
     tilingContext->SetBlockDim(tilingData->needCoreNum);
-    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
-    workspaces[0] = WORK_SPACE_SIZE;
-
+    getWorkSpace();
     return ge::GRAPH_SUCCESS;
 }
 
@@ -137,6 +136,18 @@ void UpsampleNearest3dTiling::GetTilingKey() const
     }
     const uint64_t tilingKey = GET_TPL_TILING_KEY(D_T_X, D_T_Y);
     tilingContext->SetTilingKey(tilingKey);
+}
+
+void UpsampleNearest3dTiling::getWorkSpace()
+{
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(tilingContext->GetPlatformInfo());
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
+    auto npuArch = ascendcPlatform.GetCurNpuArch();
+    if (npuArch == NpuArch::DAV_2201) {
+        workspaces[0] = 0;
+    } else {
+        workspaces[0] = WORK_SPACE_SIZE;
+    }
 }
 
 inline bool UpsampleNearest3dTiling::CheckMaxSizes(const gert::TilingContext* context)
@@ -195,7 +206,12 @@ inline bool UpsampleNearest3dTiling::CheckMaxSizes(const gert::TilingContext* co
 static ge::graphStatus Tiling4UpsampleNearest3dTiling(gert::TilingContext* context)
 {
     UpsampleNearest3dTiling tilingObject(context);
-    return tilingObject.RunBigKernelTiling();
+    auto ascendc_platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
+    platform_ascendc::SocVersion nearest3dSocVersion = ascendc_platform.GetSocVersion();
+    if (nearest3dSocVersion == platform_ascendc::SocVersion::ASCEND310P) {
+        context->SetScheduleMode(SCHEDULE_MODE);
+    }
+    return tilingObject.RunBigKernelTiling(context);
 }
 
 static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext* context)

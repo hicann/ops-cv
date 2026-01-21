@@ -43,6 +43,7 @@ constexpr uint32_t MATRIX_NUM = 2;
 constexpr uint64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint32_t BYTE_LEN_4 = 4;
 constexpr uint32_t BYTE_LEN_2 = 2;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinear2dAABackwardTiling {
 public:
@@ -540,6 +541,7 @@ inline int32_t UpsampleBilinear2dAABackwardTiling::Ceil(T1 x) const
 static ge::graphStatus Tiling4UpsampleBilinear2dAABackwardTiling(gert::TilingContext *context)
 {
     UpsampleBilinear2dAABackwardTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 

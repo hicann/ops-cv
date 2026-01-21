@@ -91,9 +91,9 @@ const aclTensor* UpsampleNearest3dGradNcdhw(
 
     auto dataType = gradOut->GetDataType();
     // npu实现
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (CheckNearest3dGradScales(gradOut, inputSize, castScales) &&
-        (socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+        (curArch == NpuArch::DAV_2201) &&
         CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
         if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
             gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);

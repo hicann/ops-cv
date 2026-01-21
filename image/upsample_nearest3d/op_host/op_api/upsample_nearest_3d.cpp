@@ -25,6 +25,7 @@
 #include "opdev/common_types.h"
 #include "opdev/platform.h"
 #include "aclnn_kernels/cast.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 
@@ -62,8 +63,8 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
         scales_h = (*castScales)[DIM_ONE];
         scales_w = (*castScales)[DIM_TWO];
     }
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
-    if (socVer == SocVersion::ASCEND910_95 && scales->Size() == DIM_THREE) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (IsRegBase(curArch) && scales->Size() == DIM_THREE) {
         scales_d = (*scales)[DIM_ZERO];
         scales_h = (*scales)[DIM_ONE];
         scales_w = (*scales)[DIM_TWO];
@@ -81,19 +82,19 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
     const aclTensor *out = executor->AllocTensor(
         selfStorageShape, selfOriginalShape, self->GetDataType(), self->GetStorageFormat(), self->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
-    if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+    if ((curArch == NpuArch::DAV_2201) &&
         CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
         ADD_TO_LAUNCHER_LIST_AICORE(
             UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;
     }
-    if ((socVer == SocVersion::ASCEND910_95) &&
+    if ((IsRegBase(curArch)) &&
         CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_95)) {
         ADD_TO_LAUNCHER_LIST_AICORE(
             UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;
     }
-    if ((socVer == SocVersion::ASCEND310P) && CheckType(self->GetDataType(), ASCEND310P_AICORE_DTYPE_SUPPORT_LIST)) {
+    if ((curArch == NpuArch::DAV_2002) && CheckType(self->GetDataType(), ASCEND310P_AICORE_DTYPE_SUPPORT_LIST)) {
         ADD_TO_LAUNCHER_LIST_AICORE(
             UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;

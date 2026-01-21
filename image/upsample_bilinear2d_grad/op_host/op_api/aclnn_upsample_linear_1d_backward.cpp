@@ -29,6 +29,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/platform.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -48,7 +49,7 @@ static const double MAX_SUPPORT_SCALE = 500.0;
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_ASCEND910_95 = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
 struct Liear1dBackWardData {
@@ -83,18 +84,17 @@ static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inpu
 
 static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *out, const aclIntArray *inputSize)
 {
-    bool isAscend910SocVersion = (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-                                  GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93 ||
-                                  GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910 ||
-                                  GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    bool isAscend910SocVersion = (curArch == NpuArch::DAV_2201 ||
+                                  curArch == NpuArch::DAV_1001 ||
+                                  IsRegBase(curArch));
     if (!isAscend910SocVersion) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "the operator doesn't support %s",
-            op::ToString(GetCurrentPlatformInfo().GetSocVersion()).GetString());
+            "the operator doesn't support %u npuArch", static_cast<uint32_t>(curArch));
         return false;
     }
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_ASCEND910_95, return false);
+    if (IsRegBase(curArch)) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_REGBASE, return false);
     }
     if (CheckIOSizesIsSame(gradOut, inputSize)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
@@ -124,7 +124,7 @@ static bool CheckShapeValid(
 
     OP_CHECK(inputL > 0 && outputL > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Size of H must be greater than 0, bug got input (L: %ld), output (L: %ld)",
+            "Size of H must be greater than 0, but got input (L: %ld), output (L: %ld)",
             inputL,
             outputL),
         return false);
@@ -178,7 +178,7 @@ static bool CheckInputElement(const aclTensor *gradOut, const aclIntArray *outpu
 
     OP_CHECK(inputH > 0 && outH > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (L: %ld),"
+            "Input and output sizes should greater than 0, but got input (L: %ld),"
             " output (L: %ld)",
             inputH,
             outH),
@@ -223,6 +223,9 @@ static bool CheckNCValid(const aclTensor *gradOut, const aclTensor *out)
 
 static bool CheckUplimit(const aclTensor *gradOut, const aclTensor *out)
 {
+    if (IsRegBase()) {
+        return true;
+    }
     int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
     int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
     int64_t gradOutH = gradOut->GetViewShape().GetDim(DIM_TWO);
@@ -230,14 +233,14 @@ static bool CheckUplimit(const aclTensor *gradOut, const aclTensor *out)
     int64_t outC = out->GetViewShape().GetDim(DIM_ONE);
     int64_t outH = out->GetViewShape().GetDim(DIM_TWO);
 
-    OP_CHECK(gradOutN < INT32_MAX && gradOutC < INT32_MAX && gradOutH < INT32_MAX ,
+    OP_CHECK(gradOutN <= INT32_MAX && gradOutC <= INT32_MAX && gradOutH <= INT32_MAX ,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld)",
+            "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld)",
             INT32_MAX, gradOutN, gradOutC, gradOutH),
         return false);
-    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX,
+    OP_CHECK(outN <= INT32_MAX && outC <= INT32_MAX && outH <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld)",
+            "Out sizes should not be greater than %d, but got out(%ld, %ld, %ld)",
             INT32_MAX, outN, outC, outH),
         return false);
     return true;
@@ -246,12 +249,12 @@ static bool CheckUplimit(const aclTensor *gradOut, const aclTensor *out)
 static aclnnStatus CheckParams(
     const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *out)
 {
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查shape
-    if (socVer == SocVersion::ASCEND910_95) {
+    if (IsRegBase(curArch)) {
         CHECK_RET(CheckShapeValid(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_INVALID);
     } else {
         CHECK_RET(CheckShape(gradOut, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
@@ -370,9 +373,8 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor *gradO
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
-
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
-    if (socVer == SocVersion::ASCEND910_95) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (IsRegBase(curArch)) {
         op::Shape imageShape = gradOut->GetViewShape();
         const aclTensor *kernelOut = gradOut;
         const aclTensor *originalImage;
@@ -415,7 +417,7 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor *gradO
 
         const aclTensor *outCast = gradOutContiguous;
         bool checkSize = CheckIOSizesIsSame(gradOutContiguous, originSizeArray);
-        bool checkSocVer = socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93;
+        bool checkSocVer = curArch == NpuArch::DAV_2201;
         bool check_scale = true;
         check_scale = ComputeCheckScale(outputSize, inputSize, scales);
         const int64_t MAX_GRAD_SIZE = 1000000;
@@ -450,7 +452,7 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor *gradO
 
             outCast = l0op::Cast(outTransdata, out->GetDataType(), uniqueExecutor.get());
             CHECK_RET(outCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        } else if (socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) {
+        } else if (curArch == NpuArch::DAV_2201) {
             CHECK_RET(CheckScales(inputSize, outputSize, scales), ACLNN_ERR_PARAM_INVALID);
             const float realScales_w = scales > 0 ? static_cast<float>(1.0 / scales) : 0;
             const float realScales_h = static_cast<float>(1.0);

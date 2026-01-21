@@ -26,6 +26,7 @@
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -412,15 +413,15 @@ aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor *self, const
     const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, DIM_TWO);
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
-    if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if ((curArch == NpuArch::DAV_2201) &&
         CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE) &&
         CheckBilinear2dScales(self, out, scalesH, scalesW, alignCorners) &&
         CheckScalesAndShapeValid(self, out, scalesH, scalesW)) {
         castOut = GoUpsampleBilinear2DAICORE(
             selfRefContiguous, outputSize, alignCorners, scalesH, scalesW, outContiguous, uniqueExecutor.get());
     } else if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE)) {
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+        if (IsRegBase(curArch)) {
             castOut = GoResizeBilinearV2AiCoreWith4d(
                 selfRefContiguous, outputSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
         } else {
@@ -433,7 +434,7 @@ aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor *self, const
         auto size = uniqueExecutor.get()->ConvertToTensor(newOutputSize, op::ToOpDataType(ACL_INT32));
         const aclTensor *newSize = uniqueExecutor.get()->CreateView(size, op::Shape({AICPU_SHAPE}), AICPU_OFFSET_NHWC);
         const aclTensor *upsampleBilinearout = nullptr;
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+        if (IsRegBase(curArch)) {
             upsampleBilinearout = l0op::ResizeBilinearV2With4d(
                 selfRefContiguous, newSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
         } else {

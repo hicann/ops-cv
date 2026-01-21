@@ -125,7 +125,7 @@ static bool CheckInputElement(
         outN > 0 && inputL > 0 && outC > 0 && outL > 0,
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
+            "Input and output sizes should greater than 0, but got input (N: %ld, C: %ld,"
             " L: %ld) output (L: %ld)",
             outN, outC, inputL, outL),
         return false);

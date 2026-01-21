@@ -57,6 +57,7 @@ constexpr uint32_t DIM_LEN = 4;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
 
 constexpr float MAX_SUPPORT_SCALE = 50.0f;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinearAATiling {
 public:
@@ -514,6 +515,7 @@ void UpsampleBilinearAATiling::FillTilingData()
 static ge::graphStatus tiling4UpsampleBilinearAATiling(gert::TilingContext *context)
 {
     UpsampleBilinearAATiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 

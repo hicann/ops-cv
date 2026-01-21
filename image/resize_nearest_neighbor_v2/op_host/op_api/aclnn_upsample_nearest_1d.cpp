@@ -14,6 +14,7 @@
 #include "level0/unsqueeze.h"
 #include "aclnn_kernels/contiguous.h"
 #include "resize_nearest_neighbor_v2.h"
+#include "../../../upsample_nearest3d/op_host/op_api/upsample_nearest_3d.h"
 #include "aclnn/aclnn_base.h"
 #include "opdev/common_types.h"
 #include "opdev/shape_utils.h"
@@ -26,12 +27,14 @@
 #include "opdev/make_op_executor.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+namespace {
 static const size_t THREEDIMS = 3;
 static const size_t DIM_IDX_2 = 2;
 static const int64_t ZERO = 0;
@@ -57,9 +60,8 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
 
 static const std::initializer_list<DataType> &GetDtypeSupportList()
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93 ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
         return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
     } else {
         return ASCEND910_DTYPE_DTYPE_SUPPORT_LIST;
@@ -185,6 +187,32 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
+static const aclTensor *View4dAs5d(const aclTensor *input, aclOpExecutor *executor)
+{
+    const int64_t appendDim[] = {2};
+    aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
+    CHECK_RET(dimUnsqueeze != nullptr, nullptr);
+    auto unsqueezedInput = l0op::UnsqueezeNd(input, dimUnsqueeze, executor);
+    CHECK_RET(unsqueezedInput != nullptr, nullptr);
+
+    auto reformatInput = l0op::ReFormat(unsqueezedInput, op::Format::FORMAT_NCDHW);
+    CHECK_RET(reformatInput != nullptr, nullptr);
+    return reformatInput;
+}
+
+static const aclTensor *View5dAs4d(const aclTensor *input, aclOpExecutor *executor)
+{
+    const int64_t removeDim[] = {2};
+    aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, 1);
+    CHECK_RET(dimSqueeze != nullptr, nullptr);
+    auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
+    CHECK_RET(squeezedInput != nullptr, nullptr);
+
+    auto reformatInput = l0op::ReFormat(squeezedInput, op::Format::FORMAT_NCHW);
+    CHECK_RET(reformatInput != nullptr, nullptr);
+    return reformatInput;
+}
+
 const aclTensor *upsampleNearest1dAiCpuCompute(
     const aclTensor *selfContiguous, const aclTensor *outContiguous, const aclTensor *size, aclOpExecutor *executor)
 {
@@ -212,6 +240,50 @@ const aclTensor *upsampleNearest1dAiCpuCompute(
         return l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, executor);
     }
 }
+
+
+static const aclTensor *doResizeCompute(
+    const aclTensor *selfContiguous, const aclTensor *outContiguous, const aclTensor *size, aclOpExecutor *executor)
+{
+    auto selfTransdata =
+        l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, executor);
+    CHECK_RET(selfTransdata != nullptr, nullptr);
+
+    auto outTransdata =
+        l0op::TransDataSpecial(outContiguous, op::Format::FORMAT_NC1HWC0, 0, executor);
+    CHECK_RET(outTransdata != nullptr, nullptr);
+
+    const aclTensor *resizeNearestOutAiCore =
+        l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, executor);
+    CHECK_RET(resizeNearestOutAiCore != nullptr, nullptr);
+
+    return l0op::TransData(resizeNearestOutAiCore, selfContiguous->GetStorageFormat(), 0, executor);
+}
+
+static const aclTensor *doUpsampleCompute(
+    const aclTensor *selfContiguous, const aclIntArray *outputSize, aclOpExecutor *executor)
+{
+    auto self = View4dAs5d(selfContiguous, executor);
+    CHECK_RET(self != nullptr, nullptr);
+
+
+    vector<float> scalesList(3, 0.0f);
+    const aclFloatArray *scales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
+    CHECK_RET(scales != nullptr, nullptr);
+
+    vector<float> scalesCastList(3, 0.0f);
+    const aclFloatArray *castScales = executor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
+    CHECK_RET(castScales != nullptr, nullptr);
+
+    vector<int64_t> sizeList = {1, 1, outputSize->GetData()[0]};
+    const aclIntArray *size = executor->AllocIntArray(sizeList.data(), sizeList.size());
+    CHECK_RET(size != nullptr, nullptr);
+    auto outUpsampleNearest = l0op::UpsampleNearest3dNcdhw(self, size, scales, castScales, executor);
+    CHECK_RET(outUpsampleNearest != nullptr, nullptr);
+
+    return View5dAs4d(outUpsampleNearest, executor);
+}
+} // namespace
 
 aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize, aclTensor *out,
     uint64_t *workspaceSize, aclOpExecutor **executor)
@@ -245,24 +317,13 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
 
     const aclTensor *resizeNearestOut = nullptr;
     if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+        if (IsRegBase()) {
             resizeNearestOut =
                 l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, uniqueExecutor.get());
+        } else if (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_2201) {
+            resizeNearestOut = doUpsampleCompute(selfContiguous, outputSize, uniqueExecutor.get());
         } else {
-            auto selfTransdata =
-                l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
-            CHECK_RET(selfTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            auto outTransdata =
-                l0op::TransDataSpecial(outContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
-            CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            const aclTensor *resizeNearestOutAiCore =
-                l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, uniqueExecutor.get());
-            CHECK_RET(resizeNearestOutAiCore != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            resizeNearestOut =
-                l0op::TransData(resizeNearestOutAiCore, selfContiguous->GetStorageFormat(), 0, uniqueExecutor.get());
+            resizeNearestOut = doResizeCompute(selfContiguous, outContiguous, size, uniqueExecutor.get());
         }
     } else {
         resizeNearestOut = upsampleNearest1dAiCpuCompute(selfContiguous, outContiguous, size, uniqueExecutor.get());

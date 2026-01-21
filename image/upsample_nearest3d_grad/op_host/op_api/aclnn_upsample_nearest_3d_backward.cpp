@@ -24,6 +24,7 @@
 #include "opdev/make_op_executor.h"
 #include "common/level2_base.h"
 #include "aclnn_upsample_nearest_3d_backward.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -52,7 +53,7 @@ static bool CheckInputElement(
         inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (H: %ld,"
+            "Input and output sizes should greater than 0, but got input (H: %ld,"
             " W: %ld) output (H: %ld, W: %ld)",
             inputH, inputW, outH, outW),
         return false);
@@ -66,16 +67,18 @@ static bool CheckInputElement(
     }
     OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gradInput, expectShape, return false);
     
-    OP_CHECK(batch < INT32_MAX && channels < INT32_MAX && outD < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld, %ld)",
-            INT32_MAX, batch, channels, outD, outH, outW),
-        return false);
-    OP_CHECK(batch < INT32_MAX && channels < INT32_MAX && inputD < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "InputSize should not be greater than %d, bug got inputSize[%ld, %ld, %ld, %ld, %ld]",
-            INT32_MAX, batch, channels, inputD , inputH , inputW),
-        return false);
+    if (!IsRegBase()) {
+        OP_CHECK(batch <= INT32_MAX && channels <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld, %ld)",
+                INT32_MAX, batch, channels, outD, outH, outW),
+            return false);
+        OP_CHECK(batch <= INT32_MAX && channels <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "InputSize should not be greater than %d, but got inputSize[%ld, %ld, %ld, %ld, %ld]",
+                INT32_MAX, batch, channels, inputD , inputH , inputW),
+            return false);
+    }
     return true;
 }
 

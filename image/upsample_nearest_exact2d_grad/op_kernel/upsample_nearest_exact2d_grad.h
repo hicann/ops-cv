@@ -100,6 +100,7 @@ private:
             return x;
         }
     }
+
     __aicore__ inline void wDirectionExpansion();
     __aicore__ inline void hDirectionExpansion();
     __aicore__ inline void ParseTilingData(UpsampleNearestExact2dGradTilingData* tilingData);

@@ -45,6 +45,7 @@ constexpr uint8_t DIM = 3;
 constexpr uint8_t D_INDEX = 0;
 constexpr uint8_t H_INDEX = 1;
 constexpr uint8_t W_INDEX = 2;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 constexpr int64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
 
@@ -590,6 +591,7 @@ inline auto UpsampleNearest3dGradTiling::Min(T1 a, T1 b, T1 c) const -> T1
 static ge::graphStatus Tiling4UpsampleNearest3dGradTiling(gert::TilingContext* context)
 {
     UpsampleNearest3dGradTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 

@@ -52,6 +52,7 @@ constexpr int8_t W_INDEX = 3;
 constexpr int32_t RESERVED_VALUE = 4;
 
 constexpr float ZERO_FLOAT = 0.0f;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleNearestExact2dGradTiling
 {
@@ -541,6 +542,7 @@ void UpsampleNearestExact2dGradTiling::FillTilingData()
 static ge::graphStatus tiling4UpsampleNearestExact2dGradTiling(gert::TilingContext* context)
 {
     UpsampleNearestExact2dGradTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 

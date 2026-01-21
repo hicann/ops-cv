@@ -63,6 +63,7 @@ constexpr uint32_t SMALL_NCH_TILING_KEY = 1003;
 
 constexpr uint32_t MAX_SMALL_SHPAE = 8192;
 constexpr uint32_t MAX_SMALL_SACALE = 2;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleNearestTiling
 {
@@ -203,6 +204,11 @@ void UpsampleNearestTiling::GetTilingKey()
             tilingKey = SMALL_C_TILING_KEY;
         } else {
             tilingKey = COMMON_TILING_KEY;
+        }
+        auto ascendc_platform = platform_ascendc::PlatformAscendC(tilingContext->GetPlatformInfo());
+        platform_ascendc::SocVersion nearestSocVersion = ascendc_platform.GetSocVersion();
+        if (nearestSocVersion == platform_ascendc::SocVersion::ASCEND310P) {
+            tilingContext->SetScheduleMode(SCHEDULE_MODE);
         }
     }
 }

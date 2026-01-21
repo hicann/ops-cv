@@ -24,6 +24,7 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
 #include "aclnn_upsample_nearest_2d.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -57,10 +58,10 @@ static bool CheckNotNull(const aclTensor *self, const aclTensor *out)
 
 static const std::initializer_list<DataType> &GetDtypeSupportList()
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201) {
         return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
-    } else if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    } else if (IsRegBase(curArch)) {
         return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
     } else {
         return ASCEND910_DTYPE_DTYPE_SUPPORT_LIST;
@@ -172,6 +173,9 @@ static bool CheckOutputSize(const aclTensor *out, const aclIntArray *outputSize)
 
 static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
 {
+    if (IsRegBase()) {
+        return true;
+    }
     int64_t inN = self->GetViewShape().GetDim(ZERO);
     int64_t inC = self->GetViewShape().GetDim(ONE);
     int64_t inH = self->GetViewShape().GetDim(TWO);
@@ -181,14 +185,14 @@ static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
     int64_t outH = out->GetViewShape().GetDim(TWO);
     int64_t outW = out->GetViewShape().GetDim(THREE);
 
-    OP_CHECK(inN < INT32_MAX && inC < INT32_MAX && inH < INT32_MAX && inW < INT32_MAX,
+    OP_CHECK(inN <= INT32_MAX && inC <= INT32_MAX && inH <= INT32_MAX && inW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Self sizes should not be greater than %d, bug got self(%ld, %ld, %ld, %ld)",
+            "Self sizes should not be greater than %d, but got self(%ld, %ld, %ld, %ld)",
             INT32_MAX, inN, inC, inH, inW),
         return false);
-    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+    OP_CHECK(outN <= INT32_MAX && outC <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld, %ld)",
+            "Out sizes should not be greater than %d, but got out(%ld, %ld, %ld, %ld)",
             INT32_MAX, outN, outC, outH, outW),
         return false);
     return true;
@@ -281,7 +285,7 @@ aclnnStatus aclnnUpsampleNearest2dGetWorkspaceSize(const aclTensor *self, const 
     const aclTensor *resizeNearestOut = nullptr;
 
     if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+        if (IsRegBase()) {
             resizeNearestOut =
                 l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, uniqueExecutor.get());
         } else {

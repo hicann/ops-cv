@@ -25,6 +25,7 @@
 #include "upsample_nearest_exact2d.h"
 #include "aclnn_upsample_nearest_exact2d.h"
 #include "image/resize_nearest_neighbor_v2/op_host/op_api/resize_nearest_neighbor_v2.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -92,7 +93,7 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
 
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input ("
+            "Input and output sizes should greater than 0, but got input ("
             "H: %ld, W: %ld) output (H: %ld, W: %ld)",
             inputH,
             inputW,
@@ -150,8 +151,7 @@ static const aclTensor *upsampleNearestExact2dCompute(const aclTensor *selfConti
 {
     float scalesH = (*scales)[DIM_ZERO];
     float scalesW = (*scales)[DIM_ONE];
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc == op::SocVersion::ASCEND910_95) {
+    if (IsRegBase()) {
         auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT32));
         return l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, true, outContiguous, executor);
     } else {
@@ -220,8 +220,7 @@ aclnnStatus aclnnUpsampleNearestExact2dGetWorkspaceSize(const aclTensor *self, c
 
     float realScalesH = scalesH > 0 ? static_cast<float>(scalesH) : 0;
     float realScalesW = scalesW > 0 ? static_cast<float>(scalesW) : 0;
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc != op::SocVersion::ASCEND910_95) {
+    if (!IsRegBase()) {
         // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
         realScalesH = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
         realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;

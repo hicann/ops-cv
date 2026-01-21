@@ -77,6 +77,7 @@ constexpr float MAX_SUPPORT_ZOOM_SCALE_REV = 0.00125f;
 constexpr float support = 1.0;
 constexpr int64_t max_interp_size = 2;
 constexpr int64_t max_interp_size_10 = 10;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleLinear1dTiling {
 public:
@@ -605,6 +606,7 @@ static ge::graphStatus tiling4UpsampleLinear1dTiling(gert::TilingContext *contex
 static ge::graphStatus tiling4UpsampleBilinear2dTiling(gert::TilingContext *context)
 {
     UpsampleLinear1dTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling(MODE_BILINEAR);
 }
 

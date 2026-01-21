@@ -24,6 +24,7 @@
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "opdev/platform.h"
+#include "common/aclnn_check.h"
 
 #include "image/resize_nearest_neighbor_v2_grad/op_host/op_api/resize_nearest_neighbor_v2_grad.h"
 #include "image/upsample_nearest_exact2d_grad/op_host/op_api/upsample_nearest_exact2d_grad.h"
@@ -81,7 +82,7 @@ bool CheckInputElements(const aclTensor *gradOut, const aclIntArray *outputSize,
 
     OP_CHECK(inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (H: %ld,"
+            "Input and output sizes should greater than 0, but got input (H: %ld,"
             " W: %ld) output (H: %ld, W: %ld)",
             inputH,
             inputW,
@@ -106,9 +107,8 @@ bool CheckInputElements(const aclTensor *gradOut, const aclIntArray *outputSize,
 
 static const std::initializer_list<DataType>& GetDtypeSupportList()
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93 ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
         return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
     } else {
         return ASCEND910_DTYPE_DTYPE_SUPPORT_LIST;
@@ -166,8 +166,8 @@ static aclnnStatus CheckParams(
 static bool isAiCoreSupport(
     const aclTensor* gradOutContiguous, const aclIntArray* inputSize, double scalesH, double scalesW)
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND910B &&
-        GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND910_93) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch != NpuArch::DAV_2201) {
         return false;
     }
     if (scalesH <= 0 || scalesW <= 0) {
@@ -228,7 +228,7 @@ aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
     CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const aclTensor* resizeNearestGradOutCast = nullptr;
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    if (IsRegBase()) {
         bool alignCorners = false;
         bool halfPixelCenters = false;
         vector<float> scalesList{};

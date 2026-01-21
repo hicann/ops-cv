@@ -50,6 +50,8 @@ constexpr int8_t W_INDEX = 3;
 constexpr int32_t DOUBLE_VALUE = 2;
 constexpr int32_t RESERVED_VALUE = 4;
 constexpr int32_t EIGHT_VALUE = 8;
+constexpr uint8_t SCHEDULE_MODE = 1;
+
 class UpsampleBilinear2dGradTiling {
 public:
     explicit UpsampleBilinear2dGradTiling(gert::TilingContext *context) : tilingContext(context){};
@@ -562,6 +564,7 @@ void UpsampleBilinear2dGradTiling::FillTilingData()
 static ge::graphStatus tiling4UpsampleBilinear2dGradTiling(gert::TilingContext *context)
 {
     UpsampleBilinear2dGradTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 

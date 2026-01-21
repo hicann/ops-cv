@@ -25,6 +25,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "common/aclnn_check.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_upsample_nearest_1d_backward.h"
 
@@ -103,7 +104,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0,"
-            "bug got input (L: %ld) output (L: %ld)",
+            "but got input (L: %ld) output (L: %ld)",
             inputL, outL),
         return false);
 
@@ -228,8 +229,8 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
         return ACLNN_SUCCESS;
     }
     const aclTensor* out3d = nullptr;
-    bool isExactSupport = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-                          GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93;
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    bool isExactSupport = curArch == NpuArch::DAV_2201;
     const int64_t inputL = (*inputSize)[DIM_TWO];
     const int64_t gradOutL = gradOut->GetViewShape().GetDim(DIM_TWO);
     bool check_scales = scales > FLOAT_ZERO ? static_cast<int64_t>(inputL * scales) == gradOutL : true;
@@ -265,12 +266,13 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
         bool ifAiCpu =
             ((gradOut->GetDataType() != op::DataType::DT_FLOAT || scales > FLOAT_ZERO) &&
              gradOut->GetDataType() != op::DataType::DT_BF16 && check_scales);
-        bool ifAiCpu910_95 =
+        bool ifAiCpu950 =
             (gradOut->GetDataType() != op::DataType::DT_FLOAT && gradOut->GetDataType() != op::DataType::DT_FLOAT16 &&
              gradOut->GetDataType() != op::DataType::DT_BF16);
         // l0算子要求传入4维tensor
-        bool is910_95 = (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95);
-        auto gradOutContiguous = View3dAs4d(gradOut, is910_95 ? ifAiCpu910_95 : ifAiCpu, uniqueExecutor.get());
+        curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+        bool is950 = IsRegBase(curArch);
+        auto gradOutContiguous = View3dAs4d(gradOut, is950 ? ifAiCpu950 : ifAiCpu, uniqueExecutor.get());
         CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         const int64_t originSizeList[] = {(*inputSize)[DIM_ZERO], (*inputSize)[DIM_ONE], 1, (*inputSize)[DIM_TWO]};
@@ -278,8 +280,8 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
         CHECK_RET(originSizeArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         const aclTensor* resizeNearestOut = nullptr;
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
-            if (ifAiCpu910_95) {
+        if (IsRegBase(curArch)) {
+            if (ifAiCpu950) {
                 auto originSizeTensor = uniqueExecutor.get()->ConvertToTensor(originSizeArray, op::DataType::DT_INT64);
                 CHECK_RET(originSizeTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
                 resizeNearestOut = upsampleNearest1dBackwardAiCpuCompute(
@@ -295,7 +297,7 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
             }
             CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
             // 转回3维tensor
-            out3d = View4dAs3d(resizeNearestOut, out, ifAiCpu910_95, uniqueExecutor.get());
+            out3d = View4dAs3d(resizeNearestOut, out, ifAiCpu950, uniqueExecutor.get());
             auto viewCopyResult = l0op::ViewCopy(out3d, out, uniqueExecutor.get());
             CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
 

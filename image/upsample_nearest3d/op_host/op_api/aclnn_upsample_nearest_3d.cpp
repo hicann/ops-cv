@@ -23,6 +23,7 @@
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "common/level2_base.h"
+#include "common/aclnn_check.h"
 #include "aclnn_upsample_nearest_3d.h"
 
 using namespace op;
@@ -33,7 +34,7 @@ extern "C" {
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_95 = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE,
     op::DataType::DT_BF16, op::DataType::DT_UINT8};
 static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {
@@ -49,11 +50,11 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
 
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc == op::SocVersion::ASCEND310P) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
-    } else if (curSoc == SocVersion::ASCEND910_95) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_95, return false);
+    } else if (IsRegBase(curArch)) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_REGBASE, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     }
@@ -109,7 +110,7 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
 
     OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (D: %ld,"
+            "Input and output sizes should greater than 0, but got input (D: %ld,"
             " H: %ld, W: %ld) output (D: %ld, H: %ld, W: %ld)",
             inputD,
             inputH,
@@ -189,7 +190,6 @@ aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor *self, const 
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
-
     // 固定写法，将输入self转换成连续的tensor
     auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);

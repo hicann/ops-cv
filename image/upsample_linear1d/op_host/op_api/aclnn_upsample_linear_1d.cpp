@@ -26,6 +26,7 @@
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -36,7 +37,7 @@ extern "C" {
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_ASCEND910_95 = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
 static constexpr size_t DIM_LIMIT = 3;
@@ -63,8 +64,8 @@ static bool CheckNotNull(const aclTensor *self, const aclTensor *out, const aclI
 
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_ASCEND910_95, return false);
+    if (IsRegBase()) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_REGBASE, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     }
@@ -98,7 +99,7 @@ static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclInt
     OP_CHECK(outL > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0,"
-            "bug got output (L: %ld)",
+            "but got output (L: %ld)",
             outL),
         return false);
 
@@ -115,7 +116,7 @@ static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclInt
         }
     }
     // 在scale合法的情况下，判断scale和outputSize是否冲突
-    if (scale >= 0 && op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_95) {
+    if (scale >= 0 && (!(IsRegBase()))) {
         const double odim = static_cast<double>(self->GetViewShape().GetDim(DIM_TWO)) * scale;
         if (static_cast<int64_t>(odim) != outL) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
@@ -225,7 +226,7 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
     }
 
     int64_t outL = (*outputSize)[DIM_ZERO];
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
+    if (IsRegBase()) {
         const aclTensor *resizeOut = nullptr;
         auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
         CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -251,12 +252,11 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
         const float scalesList[] = {static_cast<float>(scalesRes)};
         const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, 1);
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-        auto socVer = GetCurrentPlatformInfo().GetSocVersion();
+        auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
         auto dataType = selfRefContiguous->GetDataType();
         const aclTensor *ResizeDOut;
 
-        if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+        if ((curArch == NpuArch::DAV_2201) &&
             CheckLinear1dScales(self, out, outputSize, scale, alignCorners)) {
             // 调用UpsampleLinear1d算子kernel
             ResizeDOut =

@@ -75,7 +75,6 @@ private:
     TBuf<TPosition::VECCALC> UbBuf;
 
     // 系数矩阵下标队列
-
     TBuf<QuePosition::VECCALC> centerQueue_w;
     TBuf<QuePosition::VECCALC> xMinQueue_w;
     TQue<QuePosition::VECOUT, BUFFER_NUM> radioQueue_w;

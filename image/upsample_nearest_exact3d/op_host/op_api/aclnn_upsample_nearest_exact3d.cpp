@@ -60,8 +60,8 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
 
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc == op::SocVersion::ASCEND310P) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
