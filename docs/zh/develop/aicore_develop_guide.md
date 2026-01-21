@@ -65,7 +65,7 @@ ${op_name}                              # 替换为实际算子名的小写下�
 └── CMakeLists.txt                      # 算子cmakelist入口
 ```
 
-若`${op_class}`为全新算子分类需额外在`CMakeLists.txt`中添加`add_subdirectory(${op_class})`，否则无法正常编译。
+若```${op_class}```为全新算子分类需额外在`CMakeLists.txt`中添加`add_subdirectory(${op_class})`，否则无法正常编译。
 
 ```
 if(ENABLE_EXPERIMENTAL)
@@ -80,7 +80,7 @@ endif()
 ```
 
 ## 算子定义
-算子定义需要完成两个交付件：`README.md` `${op_name}_def.cpp`
+算子定义需要完成两个交付件：`README.md` ```${op_name}_def.cpp```
 
 **交付件1：README.md**
 
@@ -103,7 +103,7 @@ endif()
 
 ### 代码实现
 
-Tiling一共需要三个交付件：`${op_name}_tiling.cpp` `${op_name}_tiling_key.h` `${op_name}_tiling_data.h`
+Tiling一共需要三个交付件：```${op_name}_tiling.cpp``` ```${op_name}_tiling_key.h``` ```${op_name}_tiling_data.h```
 
 **交付件1：${op_name}_tiling.cpp**
 
@@ -230,7 +230,7 @@ graph LR
 
 ### 代码实现
 
-Kernel一共需要两个交付件：`${op_name}.cpp` `${op_name}.h`
+Kernel一共需要两个交付件：```${op_name}.cpp``` ```${op_name}.h```
 
 **交付件1：${op_name}.cpp**
 
@@ -389,11 +389,11 @@ __aicore__ inline void AddExample<T>::Process()
     # 安装run包
     ./build_out/cann-ops-cv-${vendor_name}_linux-${arch}.run
     ```
-    自定义算子包安装在`${ASCEND_HOME_PATH}/opp/vendors`路径中，`${ASCEND_HOME_PATH}`表示CANN软件安装目录，可提前在环境变量中配置。
+    自定义算子包安装在```${ASCEND_HOME_PATH}/opp/vendors```路径中，```${ASCEND_HOME_PATH}```表示CANN软件安装目录，可提前在环境变量中配置。
 
 4. **（可选）卸载自定义算子包**
 
-   自定义算子包安装后在`${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts`目录下会生成`uninstall.sh`脚本，通过执行该脚本可卸载自定义算子包，具体命令如下：
+   自定义算子包安装后在```${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts```目录下会生成`uninstall.sh`脚本，通过执行该脚本可卸载自定义算子包，具体命令如下：
     ```bash
     bash ${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts/uninstall.sh
     ```
