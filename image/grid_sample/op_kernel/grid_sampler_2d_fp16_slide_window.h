@@ -272,8 +272,8 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::ClipCoordinates(LocalTen
     Adds(inputYIntTmpUb, iYIntUb, 0, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    Cast(iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
-    Cast(iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(iXFpUb, iXIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(iYFpUb, iYIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
     LocalTensor<uint8_t> maskXUb = wMaskUb;
@@ -331,8 +331,8 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::ClipCoordinatesXInLocal(
     Adds(inputYIntTmpUb, iYIntUb, 0, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    Cast(iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
-    Cast(iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(iXFpUb, iXIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(iYFpUb, iYIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
     LocalTensor<uint8_t> maskXUb = wMaskUb;
@@ -665,7 +665,11 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::MTE2ForNCHW(int32_t nIdx
         for (int cIter = 0; cIter < channelAlign; cIter++) {
             int32_t xLocalOffset = i * channelAlign + cIter;
             if (cIter >= calCElems) {
-                xLocal.SetValue(xLocalOffset, (half)0.0);
+                if constexpr (IsSameType<T, bfloat16_t>::value) {
+                    xLocal.SetValue(xLocalOffset, ToBfloat16(0.0));
+                } else {
+                    xLocal.SetValue(xLocalOffset, static_cast<T>(0.0));
+                }
                 continue;
             }
 
@@ -741,8 +745,8 @@ template <typename T>
 __aicore__ inline void GridSampler2DFP16SlideWindow<T>::OutTranspose(
     int32_t channelAlign, LocalTensor<T> xLocal, LocalTensor<T> outValueUb)
 {
-    LocalTensor<half> dstList[16];
-    LocalTensor<half> srcList[16];
+    LocalTensor<T> dstList[16];
+    LocalTensor<T> srcList[16];
 
     event_t eventVS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
     event_t eventSV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
@@ -765,7 +769,7 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::OutTranspose(
 
         SetFlag<HardEvent::S_V>(eventSV);
         WaitFlag<HardEvent::S_V>(eventSV);
-        TransDataTo5HD<half>(dstList, srcList, transDataParams);
+        TransDataTo5HD<T>(dstList, srcList, transDataParams);
         SetFlag<HardEvent::V_S>(eventVS);
         WaitFlag<HardEvent::V_S>(eventVS);
     } else if (channelAlign <= 64) {
@@ -783,7 +787,7 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::OutTranspose(
 
             SetFlag<HardEvent::S_V>(eventSV);
             WaitFlag<HardEvent::S_V>(eventSV);
-            TransDataTo5HD<half>(dstList, srcList, transDataParams);
+            TransDataTo5HD<T>(dstList, srcList, transDataParams);
             SetFlag<HardEvent::V_S>(eventVS);
             WaitFlag<HardEvent::V_S>(eventVS);
         }
@@ -905,7 +909,7 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinear(int32_t nI
             SetFlag<HardEvent::MTE2_V>(eventMte2V);
             WaitFlag<HardEvent::MTE2_V>(eventMte2V);
 
-            LocalTensor<half> outValueFp16Ub = outValueFp16Buf_.Get<half>();
+            LocalTensor<T> outValueFp16Ub = outValueFp16Buf_.Get<T>();
             OutTranspose(channelAlign, xLocal, outValueFp16Ub);
             PipeBarrier<PIPE_V>();
             Cast(outValueUb, outValueFp16Ub, RoundMode::CAST_NONE, calCElems * TRANSE_REP_STRIDE);
@@ -985,7 +989,7 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinearXInLocal(in
 
     Muls(coordinatesUb, coordinatesUb, (int32_t)(sizeof(T) * inputC_), calHWElems);
     PipeBarrier<PIPE_V>();
-    LocalTensor<half> outValueFp16Ub = outValueFp16Buf_.Get<half>();
+    LocalTensor<T> outValueFp16Ub = outValueFp16Buf_.Get<T>();
 
     for (int32_t loop_c = 0; loop_c < inputC_; loop_c++) {
         LocalTensor<uint32_t> coordUb = coordinatesUb.ReinterpretCast<uint32_t>();
@@ -1000,12 +1004,21 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinearXInLocal(in
 
     for (size_t i = 0; i < inputC_; i++) {
         auto ubOffset = i * CAL_H_W_BLOCK;
-        Select(outValueFp16Ub[ubOffset],
-            weightMaskUbTmp,
-            outValueFp16Ub[ubOffset],
-            (half)0.0,
-            SELMODE::VSEL_TENSOR_SCALAR_MODE,
-            CAL_H_W_BLOCK);
+        if constexpr (IsSameType<T, bfloat16_t>::value) {
+            Select(outValueFp16Ub[ubOffset],
+                weightMaskUbTmp,
+                outValueFp16Ub[ubOffset],
+                ToBfloat16(0.0),
+                SELMODE::VSEL_TENSOR_SCALAR_MODE,
+                CAL_H_W_BLOCK);
+        } else {
+            Select(outValueFp16Ub[ubOffset],
+                weightMaskUbTmp,
+                outValueFp16Ub[ubOffset],
+                (half)0.0,
+                SELMODE::VSEL_TENSOR_SCALAR_MODE,
+                CAL_H_W_BLOCK);
+        }
     }
     PipeBarrier<PIPE_V>();
 
@@ -1059,7 +1072,7 @@ template <typename T>
 __aicore__ inline void GridSampler2DFP16SlideWindow<T>::CopyOut(int32_t nIdx, int32_t hwIdx, int32_t calHWElems)
 {
     LocalTensor<float> outLocal = xBuf_.AllocTensor<float>();
-    LocalTensor<T> outLocalFP16 = outValueFp16Buf_.AllocTensor<half>();
+    LocalTensor<T> outLocalFP16 = outValueFp16Buf_.AllocTensor<T>();
     // 每次处理16*512个数据
     int64_t loopTime = Ceil(inputC_, 16);
     int64_t lastC = inputC_ - 16 * (loopTime - 1);
@@ -1075,7 +1088,7 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::CopyOut(int32_t nIdx, in
 
         SetFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
         WaitFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
-        Cast(outLocalFP16, outLocal, RoundMode::CAST_NONE, dataCount);
+        Cast(outLocalFP16, outLocal, RoundMode::CAST_RINT, dataCount);
 
         SetFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
         WaitFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
@@ -1100,7 +1113,7 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::CopyOut(int32_t nIdx, in
 
     SetFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
     WaitFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
-    Cast(outLocalFP16, outLocal, RoundMode::CAST_NONE, dataCount);
+    Cast(outLocalFP16, outLocal, RoundMode::CAST_RINT, dataCount);
 
     SetFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
     WaitFlag<HardEvent::V_MTE3>(eventIdV_MTE3);

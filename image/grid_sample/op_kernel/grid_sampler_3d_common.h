@@ -301,9 +301,9 @@ __aicore__ inline void ClipCoordinates(InputTensorStruct inputTensorStruct, Loca
     Adds(inputZIntTmpUb, inputTensorStruct.iZIntUb, 0, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    Cast(inputTensorStruct.iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
-    Cast(inputTensorStruct.iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
-    Cast(inputTensorStruct.iZFpUb, inputZIntTmpUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(inputTensorStruct.iXFpUb, inputTensorStruct.iXIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(inputTensorStruct.iYFpUb, inputTensorStruct.iYIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(inputTensorStruct.iZFpUb, inputTensorStruct.iZIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     LocalTensor<uint8_t> maskUb = indexBuffer.maskBuf_.Get<uint8_t>(MASK_UB_SIZE * NUM_5);
     LocalTensor<uint8_t> maskXUb = wMaskUb;

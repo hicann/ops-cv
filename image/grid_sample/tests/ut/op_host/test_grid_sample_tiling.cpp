@@ -504,7 +504,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_bilinear_te)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(GridSampleTiling, grid_sample_tiling_david_test_float32_1)
+TEST_F(GridSampleTiling, grid_sample_tiling_david_test_1)
 {
     GridSampleCompileInfo compileInfo = {56, 196608, true};
     gert::TilingContextPara tilingContextPara("GridSample",
@@ -518,7 +518,26 @@ TEST_F(GridSampleTiling, grid_sample_tiling_david_test_float32_1)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000;
-    string expectTilingData = "64 2 1 200 200 2 2 0 0 1 0 1 1 ";
+    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 0 1 0 1 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(GridSampleTiling, grid_sample_tiling_david_test_2)
+{
+    GridSampleCompileInfo compileInfo = {56, 196608, true};
+    gert::TilingContextPara tilingContextPara("GridSample",
+                                                {{{{2, 1, 200, 200, 200}, {2, 1, 200, 200, 200}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
+                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("bilinear")),
+                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+                                                &compileInfo);
+    uint64_t expectTilingKey = 2000;
+    string expectTilingData = "64 2 1 200 200 200 2 2 2 0 0 1 0 1 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

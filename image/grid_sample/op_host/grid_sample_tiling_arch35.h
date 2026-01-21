@@ -49,7 +49,7 @@ protected:
     ge::graphStatus PostTiling() override;
 
 private:
-    GridSampler2dTilingDataSimt tilingData;
+    GridSampleTilingData tilingData;
 };
 
 }

@@ -355,8 +355,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::ClipCoordinates(
     Adds(inputZIntTmpUb, iZIntUb, 0, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     Cast(iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
-    Cast(iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
-    Cast(iZFpUb, inputZIntTmpUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(iYFpUb, iYIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(iZFpUb, iZIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 5);

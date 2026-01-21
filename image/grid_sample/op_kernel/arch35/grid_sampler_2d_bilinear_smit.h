@@ -15,6 +15,7 @@
 #ifndef GRID_SAMPLER_2D_H
 #define GRID_SAMPLER_2D_H
 #include "kernel_operator.h"
+#include "grid_sampler_bilinear_smit_common.h"
 namespace GridSample {
 
 using namespace AscendC;
@@ -22,16 +23,8 @@ using namespace AscendC;
 const uint32_t WIDTH_OFFSET_INDEX = 0;
 const uint32_t HEIGHT_OFFSET_INDEX = 1;
 const uint32_t POINT_WEIGHT_OFFSET_INDEX = 2;
-const uint32_t VF_MAX_THREAD_NUM = 512;
+const uint32_t VF_MAX_THREAD_NUM = 1024;
 const uint32_t OFFSET_DIM_VALUE = 3;
-
-const uint32_t REFLECT_RATIO_95 = 2;
-const uint32_t PADDING_MODE_ZEROS_95 = 0;
-const uint32_t PADDING_MODE_BORDER_95 = 1;
-const uint32_t PADDING_MODE_REFLECTION_95 = 2;
-const uint32_t INT_MAX = 2147483647;
-const uint32_t INT_MIN = -2147483648;
-const float DEFAULT_FAULT_VALUE = -100.0f;
 
 template <typename T>
 class GridSampler2dBilinearSimt {
@@ -40,7 +33,7 @@ public:
     {}
     __aicore__ inline void Init(
         GM_ADDR x, GM_ADDR grid, GM_ADDR y, GM_ADDR workspace,
-        const GridSampler2dTilingDataSimt* __restrict tilingData);
+        const GridSampleTilingData* __restrict tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -48,25 +41,18 @@ private:
     GlobalTensor<T> gridGm_;
     GlobalTensor<T> yGm_;
     uint32_t blockId_ = GetBlockIdx();
-    const GridSampler2dTilingDataSimt* tiling_;
+    const GridSampleTilingData* tiling_;
 };
 
 template <typename T>
 __aicore__ inline void GridSampler2dBilinearSimt<T>::Init(
-    GM_ADDR x, GM_ADDR grid, GM_ADDR y, GM_ADDR workspace, const GridSampler2dTilingDataSimt* __restrict tilingData)
+    GM_ADDR x, GM_ADDR grid, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData* __restrict tilingData)
 {
     inputImgGm_.SetGlobalBuffer((__gm__ T*)(x));
     gridGm_.SetGlobalBuffer((__gm__ T*)(grid));
     yGm_.SetGlobalBuffer((__gm__ T*)(y));
 
     tiling_ = tilingData;
-}
-
-__aicore__ __attribute__((always_inline)) inline int32_t GetFloorValue(float x)
-{
-    float negativeValue = static_cast<float>(0.0);
-    float floorFactor = static_cast<float>(-1);
-    return (x >= negativeValue ? static_cast<int32_t>(x) : static_cast<int32_t>(floorFactor + x));
 }
 
 template <typename T>
@@ -85,11 +71,11 @@ __aicore__ __attribute__((always_inline)) inline T ComputeBilinear(
     __gm__ T* inputImgGmAddr, float pointHeight, float pointWidth, uint32_t channelIndex, uint32_t inputDataBatchOffset,
     uint32_t inH, uint32_t inW, uint32_t inC)
 {
-    int32_t heightFloor = GetFloorValue(pointHeight);
-    int32_t widthFloor = GetFloorValue(pointWidth);
+    float heightFloor = Simt::Floor(pointHeight);
+    float widthFloor = Simt::Floor(pointWidth);
 
-    float heightFloorDelta = pointHeight - static_cast<float>(heightFloor);
-    float widthFloorDelta = pointWidth - static_cast<float>(widthFloor);
+    float heightFloorDelta = pointHeight - heightFloor;
+    float widthFloorDelta = pointWidth - widthFloor;
 
     // pointLeftUp
     float inputValue = static_cast<float>(GetInputPointValue(
@@ -119,61 +105,11 @@ __aicore__ __attribute__((always_inline)) inline T ComputeBilinear(
     return static_cast<T>(bilinearValue);
 }
 
-__aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coord, int64_t size)
-{
-    coord = coord > (size - 1) ? (float)size - 1 : coord;
-    coord = coord < 0 ? 0 : coord;
-    return coord;
-}
-
-__aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow, int64_t twiceHigh)
-{
-    if (twiceLow == twiceHigh) {
-        return 0;
-    }
-    float min = static_cast<float>(twiceLow) / 2;
-    float span = static_cast<float>(twiceHigh - twiceLow) / 2;
-    coord = Simt::Abs(coord - min);
-    float extra = Simt::Mod(coord, span);
-    int32_t flips = static_cast<int32_t>(Simt::Floor(coord / span));
-    if (flips % REFLECT_RATIO_95 == 0) {
-        return extra + min;
-    } else {
-        return span - extra + min;
-    }
-    return coord;
-}
-
-__aicore__ __attribute__((always_inline)) inline float safeDowngradeToIntRange(float coord)
-{
-    if (!Simt::IsFinite(coord)) {
-        return DEFAULT_FAULT_VALUE;
-    }
-    return coord;
-}
-
-__aicore__ __attribute__((always_inline)) inline float Clip(
-    float coord, int64_t size, int64_t paddingMode, int64_t alignCorners)
-{
-    if (paddingMode == PADDING_MODE_BORDER_95) {
-        coord = ClipCoordinates(coord, size);
-    } else if (paddingMode == PADDING_MODE_REFLECTION_95) {
-        if (alignCorners) {
-            coord = reflectCoordinates(coord, 0, REFLECT_RATIO_95 * (size - 1));
-        } else {
-            coord = reflectCoordinates(coord, -1, REFLECT_RATIO_95 * size - 1);
-        }
-        coord = ClipCoordinates(coord, size);
-    }
-    safeDowngradeToIntRange(coord);
-    return coord;
-}
-
 // LAUNCH_BOUND
 template <typename T>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__ void ComputeGridSampler2d(
-    __gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int64_t blockNum, int64_t intN, int64_t inC,
-    int64_t inH, int64_t inW, int64_t outH, int64_t outW, int64_t paddingMode, int64_t alignCorners,
+    __gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int32_t blockNum, int32_t intN, int32_t inC,
+    int32_t inH, int32_t inW, int32_t outH, int32_t outW, int32_t paddingMode, int32_t alignCorners,
     uint32_t outImgSize, uint32_t shiftB_, uint32_t mB_, uint32_t shiftH_, uint32_t mH_, uint32_t shiftW_, uint32_t mW_,
     uint32_t blockId_)
 {

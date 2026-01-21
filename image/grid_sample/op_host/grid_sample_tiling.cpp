@@ -82,11 +82,21 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
             return ge::GRAPH_FAILED);
     }
 
-    OP_CHECK_IF((dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
+    auto compileInfo = reinterpret_cast<const GridSampleCompileInfo *>(context_->GetCompileInfo());
+    OP_CHECK_NULL_WITH_CONTEXT(context_, compileInfo);
+    isDavid = compileInfo->isDavid;
+
+    OP_CHECK_IF((!isDavid && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
         OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32 or FLOAT16"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF((dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
+    OP_CHECK_IF((!isDavid && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
         OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32 or FLOAT16"),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((isDavid && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
+        OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((isDavid && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 && gridDtype != ge::DT_BF16),
+        OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF((dimension == 1 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
         OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
@@ -354,7 +364,7 @@ static ge::graphStatus TilingPrepare4GridSample(gert::TilingParseContext *contex
     OP_LOGD(context->GetNodeName(), "TilingPrepare4GridSample end.");
     return ge::GRAPH_SUCCESS;
 }
-REGISTER_TILING_TEMPLATE("GridSample", GridSampleTiling, 1000);
+REGISTER_OPS_TILING_TEMPLATE(GridSample, GridSampleTiling, 1000);
 
 IMPL_OP_OPTILING(GridSample).Tiling(Tiling4GridSample).TilingParse<GridSampleCompileInfo>(TilingPrepare4GridSample);
 }  // namespace optiling

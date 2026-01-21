@@ -400,8 +400,8 @@ __aicore__ inline void GridSampler2DSlideWindow<T>::ClipXYCoordinates(
     Adds(inputYIntTmpUb, inputTensorStruct2D.iYIntUb, 0, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    Cast(inputTensorStruct2D.iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
-    Cast(inputTensorStruct2D.iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(inputTensorStruct2D.iXFpUb, inputTensorStruct2D.iXIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(inputTensorStruct2D.iYFpUb, inputTensorStruct2D.iYIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
     LocalTensor<uint8_t> maskXUb = wMaskUb;

@@ -14,6 +14,7 @@
  */
 
 #include "arch35/grid_sampler_2d_bilinear_smit.h"
+#include "arch35/grid_sampler_3d_bilinear_smit.h"
 #include "grid_sampler_2d.h"
 #include "grid_sampler_2d_bicubic.h"
 #include "grid_sampler_2d_nearest.h"
@@ -39,156 +40,254 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
     TPipe pipe;
 
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
-    if (TILING_KEY_IS(1000)) {
-        GET_TILING_DATA_WITH_STRUCT(GridSampler2dTilingDataSimt, tiling_data_in, tiling);
-        const GridSampler2dTilingDataSimt* __restrict tilingData = &tiling_data_in;
+    TILING_KEY_IS(1000);
+    TILING_KEY_IS(2000);
+    TILING_KEY_IS(1000220);
+    TILING_KEY_IS(1000221);
+    TILING_KEY_IS(1001221);
+    TILING_KEY_IS(1000211);
+    TILING_KEY_IS(1001211);
+    TILING_KEY_IS(1000231);
+    TILING_KEY_IS(1001231);
+    TILING_KEY_IS(1000222);
+    TILING_KEY_IS(1001222);
+    TILING_KEY_IS(1000212);
+    TILING_KEY_IS(1001212);
+    TILING_KEY_IS(1000232);
+    TILING_KEY_IS(1001232);
+    TILING_KEY_IS(1001220);
+    TILING_KEY_IS(1000210);
+    TILING_KEY_IS(1001210);
+    TILING_KEY_IS(1000230);
+    TILING_KEY_IS(1001230);
+    TILING_KEY_IS(2000220);
+    TILING_KEY_IS(2001220);
+    TILING_KEY_IS(2000210);
+    TILING_KEY_IS(2001210);
+    TILING_KEY_IS(2000230);
+    TILING_KEY_IS(2001230);
+    TILING_KEY_IS(2100220);
+    TILING_KEY_IS(2101220);
+    TILING_KEY_IS(2100210);
+    TILING_KEY_IS(2101210);
+    TILING_KEY_IS(2100230);
+    TILING_KEY_IS(2101230);
+    TILING_KEY_IS(2200220);
+    TILING_KEY_IS(2201220);
+    TILING_KEY_IS(2200210);
+    TILING_KEY_IS(2201210);
+    TILING_KEY_IS(2200230);
+    TILING_KEY_IS(2201230);
+    TILING_KEY_IS(1010320);
+    TILING_KEY_IS(1010310);
+    TILING_KEY_IS(1010330);
+    TILING_KEY_IS(1011330);
+    TILING_KEY_IS(1010321);
+    TILING_KEY_IS(1011321);
+    TILING_KEY_IS(1010311);
+    TILING_KEY_IS(1011311);
+    TILING_KEY_IS(1010331);
+    TILING_KEY_IS(1011331);
+    TILING_KEY_IS(1011320);
+    TILING_KEY_IS(1011310);
+    #if TILING_KEY_VAR == 1000
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSampler2dBilinearSimt<DTYPE_X> gridSampler2dKernel;
-        gridSampler2dKernel.Init(x, grid, y, workspace, tilingData, pipe);
+        gridSampler2dKernel.Init(x, grid, y, workspace, tilingData);
         gridSampler2dKernel.Process();
-    } else if (TILING_KEY_IS(1000220)) {
+    #elif TILING_KEY_VAR == 2000
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSampler3dBilinearSimt<DTYPE_X> gridSampler3dKernel;
+        gridSampler3dKernel.Init(x, grid, y, workspace, tilingData);
+        gridSampler3dKernel.Process();
+    #elif TILING_KEY_VAR == 1000220
         // 2D Bilinear fp32 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2D<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1000221) || TILING_KEY_IS(1001221)) {
+    #elif TILING_KEY_VAR == 1000221 || TILING_KEY_VAR == 1001221
         // 2D nearest fp32 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DNearest<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1000211) || TILING_KEY_IS(1001211)) {
+    #elif TILING_KEY_VAR == 1000211 || TILING_KEY_VAR == 1001211
         // 2D nearest fp16 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DNearest<half> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1000222) || TILING_KEY_IS(1001222)) {
+    #elif TILING_KEY_VAR == 1000231 || TILING_KEY_VAR == 1001231
+        // 2D nearest bf16 normal
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSample::GridSampler2DNearest<bfloat16_t> op;
+        op.Init(x, grid, y, userWS, tilingData, pipe);
+        op.Process();
+    #elif TILING_KEY_VAR == 1000222 || TILING_KEY_VAR == 1001222
         // 2D Bicubic fp32 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSamplerBicubic2D<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1000212) || TILING_KEY_IS(1001212)) {
+    #elif TILING_KEY_VAR == 1000212 || TILING_KEY_VAR == 1001212
         // 2D Bicubic fp16 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSamplerBicubic2D<half> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1001220)) {
+    #elif TILING_KEY_VAR == 1000232 || TILING_KEY_VAR == 1001232
+        // 2D Bicubic bf16 normal
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSample::GridSamplerBicubic2D<bfloat16_t> op;
+        op.Init(x, grid, y, userWS, tilingData, pipe);
+        op.Process();
+    #elif TILING_KEY_VAR == 1001220
         // 2D Bilinear fp32 slide window
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DSlideWindow<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1000210) || TILING_KEY_IS(1001210)) {
+    #elif TILING_KEY_VAR == 1000210 || TILING_KEY_VAR == 1001210
         // 2D Bilinear fp16 sliceWindow
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFP16SlideWindow<half> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(2000220) || TILING_KEY_IS(2001220)) {
+    #elif TILING_KEY_VAR == 1000230 || TILING_KEY_VAR == 1001230
+        // 2D Bilinear bf16 sliceWindow
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSample::GridSampler2DFP16SlideWindow<bfloat16_t> op;
+        op.Init(x, grid, y, userWS, tilingData, pipe);
+        op.Process();
+    #elif TILING_KEY_VAR == 2000220 || TILING_KEY_VAR == 2001220
         // 2D Bilinear fp32 fullLoad general
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFullLoad<float, 0> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(2000210) || TILING_KEY_IS(2001210)) {
+    #elif TILING_KEY_VAR == 2000210 || TILING_KEY_VAR == 2001210
         // 2D Bilinear fp16 fullLoad general
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFullLoad<half, 0> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(2100220) || TILING_KEY_IS(2101220)) {
+    #elif TILING_KEY_VAR == 2000230 || TILING_KEY_VAR == 2001230
+        // 2D Bilinear bf16 fullLoad general
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSample::GridSampler2DFullLoad<bfloat16_t, 0> op;
+        op.Init(x, grid, y, userWS, tilingData, pipe);
+        op.Process();
+    #elif TILING_KEY_VAR == 2100220 || TILING_KEY_VAR == 2101220
         // 2D Bilinear fp32 fullLoad C=1 and small input
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFullLoad<float, 1> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(2100210) || TILING_KEY_IS(2101210)) {
+    #elif TILING_KEY_VAR == 2100210 || TILING_KEY_VAR == 2101210
         // 2D Bilinear fp16 fullLoad C=1 and small input
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFullLoad<half, 1> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(2200220) || TILING_KEY_IS(2201220)) {
+    #elif TILING_KEY_VAR == 2100230 || TILING_KEY_VAR == 2101230
+        // 2D Bilinear bf16 fullLoad C=1 and small input
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSample::GridSampler2DFullLoad<bfloat16_t, 1> op;
+        op.Init(x, grid, y, userWS, tilingData, pipe);
+        op.Process();
+    #elif TILING_KEY_VAR == 2200220 || TILING_KEY_VAR == 2201220
         // 2D Bilinear fp32 fullLoad C=32 and large input
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFullLoad<float, 2> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(2200210) || TILING_KEY_IS(2201210)) {
+    #elif TILING_KEY_VAR == 2200210 || TILING_KEY_VAR == 2201210
         // 2D Bilinear fp16 fullLoad C=32 and large input
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler2DFullLoad<half, 2> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1010320)) {
+    #elif TILING_KEY_VAR == 2200230 || TILING_KEY_VAR == 2201230
+        // 2D Bilinear bf16 fullLoad C=32 and large input
+        GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
+        const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
+        GridSample::GridSampler2DFullLoad<bfloat16_t, 2> op;
+        op.Init(x, grid, y, userWS, tilingData, pipe);
+        op.Process();
+    #elif TILING_KEY_VAR == 1010320
         // 3D Bilinear fp32 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3D<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1010310)) {
+    #elif TILING_KEY_VAR == 1010310
         // 3D Bilinear fp16 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3D<half> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1010330) || TILING_KEY_IS(1011330)) {
+    #elif TILING_KEY_VAR == 1010330 || TILING_KEY_VAR == 1011330
         // 3D Bilinear bf16 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3D<bfloat16_t> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1010321) || TILING_KEY_IS(1011321)) {
+    #elif TILING_KEY_VAR == 1010321 || TILING_KEY_VAR == 1011321
         // 3D nearest fp32 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3DNearest<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1010311) || TILING_KEY_IS(1011311)) {
+    #elif TILING_KEY_VAR == 1010311 || TILING_KEY_VAR == 1011311
         // 3D nearest fp16 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3DNearest<half> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1010331) || TILING_KEY_IS(1011331)) {
+    #elif TILING_KEY_VAR == 1010331 || TILING_KEY_VAR == 1011331
         // 3D nearest bf16 normal
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3DNearest<bfloat16_t> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1011320)) {
+    #elif TILING_KEY_VAR == 1011320
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3DPortrait<float> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    } else if (TILING_KEY_IS(1011310)) {
+    #elif TILING_KEY_VAR == 1011310
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
         GridSample::GridSampler3DPortrait<half> op;
         op.Init(x, grid, y, userWS, tilingData, pipe);
         op.Process();
-    }
+    #endif
 }

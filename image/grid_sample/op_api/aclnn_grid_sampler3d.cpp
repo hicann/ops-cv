@@ -64,6 +64,21 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
     return true;
 }
 
+static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode)
+{
+    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
+        input->GetDataType() != op::DataType::DT_BF16) {
+        OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s",
+            op::ToString(input->GetDataType()).GetString());
+        return false;
+    }
+    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    if (is91095SocVersion && interpolationMode == INTERPOLATION_MODE_MIN_VALUE) {
+        return true;
+    }
+    return false;
+}
+
 static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
 {
     // 检查input、grid、out的数据类型是否一致
@@ -211,7 +226,7 @@ static aclnnStatus CheckParams(
 }
 
 namespace {
-static bool CheckAiCoreSuppport(const aclTensor *input)
+static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMode)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_BF16) {
@@ -222,6 +237,12 @@ static bool CheckAiCoreSuppport(const aclTensor *input)
     bool is910bSocVersion = (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
                              GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93);
     if (is910bSocVersion) {
+        return true;
+    }
+
+    // 95芯片非bilinear场景，走到老模板
+    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    if (is91095SocVersion && interpolationMode != INTERPOLATION_MODE_MIN_VALUE) {
         return true;
     }
     return false;
@@ -322,10 +343,11 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
     // 固定写法，将输入grid转换成连续的tensor
     auto gridContiguous = l0op::Contiguous(grid, uniqueExecutor.get());
     CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    bool supportAiCore = CheckAiCoreSuppport(input);
+    bool supportAiCore = CheckAiCoreSuppport(input, interpolationMode);
     bool supportAiCpu = CheckAiCpuSuppport(input);
     const op::Format inputFormat = input->GetStorageFormat();
     bool isSpecialcase = interpolationMode == 0 && CheckSpecialCase(input, grid);
+    bool isDavid = CheckDavidSuppport(input, interpolationMode);
     const aclTensor *gridSampler3DOut = nullptr;
     if (supportAiCore) {
         inputContiguous = CheckAndTranspose(inputContiguous, inputFormat, true, isSpecialcase, uniqueExecutor.get());
@@ -335,6 +357,14 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
             paddingMode,
             alignCorners,
             !isSpecialcase,
+            uniqueExecutor.get());
+    } else if (isDavid) {
+        gridSampler3DOut = l0op::GridSample3D(inputContiguous,
+            gridContiguous,
+            interpolationMode,
+            paddingMode,
+            alignCorners,
+            false,
             uniqueExecutor.get());
     } else if (supportAiCpu) {
         gridSampler3DOut = l0op::GridSampler3D(

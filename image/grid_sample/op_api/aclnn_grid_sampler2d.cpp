@@ -50,6 +50,8 @@ static const int64_t SUPPORT_CHANNEL_310P = 32;
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_95 = {
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
 
 static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
 {
@@ -59,15 +61,33 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode)
+{
+    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
+        input->GetDataType() != op::DataType::DT_BF16) {
+        OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s",
+            op::ToString(input->GetDataType()).GetString());
+        return false;
+    }
+    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    if (is91095SocVersion && interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE) {
+        return true;
+    }
+    return false;
+}
+
+static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out, int64_t interpolationMode)
 {
     // 检查input、grid、out的数据类型是否一致
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(out, input->GetDataType(), return false);
 
     // 检查input的数据类型是否在gridsampler2d算子的支持列表内
-    OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST, return false);
-
+    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST_95, return false);
+    } else {
+        OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST, return false);
+    }
     return true;
 }
 
@@ -150,7 +170,7 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckNotNull(input, grid, out), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查输入、输出的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
-    CHECK_RET(CheckDtypeValid(input, grid, out), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckDtypeValid(input, grid, out, interpolationMode), ACLNN_ERR_PARAM_INVALID);
 
     // 3. 检查属性参数是否在支持范围内
     CHECK_RET(CheckAttrValid(interpolationMode, paddingMode), ACLNN_ERR_PARAM_INVALID);
@@ -194,17 +214,17 @@ static bool Check310PFullLoadSuppport(const aclTensor *input, int64_t interpolat
     return false;
 }
 
-static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
-{
-    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
-    if (is91095SocVersion && interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE) {
-        return true;
-    }
-    return false;
-}
-
 static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
 {
+    // 95芯片非bilinear场景，走到老模板
+    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    if (is91095SocVersion && interpolationMode != INTERPOLATION_MODE_BILINEAR_VALUE) {
+        if (input->GetDataType() == op::DataType::DT_FLOAT || input->GetDataType() == op::DataType::DT_FLOAT16 
+            || input->GetDataType() == op::DataType::DT_BF16) {
+            return true;
+        }
+    }
+
     const auto &inputShape = input->GetViewShape();
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16) {
         OP_LOGD("Only support float16 or float32 on AICore, but got data type is %s",
@@ -283,7 +303,7 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
     CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const aclTensor *gridSampler2DOut = nullptr;
-    bool isDavid = CheckDavidSuppport(input, interpolationMode, paddingMode);
+    bool isDavid = CheckDavidSuppport(input, interpolationMode);
     if (CheckAiCoreSuppport(input, interpolationMode, paddingMode)) {
         // 310p支持fp16/bf16数据类型, Cast为fp32进行计算
         bool dtypeNeedCast = input->GetDataType() == op::DataType::DT_FLOAT16;

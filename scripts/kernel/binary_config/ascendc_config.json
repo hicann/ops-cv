@@ -70,7 +70,7 @@
     {"name":"DynamicRNNV2", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false},
     {"name":"MseLoss", "compute_units": ["ascend910_95"], "auto_sync" : false,"impl_mode" : ""},
     {"name":"ReflectionPad3dGrad", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
-    {"name":"GridSample", "compute_units": ["ascend310p", "ascend310b", "ascend910b", "ascend910_93", "kirinx90"], "auto_sync" : true, "compile_options": {"ascend310p":["-mllvm -cce-aicore-jump-expand=true"]}},
+    {"name":"GridSample", "compute_units": ["ascend310p", "ascend310b", "ascend910b", "ascend910_93", "kirinx90", "ascend910_95"], "auto_sync" : true, "compile_options": {"ascend310p":["-mllvm -cce-aicore-jump-expand=true"]}},
     {"name":"L1LossGrad", "compute_units": ["ascend910_95"], "auto_sync" : false, "compile_options": {"ascend910_95":["--cce-simd-vf-fusion=true", "--cce-simd-at-voss=true"]},"impl_mode" : ""},
     {"name":"BinaryCrossEntropy", "compute_units": ["ascend910_95"], "auto_sync" : false,"impl_mode" : ""},
     {"name":"AngleV2", "compute_units": ["ascend910", "ascend910b", "ascend910_93"], "auto_sync" : true},

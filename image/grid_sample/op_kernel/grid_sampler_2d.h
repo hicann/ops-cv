@@ -230,8 +230,8 @@ __aicore__ inline void GridSampler2D<T>::ClipCoordinates(LocalTensor<float> iXFp
     Adds(inputYIntTmpUb, iYIntUb, 0, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    Cast(iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
-    Cast(iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(iXFpUb, iXIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
+    Cast(iYFpUb, iYIntUb, RoundMode::CAST_NONE, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
     LocalTensor<uint8_t> maskXUb = wMaskUb;

@@ -59,24 +59,6 @@ END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(GridSample, GridSampleTilingData)
 
-
-BEGIN_TILING_DATA_DEF(GridSampler2dTilingDataSimt)
-TILING_DATA_FIELD_DEF(int64_t, coreNumVar);
-TILING_DATA_FIELD_DEF(int64_t, inN);
-TILING_DATA_FIELD_DEF(int64_t, inC);
-TILING_DATA_FIELD_DEF(int64_t, inH);
-TILING_DATA_FIELD_DEF(int64_t, inW);
-TILING_DATA_FIELD_DEF(int64_t, outH);
-TILING_DATA_FIELD_DEF(int64_t, outW);
-TILING_DATA_FIELD_DEF(int64_t, interpolationMode);
-TILING_DATA_FIELD_DEF(int64_t, paddingMode);
-TILING_DATA_FIELD_DEF(int64_t, alignCorners);
-TILING_DATA_FIELD_DEF(int64_t, channelLast);
-TILING_DATA_FIELD_DEF(int64_t, needCoreNum);
-TILING_DATA_FIELD_DEF(int64_t, blockNum);
-END_TILING_DATA_DEF;
-REGISTER_TILING_DATA_CLASS(GridSample_1000, GridSampler2dTilingDataSimt)
-
 enum class GridSampleDtypeKey : int32_t { FLOAT16 = 1, FLOAT32 = 2, BFLOAT16 = 3 };
 
 static const size_t DIM_NUM_4D = 4;

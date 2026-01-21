@@ -67,6 +67,8 @@ private:
     __aicore__ inline void MTE3ForC32(GlobalTensor<float> gm_, int32_t calCElems, int32_t loopElems,
         LocalTensor<float> weightUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
     __aicore__ inline void OutTranspose(int32_t channelAlign, LocalTensor<T> xLocal, LocalTensor<T> outValueUb);
+    __aicore__ inline void PointBilinearForHalf(int32_t calHWElems, LocalTensor<int32_t> coordinatesUb, LocalTensor<float> weightUb, 
+        LocalTensor<uint8_t> weightMaskUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
     __aicore__ inline void PointBilinear(int32_t nIdx, int32_t hwIdx, int32_t calHWElems,
         LocalTensor<int32_t> coordinatesUb, LocalTensor<float> weightUb, LocalTensor<uint8_t> weightMaskUb,
         LocalTensor<float> outValueUb, bool isAutomicAdd);
@@ -74,6 +76,8 @@ private:
     __aicore__ inline void PointBilinearC1(int32_t nIdx, int32_t hwIdx, int32_t calHWElems,
         LocalTensor<int32_t> coordinatesUb, LocalTensor<float> weightUb, LocalTensor<uint8_t> weightMaskUb,
         LocalTensor<float> addUb, LocalTensor<float> tmpLocal);
+    __aicore__ inline void PointBilinearC32ForHalf(int32_t calHWElems, LocalTensor<int32_t> coordinatesUb, LocalTensor<float> weightUb,
+        LocalTensor<uint8_t> weightMaskUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
     __aicore__ inline void PointBilinearC32(int32_t nIdx, int32_t hwIdx, int32_t calHWElems,
         LocalTensor<int32_t> coordinatesUb, LocalTensor<float> weightUb, LocalTensor<uint8_t> weightMaskUb,
         LocalTensor<float> outValueUb, bool isAutomicAdd);
@@ -285,8 +289,8 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::ClipCoordinates(L
     Adds(inputYIntTmpUb, iYIntUb, 0, calHWBlock);
     PipeBarrier<PIPE_V>();
 
-    Cast(iXFpUb, inputXIntTmpUb, RoundMode::CAST_NONE, calHWBlock);
-    Cast(iYFpUb, inputYIntTmpUb, RoundMode::CAST_NONE, calHWBlock);
+    Cast(iXFpUb, iXIntUb, RoundMode::CAST_NONE, calHWBlock);
+    Cast(iYFpUb, iYIntUb, RoundMode::CAST_NONE, calHWBlock);
     PipeBarrier<PIPE_V>();
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(maskUbSize * 3);
     LocalTensor<uint8_t> maskXUb = weightMaskUb;
@@ -724,7 +728,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::CopyOut(int32_t n
 
         SetFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
         WaitFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
-        Cast(outLocalFP16, outLocal, RoundMode::CAST_NONE, dataCount);
+        Cast(outLocalFP16, outLocal, RoundMode::CAST_RINT, dataCount);
 
         SetFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
         WaitFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
@@ -751,7 +755,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::CopyOut(int32_t n
 
     SetFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
     WaitFlag<HardEvent::MTE2_V>(eventIdMTE2_V);
-    Cast(outLocalFP16, outLocal, RoundMode::CAST_NONE, dataCount);
+    Cast(outLocalFP16, outLocal, RoundMode::CAST_RINT, dataCount);
 
     SetFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
     WaitFlag<HardEvent::V_MTE3>(eventIdV_MTE3);
@@ -791,7 +795,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::MTE3ForC32(Global
     // 搬出，outValueUb里面是CHW，搬出也是CHW
     DataCopyExtParams params;
     params.blockCount = calCElems;
-    if constexpr (IsSameType<T, half>::value) {
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
         params.blockLen = C32_H_W_BLOCK * sizeof(float);
         params.srcStride = 0;
         params.dstStride = (1024 - C32_H_W_BLOCK) * sizeof(float);
@@ -835,7 +839,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::OutTranspose(
         for (int32_t i = 0; i < 16; i++) {
             srcList[i] = xLocal[i * 32 / sizeof(T)];
         }
-        if constexpr (IsSameType<T, half>::value) {
+        if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
             for (int32_t i = 0; i < 16; i++) {
                 dstList[i] = outValueUb[i * TRANSE_REP_STRIDE];
             }
@@ -851,6 +855,51 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::OutTranspose(
         TransDataTo5HD<T>(dstList, srcList, transDataParams);
         SetFlag<HardEvent::V_S>(eventVS);
         WaitFlag<HardEvent::V_S>(eventVS);
+    }
+}
+
+template <typename T, int templateCNum>
+__aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearForHalf(int32_t calHWElems, LocalTensor<int32_t> coordinatesUb, 
+    LocalTensor<float> weightUb, LocalTensor<uint8_t> weightMaskUb, LocalTensor<float> outValueUb, bool isAutomicAdd)
+{
+    int32_t loop_elems = calHWElems;
+    int32_t ubOffset = 0;
+    LocalTensor<T> xLocal = xBuf_.Get<T>();
+    auto coorUb = coordinatesUb.ReinterpretCast<uint32_t>();
+    LocalTensor<T> outValueFP16Local = outValueFP16Buf_.Get<T>();
+    for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
+        int32_t calCElems = perLoopChannel_;
+        if (cIdx == channelLoop_ - 1) {
+            calCElems = lastLoopChannel_;
+        }
+        PipeBarrier<PIPE_V>();
+        event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
+        SetFlag<HardEvent::V_S>(eventIdVToS);
+        WaitFlag<HardEvent::V_S>(eventIdVToS);
+
+        for (int32_t c_idx = 0; c_idx < calCElems; c_idx++) {
+            uint32_t srcBaseAddr = cIdx * perLoopChannel_ * sizeof(T) + (uint32_t)c_idx * sizeof(T);
+            Gather(outValueFP16Local[c_idx * calHWBlock], xLocal, coorUb, srcBaseAddr, calHWBlock);
+        }
+
+        PipeBarrier<PIPE_V>();
+        for (size_t i = 0; i < calCElems; i++) {
+            ubOffset = i * calHWBlock;
+            if constexpr (IsSameType<T, bfloat16_t>::value) {
+                Select(outValueFP16Local[ubOffset], weightMaskUb, outValueFP16Local[ubOffset], ToBfloat16(0.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, calHWBlock);
+            } else {
+                Select(outValueFP16Local[ubOffset], weightMaskUb, outValueFP16Local[ubOffset], half(0.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, calHWBlock);
+            }
+        }
+
+        PipeBarrier<PIPE_V>();
+        Cast(outValueUb, outValueFP16Local, RoundMode::CAST_NONE, calCElems * calHWBlock);
+
+        PipeBarrier<PIPE_V>();
+        MTE3ForNCHWToWorkSpace(cIdx, calCElems, loop_elems, weightUb, outValueUb, isAutomicAdd);
+        event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+        SetFlag<HardEvent::MTE3_V>(eventMte3V);
+        WaitFlag<HardEvent::MTE3_V>(eventMte3V);
     }
 }
 
@@ -872,43 +921,8 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinear(int
     int32_t ubOffset = 0;
     LocalTensor<T> xLocal = xBuf_.Get<T>();
 
-    if constexpr (IsSameType<T, half>::value) {
-        LocalTensor<half> outValueFP16Local = outValueFP16Buf_.Get<half>();
-        for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
-            int32_t calCElems = perLoopChannel_;
-            if (cIdx == channelLoop_ - 1) {
-                calCElems = lastLoopChannel_;
-            }
-            PipeBarrier<PIPE_V>();
-            event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
-            SetFlag<HardEvent::V_S>(eventIdVToS);
-            WaitFlag<HardEvent::V_S>(eventIdVToS);
-
-            for (int32_t c_idx = 0; c_idx < calCElems; c_idx++) {
-                uint32_t srcBaseAddr = cIdx * perLoopChannel_ * sizeof(T) + (uint32_t)c_idx * sizeof(T);
-                Gather(outValueFP16Local[c_idx * calHWBlock], xLocal, coorUb, srcBaseAddr, calHWBlock);
-            }
-
-            PipeBarrier<PIPE_V>();
-            for (size_t i = 0; i < calCElems; i++) {
-                ubOffset = i * calHWBlock;
-                Select(outValueFP16Local[ubOffset],
-                    weightMaskUb,
-                    outValueFP16Local[ubOffset],
-                    half(0.0),
-                    SELMODE::VSEL_TENSOR_SCALAR_MODE,
-                    calHWBlock);
-            }
-
-            PipeBarrier<PIPE_V>();
-            Cast(outValueUb, outValueFP16Local, RoundMode::CAST_NONE, calCElems * calHWBlock);
-
-            PipeBarrier<PIPE_V>();
-            MTE3ForNCHWToWorkSpace(cIdx, calCElems, loop_elems, weightUb, outValueUb, isAutomicAdd);
-            event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
-            SetFlag<HardEvent::MTE3_V>(eventMte3V);
-            WaitFlag<HardEvent::MTE3_V>(eventMte3V);
-        }
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
+        PointBilinearForHalf(calHWElems, coordinatesUb, weightUb, weightMaskUb, outValueUb, isAutomicAdd);
     } else {
         for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
             int32_t calCElems = perLoopChannel_;
@@ -928,16 +942,89 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinear(int
             PipeBarrier<PIPE_V>();
             for (size_t i = 0; i < calCElems; i++) {
                 ubOffset = i * calHWBlock;
-                Select(outValueUb[ubOffset],
-                    weightMaskUb,
-                    outValueUb[ubOffset],
-                    0.0f,
-                    SELMODE::VSEL_TENSOR_SCALAR_MODE,
-                    calHWBlock);
+                Select(outValueUb[ubOffset], weightMaskUb, outValueUb[ubOffset], 0.0f, SELMODE::VSEL_TENSOR_SCALAR_MODE, calHWBlock);
             }
 
             PipeBarrier<PIPE_V>();
             MTE3ForNCHW(cIdx, calCElems, loop_elems, outBaseOffset, weightUb, outValueUb, isAutomicAdd);
+            event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+            SetFlag<HardEvent::MTE3_V>(eventMte3V);
+            WaitFlag<HardEvent::MTE3_V>(eventMte3V);
+        }
+    }
+}
+
+template <typename T, int templateCNum>
+__aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC32ForHalf(int32_t calHWElems, LocalTensor<int32_t> coordinatesUb, 
+    LocalTensor<float> weightUb, LocalTensor<uint8_t> weightMaskUb, LocalTensor<float> outValueUb, bool isAutomicAdd) 
+{
+    auto coorUb = coordinatesUb.ReinterpretCast<uint32_t>();
+    int32_t loop_elems = calHWElems;
+    int32_t ubOffset = 0;
+    LocalTensor<T> xLocal = xBuf_.Get<T>();
+    LocalTensor<uint16_t> xLocalUint = xBuf_.Get<uint16_t>();
+    LocalTensor<T> tmpBufTotal = tmpBuf_.Get<T>();
+    LocalTensor<uint16_t> tmpBufUint = tmpBufTotal.template ReinterpretCast<uint16_t>();
+    LocalTensor<T> outValueFP16Local = outValueFP16Buf_.Get<T>();
+    perLoopChannel_ = 16;
+    channelLoop_ = Ceil(inputC_, perLoopChannel_);
+    for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
+        int32_t calCElems = perLoopChannel_;
+        int32_t loop_num_tmp = Ceil(loop_elems, C32_H_W_BLOCK);
+        int32_t loop_elems_tmp = C32_H_W_BLOCK;
+
+        for (auto HWLoop = 0; HWLoop < loop_num_tmp; HWLoop++) {
+            if (HWLoop == loop_num_tmp - 1) {
+                loop_elems_tmp = loop_elems - HWLoop * C32_H_W_BLOCK;
+            }
+            PipeBarrier<PIPE_V>();
+            event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
+            SetFlag<HardEvent::V_S>(eventIdVToS);
+            WaitFlag<HardEvent::V_S>(eventIdVToS);
+
+            uint8_t repeatTime = (C32_H_W_BLOCK * perLoopChannel_ * sizeof(uint16_t)) / 256;
+            GatherRepeatParams params{1, 8};
+
+            Gatherb<uint16_t>(tmpBufUint[2 * 1024 / sizeof(uint16_t)],
+                xLocalUint[cIdx * perLoopChannel_],
+                coorUb[HWLoop * C32_H_W_BLOCK],
+                repeatTime,
+                params);
+
+            PipeBarrier<PIPE_V>();
+            OutTranspose(32 / sizeof(T), tmpBufTotal[2 * 1024 / sizeof(uint16_t)], outValueFP16Local);
+            PipeBarrier<PIPE_V>();
+            for (size_t i = 0; i < calCElems; i++) {
+                ubOffset = i * C32_H_W_BLOCK;
+                if constexpr (IsSameType<T, bfloat16_t>::value) {
+                    Select(outValueFP16Local[ubOffset],
+                        weightMaskUb[HWLoop * C32_H_W_BLOCK / 8],
+                        outValueFP16Local[ubOffset],
+                        ToBfloat16(0.0),
+                        SELMODE::VSEL_TENSOR_SCALAR_MODE,
+                        C32_H_W_BLOCK);
+                } else {
+                    Select(outValueFP16Local[ubOffset],
+                        weightMaskUb[HWLoop * C32_H_W_BLOCK / 8],
+                        outValueFP16Local[ubOffset],
+                        half(0.0),
+                        SELMODE::VSEL_TENSOR_SCALAR_MODE,
+                        C32_H_W_BLOCK);
+                }
+            }
+
+            PipeBarrier<PIPE_V>();
+            Cast(outValueUb, outValueFP16Local, RoundMode::CAST_NONE, calCElems * C32_H_W_BLOCK);
+
+            PipeBarrier<PIPE_V>();
+            int64_t gmYBaseOffset = calHWBlock * inputC_ * blockIDX + (int64_t)cIdx * perLoopChannel_ * calHWBlock +
+                                    HWLoop * C32_H_W_BLOCK;
+            MTE3ForC32(gmWorkspace_[gmYBaseOffset],
+                calCElems,
+                loop_elems_tmp,
+                weightUb[HWLoop * C32_H_W_BLOCK],
+                outValueUb,
+                isAutomicAdd);
             event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
             SetFlag<HardEvent::MTE3_V>(eventMte3V);
             WaitFlag<HardEvent::MTE3_V>(eventMte3V);
@@ -963,66 +1050,8 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC32(
     int32_t ubOffset = 0;
     LocalTensor<T> xLocal = xBuf_.Get<T>();
 
-    if constexpr (IsSameType<T, half>::value) {
-        LocalTensor<uint16_t> xLocalUint = xBuf_.Get<uint16_t>();
-        LocalTensor<half> tmpBufTotal = tmpBuf_.Get<half>();
-        LocalTensor<uint16_t> tmpBufUint = tmpBufTotal.ReinterpretCast<uint16_t>();
-        LocalTensor<half> outValueFP16Local = outValueFP16Buf_.Get<half>();
-        perLoopChannel_ = 16;
-        channelLoop_ = Ceil(inputC_, perLoopChannel_);
-        for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
-            int32_t calCElems = perLoopChannel_;
-            int32_t loop_num_tmp = Ceil(loop_elems, C32_H_W_BLOCK);
-            int32_t loop_elems_tmp = C32_H_W_BLOCK;
-
-            for (auto HWLoop = 0; HWLoop < loop_num_tmp; HWLoop++) {
-                if (HWLoop == loop_num_tmp - 1) {
-                    loop_elems_tmp = loop_elems - HWLoop * C32_H_W_BLOCK;
-                }
-                PipeBarrier<PIPE_V>();
-                event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
-                SetFlag<HardEvent::V_S>(eventIdVToS);
-                WaitFlag<HardEvent::V_S>(eventIdVToS);
-
-                uint8_t repeatTime = (C32_H_W_BLOCK * perLoopChannel_ * sizeof(uint16_t)) / 256;
-                GatherRepeatParams params{1, 8};
-
-                Gatherb<uint16_t>(tmpBufUint[2 * 1024 / sizeof(uint16_t)],
-                    xLocalUint[cIdx * perLoopChannel_],
-                    coorUb[HWLoop * C32_H_W_BLOCK],
-                    repeatTime,
-                    params);
-
-                PipeBarrier<PIPE_V>();
-                OutTranspose(32 / sizeof(T), tmpBufTotal[2 * 1024 / sizeof(uint16_t)], outValueFP16Local);
-                PipeBarrier<PIPE_V>();
-                for (size_t i = 0; i < calCElems; i++) {
-                    ubOffset = i * C32_H_W_BLOCK;
-                    Select(outValueFP16Local[ubOffset],
-                        weightMaskUb[HWLoop * C32_H_W_BLOCK / 8],
-                        outValueFP16Local[ubOffset],
-                        half(0.0),
-                        SELMODE::VSEL_TENSOR_SCALAR_MODE,
-                        C32_H_W_BLOCK);
-                }
-
-                PipeBarrier<PIPE_V>();
-                Cast(outValueUb, outValueFP16Local, RoundMode::CAST_NONE, calCElems * C32_H_W_BLOCK);
-
-                PipeBarrier<PIPE_V>();
-                int64_t gmYBaseOffset = calHWBlock * inputC_ * blockIDX + (int64_t)cIdx * perLoopChannel_ * calHWBlock +
-                                        HWLoop * C32_H_W_BLOCK;
-                MTE3ForC32(gmWorkspace_[gmYBaseOffset],
-                    calCElems,
-                    loop_elems_tmp,
-                    weightUb[HWLoop * C32_H_W_BLOCK],
-                    outValueUb,
-                    isAutomicAdd);
-                event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
-                SetFlag<HardEvent::MTE3_V>(eventMte3V);
-                WaitFlag<HardEvent::MTE3_V>(eventMte3V);
-            }
-        }
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
+        PointBilinearC32ForHalf(calHWElems, coordinatesUb, weightUb, weightMaskUb, outValueUb, isAutomicAdd);
     } else {
         auto outValueUbUint = outValueUb.ReinterpretCast<uint32_t>();
         LocalTensor<uint32_t> xLocalUint = xBuf_.Get<uint32_t>();
@@ -1042,33 +1071,19 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC32(
                 uint8_t repeatTime = (C32_H_W_BLOCK * perLoopChannel_ * sizeof(uint32_t)) / 256;
                 GatherRepeatParams params{1, 8};
 
-                Gatherb<uint32_t>(outValueUbUint[perLoopChannel_ * C32_H_W_BLOCK],
-                    xLocalUint[cIdx * perLoopChannel_],
-                    coorUb[HWLoop * C32_H_W_BLOCK],
-                    repeatTime,
-                    params);
+                Gatherb<uint32_t>(outValueUbUint[perLoopChannel_ * C32_H_W_BLOCK], xLocalUint[cIdx * perLoopChannel_], coorUb[HWLoop * C32_H_W_BLOCK], repeatTime, params);
 
                 PipeBarrier<PIPE_V>();
                 OutTranspose(32 / sizeof(T), outValueUb[perLoopChannel_ * C32_H_W_BLOCK], outValueUb);
                 PipeBarrier<PIPE_V>();
                 for (size_t i = 0; i < calCElems; i++) {
                     ubOffset = i * C32_H_W_BLOCK;
-                    Select(outValueUb[ubOffset],
-                        weightMaskUb[HWLoop * C32_H_W_BLOCK / 8],
-                        outValueUb[ubOffset],
-                        0.0f,
-                        SELMODE::VSEL_TENSOR_SCALAR_MODE,
-                        C32_H_W_BLOCK);
+                    Select(outValueUb[ubOffset], weightMaskUb[HWLoop * C32_H_W_BLOCK / 8], outValueUb[ubOffset], 0.0f, SELMODE::VSEL_TENSOR_SCALAR_MODE, C32_H_W_BLOCK);
                 }
 
                 PipeBarrier<PIPE_V>();
                 int64_t gmYBaseOffset = outBaseOffset + HWLoop * C32_H_W_BLOCK + cIdx * CHANNEL_BLOCK * gridHW_;
-                MTE3ForC32(gmY_[gmYBaseOffset],
-                    calCElems,
-                    loop_elems_tmp,
-                    weightUb[HWLoop * C32_H_W_BLOCK],
-                    outValueUb,
-                    isAutomicAdd);
+                MTE3ForC32(gmY_[gmYBaseOffset], calCElems, loop_elems_tmp, weightUb[HWLoop * C32_H_W_BLOCK], outValueUb, isAutomicAdd);
                 event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
                 SetFlag<HardEvent::MTE3_V>(eventMte3V);
                 WaitFlag<HardEvent::MTE3_V>(eventMte3V);
@@ -1097,8 +1112,8 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC1(i
     SetFlag<HardEvent::V_S>(eventIdVToS);
     WaitFlag<HardEvent::V_S>(eventIdVToS);
 
-    if constexpr (IsSameType<T, half>::value) {
-        LocalTensor<half> outValueFP16Local = outValueFP16Buf_.Get<half>();
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
+        LocalTensor<T> outValueFP16Local = outValueFP16Buf_.Get<T>();
         Gather(outValueFP16Local, xLocal, coorUb, 0, calHWElems);
         PipeBarrier<PIPE_V>();
         Cast(outValueUb, outValueFP16Local, RoundMode::CAST_NONE, inputC_ * calHWBlock);
@@ -1155,7 +1170,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::ProcessingCoordin
     SetFlag<HardEvent::S_MTE2>(eventIdSToMte2);
     WaitFlag<HardEvent::S_MTE2>(eventIdSToMte2);
 
-    if constexpr (IsSameType<T, half>::value) {
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
         LocalTensor<T> gridFp16Local = gridFP16Buf_.Get<T>();
         DataCopyPad(gridFp16Local, gmGrid_[gridGmOffset], paramsGrid, padParams);
         SetFlag<HardEvent::MTE2_V>(eventMte2V);
@@ -1235,9 +1250,9 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PerLoopComputeFor
     paramsX.blockLen = calHWElems * sizeof(T);
     paramsX.srcStride = 0;
     paramsX.dstStride = 0;
-    if constexpr (IsSameType<T, half>::value) {
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
         LocalTensor<T> outValueFP16Local = outValueFP16Buf_.Get<T>();
-        Cast(outValueFP16Local, outAddLocal, RoundMode::CAST_NONE, calHWBlock);
+        Cast(outValueFP16Local, outAddLocal, RoundMode::CAST_RINT, calHWBlock);
         SetFlag<HardEvent::V_MTE3>(eventVMte3);
         WaitFlag<HardEvent::V_MTE3>(eventVMte3);
         SetFlag<HardEvent::S_MTE3>(eventIdSToMte3);
@@ -1343,7 +1358,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PerLoopCompute(
         ClipCoordinates(inputXEIntLocal, inputYEIntLocal, tmpLocal, coordinatesLocal, weightMaskUb, hwIdx);
         PointBilinearC32(nIdx, hwIdx, calHWElems, coordinatesLocal, seWeightLocal, weightMaskUb, outValueLocal, true);
 
-        if constexpr (IsSameType<T, half>::value) {
+        if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
             event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
             SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
             WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
@@ -1364,7 +1379,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PerLoopCompute(
         ClipCoordinates(inputXEIntLocal, inputYEIntLocal, tmpLocal, coordinatesLocal, weightMaskUb, hwIdx);
         PointBilinear(nIdx, hwIdx, calHWElems, coordinatesLocal, seWeightLocal, weightMaskUb, outValueLocal, true);
 
-        if constexpr (IsSameType<T, half>::value) {
+        if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
             event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
             SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
             WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
