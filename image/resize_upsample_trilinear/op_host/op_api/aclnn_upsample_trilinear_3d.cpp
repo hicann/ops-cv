@@ -25,6 +25,7 @@
 #include "opdev/make_op_executor.h"
 #include "aclnn_kernels/reshape.h"
 #include "common/level2_base.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -49,8 +50,8 @@ static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, c
 
 static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 {
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc == op::SocVersion::ASCEND310P || curSoc == op::SocVersion::ASCEND310B) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2002 || curArch == NpuArch::DAV_3002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
@@ -61,8 +62,9 @@ static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 
 static bool CheckIsPlatform310p(const aclTensor* self)
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND310P ||
-        GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND310B) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2002 ||
+        curArch == NpuArch::DAV_3002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;
@@ -167,6 +169,9 @@ static float AsComputeScale(bool alignCorners, int64_t inputSize, int64_t output
 
 static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
 {
+    if (IsRegBase()) {
+        return true;
+    }
     int64_t inN = self->GetViewShape().GetDim(DIM_ZERO);
     int64_t inC = self->GetViewShape().GetDim(DIM_ONE);
     int64_t inD = self->GetViewShape().GetDim(DIM_TWO);
@@ -179,13 +184,13 @@ static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
     int64_t outW = out->GetViewShape().GetDim(DIM_THREE);
 
     OP_CHECK(
-        inN < INT32_MAX && inC < INT32_MAX && inD < INT32_MAX && inH < INT32_MAX && inW < INT32_MAX,
+        inN <= INT32_MAX && inC <= INT32_MAX && inD <= INT32_MAX && inH <= INT32_MAX && inW <= INT32_MAX,
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID, "Self sizes should not be greater than %d, bug got self(%ld, %ld, %ld, %ld, %ld)",
             INT32_MAX, inN, inC, inD, inH, inW),
         return false);
     OP_CHECK(
-        outN < INT32_MAX && outC < INT32_MAX && outD < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+        outN <= INT32_MAX && outC <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID, "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld, %ld, %ld)",
             INT32_MAX, outN, outC, outD, outH, outW),

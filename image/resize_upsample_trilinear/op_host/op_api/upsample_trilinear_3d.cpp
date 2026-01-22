@@ -56,12 +56,12 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
     float scalesH = 0.0;
     float scalesW = 0.0;
 
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     auto dimTwo = DIM_TWO;
     auto dimThree = DIM_THREE;
     auto dimFour = DIM_FOUR;
 
-    if ((socVer == SocVersion::ASCEND310P) && CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST) &&
+    if ((curArch == NpuArch::DAV_2002) && CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST) &&
         CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
         dimTwo = DIM_ZERO;
         dimThree = DIM_ONE;
@@ -82,7 +82,7 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
     op::Shape outShape;
     op::ToShape(selfShape.data(), selfShape.size(), outShape);
     auto dataType = self->GetDataType();
-    if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+    if ((curArch == NpuArch::DAV_2201) &&
         CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
         CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
@@ -108,7 +108,7 @@ const aclTensor* UpsampleTrilinear3dNcdhw(
         }
         return out;
     } else if (
-        (socVer == SocVersion::ASCEND310P) && CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST) &&
+        (curArch == NpuArch::DAV_2002) && CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST) &&
         CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType) {
             self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);

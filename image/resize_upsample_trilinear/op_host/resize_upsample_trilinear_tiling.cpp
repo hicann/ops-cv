@@ -60,6 +60,7 @@ constexpr uint32_t BEST_PERFORMANCE_BATCH_SIZE_3 = 1024;
 
 constexpr uint32_t MAX_DATA_NUM = 8192;
 constexpr uint32_t RESERVED_NUM = 4;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 static constexpr uint16_t SOC_VERSION_310 = 200;
 static constexpr uint16_t SOC_VERSION_910 = 220;
@@ -629,7 +630,7 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
     tiling.set_total_core_num(maxCoreNum);
     const int64_t batch = input_storage_shape.GetDim(batchIdx);
     const int64_t channel = input_storage_shape.GetDim(channelIdx);
-    tiling.set_batches(batch * channel);
+    tiling.set_batches(batch * channel); 
 
     if (!CheckShapeMaxLimit(context, tiling)) {
         return ge::GRAPH_FAILED;
@@ -640,6 +641,9 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
         coreRealNeedNum = coreRealNeedNum < 1 ? 1 : coreRealNeedNum;
         context->SetBlockDim(maxCoreNum);
         tiling.set_real_core_num(coreRealNeedNum);
+        if ((batch * channel) % (32 / data_type_size) != 0) {
+            context->SetScheduleMode(SCHEDULE_MODE);
+        }
     } else {
         uint32_t core_real_need_num_w = calcIndxPerCore(tiling, maxCoreNum, DIREC_WIDTH);
         uint32_t core_real_need_num_h = calcIndxPerCore(tiling, maxCoreNum, DIREC_HEIGHT);
@@ -656,6 +660,7 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
             return ge::GRAPH_FAILED;
         }
         context->SetBlockDim(coreRealNeedNum);
+        context->SetScheduleMode(SCHEDULE_MODE);
     }
 
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
@@ -678,8 +683,8 @@ static ge::graphStatus TilingPrepare4UpsampleTrilinear(gert::TilingParseContext*
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAic();
     compileInfo->socVersionType = SOC_VERSION_910;
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    if (socVersion == platform_ascendc::SocVersion::ASCEND310P) {
+    auto npuArch = ascendcPlatform.GetCurNpuArch();
+    if (npuArch == NpuArch::DAV_2002) {
         compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
         compileInfo->socVersionType = SOC_VERSION_310;
     }
