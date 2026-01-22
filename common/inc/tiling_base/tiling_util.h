@@ -16,6 +16,7 @@
 #pragma once
 
 #include "register/op_impl_registry.h"
+#include "platform/soc_spec.h"
 
 namespace Ops {
 namespace Cv {

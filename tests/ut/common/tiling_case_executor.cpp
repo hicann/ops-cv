@@ -106,10 +106,20 @@
                                compileInfoStringMiddle +                                                               \
                                std::to_string(tilingContextPara.coreNum_) +                                            \
                                compileInfoStringSuffix;                                                                \
+     map<string, string> socToArch = {                                                                                  \
+        {"Ascend310P", "2002"},                                                                                        \
+        {"Ascend910B", "2201"},                                                                                        \
+        {"Ascend910_93", "2201"},                                                                                      \
+        {"Ascend910_95", "3510"},                                                                                      \
+        {"Ascend910", "1001"}                                                                                          \
+    };                                                                                                                 \
     map<string, string> socInfos;                                                                                      \
     map<string, string> aicoreSpec;                                                                                    \
     map<string, string> intrinsics;                                                                                    \
-    map<string, string> socversions = {{"Short_SoC_version", tilingContextPara.socVersion_}};                          \
+    map<string, string> socversions = {                                                                                \
+        {"NpuArch", socToArch[tilingContextPara.socVersion_]},                                                         \
+        {"Short_SoC_version", tilingContextPara.socVersion_}                                                           \
+    };                                                                                                                 \
     GetPlatFormInfos(compileInfoString.c_str(), socInfos, aicoreSpec, intrinsics);                                     \
     auto tilingContext = contextHolder.GetContext();                                                                   \
     tilingContext->GetPlatformInfo()->SetPlatformRes("SoCInfo", socInfos);                                             \
