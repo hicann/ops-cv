@@ -2,16 +2,19 @@
 
 ## 产品支持情况
 
-| 产品 | 是否支持 |
-| ---- | :----: |
-| Atlas A3 训练系列产品/Atlas A3 推理系列产品 | √ |
-| Atlas A2 训练系列产品/Atlas A2 推理系列产品 | √ |
+|产品             |  是否支持  |
+|:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
+|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
+|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×   |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
 
 ## 功能说明
 
 - 算子功能：根据特征点所属的组，重组点云的特征。
 - 计算公式：点云数据`features`形状为$(N1 + N2 ..., C)$，根据`features_batch_cnt`形状$(N1, N2, ...)$将其分组，同样地，`indices`形状为$(M1 + M2 ..., nsample)$，根据`indices_batch_cnt`形状$(M1, M2, ...)$将其分组。算子根据`indices`分组从对应的`features`组中抽取特征成输出`out`，实现如下功能：
-
   $$
   out[m:c:np] = features[indices[m:np]:c]
   $$

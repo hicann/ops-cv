@@ -1,11 +1,18 @@
 # aclnnIou
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/objdetect/iou_v2)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    √     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
+
 
 ## 功能说明
 
@@ -16,9 +23,7 @@
   IOU = \frac {Area_3} {Area_1 + Area_2 - Area_3} \\
   IOF = \frac {Area_3} {Area_2} 
   $$
-
   其中，Area_1为bBox的面积，Area_2为gtBox的面积，Area_3为两者重叠部分面积，x和y的定义见参数说明。
-
   $$
   Area_1 = (X_1 - X_0)(Y_1 - Y_0) \\
   Area_2 = (X_3 - X_2)(Y_3 - Y_2) \\
@@ -38,8 +43,10 @@
 - **参数说明：**
 
   - bBoxes（aclTensor*，计算输入）：预测矩形框，shape为(m, 4)的二维tensor，m为bounding boxes的数量，4指[x0, y0, x1, y1]，(x0, y0)和(x1, y1)分别表示矩形框的左上角和右下角，需满足x1 > x0, y1 > y0。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
+    - <term>Atlas 推理系列产品</term>：FLOAT、FLOAT16
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：FLOAT、FLOAT16、BFLOAT16
   - gtBoxes（aclTensor*，计算输入）：真值矩形框，shape为(n, 4)的二维tensor，n为bounding boxes的数量，4指[x2, y2, x3, y3]，(x2, y2)和(x3, y3)分别表示矩形框的左上角和右下角，需满足x3 > x2, y3 > y2。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND，数据类型需要和bBoxes保持一致。
+    - <term>Atlas 推理系列产品</term>：FLOAT、FLOAT16
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：FLOAT、FLOAT16、BFLOAT16
   - mode（char*，计算输入）: 用于选择计算方式"iou"或"iof"。Host侧的字符串，数据类型支持String。
     - "iou"：计算交并比。
@@ -49,6 +56,7 @@
     - True：bBoxes和gtBoxes的shape保持一致，都是(m, 4)，输出的shape为(m, 1)。
     - False：bBoxes和gtBoxes的shape不一致，分别是(m, 4)和(n, 4)，输出的shape为(m, n)。
   - overlap（aclTensor*，计算输出）：根据两个输入计算得到的交并比/前景交叉比，shape为(m, n)或(m, 1)的二维tensor。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND，数据类型需要和bBoxes保持一致。
+    - <term>Atlas 推理系列产品</term>：FLOAT、FLOAT16
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：FLOAT、FLOAT16、BFLOAT16
   - workspaceSize（uint64_t*，出参）：返回需要在Device侧申请的workspace大小。
   - executor（aclOpExecutor**，出参）：返回op执行器，包含了算子计算流程。
@@ -80,6 +88,7 @@
   - workspaceSize（uint64_t，入参）：在Device侧申请的workspace大小，由第一段接口aclnnIouGetWorkspaceSize获取。
   - executor（aclOpExecutor*，入参）：op执行器，包含了算子计算流程。
   - stream（aclrtStream，入参）：指定执行任务的Stream。
+
 
 - **返回值：**
 

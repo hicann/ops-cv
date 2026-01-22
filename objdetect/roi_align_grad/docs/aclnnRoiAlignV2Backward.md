@@ -1,11 +1,18 @@
 # aclnnRoiAlignV2Backward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/objdetect/roi_align_grad)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    √     |
+
 
 ## 功能说明
 
@@ -43,6 +50,7 @@
 
   - executor（aclOpExecutor**，出参）：返回op执行器，包含了算子计算流程。
 
+
 - **返回码：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -66,6 +74,7 @@
   - executor（aclOpExecutor*, 入参）：op执行器，包含了算子计算流程。
 
   - stream（aclrtStream, 入参）：指定执行任务的Stream。
+
 
 - **返回码：**
 
