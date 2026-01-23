@@ -23,6 +23,7 @@
 #include "opdev/op_log.h"
 #include "opdev/shape_utils.h"
 #include "opdev/common_types.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 
@@ -32,14 +33,14 @@ OP_TYPE_REGISTER(ResizeBilinearV2);
 
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
-static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_ASCEND910_95 = {
+static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
 // 根据芯片类型、dtype判断算子是否支持走aicore
 static bool IsAiCoreSupport(const aclTensor* self)
 {
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
-        return CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_ASCEND910_95);
+    if (IsRegBase()) {
+        return CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_REGBASE);
     }
 
     // ResizeBilinearV2只需要判断dtype

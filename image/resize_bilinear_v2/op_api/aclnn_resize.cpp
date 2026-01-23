@@ -22,6 +22,7 @@
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
+#include "common/aclnn_check.h"
 
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transdata.h"
@@ -52,7 +53,7 @@ static constexpr double EPSILON = 1e-5;
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA_ASCEND910_95 = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
 static bool CheckShape(const aclTensor* self, const aclFloatArray* scales, const aclTensor* out)
@@ -83,19 +84,19 @@ static bool CheckInputElement(const aclTensor* self, const aclFloatArray* scales
     auto outShape = out->GetViewShape();
 
     size_t dimBatch = DIM_BATCH_NCHW;
-    size_t dimChanel = DIM_CHANNEL_NCHW;
+    size_t dimChannel = DIM_CHANNEL_NCHW;
     size_t dimHeight = DIM_HEIGHT_NCHW;
     size_t dimWidth = DIM_WIDTH_NCHW;
 
     if (extendFlag && self->GetStorageFormat() == op::Format::FORMAT_NHWC) {
         dimBatch = DIM_BATCH_NHWC;
-        dimChanel = DIM_CHANNEL_NHWC;
+        dimChannel = DIM_CHANNEL_NHWC;
         dimHeight = DIM_HEIGHT_NHWC;
         dimWidth = DIM_WIDTH_NHWC;
     }
 
     if (selfShape.GetDim(dimBatch) != outShape.GetDim(dimBatch) ||
-        selfShape.GetDim(dimChanel) != outShape.GetDim(dimChanel)) {
+        selfShape.GetDim(dimChannel) != outShape.GetDim(dimChannel)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of batch or channel is not matched.");
         return false;
     }
@@ -138,7 +139,7 @@ static bool CheckNotNull(const aclTensor* self, const aclFloatArray* scales, con
 static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out, bool extendFlag)
 {
     if (extendFlag) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_DATA_ASCEND910_95, return false);
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_DATA_REGBASE, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_DATA, return false);
     }
@@ -241,11 +242,11 @@ static const aclTensor* CreateSizesRegBase(const aclTensor* self, const aclFloat
 
 static bool GetExtendPathFlag()
 {
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95 ||
-        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910B ||
-        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_93 ||
-        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910 ||
-        op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND310P) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (IsRegBase(curArch) ||
+        curArch == NpuArch::DAV_2201 ||
+        curArch == NpuArch::DAV_1001 ||
+        curArch == NpuArch::DAV_2002) {
         return true;
     }
     return false;
@@ -273,7 +274,7 @@ aclnnStatus aclnnResizeGetWorkspaceSize(
     auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    if (extendFlag && op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
+    if (extendFlag && IsRegBase()) {
         auto sizes = CreateSizesRegBase(self, scales, uniqueExecutor.get());
         CHECK_RET(sizes != nullptr, ACLNN_ERR_INNER_NULLPTR);
         // 不必转到5HD，直接执行L0算子 带scales参数

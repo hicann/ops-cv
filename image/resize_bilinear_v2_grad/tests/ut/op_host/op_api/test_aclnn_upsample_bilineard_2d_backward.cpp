@@ -555,3 +555,24 @@ TEST_F(l2_upsamplebilinear2d_backward_test, l2_upsamplebilinear2d_backward_test_
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
+
+TEST_F(l2_upsamplebilinear2d_backward_test, l2_upsamplebilinear2d_backward_test_025)
+{
+    const double_t scales_h = 2.0;
+    const double_t scales_w = 2.0;
+    bool align_corners = true;
+    vector<int64_t> output_size = {2, 4};
+    vector<int64_t> input_size = {1, 1, 3, 3};
+
+    auto self_desc = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NHWC);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    auto output_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NHWC);
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2dBackward,
+        INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+        OUTPUT(output_desc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+}
