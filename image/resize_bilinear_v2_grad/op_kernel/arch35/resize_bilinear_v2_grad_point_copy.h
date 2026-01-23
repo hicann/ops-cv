@@ -15,9 +15,9 @@
 #ifndef RESIZE_BILINEAR_V2_GRAD_POINT_COPY_H
 #define RESIZE_BILINEAR_V2_GRAD_POINT_COPY_H
 
-#include "../inc/platform.h"
+#include "op_kernel/platform_util.h"
 #include "kernel_operator.h"
-#include "../inc/kernel_utils.h"
+#include "op_kernel/math_util.h"
 #include "resize_bilinear_v2_grad_base.h"
 
 namespace ResizeBilinearV2Grad {
@@ -59,7 +59,7 @@ public:
     __aicore__ inline ResizeBilinearV2GradPointCopy(){};
 
     __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2GradTilingData *data);
+        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data);
     __aicore__ inline void Process();
 
 protected:
@@ -69,7 +69,7 @@ protected:
     __aicore__ inline void ClearOutputGm();
 
     PointCopyOffsetDefSt offsetData_;
-    const ResizeBilinearV2GradTilingData *tilingData_;
+    const ResizeBilinearV2GradTilingData* tilingData_;
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> dataQue_;
     int64_t blockIdx_ = 0;
     int64_t ubBlockSize_ = 0;
@@ -77,11 +77,11 @@ protected:
 
 template <typename T_GRADS, typename T_OUT>
 __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::Init(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2GradTilingData *data)
+    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data)
 {
     this->BaseInit(grads, y, pipe);
     blockIdx_ = GetBlockIdx();
-    ubBlockSize_ = platform::GetUbBlockSize();
+    ubBlockSize_ = Ops::Base::GetUbBlockSize();
     tilingData_ = data;
 
     int64_t bufferSize = tilingData_->ubNFactor * tilingData_->ubHFactor * tilingData_->ubWFactor *
@@ -167,10 +167,10 @@ __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::CopyInGrad
 template <typename T_GRADS, typename T_OUT>
 __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::CalcTile()
 {
-    int64_t nNum = ops::CeilDiv(tilingData_->lenN, tilingData_->nFactor);
-    int64_t hNum = ops::CeilDiv(tilingData_->lenDesH, tilingData_->hFactor);
-    int64_t wNum = ops::CeilDiv(tilingData_->lenDesW, tilingData_->wFactor);
-    int64_t cNum = ops::CeilDiv(tilingData_->lenC, tilingData_->cFactor);
+    int64_t nNum = Ops::Base::CeilDiv(tilingData_->lenN, tilingData_->nFactor);
+    int64_t hNum = Ops::Base::CeilDiv(tilingData_->lenDesH, tilingData_->hFactor);
+    int64_t wNum = Ops::Base::CeilDiv(tilingData_->lenDesW, tilingData_->wFactor);
+    int64_t cNum = Ops::Base::CeilDiv(tilingData_->lenC, tilingData_->cFactor);
     int64_t nTail = tilingData_->lenN - (nNum - 1) * tilingData_->nFactor;
     int64_t hTail = tilingData_->lenDesH - (hNum - 1) * tilingData_->hFactor;
     int64_t wTail = tilingData_->lenDesW - (wNum - 1) * tilingData_->wFactor;
@@ -252,9 +252,9 @@ __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::Process()
                 for (int64_t cLoop = 0; cLoop < offsetData_.cLength4Block; cLoop += tilingData_->ubCFactor) {
                     offsetData_.cOffset = offsetData_.cOffset4Block + cLoop;
                     offsetData_.cLength = this->Min(tilingData_->ubCFactor, offsetData_.cLength4Block - cLoop);
-                    cLengthAlign32 = ops::CeilAlign<int64_t>(offsetData_.cLength, ubBlockSize_ / sizeof(T_GRADS));
-                    offsetData_.wcLenAlign =
-                        ops::CeilAlign<int64_t>(offsetData_.wLength * cLengthAlign32, ubBlockSize_ / sizeof(T_GRADS));
+                    cLengthAlign32 = Ops::Base::CeilAlign<int64_t>(offsetData_.cLength, ubBlockSize_ / sizeof(T_GRADS));
+                    offsetData_.wcLenAlign = Ops::Base::CeilAlign<int64_t>(
+                        offsetData_.wLength * cLengthAlign32, ubBlockSize_ / sizeof(T_GRADS));
                     CopyInGrad();
                     CopyOutY();
                 }
@@ -263,6 +263,6 @@ __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::Process()
     }
 }
 
-}  // namespace ResizeBilinearV2Grad
+} // namespace ResizeBilinearV2Grad
 
-#endif  // RESIZE_BILINEAR_V2_GRAD_POINT_COPY_H
+#endif // RESIZE_BILINEAR_V2_GRAD_POINT_COPY_H

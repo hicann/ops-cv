@@ -15,7 +15,7 @@
 #ifndef RESIZE_BILINEAR_V2_GRAD_ALL_COPY_H
 #define RESIZE_BILINEAR_V2_GRAD_ALL_COPY_H
 
-#include "../inc/platform.h"
+#include "op_kernel/platform_util.h"
 #include "kernel_operator.h"
 #include "resize_bilinear_v2_grad_base.h"
 
@@ -28,7 +28,7 @@ public:
     __aicore__ inline ResizeBilinearV2GradAllCopy(){};
 
     __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2GradTilingData *data);
+        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data);
 
     __aicore__ inline void Process();
 
@@ -36,7 +36,7 @@ protected:
     __aicore__ inline void CopyIn(int64_t gradsOffsetInGM, int64_t length);
     __aicore__ inline void CopyOut(int64_t yOffsetInGM, int64_t length);
 
-    const ResizeBilinearV2GradTilingData *tilingData_;
+    const ResizeBilinearV2GradTilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> dataQue_;
 
@@ -46,12 +46,12 @@ protected:
 
 template <typename T_GRADS, typename T_OUT>
 __aicore__ inline void ResizeBilinearV2GradAllCopy<T_GRADS, T_OUT>::Init(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2GradTilingData *data)
+    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data)
 {
     this->BaseInit(grads, y, pipe);
-    int64_t ubBlockSize = platform::GetUbBlockSize();
+    int64_t ubBlockSize = Ops::Base::GetUbBlockSize();
     tilingData_ = data;
-    int64_t bufferSize = ops::CeilAlign<int64_t>(tilingData_->ubCFactor * sizeof(T_GRADS), ubBlockSize);
+    int64_t bufferSize = Ops::Base::CeilAlign<int64_t>(tilingData_->ubCFactor * sizeof(T_GRADS), ubBlockSize);
     this->pipe_->InitBuffer(dataQue_, 2, bufferSize);
 }
 
@@ -118,6 +118,6 @@ __aicore__ inline void ResizeBilinearV2GradAllCopy<T_GRADS, T_OUT>::Process()
     return;
 }
 
-}  // namespace ResizeBilinearV2Grad
+} // namespace ResizeBilinearV2Grad
 
-#endif  // RESIZE_BILINEAR_V2_GRAD_ALL_COPY_H
+#endif // RESIZE_BILINEAR_V2_GRAD_ALL_COPY_H

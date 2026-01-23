@@ -16,8 +16,8 @@
 #define RESIZE_BILINEAR_V2_GRAD_BASE_H
 
 #include "kernel_operator.h"
-#include "../inc/platform.h"
-#include "../inc/kernel_utils.h"
+#include "op_kernel/platform_util.h"
+#include "op_kernel/math_util.h"
 
 namespace ResizeBilinearV2Grad {
 using namespace AscendC;
@@ -31,9 +31,9 @@ constexpr int32_t THREAD_NUM = 512;
 constexpr int32_t THREAD_NUM_MIDDLE = 256;
 
 template <typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputeDetermine(T_IDX &tmp, T_IDX &mW,
-    T_IDX shiftW, T_IDX &W, T_IDX lenSrcW, T_IDX &mH, T_IDX shiftH, T_IDX &H, T_IDX lenSrcH, T_IDX &mC, T_IDX shiftC,
-    T_IDX &C, T_IDX lenC, T_IDX &mN, T_IDX shiftN, T_IDX &N, T_IDX lenN)
+__aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputeDetermine(
+    T_IDX& tmp, T_IDX& mW, T_IDX shiftW, T_IDX& W, T_IDX lenSrcW, T_IDX& mH, T_IDX shiftH, T_IDX& H, T_IDX lenSrcH,
+    T_IDX& mC, T_IDX shiftC, T_IDX& C, T_IDX lenC, T_IDX& mN, T_IDX shiftN, T_IDX& N, T_IDX lenN)
 {
     T_IDX tmpRes = Simt::UintDiv(tmp, mW, shiftW);
     W = tmp - tmpRes * lenSrcW;
@@ -55,12 +55,12 @@ class ResizeBilinearV2GradBase {
 public:
     __aicore__ inline ResizeBilinearV2GradBase(){};
 
-    __aicore__ inline void BaseInit(GM_ADDR grads, GM_ADDR y, TPipe *pipe)
+    __aicore__ inline void BaseInit(GM_ADDR grads, GM_ADDR y, TPipe* pipe)
     {
         this->pipe_ = pipe;
 
-        this->gradsGM_.SetGlobalBuffer((__gm__ uint8_t *)grads);
-        this->yGM_.SetGlobalBuffer((__gm__ uint8_t *)y);
+        this->gradsGM_.SetGlobalBuffer((__gm__ uint8_t*)grads);
+        this->yGM_.SetGlobalBuffer((__gm__ uint8_t*)y);
     };
 
 protected:
@@ -91,11 +91,11 @@ protected:
     }
 
 protected:
-    TPipe *pipe_;
+    TPipe* pipe_;
 
     GlobalTensor<uint8_t> gradsGM_;
     GlobalTensor<uint8_t> yGM_;
 };
 
-}  // namespace ResizeBilinearV2Grad
-#endif  // RESIZE_BILINEAR_V2_GRAD_BASE_H
+} // namespace ResizeBilinearV2Grad
+#endif // RESIZE_BILINEAR_V2_GRAD_BASE_H

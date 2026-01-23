@@ -4,6 +4,7 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 
@@ -219,6 +220,10 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     - 参数`gradOut`、`out`的数据类型不支持BFLOAT16.
     - 参数`out`的数据类型与`gradOut`的数据类型一致。
+  - <term>Ascend 950PR/Ascend 950DT</term>：
+    - 当`gradOut`的数据类型不是FLOAT时，`out`的数据类型与`gradOut`的数据类型保持一致。
+    - 当`gradOut`的数据类型是FLOAT时，`out`的数据类型可以是FLOAT32、FLOAT16和BFLOAT16。
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。

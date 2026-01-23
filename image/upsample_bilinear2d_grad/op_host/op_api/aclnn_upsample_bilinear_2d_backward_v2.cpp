@@ -26,7 +26,7 @@
 #include "opdev/platform.h"
 #include "common/aclnn_check.h"
 
-#include "image/resize_bilinear_v2_grad/op_host/op_api/resize_bilinear_v2_grad.h"
+#include "image/resize_bilinear_v2_grad/op_api/resize_bilinear_v2_grad.h"
 #include "upsample_bilinear2d_grad.h"
 #include "aclnn_upsample_bilinear_2d_backward_v2.h"
 
