@@ -128,7 +128,7 @@ __aicore__ inline void initBufTensor(TBuf<QuePosition::VECCALC> bufferMaskXBuf_,
     bufZPattern.SetValue(NUM_5, gatherMask2);
 }
 
-__aicore__ inline void ParseTilingData(const GridSampleTilingData *tilingData, GridSampleCommonParam &commonParam)
+__aicore__ inline void ParseTilingData(const GridSampleTilingData* __restrict__ tilingData, GridSampleCommonParam &commonParam)
 {
     commonParam.coreNum_ = tilingData->coreNumVar;
     commonParam.inputN_ = tilingData->inN;

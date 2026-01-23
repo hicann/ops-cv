@@ -7,8 +7,8 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-#ifndef OP_API_INC_UNAMPLE_BILINEAR_2D_BACKWARD_H_
-#define OP_API_INC_UNAMPLE_BILINEAR_2D_BACKWARD_H_
+#ifndef OP_API_INC_UPSAMPLE_BILINEAR_2D_BACKWARD_H_
+#define OP_API_INC_UPSAMPLE_BILINEAR_2D_BACKWARD_H_
 
 #include "aclnn/aclnn_base.h"
 #include "aclnn_util.h"
@@ -34,4 +34,4 @@ ACLNN_API aclnnStatus aclnnUpsampleBilinear2dBackwardGetWorkspaceSize(const aclT
 }
 #endif
 
-#endif  // OP_API_INC_UNAMPLE_BILINEAR_2D_BACKWARD_H_
+#endif  // OP_API_INC_UPSAMPLE_BILINEAR_2D_BACKWARD_H_

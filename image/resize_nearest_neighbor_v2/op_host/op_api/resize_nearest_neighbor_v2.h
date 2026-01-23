@@ -12,8 +12,8 @@
  * \file resize_nearest_neighbor_v2.h
  * \brief resize_nearest_neighbor_v2
  */
-#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_NEAREST_OP_H_
-#define PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_NEAREST_OP_H_
+#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_OP_H_
+#define PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_OP_H_
 
 #include "opdev/op_executor.h"
 
@@ -22,4 +22,4 @@ const aclTensor *ResizeNearestNeighborV2(const aclTensor *x, const aclTensor *si
     bool alignCorners, bool halfPixelCenters, const aclTensor *y, aclOpExecutor *executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_NEAREST_OP_H_
+#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_OP_H_

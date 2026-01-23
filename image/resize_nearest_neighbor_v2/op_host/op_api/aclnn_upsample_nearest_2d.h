@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#ifndef OP_API_INC_UNAMPLE_NEAREST_2D_H_
-#define OP_API_INC_UNAMPLE_NEAREST_2D_H_
+#ifndef OP_API_INC_UPSAMPLE_NEAREST_2D_H_
+#define OP_API_INC_UPSAMPLE_NEAREST_2D_H_
 
 #include "aclnn/aclnn_base.h"
 #include "aclnn_util.h"
@@ -81,4 +81,4 @@ ACLNN_API aclnnStatus aclnnUpsampleNearest2d(
 }
 #endif
 
-#endif  // OP_API_INC_UNAMPLE_NEAREST_2D_H_
+#endif  // OP_API_INC_UPSAMPLE_NEAREST_2D_H_

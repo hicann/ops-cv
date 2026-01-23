@@ -13,8 +13,8 @@
  * \brief resize_bilinear_v2
  */
 
-#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_OP_H_
-#define PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_OP_H_
+#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_OP_H_
+#define PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_OP_H_
 
 #include "opdev/op_executor.h"
 
@@ -25,4 +25,4 @@ const aclTensor* ResizeBilinearV2With4d(
     const aclTensor* x, const aclTensor* size, const bool align_corners, const aclFloatArray* scales,
     const aclTensor* y, aclOpExecutor* executor);
 } // namespace l0op
-#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_OP_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_OP_H_

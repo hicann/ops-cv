@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#ifndef OP_API_INC_UNAMPLE_BICUBIC_H_
-#define OP_API_INC_UNAMPLE_BICUBIC_H_
+#ifndef OP_API_INC_UPSAMPLE_BICUBIC_H_
+#define OP_API_INC_UPSAMPLE_BICUBIC_H_
 
 #include "aclnn/aclnn_base.h"
 #include "aclnn_util.h"
@@ -36,4 +36,4 @@ ACLNN_API aclnnStatus aclnnUpsampleBicubic2d(
 }
 #endif
 
-#endif  // OP_API_INC_UNAMPLE_BICUBIC_H_
+#endif  // OP_API_INC_UPSAMPLE_BICUBIC_H_

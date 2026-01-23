@@ -411,17 +411,17 @@ int main()
     std::vector<int64_t> outShape = {1, 1, 3, 3};
     void *selfDeviceAddr = nullptr;
     void *outDeviceAddr = nullptr;
-    aclTensor *self = nullptr;
-    aclTensor *out = nullptr;
+    aclTensor *gradOut = nullptr;
+    aclTensor *gradInput = nullptr;
     std::vector<float> selfHostData = {1, 2, 3, 4.1};
     std::vector<float> outHostData = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // 创建self aclTensor
-    ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &self);
+    ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &gradOut);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     // 创建out aclTensor
-    ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &out);
+    ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &gradInput);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     std::vector<int64_t> outArraySize = {2, 2};
@@ -437,7 +437,7 @@ int main()
     aclOpExecutor *executor;
     // 调用aclnnUpsampleBicubic2dBackward第一段接口
     ret = aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(
-        self, outputSize, inputSize, 1, 1.1, 1.1, out, &workspaceSize, &executor);
+        gradOut, outputSize, inputSize, 1, 1.1, 1.1, gradInput, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBicubic2dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
@@ -468,8 +468,8 @@ int main()
     }
 
     // 6. 释放aclTensor，需要根据具体API的接口定义修改
-    aclDestroyTensor(self);
-    aclDestroyTensor(out);
+    aclDestroyTensor(gradOut);
+    aclDestroyTensor(gradInput);
     aclDestroyIntArray(outputSize);
     aclDestroyIntArray(inputSize);
 

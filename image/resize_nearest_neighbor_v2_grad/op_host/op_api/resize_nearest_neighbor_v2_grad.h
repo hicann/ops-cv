@@ -13,8 +13,8 @@
  * \brief resize_nearest_neighbor_v2_grad
  */
 
-#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_NEAREST_GRAD_OP_H_
-#define PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_NEAREST_GRAD_OP_H_
+#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_GRAD_OP_H_
+#define PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_GRAD_OP_H_
 
 #include "opdev/op_executor.h"
 
@@ -26,4 +26,4 @@ const aclTensor *ResizeNearestNeighborV2Grad(const aclTensor *grads, const aclIn
     bool halfPixelCenters, const aclFloatArray *scales, aclOpExecutor *executor);
 }  // namespace l0op
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_NEAREST_GRAD_OP_H_
+#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_GRAD_OP_H_

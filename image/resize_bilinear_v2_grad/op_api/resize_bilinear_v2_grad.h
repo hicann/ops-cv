@@ -12,8 +12,8 @@
  * \file resize_bilinear_v2_grad.h
  * \brief resize_bilinear_v2_grad
  */
-#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_2D_BACKWARD_OP_H_
-#define PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_2D_BACKWARD_OP_H_
+#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_2D_BACKWARD_OP_H_
+#define PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_2D_BACKWARD_OP_H_
 
 #include "opdev/op_executor.h"
 
@@ -24,4 +24,4 @@ const aclTensor *ResizeBilinearV2Grad5Hd(const aclTensor *gradOut, const aclTens
 const aclTensor *ResizeBilinearV2Grad(const aclTensor *grads, const aclTensor *originalImage, const bool alignCorners,
     const bool halfPixelCenters, const aclFloatArray *scales, aclOpExecutor *executor);
 }  // namespace l0op
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_2D_BACKWARD_OP_H_
+#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_2D_BACKWARD_OP_H_

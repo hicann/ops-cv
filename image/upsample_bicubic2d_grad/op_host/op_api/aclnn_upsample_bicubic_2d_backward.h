@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#ifndef OP_API_INC_UNAMPLE_BICUBIC_2D_BACKWARD_H_
-#define OP_API_INC_UNAMPLE_BICUBIC_2D_BACKWARD_H_
+#ifndef OP_API_INC_UPSAMPLE_BICUBIC_2D_BACKWARD_H_
+#define OP_API_INC_UPSAMPLE_BICUBIC_2D_BACKWARD_H_
 
 #include "aclnn/aclnn_base.h"
 #include "aclnn_util.h"
@@ -35,4 +35,4 @@ ACLNN_API aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTe
 }
 #endif
 
-#endif  // OP_API_INC_UNAMPLE_Bicubic_2D_BACKWARD_H_
+#endif  // OP_API_INC_UPSAMPLE_BICUBIC_2D_BACKWARD_H_
