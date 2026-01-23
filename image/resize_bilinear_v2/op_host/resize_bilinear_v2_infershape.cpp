@@ -133,14 +133,14 @@ ge::graphStatus InferShape4Resize2DWithConstSize(gert::InferShapeContext* contex
     OP_CHECK_NULL_WITH_CONTEXT(context, size_tensor);
 
     OutInfo out_size;
-    OP_LOGD(context->GetNodeName(), "begin to get size from input %ld.", IN_SIZE);
+    OP_LOGD(context->GetNodeName(), "begin to get size from input %zu.", IN_SIZE);
     OP_CHECK_IF(
         !GetSizeFor2D(context, size_tensor, out_size), OP_LOGE(context->GetNodeName(), "Get size const failed!"),
         return ge::GRAPH_FAILED);
 
-    auto x_rutime_desc = context->GetInputDesc(IN_X);
-    OP_CHECK_NULL_WITH_CONTEXT(context, x_rutime_desc);
-    ge::Format input_format = x_rutime_desc->GetOriginFormat();
+    auto x_runtime_desc = context->GetInputDesc(IN_X);
+    OP_CHECK_NULL_WITH_CONTEXT(context, x_runtime_desc);
+    ge::Format input_format = x_runtime_desc->GetOriginFormat();
     OP_CHECK_IF(
         !ResizeInfershapeFor2D(context, x_shape, input_format, out_size, y_shape),
         OP_LOGE(context->GetNodeName(), "Do ResizeInfershape failed!"), return ge::GRAPH_FAILED);
@@ -179,7 +179,7 @@ graphStatus InferDtype4ResizeBilinearV2(gert::InferDataTypeContext* context)
           outDtype == ge::DT_UINT8),
         OP_LOGE(context->GetNodeName(), "dtype should be float32, float16, bfloat16 or uint8."), return GRAPH_FAILED);
     auto xDtype = context->GetInputDataType(0);
-    OP_LOGD(context->GetNodeName(), "xDtype is %ld", (int64_t)xDtype);
+    OP_LOGD(context->GetNodeName(), "xDtype is %s", Ops::Base::ToString(xDtype).c_str());
 
     OP_CHECK_IF(
         (xDtype == ge::DT_FLOAT && (outDtype == ge::DT_FLOAT16 || outDtype == ge::DT_BF16)),

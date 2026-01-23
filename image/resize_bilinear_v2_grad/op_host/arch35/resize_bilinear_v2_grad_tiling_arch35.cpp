@@ -59,7 +59,7 @@ constexpr int64_t EVEN_FACTOR = 2;
 constexpr int64_t C_PARALLEL_GRADS_TENSOR_NUM = 1;
 constexpr int64_t C_PARALLEL_Y_TENSOR_NUM = 4;
 constexpr int64_t MIN_C_SIZE = 128;
-constexpr float_t FLT_EPSILON = 1e-6;
+constexpr float FLT_EPSILON = 1e-6;
 
 ge::graphStatus ResizeBilinearV2GradTilingAscendC::GetPlatformInfo(const ResizeBilinearV2GradCompileInfo* compileInfo)
 {

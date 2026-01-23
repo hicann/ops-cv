@@ -29,7 +29,7 @@ namespace ge {
      Dtype must be float32, float16 or bfloat16.
 *@li original_image: A 4D Tensor, represents the resized image of ResizeBilinearV2. Format must be the same as grads.
      When the dtype of grads is float16 or bfloat16, the dtype of original_image must be the same as grads, when the
-     dtype of grads is float32, the dtype of original_image can be float32, float16 or bfloat16.The N, C dimension
+     dtype of grads is float32, the dtype of original_image can be float32, float16 or bfloat16. The N, C dimension
      must be the same as grads.
 
 *@par Outputs:
@@ -38,11 +38,11 @@ namespace ge {
 *@par Attributes:
 *@li align_corners: An optional bool. If true, the centers of the 4 corner pixels of the input and output tensors are
      aligned, preserving the values at the corner pixels. Defaults to false.
-*@li half_pixel_centers: An optional bool. If true, the center of pixels locate in [0.5, 0.5]. Defaults to False. 
+*@li half_pixel_centers: An optional bool. If true, the center of pixels locate in [0.5, 0.5]. Defaults to false. 
 *@li scales: An optional listfloat which has two elements. The first element represents the ratio of the H axis
-     subscripts of pixels in grades to the H axis subscripts of pixels in y, only takes effect when align_corners is
+     subscripts of pixels in grads to the H axis subscripts of pixels in y, only takes effect when align_corners is
      true and the value is greater than 0. The second element represents the ratio of the W axis subscripts of pixels in
-     grades to the W axis subscripts of pixels in y, only takes effect when align_corners is true and the value is
+     grads to the W axis subscripts of pixels in y, only takes effect when align_corners is true and the value is
      greater than 0.0f. Defaults to {0.0f, 0.0f}. 
 
 *@par Third-party framework compatibility

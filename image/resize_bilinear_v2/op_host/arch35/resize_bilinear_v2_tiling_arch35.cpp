@@ -48,7 +48,7 @@ constexpr int64_t ONE_BLOCK_SIZE = 32;
 constexpr int64_t RSV_BLOCK_NUM = 8;
 constexpr int64_t DB_BUFF_NUM = 2;
 constexpr int64_t EVEN_FACTOR = 2;
-constexpr float_t C_PARALLEL_SCALE_THRES = 2.0f;
+constexpr float C_PARALLEL_SCALE_THRES = 2.0f;
 constexpr int64_t HW_CACHE_DB_FACTOR = 1;
 constexpr int64_t C_PARALLEL_X_TENSOR_NUM = 4;
 constexpr int64_t C_PARALLEL_Y_TENSOR_NUM = 1;
@@ -59,7 +59,7 @@ constexpr int64_t IDX_DST_H = 0;
 constexpr int64_t IDX_DST_W = 1;
 constexpr int64_t SIMT_DEFAULT_THREAD_NUM = 1024;
 constexpr int64_t SIMT_DEFAULT_THREAD_NUM_IDX64 = 512;
-static const float_t FLT_EPSILON = 1e-6;
+static const float FLT_EPSILON = 1e-6;
 
 class ResizeBilinearV2AscendCTilingImpl {
 public:
