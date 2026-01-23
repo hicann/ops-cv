@@ -23,6 +23,7 @@
 #include "opdev/platform.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -105,16 +106,18 @@ static bool CheckShape(const aclTensor *x, const aclIntArray *outputSize, const 
         return false);
     
     // 检查上边界
-    OP_CHECK(inputN < INT32_MAX && inputC < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)",
-            INT32_MAX, inputN, inputC, inputH, inputW),
-        return false);
-    OP_CHECK(outH < INT32_MAX && outW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
-            INT32_MAX, outH, outW),
-        return false);
+    if (!IsRegBase()) {
+        OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)",
+                INT32_MAX, inputN, inputC, inputH, inputW),
+            return false);
+        OP_CHECK(outH <= INT32_MAX && outW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
+                INT32_MAX, outH, outW),
+            return false);
+    }
     return true;
 }
 
@@ -151,8 +154,7 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckShape(x, outputSize, out), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 检查scale是否支持
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc != op::SocVersion::ASCEND910_95) {
+    if (!(IsRegBase())) {
         CHECK_RET(CheckMaxScaleSupport(x, outputSize, scalesH, scalesW), ACLNN_ERR_PARAM_INVALID);
     }
 
@@ -185,8 +187,8 @@ aclnnStatus aclnnUpsampleBicubic2dAAGetWorkspaceSize(const aclTensor *x, const a
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     float realScalesH = scalesH > 0 ? static_cast<float>(scalesH) : 0;
     float realScalesW = scalesW > 0 ? static_cast<float>(scalesW) : 0;
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if (curSoc != op::SocVersion::ASCEND910_95) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (!(IsRegBase(curArch))) {
         auto dtype = x->GetDataType();
         // 将fp16/bf16类型cast成fp32处理，保证精度
         if (dtype == op::DataType::DT_BF16 || dtype == op::DataType::DT_FLOAT16) {
@@ -202,7 +204,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGetWorkspaceSize(const aclTensor *x, const a
     const aclTensor *upsampleOut = l0op::UpsampleBicubic2dAA(
         selfContiguous, outputSize, alignCorners, out, realScalesH, realScalesW, uniqueExecutor.get());
     CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    if (curSoc != op::SocVersion::ASCEND910_95) {
+    if (!(IsRegBase(curArch))) {
         auto dtype = x->GetDataType();
         if (dtype == op::DataType::DT_BF16) {
             // CAST回bf16

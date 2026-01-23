@@ -24,6 +24,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -143,16 +144,18 @@ static bool CheckInputElement(
             op::ToString(gradOutput->GetStorageFormat()).GetString(),
             op::ToString(out->GetStorageFormat()).GetString()),
         return false);
-    OP_CHECK(outN < INT32_MAX && outC < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "GradOutput sizes should not be greater than %d, bug got gradOutput(%ld, %ld, %ld, %ld)",
-            INT32_MAX, outN, outC, outH, outW),
-        return false);
-    OP_CHECK(inputN < INT32_MAX && inputC < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "InputSize should not be greater than %d, bug got inputSize[%ld, %ld, %ld, %ld]",
-            INT32_MAX, inputN, inputC, inputH, inputW),
-        return false);
+    if (!IsRegBase()) {
+        OP_CHECK(outN <= INT32_MAX && outC <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "GradOutput sizes should not be greater than %d, bug got gradOutput(%ld, %ld, %ld, %ld)",
+                INT32_MAX, outN, outC, outH, outW),
+            return false);
+        OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "InputSize should not be greater than %d, bug got inputSize[%ld, %ld, %ld, %ld]",
+                INT32_MAX, inputN, inputC, inputH, inputW),
+            return false);
+    }
     return true;
 }
 

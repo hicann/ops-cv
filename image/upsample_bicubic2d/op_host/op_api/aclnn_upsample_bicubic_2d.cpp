@@ -33,6 +33,7 @@
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/reshape.h"
 #include "common/level2_base.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -44,9 +45,6 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
 
 static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
-
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_ASCEND910_95 = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
 static constexpr size_t NCHW_DIM_ZERO = 0;
@@ -79,12 +77,9 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
 
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
-    auto curSoc = GetCurrentPlatformInfo().GetSocVersion();
-    if ((curSoc >= op::SocVersion::ASCEND910B && curSoc <= op::SocVersion::ASCEND910E) ||
-        curSoc == op::SocVersion::ASCEND910_93) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
-    } else if (curSoc == op::SocVersion::ASCEND910_95) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_ASCEND910_95, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     }
@@ -130,8 +125,7 @@ static bool CheckShapeValid(const aclTensor *self, const aclIntArray *outputSize
     }
     OP_CHECK(c > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Non-empty 4D data tensor expected but got a tensor with sizes %s.",
-            op::ToString(selfShape).GetString()),
+            "Non-empty 4D data tensor expected but got a tensor with sizes %s.", op::ToString(selfShape).GetString()),
         return false);
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
@@ -142,21 +136,22 @@ static bool CheckShapeValid(const aclTensor *self, const aclIntArray *outputSize
     for (size_t i = 0; i < DIM_LIMIT; ++i) {
         OP_CHECK(outShape.GetDim(i) == fullOutputSize[i],
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "The dim %zu of out should be %ld, but got %ld",
-                i, fullOutputSize[i], outShape.GetDim(i)),
+                "The dim %zu of out should be %ld, but got %ld", i, fullOutputSize[i], outShape.GetDim(i)),
             return false);
     }
     // 校验上边界
-    OP_CHECK(n < INT32_MAX && c < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)",
-            INT32_MAX, n, c, inputH, inputW),
-        return false);
-    OP_CHECK(outputH < INT32_MAX && outputW < INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
-            INT32_MAX, outputH, outputW),
-        return false);
+    if (!IsRegBase()) {
+        OP_CHECK(n <= INT32_MAX && c <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)",
+                INT32_MAX, n, c, inputH, inputW),
+            return false);
+        OP_CHECK(outputH <= INT32_MAX && outputW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
+                INT32_MAX, outputH, outputW),
+            return false);
+    }
     return true;
 }
 
@@ -251,8 +246,8 @@ static bool CheckMaxScaleSupport(const aclTensor *self, const aclIntArray *outpu
 
 static bool CheckIsBicubic2dPlatform(const aclTensor *self)
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910B ||
-        GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_93) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;
@@ -262,8 +257,9 @@ static bool CheckIsBicubic2dPlatform(const aclTensor *self)
 
 static bool CheckIsBicubic2dPlatform310p(const aclTensor *self)
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND310P ||
-        GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND310B) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2002 ||
+        curArch == NpuArch::DAV_3002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;
@@ -272,7 +268,7 @@ static bool CheckIsBicubic2dPlatform310p(const aclTensor *self)
 }
 }  // namespace
 
-aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeAscend910_95(const aclTensor *self, const aclIntArray *outputSize,
+aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(const aclTensor *self, const aclIntArray *outputSize,
     const bool alignCorners, const double scalesH, const double scalesW, aclTensor *out, uint64_t *workspaceSize,
     aclOpExecutor **executor)
 {
@@ -320,8 +316,8 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const 
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
     L2_DFX_PHASE_1(aclnnUpsampleBicubic2d, DFX_IN(self, outputSize, alignCorners, scalesH, scalesW), DFX_OUT(out));
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910_95) {
-        return aclnnUpsampleBicubic2dGetWorkspaceSizeAscend910_95(
+    if (IsRegBase()) {
+        return aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(
             self, outputSize, alignCorners, scalesH, scalesW, out, workspaceSize, &(*executor));
     }
     // 固定写法，创建OpExecutor

@@ -24,6 +24,7 @@
 #include "opdev/make_op_executor.h"
 #include "common/level2_base.h"
 #include "aclnn_upsample_trilinear_3d_backward.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -101,6 +102,9 @@ static bool CheckInputElement(
 
 static bool CheckUplimit(const aclTensor* gradOut, const aclTensor* gradInput)
 {
+    if (IsRegBase()) {
+        return true;
+    }
     int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
     int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
     int64_t outD = gradOut->GetViewShape().GetDim(DIM_TWO);
@@ -112,12 +116,12 @@ static bool CheckUplimit(const aclTensor* gradOut, const aclTensor* gradInput)
     int64_t inputH = gradOut->GetViewShape().GetDim(DIM_THREE);
     int64_t inputW = gradOut->GetViewShape().GetDim(DIM_FOUR);
 
-    OP_CHECK(gradOutN < INT32_MAX && gradOutC < INT32_MAX && outD < INT32_MAX && outH < INT32_MAX && outW < INT32_MAX,
+    OP_CHECK(gradOutN <= INT32_MAX && gradOutC <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld, %ld)",
             INT32_MAX, gradOutN, gradOutC, outD, outH, outW),
         return false);
-    OP_CHECK(inputN < INT32_MAX && inputC < INT32_MAX && inputD < INT32_MAX && inputH < INT32_MAX && inputW < INT32_MAX,
+    OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld, %ld)",
             INT32_MAX, inputN, inputC, inputD , inputH , inputW),

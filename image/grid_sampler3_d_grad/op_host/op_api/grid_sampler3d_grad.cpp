@@ -72,8 +72,8 @@ const std::tuple<aclTensor*, aclTensor*> GridSampler3DGrad(
     const auto& inputShape = input->GetViewShape();
     auto channel = input->GetStorageFormat() == op::Format::FORMAT_NCDHW ? inputShape.GetDim(SECOND_DIM) :
                                                                            inputShape.GetDim(FIFTH_DIM);
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
-    if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if ((curArch == NpuArch::DAV_2201) &&
         CheckType(gradOutput->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
         CheckType(input->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
         CheckType(grid->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) && channel <= AICORE_CHANNEL_LIMIT) {

@@ -64,6 +64,8 @@ constexpr uint32_t DIM_INDEX3 = 3;
 constexpr uint32_t RESERVED_UB = 2U * 1024U;
 constexpr uint32_t RESERVED_UB_CAST = 20U * 1024U;
 constexpr uint32_t ALIGN_256_BYTES = 256;
+constexpr uint8_t SCHEDULE_MODE = 1;
+
 static std::map<std::string, int> INTER_MODE_MAP = {{"bilinear", 0}, {"nearest", 1}, {"bicubic", 2}};
 static std::map<std::string, int> PADDING_MODE_MAP = {{"zeros", 0}, {"border", 1}, {"reflection", 2}};
 static std::map<bool, int> ALIGN_MODE_MAP = {{true, 1}, {false, 0}};
@@ -368,15 +370,19 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 0) {
         sysWorkspaceSize += xWorkspaceSize;
         params.tilingKey = FLOAT16_BILINEAR_TILING_KEY; // mode1: float16, bilinear
+        tilingContext->SetScheduleMode(SCHEDULE_MODE);
     } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 1) {
         sysWorkspaceSize += xWorkspaceSize;
         params.tilingKey = FLOAT16_NEAREST_TILING_KEY; // mode2: float16, nearest
+        tilingContext->SetScheduleMode(SCHEDULE_MODE);
     } else if (dtype == ge::DT_BF16 && params.interpolation == 0) {
         sysWorkspaceSize += xWorkspaceSize;
         params.tilingKey = BFLOAT16_BILINEAR_TILING_KEY; // mode1: bfloat16, bilinear
+        tilingContext->SetScheduleMode(SCHEDULE_MODE);
     } else if (dtype == ge::DT_BF16 && params.interpolation == 1) {
         sysWorkspaceSize += xWorkspaceSize;
         params.tilingKey = BFLOAT16_NEAREST_TILING_KEY; // mode2: bfloat16, nearest
+        tilingContext->SetScheduleMode(SCHEDULE_MODE);
     }
     size_t* currentWorkspace = tilingContext->GetWorkspaceSizes(1);
     OP_CHECK_IF(

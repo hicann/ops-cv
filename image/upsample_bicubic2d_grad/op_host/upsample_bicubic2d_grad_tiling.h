@@ -31,6 +31,7 @@ constexpr uint32_t NUM_PER_BLOCK_FLOAT16 = 16;
 constexpr uint32_t NUM_PER_BLOCK_FLOAT32 = 8;
 constexpr float THRESHOLD = 0.25;
 constexpr float MAX_SCALE = 50;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 enum class UpsampleBicubic2dGradTilingKey : uint64_t {
     BASE_MODE = 10000001,

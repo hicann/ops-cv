@@ -251,6 +251,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetWorkspaceSize()
     size_t* workspaces = context_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, workspaces);
     workspaces[0] = WORKSPACE_SIZE;
+    context_->SetScheduleMode(1);
     return ge::GRAPH_SUCCESS;
 }
 

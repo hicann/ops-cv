@@ -181,8 +181,9 @@ static bool CheckTranspose(const aclTensor* input)
     const auto& inputShape = input->GetViewShape();
     auto channel = input->GetStorageFormat() == op::Format::FORMAT_NDHWC ? inputShape.GetDim(FIFTH_DIM) :
                                                                            inputShape.GetDim(SECOND_DIM);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if ((input->GetStorageFormat() == op::Format::FORMAT_NCDHW || input->GetStorageFormat() == op::Format::FORMAT_ND) &&
-        (channel <= AICORE_CHANNEL_LIMIT) && GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B) {
+        (channel <= AICORE_CHANNEL_LIMIT) && (curArch != NpuArch::DAV_1001)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(input, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;

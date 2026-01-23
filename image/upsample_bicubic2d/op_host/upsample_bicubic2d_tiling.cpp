@@ -56,6 +56,7 @@ constexpr uint32_t ADDR_ALIGN_SIZE = 512;
 
 constexpr uint16_t SOC_VERSION_310P = 200;
 constexpr uint16_t SOC_VERSION_910B = 220;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBicubic2dTiling {
 public:
@@ -581,6 +582,7 @@ void UpsampleBicubic2dTiling::FillTilingData()
 static ge::graphStatus tiling4UpsampleBicubic2dTiling(gert::TilingContext *context)
 {
     UpsampleBicubic2dTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 
@@ -593,9 +595,8 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAic();
     compileInfo->socVersionType = SOC_VERSION_910B;
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    if (socVersion == platform_ascendc::SocVersion::ASCEND310P ||
-        socVersion == platform_ascendc::SocVersion::ASCEND310B) {
+    auto npuArch = ascendcPlatform.GetCurNpuArch();
+    if (npuArch == NpuArch::DAV_2002 || npuArch == NpuArch::DAV_3002) {
         compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
         compileInfo->socVersionType = SOC_VERSION_310P;
     }

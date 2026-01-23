@@ -25,6 +25,7 @@
 #include "opdev/tensor_view_utils.h"
 #include "aclnn_kernels/cast.h"
 #include "common/level2_base.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -54,8 +55,8 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
 
 static inline bool CheckSocVersionGe910B(void)
 {
-    return GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B &&
-           GetCurrentPlatformInfo().GetSocVersion() <= SocVersion::ASCEND910E;
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    return curArch == NpuArch::DAV_2201 || IsRegBase(curArch);
 }
 
 static inline const std::initializer_list<op::DataType> &GetDtypeSupportList()
@@ -172,8 +173,9 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
 
 static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
 {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     return input->GetDataType() != op::DataType::DT_DOUBLE && (interpolationMode == 0 || interpolationMode == 1) &&
-           GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B &&
+           (curArch != NpuArch::DAV_1001) &&
            input->GetViewShape().GetDim(SECOND_DIM) <= MAX_CHANNEL_SIZE;
 }
 
@@ -241,8 +243,9 @@ aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(const aclTensor *gradOutp
     CHECK_RET(inputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     int64_t dimSize = static_cast<int64_t>(inputContiguous->GetViewShape().GetDimNum());
     bool transposeFlag = CheckDtypeAndChannelCanTranspose(input, interpolationMode, paddingMode);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     bool castFlag = input->GetDataType() == op::DataType::DT_FLOAT16 &&
-                    GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910;
+                    curArch == NpuArch::DAV_1001;
     std::tuple<aclTensor *, aclTensor *> gridSampler2DBackwardOut;
     if (transposeFlag) {
         std::vector<int64_t> perm = {0, 2, 3, 1};

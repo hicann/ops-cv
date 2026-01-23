@@ -76,9 +76,9 @@ const aclTensor* UpsampleTrilinear3dGradNcdhw(
     float scaleH = ComputeScalesGrad(scales_h, outShape.GetDim(DIM_THREE), inputShape.GetDim(DIM_THREE));
     float scaleD = ComputeScalesGrad(scales_d, outShape.GetDim(DIM_TWO), inputShape.GetDim(DIM_TWO));
 
-    auto socVer = GetCurrentPlatformInfo().GetSocVersion();
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     auto dataType = gradOut->GetDataType();
-    if ((socVer == SocVersion::ASCEND910B || socVer == SocVersion::ASCEND910_93) &&
+    if ((curArch == NpuArch::DAV_2201) &&
         CheckType(gradOut->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) && CheckScalesGrad(scaleW, scaleH, scaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
             gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);

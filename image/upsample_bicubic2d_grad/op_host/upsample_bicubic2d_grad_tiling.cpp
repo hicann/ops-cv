@@ -589,6 +589,7 @@ ge::graphStatus UpsampleBicubic2dGradTiling::runTiling(gert::TilingContext *cont
 ge::graphStatus TilingForUpsampleBicubic2dGrad(gert::TilingContext *context)
 {
     UpsampleBicubic2dGradTiling tiling_handle;
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tiling_handle.runTiling(context);
 }
 

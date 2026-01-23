@@ -28,6 +28,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "common/aclnn_check.h"
 #include "runtime/context.h"
 #include "common/level2_base.h"
 
@@ -43,7 +44,7 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910 = {
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910B = {
     op::DataType::DT_BF16, op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_ASCEND910_95 = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
 static const int64_t DIM_LIMIT = 4;
@@ -72,11 +73,11 @@ static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *gradInput
 {
     // Check if the data type of gradOut is in the supported list of
     // the ResizeBicubicV2Grad operator
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_ASCEND910_95, return false);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (IsRegBase(curArch)) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_REGBASE, return false);
     } else {
-        bool is910BSocVersion = (GetCurrentPlatformInfo().GetSocVersion() <= SocVersion::ASCEND910E &&
-                                 GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B);
+        bool is910BSocVersion = (curArch == NpuArch::DAV_2201 || IsRegBase(curArch));
         const std::initializer_list<op::DataType> dtypeSupportList =
             is910BSocVersion ? DTYPE_SUPPORT_LIST_910B : DTYPE_SUPPORT_LIST_910;
 
@@ -94,7 +95,7 @@ static bool CheckShape(
     // NCHW NHWC和ND格式判断
     auto srcOriginFormat = gradOut->GetOriginalFormat();
     bool supportFormat = false;
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    if (IsRegBase()) {
         supportFormat = srcOriginFormat == op::Format::FORMAT_ND || srcOriginFormat == op::Format::FORMAT_NCHW ||
                         srcOriginFormat == op::Format::FORMAT_NHWC;
         OP_CHECK(supportFormat,
@@ -315,22 +316,16 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
     const float scalesHeight = computeScale(scalesH, (*inputSize)[DIM_TWO], (*outputSize)[DIM_ZERO], alignCorners);
     const aclTensor *gradOutContiguous = nullptr;
     const aclTensor *gradInputContiguous = nullptr;
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (IsRegBase(curArch)) {
         // constuct aclFloatArray
         const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
         const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, EXPECT_SIZE);
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        auto gradOutCopy =
-            (uniqueExecutor.get())->CreateView(gradOut, gradOut->GetViewShape(), gradOut->GetViewOffset());
-        CHECK_RET(gradOutCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        auto gradInputCopy =
-            (uniqueExecutor.get())->CreateView(gradInput, gradInput->GetViewShape(), gradInput->GetViewOffset());
-        CHECK_RET(gradInputCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-        gradOutContiguous = l0op::Contiguous(gradOutCopy, uniqueExecutor.get());
+        gradOutContiguous = l0op::Contiguous(gradOut, uniqueExecutor.get());
         CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        gradInputContiguous = l0op::Contiguous(gradInputCopy, uniqueExecutor.get());
+        gradInputContiguous = l0op::Contiguous(gradInput, uniqueExecutor.get());
         CHECK_RET(gradInputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // const aclTensor* kernelOut;
@@ -342,11 +337,6 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
             }
         }
 
-        if (gradOut->GetStorageFormat() == op::Format::FORMAT_ND) {
-            gradOutContiguous = l0op::ReFormat(gradOutContiguous, static_cast<op::Format>(ACL_FORMAT_NCHW));
-            gradInputContiguous = l0op::ReFormat(gradInputContiguous, static_cast<op::Format>(ACL_FORMAT_NCHW));
-        }
-
         auto originalImage = uniqueExecutor.get()->AllocTensor(
             imageShape, gradOutContiguous->GetDataType(), gradOutContiguous->GetStorageFormat());
         CHECK_RET(originalImage != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -354,20 +344,10 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
             gradOutContiguous, originalImage, alignCorners, scales, gradInputContiguous, uniqueExecutor.get());
         CHECK_RET(kernelOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        const aclTensor *kernelOutCopy =
-            (uniqueExecutor.get())->CreateView(kernelOut, kernelOut->GetViewShape(), kernelOut->GetViewOffset());
-        CHECK_RET(kernelOutCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-        if (gradInput->GetStorageFormat() == op::Format::FORMAT_ND) {
-            kernelOutCopy =
-                const_cast<aclTensor *>(l0op::ReFormat(kernelOutCopy, static_cast<op::Format>(ACL_FORMAT_ND)));
-        }
-
         // view copy out
-        auto viewCopyResult = l0op::ViewCopy(kernelOutCopy, gradInput, uniqueExecutor.get());
+        auto viewCopyResult = l0op::ViewCopy(kernelOut, gradInput, uniqueExecutor.get());
         CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    } else if (GetCurrentPlatformInfo().GetSocVersion() <= SocVersion::ASCEND910E &&
-               GetCurrentPlatformInfo().GetSocVersion() >= SocVersion::ASCEND910B &&
+    } else if ((curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) &&
                CheckType(gradOut->GetDataType(), DTYPE_SUPPORT_LIST_910B) &&
                CheckCanCalc(inputSize, scalesHeight, scalesWidth)) {
         gradOutContiguous = l0op::Contiguous(gradOut, uniqueExecutor.get());
@@ -421,7 +401,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
 
         // gradout transpose
         bool fp16Cast =
-            (deterministicValue == 1) || (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910);
+            (deterministicValue == 1) || (curArch == NpuArch::DAV_1001);
         if (fp16Cast && dtype == op::DataType::DT_FLOAT16) {
             castFp32Condition = FP16_DETERMINSTIC_CAST;
             gradOutContiguous = ContiguousCast(gradOut, op::DataType::DT_FLOAT, uniqueExecutor.get());

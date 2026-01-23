@@ -50,14 +50,14 @@ public:
         int64_t twiceHigh, int32_t calCount);
     __aicore__ inline void ComputeAfterTransposeGridGrad(
         LocalTensor<int32_t> srcIndex, LocalTensor<T> yCoor1, LocalTensor<T> yCoor2, LocalTensor<T> xCoor1,
-        LocalTensor<T> xCoor2, LocalTensor<T> gOutLocalTensor, LocalTensor<T> selTensor, const int32_t coorIndex,
-        const int32_t batchIdx);
+        LocalTensor<T> xCoor2, LocalTensor<T> gOutLocalTensor, LocalTensor<T> yIndex, LocalTensor<T> xIndex,
+        const int32_t coorIndex, const int32_t batchIdx);
     __aicore__ inline void ComputeAfterTransposeXGrad(
         LocalTensor<int32_t> srcIndex, LocalTensor<T> weight, const int32_t coorIndex, const int64_t ncOffset,
-        LocalTensor<T> gOutLocalTensor);
+        LocalTensor<T> gOutLocalTensor, LocalTensor<T> yIndex, LocalTensor<T> xIndex);
     __aicore__ inline void ComputeNearestXGrad(
         LocalTensor<int32_t> srcIndex, LocalTensor<T> weight, const int32_t coorIndex, const int32_t cycle,
-        const int64_t ncOffset, LocalTensor<T> gOutLocalTensor);
+        const int64_t ncOffset, LocalTensor<T> gOutLocalTensor, LocalTensor<T> yIndex, LocalTensor<T> xIndex);
     __aicore__ inline void WithinBounds2d(
         LocalTensor<T> dst, LocalTensor<T> iyT, LocalTensor<T> ixT, LocalTensor<T> weight, const int32_t calCount);
     __aicore__ inline void DupValue();
@@ -112,6 +112,8 @@ private:
 
     TBuf<TPosition::VECCALC> mask1Buf;
     TBuf<TPosition::VECCALC> mask2Buf;
+    TBuf<TPosition::VECCALC> mask3Buf;
+
     TBuf<TPosition::VECCALC> dupOneBuf;
     TBuf<TPosition::VECCALC> selBuf1;
     TBuf<TPosition::VECCALC> selBuf2;
@@ -208,6 +210,7 @@ private:
 
     LocalTensor<uint8_t> mask1Tensor;
     LocalTensor<uint8_t> mask2Tensor;
+    LocalTensor<uint8_t> mask3Tensor;
     LocalTensor<uint16_t> int8ToInt16Mask1;
     LocalTensor<uint16_t> int8ToInt16Mask2;
     LocalTensor<T> dupOneTensor;
@@ -319,6 +322,7 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 
         pipe->InitBuffer(mask1Buf, maskSize);
         pipe->InitBuffer(mask2Buf, maskSize);
+        pipe->InitBuffer(mask3Buf, maskSize);
 
         pipe->InitBuffer(dupOneBuf, ubFactorElement * sizeof(T));
         pipe->InitBuffer(selBuf1, ubFactorElement * sizeof(T));
@@ -373,6 +377,7 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
         pipe->InitBuffer(selBuf1, ubFactorElement * sizeof(T));
         pipe->InitBuffer(mask1Buf, maskSize);
         pipe->InitBuffer(mask2Buf, maskSize);
+        pipe->InitBuffer(mask3Buf, maskSize);
 
         pipe->InitBuffer(dupOneBuf, ubFactorElement * sizeof(T));
         pipe->InitBuffer(clipLimitBuf, ubFactorElement * sizeof(T));
@@ -395,6 +400,7 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 {
     mask1Tensor = mask1Buf.Get<uint8_t>(maskNum);
     mask2Tensor = mask2Buf.Get<uint8_t>(maskNum);
+    mask3Tensor = mask3Buf.Get<uint8_t>(maskNum);
     dupOneTensor = dupOneBuf.Get<T>(ubFactorElement);
     tmpIndex = computeIndexBuf1.Get<int32_t>(ubFactorElement);
     selTensor1 = selBuf1.Get<T>(ubFactorElement);
@@ -413,6 +419,7 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 {
     mask1Tensor = mask1Buf.Get<uint8_t>(maskNum);
     mask2Tensor = mask2Buf.Get<uint8_t>(maskNum);
+    mask3Tensor = mask3Buf.Get<uint8_t>(maskNum);
     dupOneTensor = dupOneBuf.Get<T>(ubFactorElement);
     tmpIndex = computeIndexBuf1.Get<int32_t>(ubFactorElement);
     selTensor1 = selBuf1.Get<T>(ubFactorElement);
@@ -440,6 +447,9 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     }
     int32_t newCalCount = ((calCount * FLOAT_BYTES - 1 + ALGIN_256_BYTES) / ALGIN_256_BYTES * ALGIN_256_BYTES) / 4;
     if (padding == 1) {
+        // NAN NE NAN == TRUE, mask3是NAN的mask
+        Compare(mask3Tensor, dataTensor, dataTensor, CMPMODE::EQ, newCalCount);
+        PipeBarrier<PIPE_V>();
         CompareScalar(mask1Tensor, dataTensor, static_cast<T>(0), CMPMODE::GT, newCalCount);
         Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
         Select(dupTensor, mask1Tensor, dupTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
@@ -449,15 +459,31 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
             newCalCount);
         Select(dupTensor, mask1Tensor, dupTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
     } else if (padding == 2) {
+        LocalTensor<T> tmpDataTensor = tmp6Buf.Get<T>();
+        Muls(tmpDataTensor, dataTensor, (float)(0.0), newCalCount);
+        PipeBarrier<PIPE_V>();
+        Compare(mask3Tensor, tmpDataTensor, tmpDataTensor, CMPMODE::EQ, newCalCount);
+        PipeBarrier<PIPE_V>();
         ReflectCoordinatesCommon(dataTensor, dupTensor, size, newCalCount);
     }
     // If the data is inf/-inf/nan, convert the data to -100.
     CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MAX - 1), CMPMODE::LE, newCalCount);
+    PipeBarrier<PIPE_V>();
     Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+    PipeBarrier<PIPE_V>();
     CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MIN), CMPMODE::GE, newCalCount);
+    PipeBarrier<PIPE_V>();
     Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+    PipeBarrier<PIPE_V>();
     Compare(mask1Tensor, dataTensor, dataTensor, CMPMODE::EQ, newCalCount);
+    PipeBarrier<PIPE_V>();
     Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+    PipeBarrier<PIPE_V>();
+    if (padding == 1 || padding == 2) {
+        // nan输入重新赋值为-100
+        Select(dataTensor, mask3Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        PipeBarrier<PIPE_V>();
+    }
 }
 
 template <typename T, typename Dtype, typename GridSamplerGradTilingData>
@@ -577,7 +603,6 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
         CompareScalar(mask1Tensor, ixT, static_cast<T>(fwidth), CMPMODE::LT, newCalCount);
         And(int8ToInt16Mask2, int8ToInt16Mask1, int8ToInt16Mask2, maskNum / 2);
         Select(dst, int8ToInt16Mask2, dupOneTensor, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
-        Select(weight, int8ToInt16Mask2, weight, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
     }
     if (interpolation == 1) {
         CompareScalar(mask1Tensor, iyT, static_cast<T>(0), CMPMODE::GE, newCalCount);
@@ -591,7 +616,6 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
         And(int8ToInt16Mask2, int8ToInt16Mask1, int8ToInt16Mask2, maskNum / 2);
         CompareScalar(mask1Tensor, ixT, static_cast<T>(fwidth), CMPMODE::LT, newCalCount);
         And(int8ToInt16Mask2, int8ToInt16Mask1, int8ToInt16Mask2, maskNum / 2);
-        Select(weight, int8ToInt16Mask2, weight, static_cast<T>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
     }
 }
 
@@ -627,15 +651,24 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 template <typename T, typename Dtype, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData>::ComputeAfterTransposeGridGrad(
     LocalTensor<int32_t> srcIndex, LocalTensor<T> yCoor1, LocalTensor<T> yCoor2, LocalTensor<T> xCoor1,
-    LocalTensor<T> xCoor2, LocalTensor<T> gOutLocalTensor, LocalTensor<T> selTensor, const int32_t coorIndex,
-    const int32_t batchIdx)
+    LocalTensor<T> xCoor2, LocalTensor<T> gOutLocalTensor, LocalTensor<T> yIndex, LocalTensor<T> xIndex,
+    const int32_t coorIndex, const int32_t batchIdx)
 {
+    int32_t y = yIndex.GetValue(coorIndex);
+    int32_t x = xIndex.GetValue(coorIndex);
+
+    bool inRangeY = y >= 0 && y < height;
+    bool inRangeX = x >= 0 && x < width;
+
+    if (!(inRangeY && inRangeX)) {
+        return;
+    }
+
     // Get the coordinates of the i-th point
     pointIndex = srcIndex.GetValue(coorIndex);
     xGmOffset = batchIdx * inputStrideN + pointIndex;
     T xVal = yCoor1.GetValue(coorIndex) - yCoor2.GetValue(coorIndex);
     T yVal = xCoor1.GetValue(coorIndex) - xCoor2.GetValue(coorIndex);
-    T flag = selTensor.GetValue(coorIndex);
 
     LocalTensor<Dtype> inputXLocalTempTensor = dataInQueue[1].AllocTensor<Dtype>();
     DataCopyParams copyParams = {1, 0, 0, 0};
@@ -652,10 +685,9 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     Cast(inputXLocalTensor, inputXLocalTempTensor, mode, alignChannel);
     Muls(giyLocalTensor, inputXLocalTensor, yVal, channel);
     Mul(giyLocalTensor, gOutLocalTensor, giyLocalTensor, channel);
-    Muls(giyLocalTensor, giyLocalTensor, flag, channel);
     Muls(gixLocalTensor, inputXLocalTensor, xVal, channel);
     Mul(gixLocalTensor, gOutLocalTensor, gixLocalTensor, channel);
-    Muls(gixLocalTensor, gixLocalTensor, flag, channel);
+
     Add(sumY, giyLocalTensor, sumY, channel);
     Add(sumX, gixLocalTensor, sumX, channel);
     dataInQueue[1].FreeTensor(inputXLocalTempTensor);
@@ -664,10 +696,23 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
 template <typename T, typename Dtype, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData>::ComputeAfterTransposeXGrad(
     LocalTensor<int32_t> srcIndex, LocalTensor<T> weight, const int32_t coorIndex, const int64_t ncOffset,
-    LocalTensor<T> gOutLocalTensor)
+    LocalTensor<T> gOutLocalTensor, LocalTensor<T> yIndex, LocalTensor<T> xIndex)
 {
+    int32_t y = yIndex.GetValue(coorIndex);
+    int32_t x = xIndex.GetValue(coorIndex);
+
+    bool inRangeY = y >= 0 && y < height;
+    bool inRangeX = x >= 0 && x < width;
+
+    if (!(inRangeX && inRangeY)) {
+        return;
+    }
     T weigthVal = weight.GetValue(coorIndex);
     int64_t offset = ncOffset + srcIndex.GetValue(coorIndex);
+    event_t eventIDMTE3_V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+    SetFlag<HardEvent::MTE3_V>(eventIDMTE3_V);
+    WaitFlag<HardEvent::MTE3_V>(eventIDMTE3_V);
+
     LocalTensor<T> localTensor = dataOutQueue[0].AllocTensor<T>();
     event_t eventID1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
     SetFlag<HardEvent::S_V>(eventID1);
@@ -681,22 +726,32 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     SetAtomicAdd<T>();
     DataCopyPad(inputGmT[offset], localTensor, copyParams);
     SetAtomicNone();
+    PipeBarrier<PIPE_MTE3>();
     dataOutQueue[0].FreeTensor(localTensor);
 }
 
 template <typename T, typename Dtype, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData>::ComputeNearestXGrad(
     LocalTensor<int32_t> srcIndex, LocalTensor<T> weight, const int32_t coorIndex, const int32_t cycle,
-    const int64_t ncOffset, LocalTensor<T> gOutLocalTensor)
+    const int64_t ncOffset, LocalTensor<T> gOutLocalTensor, LocalTensor<T> yIndex, LocalTensor<T> xIndex)
 {
+    int32_t x = xIndex.GetValue(coorIndex);
+    int32_t y = yIndex.GetValue(coorIndex);
+
+    bool inRangeX = x >= 0 && x < width;
+    bool inRangeY = y >= 0 && y < height;
+
+    if (!(inRangeX && inRangeY)) {
+        return;
+    }
     T weigthVal = weight.GetValue(coorIndex);
     int64_t offset = ncOffset + srcIndex.GetValue(coorIndex);
+
     event_t eventMTE3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
     SetFlag<HardEvent::MTE3_V>(eventMTE3ToV);
     WaitFlag<HardEvent::MTE3_V>(eventMTE3ToV);
 
     LocalTensor<T> localTensor = dataOutQueue[0].AllocTensor<T>();
-
     Muls(localTensor, gOutLocalTensor[cycle * alignChannel], weigthVal, channel);
     event_t eventID = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
     SetFlag<HardEvent::V_MTE3>(eventID);
@@ -898,14 +953,15 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
             WaitFlag<HardEvent::MTE2_V>(eventID1);
             Cast(gOutLocalTensor, gOutLocalTempTensor, mode, alignChannel);
 
-            ComputeAfterTransposeGridGrad(nwIndex, iySe, yTensor, ixSe, xTensor, gOutLocalTensor, selTensor1, i, n);
-            ComputeAfterTransposeXGrad(nwIndex2, nw, i, ncBaseOffset, gOutLocalTensor);
-            ComputeAfterTransposeGridGrad(neIndex, yTensor, iySw, xTensor, ixSw, gOutLocalTensor, selTensor2, i, n);
-            ComputeAfterTransposeXGrad(neIndex2, ne, i, ncBaseOffset, gOutLocalTensor);
-            ComputeAfterTransposeGridGrad(swIndex, yTensor, iyNe, xTensor, ixNe, gOutLocalTensor, selTensor3, i, n);
-            ComputeAfterTransposeXGrad(swIndex2, sw, i, ncBaseOffset, gOutLocalTensor);
-            ComputeAfterTransposeGridGrad(seIndex, iyNw, yTensor, ixNw, xTensor, gOutLocalTensor, selTensor4, i, n);
-            ComputeAfterTransposeXGrad(seIndex2, se, i, ncBaseOffset, gOutLocalTensor);
+            ComputeAfterTransposeGridGrad(nwIndex, iySe, yTensor, ixSe, xTensor, gOutLocalTensor, iyNw, ixNw, i, n);
+            ComputeAfterTransposeXGrad(nwIndex2, nw, i, ncBaseOffset, gOutLocalTensor, iyNw, ixNw);
+            ComputeAfterTransposeGridGrad(neIndex, yTensor, iySw, xTensor, ixSw, gOutLocalTensor, iyNe, ixNe, i, n);
+            ComputeAfterTransposeXGrad(neIndex2, ne, i, ncBaseOffset, gOutLocalTensor, iyNe, ixNe);
+            ComputeAfterTransposeGridGrad(swIndex, yTensor, iyNe, xTensor, ixNe, gOutLocalTensor, iySw, ixSw, i, n);
+            ComputeAfterTransposeXGrad(swIndex2, sw, i, ncBaseOffset, gOutLocalTensor, iySw, ixSw);
+            ComputeAfterTransposeGridGrad(seIndex, iyNw, yTensor, ixNw, xTensor, gOutLocalTensor, iySe, ixSe, i, n);
+            ComputeAfterTransposeXGrad(seIndex2, se, i, ncBaseOffset, gOutLocalTensor, iySe, ixSe);
+
             ReduceSum<T>(sumY, sumY, sumY, channel); // resue sumY as worklocal
             ReduceSum<T>(sumX, sumX, sumX, channel);
             gix -= sumX.GetValue(0);
@@ -960,7 +1016,8 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
                     gridPointIndex = curGridPointIndex + i * group + k;
                     n = gridPointIndex / (outH * outW);
                     ncBaseOffset = n * dxStrideN;
-                    ComputeNearestXGrad(xIndex, dupOneTensor, i * group + k, k, ncBaseOffset, gOutLocalTensor);
+                    ComputeNearestXGrad(xIndex, dupOneTensor, i * group + k, k, ncBaseOffset, gOutLocalTensor,
+                                        iyFloat, ixFloat);
                 }
                 dataInQueue[0].FreeTensor(gOutLocalTempTensor);
             }
@@ -977,7 +1034,8 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
                 SetFlag<HardEvent::MTE2_S>(eventID);
                 WaitFlag<HardEvent::MTE2_S>(eventID);
                 Cast(gOutLocalTensor, gOutLocalTempTensor, mode, alignChannel * group);
-                ComputeNearestXGrad(xIndex, dupOneTensor, times * group + i, 0, ncBaseOffset, gOutLocalTensor);
+                ComputeNearestXGrad(xIndex, dupOneTensor, times * group + i, 0, ncBaseOffset, gOutLocalTensor,
+                                    iyFloat, ixFloat);
                 dataInQueue[0].FreeTensor(gOutLocalTempTensor);
             }
         } else {
@@ -994,7 +1052,7 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
                 SetFlag<HardEvent::MTE2_S>(eventID);
                 WaitFlag<HardEvent::MTE2_S>(eventID);
                 Cast(gOutLocalTensor, gOutLocalTempTensor, mode, alignChannel * group);
-                ComputeNearestXGrad(xIndex, dupOneTensor, i, 0, ncBaseOffset, gOutLocalTensor);
+                ComputeNearestXGrad(xIndex, dupOneTensor, i, 0, ncBaseOffset, gOutLocalTensor, iyFloat, ixFloat);
                 dataInQueue[0].FreeTensor(gOutLocalTempTensor);
             }
         }

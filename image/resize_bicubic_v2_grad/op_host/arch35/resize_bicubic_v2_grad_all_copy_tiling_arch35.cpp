@@ -79,7 +79,6 @@ ge::graphStatus ResizeBicubicV2GradAllCopyTiling::PostTiling()
         return ge::GRAPH_FAILED);
     tilingData_.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
-
     return ge::GRAPH_SUCCESS;
 }
 

@@ -72,6 +72,7 @@ constexpr int8_t SCALEX_INDEX = 3;
 constexpr int8_t SCALEY_INDEX = 4;
 constexpr int8_t TEMP_INDEX = 0;
 constexpr int8_t DOUBLE_SIZE = 2;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBicubic2dAAGradTiling {
 public:
@@ -591,6 +592,7 @@ void UpsampleBicubic2dAAGradTiling::FillTilingData()
 static ge::graphStatus tiling4UpsampleBicubicAAGradTiling(gert::TilingContext *context)
 {
     UpsampleBicubic2dAAGradTiling tilingObject(context);
+    context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 

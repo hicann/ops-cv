@@ -34,8 +34,9 @@ const aclTensor *UpsampleBicubic2d(const aclTensor *input, const aclIntArray *ou
     L0_DFX(UpsampleBicubic2d, input, output_size, align_corners, scales_h, scales_w, output);
 
     aclTensor *out = nullptr;
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND310P ||
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND310B) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2002 ||
+        curArch == NpuArch::DAV_3002) {
         out = executor->AllocTensor(output->GetViewShape(), output->GetDataType(), output->GetViewFormat());
     } else {
         out = executor->AllocTensor(output->GetViewShape(), op::DataType::DT_FLOAT, output->GetViewFormat());

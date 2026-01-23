@@ -17,6 +17,7 @@
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 #include "tiling/platform/platform_ascendc.h"
+#include "tiling_base/tiling_util.h"
 #include "log/log.h"
 #include "upsample_bicubic2d_aa_tiling.h"
 
@@ -44,13 +45,14 @@ constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
 constexpr uint32_t BYTE_LEN_4 = 4;
 constexpr uint32_t BYTE_LEN_2 = 2;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 constexpr uint32_t DOUBLE_VALUE = 2;
 
 class UpsampleBicubic2dAATiling {
 public:
     explicit UpsampleBicubic2dAATiling(gert::TilingContext *context) : tilingContext(context){};
-    ge::graphStatus RunBigKernelTiling();
+    ge::graphStatus RunBigKernelTiling(gert::TilingContext *context);
 
 private:
     void SetScale();
@@ -167,11 +169,9 @@ inline float UpsampleBicubic2dAATiling::ComputeScaleValue(
     }
 }
 
-ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling()
+ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling(gert::TilingContext *context)
 {
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(tilingContext->GetPlatformInfo());
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    bool regBase = socVersion == platform_ascendc::SocVersion::ASCEND910_95;
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     if (regBase) {
         OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleBicubic2dAARegbase");
         return Tiling4UpsampleBicubic2dAARegbase(tilingContext);
@@ -524,7 +524,8 @@ void UpsampleBicubic2dAATiling::FillTilingData()
 static ge::graphStatus Tiling4UpsampleBicubic2dAA(gert::TilingContext *context)
 {
     UpsampleBicubic2dAATiling tilingObject(context);
-    return tilingObject.RunBigKernelTiling();
+    context->SetScheduleMode(SCHEDULE_MODE);
+    return tilingObject.RunBigKernelTiling(context);
 }
 
 static ge::graphStatus TilingPrepare4Bicubic2DAA(gert::TilingParseContext *context)
