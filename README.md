@@ -2,8 +2,11 @@
 
 ## 🔥Latest News
 
-- [2025/12] 开源算子支持Ascend 950PR/Ascend 950DT，可以通过CANN Simulator仿真工具开发调试；支持了UpsampleNearest3d算子<<<>>>调用示例，方便用户自定义使用；支持experimental工程方便社区贡献。
-- [2025/09] ops-cv项目首次上线。
+- [2026/01] 新增[QuickStart](QUICKSTART.md)，指导新手零基础入门算子项目部署（支持Docker环境）、算子开发和贡献流程。
+- [2025/12] 开源算子支持Ascend 950PR/Ascend 950DT/KirinX90，可以通过[CANN Simulator](docs/zh/debug/cann_simulator.md)仿真工具开发调试；优化指南类文档，聚焦[算子开发指南](docs/zh/develop/aicore_develop_guide.md)，明确最小交付件和关键示例代码，针对Ascend/samples仓算子提供迁移本项目的指导；新增onnx算子插件支持。
+- [2025/11] [three_interpolate_backward](image/three_interpolate_backward/docs/aclnnThreeInterpolateBackward.md)算子新增确定性计算特性；新增[opgen](docs/zh/develop/aicore_develop_guide.md#工程创建)支持自动生成算子工程。
+- [2025/10] 新增experimental目录，完善[贡献指南](CONTRIBUTING.md)，支持开发者调试并贡献自定义算子。
+- [2025/09] ops-nn项目首次上线，开源算子支持Atlas A2/A3系列产品。
 
 ## 🚀概述
 
