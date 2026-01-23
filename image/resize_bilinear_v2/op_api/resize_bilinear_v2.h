@@ -19,9 +19,10 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ResizeBilinearV2(
-    const aclTensor *x, const aclTensor *size, const bool align_corners, const aclTensor *y, aclOpExecutor *executor);
-const aclTensor *ResizeBilinearV2With4d(const aclTensor *x, const aclTensor *size, const bool align_corners,
-    const aclFloatArray *scales, const aclTensor *y, aclOpExecutor *executor);
-}  // namespace l0op
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_OP_H_
+const aclTensor* ResizeBilinearV2(
+    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclTensor* y, aclOpExecutor* executor);
+const aclTensor* ResizeBilinearV2With4d(
+    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclFloatArray* scales,
+    const aclTensor* y, aclOpExecutor* executor);
+} // namespace l0op
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UNAMPLE_BILINEAR_OP_H_

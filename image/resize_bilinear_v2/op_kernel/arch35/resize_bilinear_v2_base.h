@@ -14,9 +14,9 @@
 #ifndef RESIZE_BILINEAR_V2_BASE_H
 #define RESIZE_BILINEAR_V2_BASE_H
 
-#include "../inc/platform.h"
+#include "op_kernel/platform_util.h"
 #include "kernel_operator.h"
-#include "../inc/kernel_utils.h"
+#include "op_kernel/math_util.h"
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
@@ -36,12 +36,12 @@ class ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2Base(){};
 
-    __aicore__ inline void BaseInit(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe)
+    __aicore__ inline void BaseInit(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe)
     {
         this->pipe_ = pipe;
 
-        this->xGM_.SetGlobalBuffer((__gm__ uint8_t *)x);
-        this->yGM_.SetGlobalBuffer((__gm__ uint8_t *)y);
+        this->xGM_.SetGlobalBuffer((__gm__ uint8_t*)x);
+        this->yGM_.SetGlobalBuffer((__gm__ uint8_t*)y);
     };
 
 protected:
@@ -67,11 +67,11 @@ protected:
     }
 
 protected:
-    TPipe *pipe_;
+    TPipe* pipe_;
 
     GlobalTensor<uint8_t> xGM_;
     GlobalTensor<uint8_t> yGM_;
 };
 
-}  // namespace ResizeBilinearV2
-#endif  // RESIZE_BILINEAR_V2_BASE_H
+} // namespace ResizeBilinearV2
+#endif // RESIZE_BILINEAR_V2_BASE_H

@@ -11,7 +11,7 @@
 #include <array>
 #include "gtest/gtest.h"
 
-#include "../../../../op_host/op_api/aclnn_resize.h"
+#include "../../../../op_api/aclnn_resize.h"
 
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/scalar_desc.h"
@@ -21,20 +21,24 @@ using namespace std;
 
 class l2_resize_test : public testing::Test {
 protected:
-    static void SetUpTestCase() { cout << "Resize Test Setup" << endl; }
-    static void TearDownTestCase() { cout << "Resize Test TearDown" << endl; }
+    static void SetUpTestCase()
+    {
+        cout << "Resize Test Setup" << endl;
+    }
+    static void TearDownTestCase()
+    {
+        cout << "Resize Test TearDown" << endl;
+    }
 };
 
 // float nearest
 TEST_F(l2_resize_test, case_1)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -45,13 +49,11 @@ TEST_F(l2_resize_test, case_1)
 // float16 nearest
 TEST_F(l2_resize_test, case_2)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -62,13 +64,11 @@ TEST_F(l2_resize_test, case_2)
 // float bilinear
 TEST_F(l2_resize_test, case_3)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -78,13 +78,11 @@ TEST_F(l2_resize_test, case_3)
 
 TEST_F(l2_resize_test, Ascend910_9599_case_3)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -95,13 +93,11 @@ TEST_F(l2_resize_test, Ascend910_9599_case_3)
 // float16 bilinear
 TEST_F(l2_resize_test, case_4)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -112,13 +108,11 @@ TEST_F(l2_resize_test, case_4)
 // self and scales shape not match
 TEST_F(l2_resize_test, case_5)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -129,10 +123,9 @@ TEST_F(l2_resize_test, case_5)
 // self nullptr
 TEST_F(l2_resize_test, case_6)
 {
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(nullptr, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -143,11 +136,9 @@ TEST_F(l2_resize_test, case_6)
 // scales nullptr
 TEST_F(l2_resize_test, case_7)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, nullptr, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -158,12 +149,11 @@ TEST_F(l2_resize_test, case_7)
 // out nullptr
 TEST_F(l2_resize_test, case_8)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto  out = (aclTensor*)nullptr;
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = (aclTensor*)nullptr;
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -174,13 +164,11 @@ TEST_F(l2_resize_test, case_8)
 // unsupport mode
 TEST_F(l2_resize_test, case_9)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="trilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "trilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -191,13 +179,11 @@ TEST_F(l2_resize_test, case_9)
 // unmatch type
 TEST_F(l2_resize_test, case_10)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -208,13 +194,11 @@ TEST_F(l2_resize_test, case_10)
 // unmatch shape
 TEST_F(l2_resize_test, case_11)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,2,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 2, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -225,13 +209,11 @@ TEST_F(l2_resize_test, case_11)
 // unmatch format
 TEST_F(l2_resize_test, case_12)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_ND)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -242,13 +224,11 @@ TEST_F(l2_resize_test, case_12)
 // check shape
 TEST_F(l2_resize_test, case_13)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2.4,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2.4, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -259,13 +239,11 @@ TEST_F(l2_resize_test, case_13)
 // large shape
 TEST_F(l2_resize_test, case_14)
 {
-    auto self = TensorDesc({1,1,1,23}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(23));
+    auto self = TensorDesc({1, 1, 1, 23}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(23));
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,1,970155});
-    auto out = TensorDesc({1,1,1,22313565}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(22313565));
-    const char *mode="nearest";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 1, 970155});
+    auto out = TensorDesc({1, 1, 1, 22313565}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(22313565));
+    const char* mode = "nearest";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -276,13 +254,11 @@ TEST_F(l2_resize_test, case_14)
 // large shape
 TEST_F(l2_resize_test, case_15)
 {
-    auto self = TensorDesc({1,1,2,3}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4,5,6});
+    auto self = TensorDesc({1, 1, 2, 3}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4, 5, 6});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,1.666666});
-    auto out = TensorDesc({1,1,4,5}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>(20));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 1.666666});
+    auto out = TensorDesc({1, 1, 4, 5}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>(20));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -292,13 +268,11 @@ TEST_F(l2_resize_test, case_15)
 
 TEST_F(l2_resize_test, case_16)
 {
-    auto self = TensorDesc({1,1,2,3,1}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4,5,6});
+    auto self = TensorDesc({1, 1, 2, 3, 1}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4, 5, 6});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,1.666666,1});
-    auto out = TensorDesc({1,1,4,5,1}, ACL_FLOAT16, ACL_FORMAT_NCHW)
-        .Value(vector<float>(20));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 1.666666, 1});
+    auto out = TensorDesc({1, 1, 4, 5, 1}, ACL_FLOAT16, ACL_FORMAT_NCHW).Value(vector<float>(20));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -377,13 +351,11 @@ TEST_F(l2_resize_test, case_20)
 
 TEST_F(l2_resize_test, case_21)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2.6,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NHWC)
-        .Value(vector<float>(16));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2.6, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NHWC).Value(vector<float>(16));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -393,13 +365,11 @@ TEST_F(l2_resize_test, case_21)
 
 TEST_F(l2_resize_test, case_22)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_ND)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2.6,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_ND)
-        .Value(vector<float>(16));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2.6, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>(16));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -427,13 +397,11 @@ TEST_F(l2_resize_test, case_23)
 
 TEST_F(l2_resize_test, case_24)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-        .Value(vector<float>(16));
-    const char *mode="bilinear";
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = "bilinear";
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
@@ -443,17 +411,14 @@ TEST_F(l2_resize_test, case_24)
 
 TEST_F(l2_resize_test, case_20)
 {
-    auto self = TensorDesc({1,1,2,2}, ACL_FLOAT, ACL_FORMAT_NCHW)
-                    .Value(vector<float>{1,2,3,4});
+    auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 
-    auto scales = FloatArrayDesc(vector<float>{1,1,2,2});
-    auto out = TensorDesc({1,1,4,4}, ACL_FLOAT, ACL_FORMAT_NCHW)
-                   .Value(vector<float>(16));
-    const char *mode=NULL;
+    auto scales = FloatArrayDesc(vector<float>{1, 1, 2, 2});
+    auto out = TensorDesc({1, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>(16));
+    const char* mode = NULL;
     auto ut = OP_API_UT(aclnnResize, INPUT(self, scales, mode, out), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
 }
-

@@ -15,7 +15,7 @@
 #ifndef RESIZE_BILINEAR_V2_ALL_COPY_H
 #define RESIZE_BILINEAR_V2_ALL_COPY_H
 
-#include "../inc/platform.h"
+#include "op_kernel/platform_util.h"
 #include "kernel_operator.h"
 
 namespace ResizeBilinearV2 {
@@ -27,7 +27,7 @@ public:
     __aicore__ inline ResizeBilinearV2AllCopy(){};
 
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *data);
+        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
 
     __aicore__ inline void Process();
 
@@ -35,7 +35,7 @@ protected:
     __aicore__ inline void CopyIn(int64_t xOffsetInGM, int64_t length);
     __aicore__ inline void CopyOut(int64_t yOffsetInGM, int64_t length);
 
-    const ResizeBilinearV2TilingData *tilingData_;
+    const ResizeBilinearV2TilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> dataQue_;
 
@@ -46,7 +46,7 @@ protected:
 
 template <typename T_DATA>
 __aicore__ inline void ResizeBilinearV2AllCopy<T_DATA>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *data)
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -121,6 +121,6 @@ __aicore__ inline void ResizeBilinearV2AllCopy<T_DATA>::Process()
     }
 }
 
-}  // namespace ResizeBilinearV2
+} // namespace ResizeBilinearV2
 
-#endif  // RESIZE_BILINEAR_V2_ALL_COPY_H
+#endif // RESIZE_BILINEAR_V2_ALL_COPY_H

@@ -14,14 +14,14 @@
 #ifndef RESIZE_BILINEAR_V2_BROADCAST_NCHW_H
 #define RESIZE_BILINEAR_V2_BROADCAST_NCHW_H
 
-#include "../inc/platform.h"
+#include "op_kernel/platform_util.h"
 #include "kernel_operator.h"
-#include "../inc/kernel_utils.h"
+#include "op_kernel/math_util.h"
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
 
-constexpr static int32_t VECTOR_LEN = platform::GetVRegSize();
+constexpr static int32_t VECTOR_LEN = Ops::Base::GetVRegSize();
 
 template <typename T_DATA>
 class ResizeBilinearV2BroadcastNCHW : public ResizeBilinearV2Base {
@@ -29,14 +29,14 @@ public:
     __aicore__ inline ResizeBilinearV2BroadcastNCHW(){};
 
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *data);
+        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
     __aicore__ inline void Process();
 
 protected:
     __aicore__ inline void CopyIn();
     __aicore__ inline void CopyOut();
     template <typename U>
-    __aicore__ inline void Compute(LocalTensor<T_DATA> &xTensor);
+    __aicore__ inline void Compute(LocalTensor<T_DATA>& xTensor);
 
     __aicore__ inline void SyncM2toS()
     {
@@ -52,7 +52,7 @@ protected:
         WaitFlag<HardEvent::S_V>(eventId);
     };
 
-    const ResizeBilinearV2TilingData *tilingData_;
+    const ResizeBilinearV2TilingData* tilingData_;
 
     TQue<QuePosition::VECIN, 1> xQue_;
     TQue<QuePosition::VECOUT, 1> yQue_;
@@ -79,7 +79,7 @@ protected:
 
 template <typename T_DATA>
 __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *data)
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -89,7 +89,7 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Init(
     this->pipe_->InitBuffer(xQue_, 2, bufferSizeX);
 
     int64_t bufferSizeY = tilingData_->ubNFactor * tilingData_->ubCFactor *
-                          ops::CeilAlign<int64_t>(tilingData_->ubHWFactor * sizeof(T_DATA), ONE_BLOCK_BYTE);
+                          Ops::Base::CeilAlign<int64_t>(tilingData_->ubHWFactor * sizeof(T_DATA), ONE_BLOCK_BYTE);
     this->pipe_->InitBuffer(yQue_, 2, bufferSizeY);
 }
 
@@ -149,18 +149,18 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::CopyOut()
 
 template <typename T_DATA>
 template <typename U>
-__aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTensor<T_DATA> &xTensor)
+__aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTensor<T_DATA>& xTensor)
 {
     LocalTensor<T_DATA> yTensor = yQue_.AllocTensor<T_DATA>();
 
     int64_t lenNC = nLength_ * cLength_;
     int64_t oneRepeat = VECTOR_LEN / sizeof(U);
-    uint32_t repeatTimes = ops::CeilDiv<int64_t>(hwLength_, oneRepeat);
+    uint32_t repeatTimes = Ops::Base::CeilDiv<int64_t>(hwLength_, oneRepeat);
     uint32_t lineLen = hwLength_;
     uint32_t lineLenAlign = hwLengthAlign_;
 
-    __ubuf__ U *xAddr = (__ubuf__ U *)xTensor.GetPhyAddr();
-    __ubuf__ U *yAddr = (__ubuf__ U *)yTensor.GetPhyAddr();
+    __ubuf__ U* xAddr = (__ubuf__ U*)xTensor.GetPhyAddr();
+    __ubuf__ U* yAddr = (__ubuf__ U*)yTensor.GetPhyAddr();
 
     __VEC_SCOPE__
     {
@@ -169,7 +169,7 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTenso
 
         for (uint16_t ncLoop = 0; ncLoop < (uint16_t)lenNC; ncLoop++) {
             U val = *xAddr;
-            __ubuf__ U *yLineAddr = yAddr;
+            __ubuf__ U* yLineAddr = yAddr;
             uint32_t oneLineLen = lineLen;
             for (uint16_t inLoop = 0; inLoop < (uint16_t)repeatTimes; inLoop++) {
                 preg = MicroAPI::UpdateMask<U>(oneLineLen);
@@ -189,9 +189,9 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTenso
 template <typename T_DATA>
 __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Process()
 {
-    int64_t nNum = ops::CeilDiv(tilingData_->lenN, tilingData_->nFactor);
-    int64_t cNum = ops::CeilDiv(tilingData_->lenC, tilingData_->cFactor);
-    int64_t hwNum = ops::CeilDiv(tilingData_->lenDesH * tilingData_->lenDesW, tilingData_->hwFactor);
+    int64_t nNum = Ops::Base::CeilDiv(tilingData_->lenN, tilingData_->nFactor);
+    int64_t cNum = Ops::Base::CeilDiv(tilingData_->lenC, tilingData_->cFactor);
+    int64_t hwNum = Ops::Base::CeilDiv(tilingData_->lenDesH * tilingData_->lenDesW, tilingData_->hwFactor);
     int64_t nTail = tilingData_->lenN - (nNum - 1) * tilingData_->nFactor;
     int64_t cTail = tilingData_->lenC - (cNum - 1) * tilingData_->cFactor;
     int64_t hwTail = tilingData_->lenDesH * tilingData_->lenDesW - (hwNum - 1) * tilingData_->hwFactor;
@@ -234,7 +234,7 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Process()
             for (int64_t hwLoop = 0; hwLoop < hwLength4Block; hwLoop += tilingData_->ubHWFactor) {
                 hwOffset_ = hwOffset4Block + hwLoop;
                 hwLength_ = this->Min(tilingData_->ubHWFactor, hwLength4Block - hwLoop);
-                hwLengthAlign_ = ops::CeilAlign<int64_t>(hwLength_, ONE_BLOCK_BYTE / sizeof(T_DATA));
+                hwLengthAlign_ = Ops::Base::CeilAlign<int64_t>(hwLength_, ONE_BLOCK_BYTE / sizeof(T_DATA));
 
                 if constexpr (sizeof(T_DATA) == sizeof(int16_t)) {
                     Compute<int16_t>(xTensor);
@@ -249,6 +249,6 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Process()
     }
 }
 
-}  // namespace ResizeBilinearV2
+} // namespace ResizeBilinearV2
 
-#endif  // RESIZE_BILINEAR_V2_BROADCAST_NCHW_H
+#endif // RESIZE_BILINEAR_V2_BROADCAST_NCHW_H

@@ -15,9 +15,9 @@
 #ifndef RESIZE_BILINEAR_V2_C_PARALLEL_H
 #define RESIZE_BILINEAR_V2_C_PARALLEL_H
 
-#include "../inc/platform.h"
+#include "op_kernel/platform_util.h"
 #include "kernel_operator.h"
-#include "../inc/kernel_utils.h"
+#include "op_kernel/math_util.h"
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
@@ -35,7 +35,7 @@ public:
     __aicore__ inline ResizeBilinearV2CParallel(){};
 
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *data);
+        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
 
     __aicore__ inline void Process();
 
@@ -46,7 +46,7 @@ protected:
     __aicore__ inline void Compute();
     __aicore__ inline float CalcInputPos(int64_t pos, float scale);
 
-    const ResizeBilinearV2TilingData *tilingData_;
+    const ResizeBilinearV2TilingData* tilingData_;
 
     TQue<QuePosition::VECIN, 1> xQue_;
     TQue<QuePosition::VECOUT, 1> yQue_;
@@ -55,15 +55,13 @@ protected:
 
     DataCopyPadExtParams<uint8_t> padParams_ = {false, 0, 0, 0};
 
-    constexpr static MicroAPI::CastTrait castTrait0 = {MicroAPI::RegLayout::ZERO,
-        MicroAPI::SatMode::UNKNOWN,
-        MicroAPI::MaskMergeMode::ZEROING,
-        RoundMode::UNKNOWN};  // bf16 --float
+    constexpr static MicroAPI::CastTrait castTrait0 = {
+        MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN, MicroAPI::MaskMergeMode::ZEROING,
+        RoundMode::UNKNOWN}; // bf16 --float
 
-    constexpr static MicroAPI::CastTrait castTrait1 = {MicroAPI::RegLayout::ZERO,
-        MicroAPI::SatMode::NO_SAT,
-        MicroAPI::MaskMergeMode::ZEROING,
-        RoundMode::CAST_RINT};  // float---bf16
+    constexpr static MicroAPI::CastTrait castTrait1 = {
+        MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::NO_SAT, MicroAPI::MaskMergeMode::ZEROING,
+        RoundMode::CAST_RINT}; // float---bf16
 
     int64_t nStrideX_;
     int64_t hwStrideX_;
@@ -83,7 +81,7 @@ protected:
 
 template <typename T_X, typename T_Y>
 __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *data)
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -91,7 +89,7 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Init(
 
     bufferLen_ = tilingData_->ubNFactor * tilingData_->ubCFactor;
     // bufferLen需要对齐，因为x的buffer是手动分隔4块，每块起始位置必须是block对齐的。
-    bufferLen_ = ops::CeilAlign<int64_t>(bufferLen_, ONE_BLOCK_BYTE / sizeof(T_X));
+    bufferLen_ = Ops::Base::CeilAlign<int64_t>(bufferLen_, ONE_BLOCK_BYTE / sizeof(T_X));
     this->pipe_->InitBuffer(xQue_, 2, POS_NUM * bufferLen_ * sizeof(T_X));
     this->pipe_->InitBuffer(yQue_, 2, bufferLen_ * sizeof(T_Y));
 }
@@ -182,21 +180,21 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
     LocalTensor<T_X> xTensor = xQue_.DeQue<T_X>();
     LocalTensor<T_Y> yTensor = yQue_.AllocTensor<T_Y>();
 
-    __ubuf__ T_X *xAddr = (__ubuf__ T_X *)xTensor.GetPhyAddr();
-    __ubuf__ T_X *xAddrNW = xAddr + POS_NW * bufferLen_;
-    __ubuf__ T_X *xAddrNE = xAddr + POS_NE * bufferLen_;
-    __ubuf__ T_X *xAddrSW = xAddr + POS_SW * bufferLen_;
-    __ubuf__ T_X *xAddrSE = xAddr + POS_SE * bufferLen_;
-    __ubuf__ T_Y *yAddr = (__ubuf__ T_Y *)yTensor.GetPhyAddr();
+    __ubuf__ T_X* xAddr = (__ubuf__ T_X*)xTensor.GetPhyAddr();
+    __ubuf__ T_X* xAddrNW = xAddr + POS_NW * bufferLen_;
+    __ubuf__ T_X* xAddrNE = xAddr + POS_NE * bufferLen_;
+    __ubuf__ T_X* xAddrSW = xAddr + POS_SW * bufferLen_;
+    __ubuf__ T_X* xAddrSE = xAddr + POS_SE * bufferLen_;
+    __ubuf__ T_Y* yAddr = (__ubuf__ T_Y*)yTensor.GetPhyAddr();
 
     float weightNW = delta_[POS_NW];
     float weightNE = delta_[POS_NE];
     float weightSW = delta_[POS_SW];
     float weightSE = delta_[POS_SE];
 
-    int64_t oneRepeat = platform::GetVRegSize() / sizeof(float);
+    int64_t oneRepeat = Ops::Base::GetVRegSize() / sizeof(float);
     uint32_t totalLen = tilingData_->ubNFactor * tilingData_->ubCFactor;
-    int64_t repeatTimes = ops::CeilDiv<int64_t>(totalLen, oneRepeat);
+    int64_t repeatTimes = Ops::Base::CeilDiv<int64_t>(totalLen, oneRepeat);
 
     __VEC_SCOPE__
     {
@@ -224,13 +222,13 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
             MicroAPI::DataCopy<T_X, MicroAPI::PostLiteral::POST_MODE_UPDATE>(regSE, xAddrSE, (int32_t)oneRepeat);
 
             if constexpr (sizeof(T_X) == sizeof(int16_t)) {
-                MicroAPI::UnPack((RegTensor<int32_t> &)regTmp, (RegTensor<int16_t> &)regNW);
+                MicroAPI::UnPack((RegTensor<int32_t>&)regTmp, (RegTensor<int16_t>&)regNW);
                 MicroAPI::Cast<float, T_X, castTrait0>(regNWFp32, regTmp, pregFp32);
-                MicroAPI::UnPack((RegTensor<int32_t> &)regTmp, (RegTensor<int16_t> &)regNE);
+                MicroAPI::UnPack((RegTensor<int32_t>&)regTmp, (RegTensor<int16_t>&)regNE);
                 MicroAPI::Cast<float, T_X, castTrait0>(regNEFp32, regTmp, pregFp32);
-                MicroAPI::UnPack((RegTensor<int32_t> &)regTmp, (RegTensor<int16_t> &)regSW);
+                MicroAPI::UnPack((RegTensor<int32_t>&)regTmp, (RegTensor<int16_t>&)regSW);
                 MicroAPI::Cast<float, T_X, castTrait0>(regSWFp32, regTmp, pregFp32);
-                MicroAPI::UnPack((RegTensor<int32_t> &)regTmp, (RegTensor<int16_t> &)regSE);
+                MicroAPI::UnPack((RegTensor<int32_t>&)regTmp, (RegTensor<int16_t>&)regSE);
                 MicroAPI::Cast<float, T_X, castTrait0>(regSEFp32, regTmp, pregFp32);
 
                 MicroAPI::Muls(regNWFp32, regNWFp32, weightNW, pregFp32);
@@ -250,7 +248,7 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
 
             if constexpr (sizeof(T_Y) == sizeof(int16_t)) {
                 MicroAPI::Cast<T_Y, float, castTrait1>(regTmp, regSumFp32, pregFp32);
-                MicroAPI::Pack((RegTensor<uint16_t> &)regRst, (RegTensor<uint32_t> &)regTmp);
+                MicroAPI::Pack((RegTensor<uint16_t>&)regRst, (RegTensor<uint32_t>&)regTmp);
                 MicroAPI::MaskPack(pregFp16, pregFp32);
                 MicroAPI::DataCopy<T_Y, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
                     yAddr, regRst, (int32_t)oneRepeat, pregFp16);
@@ -268,9 +266,9 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
 template <typename T_X, typename T_Y>
 __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Process()
 {
-    int64_t nNum = ops::CeilDiv(tilingData_->lenN, tilingData_->nFactor);
-    int64_t hwNum = ops::CeilDiv(tilingData_->lenDesH * tilingData_->lenDesW, tilingData_->hwFactor);
-    int64_t cNum = ops::CeilDiv(tilingData_->lenC, tilingData_->cFactor);
+    int64_t nNum = Ops::Base::CeilDiv(tilingData_->lenN, tilingData_->nFactor);
+    int64_t hwNum = Ops::Base::CeilDiv(tilingData_->lenDesH * tilingData_->lenDesW, tilingData_->hwFactor);
+    int64_t cNum = Ops::Base::CeilDiv(tilingData_->lenC, tilingData_->cFactor);
     int64_t nTail = tilingData_->lenN - (nNum - 1) * tilingData_->nFactor;
     int64_t hwTail = tilingData_->lenDesH * tilingData_->lenDesW - (hwNum - 1) * tilingData_->hwFactor;
     int64_t cTail = tilingData_->lenC - (cNum - 1) * tilingData_->cFactor;
@@ -318,6 +316,6 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Process()
     }
 }
 
-}  // namespace ResizeBilinearV2
+} // namespace ResizeBilinearV2
 
-#endif  // RESIZE_BILINEAR_V2_C_PARALLEL_H
+#endif // RESIZE_BILINEAR_V2_C_PARALLEL_H

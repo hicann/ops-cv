@@ -15,8 +15,8 @@
 #ifndef RESIZE_BILINEARV2_NC_H
 #define RESIZE_BILINEARV2_NC_H
 #include "kernel_operator.h"
-#include "../inc/platform.h"
-#include "../inc/kernel_utils.h"
+#include "op_kernel/platform_util.h"
+#include "op_kernel/math_util.h"
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
@@ -37,7 +37,7 @@ using OffsetDefSt = struct {
     int64_t cLength;
 };
 
-const int32_t ONE_BLOCK_UB = platform::GetUbBlockSize();
+const int32_t ONE_BLOCK_UB = Ops::Base::GetUbBlockSize();
 
 template <typename Tin, typename Tout>
 class ResizeBilinearV2Nc : public ResizeBilinearV2Base {
@@ -45,23 +45,23 @@ public:
     __aicore__ inline ResizeBilinearV2Nc(){};
 
     __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *tilingData);
+        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void DivideNhwc();
-    __aicore__ inline void ComputeSrcIdx(int64_t &dstIdx, float &srcIdx, float scale);
+    __aicore__ inline void ComputeSrcIdx(int64_t& dstIdx, float& srcIdx, float scale);
     __aicore__ inline void ComputeDeltaArgus(
-        int64_t idxHw, int64_t &srcUpper, int64_t &srcDown, int64_t &srcLeft, int64_t &srcRight);
-    __aicore__ inline void ComputeDstValueWith4SrcDot(LocalTensor<Tout> &dstUb, uint32_t totalLen);
+        int64_t idxHw, int64_t& srcUpper, int64_t& srcDown, int64_t& srcLeft, int64_t& srcRight);
+    __aicore__ inline void ComputeDstValueWith4SrcDot(LocalTensor<Tout>& dstUb, uint32_t totalLen);
     __aicore__ inline void DataCopyPadUb2Gm(
-        TQue<QuePosition::VECOUT, BUFF_NUM> &outQueue, GlobalTensor<Tout> &dstGm, int64_t gmOffset, int32_t length);
+        TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<Tout>& dstGm, int64_t gmOffset, int32_t length);
     __aicore__ inline void DataCopyPadGm2Ub(
-        TQue<QuePosition::VECIN, BUFF_NUM> &inQueue, GlobalTensor<Tin> &srcGm, int64_t gmOffset, int32_t length);
-    __aicore__ inline void ComputLengthOffset(OffsetDefSt &stOffset);
+        TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<Tin>& srcGm, int64_t gmOffset, int32_t length);
+    __aicore__ inline void ComputLengthOffset(OffsetDefSt& stOffset);
 
 private:
-    const ResizeBilinearV2TilingData *tilingDataPtr_;
+    const ResizeBilinearV2TilingData* tilingDataPtr_;
     TQue<QuePosition::VECIN, BUFF_NUM> inQueue0;
     TQue<QuePosition::VECIN, BUFF_NUM> inQueue1;
     TQue<QuePosition::VECIN, BUFF_NUM> inQueue2;
@@ -97,21 +97,19 @@ private:
     float scaleH_ = 0.0;
     int64_t lenDstHw_ = 0;
     float delta_[POS_TOTAL];
-    uint32_t oneRepeat_ = platform::GetVRegSize() / sizeof(float);
-    constexpr static AscendC::MicroAPI::CastTrait castTrait0 = {AscendC::MicroAPI::RegLayout::ZERO,
-        AscendC::MicroAPI::SatMode::UNKNOWN,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING,
-        AscendC::RoundMode::UNKNOWN};  // bf16 --float
+    uint32_t oneRepeat_ = Ops::Base::GetVRegSize() / sizeof(float);
+    constexpr static AscendC::MicroAPI::CastTrait castTrait0 = {
+        AscendC::MicroAPI::RegLayout::ZERO, AscendC::MicroAPI::SatMode::UNKNOWN,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::UNKNOWN}; // bf16 --float
 
-    constexpr static AscendC::MicroAPI::CastTrait castTrait1 = {AscendC::MicroAPI::RegLayout::ZERO,
-        AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING,
-        AscendC::RoundMode::CAST_RINT};  // float---bf16
+    constexpr static AscendC::MicroAPI::CastTrait castTrait1 = {
+        AscendC::MicroAPI::RegLayout::ZERO, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_RINT}; // float---bf16
 };
 
 template <typename Tin, typename Tout>
 __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBilinearV2TilingData *tilingData)
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* tilingData)
 {
     this->BaseInit(x, size, y, pipe);
     blockIdx_ = GetBlockIdx();
@@ -145,8 +143,8 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::Init(
     this->pipe_->InitBuffer(inQueue2, BUFF_NUM, dataUbSize_);
     this->pipe_->InitBuffer(inQueue3, BUFF_NUM, dataUbSize_);
     this->pipe_->InitBuffer(outQueue, BUFF_NUM, dataUbSize_);
-    xGm_.SetGlobalBuffer((__gm__ Tin *)x);
-    yGm_.SetGlobalBuffer((__gm__ Tout *)y);
+    xGm_.SetGlobalBuffer((__gm__ Tin*)x);
+    yGm_.SetGlobalBuffer((__gm__ Tout*)y);
 }
 
 template <typename Tin, typename Tout>
@@ -161,7 +159,7 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::Process()
 
 template <typename Tin, typename Tout>
 __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadGm2Ub(
-    TQue<QuePosition::VECIN, BUFF_NUM> &inQueue, GlobalTensor<Tin> &srcGm, int64_t gmOffset, int32_t length)
+    TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<Tin>& srcGm, int64_t gmOffset, int32_t length)
 {
     LocalTensor<Tin> xUb = inQueue.AllocTensor<Tin>();
     DataCopyExtParams copyParams;
@@ -175,7 +173,7 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadGm2Ub(
 
 template <typename Tin, typename Tout>
 __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadUb2Gm(
-    TQue<QuePosition::VECOUT, BUFF_NUM> &outQueue, GlobalTensor<Tout> &dstGm, int64_t gmOffset, int32_t length)
+    TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<Tout>& dstGm, int64_t gmOffset, int32_t length)
 {
     LocalTensor<Tout> ubTensorOut = outQueue.DeQue<Tout>();
     DataCopyExtParams copyParams;
@@ -189,19 +187,19 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadUb2Gm(
 
 template <typename Tin, typename Tout>
 __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot(
-    LocalTensor<Tout> &dstUb, uint32_t totalLen)
+    LocalTensor<Tout>& dstUb, uint32_t totalLen)
 {
     LocalTensor<Tin> srcUbLu = inQueue0.DeQue<Tin>();
     LocalTensor<Tin> srcUbRu = inQueue1.DeQue<Tin>();
     LocalTensor<Tin> srcUbLd = inQueue2.DeQue<Tin>();
     LocalTensor<Tin> srcUbRd = inQueue3.DeQue<Tin>();
 
-    uint16_t repeatTimes = ops::CeilDiv(totalLen, oneRepeat_);
-    auto dstUbPtr = (__ubuf__ Tout *)dstUb.GetPhyAddr();
-    auto srcUbLuPrt = (__ubuf__ Tin *)srcUbLu.GetPhyAddr();
-    auto srcUbRuPrt = (__ubuf__ Tin *)srcUbRu.GetPhyAddr();
-    auto srcUbLdPrt = (__ubuf__ Tin *)srcUbLd.GetPhyAddr();
-    auto srcUbRdPrt = (__ubuf__ Tin *)srcUbRd.GetPhyAddr();
+    uint16_t repeatTimes = Ops::Base::CeilDiv(totalLen, oneRepeat_);
+    auto dstUbPtr = (__ubuf__ Tout*)dstUb.GetPhyAddr();
+    auto srcUbLuPrt = (__ubuf__ Tin*)srcUbLu.GetPhyAddr();
+    auto srcUbRuPrt = (__ubuf__ Tin*)srcUbRu.GetPhyAddr();
+    auto srcUbLdPrt = (__ubuf__ Tin*)srcUbLd.GetPhyAddr();
+    auto srcUbRdPrt = (__ubuf__ Tin*)srcUbRd.GetPhyAddr();
     float delta_lu = delta_[POS_LU];
     float delta_ru = delta_[POS_RU];
     float delta_ld = delta_[POS_LD];
@@ -239,10 +237,10 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
             MicroAPI::DataCopy<Tin, MicroAPI::PostLiteral::POST_MODE_UPDATE>(reg_srcLd, srcUbLdPrt, oneRepeat_);
             MicroAPI::DataCopy<Tin, MicroAPI::PostLiteral::POST_MODE_UPDATE>(reg_srcRd, srcUbRdPrt, oneRepeat_);
             if constexpr (sizeof(Tin) != sizeof(int32_t)) {
-                MicroAPI::UnPack((RegTensor<int32_t> &)reg_srcLui32, (RegTensor<int16_t> &)reg_srcLu);
-                MicroAPI::UnPack((RegTensor<int32_t> &)reg_srcRui32, (RegTensor<int16_t> &)reg_srcRu);
-                MicroAPI::UnPack((RegTensor<int32_t> &)reg_srcLdi32, (RegTensor<int16_t> &)reg_srcLd);
-                MicroAPI::UnPack((RegTensor<int32_t> &)reg_srcRdi32, (RegTensor<int16_t> &)reg_srcRd);
+                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcLui32, (RegTensor<int16_t>&)reg_srcLu);
+                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcRui32, (RegTensor<int16_t>&)reg_srcRu);
+                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcLdi32, (RegTensor<int16_t>&)reg_srcLd);
+                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcRdi32, (RegTensor<int16_t>&)reg_srcRd);
                 MicroAPI::Cast<float, Tin, castTrait0>(regSrcLuf32, reg_srcLui32, pregFp32);
                 MicroAPI::Cast<float, Tin, castTrait0>(regSrcRuf32, reg_srcRui32, pregFp32);
                 MicroAPI::Cast<float, Tin, castTrait0>(regSrcLdf32, reg_srcLdi32, pregFp32);
@@ -263,7 +261,7 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
 
             if constexpr (sizeof(Tout) == sizeof(int16_t)) {
                 MicroAPI::Cast<Tout, float, castTrait1>(regTmpT2, regSumF32, pregFp32);
-                MicroAPI::Pack((RegTensor<uint16_t> &)regOutputT2, (RegTensor<uint32_t> &)regTmpT2);
+                MicroAPI::Pack((RegTensor<uint16_t>&)regOutputT2, (RegTensor<uint32_t>&)regTmpT2);
                 MicroAPI::MaskPack(pregFp16, pregFp32);
                 MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
                     dstUbPtr, regOutputT2, oneRepeat_, pregFp16);
@@ -281,11 +279,11 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
 }
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputLengthOffset(OffsetDefSt &stOffset)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputLengthOffset(OffsetDefSt& stOffset)
 {
-    int64_t nDivNum = ops::CeilDiv(lenN_, nFactor_);
-    int64_t hwDivNum = ops::CeilDiv(lenDstHw_, hwFactor_);
-    int64_t cDivNum = ops::CeilDiv(lenC_, cFactor_);
+    int64_t nDivNum = Ops::Base::CeilDiv(lenN_, nFactor_);
+    int64_t hwDivNum = Ops::Base::CeilDiv(lenDstHw_, hwFactor_);
+    int64_t cDivNum = Ops::Base::CeilDiv(lenC_, cFactor_);
     int64_t tmpBlockIdx = GetBlockIdx();
     int64_t cIdx = tmpBlockIdx % cDivNum;
     tmpBlockIdx = tmpBlockIdx / cDivNum;
@@ -360,7 +358,7 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DivideNhwc()
 }
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeSrcIdx(int64_t &dstIdx, float &srcIdx, float scale)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeSrcIdx(int64_t& dstIdx, float& srcIdx, float scale)
 {
     if ((alignCorners_ == 0) && (halfPixelCenters_ == 1)) {
         srcIdx = (dstIdx + 0.5f) * scale - 0.5f;
@@ -371,7 +369,7 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeSrcIdx(int64_t &dst
 
 template <typename Tin, typename Tout>
 __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDeltaArgus(
-    int64_t idxHw, int64_t &srcUpper, int64_t &srcDown, int64_t &srcLeft, int64_t &srcRight)
+    int64_t idxHw, int64_t& srcUpper, int64_t& srcDown, int64_t& srcLeft, int64_t& srcRight)
 {
     int64_t dst_h = idxHw / lenDstW_;
     float hFp = 0.0f;
@@ -396,5 +394,5 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDeltaArgus(
     delta_[POS_LD] = hLerp * (1.0f - wLerp);
     delta_[POS_RD] = hLerp * wLerp;
 }
-}  // namespace ResizeBilinearV2
-#endif  // namespace ResizeBilinearV2
+} // namespace ResizeBilinearV2
+#endif // namespace ResizeBilinearV2

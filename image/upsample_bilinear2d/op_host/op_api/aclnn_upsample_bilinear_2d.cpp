@@ -11,7 +11,7 @@
 #include "aclnn_upsample_bilinear_2d.h"
 #include <cmath>
 #include "upsample_bilinear2d.h"
-#include "image/resize_bilinear_v2/op_host/op_api/resize_bilinear_v2.h"
+#include "image/resize_bilinear_v2/op_api/resize_bilinear_v2.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transdata.h"
