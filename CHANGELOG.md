@@ -26,15 +26,14 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 
 **ops-cv子包及相关组件与CANN版本配套关系**
 
-| **CANN子包版本**                      | **配套CANN版本**        |
-|:----------------------------------|---------------------|
-| cann-ops-cv 8.5.0-beta.1          | CANN 8.5.0-beta.1   |
-| cann-ops-math 8.5.0-beta.1        | CANN 8.5.0-beta.1   |
-| cann-ops-nn 8.5.0-beta.1          | CANN 8.5.0-beta.1   |
-| cann-ops-transformer 8.5.0-beta.1 | CANN 8.5.0-beta.1   |
-| cann-hccl 8.5.0-beta.1            | CANN 8.5.0-beta.1   |
-| cann-hixl 8.5.0-beta.1            | CANN 8.5.0-beta.1   |
-
+| CANN子包版本 | 版本源码标签   | 配套CANN版本|
+|--|--|--|
+| [cann-ops-cv   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/ops-cv/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
+| [cann-ops-math   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/ops-math/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
+| [cann-ops-nn   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/ops-nn/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
+| [cann-ops-transformer   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/ops-transformer/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
+| [cann-hccl   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/hccl/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
+| [cann-hixl   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/hixl/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
 ### 🚀 关键特性
 
 - 【工程能力】cv类onnx算子插件支持。([#97](https://gitcode.com/cann/ops-cv/pull/97))
