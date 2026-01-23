@@ -23,6 +23,7 @@
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
+#include "common/aclnn_check.h"
 #include "aclnn_grid_sampler2d.h"
 
 using namespace op;
@@ -50,7 +51,7 @@ static const int64_t SUPPORT_CHANNEL_310P = 32;
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE};
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_95 = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
 
 static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
@@ -69,8 +70,8 @@ static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode
             op::ToString(input->GetDataType()).GetString());
         return false;
     }
-    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
-    if (is91095SocVersion && interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE) {
+    bool isRegBaseArch = IsRegBase();
+    if (isRegBaseArch && interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE) {
         return true;
     }
     return false;
@@ -83,8 +84,8 @@ static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const
     OP_CHECK_DTYPE_NOT_MATCH(out, input->GetDataType(), return false);
 
     // 检查input的数据类型是否在gridsampler2d算子的支持列表内
-    if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST_95, return false);
+    if (IsRegBase()) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST_REGBASE, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST, return false);
     }
@@ -192,8 +193,9 @@ static bool CheckAiCpuSupport(int64_t interpolationMode)
 
 static bool Check310PFullLoadSuppport(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
 {
-    if (GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND310P) {
-        OP_LOGD("FullLoad template does not support on current version.");
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch != NpuArch::DAV_2002) {
+        OP_LOGD("FullLoad template does not support on this npuArch.");
         return false;
     }
     if (input->GetStorageFormat() == op::Format::FORMAT_NHWC) {
@@ -216,9 +218,9 @@ static bool Check310PFullLoadSuppport(const aclTensor *input, int64_t interpolat
 
 static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
 {
-    // 95芯片非bilinear场景，走到老模板
-    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
-    if (is91095SocVersion && interpolationMode != INTERPOLATION_MODE_BILINEAR_VALUE) {
+    // 950芯片非bilinear场景，走到老模板
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (IsRegBase(curArch) && interpolationMode != INTERPOLATION_MODE_BILINEAR_VALUE) {
         if (input->GetDataType() == op::DataType::DT_FLOAT || input->GetDataType() == op::DataType::DT_FLOAT16 
             || input->GetDataType() == op::DataType::DT_BF16) {
             return true;
@@ -231,26 +233,24 @@ static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMod
             op::ToString(input->GetDataType()).GetString());
         return false;
     }
-    bool is910bSocVersion = (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-                             GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93);
-    if (is910bSocVersion) {
+    if (curArch == NpuArch::DAV_2201) {
         return true;
     }
 
-    bool is310PSlideWindowSuppport =
-        GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND310P &&
+    bool is2002ArchSlideWindowSuppport =
+        curArch == NpuArch::DAV_2002 &&
         input->GetDataType() == op::DataType::DT_FLOAT && interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE &&
         inputShape.GetDim(SECOND_DIM) == SUPPORT_CHANNEL_310P && paddingMode == PADDING_MODE_MIN_VALUE;
 
-    bool is310PSocVersion =
-        (is310PSlideWindowSuppport || Check310PFullLoadSuppport(input, interpolationMode, paddingMode));
+    bool is2002Arch =
+        (is2002ArchSlideWindowSuppport || Check310PFullLoadSuppport(input, interpolationMode, paddingMode));
 
-    bool is310BSocVersion =
-        (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND310B &&
+    bool is3002Arch =
+        (curArch == NpuArch::DAV_3002 &&
             input->GetDataType() == op::DataType::DT_FLOAT16 &&
             interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE &&
             inputShape.GetDim(SECOND_DIM) == SUPPORT_CHANNEL_310P && paddingMode == PADDING_MODE_MIN_VALUE);
-    if (is310PSocVersion || is310BSocVersion) {
+    if (is2002Arch || is3002Arch) {
         return true;
     }
     return false;

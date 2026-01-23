@@ -170,6 +170,11 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
             (inC * inH * inW <= X_MAX_HWC_FACTOR)) {
             tempType = FULL_LOAD_TYPE;
             hwFactor = TILING_HW_FACTOR;
+            auto ascendc_platform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
+            platform_ascendc::SocVersion gridSampleSocVersion = ascendc_platform.GetSocVersion();
+            if ((outH * outW < BLOCK_NUM) && (inN < coreNumVar * BLOCK_NUM) && (gridSampleSocVersion == platform_ascendc::SocVersion::ASCEND310P)) {
+                context_->SetScheduleMode(SCHEDULE_MODE);
+            }
             OP_LOGD(context_->GetNodeName(), "Get in FullLoad Template.");
             if ((inC == 1) && (inH * inW < C1_X_COUNT)) {
                 templateCNum = 1;

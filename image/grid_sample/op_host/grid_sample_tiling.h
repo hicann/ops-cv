@@ -92,6 +92,8 @@ const static int64_t NUM_C32 = 32;
 const static int64_t MIN_HW_C32 = 8;
 const static int64_t TEMPLATE_C32 = 2;
 const static int64_t DOUBLE = 2;
+constexpr uint8_t SCHEDULE_MODE = 1;
+constexpr uint8_t BLOCK_NUM = 8;
 
 class GridSampleTiling : public Ops::Cv::OpTiling::TilingBaseClass {
 public:

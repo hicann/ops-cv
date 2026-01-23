@@ -236,7 +236,7 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::Init(
     // FP32: templateCNum == 0: 177.5K     templateCNum == 2: 177.5K    templateCNum == 1: 147K
     // FP16: templateCNum == 0: 155.5K     templateCNum == 2: 155.5K    templateCNum == 1: 183K
 
-    if constexpr (IsSameType<T, half>::value) {
+    if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
         xUbSize = FP16_X_SIZE;                     // 40K
         pipe.InitBuffer(gridFP16Buf_, calHWSize);  // calHWSize
         if constexpr (templateCNum == 1) {

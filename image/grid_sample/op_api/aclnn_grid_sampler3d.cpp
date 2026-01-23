@@ -22,6 +22,7 @@
 #include "opdev/shape_utils.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "common/aclnn_check.h"
 #include "aclnn_kernels/common/op_error_check.h"
 
 using namespace op;
@@ -72,8 +73,8 @@ static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode
             op::ToString(input->GetDataType()).GetString());
         return false;
     }
-    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
-    if (is91095SocVersion && interpolationMode == INTERPOLATION_MODE_MIN_VALUE) {
+    bool isRegBaseArch = IsRegBase();
+    if (isRegBaseArch && interpolationMode == INTERPOLATION_MODE_MIN_VALUE) {
         return true;
     }
     return false;
@@ -234,15 +235,15 @@ static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMod
             op::ToString(input->GetDataType()).GetString());
         return false;
     }
-    bool is910bSocVersion = (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-                             GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93);
-    if (is910bSocVersion) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    bool is2201Arch = curArch == NpuArch::DAV_2201;
+    if (is2201Arch) {
         return true;
     }
 
-    // 95芯片非bilinear场景，走到老模板
-    bool is91095SocVersion = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
-    if (is91095SocVersion && interpolationMode != INTERPOLATION_MODE_MIN_VALUE) {
+    // 950芯片非bilinear场景，走到老模板
+    bool isRegBaseArch = IsRegBase(curArch);
+    if (isRegBaseArch && interpolationMode != INTERPOLATION_MODE_MIN_VALUE) {
         return true;
     }
     return false;
