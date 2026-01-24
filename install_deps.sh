@@ -55,6 +55,9 @@ detect_os() {
             else
                 PKG_MANAGER="yum"
             fi
+        elif grep -qE '^NAME="openEuler"$|^NAME="EulerOS"$' /etc/os-release 2>/dev/null; then
+            OS="euler"
+            PKG_MANAGER="dnf"
         else
             echo "不支持的Linux发行版本"
             exit 1
@@ -86,7 +89,7 @@ install_gawk() {
             run_command sudo $PKG_MANAGER update
             run_command sudo $PKG_MANAGER install -y gawk
             ;;
-        rhel)
+        rhel|euler)
             run_command sudo $PKG_MANAGER install -y gawk
             ;;
         macos)
@@ -137,6 +140,9 @@ install_python() {
             echo 'export PATH="/usr/local/opt/python@3.11/bin:$PATH"' >> ~/.zshrc
             run_command source ~/.zshrc
             ;;
+        euler)
+            run_command sudo $PKG_MANAGER install -y python3 python3-pip python3-devel
+            ;;
     esac
 
     if command -v python3 &> /dev/null; then
@@ -160,9 +166,9 @@ install_gcc() {
     local curr_ver=""
 
     if command -v gcc &> /dev/null; then
-        curr_ver=$(gcc --version | awk '/^gcc/ {print $4}')
+        curr_ver=$(gcc --version | awk '/^gcc/ {print $NF}')
     elif command -v g++ &> /dev/null; then
-        curr_ver=$(g++ --version | awk '/^g\+\+/ {print $4}')
+        curr_ver=$(g++ --version | awk '/^g\+\+/ {print $NF}')
     else
         curr_ver="0.0.0"
     fi
@@ -199,10 +205,13 @@ install_gcc() {
             echo 'export CXX=/usr/local/bin/g++-11' >> ~/.zshrc
             run_command source ~/.zshrc
             ;;
+        euler)
+         	  run_command sudo $PKG_MANAGER install -y gcc gcc-c++
+         	  ;;
     esac
 
     if command -v gcc &> /dev/null; then
-        curr_ver=$(gcc --version | awk '/^gcc/ {print $4}')
+        curr_ver=$(gcc --version | awk '/^gcc/ {print $NF}')
         if version_ge "$curr_ver" "$req_ver"; then
             echo "GCC安装成功（$curr_ver）"
         else
@@ -255,6 +264,9 @@ install_cmake() {
         macos)
             run_command brew install cmake
             ;;
+        euler)
+            run_command sudo $PKG_MANAGER install -y cmake make
+            ;;
     esac
 
     if command -v cmake &> /dev/null; then
@@ -295,7 +307,7 @@ install_pigz() {
 
     echo "安装pigz..."
     case "$OS" in
-        debian|rhel)
+        debian|rhel|euler)
             run_command sudo $PKG_MANAGER install -y pigz
             ;;
         macos)
@@ -321,7 +333,7 @@ install_dos2unix() {
 
     echo "安装dos2unix..."
     case "$OS" in
-        debian|rhel)
+        debian|rhel|euler)
             run_command sudo $PKG_MANAGER install -y dos2unix
             ;;
         macos)
@@ -333,71 +345,6 @@ install_dos2unix() {
         echo "dos2unix安装成功"
     else
         echo "dos2unix安装失败"
-        exit 1
-    fi
-}
-
-install_googletest() {
-    # googletest建议版本使用release-1.11.0
-    echo -e "\n==== 检查googletest ===="
-    local req_ver="1.11.0"
-    local curr_ver=""
-    local gtest_src_dir="/usr/src/gtest"
-
-    if pkg-config --exists gtest; then
-        curr_ver=$(pkg-config --modversion gtest)
-        echo "当前googletest版本: $curr_ver"
-        if version_ge "$curr_ver" "$req_ver"; then
-            echo "googletest满足要求"
-            return
-        fi
-    fi
-    read -p "安装googletest？[Y/n] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "跳过googletest安装"
-        return
-    fi
-
-    echo "安装googletest..."
-    case "$OS" in
-        debian)
-            # 安装libgtest-dev
-            run_command sudo $PKG_MANAGER install -y libgtest-dev
-            # 检查gtest源码目录是否存在
-            if [ ! -d "$gtest_src_dir"]; then
-                echo "未找到googletest源码目录：$gtest_src_dir"
-                echo "尝试重新安装libgtest-dev..."
-                run_command sudo $PKG_MANAGER purge -y libgtest-dev
-                run_command sudo $PKG_MANAGER install -y libgtest-dev
-                # 再次检查目录
-                if [ ! -d "$gtest_src_dir" ]; then
-                    echo "仍然无法找到$gtest_src_dir，请手动安装："
-                    echo "1.下载源码：wget https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz"
-                    echo "2.解压并编译：tar -zxf release-1.11.0.tar.gz && cd googletest-release-1.11.0 && cmake . && make && sudo make install"
-                    exit 1
-                fi
-            fi
-            # 强制在gtest源码目录执行cmake（即使cd失败也能正确执行）
-            echo "进入$gtest_src_dir编译..."
-            run_command sudo cmake -S "$gtest_src_dir" -B "$gtest_src_dir/build"
-            run_command sudo make -C "$gtest_src_dir/build"
-            run_command sudo cp "$gtest_src_dir/build/lib/"*.a /usr/lib
-            ;;
-        rhel)
-            run_command sudo $PKG_MANAGER install -y gtest gtest-devel
-            ;;
-        macos)
-            run_command brew install googletest
-            echo 'export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"'
-            ;;
-    esac
-
-    if pkg-config --exists gtest; then
-        curr_ver=$(pkg-config --modversion gtest)
-        echo "googletest安装成功（$curr_ver）"
-    else
-        echo "googletest安装失败"
         exit 1
     fi
 }
@@ -414,7 +361,6 @@ main() {
     install_cmake
     install_pigz
     install_dos2unix
-    install_googletest
 
     echo -e "===================================================="
     echo "所有依赖安装完成！"
