@@ -13,7 +13,6 @@
 #define private public
 #define protected public
 #endif
-#include "utils/aicpu_read_file.h"
 #include "utils/aicpu_test_utils.h"
 #include "cpu_kernel_utils.h"
 #include "node_def_builder.h"
@@ -29,7 +28,6 @@ using namespace aicpu;
 
 namespace {
 uint64_t result_summary[4] = {0};
-std::string test_data_base_path = "../../../../image/non_max_suppression_v3/tests/ut/op_kernel_aicpu/";
 }
 
 class TEST_NON_MAX_SUPPRESSION_V3_UT : public testing::Test {};
@@ -258,53 +256,3 @@ TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, TestNonMaxSuppressionV3_Iou1_Score0) {
       CpuKernelAllocatorUtils::CheckOutputDataPtr(result_summary[2]);
   EXPECT_EQ(check_ret, KERNEL_STATUS_OK);
 }
-
-template <typename T1>
-void RunNonMaxSuppressionV3Kernel(vector<string> data_files, vector<DataType> data_types,
-                     vector<vector<int64_t>> &shapes, int64_t max_output_size,
-                     float iou_threshold, float score_threshold) {
-  // read data from file for input1
-  string data_path_1 = test_data_base_path + data_files[0];
-  uint64_t boxes_size = CalTotalElements(shapes, 0);
-  T1 *boxes = new T1[boxes_size];
-  bool status = ReadFile(data_path_1, boxes, boxes_size);
-  EXPECT_EQ(status, true);
-
-  // read data from file for input2
-  string data_path_2 = test_data_base_path + data_files[1];
-  uint64_t scores_size = CalTotalElements(shapes, 1);
-  T1 *scores = new T1[scores_size];
-  status = ReadFile(data_path_2, scores, scores_size);
-  EXPECT_EQ(status, true);
-
-  vector<void *> datas = {(void *)boxes, (void *)scores, (void *)&max_output_size, (void *)&iou_threshold,
-                         (void *)&score_threshold, (void *)result_summary};
-
-  CREATE_NODEDEF(shapes, data_types, datas);
-  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
-  uint32_t check_ret =
-      CpuKernelAllocatorUtils::CheckOutputDataPtr(result_summary[0]);
-  EXPECT_EQ(check_ret, KERNEL_STATUS_OK);
-  check_ret = 
-      CpuKernelAllocatorUtils::CheckOutputDataPtr(result_summary[2]);
-  EXPECT_EQ(check_ret, KERNEL_STATUS_OK);
-  delete[] boxes;
-  delete[] scores;
-}
-
-// TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, DATA_TYPE_FP16_1) {
-//   vector<DataType> data_types = {DT_FLOAT16, DT_FLOAT16, DT_INT32, DT_FLOAT, DT_FLOAT, DT_UINT64};
-//   vector<vector<int64_t>> shapes = {{4,4}, {4}, {1}, {1}, {1}, {-1}};
-//   vector<string> files{"data/non_max_suppression_v3_data_boxes_fp16_1.txt",
-//                        "data/non_max_suppression_v3_data_scores_fp16_1.txt",
-//                        "data/non_max_suppression_v3_data_output_int32_1.txt"};
-//   int64_t max_output_size = 4;
-//   float iou_threshold = 1.0;
-//   float score_threshold = 0.5;
-//   RunNonMaxSuppressionV3Kernel<Eigen::half>(files, data_types, shapes, max_output_size, iou_threshold, score_threshold);
-// }
-
-
-
-
-

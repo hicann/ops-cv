@@ -13,7 +13,6 @@
 #define private public
 #define protected public
 #endif
-#include "utils/aicpu_read_file.h"
 #include "utils/aicpu_test_utils.h"
 #include "cpu_kernel_utils.h"
 #include "node_def_builder.h"
@@ -23,9 +22,6 @@
 
 using namespace std;
 using namespace aicpu;
-
-const std::string ktestcaseFilePath =
-    "../../../../image/crop_and_resize/tests/ut/op_kernel_aicpu/";
 
 class TEST_IMAGE_WARP_OFFSETS_UT : public testing::Test {};
 
@@ -66,46 +62,6 @@ void CalcExpectWithDiffShape(const NodeDef &node_def, bool expect_out[]) {
       .Input({"x1", data_types[0], shapes[0], datas[0]})             \
       .Input({"x2", data_types[1], shapes[1], datas[1]})             \
       .Output({"y", data_types[2], shapes[2], datas[2]})
-
-// read input and output data from files which generate by your python file
-template <typename T1, typename T2, typename T3>
-void RunIMGWarpOffsetsKernel(vector<string> data_files,
-                             vector<DataType> data_types,
-                             vector<vector<int64_t>> &shapes) {
-  // read data from file for input1
-  string data_path = ktestcaseFilePath + data_files[0];
-  uint64_t input1_size = CalTotalElements(shapes, 0);
-  T1 *input1 = new T1[input1_size];
-  bool status = ReadFile(data_path, input1, input1_size);
-  EXPECT_EQ(status, true);
-
-  // read data from file for input2
-  data_path = ktestcaseFilePath + data_files[1];
-  uint64_t input2_size = CalTotalElements(shapes, 1);
-  T2 *input2 = new T2[input2_size];
-  status = ReadFile(data_path, input2, input2_size);
-  EXPECT_EQ(status, true);
-
-  uint64_t output_size = CalTotalElements(shapes, 2);
-  T3 *output = new T3[output_size];
-  vector<void *> datas = {(void *)input1, (void *)input2, (void *)output};
-
-  CREATE_NODEDEF(shapes, data_types, datas);
-  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
-
-  // read data from file for expect ouput
-  data_path = ktestcaseFilePath + data_files[2];
-  T3 *output_exp = new T3[output_size];
-  status = ReadFile(data_path, output_exp, output_size);
-  EXPECT_EQ(status, true);
-
-  bool compare = CompareResult(output, output_exp, output_size);
-  EXPECT_EQ(compare, true);
-  delete[] input1;
-  delete[] input2;
-  delete[] output;
-  delete[] output_exp;
-}
 
 TEST_F(TEST_IMAGE_WARP_OFFSETS_UT, NO_KERNEL_FAILED) {
   vector<DataType> data_types = {DT_UINT64, DT_UINT64, DT_UINT64};
