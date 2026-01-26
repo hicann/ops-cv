@@ -21,9 +21,8 @@ namespace GridSample {
 
 using namespace AscendC;
 
-const uint32_t VF_MAX_THREAD_NUM_3D = 512;
 
-template <typename T>
+template <typename T, typename T_IDX>
 class GridSampler3dBilinearSimt {
 public:
     __aicore__ inline GridSampler3dBilinearSimt()
@@ -40,8 +39,8 @@ private:
     const GridSampleTilingData* tiling_;
 };
 
-template <typename T>
-__aicore__ inline void GridSampler3dBilinearSimt<T>::Init(
+template <typename T, typename T_IDX>
+__aicore__ inline void GridSampler3dBilinearSimt<T, T_IDX>::Init(
     GM_ADDR x, GM_ADDR grid, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData* __restrict tilingData)
 {
     inputImgGm_.SetGlobalBuffer((__gm__ T*)(x));
@@ -58,10 +57,10 @@ __aicore__ __attribute__((always_inline)) inline int32_t GetFloorValue(float x)
     return (x >= negativeValue ? static_cast<int32_t>(x) : static_cast<int32_t>(floorFactor + x));
 }
 
-template <typename T>
+template <typename T, typename T_IDX>
 __aicore__ __attribute__((always_inline)) inline T GetInputPointValue(
-    __gm__ T* inputImgGmAddr, int32_t inputDepth, int32_t inputHeight, int32_t inputWidth, uint32_t channelIndex,
-    uint32_t inputDataBatchOffset, uint32_t inD, uint32_t inH, uint32_t inW, uint32_t inC)
+    __gm__ T* inputImgGmAddr, int32_t inputDepth, int32_t inputHeight, int32_t inputWidth, T_IDX channelIndex,
+    T_IDX inputDataBatchOffset, T_IDX inD, T_IDX inH, T_IDX inW, T_IDX inC)
 {
     if (inputDepth >= 0 && inputHeight >= 0 && inputWidth >= 0 && inputDepth < inD && inputHeight < inH &&
         inputWidth < inW) {
@@ -72,10 +71,10 @@ __aicore__ __attribute__((always_inline)) inline T GetInputPointValue(
     return static_cast<T>(0.0);
 }
 
-template <typename T>
+template <typename T, typename T_IDX>
 __aicore__ __attribute__((always_inline)) inline T ComputeBilinear(
-    __gm__ T* inputImgGmAddr, float pointDepth, float pointHeight, float pointWidth, uint32_t channelIndex,
-    uint32_t inputDataBatchOffset, uint32_t inD, uint32_t inH, uint32_t inW, uint32_t inC, uint32_t index)
+    __gm__ T* inputImgGmAddr, float pointDepth, float pointHeight, float pointWidth, T_IDX channelIndex,
+    T_IDX inputDataBatchOffset, T_IDX inD, T_IDX inH, T_IDX inW, T_IDX inC, T_IDX index)
 {
     float depthFloor = Simt::Floor(pointDepth);
     float heightFloor = Simt::Floor(pointHeight);
@@ -145,20 +144,20 @@ __aicore__ __attribute__((always_inline)) inline T ComputeBilinear(
 }
 
 // LAUNCH_BOUND
-template <typename T>
+template <typename T, typename T_IDX>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSampler3d(
     __gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int32_t blockNum, int32_t intN, int32_t inC,
     int32_t inD, int32_t inH, int32_t inW, int32_t outD, int32_t outH, int32_t outW, int32_t paddingMode,
-    int32_t alignCorners, uint32_t outImgSize, uint32_t shiftB_, uint32_t mB_, uint32_t shiftD_, uint32_t mD_,
-    uint32_t shiftH_, uint32_t mH_, uint32_t shiftW_, uint32_t mW_, uint32_t blockId_)
+    int32_t alignCorners, T_IDX outImgSize, T_IDX shiftB_, T_IDX mB_, T_IDX shiftD_, T_IDX mD_,
+    T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_, T_IDX blockId_)
 {
-    for (uint32_t index = blockId_ * VF_MAX_THREAD_NUM_3D + Simt::GetThreadIdx(); index < outImgSize * intN;
+    for (T_IDX index = blockId_ * VF_MAX_THREAD_NUM_3D + Simt::GetThreadIdx(); index < outImgSize * intN;
          index += (blockNum * VF_MAX_THREAD_NUM_3D)) {
         // output info (N H K_h W K_w, groups, groupC)
-        uint32_t batchNum, depthCol, heightCol, widthCol, channelIndex;
+        T_IDX batchNum, depthCol, heightCol, widthCol, channelIndex;
         // fast division, addr/factor
         batchNum = Simt::UintDiv(index, mB_, shiftB_);
-        uint32_t remain = index - batchNum * outImgSize;
+        T_IDX remain = index - batchNum * outImgSize;
 
         channelIndex = Simt::UintDiv(remain, mD_, shiftD_);
         remain = remain - channelIndex * (outW * outH * outD);
@@ -169,8 +168,8 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSample
         heightCol = Simt::UintDiv(remain, mW_, shiftW_);
         widthCol = remain - heightCol * outW;
 
-        uint32_t newInputIndex = batchNum * inD * inH * inW * inC;
-        uint32_t offsetBaseAddr =
+        T_IDX newInputIndex = batchNum * inD * inH * inW * inC;
+        T_IDX offsetBaseAddr =
             batchNum * outD * outH * outW * 3 + depthCol * outH * outW * 3 + heightCol * outW * 3 + widthCol * 3;
 
         // offset height info
@@ -191,7 +190,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSample
         gridWeightValue = Clip(gridWeightValue, inW, paddingMode, alignCorners);
         gridHeigthValue = Clip(gridHeigthValue, inH, paddingMode, alignCorners);
 
-        T bilinearValue = ComputeBilinear(
+        T bilinearValue = ComputeBilinear<T, T_IDX>(
             (__gm__ T*)(inputImgGmAddr), gridDepthValue, gridHeigthValue, gridWeightValue, channelIndex, newInputIndex,
             inD, inH, inW, inC, index);
 
@@ -200,16 +199,16 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSample
     }
 }
 
-template <typename T>
-__aicore__ inline void GridSampler3dBilinearSimt<T>::Process()
+template <typename T, typename T_IDX>
+__aicore__ inline void GridSampler3dBilinearSimt<T, T_IDX>::Process()
 {
-    uint32_t outImgSize = tiling_->outD * tiling_->outW * tiling_->outH * tiling_->inC;
-    uint32_t shiftB_, mB_, shiftD_, mD_, shiftH_, mH_, shiftW_, mW_;
+    T_IDX outImgSize = tiling_->outD * tiling_->outW * tiling_->outH * tiling_->inC;
+    T_IDX shiftB_, mB_, shiftD_, mD_, shiftH_, mH_, shiftW_, mW_;
     GetUintDivMagicAndShift(mB_, shiftB_, outImgSize);
-    GetUintDivMagicAndShift(mD_, shiftD_, static_cast<uint32_t>(tiling_->outW * tiling_->outH * tiling_->outD));
-    GetUintDivMagicAndShift(mH_, shiftH_, static_cast<uint32_t>(tiling_->outW * tiling_->outH));
-    GetUintDivMagicAndShift(mW_, shiftW_, static_cast<uint32_t>(tiling_->outW));
-    Simt::VF_CALL<ComputeGridSampler3d<T>>(
+    GetUintDivMagicAndShift(mD_, shiftD_, static_cast<T_IDX>(tiling_->outW * tiling_->outH * tiling_->outD));
+    GetUintDivMagicAndShift(mH_, shiftH_, static_cast<T_IDX>(tiling_->outW * tiling_->outH));
+    GetUintDivMagicAndShift(mW_, shiftW_, static_cast<T_IDX>(tiling_->outW));
+    Simt::VF_CALL<ComputeGridSampler3d<T, T_IDX>>(
         Simt::Dim3{VF_MAX_THREAD_NUM_3D, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()),
         (__gm__ T*)(gridGm_.GetPhyAddr()), (__gm__ T*)(yGm_.GetPhyAddr()), tiling_->needCoreNum, tiling_->inN,
         tiling_->inC, tiling_->inD, tiling_->inH, tiling_->inW, tiling_->outD, tiling_->outH, tiling_->outW,

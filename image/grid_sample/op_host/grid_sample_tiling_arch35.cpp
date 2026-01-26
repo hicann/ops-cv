@@ -21,6 +21,9 @@ static constexpr uint32_t SIMT_COMMON_2D_TILING_KEY = 1000;
 static constexpr uint32_t SIMT_COMMON_3D_TILING_KEY = 2000;
 static constexpr uint32_t DCACHE_SIZE = 32 * 1024;
 static constexpr uint32_t REGBASE_CCEC_CACHE_SIZE = 8 * 1024;
+static constexpr uint32_t MAX_OUTPUT_SIZE = 2147483647;
+static constexpr uint32_t USE_UINT64_TYPE = 100;
+
 static const std::set<ge::DataType> supportDtype = {ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16};
 
 bool GridSampleArch35Tiling::IsCapable()
@@ -46,8 +49,12 @@ ge::graphStatus GridSampleArch35Tiling::DoOpTiling()
 
     // output format is [N, C, H, W]
     int64_t outputD = outD == 0 ? 1 : outD;
-    int64_t outputSize = inN * inC * outputD * outH * outW;
-    int32_t threadNum = dimension == 0? VF_MAX_THREAD_NUM_2D: VF_MAX_THREAD_NUM_3D;
+    outputSize = inN * inC * outputD * outH * outW;
+    int32_t threadNum = VF_MAX_THREAD_NUM_2D;
+    if (outputSize > MAX_OUTPUT_SIZE || dimension != 0) {
+        threadNum = VF_MAX_THREAD_NUM_3D;
+    }
+    
     needCoreNum = (outputSize + threadNum - 1) / threadNum;
     needCoreNum = std::min(needCoreNum, coreNumVar);
     tilingData.set_needCoreNum(needCoreNum);
@@ -84,11 +91,14 @@ ge::graphStatus GridSampleArch35Tiling::PostTiling()
 
 uint64_t GridSampleArch35Tiling::GetTilingKey() const
 {
-    if (dimension == 0) {
-        return SIMT_COMMON_2D_TILING_KEY;
-    } else {
-        return SIMT_COMMON_3D_TILING_KEY;
+    uint32_t tilingKey = SIMT_COMMON_2D_TILING_KEY;
+    if (dimension != 0) {
+        tilingKey = SIMT_COMMON_3D_TILING_KEY;
     }
+    if (outputSize > MAX_OUTPUT_SIZE) {
+        tilingKey += USE_UINT64_TYPE;
+    }
+    return tilingKey;
 }
 
 REGISTER_OPS_TILING_TEMPLATE(GridSample, GridSampleArch35Tiling, 2000);

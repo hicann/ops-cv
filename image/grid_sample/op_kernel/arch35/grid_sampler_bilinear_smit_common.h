@@ -26,12 +26,16 @@ const uint32_t PADDING_MODE_REFLECTION_95 = 2;
 const uint32_t INT_MAX = 2147483647;
 const uint32_t INT_MIN = -2147483648;
 const float DEFAULT_FAULT_VALUE = -100.0f;
+const uint32_t ALIGNCORNER_FALSE = 0;
+const uint32_t ALIGNCORNER_TRUE = 1;
+const uint32_t VF_MAX_THREAD_NUM = 1024;
+const uint32_t VF_MAX_THREAD_NUM_3D = 512;
 
 
 __aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coord, int32_t size)
 {
-    coord = coord > (size - 1) ? (float)size - 1 : coord;
     coord = coord < 0 ? 0 : coord;
+    coord = coord > (size - 1) ? (float)size - 1 : coord;
     return coord;
 }
 

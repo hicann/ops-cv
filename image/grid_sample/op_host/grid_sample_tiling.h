@@ -140,6 +140,7 @@ protected:
     int64_t hwFactor{512};
     int64_t dimension{0};
     bool isDavid {false};
+    int64_t outputSize;
 
 private:
     GridSampleTilingData tilingData;
