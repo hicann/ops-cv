@@ -1,12 +1,19 @@
 
 # aclnnGridSampler2DBackward
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/grid_sampler2_d_grad)
+
 
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -30,6 +37,7 @@
       $$
   
       其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+
 
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
@@ -96,7 +104,7 @@ aclnnStatus aclnnGridSampler2DBackward(
     </tr></thead>
   <tbody>
     <tr>
-      <td>gradOutput</td>
+      <td>gradOutput（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向传播过程中上一层的输出梯度，对应公式描述中的`grad`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li></ul></td>
@@ -106,7 +114,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>input</td>
+      <td>input（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。</td>
       <td><ul><li>支持空Tensor。</li><li>`input`和`gradOutput`的N轴和C轴的值保持一致，且`input`最后两维的维度值不可为0。</li></ul></td>
@@ -116,7 +124,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>grid</td>
+      <td>grid（aclTensor*）</td>
       <td>输入</td>
       <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li></ul></td>
@@ -126,37 +134,37 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>interpolationMode</td>
+      <td>interpolationMode（int64_t）</td>
       <td>输入</td>
       <td>表示插值模式，对应公式描述中的`interpolationMode`。</td>
       <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）两种模式。</td>
-      <td>INT64</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>paddingMode</td>
+      <td>paddingMode（int64_t）</td>
       <td>输入</td>
       <td>表示填充模式，即当(x, y)取值超过输入特征图采样范围时，返回一个特定值。对应公式描述中的`paddingMode`。</td>
       <td>支持0：zeros、1：border、2：reflection三种模式。</td>
-      <td>INT64</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>alignCorners</td>
+      <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式，对应公式描述中的`alignCorners`。</td>
       <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>outputMask</td>
+      <td>outputMask（aclBoolArray*）</td>
       <td>输入</td>
       <td>用于表示输出的掩码。</td>
       <td>outputMask[0]为true/false，表示是/否获取输出`inputGrad`；outputMask[1]为true/false，表示是/否获取输出`gridGrad`。</td>
@@ -166,7 +174,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>inputGrad</td>
+      <td>inputGrad（aclTensor*）</td>
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`input`保持一致。</li></ul></td>
@@ -176,7 +184,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>gridGrad</td>
+      <td>gridGrad（aclTensor*）</td>
       <td>输出</td>
       <td>表示grid梯度，对应公式描述中的`dgrid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与`input`的数据类型一致。</li><li>shape与`grid`保持一致。</li></ul></td>
@@ -186,7 +194,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -196,7 +204,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>
@@ -207,6 +215,10 @@ aclnnStatus aclnnGridSampler2DBackward(
     </tr>
   </tbody>
   </table>
+
+  - <term>Atlas 训练系列产品</term>：
+  
+    参数`gradOutput`、`input`、`grid`、`inputGrad`、`gridGrad`的数据类型不支持BFLOAT16、DOUBLE。
 
 - **返回值：**
 

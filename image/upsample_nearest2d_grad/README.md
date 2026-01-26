@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -13,7 +18,7 @@
 - 计算公式：
 
   $$
-  gradInput(N, C, H, W) += gradOutput( N, C, ceil ( scales\_h * H ),  ceil ( scales\_w * W )) 
+  gradInput(N, C, H, W) += gradOutput( N, C, ceil ( scales\_h * H ),  ceil ( scales\_w * W ))
   $$
 
 ## 参数说明
@@ -39,32 +44,32 @@
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td><!--aclnn多增了一个NCHW-->
+      <td>ND</td>
     </tr>
     <tr>
       <td>output_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
-      <td>表示指定`grad_output`在H和W维度上的空间大小。size需要等于2，且各元素均大于0。</td><!--opdef中是否是2维不确定，这个参考的是aclnn，待确认-->
+      <td>属性</td>
+      <td>表示指定`grad_output`在H和W维度上的空间大小。size为2，且各元素均大于0。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>input_size</td>
-      <td>属性</td><!--aclnn是必选输入-->
+      <td>属性</td>
       <td>表示指定`grad_input`在H和W维度上的空间大小。size为4，且最后两个元素均大于零。</td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_h</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scales_h`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
-      <td>可选属性</td><!--aclnn是必选输入-->
+      <td>可选属性</td>
       <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scales_w`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>

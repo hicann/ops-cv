@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -16,10 +21,10 @@
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
-    
+
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
-    
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。对于一个三维插值点$(N, C, D, H, W)$，则有以下公式：
+
     $$
     scale\_d =\begin{cases}
     (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -43,16 +48,16 @@
     inputSize[4] / outputSize[2] & alignCorners=false
     \end{cases}
     $$
-   
+
     因此，对于output的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
-    
+
     $$
     x' =\begin{cases}
     x * scale\_d & alignCorners=true \\
     MAX(0,{(x+0.5)*scale\_d-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     $$
     y' =\begin{cases}
     y * scale\_h & alignCorners=true \\
@@ -66,9 +71,9 @@
     MAX(0,{(z+0.5)*scale\_w-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
@@ -80,7 +85,7 @@
       $$
       z_{0} =int(z'),z_{1} =int(z')+1, lambdc_{0} = z_{1}-z', lambdc_{1} =   1-lambdc_{0}
       $$
-    
+
     - 则有以下公式：
 
       $$

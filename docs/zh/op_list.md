@@ -110,7 +110,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>使用双三次插值调整图像大小到指定的大小。</td>
   </tr>
@@ -120,7 +120,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>计算输入图像在双三次插值基础下的梯度。</td>
   </tr>
@@ -150,7 +150,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>使用单线性插值调整图像大小到指定的大小。</td>
   </tr>
@@ -160,7 +160,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>计算输入图像在单线性插值基础下的梯度。</td>
   </tr>
@@ -366,6 +366,36 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/mrgba_custom/doc/aclnnMrgbaCustom.md">mrgba_custom</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>完成张量rgb和张量alpha的透明度乘法计算。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/blend_images_custom/doc/aclnnBlendImagesCustom.md">blend_images_custom</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>完成张量rgb、frame和alpha的透明度乘法计算。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/background_replace/doc/aclnnBackgroundReplace.md">background_replace</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/iou_v2/README.md">iou_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -406,5 +436,3 @@
   </tr>
 </tbody>
 </table>
-
-

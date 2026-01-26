@@ -1,15 +1,22 @@
 # aclnnUpsampleNearest3d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest3d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
-- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D, H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
 - 计算公式：
   - 核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
@@ -34,7 +41,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用`aclnnUpsampleNearest3dGetWorkspaceSize`接口获取入参并根据计算流程计算所需workspace大小，再调用`aclnnUpsampleNearest3d`接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用`aclnnUpsampleNearest3dGetWorkspaceSize`接口获取入参并根据计算流程计算所需workspace大小，再调用`aclnnUpsampleNearest3d`接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(
@@ -55,6 +62,7 @@ aclnnStatus aclnnUpsampleNearest3d(
   aclOpExecutor    *executor, 
   aclrtStream       stream)
 ```
+
 
 ## aclnnUpsampleNearest3dGetWorkspaceSize
 
@@ -135,7 +143,7 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中`out`的点p坐标。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self保持一致。</li><li>输入和输出shape的N、C轴必须相同。</li><li>out的所有维度取值均小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需与入参self的数据类型和数据格式保持一致。</li><li>输入和输出shape的N、C轴必须相同。</li><li>out的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
       <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
@@ -164,6 +172,12 @@ aclnnStatus aclnnUpsampleNearest3d(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>：
+
+    入参`self`和出参`out`的数据类型不支持BFLOAT16、DOUBLE、UINT8。
+  - <term>Atlas 训练系列产品</term>：
+
+    入参`self`和出参`out`的数据类型不支持BFLOAT16、UINT8。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
 
     入参`self`和出参`out`的数据类型不支持UINT8。
@@ -171,7 +185,7 @@ aclnnStatus aclnnUpsampleNearest3d(
   
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
   第一段接口完成入参校验，出现以下场景时报错：
   
@@ -253,18 +267,33 @@ aclnnStatus aclnnUpsampleNearest3d(
   </tbody>
   </table>
 
+
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
+- 参数self、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_D = floor(self\_D * scalesD)
+  $$
+
+  $$
+  outputSize\_H = floor(self\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(self\_W * scalesW)
+  $$
 
 - 确定性计算：
   - aclnnUpsampleNearest3d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>
@@ -413,4 +442,3 @@ int main()
     return 0;
 }
 ```
-

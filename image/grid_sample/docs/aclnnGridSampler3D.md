@@ -1,11 +1,18 @@
 # aclnnGridSampler3D
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/grid_sample)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -114,7 +121,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>paddingMode</td>
       <td>输入</td>
       <td>表示grid范围外填充模式。即当grid有超过[-1, 1]范围的值，则按照paddingMode定义的方式处理相应的输出。对应公式描述中的`paddingMode`。</td>
-      <td>支持0：zeros、1：border、2：reflection三种模式。</li></ul></td>
+      <td>支持0：zeros、1：border、2：reflection三种模式。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -163,6 +170,10 @@ aclnnStatus aclnnGridSampler3D(
   </tbody>
   </table>
 
+  - <term>Atlas 训练系列产品</term>：
+  
+    参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
+  
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -415,4 +426,3 @@ int main()
     return 0;
 }
 ```
-

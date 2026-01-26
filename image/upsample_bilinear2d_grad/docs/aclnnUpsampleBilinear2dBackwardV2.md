@@ -1,24 +1,33 @@
 # aclnnUpsampleBilinear2dBackwardV2
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
 - 接口功能：[aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d.md)的反向传播。
 
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，支持使用scale计算，以及增加outputSize与scale的约束，请根据实际情况选择合适的接口。
+  - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：本接口相较于[aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward.md)，无变更。
+
 - 计算公式：
   - 正向的核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。对于一个二维插值点$(N, C, H, W)$，则有以下公式：
 
     $$
     scaleH =\begin{cases}
@@ -159,7 +168,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>alignCorners</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值对边界外的值进行填充，使此操作在保持不变时独立于输入大小scalesH和scalesW。</td>
+      <td>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值对边界外的值进行填充，使此操作在不同输入大小下保持一致的行为。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -217,6 +226,11 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
     </tr>
   </tbody>
   </table>
+
+  - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：
+  
+    参数`gradOut`、`out`的数据类型不支持BFLOAT16.
+  
 
 - **返回值**
 
@@ -324,7 +338,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
 - 参数`gradOut`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`gradOut`保持一致。
-  - 占用内存小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60G。内存占用的计算公式如下：
 
     $$
     (gradOut\_H * gradOut\_W + out\_H * out\_W + gradOut\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
@@ -334,13 +348,16 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
   - N \* C \* gradOut_H < 2^31
-- 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
-  - 当alignCorners为True时：
-    - outputSize对应轴的值等于1，scales对应轴的值为0。
-    - 其他情况下使用入参inputSize和outputSize中对应轴的参数值，且：$scales=(inputSize-1)/(outputSize-1)$。  
-  - 当alignCorners为False时：
-    - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
-    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+- 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_H = floor(inputSize\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(inputSize\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleBilinear2dBackwardV2默认确定性实现。
 

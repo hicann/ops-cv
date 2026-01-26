@@ -1,15 +1,22 @@
 # aclnnUpsampleNearestExact1dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
-- 接口功能：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上
+- 接口功能：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上。
 - 计算公式：
   
   $$
@@ -36,7 +43,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
   void             *workspace, 
   uint64_t          workspaceSize, 
   aclOpExecutor    *executor, 
-  aclrtStream       stream)  
+  aclrtStream       stream)
 ```
 
 ## aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize
@@ -108,7 +115,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
       <td>out</td>
       <td>输出</td>
       <td>公式中的输出`gradInput`，表示反向计算的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOutput`保持一致。</li><li>shape的N轴、C轴与入参`gradOutput`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -137,12 +144,13 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
   </tbody>
   </table>
 
+
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-
+  
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -227,10 +235,18 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
 
 ## 约束说明
 
-- 输入数据缩放场景放大倍数必须小于等于50，即$outputSize[0]/输出shape的高度L$必须小于等于50。
-- 参数outputSize与参数scales，在使用时二选一，即：
-  - 当入参scales的值等于0时，使用入参outputSize的参数值。
-  - 当入参scales的值大于0时，使用入参scales参数值，且$outputSize=[floor(inputSize\_L * scales)]$。
+- 输入数据缩放场景放大倍数必须小于等于50，即：
+  
+  $$
+  outputSize[0]/输出shape的高度L <= 50
+  $$
+
+- 参数inputSize、outputSize、scales需要满足如下约束：
+
+  $$
+  outputSize = floor(inputSize\_L * scales)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearestExact1dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
 

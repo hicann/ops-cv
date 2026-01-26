@@ -1,11 +1,18 @@
 # aclnnUpsampleLinear1d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_linear1d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -50,7 +57,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleLinear1d”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleLinear1d”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(
@@ -172,6 +179,11 @@ aclnnStatus aclnnUpsampleLinear1d(
   </tbody>
   </table>
 
+  - <term>Atlas 训练系列产品</term>：
+
+    入参`self`和出参`out`的数据类型不支持BFLOAT16。
+
+  
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -197,12 +209,12 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="7">161002</td>
+      <td rowspan="8">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="8">161002</td>
     </tr>
     <tr><td>self的数据类型不在支持的范围之内。</td>
     </tr>
-    <tr><td>self与out的数据类型不一致。</td>
+    <tr><td>self和out的数据类型不一致。</td>
     </tr>
     <tr><td>self和out的维度不为3维。</td>
     </tr>
@@ -211,6 +223,8 @@ aclnnStatus aclnnUpsampleLinear1d(
     <tr><td>outputSize的某个元素值小于1。</td>
     </tr>
     <tr><td>out在L维度上的size与outputSize[0]不一致。</td>
+    </tr>
+    <tr><td>self、outputSize、scales不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -260,13 +274,12 @@ aclnnStatus aclnnUpsampleLinear1d(
 ## 约束说明
 
 - 入参`self`和出参`out`的数据格式不为ND或NCL时，输入其他数据格式会默认按照NCL处理。
-- 参数outputSize与参数scales，在使用时二选一，即：
-  - 当alignCorners为True：
-    - outputSize等于1，scales的值为0。
-    - 其他情况下使用入参self和outputSize的参数值，且：$scales=(self\_L-1)/  (outputSize-1)$。  
-  - 当alignCorners为False时：
-    - 当入参scales的值小于等于0时，使用入参outputSize的参数值，即：$scales=  (self\_L / outputSize)$。
-    - 当入参scales的值都大于0时，使用入参scales的参数值，即$outputSize=[floor(self\_L * scales)]$。
+- 参数self、outputSize、scales需要满足如下约束：
+
+  $$
+  outputSize = floor(self\_L * scales)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleLinear1d默认确定性实现。
 

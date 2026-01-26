@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -29,7 +34,6 @@
       $$
   
       其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
-
 
     - 对于超出范围的坐标，会根据padding_mode进行不同处理：
   
@@ -117,6 +121,8 @@
       <td>NHWC</td>
     </tr>
   </tbody></table>
+
+<term>Atlas 训练系列产品</term>：输入参数和输出参数的数据类型不支持DOUBLE、BFLOAT16。
 
 ## 约束说明
 

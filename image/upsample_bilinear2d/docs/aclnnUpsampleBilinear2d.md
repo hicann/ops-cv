@@ -1,11 +1,18 @@
 # aclnnUpsampleBilinear2d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -19,7 +26,7 @@
     2.计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3.分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。对于一个二维插值点$(N, C, H, W)$，则有以下公式：
 
     $$
     scaleH =\begin{cases}
@@ -71,7 +78,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2d”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2d”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(
@@ -173,7 +180,7 @@ aclnnStatus aclnnUpsampleBilinear2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li><li>当数据类型为DOUBLE时，仅支持NHWC格式。</li><li>shape仅支持4维，且N轴和C轴与输入self shape的N轴和C轴保持一致；当outputSize输入的值有效时，H轴和W轴与参数outputSize对应轴的值保持一致；当outputSize输入的值不生效时（不生效的场景请参见<a href="#约束说明">约束说明</a>），H轴和W轴与计算后得到的outputSize对应轴的值保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`的数据类型和数据格式保持一致。</li><li>当数据类型为DOUBLE时，仅支持NHWC格式。</li><li>shape仅支持4维，且N轴和C轴与输入self shape的N轴和C轴保持一致。</li></ul></td>
       <td>FLOAT32、BFLOAT16、FLOAT16、DOUBLE</td>
       <td>NCHW、NHWC</td>
       <td>4</td>
@@ -201,6 +208,10 @@ aclnnStatus aclnnUpsampleBilinear2d(
     </tr>
   </tbody>
   </table>
+
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
+
+    参数`self`、`out`的数据类型不支持BFLOAT16。
 
 - **返回值**：
 
@@ -283,24 +294,26 @@ aclnnStatus aclnnUpsampleBilinear2d(
 
 - **返回值**：
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
-- 当alignCorners为True时，参数outputSize与参数scalesH和参数scalesW，在使用时二选一，即：
-  - outputSize对应轴的值小于等于1，scales对应轴的值为0。
-  - 其他情况下使用入参self和outputSize中对应轴的参数值，且：$scales=(self-1)/(outputSize-1)$。  
-- 当alignCorners为False时：
-  - 当入参scalesH或入参scalesW的值等于0时，使用入参outputSize的参数值。
-    - 当outputSize对应轴等于0，即对应的scales为0。
-    - 当outputSize的对应轴不等于0时，即：$scales=(self/outputSize)$。
-  - 当入参scalesH和入参scalesW的值都大于0时，使用入参scalesH、scalesW和outputSize输入的参数值。
+- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_H = floor(self\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(self\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleBilinear2d默认确定性实现。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

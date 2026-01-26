@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -26,22 +31,22 @@
     self.dim[2] / outputSize[0] & alignCorners=false
     \end{cases}
     $$
-   
+
     因此，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系：
-    
+
     $$
     x' =\begin{cases}
     x * scale\_h & alignCorners=true \\
     MAX(0,{(x+0.5)*scale\_h-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
-   
+
     - 则有以下公式：
 
       $$

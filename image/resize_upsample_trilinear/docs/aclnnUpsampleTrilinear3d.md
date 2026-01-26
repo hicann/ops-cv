@@ -1,11 +1,18 @@
 # aclnnUpsampleTrilinear3d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_upsample_trilinear)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -16,7 +23,7 @@
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。对于一个三维插值点$(N, C, D, H, W)$，则有以下公式：
 
     $$
     scale\_d =\begin{cases}
@@ -229,12 +236,19 @@ aclnnStatus aclnnUpsampleTrilinear3d(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>：
+    - 入参`self`的数据类型仅支持FLOAT32、FLOAT16，不支持inf、-inf输入。
+    - 出参`out`的数据类型仅支持FLOAT32、FLOAT16。
+  - <term>Atlas 训练系列产品</term>：
+
+    入参`self`和出参`out`的数据类型支持FLOAT32、FLOAT16、DOUBLE。
+
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-
+  
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -317,11 +331,24 @@ aclnnStatus aclnnUpsampleTrilinear3d(
 
 ## 约束说明
 
-- 输入数据缩放场景缩小倍数必须小于等于50，即$输出shape的高度D/outputSize[0]$、$输出shape的宽度H/outputSize[1]$、$输出shape的宽度W/outputSize[2]$必须小于等于50。
+- 输入数据缩放场景缩小倍数必须小于等于50，即：
+
+  $$
+  输出shape的深度D/outputSize\_D <= 50
+  $$
+  
+  $$
+  输出shape的高度H/outputSize\_H <= 50
+  $$
+  
+  $$
+  输出shape的宽度W/outputSize\_W <=50
+  $$
+
 - 参数`self`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
-  - 占用内存小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60G。内存占用的计算公式如下：
 
     $$
     N * C * (self\_D * self\_H * self\_W + out\_D * out\_H * out\_W + self\_D * self\_H * out\_W + self\_D * out\_H * out\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
@@ -332,6 +359,20 @@ aclnnStatus aclnnUpsampleTrilinear3d(
     - C代表输入和输出的C轴。
   - N \* C \* self_D \* self_H < 2^31
   - out_W * out_H < 2^31
+- 参数self、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_D = floor(self\_D * scalesD)
+  $$
+
+  $$
+  outputSize\_H = floor(self\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(self\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleTrilinear3d默认确定性实现。
 

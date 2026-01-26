@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -15,9 +20,9 @@
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 对于缩放之后的目标图像的点，计算距离最近的原始图像的点，后者的值直接复制给前者。
   - 具体计算逻辑：
-    
+
     对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
-    
+
     $$
     x' = \min(\lfloor x * scale\_depth \rfloor, self\_D - 1) ,\ 
     scale\_depth = self\_D / outputSize[0]
@@ -27,14 +32,14 @@
     y' = \min(\lfloor y * scale\_height \rfloor, self\_H - 1) ,\ 
     scale\_height = self\_H / outputSize[1]
     $$
-    
+
     $$
     z' = \min(\lfloor z * scale\_width \rfloor, self\_W - 1) ,\ 
     scale\_width = self\_W / outputSize[2]
     $$
-    
+
     则有以下公式：
-    
+
     $$
     {V(p_{x,y,z})} = {V(q_{x',y',z'})}
     $$
@@ -86,6 +91,8 @@
       <td>NCDHW</td>
     </tr>
   </tbody></table>
+
+<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
 
 ## 约束说明
 

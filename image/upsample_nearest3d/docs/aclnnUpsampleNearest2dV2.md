@@ -1,11 +1,18 @@
 # aclnnUpsampleNearest2dV2
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest3d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -47,6 +54,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   aclOpExecutor *executor, 
   aclrtStream    stream)
 ```
+
 
 ## aclnnUpsampleNearest2dV2GetWorkspaceSize
 
@@ -148,6 +156,10 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
+  
+    入参`self`和出参`out`的数据类型不支持FLOAT32、BFLOAT16。
+
 - **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -187,6 +199,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
       <td>outputSize中存在值为0的元素。</td>
     </tr>
   </tbody></table>
+
 
 ## aclnnUpsampleNearest2dV2
 
@@ -233,9 +246,16 @@ aclnnStatus aclnnUpsampleNearest2dV2(
 
 ## 约束说明
 
-- 参数outputSize与参数scalesH、scalesW，在使用时二选一，即：
-  - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize的参数值。
-  - 当入参scalesH和入参scalesW的值都大于0时，使用入参scalesH和入参scalesW的参数值，且$outputSize=[floor(self\_H * scalesH)，floor(self\_W * scalesW)]$。
+- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_H = floor(self\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(self\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearest2dV2默认确定性实现。
 

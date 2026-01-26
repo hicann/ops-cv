@@ -1,11 +1,18 @@
 # aclnnUpsampleNearest1dV2
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest3d)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -129,6 +136,10 @@ aclnnStatus aclnnUpsampleNearest1dV2(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
+  
+    入参`self`和出参`out`的数据类型不支持BFLOAT16。
+  
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -161,7 +172,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
       <td>self、out的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>self、out的数据类型或数据格式不一致。</td>
+      <td>self、out的数据类型、数据格式不一致。</td>
     </tr>
     <tr><td>self的shape不是3维。</td>
     </tr>
@@ -214,9 +225,12 @@ aclnnStatus aclnnUpsampleNearest1dV2(
 
 ## 约束说明
 
-- 参数outputSize与参数scaleL，在使用时二选一，即：
-  - 当入参scaleL的值小于等于0时，使用入参outputSize的参数值。
-  - 当入参scaleL的值大于0时，使用入参scaleL参数值，且$outputSize=[floor(self\_L * scaleL)]$。
+- 参数self、outputSize、scales需要满足如下约束：
+
+  $$
+  outputSize = floor(self\_L * scaleL)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearest1dV2默认确定性实现。
 

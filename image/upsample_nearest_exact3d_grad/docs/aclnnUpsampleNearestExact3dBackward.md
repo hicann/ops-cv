@@ -1,11 +1,18 @@
 # aclnnUpsampleNearestExact3dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact3d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -23,14 +30,14 @@
   $$
   scalesW = outputSize[2] / inputSize[4]
   $$
-
+  
   $$
   gradInput(N, C, floor ( scalesD * ( D + 0.5 )), floor ( scalesH * ( H + 0.5 )),  floor ( scalesW * ( W+ 0.5 ))) += gradOutput( N, C, D, H ,W)
   $$
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearestExact3dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleNearestExact3dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
@@ -174,7 +181,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
   
@@ -274,14 +281,14 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
 - 参数`gradOut`、`gradInput`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`gradInput`的N轴和C轴与`gradOut`保持一致。
-  - 占用内存小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60G。内存占用的计算公式如下：
 
     $$
     N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
@@ -293,16 +300,40 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   - N \* C \* gradOut_D \* gradOut_H < 2^31
   - gradInput_W * gradInput_H < 2^31
 - 参数gradOut、gradInput的数据格式不为NCDHW或NDHWC时，输入其他数据格式默认按NCDHW处理。
-- 输入数据缩放场景放大倍数必须小于等于50，即$outputSize[0]/输出shape的高度H$、$outputSize[1]/输出shape的宽度W$以及$outputSize[2]/输出shape的深度D$必须小于等于50。
-- 参数outputSize与参数scalesD、scalesH、scalesW，在使用时二选一，即：
-  - 当入参scalesD、scalesH、scalesW，其中一个参数的值小于等于0时，使用入参outputSize的参数值。
-  - 当入参scalesD、scalesH、scalesW的值都大于0时，使用入参scalesD、scalesH、scalesW的参数值，且$outputSize=[floor(inputSize\_D * scalesD)，floor(inputSize\_H * scalesH)，floor(inputSize\_W * scalesW)]$。
+- 输入数据缩放场景放大倍数必须小于等于50，即：
+
+  $$
+  outputSize\_D / 输出shape的深度D <= 50
+  $$
+
+  $$
+  outputSize\_H / 输出shape的高度H <= 50
+  $$
+  
+  $$
+  outputSize\_W / 输出shape的宽度W <=50
+  $$
+
+- 参数inputSize、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_D = floor(inputSize\_D * scalesD)
+  $$
+  
+  $$
+  outputSize\_H = floor(inputSize\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(inputSize\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearestExact3dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](./../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>

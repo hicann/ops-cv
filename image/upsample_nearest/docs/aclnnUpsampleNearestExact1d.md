@@ -1,11 +1,18 @@
 # aclnnUpsampleNearestExact1d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -97,7 +104,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>out</td>
       <td>输出</td>
       <td>公式中的输出`out`，表示采样后的输出张量。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL、ND</td>
       <td>3</td>
@@ -125,6 +132,10 @@ aclnnStatus aclnnUpsampleNearestExact1d(
     </tr>
   </tbody>
   </table>
+
+  - <term>Atlas 推理系列产品</term>：
+  
+    入参`self`和出参`out`的数据类型不支持BFLOAT16。
 
 - **返回值**：
 
@@ -162,6 +173,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>self的shape不是3维。</td>
     </tr>
   </tbody></table>
+
 
 ## aclnnUpsampleNearestExact1d
 
@@ -207,9 +219,12 @@ aclnnStatus aclnnUpsampleNearestExact1d(
 
 ## 约束说明
 
-- 参数outputSize与参数scales，在使用时二选一，即：
-  - 当入参scales的值小于等于0时，使用入参outputSize的参数值。
-  - 当入参scales的值大于0时，使用入参scales参数值，且$outputSize=[floor(self\_L * scales)]$。
+- 参数self、outputSize、scales需要满足如下约束：
+
+  $$
+  outputSize = floor(self\_L * scales)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearestExact1d默认确定性实现。
 

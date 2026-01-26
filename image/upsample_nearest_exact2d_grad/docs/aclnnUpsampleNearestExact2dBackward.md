@@ -1,11 +1,18 @@
 # aclnnUpsampleNearestExact2dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest_exact2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -191,7 +198,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
       <td>scalesH或scalesW的取值小于0。</td>
     </tr>
     <tr>
-      <td>gradOutput和out的数据格式不满足约束。</td>
+      <td>gradOutput与out的数据格式不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -240,10 +247,26 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 
 ## 约束说明
 
-- 输入数据缩放场景放大倍数必须小于等于50，即$outputSize[0]/输出shape的高度H$以及$outputSize[1]/输出shape的宽度W$必须小于等于50。
-- 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
-  - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值。
-  - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+- 输入数据缩放场景放大倍数必须小于等于50，即：
+
+  $$
+  outputSize\_H / 输出shape的高度H <= 50
+  $$
+  
+  $$
+  outputSize\_W / 输出shape的宽度W <=50
+  $$
+
+- 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_H = floor(inputSize\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(inputSize\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearestExact2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
 

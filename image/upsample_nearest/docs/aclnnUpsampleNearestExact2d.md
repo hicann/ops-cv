@@ -1,11 +1,18 @@
 # aclnnUpsampleNearestExact2d
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_nearest)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -117,7 +124,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>out</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`self`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、NHWC、ND</td>
       <td>4</td>
@@ -146,12 +153,16 @@ aclnnStatus aclnnUpsampleNearestExact2d(
   </tbody>
   </table>
 
+  - <term>Atlas 推理系列产品</term>：
+  
+    参数self、out的数据类型仅支持FLOAT32、FLOAT16。
+  
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-
+  
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -231,9 +242,16 @@ aclnnStatus aclnnUpsampleNearestExact2d(
 
 ## 约束说明
 
-- 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
-  - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值。
-  - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(self\_H * scalesH)$，或者$floor(self\_W * scalesW)$。
+- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_H = floor(self\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(self\_W * scalesW)
+  $$
+
 - 确定性计算：
   - aclnnUpsampleNearestExact2d默认确定性实现。
 

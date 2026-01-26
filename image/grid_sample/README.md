@@ -4,8 +4,13 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
@@ -30,9 +35,9 @@
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
   
     - 2D场景：
-      
+
       输入input、grid网格、输出output的尺寸如下：
-    
+
       $$
       input: (N, C, H_{in}, W_{in})\\
       grid: (N, H_{out}, W_{out}, 2)\\
@@ -40,8 +45,8 @@
       $$
   
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
-    
-    
+
+
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
       - paddingMode="zeros"，表示对越界位置用0填充。
@@ -131,6 +136,15 @@
     </tr>
     <tr>
   </tbody></table>
+
+- <term>Atlas 推理系列产品</term>：
+
+  - 2D场景下，需要同时满足以下条件：
+    - 输入和输出的数据类型仅支持FLOAT32。
+    - 属性`interpolation_mode`需要设置为`bilinear`。
+    - 属性`padding_mode`设置为`zeros`。
+    - 输入`x`的C轴的值为32或者(C轴的大小 * H轴的大小 * W轴的大小) < 20k。
+  - 不支持3D场景。
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：2D场景下，数据类型不支持BFLOAT16。
 

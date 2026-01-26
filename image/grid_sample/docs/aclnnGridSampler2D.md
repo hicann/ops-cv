@@ -1,11 +1,18 @@
 # aclnnGridSampler2D
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/grid_sample)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -107,7 +114,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>interpolationMode</td>
       <td>输入</td>
       <td>表示插值模式，对应公式描述中的`interpolationMode`。</td>
-     <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）、2：bicubic（双三次插值）三种模式。</td>
+      <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）、2：bicubic（双三次插值）三种模式。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -117,7 +124,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>paddingMode</td>
       <td>输入</td>
       <td>表示填充模式，即当(x, y)取值超过输入特征图采样范围时，返回一个特定值。对应公式描述中的`paddingMode`。</td>
-      <td>支持0：zeros、1：border、2：reflection三种模式。</li></ul></td>
+      <td>支持0：zeros、1：border、2：reflection三种模式。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -166,6 +173,9 @@ aclnnStatus aclnnGridSampler2D(
   </tbody>
   </table>
 
+  - <term>Atlas 训练系列产品</term>：
+  
+    入参`interpolationMode`不支持插值模式2：bicubic（双三次插值）。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     入参`interpolationMode`，仅当input数据类型为FLOAT32或者FLOAT16时支持2：bicubic（双三次插值）。
@@ -264,11 +274,14 @@ aclnnStatus aclnnGridSampler2D(
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   - 如果grid存在超出[-1, 1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
   - 使用bilinear或者bicubic插值时，针对FLOAT16数据类型，需要使用workspace内存。
+- <term>Atlas 训练系列产品</term>：使用bilinear插值时，针对FLOAT16数据类型，需要使用workspace内存。
 - 确定性计算：
   - aclnnGridSampler2D默认确定性实现。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>

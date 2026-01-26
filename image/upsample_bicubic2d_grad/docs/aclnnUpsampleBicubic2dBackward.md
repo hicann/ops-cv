@@ -1,11 +1,18 @@
 # aclnnUpsampleBicubic2dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bicubic2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -52,7 +59,7 @@
 
 ## 函数原型
 
-算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleBicubic2dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleBicubic2dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(
@@ -194,6 +201,9 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   </tbody>
   </table>
 
+  - <term>Atlas 训练系列产品</term>：
+    - 参数`gradOut`、`gradInput`的数据类型不支持BFLOAT16。
+    - 参数`gradOut`、`gradInput`的数据格式不支持NHWC。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   
     参数`gradOut`、`gradInput`的数据格式不支持NHWC。
@@ -308,20 +318,23 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
 
 ## 约束说明
 
-- 参数outputSize的H轴和W轴与参数scalesH和参数scalesW，在使用时二选一，即：
-  - 当alignCorners为True时：
-    - outputSize对应轴的值等于1，scales对应轴的值为0。
-    - 其他情况下使用入参inputSize和outputSize中对应轴的参数值，且：$scales=(inputSize-1)/(outputSize-1)$。  
-  - 当alignCorners为False时：
-    - 当入参scalesH或入参scalesW的值小于等于0时，使用入参outputSize中对应轴的参数值，即：$scales=(inputSize/outputSize)$。
-    - 当入参scalesH或入参scalesW的值大于0时，使用入参scalesH或入参scalesW的参数值，即outputSize对应轴的值为$floor(inputSize\_H * scalesH)$，或者$floor(inputSize\_W * scalesW)$。
+- 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
+
+  $$
+  outputSize\_H = floor(inputSize\_H * scalesH)
+  $$
+
+  $$
+  outputSize\_W = floor(inputSize\_W * scalesW)
+  $$
+
 - 确定性计算：
   
-  aclnnUpsampleBicubic2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。确定性实现需同时满足如下条件：
-  - inputSize[3] > 130000
-  - scaleH >=50
-  - scaleW >=50 && inputSize[0] \* inputSize[1] \* inputSize[2] > inputSize[3] \* 0.5
-  - scaleH < 0.02 && scaleW < 0.02 && inputSize[0] \* inputSize[1] \* inputSize[2] > inputSize[3] \* 10000
+  aclnnUpsampleBicubic2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。当满足如下条件时不支持确定性计算：
+  - $inputSize\_W$ > 130000
+  - $inputSize\_H$/$outputSize\_H$ >=50
+  - $inputSize\_W$/$outputSize\_W$ >=50 && $inputSize\_N$ \* $inputSize\_C$ \* $inputSize\_H$ > $inputSize\_W$ \* 0.5
+  - $inputSize\_H$/$outputSize\_H$ < 0.02 && $inputSize\_W$/$outputSize\_W$ < 0.02 && $inputSize\_N$ \* $inputSize\_C$ \* $inputSize\_H$ > $inputSize\_W$ \* 10000
 
 ## 调用示例
 
@@ -411,17 +424,17 @@ int main()
     std::vector<int64_t> outShape = {1, 1, 3, 3};
     void *selfDeviceAddr = nullptr;
     void *outDeviceAddr = nullptr;
-    aclTensor *gradOut = nullptr;
-    aclTensor *gradInput = nullptr;
+    aclTensor *self = nullptr;
+    aclTensor *out = nullptr;
     std::vector<float> selfHostData = {1, 2, 3, 4.1};
     std::vector<float> outHostData = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // 创建self aclTensor
-    ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &gradOut);
+    ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &self);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     // 创建out aclTensor
-    ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &gradInput);
+    ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &out);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     std::vector<int64_t> outArraySize = {2, 2};
@@ -437,7 +450,7 @@ int main()
     aclOpExecutor *executor;
     // 调用aclnnUpsampleBicubic2dBackward第一段接口
     ret = aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(
-        gradOut, outputSize, inputSize, 1, 1.1, 1.1, gradInput, &workspaceSize, &executor);
+        self, outputSize, inputSize, 1, 1.1, 1.1, out, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBicubic2dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
@@ -468,8 +481,8 @@ int main()
     }
 
     // 6. 释放aclTensor，需要根据具体API的接口定义修改
-    aclDestroyTensor(gradOut);
-    aclDestroyTensor(gradInput);
+    aclDestroyTensor(self);
+    aclDestroyTensor(out);
     aclDestroyIntArray(outputSize);
     aclDestroyIntArray(inputSize);
 

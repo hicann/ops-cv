@@ -1,11 +1,18 @@
 # aclnnUpsampleLinear1dBackward
 
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_grad)
+
 ## 产品支持情况
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
+|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 训练系列产品</term>    |     √    |
+
 
 ## 功能说明
 
@@ -56,7 +63,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](./../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleLinear1dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleLinear1dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleLinear1dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(
@@ -149,7 +156,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>scales</td>
       <td>输入</td>
       <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
-      <td>取值不大于500。</td>
+      <td>取值不大于500。</li></ul></td>
       <td>DOUBLE</td>
       <td>-</td>
       <td>-</td>
@@ -188,8 +195,12 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   </tbody>
   </table>
 
-  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - <term>Atlas 训练系列产品</term>：
+
+    入参`gradOut`和出参`out`的数据类型仅支持FLOAT32、FLOAT16。
   
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+
     入参`gradOut`：当gradOut的shape对应轴的值与inputSize对应轴的值不相同时，数据类型仅支持FLOAT32、FLOAT16。
 
 - **返回值：**
@@ -293,7 +304,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
 - 参数`gradOut`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`gradOut`保持一致。
-  - 占用内存小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60G。内存占用的计算公式如下：
 
     $$
     (gradOut\_L + out\_L + out\_L) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
@@ -304,16 +315,19 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     - C代表输入和输出的C轴。
   - N * C < 2^31
 - 入参`gradOut`和出参`out`的数据格式不为NCL或ND时，输入其他数据格式默认按照NCL处理。
-- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：输入数据缩放场景放大倍数必须小于等于500，即：$outputSize[0]/(输出shape的长度L)<=500$。
-- 参数outputSize与参数scales，在使用时二选一，即：
-  - 当alignCorners为True：
-    - outputSize等于1，scales的值为0。
-    - 其他情况下使用入参inputSize和outputSize的参数值，且：$scales=(inputSize\_L-1)/(outputSize-1)$。  
-  - 当alignCorners为False：
-    - 当入参scales的值小于等于0时，使用入参outputSize的参数值，即：$scales=(inputSize\_L / outputSize)$。
-    - 当入参scales的值大于0时，当$outputSize=[floor(inputSize\_L * scales)]$不成立时，使用入参outputSize的参数值；否则使用入参scales的值。
-- 确定性计算：
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：输入数据缩放场景放大倍数必须小于等于500，即：
   
+  $$
+  outputSize[0] / 输出shape的长度L <= 500
+  $$
+
+- 参数inputSize、outputSize、scales需要满足如下约束：
+
+  $$
+  outputSize = floor(inputSize\_L * scales)
+  $$
+
+- 确定性计算：
   - aclnnUpsampleLinear1dBackward默认确定性实现。
 
 ## 调用示例

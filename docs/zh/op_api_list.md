@@ -4,7 +4,7 @@
 
 为方便调用算子，提供一套基于C的API（以aclnn为前缀API），无需提供IR（Intermediate Representation）定义，方便高效构建模型与应用开发，该方式被称为“单算子API调用”，简称aclnn调用。
 
-调用算子API时，需引用依赖的头文件和库文件，一般头文件默认在```${INSTALL_DIR}/include/aclnnop```，库文件默认在```${INSTALL_DIR}/lib64```，具体文件如下：
+调用算子API时，需引用依赖的头文件和库文件，一般头文件默认在`${INSTALL_DIR}/include/aclnnop`，库文件默认在`${INSTALL_DIR}/lib64`，具体文件如下：
 
 - 依赖的头文件：①方式1 （推荐）：引用算子总头文件aclnn\_ops\_\$\{ops\_project\}.h。②方式2：按需引用单算子API头文件aclnn\_\*.h。
 - 依赖的库文件：按需引用算子总库文件libopapi\_\$\{ops\_project\}.so。
@@ -22,8 +22,11 @@
 
 算子接口列表如下：
 
-| 接口名      | 说明     | 确定性说明（A2/A3） |
-| -------------- | --------------------------- | --------------------------- |
+| 接口名      | 说明     | 确定性说明（A2/A3） | 确定性说明（A5） |
+| -------------- | --------------------------- | --------------------------- | --------------------------- |
+| [aclnnMrgbaCustom](../../objdetect/mrgba_custom/doc/aclnnMrgbaCustom.md) | 完成张量rgb和张量alpha的透明度乘法计算。 |默认确定性实现|
+| [aclnnBackgroundReplace](../../objdetect/background_replace/doc/aclnnBackgroundReplace.md) | 将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。 |默认确定性实现|
+| [aclnnBlendImagesCustom](../../objdetect/blend_images_custom/doc/aclnnBlendImagesCustom.md) | 完成张量rgb、frame和alpha的透明度乘法计算。 |默认确定性实现|
 | [aclnnGridSampler2D](../../image/grid_sample/docs/aclnnGridSampler2D.md) | 根据网格定义的坐标，从输入张量中采样像素值并重映射到输出空间。 |默认确定性实现|
 | [aclnnGridSampler3D](../../image/grid_sample/docs/aclnnGridSampler3D.md) | 根据网格定义的坐标，从输入张量中采样像素值并重映射到输出空间。 |默认确定性实现|
 | [aclnnGridSampler2DBackward](../../image/grid_sampler2_d_grad/docs/aclnnGridSampler2DBackward.md) | [aclnnGridSampler2D](../../image/grid_sample/docs/aclnnGridSampler2D.md)的反向传播，完成张量input与张量grid的梯度计算。 |默认非确定性实现，支持配置开启|

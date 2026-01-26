@@ -4,19 +4,24 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
+|  <term>Atlas 训练系列产品</term>    |     ×    |
+
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
+- 算子功能：对由多个输入通道组成的输入信号应用2D双三次上采样的反向传播。
 - 计算公式：
   - 正向的核心算法逻辑：
     1. 将目标图像缩放到和原始图像一样大的尺寸。
     2. 计算缩放之后的目标图像的点，以及前后相邻的原始图像的点。
     3. 分别计算相邻点到对应目标点的权重，按照权重相乘累加即可得到目标点值。
   - 具体计算逻辑：
-    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
+    缩放方式分为角对齐和边对齐，角对齐表示按照原始图片左上角像素中心点对齐，边对齐表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。对于一个二维插值点$(N, C, H, W)$，则有以下公式：
 
     $$
     scale\_h =\begin{cases}
@@ -33,25 +38,25 @@
     inputSize[3] / outputSize[1] & alignCorners=false
     \end{cases}
     $$
-   
+
     因此，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
-    
+
     $$
     x' =\begin{cases}
     x * scale\_h & alignCorners=true \\
     MAX(0,{(x+0.5)*scale\_h-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     $$
     y' =\begin{cases}
     y * scale\_w & alignCorners=true \\
     MAX(0,{(y+0.5)*scale\_w-0.5}) & alignCorners=false
     \end{cases}
     $$
-    
+
     - 记：
-    
+
       $$
       x_{0} =int(x'),x_{1} =int(x')+1, lambda_{0} = x_{1}-x', lambda_{1} =   1-lambda_{0}
       $$
@@ -59,7 +64,7 @@
       $$
       y_{0} =int(y'),y_{1} =int(y')+1, lambdb_{0} = y_{1}-y', lambdb_{1} =   1-lambdb_{0}
       $$
-   
+
     - 则有以下公式：
 
       $$
@@ -140,6 +145,8 @@
       <td>ND</td>
     </tr>
   </tbody></table>
+
+<term>Atlas 推理系列产品</term>、<term>Atlas 200I/500 A2 推理产品</term>：输入和输出的数据类型不支持BFLOAT16。
 
 ## 约束说明
 
