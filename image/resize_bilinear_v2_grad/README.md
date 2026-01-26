@@ -104,4 +104,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_upsample_bilinear_v2_backward](examples/test_aclnn_upsample_bilinear_2d_backward.cpp) | 通过[aclnnUpsampleBilinear2dBackward](docs/aclnnUpsampleBilinear2dBackward.md)接口方式调用ResizeBlinearV2Grad算子。 |
+| aclnn接口  | [test_aclnn_upsample_bilinear_2d_backward](examples/test_aclnn_upsample_bilinear_2d_backward.cpp) | 通过[aclnnUpsampleBilinear2dBackward](docs/aclnnUpsampleBilinear2dBackward.md)接口方式调用ResizeBlinearV2Grad算子。 |
