@@ -36,6 +36,9 @@ __aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coo
 {
     coord = coord < 0 ? 0 : coord;
     coord = coord > (size - 1) ? (float)size - 1 : coord;
+    if (Simt::IsNan(coord) || Simt::IsInf(coord)) {
+        return 0.0;
+    }
     return coord;
 }
 
@@ -78,7 +81,7 @@ __aicore__ __attribute__((always_inline)) inline float Clip(
         }
         coord = ClipCoordinates(coord, size);
     }
-    safeDowngradeToIntRange(coord);
+    coord = safeDowngradeToIntRange(coord);
     return coord;
 }
 
