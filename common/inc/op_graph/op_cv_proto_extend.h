@@ -12,8 +12,8 @@
  * \file op_cv_proto_extend.h
  * \brief
  */
-#ifndef OPS_OP_MATH_PROTO_EXTEND_H_
-#define OPS_OP_MATH_PROTO_EXTEND_H_
+#ifndef OPS_OP_CV_PROTO_EXTEND_H_
+#define OPS_OP_CV_PROTO_EXTEND_H_
 
 #include "graph/operator_reg.h"
 

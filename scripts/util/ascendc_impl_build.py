@@ -16,6 +16,7 @@ import sys
 import os
 import re
 import datetime
+import json
 from typing import List
 
 import opdesc_parser
@@ -165,17 +166,19 @@ def {}({}, kernel_name="{}", impl_mode=""):
         bisheng_path = os.path.dirname(bisheng)
         tikcpp_path = os.path.realpath(os.path.join(bisheng_path, "..", "..", "tikcpp"))
     else:
-        tikcpp_path = os.path.realpath("/usr/local/Ascend/latest/compiler/tikcpp")
+        tikcpp_path = os.path.realpath("/usr/local/Ascend/cann/compiler/tikcpp")
     options.append("-I" + tikcpp_path)
     options.append("-I" + os.path.join(tikcpp_path, "..", "..", "include"))
     options.append("-I" + os.path.join(tikcpp_path, "tikcfw"))
     options.append("-I" + os.path.join(tikcpp_path, "tikcfw", "impl"))
     options.append("-I" + os.path.join(tikcpp_path, "tikcfw", "interface"))
+    options.append("-I" + os.path.join(tikcpp_path,
+                    "..", "..", "..", "latest", os.uname().machine+"-linux", "asc", "atcos"))
     options.append("-I" + os.path.join(PYF_PATH, "..", "ascendc", "common"))
 
     ascend_home_path = os.environ.get('ASCEND_HOME_PATH')
     if ascend_home_path is None:
-        ascend_home_path = os.path.realpath("/usr/local/Ascend/latest")
+        ascend_home_path = os.path.realpath("/usr/local/Ascend/cann")
     options.append("-I" + os.path.join(ascend_home_path, "pkg_inc", "op_common"))
 
     if impl_mode == "high_performance":
@@ -337,6 +340,9 @@ class AdpBuilder(opdesc_parser.OpDesc):
             if self.op_file.endswith("_apt"):
                 op_dir = self.op_file.replace("_apt", "")
                 src_file = os.path.join(impl_path, op_dir, self.op_file + ".cpp")
+            elif self.op_file.endswith("_910b"):
+                op_dir = self.op_file.replace("_910b", "")
+                src_file = os.path.join(impl_path, op_dir, self.op_file + ".cpp")
             else:
                 src_file = os.path.join(impl_path, self.op_file, self.op_file + ".cpp")
             if not os.path.exists(src_file):
@@ -365,9 +371,9 @@ class AdpBuilder(opdesc_parser.OpDesc):
     def _gen_op_compile_option(self: any, op_compile_option_all: list = None):
         if op_compile_option_all is not None:
             if self.op_type in op_compile_option_all:
-                self.op_compile_option = op_compile_option_all[self.op_type]
+                self.op_compile_option = json.dumps(op_compile_option_all[self.op_type])
             elif "__all__" in op_compile_option_all:
-                self.op_compile_option = op_compile_option_all["__all__"]
+                self.op_compile_option = json.dumps(op_compile_option_all["__all__"])
 
 
     def _ip_argpack(self: any, default: bool = True) -> list:
@@ -400,6 +406,9 @@ class AdpBuilder(opdesc_parser.OpDesc):
                     arg += '="' + self.argsdefv[i + argidx] + '"'
                 elif self.attr_val.get(att).get('type') == 'bool':
                     arg += '=' + self.argsdefv[i + argidx].capitalize()
+                elif self.attr_val.get(att).get('type') == 'list_bool':
+                    arg += '=' + "[" + ", ".join(word.strip().capitalize() \
+                            for word in self.argsdefv[i + argidx].strip('[]').split(',')) + "]"
                 else:
                     arg += '=' + self.argsdefv[i + argidx]
             args.append(arg)

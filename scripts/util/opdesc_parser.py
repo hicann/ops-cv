@@ -289,6 +289,7 @@ def get_op_desc(file: str, batch_list: list, iterator_list: list, builder: any,
     with open (file, 'r') as fd:
         lines = fd.readlines()
         for line in lines:
+            line = line.replace(" ", "")
             line = line.strip()
             if line.startswith('['):
                 name = line[1:-1]

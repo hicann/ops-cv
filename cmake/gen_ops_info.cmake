@@ -41,6 +41,59 @@ function(kernel_src_copy)
   endforeach()
 endfunction()
 
+function(get_op_type_and_validate OP_DIR compute_unit op_name_var op_type_var is_valid_var)
+  get_filename_component(op_name "${OP_DIR}" NAME)
+  set(${op_name_var} "${op_name}" PARENT_SCOPE)
+  set(cache_key "OP_CACHE_${op_name}_${compute_unit}")
+  if(DEFINED ${cache_key})
+    set(cached_op_type "${${cache_key}}")
+    if(cached_op_type)
+      set(${op_type_var} "${${cache_key}}" PARENT_SCOPE)
+      set(${is_valid_var} TRUE PARENT_SCOPE)
+      return()
+    else()
+      set(${is_valid_var} FALSE PARENT_SCOPE)
+      return()
+    endif()
+  endif()
+
+  set(op_type "")
+  set(is_valid FALSE)
+  set(${op_type_var} "" PARENT_SCOPE)
+  set(${is_valid_var} FALSE PARENT_SCOPE)
+  set(binary_json ${OP_DIR}/op_host/config/${compute_unit}/${op_name}_binary.json)
+
+  if(EXISTS ${binary_json})
+    get_op_type_from_binary_json("${binary_json}" OP_TYPE)
+    set(op_type ${OP_TYPE})
+    message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary with self config.")
+    if(NOT op_type)
+      set(${cache_key} "" CACHE INTERNAL "")
+      return()
+    endif()
+  else()
+    get_op_type_from_op_name("${op_name}" op_type)
+    if(NOT op_type)
+      message(STATUS "[INFO] On [${compute_unit}], [${op_name}] not need to compile.")
+      set(${cache_key} "" CACHE INTERNAL "")
+      return()
+    endif()
+
+    set(check_op_supported_result)
+    check_op_supported("${op_name}" "${OP_DIR}" "${compute_unit}" check_op_supported_result)
+    if(NOT check_op_supported_result)
+      message(STATUS "[INFO] On [${compute_unit}], [${op_name}] not supported.")
+      set(${cache_key} "" CACHE INTERNAL "")
+      return()
+    endif()
+  endif()
+
+  set(is_valid TRUE)
+  set(${op_type_var} "${op_type}" PARENT_SCOPE)
+  set(${is_valid_var} TRUE PARENT_SCOPE)
+  set(${cache_key} "${op_type}" CACHE INTERNAL "Cached op_type for ${op_name} on ${compute_unit}")
+endfunction()
+
 # ######################################################################################################################
 # generate operator dynamic python script for compile, generenate out path ${CMAKE_BINARY_DIR}/tbe, and install to
 # packages/vendors/${VENDOR_NAME}/op_impl/ai_core/tbe/${VENDOR_NAME}_impl/dynamic
@@ -64,6 +117,33 @@ function(add_ops_impl_target)
     DEPENDS ${CMAKE_SOURCE_DIR}/scripts/util/ascendc_impl_build.py
     )
   add_custom_target(${OPIMPL_TARGET} ALL DEPENDS ${OPIMPL_OUT_DIR}/.impl_timestamp)
+
+  foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
+    set(compute_unit_op_cache "${compute_unit}_ALL_COMPUTE_PAIRS")
+    if(NOT DEFINED ${compute_unit_op_cache})
+      set(all_op_pairs)
+      foreach(OP_DIR ${COMPILED_OP_DIRS})
+        get_op_type_and_validate("${OP_DIR}" "${compute_unit}" op_name op_type is_valid)
+        if(NOT is_valid)
+          continue()
+        endif()
+        list(APPEND all_op_pairs "${op_type}:${compute_unit}")
+      endforeach()
+      set(${compute_unit_op_cache} ${all_op_pairs} CACHE STRING "compute_unit:${compute_unit}")
+    endif()
+
+    set(cur_op_pairs ${${compute_unit_op_cache}})
+    add_custom_command(OUTPUT ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp
+      COMMAND mkdir -m 700 -p ${OPIMPL_OUT_DIR}/${compute_unit}
+      COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/util/gen_compile_option.sh ${cur_op_pairs}
+      COMMAND rm -rf ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp
+      COMMAND touch ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp
+      DEPENDS merge_ini_${compute_unit} ${OPIMPL_OUT_DIR}/.impl_timestamp
+    )
+    add_custom_target(gen_compile_options_${compute_unit} ALL
+      DEPENDS ${OPIMPL_OUT_DIR}/.impl_timestamp ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp)
+    add_dependencies(${OPIMPL_TARGET} gen_compile_options_${compute_unit})
+  endforeach()
 
   file(GLOB dynamic_impl ${OPIMPL_OUT_DIR}/dynamic/*.py)
   if(ENABLE_PACKAGE)

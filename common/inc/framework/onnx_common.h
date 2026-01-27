@@ -13,8 +13,8 @@
  * \brief
  */
 
-#ifndef MATH_COMMON_ONNX_COMMON_H
-#define MATH_COMMON_ONNX_COMMON_H
+#ifndef CV_COMMON_ONNX_COMMON_H
+#define CV_COMMON_ONNX_COMMON_H
 
 #include <string>
 #include <vector>
@@ -86,4 +86,4 @@ inline Status ChangeFormatFromOnnx(ge::Operator& op, const int idx, ge::Format f
 }
 }  // namespace domi
 
-#endif  //  MATH_COMMON_ONNX_COMMON_H
+#endif  //  CV_COMMON_ONNX_COMMON_H

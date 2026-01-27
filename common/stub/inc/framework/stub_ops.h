@@ -13,8 +13,8 @@
  * \brief
  */
 
-#ifndef MATH_COMMON_STUB_OPS_H
-#define MATH_COMMON_STUB_OPS_H
+#ifndef CV_COMMON_STUB_OPS_H
+#define CV_COMMON_STUB_OPS_H
 
 #include "graph/operator_reg.h"
 #include "graph/operator.h"
@@ -195,4 +195,4 @@ REG_OP(Transpose)
     .OP_END_FACTORY_REG(Transpose)
 }  // namespace ge
 
-#endif  // MATH_COMMON_STUB_OPS_H
+#endif  // CV_COMMON_STUB_OPS_H
