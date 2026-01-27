@@ -13,9 +13,13 @@
  * \brief
  */
 
+#if __CCE_AICORE__ == 220
 #include "grid_sampler2_d_grad.h"
 #include "grid_sampler2_d_grad_fp16.h"
 #include "grid_sampler2_d_grad_cast.h"
+#else
+#include "arch35/grid_sampler2_d_grad_simt.h"
+#endif
 
 __aicore__ inline void InitWorkspace(const GridSampler2DGradTilingData& tiling, GM_ADDR workSpace)
 {
@@ -41,12 +45,19 @@ __aicore__ inline void InitWorkspace(const GridSampler2DGradTilingData& tiling, 
 extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
     GM_ADDR grad, GM_ADDR x, GM_ADDR grid, GM_ADDR dx, GM_ADDR dgrid, GM_ADDR workspace, GM_ADDR tiling)
 {
+    #if __CCE_AICORE__ != 220
+ 	     if ASCEND_IS_AIC {
+ 	         return;
+ 	     }
+ 	#endif
+    
     if (workspace == nullptr || GetUserWorkspace(workspace) == nullptr) {
         return;
     }
     TPipe pipe;
     GET_TILING_DATA(tilingData, tiling);
     GM_ADDR gmTensor[6] = {grad, x, grid, dx, dgrid, workspace};
+    #if __CCE_AICORE__ == 220
     if (TILING_KEY_IS(1)) {
         GridSampler2DGrad<float, GridSampler2DGradTilingData> op;
         op.Init(tilingData, gmTensor);
@@ -121,4 +132,19 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
         castOp.Init(tilingData, gmTensor, &tpipe);
         castOp.Process();
     }
+#else
+    if (TILING_KEY_IS(1) || TILING_KEY_IS(2)) {
+        GridSampler2DGradSimt<float> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(3) || TILING_KEY_IS(4)) {
+        GridSampler2DGradSimt<half> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(5) || TILING_KEY_IS(6)) {
+        GridSampler2DGradSimt<bfloat16_t> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    }
+#endif
 }

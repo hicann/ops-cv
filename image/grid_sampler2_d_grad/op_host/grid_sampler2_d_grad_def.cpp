@@ -22,13 +22,13 @@ public:
         this->Input("grad")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC})
-            .UnknownShapeFormat({ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC});
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("x")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC})
-            .UnknownShapeFormat({ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC});
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("grid")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16})
@@ -37,8 +37,8 @@ public:
         this->Output("dx")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC})
-            .UnknownShapeFormat({ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC})
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
             .InitValue({{ScalarType::FLOAT32, 0}, {ScalarType::FLOAT16, 0}, {ScalarType::FLOAT16, 0}});
         this->Output("dgrid")
             .ParamType(REQUIRED)
@@ -50,6 +50,7 @@ public:
         this->Attr("align_corners").AttrType(REQUIRED).Bool(false);
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+        this->AICore().AddConfig("ascend910_95");
     }
 };
 OP_ADD(GridSampler2DGrad);

@@ -55,6 +55,7 @@ REGISTER_TILING_DATA_CLASS(GridSampler2DGrad, GridSampler2DGradTilingData)
 struct Tiling4GridSampler2DGradCompileInfo {
     uint32_t coreNum;
     uint64_t ubSizePlatForm;
+    bool isDavid{false};
 };
 
 struct InputParamsInfo {
@@ -68,6 +69,7 @@ struct InputParamsInfo {
     int interpolation = 0;
     int padding = 0;
     int alignCorners = 0;
+    bool isDavid = false;
 };
 } // namespace optiling
 #endif // __GRID_SAMPLER_2D_GRAD_TILINGDATA_H__

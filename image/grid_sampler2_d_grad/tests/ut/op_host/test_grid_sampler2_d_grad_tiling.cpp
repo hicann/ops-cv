@@ -31,6 +31,7 @@ protected:
 struct GridSampler2DGradCompileInfo {
     uint32_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
+    bool isDavid{false};
 };
 
 TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_float32_case1)
@@ -40,7 +41,7 @@ TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_float32_case1)
     gert::StorageShape grid = {{2, 8, 8, 2}, {2, 8, 8, 2}};
     gert::StorageShape output1 = {{2, 16, 16, 3}, {2, 16, 16, 3}};
     gert::StorageShape output2 = {{2, 8, 8, 2}, {2, 8, 8, 2}};
-    GridSampler2DGradCompileInfo compileInfo = {48, 196608};
+    GridSampler2DGradCompileInfo compileInfo = {48, 196608, false};
     gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
                                                 {{grad, ge::DT_FLOAT, ge::FORMAT_ND}, 
                                                 {x, ge::DT_FLOAT, ge::FORMAT_ND},

@@ -176,7 +176,7 @@ static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t int
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     return input->GetDataType() != op::DataType::DT_DOUBLE && (interpolationMode == 0 || interpolationMode == 1) &&
            (curArch != NpuArch::DAV_1001) &&
-           input->GetViewShape().GetDim(SECOND_DIM) <= MAX_CHANNEL_SIZE;
+           input->GetViewShape().GetDim(SECOND_DIM) <= MAX_CHANNEL_SIZE && (curArch != NpuArch::DAV_3510);
 }
 
 static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclTensor *input, const aclTensor *grid,
@@ -275,14 +275,24 @@ aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(const aclTensor *gradOutp
             gridContiguous = l0op::Cast(gridContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
         }
-        // 进行计算
-        gridSampler2DBackwardOut = l0op::GridSampler2DGrad(gradOutputContiguous,
-            inputContiguous,
-            gridContiguous,
-            interpolationMode,
-            paddingMode,
-            alignCorners,
-            uniqueExecutor.get());
+        if (curArch == NpuArch::DAV_3510) {
+            gridSampler2DBackwardOut = l0op::GridSamplerGrad(gradOutputContiguous,
+                inputContiguous,
+                gridContiguous,
+                interpolationMode,
+                paddingMode,
+                alignCorners,
+                uniqueExecutor.get());
+        } else {
+            // 进行计算
+            gridSampler2DBackwardOut = l0op::GridSampler2DGrad(gradOutputContiguous,
+                inputContiguous,
+                gridContiguous,
+                interpolationMode,
+                paddingMode,
+                alignCorners,
+                uniqueExecutor.get());
+        }
     }
 
     CHECK_RET(CheckTupleNullptr(gridSampler2DBackwardOut), ACLNN_ERR_INNER_NULLPTR);

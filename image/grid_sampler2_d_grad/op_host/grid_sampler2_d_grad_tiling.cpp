@@ -17,6 +17,7 @@
 #include <map>
 #include <vector>
 #include "grid_sampler_2d_grad_tiling_data.h"
+#include "tiling_base/tiling_util.h"
 
 namespace optiling {
 
@@ -65,6 +66,9 @@ constexpr uint32_t RESERVED_UB = 2U * 1024U;
 constexpr uint32_t RESERVED_UB_CAST = 20U * 1024U;
 constexpr uint32_t ALIGN_256_BYTES = 256;
 constexpr uint8_t SCHEDULE_MODE = 1;
+constexpr uint32_t GRID_LAST_NUM = 2;
+constexpr uint32_t VF_MAX_THREAD_NUM = 1024;
+constexpr uint32_t DAVID_MAX_CORE_NUM = 56;
 
 static std::map<std::string, int> INTER_MODE_MAP = {{"bilinear", 0}, {"nearest", 1}, {"bicubic", 2}};
 static std::map<std::string, int> PADDING_MODE_MAP = {{"zeros", 0}, {"border", 1}, {"reflection", 2}};
@@ -92,6 +96,7 @@ public:
         this->dataTypeSize = dataTypeLen;
         this->elementsPerBlock = BYTE_BLOCK / dataTypeSize;
         this->isDeterministic = deterministic;
+        this->isDavid = param.isDavid;
         return;
     }
 
@@ -131,6 +136,18 @@ private:
         }
         return (a) / b * b;
     }
+    inline uint32_t Ceil(uint32_t a, uint32_t b)
+    {
+        if (b == 0) {
+            throw std::invalid_argument("Ceil Division by zero");
+        }
+        uint32_t tmp = a % b;
+        if (tmp > 0) {
+            return a / b + 1;
+        } else {
+            return a / b;
+        }
+    }
 
 private:
     uint32_t batch = 0;
@@ -160,11 +177,20 @@ private:
     uint32_t extraUbSize = 0;
     uint32_t isDeterministic = 0;
     uint32_t tailBNum = 0;
+    bool isDavid = false;
 };
 
 template <typename TilingData, int32_t dataTypeLen>
 void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
 {
+    if (isDavid) {
+        uint32_t mulNCHW = static_cast<uint32_t>(batch * gridH * gridW * GRID_LAST_NUM);
+        uint32_t tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM);
+        usedCoreNum = tmpCoreNum <= DAVID_MAX_CORE_NUM ? tmpCoreNum : DAVID_MAX_CORE_NUM;
+        pNumPerCore = 0;
+        tailPNum = 0;
+        return;
+    }
     if (isDeterministic == 0) {
         uint64_t mulBHW = static_cast<uint64_t>(batch) * static_cast<uint64_t>(gridH) * static_cast<uint64_t>(gridW);
         if (mulBHW <= this->coreNum) {
@@ -316,9 +342,7 @@ static void PrintTilingData(gert::TilingContext* tilingContext, GridSampler2DGra
     OP_LOGI(tilingContext->GetNodeName(), "End printing");
 }
 
-static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
-{
-    OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
+static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputParamsInfo& params){
     const gert::StorageShape* gradShape = tilingContext->GetInputShape(GRAD_INPUT_INDEX);
     OP_CHECK_IF(
         (gradShape == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get StorageShape Failed."), return false);
@@ -330,6 +354,8 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
         OP_LOGD(tilingContext->GetNodeName(), "input dim is not 4, please check input");
         return ge::GRAPH_FAILED;
     }
+    auto compileInfo = reinterpret_cast<const Tiling4GridSampler2DGradCompileInfo*>(tilingContext->GetCompileInfo());
+    params.isDavid = compileInfo->isDavid;
     uint32_t outH = gradShape->GetStorageShape().GetDim(DIM_INDEX1);
     uint32_t outW = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
     params.batch = xShape->GetStorageShape().GetDim(DIM_INDEX0);
@@ -338,10 +364,27 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     params.width = xShape->GetStorageShape().GetDim(DIM_INDEX2);
     params.gridH = gridShape->GetStorageShape().GetDim(DIM_INDEX1);
     params.gridW = gridShape->GetStorageShape().GetDim(DIM_INDEX2);
+    if (params.isDavid) {
+        outH = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
+        outW = gradShape->GetStorageShape().GetDim(DIM_INDEX3);
+        params.channel = xShape->GetStorageShape().GetDim(DIM_INDEX1);
+        params.height = xShape->GetStorageShape().GetDim(DIM_INDEX2);
+        params.width = xShape->GetStorageShape().GetDim(DIM_INDEX3);
+    }
     if (outH != params.gridH || outW != params.gridW) {
         OP_LOGW(tilingContext->GetNodeName(), "Please check grad's dims and grid's dims");
         return ge::GRAPH_FAILED;
     }
+    return ge::GRAPH_SUCCESS;
+}
+static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
+{
+    OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
+    if (GetNCHWInfo(tilingContext, params) != ge::GRAPH_SUCCESS) {
+        OP_LOGW(tilingContext->GetNodeName(), "Failed to Parse input params NCHW, please check inputs");
+        return ge::GRAPH_FAILED;
+    }
+    
     const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     OP_CHECK_IF((attrs == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get attrs Failed."), return false);
     const string interpolationMode = string(attrs->GetAttrPointer<char>(INTERPOLATION_MODE_INDEX));
@@ -411,10 +454,10 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
 
     OP_LOGI(tilingContext->GetNodeName(), "ubSizePlatForm:%lu, coreNum:%u", ubSizePlatForm, coreNum);
     ge::DataType inputDatatype = tilingContext->GetInputDesc(0)->GetDataType();
-    if (inputDatatype == ge::DT_FLOAT) {
-        coreNum = compileInfo->coreNum;
-    } else {
+    if (inputDatatype != ge::DT_FLOAT && !compileInfo->isDavid) {
         coreNum = 1;
+    } else { 
+         coreNum = compileInfo->coreNum; 
     }
     tilingContext->SetNeedAtomic(true);
 
@@ -434,14 +477,11 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
         GetGridSampler2DGradTiling<GridSampler2DGradTilingData, DTYPE_SIZE_16>(
             &tilingData, params, coreNum, availableUb, deterministic);
     }
-    OP_CHECK_IF(
-        tilingData.get_ubFactorElement() <= 0,
-        OP_LOGE(tilingContext->GetNodeName(), "ub space is not enough, please check input."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tilingData.get_ubFactorElement() <= 0, OP_LOGE(tilingContext->GetNodeName(), "ub space is not enough, please check input."), return ge::GRAPH_FAILED);
     // set tilingdata
     tilingContext->SetTilingKey(params.tilingKey);
     tilingContext->SetBlockDim(tilingData.get_blockNum());
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
     PrintTilingData(tilingContext, tilingData);
     OP_LOGI(tilingContext->GetNodeName(), "GridSampler2DGrad tiling end running");
@@ -457,6 +497,7 @@ static ge::graphStatus TilingPrepare4GridSampler2DGrad(gert::TilingParseContext*
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAiv();
+    compileInfo->isDavid = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     OP_CHECK_IF(
         (compileInfo->coreNum <= 0), OP_LOGE(context->GetNodeName(), "Failed to get core num."),
         return ge::GRAPH_FAILED);

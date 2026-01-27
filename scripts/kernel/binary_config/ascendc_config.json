@@ -335,7 +335,7 @@
     {"name":"GatherElementsV2", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
     {"name":"GatherNd", "compute_units": ["ascend910_95"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"ForeachBinaryOp", "compute_units": ["ascend910b"], "auto_sync" : false},
-    {"name":"GridSampler2DGrad", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
+    {"name":"GridSampler2DGrad", "compute_units": ["ascend910b", "ascend910_93", "ascend910_95"], "auto_sync" : true},
     {"name":"GridSampler3DGrad", "compute_units": ["ascend910b", "ascend910_93", "ascend910_95"], "auto_sync" : true},
     {"name":"PadV4Grad", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
     {"name":"PadV3GradReplicate", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
