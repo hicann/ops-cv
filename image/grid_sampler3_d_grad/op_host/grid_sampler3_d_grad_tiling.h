@@ -31,6 +31,7 @@ namespace optiling {
 struct Tiling4GridSampler3DGradCompileInfo {
     uint32_t coreNum;
     uint64_t ubSizePlatForm;
+    bool isDavid{false};
 };
 
 struct InputParamsInfo {
@@ -46,6 +47,7 @@ struct InputParamsInfo {
     uint32_t interpolation = 0;
     uint32_t padding = 0;
     uint32_t alignCorners = 0;
+    bool isDavid = false;
 };
 
 constexpr uint16_t MAX_CORE_CONT = 50;

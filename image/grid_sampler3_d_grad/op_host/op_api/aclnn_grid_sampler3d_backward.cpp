@@ -183,7 +183,7 @@ static bool CheckTranspose(const aclTensor* input)
                                                                            inputShape.GetDim(SECOND_DIM);
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if ((input->GetStorageFormat() == op::Format::FORMAT_NCDHW || input->GetStorageFormat() == op::Format::FORMAT_ND) &&
-        (channel <= AICORE_CHANNEL_LIMIT) && (curArch != NpuArch::DAV_1001)) {
+        (channel <= AICORE_CHANNEL_LIMIT) && (curArch != NpuArch::DAV_1001) && (curArch != NpuArch::DAV_3510)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(input, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;
@@ -274,7 +274,9 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
     } else {
         // 输入为float16/bfloat16类型时，将其转为float32
         auto castDtype = inputContiguous->GetDataType();
-        if (castDtype == op::DataType::DT_FLOAT16 || castDtype == op::DataType::DT_BF16) {
+        auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+        if ((castDtype == op::DataType::DT_FLOAT16 || castDtype == op::DataType::DT_BF16) &&
+            (curArch != NpuArch::DAV_3510)) {
             gradOutputContiguous = l0op::Cast(gradOutputContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gradOutputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
             inputContiguous = l0op::Cast(inputContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());

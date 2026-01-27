@@ -13,13 +13,25 @@
  * \brief
  */
 
+#if __CCE_AICORE__ == 220
 #include "grid_sampler3_d_grad.h"
+#else
+#include "arch35/grid_sampler3_d_grad_simt.h"
+#endif
 
+#if __CCE_AICORE__ == 220
 using namespace GridSampler3DGrad;
+#endif
 
 extern "C" __global__ __aicore__ void grid_sampler3_d_grad(
     GM_ADDR grad, GM_ADDR x, GM_ADDR grid, GM_ADDR dx, GM_ADDR dgrid, GM_ADDR workspace, GM_ADDR tiling)
 {
+#if __CCE_AICORE__ != 220
+    if ASCEND_IS_AIC {
+        return;
+    }
+#endif
+
     if (workspace == nullptr || GetUserWorkspace(workspace) == nullptr) {
         return;
     }
@@ -27,9 +39,25 @@ extern "C" __global__ __aicore__ void grid_sampler3_d_grad(
     GET_TILING_DATA(tilingData, tiling);
     GM_ADDR gmTensor[6] = {grad, x, grid, dx, dgrid, workspace};
 
+#if __CCE_AICORE__ == 220
     if (TILING_KEY_IS(1)) {
         GridSampler3DGradNS<float> op;
         op.Init(&tilingData, gmTensor);
         op.Process();
     }
+#else
+    if (TILING_KEY_IS(1)) {
+        GridSampler3DGradSimt<float> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(2)) {
+        GridSampler3DGradSimt<half> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(3)) {
+        GridSampler3DGradSimt<bfloat16_t> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    }
+#endif
 }
