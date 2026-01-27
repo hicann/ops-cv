@@ -37,13 +37,14 @@ bash build.sh --help
 | --ops           | 可选     | 指定待编译的算子，如：grid_sample,iou_v2，多个算子用英文逗号“,”分隔，不可与--ophost、--opapi、--opgraph同时使用。 |
 | --soc           | 可选     | 指定NPU型号，每次编译只支持1个NPU型号。                                                         |
 | --jit           | 可选     | 配置后，表示不编译算子的二进制文件。                                                              |
+| --static        | 可选     | 配置后，表示生成静态库文件，包含libcann_cv_static.a和aclnn接口头文件，搭配--pkg参数，生成静态库压缩包。              |
 | --vendor_name   | 可选     | 指定自定义算子包的名称，默认值为custom。                                                         |
-| --build-type    | 可选     | 启用调试模式。可选类型：Release/Debug，默认为Release。值为Debug时，不可与--mssanitizer、--oom同时使用         |
+| --build-type    | 可选     | 启用调试模式。可选类型：Release/Debug，默认为Release。值为Debug时，不可与--mssanitizer、--oom同时使用        |
 | --cov           | 可选     | 预留参数，开发者暂不需要关注。                                                                 |
 | --noexec        | 可选     | 仅编译单元测试二进制文件，不自动执行编译后的UT可执行文件。                                                  |
 | --opkernel      | 可选     | 编译二进制内核。                                                                        |
 | --pkg           | 可选     | 生成安装包，不可与-u（UT模式）或--ophost、--opapi、--opgraph同时使用。                               |
-| --asan          | 可选     | 开启host侧ASAN（AddressSanitizer）内存检测功能。                                           |
+| --asan          | 可选     | 开启host侧ASAN（AddressSanitizer）内存检测功能。                                            |
 | --valgrind      | 可选     | 预留参数，开发者暂不需要关注。                                                                 |
 | --make_clean    | 可选     | 执行基础清理操作（清理编译产物），执行后脚本退出。                                                       |
 | --ophost        | 可选     | 编译libophost_cv.so库，不可与--pkg、--ops同时使用。                                          |
@@ -56,7 +57,7 @@ bash build.sh --help
 | --run_example   | 可选     | 编译指定算子及模式的样例并执行编译后的可执行文件。                                                       |
 | --genop         | 可选     | 创建AI Core自定义算子初始目录。                                                             |
 | --genop_aicpu   | 可选     | 创建AI CPU自定义算子初始目录。                                                              |
-| --experimental  | 可选     | 编译experimental目录下的用户算子。                                                   |
-| --mssanitizer   | 可选     | 开启kernel侧mssanitizer内存检测功能。不可与--oom同时使用                                                   |
-| --oom           | 可选     | 开启kernel侧oom内存检测功能。不可与--mssanitizer同时使用                                                 |
-| --cann_3rd_lib_path       | 可选     | 离线编译场景下第三方库存放的目录。                     |                    |
+| --experimental  | 可选     | 编译experimental目录下的用户算子。                                                         |
+| --mssanitizer   | 可选     | 开启kernel侧mssanitizer内存检测功能。不可与--oom同时使用                                         |
+| --oom           | 可选     | 开启kernel侧oom内存检测功能。不可与--mssanitizer同时使用                                         |
+| --cann_3rd_lib_path      | 可选     | 离线编译场景下第三方库存放的目录。                                                               |                    |
