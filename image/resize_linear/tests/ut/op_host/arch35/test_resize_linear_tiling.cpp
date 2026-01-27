@@ -13,7 +13,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include "../../../op_host/arch35/resize_linear_tiling_arch35.h"
+#include "../../../../op_host/arch35/resize_linear_tiling_arch35.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
 
@@ -49,6 +49,52 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_01)
         &compileInfo);
     uint64_t expectTilingKey = 65793;
     string expectTilingData = "64 1 32 32 32 1065353216 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_02)
+{
+    gert::StorageShape inputXShape = {{1, 3, 32}, {1, 3, 32}};
+    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape outputShape = {{1, 3, 32}, {1, 3, 32}};
+    int size_value[1] = {32};
+
+    ResizeLinearCompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinear",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(2.0f))},
+        &compileInfo);
+    uint64_t expectTilingKey = 257;
+    string expectTilingData = "64 1 32 32 32 1065353216 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_03)
+{
+    gert::StorageShape inputXShape = {{1024, 2048, 4096}, {1024, 2048, 4096}};
+    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape outputShape = {{1024, 2048, 4096}, {1024, 2048, 4096}};
+    int size_value[1] = {4096};
+
+    ResizeLinearCompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinear",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(2.0f))},
+        &compileInfo);
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "64 134217728 0 4096 4096 1065353216 ";
     std::vector<size_t> expectWorkspaces = {16777216};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);

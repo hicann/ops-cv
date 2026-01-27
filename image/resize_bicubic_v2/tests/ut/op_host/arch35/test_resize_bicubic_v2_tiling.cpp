@@ -13,7 +13,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include "../../../op_host/arch35/resize_bicubic_v2_tiling_arch35.h"
+#include "../../../../op_host/arch35/resize_bicubic_v2_tiling_arch35.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
 
@@ -51,6 +51,29 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_01)
         &compileInfo);
     uint64_t expectTilingKey = 65541;
     string expectTilingData = "64 48 0 32 32 32 32 3 1 4575657222473777152 1 32 32 3 1 32 32 25056 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_02)
+{
+    gert::StorageShape inputXShape = {{1, 225, 225, 128}, {1, 225, 225, 128}};
+    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape outputShape = {{1, 113, 113, 128}, {1, 113, 113, 128}};
+    int size_value[2] = {113, 113};
+
+    ResizeBicubicV2CompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NHWC}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+    uint64_t expectTilingKey = 6;
+    string expectTilingData = "57 25538 0 225 225 113 113 128 1 4611686019501129728 1 2 113 128 1 1 113 128 ";
     std::vector<size_t> expectWorkspaces = {16777216};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);

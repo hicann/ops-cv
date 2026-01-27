@@ -2,18 +2,19 @@
 
 ## 产品支持情况
 
-|产品             |  是否支持  |
-|:-------------------------|:----------:|
-| <term>Ascend 950PR/Ascend 950DT</term> |√|
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>   |     √    |
+| 产品 | 是否支持 |
+| :---- | :----: |
+| <term>Ascend 950PR/Ascend 950DT</term> | √ |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term> | × |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> | × |
 
 ## 功能说明
 
 - 算子功能：使用双三次插值调整图像大小到指定的大小。
 - 计算公式：  
+
   周边16个点的像素位置：
-  
+
   $$
   W(x) = \begin{cases}
   (a + 2)|x|^3 - (a + 3)|x|2 + 1 & \text{for } |x|\leq1 \\
@@ -23,20 +24,19 @@
   $$
 
   像素值：
-
   $$
   B(X,Y) = \sum_{i=0}^3 \sum_{j=0}^3a_{ij} \times W(i) \times W(j)
   $$
 
-
 ## 参数说明
 
-<table style="undefined;table-layout: fixed; width: 1005px"><colgroup>
-  <col style="width: 170px">
-  <col style="width: 170px">
-  <col style="width: 352px">
-  <col style="width: 213px">
-  <col style="width: 100px">
+<table style="undefined;table-layout: fixed; width: 1000px">
+  <colgroup>
+    <col style="width: 150px">
+    <col style="width: 150px">
+    <col style="width: 300px">
+    <col style="width: 250px">
+    <col style="width: 150px">
   </colgroup>
   <thead>
     <tr>
@@ -45,7 +45,8 @@
       <th>描述</th>
       <th>数据类型</th>
       <th>数据格式</th>
-    </tr></thead>
+    </tr>
+  </thead>
   <tbody>
     <tr>
       <td>x</td>
@@ -68,14 +69,15 @@
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>NCHW、NHWC</td>
     </tr>
-  </tbody></table>
+  </tbody>
+</table>
 
 ## 约束说明
 
-无
+- 无
 
 ## 调用说明
 
-| 调用方式   | 样例代码           | 说明                                         |
-| ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_resize_bicubic_v2](examples/test_aclnn_bicubic_v2.cpp) | 通过[aclnnUpsampleBicubic2d](../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)接口方式调用ResizeBicubicV2算子。 |
+| 调用方式 | 样例代码 | 说明 |
+| ---- | ---- | ---- |
+|aclnn接口|[test_aclnn_resize_bicubic_v2](examples/test_aclnn_bicubic_v2.cpp)|通过[aclnnUpsampleBicubic2d](docs/aclnnUpsampleBicubic2d.md)接口方式调用ResizeBicubicV2算子。|

@@ -12,7 +12,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include "../../../op_host/arch35/resize_bicubic_v2_grad_tiling_arch35.h"
+#include "../../../../op_host/arch35/resize_bicubic_v2_grad_tiling_arch35.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
 
@@ -47,6 +47,50 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_01)
         &compileInfo);
     uint64_t expectTilingKey = 30000;
     string expectTilingData = "64 48 0 32736 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_02)
+{
+    gert::StorageShape inputGradsShape = {{1, 3, 225, 32}, {1, 3, 225, 32}};
+    gert::StorageShape inputOriImageShape = {{1, 3, 113, 32}, {1, 3, 113, 32}};
+    gert::StorageShape outputShape = {{1, 3, 113, 32}, {1, 3, 113, 32}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+    uint64_t expectTilingKey = 20000;
+    string expectTilingData = "3 113 32 225 32 0 1 64 169 32 4575657222465388544 4575657222482165760 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_03)
+{
+    gert::StorageShape inputGradsShape = {{32, 2048, 4096, 32}, {32, 2048, 4096, 32}};
+    gert::StorageShape inputOriImageShape = {{32, 2048, 4096, 32}, {32, 2048, 4096, 32}};
+    gert::StorageShape outputShape = {{32, 2048, 4096, 32}, {32, 2048, 4096, 32}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NHWC}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+    uint64_t expectTilingKey = 30000;
+    string expectTilingData = "64 134217728 0 32736 ";
     std::vector<size_t> expectWorkspaces = {16777216};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);

@@ -2,12 +2,11 @@
 
 ## 产品支持情况
 
-|产品             |  是否支持  |
-|:-------------------------|:----------:|
-| <term>Ascend 950PR/Ascend 950DT</term> |√|
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>   |     √    |
-
+| 产品 | 是否支持 |
+| :---- | :----: |
+| <term>Ascend 950PR/Ascend 950DT</term> | √ |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term> | × |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> | × |
 
 ## 功能说明
 
@@ -21,12 +20,13 @@
 
 ## 参数说明
 
-<table style="undefined;table-layout: fixed; width: 1005px"><colgroup>
-  <col style="width: 170px">
-  <col style="width: 170px">
-  <col style="width: 352px">
-  <col style="width: 213px">
-  <col style="width: 100px">
+<table style="undefined;table-layout: fixed; width: 1005px">
+  <colgroup>
+    <col style="width: 150px">
+    <col style="width: 150px">
+    <col style="width: 300px">
+    <col style="width: 250px">
+    <col style="width: 150px">
   </colgroup>
   <thead>
     <tr>
@@ -35,7 +35,8 @@
       <th>描述</th>
       <th>数据类型</th>
       <th>数据格式</th>
-    </tr></thead>
+    </tr>
+  </thead>
   <tbody>
     <tr>
       <td>grads</td>
@@ -58,14 +59,15 @@
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>ND</td>
     </tr>
-  </tbody></table>
+  </tbody>
+</table>
 
 ## 约束说明
 
-无
+- 无
 
 ## 调用说明
 
-| 调用方式   | 样例代码           | 说明                                         |
-| ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_resize_linear_grad](examples/test_aclnn_resize_linear_grad.cpp) | 通过[aclnnUpsampleLinear1dBackward](../upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md)接口方式调用ResizeLinearGrad算子。 |
+| 调用方式 | 样例代码 | 说明 |
+| ---- | ---- | ---- |
+| aclnn接口  | [test_aclnn_resize_linear_grad](examples/test_aclnn_resize_linear_grad.cpp) | 通过[aclnnUpsampleLinear1dBackward](image/upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md)接口方式调用ResizeLinearGrad算子。 |

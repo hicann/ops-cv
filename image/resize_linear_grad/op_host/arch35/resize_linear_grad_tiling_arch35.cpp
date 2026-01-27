@@ -415,7 +415,7 @@ ge::graphStatus ResizeLinearGradTiling::SetTilingData()
         isInt32_, alignCorners_, isDetermine_);
     const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, isInt32_, alignCorners_, isDetermine_);
     context_->SetTilingKey(tilingKey);
-
+    context_->SetScheduleMode(1);
     size_t* workspaces = context_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, workspaces);
     workspaces[0] = WORK_SPACE_SIZE;
