@@ -49,6 +49,7 @@ TILING_DATA_FIELD_DEF(int64_t, groupCoreNum);
 TILING_DATA_FIELD_DEF(int64_t, inputRow);
 TILING_DATA_FIELD_DEF(int64_t, tailAvergingRow);
 TILING_DATA_FIELD_DEF(int64_t, needCoreNum);
+TILING_DATA_FIELD_DEF(bool, isView1DAndSmallW);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleNearest3d, UpsampleNearest3dTilingData)

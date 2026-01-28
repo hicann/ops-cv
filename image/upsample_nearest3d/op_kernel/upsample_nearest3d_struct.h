@@ -63,6 +63,7 @@ struct UpsampleNearest3dTilingData {
     int64_t inputRow;
     int64_t tailAvergingRow;
     int64_t needCoreNum;
+    bool isView1DAndSmallW;
 };
 
 } // namespace UpsampleNearest3d

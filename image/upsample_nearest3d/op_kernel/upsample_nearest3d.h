@@ -31,6 +31,9 @@ constexpr uint32_t BYTE_BLOCK = 32;
 constexpr float BEST_PERFORMANCE_SCALE = 100.0f;
 constexpr float ZERO_FLOAT = 0.0f;
 constexpr float ONE_FLOAT = 1.0f;
+constexpr float EXACT_VALUE = 0.5f;
+constexpr int32_t NUM_PER_REP_FP32 = 64;
+constexpr int32_t NUM_PER_REP_FP16 = 128;
 
 template <typename T>
 class UpsampleNearest3dND {
@@ -64,6 +67,7 @@ private:
     __aicore__ inline void ParseTilingData(const UpsampleNearest3dTilingData* tilingData);
     __aicore__ inline void GatherData(int64_t slideIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void CopyIn(int64_t inputOffset, DataCopyExtParams copyParams);
+    __aicore__ inline void CopyOut(int64_t outputOffset, DataCopyExtParams copyParams);
     __aicore__ inline void ComputeAndCopyOut(
         uint32_t dataCount, uint32_t srcDataLength, uint32_t blockCount, int64_t outputOffset);
     __aicore__ inline void GetRangeW(int64_t slideIndex);
@@ -72,6 +76,10 @@ private:
     __aicore__ inline void CalculateSrcIndexTensor(
         int64_t index, int64_t length, int8_t direction, LocalTensor<float> srcIndexTensor);
     __aicore__ inline void CalculateGatherOffsetW();
+    __aicore__ inline void ComputeView1DSmallW();
+    __aicore__ inline void DoComputeView1DSmallW(
+        int64_t row, int64_t batches, int64_t repeat, int64_t batchesEachRepeat);
+    __aicore__ inline void DoComputeGatherOffset(int64_t batchesEachRepeat, int64_t numPerRep, int64_t repeatTimes);
 
 private:
     TBuf<QuePosition::VECCALC> srcIndexQueueW;
@@ -92,6 +100,7 @@ private:
 
     int64_t blockIdx = 0;
     bool isExact = false;
+    bool isView1DAndSmallW = false;
     int64_t batches = 0;
     int64_t inputShapes[3] = {0};
     int64_t outputShapes[3] = {0};
@@ -131,6 +140,8 @@ private:
     int64_t indexD = 0;
     int64_t srcIndexD = 0;
     int64_t depthCount = 0;
+
+    int32_t numPerRep = 0;
 };
 
 template <typename T>
@@ -158,35 +169,135 @@ __aicore__ inline void UpsampleNearest3dND<T>::Process()
     if (blockIdx >= needCoreNum) {
         return;
     }
-    srcIndexTensorW = srcIndexQueueW.AllocTensor<float>();
-    srcIndexTensorH = srcIndexQueueH.AllocTensor<float>();
-    srcIndexTensorD = srcIndexQueueD.AllocTensor<float>();
-    srcOffsetTensor = srcOffsetQueue.AllocTensor<int32_t>();
-    lastStartW = -1;
+    if (isView1DAndSmallW) {
+        ComputeView1DSmallW();
+    } else {
+        srcIndexTensorW = srcIndexQueueW.AllocTensor<float>();
+        srcIndexTensorH = srcIndexQueueH.AllocTensor<float>();
+        srcIndexTensorD = srcIndexQueueD.AllocTensor<float>();
+        srcOffsetTensor = srcOffsetQueue.AllocTensor<int32_t>();
+        lastStartW = -1;
 
-    int64_t slideStart = blockIdx * eachCoreSlideNum;
-    int64_t slideEnd = slideStart + eachCoreSlideNum;
-    // 计算批量分组的数据
-    if (slideStart < slideEnd) {
-        for (int64_t slideIndex = slideStart; slideIndex < slideEnd; slideIndex++) {
-            GatherData(slideIndex, 0, inputRow);
+        int64_t slideStart = blockIdx * eachCoreSlideNum;
+        int64_t slideEnd = slideStart + eachCoreSlideNum;
+        // 计算批量分组的数据
+        if (slideStart < slideEnd) {
+            for (int64_t slideIndex = slideStart; slideIndex < slideEnd; slideIndex++) {
+                GatherData(slideIndex, 0, inputRow);
+            }
+        }
+
+        int64_t groupIndex = blockIdx / groupCoreNum;
+        if (groupIndex < remainder) {
+            // 处理尾块部分数据
+            int64_t slideIndex = tailStartSlideNum + groupIndex;
+            int64_t blockIdxInGroup = blockIdx % groupCoreNum;
+            int64_t tailRowStart = blockIdxInGroup * tailAvergingRow;
+            int64_t tailRowEnd = Min(tailRowStart + tailAvergingRow, inputRow);
+            GatherData(slideIndex, tailRowStart, tailRowEnd);
+        }
+
+        srcOffsetQueue.FreeTensor(srcOffsetTensor);
+        srcIndexQueueD.FreeTensor(srcIndexTensorD);
+        srcIndexQueueH.FreeTensor(srcIndexTensorH);
+        srcIndexQueueW.FreeTensor(srcIndexTensorW);
+    }
+}
+
+template <typename T>
+__aicore__ inline void UpsampleNearest3dND<T>::ComputeView1DSmallW()
+{
+    if constexpr (std::is_same<T, float>::value) {
+        numPerRep = NUM_PER_REP_FP32;
+    } else {
+        numPerRep = NUM_PER_REP_FP16;
+    }
+
+    srcIndexTensorW = srcIndexQueueW.Get<float>();
+    srcOffsetTensor = srcOffsetQueue.Get<int32_t>();
+    int64_t ow = outputShapes[W_INDEX];
+    int64_t iw = inputShapes[W_INDEX];
+    CalculateSrcIndexTensor(0, ow, W_INDEX, srcIndexTensorW);
+    int64_t batchesEachRepeat = numPerRep / ow;                   // 每个repeat处理的batch数
+    int64_t repeatTimes = slideSizeW / numPerRep;                 // 每行计算处理的repeat数
+    int64_t batchesEachCompute = repeatTimes * batchesEachRepeat; // 每行计算可处理的batch数
+    int64_t rowNum = tailAvergingRow;
+    if (blockIdx == (needCoreNum - 1)) {
+        rowNum = inputRow - tailAvergingRow * (needCoreNum - 1);  //获取尾核的batch数
+    }
+    int64_t times = rowNum / batchesEachCompute;                  // 整行的计算次数
+    int64_t tailComputeBatches = rowNum % batchesEachCompute;     // 尾行的batch数
+    int64_t tailRepeat = tailComputeBatches / batchesEachRepeat;  // 尾行的repeat数
+    int64_t tailBatches = tailComputeBatches % batchesEachRepeat; // 尾行的尾块的batch数
+
+    DoComputeGatherOffset(batchesEachRepeat, numPerRep, repeatTimes);
+    DataCopyPadExtParams<T> padParams{false, 0, 0, 0};
+    // 整行处理
+    for (int64_t i = 0; i < times; i++) {
+        DoComputeView1DSmallW(i, batchesEachCompute, repeatTimes, batchesEachRepeat);
+    }
+    // 尾行前n-1个整repeat处理
+    if (tailComputeBatches != 0) {
+        DoComputeView1DSmallW(times, batchesEachCompute, tailRepeat, batchesEachRepeat);
+    }
+    // 尾行的尾repeat处理
+    {
+        int64_t baseOffset = blockIdx * tailAvergingRow + times * batchesEachCompute  + tailRepeat * batchesEachRepeat;
+        int64_t inOffset = baseOffset * iw;
+        DataCopyExtParams copyInParams{1, static_cast<uint32_t>(tailBatches * iw * sizeof(T)), 0, 0, 0};
+        CopyIn(inOffset, copyInParams);
+        LocalTensor<T> srcLocal = inQueue.DeQue<T>();
+        LocalTensor<T> dstLocal = outQueue.AllocTensor<T>();
+        Gather(dstLocal, srcLocal, gatherOffsetTensor, static_cast<uint32_t>(0), tailBatches * ow);
+        outQueue.EnQue(dstLocal);
+        inQueue.FreeTensor(srcLocal);
+        int64_t outOffset = baseOffset * ow;
+        DataCopyExtParams copyOutParams{static_cast<uint16_t>(1), static_cast<uint32_t>(tailBatches * ow * sizeof(T)), 0, 0, 0};
+        CopyOut(outOffset, copyOutParams);
+    }
+}
+
+template <typename T>
+__aicore__ inline void UpsampleNearest3dND<T>::DoComputeGatherOffset(
+    int64_t batchesEachRepeat, int64_t numPerRep, int64_t repeatTimes)
+{
+    int64_t ow = outputShapes[W_INDEX];
+    int64_t iw = inputShapes[W_INDEX];
+    Duplicate(srcOffsetTensor, static_cast<int32_t>(0), slideSizeW);
+    for (int64_t i = 0; i < batchesEachRepeat; i++) {
+        for (int64_t j = 0; j < ow; j++) {
+            srcOffsetTensor.SetValue(i * ow + j, static_cast<int32_t>(srcIndexTensorW.GetValue(j)) + i * iw);
         }
     }
-
-    int64_t groupIndex = blockIdx / groupCoreNum;
-    if (groupIndex < remainder) {
-        // 处理尾块部分数据
-        int64_t slideIndex = tailStartSlideNum + groupIndex;
-        int64_t blockIdxInGroup = blockIdx % groupCoreNum;
-        int64_t tailRowStart = blockIdxInGroup * tailAvergingRow;
-        int64_t tailRowEnd = Min(tailRowStart + tailAvergingRow, inputRow);
-        GatherData(slideIndex, tailRowStart, tailRowEnd);
+    for (int64_t i = 1; i < repeatTimes; i++) {
+        Adds(srcOffsetTensor[i * numPerRep], srcOffsetTensor[(i - 1) * numPerRep],static_cast<int32_t>(batchesEachRepeat * iw), numPerRep);
+        PipeBarrier<PIPE_V>();
     }
+    Muls(srcOffsetTensor, srcOffsetTensor, static_cast<int32_t>(sizeof(T)), slideSizeW);
+    PipeBarrier<PIPE_V>();
+    gatherOffsetTensor = srcOffsetTensor.ReinterpretCast<uint32_t>();
+}
 
-    srcOffsetQueue.FreeTensor(srcOffsetTensor);
-    srcIndexQueueD.FreeTensor(srcIndexTensorD);
-    srcIndexQueueH.FreeTensor(srcIndexTensorH);
-    srcIndexQueueW.FreeTensor(srcIndexTensorW);
+template <typename T>
+__aicore__ inline void UpsampleNearest3dND<T>::DoComputeView1DSmallW(
+    int64_t row, int64_t batches, int64_t repeat, int64_t batchesEachRepeat)
+{
+    int64_t ow = outputShapes[W_INDEX];
+    int64_t iw = inputShapes[W_INDEX];
+    int64_t inOffset = blockIdx * tailAvergingRow * iw + row * batches * iw;
+    DataCopyExtParams copyInParams{1, static_cast<uint32_t>(repeat * batchesEachRepeat * iw * sizeof(T)), 0, 0, 0};
+    CopyIn(inOffset, copyInParams);
+    LocalTensor<T> srcLocal = inQueue.DeQue<T>();
+    uint64_t mask = batchesEachRepeat * ow;
+    LocalTensor<T> dstLocal = outQueue.AllocTensor<T>();
+    Gather(dstLocal, srcLocal, gatherOffsetTensor, 0, mask, static_cast<uint8_t>(repeat), 8);
+    PipeBarrier<PIPE_V>();
+    outQueue.EnQue(dstLocal);
+    inQueue.FreeTensor(srcLocal);
+    int64_t outOffset = blockIdx * tailAvergingRow * ow + row * batches * ow;
+    uint32_t srcStride = (numPerRep - batchesEachRepeat * ow) / (BYTE_BLOCK / sizeof(T));
+    DataCopyExtParams copyOutParams{static_cast<uint16_t>(repeat), static_cast<uint32_t>(batchesEachRepeat * ow * sizeof(T)), srcStride, 0, 0};
+    CopyOut(outOffset, copyOutParams);
 }
 
 template <typename T>
@@ -230,6 +341,17 @@ __aicore__ inline void UpsampleNearest3dND<T>::CopyIn(int64_t inputOffset, DataC
     DataCopyPadExtParams<T> padParams{false, 0, 0, 0};
     DataCopyPad(srcLocal, inTensorsGM[inputOffset], copyParams, padParams);
     inQueue.EnQue(srcLocal);
+}
+
+template <typename T>
+__aicore__ inline void UpsampleNearest3dND<T>::CopyOut(int64_t outputOffset, DataCopyExtParams copyParams)
+{
+    LocalTensor<T> dstLocal = outQueue.DeQue<T>();
+    DataCopyPad(outTensorsGM[outputOffset], dstLocal, copyParams);
+    outQueue.FreeTensor(dstLocal);
+    event_t eventID1 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
+    SetFlag<HardEvent::MTE3_MTE2>(eventID1);
+    WaitFlag<HardEvent::MTE3_MTE2>(eventID1);
 }
 
 template <typename T>
@@ -368,10 +490,10 @@ template <typename T>
 __aicore__ inline void UpsampleNearest3dND<T>::CalculateSrcIndexTensor(
     int64_t index, int64_t length, int8_t direction, LocalTensor<float> srcIndexTensor)
 {
-    ArithProgression(srcIndexTensor, static_cast<float>(index), static_cast<float>(1), length);
+    ArithProgression(srcIndexTensor, static_cast<float>(index), ONE_FLOAT, length);
     PipeBarrier<PIPE_V>();
     if (isExact) {
-        Adds(srcIndexTensor, srcIndexTensor, static_cast<float>(0.5), length);
+        Adds(srcIndexTensor, srcIndexTensor, EXACT_VALUE, length);
         PipeBarrier<PIPE_V>();
     }
     Muls(srcIndexTensor, srcIndexTensor, scales[direction], length);
@@ -420,6 +542,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::ParseTilingData(const UpsampleNea
     inputRow = tilingData->inputRow;
     tailAvergingRow = tilingData->tailAvergingRow;
     needCoreNum = tilingData->needCoreNum;
+    isView1DAndSmallW = tilingData->isView1DAndSmallW;
 }
 
 template <int D_T_X, int D_T_Y>

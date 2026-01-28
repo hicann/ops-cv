@@ -253,7 +253,7 @@ static const aclTensor *upsampleNearest1dAiCoreCompute(
 {
     auto self = View4dAs5d(selfContiguous, executor);
     CHECK_RET(self != nullptr, nullptr);
-    float scalesW = static_cast<float>(DOUBLE_ONE / static_cast<double>(scaleL));
+    float scalesW = scaleL > 0 ? static_cast<float>(DOUBLE_ONE / static_cast<double>(scaleL)) : 0;
 
     vector<float> scalesList{};
     scalesList.push_back(1.0);

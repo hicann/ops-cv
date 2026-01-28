@@ -24,7 +24,7 @@ namespace UpsampleNearest3d {
 
 class UpsampleNearest3dTiling {
 public:
-    constexpr static int64_t BEST_PERFORMANCE_SIZE_1 = 192;
+    constexpr static int64_t BEST_PERFORMANCE_SIZE_1 = 256;
     constexpr static int64_t BEST_PERFORMANCE_SIZE_2 = 768;
     constexpr static int64_t BEST_PERFORMANCE_SIZE_3 = 1536;
     constexpr static int64_t BEST_PERFORMANCE_SIZE_4 = 2048;
@@ -50,6 +50,8 @@ public:
     constexpr static uint8_t W_INDEX = 2;
 
     constexpr static size_t SHAPE_SIZE = 3;
+
+    constexpr static int64_t SMALL_W = 64;
 
     template <typename T>
     static void UpsampleNearest3dCommonTiling(
@@ -100,6 +102,14 @@ public:
         // GetNeedCoreNum
         GetTensorSize(inputShapes, inputShapeSize, outputShapes, outputShapeSize, tilingData);
         GetNeedCoreNum(static_cast<int64_t>(coreNum), outputShapes, tilingData);
+
+        tilingData.isView1DAndSmallW = false;
+        if (GetISView1DAndSmallW(tilingData)) {
+            tilingData.isView1DAndSmallW = true;
+            tilingData.needCoreNum = static_cast<int64_t>(coreNum);
+            tilingData.tailAvergingRow = CeilA2B(tilingData.inputRow, static_cast<int64_t>(coreNum));
+            tilingData.needCoreNum = CeilA2B(tilingData.inputRow, tilingData.tailAvergingRow);
+        }
     }
 
     static float ComputeScaleValue(int64_t inSize, int64_t outSize, float scale)
@@ -112,7 +122,8 @@ public:
     }
 
     static void GetTensorSize(
-        int64_t* inputShapes, size_t inputShapeSize, const int64_t* outputShapes, size_t outputShapeSize, UpsampleNearest3dTilingData& tilingData)
+        int64_t* inputShapes, size_t inputShapeSize, const int64_t* outputShapes, size_t outputShapeSize,
+        UpsampleNearest3dTilingData& tilingData)
     {
         if (inputShapeSize < SHAPE_SIZE || outputShapeSize < SHAPE_SIZE) {
             return;
@@ -141,8 +152,7 @@ public:
         tilingData.tensorSizeD = tensorSizeD;
     }
 
-    static void GetNeedCoreNum(
-        int64_t coreNumPlatform, int64_t* outputShapes, UpsampleNearest3dTilingData& tilingData)
+    static void GetNeedCoreNum(int64_t coreNumPlatform, int64_t* outputShapes, UpsampleNearest3dTilingData& tilingData)
     {
         float realScaleW = tilingData.scaleW;
         int64_t batches = tilingData.batches;
@@ -178,6 +188,23 @@ public:
         tilingData.inputRow = inputRow;
         tilingData.tailAvergingRow = tailAvergingRow;
         tilingData.needCoreNum = needCoreNum;
+    }
+
+    static bool GetISView1DAndSmallW(UpsampleNearest3dTilingData& tilingData)
+    {
+        if (tilingData.inputShapes[D_INDEX] != 1 || tilingData.outputShapes[D_INDEX] != 1) {
+            return false;
+        }
+        if (tilingData.inputShapes[H_INDEX] != 1 || tilingData.outputShapes[H_INDEX] != 1) {
+            return false;
+        }
+        if (tilingData.scaleW > BEST_PERFORMANCE_SCALE_1) {
+            return false;
+        }
+        if (tilingData.outputShapes[W_INDEX] > SMALL_W) {
+            return false;
+        }
+        return true;
     }
 
     template <typename T1, typename T2>
