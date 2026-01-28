@@ -100,7 +100,7 @@ write_scripts(
 }
 
 main() {
-  echo "[INFO]excute file: $0 $*"
+  echo "[INFO]execute file: $0 $*"
   local all_pairs=("$@")
   if [ ${#all_pairs[@]} -eq 0 ]; then
     echo "[WARNING] No op pairs provided"

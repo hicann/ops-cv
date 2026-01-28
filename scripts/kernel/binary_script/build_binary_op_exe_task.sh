@@ -12,7 +12,7 @@
 set -e
 
 main() {
-  echo "[INFO]excute file: $0"
+  echo "[INFO]execute file: $0"
   if [ $# -lt 2 ]; then
     echo "[ERROR]input error"
     echo "[ERROR]bash $0 {out_path} {task_id}"

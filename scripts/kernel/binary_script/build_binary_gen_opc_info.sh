@@ -15,7 +15,7 @@ FILE_NAME="$(basename $0)"
 source build_env.sh
 
 main() {
-  echo "[INFO]excute file: $0"
+  echo "[INFO]execute file: $0"
   if [ $# -lt 1 ]; then
     echo "[ERROR]input error"
     echo "[ERROR]bash $0 {soc_version}"
