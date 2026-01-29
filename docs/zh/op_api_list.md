@@ -61,6 +61,7 @@
 | [aclnnUpsampleNearestExact3dBackward](../../image/upsample_nearest_exact3d_grad/docs/aclnnUpsampleNearestExact3dBackward.md) | [aclnnUpsampleNearestExact3d](../../image/upsample_nearest_exact3d/docs/aclnnUpsampleNearestExact3d.md)的反向传播。 |默认非确定性实现，支持配置开启|
 | [aclnnUpsampleTrilinear3dBackward](../../image/upsample_trilinear3d_backward/docs/aclnnUpsampleTrilinear3dBackward.md) | [aclnnUpsampleTrilinear3d](../../image/resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md)的反向传播。 |默认确定性实现|
 | [aclnnIou](../../objdetect/iou_v2/docs/aclnnIou.md)          | 计算两组矩形框（预测框bBox与真值框gtBox）的交并比（IOU）或前景交叉比（IOF），用于评估其重叠程度。 |默认确定性实现|
+| [aclnnNonMaxSuppression](../../objdetect/non_max_suppression_v6/docs/aclnnNonMaxSuppression.md)          | 删除分数小于scoreThreshold的边界框，筛选出与之前被选中部分重叠较高（IOU较高）的框。 |默认确定性实现|
 | [aclnnRoiAlign](../../objdetect/roi_align/docs/aclnnRoiAlign.md) | RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。 |默认确定性实现|
 | [aclnnRoiAlignV2](../../objdetect/roi_align/docs/aclnnRoiAlignV2.md) | RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。 |默认确定性实现|
 | [aclnnRoiAlignV2Backward](../../objdetect/roi_align_grad/docs/aclnnRoiAlignV2Backward.md) | [aclnnRoiAlignV2](../../objdetect/roi_align/docs/aclnnRoiAlignV2.md)的反向传播。 |默认非确定性实现，支持配置开启|

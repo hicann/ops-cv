@@ -399,10 +399,40 @@
     <td><a href="../../objdetect/iou_v2/README.md">iou_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
     <td>计算两个矩阵的重叠面积占两个矩阵总面积的比例，设预测框的左上角坐标为（X1，Y1），右下角坐标为（X2，Y2），真实框的左上角坐标为（X3，Y3），右下角坐标为（X4，Y4）。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/non_max_suppression_v6/README.md">non_max_suppression_v6</a></td>
+    <td>&cross;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/roi_align/README.md">roi_align</a></td>
+    <td>&cross;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/roi_align_grad/README.md">roi_align_grad</a></td>
+    <td>&cross;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
   </tr>
   <tr>
     <td>objdetect</td>
