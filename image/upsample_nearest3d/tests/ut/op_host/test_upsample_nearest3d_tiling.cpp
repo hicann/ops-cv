@@ -73,7 +73,7 @@ TEST_F(UpsampleNearest3dTiling, Ascend310P_upsample_nearest3d_tiling_002)
 TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_001)
 {
     UpsampleNearest3dCompileInfo compileInfo = {48};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleNearest3d",
         {{{{1, 1, 128, 128, 128}, {1, 1, 128, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{1, 1, 256, 256, 256}, {1, 1, 256, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -91,7 +91,7 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_001)
 TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_002)
 {
     UpsampleNearest3dCompileInfo compileInfo = {64};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleNearest3d",
         {{{{2,2,4,5,6}, {2,2,4,5,6}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{2,2,4,5,6}, {2,2,4,5,6}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -109,7 +109,7 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_002)
 TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_004)
 {
     UpsampleNearest3dCompileInfo compileInfo = {64};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleNearest3d",
         {{{{2,2,4,5,6}, {2,2,4,5,6}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{2,2,8,8,7}, {2,2,8,8,7}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -127,7 +127,7 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_004)
 TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_005)
 {
     UpsampleNearest3dCompileInfo compileInfo = {64};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleNearest3d",
         {{{{2,22,20,30,2}, {2,22,20,30,2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{2,22,40,20,8}, {2,22,40,20,8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -145,7 +145,7 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_005)
 TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_006)
 {
     UpsampleNearest3dCompileInfo compileInfo = {64};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleNearest3d",
         {{{{2,2,80,30,2}, {2,2,80,30,2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{2,2,60,200,200}, {2,2,60,200,200}}, ge::DT_FLOAT, ge::FORMAT_ND}},
