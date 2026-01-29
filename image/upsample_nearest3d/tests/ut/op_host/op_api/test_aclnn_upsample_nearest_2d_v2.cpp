@@ -484,7 +484,7 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend910_93_case_float_NHWC)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplenearest2dv2_test, Ascend910_9591_case_float_scale_01)
+TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_scale_01)
 {
     vector<int64_t> inp_dims = {1, 1, 3, 36};
     vector<int64_t> output_size = {6, 72};
@@ -504,7 +504,7 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend910_9591_case_float_scale_01)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplenearest2dv2_test, Ascend910_9591_case_float_scale_02)
+TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_scale_02)
 {
     vector<int64_t> inp_dims = {1, 1, 6, 6};
     vector<int64_t> output_size = {3, 3};
@@ -524,7 +524,7 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend910_9591_case_float_scale_02)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplenearest2dv2_test, Ascend910_9591_case_float_NHWC)
+TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_NHWC)
 {
     vector<int64_t> inp_dims = {1, 6, 6, 1};
     vector<int64_t> output_size = {3, 3};

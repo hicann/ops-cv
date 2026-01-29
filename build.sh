@@ -13,7 +13,7 @@ set -e
 RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin")
 UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
-                            "ascend910_55" "ascend910_93" "ascend910_95" "ascend910b" "ascend910" "mc62cm12a" "kirinx90")
+                            "ascend910_55" "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62cm12a" "kirinx90")
 SUPPORT_COMPUTE_UNIT_SHORT_PRINT=("ascend910b" "ascend910_93" "ascend950" "ascend310p" "ascend910" "ascend310b" "ascend630"
                                   "ascend610lite" "ascend031" "ascend035" "kirinx90" "mc62cm12a")
 
@@ -793,7 +793,6 @@ checkopts() {
           ;;
         soc=*)
           COMPUTE_UNIT=${OPTARG#*=}
-          COMPUTE_UNIT=$(echo "$COMPUTE_UNIT" | sed 's/ascend950/ascend910_95/g')
           ;;
         vendor_name=*)
           VENDOR_NAME=${OPTARG#*=}
@@ -1021,9 +1020,6 @@ assemble_cmake_args() {
   fi
   if [[ -n $COMPUTE_UNIT ]]; then
     COMPUTE_UNIT=$(echo "$COMPUTE_UNIT" | tr '[:upper:]' '[:lower:]')
-    if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
-      COMPUTE_UNIT="ascend910_95"
-    fi
     found=0
     for support_unit in "${SUPPORT_COMPUTE_UNIT_SHORT[@]}"; do
       if [[ "$COMPUTE_UNIT" == "$support_unit" ]]; then
@@ -1240,7 +1236,7 @@ build_example() {
       file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp)
     else
       file=$(find ../ -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp -not -path "*/experimental/*")
-      if [[ "$COMPUTE_UNIT" == "ascend910_95" ]]; then
+      if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
         file+=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/*" -name test_aclnn_*.cpp))
       fi
     fi
@@ -1288,7 +1284,7 @@ build_example() {
       file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_geir_*.cpp)
     else
       file=$(find ../ -path "*/${EXAMPLE_NAME}/examples/*" -name test_geir_*.cpp -not -path "*/experimental/*")
-      if [[ "$COMPUTE_UNIT" == "ascend910_95" ]]; then
+      if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
         file+=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/*" -name test_geir_*.cpp))
       fi
     fi

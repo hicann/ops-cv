@@ -50,7 +50,7 @@ public:
         this->Attr("align_corners").AttrType(REQUIRED).Bool(false);
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 OP_ADD(GridSampler2DGrad);

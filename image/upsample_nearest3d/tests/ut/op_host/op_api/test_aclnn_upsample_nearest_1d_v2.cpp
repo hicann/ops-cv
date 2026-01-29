@@ -293,7 +293,7 @@ TEST_F(l2_upsamplenearest1dv2_test, ascend910B4_case_float_scale_03)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplenearest1dv2_test, Ascend910_9591_case_float_scale_01)
+TEST_F(l2_upsamplenearest1dv2_test, Ascend950DT_9591_case_float_scale_01)
 {
     auto selfDesc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
     auto outDesc = TensorDesc({1, 1, 4}, ACL_FLOAT, ACL_FORMAT_NCL);
@@ -305,7 +305,7 @@ TEST_F(l2_upsamplenearest1dv2_test, Ascend910_9591_case_float_scale_01)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplenearest1dv2_test, Ascend910_9591_case_float_scale_02)
+TEST_F(l2_upsamplenearest1dv2_test, Ascend950DT_9591_case_float_scale_02)
 {
     auto selfDesc = TensorDesc({1, 1, 36}, ACL_FLOAT, ACL_FORMAT_NCL);
     auto outDesc = TensorDesc({1, 1, 72}, ACL_FLOAT, ACL_FORMAT_NCL);
@@ -317,7 +317,7 @@ TEST_F(l2_upsamplenearest1dv2_test, Ascend910_9591_case_float_scale_02)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplenearest1dv2_test, Ascend910_9591_case_float_scale_03)
+TEST_F(l2_upsamplenearest1dv2_test, Ascend950DT_9591_case_float_scale_03)
 {
     auto selfDesc = TensorDesc({1, 1, 4}, ACL_FLOAT, ACL_FORMAT_NCL);
     auto outDesc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);

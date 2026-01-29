@@ -638,7 +638,7 @@ TEST_F(l2_upsamplelinear1d_backward_test, ascend910B3_checkNC)
 }
 
 /*
-TEST_F(l2_upsamplelinear1d_backward_test, Ascend910_9589_l2_upsamplelinear1d_backward_test_001) {
+TEST_F(l2_upsamplelinear1d_backward_test, Ascend95089_l2_upsamplelinear1d_backward_test_001) {
   const double_t scales_l = 2.0;
   bool align_corners = false;
   vector<int64_t> output_size = {3};
@@ -656,7 +656,7 @@ TEST_F(l2_upsamplelinear1d_backward_test, Ascend910_9589_l2_upsamplelinear1d_bac
   EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_upsamplelinear1d_backward_test, Ascend910_9589_l2_upsamplelinear1d_backward_test_002)
+TEST_F(l2_upsamplelinear1d_backward_test, Ascend95089_l2_upsamplelinear1d_backward_test_002)
 {
     const double_t scales_l = 2.0;
     bool align_corners = false;

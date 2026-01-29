@@ -142,7 +142,7 @@ public:
             .NeedCheckSupportFlag(false)
             .ExtendCfgInfo("opFile.value", "grid_sample_apt");;
         this->AICore().AddConfig("mc62cm12a", aicore95_config);
-        this->AICore().AddConfig("ascend910_95", aicore95_config);
+        this->AICore().AddConfig("ascend950", aicore95_config);
 
         OpAICoreConfig config_310p = Get310PCoreConfig();
         this->AICore().AddConfig("ascend310p", config_310p);

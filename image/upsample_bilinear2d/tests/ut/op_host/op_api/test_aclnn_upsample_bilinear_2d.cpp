@@ -552,7 +552,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1010)
     EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
 }
 
-TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_001)
+TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_001)
 {
     const double_t scales_h = 2.0;
     const double_t scales_w = 10.0;
@@ -574,7 +574,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_001
     EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
 }
 
-TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_002)
+TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_002)
 {
     const double_t scales_h = 2.0;
     const double_t scales_w = 10.0;
@@ -596,7 +596,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_002
     EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
 }
 
-TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_003)
+TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_003)
 {
     const double_t scales_h = 2.0;
     const double_t scales_w = 10.0;
@@ -618,7 +618,7 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_003
     EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
 }
 
-TEST_F(l2_upsamplebilinear2d_test, Ascend910_9599_l2_upsamplebilinear2d_test_004)
+TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_004)
 {
     const double_t scales_h = 2.0;
     const double_t scales_w = 10.0;

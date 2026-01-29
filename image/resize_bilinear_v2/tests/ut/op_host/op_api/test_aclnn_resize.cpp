@@ -76,7 +76,7 @@ TEST_F(l2_resize_test, case_3)
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
-TEST_F(l2_resize_test, Ascend910_9599_case_3)
+TEST_F(l2_resize_test, Ascend950PR_9599_case_3)
 {
     auto self = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{1, 2, 3, 4});
 

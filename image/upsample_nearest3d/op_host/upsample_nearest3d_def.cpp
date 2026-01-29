@@ -83,7 +83,7 @@ public:
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
             .ExtendCfgInfo("opFile.value", "upsample_nearest3d_apt");
-        this->AICore().AddConfig("ascend910_95", regbaseConfig); 
+        this->AICore().AddConfig("ascend950", regbaseConfig); 
     }
 };
 

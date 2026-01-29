@@ -108,7 +108,7 @@ TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_004)
 TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_005)
 {
     optiling::UpsampleBicubic2dAACompileInfo compileInfo = {64};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAA",
         {{{{2,2,4,5}, {2,2,4,5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{2,2,4,5}, {2,2,4,5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
@@ -126,7 +126,7 @@ TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_005)
 TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_006)
 {
     optiling::UpsampleBicubic2dAACompileInfo compileInfo = {64};
-    string socVersion = "Ascend910_95";
+    string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAA",
         {{{{2,2,4,4}, {2,2,4,4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{2,2,8,8}, {2,2,8,8}}, ge::DT_FLOAT, ge::FORMAT_ND}},

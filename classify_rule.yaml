@@ -18,12 +18,12 @@ image@ops-cv:
         - ops/ops-cv/common/inc/torch_extension/
         - ops/ops-cv/image/
         - ops/ops-cv/image/deformable_offsets/op_host/arch35/
-        - ops/ops-cv/image/deformable_offsets/op_host/config/ascend910_95/
+        - ops/ops-cv/image/deformable_offsets/op_host/config/ascend950/
         - ops/ops-cv/image/deformable_offsets/op_host/deformable_offsets_def.cpp
         - ops/ops-cv/image/deformable_offsets/op_kernel/arch35/
         - ops/ops-cv/image/deformable_offsets/op_kernel/deformable_offsets_apt.cpp
         - ops/ops-cv/image/deformable_offsets_grad/op_host/arch35/
-        - ops/ops-cv/image/deformable_offsets_grad/op_host/config/ascend910_95/
+        - ops/ops-cv/image/deformable_offsets_grad/op_host/config/ascend950/
         - ops/ops-cv/image/deformable_offsets_grad/op_kernel/arch35/
         - ops/ops-cv/image/deformable_offsets_grad/op_kernel/deformable_offsets_grad_apt.cpp
         - ops/ops-cv/image/resize_bilinear_v2/op_kernel/arch35/
@@ -34,7 +34,7 @@ image@ops-cv:
         - ops/ops-cv/image/resize_linear/op_graph/fusion_pass/.gitkeep
         - ops/ops-cv/image/resize_linear/op_graph/resize_linear_proto.h
         - ops/ops-cv/image/resize_linear/op_host/arch35/
-        - ops/ops-cv/image/resize_linear/op_host/config/ascend910_95/
+        - ops/ops-cv/image/resize_linear/op_host/config/ascend950/
         - ops/ops-cv/image/resize_linear/op_host/op_api/
         - ops/ops-cv/image/resize_linear/op_host/resize_linear_def.cpp
         - ops/ops-cv/image/resize_linear/op_host/resize_linear_infershape.cpp
@@ -47,7 +47,7 @@ image@ops-cv:
         - ops/ops-cv/image/resize_bicubic_v2/op_graph/fusion_pass/.gitkeep
         - ops/ops-cv/image/resize_bicubic_v2/op_graph/resize_bicubic_v2_proto.h
         - ops/ops-cv/image/resize_bicubic_v2/op_host/arch35/
-        - ops/ops-cv/image/resize_bicubic_v2/op_host/config/ascend910_95/
+        - ops/ops-cv/image/resize_bicubic_v2/op_host/config/ascend950/
         - ops/ops-cv/image/resize_bicubic_v2/op_host/op_api/resize_bicubic_v2.h
         - ops/ops-cv/image/resize_bicubic_v2/op_host/resize_bicubic_v2_def.cpp
         - ops/ops-cv/image/resize_bicubic_v2/op_host/resize_bicubic_v2_infershape.cpp
@@ -60,7 +60,7 @@ image@ops-cv:
         - ops/ops-cv/image/resize_linear_grad/op_graph/fusion_pass/.gitkeep
         - ops/ops-cv/image/resize_linear_grad/op_graph/resize_linear_grad_proto.h
         - ops/ops-cv/image/resize_linear_grad/op_host/arch35/
-        - ops/ops-cv/image/resize_linear_grad/op_host/config/ascend910_95/
+        - ops/ops-cv/image/resize_linear_grad/op_host/config/ascend950/
         - ops/ops-cv/image/resize_linear_grad/op_host/op_api/resize_linear_grad.h
         - ops/ops-cv/image/resize_linear_grad/op_host/resize_linear_grad_def.cpp
         - ops/ops-cv/image/resize_linear_grad/op_host/resize_linear_grad_infershape.cpp
@@ -73,18 +73,18 @@ image@ops-cv:
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_graph/fusion_pass/.gitkeep
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_graph/resize_bicubic_v2_grad_proto.h
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_host/arch35/
-        - ops/ops-cv/image/resize_bicubic_v2_grad/op_host/config/ascend910_95/
+        - ops/ops-cv/image/resize_bicubic_v2_grad/op_host/config/ascend950/
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_host/op_api/resize_bicubic_v2_grad.h
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_host/resize_bicubic_v2_grad_def.cpp
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_host/resize_bicubic_v2_grad_infershape.cpp
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_kernel/arch35/
         - ops/ops-cv/image/resize_bicubic_v2_grad/op_kernel/resize_bicubic_v2_grad.cpp
         - ops/ops-cv/image/resize_nearest_neighbor_v2/op_kernel/arch35/
-        - ops/ops-cv/image/upsample_nearest3d/op_host/config/ascend910_95/
+        - ops/ops-cv/image/upsample_nearest3d/op_host/config/ascend950/
         - ops/ops-cv/image/upsample_nearest3d/op_host/upsample_nearest3d_tiling_arch35.cpp
         - ops/ops-cv/image/upsample_nearest3d/op_kernel/arch35/
         - ops/ops-cv/image/upsample_nearest3d/op_kernel/upsample_nearest3d_apt.cpp
-        - ops/ops-cv/image/upsample_bicubic2d_aa/op_host/config/ascend910_95/
+        - ops/ops-cv/image/upsample_bicubic2d_aa/op_host/config/ascend950/
         - ops/ops-cv/image/upsample_bicubic2d_aa/op_host/upsample_bicubic2d_aa_tiling_arch35.cpp
         - ops/ops-cv/image/upsample_bicubic2d_aa/op_kernel/arch35/
         - ops/ops-cv/image/upsample_bicubic2d_aa/op_kernel/upsample_bicubic2d_aa_apt.cpp
