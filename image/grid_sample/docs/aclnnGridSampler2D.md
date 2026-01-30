@@ -9,8 +9,8 @@
 |  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品</term>    |     ×    |
+|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
+|  <term>Atlas 推理系列产品</term>    |     √    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
 
@@ -95,7 +95,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
       <td><ul><li>支持空Tensor。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>in</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>in</em>)。H*W < INT32的最大值。`input`的shape最后两维的维度值不能为0。</li></ul></td>
-      <td>FLOAT32、FLOAT16、DOUBLE</td>
+      <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>4</td>
       <td>√</td>
@@ -105,7 +105,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>输入</td>
       <td>采样的网络，对应公式中描述的`grid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 2)，且N与入参`input`的shape中的N一致。</li></ul></td>
-      <td>FLOAT32、FLOAT16、DOUBLE</td>
+      <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>4</td>
       <td>√</td>
@@ -145,7 +145,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>输出</td>
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与input的数据类型一致。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>)，且N、C与input的shape中的N、C一致，<em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>与grid的shape中的<em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>一致。</li></ul></td>
-      <td>FLOAT32、FLOAT16、DOUBLE</td>
+      <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>4</td>
       <td>√</td>
@@ -174,11 +174,26 @@ aclnnStatus aclnnGridSampler2D(
   </table>
 
   - <term>Atlas 训练系列产品</term>：
-  
-    入参`interpolationMode`不支持插值模式2：bicubic（双三次插值）。
+    - 入参`interpolationMode`不支持插值模式2：bicubic（双三次插值）。
+    - 参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-  
-    入参`interpolationMode`，仅当input数据类型为FLOAT32或者FLOAT16时支持2：bicubic（双三次插值）。
+    - 入参`interpolationMode`，仅当input数据类型为FLOAT32或者FLOAT16时支持2：bicubic（双三次插值）。
+    - 参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
+  - <term>Atlas 200I/500 A2 推理产品</term>：
+    
+    当接口运行在AI Core时，需要满足如下条件：
+    - 入参`interpolationMode`为bilinear。
+    - 入参`paddingMode`为zero。
+    - 入参`dtype`为FLOAT16。
+    - 参数`input`的shape需要满足C维的值为32。
+  - <term>Atlas 推理系列产品</term>：
+    
+    当接口运行在AI Core时，需要满足如下条件：
+    - 入参`interpolationMode`为bilinear。
+    - 入参`paddingMode`为zero。
+    - 入参`dtype`为FLOAT32。
+    - 参数`input`的shape需要满足C维的值为32或者C*H*W < 20480。
+    - 参数`input`的数据格式不支持NHWC。
 
 - **返回值：**
 

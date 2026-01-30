@@ -17,7 +17,7 @@
 
 ## 功能说明
 
-- 接口功能：[aclnnUpsampleNearest1dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md)的反向传播。<!--[aclnnUpsampleNearest1d](../../upsample_nearest3d/aclnnUpsampleNearest1d.md)的反向传播。-->
+- 接口功能：[aclnnUpsampleNearest1dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md)的反向传播。
 
 - 计算公式：
 
