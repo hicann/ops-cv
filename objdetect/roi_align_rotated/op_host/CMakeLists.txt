@@ -9,4 +9,4 @@
 # ---------------------------------------------------------------------------------------------------------
 
 
-add_modules_sources(OPTYPE roi_align_rotated ACLNNTYPE aclnn)
+add_modules_sources(OPTYPE roi_align_rotated ACLNNTYPE aclnn_exclude)
