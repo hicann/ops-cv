@@ -184,8 +184,11 @@
             在待执行算子`examples\test_aclnn_${op_name}.cpp`同级目录下创建run.sh文件。
 
             以GridSample算子执行test_aclnn_grid_sample2_d.cpp、test_aclnn_grid_sample3_d.cpp为例，示例如下:
-           
+
             ```bash
+            # 静态库文件路径
+            static_lib_path=""
+            
             # 环境变量生效
             if [ -n "$ASCEND_INSTALL_PATH" ]; then
                 _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH
@@ -198,15 +201,30 @@
             source ${_ASCEND_INSTALL_PATH}/bin/setenv.bash
 
             # 编译可执行文件
-            g++ test_aclnn_grid_sample2_d.cpp -I ${static_lib_path}/include -L ${static_lib_path}/lib64 -L ${ASCEND_HOME_PATH}/lib64 -Wl,--allow-multiple-definition \
+            g++ test_aclnn_grid_sample2_d.cpp \
+            -I ${static_lib_path}/include \
+            -L ${static_lib_path}/lib64 \
+            -I ${_ASCEND_INSTALL_PATH}/include \
+            -I ${_ASCEND_INSTALL_PATH}/include/aclnnop \
+            -L ${_ASCEND_INSTALL_PATH}/lib64 \
+            -Wl,--allow-multiple-definition \
             -Wl,--start-group -lcann_cv_static -lcann_math_static -lcann_legacy_static -Wl,--end-group -lgraph -lgraph_base \
             -lpthread -lmmpa -lmetadef -lascendalog -lregister -lopp_registry -lops_base -lascendcl -ltiling_api -lplatform \
-            -ldl -lc_sec -lnnopbase -lruntime -lerror_manager -lunified_dlog -o test_aclnn_grid_sample2_d   # 替换为实际算子可执行文件名
+            -ldl -lc_sec -lnnopbase -lruntime -lerror_manager -lunified_dlog \
+            -o test_aclnn_grid_sample2_d   # 替换为实际算子可执行文件名
 
-            g++ test_aclnn_grid_sample3_d.cpp -I ${static_lib_path}/include -L ${static_lib_path}/lib64 -L ${ASCEND_HOME_PATH}/lib64 -Wl,--allow-multiple-definition \
+            g++ test_aclnn_grid_sample3_d.cpp \
+            -I ${static_lib_path}/include \
+            -L ${static_lib_path}/lib64 \
+            -I ${_ASCEND_INSTALL_PATH}/include \
+            -I ${_ASCEND_INSTALL_PATH}/include/aclnnop \
+            -L ${_ASCEND_INSTALL_PATH}/lib64 \
+            -Wl,--allow-multiple-definition \
             -Wl,--start-group -lcann_cv_static -lcann_math_static -lcann_legacy_static -Wl,--end-group -lgraph -lgraph_base \
             -lpthread -lmmpa -lmetadef -lascendalog -lregister -lopp_registry -lops_base -lascendcl -ltiling_api -lplatform \
-            -ldl -lc_sec -lnnopbase -lruntime -lerror_manager -lunified_dlog -o test_aclnn_grid_sample3_d   # 替换为实际算子可执行文件名
+            -ldl -lc_sec -lnnopbase -lruntime -lerror_manager -lunified_dlog \
+            -o test_aclnn_grid_sample3_d   # 替换为实际算子可执行文件名
+
             # 执行程序
             ./test_aclnn_grid_sample2_d
             ./test_aclnn_grid_sample3_d
