@@ -1,77 +1,273 @@
 # aclnnIm2colBackward
+
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/col2im)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品 </term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
 
-算子功能：从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。
+- 算子功能：从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。
+- 计算公式：
+  
+  考虑一个形状为 $(N,C,*)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$*$表示任意空间维度。
 
-考虑一个形状为 $(N,C,∗)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$∗$表示任意空间维度。
+  此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel\_size),L)$ 的 3-D output张量的列（即最后一维）。
 
-此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel_size),L)$ 的 3-D output张量的列（即最后一维）。
+  其中：
+  - $C×\prod(kernel\_size)$ 是每个块内的值的数量（一个块有$\prod(kernel\_size)$ 个空间位置，每个空间位置都包含一个$C$ 通道向量），而$L$是这些块的总数：
 
-其中$C×\prod(kernel_size)$ 是每个块内的值的数量（一个块有$\prod(kernel_size)$ 个空间位置，每个空间位置都包含一个$C$ 通道向量），而$L$是这些块的总数：
+    $$
+    L=\prod_d⌊{\frac{spatial\_size[d]+2×padding[d]−dilation[d]×(kernel\_size[d]−1)−1}{stride[d]}+1}⌋
+    $$
 
-$L=\prod_d⌊{\frac{spatial_size[d]+2×padding[d]−dilation[d]×(kernel_size[d]−1)−1}{stride[d]}+1}⌋$
-
-其中spatial_size由input(上面的$∗$)的空间维度构成，而$d$覆盖所有空间维度。
-因此，在最后一个维度（列维度）索引，output会给出某个块内的所有值。
+  - spatial_size由input(上面的$*$)的空间维度构成，而$d$覆盖所有空间维度。
+  因此，在最后一个维度（列维度）索引，output会给出某个块内的所有值。
 
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnIm2colBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnIm2colBackward”接口执行计算。
 
-- `aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclIntArray* kernelSize, const aclIntArray* dilation, const aclIntArray* padding, const aclIntArray* stride, aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)`
-- `aclnnStatus aclnnIm2colBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(
+  const aclTensor   *gradOutput, 
+  const aclIntArray *inputSize, 
+  const aclIntArray *kernelSize, 
+  const aclIntArray *dilation, 
+  const aclIntArray *padding, 
+  const aclIntArray *stride, 
+  aclTensor         *out, 
+  uint64_t          *workspaceSize, 
+  aclOpExecutor    **executor)
+```
+
+```Cpp
+aclnnStatus aclnnIm2colBackward(
+  void          *workspace, 
+  uint64_t       workspaceSize, 
+  aclOpExecutor *executor, 
+  aclrtStream    stream)
+```
 
 ## aclnnIm2colBackwardGetWorkspaceSize
 
 - **参数说明：**
-
-  - gradOutput(aclTensor*, 计算输入)：公式中的output张量，shape为$(C×\prod(kernel_size),L)$或$(N,C×\prod(kernel_size),L)$。Device侧的aclTensor，shape支持2维和3维。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：数据类型支持BFLOAT16、FLOAT16、FLOAT。
-  - inputSize(aclIntArray*, 计算输入): 公式中的参数$spatial_size$。host侧的aclIntArray，输入张量的形状，size为2，数据类型为int64。
-  - kernelSize(aclIntArray*, 计算输入): 公式中的参数$kernel_size$。host侧的aclIntArray，卷积核的大小，size为2，数据类型为int64。
-  - dilation(aclIntArray*, 计算输入): 公式中的参数$dilation$。host侧的aclIntArray，膨胀参数，size为2，数据类型为int64。
-  - padding(aclIntArray*, 计算输入): 公式中的参数$padding$。host侧的aclIntArray，卷积的填充大小，size为2，数据类型为int64。
-  - stride(aclIntArray*, 计算输入): 公式中的参数$stride$。host侧的aclIntArray，卷积的步长，size为2，数据类型为int64。
-  - out(aclTensor*, 计算输出)：公式中的input张量，shape为$(C,spatial_size[0],spatial_size[1])$或$(N,C,spatial_size[0],spatial_size[1])$。Device侧的aclTensor，shape支持3维(gradOutput的shape是2维)和4维(gradOutput的shape是3维)。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：数据类型支持BFLOAT16、FLOAT16、FLOAT。
-  - workspaceSize(uint64_t*, 出参)：返回需要在Device侧申请的workspace大小。
-  - executor(aclOpExecutor**, 出参)：返回op执行器，包含了算子计算流程。
+  
+  <table style="undefined;table-layout: fixed; width: 1546px"><colgroup>
+  <col style="width: 165px">
+  <col style="width: 121px">
+  <col style="width: 325px">
+  <col style="width: 272px">
+  <col style="width: 252px">
+  <col style="width: 121px">
+  <col style="width: 149px">
+  <col style="width: 141px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+      <th>使用说明</th>
+      <th>数据类型</th>
+      <th>数据格式</th>
+      <th>维度(shape)</th>
+      <th>非连续tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>gradOutput</td>
+      <td>输入</td>
+      <td>输入tensor。</td>
+      <td>shape为(C×kernel_size[0]×kernel_size[1],L)或(N,C×kernel_size[0]×kernel_size[1],L)。</td>
+      <td>BFLOAT16、FLOAT16、FLOAT</td>
+      <td>ND</td>
+      <td>支持2维和3维</td>
+      <td>√</td>
+    </tr>
+    <tr>
+      <td>inputSize</td>
+      <td>输入</td>
+      <td>输入张量的形状。</td>
+      <td>值大于0。</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>kernelSize</td>
+      <td>输入</td>
+      <td>卷积核的大小。</td>
+      <td>值大于0。</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>dilation</td>
+      <td>输入</td>
+      <td>膨胀参数。</td>
+      <td>值大于0。</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>padding</td>
+      <td>输入</td>
+      <td>卷积的填充大小。</td>
+      <td>值大于等于0。</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>stride</td>
+      <td>输入</td>
+      <td>卷积的步长。</td>
+      <td>值大于0。</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>out</td>
+      <td>输出</td>
+      <td>输出tensor。</td>
+      <td>shape为(C,spatial_size[0],spatial_size[1])或(N,C,spatial_size[0],spatial_size[1])。</td>
+      <td>BFLOAT16、FLOAT16、FLOAT</td>
+      <td>ND</td>
+      <td>支持3维和4维，且维度比gradOutput的大1。</td>
+      <td>√</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输出</td>
+      <td>返回用户需要在Device侧申请的workspace大小。</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输出</td>
+      <td>返回op执行器，包含了算子计算流程。</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+  </tbody></table>
 
 - **返回值：**
-
+  
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-
-  ```
+  
   第一段接口完成入参校验，出现以下场景时报错：
-  返回161001（ACLNN_ERR_PARAM_NULLPTR）：1. 传入的gradOutput、inputSize、kernelSize、dilation、padding、stride或out是空指针。
-  返回161002（ACLNN_ERR_PARAM_INVALID）：1. gradOutput的数据类型不在支持的范围之内。
-                                        2. gradOutput的维度不是2维且不是3维。
-                                        3. gradOutput是2维时，out不是3维；gradOutput是3维时，out不是4维。
-                                        4. inputSize、kernelSize、dilation、padding或stride的size不为2。
-                                        5. kernelSize、dilation或stride存在值等于或小于0的元素。
-                                        6. padding存在值小于0的元素。
-                                        7. gradOutput的shape不符合参数说明中的shape。
-                                        8. out的shape不符合参数说明中的shape。
-  ```
+
+  <table style="undefined;table-layout: fixed; width: 1124px"><colgroup>
+  <col style="width: 284px">
+  <col style="width: 124px">
+  <col style="width: 716px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的gradOutput、inputSize、kernelSize、dilation、padding、stride或out是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="8">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="8">161002</td>
+      <td>gradOutput的数据类型不在支持的范围之内。</td>
+    </tr>
+    <tr>
+      <td>gradOutput的维度不是2维且不是3维。</td>
+    </tr>
+    <tr>
+      <td>gradOutput是2维时，out不是3维；gradOutput是3维时，out不是4维。</td>
+    </tr>
+    <tr>
+      <td>inputSize、kernelSize、dilation、padding或stride的size不为2。</td>
+    </tr>
+    <tr>
+      <td>kernelSize、dilation或stride存在值等于或小于0的元素。</td>
+    </tr>
+    <tr>
+      <td>padding存在值小于0的元素。</td>
+    </tr>
+    <tr>
+      <td>gradOutput的shape不符合参数说明中的shape。</td>
+    </tr>
+    <tr>
+      <td>out的shape不符合参数说明中的shape。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnIm2colBackward
 
 - **参数说明：**
-
-  - workspace(void*, 入参)：在Device侧申请的workspace内存地址。
-  - workspaceSize(uint64_t, 入参)：在Device侧申请的workspace大小，由第一段接口aclnnIm2colBackwardGetWorkspaceSize获取。
-  - executor(aclOpExecutor*, 入参)：op执行器，包含了算子计算流程。
-  - stream(aclrtStream, 入参)：指定执行任务的Stream。
+  
+  <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
+  <col style="width: 180px">
+  <col style="width: 130px">
+  <col style="width: 839px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在 Device 侧申请的 workspace 内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnIm2colBackwardGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op 执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的 Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回值：**
-
+  
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
@@ -81,6 +277,7 @@ $L=\prod_d⌊{\frac{spatial_size[d]+2×padding[d]−dilation[d]×(kernel_size[d]
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>
@@ -240,5 +437,5 @@ int main() {
   aclFinalize();
   return 0;
 }
-```
 
+```
