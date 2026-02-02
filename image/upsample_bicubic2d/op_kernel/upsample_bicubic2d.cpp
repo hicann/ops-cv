@@ -13,7 +13,7 @@
  * \brief
  */
 
-#if __CCE_AICORE__ == 200 || (__CCE_AICORE__ == 300 && !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003))
+#if __CCE_AICORE__ == 200 || (__CCE_AICORE__ == 300 && !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)))
 #include "upsample_bicubic2d_310p.h"
 #else
 #include "upsample_bicubic2d.h"
@@ -32,7 +32,7 @@ extern "C" __global__ __aicore__ void upsample_bicubic2d(
         return;
     }
 
-#if __CCE_AICORE__ == 200 || (__CCE_AICORE__ == 300 && !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003))
+#if __CCE_AICORE__ == 200 || (__CCE_AICORE__ == 300 && !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)))
     if constexpr (std::is_same<DTYPE_INPUT, half>::value) {
         if (TILING_KEY_IS(1)) {
             UpsampleBicubic2dND310p<half> op;
@@ -56,7 +56,7 @@ extern "C" __global__ __aicore__ void upsample_bicubic2d(
             REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
-#if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+#if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
         }
         if (tiling_data->dataType == 2) {
 

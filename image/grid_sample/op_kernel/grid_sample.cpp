@@ -18,7 +18,7 @@
 #include "grid_sampler_2d_slide_window_310p.h"
 #elif __CCE_AICORE__ == 300
 #include "grid_sampler_2d_fp16_slide_window_310b.h"
-#if (defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+#if (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
 #include "grid_sampler_2d_slide_window.h"
 #endif
 #else
@@ -63,7 +63,7 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
         op.Process();
     }
 #elif __CCE_AICORE__ == 300
-#if (defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+#if (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
     if (TILING_KEY_IS(1001220)) {
         // 2D Bilinear fp32 slide window
         GridSample::GridSampler2DSlideWindow<float> op;

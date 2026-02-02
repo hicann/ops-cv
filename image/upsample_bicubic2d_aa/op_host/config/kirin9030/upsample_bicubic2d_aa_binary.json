@@ -1,0 +1,103 @@
+{
+  "op_type": "UpsampleBicubic2dAA",
+  "op_list": [
+    {
+      "bin_filename": "UpsampleBicubic2dAA_07b18bf255d2df366c69af24e5a65d09",
+      "inputs": [
+        {
+          "name": "x",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "shape": [
+            -2
+          ],
+          "paramType": "required"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "shape": [
+            -2
+          ],
+          "paramType": "required"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleBicubic2dAA_e5196c3ec3a67f48b4aee4bc368ac19c",
+      "inputs": [
+        {
+          "name": "x",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "shape": [
+            -2
+          ],
+          "paramType": "required"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "shape": [
+            -2
+          ],
+          "paramType": "required"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float",
+          "value": 0.0
+        }
+      ]
+    }
+  ]
+}

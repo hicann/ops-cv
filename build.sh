@@ -13,9 +13,9 @@ set -e
 RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin")
 UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
-                            "ascend910_55" "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62cm12a" "kirinx90")
+                            "ascend910_55" "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62cm12a" "kirinx90" "kirin9030")
 SUPPORT_COMPUTE_UNIT_SHORT_PRINT=("ascend910b" "ascend910_93" "ascend950" "ascend310p" "ascend910" "ascend310b" "ascend630"
-                                  "ascend610lite" "ascend031" "ascend035" "kirinx90" "mc62cm12a")
+                                  "ascend610lite" "ascend031" "ascend035" "kirinx90"  "kirin9030" "mc62cm12a")
 
 # 所有支持的短选项
 SUPPORTED_SHORT_OPTS="hj:vO:uf:-:"

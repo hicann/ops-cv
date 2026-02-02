@@ -59,6 +59,7 @@ public:
         this->AICore().AddConfig("ascend310p", config310p);
         this->AICore().AddConfig("ascend310b", config310p);
         this->AICore().AddConfig("kirinx90", config310p);
+        this->AICore().AddConfig("kirin9030", config310p);
     }
 };
 

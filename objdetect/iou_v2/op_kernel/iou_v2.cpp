@@ -72,7 +72,7 @@ extern "C" __global__ __aicore__ void iou_v2(
     {
         KernelIofV2NotAlign<half> op;
         INIT_AND_PROCESS;
-#if __CCE_AICORE__ != 200 && !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+#if __CCE_AICORE__ != 200 && !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
     }
     else if (TILING_KEY_IS(6))
     {

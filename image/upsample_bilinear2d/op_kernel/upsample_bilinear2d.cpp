@@ -44,7 +44,7 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(
             op.Process();
         }
         if (tiling_data->dataType == 2) {
-#if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+#if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
             UpsampleLinear1dND<float> op;
             REGIST_MATMUL_OBJ(
                 &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
@@ -53,7 +53,7 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(
 #endif
         }
         if (tiling_data->dataType == 3) {
-#if !(defined(__NPU_ARCH__) && __NPU_ARCH__ == 3003)
+#if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
             UpsampleLinear1dND<bfloat16_t> op;
             REGIST_MATMUL_OBJ(
                 &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
