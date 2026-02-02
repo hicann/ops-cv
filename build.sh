@@ -630,7 +630,7 @@ checkopts_run_example() {
 }
 
 checkopts() {
-  THREAD_NUM=$(grep -c ^processor /proc/cpuinfo)
+  THREAD_NUM=8
   VERBOSE=""
   BUILD_MODE=""
   COMPILED_OPS=""
@@ -1426,7 +1426,10 @@ package_static() {
 
 main() {
   checkopts "$@"
-  THREAD_NUM=8
+  if [ "$THREAD_NUM" -gt "$CORE_NUMS" ]; then
+    echo "compile thread num:$THREAD_NUM over core num:$CORE_NUMS, adjust to core num"
+    THREAD_NUM=$CORE_NUMS
+  fi
   assemble_cmake_args
   echo "CMAKE_ARGS: ${CMAKE_ARGS}"
   if [ "$ENABLE_CREATE_LIB" == "TRUE" ]; then
