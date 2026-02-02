@@ -20,7 +20,17 @@
 namespace optiling {
 uint64_t AippTiling::GetTilingKey() const
 {
-    return 0;
+    uint64_t tilingKey = 0;
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) && tilingData.cscSwitch == 0) {
+        tilingKey = FORMAT_RGB_INDICE_UINT32;
+    }
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) && tilingData.cscSwitch == 1) {
+        tilingKey = FORMAT_RGB_SWITCH_OPEN_UINT32;
+    }
+    if (tilingKey == 0) {
+        OP_LOGE(context_->GetNodeName(), "tilingKey is:0, please check aipp.cfg's inputformat and csc_switch");
+    }
+    return tilingKey;
 }
 
 inline static int64_t CeilDiv(int64_t value, int64_t factor)
@@ -108,6 +118,7 @@ ge::graphStatus AippTiling::SetAippDataFromCfg()
     if (CheckCropSize() != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
+    SetCscValue();
     SetDTCValue();
     return ge::GRAPH_SUCCESS;
 }
@@ -263,6 +274,84 @@ ge::graphStatus AippTiling::CheckAippImages()
     return ge::GRAPH_SUCCESS;
 }
 
+bool AippTiling::CheckMatrixValid(const string& name)
+{
+    if (aippCfg.find(name) == aippCfg.end()) {
+        return false;
+    }
+    if (name == AIPP_CFG_MATRIX_R0C0) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C0)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C0)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix00 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R0C1) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C1)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C1)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix01 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R0C2) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C2)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C2)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix02 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R1C0) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C0)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C0)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix10 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R1C1) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C1)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C1)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix11 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R1C2) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C2)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C2)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix12 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R2C0) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C0)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C0)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix20 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R2C1) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C1)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C1)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix21 should between [-32677,32676]."), return false);
+    } else if (name == AIPP_CFG_MATRIX_R2C2) {
+        OP_CHECK_IF(stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C2)) < MIN_MATRIX_BOUND ||
+            stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C2)) > MAX_MATRIX_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of cscMatrix22 should between [-32677,32676]."), return false);
+    }
+    return true;
+}
+
+bool AippTiling::CheckBaisValid(const string& name)
+{
+    if (aippCfg.find(name) == aippCfg.end()) {
+        return false;
+    }
+    if (name == AIPP_CFG_INPUT_BIAS_0) {
+        OP_CHECK_IF(
+            stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_0)) < 0 || stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_0)) > MAX_RGB_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of inBias0 should between [0,255]."), return false);
+    } else if (name == AIPP_CFG_INPUT_BIAS_1) {
+        OP_CHECK_IF(
+            stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_1)) < 0 || stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_1)) > MAX_RGB_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of inBias1 should between [0,255]."), return false);
+    } else if (name == AIPP_CFG_INPUT_BIAS_2) {
+        OP_CHECK_IF(
+            stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_2)) < 0 || stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_2)) > MAX_RGB_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of inBias2 should between [0,255]."), return false);
+    } else if (name == AIPP_CFG_OUTPUT_BIAS_0) {
+        OP_CHECK_IF(
+            stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_0)) < 0 || stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_0)) > MAX_RGB_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of outBias0 should between [0,255]."), return false);
+    } else if (name == AIPP_CFG_OUTPUT_BIAS_1) {
+        OP_CHECK_IF(
+            stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_1)) < 0 || stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_1)) > MAX_RGB_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of outBias1 should between [0,255]."), return false);
+    } else if (name == AIPP_CFG_OUTPUT_BIAS_2) {
+        OP_CHECK_IF(
+            stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_2)) < 0 || stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_2)) > MAX_RGB_BOUND,
+            OP_LOGE(context_->GetNodeName(), "Params of outBias2 should between [0,255]."), return false);
+    }
+    return true;
+}
+
 bool AippTiling::CheckMeanChnValid(const string& name)
 {
     if (aippCfg.find(name) == aippCfg.end()) {
@@ -271,19 +360,19 @@ bool AippTiling::CheckMeanChnValid(const string& name)
     if (name == AIPP_MEAN_CHN_0) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MEAN_CHN_0)) < 0 || stoi(aippCfg.at(AIPP_MEAN_CHN_0)) > MAX_RGB_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn0 should bewteen [0,255]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn0 should between [0,255]."), return false);
     } else if (name == AIPP_MEAN_CHN_1) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MEAN_CHN_1)) < 0 || stoi(aippCfg.at(AIPP_MEAN_CHN_1)) > MAX_RGB_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn1 should bewteen [0,255]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn1 should between [0,255]."), return false);
     } else if (name == AIPP_MEAN_CHN_2) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MEAN_CHN_2)) < 0 || stoi(aippCfg.at(AIPP_MEAN_CHN_2)) > MAX_RGB_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn2 should bewteen [0,255]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn2 should between [0,255]."), return false);
     } else if (name == AIPP_MEAN_CHN_3) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MEAN_CHN_3)) < 0 || stoi(aippCfg.at(AIPP_MEAN_CHN_3)) > MAX_RGB_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn3 should bewteen [0,255]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMeanChn3 should between [0,255]."), return false);
     }
     return true;
 }
@@ -296,19 +385,19 @@ bool AippTiling::CheckMinChnValid(const string& name)
     if (name == AIPP_MIN_CHN_0) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MIN_CHN_0)) < MIN_CHN_BOUND || stoi(aippCfg.at(AIPP_MIN_CHN_0)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn0 should bewteen [-65504,65504]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn0 should between [-65504,65504]."), return false);
     } else if (name == AIPP_MIN_CHN_1) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MIN_CHN_1)) < MIN_CHN_BOUND || stoi(aippCfg.at(AIPP_MIN_CHN_1)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn1 should bewteen [-65504,65504]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn1 should between [-65504,65504]."), return false);
     } else if (name == AIPP_MIN_CHN_2) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MIN_CHN_2)) < MIN_CHN_BOUND || stoi(aippCfg.at(AIPP_MIN_CHN_2)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn2 should bewteen [-65504,65504]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn2 should between [-65504,65504]."), return false);
     } else if (name == AIPP_MIN_CHN_3) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_MIN_CHN_3)) < MIN_CHN_BOUND || stoi(aippCfg.at(AIPP_MIN_CHN_3)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn3 should bewteen [-65504,65504]."), return false);
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelMinChn3 should between [-65504,65504]."), return false);
     }
     return true;
 }
@@ -322,25 +411,25 @@ bool AippTiling::CheckReciValid(const string& name)
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_VAR_RECI_CHN_0)) < MIN_CHN_BOUND ||
                 stoi(aippCfg.at(AIPP_VAR_RECI_CHN_0)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn0 should bewteen [-65504,65504]."),
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn0 should between [-65504,65504]."),
             return false);
     } else if (name == AIPP_VAR_RECI_CHN_1) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_VAR_RECI_CHN_1)) < MIN_CHN_BOUND ||
                 stoi(aippCfg.at(AIPP_VAR_RECI_CHN_1)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn1 should bewteen [-65504,65504]."),
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn1 should between [-65504,65504]."),
             return false);
     } else if (name == AIPP_VAR_RECI_CHN_2) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_VAR_RECI_CHN_2)) < MIN_CHN_BOUND ||
                 stoi(aippCfg.at(AIPP_VAR_RECI_CHN_2)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn2 should bewteen [-65504,65504]."),
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn2 should between [-65504,65504]."),
             return false);
     } else if (name == AIPP_VAR_RECI_CHN_3) {
         OP_CHECK_IF(
             stoi(aippCfg.at(AIPP_VAR_RECI_CHN_3)) < MIN_CHN_BOUND ||
                 stoi(aippCfg.at(AIPP_VAR_RECI_CHN_3)) > MAX_CHN_BOUND,
-            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn3 should bewteen [-65504,65504]."),
+            OP_LOGE(context_->GetNodeName(), "Params of dtcPixelReciChn3 should between [-65504,65504]."),
             return false);
     }
     return true;
@@ -406,6 +495,24 @@ void AippTiling::SetAippTilingData()
     tilingData.dtcPixelVarReciChn1 = dtcPixelVarReciChn1;
     tilingData.dtcPixelVarReciChn2 = dtcPixelVarReciChn2;
     tilingData.dtcPixelVarReciChn3 = dtcPixelVarReciChn3;
+
+    tilingData.cscSwitch = cscSwitch;
+    tilingData.cscMatrix00 = cscMatrix00;
+    tilingData.cscMatrix01 = cscMatrix01;
+    tilingData.cscMatrix02 = cscMatrix02;
+    tilingData.cscMatrix10 = cscMatrix10;
+    tilingData.cscMatrix11 = cscMatrix11;
+    tilingData.cscMatrix12 = cscMatrix12;
+    tilingData.cscMatrix20 = cscMatrix20;
+    tilingData.cscMatrix21 = cscMatrix21;
+    tilingData.cscMatrix22 = cscMatrix22;
+
+    tilingData.outBias0 = outBias0;
+    tilingData.outBias1 = outBias1;
+    tilingData.outBias2 = outBias2;
+    tilingData.inBias0 = inBias0;
+    tilingData.inBias1 = inBias1;
+    tilingData.inBias2 = inBias2;
 }
 
 void AippTiling::SetCropValue()
@@ -450,6 +557,85 @@ ge::graphStatus AippTiling::CheckCropSize()
         }
     }
     return ge::GRAPH_SUCCESS;
+}
+
+void AippTiling::SetCscValue()
+{
+    bool cscEnabled = (aippCfg.find(AIPP_CFG_CSC_SWITCH) != aippCfg.end()) &&
+                      (aippCfg.at(AIPP_CFG_CSC_SWITCH) == "true");
+    cscSwitch = cscEnabled ? CONST_VALUE_ONE : CONST_VALUE_ZERO;
+    if (cscEnabled) {
+        SetMatrixValid();
+        SetBaisValid();
+    }
+}
+
+void AippTiling::SetMatrixValid()
+{
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R0C0)) {
+        cscMatrix00 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C0)));
+    }
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R0C1)) {
+        cscMatrix01 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C1)));
+    }
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R0C2)) {
+        cscMatrix02 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R0C2)));
+    }
+
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R1C0)) {
+        cscMatrix10 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C0)));
+    }
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R1C1)) {
+        cscMatrix11 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C1)));
+    }
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R1C2)) {
+        cscMatrix12 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R1C2)));
+    }
+
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R2C0)) {
+        cscMatrix20 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C0)));
+    }
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R2C1)) {
+        cscMatrix21 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C1)));
+    }
+    if (CheckMatrixValid(AIPP_CFG_MATRIX_R2C2)) {
+        cscMatrix22 = static_cast<int16_t>(stoi(aippCfg.at(AIPP_CFG_MATRIX_R2C2)));
+    }
+}
+
+void AippTiling::SetBaisValid()
+{
+    if (CheckBaisValid(AIPP_CFG_INPUT_BIAS_0)) {
+        inBias0 = static_cast<uint8_t>(stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_0)));
+    }
+    if (CheckBaisValid(AIPP_CFG_INPUT_BIAS_1)) {
+        inBias1 = static_cast<uint8_t>(stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_1)));
+    }
+    if (CheckBaisValid(AIPP_CFG_INPUT_BIAS_2)) {
+        inBias2 = static_cast<uint8_t>(stoi(aippCfg.at(AIPP_CFG_INPUT_BIAS_2)));
+    }
+
+    if (CheckBaisValid(AIPP_CFG_OUTPUT_BIAS_0)) {
+        outBias0 = static_cast<uint8_t>(stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_0)));
+    }
+    if (CheckBaisValid(AIPP_CFG_OUTPUT_BIAS_1)) {
+        outBias1 = static_cast<uint8_t>(stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_1)));
+    }
+    if (CheckBaisValid(AIPP_CFG_OUTPUT_BIAS_2)) {
+        outBias2 = static_cast<uint8_t>(stoi(aippCfg.at(AIPP_CFG_OUTPUT_BIAS_2)));
+    }
+    
+    bool hasInBiasFlag = aippCfg.find(AIPP_CFG_INPUT_BIAS_0) != aippCfg.end() &&
+                            aippCfg.find(AIPP_CFG_INPUT_BIAS_1) != aippCfg.end() &&
+                            aippCfg.find(AIPP_CFG_INPUT_BIAS_2) != aippCfg.end();
+    bool hasOutBiasFlag = aippCfg.find(AIPP_CFG_OUTPUT_BIAS_0) != aippCfg.end() &&
+                            aippCfg.find(AIPP_CFG_OUTPUT_BIAS_1) != aippCfg.end() &&
+                            aippCfg.find(AIPP_CFG_OUTPUT_BIAS_2) != aippCfg.end();
+    if (cscSwitch && hasInBiasFlag && !hasOutBiasFlag) {
+        outBias0 = inBias0;
+        outBias1 = inBias1;
+        outBias2 = inBias2;
+    }
 }
 
 void AippTiling::SetDTCValue()
@@ -561,6 +747,10 @@ ge::graphStatus AippTiling::CheckTilingData()
         ((tilingData.cropSizeW + tilingData.cropStartPosW) > tilingData.inputSizeW),
         OP_LOGE(context_->GetNodeName(), "Params of cropStartPosW + cropSizeW should smaller than inputSizeW."),
         return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        (tilingData.cscSwitch != 0 && tilingData.cscSwitch != 1),
+        OP_LOGE(context_->GetNodeName(), "Params of cscSwitch should be 0/1."),
+        return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -569,18 +759,35 @@ void AippTiling::PrintTilingData()
 {
     stringstream ss;
     ss << "inputFormat: " << static_cast<uint32_t>(tilingData.inputFormat)
-       << ", imageFormat: " << static_cast<uint32_t>(tilingData.imageFormat) << ", batchNum: " << tilingData.batchNum
-       << ", channelNum: " << tilingData.channelNum << ", inputSizeW: " << tilingData.inputSizeW
-       << ", inputSizeH: " << tilingData.inputSizeH << ", cropSwitch: " << static_cast<uint32_t>(tilingData.cropSwitch)
+       << ", imageFormat: " << static_cast<uint32_t>(tilingData.imageFormat)
+       << ", batchNum: " << tilingData.batchNum << ", channelNum: " << tilingData.channelNum
+       << ", inputSizeW: " << tilingData.inputSizeW << ", inputSizeH: " << tilingData.inputSizeH
+       << ", cropSwitch: " << static_cast<uint32_t>(tilingData.cropSwitch)
        << ", cropStartPosH: " << tilingData.cropStartPosH << ", cropStartPosW: " << tilingData.cropStartPosW
-       << ", cropSizeH: " << tilingData.cropSizeH << ", cropSizeW: " << tilingData.cropSizeW;
+       << ", cropSizeH: " << tilingData.cropSizeH << ", cropSizeW: " << tilingData.cropSizeW
+       << ", cscSwitch: " << static_cast<int32_t>(tilingData.cscSwitch)
+       << ", cscMatrix00: " << static_cast<int32_t>(tilingData.cscMatrix00)
+       << ", cscMatrix01: " << static_cast<int32_t>(tilingData.cscMatrix01)
+       << ", cscMatrix02: " << static_cast<int32_t>(tilingData.cscMatrix02)
+       << ", cscMatrix10: " << static_cast<int32_t>(tilingData.cscMatrix10)
+       << ", cscMatrix11: " << static_cast<int32_t>(tilingData.cscMatrix11)
+       << ", cscMatrix12: " << static_cast<int32_t>(tilingData.cscMatrix12)
+       << ", cscMatrix20: " << static_cast<int32_t>(tilingData.cscMatrix20)
+       << ", cscMatrix21: " << static_cast<int32_t>(tilingData.cscMatrix21)
+       << ", cscMatrix22: " << static_cast<int32_t>(tilingData.cscMatrix22);
     OP_LOGI(context_->GetNodeName(), "%s", ss.str().c_str());
 
     stringstream strs;
-    strs << "dtcPixelMeanChn0: " << static_cast<uint32_t>(tilingData.dtcPixelMeanChn0)
-         << ", dtcPixelMeanChn1: " << static_cast<uint32_t>(tilingData.dtcPixelMeanChn1)
-         << ", dtcPixelMeanChn2: " << static_cast<uint32_t>(tilingData.dtcPixelMeanChn2)
-         << ", dtcPixelMeanChn3: " << static_cast<uint32_t>(tilingData.dtcPixelMeanChn3)
+    strs << "outBias0: " << static_cast<int32_t>(tilingData.outBias0)
+         << ", outBias1: " << static_cast<int32_t>(tilingData.outBias1)
+         << ", outBias2: " << static_cast<int32_t>(tilingData.outBias2)
+         << ", inBias0: " << static_cast<int32_t>(tilingData.inBias0)
+         << ", inBias1: " << static_cast<int32_t>(tilingData.inBias1)
+         << ", inBias2: " << static_cast<int32_t>(tilingData.inBias2)
+         << ", dtcPixelMeanChn0: " << static_cast<int32_t>(tilingData.dtcPixelMeanChn0)
+         << ", dtcPixelMeanChn1: " << static_cast<int32_t>(tilingData.dtcPixelMeanChn1)
+         << ", dtcPixelMeanChn2: " << static_cast<int32_t>(tilingData.dtcPixelMeanChn2)
+         << ", dtcPixelMeanChn3: " << static_cast<int32_t>(tilingData.dtcPixelMeanChn3)
          << ", dtcPixelMinChn0: " << tilingData.dtcPixelMinChn0 << ", dtcPixelMinChn1: " << tilingData.dtcPixelMinChn1
          << ", dtcPixelMinChn2: " << tilingData.dtcPixelMinChn2 << ", dtcPixelMinChn3: " << tilingData.dtcPixelMinChn3
          << ", dtcPixelVarReciChn0: " << tilingData.dtcPixelVarReciChn0

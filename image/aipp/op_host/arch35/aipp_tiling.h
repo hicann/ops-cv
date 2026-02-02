@@ -55,6 +55,10 @@ constexpr uint8_t CONST_VALUE_ONE = 1;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
 
+constexpr int64_t FORMAT_RGB_INDICE_UINT32 = 1;
+constexpr int64_t FORMAT_YUV_INDICE_UINT32 = 2;
+constexpr int64_t FORMAT_RGB_SWITCH_OPEN_UINT32 = 3;
+
 constexpr size_t INPUT_IMAGES_IDX = 0;
 constexpr size_t INPUT_PARAMS_IDX = 1;
 constexpr size_t OUTPUT_FEATURES_IDX = 0;
@@ -77,6 +81,23 @@ const string AIPP_CROP_SIZE_W = "crop_size_w";
 const string AIPP_CROP_SIZE_H = "crop_size_h";
 const string AIPP_CROP_LOAD_START_POS_H = "load_start_pos_h";
 const string AIPP_CROP_LOAD_START_POS_W = "load_start_pos_w";
+
+const string AIPP_CFG_CSC_SWITCH = "csc_switch";
+const string AIPP_CFG_MATRIX_R0C0 = "matrix_r0c0";
+const string AIPP_CFG_MATRIX_R0C1 = "matrix_r0c1";
+const string AIPP_CFG_MATRIX_R0C2 = "matrix_r0c2";
+const string AIPP_CFG_MATRIX_R1C0 = "matrix_r1c0";
+const string AIPP_CFG_MATRIX_R1C1 = "matrix_r1c1";
+const string AIPP_CFG_MATRIX_R1C2 = "matrix_r1c2";
+const string AIPP_CFG_MATRIX_R2C0 = "matrix_r2c0";
+const string AIPP_CFG_MATRIX_R2C1 = "matrix_r2c1";
+const string AIPP_CFG_MATRIX_R2C2 = "matrix_r2c2";
+const string AIPP_CFG_OUTPUT_BIAS_0 = "output_bias_0";
+const string AIPP_CFG_OUTPUT_BIAS_1 = "output_bias_1";
+const string AIPP_CFG_OUTPUT_BIAS_2 = "output_bias_2";
+const string AIPP_CFG_INPUT_BIAS_0 = "input_bias_0";
+const string AIPP_CFG_INPUT_BIAS_1 = "input_bias_1";
+const string AIPP_CFG_INPUT_BIAS_2 = "input_bias_2";
 
 const string AIPP_MEAN_CHN_0 = "mean_chn_0";
 const string AIPP_MEAN_CHN_1 = "mean_chn_1";
@@ -138,10 +159,15 @@ private:
     map<string, string> parseAippConfig(string jsonStr);
     map<string, string> parseAippCfgFromPath(string fileName);
     void SetAippTilingData();
+    void SetCscValue();
+    void SetMatrixValid();
+    void SetBaisValid();
     void SetCropValue();
     void SetDTCValue();
     void SetSySTilingData();
     void PrintTilingData();
+    bool CheckMatrixValid(const string& name);
+    bool CheckBaisValid(const string& name);
     bool CheckMeanChnValid(const string& name);
     bool CheckMinChnValid(const string& name);
     bool CheckReciValid(const string& name);
@@ -166,6 +192,26 @@ private:
     uint32_t cropStartPosW = 0;
     uint32_t cropSizeH = 0;
     uint32_t cropSizeW = 0;
+
+    // csc
+    uint8_t cscSwitch = 0;
+    int16_t cscMatrix00 = 298;
+    int16_t cscMatrix01 = 516;
+    int16_t cscMatrix02 = 0;
+    int16_t cscMatrix10 = 298;
+    int16_t cscMatrix11 = -100;
+    int16_t cscMatrix12 = -208;
+    int16_t cscMatrix20 = 298;
+    int16_t cscMatrix21 = 0;
+    int16_t cscMatrix22 = 409;
+
+    uint8_t outBias0 = 16;
+    uint8_t outBias1 = 128;
+    uint8_t outBias2 = 128;
+
+    uint8_t inBias0 = 16;
+    uint8_t inBias1 = 128;
+    uint8_t inBias2 = 128;
 
     // DTC
     int16_t dtcPixelMeanChn0 = 0;

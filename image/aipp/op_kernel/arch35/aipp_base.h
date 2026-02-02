@@ -21,6 +21,10 @@
 namespace Aipp_Kernel {
 using namespace AscendC;
 constexpr uint32_t MAX_TGHREAD_NUM = 256;
+constexpr uint8_t RGB_CHANNEL_NUM = 3;
+constexpr uint8_t YUV_CHANNEL_NUM = 3;
+constexpr uint8_t DIGIT_EIGHT = 8;
+constexpr uint8_t DIGIT_ONE = 1;
 constexpr uint8_t DIGIT_TWO = 2;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
@@ -40,6 +44,7 @@ public:
     DataType batchNum_ = 0;
     DataType cropSizeH_ = 0;
     DataType cropSizeW_ = 0;
+    bool rbuvSwapSwitch_ = false;
 
     DataType totalNum_ = 0;
     uint8_t inputFormat_ = NCHW_FORMAT_INDEX;
