@@ -696,13 +696,13 @@ float AippTiling::StringToFloat(string str)
 void AippTiling::SetSySTilingData()
 {
     int64_t totalNum = tilingData.batchNum * tilingData.channelNum * tilingData.inputSizeH * tilingData.inputSizeW;
-    int64_t blockDim = CeilDiv(totalNum, MAX_THREAD_NUM);
+    int64_t numBlocks = CeilDiv(totalNum, MAX_THREAD_NUM);
     auto compileInfo = reinterpret_cast<const AippCompileInfo*>(context_->GetCompileInfo());
     int32_t coreNums = compileInfo->coreNum;
-    if (blockDim > coreNums) {
+    if (numBlocks > coreNums) {
         context_->SetBlockDim(coreNums);
     } else {
-        context_->SetBlockDim(blockDim);
+        context_->SetBlockDim(numBlocks);
     }
     int64_t simtLocalMem = compileInfo->ubSize - DCACHE_SIZE;
     context_->SetLocalMemorySize(simtLocalMem);

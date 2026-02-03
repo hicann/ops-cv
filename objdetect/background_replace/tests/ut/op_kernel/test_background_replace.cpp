@@ -55,7 +55,7 @@ TEST_F(background_replace_test, test_case_float16_c1) {
 
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
     system("cp -r ../../../../../../../ops/objdetect/background_replace/tests/ut/op_kernel/background_replace_data ./");
     system("chmod -R 755 ./background_replace_data/");
     system("cd ./background_replace_data/ && rm -rf ./*bin");
@@ -70,7 +70,7 @@ TEST_F(background_replace_test, test_case_float16_c1) {
     tilingDatafromBin->size = 480*640;
 
     ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(background_replace, blockDim, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(background_replace, numBlocks, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
     
     AscendC::GmFree(bkg);
     AscendC::GmFree(src);
@@ -99,7 +99,7 @@ TEST_F(background_replace_test, test_case_u8_c1) {
 
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
     system("cp -r ../../../../../../../ops/built-in/tests/ut/fast_op_test/background_replace/background_replace_data ./");
     system("chmod -R 755 ./background_replace_data/");
     system("cd ./background_replace_data/ && rm -rf ./*bin");
@@ -114,7 +114,7 @@ TEST_F(background_replace_test, test_case_u8_c1) {
     tilingDatafromBin->size = 480*640;
 
     ICPU_SET_TILING_KEY(2);
-    ICPU_RUN_KF(background_replace, blockDim, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(background_replace, numBlocks, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
     
     AscendC::GmFree(bkg);
     AscendC::GmFree(src);
@@ -145,7 +145,7 @@ TEST_F(background_replace_test, test_case_float16_c3) {
 
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
     system("cp -r ../../../../../../../ops/built-in/tests/ut/fast_op_test/background_replace/background_replace_data ./");
     system("chmod -R 755 ./background_replace_data/");
     system("cd ./background_replace_data/ && rm -rf ./*bin");
@@ -160,7 +160,7 @@ TEST_F(background_replace_test, test_case_float16_c3) {
     tilingDatafromBin->size = 480*640;
 
     ICPU_SET_TILING_KEY(3);
-    ICPU_RUN_KF(background_replace, blockDim, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(background_replace, numBlocks, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
     
     AscendC::GmFree(bkg);
     AscendC::GmFree(src);
@@ -189,7 +189,7 @@ TEST_F(background_replace_test, test_case_u8_c3) {
 
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
     system("cp -r ../../../../../../../ops/built-in/tests/ut/fast_op_test/background_replace/background_replace_data ./");
     system("chmod -R 755 ./background_replace_data/");
     system("cd ./background_replace_data/ && rm -rf ./*bin");
@@ -204,7 +204,7 @@ TEST_F(background_replace_test, test_case_u8_c3) {
     tilingDatafromBin->size = 480*640;
 
     ICPU_SET_TILING_KEY(4);
-    ICPU_RUN_KF(background_replace, blockDim, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(background_replace, numBlocks, bkg, src, mask, out, workspace, (uint8_t*)(tilingDatafromBin));
     
     AscendC::GmFree(bkg);
     AscendC::GmFree(src);

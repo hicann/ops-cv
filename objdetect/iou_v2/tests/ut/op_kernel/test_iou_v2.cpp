@@ -53,7 +53,7 @@ TEST_F(iou_v2_test, test_aligned_iou_fp32)
 
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
     tilingData->bBoxLength = 8;
@@ -66,7 +66,7 @@ TEST_F(iou_v2_test, test_aligned_iou_fp32)
 
     ICPU_SET_TILING_KEY(4);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-    ICPU_RUN_KF(iou_v2, blockDim, bboxes, gtboxes, overlap, workspace, tiling);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
 
     AscendC::GmFree(bboxes);
     AscendC::GmFree(gtboxes);

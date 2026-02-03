@@ -48,7 +48,7 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
     size_t gradOutputByteSize = 16 * 16 * 16 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleNearest3dGradTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 4;
+    uint32_t numBlocks = 4;
 
     uint8_t* gradInput = (uint8_t*)AscendC::GmAlloc(gradInputByteSize);
     uint8_t* gradOutput = (uint8_t*)AscendC::GmAlloc(gradOutputByteSize);
@@ -198,7 +198,7 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(1);
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    ICPU_RUN_KF(upsample_nearest3d_grad, blockDim, gradOutput, gradInput, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest3d_grad, numBlocks, gradOutput, gradInput, workspace, (uint8_t*)(tilingDatafromBin));
 
     fileName = "./upsample_nearest3d_grad_data/float32_output_upsample_nearest3d_grad.bin";
     WriteFile(fileName, gradInput, gradInputByteSize);

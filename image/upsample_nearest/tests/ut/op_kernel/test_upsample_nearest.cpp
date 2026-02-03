@@ -51,7 +51,7 @@ TEST_F(upsample_nearest_test, test_case_float_1)
     size_t outputByteSize = 16 * 16 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -86,7 +86,7 @@ TEST_F(upsample_nearest_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(1001);
 
-    ICPU_RUN_KF(upsample_nearest, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_data/float32_output_upsample_nearest.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -111,7 +111,7 @@ TEST_F(upsample_nearest_test, test_case_float_2)
     size_t outputByteSize = 16 * 16 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -146,7 +146,7 @@ TEST_F(upsample_nearest_test, test_case_float_2)
 
     ICPU_SET_TILING_KEY(1002);
 
-    ICPU_RUN_KF(upsample_nearest, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_data/float32_output_upsample_nearest.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -171,7 +171,7 @@ TEST_F(upsample_nearest_test, test_case_float_3)
     size_t outputByteSize = 1 * 64 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -206,7 +206,7 @@ TEST_F(upsample_nearest_test, test_case_float_3)
 
     ICPU_SET_TILING_KEY(1000);
 
-    ICPU_RUN_KF(upsample_nearest, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_data/float32_output_upsample_nearest.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -231,7 +231,7 @@ TEST_F(upsample_nearest_test, test_case_float16_1)
     size_t outputByteSize = 16 * 16 * sizeof(half);
     size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -266,7 +266,7 @@ TEST_F(upsample_nearest_test, test_case_float16_1)
 
     ICPU_SET_TILING_KEY(1002);
 
-    ICPU_RUN_KF(upsample_nearest, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_data/float16_output_upsample_nearest.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -291,7 +291,7 @@ TEST_F(upsample_nearest_test, test_case_float16_2)
     size_t outputByteSize = 16 * 16 * sizeof(half);
     size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -326,7 +326,7 @@ TEST_F(upsample_nearest_test, test_case_float16_2)
 
     ICPU_SET_TILING_KEY(1001);
 
-    ICPU_RUN_KF(upsample_nearest, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_data/float16_output_upsample_nearest.bin";
     WriteFile(fileName, y, outputByteSize);
 

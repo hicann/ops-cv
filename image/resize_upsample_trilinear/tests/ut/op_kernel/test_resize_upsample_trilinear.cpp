@@ -67,7 +67,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float32)
 
     size_t inputByteSize = 2 * 2 * 4 * 4 * sizeof(float);
     size_t outputByteSize = 2 * 8 * 8 * 16 * sizeof(float);
-    uint32_t blockDim = tilingInfo.blockNum;
+    uint32_t numBlocks = tilingInfo.blockNum;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -81,7 +81,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float32)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, tiling);
+    ICPU_RUN_KF(resize_upsample_trilinear, numBlocks, x, y, workspace, tiling);
     fileName = "./resize_upsample_trilinear_data/float32_output_trilinear.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -122,7 +122,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float16)
 
     size_t inputByteSize = 2 * 2 * 4 * 4 * sizeof(half);
     size_t outputByteSize = 2 * 8 * 8 * 16 * sizeof(half);
-    uint32_t blockDim =  tilingInfo.blockNum;
+    uint32_t numBlocks =  tilingInfo.blockNum;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -136,7 +136,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float16)
 
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    ICPU_RUN_KF(resize_upsample_trilinear, blockDim, x, y, workspace, tiling);
+    ICPU_RUN_KF(resize_upsample_trilinear, numBlocks, x, y, workspace, tiling);
     fileName = "./resize_upsample_trilinear_data/float16_output_trilinear.bin";
     WriteFile(fileName, y, outputByteSize);
 

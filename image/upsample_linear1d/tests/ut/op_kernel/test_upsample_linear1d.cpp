@@ -50,7 +50,7 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     size_t outputByteSize = 16 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleLinear1dTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 16;
+    uint32_t numBlocks = 16;
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
@@ -158,7 +158,7 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_linear1d, blockDim, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_linear1d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_linear1d_data/float32_output_upsample_linear1d.bin";
     WriteFile(fileName, y, outputByteSize);
 

@@ -48,7 +48,7 @@ TEST_F(upsample_nearest3d_test, test_case_float_1)
     size_t outputByteSize = 16 * 16 * 16 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleNearest3dTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 16;
+    uint32_t numBlocks = 16;
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
@@ -93,7 +93,7 @@ TEST_F(upsample_nearest3d_test, test_case_float_1)
     ICPU_SET_TILING_KEY(5140);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     auto func = upsample_nearest3d<UPSAMPLE_NEAREST3D_TPL_FP32, UPSAMPLE_NEAREST3D_TPL_FP32>; 
-    ICPU_RUN_KF(func, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(func, numBlocks, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_nearest3d_data/float32_output_upsample_nearest3d.bin";
     WriteFile(fileName, y, outputByteSize);
 

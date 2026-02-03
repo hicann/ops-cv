@@ -62,12 +62,12 @@ TEST_F(roi_align_rotated_test, test_case_0)
   uint8_t *output = (uint8_t *)AscendC::GmAlloc(outputByteSize);
   uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
   uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-  uint32_t blockDim = 1;
+  uint32_t numBlocks = 1;
 
   RoiAlignRotatedTilingData* tilingData = reinterpret_cast<RoiAlignRotatedTilingData*>(tiling);
   tilingData->aligned = 0;
   tilingData->clockwise = 0;
-  tilingData->blockDim = 1;
+  tilingData->numBlocks = 1;
   tilingData->rois_num_per_Lcore = 8;
   tilingData->rois_num_per_Score = 0;
   tilingData->Lcore_num = 1;
@@ -89,7 +89,7 @@ TEST_F(roi_align_rotated_test, test_case_0)
 
   ICPU_SET_TILING_KEY(1);
   AscendC::SetKernelMode(KernelMode::AIV_MODE);
-  ICPU_RUN_KF(roi_align_rotated, blockDim, input, rois, output, workspace, tiling);
+  ICPU_RUN_KF(roi_align_rotated, numBlocks, input, rois, output, workspace, tiling);
 
   AscendC::GmFree(input);
   AscendC::GmFree(rois);

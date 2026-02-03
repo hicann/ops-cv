@@ -31,7 +31,7 @@ namespace optiling
   BEGIN_TILING_DATA_DEF(RoiAlignRotatedTilingData)
   TILING_DATA_FIELD_DEF(uint8_t, aligned);
   TILING_DATA_FIELD_DEF(uint8_t, clockwise);
-  TILING_DATA_FIELD_DEF(uint32_t, blockDim);
+  TILING_DATA_FIELD_DEF(uint32_t, numBlocks);
   TILING_DATA_FIELD_DEF(uint32_t, rois_num_per_Lcore);
   TILING_DATA_FIELD_DEF(uint32_t, rois_num_per_Score);
   TILING_DATA_FIELD_DEF(uint32_t, Lcore_num);

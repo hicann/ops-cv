@@ -157,7 +157,7 @@ namespace optiling
         float input_size = float(channels_aligned) / ALIGN_VALUE;
         uint32_t input_buffer_size = static_cast<uint32_t>(ceil(input_size)) * ALIGN_VALUE * sizeof(float);
 
-        tiling.set_blockDim(BLOCK_DIM);
+        tiling.set_numBlocks(BLOCK_DIM);
         tiling.set_ub_total_size(ub_total_size);
         tiling.set_tileNum(TILE_NUM);
         tiling.set_batch_size(batch_size);

@@ -43,7 +43,7 @@ public:
         ASSERT(GetBlockNum() != 0 && "block dim can not be zero!");
 
         tileNum = tiling_data->tileNum;
-        blockDim = tiling_data->blockDim;
+        numBlocks = tiling_data->numBlocks;
         ub_total_size = tiling_data->ub_total_size;
         batch_size = tiling_data->batch_size;
         channels = tiling_data->channels;
@@ -581,7 +581,7 @@ private:
     LocalTensor<float> WeightTensor, ValueTensor, TmpValueTensor, AtomicAddTensor;
 
     bool aligned, clockwise;
-    uint32_t blockDim, tileNum, batch_size, channels, channels_aligned, input_h, input_w, rois_num_aligned, tail_num, total_rois_num;
+    uint32_t numBlocks, tileNum, batch_size, channels, channels_aligned, input_h, input_w, rois_num_aligned, tail_num, total_rois_num;
     uint32_t rois_num_per_core, rois_num_per_loop, rois_num_per_loop_limit, loopCount;
     uint32_t rois_num_per_Lcore, rois_num_per_Score, Lcore_num, Score_num, input_buffer_size;
     int32_t sampling_ratio, pooled_height, pooled_width, output_shape;

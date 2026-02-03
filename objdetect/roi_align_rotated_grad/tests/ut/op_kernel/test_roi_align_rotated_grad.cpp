@@ -63,7 +63,7 @@ TEST_F(roi_align_rotated_grad_test, test_case_0)
   uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(gradOutputByteSize);
   uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
 
-  uint32_t blockDim = 1;
+  uint32_t numBlocks = 1;
 
   RoiAlignRotatedGradTilingData* tilingData = reinterpret_cast<RoiAlignRotatedGradTilingData*>(tiling);
   tilingData->coreRoisNums = 0;

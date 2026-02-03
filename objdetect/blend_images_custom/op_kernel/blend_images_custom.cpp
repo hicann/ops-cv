@@ -139,9 +139,9 @@ extern "C" __global__ __aicore__ void blend_images_custom(GM_ADDR rgb, GM_ADDR a
 
 #ifndef __CCE_KT_TEST__
 // call of kernel function
-void blend_images_custom_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *rgb, uint8_t *alpha, uint8_t *frame,
+void blend_images_custom_do(uint32_t numBlocks, void *l2ctrl, void *stream, uint8_t *rgb, uint8_t *alpha, uint8_t *frame,
                             uint8_t *out, uint8_t *workspace, uint8_t *tiling)
 {
-    blend_images_custom<<<blockDim, l2ctrl, stream>>>(rgb, alpha, frame, out, workspace, tiling);
+    blend_images_custom<<<numBlocks, l2ctrl, stream>>>(rgb, alpha, frame, out, workspace, tiling);
 }
 #endif

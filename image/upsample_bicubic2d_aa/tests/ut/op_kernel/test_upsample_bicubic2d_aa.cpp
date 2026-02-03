@@ -67,8 +67,8 @@ TEST_F(upsample_bicubic2d_aa_test, test_case_float32)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
-    uint32_t blockDim = 1;
-    ICPU_RUN_KF(upsample_bicubic2d_aa, blockDim, x, y, workspace, tiling);
+    uint32_t numBlocks = 1;
+    ICPU_RUN_KF(upsample_bicubic2d_aa, numBlocks, x, y, workspace, tiling);
     fileName = "./upsample_bicubic2d_aa_data/float32_output_bicubic2d_aa.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -112,8 +112,8 @@ TEST_F(upsample_bicubic2d_aa_test, test_case_float16)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
-    uint32_t blockDim = 1;
-    ICPU_RUN_KF(upsample_bicubic2d_aa, blockDim, x, y, workspace, tiling);
+    uint32_t numBlocks = 1;
+    ICPU_RUN_KF(upsample_bicubic2d_aa, numBlocks, x, y, workspace, tiling);
     fileName = "./upsample_bicubic2d_aa_data/float16_output_bicubic2d_aa.bin";
     WriteFile(fileName, y, outputByteSize);
     

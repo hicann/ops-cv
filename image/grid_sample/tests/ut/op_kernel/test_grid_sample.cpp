@@ -71,7 +71,7 @@ TEST_F(grid_sample_test, test_case_fp32_test01)
     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-    uint32_t blockDim = tilingInfo.blockNum;
+    uint32_t numBlocks = tilingInfo.blockNum;
 
     char *path_ = get_current_dir_name();
     string path(path_);
@@ -83,7 +83,7 @@ TEST_F(grid_sample_test, test_case_fp32_test01)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+    ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
     AscendC::GmFree(x);
     AscendC::GmFree(grid);
@@ -126,7 +126,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-    uint32_t blockDim = tilingInfo.blockNum;
+    uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -136,7 +136,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-    ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+    ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
     AscendC::GmFree(x);
     AscendC::GmFree(grid);
@@ -179,7 +179,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -190,7 +190,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -233,7 +233,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -244,7 +244,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -287,7 +287,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -298,7 +298,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -341,7 +341,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -352,7 +352,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -395,7 +395,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -406,7 +406,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -449,7 +449,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -460,7 +460,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -503,7 +503,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -513,7 +513,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     string path(path_);
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -556,7 +556,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -566,7 +566,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     string path(path_);
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -609,7 +609,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -619,7 +619,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     string path(path_);
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -662,7 +662,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -672,7 +672,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     string path(path_);
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -715,7 +715,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -726,7 +726,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -769,7 +769,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -779,7 +779,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     string path(path_);
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -822,7 +822,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -833,7 +833,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -876,7 +876,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -887,7 +887,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -930,7 +930,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -941,7 +941,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -984,7 +984,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -995,7 +995,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -1038,7 +1038,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -1049,7 +1049,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -1092,7 +1092,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -1103,7 +1103,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -1148,7 +1148,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -1159,7 +1159,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -1204,7 +1204,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -1215,7 +1215,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);
@@ -1261,7 +1261,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -1272,7 +1272,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 //     cout << "ICPU_RUN_KF end\n" << endl;
 
 //     AscendC::GmFree(x);
@@ -1317,7 +1317,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 //     uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
 //     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
 
-//     uint32_t blockDim = tilingInfo.blockNum;
+//     uint32_t numBlocks = tilingInfo.blockNum;
 //     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
 //     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
 //     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
@@ -1328,7 +1328,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
 
 //     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-//     ICPU_RUN_KF(grid_sample, blockDim, x, grid, y, workspace, tiling);
+//     ICPU_RUN_KF(grid_sample, numBlocks, x, grid, y, workspace, tiling);
 
 //     AscendC::GmFree(x);
 //     AscendC::GmFree(grid);

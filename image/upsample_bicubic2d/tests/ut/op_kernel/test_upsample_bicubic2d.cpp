@@ -48,7 +48,7 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_1)
     size_t outputByteSize = 16 * 16 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleBicubic2dTilingData);
     size_t workspaceSize = 64 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
@@ -151,7 +151,7 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_1)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_bicubic2d, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_bicubic2d, numBlocks, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_bicubic2d_data/float32_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -175,7 +175,7 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_2)
     size_t outputByteSize = 3 * 3 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleBicubic2dTilingData);
     size_t workspaceSize = 64 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
@@ -278,7 +278,7 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_2)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_bicubic2d, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_bicubic2d, numBlocks, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_bicubic2d_data/float32_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
@@ -302,7 +302,7 @@ TEST_F(upsample_bicubic2d_test, test_case_float16)
     size_t outputByteSize = 16 * 16 * sizeof(half);
     size_t tiling_data_size = sizeof(UpsampleBicubic2dTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
@@ -405,7 +405,7 @@ TEST_F(upsample_bicubic2d_test, test_case_float16)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_bicubic2d, blockDim, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_bicubic2d, numBlocks, x, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_bicubic2d_data/float16_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 

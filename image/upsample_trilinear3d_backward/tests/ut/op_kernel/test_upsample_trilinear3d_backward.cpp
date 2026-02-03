@@ -55,7 +55,7 @@ TEST_F(UpsampleTrilinear3dBackwardTest, test_case_float32)
     size_t grad_inputByteSize = 2 * 2 * 4 * 4 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleTrilinear3dBackwardTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(grad_outputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(grad_inputByteSize);
@@ -204,7 +204,7 @@ TEST_F(UpsampleTrilinear3dBackwardTest, test_case_float32)
 
     ICPU_SET_TILING_KEY(1);
 	AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    ICPU_RUN_KF(upsample_trilinear3d_backward, blockDim, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_trilinear3d_backward, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
 
     fileName = "./upsample_trilinear3d_backward_data/float32_output_trilinear3d_grad.bin";
     WriteFile(fileName, y, grad_inputByteSize);

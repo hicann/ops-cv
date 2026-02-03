@@ -70,8 +70,8 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_1)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
-    uint32_t blockDim = 20;
-    ICPU_RUN_KF(upsample_bicubic2d_grad, blockDim, x, y, workspace, tiling);
+    uint32_t numBlocks = 20;
+    ICPU_RUN_KF(upsample_bicubic2d_grad, numBlocks, x, y, workspace, tiling);
 
     AscendC::GmFree((void*)(x));
     AscendC::GmFree((void*)(y));
@@ -113,8 +113,8 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_2)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
-    uint32_t blockDim = 20;
-    ICPU_RUN_KF(upsample_bicubic2d_grad, blockDim, x, y, workspace, tiling);
+    uint32_t numBlocks = 20;
+    ICPU_RUN_KF(upsample_bicubic2d_grad, numBlocks, x, y, workspace, tiling);
 
     AscendC::GmFree((void*)(x));
     AscendC::GmFree((void*)(y));
@@ -156,8 +156,8 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_3)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(10000002);
-    uint32_t blockDim = 20;
-    ICPU_RUN_KF(upsample_bicubic2d_grad, blockDim, x, y, workspace, tiling);
+    uint32_t numBlocks = 20;
+    ICPU_RUN_KF(upsample_bicubic2d_grad, numBlocks, x, y, workspace, tiling);
 
     AscendC::GmFree((void*)(x));
     AscendC::GmFree((void*)(y));
@@ -199,8 +199,8 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_4)
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(10000002);
-    uint32_t blockDim = 20;
-    ICPU_RUN_KF(upsample_bicubic2d_grad, blockDim, x, y, workspace, tiling);
+    uint32_t numBlocks = 20;
+    ICPU_RUN_KF(upsample_bicubic2d_grad, numBlocks, x, y, workspace, tiling);
 
     AscendC::GmFree((void*)(x));
     AscendC::GmFree((void*)(y));

@@ -41,7 +41,7 @@ TEST_F(mrgba_custom_test, test_case_uint8) {
     size_t tiling_data_size = sizeof(MrgbaCustomTilingData);
     size_t rgb_size = 480*640*3;
     size_t alpha_size = 480*640*1;
-    uint32_t blockDim = 1;
+    uint32_t numBlocks = 1;
 
     uint8_t *rgb = (uint8_t*)AscendC::GmAlloc(rgb_size);
     uint8_t *alpha = (uint8_t*)AscendC::GmAlloc(alpha_size);
@@ -60,7 +60,7 @@ TEST_F(mrgba_custom_test, test_case_uint8) {
     MrgbaCustomTilingData* tilingDatafromBin = reinterpret_cast<MrgbaCustomTilingData*>(tiling);
     tilingDatafromBin->alphaLen = 480*640*1;
 
-    ICPU_RUN_KF(mrgba_custom, blockDim, rgb, alpha, dst, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(mrgba_custom, numBlocks, rgb, alpha, dst, workspace, (uint8_t*)(tilingDatafromBin));
 
     AscendC::GmFree(rgb);
     AscendC::GmFree(alpha);

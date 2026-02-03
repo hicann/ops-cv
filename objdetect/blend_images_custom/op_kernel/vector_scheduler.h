@@ -57,19 +57,19 @@ public:
 
 class VectorScheduler {
 public:
-    __aicore__ inline VectorScheduler(size_t contentLen, size_t blockDim, size_t bufferNum, float ubVarCount,
+    __aicore__ inline VectorScheduler(size_t contentLen, size_t numBlocks, size_t bufferNum, float ubVarCount,
                                       size_t sizeofT)
-        : blockDim(blockDim), bufferNum(bufferNum), ubVarCount(ubVarCount), sizeofT(sizeofT)
+        : numBlocks(numBlocks), bufferNum(bufferNum), ubVarCount(ubVarCount), sizeofT(sizeofT)
     {
         auto blockIdx = GetBlockIdx();
         this->dataLenPer32B = BLOCK_SIZE_BYTES / this->sizeofT;
         // L1
-        this->dataLenPerCore = contentLen / this->blockDim;
+        this->dataLenPerCore = contentLen / this->numBlocks;
         if (this->dataLenPerCore < this->dataLenPer32B) {
             this->dataLenPerCore = blockIdx == 0 ? contentLen : 0;
             this->dataLenTailL1 = 0;
         } else {
-            this->dataLenTailL1 = contentLen % this->blockDim;
+            this->dataLenTailL1 = contentLen % this->numBlocks;
         }
         // L2
         int maxUbSizePerVar = UB_SIZE_BYTE / ubVarCount / this->bufferNum;
@@ -77,7 +77,7 @@ public:
         this->dataLenPerLoop = this->dataBytesPerLoop / this->sizeofT;
 
         this->dataLen = this->dataLenPerCore;
-        if (blockIdx == this->blockDim - 1) {
+        if (blockIdx == this->numBlocks - 1) {
             this->dataLen += this->dataLenTailL1;
         }
         this->bufferBytesPerVar = this->dataLen > this->dataLenPerLoop ? this->dataBytesPerLoop : UpAlign32(
@@ -112,7 +112,7 @@ public:
 
 public:
     float ubVarCount;
-    size_t blockDim;
+    size_t numBlocks;
     size_t bufferNum;
     size_t sizeofT;
     size_t dataLenPer32B;

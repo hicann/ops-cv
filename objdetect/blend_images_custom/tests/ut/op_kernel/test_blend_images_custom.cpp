@@ -50,7 +50,7 @@ TEST_F(blend_images_custom_test, test_case_uint8) {
     
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
     system("cp -r ../../../../../../../ops/objdetect/blend_images_custom/tests/ut/op_kernel/blend_images_custom_data ./");
     system("chmod -R 755 ./blend_images_custom_data/");
     system("cd ./blend_images_custom_data/ && rm -rf ./*bin");
@@ -64,7 +64,7 @@ TEST_F(blend_images_custom_test, test_case_uint8) {
     TilingDataBlendImages* tilingDatafromBin = reinterpret_cast<TilingDataBlendImages*>(tiling);
     tilingDatafromBin->totalAlphaLength = 480 * 640 * 1;
     
-    ICPU_RUN_KF(blend_images_custom, blockDim, rgb, alpha, frame, out, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(blend_images_custom, numBlocks, rgb, alpha, frame, out, workspace, (uint8_t*)(tilingDatafromBin));
     
     AscendC::GmFree(rgb);
     AscendC::GmFree(alpha);
@@ -89,7 +89,7 @@ TEST_F(blend_images_custom_test, test_case_uint8_size_is_zero) {
     
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-    uint32_t blockDim = 8;
+    uint32_t numBlocks = 8;
     system("cp -r ../../../../../../../ops/built-in/tests/ut/fast_op_test/blend_images_custom/blend_images_custom_data ./");
     system("chmod -R 755 ./blend_images_custom_data/");
     system("cd ./blend_images_custom_data/ && rm -rf ./*bin");
@@ -103,7 +103,7 @@ TEST_F(blend_images_custom_test, test_case_uint8_size_is_zero) {
     TilingDataBlendImages* tilingDatafromBin = reinterpret_cast<TilingDataBlendImages*>(tiling);
     tilingDatafromBin->totalAlphaLength = 0;
     
-    ICPU_RUN_KF(blend_images_custom, blockDim, rgb, alpha, frame, out, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(blend_images_custom, numBlocks, rgb, alpha, frame, out, workspace, (uint8_t*)(tilingDatafromBin));
     
     AscendC::GmFree(rgb);
     AscendC::GmFree(alpha);
