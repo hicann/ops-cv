@@ -65,3 +65,6 @@
 | [aclnnRoiAlign](../../objdetect/roi_align/docs/aclnnRoiAlign.md) | RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。 |默认确定性实现|
 | [aclnnRoiAlignV2](../../objdetect/roi_align/docs/aclnnRoiAlignV2.md) | RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。 |默认确定性实现|
 | [aclnnRoiAlignV2Backward](../../objdetect/roi_align_grad/docs/aclnnRoiAlignV2Backward.md) | [aclnnRoiAlignV2](../../objdetect/roi_align/docs/aclnnRoiAlignV2.md)的反向传播。 |默认非确定性实现，支持配置开启|
+| [aclnnMrgbaCustom](../../objdetect/mrgba_custom/docs/aclnnMrgbaCustom.md) | 完成张量rgb和张量alpha的透明度乘法计算。 |默认确定性实现|
+| [aclnnBackgroundReplace](../../objdetect/background_replace/docs/aclnnBackgroundReplace.md) | 将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。 |默认确定性实现|
+| [aclnnBlendImagesCustom](../../objdetect/blend_images_custom/docs/aclnnBlendImagesCustom.md) | 完成张量rgb、frame和alpha的透明度乘法计算。 |默认确定性实现|

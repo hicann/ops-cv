@@ -464,5 +464,35 @@
     <td>AI Core</td>
     <td>根据特征点所属的组，重组点云中的特征点。 </td>
   </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/background_replace/README.md">background_repalce</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/blend_images_custom/README.md">blend_images_custom</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>完成张量rgb、frame和alpha的透明度乘法计算。 </td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>完成张量rgb和张量alpha的透明度乘法计算。 </td>
+  </tr>
 </tbody>
 </table>
