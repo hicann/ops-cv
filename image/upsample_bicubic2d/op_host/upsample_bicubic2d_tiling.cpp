@@ -18,6 +18,7 @@
 #include "log/log.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "upsample_bicubic2d_tiling.h"
+#include "tiling_base/tiling_base.h"
 
 namespace optiling {
 constexpr uint32_t BEST_PERFORMANCE_SIZE_1 = 16;
