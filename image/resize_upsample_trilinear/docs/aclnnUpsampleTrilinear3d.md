@@ -243,7 +243,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
 
     入参`self`和出参`out`的数据类型支持FLOAT32、FLOAT16、DOUBLE。
 
-- **返回值**：
+- **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

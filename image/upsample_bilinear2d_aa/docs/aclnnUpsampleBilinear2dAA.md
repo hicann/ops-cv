@@ -295,7 +295,7 @@ aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/co
   输入shape的宽度W/outputSize\_W <=50
   $$
 
-- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+- 参数input、outputSize、scalesH、scalesW需要满足如下约束：
 
   $$
   outputSize\_H = floor(input\_H * scalesH)
