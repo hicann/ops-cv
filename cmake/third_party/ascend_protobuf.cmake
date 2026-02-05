@@ -19,7 +19,6 @@ find_package_handle_standard_args(ascend_protobuf_build_cv
     ASCEND_PROTOBUF_SHARED_INCLUDE
 )
 
-set(ASCEND_PROTOBUF_SOURCE_DIR ${PROJECT_SOURCE_DIR}/third_party/ascend_protobuf)
 if(ascend_protobuf_build_cv_FOUND AND NOT FORCE_REBUILD_CANN_3RD)
     message(STATUS "[ThirdPartyLib][ascend protobuf] ascend_protobuf_shared found, skip compile.")
     cmake_print_variables(ASCEND_PROTOBUF_SHARED_INCLUDE)
@@ -32,6 +31,9 @@ else()
     message(STATUS "[ThirdPartyLib][ascend protobuf] ascend protobuf shared not found, finding binary file.")
     if(EXISTS "${CANN_3RD_LIB_PATH}/protobuf/protobuf-all-25.1.tar.gz")
         set(REQ_URL "file://${CANN_3RD_LIB_PATH}/protobuf/protobuf-all-25.1.tar.gz")
+        message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
+    elseif(EXISTS "${CANN_3RD_LIB_PATH}/protobuf/protobuf-25.1.tar.gz")
+        set(REQ_URL "file://${CANN_3RD_LIB_PATH}/protobuf/protobuf-25.1.tar.gz")
         message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
     elseif(EXISTS "${CANN_3RD_LIB_PATH}/pkg/${PROTOBUF_VERSION_PKG}")
         set(REQ_URL "file://${CANN_3RD_LIB_PATH}/pkg/${PROTOBUF_VERSION_PKG}")
@@ -66,7 +68,7 @@ else()
                             -Dprotobuf_ABSL_PROVIDER=module
                             -DABSL_ROOT_DIR=${ABSL_SOURCE_DIR}
                             <SOURCE_DIR>
-                        SOURCE_DIR ${ASCEND_PROTOBUF_SOURCE_DIR}
+                        SOURCE_DIR ${ASCEND_PROTOBUF_DIR}
                         BUILD_COMMAND $(MAKE)
                         INSTALL_COMMAND ""
                         EXCLUDE_FROM_ALL TRUE

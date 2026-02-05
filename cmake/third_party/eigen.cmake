@@ -11,23 +11,27 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-if (IS_DIRECTORY "${CANN_3RD_LIB_PATH}/eigen")
-  set(REQ_URL "${CANN_3RD_LIB_PATH}/eigen")
+set(EIGEN_DOWNLOAD_PATH ${CANN_3RD_LIB_PATH}/pkg)
+
+if (EXISTS "${CANN_3RD_LIB_PATH}/eigen/CMakeLists.txt" AND NOT FORCE_REBUILD_CANN_3RD)
+  message("eigen found, and not force rebuild cann third_party")
+  set(SOURCE_DIR "${CANN_3RD_LIB_PATH}/eigen")
 else()
   set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/3.4.0/eigen-3.4.0.tar.gz")
+  include(ExternalProject)
+  ExternalProject_Add(external_eigen_cv
+    TLS_VERIFY        OFF
+    URL               ${REQ_URL}
+    DOWNLOAD_DIR      ${EIGEN_DOWNLOAD_PATH}
+    SOURCE_DIR        ${CANN_3RD_LIB_PATH}/eigen
+    PREFIX            third_party
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     ""
+    INSTALL_COMMAND   ""
+  )
+  ExternalProject_Get_Property(external_eigen_cv SOURCE_DIR)
 endif()
 
-include(ExternalProject)
-ExternalProject_Add(external_eigen_cv
-  URL               ${REQ_URL}
-  DOWNLOAD_DIR      download/eigen
-  PREFIX            third_party
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-)
-
-ExternalProject_Get_Property(external_eigen_cv SOURCE_DIR)
 
 add_library(EigenCv INTERFACE)
 target_compile_options(EigenCv INTERFACE -w)

@@ -121,7 +121,7 @@ export CP_GRAPH_LIBRARY_STUB_PATH="${ASCEND_HOME_PATH}/lib64/stub"
 export GRAPH_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
 export CP_GRAPH_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
 export CP_EXECUTOR_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
-CANN_3RD_LIB_PATH="${BASE_PATH}/third_party"
+CANN_3RD_LIB_PATH="${BUILD_PATH}/third_party"
 
 # print usage message
 usage() {
@@ -145,7 +145,7 @@ usage() {
         echo "                           Specify build type(TYPE options: Release/Debug), Default:Release"
         echo "    --experimental         Build experimental version"
         echo "    --cann_3rd_lib_path=<PATH>"
-        echo "                           Set ascend third_party package install path, default ./third_party"
+        echo "                           Set ascend third_party package install path, default ./build/third_party"
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo $dotted_line
@@ -836,7 +836,6 @@ checkopts() {
         make_clean)
           clean_build
           clean_build_out
-          clean_third_party
           exit 0
           ;;
         *)
@@ -1052,14 +1051,6 @@ clean_build() {
 clean_build_out() {
   if [ -d "${BUILD_OUT_PATH}" ]; then
     rm -rf ${BUILD_OUT_PATH}/*
-  fi
-}
-
-clean_third_party() {
-  THIRD_PARTY_PATH=${BASE_PATH}/third_party
-  if [ -d "${THIRD_PARTY_PATH}" ]; then
-    rm -rf ${THIRD_PARTY_PATH}/abseil-cpp
-    rm -rf ${THIRD_PARTY_PATH}/ascend_protobuf
   fi
 }
 
