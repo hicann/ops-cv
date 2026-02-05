@@ -15,7 +15,7 @@
 #ifndef GIRD_SAMPLER_2D
 #define GIRD_SAMPLER_2D
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {

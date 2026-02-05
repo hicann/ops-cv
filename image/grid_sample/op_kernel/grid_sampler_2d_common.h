@@ -15,7 +15,7 @@
 #ifndef GRID_SAMPLER_2D_COMMON
 #define GRID_SAMPLER_2D_COMMON
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "grid_sample_common.h"
 

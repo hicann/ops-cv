@@ -15,7 +15,7 @@
 #ifndef GRID_SAMPLE_COMMON
 #define GRID_SAMPLE_COMMON
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {

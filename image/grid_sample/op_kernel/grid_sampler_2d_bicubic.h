@@ -15,7 +15,8 @@
 #ifndef GIRD_SAMPLER_BICUBIC_2D
 #define GIRD_SAMPLER_BICUBIC_2D
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
+#include "math/floor.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {

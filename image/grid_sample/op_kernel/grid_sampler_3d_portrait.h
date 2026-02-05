@@ -15,7 +15,7 @@
 #ifndef GIRD_SAMPLER_3D_PORTRAIT
 #define GIRD_SAMPLER_3D_PORTRAIT
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {

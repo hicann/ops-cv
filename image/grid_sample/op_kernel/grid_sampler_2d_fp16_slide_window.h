@@ -15,7 +15,8 @@
 #ifndef GRID_SAMPLER_2D_FP16_SLIDE_WINDOW
 #define GRID_SAMPLER_2D_FP16_SLIDE_WINDOW
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
+#include "pad/broadcast.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {

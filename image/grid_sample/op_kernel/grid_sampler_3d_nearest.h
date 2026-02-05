@@ -15,7 +15,7 @@
 #ifndef GIRD_SAMPLER_3D_NEAREST
 #define GIRD_SAMPLER_3D_NEAREST
 
-#include "kernel_operator.h"
+#include "kernel_vec_intf.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "grid_sampler_3d_common.h"
 
