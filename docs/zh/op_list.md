@@ -36,16 +36,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/deformable_offsets/README.md">deformable_offsets</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>用于计算变形卷积（Deformable Convolution）输出的函数。通过引入偏移参数 offsets ，使得卷积核在输入特征图上的位置可以动态调整，从而适配不规则的集合变化。  </td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/deformable_offsets_grad/README.md">deformable_offsets_grad</a></td>
     <td>&check;</td>
     <td>&check;</td>
