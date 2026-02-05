@@ -67,7 +67,7 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
     if (TILING_KEY_IS(1001220)) {
         // 2D Bilinear fp32 slide window
         GridSample::GridSampler2DSlideWindow<float> op;
-        op.Init(x, grid, y, userWS, &tilingData);
+        op.Init(x, grid, y, userWS, &tilingData, pipe);
         op.Process();
     }
 #endif
