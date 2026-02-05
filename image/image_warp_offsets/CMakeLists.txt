@@ -11,17 +11,10 @@
 set(ASCEND_OP_NAME "" CACHE STRING "Ascend op names to compile")
 set(OP_TYPE "image_warp_offsets")
 
-if(ASCEND_OP_NAME)
-  set(_ASCEND_OP_NAME_TMP "${ASCEND_OP_NAME}")
-  separate_arguments(_ASCEND_OP_NAME_TMP)
+skip_aicpu_kernel("${OP_TYPE}" "${ASCEND_OP_NAME}")
 
-  list(FIND _ASCEND_OP_NAME_TMP "${OP_TYPE}" _index)
-  if(_index EQUAL -1)
-    message(STATUS "[${OP_TYPE}] skipped, not in ASCEND_OP_NAME list: ${ASCEND_OP_NAME}")
-    return()
-  else()
-    message(STATUS "[${OP_TYPE}] selected, in ASCEND_OP_NAME list: ${ASCEND_OP_NAME}")
-  endif()
+if(SKIP_FLAG)
+  return()
 endif()
 
 file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)

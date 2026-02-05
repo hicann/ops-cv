@@ -127,6 +127,7 @@ aicpu@ops-cv:
         - ops/ops-cv/common/stub/CMakeLists.txt
         - ops/ops-cv/common/stub/inc/framework
         - ops/ops-cv/common/src/common/allocator_utils.cpp
+        - ops/ops-cv/CMakeLists.txt
         - ops/ops-cv/common/CMakeLists.txt
       opensource_style: null
       kernel_style: null
