@@ -112,7 +112,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
     </tr></thead>
   <tbody>
     <tr>
-      <td>input</td>
+      <td>input（aclTensor*）</td>
       <td>输入</td>
       <td>表示进行采样的输入张量，对应公式中的`input`。</td>
       <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
@@ -122,7 +122,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>√</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>指定输出空间大小，表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
       <td>size为2，且各元素均大于零。</td>
@@ -132,37 +132,37 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>-</td>
     </tr>
     <tr>
-      <td>alignCorners</td>
+      <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
       <td>如果设置为`true`，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。如果设置为`false`，则输入和输出张量通过其角像素的角点对齐，并使用边缘值对边界外的值进行填充。</td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesH</td>
+      <td>scalesH（double）</td>
       <td>输入</td>
       <td>指定空间大小的height维度乘数，对应公式中的`scalesH`。</td>
       <td>不能传入负值。</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesW</td>
+      <td>scalesW（double）</td>
       <td>输入</td>
       <td>指定空间大小的width维度乘数，对应公式中的`scalesW`。</td>
       <td>不能传入负值。</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`I`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式和shape与入参`input`保持一致。</li></ul></td>
@@ -172,7 +172,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -182,7 +182,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>

@@ -144,7 +144,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
     </tr></thead>
   <tbody>
     <tr>
-      <td>self</td>
+      <td>self（aclTensor*）</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCDHW格式处理。</li><li>shape的C轴、D轴、H轴、W轴的取值大于0。</li></ul></td>
@@ -154,7 +154,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>√</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示出参`out`在D、H和W维度上的空间大小，对应公式中的`outputSize`。</td>
       <td>size为3，且各元素均大于零。</td>
@@ -164,47 +164,47 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>-</td>
     </tr>
     <tr>
-      <td>alignCorners</td>
+      <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示是否对齐角像素点，对应公式中的`alignCorners`。</td>
       <td>如果为true，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesD</td>
+      <td>scalesD（double）</td>
       <td>输入</td>
       <td>表示输出`out`的depth维度乘数，对应公式中的`scales_d`。</td>
       <td>取值小于等于50。</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesH</td>
+      <td>scalesH（double）</td>
       <td>输入</td>
       <td>表示输出`out`的height维度乘数，对应公式中的`scales_h`。</td>
       <td>取值小于等于50。</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesW</td>
+      <td>scalesW（double）</td>
       <td>输入</td>
       <td>表示输出`out`的width维度乘数，对应公式中的`scales_w`。</td>
       <td>取值小于等于50。</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
@@ -214,7 +214,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -224,7 +224,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>

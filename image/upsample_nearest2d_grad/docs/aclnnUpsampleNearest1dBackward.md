@@ -75,7 +75,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
     </tr></thead>
   <tbody>
     <tr>
-      <td>gradOut</td>
+      <td>gradOut（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor,对应公式中的'gradOut'。</td>
       <td><ul><li>L轴不支持空Tensor。</li>
@@ -87,7 +87,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示输入`gradOut`在L维度上的空间大小。</td>
       <td>size为1，且取值大于0。</td>
@@ -97,7 +97,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>inputSize</td>
+      <td>inputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示输出`out`分别在N、C、L维度上的空间大小。</td>
       <td>size为3，且第三个元素的取值大于零。</td>
@@ -107,17 +107,17 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>scales</td>
+      <td>scales（double）</td>
       <td>输入</td>
       <td>表示输出`out`的L维度乘数，对应公式中的'scales'。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的'out'。</td>
       <td><ul><li>L轴不支持空Tensor。</li><li>数据类型与`gradOut`保持一致。</li><li>输入必须是3维。</li></ul></td>
@@ -127,7 +127,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -137,7 +137,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>

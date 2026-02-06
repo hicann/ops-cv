@@ -112,7 +112,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     </tr></thead>
   <tbody>
     <tr>
-      <td>x</td>
+      <td>x（aclTensor*）</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`x`。</td>
       <td><ul><li>支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
@@ -122,7 +122,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>√</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示指定`out`在H和W维度上的空间大小。对应公式中的`outputSize`。</td>
       <td>size为2，且各元素均大于0。</td>
@@ -132,37 +132,37 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>-</td>
     </tr>
     <tr>
-      <td>alignCorners</td>
+      <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
       <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesH</td>
+      <td>scalesH（double）</td>
       <td>输入</td>
       <td>指定空间大小的height维度乘数，对应公式中的`scalesH`。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesW</td>
+      <td>scalesW（double）</td>
       <td>输入</td>
       <td>指定空间大小的width维度乘数，对应公式中的`scalesW`。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的`out`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`x`保持一致。</li></ul></td>
@@ -172,7 +172,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -182,7 +182,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>

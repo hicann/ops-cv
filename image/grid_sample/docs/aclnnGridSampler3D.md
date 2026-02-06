@@ -88,7 +88,7 @@ aclnnStatus aclnnGridSampler3D(
     </tr></thead>
   <tbody>
     <tr>
-      <td>input</td>
+      <td>input（aclTensor*）</td>
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
       <td><ul><li>支持空Tensor。</li><li>当数据格式为ND时，会按照NCDHW格式进行处理；仅当满足条件（数据类型为FLOAT32 && interpolationMode为0 && C轴为4的倍数）时支持NDHWC。</li></ul></td>
@@ -98,7 +98,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>√</td>
     </tr>
     <tr>
-      <td>grid</td>
+      <td>grid（aclTensor*）</td>
       <td>输入</td>
       <td>采样的网络，对应公式中描述的`grid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>D</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 3)，且N与入参`input`的shape中的N一致。</li></ul></td>
@@ -108,37 +108,37 @@ aclnnStatus aclnnGridSampler3D(
       <td>√</td>
     </tr>
     <tr>
-      <td>interpolationMode</td>
+      <td>interpolationMode（int64_t）</td>
       <td>输入</td>
       <td>表示插值模式，对应公式描述中的`interpolationMode`。</td>
      <td>支持0：bilinear（双线性插值）、1：nearest（最邻近插值）两种模式。</td>
-      <td>INT64</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>paddingMode</td>
+      <td>paddingMode（int64_t）</td>
       <td>输入</td>
       <td>表示grid范围外填充模式。即当grid有超过[-1, 1]范围的值，则按照paddingMode定义的方式处理相应的输出。对应公式描述中的`paddingMode`。</td>
       <td>支持0：zeros、1：border、2：reflection三种模式。</td>
-      <td>INT64</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>alignCorners</td>
+      <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式。</td>
       <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</li></ul></td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据格式和数据类型与input保持一致。</li><li>shape的N轴、C轴与input保持一致，shape的D轴、H轴、W轴与grid保持一致。</li></ul></td>
@@ -148,7 +148,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -158,7 +158,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>

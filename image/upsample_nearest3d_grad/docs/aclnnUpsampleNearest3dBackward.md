@@ -74,7 +74,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
     </tr></thead>
   <tbody>
     <tr>
-      <td>gradOut</td>
+      <td>gradOut（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式中的`gradOut`。</td>
       <td>不支持空Tensor。</td>
@@ -84,7 +84,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示输入`gradOut`在D、H和W维度上的空间大小。</td>
       <td>size为3，且各元素均大于零。</td>
@@ -94,7 +94,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>inputSize</td>
+      <td>inputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示输出`gradInput`的空间大小。</td>
       <td><ul><li>size为5，且最后两个元素均大于零。</li><li>当输入`gradOut`的数据格式为NCDHW时，表示输出`gradInput`分别在N、C、D、H和W维度上的空间大小；当输入`gradOut`的数据格式为NDHWC时，表示输出`gradInput`分别在N、D、H、W和C维度上的空间大小。</li></ul></td>
@@ -104,37 +104,37 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>scalesD</td>
+      <td>scalesD（double）</td>
       <td>输入</td>
       <td>表示输出`gradInput`的depth维度乘数，对应公式中的`scalesD`。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>  
     <tr>
-      <td>scalesH</td>
+      <td>scalesH（double）</td>
       <td>输入</td>
       <td>表示输出`gradInput`的height维度乘数，对应公式中的`scalesH`。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>  
     <tr>
-      <td>scalesW</td>
+      <td>scalesW（double）</td>
       <td>输入</td>
       <td>表示输出`gradInput`的width维度乘数，对应公式中的`scalesW`。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>gradInput</td>
+      <td>gradInput（aclTensor*）</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式与入参`gradOut`保持一致。</li></ul></td>
@@ -144,7 +144,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回用户需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -154,7 +154,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>

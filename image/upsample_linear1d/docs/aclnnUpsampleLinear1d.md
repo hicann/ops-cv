@@ -105,7 +105,7 @@ aclnnStatus aclnnUpsampleLinear1d(
     </tr></thead>
   <tbody>
     <tr>
-      <td>self</td>
+      <td>self（aclTensor*）</td>
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的`self`。</td>
       <td><ul><li>不支持空Tensor。</li>
@@ -116,7 +116,7 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>√</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示输出out在L维度上的空间大小，对应公式中的`outputSize`。</td>
       <td>size为1，且取值大于0。</td>
@@ -126,28 +126,28 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>-</td>
     </tr>
     <tr>
-      <td>alignCorners</td>
+      <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>bool类型参数，决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
       <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。</li>
       <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
-      <td>BOOL</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scales</td>
+      <td>scales（double）</td>
       <td>输入</td>
       <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
       <td>-</td>
-      <td>DOUBLE</td>
+      <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>表示采样后的输出张量。</td>
       <td><ul><li>不支持空Tensor。</li><li>输出维度必须是3维。数据类型、数据格式与入参`self`保持一致。</li></ul></td>
@@ -157,7 +157,7 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>√</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -167,7 +167,7 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>
