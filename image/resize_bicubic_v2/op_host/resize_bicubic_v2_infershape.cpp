@@ -49,18 +49,19 @@ ge::graphStatus ResizeBicubicV2InferShape(gert::InferShapeContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, sizeTensor);
     auto sizeDtype = sizeTensor->GetDataType();
     OP_CHECK_IF(sizeDtype != ge::DT_INT32, OP_LOGE(nodeName, "size dtype only support int32"), return GRAPH_FAILED);
-    auto sizeNum = sizeTensor->GetShapeSize();
-    OP_CHECK_IF(
-        sizeNum != IN_SIZE_NUM, OP_LOGE(nodeName, "the element number of size should be 2"), return GRAPH_FAILED);
-
     int32_t outH = ge::UNKNOWN_DIM;
     int32_t outW = ge::UNKNOWN_DIM;
     if (Ops::Cv::IsConstTensor(sizeTensor)) {
         const int32_t* sizeValue = sizeTensor->GetData<int32_t>();
+        auto sizeNum = sizeTensor->GetShapeSize();
+        OP_CHECK_IF(
+            sizeNum != IN_SIZE_NUM, OP_LOGE(nodeName, "the element number of size should be 2, but is %ld", sizeNum),
+                return GRAPH_FAILED);
         outH = sizeValue[0];
         outW = sizeValue[1];
         OP_CHECK_IF(
-            (outH <= 0) || (outW <= 0), OP_LOGE(nodeName, "output size should be greater than 0"), return GRAPH_FAILED);
+            (outH <= 0) || (outW <= 0), OP_LOGE(nodeName, "output size should be greater than 0"),
+                return GRAPH_FAILED);
     }
 
     if (Ops::Base::IsUnknownRank(*xShape)) {
