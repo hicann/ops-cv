@@ -9,6 +9,7 @@
 # ----------------------------------------------------------------------------------------------------------
 include(ExternalProject)
 set(PROTOBUF_VERSION_PKG protobuf-25.1.tar.gz)
+set(PROTOBUF_ALL_VERSION_NAME protobuf-all-25.1.tar.gz)
 set(ASCEND_PROTOBUF_DIR ${CANN_3RD_LIB_PATH}/ascend_protobuf)
 
 include(FindPackageHandleStandardArgs)
@@ -19,6 +20,7 @@ find_package_handle_standard_args(ascend_protobuf_build_cv
     ASCEND_PROTOBUF_SHARED_INCLUDE
 )
 
+# check whether ascend_protobuf exists
 if(ascend_protobuf_build_cv_FOUND AND NOT FORCE_REBUILD_CANN_3RD)
     message(STATUS "[ThirdPartyLib][ascend protobuf] ascend_protobuf_shared found, skip compile.")
     cmake_print_variables(ASCEND_PROTOBUF_SHARED_INCLUDE)
@@ -29,18 +31,27 @@ if(ascend_protobuf_build_cv_FOUND AND NOT FORCE_REBUILD_CANN_3RD)
     add_library(ascend_protobuf_build_cv INTERFACE)
 else()
     message(STATUS "[ThirdPartyLib][ascend protobuf] ascend protobuf shared not found, finding binary file.")
-    if(EXISTS "${CANN_3RD_LIB_PATH}/protobuf/protobuf-all-25.1.tar.gz")
-        set(REQ_URL "file://${CANN_3RD_LIB_PATH}/protobuf/protobuf-all-25.1.tar.gz")
-        message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
-    elseif(EXISTS "${CANN_3RD_LIB_PATH}/protobuf/protobuf-25.1.tar.gz")
-        set(REQ_URL "file://${CANN_3RD_LIB_PATH}/protobuf/protobuf-25.1.tar.gz")
-        message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
-    elseif(EXISTS "${CANN_3RD_LIB_PATH}/pkg/${PROTOBUF_VERSION_PKG}")
+    
+    # 检查用户是否提供了 protobuf-25.1.tar.gz 并复制到 pkg 目录
+    if(EXISTS "${CANN_3RD_LIB_PATH}/${PROTOBUF_VERSION_PKG}")
+        file(MAKE_DIRECTORY "${CANN_3RD_LIB_PATH}/pkg")
+        file(RENAME "${CANN_3RD_LIB_PATH}/${PROTOBUF_VERSION_PKG}"  "${CANN_3RD_LIB_PATH}/pkg/${PROTOBUF_VERSION_PKG}")
+        message(STATUS "[ThirdPartyLib][ascend protobuf] moving ${PROTOBUF_VERSION_PKG} from ${CANN_3RD_LIB_PATH} to ${PROTOBUF_VERSION_PKG}/pkg/")
+    endif()
+    
+    # 按优先级顺序检查文件是否存在
+    if(EXISTS "${CANN_3RD_LIB_PATH}/pkg/${PROTOBUF_VERSION_PKG}")
         set(REQ_URL "file://${CANN_3RD_LIB_PATH}/pkg/${PROTOBUF_VERSION_PKG}")
         message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
+    elseif(EXISTS "${CANN_3RD_LIB_PATH}/protobuf/${PROTOBUF_ALL_VERSION_NAME}")
+        set(REQ_URL "file://${CANN_3RD_LIB_PATH}/protobuf/${PROTOBUF_ALL_VERSION_NAME}")
+        message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
+    elseif(EXISTS "${CANN_3RD_LIB_PATH}/protobuf/${PROTOBUF_VERSION_PKG}")
+        set(REQ_URL "file://${CANN_3RD_LIB_PATH}/protobuf/${PROTOBUF_VERSION_PKG}")
+        message(STATUS "[ThirdPartyLib][ascend protobuf] found in ${REQ_URL}.")
     else()
-        set(REQ_URL "https://gitcode.com/cann-src-third-party/protobuf/releases/download/v25.1/protobuf-25.1.tar.gz")
-        message(STATUS "[ThirdPartyLib][ascend protobuf] ${REQ_URL} not found, need download.")
+        set(REQ_URL "https://gitcode.com/cann-src-third-party/protobuf/releases/download/v25.1/${PROTOBUF_VERSION_PKG}")
+        message(STATUS "[ThirdPartyLib][ascend protobuf] not found, need download.")
     endif()
     
     set(protobuf_CXXFLAGS "-Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fstack-protector-all -D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2 -Dgoogle=ascend_private")

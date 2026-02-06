@@ -20,6 +20,8 @@ unset(GMOCK_MAIN_STATIC_LIBRARY CACHE)
 set(GTEST_DOWNLOAD_PATH ${CANN_3RD_LIB_PATH}/pkg)
 set(GTEST_INSTALL_PATH ${CANN_3RD_LIB_PATH}/gtest)
 message("GTEST_INSTALL_PATH=${GTEST_INSTALL_PATH}")
+set(GTEST_VERSION_PKG googletest-1.14.0.tar.gz)
+
 find_path(GTEST_INCLUDE
         NAMES gtest/gtest.h
         NO_CMAKE_SYSTEM_PATH
@@ -61,18 +63,34 @@ find_package_handle_standard_args(gtest
         GMOCK_STATIC_LIBRARY
         GMOCK_MAIN_STATIC_LIBRARY
         )
-message("gtest found:${gtest_FOUND}")
+message("[ThirdPartyLib][gtest] gtest found:${gtest_FOUND}")
 
 if(gtest_FOUND AND NOT FORCE_REBUILD_CANN_3RD)
-    message("gtest found in ${GTEST_INSTALL_PATH}, and not force rebuild cann third_party")
+    message("[ThirdPartyLib][gtest] gtest found in ${GTEST_INSTALL_PATH}, and not force rebuild cann third_party")
 else()
-    set(REQ_URL "https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz")
+    set(REQ_URL "https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/${GTEST_VERSION_PKG}")
+    set(GTEST_ARCHIVE ${GTEST_DOWNLOAD_PATH}/${GTEST_VERSION_PKG})
+    file(MAKE_DIRECTORY ${GTEST_DOWNLOAD_PATH})
+
+    # Search in CANN_3RD_LIB_PATH and move to pkg if found
+    if(EXISTS ${CANN_3RD_LIB_PATH}/${GTEST_VERSION_PKG} AND NOT EXISTS ${GTEST_ARCHIVE})
+        message("[ThirdPartyLib][gtest] Found googletest archive in ${CANN_3RD_LIB_PATH}, moving to pkg")
+        file(RENAME ${CANN_3RD_LIB_PATH}/${GTEST_VERSION_PKG} ${GTEST_ARCHIVE})
+    endif()
+
+    if(EXISTS ${GTEST_ARCHIVE})
+        message("[ThirdPartyLib][gtest] gtest not found in ${GTEST_INSTALL_PATH}, found archive at ${GTEST_ARCHIVE}")
+        set(GTEST_URL "file://${GTEST_ARCHIVE}")
+    else()
+        message("[ThirdPartyLib][gtest] gtest not found in ${GTEST_INSTALL_PATH}, begin to download from ${REQ_URL}")
+        set(GTEST_URL ${REQ_URL})
+    endif()
     set (gtest_CXXFLAGS "-D_GLIBCXX_USE_CXX11_ABI=0 -O2 -D_FORTIFY_SOURCE=2 -fPIC -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack")
     set (gtest_CFLAGS   "-D_GLIBCXX_USE_CXX11_ABI=0 -O2 -D_FORTIFY_SOURCE=2 -fPIC -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack")
 
     include(ExternalProject)
     ExternalProject_Add(third_party_gtest
-            URL ${REQ_URL}
+            URL ${GTEST_URL}
             TLS_VERIFY OFF
             DOWNLOAD_DIR ${GTEST_DOWNLOAD_PATH}
             CONFIGURE_COMMAND ${CMAKE_COMMAND}

@@ -12,16 +12,34 @@ if(POLICY CMP0135)
 endif()
 
 set(EIGEN_DOWNLOAD_PATH ${CANN_3RD_LIB_PATH}/pkg)
+set(EIGEN_VERSION_PKG eigen-3.4.0.tar.gz)
 
 if (EXISTS "${CANN_3RD_LIB_PATH}/eigen/CMakeLists.txt" AND NOT FORCE_REBUILD_CANN_3RD)
-  message("eigen found, and not force rebuild cann third_party")
+  message("[ThirdPartyLib][eigen] eigen found, and not force rebuild cann third_party")
   set(SOURCE_DIR "${CANN_3RD_LIB_PATH}/eigen")
 else()
-  set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/3.4.0/eigen-3.4.0.tar.gz")
+  set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/3.4.0/${EIGEN_VERSION_PKG}")
+  set(EIGEN_ARCHIVE ${CANN_3RD_LIB_PATH}/pkg/${EIGEN_VERSION_PKG})
+  file(MAKE_DIRECTORY ${EIGEN_DOWNLOAD_PATH})
+
+  # Search in CANN_3RD_LIB_PATH and move to pkg if found
+  if(EXISTS ${CANN_3RD_LIB_PATH}/${EIGEN_VERSION_PKG} AND NOT EXISTS ${EIGEN_ARCHIVE})
+      message(STATUS "[ThirdPartyLib][eigen] Found egien archive in ${CANN_3RD_LIB_PATH}, moving to pkg")
+      file(RENAME ${CANN_3RD_LIB_PATH}/${EIGEN_VERSION_PKG} ${EIGEN_ARCHIVE})
+  endif()
+
+  if(EXISTS ${EIGEN_ARCHIVE})
+      message(STATUS "[ThirdPartyLib][eigen] Found egien archive at ${EIGEN_ARCHIVE}")
+      set(EIGEN_URL "file://${EIGEN_ARCHIVE}")
+  else()
+      set(EIGEN_URL ${REQ_URL})
+      message(STATUS "[ThirdPartyLib][eigen] not found eigen ,need to download ${MAKESELF_NAME} from ${REQ_URL}")
+  endif()
+
   include(ExternalProject)
   ExternalProject_Add(external_eigen_cv
     TLS_VERIFY        OFF
-    URL               ${REQ_URL}
+    URL               ${EIGEN_URL}
     DOWNLOAD_DIR      ${EIGEN_DOWNLOAD_PATH}
     SOURCE_DIR        ${CANN_3RD_LIB_PATH}/eigen
     PREFIX            third_party

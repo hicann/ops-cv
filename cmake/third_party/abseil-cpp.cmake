@@ -29,18 +29,25 @@ find_package_handle_standard_args(abseil-cpp
 
 set(ABSEIL_SOURCE_DIR ${CANN_3RD_LIB_PATH}/abseil-cpp)
 if(abseil-cpp_FOUND)
-  message(STATUS "Found abseil-cpp in ${CANN_3RD_LIB_PATH}/abseil-cpp")
+  message(STATUS "[ThirdPartyLib][abseil-cpp] Found abseil-cpp in ${CANN_3RD_LIB_PATH}/abseil-cpp")
 else()
+  # 检查用户是否提供了 abseil-cpp 并复制到 pkg 目录
+  if(EXISTS "${CANN_3RD_LIB_PATH}/${ABSEIL_VERSION_PKG}")
+      file(MAKE_DIRECTORY "${CANN_3RD_LIB_PATH}/pkg")
+      file(RENAME "${CANN_3RD_LIB_PATH}/${ABSEIL_VERSION_PKG}" "${CANN_3RD_LIB_PATH}/pkg/${ABSEIL_VERSION_PKG}")
+      message(STATUS "[ThirdPartyLib][abseil-cpp] Found abseil-cpp in ${CANN_3RD_LIB_PATH} and moving to ${ABSEIL_VERSION_PKG}/pkg/")
+  endif()
+
   # 初始化可选参数列表
-  if(EXISTS "${CANN_3RD_LIB_PATH}/abseil-cpp/${ABSEIL_VERSION_PKG}")
+  if(EXISTS "${CANN_3RD_LIB_PATH}/pkg/${ABSEIL_VERSION_PKG}")
+        set(REQ_URL "file://${CANN_3RD_LIB_PATH}/pkg/${ABSEIL_VERSION_PKG}")
+        message(STATUS "[ThirdPartyLib][abseil-cpp] found in ${CANN_3RD_LIB_PATH}/pkg/${ABSEIL_VERSION_PKG}.")
+  elseif(EXISTS "${CANN_3RD_LIB_PATH}/abseil-cpp/${ABSEIL_VERSION_PKG}")
       set(REQ_URL "file://${CANN_3RD_LIB_PATH}/abseil-cpp/${ABSEIL_VERSION_PKG}")
-      message(STATUS "[ThirdPartyLib][abseil-cpp] found in ${REQ_URL}.")
-  elseif(EXISTS "${CANN_3RD_LIB_PATH}/pkg/${ABSEIL_VERSION_PKG}")
-      set(REQ_URL "file://${CANN_3RD_LIB_PATH}/pkg/${ABSEIL_VERSION_PKG}")
-      message(STATUS "[ThirdPartyLib][abseil-cpp] found in ${REQ_URL}.")
+      message(STATUS "[ThirdPartyLib][abseil-cpp] found in ${CANN_3RD_LIB_PATH}/abseil-cpp/${ABSEIL_VERSION_PKG}.")
   else()
     set(REQ_URL "https://gitcode.com/cann-src-third-party/abseil-cpp/releases/download/20230802.1/abseil-cpp-20230802.1.tar.gz")
-    message(STATUS "[ThirdPartyLib][abseil-cpp] ${REQ_URL} not found, need download.")
+    message(STATUS "[ThirdPartyLib][abseil-cpp] not found, need download.")
   endif()
 
   ExternalProject_Add(abseil_build_cv

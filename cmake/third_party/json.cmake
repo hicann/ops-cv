@@ -35,29 +35,45 @@ find_package_handle_standard_args(json
         )
 
 if(json_FOUND AND NOT FORCE_REBUILD_CANN_3RD)
-    message("json found in ${JSON_INSTALL_PATH}, and not force rebuild cann third_party")
+    message("[ThirdPartyLib][json] json found in ${JSON_INSTALL_PATH}, and not force rebuild cann third_party")
     set(JSON_INCLUDE_DIR ${JSON_INSTALL_PATH}/include)
     add_library(json INTERFACE IMPORTED)
 else()
     set(REQ_URL "https://gitcode.com/cann-src-third-party/json/releases/download/v3.11.3/include.zip")
+    set(JSON_ARCHIVE ${JSON_DOWNLOAD_PATH}/include.zip)
+    file(MAKE_DIRECTORY ${JSON_DOWNLOAD_PATH})
 
-    include(ExternalProject)
-    ExternalProject_Add(third_party_json
-            URL ${REQ_URL}
+    # Search in CANN_3RD_LIB_PATH and move to pkg if found
+    if(EXISTS ${CANN_3RD_LIB_PATH}/include.zip AND NOT EXISTS ${JSON_ARCHIVE})
+        message("[ThirdPartyLib][json] Found json archive in ${CANN_3RD_LIB_PATH}, moving to pkg")
+        file(RENAME ${CANN_3RD_LIB_PATH}/include.zip ${JSON_ARCHIVE})
+    endif()
+
+    if(EXISTS ${JSON_ARCHIVE})
+        message("[ThirdPartyLib][json] json not found in ${JSON_INSTALL_PATH}, found archive at ${JSON_ARCHIVE}")
+    else()
+        message("[ThirdPartyLib][json] json not found in ${JSON_INSTALL_PATH}, begin load from ${REQ_URL}")
+        file(DOWNLOAD
+            ${REQ_URL}
+            ${JSON_ARCHIVE}
+            SHOW_PROGRESS
             TLS_VERIFY OFF
-            DOWNLOAD_DIR ${JSON_DOWNLOAD_PATH}
-            DOWNLOAD_NO_EXTRACT TRUE
-            SOURCE_DIR ${JSON_INSTALL_PATH}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND ""
-            INSTALL_COMMAND
-                ${CMAKE_COMMAND} -E make_directory ${JSON_INSTALL_PATH} &&
-                ${CMAKE_COMMAND} -E chdir ${JSON_INSTALL_PATH} ${CMAKE_COMMAND} -E tar xf "${JSON_DOWNLOAD_PATH}/include.zip" --format=zip
-            UPDATE_COMMAND ""
+        )
+    endif()
+
+    file(MAKE_DIRECTORY ${JSON_INSTALL_PATH})
+    execute_process(
+        COMMAND unzip -o "${JSON_ARCHIVE}" -d ${JSON_INSTALL_PATH}
+        RESULT_VARIABLE UNZIP_RESULT
+        ERROR_VARIABLE UNZIP_ERROR
     )
 
-    ExternalProject_Get_Property(third_party_json SOURCE_DIR)
-    set(JSON_INCLUDE_DIR ${SOURCE_DIR}/include)
+    if(NOT UNZIP_RESULT EQUAL 0)
+        message(FATAL_ERROR "[ThirdPartyLib][json] Failed to unzip ${JSON_ARCHIVE}")
+    endif()
+    
+    set(JSON_INCLUDE_DIR ${JSON_INSTALL_PATH}/include)
     add_library(json INTERFACE)
-    add_dependencies(json third_party_json)
+    set_target_properties(json PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${JSON_INCLUDE_DIR}")
 endif()

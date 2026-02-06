@@ -10,6 +10,7 @@
 
 set(MAKESELF_NAME "makeself")
 set(MAKESELF_PATH ${CANN_3RD_LIB_PATH}/makeself)
+set(MAKESELF_VERSION_PKG makeself-release-2.5.0-patch1.tar.gz)
 
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -17,8 +18,23 @@ endif()
 
 # 默认配置的makeself还是不存在则下载
 if (NOT EXISTS "${MAKESELF_PATH}/makeself-header.sh" OR NOT EXISTS "${MAKESELF_PATH}/makeself.sh")
-    set(MAKESELF_URL "https://gitcode.com/cann-src-third-party/makeself/releases/download/release-2.5.0-patch1.0/makeself-release-2.5.0-patch1.tar.gz")
-    message(STATUS "Downloading ${MAKESELF_NAME} from ${MAKESELF_URL}")
+    set(MAKESELF_DOWNLOAD_URL "https://gitcode.com/cann-src-third-party/makeself/releases/download/release-2.5.0-patch1.0/${MAKESELF_VERSION_PKG}")
+    set(MAKESELF_ARCHIVE ${CANN_3RD_LIB_PATH}/pkg/${MAKESELF_VERSION_PKG})
+    file(MAKE_DIRECTORY ${CANN_3RD_LIB_PATH}/pkg)
+
+    # Search in CANN_3RD_LIB_PATH and move to pkg if found
+    if(EXISTS ${CANN_3RD_LIB_PATH}/${MAKESELF_VERSION_PKG} AND NOT EXISTS ${MAKESELF_ARCHIVE})
+        message(STATUS "[ThirdPartyLib][makeself] Found makeself archive in ${CANN_3RD_LIB_PATH}, moving to pkg")
+        file(RENAME ${CANN_3RD_LIB_PATH}/${MAKESELF_VERSION_PKG} ${MAKESELF_ARCHIVE})
+    endif()
+
+    if(EXISTS ${MAKESELF_ARCHIVE})
+        message(STATUS "[ThirdPartyLib][makeself] Found makeself archive at ${MAKESELF_ARCHIVE}")
+        set(MAKESELF_URL "file://${MAKESELF_ARCHIVE}")
+    else()
+        message(STATUS "[ThirdPartyLib][makeself] Downloading ${MAKESELF_NAME} from ${MAKESELF_DOWNLOAD_URL}")
+        set(MAKESELF_URL ${MAKESELF_DOWNLOAD_URL})
+    endif()
 
     include(FetchContent)
     FetchContent_Declare(
@@ -37,4 +53,12 @@ if (NOT EXISTS "${MAKESELF_PATH}/makeself-header.sh" OR NOT EXISTS "${MAKESELF_P
         RESULT_VARIABLE CHMOD_RESULT
         ERROR_VARIABLE CHMOD_ERROR
     )
+else()
+   execute_process(
+        COMMAND cp -fr ${MAKESELF_PATH} ${CMAKE_BINARY_DIR}
+        COMMAND chmod 700 "${CMAKE_BINARY_DIR}/makeself/makeself.sh"
+        COMMAND chmod 700 "${CMAKE_BINARY_DIR}/makeself/makeself-header.sh"
+        RESULT_VARIABLE CHMOD_RESULT
+        ERROR_VARIABLE CHMOD_ERROR
+        ) 
 endif()
