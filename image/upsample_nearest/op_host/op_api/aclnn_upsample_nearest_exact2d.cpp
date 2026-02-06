@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "upsample_nearest_exact2d.h"
 #include "aclnn_upsample_nearest_exact2d.h"
-#include "image/resize_nearest_neighbor_v2/op_host/op_api/resize_nearest_neighbor_v2.h"
+#include "image/resize_nearest_neighbor_v2/op_api/resize_nearest_neighbor_v2.h"
 #include "common/aclnn_check.h"
 
 using namespace op;

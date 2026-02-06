@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -23,12 +23,9 @@ namespace ResizeNearestNeighborV2 {
 using namespace AscendC;
 
 template <typename T>
-class TILING_KEY_DATA_COPY_NHWC_JH : public ResizeNearestNeighborV2Base {
+class TILING_KEY_DATA_COPY_NHWC_JH : public ResizeNearestNeighborV2Base<T> {
 public:
     __aicore__ inline TILING_KEY_DATA_COPY_NHWC_JH(){};
-
-    __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, const ResizeNearestNeighborV2TilingData *tilingData);
     __aicore__ inline void Process();
     struct processParams {
         int64_t nLoopTimes = 0;
@@ -47,162 +44,76 @@ public:
     };
 
 private:
-    __aicore__ inline void ComputeJhCutHw0(
-        jhParams &loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset);
-    __aicore__ inline void ComputeJhCutHw2(
-        jhParams &loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset);
-    __aicore__ inline void ComputeSmallJhCut(processParams &params);
-    __aicore__ inline void ComputeHwLoop1(int64_t no, int64_t nLoopOnce, processParams &params);
-    __aicore__ inline void ComputeHwLoop2(int64_t no, int64_t nLoopOnce, processParams &params);
+    __aicore__ inline void ComputeJhCutHw(
+        jhParams& loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset, int64_t mode);
+    __aicore__ inline void ComputeSmallJhCut(processParams& params);
+    __aicore__ inline void ComputeHwLoop(int64_t no, int64_t nLoopOnce, processParams& params, int64_t mode);
     __aicore__ inline void ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail, int64_t hwTimes, int64_t hwTail);
-
-    constexpr static int64_t bufferNum = 2;
-
-private:
-    const ResizeNearestNeighborV2TilingData *tilingData_;
-    TPipe pipe;
-    int64_t blockIdx_;
-    TQueBind<QuePosition::VECIN, QuePosition::VECOUT, bufferNum> xQue_;
-    DataCopyExtParams copyParams;
-    DataCopyPadExtParams<T> padParams{false, 0, 0, 0};
-    GlobalTensor<T> inputGm_;
-    GlobalTensor<T> outputGm_;
 };
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, const ResizeNearestNeighborV2TilingData *tilingData)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(
+    jhParams& loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset, int64_t mode)
 {
-    blockIdx_ = GetBlockIdx();
-    tilingData_ = tilingData;
-    bias_ = tilingData_->halfPixelCenters == 1 ? 0.5f : 0.0f;
-    lenC = tilingData_->lenC;
-    hScale_ = tilingData_->scaleH;
-    wScale_ = tilingData_->scaleW;
-    srcHSize_ = tilingData->lenSrcH;
-    srcWSize_ = tilingData->lenSrcW;
-    inputGm_.SetGlobalBuffer((__gm__ T *)x);
-    outputGm_.SetGlobalBuffer((__gm__ T *)y);
-    pipe.InitBuffer(xQue_, bufferNum, tilingData_->ubSize);
-}
-
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw0(
-    jhParams &loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset)
-{
-    LocalTensor<T> inputUb = xQue_.AllocTensor<T>();
+    LocalTensor<T> inputUb = this->xQue_.template AllocTensor<T>();
     for (int64_t howo = 0; howo < loopParams.hwOnceLoop; howo++) {
-        int64_t ho = (hwBlockOffset + loopParams.hw * tilingData_->wcLoop + howo) / tilingData_->lenDesW;
-        int64_t wo = (hwBlockOffset + loopParams.hw * tilingData_->wcLoop + howo) % tilingData_->lenDesW;
-        int64_t h = this->Min(this->Floor(static_cast<float>((ho + bias_) * hScale_)), srcHSize_ - 1);
-        int64_t w = this->Min(this->Floor(static_cast<float>((wo + bias_) * wScale_)), srcWSize_ - 1);
-        int64_t inputOffset = srcNOffset + loopParams.no * tilingData_->lenCAlign + h * tilingData_->wcNum + w * lenC;
-        copyParams.blockCount = loopParams.nLoopOnce;
-        copyParams.blockLen = lenC * sizeof(T);
-        copyParams.srcStride = (tilingData_->hwcNum - lenC) * sizeof(T);
-        copyParams.dstStride = (loopParams.hwOnceLoop * lenC - lenC) * sizeof(T) / BIT32;
-        DataCopyPad(inputUb[howo * lenC], inputGm_[inputOffset], copyParams, padParams);
+        int64_t ho = (hwBlockOffset + loopParams.hw * this->tilingData_->wcLoop + howo) / this->tilingData_->lenDesW;
+        int64_t wo = (hwBlockOffset + loopParams.hw * this->tilingData_->wcLoop + howo) % this->tilingData_->lenDesW;
+        int64_t h, w;
+        if (mode == 0) {
+            h = this->Min(this->Floor(static_cast<float>((ho + this->bias_) * this->hScale_)), this->srcHSize_ - 1);
+            w = this->Min(this->Floor(static_cast<float>((wo + this->bias_) * this->wScale_)), this->srcWSize_ - 1);
+        } else {
+            h = this->Min(this->Round(static_cast<float>(ho * this->hScale_)), this->srcHSize_ - 1);
+            w = this->Min(this->Round(static_cast<float>(wo * this->wScale_)), this->srcWSize_ - 1);
+        }
+        int64_t inputOffset =
+            srcNOffset + loopParams.no * this->tilingData_->lenCAlign + h * this->tilingData_->wcNum + w * this->lenC_;
+        this->copyParams_.blockCount = loopParams.nLoopOnce;
+        this->copyParams_.blockLen = this->lenC_ * sizeof(T);
+        this->copyParams_.srcStride = (this->tilingData_->hwcNum - this->lenC_) * sizeof(T);
+        this->copyParams_.dstStride = (loopParams.hwOnceLoop * this->lenC_ - this->lenC_) * sizeof(T) / BIT32;
+        DataCopyPad(inputUb[howo * this->lenC_], this->inputGm_[inputOffset], this->copyParams_, this->padParams_);
     }
-    xQue_.EnQue(inputUb);
-    int64_t outputOffset = nBlockOffset + loopParams.no * tilingData_->alignCorners + hwBlockOffset * lenC +
-                           loopParams.hw * tilingData_->wcLoop * tilingData_->lenC;
-    LocalTensor<T> outputUb = xQue_.DeQue<T>();
-    copyParams.blockCount = loopParams.nLoopOnce;
-    copyParams.blockLen = loopParams.hwOnceLoop * lenC * sizeof(T);
-    copyParams.srcStride = 0;
-    copyParams.dstStride = (tilingData_->dstHwcNum - loopParams.hwOnceLoop * lenC) * sizeof(T);
-    DataCopyPad(outputGm_[outputOffset], outputUb, copyParams);
-    xQue_.FreeTensor(outputUb);
+    this->xQue_.EnQue(inputUb);
+    int64_t outputOffset = nBlockOffset + loopParams.no * this->tilingData_->alignCorners +
+                           hwBlockOffset * this->lenC_ + loopParams.hw * this->tilingData_->wcLoop * this->lenC_;
+    LocalTensor<T> outputUb = this->xQue_.template DeQue<T>();
+    this->copyParams_.blockCount = loopParams.nLoopOnce;
+    this->copyParams_.blockLen = loopParams.hwOnceLoop * this->lenC_ * sizeof(T);
+    this->copyParams_.srcStride = 0;
+    this->copyParams_.dstStride = (this->tilingData_->dstHwcNum - loopParams.hwOnceLoop * this->lenC_) * sizeof(T);
+    DataCopyPad(this->outputGm_[outputOffset], outputUb, this->copyParams_);
+    this->xQue_.FreeTensor(outputUb);
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw2(
-    jhParams &loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset)
-{
-    LocalTensor<T> inputUb = xQue_.AllocTensor<T>();
-    for (int64_t howo = 0; howo < loopParams.hwOnceLoop; howo++) {
-        int64_t ho = (hwBlockOffset + loopParams.hw * tilingData_->wcLoop + howo) / tilingData_->lenDesW;
-        int64_t wo = (hwBlockOffset + loopParams.hw * tilingData_->wcLoop + howo) % tilingData_->lenDesW;
-        int64_t h = this->Min(this->Round(static_cast<float>(ho * hScale_)), srcHSize_ - 1);
-        int64_t w = this->Min(this->Round(static_cast<float>(wo * wScale_)), srcWSize_ - 1);
-        int64_t inputOffset = srcNOffset + loopParams.no * tilingData_->lenCAlign + h * tilingData_->wcNum + w * lenC;
-        copyParams.blockCount = loopParams.nLoopOnce;
-        copyParams.blockLen = lenC * sizeof(T);
-        copyParams.srcStride = (tilingData_->hwcNum - lenC) * sizeof(T);
-        copyParams.dstStride = (loopParams.hwOnceLoop * lenC - lenC) * sizeof(T) / BIT32;
-        DataCopyPad(inputUb[howo * lenC], inputGm_[inputOffset], copyParams, padParams);
-    }
-    xQue_.EnQue(inputUb);
-    int64_t outputOffset = nBlockOffset + loopParams.no * tilingData_->alignCorners + hwBlockOffset * lenC +
-                           loopParams.hw * tilingData_->wcLoop * lenC;
-    LocalTensor<T> outputUb = xQue_.DeQue<T>();
-    copyParams.blockCount = loopParams.nLoopOnce;
-    copyParams.blockLen = loopParams.hwOnceLoop * lenC * sizeof(T);
-    copyParams.srcStride = 0;
-    copyParams.dstStride = (tilingData_->dstHwcNum - loopParams.hwOnceLoop * lenC) * sizeof(T);
-    DataCopyPad(outputGm_[outputOffset], outputUb, copyParams);
-    xQue_.FreeTensor(outputUb);
-}
-
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop1(
-    int64_t no, int64_t nLoopOnce, processParams &params)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop(
+    int64_t no, int64_t nLoopOnce, processParams& params, int64_t mode)
 {
     jhParams loopParams;
     for (int64_t hw = 0; hw < params.hwLoopTimes; hw++) {
         loopParams.no = no;
         loopParams.nLoopOnce = nLoopOnce;
         loopParams.hw = hw;
-        loopParams.hwOnceLoop = tilingData_->wcLoop;
-        ComputeJhCutHw0(loopParams, params.srcNOffset, params.nOffset, params.hwOffset);
+        loopParams.hwOnceLoop = this->tilingData_->wcLoop;
+        ComputeJhCutHw(loopParams, params.srcNOffset, params.nOffset, params.hwOffset, mode);
     }
     loopParams.no = no;
     loopParams.nLoopOnce = nLoopOnce;
     loopParams.hw = params.hwLoopTimes;
     loopParams.hwOnceLoop = params.hwLoopTail;
-    ComputeJhCutHw0(loopParams, params.srcNOffset, params.nOffset, params.hwOffset);
-}
-
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop2(
-    int64_t no, int64_t nLoopOnce, processParams &params)
-{
-    jhParams loopParams;
-    for (int64_t hw = 0; hw < params.hwLoopTimes; hw++) {
-        loopParams.no = no;
-        loopParams.nLoopOnce = nLoopOnce;
-        loopParams.hw = hw;
-        loopParams.hwOnceLoop = tilingData_->wcLoop;
-        ComputeJhCutHw2(loopParams, params.srcNOffset, params.nOffset, params.hwOffset);
-    }
-    loopParams.no = no;
-    loopParams.nLoopOnce = nLoopOnce;
-    loopParams.hw = params.hwLoopTimes;
-    loopParams.hwOnceLoop = params.hwLoopTail;
-    ComputeJhCutHw2(loopParams, params.srcNOffset, params.nOffset, params.hwOffset);
+    ComputeJhCutHw(loopParams, params.srcNOffset, params.nOffset, params.hwOffset, mode);
 }
 
 template <typename T>
 __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeSmallJhCut(processParams &params)
 {
-    switch (tilingData_->condition) {
-        case 0: {
-            for (int64_t no = 0; no < params.nLoopTimes; no++) {
-                ComputeHwLoop1(no, tilingData_->nLoop, params);
-            }
-            ComputeHwLoop1(params.nLoopTimes, params.nLoopTail, params);
-            break;
-        }
-        case 2: {
-            for (int64_t no = 0; no < params.nLoopTimes; no++) {
-                ComputeHwLoop2(no, tilingData_->nLoop, params);
-            }
-            ComputeHwLoop2(params.nLoopTimes, params.nLoopTail, params);
-            break;
-        }
-        default:
-            break;
+    int64_t mode = this->tilingData_->condition;
+    for (int64_t no = 0; no < params.nLoopTimes; no++) {
+        ComputeHwLoop(no, this->tilingData_->nLoop, params, mode);
     }
+    ComputeHwLoop(params.nLoopTimes, params.nLoopTail, params, mode);
 }
 
 template <typename T>
@@ -214,17 +125,18 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(
     params.nLoopTail = nLoopTail;
     params.hwLoopTimes = hwTimes;
     params.hwLoopTail = hwTail;
-    switch (tilingData_->switchParams) {
+    switch (this->tilingData_->switchParams) {
         case 4:
-            params.srcNOffset = blockIdx_ * tilingData_->splitBlockFactor * srcHSize_ * srcWSize_ * tilingData_->lenC;
-            params.nOffset = blockIdx_ * tilingData_->lenN;
+            params.srcNOffset =
+                this->blockIdx_ * this->tilingData_->splitBlockFactor * this->srcHSize_ * this->srcWSize_ * this->lenC_;
+            params.nOffset = this->blockIdx_ * this->tilingData_->lenN;
             params.hwOffset = 0;
             ComputeSmallJhCut(params);
             break;
         case 5:
             params.srcNOffset = 0;
             params.nOffset = 0;
-            params.hwOffset = blockIdx_ * tilingData_->splitBlockFactor;
+            params.hwOffset = this->blockIdx_ * this->tilingData_->splitBlockFactor;
             ComputeSmallJhCut(params);
             break;
         default:
@@ -235,18 +147,16 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(
 template <typename T>
 __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::Process()
 {
-    if (blockIdx_ == tilingData_->realCoreNum - 1) {
-        ProcessPreCore(tilingData_->nLoopTimesLast,
-            tilingData_->nLoopTailLast,
-            tilingData_->wcLoopTimesLast,
-            tilingData_->wcLoopTailLast);
+    if (this->blockIdx_ == this->tilingData_->realCoreNum - 1) {
+        ProcessPreCore(
+            this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast, this->tilingData_->wcLoopTimesLast,
+            this->tilingData_->wcLoopTailLast);
     } else {
-        ProcessPreCore(tilingData_->nLoopTimesBefore,
-            tilingData_->splitBlockTailFactor,
-            tilingData_->wcLoopTimesBefore,
-            tilingData_->wcLoopTailBefore);
+        ProcessPreCore(
+            this->tilingData_->nLoopTimesBefore, this->tilingData_->splitBlockTailFactor,
+            this->tilingData_->wcLoopTimesBefore, this->tilingData_->wcLoopTailBefore);
     }
 }
-}  // namespace ResizeNearestNeighborV2
+} // namespace ResizeNearestNeighborV2
 
-#endif  // CANN_RESIZE_NEAREST_NEIGHBOR_V2_DATA_COPY_JH_H
+#endif // CANN_RESIZE_NEAREST_NEIGHBOR_V2_DATA_COPY_JH_H

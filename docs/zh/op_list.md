@@ -162,7 +162,7 @@
     <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
-    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+    <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
   </tr>
     <tr>
     <td>image</td>

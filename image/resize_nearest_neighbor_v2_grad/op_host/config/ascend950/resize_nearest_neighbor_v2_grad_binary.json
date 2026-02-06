@@ -1,0 +1,347 @@
+{
+  "op_type": "ResizeNearestNeighborV2Grad",
+  "op_list": [
+    {
+      "bin_filename": "ResizeNearestNeighborV2Grad_165d481e9cd06c1e706548350f5bf6cb",
+      "inputs": [
+        {
+          "name": "grads",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "NCHW",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatDefault"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "NCHW",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "half_pixel_centers",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+        }
+      ]
+    },
+    {
+      "bin_filename": "ResizeNearestNeighborV2Grad_ea0546f5bae67d5b750593df1e626a1b",
+      "inputs": [
+        {
+          "name": "grads",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "NHWC",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatDefault"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "NHWC",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "half_pixel_centers",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+        }
+      ]
+    },
+    {
+      "bin_filename": "ResizeNearestNeighborV2Grad_9859812e62c3bb4aff0ad16b1b9d322b",
+      "inputs": [
+        {
+          "name": "grads",
+          "index": 0,
+          "dtype": "float16",
+          "format": "NCHW",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatDefault"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "NCHW",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "half_pixel_centers",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+        }
+      ]
+    },
+    {
+      "bin_filename": "ResizeNearestNeighborV2Grad_4cdcbf48b428a3acc458df4579f305ab",
+      "inputs": [
+        {
+          "name": "grads",
+          "index": 0,
+          "dtype": "float16",
+          "format": "NHWC",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatDefault"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "NHWC",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "half_pixel_centers",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+        }
+      ]
+    },
+    {
+      "bin_filename": "ResizeNearestNeighborV2Grad_c458c2b5280205573eade0bf3ca4defe",
+      "inputs": [
+        {
+          "name": "grads",
+          "index": 0,
+          "dtype": "float32",
+          "format": "NCHW",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatDefault"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "NCHW",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "half_pixel_centers",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+        }
+      ]
+    },
+    {
+      "bin_filename": "ResizeNearestNeighborV2Grad_f606e4fd16630ac5d690f1e87f3a6b12",
+      "inputs": [
+        {
+          "name": "grads",
+          "index": 0,
+          "dtype": "float32",
+          "format": "NHWC",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatDefault"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "NHWC",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatFixed"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "half_pixel_centers",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "scales",
+          "dtype": "list_float",
+          "value": []
+        }
+      ]
+    }
+  ]
+}
