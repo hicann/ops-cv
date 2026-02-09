@@ -56,6 +56,7 @@ option(ENABLE_COVERAGE "Enable coverage" OFF)
 option(ENABLE_MSSANITIZER "Enable mssanitizer mode" OFF)
 option(ENABLE_OOM "Enable oom mode" OFF)
 option(DISABLE_AICPU "Disable aicpu" OFF)
+option(ENABLE_DUMP_CCE "Enable dump_cce mode" OFF)
 
 option(OP_HOST_UT "Enable ophost ut" OFF)
 option(OP_API_UT "Enable opapi ut" OFF)

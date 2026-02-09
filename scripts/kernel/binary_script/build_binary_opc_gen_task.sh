@@ -93,9 +93,9 @@ function get_simplified_key_config_file() {
 
 main() {
   echo "[INFO]execute file: $0"
-  if [ $# -lt 4 ]; then
+  if [ $# -lt 8 ]; then
     echo "[ERROR]input error"
-    echo "[ERROR]bash $0 {op_type} {soc_version} {output_path} {task_path}"
+    echo "[ERROR]bash $0 {op_type} {soc_version} {output_path} {task_path} {enable_mssanitizer} {enable_debug} {enable_oom} {enable_dump_cce}"
     exit 1
   fi
   local workdir=$(
@@ -112,6 +112,7 @@ main() {
   local enable_mssanitizer=$5
   local enable_debug=$6
   local enable_oom=$7
+  local enable_dump_cce=$8
   local is_need_gen_opc_info=TRUE
   local python_arg=${HI_PYTHON}
   if [ "${python_arg}" = "" ]; then
@@ -276,6 +277,11 @@ main() {
 
           cmd="${cmd} --op_debug_config=oom"
 
+        fi
+        
+        if [ "${enable_dump_cce}" = "TRUE" ]; then
+          cmd="${cmd} --op_debug_config=dump_cce"
+          cmd="${cmd} --debug_dir=${output_path}/kernel_metas"
         fi
         echo "[INFO] op:${op_type} do opc cmd is ${cmd}"
         echo ${cmd} >> ${opc_task_cmd_file}

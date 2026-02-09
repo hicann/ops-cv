@@ -25,7 +25,7 @@ SUPPORTED_LONG_OPTS=(
   "help" "ops=" "soc=" "vendor_name=" "build-type=" "cov" "noexec" "aicpu" "noaicpu" "opkernel" "opkernel_aicpu" "jit"
   "pkg" "asan" "valgrind" "make_clean" "static"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
-  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin"
+  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "dump_cce"
 )
 
 in_array() {
@@ -148,6 +148,7 @@ usage() {
         echo "                           Set ascend third_party package install path, default ./build/third_party"
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
+        echo "    --dump_cce             Dump kernel precompiled files"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --pkg --soc=ascend910b --vendor_name=customize -j16 -O3"
@@ -157,6 +158,7 @@ usage() {
         echo "    bash build.sh --pkg --experimental --soc=ascend910b"
         echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --mssanitizer"
         echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --oom"
+        echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --dump_cce"
         return
         ;;
       opkernel)
@@ -168,12 +170,14 @@ usage() {
         echo "    --build-type=<Type>    Specify build-type (Type options: Release/Debug), Default:Release"
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
+        echo "    --dump_cce             Dump kernel precompiled files"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --build-type=Debug"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --mssanitizer"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --oom"
+        echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --dump_cce"
         return
         ;;
       opkernel_aicpu)
@@ -185,12 +189,14 @@ usage() {
         echo "    --build-type=<Type>    Specify build-type (Type options: Release/Debug), Default:Release"
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
+        echo "    --dump_cce             Dump kernel precompiled files"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --build-type=Debug"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --mssanitizer"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --oom"
+        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --dump_cce"
         return
         ;;
       test)
@@ -400,6 +406,7 @@ usage() {
   echo "    --genop_aicpu Create the initial directory for AI CPU op"
   echo "    --mssanitizer Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
   echo "    --oom Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
+  echo "    --dump_cce Dump kernel precompiled files"
   echo "to be continued ..."
 }
 
@@ -484,8 +491,8 @@ check_param() {
       fi
     fi
     if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-      if [[ "$ENABLE_MSSANITIZER" == "TRUE" || "$ENABLE_OOM" == "TRUE" ]]; then
-        echo "[ERROR] --build-type=Debug cannot be used with --mssanitizer or --oom"
+      if [[ "$ENABLE_MSSANITIZER" == "TRUE" || "$ENABLE_OOM" == "TRUE" || "$ENABLE_DUMP_CCE" == "TRUE" ]]; then
+        echo "[ERROR] --build-type=Debug cannot be used with --mssanitizer, --oom or --dump_cce"
         exit 1
       fi
     fi
@@ -647,6 +654,7 @@ checkopts() {
   BUILD_TYPE="Release"
   ENABLE_MSSANITIZER=FALSE
   ENABLE_OOM=FALSE
+  ENABLE_DUMP_CCE=FALSE
   ENABLE_COVERAGE=FALSE
   ENABLE_UT_EXEC=TRUE
   ENABLE_ASAN=FALSE
@@ -804,6 +812,7 @@ checkopts() {
           ;;
         mssanitizer) ENABLE_MSSANITIZER=TRUE ;;
         oom) ENABLE_OOM=TRUE ;;
+        dump_cce) ENABLE_DUMP_CCE=TRUE ;;
         cov) ENABLE_COVERAGE=TRUE ;;
         noexec) ENABLE_UT_EXEC=FALSE ;;
         aicpu) AICPU_ONLY=TRUE ;;
@@ -975,6 +984,9 @@ assemble_cmake_args() {
   fi
   if [[ "$DISABLE_AICPU" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DDISABLE_AICPU=TRUE"
+  fi
+  if [[ "$ENABLE_DUMP_CCE" == "TRUE" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DENABLE_DUMP_CCE=TRUE"
   fi
   if [[ "$ENABLE_TEST" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_TEST=TRUE"

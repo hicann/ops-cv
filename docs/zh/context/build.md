@@ -39,7 +39,7 @@ bash build.sh --help
 | --jit           | 可选     | 配置后，表示不编译算子的二进制文件。                                                              |
 | --static        | 可选     | 配置后，表示生成静态库文件，包含libcann_cv_static.a和aclnn接口头文件，搭配--pkg参数，生成静态库压缩包。              |
 | --vendor_name   | 可选     | 指定自定义算子包的名称，默认值为custom。                                                         |
-| --build-type    | 可选     | 启用调试模式。可选类型：Release/Debug，默认为Release。值为Debug时，不可与--mssanitizer、--oom同时使用        |
+| --build-type    | 可选     | 启用调试模式。可选类型：Release/Debug，默认为Release。值为Debug时，不可与--mssanitizer、--oom、--dump_cce同时使用        |
 | --cov           | 可选     | 预留参数，开发者暂不需要关注。                                                                 |
 | --noexec        | 可选     | 仅编译单元测试二进制文件，不自动执行编译后的UT可执行文件。                                                  |
 | --opkernel      | 可选     | 编译二进制内核。                                                                        |
@@ -60,4 +60,5 @@ bash build.sh --help
 | --experimental  | 可选     | 编译experimental目录下的用户算子。                                                         |
 | --mssanitizer   | 可选     | 开启kernel侧mssanitizer内存检测功能。不可与--oom同时使用                                         |
 | --oom           | 可选     | 开启kernel侧oom内存检测功能。不可与--mssanitizer同时使用                                         |
+| --dump_cce      | 可选     | 开启kernel侧dump预编译文件功能。                                                      |
 | --cann_3rd_lib_path      | 可选     | 离线编译场景下第三方库存放的目录。                                                               |                    |
