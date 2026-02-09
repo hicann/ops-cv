@@ -1,0 +1,78 @@
+api: pytorch
+api_type: executor_aclnn_ciou
+version: v2.1
+name: aclnn.ciou
+aclnn_name: CIoU
+generate: gen_aclnn_ciou
+dtype_numbers: 200
+standard:
+    acc: default
+inputs:
+  - name: bBoxes
+    type: tensor
+    required: true
+    dtypes:
+      values: [ fp32, fp16 ]
+    ranges:
+      valid:
+        values: [ [ '-inf', 'inf' ] ]
+        random_types:
+          - name: nd
+      invalid:
+        values: [ [ '-inf', 'inf' ] ]
+        random_types:
+          - name: nd
+    shapes:
+      dim_numbers:
+        values: [ 2 ]
+      dim_values:
+        values: [ 1, 7, 8, 9, 15, 16, 17, 19, 20, 21, 255, 256, 257, 1310, [ 1,1024 ] ]
+  - name: gtBoxes
+    type: tensor
+    required: true
+    dtypes:
+      values: [ fp32, fp16 ]
+    ranges:
+      valid:
+        values: [ [ '-inf', 'inf' ] ]
+        random_types:
+          - name: nd
+      invalid:
+        values: [ [ '-inf', 'inf' ] ]
+        random_types:
+          - name: nd
+    shapes:
+      dim_numbers:
+        values: [ 2 ]
+      dim_values:
+        values: [ 1, 7, 8, 9, 15, 16, 17, 19, 20, 21, 255, 256, 257, 1310, [ 1,1024 ] ]
+  - name: trans
+    type: attr
+    required: true
+    dtypes:
+      values: [ bool ]
+    ranges:
+      valid:
+        values: [ false, true ]
+      invalid:
+        values: []
+  - name: isCross
+    type: attr
+    required: true
+    dtypes:
+      values: [ bool ]
+    ranges:
+      valid:
+        values: [ false ]
+      invalid:
+        values: [ ]
+  - name: mode
+    type: attr
+    dtypes:
+      values: [ string ]
+    required: true
+    ranges:
+      valid:
+        values: [ "iou", "iof" ]
+      invalid:
+        values: [ ]
