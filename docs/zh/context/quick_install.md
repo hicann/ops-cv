@@ -15,13 +15,14 @@
 
    本项目源码编译用到的依赖如下，请注意版本要求。
 
-   - python >= 3.7.0（建议版本<= 3.10） 
+   - python >= 3.7.0（建议版本 <= 3.10） 
    - gcc >= 7.3.0
    - cmake >= 3.16.0
    - pigz（可选，安装后可提升打包速度，建议版本 >= 2.4）
    - dos2unix
    - gawk
    - make
+   - googletest（仅执行UT时依赖，建议版本 [release-1.11.0](https://github.com/google/googletest/releases/tag/release-1.11.0)）
 
    上述依赖包可通过项目根目录install\_deps.sh安装，命令如下，若遇到不支持系统，请参考该文件自行适配。
    ```bash
