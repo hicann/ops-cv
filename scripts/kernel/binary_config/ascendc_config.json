@@ -492,7 +492,7 @@
     {"name":"BinaryCrossEntropyGrad", "compute_units": ["ascend950"], "auto_sync" : false,"impl_mode" : ""},
     {"name":"ApplyAdamW", "compute_units": ["ascend950"], "auto_sync" : false,"impl_mode" : ""},
     {"name":"ApplyAdagradD", "compute_units": ["ascend950"], "auto_sync" : false, "compile_options": {"ascend950":["--cce-simd-vf-fusion=true", "--cce-simd-at-voss=true"]}, "impl_mode" : ""},
-    {"name":"IouV2", "compute_units": ["ascend310p", "ascend910b", "ascend910_93", "kirinx90", "kirin9030"], "auto_sync" : true},
+    {"name":"IouV2", "compute_units": ["ascend310p", "ascend910b", "ascend910_93", "ascend950", "kirinx90", "kirin9030"], "auto_sync" : true},
     {"name":"GroupQuant", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false},
     {"name":"SwinTransformerLnQkvQuant", "compute_units": ["ascend310p"], "auto_sync" : false},
     {"name":"BidirectionLSTM", "compute_units": ["ascend310p"], "auto_sync" : false, "compile_options": {"ascend310p":["-mllvm -cce-aicore-jump-expand=true"]}},
