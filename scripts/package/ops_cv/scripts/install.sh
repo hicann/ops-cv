@@ -287,7 +287,9 @@ get_opts() {
   done
 
   if [ "$*" = "" ]; then
-    echo "[ERROR]: ERR_NO:${PARAM_INVALID}; ERR_DES:Unrecognized parameters.Try './xxx.run --help for more information.'"
+    echo "[OpsCv] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:\
+ only support one type: full/upgrade/uninstall, operation execute failed!\
+ Please use [--help] to see the usage."
     exitlog
     exit 1
   fi
@@ -348,7 +350,7 @@ get_opts() {
 check_opts() {
   if [ "${CONFLICT_CMD_NUMS}" != 1 ]; then
     echo "[OpsCv] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:\
- only support one type: full/run/devel/upgrade/uninstall/check, operation execute failed!\
+ only support one type: full/upgrade/uninstall, operation execute failed!\
  Please use [--help] to see the usage."
     exitlog
     exit 1
