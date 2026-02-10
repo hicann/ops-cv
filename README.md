@@ -82,6 +82,6 @@ ops-cv是[CANN](https://hiascend.com/software/cann) （Compute Architecture for 
 
 本项目功能和文档正在持续更新和完善中，欢迎您关注最新版本。
 
-- **问题反馈**：通过GitCode[【Issues】](https://gitcode.com/cann/ops-cv/issues)提交问题
-- **社区互动**：通过GitCode[【讨论】](https://gitcode.com/cann/ops-cv/discussions)参与交流
-- **技术专栏**：通过GitCode[【Wiki】](https://gitcode.com/cann/ops-cv/wiki)获取技术文章
+- **问题反馈**：通过GitCode[【Issues】](https://gitcode.com/cann/ops-cv/issues)提交问题。
+- **社区互动**：通过GitCode[【讨论】](https://gitcode.com/cann/ops-cv/discussions)参与交流。
+- **技术专栏**：通过GitCode[【Wiki】](https://gitcode.com/cann/ops-cv/wiki)获取技术文章。
