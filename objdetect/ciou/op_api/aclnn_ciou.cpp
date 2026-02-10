@@ -12,6 +12,7 @@
 #include "ciou.h"
 #include <dlfcn.h>
 #include <acl/acl.h>
+#include "aclnn_check.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_kernels/contiguous.h"
 #include "opdev/common_types.h"
@@ -51,13 +52,9 @@ static bool CheckNotNull(
 static aclnnStatus CheckSocValid()
 {
     SocVersion socVersion = GetCurrentPlatformInfo().GetSocVersion();
-    switch (socVersion) {
-        case SocVersion::ASCEND950:
-            break;
-        default: {
-            OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "support for %s is not implemented", op::ToString(socVersion).GetString());
-            return ACLNN_ERR_RUNTIME_ERROR;
-        }
+    if (!IsRegBase()) {
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "support for %s is not implemented", op::ToString(socVersion).GetString());
+        return ACLNN_ERR_RUNTIME_ERROR;
     }
     return ACLNN_SUCCESS;
 }
