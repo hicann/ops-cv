@@ -49,7 +49,7 @@ main() {
     echo -e "Error output: \n $result"
     return
   fi
-  echo "$result\n"
+  echo "$result"
 }
 set -o pipefail
-main "$@" | gawk '{print strftime("[%Y-%m-%d %H:%M:%S]"), $0}'
+main "$@"

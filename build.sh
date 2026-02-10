@@ -665,6 +665,7 @@ checkopts() {
   ENABLE_PACKAGE=FALSE
   ENABLE_EXPERIMENTAL=FALSE
   ENABLE_TEST=FALSE
+  ENABLE_JIT=FALSE
   AICPU_ONLY=FALSE
   DISABLE_AICPU=FALSE
   OP_API_UT=FALSE
@@ -828,7 +829,10 @@ checkopts() {
         cann_3rd_lib_path=*)
           CANN_3RD_LIB_PATH="$(realpath ${OPTARG#*=})"
           ;;
-        jit) ENABLE_BINARY=FALSE ;;
+        jit)
+          ENABLE_BINARY=FALSE
+          ENABLE_JIT=TRUE
+          ;;
         asan) ENABLE_ASAN=TRUE ;;
         valgrind)
           ENABLE_VALGRIND=TRUE
@@ -1443,7 +1447,7 @@ main() {
   if [ "$ENABLE_CREATE_LIB" == "TRUE" ]; then
     build_lib
   fi
-  if [[ "$ENABLE_BINARY" == "TRUE" || "$ENABLE_CUSTOM" == "TRUE" ]]; then
+  if [[ "$ENABLE_BINARY" == "TRUE" || "$ENABLE_CUSTOM" == "TRUE" ]] && [[ "$ENABLE_JIT" == "FALSE" ]]; then
     build_binary
   fi
   if [[ "$ENABLE_STATIC" == "TRUE" ]]; then

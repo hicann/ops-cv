@@ -86,6 +86,7 @@ function(get_op_type_and_validate OP_DIR compute_unit op_name_var op_type_var is
       set(${cache_key} "" CACHE INTERNAL "")
       return()
     endif()
+    message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary with def config.")
   endif()
 
   set(is_valid TRUE)
