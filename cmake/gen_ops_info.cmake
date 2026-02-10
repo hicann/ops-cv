@@ -217,13 +217,26 @@ function(merge_graph_headers)
   set(oneValueArgs TARGET OUT_DIR)
   cmake_parse_arguments(MGPROTO "" "${oneValueArgs}" "" ${ARGN})
   get_target_property(proto_headers ${OP_GRAPH_NAME}_proto_headers INTERFACE_SOURCES)
+  set(proto_headers ${proto_headers} ${CMAKE_SOURCE_DIR}/common/inc/op_graph/op_cv_proto_extend.h)
   add_custom_command(
     OUTPUT ${MGPROTO_OUT_DIR}/ops_proto_cv.h
     COMMAND
       ${ASCEND_PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/util/merge_proto.py ${proto_headers} --output-file
       ${MGPROTO_OUT_DIR}/ops_proto_cv.h
-    )
-  add_custom_target(${MGPROTO_TARGET} ALL DEPENDS ${MGPROTO_OUT_DIR}/ops_proto_cv.h)
+  )
+  add_custom_command(
+    OUTPUT ${MGPROTO_OUT_DIR}/ops_proto_cv.cpp
+    COMMAND ${CMAKE_COMMAND} -E copy
+      ${MGPROTO_OUT_DIR}/ops_proto_cv.h
+      ${MGPROTO_OUT_DIR}/ops_proto_cv.cpp
+    DEPENDS ${MGPROTO_OUT_DIR}/ops_proto_cv.h
+  )
+  add_custom_target(
+    ${MGPROTO_TARGET} ALL
+    DEPENDS
+      ${MGPROTO_OUT_DIR}/ops_proto_cv.h
+      ${MGPROTO_OUT_DIR}/ops_proto_cv.cpp
+  )
 endfunction()
 
 # ######################################################################################################################

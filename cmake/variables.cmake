@@ -15,6 +15,7 @@ set(OPSTATIC_NAME cann_${PKG_NAME}_static)
 set(OPAPI_NAME opapi_${PKG_NAME})
 set(OPGRAPH_NAME opgraph_${PKG_NAME})
 set(OP_GRAPH_NAME op_graph_${PKG_NAME})
+set(GRAPH_PLUGIN_NAME graph_plugin_${PKG_NAME})
 set(ONNX_PLUGIN_NAME op_${PKG_NAME}_onnx_plugin)
 if(NOT CANN_3RD_LIB_PATH)
   set(CANN_3RD_LIB_PATH ${PROJECT_SOURCE_DIR}/build/third_party)
@@ -29,6 +30,8 @@ add_library(${OPHOST_NAME}_opdef_aclnn_exclude_obj INTERFACE)
 add_library(${OPHOST_NAME}_aclnn_exclude_headers INTERFACE)
 # interface, 用于收集ops proto头文件
 add_library(${OP_GRAPH_NAME}_proto_headers INTERFACE)
+
+set(OP_GRAPH_MODULE_NAME ${PKG_NAME}_op_graph_ut)
 
 # global variables
 set(COMPILED_OPS CACHE STRING "Compiled Ops" FORCE)
@@ -68,6 +71,8 @@ if(ENABLE_CUSTOM)
   set(AICPU_KERNEL_IMPL               packages/vendors/${PATH_NAME}/op_impl/cpu/aicpu_kernel/impl)
   set(AICPU_JSON_CONFIG               packages/vendors/${PATH_NAME}/op_impl/cpu/config)
   set(CUST_AICPU_OP_PROTO             packages/vendors/${PATH_NAME}/op_proto)
+  set(ES_INC_INSTALL_DIR              packages/vendors/${VENDOR_PACKAGE_NAME}/op_proto/es/include)
+  set(ES_LIB_INSTALL_DIR              packages/vendors/${VENDOR_PACKAGE_NAME}/op_proto/es/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
   set(VERSION_INFO_INSTALL_DIR        packages/vendors/${PATH_NAME}/)
 else()
   # built-in package install path

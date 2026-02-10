@@ -195,7 +195,15 @@ function(add_op_graph_modules)
     else()
       add_library(${OP_GRAPH_NAME}_obj OBJECT)
     endif()
-    target_include_directories(${OP_GRAPH_NAME}_obj PRIVATE ${OP_PROTO_INCLUDE})
+    target_include_directories(${OP_GRAPH_NAME}_obj PRIVATE 
+      ${OP_PROTO_INCLUDE}
+      ${PROJECT_SOURCE_DIR}/common/inc
+      ${ASCEND_DIR}/include
+      ${ASCEND_DIR}/include/external
+      ${ASCEND_DIR}/include/exe_graph
+      ${ASCEND_DIR}/include/base/context_builder
+      ${ASCEND_DIR}/include/ge
+    )
     target_compile_definitions(${OP_GRAPH_NAME}_obj PRIVATE OPS_UTILS_LOG_SUB_MOD_NAME="OP_GRAPH" LOG_CPP)
 
     if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
@@ -208,14 +216,27 @@ function(add_op_graph_modules)
                                        -fvisibility=hidden
       )
     endif()
-
-    target_link_libraries(
+    if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
+      target_link_libraries(
+      ${OP_GRAPH_NAME}_obj
+      PRIVATE $<BUILD_INTERFACE:$<IF:$<BOOL:${ENABLE_TEST}>,intf_llt_pub_asan_cxx17,intf_pub_cxx17>>
+              $<BUILD_INTERFACE:dlog_headers>
+              $<$<TARGET_EXISTS:ops_base_util_objs>:$<TARGET_OBJECTS:ops_base_util_objs>>
+              $<$<TARGET_EXISTS:ops_base_infer_objs>:$<TARGET_OBJECTS:ops_base_infer_objs>>
+              metadef
+              graph
+              register
+              ge_compiler
+      )
+    else()
+      target_link_libraries(
       ${OP_GRAPH_NAME}_obj
       PRIVATE $<BUILD_INTERFACE:$<IF:$<BOOL:${ENABLE_TEST}>,intf_llt_pub_asan_cxx17,intf_pub_cxx17>>
               $<BUILD_INTERFACE:dlog_headers>
               $<$<TARGET_EXISTS:ops_base_util_objs>:$<TARGET_OBJECTS:ops_base_util_objs>>
               $<$<TARGET_EXISTS:ops_base_infer_objs>:$<TARGET_OBJECTS:ops_base_infer_objs>>
       )
+    endif()
   endif()
 endfunction()
 
@@ -546,7 +567,11 @@ macro(add_op_graph_sources)
     endif()
   endif()
 
-  file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/*_graph_*.cpp)
+  if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
+    file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/*_graph*.cpp ${SOURCE_DIR}/fusion_pass/*_pass.cpp)
+  else()
+    file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/*_graph*.cpp)
+  endif()
   if(OP_GRAPH_SRCS)
     add_op_graph_modules()
     target_sources(${OP_GRAPH_NAME}_obj PRIVATE ${OP_GRAPH_SRCS})

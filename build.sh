@@ -594,6 +594,9 @@ set_ut_mode() {
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_HOST_UT" == "TRUE" ]]; then
     UT_TARGES+=("${REPOSITORY_NAME}_op_host_ut")
   fi
+  if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_GRAPH_UT" == "TRUE" ]]; then
+    UT_TARGES+=("${REPOSITORY_NAME}_op_graph_ut")
+  fi
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_API_UT" == "TRUE" ]]; then
     UT_TARGES+=("${REPOSITORY_NAME}_op_api_ut")
   fi

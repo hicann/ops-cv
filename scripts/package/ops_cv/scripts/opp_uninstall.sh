@@ -225,6 +225,15 @@ whl_uninstall_package() {
   fi
 }
 
+uninstall_es_whl() {
+    local python_es_whl_name="es_cv"
+    local whl_install_dir_path="${TARGET_VERSION_DIR}/python/site-packages"
+    chmod u+w "${whl_install_dir_path}" 2> /dev/null
+    chmod u+w -R "${whl_install_dir_path}"/es_cv 2> /dev/null
+    chmod u+w -R "${whl_install_dir_path}"/es_cv-*.dist-info 2> /dev/null
+    whl_uninstall_package "${python_es_whl_name}" "${whl_install_dir_path}"
+}
+
 logandprint "[INFO]: Begin uninstall the opp module."
 
 main() {
@@ -239,6 +248,8 @@ main() {
   check_installed_type "${INSTALLED_TYPE}"
 
   unsetenv
+
+  uninstall_es_whl
 
   remove_ops_cv
 

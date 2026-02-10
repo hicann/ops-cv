@@ -12,4 +12,15 @@
     <file_info copy_type="delivery" src_path="" dst_path="built-in/op_impl/ai_core/tbe/op_api/include" install_path="$(TARGET_ENV)/include/" install_type="all">
         <file value="aclnnop" install_mod="550"/>
     </file_info>
+    <file_info value="ops_es_packages_lib" copy_type="delivery" src_path=""
+ 	    dst_path="es_packages/lib64"
+ 	    install_path="$(TARGET_ENV)/lib64" install_mod="550">
+ 	    <file value="libes_cv.so"
+ 	        file_type="shared"/>
+ 	</file_info>
+ 	<file_info copy_type="source" src_path=""
+ 	    dst_path="es_packages/include"
+ 	    install_path="$(TARGET_ENV)/include/es" install_type="all">
+ 	    <file value="es_cv" install_mod="550" entity="true"/>
+ 	</file_info>
 </block>

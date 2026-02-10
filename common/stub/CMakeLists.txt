@@ -23,3 +23,12 @@ target_link_libraries(opapi_math
   PRIVATE
   $<BUILD_INTERFACE:intf_pub_cxx17>
 )
+
+if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
+    file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+    foreach(SUB_DIR ${CURRENT_DIRS})
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}/CMakeLists.txt")
+            add_subdirectory(${SUB_DIR})
+        endif()
+    endforeach()
+endif()

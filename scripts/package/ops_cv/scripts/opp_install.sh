@@ -333,10 +333,21 @@ install_whl_package() {
     else
         logandprint "INFO ${_package_name} installed successfully!"
     fi
+    chmod -R "${CUSTOM_PERM}" "${_pythonlocalpath}"/es_cv 2> /dev/null
+    chmod -R "${CUSTOM_PERM}" "${_pythonlocalpath}"/es_cv-*.dist-info 2> /dev/null
   else
     logandprint "ERROR ERR_NO:0x0080;ERR_DES:install ${_package_name} faied, can not find the matched package for this platform."
     exit 1
   fi
+}
+
+install_es_whl() {
+  local es_whl_path="${SOURCEDIR}/es_packages/whl/es_cv-1.0.0-py3-none-any.whl"
+  local python_es_whl_name="es_cv"
+  chmod u+w "${TARGET_VERSION_DIR}/python" 2> /dev/null
+  local whl_install_dir_path="${TARGET_VERSION_DIR}/python/site-packages"
+  chmod u+w "${whl_install_dir_path}" 2> /dev/null
+  install_whl_package "${es_whl_path}" "${python_es_whl_name}" "${whl_install_dir_path}"
 }
 
 add_init_py() {
@@ -378,6 +389,8 @@ install_opp() {
   logandprint "[INFO]: upgradePercentage:30%"
 
   add_init_py
+
+  install_es_whl
 
   logandprint "[INFO]: upgradePercentage:50%"
 }

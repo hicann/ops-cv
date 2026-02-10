@@ -139,6 +139,11 @@ else()
 endif()
 
 if(ENABLE_TEST)
+  if(UT_TEST_ALL OR OP_GRAPH_UT)
+    include(cmake/opbuild.cmake)
+    include(cmake/gen_ops_info.cmake)
+    include(cmake/symbol.cmake)
+  endif()
   add_subdirectory(tests/ut)
 endif()
 
