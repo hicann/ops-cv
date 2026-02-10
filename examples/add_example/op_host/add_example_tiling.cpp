@@ -15,27 +15,26 @@
 
 #include "log/log.h"
 #include "util/math_util.h"
+#include "util/platform_util.h"
 #include "tiling_base/tiling_util.h"
 #include "tiling_base/tiling_templates_registry.h"
-#include "examples/add_example/op_kernel/add_example_tiling_data.h"
-#include "examples/add_example/op_kernel/add_example_tiling_key.h"
+#include "../op_kernel/add_example_tiling_data.h"
+#include "../op_kernel/add_example_tiling_key.h"
 
 namespace optiling {
 
 using namespace Ops::Cv::OpTiling;
 
-const uint32_t BLOCK_DIM = 8;
-const int64_t TILE_NUM = 8;
-const uint32_t WS_SYS_SIZE = 16U * 1024U * 1024U;
-const int32_t DIMS_LIMIT = 4;
-constexpr int32_t ATTRPOS0 = 0;
+constexpr uint32_t WS_SYS_SIZE = 0U;
+constexpr int32_t DIMS_LIMIT = 4;
 constexpr uint32_t INDEXZERO = 0;
 constexpr uint32_t INDEXONE = 1;
 constexpr uint32_t INDEXTWO = 2;
 constexpr uint32_t INDEXTHREE = 3;
+constexpr int64_t BUFFER_NUM = 6;
+constexpr int64_t TYPE_SIZE = 4;
 
-struct AddExampleCompileInfo {
-};
+struct AddExampleCompileInfo {};
 
 // 获取平台信息如ubSize, coreNum
 static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& ubSize, int64_t& coreNum)
@@ -52,7 +51,7 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
 }
 
 // 获取属性，shape信息
-ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalIdx, ge::DataType& dataType)
+static ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalIdx, ge::DataType& dataType)
 {
     // 获取输入shape信息
     auto inputX = context->GetInputShape(0);
@@ -76,11 +75,7 @@ ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalId
         return ge::GRAPH_FAILED);
 
     // 获取shape dim值
-    auto nDim = inputShapeX.GetDim(INDEXZERO);
-    auto cDim = inputShapeX.GetDim(INDEXONE);
-    auto hDim = inputShapeX.GetDim(INDEXTWO);
-    auto wDim = inputShapeX.GetDim(INDEXTHREE);
-    totalIdx = nDim * cDim * hDim * wDim;
+    totalIdx = inputShapeX.GetShapeSize();
     // dtype校验
     const std::set<ge::DataType> supportedDtype = {ge::DT_FLOAT, ge::DT_INT32};
     auto inputDesc = context->GetInputDesc(0);
@@ -93,7 +88,7 @@ ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalId
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
+static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 {
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, currentWorkspace);
@@ -113,7 +108,6 @@ static ge::graphStatus AddExampleTilingFunc(gert::TilingContext* context)
     // 2、获取shape、属性信息
     int64_t totalIdx;
     ge::DataType dataType;
-
     OP_CHECK_IF(
         GetShapeAttrsInfo(context, totalIdx, dataType) != ge::GRAPH_SUCCESS,
         OP_LOGE(context, "GetShapeAttrsInfo error"), return ge::GRAPH_FAILED);
@@ -128,10 +122,17 @@ static ge::graphStatus AddExampleTilingFunc(gert::TilingContext* context)
     OP_CHECK_IF(
         memset_s(tiling, sizeof(AddExampleTilingData), 0, sizeof(AddExampleTilingData)) != EOK,
         OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
-    tiling->totalLength = totalIdx;
-    tiling->tileNum = TILE_NUM;
+    // 优先做核切分，尽量用更多的核并行计算
+    tiling->totalNum = totalIdx;
+    tiling->blockFactor = Ops::Base::CeilDiv(totalIdx, coreNum);
+    int64_t usedCoreNum = Ops::Base::CeilDiv(totalIdx, tiling->blockFactor);
+    // 计算ub切分，考虑最大同时使用的ub tensor数量，计算单个ub tensor可用大小
+    // 当前场景，2输入和1输出，考虑使能db，共需要6块ub tensor
+    int64_t ubCanUse = static_cast<int64_t>(ubSize);
+    int64_t ubBlockSize = Ops::Base::GetUbBlockSize(context);
+    tiling->ubFactor = Ops::Base::FloorAlign(Ops::Base::FloorDiv((ubCanUse / TYPE_SIZE), BUFFER_NUM), ubBlockSize);
 
-    context->SetBlockDim(BLOCK_DIM);
+    context->SetBlockDim(usedCoreNum);
     uint64_t tilingKey = 0;
     // 区分dtype走不同得tiling key分支.
     if (dataType == ge::DT_FLOAT) {

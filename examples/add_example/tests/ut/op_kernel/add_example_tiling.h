@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file is_finite_tiling.h
+ * \file add_example_tiling.h
  * \brief
  */
 
@@ -20,8 +20,6 @@
 
 #include "../../../op_kernel/add_example_tiling_data.h"
 #include "kernel_tiling/kernel_tiling.h"
-
-// using namespace AddExampleNs;
 
 #define __aicore__
 #ifdef __NPU_TILING__
