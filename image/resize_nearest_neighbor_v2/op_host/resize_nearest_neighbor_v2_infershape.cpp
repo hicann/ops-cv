@@ -148,6 +148,15 @@ static ge::graphStatus InferShape4Resize2DWithConstSize(gert::InferShapeContext*
   return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_INFERSHAPE(ResizeNearestNeighborV2).InferShape(InferShape4Resize2DWithConstSize).InputsDataDependency({IN_SIZE});
+static graphStatus InferDtype4ResizeNearestNeighborV2(gert::InferDataTypeContext *context)
+{
+    auto xDtype = context->GetInputDataType(0);
+    context->SetOutputDataType(0, xDtype);
+    return GRAPH_SUCCESS;
+}
+
+IMPL_OP_INFERSHAPE(ResizeNearestNeighborV2).InferShape(InferShape4Resize2DWithConstSize)
+                                           .InputsDataDependency({IN_SIZE})
+                                           .InferDataType(InferDtype4ResizeNearestNeighborV2);
 
 }  // namespace ops

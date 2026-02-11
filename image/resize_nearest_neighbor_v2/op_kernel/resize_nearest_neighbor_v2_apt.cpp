@@ -17,6 +17,7 @@
 #include "./arch35/resize_nearest_neighbor_v2_data_copy_big_c.h"
 #include "./arch35/resize_nearest_neighbor_v2_data_copy_jh.h"
 #include "./arch35/resize_nearest_neighbor_v2_data_copy_small_c.h"
+#include "./arch35/resize_nearest_neighbor_v2_data_copy_nhwc.h"
 #include "./arch35/resize_nearest_neighbor_v2_tiling_key.h"
 
 using namespace AscendC;
@@ -57,7 +58,27 @@ __global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, G
         op.Process();
         return;
     }
-
+    if constexpr (schId == TPL_SCH_MODE_DATA_COPY_NOT_ALL_W_OUT) {
+        // n或者h分核，输入对应的1,w,c,输出是xo,wo,c一次放不下，需循环搬出
+        ResizeNearestNeighborV2::ResizeNearestNeighborV2NHWC<DTYPE_X, 0> op;
+        op.Init(x, size, y, &tilingData);
+        op.Process();
+        return;
+    }
+    if constexpr (schId == TPL_SCH_MODE_DATA_COPY_ALL_W_OUT) {
+        // n或者h分核，输入对应的1,w,c,输出是xo,wo,c可以一次放下，一次搬出
+        ResizeNearestNeighborV2::ResizeNearestNeighborV2NHWC<DTYPE_X, 1> op;
+        op.Init(x, size, y, &tilingData);
+        op.Process();
+        return;
+    }
+    if constexpr (schId == TPL_SCH_MODE_DATA_COPY_CUT_NH) {
+        // nh合轴分核, 2表示nh合轴切分
+        ResizeNearestNeighborV2::ResizeNearestNeighborV2NHWC<DTYPE_X, 2> op;
+        op.Init(x, size, y, &tilingData);
+        op.Process();
+        return;
+    }
     if constexpr (idxInt32) {
         ResizeNearestNeighborV2::ResizeNearestNeighborV2Simt<DTYPE_X, uint32_t, format, schId, alignCorners,
                                                              halfPixelCenters> op;

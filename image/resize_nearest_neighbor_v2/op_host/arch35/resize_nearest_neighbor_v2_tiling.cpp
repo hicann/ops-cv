@@ -19,10 +19,6 @@
 #include "log/log.h"
 
 namespace optiling {
-static constexpr int64_t MAX_UINT16 = 65535;
-static constexpr int64_t NUM_FP32_ONE_BLCOK = 8;
-static constexpr int64_t NUM_FP16_ONE_BLCOK = 16;
-
 ge::graphStatus Tiling4ResizeNearestNeighborV2(gert::TilingContext* context) {
   // get compile info ptr
   const ResizeNearestNeighborV2CompileInfo* compileInfo =

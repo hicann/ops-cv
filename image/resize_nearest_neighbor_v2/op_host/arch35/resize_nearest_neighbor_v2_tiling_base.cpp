@@ -45,6 +45,9 @@ constexpr uint64_t SCHEDULE_ID_DATA_COPY_JH_C = 2;
 constexpr uint64_t SCHEDULE_ID_SIMT_COMMON = 3;
 constexpr uint64_t SCHEDULE_ID_SIMT_INPUT_EQ_OUTPUT = 4;
 constexpr uint64_t SCHEDULE_ID_SIMT_INPUT_EQ_ONE = 5;
+constexpr uint64_t SCHEDULE_ID_NHWC_W_OUT_ALL = 6;
+constexpr uint64_t SCHEDULE_ID_NHWC_NOT_W_OUT_ALL = 7;
+constexpr uint64_t SCHEDULE_ID_NHWC_CORE_NH = 8;
 constexpr float ENLARGE_SCALE_THRESHOLD = 4;
 constexpr float REDUCE_SCALE_THRESHOLD = 0.25;
 constexpr int64_t ONE_BLOCK_SIZE = 32;
@@ -59,6 +62,7 @@ constexpr int64_t NUM_4 = 4;
 constexpr int64_t NUM_5 = 5;
 constexpr int64_t NUM_8 = 8;
 constexpr int64_t BUST_COUNT = 4095;
+constexpr int64_t MIN_WC_SIZE = 4096; // 实测暂定数据，特化的nhwc ub内组合模版，如果w很小，比不上纯copy
 constexpr int64_t INPUT_IDX_SIZE = 1;
 constexpr int64_t IDX_DST_H = 0;
 constexpr int64_t IDX_DST_W = 1;
@@ -67,7 +71,7 @@ class ResizeNearestNeighborV2AscendCTilingImpl {
 public:
     explicit ResizeNearestNeighborV2AscendCTilingImpl(gert::TilingContext* context) : context_(context) {};
 
-    ge::graphStatus Init(const ResizeNearestNeighborV2CompileInfo* compileInfo);
+    ge::graphStatus Init();
     ge::graphStatus DoTiling();
 
 private:
@@ -89,9 +93,13 @@ private:
     void PrintTilingData();
     int64_t CalTimes(int64_t a, int64_t b) const;
     bool IsMatchTiling_NHWC();
+    bool IsMatchTiling_NHWC_UB2UB();
     void DoTilingSmallC();
     void DoTilingBigC();
     void DoTilingJHC();
+    void DoTilingUb2Ub();
+    void ComputeHCut();
+    void DoTilingUb2UbCutNH();
 
 private:
     uint64_t schId_ = 0;
@@ -102,6 +110,8 @@ private:
     int64_t realCoreNum_ = 0;
     int64_t lenC_ = 0;
     int64_t lenN_ = 0;
+    int64_t lenCOut_ = 0;
+    int64_t lenNOut_ = 0;
     int64_t lenSrcH_ = 0;
     int64_t lenSrcW_ = 0;
     int64_t lenDesH_ = 0;
@@ -170,22 +180,24 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::CheckFormatMatchDims()
     const int64_t inputSize = xShape_.GetShapeSize();
     const int64_t outSize = yShape_.GetShapeSize();
     OP_CHECK_IF(inputSize == 0 || outSize == 0,
-                    OP_LOGE(context_->GetNodeName(),
-                                                    "input or output size is zero"),
+                    OP_LOGE(context_->GetNodeName(), "input or output size is zero"),
                     return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
 void ResizeNearestNeighborV2AscendCTilingImpl::SetDimsByFormat() {
     lenN_ = xShape_.GetDim(N_DIM_IDX);
+    lenNOut_ = yShape_.GetDim(N_DIM_IDX);
     if ((format_ == ge::FORMAT_NCHW) || (format_ == ge::FORMAT_ND)) {
       lenC_ = xShape_.GetDim(C_DIM_IDX_NCHW);
+      lenCOut_ = yShape_.GetDim(C_DIM_IDX_NCHW);
       lenSrcH_ = xShape_.GetDim(H_DIM_IDX_NCHW);
       lenDesH_ = yShape_.GetDim(H_DIM_IDX_NCHW);
       lenSrcW_ = xShape_.GetDim(W_DIM_IDX_NCHW);
       lenDesW_ = yShape_.GetDim(W_DIM_IDX_NCHW);
     } else if (format_ == ge::FORMAT_NHWC) {
       lenC_ = xShape_.GetDim(C_DIM_IDX_NHWC);
+      lenCOut_ = yShape_.GetDim(C_DIM_IDX_NHWC);
       lenSrcH_ = xShape_.GetDim(H_DIM_IDX_NHWC);
       lenDesH_ = yShape_.GetDim(H_DIM_IDX_NHWC);
       lenSrcW_ = xShape_.GetDim(W_DIM_IDX_NHWC);
@@ -363,13 +375,13 @@ bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NHWC() {
 
   maxUbNum_ = (((ubSize_ / NUM_2) / ONE_BLOCK_SIZE) * ONE_BLOCK_SIZE) / dtypeSize_;
   OP_LOGI(context_->GetNodeName(), "maxUbNum_ is %ld", maxUbNum_);
-  splitBlockFactor_ = (lenN_ + coreNum_ - 1) / coreNum_;
-  realCoreNum_ = (lenN_ + splitBlockFactor_ - 1) / splitBlockFactor_;
+  splitBlockFactor_ = Ops::Base::CeilDiv(lenN_, coreNum_);
+  realCoreNum_ = Ops::Base::CeilDiv(lenN_, splitBlockFactor_);
   splitBlockFactorTail_ = lenN_ - (realCoreNum_ - 1) * splitBlockFactor_;
   onceUbNum_ = splitBlockFactor_ * lenCAlign_;
   hwNum_ = lenDesH_ * lenDesW_;
-  int64_t hwfactor = (hwNum_ + coreNum_ - 1) / coreNum_;
-  int64_t hwcore = (hwNum_ + hwfactor - 1) / hwfactor;
+  int64_t hwfactor = Ops::Base::CeilDiv(hwNum_, coreNum_);
+  int64_t hwcore = Ops::Base::CeilDiv(hwNum_, hwfactor);
   if (((hwfactor >= splitBlockFactor_) && (hwcore >= realCoreNum_)) || (lenN_ * lenCAlign_ <= maxUbNum_)) {
     cutNd_ = false;
   }
@@ -488,8 +500,65 @@ void ResizeNearestNeighborV2AscendCTilingImpl::DoTilingJHC() {
     lenN_ = splitBlockFactor_ * dstHwcNum_;
 }
 
+bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NHWC_UB2UB() {
+    OP_CHECK_IF((format_ != ge::FORMAT_NHWC),
+                 OP_LOGI(context_->GetNodeName(), "format is not eligible"),
+                 return false);
+    OP_CHECK_IF((alignCorners_ != 0) || (halfPixelCenters_ != 0),
+                 OP_LOGI(context_->GetNodeName(), "alignCorners and halfPixelCenters not false"),
+                 return false);
+    OP_CHECK_IF((lenDesW_ <= lenSrcW_) || (lenDesH_ < lenSrcH_),
+                 OP_LOGI(context_->GetNodeName(), "It must be an enlarged scene"),
+                 return false);
+    int64_t remainW = lenDesW_ % lenSrcW_;
+    int64_t remainH = lenDesH_ % lenSrcH_;
+    OP_CHECK_IF((remainW != 0) || (remainH != 0),
+                 OP_LOGI(context_->GetNodeName(), "remainW and remainH must be zero"),
+                 return false);
+    OP_CHECK_IF((originalScaleH_ != 0.0f) || (originalScaleW_ != 0.0f),
+                 OP_LOGI(context_->GetNodeName(), "originalScaleH or originalScaleW is not 0.0f"),
+                 return false);
+    OP_CHECK_IF((lenCAlign_ * lenSrcW_ * dtypeSize_ < MIN_C_SIZE * NUM_2) && (lenCAlign_ == lenC_),
+                 OP_LOGI(context_->GetNodeName(), "c is align and small"),
+                 return false);
+    OP_CHECK_IF((lenC_ * dtypeSize_ < MIN_C_SIZE) && (lenCAlign_ != lenC_),
+                 OP_LOGI(context_->GetNodeName(), "c is not align and small"),
+                 return false);
+    int64_t needUb = (lenSrcW_ + lenDesW_) * lenCAlign_ * dtypeSize_ * NUM_2;
+    OP_CHECK_IF(needUb > ubSize_,
+                OP_LOGI(context_->GetNodeName(), "ub is not enough"),
+                return false);
+    int64_t xSize = xShape_.GetShapeSize();
+    int64_t ySize = yShape_.GetShapeSize();
+    OP_CHECK_IF(xSize >= UINT32_MAX || ySize >= UINT32_MAX,
+                OP_LOGI(context_->GetNodeName(), "input or output size is too large"),
+                return false);
+    OP_CHECK_IF(isAlign_ && (lenDesW_ * lenC_ * dtypeSize_ < MIN_WC_SIZE),
+                OP_LOGI(context_->GetNodeName(), "w is too small"),
+                return false);
+    return true;
+}
+
 void ResizeNearestNeighborV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKey() {
-    if (IsMatchTiling_NHWC()) {
+    if (IsMatchTiling_NHWC_UB2UB()) {
+        idxUseInt32_ = static_cast<uint64_t>(1);
+        int64_t inputUb = lenSrcW_ * lenCAlign_ * dtypeSize_ * NUM_2;
+        int64_t outHNum = Ops::Base::FloorDiv(lenDesH_, lenSrcH_);
+        int64_t outUb = outHNum * lenDesW_ * lenCAlign_ * dtypeSize_ * NUM_2;
+        int64_t allUb = inputUb + outUb;
+        if (allUb <= ubSize_) {
+            schId_ = SCHEDULE_ID_NHWC_W_OUT_ALL;
+        } else {
+            schId_ = SCHEDULE_ID_NHWC_NOT_W_OUT_ALL;
+        }
+        int64_t nFactor = Ops::Base::CeilDiv(lenN_, coreNum_);
+        int64_t nCoreNum = Ops::Base::CeilDiv(lenN_, nFactor);
+        int64_t hFactor = Ops::Base::CeilDiv(lenSrcH_, coreNum_);
+        int64_t hCoreNum = Ops::Base::CeilDiv(lenSrcH_, hFactor);
+        if (nCoreNum < coreNum_ && hCoreNum < coreNum_) {
+            schId_ = SCHEDULE_ID_NHWC_CORE_NH;
+        }
+    } else if (IsMatchTiling_NHWC()) {
         if(isAlign_ && ((lenN_ * lenCAlign_ < maxUbNum_) || (lenC_ * dtypeSize_ < UNIT_PROC_BYTES))) {
             schId_ = SCHEDULE_ID_DATA_COPY_JH_C;
         } else if (lenCAlign_ <= maxUbNum_) {
@@ -497,6 +566,10 @@ void ResizeNearestNeighborV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKe
         } else {
             schId_ = SCHEDULE_ID_DATA_COPY_BIG_C;
         }
+        format_ = ge::FORMAT_NHWC;
+        alignCorners_ = static_cast<int64_t>(0);
+        halfPixelCenters_ = static_cast<int64_t>(0);
+        idxUseInt32_ = static_cast<uint64_t>(0);
     } else {
         idxUseInt32_ = xShape_.GetShapeSize() < UINT32_MAX && yShape_.GetShapeSize() < UINT32_MAX;
         if (lenSrcH_ == lenDesH_ && lenSrcW_ == lenDesW_) {
@@ -507,6 +580,106 @@ void ResizeNearestNeighborV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKe
             schId_ = SCHEDULE_ID_SIMT_COMMON;
         }
     }
+}
+
+void ResizeNearestNeighborV2AscendCTilingImpl::ComputeHCut() {
+    nLoopTimesBefore_ = lenN_;
+    nLoopTimesLast_ = lenN_;
+    wcLoopTimesBefore_ = Ops::Base::CeilDiv(splitBlockFactor_, splitFactorDesH_);
+    if (splitBlockFactor_ % splitFactorDesH_ == 0) {
+        wcLoopTailBefore_ = splitFactorDesH_;
+    } else {
+        wcLoopTailBefore_ = splitBlockFactor_ % splitFactorDesH_;
+    }
+    wcLoopTimesLast_ = Ops::Base::CeilDiv(splitFactorTailDesH_, splitFactorDesH_);
+    if (splitFactorTailDesH_ % splitFactorDesH_ == 0) {
+        wcLoopTailLast_ = splitFactorDesH_;
+    } else {
+        wcLoopTailLast_ = splitFactorTailDesH_ % splitFactorDesH_;
+    }
+}
+
+void ResizeNearestNeighborV2AscendCTilingImpl::DoTilingUb2Ub() {
+    int64_t scaleHInt = Ops::Base::FloorDiv(lenDesH_, lenSrcH_);
+    scaleH_ = static_cast<float>(scaleHInt);
+    scaleW_ = static_cast<float>(Ops::Base::FloorDiv(lenDesW_, lenSrcW_));
+    // 先尝试n分核，看是否可以分满核
+    splitBlockFactor_ = Ops::Base::CeilDiv(lenN_, coreNum_);
+    realCoreNum_ = Ops::Base::CeilDiv(lenN_, splitBlockFactor_);
+    splitBlockFactorTail_ = lenN_ - (realCoreNum_ - 1) * splitBlockFactor_;
+    condition_ = 0; // 默认n分核
+    if (realCoreNum_ < coreNum_) {
+        // h分核
+        int64_t hBlockFactor = Ops::Base::CeilDiv(lenSrcH_, coreNum_);
+        int64_t hCoreNum = Ops::Base::CeilDiv(lenSrcH_, hBlockFactor);
+        int64_t hBlockFactorTail = lenSrcH_ - (hCoreNum - 1) * hBlockFactor;
+        if ((hCoreNum == coreNum_ && hBlockFactor > 1) || (hCoreNum > realCoreNum_ && splitBlockFactor_ == 1)) {
+            condition_ = 1;
+            realCoreNum_ = hCoreNum;
+            splitBlockFactor_ = hBlockFactor;
+            splitFactorTailDesH_ = hBlockFactorTail;
+        }
+    }
+    splitFactorDesW_ = dtypeSize_ * lenDesW_ * lenCAlign_; // 输出ub
+    int64_t yUb = NUM_2 * splitFactorDesW_;
+    int64_t xUb = NUM_2 * lenSrcW_ * lenCAlign_ * dtypeSize_;
+    splitFactorTailDesW_ = lenSrcW_ * lenCAlign_ * dtypeSize_; // 输入ub
+    if (schId_ == SCHEDULE_ID_NHWC_W_OUT_ALL) {
+        splitFactorDesH_ = (ubSize_ - yUb * scaleHInt) / xUb;
+        splitFactorDesW_ = splitFactorDesW_ * scaleHInt;
+    } else {
+        splitFactorDesH_ = (ubSize_ - yUb) / xUb; // h的ub切分factor
+    }
+    splitFactorTailDesW_ = splitFactorDesH_ * splitFactorTailDesW_;
+    if (condition_ == 1) {
+        ComputeHCut();
+    } else {
+        nLoopTimesBefore_ = splitBlockFactor_;
+        nLoopTimesLast_ = splitBlockFactorTail_;
+        wcLoopTimesBefore_ = Ops::Base::CeilDiv(lenSrcH_, splitFactorDesH_);
+        if (lenSrcH_ % splitFactorDesH_ == 0) {
+            wcLoopTailBefore_ = splitFactorDesH_;
+        } else {
+            wcLoopTailBefore_ = lenSrcH_ % splitFactorDesH_;
+        }
+        wcLoopTimesLast_ = wcLoopTimesBefore_;
+        wcLoopTailLast_ = wcLoopTailBefore_;
+    }
+    return;
+}
+
+void ResizeNearestNeighborV2AscendCTilingImpl::DoTilingUb2UbCutNH() {
+    scaleH_ = static_cast<float>(Ops::Base::FloorDiv(lenDesH_, lenSrcH_));
+    scaleW_ = static_cast<float>(Ops::Base::FloorDiv(lenDesW_, lenSrcW_));
+    int64_t nh = lenN_ * lenSrcH_;
+    // nh合并分核
+    splitBlockFactor_ = Ops::Base::CeilDiv(nh, coreNum_);
+    realCoreNum_ = Ops::Base::CeilDiv(nh, splitBlockFactor_);
+    splitBlockFactorTail_ = nh - (realCoreNum_ - 1) * splitBlockFactor_;
+    condition_ = 1;
+
+    splitFactorDesW_ = dtypeSize_ * lenDesW_ * lenCAlign_; // 输出ub
+    int64_t yUb = NUM_2 * splitFactorDesW_;
+    int64_t xUb = NUM_2 * lenSrcW_ * lenCAlign_ * dtypeSize_;
+    splitFactorTailDesW_ = lenSrcW_ * lenCAlign_ * dtypeSize_;
+
+    splitFactorDesH_ = (ubSize_ - yUb) / xUb; // h的ub切分factor
+
+    splitFactorTailDesW_ = splitFactorDesH_ * splitFactorTailDesW_; // 输入ub
+
+    wcLoopTimesBefore_ = Ops::Base::CeilDiv(splitBlockFactor_, splitFactorDesH_);
+    if (splitBlockFactor_ % splitFactorDesH_ == 0) {
+        wcLoopTailBefore_ = splitFactorDesH_;
+    } else {
+        wcLoopTailBefore_ = splitBlockFactor_ % splitFactorDesH_;
+    }
+    wcLoopTimesLast_ = Ops::Base::CeilDiv(splitBlockFactorTail_, splitFactorDesH_);
+    if (splitBlockFactorTail_ % splitFactorDesH_ == 0) {
+        wcLoopTailLast_ = splitFactorDesH_;
+    } else {
+        wcLoopTailLast_ = splitBlockFactorTail_ % splitFactorDesH_;
+    }
+    return;
 }
 
 void ResizeNearestNeighborV2AscendCTilingImpl::TilingStrategy()
@@ -523,6 +696,15 @@ void ResizeNearestNeighborV2AscendCTilingImpl::TilingStrategy()
         }
         case SCHEDULE_ID_DATA_COPY_JH_C: {
             DoTilingJHC();
+            break;
+        }
+        case SCHEDULE_ID_NHWC_CORE_NH: {
+            DoTilingUb2UbCutNH();
+            break;
+        }
+        case SCHEDULE_ID_NHWC_W_OUT_ALL:
+        case SCHEDULE_ID_NHWC_NOT_W_OUT_ALL: {
+            DoTilingUb2Ub();
             break;
         }
         default: {
@@ -585,7 +767,8 @@ void ResizeNearestNeighborV2AscendCTilingImpl::PrintTilingData() {
             condition:%ld, switchParams:%ld, splitBlockFactor:%ld, splitBlockTailFactor: %ld, lenCAlign: %ld, \
             hwcNum: %ld, dstHwcNum:%ld, wcNum:%ld, dstWcNum:%ld, nLoop: %ld, nLoopTimesBefore: %ld, \
             nLoopTimesLast is %ld, nLoopTailLast: %ld, wcLoop: %ld, wcLoopTimesBefore: %ld, \
-            wcLoopTailBefore: %ld, wcLoopTimesLast: %ld, wcLoopTailLast: %ld, scaleW: %f, scaleH：%f",
+            wcLoopTailBefore: %ld, wcLoopTimesLast: %ld, wcLoopTailLast: %ld, \
+            splitFactorDesH %ld, splitFactorTailDesW %ld, splitFactorDesW %ld, scaleW: %f, scaleH：%f",
             tilingData_.get_realCoreNum(),
             tilingData_.get_ubSize(),
             tilingData_.get_alignCorners(),
@@ -614,6 +797,9 @@ void ResizeNearestNeighborV2AscendCTilingImpl::PrintTilingData() {
             tilingData_.get_wcLoopTailBefore(),
             tilingData_.get_wcLoopTimesLast(),
             tilingData_.get_wcLoopTailLast(),
+            tilingData_.get_splitFactorDesH(),
+            tilingData_.get_splitFactorTailDesW(),
+            tilingData_.get_splitFactorDesW(),
             tilingData_.get_scaleW(),
             tilingData_.get_scaleH());
 }
@@ -646,6 +832,9 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::CheckInputSize()
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(lenC_ <= 0 || lenN_ <= 0,
         OP_LOGE(context_->GetNodeName(), "n and c must greater than zero"),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(lenCOut_ != lenC_ || lenNOut_ != lenN_,
+        OP_LOGE(context_->GetNodeName(), "out_shape n or c is not equal as input_shape n or c"),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
@@ -711,14 +900,21 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::GetDtypeInfo()
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::Init(const ResizeNearestNeighborV2CompileInfo* compileInfo) {
+ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::Init() {
     OP_LOGD(context_->GetNodeName(), "Enter ResizeNearestNeighborV2AscendCTilingImpl init.");
-
-    coreNum_ = compileInfo->core_num;
-    ubSize_ = compileInfo->ubSize;
-    OP_CHECK_IF(coreNum_ <= 0 || ubSize_ <= 0,
-                    OP_LOGE(context_->GetNodeName(), "coreNum or ubSize is small than zero"),
-                    return ge::GRAPH_FAILED);
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
+    coreNum_ = ascendcPlatform.GetCoreNumAiv();
+    OP_CHECK_IF(
+        coreNum_ <= 0,
+        OP_LOGE(context_, "coreNum must greater than zero, but is %ld", coreNum_),
+        return ge::GRAPH_FAILED);
+    uint64_t ubSize = 0;
+    ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
+    OP_CHECK_IF(
+        ubSize <= 0UL,
+        OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
+        return ge::GRAPH_FAILED);
+    ubSize_ = static_cast<int64_t>(ubSize);
     OP_LOGI(context_->GetNodeName(), "coreNum_ is %ld, ubSize_ is %ld", coreNum_, ubSize_);
     // Get attrs: alignCorners, halfPixelCenters, scales
     OP_CHECK_IF((GetAttrInfo() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "GetAttrInfo failed."),
@@ -773,7 +969,7 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::DoTiling() {
     OP_LOGD(context->GetNodeName(), "Start Tiling4ResizeNearestNeighborV2ForAscendC.");
 
     ResizeNearestNeighborV2AscendCTilingImpl tilingImpl = ResizeNearestNeighborV2AscendCTilingImpl(context);
-    if (tilingImpl.Init(compileInfo) != ge::GRAPH_SUCCESS) {
+    if (tilingImpl.Init() != ge::GRAPH_SUCCESS) {
         OP_LOGE(context->GetNodeName(), "Tiling4ResizeNearestNeighborV2ForAscendC init failed.");
         return ge::GRAPH_FAILED;
     }
