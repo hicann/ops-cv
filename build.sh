@@ -914,10 +914,26 @@ parse_changed_files() {
   cat $CHANGED_FILES
   echo $dotted_line
 
-  local related_ut=`python3 scripts/ci/parse_changed_files.py $CHANGED_FILES`
-  COMPILED_OPS=`python3 scripts/ci/parse_changed_ops.py $CHANGED_FILES`
-  echo "related ut "$related_ut
+  COMPILED_OPS=$(python3 scripts/ci/parse_changed_ops.py $CHANGED_FILES "$ENABLE_EXPERIMENTAL")
   echo "related ops "$COMPILED_OPS
+
+  if [[ -z $COMPILED_OPS ]]; then
+    if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
+      COMPILED_OPS='nms_with_mask'
+    else
+      COMPILED_OPS='grid_sample'
+    fi
+    echo "No ops changed found, set op $COMPILED_OPS as default."
+  fi
+
+  if [[ "$ENABLE_PACKAGE" == "TRUE" ]]; then
+    return
+  fi
+
+  local script_ret=$(python3 scripts/ci/parse_changed_files.py $CHANGED_FILES "$ENABLE_EXPERIMENTAL")
+  IFS='&&' read -r related_ut soc_info <<<"$script_ret"
+  echo "related ut "$related_ut
+  echo "related soc_info "$soc_info
 
   if [[ "$related_ut" == "set()" ]]; then
     ENABLE_TEST=FALSE
@@ -927,6 +943,7 @@ parse_changed_files() {
   else
     ENABLE_TEST=TRUE
   fi
+
   if [[ "$related_ut" =~ "ALL_UT" ]]; then
     echo "ALL UT is triggered!"
     return
@@ -981,7 +998,7 @@ assemble_cmake_args() {
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_VALGRIND=TRUE"
   fi
   if [[ -n "$BUILD_TYPE" ]]; then
-    CMAKE_ARGS="$CMAKE_ARGS -DCMKAE_BUILD_TYPE=${BUILD_TYPE}"
+    CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
   fi
   if [[ "$ENABLE_MSSANITIZER" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_MSSANITIZER=TRUE"
@@ -1061,6 +1078,19 @@ assemble_cmake_args() {
   CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
 }
 
+cmake_init() {
+  if [[ "$ENABLE_GENOP" == "TRUE" || "$ENABLE_GENOP_AICPU" == "TRUE" ]]; then
+    return
+  fi
+  if [ ! -d "${BUILD_PATH}" ]; then
+    mkdir -p "${BUILD_PATH}"
+  fi
+
+  [ -f "${BUILD_PATH}/CMakeCache.txt" ] && rm -f ${BUILD_PATH}/CMakeCache.txt
+
+  cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
+}
+
 clean_build() {
   if [ -d "${BUILD_PATH}" ]; then
     rm -rf ${BUILD_PATH}/*
@@ -1070,6 +1100,23 @@ clean_build() {
 clean_build_out() {
   if [ -d "${BUILD_OUT_PATH}" ]; then
     rm -rf ${BUILD_OUT_PATH}/*
+  fi
+}
+
+clean_build_binary() {
+  if [ -d "${BUILD_PATH}/tbe" ]; then
+    rm -rf ${BUILD_PATH}/tbe/
+  fi
+  if [ -d "${BUILD_PATH}/autogen" ]; then
+    rm -rf ${BUILD_PATH}/autogen/
+  fi
+  if [ -d "${BUILD_PATH}/binary" ]; then
+    rm -rf ${BUILD_PATH}/binary/
+  fi
+  if [[ "$ENABLE_STATIC" == "TRUE" ]]; then
+    if [ -d "${BUILD_PATH}/static_library_files" ]; then
+      rm -rf ${BUILD_PATH}/static_library_files/
+    fi
   fi
 }
 
@@ -1447,6 +1494,9 @@ main() {
   fi
   assemble_cmake_args
   echo "CMAKE_ARGS: ${CMAKE_ARGS}"
+
+  clean_build_binary
+  cmake_init
   if [ "$ENABLE_CREATE_LIB" == "TRUE" ]; then
     build_lib
   fi

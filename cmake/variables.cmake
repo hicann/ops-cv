@@ -34,6 +34,9 @@ add_library(${OP_GRAPH_NAME}_proto_headers INTERFACE)
 set(OP_GRAPH_MODULE_NAME ${PKG_NAME}_op_graph_ut)
 
 # global variables
+# 需要编译的算子
+set(NEED_COMPILE_OPS "${ASCEND_OP_NAME}" CACHE STRING "Need to be compiled Ops" FORCE)
+# 已编译的算子
 set(COMPILED_OPS CACHE STRING "Compiled Ops" FORCE)
 set(COMPILED_OP_DIRS CACHE STRING "Compiled Ops Dirs" FORCE)
 

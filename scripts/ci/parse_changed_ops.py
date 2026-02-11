@@ -27,22 +27,30 @@ class OperatorChangeInfo:
         self.operator_file_map = {} if operator_file_map is None else operator_file_map
 
 
-def extract_operator_name(file_path):
+def extract_operator_name(file_path, is_experimental):
     clean_path = file_path.lstrip('/')
     path_parts = clean_path.split('/')
     default_name = ''
-
-    if len(path_parts) >= 2:
-        domain = path_parts[0]
-        operator_name = path_parts[1]
-        if operator_name == "common" or not os.path.exists(f'{domain}/{operator_name}'):
-            return default_name
-        if domain in NEW_OPS_PATH:
-            return operator_name
+    operator_name = ''
+    domain = ''
+    if is_experimental == "TRUE":
+        if len(path_parts) >= 3:
+            domain = path_parts[1]
+            operator_name = path_parts[2]
+            if operator_name == "common" or not os.path.exists(f'experimental/{domain}/{operator_name}'):
+                return default_name
+    else:
+        if len(path_parts) >= 2:
+            domain = path_parts[0]
+            operator_name = path_parts[1]
+            if operator_name == "common" or not os.path.exists(f'{domain}/{operator_name}'):
+                return default_name
+    if domain in NEW_OPS_PATH:
+        return operator_name
     return default_name
 
 
-def get_operator_info_from_ci(changed_file_info_from_ci):
+def get_operator_info_from_ci(changed_file_info_from_ci, is_experimental):
     """
     get operator change info from ci, ci will write `git diff > /or_filelist.txt`
     :param changed_file_info_from_ci: git diff result file from ci
@@ -56,26 +64,25 @@ def get_operator_info_from_ci(changed_file_info_from_ci):
         lines = or_f.readlines()
         changed_operators = set()
         operator_file_map = {}
-        get_change_operators(changed_operators, lines, operator_file_map)
-    return OperatorChangeInfo(changed_operators=list(changed_operators), operator_file_map=operator_file_map)
 
-
-def get_change_operators(changed_operators, lines, operator_file_map):
-    for line in lines:
-        line = line.strip()
-        ext = os.path.splitext(line)[-1].lower()
-        if ext in (".md",):
-            continue
-        operator_name = extract_operator_name(line)
-        if operator_name:
+        for line in lines:
+            line = line.strip()
+            ext = os.path.splitext(line)[-1].lower()
+            if ext in (".md",):
+                continue
+            operator_name = extract_operator_name(line, is_experimental)
+            if not operator_name:
+                continue
             changed_operators.add(operator_name)
             if operator_name not in operator_file_map:
                 operator_file_map[operator_name] = []
             operator_file_map[operator_name].append(line)
 
+    return OperatorChangeInfo(changed_operators=list(changed_operators), operator_file_map=operator_file_map)
 
-def get_change_ops_list(changed_file_info_from_ci):
-    ops_change_info = get_operator_info_from_ci(changed_file_info_from_ci)
+
+def get_change_ops_list(changed_file_info_from_ci, is_experimental):
+    ops_change_info = get_operator_info_from_ci(changed_file_info_from_ci, is_experimental)
     if not ops_change_info:
         logging.info("[INFO] not found ops change info, run all c++.")
         return None
@@ -84,4 +91,4 @@ def get_change_ops_list(changed_file_info_from_ci):
 
 
 if __name__ == '__main__':
-    logging.info(get_change_ops_list(sys.argv[1]))
+    print(get_change_ops_list(sys.argv[1], sys.argv[2]))
