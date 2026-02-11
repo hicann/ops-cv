@@ -134,5 +134,3 @@
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_grid_sampler2_d_backward](examples/test_aclnn_grid_sampler2_d_backward.cpp) | 通过[aclnnGridSampler2DBackward](docs/aclnnGridSampler2DBackward.md)接口方式调用GridSampler2DGrad算子。 |
 | 图模式 | -  | 通过[算子IR](op_graph/grid_sampler2_d_grad_proto.h)构图方式调用GridSampler2DGrad算子。         |
-
-<!--[test_geir_grid_sampler2_d_grad](examples/test_geir_grid_sampler2_d_grad.cpp)-->

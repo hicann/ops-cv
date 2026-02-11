@@ -94,6 +94,3 @@
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_upsample_nearest_exact1d_backward](examples/test_aclnn_upsample_nearest_exact1d_backward.cpp) | 通过[aclnnUpsampleNearestExact1dBackward](docs/aclnnUpsampleNearestExact1dBackward.md)接口方式调用UpsampleNearestExact2dGrad算子。 |
 | aclnn接口  | [test_aclnn_upsample_nearest_exact2d_grad](examples/test_aclnn_upsample_nearest_exact2d_grad.cpp) | 通过[aclnnUpsampleNearestExact2dBackward](docs/aclnnUpsampleNearestExact2dBackward.md)接口方式调用UpsampleNearestExact2dGrad算子。 |
-<!--
-| 图模式 | [test_geir_upsample_nearest2d_backward](examples/test_geir_upsample_nearest2d_backward.cpp)  | 通过[算子IR](op_graph/upsample_nearest2d_backward_proto.h)构图方式调用UpsampleNearestExact2dGrad算子。         |
--->

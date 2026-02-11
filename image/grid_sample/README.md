@@ -169,5 +169,3 @@
 | aclnn接口  | [test_aclnn_grid_sample2_d](examples/test_aclnn_grid_sample2_d.cpp) | 通过[aclnnGridSampler2D](docs/aclnnGridSampler2D.md)接口方式调用GridSample算子。 |
 | aclnn接口  | [test_aclnn_grid_sample3_d](examples/test_aclnn_grid_sample3_d.cpp) | 通过[aclnnGridSampler3D](docs/aclnnGridSampler3D.md)接口方式调用GridSample算子。 |
 | 图模式 | -  | 通过[算子IR](op_graph/grid_sample_proto.h)构图方式调用GridSample算子。         |
-
-<!--[test_geir_grid_sample](examples/test_geir_grid_sample.cpp)-->

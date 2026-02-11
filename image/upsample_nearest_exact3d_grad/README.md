@@ -86,5 +86,3 @@
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_upsample_nearest_exact3d_grad](examples/test_aclnn_upsample_nearest_exact3d_grad.cpp) | 通过[aclnnUpsampleNearestExact3dBackward](docs/aclnnUpsampleNearestExact3dBackward.md)接口方式调用UpsampleNearestExact3dGrad算子。 |
 | 图模式 | -  | 通过[算子IR](op_graph/upsample_nearest_exact3d_grad_proto.h)构图方式调用UpsampleNearestExact3dGrad算子。         |
-
-<!--[test_geir_upsample_nearest_exact3d_grad](examples/test_geir_upsample_nearest_exact3d_grad.cpp)-->

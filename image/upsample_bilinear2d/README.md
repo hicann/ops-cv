@@ -140,6 +140,3 @@
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_upsample_bilinear2d](examples/test_aclnn_upsample_bilinear2d.cpp) | 通过[aclnnUpsampleBilinear2d](docs/aclnnUpsampleBilinear2d.md)接口方式调用UpsampleBilinear2d算子。 |
-<!--
-| 图模式 | [test_geir_upsample_bilinear2d](examples/test_geir_upsample_bilinear2d.cpp)  | 通过[算子IR](op_graph/upsample_bilinear2d_proto.h)构图方式调用UpsampleBilinear2d算子。         |
--->
