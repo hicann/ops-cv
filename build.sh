@@ -1473,6 +1473,7 @@ package_static() {
     # Create compressed package and restore directory name
     local new_filename="${new_name}.tar.gz"
     if tar -czf "$BUILD_OUT_PATH/$new_filename" -C "$BUILD_PATH" "$new_name"; then
+        echo "[SUCCESS] Build static lib success!"
         echo "Successfully created compressed package: $BUILD_OUT_PATH/$new_filename"
         # Restore original directory name
         echo "Restoring original directory name: $new_dir_path -> $static_files_dir"
