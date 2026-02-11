@@ -267,12 +267,6 @@ main() {
 
         fi
 
-        if [ "${enable_debug}" = "Debug" ]; then
-
-          cmd="${cmd} --op_debug_config=debug"
-
-        fi
-
         if [ "${enable_oom}" = "TRUE" ]; then
 
           cmd="${cmd} --op_debug_config=oom"
