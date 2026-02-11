@@ -38,7 +38,6 @@ public:
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
 
-	    this->AICore().AddConfig("ascend950");
         OpAICoreConfig config310p;
         config310p.DynamicCompileStaticFlag(true)
             .DynamicFormatFlag(true)
