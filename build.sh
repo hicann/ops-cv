@@ -594,9 +594,6 @@ set_ut_mode() {
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_HOST_UT" == "TRUE" ]]; then
     UT_TARGES+=("${REPOSITORY_NAME}_op_host_ut")
   fi
-  if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_GRAPH_UT" == "TRUE" ]]; then
-    UT_TARGES+=("${REPOSITORY_NAME}_op_graph_ut")
-  fi
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_API_UT" == "TRUE" ]]; then
     UT_TARGES+=("${REPOSITORY_NAME}_op_api_ut")
   fi
@@ -935,6 +932,8 @@ parse_changed_files() {
   echo "related ut "$related_ut
   echo "related soc_info "$soc_info
 
+  COMPUTE_UNIT=$soc_info
+
   if [[ "$related_ut" == "set()" ]]; then
     ENABLE_TEST=FALSE
     echo "no ut matched! no need to run!"
@@ -948,25 +947,22 @@ parse_changed_files() {
     echo "ALL UT is triggered!"
     return
   fi
-  if [[ "$related_ut" =~ "OP_HOST_UT" ||  "$related_ut" =~ "OP_GRAPH_UT" ]] ; then
+  if [[ ("$related_ut" =~ "OP_HOST_UT" || "$related_ut" =~ "OP_GRAPH_UT") && "$OP_HOST" == "TRUE" ]]; then
     echo "OP_HOST_UT is triggered!"
     OP_HOST_UT=TRUE
-    OP_HOST=TRUE
-    OP_GRAPH=TRUE
     OP_KERNEL_UT=TRUE
     OP_KERNEL=TRUE
+    OP_GRAPH=TRUE
     ENABLE_CUSTOM=TRUE
   fi
-  if [[ "$related_ut" =~ "OP_API_UT" ]]; then
+  if [[ "$related_ut" =~ "OP_API_UT" && "$OP_API" == "TRUE" ]]; then
     echo "OP_API_UT is triggered!"
     OP_API_UT=TRUE
-    OP_API=TRUE
     ENABLE_CUSTOM=TRUE
   fi
-  if [[ "$related_ut" =~ "OP_KERNEL_UT" ]]; then
+  if [[ "$related_ut" =~ "OP_KERNEL_UT" && "$OP_KERNEL" == "TRUE" ]]; then
     echo "OP_KERNEL_UT is triggered!"
     OP_KERNEL_UT=TRUE
-    OP_KERNEL=TRUE
     ENABLE_CUSTOM=TRUE
   fi
 }
