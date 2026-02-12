@@ -500,17 +500,10 @@
     {"name":"QuantMatmulDequant", "compute_units": ["ascend310p"], "auto_sync" : false, "compile_options": {"ascend310p":["-mllvm -cce-aicore-jump-expand=true"]}},
     {"name":"QuantGroupedMatmulDequant", "compute_units": ["ascend310p"], "auto_sync" : false, "compile_options": {"ascend310p":["-mllvm -cce-aicore-jump-expand=true"]}},
     {"name":"L2Loss", "compute_units": ["ascend950"], "auto_sync" : false,"impl_mode" : ""},
-<<<<<<< HEAD
-    {"name":"UpsampleLinear1d", "compute_units": ["ascend910b","ascend910_93","ascend950"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
+    {"name":"UpsampleLinear1d", "compute_units": ["ascend910b","ascend910_93"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"UpsampleBilinear2d", "compute_units": ["ascend910b","ascend910_93", "kirinx90", "kirin9030"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"UpsampleBilinear2dAA", "compute_units": ["ascend910b","ascend910_93", "kirinx90", "kirin9030"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
-    {"name":"UpsampleBilinear2dGrad", "compute_units": ["ascend910b","ascend910_93","ascend950"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
-=======
-    {"name":"UpsampleLinear1d", "compute_units": ["ascend910b","ascend910_93"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
-    {"name":"UpsampleBilinear2d", "compute_units": ["ascend910b","ascend910_93", "kirinx90"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
-    {"name":"UpsampleBilinear2dAA", "compute_units": ["ascend910b","ascend910_93", "kirinx90"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"UpsampleBilinear2dGrad", "compute_units": ["ascend910b","ascend910_93"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
->>>>>>> 1857928 (UpsampleBilinear2dGrad,UpsampleBicubic2d,UpsampleBicubic2dGrad,UpsampleNearest2dGrad,UpsampleLinear1d 五个算子暂不支持下一代芯片)
     {"name":"UpsampleBilinear2dAABackward", "compute_units": ["ascend910b","ascend910_93"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"CumsumCube", "compute_units": ["ascend910b","ascend910_93"], "auto_sync" : true},
     {"name":"AlltoAllAllGatherBatchMatMul", "compute_units": ["ascend910_93"], "auto_sync" : false, "compile_options": {"ascend910_93":["-DAICORE_EXCEPTION_RESTART"]}},
