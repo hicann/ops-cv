@@ -482,10 +482,15 @@ function(gen_binary_info_config_json)
   add_custom_command(
     OUTPUT ${GENBIN_INFOCFG_BIN_DIR}/bin/config/${GENBIN_INFOCFG_COMPUTE_UNIT}/binary_info_config.json
     COMMAND
-      ${ASCEND_PYTHON_EXECUTABLE} ${OPS_KERNEL_BINARY_SCRIPT}/gen_binary_info_config.py ${GENBIN_INFOCFG_BIN_DIR}/bin
+      ${CMAKE_COMMAND} -E make_directory
+      ${GENBIN_INFOCFG_BIN_DIR}/bin/config/${GENBIN_INFOCFG_COMPUTE_UNIT}
+    COMMAND
+      ${ASCEND_PYTHON_EXECUTABLE}
+      ${OPS_KERNEL_BINARY_SCRIPT}/gen_binary_info_config.py
+      ${GENBIN_INFOCFG_BIN_DIR}/bin
       ${GENBIN_INFOCFG_COMPUTE_UNIT}
-    DEPENDS ${GENBIN_INFOCFG_BIN_DIR}/bin/config
     )
+
   add_custom_target(
     ${GENBIN_INFOCFG_TARGET}
     DEPENDS ${GENBIN_INFOCFG_BIN_DIR}/bin/config/${GENBIN_INFOCFG_COMPUTE_UNIT}/binary_info_config.json
@@ -513,12 +518,8 @@ endfunction()
 # ######################################################################################################################
 # get op_type from *_def.cpp
 # ######################################################################################################################
-function(check_op_supported OP_NAME COMPUTE_UNIT OP_SUPPORTED_COMPUTE_UNIT)
-  if(ENABLE_EXPERIMENTAL)
-    set(cmd "find ${CMAKE_CURRENT_SOURCE_DIR} -name ${OP_NAME}_def.cpp -path '*/experimental/*' -exec grep '\.AddConfig(\\s*\"${COMPUTE_UNIT}\"' {} \;")
-  else()
-   set(cmd "find ${CMAKE_CURRENT_SOURCE_DIR} -name ${OP_NAME}_def.cpp ! -path '*/experimental/*' -exec grep '\.AddConfig(\\s*\"${COMPUTE_UNIT}\"' {} \;")
-  endif()
+function(check_op_supported OP_NAME OP_DIR COMPUTE_UNIT OP_SUPPORTED_COMPUTE_UNIT)
+  set(cmd "find ${OP_DIR} -name ${OP_NAME}_def.cpp -exec grep '\.AddConfig(\\s*\"${COMPUTE_UNIT}\"' {} \;")
   execute_process(
     COMMAND bash -c "${cmd}"
     OUTPUT_VARIABLE op_supported_compute_unit
@@ -587,7 +588,7 @@ function(gen_ops_info_and_python)
         endif()
 
         set(check_op_supported_result)
-        check_op_supported("${op_name}" "${compute_unit}" check_op_supported_result)
+        check_op_supported("${op_name}" "${OP_DIR}" "${compute_unit}" check_op_supported_result)
         if(NOT check_op_supported_result)
           message(STATUS "[INFO] On [${compute_unit}], [${op_name}] not supported.")
           continue()
