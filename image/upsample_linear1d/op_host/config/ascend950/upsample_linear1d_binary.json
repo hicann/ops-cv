@@ -1,0 +1,152 @@
+{
+  "op_type": "UpsampleLinear1d",
+  "op_list": [
+    {
+      "bin_filename": "UpsampleLinear1d_8e4a38fbe03a205af1e81a07cc9330d4",
+      "inputs": [
+        {
+          "name": "x",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        },
+        {
+            "name": "size",
+            "index": 1,
+            "dtype": "int32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+                -2
+            ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        }
+      ],
+      "attrs": [
+      {
+          "name": "align_corners",
+          "dtype": "bool",
+          "value": null
+      },
+      {
+          "name": "scale",
+          "dtype": "float",
+          "value": 0.0
+      }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleLinear1d_9d28fbc4d6edde5d9ec696ebb3515afd",
+      "inputs": [
+        {
+          "name": "input",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        },
+        {
+            "name": "size",
+            "index": 1,
+            "dtype": "int32",
+            "format": "ND",
+            "paramType": "required",
+            "shape": [
+                -2
+            ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        }
+      ],
+      "attrs": [
+        {
+            "name": "align_corners",
+            "dtype": "bool",
+            "value": null
+        },
+        {
+            "name": "scale",
+            "dtype": "float",
+            "value": 0.0
+        }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleLinear1d_c6c82571c09acc43bf95ccc3a3bf275b",
+      "inputs": [
+        {
+          "name": "input",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        },
+        {
+          "name": "size",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+              -2
+          ]
+        }
+      ],
+      "attrs": [
+        {
+            "name": "align_corners",
+            "dtype": "bool",
+            "value": null
+        },
+        {
+            "name": "scale",
+            "dtype": "float",
+            "value": 0.0
+        }
+      ]
+    }
+  ]
+}

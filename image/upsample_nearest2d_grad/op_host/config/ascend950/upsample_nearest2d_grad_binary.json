@@ -1,0 +1,152 @@
+{
+  "op_type": "UpsampleNearest2dGrad",
+  "op_list": [
+    {
+      "bin_filename": "UpsampleNearest2dGrad_bbdea677579383e386f0c48f860fb310",
+      "inputs": [
+        {
+          "name": "grad_output",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grad_input",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "input_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleNearest2dGrad_386ac5522512af59da8c25db451c1473",
+      "inputs": [
+        {
+          "name": "grad_output",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grad_input",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "input_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleNearest2dGrad_7b75cdef8d74d891527db32be4a4222f",
+      "inputs": [
+        {
+          "name": "grad_output",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grad_input",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "input_size",
+          "dtype": "list_int",
+          "value": []
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float",
+          "value": 0.0
+        }
+      ]
+    }
+  ]
+}
