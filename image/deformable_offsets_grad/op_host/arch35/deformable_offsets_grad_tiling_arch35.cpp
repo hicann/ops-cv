@@ -15,6 +15,8 @@
 #include "deformable_offsets_grad_tiling_arch35.h"
 #include <cstdint>
 #include "log/log.h"
+#include "util/math_util.h"
+#include "tiling_base/tiling_util.h"
 #include "register/op_impl_registry.h"
 
 using namespace std;
@@ -38,14 +40,14 @@ constexpr int32_t LIST_INDEX_0 = 0;
 constexpr int32_t LIST_INDEX_1 = 1;
 constexpr int32_t LIST_INDEX_2 = 2;
 constexpr int32_t LIST_INDEX_3 = 3;
-constexpr int32_t POINT_WEIGHT_SIZE = 3;
-constexpr int32_t POINT_NOT_WEIGHT_SIZE = 2;
-constexpr uint32_t MAX_CORE_NUM = 64;
-constexpr uint32_t VF_MAX_THREAD_NUM = 256;
-constexpr uint32_t EXCEPTED_KERNEL_SIZE = 2;
-constexpr uint32_t SYS_WORK_SPACE_SIZE = static_cast<uint32_t>(16 * 1024 * 1024);
-const std::map<ge::DataType, uint32_t> deformableOffsetDataTypeKeyMap = {
-    {ge::DT_FLOAT, 1002}, {ge::DT_FLOAT16, 1001}, {ge::DT_BF16, 1000}};
+constexpr int64_t POINT_WEIGHT_SIZE = 3;
+constexpr int64_t POINT_NOT_WEIGHT_SIZE = 2;
+constexpr int64_t MAX_INT32 = 2147483647; // INT32最大值
+constexpr int64_t MAX_CORE_NUM = 64;
+constexpr int64_t VF_MAX_THREAD_NUM = 256;
+constexpr int64_t EXCEPTED_KERNEL_SIZE = 2;
+constexpr int64_t SYS_WORK_SPACE_SIZE = static_cast<int64_t>(16 * 1024 * 1024);
+constexpr int64_t SCH_KEY = 1000; // 基础tilingkey为1000
 
 class DeformableOffsetsGradAscendCTilingImpl {
 public:
@@ -75,43 +77,45 @@ private:
     int64_t padsWidthRight_ = 0;
     int64_t dimKh_ = 0;
     int64_t dimKw_ = 0;
+    int64_t gradSize_ = 0;
+    int64_t xSize_ = 0;
+    int64_t offsetSize_ = 0;
+    int64_t gradBatchNum_ = 0;
+    int64_t gradWidth_ = 0;
+    int64_t gradHeight_ = 0;
+    int64_t imgBatchNum_ = 0;
+    int64_t imgChannel_ = 0;
+    int64_t imgWidth_ = 0;
+    int64_t imgHeight_ = 0;
 
-    uint32_t gradBatchNum_ = 0;
-    uint32_t gradWidth_ = 0;
-    uint32_t gradHeight_ = 0;
-    uint32_t imgBatchNum_ = 0;
-    uint32_t imgChannel_ = 0;
-    uint32_t imgWidth_ = 0;
-    uint32_t imgHeight_ = 0;
+    int64_t imgOutBatchNum_ = 0;
+    int64_t imgOutHeight_ = 0;
+    int64_t imgOutWidth_ = 0;
+    int64_t offsetBatchNum_ = 0;
+    int64_t offsetWidth_ = 0;
+    int64_t offsetHeight_ = 0;
+    int64_t offsetChannel_ = 0;
+    int64_t offsetValueDim_ = 0;
+    int64_t deformableGroups_ = 0;
+    int64_t deformableGroupsAttr_ = 0;
 
-    uint32_t imgOutBatchNum_ = 0;
-    uint32_t imgOutHeight_ = 0;
-    uint32_t imgOutWidth_ = 0;
-    uint32_t offsetBatchNum_ = 0;
-    uint32_t offsetWidth_ = 0;
-    uint32_t offsetHeight_ = 0;
-    uint32_t offsetChannel_ = 0;
-    uint32_t offsetValueDim_ = 0;
-    uint32_t deformableGroups_ = 0;
-    uint32_t deformableGroupsAttr_ = 0;
+    int64_t numKernels_ = 0;
+    int64_t realCoreNum_ = 0;
+    int64_t realUseCoreNum_ = 0;
+    int64_t blockFactor_ = 0;
+    int64_t blockFactorTail_ = 0;
 
-    uint32_t numKernels_ = 0;
-    uint32_t realCoreNum_ = 0;
-    uint32_t realUseCoreNum_ = 0;
-    uint32_t blockFactor_ = 0;
-    uint32_t blockFactorTail_ = 0;
+    int64_t outputGradXSize_ = 0;
+    int64_t clearGradXCoreNum_ = 0;
+    int64_t gradXFactor_ = 0;
+    int64_t gradXFactorTail_ = 0;
 
-    uint32_t outputGradXSize_ = 0;
-    uint32_t clearGradXCoreNum_ = 0;
-    uint32_t gradXFactor_ = 0;
-    uint32_t gradXFactorTail_ = 0;
-
-    uint32_t outputGradOffsetsSize_ = 0;
-    uint32_t clearGradOffsetsCoreNum_ = 0;
-    uint32_t gradOffsetsFactor_ = 0;
-    uint32_t gradOffsetsFactorTail_ = 0;
-    uint32_t maxCoreNum_ = 0;
-    uint32_t dataTypeKey_ = 0;
+    int64_t outputGradOffsetsSize_ = 0;
+    int64_t clearGradOffsetsCoreNum_ = 0;
+    int64_t gradOffsetsFactor_ = 0;
+    int64_t gradOffsetsFactorTail_ = 0;
+    int64_t maxCoreNum_ = 0;
+    int64_t dataTypeKey_ = SCH_KEY;
     bool isModulated_ = false;
 
     gert::TilingContext* context_ = nullptr;
@@ -121,7 +125,7 @@ private:
 ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::Init(const int64_t coreNum)
 {
     OP_LOGD(context_->GetNodeName(), "DeformableOffsetsGradTiling start");
-    maxCoreNum_ = static_cast<uint32_t>(coreNum);
+    maxCoreNum_ = static_cast<int64_t>(coreNum);
     DeformableOffsetsGradOffset deformableOffsetsGradOffset;
     // input data Format
     auto primaryFormatPtr = context_->GetInputDesc(INPUT_X_INDEX);
@@ -132,18 +136,12 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::Init(const int64_t coreN
         return ge::GRAPH_FAILED);
     auto inputXDataTypePtr = context_->GetInputDesc(INPUT_X_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputXDataTypePtr);
-    auto inputXDataType = inputXDataTypePtr->GetDataType();
-    auto iter = deformableOffsetDataTypeKeyMap.find(inputXDataType);
-    if (iter != deformableOffsetDataTypeKeyMap.end()) {
-        dataTypeKey_ = iter->second;
-    } else {
-        OP_LOGE(context_->GetNodeName(), "inputX dataType is not supported.");
-        return ge::GRAPH_FAILED;
-    }
     OP_CHECK_IF(
         GetinputInfoAndCheck() != ge::GRAPH_SUCCESS,
         OP_LOGE(context_->GetNodeName(), "input info get failed or check failed."), return ge::GRAPH_FAILED);
-
+    if (gradSize_ > MAX_INT32 || xSize_ > MAX_INT32 || offsetSize_ > MAX_INT32) {
+        dataTypeKey_ = SCH_KEY + 1;
+    }
     OP_CHECK_IF(
         GetOutputInfoAndCheck(deformableOffsetsGradOffset) != ge::GRAPH_SUCCESS,
         OP_LOGE(context_->GetNodeName(), "output info get failed or check failed."), return ge::GRAPH_FAILED);
@@ -157,13 +155,13 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::Init(const int64_t coreN
         GetAttrInfoAndCheck() != ge::GRAPH_SUCCESS,
         OP_LOGE(context_->GetNodeName(), "attribute value get fail or check failed."), return ge::GRAPH_FAILED);
 
-    offsetValueDim_ = static_cast<uint32_t>(isModulated_ ? POINT_WEIGHT_SIZE : POINT_NOT_WEIGHT_SIZE);
-    deformableGroups_ = static_cast<uint32_t>(offsetChannel_ / (dimKh_ * dimKw_ * offsetValueDim_));
+    offsetValueDim_ = isModulated_ ? POINT_WEIGHT_SIZE : POINT_NOT_WEIGHT_SIZE;
+    deformableGroups_ = offsetChannel_ / (dimKh_ * dimKw_ * offsetValueDim_);
 
     // conved img
-    imgOutHeight_ = static_cast<uint32_t>(
+    imgOutHeight_ = static_cast<int64_t>(
         (imgHeight_ + padsHeightUp_ + padsHeightDown_ - (dilationH_ * (dimKh_ - 1) + 1)) / strideH_ + 1);
-    imgOutWidth_ = static_cast<uint32_t>(
+    imgOutWidth_ = static_cast<int64_t>(
         (imgWidth_ + padsWidthLeft_ + padsWidthRight_ - (dilationW_ * (dimKw_ - 1) + 1)) / strideW_ + 1);
 
     OP_CHECK_IF(
@@ -180,33 +178,36 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::GetinputInfoAndCheck()
     OP_CHECK_IF(
         inputGrad == nullptr, OP_LOGE(context_->GetNodeName(), "Get input grad failed"), return ge::GRAPH_FAILED);
     const gert::Shape& inputGradShape = inputGrad->GetStorageShape();
-    uint32_t inputGradShapeDims = inputGradShape.GetDimNum();
+    int64_t inputGradShapeDims = inputGradShape.GetDimNum();
     // get input x shape info
     auto inputX = context_->GetInputShape(INPUT_X_INDEX);
     OP_CHECK_IF(inputX == nullptr, OP_LOGE(context_->GetNodeName(), "Get input x failed"), return ge::GRAPH_FAILED);
     const gert::Shape& inputXShape = inputX->GetStorageShape();
-    uint32_t inputXShapeDims = inputXShape.GetDimNum();
+    int64_t inputXShapeDims = inputXShape.GetDimNum();
     // get input offsets shape info
     auto inputDescPtr = context_->GetInputDesc(INPUT_OFFSET_INDEX);
     OP_CHECK_IF(
         inputDescPtr == nullptr, OP_LOGE(context_->GetNodeName(), "Get input offsets failed"), return ge::GRAPH_FAILED);
-    auto inputOffsetsDataType = inputDescPtr->GetDataType();
+    auto offsetsDType = inputDescPtr->GetDataType();
     OP_CHECK_IF(
-        deformableOffsetDataTypeKeyMap.count(inputOffsetsDataType) == 0,
+        (offsetsDType != ge::DT_FLOAT) && (offsetsDType != ge::DT_FLOAT16) && (offsetsDType != ge::DT_BF16),
         OP_LOGE(context_->GetNodeName(), "offsets not support data type"), return ge::GRAPH_FAILED);
     auto inputOffset = context_->GetInputShape(INPUT_OFFSET_INDEX);
     OP_CHECK_IF(
         inputOffset == nullptr, OP_LOGE(context_->GetNodeName(), "Get input offsets failed"), return ge::GRAPH_FAILED);
     const gert::Shape& inputOffsetShape = inputOffset->GetStorageShape();
-    uint32_t inputOffsetShapeDims = inputOffsetShape.GetDimNum();
+    int64_t inputOffsetShapeDims = inputOffsetShape.GetDimNum();
     // check shape and format
     OP_CHECK_IF(
-        inputXShapeDims != static_cast<uint32_t>(DIM_NUM_4D) ||
-            inputOffsetShapeDims != static_cast<uint32_t>(DIM_NUM_4D) ||
-            inputGradShapeDims != static_cast<uint32_t>(DIM_NUM_4D),
+        inputXShapeDims != static_cast<int64_t>(DIM_NUM_4D) ||
+            inputOffsetShapeDims != static_cast<int64_t>(DIM_NUM_4D) ||
+            inputGradShapeDims != static_cast<int64_t>(DIM_NUM_4D),
         OP_LOGE(context_->GetNodeName(), "grad or inputX or offsets shape check failed"), return ge::GRAPH_FAILED);
+    gradSize_ = inputGradShape.GetShapeSize();
+    xSize_ = inputXShape.GetShapeSize();
+    offsetSize_ = inputOffsetShape.GetShapeSize();
     OP_CHECK_IF(
-        inputGradShape.GetShapeSize() == 0 || inputXShape.GetShapeSize() == 0 || inputOffsetShape.GetShapeSize() == 0,
+        gradSize_ == 0 || xSize_ == 0 || offsetSize_ == 0,
         OP_LOGE(context_->GetNodeName(), "grad, inputX, offsets not support empty tensor."), return ge::GRAPH_FAILED);
     // input x info
     gradBatchNum_ = inputGradShape.GetDim(LIST_INDEX_0);
@@ -235,15 +236,17 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::GetOutputInfoAndCheck(
     auto outputGradXDataType = outputGradXDescPtr->GetDataType();
     auto outputGradOffsetDescPtr = context_->GetOutputDesc(OUTPUT_GRAD_OFFSETS_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputGradOffsetDescPtr);
-    auto outputGradOffsetsDataType = outputGradOffsetDescPtr->GetDataType();
+    auto outGradOffsetsType = outputGradOffsetDescPtr->GetDataType();
     auto outputGradOffsetsShapeInfoPtr = context_->GetOutputShape(OUTPUT_GRAD_OFFSETS_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputGradOffsetsShapeInfoPtr);
     auto outputGradOffsetsShapeInfo = outputGradOffsetsShapeInfoPtr->GetStorageShape();
     OP_CHECK_IF(
-        deformableOffsetDataTypeKeyMap.count(outputGradOffsetsDataType) == 0 ||
-            deformableOffsetDataTypeKeyMap.count(outputGradXDataType) == 0,
+        (outGradOffsetsType != ge::DT_FLOAT) &&
+            (outGradOffsetsType != ge::DT_FLOAT16) && (outGradOffsetsType != ge::DT_BF16),
         OP_LOGE(context_->GetNodeName(), "Not support output data type"), return ge::GRAPH_FAILED);
-
+    OP_CHECK_IF(outGradOffsetsType != outputGradXDataType,
+        OP_LOGE(context_->GetNodeName(), "outGradOffset dtype not same as outputGradX dtype"),
+        return ge::GRAPH_FAILED);
     deformableOffsetsGradOffset.gradOffsetsBatchNum = outputGradOffsetsShapeInfo.GetDim(LIST_INDEX_0);
     deformableOffsetsGradOffset.gradOffsetsImgOutHeight = outputGradOffsetsShapeInfo.GetDim(LIST_INDEX_1);
     deformableOffsetsGradOffset.gradOffsetsImgOutWidth = outputGradOffsetsShapeInfo.GetDim(LIST_INDEX_2);
@@ -283,7 +286,7 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::GetAttrInfoAndCheck() {
     auto deformableGroupsPtr = attrs->GetAttrPointer<int>(DEFORMABLE_GROUPS_ATTR_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, deformableGroupsPtr);
     deformableGroupsAttr_ = *deformableGroupsPtr;
-    OP_CHECK_IF(deformableGroupsAttr_ <= static_cast<uint32_t>(0),
+    OP_CHECK_IF(deformableGroupsAttr_ <= 0,
         OP_LOGE(context_->GetNodeName(), "Deformable groups must be greater than 0"), return ge::GRAPH_FAILED);
     strideH_ = stridesData[LIST_INDEX_1];
     strideW_ = stridesData[LIST_INDEX_2];
@@ -325,8 +328,8 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::UpdateStrideAndDilationB
         OP_LOGE(context_->GetNodeName(), "Stride or dilation data index 0 value must equal to 1"),
         return ge::GRAPH_FAILED);
 
-    uint32_t offsetHeightSame = offsetHeight_ * static_cast<uint32_t>(dimKh_);
-    uint32_t offsetWidthSame = offsetWidth_ * static_cast<uint32_t>(dimKw_);
+    int64_t offsetHeightSame = offsetHeight_ * static_cast<int64_t>(dimKh_);
+    int64_t offsetWidthSame = offsetWidth_ * static_cast<int64_t>(dimKw_);
 
     OP_CHECK_IF(
         gradHeight_ != offsetHeightSame,
@@ -348,7 +351,7 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::GetParameterAndCheck(
         return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(
-        imgOutHeight_ <= static_cast<uint32_t>(0) || imgOutWidth_ <= static_cast<uint32_t>(0),
+        imgOutHeight_ <= static_cast<int64_t>(0) || imgOutWidth_ <= static_cast<int64_t>(0),
         OP_LOGE(
             context_->GetNodeName(),
             "Img outputShape must greater than 0, please use appropriate parameters for inputShape, pads, dilation,\
@@ -391,7 +394,7 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::GetParameterAndCheck(
 ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::DoTiling()
 {
     numKernels_ =
-        static_cast<uint32_t>(imgBatchNum_ * imgOutHeight_ * imgOutWidth_ * deformableGroups_ * dimKh_ * dimKw_);
+        static_cast<int64_t>(imgBatchNum_ * imgOutHeight_ * imgOutWidth_ * deformableGroups_ * dimKh_ * dimKw_);
     realCoreNum_ = (numKernels_ < maxCoreNum_) ? numKernels_ : maxCoreNum_;
     blockFactor_ = numKernels_ / realCoreNum_;
     blockFactorTail_ = numKernels_ - blockFactor_ * realCoreNum_;
@@ -401,7 +404,7 @@ ge::graphStatus DeformableOffsetsGradAscendCTilingImpl::DoTiling()
     gradXFactor_ = outputGradXSize_ / clearGradXCoreNum_;
     gradXFactorTail_ = outputGradXSize_ - gradXFactor_ * clearGradXCoreNum_;
 
-    outputGradOffsetsSize_ = static_cast<uint32_t>(numKernels_ * POINT_WEIGHT_SIZE);
+    outputGradOffsetsSize_ = numKernels_ * POINT_WEIGHT_SIZE;
     clearGradOffsetsCoreNum_ = (outputGradOffsetsSize_ < maxCoreNum_) ? outputGradOffsetsSize_ : maxCoreNum_;
     gradOffsetsFactor_ = outputGradOffsetsSize_ / clearGradOffsetsCoreNum_;
     gradOffsetsFactorTail_ = outputGradOffsetsSize_ - gradOffsetsFactor_ * clearGradOffsetsCoreNum_;
@@ -498,7 +501,7 @@ static ge::graphStatus Tiling4DeformableOffsetsGrad(gert::TilingContext* context
     OP_CHECK_NULL_WITH_CONTEXT(context, compile_info);
 
     OP_LOGD(context->GetNodeName(), "AscendC deformable offsets grad simt tiling");
-    int32_t maxCoreNum = static_cast<int32_t>(compile_info->coreNum);
+    int64_t maxCoreNum = compile_info->coreNum;
     return DeformableOffsetsGradTilingForAscendC(context, maxCoreNum);
 }
 

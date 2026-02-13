@@ -14,27 +14,24 @@
  */
 #include "arch35/deformable_offsets_grad.h"
 
-#define TILING_KEY_SIMIT_MODE_BFLOAT16 1000
-#define TILING_KEY_SIMIT_MODE_FLOAT16 1001
-#define TILING_KEY_SIMIT_MODE_FLOAT32 1002
+#define TILING_KEY_SIMIT_MODE_INT32 1000
+#define TILING_KEY_SIMIT_MODE_INT64 1001
 
 using namespace DeformableOffsetsGrad;
 extern "C" __global__ __aicore__ void deformable_offsets_grad(
     GM_ADDR grad, GM_ADDR x, GM_ADDR offsets, GM_ADDR grad_x, GM_ADDR grad_offsets, GM_ADDR workspace, GM_ADDR tiling)
 {
     GET_TILING_DATA(tilingData, tiling);
-    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
-    if (TILING_KEY_IS(TILING_KEY_SIMIT_MODE_FLOAT32)) {
-        DeformableOffsetsGrad::DeformableOffsetGrad<float> DeformableOffsetGradObject;
-        DeformableOffsetGradObject.Init(grad, x, offsets, grad_x, grad_offsets, &tilingData);
-        DeformableOffsetGradObject.Process();
-    } else if (TILING_KEY_IS(TILING_KEY_SIMIT_MODE_FLOAT16)) {
-        DeformableOffsetsGrad::DeformableOffsetGrad<half> DeformableOffsetGradObject;
-        DeformableOffsetGradObject.Init(grad, x, offsets, grad_x, grad_offsets, &tilingData);
-        DeformableOffsetGradObject.Process();
-    } else if (TILING_KEY_IS(TILING_KEY_SIMIT_MODE_BFLOAT16)) {
-        DeformableOffsetsGrad::DeformableOffsetGrad<bfloat16_t> DeformableOffsetGradObject;
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIV_1_0);
+    if (TILING_KEY_IS(TILING_KEY_SIMIT_MODE_INT32)) {
+        DeformableOffsetsGrad::DeformableOffsetGrad<DTYPE_GRAD, int32_t> DeformableOffsetGradObject;
         DeformableOffsetGradObject.Init(grad, x, offsets, grad_x, grad_offsets, &tilingData);
         DeformableOffsetGradObject.Process();
     }
+    if (TILING_KEY_IS(TILING_KEY_SIMIT_MODE_INT64)) {
+        DeformableOffsetsGrad::DeformableOffsetGrad<DTYPE_GRAD, int64_t> DeformableOffsetGradObject;
+        DeformableOffsetGradObject.Init(grad, x, offsets, grad_x, grad_offsets, &tilingData);
+        DeformableOffsetGradObject.Process();
+    }
+    return;
 }
