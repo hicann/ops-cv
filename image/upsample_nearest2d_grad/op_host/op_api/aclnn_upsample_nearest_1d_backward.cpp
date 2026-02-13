@@ -157,6 +157,17 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
+static bool isUpsampleCompute(const aclTensor* gradOut, int64_t inputL, int64_t gradOutL, double scale)
+{
+    if (GetCurrentPlatformInfo().GetCurNpuArch() != NpuArch::DAV_2201) {
+        return false;
+    }
+    if (!CheckType(gradOut->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
+        return false;
+    }
+    return scale > 0;
+}
+
 static const aclTensor* View4dAs3d(const aclTensor* input, const aclTensor* out, bool ifAiCpu, aclOpExecutor* executor)
 {
     // NCHW -> squeeze -> reformat -> NCL
@@ -230,12 +241,10 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
     }
     const aclTensor* out3d = nullptr;
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    bool isExactSupport = curArch == NpuArch::DAV_2201;
     const int64_t inputL = (*inputSize)[DIM_TWO];
     const int64_t gradOutL = gradOut->GetViewShape().GetDim(DIM_TWO);
     bool check_scales = scales > FLOAT_ZERO ? static_cast<int64_t>(inputL * scales) == gradOutL : true;
-    if (CheckType(gradOut->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) && scales > FLOAT_ZERO && isExactSupport &&
-        check_scales) {
+    if (isUpsampleCompute(gradOut, inputL, gradOutL, scales) && check_scales) {
         auto gradOutContiguous = View3dAs4d(gradOut, false, uniqueExecutor.get());
         CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -250,13 +259,24 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
         CHECK_RET(outputSizeArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
-        const float realScales_w = scales > 0 ? static_cast<float>(scales) : 0;
+        const float realScales_w = static_cast<float>(scales);
         const float realScales_h = static_cast<float>(1.0);
+        // 升精度计算
+        auto dataType = gradOut->GetDataType();
+        if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+            gradOutContiguous = l0op::Cast(gradOutContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
+            CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
         // 调用算子计算
         const aclTensor* upsampleOut = l0op::UpsampleNearestExact2dGrad(
             gradOutContiguous, outputSizeArray, inputSizeArray, const_cast<aclTensor*>(outContiguous), realScales_h,
             realScales_w, false, uniqueExecutor.get());
         CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        // 转回初始精度
+        if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+            upsampleOut = l0op::Cast(upsampleOut, dataType, uniqueExecutor.get());
+            CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
         const aclTensor* resizeNearestOut = nullptr;
         resizeNearestOut = l0op::TransData(upsampleOut, outContiguous->GetStorageFormat(), 0, uniqueExecutor.get());
         CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);

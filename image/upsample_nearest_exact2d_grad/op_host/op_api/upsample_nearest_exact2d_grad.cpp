@@ -25,18 +25,31 @@ namespace l0op {
 OP_TYPE_REGISTER(UpsampleNearestExact2dGrad);
 OP_TYPE_REGISTER(UpsampleNearest2dGrad);
 
+static constexpr size_t DIM_H = 2;
+static constexpr size_t DIM_W = 3;
+
 const aclTensor* UpsampleNearestExact2dGrad(
     const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize, aclTensor* output,
     float scales_h, float scales_w, bool isExact, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleNearestExact2dGrad, gradOutput, outputSize, inputSize, output, scales_h, scales_w);
-    auto dataType = gradOutput->GetDataType();
-    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
-        gradOutput = l0op::Cast(gradOutput, op::DataType::DT_FLOAT, executor);
-    }
 
-    const aclTensor* out =
-        executor->AllocTensor(output->GetViewShape(), gradOutput->GetDataType(), output->GetStorageFormat());
+    Shape gradOutputStorageShape = gradOutput->GetStorageShape();
+    Shape gradOutputOriginalShape = gradOutput->GetOriginalShape();
+    Format gradOutputStorageFormat = gradOutput->GetStorageFormat();
+    Format gradOutputOriginalFormat = gradOutput->GetOriginalFormat();
+
+    gradOutputStorageShape.SetDim(DIM_H, (*inputSize)[DIM_H]);
+    gradOutputStorageShape.SetDim(DIM_W, (*inputSize)[DIM_W]);
+    gradOutputOriginalShape.SetDim(DIM_H, (*inputSize)[DIM_H]);
+    gradOutputOriginalShape.SetDim(DIM_W, (*inputSize)[DIM_W]);
+
+    const aclTensor* out = executor->AllocTensor(
+        gradOutputStorageShape,
+        gradOutputOriginalShape,
+        gradOutput->GetDataType(),
+        gradOutputStorageFormat,
+        gradOutputOriginalFormat);
     CHECK_RET(out != nullptr, nullptr);
 
     if (isExact) {
@@ -47,12 +60,6 @@ const aclTensor* UpsampleNearestExact2dGrad(
         ADD_TO_LAUNCHER_LIST_AICORE(
             UpsampleNearest2dGrad, OP_INPUT(gradOutput), OP_OUTPUT(out),
             OP_ATTR(outputSize, inputSize, scales_h, scales_w));
-    }
-
-    if (op::DataType::DT_BF16 == dataType) {
-        out = l0op::Cast(out, op::DataType::DT_BF16, executor);
-    } else if (op::DataType::DT_FLOAT16 == dataType) {
-        out = l0op::Cast(out, op::DataType::DT_FLOAT16, executor);
     }
     return out;
 }

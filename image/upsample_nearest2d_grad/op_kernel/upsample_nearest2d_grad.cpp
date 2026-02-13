@@ -17,6 +17,7 @@
 #include "../../upsample_nearest_exact2d_grad/op_kernel/upsample_nearest_exact2d_grad.h"
 #else
 #include "../upsample_nearest_exact2d_grad/upsample_nearest_exact2d_grad.h"
+#include "../upsample_nearest_exact2d_grad/upsample_nearest_exact2d_grad_transpose.h"
 #endif
 
 using namespace UpSampleNearestExact2dGrad;
@@ -24,34 +25,46 @@ using namespace UpSampleNearestExact2dGrad;
 extern "C" __global__ __aicore__ void upsample_nearest2d_grad(
     GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
 {
-    GET_TILING_DATA(tilingData, tiling);
-    const UpsampleNearestExact2dGradTilingData* __restrict tiling_data = &tilingData;
-    const TCubeTiling* __restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
-    const TCubeTiling* __restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
-
     GM_ADDR userWS = GetUserWorkspace(workspace);
     if (userWS == nullptr) {
         return;
     }
     if (TILING_KEY_IS(1)) {
-        if (tiling_data->dataType == 1) {
-            UpSampleNearestExact2dGradND<half> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
-            op.Init(input, output, false, userWS, &tilingData);
+        GET_TILING_DATA_WITH_STRUCT(UpsampleNearestExact2dGradTilingData, tilingData, tiling);
+        const UpsampleNearestExact2dGradTilingData* __restrict tiling_data = &tilingData;
+        const TCubeTiling* __restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
+        const TCubeTiling* __restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
+        UpSampleNearestExact2dGradND<DTYPE_GRAD_OUTPUT> op;
+        REGIST_MATMUL_OBJ(
+            &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+        op.Init(input, output, false, userWS, &tilingData);
+        op.Process();
+    }
+#ifndef __CCE_KT_TEST__
+    if (TILING_KEY_IS(100)) {
+        if ASCEND_IS_AIV {
+            TPipe pipe;
+            GET_TILING_DATA_WITH_STRUCT(UpsampleNearestExact2dGradTransposeTilingData, tilingData, tiling);
+            UpSampleNearestExact2dGradTranspose<DTYPE_GRAD_OUTPUT, false, false> op;
+            op.Init(input, output, userWS, &pipe, &tilingData);
             op.Process();
-        } else if (tiling_data->dataType == 2) {
-            UpSampleNearestExact2dGradND<float> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
-            op.Init(input, output, false, userWS, &tilingData);
+        }
+    } else if (TILING_KEY_IS(101)) {
+        if ASCEND_IS_AIV {
+            TPipe pipe;
+            GET_TILING_DATA_WITH_STRUCT(UpsampleNearestExact2dGradTransposeTilingData, tilingData, tiling);
+            UpSampleNearestExact2dGradTranspose<DTYPE_GRAD_OUTPUT, false, true> op;
+            op.Init(input, output, userWS, &pipe, &tilingData);
             op.Process();
-        } else if (tiling_data->dataType == 3) {
-            UpSampleNearestExact2dGradND<bfloat16_t> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
-            op.Init(input, output, false, userWS, &tilingData);
+        }
+    } else if (TILING_KEY_IS(110)) {
+        if ASCEND_IS_AIV {
+            TPipe pipe;
+            GET_TILING_DATA_WITH_STRUCT(UpsampleNearestExact2dGradTransposeTilingData, tilingData, tiling);
+            UpSampleNearestExact2dGradTranspose<DTYPE_GRAD_OUTPUT, true, false> op;
+            op.Init(input, output, userWS, &pipe, &tilingData);
             op.Process();
         }
     }
+#endif
 }

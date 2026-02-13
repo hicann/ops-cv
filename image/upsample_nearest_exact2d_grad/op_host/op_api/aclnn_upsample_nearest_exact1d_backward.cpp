@@ -234,8 +234,6 @@ aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
     auto outContiguous = View3dAs4d(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
     const int64_t inputSizeList[] = {(*inputSize)[DIM_ZERO], (*inputSize)[DIM_ONE], 1, (*inputSize)[DIM_TWO]};
     auto inputSizeArray = uniqueExecutor.get()->AllocIntArray(inputSizeList, 4);
     CHECK_RET(inputSizeArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -246,11 +244,26 @@ aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
     // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
     const float realScales_w = scales > 0 ? static_cast<float>(scales) : 0;
     const float realScales_h = static_cast<float>(1.0);
+
+    // 升精度计算
+    auto dataType = gradOutput->GetDataType();
+    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+        selfContiguous = l0op::Cast(selfContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
+        CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
+
     // 调用算子计算
     const aclTensor* upsampleOut = l0op::UpsampleNearestExact2dGrad(
         selfContiguous, outputSizeArray, inputSizeArray, const_cast<aclTensor*>(outContiguous), realScales_h,
         realScales_w, true, uniqueExecutor.get());
     CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+    // 转回初始精度
+    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+        upsampleOut = l0op::Cast(upsampleOut, dataType, uniqueExecutor.get());
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
+
     const aclTensor* resizeNearestOut = nullptr;
     resizeNearestOut = l0op::TransData(upsampleOut, outContiguous->GetStorageFormat(), 0, uniqueExecutor.get());
     CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);

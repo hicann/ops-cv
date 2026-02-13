@@ -31,7 +31,8 @@ public:
             .ParamType(REQUIRED)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
+            .InitValue({{ScalarType::FLOAT16, 0}, {ScalarType::FLOAT16, 0}, {ScalarType::FLOAT32, 0}});
         this->Attr("output_size").AttrType(REQUIRED).ListInt();
         this->Attr("input_size").AttrType(REQUIRED).ListInt();
         this->Attr("scales_h").AttrType(OPTIONAL).Float();

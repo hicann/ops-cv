@@ -16,12 +16,23 @@
 #ifndef OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_NEAREST_EXACT2D_GRAD_TILING_H
 #define OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_NEAREST_EXACT2D_GRAD_TILING_H
 
+#include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 
 namespace optiling {
 
 constexpr uint16_t MAX_CORE_CONT = 50;
+constexpr int8_t SHAPE_SIZE = 4;
+constexpr int8_t N_INDEX = 0;
+constexpr int8_t C_INDEX = 1;
+constexpr int8_t H_INDEX = 2;
+constexpr int8_t W_INDEX = 3;
+
+constexpr float ZERO_FLOAT = 0.0f;
+constexpr uint8_t SCHEDULE_MODE = 1;
+const std::string EXACT_2D_GRAD_TYPE = "UpsampleNearestExact2dGrad";
+
 struct UpsampleNearestExact2dGradCompileInfo {
     uint32_t coreNum;
 };
@@ -70,6 +81,57 @@ END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(UpsampleNearestExact2dGrad, UpsampleNearestExact2dGradTilingData);
 REGISTER_TILING_DATA_CLASS(UpsampleNearest2dGrad, UpsampleNearestExact2dGradTilingData);
 
-} // namespace optiling
+BEGIN_TILING_DATA_DEF(UpsampleNearestExact2dGradTransposeTilingData)
+TILING_DATA_FIELD_DEF(int64_t, slideSize);
+TILING_DATA_FIELD_DEF(int64_t, slideSizeH);
+TILING_DATA_FIELD_DEF(int64_t, slideSizeW);
+TILING_DATA_FIELD_DEF(float, scaleH);
+TILING_DATA_FIELD_DEF(float, scaleW);
+TILING_DATA_FIELD_DEF(float, realScaleH);
+TILING_DATA_FIELD_DEF(float, realScaleW);
+TILING_DATA_FIELD_DEF(int64_t, needCoreNum);
+TILING_DATA_FIELD_DEF(int64_t, batches);
+TILING_DATA_FIELD_DEF(bool, isHResizeSmall);
+TILING_DATA_FIELD_DEF(bool, isWResizeSmall);
+TILING_DATA_FIELD_DEF(bool, isHAlign);
+TILING_DATA_FIELD_DEF(bool, isWAlign);
 
+TILING_DATA_FIELD_DEF_ARR(int64_t, 4, input_shapes);
+TILING_DATA_FIELD_DEF_ARR(int64_t, 4, output_shapes);
+TILING_DATA_FIELD_DEF_ARR(int64_t, MAX_CORE_CONT, startW);
+TILING_DATA_FIELD_DEF_ARR(int64_t, MAX_CORE_CONT, endW);
+TILING_DATA_FIELD_DEF_ARR(int64_t, MAX_CORE_CONT, startH);
+TILING_DATA_FIELD_DEF_ARR(int64_t, MAX_CORE_CONT, endH);
+TILING_DATA_FIELD_DEF_ARR(int64_t, MAX_CORE_CONT, startBatches);
+TILING_DATA_FIELD_DEF_ARR(int64_t, MAX_CORE_CONT, endBatches);
+END_TILING_DATA_DEF;
+
+REGISTER_TILING_DATA_CLASS(UpsampleNearest2dGrad_100, UpsampleNearestExact2dGradTransposeTilingData);
+REGISTER_TILING_DATA_CLASS(UpsampleNearest2dGrad_101, UpsampleNearestExact2dGradTransposeTilingData);
+REGISTER_TILING_DATA_CLASS(UpsampleNearest2dGrad_110, UpsampleNearestExact2dGradTransposeTilingData);
+
+ge::graphStatus tiling4UpsampleNearestExact2dGradTransposeTiling(gert::TilingContext* context);
+
+inline float compute_scale_value(int64_t in_size, int64_t out_size, const float* scale)
+{
+    if (scale != nullptr && *scale > 0) {
+        return static_cast<float>(*scale);
+    } else {
+        if (out_size > 0) {
+            return static_cast<float>(in_size) / out_size;
+        }
+    }
+    return ZERO_FLOAT;
+}
+
+inline bool FloatEqual(float a, float b)
+{
+    float closeTo0 = float(1e-6);
+    if (a > b) {
+        return a - b < closeTo0;
+    } else {
+        return b - a < closeTo0;
+    }
+}
+} // namespace optiling
 #endif

@@ -44,15 +44,7 @@ constexpr uint64_t DATE_TYPE_FLOAT16 = 1;
 constexpr uint64_t DATE_TYPE_FLOAT = 2;
 constexpr uint64_t DATE_TYPE_HALF = 3;
 
-constexpr int8_t SHAPE_SIZE = 4;
-constexpr int8_t N_INDEX = 0;
-constexpr int8_t C_INDEX = 1;
-constexpr int8_t H_INDEX = 2;
-constexpr int8_t W_INDEX = 3;
 constexpr int32_t RESERVED_VALUE = 4;
-
-constexpr float ZERO_FLOAT = 0.0f;
-constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleNearestExact2dGradTiling
 {
@@ -63,7 +55,6 @@ public:
 
 private:
     void setScale();
-    inline float compute_scale_value(int64_t in_size, int64_t out_size, const float *scale) const;
     void getWorkSpace(uint32_t needCoreNum);
     void getOutputShape();
     void getSlideSize();
@@ -73,6 +64,7 @@ private:
     uint32_t GetNeedCoreNum(uint32_t coreNumPlatform);
     uint32_t GetNeedCoreNumW(uint32_t coreNumPlatform);
     uint32_t GetNeedCoreNumH(uint32_t coreNumPlatform);
+    bool CheckTranspose();
     void FillTilingData();
     void getTCubeTiling_w();
     void getTCubeTiling_h();
@@ -124,16 +116,6 @@ private:
     int32_t singleCoreK_h = 0;
 };
 
-inline bool FloatEqual(float a, float b)
-{
-    float closeTo0 = float(1e-6);
-    if (a > b) {
-        return a - b < closeTo0;
-    } else {
-        return b - a < closeTo0;
-    }
-};
-
 void UpsampleNearestExact2dGradTiling::setScale()
 {
     if (dim == H_INDEX) {
@@ -152,21 +134,12 @@ void UpsampleNearestExact2dGradTiling::setScale()
     }
 }
 
-inline float UpsampleNearestExact2dGradTiling::compute_scale_value(
-    int64_t in_size, int64_t out_size, const float *scale) const
-{
-    if (scale != nullptr && *scale > 0) {
-        return static_cast<float>(*scale);
-    } else {
-        if (out_size > 0) {
-            return static_cast<float>(in_size) / out_size;
-        }
-    }
-    return ZERO_FLOAT;
-}
-
 ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
 {
+    if (CheckTranspose()) {
+        OP_LOGI(tilingContext->GetNodeName(), "Enter tiling4UpsampleNearestExact2dGradTranspose");
+        return tiling4UpsampleNearestExact2dGradTransposeTiling(tilingContext);
+    }
     auto srcTensor = tilingContext->GetInputTensor(0);
     if (srcTensor == nullptr) {
         return ge::GRAPH_FAILED;
@@ -218,6 +191,16 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
     tilingContext->SetBlockDim(needCoreNum);
     FillTilingData();
     return ge::GRAPH_SUCCESS;
+}
+
+bool UpsampleNearestExact2dGradTiling::CheckTranspose() 
+{
+    auto inputFormat = static_cast<ge::Format>(GetPrimaryFormat(tilingContext->GetInputDesc(0)->GetStorageFormat()));
+    std::string opType(tilingContext->GetNodeType());
+    if (inputFormat == ge::Format::FORMAT_NC1HWC0 && (opType != EXACT_2D_GRAD_TYPE)) {
+        return true;
+    }
+    return false;
 }
 
 void UpsampleNearestExact2dGradTiling::setSingleCoreK()

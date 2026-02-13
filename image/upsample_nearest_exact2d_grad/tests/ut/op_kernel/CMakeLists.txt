@@ -23,6 +23,7 @@ if (UT_TEST_ALL OR OP_KERNEL_UT)
     # 算子自己的tiling文件路径
     set(upsample_nearest_exact2d_grad_tiling_files
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/upsample_nearest_exact2d_grad_tiling.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/upsample_nearest_exact2d_grad_transpose_tiling.cpp
         )
     # 使用AddOpTestCase
     # param1：算子名称，以kernel方式命名

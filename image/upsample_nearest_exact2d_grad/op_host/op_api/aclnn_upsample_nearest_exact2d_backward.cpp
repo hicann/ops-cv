@@ -222,11 +222,23 @@ aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
     const float realScalesH = scalesH > 0 ? static_cast<float>(scalesH) : 0;
     const float realScalesW = scalesW > 0 ? static_cast<float>(scalesW) : 0;
 
+    // 升精度计算
+    auto dataType = gradOutput->GetDataType();
+    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+        selfContiguous = l0op::Cast(selfContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
+        CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
+
     // 调用算子计算
     const aclTensor* upsampleOut = l0op::UpsampleNearestExact2dGrad(
         selfContiguous, outputSize, inputSize, out, realScalesH, realScalesW, true, uniqueExecutor.get());
     CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
+    // 转回初始精度
+    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+        upsampleOut = l0op::Cast(upsampleOut, dataType, uniqueExecutor.get());
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
     auto viewCopyResult = l0op::ViewCopy(upsampleOut, out, uniqueExecutor.get());
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
