@@ -126,7 +126,7 @@ static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *out, cons
 {
     if (!CheckIOSizesIsSame(gradOut, inputSize)) {
         auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-        bool bf16Support = curArch == NpuArch::DAV_2201;
+        bool bf16Support = curArch == NpuArch::DAV_2201 || IsRegBase();
         bool bf16NoSupport = (curArch == NpuArch::DAV_2002 || curArch == NpuArch::DAV_1001);
         if (bf16Support) {
             OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
@@ -386,7 +386,30 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2GetWorkspaceSize(const aclTensor *g
     CHECK_RET(out_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     bool check_scale = true;
     check_scale = ComputeCheckScale(gradOut, outputSize, inputSize, scalesH, scalesW);
-    if (!CheckIOSizesIsSame(gradOut, inputSize) &&
+    if (IsRegBase()) {
+        bool halfPixelCenters = !alignCorners;
+        op::Shape imageShape;
+        imageShape.SetDimNum(DIM_LIMIT);
+        for (size_t i = 0; i < DIM_LIMIT; ++i) {
+            imageShape.SetDim(i, (*inputSize)[i]);
+        }
+
+        auto originalImage =
+            uniqueExecutor.get()->AllocTensor(imageShape, out->GetDataType(), out->GetViewFormat());
+        CHECK_RET(originalImage != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
+        auto scales = uniqueExecutor->AllocFloatArray(scalesList, DIM_TWO);
+        CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        outTransdata = l0op::ResizeBilinearV2Grad(
+            gradOutContiguous, originalImage, alignCorners, halfPixelCenters, scales, uniqueExecutor.get());
+        CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        CHECK_RET(CheckReduceOutShape(outTransdata, out), ACLNN_ERR_PARAM_INVALID);
+        auto viewCopyResult = l0op::ViewCopy(outTransdata, out, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    } else if (!CheckIOSizesIsSame(gradOut, inputSize) &&
         (!(curArch == NpuArch::DAV_2201) || !check_scale ||
             !CheckMinScale(gradOut, inputSize, scalesH, scalesW))) {
         aclnnStatus status =
