@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file aclnn_im2col_backward.cpp
@@ -29,6 +29,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/shape_utils.h"
+#include "common/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -43,7 +44,7 @@ static constexpr size_t GRAD_DIM = 4;
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910 = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910B = {
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910B_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
 static inline bool CheckNotNull(const aclTensor *gradOutput, const aclIntArray *inputSize,
@@ -62,10 +63,10 @@ static inline bool CheckNotNull(const aclTensor *gradOutput, const aclIntArray *
 
 static bool CheckDtype(const aclTensor *gradOutput, const aclTensor *out)
 {
-    bool is910BSocVersion = (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B ||
-                             GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_93);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    bool isBf16Supported = (curArch == NpuArch::DAV_2201 || IsRegBase());
     const std::initializer_list<DataType> DTYPE_SUPPORT_LIST =
-        is910BSocVersion ? DTYPE_SUPPORT_LIST_910B : DTYPE_SUPPORT_LIST_910;
+        isBf16Supported ? DTYPE_SUPPORT_LIST_910B_REGBASE : DTYPE_SUPPORT_LIST_910;
 
     OP_CHECK_DTYPE_NOT_SUPPORT(gradOutput, DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(out, DTYPE_SUPPORT_LIST, return false);
@@ -248,15 +249,15 @@ aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor *gradOutput, con
         return ACLNN_SUCCESS;
     }
 
-    bool isNeedSqueeze = (gradOutput->GetViewShape().GetDimNum() == NEED_SQUEEZE);
-
     // 固定写法，将输入转换成连续的tensor
     auto gradOutputContiguous = l0op::Contiguous(gradOutput, uniqueExecutor.get());
     CHECK_RET(gradOutputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
+    bool isNeedSqueeze = (gradOutput->GetViewShape().GetDimNum() == NEED_SQUEEZE);
+
     auto gradOutputUnsqueeze =
         isNeedSqueeze ? l0op::UnsqueezeNd(gradOutputContiguous, static_cast<int64_t>(0), uniqueExecutor.get())
-                      : gradOutputContiguous;
+                    : gradOutputContiguous;
     CHECK_RET(gradOutputUnsqueeze != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const int64_t newShape[] = {gradOutputUnsqueeze->GetViewShape().GetDim(0),
@@ -268,22 +269,28 @@ aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor *gradOutput, con
         gradOutputUnsqueeze, uniqueExecutor.get()->AllocIntArray(newShape, GRAD_DIM), uniqueExecutor.get());
     CHECK_RET(gradOutputReshape != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto gradOutputReFormat = l0op::ReFormat(gradOutputReshape, op::Format::FORMAT_NCHW);
-    CHECK_RET(gradOutputReFormat != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    const aclTensor* outCompute = nullptr;
+    if (IsRegBase()) {
+        outCompute =
+            l0op::Col2im(gradOutputReshape, inputSize, kernelSize, dilation, padding, stride, uniqueExecutor.get());
+        CHECK_RET(outCompute != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    } else {
+        auto gradOutputReFormat = l0op::ReFormat(gradOutputReshape, op::Format::FORMAT_NCHW);
+        CHECK_RET(gradOutputReFormat != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto gradOutputTransData =
-        l0op::TransDataSpecial(gradOutputReFormat, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
-    CHECK_RET(gradOutputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        auto gradOutputTransData =
+            l0op::TransDataSpecial(gradOutputReFormat, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+        CHECK_RET(gradOutputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto col2imOut =
-        l0op::Col2im(gradOutputTransData, inputSize, kernelSize, dilation, padding, stride, uniqueExecutor.get());
-    CHECK_RET(col2imOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        auto col2imOut =
+            l0op::Col2im(gradOutputTransData, inputSize, kernelSize, dilation, padding, stride, uniqueExecutor.get());
+        CHECK_RET(col2imOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto outTransData = l0op::TransDataSpecial(col2imOut, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
-    CHECK_RET(outTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
+        outCompute = l0op::TransDataSpecial(col2imOut, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
+        CHECK_RET(outCompute != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
     auto outSqueeze =
-        isNeedSqueeze ? l0op::SqueezeNd(outTransData, static_cast<int64_t>(0), uniqueExecutor.get()) : outTransData;
+        isNeedSqueeze ? l0op::SqueezeNd(outCompute, static_cast<int64_t>(0), uniqueExecutor.get()) : outCompute;
     CHECK_RET(outSqueeze != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto outView =
@@ -314,3 +321,4 @@ aclnnStatus aclnnIm2colBackward(void *workspace, uint64_t workspaceSize, aclOpEx
 #ifdef __cplusplus
 }
 #endif
+
