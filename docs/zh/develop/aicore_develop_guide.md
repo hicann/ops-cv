@@ -5,6 +5,7 @@
 > 1. 算子开发过程中涉及的基本概念如Tiling、Kernel、Ascend C接口等，详细介绍请参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)。  
 > 2. AI Core算子是使用Ascend C语言开发，运行在AI Core硬件单元算子；AI CPU算子是使用C++语言开发，运行在AI CPU硬件单元算子。如果您想贡献AI CPU算子，请参考[AI CPU算子开发指南](./aicpu_develop_guide.md)。
 > 3. 针对基于[Ascend/samples](https://gitee.com/ascend/samples/tree/master)仓贡献的算子，请参考[附录 > 算子工程迁移](#算子工程迁移)完成存量算子往本项目工程迁移。
+> 4. build.sh：算子开发过程中涉及的命令可通过`bash build.sh --help`查看，功能参数介绍参考[build参数说明](../context/build.md)。
 
 开发指南以`AddExample`算子开发为例，介绍新算子开发流程以及涉及的交付件，完整样例代码请访问项目`examples`目录。
 
@@ -111,6 +112,10 @@ Tiling主要切分逻辑。
 
 如需查看详细实现，请参考[add_example_tiling.cpp](../../../examples/add_example/op_host/add_example_tiling.cpp)。
 
+> **样例中函数空实现说明：**
+> 1. **TilingParse**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
+> 2. **CompileInfo**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
+
 ```CPP
 // ${op_name}_tiling.cpp
 // 1.Tiling需要获取运行环境信息，包括可用核数、UB(Unified Buffer)大小，并将获取到的信息传递给CompileInfo, 自动生成aclnn不调用该函数，直接返回ge::GRAPH_SUCCESS即可。
@@ -184,6 +189,9 @@ TilingKey是一个算子内为了区分不同的实现而将kernel代码进行�
 
 如需查看详细实现，请参考[add_example_tiling_key.h](../../../examples/add_example/op_kernel/add_example_tiling_key.h)。
 
+> **说明：**
+> 如需实现复杂参数组合完成分支选择（涉及多TilingKey场景），请参考[《Ascend C算子开发接口》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“Utils API > Tiling模版编程 > 模版参数含义”。
+
 ```CPP
 // ${op_name}_tiling_key.h
 ASCENDC_TPL_ARGS_DECL(
@@ -206,7 +214,6 @@ struct ${op_name}TilingData {
     int64_t tileNum;
 };
 ```
-如需实现复杂参数组合完成分支选择（涉及多TilingKey场景），请参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“算子实现 > 工程化算子开发 > Host侧Tiling实现 > Tiling模板编程”。
 
 ## Kernel实现
 
@@ -408,6 +415,7 @@ export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/op_api/
 - **UT验证**
 
   算子开发过程中，可通过UT验证（如Tiling）方式进行快速验证，如需查看详细实现，请参考[Tiling UT](../../../examples/add_example/tests/ut/op_host/test_add_example_tiling.cpp)。
+  执行UT验证的命令，请参考[算子调用](../invocation/quick_op_invocation.md)
 
 - **aclnn调用验证**
 

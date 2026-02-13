@@ -11,25 +11,27 @@
 
 ## 一、贡献新算子
 
-算子开发贡献流程如下：
+  算子开发贡献流程如下：
 
-![算子开发贡献流程](./docs/zh/figures/算子开发贡献流程.png "算子开发贡献流程图")
+  ![算子开发贡献流程](./docs/zh/figures/算子开发贡献流程.png "算子开发贡献流程图")
 
-如果您有全新的算子希望基于NPU进行设计与实现，欢迎在Issue中提出您的想法与设计方案。完整的贡献过程如下：
+  如果您有全新的算子希望基于NPU设计与实现，欢迎在Issue中提出您的想法与设计方案。完整的贡献过程如下：
 
 ### 1. 创建Issue需求
-新建 `Requirement|需求建议` 类 Issue，并阐明新增算子的设计方案。Issue一般需包含以下内容：
 
-- **背景信息**  
-- **价值/作用**  
+新建 `Requirement|需求建议` 类Issue，并阐明新增算子的设计方案。Issue一般需包含以下内容：
+
+- **背景信息** 
+- **价值/作用** 
 - **设计方案**
 
 请在提交的Issue中评论`/assign @yourself` 认领该任务。
 
 ### 2. 需求评审
+
 Sig组将指派Committer对您提交的Issue进行评审并反馈修改意见。请在完成修改后，于Issue中@对应Committer。
 
-若需求被接纳，[sig成员](https://gitcode.com/cann/community/blob/master/CANN/sigs/ops-basic/README.md)将为您分配合适的算子分类路径（如：`experimental/image`），请将贡献的算子提交至`experimental`对应算子分类目录。
+若需求被接纳，[sig成员](https://gitcode.com/cann/community/blob/master/CANN/sigs/ops-basic/README.md)将为您分配合适的算子分类路径（如：`experimental/image`），请将贡献算子提交至`experimental`对应算子分类目录。
 
 ### 3. PR提交  
 生态最简算子交付件如下：
@@ -54,8 +56,7 @@ PR上库要求：
 - 贡献目录：按sig成员意见提交至指定目录下`experimental/${op_class}`，可参考已有算子文件放置规则。
 - PR提交：通过`git`命令提交目标分支PR，检查PR标题是否清晰、PR描述是否规范（指明更改内容和原因、是否关联对应Issue）、是否签署CLA。
 
-如果您希望贡献项目标准算子，其交付件比生态算子更丰富，包括Kernel、Tiling实现等，贡献指导可参考[附录](#附录)。
-
+如果您希望贡献项目标准算子，其交付件和开发过程比生态算子复杂，包括Kernel、Tiling实现等，具体贡献指导参考[附录](#附录)。
 
 ### 4. CI门禁
 

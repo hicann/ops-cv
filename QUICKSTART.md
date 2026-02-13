@@ -1,11 +1,23 @@
 # 快速入门：基于ops-cv仓
 
-本指南旨在帮助您快速上手CANN和`ops-cv`算子仓的使用，最简化地完成环境安装、编译部署及算子运行。算子开发和贡献流程如下图，我们欢迎并鼓励您在社区贡献算子，共同丰富项目生态。
+本指南旨在帮助您快速上手CANN和`ops-cv`算子仓的使用，**基于WebIDE或Docker环境**提供极简化软件安装、编译部署及算子运行指导，两种环境默认提供最新商发版本CANN软件包，目前是CANN 8.5.0。
+
+如果您是手动安装CANN软件包或体验master分支最新能力等其他场景，请参考如下指南，获取详细教程：
+
+1. [环境部署指南](./docs/zh/context/quick_install.md)：不同场景下环境搭建指导，包括Docker安装、手动安装CANN软件包等。
+
+2. [编译执行算子指南](./docs/zh/invocation/quick_op_invocation.md)：不同场景下算子包编译和验证指导，例如离线编译，深入了解编译参数与调用方式。
+
+3. [算子开发指南](./docs/zh/develop/aicore_develop_guide.md)：自定义开发标准算子指南，学习从零创建算子工程、实现Tiling和Kernel。
+
+4. [调试调优指南](./docs/zh/debug/op_debug_prof.md)：不同场景下系统的调试技巧与性能优化方法。
+
+无论是极简还是标准场景，算子开发和贡献流程一般如下图，我们欢迎并鼓励您在社区贡献算子，共同丰富项目生态。
 
 ![算子开发贡献流程](./docs/zh/figures/算子开发贡献流程.png "算子开发贡献流程图")
 
 
-这里将以**AddExample**算子作为实践对象，源文件位于`ops-cv/examples/add_example`目录，请参考下述步骤快速体验起来吧！
+这里将以**AddExample**算子作为实践对象，源文件位于`ops-cv/examples/add_example`目录，请参考下面步骤快速体验起来吧！
 
 ## 目录导读
 1.  **[环境安装](#一环境安装)**：搭建算子开发和运行环境。
@@ -16,33 +28,38 @@
 
 完成以上步骤，您将对算子开发的全流程有一个基础的实践认知。
 
-## 一、环境安装
+## 一、环境安装（二选一）
+
 ### 1. 有环境场景：Docker安装
 
-Docker安装环境以Atlas A2产品（910B）为例。
-**前提条件**：
-*   **Docker环境**：宿主机已安装Docker引擎（版本1.11.2及以上）。
-*   **驱动与固件**：宿主机已安装昇腾NPU的[驱动与固件](https://www.hiascend.com/hardware/firmware-drivers/community?product=1&model=30&cann=8.0.RC3.alpha002&driver=1.0.26.alpha)Ascend HDK 24.1.0版本以上。安装指导详见《[CANN 软件安装指南](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_0005.html?Mode=PmIns&OS=openEuler&Software=cannToolKit)》。
-    
+#### 前提条件
+
+* **Docker环境**：以Atlas A2产品（910B）为例，环境里宿主机已安装Docker引擎（版本1.11.2及以上）。
+
+* **驱动与固件**：宿主机已安装昇腾NPU的[驱动与固件](https://www.hiascend.com/hardware/firmware-drivers/community?product=1&model=30&cann=8.0.RC3.alpha002&driver=1.0.26.alpha)Ascend HDK 24.1.0版本以上。安装指导详见《[CANN 软件安装指南](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_0005.html?Mode=PmIns&OS=openEuler&Software=cannToolKit)》。
+  
     > **注意**：使用`npu-smi info`查看对应的驱动与固件版本。
 
 #### 下载镜像
 拉取已预集成CANN软件包及`ops-cv`所需依赖的镜像。
 
-*   **操作步骤**：
-    1.  以root用户登录宿主机。
-    2.  执行拉取命令（请根据你的宿主机架构选择）：
-        * ARM架构：
+1.  以root用户登录宿主机。
+2.  执行拉取命令（请根据你的宿主机架构选择）：
+    
+    * ARM架构：
+      
         ```bash
         docker pull --platform=arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
         ```
-        * X86架构：
+    * X86架构：
+    
         ```bash
         docker pull --platform=amd64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
         ```
-        > **注意**：正常网速下，镜像下载时间约为5-10分钟。
+> **注意**：正常网速下，镜像下载时间约为5-10分钟。
 
 #### Docker运行
+
 请根据以下命令运行docker：
 
 ```bash
@@ -56,17 +73,19 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 | `-v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/` | 关键挂载：将宿主机的NPU驱动库映射到容器内。 | - |
 
 #### 检查环境
+
 进入容器后，验证环境和驱动是否正常。
 
 -   **检查NPU设备**
 
-    执行如下命令，若返回驱动相关信息说明已成功挂载。
+    执行如下命令，若返回驱动相关信息说明已成功挂载。    
     ```bash    
     npu-smi info
     ```
 -   **检查CANN安装**
     
-    执行如下命令查看CANN Toolkit版本信息，是否为8.5.0版本。
+    执行如下命令查看CANN Toolkit版本信息，默认最新商发版本（目前是8.5.0）。
+    
     ```bash
     cat /usr/local/Ascend/ascend-toolkit/latest/opp/version.info
     ```
@@ -74,12 +93,14 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 你已经拥有了一个“开箱即用”的算子开发环境。接下来，需要在这个环境里验证从源码到可运行算子的完整工具链。
 
 ### 2. 无环境场景：WebIDE开发（内测中）
+
 对于无环境的用户，提供WebIDE开发平台，即“**算子一站式开发平台**”。该平台为您提供在线可直接运行的昇腾环境，环境中已安装必备的软件包，无需手动安装。
 
 > **前提说明：**
+>
 > 当前平台功能正在内测中，若您想体验，请先单击[LINK](https://gitcode.com/org/cann/discussions/47)申请云开发平台资源，并获取平台介绍文档。只有成功申请了平台资源，开源项目的首页才会有“**云开发**”按钮，您才可以参考下述步骤体验。
 
-1. 进入ops-cv开源项目，单击“`云开发 > WebIDE for Ascend`”进入算子一站式开发平台，根据页面提示启动云开发环境。
+1. 进入ops-nn开源项目，单击“`云开发 > WebIDE for Ascend`”进入算子一站式开发平台，根据页面提示启动云开发环境。
 
    <img src="docs/zh/figures/cloudIDE.png" alt="云平台"  width="700px" height="100px">
 
@@ -96,7 +117,8 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
         ```
     
     -   **检查CANN安装**：
-        执行如下命令查看CANN Toolkit版本信息，是否为8.5.0版本。
+
+        执行如下命令查看CANN Toolkit版本信息，默认最新商发版本（目前是8.5.0）。
         
         ```bash
         cat /home/developer/Ascend/ascend-toolkit/latest/opp/version.info
@@ -108,13 +130,15 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 
 ### 1. 获取项目源码
 
-1. 获取项目源码，命令如下：
+1. 获取项目源码。
+
+    无论Docker或WebIDE环境，默认提供最新商发分支源码（目前是8.5.0）。如需获取其他分支源码，可通过如下命令下载，\$\{tag\_version\}需替换为目标分支标签名，算子仓与CANN版本配套关系可参见[release仓库](https://gitcode.com/cann/release-management)。
 
     ```bash
-    git clone https://gitcode.com/cann/ops-cv.git
+    git clone -b ${tag_version} https://gitcode.com/cann/ops-cv.git
     ```
-    若出现”`fatal: destionation path 'ops-cv' already exists and is not an empty directory.`“说明项目源码已存在，如需刷新项目代码可使用`git pull`命令。
-
+    若出现“`fatal: destionation path 'ops-cv' already exists and is not an empty directory.`”说明项目源码已存在，如需刷新项目代码可使用`git pull`命令。
+    
 2. 进入项目根目录，命令如下，请区分Docker和WebIDE场景。
     - Docker场景：
       ```bash
@@ -166,15 +190,15 @@ bash build.sh --run_example add_example eager cust --vendor_name=custom
 预期输出：打印算子`AddExample`的加法计算结果，表明算子已成功部署并正确执行。
 
 ```
- add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 2.000000
- add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 2.000000
- add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 2.000000
- add_example first input[3] is: 1.000000, second input[3] is: 1.000000, result[3] is: 2.000000
- add_example first input[4] is: 1.000000, second input[4] is: 1.000000, result[4] is: 2.000000
- add_example first input[5] is: 1.000000, second input[5] is: 1.000000, result[5] is: 2.000000
- add_example first input[6] is: 1.000000, second input[6] is: 1.000000, result[6] is: 2.000000
- add_example first input[7] is: 1.000000, second input[7] is: 1.000000, result[7] is: 2.000000
- ...
+add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 2.000000
+add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 2.000000
+add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 2.000000
+add_example first input[3] is: 1.000000, second input[3] is: 1.000000, result[3] is: 2.000000
+add_example first input[4] is: 1.000000, second input[4] is: 1.000000, result[4] is: 2.000000
+add_example first input[5] is: 1.000000, second input[5] is: 1.000000, result[5] is: 2.000000
+add_example first input[6] is: 1.000000, second input[6] is: 1.000000, result[6] is: 2.000000
+add_example first input[7] is: 1.000000, second input[7] is: 1.000000, result[7] is: 2.000000
+...
 ```
 
 ## 三、算子开发
@@ -182,22 +206,22 @@ bash build.sh --run_example add_example eager cust --vendor_name=custom
 本阶段目的是对已成功运行的AddExample算子尝试**修改核函数代码**。
 
 ### 1. 修改Kernel实现
-打开AddExample算子的核心Kernel实现文件`ops-cv/examples/add_example/op_kernel/add_example.h`，尝试将算子中的Add操作改为Mul操作：
+找到AddExample算子的核心kernel实现文件`ops-cv/examples/add_example/op_kernel/add_example.h`，尝试将算子中的Add操作改为Mul操作：
 
- ```cpp
- __aicore__ inline void AddExample<T>::Compute(int32_t progress)
- {
-     AscendC::LocalTensor<T> xLocal = inputQueueX.DeQue<T>();
-     AscendC::LocalTensor<T> yLocal = inputQueueY.DeQue<T>();
-     AscendC::LocalTensor<T> zLocal = outputQueueZ.AllocTensor<T>();
-     // === 在此处将Add替换为Mul ===
-     // AscendC::Add(zLocal, xLocal, yLocal, tileLength_);
-     AscendC::Mul(zLocal, xLocal, yLocal, tileLength_);
-     outputQueueZ.EnQue<T>(zLocal);
-     inputQueueX.FreeTensor(xLocal);
-     inputQueueY.FreeTensor(yLocal);
- }
- ```
+```cpp
+__aicore__ inline void AddExample<T>::Compute(int32_t progress)
+{
+    AscendC::LocalTensor<T> xLocal = inputQueueX.DeQue<T>();
+    AscendC::LocalTensor<T> yLocal = inputQueueY.DeQue<T>();
+    AscendC::LocalTensor<T> zLocal = outputQueueZ.AllocTensor<T>();
+    // === 在此处将Add替换为Mul ===
+    // AscendC::Add(zLocal, xLocal, yLocal, tileLength_);
+    AscendC::Mul(zLocal, xLocal, yLocal, tileLength_);
+    outputQueueZ.EnQue<T>(zLocal);
+    inputQueueX.FreeTensor(xLocal);
+    inputQueueY.FreeTensor(yLocal);
+}
+```
 ### 2. 编译与验证
 
 重复[编译部署](#二编译部署)章节中的第2至第5步：
@@ -229,6 +253,7 @@ bash build.sh --run_example add_example eager cust --vendor_name=custom
     add_example first input[7] is: 1.000000, second input[7] is: 1.000000, result[7] is: 1.000000
     ...
     ```
+
 ## 四、算子调试
 本阶段以AddExample为例，在算子中添加打印并采集算子性能数据，以便后续问题分析定位。
 
@@ -320,11 +345,3 @@ int main() {
 ## 六、开发贡献
 
 体验完上述操作，基本完成了一个算子开发，您可以将算子贡献到本项目`experimental`目录，贡献流程请参考[贡献指南](CONTRIBUTING.md)。过程中，任何问题可通过Issue方式咨询。
-
-如果您想要**深入了解**上述每个环节，请参考如下指南：
-
-- [环境部署](./docs/zh/context/quick_install.md)：提供不同场景环境搭建指导，包括Docker安装、手动安装CANN软件包等。
-- [编译部署及算子调用](./docs/zh/invocation/quick_op_invocation.md)：提供不同场景和方式的算子包编译和验证指导，深入了解编译参数与调用方式。
-- [算子开发](./docs/zh/develop/aicore_develop_guide.md)：提供算子开发指南，学习从零创建算子工程、实现Tiling和Kernel。
-- [调试调优](./docs/zh/debug/op_debug_prof.md)：提供更系统的调试技巧与性能优化方法。
-

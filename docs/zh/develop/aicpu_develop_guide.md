@@ -3,7 +3,8 @@
 > 说明：
 >
 > 1. 算子开发过程中涉及的基本概念、AI CPU接口等，详细介绍请参考[《TBE&AI CPU算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevWizard)。
-> 2. AI CPU算子是使用C++语言开发，运行在AI CPU硬件单元算子。
+> 2. AI CPU算子是使用C++语言开发，运行在AI CPU硬件单元的算子。
+> 3. build.sh：算子开发过程中涉及的命令可通过`bash build.sh --help`查看，功能参数介绍参考[build参数说明](../context/build.md)。
 
 开发指南以`AddExample`算子开发为例，介绍新算子开发流程以及涉及的交付件，完整样例代码请访问项目`examples`目录。
 
@@ -106,7 +107,7 @@ Kernel一共需要两个交付件：```${op_name}_aicpu.cpp``` ```${op_name}_aic
 
 算子类声明
 
-Kernel实现的第一步，需在头文件`op_kernel_aicpu/${op_name}_aicpu.h`进行算子类的声明，算子类需继承CpuKernel基类。
+Kernel实现的第一步，需在头文件```op_kernel_aicpu/${op_name}_aicpu.h```进行算子类的声明，算子类需继承CpuKernel基类。
 如需查看详细实现，请参考[add_example_aicpu.h](../../../examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu.h)。
 
 
@@ -240,7 +241,7 @@ export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/op_api/
 ```
 - **UT验证**
 
-  算子开发过程中，可通过UT验证（如Kernel）方式进行快速验证，如需查看详细实现，请参考[Kernel UT](../../../examples/add_example_aicpu/tests/ut/op_kernel_aicpu/test_add_example.cpp)。
+  算子开发过程中，可通过UT验证（如Kernel）方式进行快速验证。
 
 - **aclnn调用验证**
 

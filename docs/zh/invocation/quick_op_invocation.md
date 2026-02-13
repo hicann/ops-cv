@@ -3,6 +3,7 @@
 
 - 环境部署：调用算子之前，请先参考[环境部署](../context/quick_install.md)完成基础环境搭建。
 - 调用算子列表：项目可调用的算子参见[算子列表](../op_list.md)，算子对应的aclnn接口参见[aclnn列表](../op_api_list.md)。
+- build.sh：算子调用依赖根目录build.sh脚本，可通过`bash build.sh --help`命令查看功能，参数介绍参考[build参数说明](../context/build.md)。
 
 ## 编译执行
 
@@ -16,26 +17,25 @@
 
   >说明：若您需要**基于本项目进行二次发布**并且对**软件包大小有要求**时，建议采用静态库编译，该库可以链接您的应用开发程序，仅保留业务所需的算子，从而实现软件最小化部署。
 
-
 ### 自定义算子包
 
 1. **编译自定义算子包**
 
     进入项目根目录，执行如下编译命令：
-    
-    > 说明：编译过程依赖第三方开源软件，联网场景会自动下载，离线编译场景需要自行安装，具体参考[离线编译](../context/build_offline.md)。
 
+    > **说明**：编译过程依赖第三方开源软件，联网场景会自动下载，离线编译场景需要自行安装，具体参考[离线编译](../context/build_offline.md)。
+    
     ```bash
     bash build.sh --pkg --soc=${soc_version} [--vendor_name=${vendor_name}] [--ops=${op_list}]
     # 以GridSample算子编译为例
     # bash build.sh --pkg --soc=ascend910b --ops=grid_sample
-    # 编译experimental贡献目录下的用户算子（以GridSample算子编译为例，编译时请以实际贡献算子为准）
-    # bash build.sh --pkg --experimental --soc=ascend910b --ops=grid_sample
+    # 编译experimental贡献目录下的用户算子
+    # bash build.sh --pkg --experimental --soc=ascend910b --ops=${experimental_op}
     ```
     - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用“ascend950”。
     - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
     - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"grid_sample,iou_v2,..."，多算子之间用英文逗号","分隔。
-    - --experimental（可选）：表示编译experimental贡献目录下的算子。
+    - --experimental（可选）：表示编译experimental贡献目录下的算子，${experimental_op}为新贡献算子目录名，贡献说明参见[贡献指南](../../../CONTRIBUTING.md)。
     
     若\$\{vendor\_name\}和\$\{op\_list\}都不传入编译的是ops-cv包；若编译所有算子的自定义算子包，需传入\$\{vendor\_name\}。当提示如下信息，说明编译成功。
     ```bash
@@ -177,7 +177,7 @@
 
             ops-cv静态库依赖于ops-legacy静态库和ops-math静态库，将上述静态库准备好，解压并将所有lib64、include目录移动至统一目录\$\{static\_lib\_path\}下。
 
-            > 说明：ops-legacy静态库`cann-${soc_name}-ops-legacy-static_${cann_version}_linux-${arch}.tar.gz`需单击[下载链接](https://mirror-centralrepo.devcloud.cn-north-4.huaweicloud.com/artifactory/cann-run-release/software/master/)获取， ops-cv静态库、ops-math静态库暂未提供软件包，请通过本地编译生成。
+            > 说明：ops-legacy静态库`cann-${soc_name}-ops-legacy-static_${cann_version}_linux-${arch}.tar.gz`需单击[下载链接](https://mirror-centralrepo.devcloud.cn-north-4.huaweicloud.com/artifactory/cann-run-release/software/9.0.0/)获取， ops-cv静态库、ops-math静态库暂未提供软件包，请通过本地编译生成。
 
         2. **创建run.sh**
 
