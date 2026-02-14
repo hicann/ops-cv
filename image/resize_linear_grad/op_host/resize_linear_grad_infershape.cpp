@@ -43,7 +43,7 @@ ge::graphStatus ResizeLinearGradInferShape(gert::InferShapeContext* context)
             imageShape->GetDimNum() != IN_GRADS_DIMS, OP_LOGE(nodeName, "original_image shape only support 3D"),
             return GRAPH_FAILED);
         OP_CHECK_IF(
-            (imageShape->GetDim(IDX_L) == 0) || (imageShape->GetDim(IDX_L - 1) == 0),
+            imageShape->GetDim(IDX_L) == 0,
             OP_LOGE(nodeName, "original_image size should be greater than 0"), return GRAPH_FAILED);
         *yShape = *imageShape;
     }
