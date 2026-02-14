@@ -28,21 +28,6 @@ if(UNIX)
 endif()
 set(OPS_CV_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(OPS_CV_VERSION_FILE ${CMAKE_CURRENT_BINARY_DIR}/version/version.info)
-add_custom_command(
-    OUTPUT ${OPS_CV_VERSION_FILE}
-    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/update_version_info/update_version_info.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/version.info
-    ${OPS_CV_VERSION_FILE}
-    DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/version.info
-    VERBATIM
-)
-
-add_custom_target(generate_ops_cv_version_file ALL
-    DEPENDS ${OPS_CV_VERSION_FILE}
-)
-
 # 外部传参
 option(ENABLE_ASAN "Enable asan" OFF)
 option(ENABLE_VALGRIND "Enable valgrind" OFF)
@@ -122,6 +107,10 @@ include(cmake/third_party/json.cmake)
 include(cmake/func.cmake)
 include(cmake/intf_pub_linux.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/ut.cmake)
+
+include(version.cmake)
+check_pkg_build_deps("ops_cv")
+add_version_info_targets()
 
 add_subdirectory(common)
 if(ENABLE_EXPERIMENTAL)
