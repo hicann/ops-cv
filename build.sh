@@ -105,23 +105,30 @@ REPOSITORY_NAME="cv"
 
 CORE_NUMS=$(cat /proc/cpuinfo | grep "processor" | wc -l)
 ARCH_INFO=$(uname -m)
+CANN_3RD_LIB_PATH="${BUILD_PATH}/third_party"
 
+# Base paths
 export INCLUDE_PATH="${ASCEND_HOME_PATH}/include"
+export LIB_PATH="${ASCEND_HOME_PATH}/lib64"
+
+# Include paths
 export ACLNN_INCLUDE_PATH="${INCLUDE_PATH}/aclnn"
-export COMPILER_INCLUDE_PATH="${ASCEND_HOME_PATH}/include"
-export GRAPH_INCLUDE_PATH="${COMPILER_INCLUDE_PATH}/graph"
+export GRAPH_INCLUDE_PATH="${INCLUDE_PATH}/graph"
 export CP_GRAPH_INCLUDE_PATH="${INCLUDE_PATH}/graph"
-export GE_INCLUDE_PATH="${COMPILER_INCLUDE_PATH}/ge"
+export GE_INCLUDE_PATH="${INCLUDE_PATH}/ge"
 export CP_GE_INCLUDE_PATH="${INCLUDE_PATH}/ge"
 export CP_GE_EXTERNAL_INCLUDE_PATH="${INCLUDE_PATH}/external"
 export INC_INCLUDE_PATH="${ASCEND_OPP_PATH}/built-in/op_proto/inc"
-export EAGER_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
-export GRAPH_LIBRARY_STUB_PATH="${ASCEND_HOME_PATH}/lib64/stub"
-export CP_GRAPH_LIBRARY_STUB_PATH="${ASCEND_HOME_PATH}/lib64/stub"
-export GRAPH_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
-export CP_GRAPH_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
-export CP_EXECUTOR_LIBRARY_PATH="${ASCEND_HOME_PATH}/lib64"
-CANN_3RD_LIB_PATH="${BUILD_PATH}/third_party"
+
+# Library paths
+export EAGER_LIBRARY_PATH="${LIB_PATH}"
+export GRAPH_LIBRARY_PATH="${LIB_PATH}"
+export CP_GRAPH_LIBRARY_PATH="${LIB_PATH}"
+export CP_EXECUTOR_LIBRARY_PATH="${LIB_PATH}"
+
+# Stub paths
+export GRAPH_LIBRARY_STUB_PATH="${LIB_PATH}/stub"
+export CP_GRAPH_LIBRARY_STUB_PATH="${LIB_PATH}/stub"
 
 # print usage message
 usage() {
@@ -1280,89 +1287,148 @@ build_ut() {
   fi
 }
 
+#######################################
+# build_example entry
+#######################################
 build_example() {
   echo $dotted_line
   echo "Start to run examples,name:${EXAMPLE_NAME} mode:${EXAMPLE_MODE}"
 
-  if [ ! -d "${BUILD_PATH}" ]; then
-    mkdir -p "${BUILD_PATH}"
-  fi
+  mkdir -p "${BUILD_PATH}"
+  cd "${BUILD_PATH}" || exit 1
 
-  cd "${BUILD_PATH}"
   if [[ "${EXAMPLE_MODE}" == "eager" ]]; then
-    if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
-      file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp)
-    else
-      file=$(find ../ -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp -not -path "*/experimental/*")
-      if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
-        file+=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/*" -name test_aclnn_*.cpp))
-      fi
-    fi
-    if [ -z "$file" ]; then
-      echo "ERROR: ${EXAMPLE_NAME} do not have eager examples"
-      exit 1
-    fi
-
-    for f in $file; do
-      if [[ "${PKG_MODE}" == "cust" && "$f" == *add_example_aicpu* && "$f" == *opgen* ]]; then
-        continue
-      fi
-      echo "Start compile and run examples file: $f"
-      if [[ "${PKG_MODE}" == "" ]]; then
-        g++ ${f} -I ${INCLUDE_PATH} -I ${ACLNN_INCLUDE_PATH} -L ${EAGER_LIBRARY_PATH} -lopapi_cv -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME}
-      elif [[ "${PKG_MODE}" == "cust" ]]; then
-        echo "pkg_mode:${PKG_MODE} vendor_name:${VENDOR}"
-        export CUST_LIBRARY_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/lib"     # 仅自定义算子需要
-        export CUST_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include" # 仅自定义算子需要
-        CUST_ACLNNOP_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include/aclnnop"
-        local include_dir_mode=$(stat -c %a $CUST_INCLUDE_PATH)
-        if [ ! -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
-          chmod u+w $(dirname ${CUST_ACLNNOP_INCLUDE_PATH})
-          ln -s ${CUST_INCLUDE_PATH} ${CUST_ACLNNOP_INCLUDE_PATH}
-        fi
-        g++ ${f} -I ${INCLUDE_PATH} -I ${INCLUDE_PATH}/aclnnop -I ${CUST_INCLUDE_PATH} -L ${CUST_LIBRARY_PATH} -L ${EAGER_LIBRARY_PATH} -lcust_opapi -lascendcl -lnnopbase -o test_aclnn_${EXAMPLE_NAME} -Wl,-rpath=${CUST_LIBRARY_PATH}
-        if [ -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
-          rm ${CUST_ACLNNOP_INCLUDE_PATH}
-          chmod ${include_dir_mode} $CUST_INCLUDE_PATH
-        fi
-      else
-        echo "Error: pkg_mode(${PKG_MODE}) must be cust."
-        exit 1
-      fi
-      ./test_aclnn_${EXAMPLE_NAME}
-      if [ $? -eq 0 ]; then
-        echo "run test_aclnn_${EXAMPLE_NAME}, execute samples success"
-      else
-        echo "run test_aclnn_${EXAMPLE_NAME}, execute samples failed"
-        exit 1
-      fi
-    done
+    build_example_eager
   elif [[ "${EXAMPLE_MODE}" == "graph" ]]; then
-    if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
-      file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_geir_*.cpp)
-    else
-      file=$(find ../ -path "*/${EXAMPLE_NAME}/examples/*" -name test_geir_*.cpp -not -path "*/experimental/*")
-      if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
-        file+=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/*" -name test_geir_*.cpp))
-      fi
-    fi
-    if [ -z "$file" ]; then
-      echo "ERROR: ${EXAMPLE_NAME} do not have graph examples"
-      exit 1
-    fi
-    for f in $file; do
-      echo "Start compile and run examples file: $f"
-      g++ ${f} -I ${GRAPH_INCLUDE_PATH} -I ${GE_INCLUDE_PATH} -I ${INCLUDE_PATH} -I ${INC_INCLUDE_PATH} \
-                -I ${CP_GRAPH_INCLUDE_PATH} -I ${CP_GE_INCLUDE_PATH} -I ${CP_GE_EXTERNAL_INCLUDE_PATH} \
-        -L ${GRAPH_LIBRARY_STUB_PATH} -L ${GRAPH_LIBRARY_PATH} \
-        -L ${CP_GRAPH_LIBRARY_STUB_PATH} -L ${CP_GRAPH_LIBRARY_PATH} -L ${CP_EXECUTOR_LIBRARY_PATH} \
-        -lgraph -lge_runner -lgraph_base -lge_compiler -o test_geir_${EXAMPLE_NAME}
-      ./test_geir_${EXAMPLE_NAME}
-    done
+    build_example_graph
   else
     usage
     exit 1
   fi
+}
+
+#######################################
+# eager mode
+#######################################
+build_example_eager() {
+  local file
+
+  if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
+    file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp)
+  else
+    file=$(find ../ -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp -not -path "*/experimental/*")
+    if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
+      file+=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/*" -name test_aclnn_*.cpp))
+    fi
+  fi
+
+  if [ -z "$file" ]; then
+    echo "ERROR: ${EXAMPLE_NAME} do not have eager examples"
+    exit 1
+  fi
+
+  for f in $file; do
+    if [[ "${PKG_MODE}" == "cust" && "$f" == *add_example_aicpu* && "$f" == *opgen* ]]; then
+      continue
+    fi
+
+    echo "Start compile and run examples file: $f"
+
+    if [[ "${PKG_MODE}" == "" ]]; then
+      g++ ${f} \
+        -I ${INCLUDE_PATH} \
+        -I ${ACLNN_INCLUDE_PATH} \
+        -L ${EAGER_LIBRARY_PATH} \
+        -lopapi_cv -lascendcl -lnnopbase \
+        -o test_aclnn_${EXAMPLE_NAME}
+
+    elif [[ "${PKG_MODE}" == "cust" ]]; then
+      echo "pkg_mode:${PKG_MODE} vendor_name:${VENDOR}"
+
+      export CUST_LIBRARY_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/lib"
+      export CUST_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include"
+      CUST_ACLNNOP_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include/aclnnop"
+
+      local include_dir_mode
+      include_dir_mode=$(stat -c %a $CUST_INCLUDE_PATH)
+
+      if [ ! -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
+        chmod u+w "$(dirname ${CUST_ACLNNOP_INCLUDE_PATH})"
+        ln -s ${CUST_INCLUDE_PATH} ${CUST_ACLNNOP_INCLUDE_PATH}
+      fi
+
+      g++ ${f} \
+        -I ${INCLUDE_PATH} \
+        -I ${INCLUDE_PATH}/aclnnop \
+        -I ${CUST_INCLUDE_PATH} \
+        -L ${CUST_LIBRARY_PATH} \
+        -L ${EAGER_LIBRARY_PATH} \
+        -lcust_opapi -lascendcl -lnnopbase \
+        -o test_aclnn_${EXAMPLE_NAME} \
+        -Wl,-rpath=${CUST_LIBRARY_PATH}
+
+      if [ -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
+        rm ${CUST_ACLNNOP_INCLUDE_PATH}
+        chmod ${include_dir_mode} $CUST_INCLUDE_PATH
+      fi
+
+    else
+      echo "Error: pkg_mode(${PKG_MODE}) must be cust."
+      exit 1
+    fi
+
+    ./test_aclnn_${EXAMPLE_NAME}
+
+    if [ $? -eq 0 ]; then
+      echo "run test_aclnn_${EXAMPLE_NAME}, execute samples success"
+    else
+      echo "run test_aclnn_${EXAMPLE_NAME}, execute samples failed"
+      exit 1
+    fi
+  done
+}
+
+#######################################
+# graph mode
+#######################################
+build_example_graph() {
+  local file
+
+  if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
+    file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_geir_*.cpp)
+  else
+    file=$(find ../ -path "*/${EXAMPLE_NAME}/examples/*" -name test_geir_*.cpp -not -path "*/experimental/*")
+    if [[ "$COMPUTE_UNIT" == "ascend950" ]]; then
+      file+=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/*" -name test_geir_*.cpp))
+    fi
+  fi
+
+  if [ -z "$file" ]; then
+    echo "ERROR: ${EXAMPLE_NAME} do not have graph examples"
+    exit 1
+  fi
+
+  for f in $file; do
+    echo "Start compile and run examples file: $f"
+
+    g++ ${f} \
+      -I ${GRAPH_INCLUDE_PATH} \
+      -I ${GE_INCLUDE_PATH} \
+      -I ${INCLUDE_PATH} \
+      -I ${INC_INCLUDE_PATH} \
+      -I ${CP_GRAPH_INCLUDE_PATH} \
+      -I ${CP_GE_INCLUDE_PATH} \
+      -I ${CP_GE_EXTERNAL_INCLUDE_PATH} \
+      -L ${GRAPH_LIBRARY_STUB_PATH} \
+      -L ${GRAPH_LIBRARY_PATH} \
+      -L ${CP_GRAPH_LIBRARY_STUB_PATH} \
+      -L ${CP_GRAPH_LIBRARY_PATH} \
+      -L ${CP_EXECUTOR_LIBRARY_PATH} \
+      -lgraph -lge_runner -lgraph_base -lge_compiler \
+      -o test_geir_${EXAMPLE_NAME}
+
+    ./test_geir_${EXAMPLE_NAME}
+  done
 }
 
 gen_op() {
