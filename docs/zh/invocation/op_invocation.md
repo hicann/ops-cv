@@ -104,7 +104,7 @@ int main()
 >说明：对于项目内已实现的算子（非自定义算子），可通过根目录下[build.sh](../../../build.sh)直接运行算子，操作请参考[本地验证](./quick_op_invocation.md#本地验证)。
 
 1. 前提条件。
-   请参考本项目[编译执行](./quick_op_invocation.md#编译执行)完成目标算子的编译部署。
+   请参考本项目[源码编译](./quick_op_invocation.md#源码编译)完成目标算子的编译部署。
    当前提供的CMakeLists.txt样例仅针对自定义算子包场景，请在自定义算子包安装后，按安装提示设置相应的环境变量。
 
 2. 创建CMakeLists.txt文件。
@@ -282,7 +282,7 @@ int main() {
 >说明：对于项目内已实现的算子（非自定义算子），可通过根目录下[build.sh](../../../build.sh)直接运行算子，操作请参考[本地验证](./quick_op_invocation.md#本地验证)。
 
 1. 前提条件。
-   请参考本项目[编译执行](./quick_op_invocation.md#编译执行)完成目标算子的编译部署。
+   请参考本项目[源码编译](./quick_op_invocation.md#源码编译)完成目标算子的编译部署。
 
 2. 创建CMakeLists.txt文件。
 
