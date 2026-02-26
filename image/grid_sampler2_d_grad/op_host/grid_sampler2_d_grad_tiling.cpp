@@ -432,6 +432,9 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
         (currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
         return false);
     currentWorkspace[0] = sysWorkspaceSize;
+    if (params.isDavid) {
+        currentWorkspace[0] = 0;
+    }
     OP_LOGI(tilingContext->GetNodeName(), "sysWorkspaceSize is %zu.", sysWorkspaceSize);
     return ge::GRAPH_SUCCESS;
 }
