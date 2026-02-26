@@ -21,7 +21,7 @@ elseif (EXISTS "${CANN_3RD_LIB_PATH}/eigen/CMakeLists.txt" AND NOT FORCE_REBUILD
   message("[ThirdPartyLib][eigen] eigen found, and not force rebuild cann third_party")
   set(SOURCE_DIR "${CANN_3RD_LIB_PATH}/eigen")
 else()
-  set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/5.0.0/${EIGEN_VERSION_PKG}")
+  set(REQ_URL "https://gitcode.com/cann-src-third-party/eigen/releases/download/5.0.0-h0.trunk/${EIGEN_VERSION_PKG}")
   set(EIGEN_ARCHIVE ${CANN_3RD_LIB_PATH}/pkg/${EIGEN_VERSION_PKG})
   file(MAKE_DIRECTORY ${EIGEN_DOWNLOAD_PATH})
 
