@@ -68,6 +68,6 @@
 
 ## 调用说明
 
-| 调用方式 | 样例代码 | 说明 |
-| ---- | ---- | ---- |
-| aclnn接口  | [test_aclnn_resize_linear_grad](examples/test_aclnn_resize_linear_grad.cpp) | 通过[aclnnUpsampleLinear1dBackward](image/upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md)接口方式调用ResizeLinearGrad算子。 |
+| 调用方式 | 样例代码 | 说明                                                                                                                            |
+| ---- | ---- |-------------------------------------------------------------------------------------------------------------------------------|
+| aclnn接口  | [test_aclnn_resize_linear_grad](examples/test_aclnn_resize_linear_grad.cpp) | 通过[aclnnUpsampleLinear1dBackward](../upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md)接口方式调用ResizeLinearGrad算子。 |

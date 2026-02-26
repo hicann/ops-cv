@@ -108,4 +108,4 @@ $$
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_ciou](example/test_aclnn_ciou.cpp) | 通过[aclnnCIoU](docs/aclnnCIoU.md)接口方式调用CIoU算子。 |
+| aclnn接口  | [test_aclnn_ciou](examples/test_aclnn_ciou.cpp) | 通过[aclnnCIoU](docs/aclnnCIoU.md)接口方式调用CIoU算子。 |

@@ -1196,7 +1196,7 @@ do_remove() {
     fi
 
     if [ "${package}" != "" ]; then
-        # root帐户--uninstall时，存在不调用restoremod，直接调用remove的场景。（toolkit包）
+        # root账户--uninstall时，存在不调用restoremod，直接调用remove的场景。（toolkit包）
         func_before_remove="del_blocks_info_pkg \"${install_path}\" \"${package}\""
         if [ -f "${install_path}/${STASH_MOD_PATH}" ]; then
             # 删除文件后，恢复目录权限配置

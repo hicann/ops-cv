@@ -3,7 +3,7 @@
 ## 🔥Latest News
 
 - [2026/01] 新增[QuickStart](QUICKSTART.md)，指导新手零基础入门算子项目部署（支持Docker环境）、算子开发和贡献流程。
-- [2025/12] 开源算子支持Ascend 950PR/Ascend 950DT/KirinX90，可以通过[CANN Simulator](docs/zh/debug/cann_simulator.md)仿真工具开发调试；优化指南类文档，聚焦[算子开发指南](docs/zh/develop/aicore_develop_guide.md)，明确最小交付件和关键示例代码，针对Ascend/samples仓算子提供迁移本项目的指导；新增onnx算子插件支持。
+- [2025/12] 开源算子支持Ascend 950PR/Ascend 950DT/KirinX90，可以通过[CANN Simulator](docs/zh/debug/cann_sim.md)仿真工具开发调试；优化指南类文档，聚焦[算子开发指南](docs/zh/develop/aicore_develop_guide.md)，明确最小交付件和关键示例代码，针对Ascend/samples仓算子提供迁移本项目的指导；新增onnx算子插件支持。
 - [2025/11] [three_interpolate_backward](image/three_interpolate_backward/docs/aclnnThreeInterpolateBackward.md)算子新增确定性计算特性；新增[opgen](docs/zh/develop/aicore_develop_guide.md#工程创建)支持自动生成算子工程。
 - [2025/10] 新增experimental目录，完善[贡献指南](CONTRIBUTING.md)，支持开发者调试并贡献自定义算子。
 - [2025/09] ops-cv项目首次上线，开源算子支持Atlas A2/A3系列产品。
@@ -26,7 +26,7 @@ ops-cv是[CANN](https://hiascend.com/software/cann) （Compute Architecture for 
 1. [算子列表](docs/zh/op_list.md)：项目全量算子信息，方便快速查询。
 2. [QuickStart](QUICKSTART.md)：**基于WebIDE或Docker环境**提供极简快速上手指南，包括搭建环境、编译部署、算子调用/开发/调试、贡献等。
 
-    > **说明**：无论是WebIDE或Docker环境，默认提供最新商发版本CANN软件包，目前是CANN 8.5.0。若您想手动安装CANN包或体验master分支最新能力等，请参考[学习教程](#📖学习教程)中的步骤，完成环境搭建、编译执行、算子开发等操作。
+    > **说明**：无论是WebIDE或Docker环境，默认提供最新商发版本CANN软件包，目前是CANN 8.5.0。若您想手动安装CANN包或体验master分支最新能力等，请参考[学习教程](#学习教程)中的步骤，完成环境搭建、编译执行、算子开发等操作。
 
 ## 📖学习教程
 

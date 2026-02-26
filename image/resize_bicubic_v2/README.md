@@ -78,6 +78,6 @@
 
 ## 调用说明
 
-| 调用方式 | 样例代码 | 说明 |
-| ---- | ---- | ---- |
-|aclnn接口|[test_aclnn_resize_bicubic_v2](examples/test_aclnn_bicubic_v2.cpp)|通过[aclnnUpsampleBicubic2d](docs/aclnnUpsampleBicubic2d.md)接口方式调用ResizeBicubicV2算子。|
+| 调用方式 | 样例代码 | 说明                                                                                                       |
+| ---- | ---- |----------------------------------------------------------------------------------------------------------|
+|aclnn接口|[test_aclnn_resize_bicubic_v2](examples/test_aclnn_bicubic_v2.cpp)| 通过[aclnnUpsampleBicubic2d](../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)接口方式调用ResizeBicubicV2算子。 |

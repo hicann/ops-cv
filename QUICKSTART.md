@@ -20,7 +20,7 @@
 这里将以**AddExample**算子作为实践对象，源文件位于`ops-cv/examples/add_example`目录，请参考下面步骤快速体验起来吧！
 
 ## 目录导读
-1.  **[环境安装](#一环境安装)**：搭建算子开发和运行环境。
+1.  **[环境安装](#一环境安装二选一)**：搭建算子开发和运行环境。
 2.  **[编译部署](#二编译部署)**：编译自定义算子包并部署安装，实现快速调用算子。
 3.  **[算子开发](#三算子开发)**：通过修改现有算子Kernel，体验开发、编译、验证的完整闭环。
 4.  **[算子调试](#四算子调试)**：掌握算子打印和性能采集方法。
@@ -100,7 +100,7 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 >
 > 当前平台功能正在内测中，若您想体验，请先单击[LINK](https://gitcode.com/org/cann/discussions/47)申请云开发平台资源，并获取平台介绍文档。只有成功申请了平台资源，开源项目的首页才会有“**云开发**”按钮，您才可以参考下述步骤体验。
 
-1. 进入ops-nn开源项目，单击“`云开发 > WebIDE for Ascend`”进入算子一站式开发平台，根据页面提示启动云开发环境。
+1. 进入ops-cv开源项目，单击“`云开发 > WebIDE for Ascend`”进入算子一站式开发平台，根据页面提示启动云开发环境。
 
    <img src="docs/zh/figures/cloudIDE.png" alt="云平台"  width="700px" height="100px">
 
@@ -137,7 +137,7 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
     ```bash
     git clone -b ${tag_version} https://gitcode.com/cann/ops-cv.git
     ```
-    若出现“`fatal: destionation path 'ops-cv' already exists and is not an empty directory.`”说明项目源码已存在，如需刷新项目代码可使用`git pull`命令。
+    若出现“`fatal: destination path 'ops-cv' already exists and is not an empty directory.`”说明项目源码已存在，如需刷新项目代码可使用`git pull`命令。
     
 2. 进入项目根目录，命令如下，请区分Docker和WebIDE场景。
     - Docker场景：

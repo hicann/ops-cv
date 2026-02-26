@@ -16,7 +16,7 @@
 
 ## 功能说明
 
-算子功能：[aclnnRoiAlignV2](./aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
+算子功能：[aclnnRoiAlignV2](../../roi_align/docs/aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
 
 ## 函数原型
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignV2BackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlignV2Backward”接口执行计算。
@@ -42,7 +42,7 @@
 
   - samplingRatio（int64_t，计算输入）：RoiAlign中用于计算每个输出元素在H和W方向上的采样频率。Host侧的输入参数，需大于等于0。
   
-  - aligned（bool，计算输入）：如果为false，则对齐[aclnnRoiAlign](./aclnnRoiAlign.md)版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。Host侧的输入参数。
+  - aligned（bool，计算输入）：如果为false，则对齐[aclnnRoiAlign](../../roi_align/docs/aclnnRoiAlign.md)版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。Host侧的输入参数。
 
   - gradInput（aclTensor\*，计算输出）：反向传播的输出。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、boxes数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为（B, C, inputHeight, inputWidth）。
 

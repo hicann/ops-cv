@@ -72,4 +72,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_mrgba_custom](example/test_aclnn_mrgba_custom.cpp) | 通过[aclnnMrgbaCustom](docs/aclnnMrgbaCustom.md)接口方式调用MrgbaCustom算子。 |
+| aclnn接口  | [test_aclnn_mrgba_custom](examples/test_aclnn_mrgba_custom.cpp) | 通过[aclnnMrgbaCustom](docs/aclnnMrgbaCustom.md)接口方式调用MrgbaCustom算子。 |

@@ -75,6 +75,6 @@
 
 ## 调用说明
 
-| 调用方式 | 样例代码 | 说明 |
-| ---- | ---- | ---- |
-| aclnn接口  | [test_aclnn_resize_bicubic_v2_grad](examples/test_aclnn_resize_bicubic_v2_grad.cpp) | 通过[aclnnUpsampleBicubic2dBackward](image/upsample_bicubic2d_grad/docs/aclnnUpsampleBicubic2dBackward.md)接口方式调用ResizeBicubicV2Grad算子。 |
+| 调用方式 | 样例代码 | 说明                                                                                                                                |
+| ---- | ---- |-----------------------------------------------------------------------------------------------------------------------------------|
+| aclnn接口  | [test_aclnn_resize_bicubic_v2_grad](examples/test_aclnn_resize_bicubic_v2_grad.cpp) | 通过[aclnnUpsampleBicubic2dBackward](../upsample_bicubic2d_grad/docs/aclnnUpsampleBicubic2dBackward.md)接口方式调用ResizeBicubicV2Grad算子。 |

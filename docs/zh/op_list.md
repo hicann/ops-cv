@@ -356,7 +356,7 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/mrgba_custom/doc/aclnnMrgbaCustom.md">mrgba_custom</a></td>
+    <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
@@ -366,7 +366,7 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/blend_images_custom/doc/aclnnBlendImagesCustom.md">blend_images_custom</a></td>
+    <td><a href="../../objdetect/blend_images_custom/README.md">blend_images_custom</a></td>
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
@@ -376,7 +376,7 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/background_replace/doc/aclnnBackgroundReplace.md">background_replace</a></td>
+    <td><a href="../../objdetect/background_replace/README.md">background_replace</a></td>
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
@@ -467,7 +467,7 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/background_replace/README.md">background_repalce</a></td>
+    <td><a href="../../objdetect/background_replace/README.md">background_replace</a></td>
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>

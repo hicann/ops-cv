@@ -79,4 +79,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_background_replace](example/test_aclnn_background_replace.cpp) | 通过[aclnnBackgroundReplace](docs/aclnnBackgroundReplace.md)接口方式调用BackgroundReplace算子。 |
+| aclnn接口  | [test_aclnn_background_replace](examples/test_aclnn_background_replace.cpp) | 通过[aclnnBackgroundReplace](docs/aclnnBackgroundReplace.md)接口方式调用BackgroundReplace算子。 |

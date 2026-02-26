@@ -68,6 +68,6 @@
 
 ## 调用说明
 
-| 调用方式 | 样例代码 | 说明 |
-| ---- | ---- | ---- |
-| aclnn接口  | [test_aclnn_resize_linear](examples/test_aclnn_resize_linear.cpp) | 通过[aclnnUpsampleLinear1d](docs/aclnnUpsampleLinear1d.md)接口方式调用ResizeLinear算子。 |
+| 调用方式 | 样例代码 | 说明                                                                                                 |
+| ---- | ---- |----------------------------------------------------------------------------------------------------|
+| aclnn接口  | [test_aclnn_resize_linear](examples/test_aclnn_resize_linear.cpp) | 通过[aclnnUpsampleLinear1d](../upsample_linear1d/docs/aclnnUpsampleLinear1d.md)接口方式调用ResizeLinear算子。 |

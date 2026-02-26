@@ -79,4 +79,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_blend_images_custom](example/test_aclnn_blend_images_custom.cpp) | 通过[aclnnBlendImagesCustom](docs/aclnnBlendImagesCustom.md)接口方式调用BlendImagesCustom算子。 |
+| aclnn接口  | [test_aclnn_blend_images_custom](examples/test_aclnn_blend_images_custom.cpp) | 通过[aclnnBlendImagesCustom](docs/aclnnBlendImagesCustom.md)接口方式调用BlendImagesCustom算子。 |
