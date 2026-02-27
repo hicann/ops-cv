@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ OP_API_UT = "OP_API_UT"
 OP_HOST_UT = "OP_HOST_UT"
 OP_GRAPH_UT = "OP_GRAPH_UT"
 OP_KERNEL_UT = "OP_KERNEL_UT"
+OP_KERNEL_AICPU_UT = "OP_KERNEL_AICPU_UT"
 ALL_UT = "ALL_UT"
 
 NEW_OPS_PATH = [
@@ -41,11 +42,13 @@ SOC_MAPPING = {
 
 class FileChangeInfo:
     def __init__(self, op_api_changed_files=None, op_host_changed_files=None, op_graph_changed_files=None,
-                 op_kernel_changed_files=None, comm_changed_files=None, soc_info=None):
+                 op_kernel_changed_files=None, op_kernel_aicpu_changed_files=None, comm_changed_files=None,
+                 soc_info=None):
         self.op_api_changed_files = [] if op_api_changed_files is None else op_api_changed_files
         self.op_host_changed_files = [] if op_host_changed_files is None else op_host_changed_files
         self.op_graph_changed_files = [] if op_graph_changed_files is None else op_graph_changed_files
         self.op_kernel_changed_files = [] if op_kernel_changed_files is None else op_kernel_changed_files
+        self.op_kernel_aicpu_changed_files = op_kernel_aicpu_changed_files or []
         self.comm_changed_files = [] if comm_changed_files is None else comm_changed_files
         self.soc_info = set() if soc_info is None else soc_info
 
@@ -60,24 +63,34 @@ def get_file_change_info_from_ci(changed_file_info_from_ci, ops_path):
     if not os.path.exists(or_file_path):
         logging.error("[ERROR] change file is not exist, can not get file change info in this pull request.")
         return None
+    
+    def _compile_patterns(ops_path):
+        p = {}
+        p['host'] = re.compile(rf"({'|'.join(ops_path)})/.*/op_host/.*\.(cc|cpp|h)$")
+        p['api'] = re.compile(rf"({'|'.join(ops_path)})/.*/op_api/.*\.(cc|cpp|h)$")
+        p['kernel'] = re.compile(rf"({'|'.join(ops_path)})/.*/op_kernel/.*\.(cc|cpp|h)$")
+        p['kernel_aicpu'] = re.compile(rf"({'|'.join(ops_path)})/.*/op_kernel_aicpu/.*\.(cc|cpp|h)$")
+        p['graph'] = re.compile(rf"({'|'.join(ops_path)})/.*/op_graph/.*\.(cc|cpp|h)$")
+        p['host_test'] = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_host/.*\.(cc|cpp|txt)$")
+        p['api_test'] = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_api/.*\.(cc|cpp|txt|py)$")
+        p['graph_test'] = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_graph/.*\.(cc|cpp|txt)$")
+        p['kernel_test'] = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_kernel/.*\.(cc|cpp|txt)$")
+        p['kernel_aicpu_test'] = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_kernel_aicpu/.*\.(cc|cpp|txt)$")
+        p['comm'] = re.compile(rf"^({'|'.join(COMM_FILES)})")
+        p['soc'] = re.compile(rf"({'|'.join(re.escape(key) for key in SOC_MAPPING)})")
+        return p
+        
+
     with open(or_file_path) as or_f:
         lines = or_f.readlines()
         op_api_changed_files = []
         op_host_changed_files = []
         op_graph_changed_files = []
         op_kernel_changed_files = []
+        op_kernel_aicpu_changed_files = []
         comm_changed_files = []
         soc_info = set()
-        host_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/op_host/.*\.(cc|cpp|h)$")
-        api_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/op_api/.*\.(cc|cpp|h)$")
-        kernel_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/op_kernel/.*\.(cc|cpp|h)$")
-        graph_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/op_graph/.*\.(cc|cpp|h)$")
-        host_test_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_host/.*\.(cc|cpp|txt)$")
-        api_test_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_api/.*\.(cc|cpp|txt|py)$")
-        graph_test_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_graph/.*\.(cc|cpp|txt)$")
-        kernel_test_pattern = re.compile(rf"({'|'.join(ops_path)})/.*/tests/ut/op_kernel/.*\.(cc|cpp|txt)$")
-        comm_files_pattern = re.compile(rf"^({'|'.join(COMM_FILES)})")
-        soc_pattern = re.compile(rf"({'|'.join(re.escape(key) for key in SOC_MAPPING)})")
+        patterns = _compile_patterns(ops_path)     
 
         for line in lines:
             line = line.strip()
@@ -86,17 +99,19 @@ def get_file_change_info_from_ci(changed_file_info_from_ci, ops_path):
                 continue
             if not os.path.exists(line):
                 continue
-            if api_pattern.match(line) or api_test_pattern.match(line):
+            if patterns['api'].match(line) or patterns['api_test'].match(line):
                 op_api_changed_files.append(line)
-            elif host_pattern.match(line) or host_test_pattern.match(line):
+            elif patterns['host'].match(line) or patterns['host_test'].match(line):
                 op_host_changed_files.append(line)
-            elif kernel_pattern.match(line) or kernel_test_pattern.match(line):
+            elif patterns['kernel'].match(line) or patterns['kernel_test'].match(line):
                 op_kernel_changed_files.append(line)
-            elif graph_pattern.match(line) or graph_test_pattern.match(line):
+            elif patterns['kernel_aicpu'].match(line) or patterns['kernel_aicpu_test'].match(line):
+                op_kernel_aicpu_changed_files.append(line)
+            elif patterns['graph'].match(line) or patterns['graph_test'].match(line):
                 op_graph_changed_files.append(line)
-            elif comm_files_pattern.match(line):
+            elif patterns['comm'].match(line):
                 comm_changed_files.append(line)
-            soc_match = soc_pattern.search(line)
+            soc_match = patterns['soc'].search(line)
             if soc_match:
                 matched_key = soc_match.group(1)
                 soc_info.add(SOC_MAPPING[matched_key])
@@ -105,6 +120,7 @@ def get_file_change_info_from_ci(changed_file_info_from_ci, ops_path):
                           op_api_changed_files=op_api_changed_files,
                           op_graph_changed_files=op_graph_changed_files, 
                           op_kernel_changed_files=op_kernel_changed_files,
+                          op_kernel_aicpu_changed_files=op_kernel_aicpu_changed_files,
                           comm_changed_files=comm_changed_files,
                           soc_info=soc_info)
 
@@ -129,6 +145,8 @@ def get_change_relate_ut_dir_list(changed_file_info_from_ci, is_experimental):
             relate_ut.add(OP_GRAPH_UT)
         if len(file_change_info.op_kernel_changed_files) > 0:
             relate_ut.add(OP_KERNEL_UT)
+        if len(file_change_info.op_kernel_aicpu_changed_files) > 0:
+            relate_ut.add(OP_KERNEL_AICPU_UT)
         if len(file_change_info.comm_changed_files) > 0:
             relate_ut.add(ALL_UT)
         return relate_ut

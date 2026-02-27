@@ -1,6 +1,6 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -970,6 +970,12 @@ parse_changed_files() {
   if [[ "$related_ut" =~ "OP_KERNEL_UT" && "$OP_KERNEL" == "TRUE" ]]; then
     echo "OP_KERNEL_UT is triggered!"
     OP_KERNEL_UT=TRUE
+    ENABLE_CUSTOM=TRUE
+  fi
+  if [[ "$related_ut" =~ "OP_KERNEL_AICPU_UT" ]]; then
+    echo "OP_KERNEL_AICPU_UT is triggered!"
+    OP_KERNEL_AICPU_UT=TRUE
+    OP_KERNEL_AICPU=TRUE
     ENABLE_CUSTOM=TRUE
   fi
 }
