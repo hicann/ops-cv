@@ -371,7 +371,7 @@ aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
         Nearest2dGradData nearest2dGradData = {gradOutContiguous, gradInput, outputSize, inputSize, scalesH, scalesW};
         resizeNearestGradOutCast = GoUpsampleNearestGrad(nearest2dGradData, uniqueExecutor.get());
         CHECK_RET(resizeNearestGradOutCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    } else if (scalesH > 0 || scalesW > 0) {
+    } else if (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_2201 && (scalesH > 0 || scalesW > 0)) {
         Nearest2dGradData nearest2dGradData = {gradOutContiguous, gradInput, outputSize, inputSize, scalesH, scalesW};
         resizeNearestGradOutCast = GoUpsampleNearestGradTranspose(nearest2dGradData, uniqueExecutor.get());
         CHECK_RET(resizeNearestGradOutCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
