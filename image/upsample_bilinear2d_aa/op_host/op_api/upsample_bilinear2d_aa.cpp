@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ const aclTensor *UpsampleBilinear2dAA(const aclTensor *input, const aclIntArray 
 {
     L0_DFX(UpsampleBilinear2dAA, input, outputSize, output, alignCorners, scales_h, scales_w);
 
-    auto out = executor->AllocTensor(output->GetViewShape(), op::DataType::DT_FLOAT, output->GetStorageFormat());
+    auto out = executor->AllocTensor(output->GetViewShape(), output->GetDataType(), output->GetStorageFormat());
     CHECK_RET(out != nullptr, nullptr);
 
     auto ret = ADD_TO_LAUNCHER_LIST_AICORE(

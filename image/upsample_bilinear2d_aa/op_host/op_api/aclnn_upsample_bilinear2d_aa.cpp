@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "aclnn_upsample_bilinear2d_aa.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -164,8 +165,9 @@ static aclnnStatus CheckParams(
     // 4. 检查输入元素是否合法
     CHECK_RET(CheckInputElement(input, outputSize), ACLNN_ERR_PARAM_INVALID);
 
-    CHECK_RET(CheckMaxScaleSupport(input, outputSize, scalesH, scalesW), ACLNN_ERR_PARAM_INVALID);
-
+    if (!IsRegBase()) {
+        CHECK_RET(CheckMaxScaleSupport(input, outputSize, scalesH, scalesW), ACLNN_ERR_PARAM_INVALID);
+    }
     return ACLNN_SUCCESS;
 }
 
@@ -199,7 +201,14 @@ aclnnStatus aclnnUpsampleBilinear2dAAGetWorkspaceSize(const aclTensor *input, co
     int64_t inputW = selfShape.GetDim(DIM_THREE);
 
     const aclTensor *upsampleOut;
-    if (inputH == (*outputSize)[DIM_ZERO] && inputW == (*outputSize)[DIM_ONE]) {
+    if (IsRegBase()) {
+        const float realScalesH = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
+        const float realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
+
+        upsampleOut = l0op::UpsampleBilinear2dAA(
+            selfContiguous, outputSize, out, alignCorners, realScalesH, realScalesW, uniqueExecutor.get());
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    } else if (inputH == (*outputSize)[DIM_ZERO] && inputW == (*outputSize)[DIM_ONE]) {
         upsampleOut = selfContiguous;
     } else {
         auto dtype = input->GetDataType();

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,11 +12,9 @@
  * \file upsample_bilinear2d_aa_tiling.cpp
  * \brief
  */
-#include "register/op_impl_registry.h"
-#include "register/tilingdata_base.h"
-#include "tiling/tiling_api.h"
+
 #include "log/log.h"
-#include "tiling/platform/platform_ascendc.h"
+#include "op_host/tiling_util.h"
 #include "upsample_bilinear2d_aa_tiling.h"
 
 namespace optiling {
@@ -62,8 +60,7 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 class UpsampleBilinearAATiling {
 public:
     explicit UpsampleBilinearAATiling(gert::TilingContext *context) : tilingContext(context){};
-    ge::graphStatus RunBigKernelTiling();
-
+    ge::graphStatus RunBigKernelTiling(gert::TilingContext *context);
 private:
     void setScale();
     inline float compute_scale_value(int64_t input_size, int64_t out_size,
@@ -94,7 +91,6 @@ private:
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize{4};
     gert::Shape input_shape;
-    uint8_t dim{0};
     const bool *align_corners{nullptr};
     const float *scale_h{nullptr};
     const float *scale_w{nullptr};
@@ -186,29 +182,30 @@ inline bool FloatEqual(float a, float b)
     }
 };
 
-ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling()
+ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling(gert::TilingContext *context)
 {
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
+    if (regBase) {
+        OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleBilinear2dAARegbase");
+        return Tiling4UpsampleBilinear2dAARegbase(tilingContext);
+    }
     auto srcTensor = tilingContext->GetInputTensor(0);
     OP_CHECK_IF(srcTensor == nullptr, OP_LOGE(tilingContext->GetNodeName(), "srcTensor == nullptr"),
         return ge::GRAPH_FAILED);
 
     const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
-    OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"), return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
-    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"), return ge::GRAPH_FAILED);
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
-    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"), return ge::GRAPH_FAILED);
     scale_h = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
     OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(SCALE_W_ATTR);
     OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
 
     auto temp = tilingContext->GetInputDesc(0);
-    OP_CHECK_IF(temp == nullptr, OP_LOGE(tilingContext->GetNodeName(), "temp == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(temp == nullptr, OP_LOGE(tilingContext->GetNodeName(), "temp == nullptr"), return ge::GRAPH_FAILED);
 
     ge::DataType srcDtype = ge::DT_UNDEFINED;
     srcDtype = temp->GetDataType();
@@ -223,7 +220,6 @@ ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling()
 
     auto src_shape = tilingContext->GetInputShape(0);
     input_shape = src_shape->GetOriginShape();
-    dim = src_shape->GetStorageShape().GetDimNum() - 2;  // 其实固定是2
 
     if (!CheckScales(tilingContext, *scale_w, *scale_h)) {
         return ge::GRAPH_FAILED;
@@ -516,7 +512,7 @@ static ge::graphStatus tiling4UpsampleBilinearAATiling(gert::TilingContext *cont
 {
     UpsampleBilinearAATiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
-    return tilingObject.RunBigKernelTiling();
+    return tilingObject.RunBigKernelTiling(context);
 }
 
 static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
