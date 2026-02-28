@@ -50,12 +50,12 @@ public:
 
     __aicore__ inline UpsampleLinear1dND(){};
     __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleLinear1dTilingData *tilingData);
+        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleLinear1dTilingData *tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void ClearGM(const GlobalTensor<T> &dstGlobal, int64_t totalCount);
-    __aicore__ inline void ParseTilingData(UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleLinear1dTilingData *tilingData);
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
     __aicore__ inline void calculateRadioTensorW(int64_t loopIndex, int64_t length);
@@ -162,7 +162,7 @@ private:
 
 template <typename T>
 __aicore__ inline void UpsampleLinear1dND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleLinear1dTilingData *tilingData)
+    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleLinear1dTilingData *tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
     inTensorsPtr = input;
@@ -515,7 +515,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::ParseTilingData(UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dND<T>::ParseTilingData(const UpsampleLinear1dTilingData *tilingData)
 {
     mode = tilingData->mode;
     align_corners = tilingData->align_corners;
