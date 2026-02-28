@@ -25,7 +25,7 @@
 #include "opdev/common_types.h"
 #include "opdev/platform.h"
 #include "aclnn_kernels/cast.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 

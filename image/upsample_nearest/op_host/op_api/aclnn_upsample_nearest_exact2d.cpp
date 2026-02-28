@@ -25,7 +25,7 @@
 #include "upsample_nearest_exact2d.h"
 #include "aclnn_upsample_nearest_exact2d.h"
 #include "image/resize_nearest_neighbor_v2/op_api/resize_nearest_neighbor_v2.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus

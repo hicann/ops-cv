@@ -153,7 +153,7 @@ set(OPAPI_INCLUDE
   ${OPBASE_INC_DIRS}
   ${OPS_CV_DIR}/
   ${OPS_CV_DIR}/common/inc
-  ${OPS_CV_DIR}/common/inc/common
+  ${OPS_CV_DIR}/common/inc/op_api
   ${OPS_CV_DIR}/common/inc/external
   ${TOP_DIR}/output/${PRODUCT}/aclnnop_resource
   ${ASCEND_DIR}/${SYSTEM_PREFIX}/pkg_inc/profiling  # include profiling/prof_common.h
@@ -176,7 +176,7 @@ set(OP_PROTO_INCLUDE
   ${OPBASE_INC_DIRS}
   ${NPURUNTIME_INCLUDE_DIRS}
   ${TOP_DIR}/runtime/pkg_inc
-  ${OPS_CV_DIR}/common/inc/common
+  ${OPS_CV_DIR}/common/inc/op_api
 )
 
 set(OP_PROTO_PATH_LIST )
@@ -203,7 +203,7 @@ set(AICPU_INCLUDE
   ${C_SEC_INCLUDE}
   ${NNOPBASE_INCLUDE_DIRS}
   ${HCCL_EXTERNAL_INCLUDE}
-  ${OPS_CV_DIR}/common/inc/common
+  ${OPS_CV_DIR}/common/inc/op_api
   ${METADEF_INCLUDE_DIRS}
 )
 

@@ -22,7 +22,7 @@
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transdata.h"

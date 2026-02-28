@@ -15,9 +15,9 @@
 
 #include "tiling/platform/platform_ascendc.h"
 #include "op_common/op_host/util/platform_util.h"
-#include "tiling_base/tiling_base.h"
-#include "tiling_base/tiling_util.h"
-#include "tiling_base/tiling_templates_registry.h"
+#include "op_host/tiling_base.h"
+#include "op_host/tiling_util.h"
+#include "op_host/tiling_templates_registry.h"
 #include "col2im_tiling_arch35.h"
 #include "../../op_kernel/arch35/col2im_tiling_key.h"
 #include "util/math_util.h"

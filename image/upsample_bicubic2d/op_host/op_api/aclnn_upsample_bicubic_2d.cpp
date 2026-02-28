@@ -32,8 +32,8 @@
 #include "opdev/make_op_executor.h"
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/reshape.h"
-#include "common/level2_base.h"
-#include "common/aclnn_check.h"
+#include "op_api/level2_base.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus

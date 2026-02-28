@@ -17,9 +17,9 @@
 #include <cmath>
 #include "tiling/platform/platform_ascendc.h"
 #include "op_common/op_host/util/platform_util.h"
-#include "tiling_base/tiling_base.h"
-#include "tiling_base/tiling_util.h"
-#include "tiling_base/tiling_templates_registry.h"
+#include "op_host/tiling_base.h"
+#include "op_host/tiling_util.h"
+#include "op_host/tiling_templates_registry.h"
 #include "upsample_nearest3d_tiling.h"
 #include "image/upsample_nearest3d/op_kernel/arch35/upsample_nearest3d_tiling_data.h"
 #include "image/upsample_nearest3d/op_kernel/arch35/upsample_nearest3d_tiling_key.h"

@@ -18,10 +18,10 @@
 #include "../../op_kernel/arch35/resize_nearest_neighbor_v2_grad_tiling_key.h"
 #include "resize_nearest_neighbor_v2_grad_tiling_base.h"
 #include "log/log.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include "util/math_util.h"
 #include "util/platform_util.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include <cmath>
 
 using namespace ge;

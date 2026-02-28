@@ -13,7 +13,7 @@
  * \brief resize_nearest_neighbor_v2_grad
  */
 #include "resize_nearest_neighbor_v2_grad_tiling_base.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 
 #include "log/log.h"
 

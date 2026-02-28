@@ -62,13 +62,13 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
                     COMMAND
                     COMMAND export LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} &&
                     ${PRELOAD} ASAN_OPTIONS=detect_leaks=0 ./${AICPU_OP_KERNEL_UT_EXE}
-                    COMMENT "Run fast op utest with asan"
+                    COMMENT "Run ops opkernel_aicpu utest with asan"
             )
         else()
             add_custom_command(
                     TARGET ${AICPU_OP_KERNEL_UT_EXE} POST_BUILD
                     COMMAND export LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} && ./${AICPU_OP_KERNEL_UT_EXE}
-                    COMMENT "Run fast op utest"
+                    COMMENT "Run ops opkernel_aicpu utest"
             )
         endif()
     endif()
@@ -77,7 +77,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
         add_custom_command(
                 TARGET ${AICPU_OP_KERNEL_UT_EXE} POST_BUILD
                 COMMAND export LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH} && valgrind --undef-value-errors=no --leak-check=full ./${AICPU_OP_KERNEL_UT_EXE}
-                COMMENT "Run fast op utest with valgrind"
+                COMMENT "Run ops opkernel_aicpu utest with valgrind"
         )
     endif()
  

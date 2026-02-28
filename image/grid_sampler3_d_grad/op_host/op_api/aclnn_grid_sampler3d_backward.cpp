@@ -22,7 +22,7 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn/aclnn_base.h"
 #include "acl/acl_rt.h"
-#include "common/level2_base.h"
+#include "op_api/level2_base.h"
 #include "runtime/context.h"
 #include "grid_sampler3d_grad.h"
 #include "aclnn_grid_sampler3d_backward.h"

@@ -23,7 +23,7 @@
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 #include "aclnn_grid_sampler2d.h"
 
 using namespace op;

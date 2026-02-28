@@ -17,7 +17,7 @@
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 #include "tiling/platform/platform_ascendc.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include "log/log.h"
 #include "upsample_bicubic2d_aa_tiling.h"
 

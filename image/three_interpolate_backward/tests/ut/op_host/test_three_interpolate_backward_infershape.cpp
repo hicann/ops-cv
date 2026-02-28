@@ -11,7 +11,7 @@
 #include <iostream>
 #include "op_proto_test_util.h"
 #include "experiment_ops.h"
-#include "common/utils/ut_op_common.h"
+#include "op_api/utils/ut_op_common.h"
 
 class ThreeInterpolateGradProtoTest : public testing::Test
 {

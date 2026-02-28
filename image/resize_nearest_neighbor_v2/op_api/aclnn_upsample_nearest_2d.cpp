@@ -24,7 +24,7 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
 #include "aclnn_upsample_nearest_2d.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus

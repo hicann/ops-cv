@@ -12,8 +12,8 @@
 #define CV_COMMON_LEVEL2_BASE_H_
 
 #include <stdio.h>
-#include "common/op_api_def.h"
-#include "common/aclnn_check.h"
+#include "op_api/op_api_def.h"
+#include "op_api/aclnn_check.h"
 #include "aclnn/aclnn_base.h"
 
 #ifdef __cplusplus
@@ -303,56 +303,55 @@ static inline bool CheckInpuNullTensorMaxUnPool3D(const aclTensor *self)
     return true;
 }
 
-static inline bool CheckIntArrayShapeMaxUnPool3D(
-    const aclTensor *self, const aclIntArray *outputSize, const aclIntArray *stride, const aclIntArray *padding)
+static inline bool CheckArraySize3(const aclIntArray *array, const char *arrayName)
 {
-    constexpr size_t NCDHW_DIM_NUM = 5;
     constexpr int64_t EXPECT_SIZE = 3;
+    OP_CHECK(array->Size() == EXPECT_SIZE,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "There should be exactly three elements (depth, height, width) in "
+            "%s, but got %zu elements",
+            arrayName,
+            array->Size()),
+        return false);
+    return true;
+}
 
-    OP_CHECK(outputSize->Size() == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "There should be exactly three elements (depth, height, width) in "
-            "output_size, but got %zu elements",
-            outputSize->Size()),
-        return false);
-    OP_CHECK(stride->Size() == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "There should be exactly three elements (depth, height, width) in "
-            "stride, but got %zu elements",
-            stride->Size()),
-        return false);
-    OP_CHECK(padding->Size() == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "There should be exactly three elements (depth, height, width) in "
-            "padding, but got %zu elements",
-            padding->Size()),
-        return false);
-
-    for (size_t i = 0; i < EXPECT_SIZE; ++i) {
-        if ((*stride)[i] <= 0) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "strides[%zu] shoule be greater than zero, but got %ld.", i, (*stride)[i]);
-            return false;
-        }
-        if ((*outputSize)[i] <= 0) {
+static inline bool CheckPositiveValues(const aclIntArray *array, const char *arrayName, size_t size)
+{
+    for (size_t i = 0; i < size; ++i) {
+        if ((*array)[i] <= 0) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "outputSize[%zu] should be greater than zero, but got %ld.",
+                "%s[%zu] should be greater than zero, but got %ld.",
+                arrayName,
                 i,
-                (*outputSize)[i]);
+                (*array)[i]);
             return false;
         }
     }
+    return true;
+}
 
-    int64_t dimD = self->GetViewShape().GetDim(DIM_ONE);
-    int64_t dimH = self->GetViewShape().GetDim(DIM_TWO);
-    int64_t dimW = self->GetViewShape().GetDim(DIM_THREE);
-
+static inline void GetSpatialDimensions(const aclTensor *self, int64_t &dimD, int64_t &dimH, int64_t &dimW)
+{
+    constexpr size_t NCDHW_DIM_NUM = 5;
+    
     if (self->GetViewShape().GetDimNum() == NCDHW_DIM_NUM) {
         dimD = self->GetViewShape().GetDim(DIM_TWO);
         dimH = self->GetViewShape().GetDim(DIM_THREE);
         dimW = self->GetViewShape().GetDim(DIM_FOUR);
+    } else {
+        dimD = self->GetViewShape().GetDim(DIM_ONE);
+        dimH = self->GetViewShape().GetDim(DIM_TWO);
+        dimW = self->GetViewShape().GetDim(DIM_THREE);
     }
+}
 
-    OP_CHECK(((*outputSize)[DIM_ZERO] * (*outputSize)[DIM_ONE] * (*outputSize)[DIM_TWO]) >= (dimD * dimH * dimW),
+static inline bool CheckOutputSizeValid(const aclIntArray *outputSize, int64_t dimD, int64_t dimH, int64_t dimW)
+{
+    int64_t outputTotal = (*outputSize)[DIM_ZERO] * (*outputSize)[DIM_ONE] * (*outputSize)[DIM_TWO];
+    int64_t inputTotal = dimD * dimH * dimW;
+    
+    OP_CHECK(outputTotal >= inputTotal,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "The output dimensions are of size %ld x %ld x %ld, "
             "should be greater than or equal to self of size %ld x %ld x %ld.",
@@ -364,6 +363,28 @@ static inline bool CheckIntArrayShapeMaxUnPool3D(
             dimW),
         return false);
     return true;
+}
+
+static inline bool CheckIntArrayShapeMaxUnPool3D(
+    const aclTensor *self, const aclIntArray *outputSize, const aclIntArray *stride, const aclIntArray *padding)
+{
+    constexpr int64_t EXPECT_SIZE = 3;
+
+    if (!CheckArraySize3(outputSize, "output_size") ||
+        !CheckArraySize3(stride, "stride") ||
+        !CheckArraySize3(padding, "padding")) {
+        return false;
+    }
+
+    if (!CheckPositiveValues(stride, "strides", EXPECT_SIZE) ||
+        !CheckPositiveValues(outputSize, "outputSize", EXPECT_SIZE)) {
+        return false;
+    }
+
+    int64_t dimD, dimH, dimW;
+    GetSpatialDimensions(self, dimD, dimH, dimW);
+
+    return CheckOutputSizeValid(outputSize, dimD, dimH, dimW);
 }
 
 static void CalculateValuesSliceUpper(const aclTensor *self, int64_t &dim, int64_t &start, int64_t &end)

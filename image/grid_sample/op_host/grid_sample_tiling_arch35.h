@@ -24,11 +24,11 @@
 #include "tiling/platform/platform_ascendc.h"
 #include "platform/platform_infos_def.h"
 #include "op_common/op_host/util/platform_util.h"
-#include "tiling_base/tiling_templates_registry.h"
-#include "tiling_base/tiling_key.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_templates_registry.h"
+#include "op_host/tiling_key.h"
+#include "op_host/tiling_util.h"
 #include "grid_sample_tiling.h"
-#include "tiling_base/tiling_base.h"
+#include "op_host/tiling_base.h"
 
 namespace optiling {
 

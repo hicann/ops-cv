@@ -14,7 +14,7 @@ else()
   add_library(${COMMON_NAME}_obj OBJECT)
 endif()
 
-file(GLOB CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/tiling_base/*.cpp")
+file(GLOB CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/op_host/*.cpp")
 
 target_sources(${COMMON_NAME}_obj PRIVATE ${CPP_SOURCES})
 

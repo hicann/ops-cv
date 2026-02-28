@@ -16,7 +16,7 @@
 #include "register/op_impl_registry.h"
 #include "log/log.h"
 #include "util/math_util.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include "image/resize_bicubic_v2/op_kernel/arch35/resize_bicubic_v2_tiling_key.h"
 
 namespace optiling {

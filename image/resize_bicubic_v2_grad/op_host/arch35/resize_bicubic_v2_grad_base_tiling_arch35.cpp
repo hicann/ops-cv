@@ -13,7 +13,7 @@
  * \brief resize_bicubic_v2_grad_base_tiling_arch35
  */
 #include "resize_bicubic_v2_grad_tiling_arch35.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include "util/platform_util.h"
 
 namespace optiling {

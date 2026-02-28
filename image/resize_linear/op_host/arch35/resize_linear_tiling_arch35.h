@@ -23,7 +23,7 @@
 #include "log/log.h"
 #include "util/math_util.h"
 #include "util/const_util.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 
 namespace optiling {
 BEGIN_TILING_DATA_DEF(ResizeLinearTilingData)

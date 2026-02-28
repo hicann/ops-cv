@@ -14,7 +14,7 @@
 #include "array_ops.h"
 #include "op_proto_test_util.h"
 #include "image_ops.h"
-#include "common/utils/ut_op_common.h"
+#include "op_api/utils/ut_op_common.h"
 
 class UpsampleTrilinear3dGradTest : public testing::Test
 {

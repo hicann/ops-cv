@@ -19,7 +19,7 @@
 #include "log/log.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "register/op_impl_registry.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include "upsample_nearest3d_tiling.h"
 
 using namespace ge;

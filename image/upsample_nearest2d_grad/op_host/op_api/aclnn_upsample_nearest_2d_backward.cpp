@@ -24,7 +24,7 @@
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "opdev/platform.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 #include "image/resize_nearest_neighbor_v2_grad/op_api/resize_nearest_neighbor_v2_grad.h"
 #include "image/upsample_nearest_exact2d_grad/op_host/op_api/upsample_nearest_exact2d_grad.h"

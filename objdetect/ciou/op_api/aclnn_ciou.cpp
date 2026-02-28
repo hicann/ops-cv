@@ -12,7 +12,7 @@
 #include "ciou.h"
 #include <dlfcn.h>
 #include <acl/acl.h>
-#include "aclnn_check.h"
+#include "op_api/aclnn_check.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_kernels/contiguous.h"
 #include "opdev/common_types.h"

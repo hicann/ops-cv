@@ -152,7 +152,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE ${OP_KERNEL_UT_COMMON_SRC})
     target_include_directories(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE
         ${GTEST_INCLUDE}
-        ${PROJECT_SOURCE_DIR}/common/inc/common
+        ${PROJECT_SOURCE_DIR}/common/inc/op_api
         ${ASCEND_DIR}/pkg_inc/base
         ${AICPU_INC_DIRS}
     )
@@ -168,7 +168,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     if(NOT TARGET ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj)
         add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
-    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl)
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl Eigen3::EigenCv)
     target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE ${OP_KERNEL_AICPU_UT_UTILS_SRC})
 
     ## add opkernel ut cases shared lib: libcv_aicpu_op_kernel_ut_cases.so

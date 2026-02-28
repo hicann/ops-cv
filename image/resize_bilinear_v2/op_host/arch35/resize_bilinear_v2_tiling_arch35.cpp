@@ -13,7 +13,7 @@
  * \brief resize_bilinear_v2_tiling_arch35
  */
 #include "resize_bilinear_v2_tiling_arch35.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 #include "register/op_impl_registry.h"
 #include "log/log.h"
 #include "util/math_util.h"

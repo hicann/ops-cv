@@ -10,7 +10,7 @@
 #include <string>
 #include <iostream>
 #include <gtest/gtest.h>
-#include "common/utils/ut_op_util.h"
+#include "op_api/utils/ut_op_util.h"
 #include "matrix_calculation_ops.h"
 #include "op_tiling/op_tiling_util.h"
 #include "register/op_tiling_registry.h"

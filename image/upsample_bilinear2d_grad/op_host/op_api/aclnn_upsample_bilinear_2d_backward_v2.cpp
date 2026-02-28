@@ -24,7 +24,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/platform.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 #include "image/resize_bilinear_v2_grad/op_api/resize_bilinear_v2_grad.h"
 #include "upsample_bilinear2d_grad.h"

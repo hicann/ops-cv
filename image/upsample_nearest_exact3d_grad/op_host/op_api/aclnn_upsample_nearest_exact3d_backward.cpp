@@ -21,7 +21,7 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "upsample_nearest_exact3d_grad.h"
 #include "aclnn_upsample_nearest_exact3d_backward.h"
-#include "common/aclnn_check.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus

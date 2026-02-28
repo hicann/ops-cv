@@ -14,7 +14,7 @@
  */
 #include <cmath>
 #include "tiling/tiling_api.h"
-#include "tiling_base/tiling_base.h"
+#include "op_host/tiling_base.h"
 #include "log/log.h"
 #include "register/op_impl_registry.h"
 #include "exe_graph/runtime/storage_format.h"

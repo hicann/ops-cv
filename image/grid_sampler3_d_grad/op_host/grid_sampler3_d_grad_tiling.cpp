@@ -18,7 +18,7 @@
 #include <vector>
 #include <string>
 #include "grid_sampler3_d_grad_tiling.h"
-#include "tiling_base/tiling_util.h"
+#include "op_host/tiling_util.h"
 
 namespace optiling {
 constexpr uint32_t RESERVED_UB = static_cast<uint32_t>(8 * 1024);

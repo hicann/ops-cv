@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include "exe_graph/runtime/tiling_context.h"
-#include "tiling_base/tiling_base.h"
+#include "op_host/tiling_base.h"
 #include "log/log.h"
 
 namespace Ops {
@@ -33,6 +33,25 @@ std::unique_ptr<TilingBaseClass> TILING_CLASS(gert::TilingContext* context)
 }
 
 using TilingClassCase = std::unique_ptr<TilingBaseClass> (*)(gert::TilingContext*);
+
+// Helper: 遍历 tiling cases 并尝试执行，若任一 case 返回非 GRAPH_PARAM_INVALID 的状态则返回该状态。
+// 若无可用 template 则返回 ge::GRAPH_FAILED。
+inline ge::graphStatus RunTilingCasesHelper(const std::map<int32_t, TilingClassCase>& tiling_cases,
+                                           gert::TilingContext* context)
+{
+    for (auto it = tiling_cases.begin(); it != tiling_cases.end(); ++it) {
+        auto tilingTemplate = it->second(context);
+        if (tilingTemplate != nullptr) {
+            ge::graphStatus status = tilingTemplate->DoTiling();
+            if (status != ge::GRAPH_PARAM_INVALID) {
+                OP_LOGD(context, "Do general op tiling success priority=%d", it->first);
+                return status;
+            }
+            OP_LOGD(context, "Ignore general op tiling priority=%d", it->first);
+        }
+    }
+    return ge::GRAPH_FAILED;
+}
 
 class TilingCases
 {
@@ -98,55 +117,25 @@ public:
 
     ge::graphStatus DoTilingImpl(gert::TilingContext* context)
     {
-        int32_t soc_version = (int32_t)platform_ascendc::SocVersion::RESERVED_VERSION;
+        int32_t soc_version;
         const char* op_type = context->GetNodeType();
-        fe::PlatFormInfos* platformInfoPtr = context->GetPlatformInfo();
-        if (platformInfoPtr == nullptr) {
-            auto compileInfoPtr = reinterpret_cast<const CompileInfoCommon*>(context->GetCompileInfo());
-            OP_CHECK_IF(
-                compileInfoPtr == nullptr, OP_LOGE(op_type, "compileInfoPtr is null."), return ge::GRAPH_FAILED);
-            soc_version = compileInfoPtr->socVersion;
-            OP_LOGD(context, "soc version in compileInfo is %d", soc_version);
-        } else {
-            auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-            soc_version = static_cast<int32_t>(ascendcPlatform.GetSocVersion());
-            OP_LOGD(context, "soc version is %d", soc_version);
-            if (soc_version == (int32_t)platform_ascendc::SocVersion::RESERVED_VERSION) {
-                OP_LOGE(op_type, "Do op tiling failed, cannot find soc version.");
-                return ge::GRAPH_FAILED;
-            }
+        if (!GetSocVersionFromContext(context, soc_version, op_type, /*require_valid*/ true)) {
+            return ge::GRAPH_FAILED;
         }
         auto tilingTemplateRegistryMap = GetTilingTemplates(op_type, soc_version);
-        for (auto it = tilingTemplateRegistryMap.begin(); it != tilingTemplateRegistryMap.end(); ++it) {
-            auto tilingTemplate = it->second(context);
-            if (tilingTemplate != nullptr) {
-                ge::graphStatus status = tilingTemplate->DoTiling();
-                if (status != ge::GRAPH_PARAM_INVALID) {
-                    OP_LOGD(context, "Do general op tiling success priority=%d", it->first);
-                    return status;
-                }
-                OP_LOGD(context, "Ignore general op tiling priority=%d", it->first);
-            }
+        ge::graphStatus status = RunTilingCasesHelper(tilingTemplateRegistryMap, context);
+        if (status == ge::GRAPH_FAILED) {
+            OP_LOGE(op_type, "Do op tiling failed, no valid template is found.");
         }
-        OP_LOGE(op_type, "Do op tiling failed, no valid template is found.");
-        return ge::GRAPH_FAILED;
+        return status;
     }
 
     ge::graphStatus DoTilingImpl(gert::TilingContext* context, const std::vector<int32_t>& priorities)
     {
         int32_t soc_version;
         const char* op_type = context->GetNodeType();
-        auto platformInfoPtr = context->GetPlatformInfo();
-        if (platformInfoPtr == nullptr) {
-            auto compileInfoPtr = reinterpret_cast<const CompileInfoCommon*>(context->GetCompileInfo());
-            OP_CHECK_IF(
-                compileInfoPtr == nullptr, OP_LOGE(op_type, "compileInfoPtr is null."), return ge::GRAPH_FAILED);
-            soc_version = compileInfoPtr->socVersion;
-            OP_LOGD(context, "soc version in compileInfo is %d", soc_version);
-        } else {
-            auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-            soc_version = static_cast<int32_t>(ascendcPlatform.GetSocVersion());
-            OP_LOGD(context, "soc version is %d", soc_version);
+        if (!GetSocVersionFromContext(context, soc_version, op_type, /*require_valid*/ false)) {
+            return ge::GRAPH_FAILED;
         }
 
         auto tilingTemplateRegistryMap = GetTilingTemplates(op_type, soc_version);
@@ -182,6 +171,30 @@ public:
     }
 
 private:
+    // 从 context 中提取 soc version 的通用逻辑，减少重复代码。
+    // 返回 true 表示成功获取；返回 false 表示发生错误（例如 compileInfo 为空或需要有效 soc 但无法获取）。
+    bool GetSocVersionFromContext(gert::TilingContext* context, int32_t &soc_version, const char* op_type,
+                                  bool require_valid)
+    {
+        soc_version = (int32_t)platform_ascendc::SocVersion::RESERVED_VERSION;
+        auto platformInfoPtr = context->GetPlatformInfo();
+        if (platformInfoPtr == nullptr) {
+            auto compileInfoPtr = reinterpret_cast<const CompileInfoCommon*>(context->GetCompileInfo());
+            OP_CHECK_IF(compileInfoPtr == nullptr, OP_LOGE(op_type, "compileInfoPtr is null."), return false);
+            soc_version = compileInfoPtr->socVersion;
+            OP_LOGD(context, "soc version in compileInfo is %d", soc_version);
+        } else {
+            auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
+            soc_version = static_cast<int32_t>(ascendcPlatform.GetSocVersion());
+            OP_LOGD(context, "soc version is %d", soc_version);
+            if (require_valid && soc_version == (int32_t)platform_ascendc::SocVersion::RESERVED_VERSION) {
+                OP_LOGE(op_type, "Do op tiling failed, cannot find soc version.");
+                return false;
+            }
+        }
+        return true;
+    }
+    
     std::map<int32_t, std::map<std::string, std::shared_ptr<TilingCases>>> registry_map_; // key is socversion
     const std::map<int32_t, TilingClassCase> empty_tiling_case_{};
 };
@@ -250,19 +263,11 @@ public:
     {
         const char* op_type = context->GetNodeType();
         auto tilingTemplateRegistryMap = GetTilingTemplates(op_type);
-        for (auto it = tilingTemplateRegistryMap.begin(); it != tilingTemplateRegistryMap.end(); ++it) {
-            auto tilingTemplate = it->second(context);
-            if (tilingTemplate != nullptr) {
-                ge::graphStatus status = tilingTemplate->DoTiling();
-                if (status != ge::GRAPH_PARAM_INVALID) {
-                    OP_LOGD(context, "Do general op tiling success priority=%d", it->first);
-                    return status;
-                }
-                OP_LOGD(context, "Ignore general op tiling priority=%d", it->first);
-            }
+        ge::graphStatus status = RunTilingCasesHelper(tilingTemplateRegistryMap, context);
+        if (status == ge::GRAPH_FAILED) {
+            OP_LOGE(op_type, "Do op tiling failed, no valid template is found.");
         }
-        OP_LOGE(op_type, "Do op tiling failed, no valid template is found.");
-        return ge::GRAPH_FAILED;
+        return status;
     }
 
     ge::graphStatus DoTilingImpl(gert::TilingContext* context, const std::vector<int32_t>& priorities)
