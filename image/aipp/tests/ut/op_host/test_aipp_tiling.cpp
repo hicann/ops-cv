@@ -19,6 +19,7 @@
 #include "exe_graph/runtime/storage_shape.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 #include "../../../op_host/arch35/aipp_tiling.h"
+#include "../../../op_kernel/arch35/aipp_struct.h"
 
 #include "tiling_context_faker.h"
 
@@ -114,11 +115,11 @@
                                compileInfoStringMiddle +                                                               \
                                std::to_string(tilingContextPara.coreNum_) +                                            \
                                compileInfoStringSuffix;                                                                \
-     map<string, string> socToArch = {                                                                                  \
+     map<string, string> socToArch = {                                                                                 \
         {"Ascend310P", "2002"},                                                                                        \
         {"Ascend910B", "2201"},                                                                                        \
         {"Ascend910_93", "2201"},                                                                                      \
-        {"Ascend950", "3510"},                                                                                      \
+        {"Ascend950", "3510"},                                                                                         \
         {"Ascend910", "1001"}                                                                                          \
     };                                                                                                                 \
     map<string, string> socInfos;                                                                                      \
@@ -137,11 +138,9 @@
     tilingContext->GetPlatformInfo()->SetPlatformRes("version", socversions);                                          \
     /* 3. get tiling func */                                                                                           \
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();                         \
-    /* fixme */                                                                                                        \
-    /* auto tilingFunc = spaceRegistry->GetOpImpl(tilingContextPara.opName_.c_str())->tiling; */                       \
+    auto tilingFunc = spaceRegistry->GetOpImpl(tilingContextPara.opName_.c_str())->tiling;                             \
     /* 4. check tiling func */                                                                                         \
-    /* fixme */                                                                                                        \
-    /* auto tilingRet = tilingFunc(tilingContext); */
+    auto tilingRet = tilingFunc(tilingContext);
 
 template <typename T>
 static string to_string(void* buf, size_t size) {
@@ -171,33 +170,6 @@ protected:
 struct AippCompileInfo {
     uint32_t coreNum = 0;
     uint64_t ubSize = 0;
-};
-
-struct UtAippTilingData {
-    uint8_t inputFormat = 0;
-    uint8_t imageFormat = 0;
-    uint32_t batchNum = 1;
-    uint32_t channelNum = 3;
-    uint32_t inputSizeW = 0;
-    uint32_t inputSizeH = 0;
-    uint8_t  cropSwitch = 0;
-    uint32_t cropStartPosH = 0;
-    uint32_t cropStartPosW = 0;
-    uint32_t cropSizeH = 0;
-    uint32_t cropSizeW = 0;
-
-    int16_t dtcPixelMeanChn0 = 0;
-    int16_t dtcPixelMeanChn1 = 0;
-    int16_t dtcPixelMeanChn2 = 0;
-    int16_t dtcPixelMeanChn3 = 0;
-    float dtcPixelMinChn0 = 0.0;
-    float dtcPixelMinChn1 = 0.0;
-    float dtcPixelMinChn2 = 0.0;
-    float dtcPixelMinChn3 = 0.0;
-    float dtcPixelVarReciChn0 = 1.0;
-    float dtcPixelVarReciChn1 = 1.0;
-    float dtcPixelVarReciChn2 = 1.0;
-    float dtcPixelVarReciChn3 = 1.0;
 };
 
 static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& socInfos, map<string, string>& aicoreSpec,
@@ -272,8 +244,7 @@ void AippExecuteTestCase(const gert::TilingContextPara& tilingContextPara,
     DO_TILING(tilingContextPara)
 
     // check tiling func
-    // fixme
-    // EXPECT_EQ(tilingRet, expectResult);
+    EXPECT_EQ(tilingRet, expectResult);
     if (expectResult == ge::GRAPH_FAILED) {
         return;
     }
@@ -290,50 +261,57 @@ void AippExecuteTestCase(const gert::TilingContextPara& tilingContextPara,
     // check tiling key
     auto tilingKeyResult = tilingContext->GetTilingKey();
     // fixme
-    // ASSERT_EQ(tilingKeyResult, expectTilingKey);
+    ASSERT_EQ(tilingKeyResult, expectTilingKey);
 
     // check tiling data
-    auto buf = (UtAippTilingData*)tilingContext->GetRawTilingData()->GetData();
-    UtAippTilingData tilingParam = *buf;
+    auto buf = (AippTilingData*)tilingContext->GetRawTilingData()->GetData();
+    AippTilingData tilingParam = *buf;
     std::stringstream ss;
-    ss << static_cast<uint32_t>(tilingParam.inputFormat) << " "
-       << static_cast<uint32_t>(tilingParam.imageFormat) << " "
-       << tilingParam.batchNum << " "
-       << tilingParam.channelNum << " "
-       << tilingParam.inputSizeW << " "
-       << tilingParam.inputSizeH << " "
-       << static_cast<uint32_t>(tilingParam.cropSwitch) << " "
-       << tilingParam.cropStartPosH << " "
-       << tilingParam.cropStartPosW << " "
-       << tilingParam.cropSizeH << " "
-       << tilingParam.cropSizeW << " "
-       << tilingParam.dtcPixelMeanChn0 << " "
-       << tilingParam.dtcPixelMeanChn1 << " "
-       << tilingParam.dtcPixelMeanChn2 << " "
-       << tilingParam.dtcPixelMeanChn3 << " "
-       << tilingParam.dtcPixelMinChn0 << " "
-       << tilingParam.dtcPixelMinChn1 << " "
-       << tilingParam.dtcPixelMinChn2 << " "
-       << tilingParam.dtcPixelMinChn3 << " "
-       << tilingParam.dtcPixelVarReciChn0 << " "
-       << tilingParam.dtcPixelVarReciChn1 << " "
-       << tilingParam.dtcPixelVarReciChn2 << " "
-       << tilingParam.dtcPixelVarReciChn3;
+    ss << (int)tilingParam.imageFormat << " " << (int)tilingParam.outputFormat
+       << " " << tilingParam.batchNum << " " << tilingParam.channelNum
+       << " " << tilingParam.inputSizeH << " " << tilingParam.inputSizeW
+       << " " << tilingParam.cropParam.cropSwitch << " " << tilingParam.cropParam.cropStartPosH 
+       << " " << tilingParam.cropParam.cropStartPosW << " " << tilingParam.cropParam.cropSizeH 
+       << " " << tilingParam.cropParam.cropSizeW << " " << tilingParam.cscParam.cscSwitch
+       << " " << tilingParam.cscParam.cscMatrix00 << " " << tilingParam.cscParam.cscMatrix01
+       << " " << tilingParam.cscParam.cscMatrix02 << " " << tilingParam.cscParam.cscMatrix10
+       << " " << tilingParam.cscParam.cscMatrix11 << " " << tilingParam.cscParam.cscMatrix12
+       << " " << tilingParam.cscParam.cscMatrix20 << " " << tilingParam.cscParam.cscMatrix21
+       << " " << tilingParam.cscParam.cscMatrix22 << " " << tilingParam.cscParam.outBias0
+       << " " << tilingParam.cscParam.outBias1 << " " << tilingParam.cscParam.outBias2
+       << " " << tilingParam.cscParam.inBias0 << " " << tilingParam.cscParam.inBias1
+       << " " << tilingParam.cscParam.inBias2
+       << " " << tilingParam.dtcParam.dtcPixelMeanChn0
+       << " " << tilingParam.dtcParam.dtcPixelMeanChn1
+       << " " << tilingParam.dtcParam.dtcPixelMeanChn2
+       << " " << tilingParam.dtcParam.dtcPixelMeanChn3
+       << " " << tilingParam.dtcParam.dtcPixelMinChn0 
+       << " " << tilingParam.dtcParam.dtcPixelMinChn1
+       << " " << tilingParam.dtcParam.dtcPixelMinChn2 
+       << " " << tilingParam.dtcParam.dtcPixelMinChn3
+       << " " << tilingParam.dtcParam.dtcPixelVarReciChn0
+       << " " << tilingParam.dtcParam.dtcPixelVarReciChn1
+       << " " << tilingParam.dtcParam.dtcPixelVarReciChn2
+       << " " << tilingParam.dtcParam.dtcPixelVarReciChn3;
+
     auto tilingDataResult = ss.str();
     // fixme
-    // EXPECT_EQ(tilingDataResult, expectTilingData);
+    EXPECT_EQ(tilingDataResult, expectTilingData);
 }
 
 TEST_F(AippTiling, aipp_tiling_test_0)
 {
     AippCompileInfo compileInfo = {56, 253952};
     gert::TilingContextPara tilingContextPara("Aipp",
-                                                {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_UINT8, ge::FORMAT_NCHW}},
-                                                {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-                                                {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
-                                                &compileInfo);
-    uint64_t expectTilingKey = 0;
-    string expectTilingData = "1 1 1 3 224 224 0 0 0 224 224 0 0 0 0 0 0 0 0 1 1 1 1";
+        {{{{10, 256, 224, 3}, {10, 256, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+        Ops::Cv::AnyValue::CreateFrom<string>\
+        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "2 1 10 3 256 224 0 0 0 256 224 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1";
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -342,12 +320,24 @@ TEST_F(AippTiling, aipp_tiling_test_1)
 {
     AippCompileInfo compileInfo = {56, 253952};
     gert::TilingContextPara tilingContextPara("Aipp",
-                                                {{{{1, 3, 256, 256}, {1, 3, 256, 256}}, ge::DT_UINT8, ge::FORMAT_NCHW}},
-                                                {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-                                                {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","crop":true,"crop_size_h":224,"crop_size_w":224,"input_format":"RGB888_U8","load_start_pos_h":16,"load_start_pos_w":16,"min_chn_0":123.67500305175781,"min_chn_1":116.27999877929688,"min_chn_2":103.52999877929688,"src_image_size_h":256,"src_image_size_w":256,"var_reci_chn_0":0.017124753445386887,"var_reci_chn_1":0.017507003620266914,"var_reci_chn_2":0.01742919348180294})"))},
-                                                &compileInfo);
-    uint64_t expectTilingKey = 0;
-    string expectTilingData = "1 1 1 3 256 256 1 16 16 224 224 0 0 0 0 123.675 116.28 103.53 0 0.0171248 0.017507 0.0174292 1";
+        {{{{100, 2560, 2240, 3}, {100, 2560, 2240, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{100, 256, 224, 3}, {100, 256, 224, 3}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", 
+        Ops::Cv::AnyValue::CreateFrom<string>\
+        (R"({"aipp_mode":"static","crop":true,"crop_size_h":256,"crop_size_w":224,
+        "input_format":"RGB888_U8","load_start_pos_h":16,"load_start_pos_w":16,
+        "min_chn_0":123.67500305175781,"min_chn_1":116.27999877929688,
+        "min_chn_2":103.52999877929688,"src_image_size_h":2560,"src_image_size_w":2240,
+        "var_reci_chn_0":0.017124753445386887,"var_reci_chn_1":0.017507003620266914,
+        "var_reci_chn_2":0.01742919348180294, "csc_switch":true, "matrix_r0c0":256,
+        "matrix_r0c1":101, "matrix_r0c2":-202, "matrix_r1c0":301, "matrix_r1c1":-256,
+        "matrix_r1c2":402, "matrix_r2c0":503, "matrix_r2c1":601, "matrix_r2c2":256,
+        "output_bias_0":110, "output_bias_1":120, "output_bias_2":83})"))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 3;
+    string expectTilingData = \
+        "2 2 100 3 2560 2240 1 16 16 256 224 1 256 101 -202 301 -256 402 503 601 256 110 120 83 0 0 0 0 0 0 0 123.675 116.28 103.53 0 0.0171248 0.017507 0.0174292 1";
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -355,16 +345,122 @@ TEST_F(AippTiling, aipp_tiling_test_1)
 TEST_F(AippTiling, aipp_tiling_test_2)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    std::string filePath = std::filesystem::current_path() / "aipp_test.cfg";
-    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_test.cfg " + filePath;
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_01.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_01.cfg " + filePath;
     system(command.c_str());
     gert::TilingContextPara tilingContextPara("Aipp",
-                                                {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_UINT8, ge::FORMAT_NCHW}},
-                                                {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-                                                {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
-                                                &compileInfo);
-    uint64_t expectTilingKey = 0;
-    string expectTilingData = "1 1 1 3 224 224 0 0 0 224 224 128 128 128 0 0 0 0 0 0.00781 0.00781 0.00781 1";
+        {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "2 1 1 3 224 224 0 0 0 224 224 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 128 128 128 0 0 0 0 0 0.00781 0.00781 0.00781 1";
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_test_3)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_02.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_02.cfg " + filePath;
+    system(command.c_str());
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 256, 1080, 3}, {1, 256, 1080, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 224, 256}, {1, 3, 224, 256}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 3;
+    string expectTilingData = "2 1 1 3 1080 256 1 2 16 256 224 1 298 10 409 298 -100 -208 298 516 20 110 120 83 0 0 0 10 20 30 0 123.675 116.28 103.53 0 0.0171248 0.017507 0.0174292 1";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_test_4)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_03.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_03.cfg " + filePath;
+    system(command.c_str());
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 2;
+    string expectTilingData = "1 2 1 3 256 256 0 0 0 256 256 1 298 0 409 298 -100 -208 298 516 0 110 120 83 110 120 83 10 20 30 0 123.675 116.28 103.53 0 0.0171248 0.017507 0.0174292 1";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_test_5)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_UINT8, ge::FORMAT_NCHW}},
+        {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+        Ops::Cv::AnyValue::CreateFrom<string>\
+        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 0;
+    string expectTilingData = "";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_test_6)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 256, 221, 3}, {1, 256, 221, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+        Ops::Cv::AnyValue::CreateFrom<string>\
+        (R"({"aipp_mode":"static","input_format":"YUV420SP_U8"})"))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 0;
+    string expectTilingData = "";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_test_7)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 256, 222, 3}, {1, 256, 222, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+        Ops::Cv::AnyValue::CreateFrom<string>\
+        (R"({"aipp_mode":"static","input_format":"YUV420SP_U8",
+        "crop":true,"load_start_pos_h":222,"load_start_pos_w":21})"))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 0;
+    string expectTilingData = "";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_test_8)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 4097, 222, 3}, {1, 4097, 222, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+        Ops::Cv::AnyValue::CreateFrom<string>\
+        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        &compileInfo);
+
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }

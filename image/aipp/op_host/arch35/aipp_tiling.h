@@ -22,7 +22,6 @@
 #include <fstream>
 #include <sstream>
 #include "register/tilingdata_base.h"
-#include "log/log.h"
 #include "register/op_impl_registry.h"
 #include "util/math_util.h"
 #include "tiling/platform/platform_ascendc.h"
@@ -36,13 +35,14 @@
 
 using namespace std;
 using namespace ge;
-
 namespace optiling {
 constexpr int64_t MAX_RGB_BOUND = 255;
 constexpr int64_t MIN_MATRIX_BOUND = -32677;
 constexpr int64_t MAX_MATRIX_BOUND = 32676;
 constexpr int64_t MIN_CHN_BOUND = -65504;
 constexpr int64_t MAX_CHN_BOUND = 65504;
+constexpr int64_t MAX_IMAGE_HIGH = 4096;
+constexpr int64_t MAX_IMAGE_WIDTH = 4096;
 
 constexpr size_t SYSTEM_WORKSPACE_SIZE = 16 * 1024 * 1024;
 constexpr int64_t MAX_THREAD_NUM = 512;
@@ -51,6 +51,8 @@ constexpr uint8_t EVEN_NUMBER_BASE = 2;
 
 constexpr uint8_t CONST_VALUE_ZERO = 0;
 constexpr uint8_t CONST_VALUE_ONE = 1;
+constexpr uint8_t CONST_VALUE_TWO = 2;
+constexpr uint8_t CONST_VALUE_THREE = 3;
 
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
@@ -64,12 +66,14 @@ constexpr size_t INPUT_PARAMS_IDX = 1;
 constexpr size_t OUTPUT_FEATURES_IDX = 0;
 constexpr size_t ATTR_AIPP_CONFIG_PATH_IDX = 0;
 constexpr size_t IMAGE_BATCH_DIM = 0;
-constexpr size_t IMAGE_CHANNEL_DIM = 1;
-constexpr size_t IMAGE_H_DIM = 2;
-constexpr size_t IMAGE_W_DIM = 3;
+constexpr size_t NHWC_IMAGE_H_DIM = 1;
+constexpr size_t NHWC_IMAGE_W_DIM = 2;
+constexpr size_t NHWC_IMAGE_CHANNEL_DIM = 3;
 
 const string IMAGE_FORMAT_RGB888_U8 = "RGB888_U8";
-const uint8_t IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT = 3;
+const string IMAGE_FORMAT_YUV420SP_U8 = "YUV420SP_U8";
+constexpr uint8_t IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT = (3);
+constexpr float IMAGE_FORMAT_YUV420SP_U8_SIZE_LIMIT = (1.5f);
 
 const string AIPP_MODE = "aipp_mode";
 const string AIPP_MODE_STATIC = "static";
@@ -112,15 +116,12 @@ const string AIPP_VAR_RECI_CHN_1 = "var_reci_chn_1";
 const string AIPP_VAR_RECI_CHN_2 = "var_reci_chn_2";
 const string AIPP_VAR_RECI_CHN_3 = "var_reci_chn_3";
 
-const std::map<string, uint8_t> IMAGE_FORMART_MAP = {{IMAGE_FORMAT_RGB888_U8, 1}};
+const std::map<string, uint8_t> IMAGE_FORMART_MAP = {{IMAGE_FORMAT_YUV420SP_U8, 1},
+                                                     {IMAGE_FORMAT_RGB888_U8, 2}};
 
 struct AippCompileInfo {
     int64_t coreNum = 0;
     uint64_t ubSize = 0;
-};
-
-struct AippImageInput {
-    int32_t inputImageSize = 1;
 };
 
 class AippTiling : public Ops::Cv::OpTiling::TilingBaseClass {
@@ -146,87 +147,31 @@ protected:
     ge::graphStatus PostTiling() override;
 
 private:
-    const ge::graphStatus CheckAippCfg();
+    ge::graphStatus CheckAippCfg();
     ge::graphStatus CheckInputDtype();
     ge::graphStatus CheckInputFormat();
-    ge::graphStatus SetAippDataFromCfg();
-    ge::graphStatus CheckInputImage();
-    ge::graphStatus CheckDtypeValid();
-    ge::graphStatus CheckAippImages();
-    ge::graphStatus CheckCropSize();
-    ge::graphStatus CheckTilingData();
     ge::graphStatus SetImagesValue();
+    ge::graphStatus CheckInputImage();
+    ge::graphStatus SetCropValue();
+    ge::graphStatus CheckCropSize();
+    ge::graphStatus SetCscValue();
+    ge::graphStatus SetDTCValue();
+
     map<string, string> parseAippConfig(string jsonStr);
     map<string, string> parseAippCfgFromPath(string fileName);
-    void SetAippTilingData();
-    void SetCscValue();
-    void SetMatrixValid();
-    void SetBaisValid();
-    void SetCropValue();
-    void SetDTCValue();
     void SetSySTilingData();
     void PrintTilingData();
-    bool CheckMatrixValid(const string& name);
-    bool CheckBaisValid(const string& name);
-    bool CheckMeanChnValid(const string& name);
-    bool CheckMinChnValid(const string& name);
-    bool CheckReciValid(const string& name);
-    float StringToFloat(string str);
+
+    template <typename T>
+    ge::graphStatus ParseNumAndValidateRange(const std::map<std::string, T*>& valueMap,\
+        int64_t minValue, int64_t maxValue);
 
 private:
-    AippTilingData tilingData;
-    AippImageInput aippImageInput;
-
     map<string, string> aippCfg;
+    AippTilingData tilingData;
 
-    uint8_t inputFormat = 0;
-    uint8_t imageFormat = 0;
-    uint32_t inputSizeH = 0;
-    uint32_t inputSizeW = 0;
-    uint32_t channelNum = 3;
-    uint32_t batchNum = 1;
-
-    // crop
-    uint8_t cropSwitch = 0;
-    uint32_t cropStartPosH = 0;
-    uint32_t cropStartPosW = 0;
-    uint32_t cropSizeH = 0;
-    uint32_t cropSizeW = 0;
-
-    // csc
-    uint8_t cscSwitch = 0;
-    int16_t cscMatrix00 = 298;
-    int16_t cscMatrix01 = 516;
-    int16_t cscMatrix02 = 0;
-    int16_t cscMatrix10 = 298;
-    int16_t cscMatrix11 = -100;
-    int16_t cscMatrix12 = -208;
-    int16_t cscMatrix20 = 298;
-    int16_t cscMatrix21 = 0;
-    int16_t cscMatrix22 = 409;
-
-    uint8_t outBias0 = 16;
-    uint8_t outBias1 = 128;
-    uint8_t outBias2 = 128;
-
-    uint8_t inBias0 = 16;
-    uint8_t inBias1 = 128;
-    uint8_t inBias2 = 128;
-
-    // DTC
-    int16_t dtcPixelMeanChn0 = 0;
-    int16_t dtcPixelMeanChn1 = 0;
-    int16_t dtcPixelMeanChn2 = 0;
-    int16_t dtcPixelMeanChn3 = 0;
-    float dtcPixelMinChn0 = 0.0;
-    float dtcPixelMinChn1 = 0.0;
-    float dtcPixelMinChn2 = 0.0;
-    float dtcPixelMinChn3 = 0.0;
-    float dtcPixelVarReciChn0 = 1.0;
-    float dtcPixelVarReciChn1 = 1.0;
-    float dtcPixelVarReciChn2 = 1.0;
-    float dtcPixelVarReciChn3 = 1.0;
+    int32_t inputImageSize = 1;
 };
 
 } // namespace optiling
-#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_GRID_SAMPLE_H
+#endif // AIPP_OP_HOST_ARCH35_AIPP_TILING_H

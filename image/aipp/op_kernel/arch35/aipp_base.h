@@ -18,58 +18,95 @@
 #include "kernel_operator.h"
 #include "aipp_struct.h"
 
+#define CLIP3(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
+
 namespace Aipp_Kernel {
 using namespace AscendC;
 constexpr uint32_t MAX_TGHREAD_NUM = 256;
+constexpr uint32_t CSC_MATRIX_SCALE = 512;
+constexpr uint8_t MAX_CHANNEL_NUM = 4;
 constexpr uint8_t RGB_CHANNEL_NUM = 3;
 constexpr uint8_t YUV_CHANNEL_NUM = 3;
-constexpr uint8_t DIGIT_EIGHT = 8;
-constexpr uint8_t DIGIT_ONE = 1;
+constexpr uint8_t YUV_PER_DEAL_NUM = 4;
+constexpr uint8_t YUV_DEAL_NUM_0 = 0;
+constexpr uint8_t YUV_DEAL_NUM_1 = 1;
+constexpr uint8_t YUV_DEAL_NUM_2 = 2;
+constexpr uint8_t YUV_DEAL_NUM_3 = 3;
+constexpr uint8_t CHANNEL_NUM_0 = 0;
+constexpr uint8_t CHANNEL_NUM_1 = 1;
+constexpr uint8_t CHANNEL_NUM_2 = 2;
 constexpr uint8_t DIGIT_TWO = 2;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
+
+template <typename T>
+struct RgbPack {
+    T r = 0;
+    T g = 0;
+    T b = 0;
+};
+
+template <typename T>
+struct YuvPack {
+    T y = 0;
+    T u = 0;
+    T v = 0;
+};
+
+template <typename T>
+struct CoordPack {
+    T nIdx = 0;
+    T hIdx = 0;
+    T wIdx = 0;
+};
 
 template <typename T, typename DataType>
 class AippBase {
 public:
     __aicore__ inline AippBase(){};
-    __aicore__ inline void BaseInit(GM_ADDR x, GM_ADDR y, const AippTilingData& tilingData);
-    __aicore__ inline void BaseParseTilingData(const AippTilingData& tilingData);
+    __aicore__ inline void BaseInit(const AippTilingData& tilingData);
 
 public:
-    GlobalTensor<uint8_t> xGm_;
-    GlobalTensor<T> yGm_;
+    AippTilingData tilingData_ = {};
 
-    DataType channelNum_ = 0;
-    DataType batchNum_ = 0;
-    DataType cropSizeH_ = 0;
-    DataType cropSizeW_ = 0;
-    bool rbuvSwapSwitch_ = false;
-
-    DataType totalNum_ = 0;
-    uint8_t inputFormat_ = NCHW_FORMAT_INDEX;
+    uint64_t totalNum_ = 0;
+    uint32_t blockIdx_ = 0;
+    uint32_t blockNum_ = 0;
 };
 
 template <typename T, typename DataType>
-__aicore__ inline void AippBase<T, DataType>::BaseParseTilingData(const AippTilingData& tilingData)
+__aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& tilingData)
 {
-    channelNum_ = tilingData.channelNum;
-    batchNum_ = tilingData.batchNum;
-    cropSizeH_ = tilingData.cropSizeH;
-    cropSizeW_ = tilingData.cropSizeW;
-    inputFormat_ = tilingData.inputFormat;
+    tilingData_ = tilingData;
+
+    blockNum_ = GetBlockNum();
+    blockIdx_ = GetBlockIdx();
+    totalNum_ = tilingData_.batchNum * tilingData_.cropParam.cropSizeH * tilingData_.cropParam.cropSizeW;
 }
 
-template <typename T, typename DataType>
-__aicore__ inline void AippBase<T, DataType>::BaseInit(GM_ADDR x, GM_ADDR y, const AippTilingData& tilingData)
+template <typename T>
+__aicore__ __attribute__((always_inline)) inline void DataConversion(
+    T& dst, uint8_t src, const DtcParam& dtcParam, int32_t channelIndex)
 {
-    BaseParseTilingData(tilingData);
-    totalNum_ = batchNum_ * cropSizeW_ * cropSizeH_;
-
-    xGm_.SetGlobalBuffer((__gm__ uint8_t*)x);
-    yGm_.SetGlobalBuffer((__gm__ T*)y);
+    if constexpr (sizeof(T) == DIGIT_TWO) {
+        if (channelIndex == 0) {
+            dst = (static_cast<T>(src - dtcParam.dtcPixelMeanChn0) - static_cast<T>(dtcParam.dtcPixelMinChn0)) *
+                  static_cast<T>(dtcParam.dtcPixelVarReciChn0);
+        } else if (channelIndex == 1) {
+            dst = (static_cast<T>(src - dtcParam.dtcPixelMeanChn1) - static_cast<T>(dtcParam.dtcPixelMinChn1)) *
+                  static_cast<T>(dtcParam.dtcPixelVarReciChn1);
+        } else if (channelIndex == 2) {
+            dst = (static_cast<T>(src - dtcParam.dtcPixelMeanChn2) - static_cast<T>(dtcParam.dtcPixelMinChn2)) *
+                  static_cast<T>(dtcParam.dtcPixelVarReciChn2);
+        } else if (channelIndex == 3) {
+            // 4th channel is reserved
+            dst = 0;
+        }
+    } else {
+        dst = src;
+    }
 }
 
-}  // namespace Aipp
+} // namespace Aipp_Kernel
 
-#endif  // AIPP_OP_KERNEL_ARCH35_BASE_H
+#endif // AIPP_OP_KERNEL_ARCH35_BASE_H

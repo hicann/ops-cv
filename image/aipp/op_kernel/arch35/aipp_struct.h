@@ -16,33 +16,9 @@
 #ifndef AIPP_OP_KERNEL_ARCH35_STRUCT_H
 #define AIPP_OP_KERNEL_ARCH35_STRUCT_H
 
-struct AippTilingData {
-    uint8_t inputFormat = 0;
-    uint8_t imageFormat = 0;
-    uint32_t batchNum = 1;
-    uint32_t channelNum = 3;
-    uint32_t inputSizeW = 0;
-    uint32_t inputSizeH = 0;
-    uint8_t cropSwitch = 0;
-    uint32_t cropStartPosH = 0;
-    uint32_t cropStartPosW = 0;
-    uint32_t cropSizeH = 0;
-    uint32_t cropSizeW = 0;
+struct CscParam {
+    int16_t cscSwitch = 0;
 
-    int16_t dtcPixelMeanChn0 = 0;
-    int16_t dtcPixelMeanChn1 = 0;
-    int16_t dtcPixelMeanChn2 = 0;
-    int16_t dtcPixelMeanChn3 = 0;
-    float dtcPixelMinChn0 = 0.0;
-    float dtcPixelMinChn1 = 0.0;
-    float dtcPixelMinChn2 = 0.0;
-    float dtcPixelMinChn3 = 0.0;
-    float dtcPixelVarReciChn0 = 1.0;
-    float dtcPixelVarReciChn1 = 1.0;
-    float dtcPixelVarReciChn2 = 1.0;
-    float dtcPixelVarReciChn3 = 1.0;
-
-    uint8_t cscSwitch = 0;
     int16_t cscMatrix00 = 0;
     int16_t cscMatrix01 = 0;
     int16_t cscMatrix02 = 0;
@@ -52,14 +28,50 @@ struct AippTilingData {
     int16_t cscMatrix20 = 0;
     int16_t cscMatrix21 = 0;
     int16_t cscMatrix22 = 0;
+    int16_t outBias0 = 0;
+    int16_t outBias1 = 0;
+    int16_t outBias2 = 0;
+    int16_t inBias0 = 0;
+    int16_t inBias1 = 0;
+    int16_t inBias2 = 0;
+};
 
-    uint8_t outBias0 = 0;
-    uint8_t outBias1 = 0;
-    uint8_t outBias2 = 0;
+struct CropParam {
+    int16_t cropSwitch = 0;
 
-    uint8_t inBias0 = 0;
-    uint8_t inBias1 = 0;
-    uint8_t inBias2 = 0;
+    uint32_t cropStartPosH = 0;
+    uint32_t cropStartPosW = 0;
+    uint32_t cropSizeH = 0;
+    uint32_t cropSizeW = 0;
+};
+
+struct DtcParam {
+    int16_t dtcPixelMeanChn0 = 0;
+    int16_t dtcPixelMeanChn1 = 0;
+    int16_t dtcPixelMeanChn2 = 0;
+    int16_t dtcPixelMeanChn3 = 0;
+    float dtcPixelMinChn0 = 0;
+    float dtcPixelMinChn1 = 0;
+    float dtcPixelMinChn2 = 0;
+    float dtcPixelMinChn3 = 0;
+    float dtcPixelVarReciChn0 = 1;
+    float dtcPixelVarReciChn1 = 1;
+    float dtcPixelVarReciChn2 = 1;
+    float dtcPixelVarReciChn3 = 1;
+};
+
+struct AippTilingData {
+    uint8_t imageFormat = 0;
+    uint8_t outputFormat = 0;
+
+    uint32_t batchNum = 0;
+    uint32_t channelNum = 0;
+    uint32_t inputSizeW = 0;
+    uint32_t inputSizeH = 0;
+
+    CscParam cscParam;
+    CropParam cropParam;
+    DtcParam dtcParam;
 };
 
 #endif // AIPP_OP_KERNEL_ARCH35_STRUCT_H
