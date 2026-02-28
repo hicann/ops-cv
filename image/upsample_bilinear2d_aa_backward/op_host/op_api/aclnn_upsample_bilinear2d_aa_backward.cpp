@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -129,14 +130,16 @@ static bool CheckInputElement(
             outW),
         return false);
 
-    double realScalesH = ComputeBilinear2dAABackwardScales(inputH, outH, scalesH);
-    double realScalesW = ComputeBilinear2dAABackwardScales(inputW, outW, scalesW);
-    OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].",
-            realScalesH,
-            realScalesW),
-        return false);
+    if (!IsRegBase()) {
+        double realScalesH = ComputeBilinear2dAABackwardScales(inputH, outH, scalesH);
+        double realScalesW = ComputeBilinear2dAABackwardScales(inputW, outW, scalesW);
+        OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].",
+                realScalesH,
+                realScalesW),
+            return false);
+    }
     return true;
 }
 
@@ -194,7 +197,14 @@ aclnnStatus aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize(const aclTensor *g
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const aclTensor *upsampleOut;
-    if ((*inputSize)[DIM_TWO] == (*outputSize)[DIM_ZERO] && (*inputSize)[DIM_THREE] == (*outputSize)[DIM_ONE]) {
+    if (IsRegBase()) {
+        const float realScalesH = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
+        const float realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
+
+        upsampleOut = l0op::UpsampleBilinear2dAABackward(
+            selfContiguous, outputSize, inputSize, out, alignCorners, realScalesH, realScalesW, uniqueExecutor.get());
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    } else if ((*inputSize)[DIM_TWO] == (*outputSize)[DIM_ZERO] && (*inputSize)[DIM_THREE] == (*outputSize)[DIM_ONE]) {
         upsampleOut = selfContiguous;
     } else {
         auto dtype = gradOutput->GetDataType();

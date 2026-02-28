@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  */
 
 #include "log/log.h"
-#include "register/op_impl_registry.h"
-#include "register/tilingdata_base.h"
+#include "op_host/tiling_util.h"
 #include "upsample_bilinear2d_aa_backward_tiling.h"
 
 namespace optiling {
@@ -130,6 +129,11 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::Init() const
 
 ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
 {
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(tilingContext);
+    if (regBase) {
+        OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleBilinear2dAABackwardRegbase");
+        return Tiling4UpsampleBilinear2dAABackwardRegbase(tilingContext);
+    }
     // 获取输入矩阵
     auto srcTensor = tilingContext->GetInputTensor(0);
     if (srcTensor == nullptr) {
@@ -143,14 +147,11 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     }
     size_t idx = 0;
     outputSize = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
-    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSize == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSize == nullptr"), return ge::GRAPH_FAILED);
     inputSize = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
-    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "inputSize == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "inputSize == nullptr"), return ge::GRAPH_FAILED);
     alignCorners = attrs->GetAttrPointer<bool>(idx++);
-    OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"), return ge::GRAPH_FAILED);
     scaleH = attrs->GetAttrPointer<float>(idx++);
     OP_CHECK_IF(scaleH == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleH == nullptr"), return ge::GRAPH_FAILED);
     scaleW = attrs->GetAttrPointer<float>(idx++);
@@ -174,12 +175,8 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     GetSlideSize();
     GetShapes();
 
-    auto compileInfo =
-        reinterpret_cast<const UpsampleBilinear2dAABackwardCompileInfo *>(tilingContext->GetCompileInfo());
-    uint32_t coreNumPlatform = 0;
-    if (compileInfo != nullptr) {
-        coreNumPlatform = compileInfo->coreNum;
-    }
+    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAABackwardCompileInfo *>(tilingContext->GetCompileInfo());
+    uint32_t coreNumPlatform = (compileInfo != nullptr) ? compileInfo->coreNum : 0;
     uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatform);
     GetWorkSpace(needCoreNum);
     tilingContext->SetBlockDim(needCoreNum);
