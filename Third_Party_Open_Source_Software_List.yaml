@@ -10,7 +10,7 @@ eigen:
   version: 5.0.0
   type: run
 makeself:
-  version: v2.5.0
+  version: release-2.5.0-patch1
   type: build
 json:
   version: v3.11.3
