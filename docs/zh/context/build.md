@@ -55,6 +55,7 @@ bash build.sh --help
 | --opgraph_test  | 可选     | 预留参数，开发者暂不需要关注。                                                                 |
 | --opkernel_test | 可选     | 编译opkernel相关单元测试，与-u --opkernel组合等效。                                            |
 | --run_example   | 可选     | 编译指定算子及模式的样例并执行编译后的可执行文件。                                                       |
+| --simulator     | 可选     | 启用仿真器模式执行--run_example任务。仿真模式下，会根据soc_version链接对应的仿真库。                                  |
 | --genop         | 可选     | 创建AI Core自定义算子初始目录。                                                             |
 | --genop_aicpu   | 可选     | 创建AI CPU自定义算子初始目录。                                                              |
 | --experimental  | 可选     | 编译experimental目录下的用户算子。                                                         |

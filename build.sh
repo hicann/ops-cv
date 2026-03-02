@@ -23,7 +23,7 @@ SUPPORTED_SHORT_OPTS="hj:vO:uf:-:"
 # 所有支持的长选项
 SUPPORTED_LONG_OPTS=(
   "help" "ops=" "soc=" "vendor_name=" "build-type=" "cov" "noexec" "aicpu" "noaicpu" "opkernel" "opkernel_aicpu" "jit"
-  "pkg" "asan" "valgrind" "make_clean" "static"
+  "pkg" "asan" "valgrind" "make_clean" "static" "simulator"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
   "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "dump_cce"
 )
@@ -333,12 +333,14 @@ usage() {
         echo "Run examples Options:"
         echo $dotted_line
         echo "    --run_example op_type  mode[eager:graph] [pkg_mode --vendor_name=name]     Compile and execute the test_aclnn_xxx.cpp/test_geir_xxx.cpp"
+        echo "    --simulator   Enable simulator mode when running aclnn examples"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --run_example abs eager"
         echo "    bash build.sh --run_example abs graph"
         echo "    bash build.sh --run_example abs eager cust"
         echo "    bash build.sh --run_example abs eager cust --vendor_name=custom"
+        echo "    bash build.sh --run_example abs eager --simulator --soc=ascend950"
         return
         ;;
       genop)
@@ -409,6 +411,7 @@ usage() {
   echo "    --opkernel_test build and run opkernel unit tests"
   echo "    --opkernel_aicpu_test build and run aicpu opkernel unit tests"
   echo "    --run_example Compile and execute the test_aclnn_xxx.cpp/test_geir_xxx.cpp"
+  echo "    --simulator Enable simulator mode for run_example (requires --soc parameter)"
   echo "    --genop Create the initial directory for op"
   echo "    --genop_aicpu Create the initial directory for AI CPU op"
   echo "    --mssanitizer Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
@@ -531,6 +534,16 @@ check_param() {
 
   if $(echo ${USE_CMD} | grep -wq "opkernel_aicpu") && $(echo ${USE_CMD} | grep -wq "jit"); then
     echo "[ERROR] --opkernel_aicpu cannot be used with --jit"
+    exit 1
+  fi
+
+  if [[ "$ENABLE_SIMULATOR" == "TRUE" && -z "$COMPUTE_UNIT" ]]; then
+    echo "[ERROR] --simulator requires --soc parameter to be specified"
+    exit 1
+  fi
+
+  if [[ "$ENABLE_SIMULATOR" == "TRUE" && "$EXAMPLE_MODE" == "graph" ]]; then
+    echo "[ERROR] --simulator does not support graph mode. Please use eager mode instead."
     exit 1
   fi
 }
@@ -669,6 +682,7 @@ checkopts() {
   ENABLE_BINARY=FALSE
   ENABLE_CUSTOM=FALSE
   ENABLE_STATIC=FALSE
+  ENABLE_SIMULATOR=FALSE
   ENABLE_PACKAGE=FALSE
   ENABLE_EXPERIMENTAL=FALSE
   ENABLE_TEST=FALSE
@@ -846,6 +860,7 @@ checkopts() {
           ENABLE_UT_EXEC=FALSE
           BUILD_TYPE="Debug"
           ;;
+        simulator) ENABLE_SIMULATOR=TRUE ;;
         run_example)
           checkopts_run_example "$@"
           ;;
@@ -1318,6 +1333,12 @@ build_example() {
 #######################################
 build_example_eager() {
   local file
+  local sim_lib_path
+  sim_lib_path=$(get_simulator_args)
+  local ret=$?
+  if [ $ret -ne 0 ]; then
+    exit 1
+  fi
 
   if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
     file=$(find ../experimental -path "*/${EXAMPLE_NAME}/examples/*" -name test_aclnn_*.cpp)
@@ -1341,12 +1362,27 @@ build_example_eager() {
     echo "Start compile and run examples file: $f"
 
     if [[ "${PKG_MODE}" == "" ]]; then
-      g++ ${f} \
-        -I ${INCLUDE_PATH} \
-        -I ${ACLNN_INCLUDE_PATH} \
-        -L ${EAGER_LIBRARY_PATH} \
-        -lopapi_cv -lascendcl -lnnopbase \
-        -o test_aclnn_${EXAMPLE_NAME}
+      if [[ -n "$sim_lib_path" ]]; then
+        export LD_LIBRARY_PATH=${sim_lib_path}:${LD_LIBRARY_PATH}
+        ln -sf ${sim_lib_path}/libruntime_camodel.so ${sim_lib_path}/libruntime.so
+        ln -sf ${sim_lib_path}/libnpu_drv_camodel.so ${sim_lib_path}/libascend_hal.so
+        g++ ${f} \
+          -I ${INCLUDE_PATH} \
+          -I ${ACLNN_INCLUDE_PATH} \
+          -L ${EAGER_LIBRARY_PATH} \
+          -lopapi_cv -lascendcl -lnnopbase \
+          -L ${sim_lib_path} \
+          -lruntime_camodel -lnpu_drv_camodel \
+          -o test_aclnn_${EXAMPLE_NAME} \
+          -Wl,-rpath=${sim_lib_path}
+      else
+        g++ ${f} \
+          -I ${INCLUDE_PATH} \
+          -I ${ACLNN_INCLUDE_PATH} \
+          -L ${EAGER_LIBRARY_PATH} \
+          -lopapi_cv -lascendcl -lnnopbase \
+          -o test_aclnn_${EXAMPLE_NAME}
+      fi
 
     elif [[ "${PKG_MODE}" == "cust" ]]; then
       echo "pkg_mode:${PKG_MODE} vendor_name:${VENDOR}"
@@ -1363,15 +1399,32 @@ build_example_eager() {
         ln -s ${CUST_INCLUDE_PATH} ${CUST_ACLNNOP_INCLUDE_PATH}
       fi
 
-      g++ ${f} \
-        -I ${INCLUDE_PATH} \
-        -I ${INCLUDE_PATH}/aclnnop \
-        -I ${CUST_INCLUDE_PATH} \
-        -L ${CUST_LIBRARY_PATH} \
-        -L ${EAGER_LIBRARY_PATH} \
-        -lcust_opapi -lascendcl -lnnopbase \
-        -o test_aclnn_${EXAMPLE_NAME} \
-        -Wl,-rpath=${CUST_LIBRARY_PATH}
+      if [[ -n "$sim_lib_path" ]]; then
+        export LD_LIBRARY_PATH=${sim_lib_path}:${LD_LIBRARY_PATH}
+        ln -sf ${sim_lib_path}/libruntime_camodel.so ${sim_lib_path}/libruntime.so
+        ln -sf ${sim_lib_path}/libnpu_drv_camodel.so ${sim_lib_path}/libascend_hal.so
+        g++ ${f} \
+          -I ${INCLUDE_PATH} \
+          -I ${INCLUDE_PATH}/aclnnop \
+          -I ${CUST_INCLUDE_PATH} \
+          -L ${CUST_LIBRARY_PATH} \
+          -L ${EAGER_LIBRARY_PATH} \
+          -lcust_opapi -lascendcl -lnnopbase \
+          -L ${sim_lib_path} \
+          -lruntime_camodel -lnpu_drv_camodel \
+          -o test_aclnn_${EXAMPLE_NAME} \
+          -Wl,-rpath=${CUST_LIBRARY_PATH}:${sim_lib_path}
+      else
+        g++ ${f} \
+          -I ${INCLUDE_PATH} \
+          -I ${INCLUDE_PATH}/aclnnop \
+          -I ${CUST_INCLUDE_PATH} \
+          -L ${CUST_LIBRARY_PATH} \
+          -L ${EAGER_LIBRARY_PATH} \
+          -lcust_opapi -lascendcl -lnnopbase \
+          -o test_aclnn_${EXAMPLE_NAME} \
+          -Wl,-rpath=${CUST_LIBRARY_PATH}
+      fi
 
       if [ -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
         rm ${CUST_ACLNNOP_INCLUDE_PATH}
@@ -1383,7 +1436,13 @@ build_example_eager() {
       exit 1
     fi
 
-    ./test_aclnn_${EXAMPLE_NAME}
+    if [[ -n "$sim_lib_path" ]]; then
+      ASCEND_SLOG_PRINT_TO_STDOUT=${ASCEND_SLOG_PRINT_TO_STDOUT:-0} \
+        ASCEND_GLOBAL_LOG_LEVEL=${ASCEND_GLOBAL_LOG_LEVEL:-3} \
+        ./test_aclnn_${EXAMPLE_NAME}
+    else
+      ./test_aclnn_${EXAMPLE_NAME}
+    fi
 
     if [ $? -eq 0 ]; then
       echo "run test_aclnn_${EXAMPLE_NAME}, execute samples success"
@@ -1392,6 +1451,47 @@ build_example_eager() {
       exit 1
     fi
   done
+}
+
+get_simulator_chip_version() {
+  local soc=$1
+  case "$soc" in
+    ascend910) echo "dav_1001" ;;
+    ascend910_93|ascend910b) echo "dav_2201" ;;
+    ascend310p) echo "dav_2002" ;;
+    ascend310b) echo "dav_3002" ;;
+    ascend950) echo "dav_3510" ;;
+    *)
+      echo "[ERROR] Unsupported soc version for simulator: $soc" >&2
+      return 1
+      ;;
+  esac
+}
+
+get_simulator_args() {
+  if [[ "$ENABLE_SIMULATOR" == "FALSE" ]]; then
+    return 0
+  fi
+  if [[ "$ENABLE_SIMULATOR" == "TRUE" ]] && [[ -n "$COMPUTE_UNIT" ]]; then
+    local chip_version
+    chip_version=$(get_simulator_chip_version "$COMPUTE_UNIT")
+    if [[ $? -ne 0 ]]; then
+      exit 1
+    fi
+    if [[ -n "$chip_version" ]]; then
+      local sim_lib_path="${ASCEND_HOME_PATH}/tools/simulator/${chip_version}/lib"
+      if [[ ! -d "$sim_lib_path" ]]; then
+        echo "[ERROR] Simulator lib path not found: $sim_lib_path" >&2
+        exit 1
+      else
+        echo "[INFO] Successfully linked simulator libraries: ${sim_lib_path}/libruntime_camodel.so, ${sim_lib_path}/libnpu_drv_camodel.so" >&2
+      fi
+      echo "$sim_lib_path"
+      return 0
+    fi
+  fi
+  echo ""
+  return 1
 }
 
 #######################################
