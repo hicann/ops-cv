@@ -170,3 +170,127 @@ TEST_F(TEST_IMAGE_WARP_OFFSETS_UT, INVALID_VALUE_FAILED) {
   CREATE_NODEDEF(shapes, data_types, datas);
   RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
+
+TEST_F(TEST_IMAGE_WARP_OFFSETS_UT, DT_FLOAT16_DT_FLOAT_DT_FLOAT16_SUCCESS) {
+  vector<DataType> data_types = {DT_FLOAT16, DT_FLOAT, DT_FLOAT16};
+  vector<vector<int64_t>> shapes = {
+      {1, 4, 2, 3}, {1, 4, 2, 2}, {1, 4, 2, 2, 3}};
+  Eigen::half input0_data[24] = {
+    Eigen::half(1.0f), Eigen::half(2.0f), Eigen::half(3.0f),
+    Eigen::half(4.0f), Eigen::half(5.0f), Eigen::half(6.0f),
+    Eigen::half(7.0f), Eigen::half(8.0f), Eigen::half(9.0f),
+    Eigen::half(10.0f), Eigen::half(11.0f), Eigen::half(12.0f),
+    Eigen::half(13.0f), Eigen::half(14.0f), Eigen::half(15.0f),
+    Eigen::half(16.0f), Eigen::half(17.0f), Eigen::half(18.0f),
+    Eigen::half(19.0f), Eigen::half(20.0f), Eigen::half(21.0f),
+    Eigen::half(22.0f), Eigen::half(23.0f), Eigen::half(24.0f)
+  };
+  float input1_data[16] = {
+    0.0f, 1.0f, 2.0f, 3.0f,
+    6.0f, 7.0f, 8.0f, 9.0f,
+    12.0f, 13.0f, 14.0f, 15.0f,
+    18.0f, 19.0f, 20.0f, 21.0f
+  };
+  Eigen::half output_data[48] = {Eigen::half(0.0f)};
+  vector<void *> datas = {(void *)input0_data, (void *)input1_data, (void *)output_data};
+  CREATE_NODEDEF(shapes, data_types, datas);
+  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
+  
+  EXPECT_EQ(static_cast<float>(output_data[0]), 1.0f);
+  EXPECT_EQ(static_cast<float>(output_data[1]), 2.0f);
+  EXPECT_EQ(static_cast<float>(output_data[2]), 3.0f);
+  EXPECT_EQ(static_cast<float>(output_data[3]), 2.0f);
+  EXPECT_EQ(static_cast<float>(output_data[4]), 3.0f);
+  EXPECT_EQ(static_cast<float>(output_data[5]), 4.0f);
+}
+
+TEST_F(TEST_IMAGE_WARP_OFFSETS_UT, DT_FLOAT_DT_FLOAT_DT_FLOAT_SUCCESS) {
+  vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+  vector<vector<int64_t>> shapes = {
+      {1, 4, 2, 3}, {1, 4, 2, 2}, {1, 4, 2, 2, 3}};
+  float input0_data[24] = {
+    1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f,
+    7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f,
+    13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f,
+    19.0f, 20.0f, 21.0f, 22.0f, 23.0f, 24.0f
+  };
+  float input1_data[16] = {
+    0.0f, 1.0f, 2.0f, 3.0f,
+    6.0f, 7.0f, 8.0f, 9.0f,
+    12.0f, 13.0f, 14.0f, 15.0f,
+    18.0f, 19.0f, 20.0f, 21.0f
+  };
+  float output_data[48] = {0.0f};
+  vector<void *> datas = {(void *)input0_data, (void *)input1_data, (void *)output_data};
+  CREATE_NODEDEF(shapes, data_types, datas);
+  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
+  
+  EXPECT_EQ(output_data[0], 1.0f);
+  EXPECT_EQ(output_data[1], 2.0f);
+  EXPECT_EQ(output_data[2], 3.0f);
+  EXPECT_EQ(output_data[3], 2.0f);
+  EXPECT_EQ(output_data[4], 3.0f);
+  EXPECT_EQ(output_data[5], 4.0f);
+}
+
+TEST_F(TEST_IMAGE_WARP_OFFSETS_UT, DT_UINT8_DT_FLOAT_DT_UINT8_SUCCESS) {
+  vector<DataType> data_types = {DT_UINT8, DT_FLOAT, DT_UINT8};
+  vector<vector<int64_t>> shapes = {
+      {1, 4, 2, 3}, {1, 4, 2, 2}, {1, 4, 2, 2, 3}};
+  uint8_t input0_data[24] = {
+    1, 2, 3, 4, 5, 6,
+    7, 8, 9, 10, 11, 12,
+    13, 14, 15, 16, 17, 18,
+    19, 20, 21, 22, 23, 24
+  };
+  float input1_data[16] = {
+    0.0f, 1.0f, 2.0f, 3.0f,
+    6.0f, 7.0f, 8.0f, 9.0f,
+    12.0f, 13.0f, 14.0f, 15.0f,
+    18.0f, 19.0f, 20.0f, 21.0f
+  };
+  uint8_t output_data[48] = {0};
+  vector<void *> datas = {(void *)input0_data, (void *)input1_data, (void *)output_data};
+  CREATE_NODEDEF(shapes, data_types, datas);
+  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
+  
+  EXPECT_EQ(output_data[0], 1);
+  EXPECT_EQ(output_data[1], 2);
+  EXPECT_EQ(output_data[2], 3);
+  EXPECT_EQ(output_data[3], 2);
+  EXPECT_EQ(output_data[4], 3);
+  EXPECT_EQ(output_data[5], 4);
+}
+
+TEST_F(TEST_IMAGE_WARP_OFFSETS_UT, DT_FLOAT16_DT_INT32_DT_FLOAT16_SUCCESS) {
+  vector<DataType> data_types = {DT_FLOAT16, DT_INT32, DT_FLOAT16};
+  vector<vector<int64_t>> shapes = {
+      {1, 4, 2, 3}, {1, 4, 2, 2}, {1, 4, 2, 2, 3}};
+  Eigen::half input0_data[24] = {
+    Eigen::half(1.0f), Eigen::half(2.0f), Eigen::half(3.0f),
+    Eigen::half(4.0f), Eigen::half(5.0f), Eigen::half(6.0f),
+    Eigen::half(7.0f), Eigen::half(8.0f), Eigen::half(9.0f),
+    Eigen::half(10.0f), Eigen::half(11.0f), Eigen::half(12.0f),
+    Eigen::half(13.0f), Eigen::half(14.0f), Eigen::half(15.0f),
+    Eigen::half(16.0f), Eigen::half(17.0f), Eigen::half(18.0f),
+    Eigen::half(19.0f), Eigen::half(20.0f), Eigen::half(21.0f),
+    Eigen::half(22.0f), Eigen::half(23.0f), Eigen::half(24.0f)
+  };
+  int32_t input1_data[16] = {
+    0, 1, 2, 3,
+    6, 7, 8, 9,
+    12, 13, 14, 15,
+    18, 19, 20, 21
+  };
+  Eigen::half output_data[48] = {Eigen::half(0.0f)};
+  vector<void *> datas = {(void *)input0_data, (void *)input1_data, (void *)output_data};
+  CREATE_NODEDEF(shapes, data_types, datas);
+  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
+  
+  EXPECT_EQ(static_cast<float>(output_data[0]), 1.0f);
+  EXPECT_EQ(static_cast<float>(output_data[1]), 2.0f);
+  EXPECT_EQ(static_cast<float>(output_data[2]), 3.0f);
+  EXPECT_EQ(static_cast<float>(output_data[3]), 2.0f);
+  EXPECT_EQ(static_cast<float>(output_data[4]), 3.0f);
+  EXPECT_EQ(static_cast<float>(output_data[5]), 4.0f);
+}
