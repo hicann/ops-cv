@@ -62,4 +62,6 @@ bash build.sh --help
 | --mssanitizer   | 可选     | 开启kernel侧mssanitizer内存检测功能。不可与--oom同时使用                                         |
 | --oom           | 可选     | 开启kernel侧oom内存检测功能。不可与--mssanitizer同时使用                                         |
 | --dump_cce      | 可选     | 开启kernel侧dump预编译文件功能。                                                      |
+| --bisheng_flags | 可选     | 指定毕昇编译器编译参数，多个编译参数用英文逗号“,”分隔，不可与--mssanitizer、--oom、--dump_cce同时使用。     |
+| --kernel_template_input  | 可选     | 指定编译kernel时的模板参数，多个模板参数用英文逗号“,”分隔，与--ops同时使用且只能指定一个算子。     |
 | --cann_3rd_lib_path      | 可选     | 离线编译场景下第三方库存放的目录。                                                               |                    |

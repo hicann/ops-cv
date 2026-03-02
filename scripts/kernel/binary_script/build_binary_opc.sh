@@ -41,11 +41,13 @@ main() {
     }
   fi
 
-  result=$(bash build_binary_opc_gen_task.sh $op_type $soc_version $output_path $task_path $enable_mssanitizer $enable_debug $enable_oom $enable_dump_cce)
+  local bisheng_flags=$8
+  local kernel_template_input=$9
+  result=$(bash build_binary_opc_gen_task.sh $op_type $soc_version $output_path $task_path $enable_mssanitizer $enable_debug $enable_oom $enable_dump_cce $bisheng_flags $kernel_template_input)
   local gen_res=$?
   if [ $gen_res -ne 0 ]; then
     echo -e "[ERROR] [$op_type]build binary single op gen task failed with ErrorCode[$gen_res]."
-    echo -e "Command executed: build_binary_single_op_gen_task.sh $op_type $soc_version $output_path $task_path $enable_mssanitizer $enable_debug $enable_oom $enable_dump_cce"
+    echo -e "Command executed: build_binary_single_op_gen_task.sh $op_type $soc_version $output_path $task_path $enable_mssanitizer $enable_debug $enable_oom $enable_dump_cce $bisheng_flags $kernel_template_input"
     echo -e "Error output: \n $result"
     return
   fi

@@ -95,7 +95,7 @@ main() {
   echo "[INFO]execute file: $0"
   if [ $# -lt 8 ]; then
     echo "[ERROR]input error"
-    echo "[ERROR]bash $0 {op_type} {soc_version} {output_path} {task_path} {enable_mssanitizer} {enable_debug} {enable_oom} {enable_dump_cce}"
+    echo "[ERROR]bash $0 {op_type} {soc_version} {output_path} {task_path} {enable_mssanitizer} {enable_debug} {enable_oom} {enable_dump_cce} bisheng_flags={bisheng_flags} kernel_template_input={kernel_template_input}"
     exit 1
   fi
   local workdir=$(
@@ -113,6 +113,8 @@ main() {
   local enable_debug=$6
   local enable_oom=$7
   local enable_dump_cce=$8
+  local bisheng_flags="${9#*=}"
+  local kernel_template_input="${10#*=}"
   local is_need_gen_opc_info=TRUE
   local python_arg=${HI_PYTHON}
   if [ "${python_arg}" = "" ]; then
@@ -277,6 +279,12 @@ main() {
           cmd="${cmd} --op_debug_config=dump_cce"
           cmd="${cmd} --debug_dir=${output_path}/kernel_metas"
         fi
+
+        if [[ -n "$kernel_template_input" ]]; then
+          echo "kernel_template_input is: ${kernel_template_input}"
+          cmd="${cmd} --kernel-template-input=${kernel_template_input}"
+        fi
+
         echo "[INFO] op:${op_type} do opc cmd is ${cmd}"
         echo ${cmd} >> ${opc_task_cmd_file}
         cmd="${python_arg} gen_output_json.py ${new_file} ${binary_bin_path} ${binary_compile_json_file}"

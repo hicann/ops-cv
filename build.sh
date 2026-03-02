@@ -26,6 +26,7 @@ SUPPORTED_LONG_OPTS=(
   "pkg" "asan" "valgrind" "make_clean" "static" "simulator"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
   "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "dump_cce"
+  "bisheng_flags=" "kernel_template_input="
 )
 
 in_array() {
@@ -156,6 +157,10 @@ usage() {
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo "    --dump_cce             Dump kernel precompiled files"
+        echo "    --bisheng_flags=flag1,flag2"
+        echo "                           Specify bisheng compiler flags (comma-separated for multiple)"
+        echo "    --kernel_template_input=args0,args1"
+        echo "                           Specify kernel template input arguments(comma-separated for multiple)"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --pkg --soc=ascend910b --vendor_name=customize -j16 -O3"
@@ -166,6 +171,8 @@ usage() {
         echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --mssanitizer"
         echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --oom"
         echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --dump_cce"
+        echo "    bash build.sh --pkg --experimental --soc=ascend910b --ops=add --bisheng_flags=ccec_g,oom"
+        echo "    bash build.sh --pkg --experimental --soc=ascend950 --ops=abs --kernel_template_input=0,1"
         return
         ;;
       opkernel)
@@ -178,6 +185,10 @@ usage() {
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo "    --dump_cce             Dump kernel precompiled files"
+        echo "    --bisheng_flags=flag1,flag2"
+        echo "                           Specify bisheng compiler config (comma-separated for multiple)"
+        echo "    --kernel_template_input=args0,args1"
+        echo "                           Specify kernel template input arguments(comma-separated for multiple)"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample"
@@ -185,6 +196,8 @@ usage() {
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --mssanitizer"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --oom"
         echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --dump_cce"
+        echo "    bash build.sh --opkernel --soc=ascend310p --ops=grid_sample --bisheng_flags=ccec_g,oom"
+        echo "    bash build.sh --opkernel --soc=ascend950 --ops=abs --kernel_template_input=0,1"
         return
         ;;
       opkernel_aicpu)
@@ -197,6 +210,10 @@ usage() {
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo "    --dump_cce             Dump kernel precompiled files"
+        echo "    --bisheng_flags=flag1,flag2"
+        echo "                           Specify bisheng compiler flags (comma-separated for multiple)"
+        echo "    --kernel_template_input=args0,args1"
+        echo "                           Specify kernel template input arguments(comma-separated for multiple)"
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize"
@@ -204,6 +221,7 @@ usage() {
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --mssanitizer"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --oom"
         echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --dump_cce"
+        echo "    bash build.sh --opkernel_aicpu --soc=ascend910b --ops=crop_and_resize --bisheng_flags=ccec_g,oom"
         return
         ;;
       test)
@@ -417,6 +435,8 @@ usage() {
   echo "    --mssanitizer Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
   echo "    --oom Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
   echo "    --dump_cce Dump kernel precompiled files"
+  echo "    --bisheng_flags Specify bisheng compiler config, like: --bisheng_flags=ccec_g,oom, use ',' to separate different compiler flags"
+  echo "    --kernel_template_input Specify kernel template input arguments, like: --kernel_template_input=0,1, use ',' to separate different kernel template args"
   echo "to be continued ..."
 }
 
@@ -514,6 +534,20 @@ check_param() {
 
     if $(echo ${USE_CMD} | grep -wq "jit"); then
       ENABLE_BINARY=FALSE
+    fi
+
+    if [ -n "$BISHENG_FLAGS" ]; then
+      if [[ "$ENABLE_MSSANITIZER" == "TRUE" || "$ENABLE_OOM" == "TRUE" || "$ENABLE_DUMP_CCE" == "TRUE" ]]; then
+        echo "[ERROR] --bisheng_flags= cannot be used with --mssanitizer, --oom, --dump_cce"
+        exit 1
+      fi
+    fi
+
+    if [ -n "$KERNEL_TEMPLATE_INPUT" ]; then
+      if [[ -z "${COMPILED_OPS}" || "$COMPILED_OPS" == *","* ]]; then
+        echo "[ERROR] --kernel_template_input must be used with --ops= and can only specify a single operator"
+        exit 1
+      fi
     fi
   fi
 
@@ -670,6 +704,8 @@ checkopts() {
   EXAMPLE_NAME=""
   EXAMPLE_MODE=""
   USE_CMD="$*"
+  BISHENG_FLAGS=""
+  KERNEL_TEMPLATE_INPUT=""
 
   BUILD_TYPE="Release"
   ENABLE_MSSANITIZER=FALSE
@@ -835,6 +871,12 @@ checkopts() {
         mssanitizer) ENABLE_MSSANITIZER=TRUE ;;
         oom) ENABLE_OOM=TRUE ;;
         dump_cce) ENABLE_DUMP_CCE=TRUE ;;
+        bisheng_flags=*)
+          BISHENG_FLAGS=${OPTARG#*=}
+          ;;
+        kernel_template_input=*)
+          KERNEL_TEMPLATE_INPUT=${OPTARG#*=}
+          ;;
         cov) ENABLE_COVERAGE=TRUE ;;
         noexec) ENABLE_UT_EXEC=FALSE ;;
         aicpu) AICPU_ONLY=TRUE ;;
@@ -1035,6 +1077,12 @@ assemble_cmake_args() {
   fi
   if [[ "$ENABLE_DUMP_CCE" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_DUMP_CCE=TRUE"
+  fi
+  if [[ "$ENABLE_BISHEG_FLAGS" == "TRUE" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DBISHENG_FLAGS=$BISHENG_FLAGS"
+  fi
+  if [[ "$KERNEL_TEMPLATE_INPUT" != "" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DKERNEL_TEMPLATE_INPUT=$KERNEL_TEMPLATE_INPUT"
   fi
   if [[ "$ENABLE_TEST" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_TEST=TRUE"
