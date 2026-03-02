@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "opdev/common_types.h"
 #include "opdev/platform.h"
 #include "aclnn_kernels/cast.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 
@@ -51,7 +52,8 @@ static float ComputeNearest3dGradScales(int64_t input_size, int64_t output_size,
     }
 }
 
-static bool CheckNearest3dGradScales(const aclTensor* gradOut, const aclIntArray* inputSize, const aclFloatArray* castScales)
+static bool CheckNearest3dGradScales(
+    const aclTensor* gradOut, const aclIntArray* inputSize, const aclFloatArray* castScales)
 {
     float scales_d = 0.0, scales_h = 0.0, scales_w = 0.0;
     if (castScales->Size() == DIM_THREE) {
@@ -67,6 +69,29 @@ static bool CheckNearest3dGradScales(const aclTensor* gradOut, const aclIntArray
     float scaleH = ComputeNearest3dGradScales(sizeH, inputShape.GetDim(DIM_THREE), scales_h);
     float scaleD = ComputeNearest3dGradScales(sizeD, inputShape.GetDim(DIM_TWO), scales_d);
     return (scaleW <= MAX_SUPPORT_SCALE && scaleH <= MAX_SUPPORT_SCALE && scaleD <= MAX_SUPPORT_SCALE);
+}
+
+static const aclTensor* UpsampleNearest3dGradAICORE(
+    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclFloatArray* scales,
+    const aclFloatArray* castScales, op::Shape gradInputStorageShape, op::Shape gradInputOriginalShape,
+    aclOpExecutor* executor)
+{
+    auto dataType = gradOut->GetDataType();
+    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+        gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
+    }
+    const aclTensor* gradInput = executor->AllocTensor(
+        gradInputStorageShape, gradInputOriginalShape, gradOut->GetDataType(), gradOut->GetStorageFormat(),
+        gradOut->GetOriginalFormat());
+    CHECK_RET(gradInput != nullptr, nullptr);
+    ADD_TO_LAUNCHER_LIST_AICORE(
+        UpsampleNearest3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, castScales));
+    if (op::DataType::DT_BF16 == dataType) {
+        gradInput = l0op::Cast(gradInput, op::DataType::DT_BF16, executor);
+    } else if (op::DataType::DT_FLOAT16 == dataType) {
+        gradInput = l0op::Cast(gradInput, op::DataType::DT_FLOAT16, executor);
+    }
+    return gradInput;
 }
 
 const aclTensor* UpsampleNearest3dGradNcdhw(
@@ -92,24 +117,20 @@ const aclTensor* UpsampleNearest3dGradNcdhw(
     auto dataType = gradOut->GetDataType();
     // npu实现
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if (CheckNearest3dGradScales(gradOut, inputSize, castScales) &&
-        (curArch == NpuArch::DAV_2201) &&
-        CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
-        if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
-            gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
-        }
+    if (IsRegBase(curArch) && CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
         const aclTensor* gradInput = executor->AllocTensor(
             gradInputStorageShape, gradInputOriginalShape, gradOut->GetDataType(), gradOut->GetStorageFormat(),
             gradOut->GetOriginalFormat());
         CHECK_RET(gradInput != nullptr, nullptr);
         ADD_TO_LAUNCHER_LIST_AICORE(
             UpsampleNearest3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, castScales));
-        if (op::DataType::DT_BF16 == dataType) {
-            gradInput = l0op::Cast(gradInput, op::DataType::DT_BF16, executor);
-        } else if (op::DataType::DT_FLOAT16 == dataType) {
-            gradInput = l0op::Cast(gradInput, op::DataType::DT_FLOAT16, executor);
-        }
         return gradInput;
+    }
+    if (CheckNearest3dGradScales(gradOut, inputSize, castScales) && (curArch == NpuArch::DAV_2201) &&
+        CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
+        return UpsampleNearest3dGradAICORE(
+            gradOut, outputSize, inputSize, scales, castScales, gradInputStorageShape, gradInputOriginalShape,
+            executor);
     }
 
     if (op::DataType::DT_BF16 == dataType) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 #include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "upsample_nearest3d_grad_tiling.h"
+
+#include <string>
+#include "tiling/platform/platform_ascendc.h"
+#include "op_host/tiling_util.h"
 
 namespace optiling {
 constexpr int64_t BEST_PERFORMANCE_SIZE_1 = 16;
@@ -48,6 +52,7 @@ constexpr uint8_t W_INDEX = 2;
 constexpr uint8_t SCHEDULE_MODE = 1;
 
 constexpr int64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
+const std::string EXACT_3D_GRAD_TYPE = "UpsampleNearestExact3dGrad";
 
 class UpsampleNearest3dGradTiling
 {
@@ -152,6 +157,12 @@ ge::graphStatus UpsampleNearest3dGradTiling::Init() const
 
 ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
 {
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(tilingContext);
+    std::string opType(tilingContext->GetNodeType());
+    if (regBase && (opType != EXACT_3D_GRAD_TYPE)) {
+        OP_LOGI(tilingContext->GetNodeName(), "Enter Tiling4UpsampleNearest3dGradRegbase");
+        return Tiling4UpsampleNearest3dGradRegbase(tilingContext);
+    }
     // 获取输入矩阵
     auto srcTensor = tilingContext->GetInputTensor(0);
     if (srcTensor == nullptr) {
