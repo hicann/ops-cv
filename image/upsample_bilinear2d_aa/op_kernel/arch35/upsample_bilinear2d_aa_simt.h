@@ -28,7 +28,6 @@ template <typename T1, typename T2, typename T3>
 class Bilinear2dAASimt {
 public:
     __aicore__ inline Bilinear2dAASimt(){};
-
     __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, const UpsampleBilinear2dAARegBaseTilingData *__restrict tilingData);
     __aicore__ inline void Process();
 

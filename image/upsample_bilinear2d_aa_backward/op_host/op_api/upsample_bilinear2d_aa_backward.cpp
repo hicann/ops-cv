@@ -29,7 +29,7 @@ const aclTensor *UpsampleBilinear2dAABackward(const aclTensor *gradOutput, const
 {
     L0_DFX(UpsampleBilinear2dAABackward, gradOutput, outputSize, inputSize, output, alignCorners, scales_h, scales_w);
 
-    auto out = executor->AllocTensor(output->GetViewShape(), output->GetDataType(), output->GetStorageFormat());
+    auto out = executor->AllocTensor(output->GetViewShape(), gradOutput->GetDataType(), output->GetStorageFormat());
     CHECK_RET(out != nullptr, nullptr);
 
     auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2dAABackward,
