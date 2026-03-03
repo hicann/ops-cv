@@ -292,7 +292,9 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
   - N \* C \* x_H < 2^31
-- 输入数据缩放场景缩小倍数必须小于等于50，即：
+- - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
+
+  输入数据缩放场景缩小倍数必须小于等于50，即：
   
   $$
   输入shape的高度H/outputSize\_H <= 50
@@ -302,7 +304,6 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
   输入shape的宽度W/outputSize\_W <=50
   $$
 
-- <term>Ascend 950PR/Ascend 950DT</term>：不限制缩放倍数。
 - 参数x、outputSize、scalesH、scalesW需要满足如下约束：
 
   $$
