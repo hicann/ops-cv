@@ -77,7 +77,7 @@ static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode
     return false;
 }
 
-static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out, int64_t interpolationMode)
+static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
 {
     // 检查input、grid、out的数据类型是否一致
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
@@ -171,7 +171,7 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckNotNull(input, grid, out), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查输入、输出的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
-    CHECK_RET(CheckDtypeValid(input, grid, out, interpolationMode), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckDtypeValid(input, grid, out), ACLNN_ERR_PARAM_INVALID);
 
     // 3. 检查属性参数是否在支持范围内
     CHECK_RET(CheckAttrValid(interpolationMode, paddingMode), ACLNN_ERR_PARAM_INVALID);

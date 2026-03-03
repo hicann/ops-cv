@@ -38,7 +38,7 @@ template <typename T>
 static bool GetSizeValueFor2D(const gert::InferShapeContext* context, const gert::Tensor* size_tensor, OutInfo& out_size)
 {
     const T* size_value = size_tensor->GetData<T>();
-    const size_t size_num = size_tensor->GetShapeSize();
+    const size_t size_num = static_cast<size_t>(size_tensor->GetShapeSize());
     OP_CHECK_IF(
         size_num != SIZE_NUM_2D, OP_LOGE(context->GetNodeName(), "The size number must be 2, but is %d", size_num),
         return false);

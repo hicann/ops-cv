@@ -100,7 +100,7 @@ static bool CheckInputElement(
     return true;
 }
 
-static bool CheckUplimit(const aclTensor* gradOut, const aclTensor* gradInput)
+static bool CheckUplimit(const aclTensor* gradOut)
 {
     if (IsRegBase()) {
         return true;
@@ -146,7 +146,7 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckInputElement(gradOut, outputSize, inputSize, gradInput), ACLNN_ERR_PARAM_INVALID);
 
     // 5. 校验上边界
-    CHECK_RET(CheckUplimit(gradOut, gradInput), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckUplimit(gradOut), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;
 }
 

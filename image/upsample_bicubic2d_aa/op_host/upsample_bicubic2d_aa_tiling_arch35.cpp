@@ -319,7 +319,7 @@ ge::graphStatus UpsampleBicubic2dAARegbaseTiling::DoTiling()
     PrintTilingData();
     uint64_t schId = static_cast<uint64_t>(baseTiling_.schId);
     uint64_t isInt32 = static_cast<uint64_t>(baseTiling_.isInt32);
-    const uint64_t tilingKey = GET_TPL_TILING_KEY((uint64_t)schId, (uint64_t)isInt32);
+    const uint64_t tilingKey = GET_TPL_TILING_KEY(schId, isInt32);
     OP_LOGI(context_, "tilingKey %lu, schId %lu, isInt32 %lu, realCoreNum %d", tilingKey, schId, isInt32,
         baseTiling_.realCoreNum);
     context_->SetTilingKey(tilingKey);

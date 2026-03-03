@@ -171,7 +171,7 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
     return true;
 }
 
-static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
+static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t interpolationMode)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     return input->GetDataType() != op::DataType::DT_DOUBLE && (interpolationMode == 0 || interpolationMode == 1) &&
@@ -242,7 +242,7 @@ aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(const aclTensor *gradOutp
     auto inputContiguous = l0op::Contiguous(input, uniqueExecutor.get());
     CHECK_RET(inputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     int64_t dimSize = static_cast<int64_t>(inputContiguous->GetViewShape().GetDimNum());
-    bool transposeFlag = CheckDtypeAndChannelCanTranspose(input, interpolationMode, paddingMode);
+    bool transposeFlag = CheckDtypeAndChannelCanTranspose(input, interpolationMode);
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     bool castFlag = input->GetDataType() == op::DataType::DT_FLOAT16 &&
                     curArch == NpuArch::DAV_1001;

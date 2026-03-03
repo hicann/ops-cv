@@ -157,7 +157,7 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-static bool isUpsampleCompute(const aclTensor* gradOut, int64_t inputL, int64_t gradOutL, double scale)
+static bool isUpsampleCompute(const aclTensor* gradOut, double scale)
 {
     if (GetCurrentPlatformInfo().GetCurNpuArch() != NpuArch::DAV_2201) {
         return false;
@@ -244,7 +244,7 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
     const int64_t inputL = (*inputSize)[DIM_TWO];
     const int64_t gradOutL = gradOut->GetViewShape().GetDim(DIM_TWO);
     bool check_scales = scales > FLOAT_ZERO ? static_cast<int64_t>(inputL * scales) == gradOutL : true;
-    if (isUpsampleCompute(gradOut, inputL, gradOutL, scales) && check_scales) {
+    if (isUpsampleCompute(gradOut, scales) && check_scales) {
         auto gradOutContiguous = View3dAs4d(gradOut, false, uniqueExecutor.get());
         CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 

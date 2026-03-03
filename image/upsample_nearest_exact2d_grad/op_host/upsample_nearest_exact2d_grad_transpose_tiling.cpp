@@ -263,7 +263,8 @@ bool UpsampleNearestExact2dGradTransposeTiling::isIntergerResize(int64_t input, 
         return false;
     }
     std::string opType(tilingContext->GetNodeType());
-    return input > 0 && output > 0 && output % input == 0 && FloatEqual(input / output, scale);
+    float realScale = output != 0 ? static_cast<float>(input) / output : 0;
+    return input > 0 && output > 0 && output % input == 0 && FloatEqual(realScale, scale);
 }
 
 void UpsampleNearestExact2dGradTransposeTiling::FillTilingData()

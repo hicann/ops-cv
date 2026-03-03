@@ -49,5 +49,3 @@ __global__ __aicore__ void col2im(GM_ADDR gradOut, GM_ADDR outputSize, GM_ADDR g
         col2imKernel.Process();
     }
 }
-
-

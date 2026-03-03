@@ -545,5 +545,4 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::GetSlideRange()
     }
 }
 } // namespace UpsampleNearest3dGrad
-
 #endif // UPSAMPLE_NEAREST3D_GRAD
