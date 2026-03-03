@@ -18,6 +18,7 @@
 using namespace std;
 using namespace ge;
 
+
 class UpsampleBicubic2dTiling : public testing::Test {
 protected:
     static void SetUpTestCase()

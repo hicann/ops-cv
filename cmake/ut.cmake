@@ -43,13 +43,11 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       add_library(${OP_TILING_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
     target_include_directories(
-      ${OP_TILING_MODULE_NAME}_cases_obj PRIVATE ${UT_COMMON_INC} ${GTEST_INCLUDE} ${ASCEND_DIR}/include ${ASCEND_DIR}/pkg_inc
-                                                 ${JSON_INCLUDE_DIR} ${ASCEND_DIR}/include/base/context_builder ${PROJECT_SOURCE_DIR}/common/inc
-                                                 ${ASCEND_DIR}/include/op_common ${ASCEND_DIR}/include/tiling
-                                                 ${ASCEND_DIR}/include/op_common/op_host
+      ${OP_TILING_MODULE_NAME}_cases_obj PRIVATE ${UT_COMMON_INC} ${GTEST_INCLUDE} ${OP_TILING_INCLUDE}
+                                                 ${JSON_INCLUDE_DIR} ${ASCEND_DIR}/include/base/context_builder
+                                                 ${PROJECT_SOURCE_DIR}/common/inc
+                                                 ${ASCEND_DIR}/pkg_inc
                                                  ${ASCEND_DIR}/pkg_inc/base
-                                                 ${ASCEND_DIR}/pkg_inc/op_common 
-                                                 ${ASCEND_DIR}/pkg_inc/op_common/op_host
       )
     target_link_libraries(${OP_TILING_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest json)
 
@@ -71,7 +69,6 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE
       ${GTEST_INCLUDE} ${ASCEND_DIR}/include/base/context_builder
       ${ASCEND_DIR}/pkg_inc
-      ${ASCEND_DIR}/pkg_inc/base
     )
     target_link_libraries(
       ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest c_sec
@@ -82,8 +79,10 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       add_library(${OP_INFERSHAPE_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
     target_include_directories(
-      ${OP_INFERSHAPE_MODULE_NAME}_cases_obj PRIVATE ${UT_COMMON_INC} ${GTEST_INCLUDE} ${ASCEND_DIR}/include
-                                                     ${ASCEND_DIR}/pkg_inc ${ASCEND_DIR}/include/base/context_builder
+      ${OP_INFERSHAPE_MODULE_NAME}_cases_obj PRIVATE ${UT_COMMON_INC} ${GTEST_INCLUDE} ${OP_PROTO_INCLUDE}
+                                                     ${ASCEND_DIR}/include/base/context_builder
+                                                     ${ASCEND_DIR}/pkg_inc
+                                                     ${ASCEND_DIR}/pkg_inc/base
       )
     target_link_libraries(
       ${OP_INFERSHAPE_MODULE_NAME}_cases_obj PRIVATE
@@ -122,8 +121,6 @@ if(UT_TEST_ALL OR OP_API_UT)
       ${OP_API_MODULE_NAME}_cases_obj
       PRIVATE ${JSON_INCLUDE_DIR} ${HI_PYTHON_INC_TEMP} ${UT_PATH}/op_api/stub ${OP_API_UT_COMMON_INC}
               ${ASCEND_DIR}/include ${ASCEND_DIR}/include/aclnn ${ASCEND_DIR}/include/aclnnop
-              ${ASCEND_DIR}/pkg_inc
-              ${ASCEND_DIR}/pkg_inc/base
               ${OPAPI_INCLUDE}
       )
     target_link_libraries(${OP_API_MODULE_NAME}_cases_obj PRIVATE
@@ -376,26 +373,24 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       string(REPLACE "ascend" "Ascend" socVersion "${oriSocVersion}")
 
       # add tiling tmp so: ${opName}_${socVersion}_tiling_tmp.so
-      add_library(${opName}_${socVersion}_tiling_tmp SHARED ${tilingSrc} $<TARGET_OBJECTS:${COMMON_NAME}_obj>)
+      add_library(${opName}_${socVersion}_tiling_tmp SHARED ${tilingSrc} $<TARGET_OBJECTS:${COMMON_NAME}_obj>
+                  $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>
+                  $<$<TARGET_EXISTS:opbase_tiling_objs>:$<TARGET_OBJECTS:opbase_tiling_objs>>)
       target_include_directories(
         ${opName}_${socVersion}_tiling_tmp
-        PRIVATE ${ASCEND_DIR}/include/op_common/atvoss ${ASCEND_DIR}/include/op_common
-                ${ASCEND_DIR}/include/op_common/op_host ${PROJECT_SOURCE_DIR}/common/inc
-                ${ASCEND_DIR}/include/tiling ${ASCEND_DIR}/include/op_common/op_host
-                ${ASCEND_DIR}/pkg_inc/base
-                ${ASCEND_DIR}/pkg_inc/op_common
-                ${ASCEND_DIR}/pkg_inc/op_common/op_host
+        PRIVATE ${OP_TILING_INCLUDE}
                 ${PROJECT_SOURCE_DIR}
         )
       target_compile_definitions(${opName}_${socVersion}_tiling_tmp PRIVATE LOG_CPP _GLIBCXX_USE_CXX11_ABI=0)
       target_link_libraries(
         ${opName}_${socVersion}_tiling_tmp PRIVATE
-        -Wl,--no-as-needed $<$<TARGET_EXISTS:opsbase>:opsbase> -Wl,--as-needed
         $<BUILD_INTERFACE:dlog_headers>
         -Wl,--whole-archive
         tiling_api rt2_registry_static
         -Wl,--no-whole-archive
         $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+        register
+        opp_registry
         )
 
       # gen ascendc tiling head files
@@ -440,15 +435,18 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
         ${opName}_${socVersion}_cases_obj PRIVATE -g ${compileOptions} -DUT_SOC_VERSION="${socVersion}"
         )
       target_include_directories(
-        ${opName}_${socVersion}_cases_obj
-        PRIVATE ${ASCEND_DIR}/include/base/context_builder ${PROJECT_SOURCE_DIR}/tests/ut/op_kernel ${ASCEND_DIR}/pkg_inc
-                ${PROJECT_SOURCE_DIR}/tests/ut/common ${PROJECT_SOURCE_DIR}/common/inc
-                ${ASCEND_DIR}/include/op_common ${ASCEND_DIR}/include/tiling
-                ${ASCEND_DIR}/include/op_common/op_host
-                ${ASCEND_DIR}/pkg_inc/base
-                ${ASCEND_DIR}/pkg_inc/op_common
-                ${ASCEND_DIR}/pkg_inc/op_common/op_host
-        )
+          ${opName}_${socVersion}_cases_obj
+        PRIVATE
+          ${GTEST_INCLUDE}
+          ${ASCEND_DIR}/include/base/context_builder
+          ${PROJECT_SOURCE_DIR}/tests/ut/op_kernel
+          ${PROJECT_SOURCE_DIR}/tests/ut/common
+          ${OP_TILING_INCLUDE}
+          ${ASCEND_DIR}/pkg_inc/base
+          ${ASCEND_DIR}/${CMAKE_SYSTEM_PROCESSOR}-linux/asc/
+          ${ASCEND_DIR}/${CMAKE_SYSTEM_PROCESSOR}-linux/asc/impl/basic_api/
+          ${ASCEND_DIR}/${CMAKE_SYSTEM_PROCESSOR}-linux/asc/include/
+          ${ASCEND_DIR}/${CMAKE_SYSTEM_PROCESSOR}-linux/asc/include/basic_api/)
       target_link_libraries(
         ${opName}_${socVersion}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> tikicpulib::${socVersion}
                                                   gtest
@@ -520,7 +518,6 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
             gtest
             c_sec
             Eigen3::EigenCv
-            $<$<TARGET_EXISTS:opsbase>:opsbase>
             )
 
     ## add object: cv_op_kernel_ut_cases_obj
@@ -541,7 +538,6 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
             gtest
             c_sec
             Eigen3::EigenCv
-      $<$<TARGET_EXISTS:opsbase>:opsbase>
             )
   endfunction()
 endif()

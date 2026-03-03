@@ -24,6 +24,7 @@ using namespace std;
 
 extern "C" __global__ __aicore__ void upsample_bicubic2d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
+
 class upsample_bicubic2d_test : public testing::Test {
 protected:
     static void SetUpTestCase()
