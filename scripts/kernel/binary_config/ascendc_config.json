@@ -240,7 +240,7 @@
     {"name":"UpsampleNearestExact3d", "compute_units": ["ascend910_93", "ascend910b", "ascend310p", "kirinx90", "kirin9030"], "auto_sync" : true},
     {"name":"UpsampleNearest3dGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}, "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"UpsampleNearestExact3dGrad", "compute_units": ["ascend910_93", "ascend910b"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
-    {"name":"UpsampleBicubic2dAAGrad", "compute_units": ["ascend910_93", "ascend910b"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
+    {"name":"UpsampleBicubic2dAAGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"UpsampleNearest2dGrad", "compute_units": ["ascend910_93", "ascend910b"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"UpsampleNearestExact2dGrad", "compute_units": ["ascend910_93", "ascend910b"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"RmsNormGrad", "compute_units": ["ascend950", "ascend910_93", "ascend910b", "ascend910", "ascend310p"], "auto_sync" : false},

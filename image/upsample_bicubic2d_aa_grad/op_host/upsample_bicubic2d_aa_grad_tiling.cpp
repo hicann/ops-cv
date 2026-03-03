@@ -15,6 +15,7 @@
 #include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
+#include "op_host/tiling_util.h"
 #include "log/log.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "upsample_bicubic2d_aa_grad_tiling.h"
@@ -215,6 +216,11 @@ inline float UpsampleBicubic2dAAGradTiling::compute_scale_value (
 
 ge::graphStatus UpsampleBicubic2dAAGradTiling::RunBigKernelTiling()
 {
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(tilingContext);
+    if (regBase) {
+        OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleBicubic2dAAGradRegbase");
+        return Tiling4UpsampleBicubic2dAAGradRegbase(tilingContext);
+    }
     auto srcTensor = tilingContext->GetInputTensor(0);
     if (srcTensor == nullptr) {
         return ge::GRAPH_FAILED;

@@ -17,20 +17,23 @@
 
 namespace ops {
 
+static const std::vector<ge::DataType> xDtype = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
+static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
+
 class UpsampleBicubic2dAAGrad : public OpDef {
 public:
     explicit UpsampleBicubic2dAAGrad(const char *name) : OpDef(name)
     {
         this->Input("grad_output")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
         this->Output("grad_input")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
         this->Attr("output_size").AttrType(REQUIRED).ListInt();
         this->Attr("input_size").AttrType(REQUIRED).ListInt();
         this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
@@ -38,6 +41,22 @@ public:
         this->Attr("scales_w").AttrType(OPTIONAL).Float();
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+        OpAICoreConfig regbaseConfig;
+        regbaseConfig.Input("grad_output")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("grad_input")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "upsample_bicubic2d_aa_grad_apt");
+        this->AICore().AddConfig("ascend950", regbaseConfig);
     }
 };
 

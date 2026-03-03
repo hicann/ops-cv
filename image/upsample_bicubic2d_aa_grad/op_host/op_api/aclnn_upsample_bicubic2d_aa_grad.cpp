@@ -121,14 +121,6 @@ static bool CheckInputElement(
     outH = gradOutputShape.GetDim(DIM_TWO);
     outW = gradOutputShape.GetDim(DIM_THREE);
 
-    double realScalesH = ComputeBicubic2dAABackwardScales(inputH, outH, scalesH);
-    double realScalesW = ComputeBicubic2dAABackwardScales(inputW, outW, scalesW);
-    OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].",
-            realScalesH, realScalesW),
-        return false);
-
     OP_CHECK(outN > 0 && inputH > 0 && inputW > 0 && outC > 0 && outH > 0 && outW > 0,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
@@ -145,6 +137,13 @@ static bool CheckInputElement(
             op::ToString(out->GetStorageFormat()).GetString()),
         return false);
     if (!IsRegBase()) {
+        double realScalesH = ComputeBicubic2dAABackwardScales(inputH, outH, scalesH);
+        double realScalesW = ComputeBicubic2dAABackwardScales(inputW, outW, scalesW);
+        OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].",
+                realScalesH, realScalesW),
+            return false);
         OP_CHECK(outN <= INT32_MAX && outC <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "GradOutput sizes should not be greater than %d, bug got gradOutput(%ld, %ld, %ld, %ld)",
