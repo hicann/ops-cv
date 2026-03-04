@@ -457,6 +457,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/roi_pooling_grad_with_arg_max/README.md">roi_pooling_grad_with_arg_max</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>遍历每个ROI的池化结果，将feature map坐标上的反向梯度贡献累加，即完成整张图上的反向计算。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/stack_group_points/README.md">stack_group_points</a></td>
     <td>&check;</td>
     <td>&check;</td>
