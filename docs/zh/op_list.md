@@ -26,6 +26,16 @@
 <tbody>
   <tr>
     <td>image</td>
+    <td><a href="../../image/aipp/README.md">aipp</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>AIPP（Artificial Intelligence Pre-Processing）人工智能预处理，用于在AI Core上完成数据预处理，包括改变图像尺寸、色域转换（转换图像格式）、减均值/乘系数（改变图像像素），数据预处理之后再进行真正的模型推理。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/crop_and_resize/README.md">crop_and_resize</a></td>
     <td>&check;</td>
     <td>&check;</td>

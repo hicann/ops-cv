@@ -25,7 +25,7 @@
 #include "array_ops.h"
 #include "ge_ir_build.h"
 
-#include "../op_graph/aipp_proto.h"
+#include "../../op_graph/aipp_proto.h"
 
 #define FAILED -1
 #define SUCCESS 0
@@ -44,8 +44,9 @@ using std::vector;
     placeholder##inputIndex##_desc.SetFormat(FORMAT_NHWC);                                                       \
     placeholder##inputIndex##_desc.SetOriginFormat(FORMAT_NHWC);                                                 \
     Tensor tensor_placeholder##inputIndex;                                                                       \
-    ret = ReadBin(                                                                                               \
-        placeholder##inputIndex##_shape, tensor_placeholder##inputIndex, placeholder##inputIndex##_desc); \
+    ret = GenOnesData(                                                                                               \
+        placeholder##inputIndex##_shape, tensor_placeholder##inputIndex, placeholder##inputIndex##_desc, inputDtype, \
+        2);                                                                                                          \
     if (ret != SUCCESS) {                                                                                        \
         printf("%s - ERROR - [XIR]: Generate input data failed\n", GetTime().c_str());                           \
         return FAILED;                                                                                           \
@@ -64,6 +65,7 @@ using std::vector;
   do {                              \
     printf(message, ##__VA_ARGS__); \
   } while (0)
+
 
 string GetTime()
 {
@@ -108,35 +110,22 @@ uint32_t GetDataTypeSize(DataType dt)
     return dilation;
 }
 
-int32_t ReadBin(vector<int64_t> shapes, Tensor &input_tensor, TensorDesc &input_tensor_desc)
+int32_t GenOnesData(
+    vector<int64_t> shapes, Tensor& input_tensor, TensorDesc& input_tensor_desc, DataType data_type, int value)
 {
     input_tensor_desc.SetRealDimCnt(shapes.size());
     size_t size = 1;
     for (uint32_t i = 0; i < shapes.size(); i++) {
         size *= shapes[i];
     }
-    uint32_t byteSizeUint8 = 1;
-    uint32_t data_len = size * byteSizeUint8;
-    std::ifstream binFile("../image/aipp/examples/input_tensor.bin", std::ios::binary);
-    if (!binFile.is_open()) {
-        return FAILED;
+    uint32_t data_len = size * GetDataTypeSize(data_type);
+    int32_t* pData = new (std::nothrow) int32_t[data_len];
+    for (uint32_t i = 0; i < size; ++i) {
+        *(pData + i) = value;
     }
-    uint8_t* pData = new (std::nothrow) uint8_t[data_len];
-    if (pData == nullptr) {
-        binFile.close();
-        return FAILED;
-    }
-    binFile.read(reinterpret_cast<char*>(pData), data_len);
-    if (binFile.gcount() != data_len) {
-        delete[] pData;
-        binFile.close();
-        return FAILED;
-    }
-    binFile.close();
-    input_tensor = Tensor(input_tensor_desc, pData, data_len);
+    input_tensor = Tensor(input_tensor_desc, reinterpret_cast<uint8_t*>(pData), data_len);
     return SUCCESS;
 }
-
 
 int32_t WriteDataToFile(string bin_file, uint64_t data_size, uint8_t *inputData)
 {
