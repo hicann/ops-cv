@@ -256,6 +256,7 @@
     {"name":"RoiPoolingGradWithArgMax", "compute_units": ["ascend950"], "auto_sync": false, "impl_mode": "", "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"ResizeBilinearV2Grad", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : "" },
     {"name":"ResizeBilinearV2", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
+    {"name":"RoiPoolingWithArgmax", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"RotaryPositionEmbeddingGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : true},
     {"name":"EmbeddingDenseGrad", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"EmbeddingDenseGradV2", "compute_units": ["ascend910_93", "ascend910b", "ascend950" ], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}},
