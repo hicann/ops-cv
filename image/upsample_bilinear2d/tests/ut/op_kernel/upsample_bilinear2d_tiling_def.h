@@ -9,12 +9,12 @@
  */
 
 /*!
- * \file upsample_linear1d_tiling_def.h
+ * \file upsample_bilinear2d_aa_tiling_def.h
  * \brief
  */
 
-#ifndef UPSAMPLE_LINEAR1D_INPLACE_TILING_DEF_H
-#define UPSAMPLE_LINEAR1D_INPLACE_TILING_DEF_H
+#ifndef UPSAMPLE_BILINEAR2D_INPLACE_TILING_DEF_H
+#define UPSAMPLE_BILINEAR2D_INPLACE_TILING_DEF_H
 
 #include <cstdint>
 
@@ -24,15 +24,19 @@
 
 constexpr uint16_t MAX_TENSOR_CONT = 192;
 
-struct UpsampleLinear1dTilingData {
+struct UpsampleBilinear2dTilingData {
     bool align_corners;
     int64_t slide_size_w;
+    int64_t slide_size_h;
     int64_t dataType;
     float scale_w;
+    float scale_h;
 
     uint64_t intermediate_matrix_size;
     uint32_t radio_matrix_size_w;
+    uint32_t radio_matrix_size_h;
     uint32_t need_core_num_w;
+    uint32_t need_core_num_h;
 
     int64_t input_shapes[4] = {0, 0, 0, 0};
     int64_t output_shapes[4] = {0, 0, 0, 0};
@@ -44,24 +48,15 @@ struct UpsampleLinear1dTilingData {
     int64_t tailAvergingRowsW;
     int64_t remainderW;
 
-    uint64_t mPerTime;
-    uint64_t loopTimes;
-    uint64_t loopTail;
-    uint64_t inputUbSize;
-    uint64_t outputUbSize;
-    uint64_t matmulLoopTimes;
-    uint64_t matmulBlockTail;
-    uint64_t matmulBlockPerTime;
-
-    uint64_t loopTailTimes;
-    uint64_t loopTailTail;
-    uint64_t singleCoreK;
-    uint64_t remainderMatmulLoopTimes;
-    uint64_t remainderMatmulBlockTail;
-    uint64_t remainderLoopTailTimes;
-    uint64_t remainderLoopTailTail;
+    int64_t eachCoreSlideNumH;
+    int64_t tailStartSlideNumH;
+    int64_t slideNumH;
+    int64_t groupCoreNumH;
+    int64_t tailAvergingRowsH;
+    int64_t remainderH;
 
     TCubeTiling matmulTiling_w;
+    TCubeTiling matmulTiling_h;
 };
 
 #define COPY_ARR(arrA, arrB, count)        \
@@ -77,38 +72,34 @@ struct UpsampleLinear1dTilingData {
     CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer);
 
 #define GET_TILING_DATA(tilingData, tilingPointer)                                       \
-    UpsampleLinear1dTilingData tilingData;                                               \
-    INIT_TILING_DATA(UpsampleLinear1dTilingData, tilingDataPointer, tilingPointer);      \
+    UpsampleBilinear2dTilingData tilingData;                                               \
+    INIT_TILING_DATA(UpsampleBilinear2dTilingData, tilingDataPointer, tilingPointer);      \
     (tilingData).align_corners = tilingDataPointer->align_corners;                       \
     (tilingData).slide_size_w = tilingDataPointer->slide_size_w;                         \
+    (tilingData).slide_size_h = tilingDataPointer->slide_size_h;                         \
     (tilingData).dataType = tilingDataPointer->dataType;                                 \
     (tilingData).scale_w = tilingDataPointer->scale_w;                                   \
+    (tilingData).scale_h = tilingDataPointer->scale_h;                                   \
     (tilingData).intermediate_matrix_size = tilingDataPointer->intermediate_matrix_size; \
     (tilingData).radio_matrix_size_w = tilingDataPointer->radio_matrix_size_w;           \
+    (tilingData).radio_matrix_size_h = tilingDataPointer->radio_matrix_size_h;           \
     (tilingData).need_core_num_w = tilingDataPointer->need_core_num_w;                   \
+    (tilingData).need_core_num_h = tilingDataPointer->need_core_num_h;                   \
     (tilingData).eachCoreSlideNumW = tilingDataPointer->eachCoreSlideNumW;               \
     (tilingData).tailStartSlideNumW = tilingDataPointer->tailStartSlideNumW;             \
     (tilingData).slideNumW = tilingDataPointer->slideNumW;                               \
     (tilingData).groupCoreNumW = tilingDataPointer->groupCoreNumW;                       \
     (tilingData).tailAvergingRowsW = tilingDataPointer->tailAvergingRowsW;               \
     (tilingData).remainderW = tilingDataPointer->remainderW;                             \
+    (tilingData).eachCoreSlideNumH = tilingDataPointer->eachCoreSlideNumH;               \
+    (tilingData).tailStartSlideNumH = tilingDataPointer->tailStartSlideNumH;             \
+    (tilingData).slideNumH = tilingDataPointer->slideNumH;                               \
+    (tilingData).groupCoreNumH = tilingDataPointer->groupCoreNumH;                       \
+    (tilingData).tailAvergingRowsH = tilingDataPointer->tailAvergingRowsH;               \
+    (tilingData).remainderH = tilingDataPointer->remainderH;                             \
     (tilingData).matmulTiling_w = tilingDataPointer->matmulTiling_w;                     \
-    (tilingData).mPerTime = tilingDataPointer->mPerTime;                                 \
-    (tilingData).loopTimes = tilingDataPointer->loopTimes;                               \
-    (tilingData).loopTail = tilingDataPointer->loopTail;                                 \
-    (tilingData).inputUbSize = tilingDataPointer->inputUbSize;                           \
-    (tilingData).outputUbSize = tilingDataPointer->outputUbSize;                         \
-    (tilingData).matmulLoopTimes = tilingDataPointer->matmulLoopTimes;                         \
-    (tilingData).matmulBlockTail = tilingDataPointer->matmulBlockTail;                                 \
-    (tilingData).matmulBlockPerTime = tilingDataPointer->matmulBlockPerTime;                               \
-    (tilingData).loopTailTimes = tilingDataPointer->loopTailTimes;                                 \
-    (tilingData).loopTailTail = tilingDataPointer->loopTailTail;                               \
-    (tilingData).singleCoreK = tilingDataPointer->singleCoreK;                               \
-    (tilingData).remainderMatmulLoopTimes = tilingDataPointer->remainderMatmulLoopTimes;                               \
-    (tilingData).remainderMatmulBlockTail = tilingDataPointer->remainderMatmulBlockTail;                                 \
-    (tilingData).remainderLoopTailTimes = tilingDataPointer->remainderLoopTailTimes;                               \
-    (tilingData).remainderLoopTailTail = tilingDataPointer->remainderLoopTailTail;                               \
+    (tilingData).matmulTiling_h = tilingDataPointer->matmulTiling_h;                     \
     COPY_ARR((tilingData).input_shapes, tilingDataPointer->input_shapes, 4);             \
     COPY_ARR((tilingData).output_shapes, tilingDataPointer->output_shapes, 4);
 
-#endif  // UPSAMPLE_LINEAR1D_INPLACE_TILING_DEF_H
+#endif  // UPSAMPLE_BILINEAR2D_INPLACE_TILING_DEF_H

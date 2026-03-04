@@ -12,20 +12,16 @@
  * \file upsample_bilinear2d.cpp
  * \brief
  */
-#ifdef __CCE_KT_TEST__
-#include "../../upsample_linear1d/op_kernel/upsample_linear1d.h"
-#else
-#include "../upsample_linear1d/upsample_linear1d.h"
-#endif
+#include "upsample_bilinear2d.h"
 
-using namespace UpsampleLinear1d;
+using namespace UpsampleBilinear2d;
 
 extern "C" __global__ __aicore__ void upsample_bilinear2d(
     GM_ADDR input, GM_ADDR size, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
 {
     GET_TILING_DATA(tilingData, tiling);
 
-    const UpsampleLinear1dTilingData *__restrict tiling_data = &tilingData;
+    const UpsampleBilinear2dTilingData *__restrict tiling_data = &tilingData;
     const TCubeTiling *__restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
     const TCubeTiling *__restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
 
@@ -37,7 +33,7 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(
 
     if (TILING_KEY_IS(1)) {
         if (tiling_data->dataType == 1) {
-            UpsampleLinear1dND<half> op;
+            UpsampleBilinear2dND<half> op;
             REGIST_MATMUL_OBJ(
                 &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
             op.Init(input, output, userWS, &tilingData);
@@ -45,7 +41,7 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(
         }
         if (tiling_data->dataType == 2) {
 #if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
-            UpsampleLinear1dND<float> op;
+            UpsampleBilinear2dND<float> op;
             REGIST_MATMUL_OBJ(
                 &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
             op.Init(input, output, userWS, &tilingData);
@@ -54,7 +50,7 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(
         }
         if (tiling_data->dataType == 3) {
 #if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
-            UpsampleLinear1dND<bfloat16_t> op;
+            UpsampleBilinear2dND<bfloat16_t> op;
             REGIST_MATMUL_OBJ(
                 &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
             op.Init(input, output, userWS, &tilingData);

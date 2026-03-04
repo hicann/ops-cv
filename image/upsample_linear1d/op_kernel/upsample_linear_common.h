@@ -19,6 +19,10 @@
 using namespace AscendC;
 
 constexpr int64_t BLOCK_SIZE = 32;
+constexpr int32_t BUFFER_NUM = 1;
+constexpr uint32_t ADDR_ALIGN_SIZE = 128;
+constexpr uint8_t SYNC_MODE2 = 2;
+constexpr uint8_t VEC_FLAG_ID_0 = 0;
 
 __aicore__ inline int64_t ROUND_UP(const int64_t x, const int64_t block_number)
 {
@@ -26,25 +30,6 @@ __aicore__ inline int64_t ROUND_UP(const int64_t x, const int64_t block_number)
         return (x + block_number - 1) / block_number * block_number;
     }
     return 0;
-}
-
-template <typename T>
-__aicore__ inline void InitGmZero(
-    const GlobalTensor<T> &outGm, TBuf<TPosition::VECCALC> &TmpZeroTBuf, const int64_t zeroLen, const int64_t outOffset)
-{
-    int64_t alignLen_ = BLOCK_SIZE / sizeof(T);
-    LocalTensor<T> temp_zero_tensor = TmpZeroTBuf.Get<T>();
-
-    Duplicate(temp_zero_tensor, (T)0.0, zeroLen);
-    PipeBarrier<PIPE_ALL>();
-    SetFlag<HardEvent::V_MTE3>(EVENT_ID0);
-    WaitFlag<HardEvent::V_MTE3>(EVENT_ID0);
-
-    DataCopy(outGm[outOffset], temp_zero_tensor, ROUND_UP(zeroLen, alignLen_));
-    SetFlag<HardEvent::MTE3_S>(EVENT_ID0);
-    WaitFlag<HardEvent::MTE3_S>(EVENT_ID0);
-
-    PipeBarrier<PIPE_ALL>();
 }
 
 template <typename T1, typename T2>
@@ -105,4 +90,57 @@ __aicore__ inline bool FloatEqual(const float a, const float b)
         return b - a < closeTo0;
     }
 };
+
+__aicore__ inline void calculateRadioTensorW(
+    int64_t loopIndex, int64_t length, LocalTensor<float> radioTensor,
+    int64_t& xMin, int64_t& singleCoreK, float scale_w, bool align_corners, 
+    int64_t wIn, int64_t slide_size_w, TPipe pipe)
+{
+    singleCoreK = 0;
+    // 计算横向系数矩阵
+    Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
+    event_t eventIDVToS = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_S));
+    SetFlag<HardEvent::V_S>(eventIDVToS);
+    WaitFlag<HardEvent::V_S>(eventIDVToS);
+    xMin = getCenterValue(loopIndex, scale_w, align_corners);
+    int64_t xMax = getCenterValue(loopIndex + length - 1, scale_w, align_corners);
+    int64_t xMaxNext = Min(xMax + (int64_t)2, wIn);
+    int64_t xMaxSize = Min(Max(xMaxNext - xMax, static_cast<int64_t>(0)), static_cast<int64_t>(2));
+    singleCoreK = Max(xMax - xMin + xMaxSize, (int64_t)1);
+    if ((singleCoreK + xMin) > wIn) {
+        singleCoreK = wIn - xMin;
+    }
+    for (int64_t i = 0; i < length; i++) {
+        float i_rel_idx = getCenterValue(i + loopIndex, scale_w, align_corners);
+        int64_t i_min = Min(static_cast<int64_t>(i_rel_idx), wIn - 1);
+        int64_t i_max = Min(i_min + (int64_t)1, wIn - 1);
+        int64_t yIndexOffset = i_min - xMin;
+        int64_t indexMin = yIndexOffset * slide_size_w + i;
+        float i_lambda_1 = 0;
+        float i_lambda_0 = 0;
+        int64_t indexMax = 0;
+        if (i_min == i_max) {
+            radioTensor.SetValue(indexMin, 1);
+        } else {
+            i_lambda_1 = getLambda(i_rel_idx, i_min);
+            i_lambda_0 = 1 - i_lambda_1;
+            radioTensor.SetValue(indexMin, i_lambda_0);
+            indexMax = (1 + yIndexOffset) * slide_size_w + i;
+            radioTensor.SetValue(indexMax, i_lambda_1);
+        }
+    }
+}
+
+__aicore__ inline void getWorkSize(
+    int64_t& totalPerCore, int64_t& inputWorkStartOffset_0, int64_t& outputWorkStartOffset_0,
+    int64_t matmulBlockPerTime, int64_t singleCoreKTiling, int64_t slide_size_w, 
+    int64_t radio_matrix_size_w, int64_t blockIdx)
+{
+    int64_t inputSize = matmulBlockPerTime * singleCoreKTiling;
+    int64_t outputSize = matmulBlockPerTime * slide_size_w;
+    totalPerCore = radio_matrix_size_w + inputSize + outputSize;
+    inputWorkStartOffset_0 = totalPerCore * blockIdx + radio_matrix_size_w;
+    outputWorkStartOffset_0 = totalPerCore * blockIdx + radio_matrix_size_w + inputSize;
+}
+
 #endif  // UPSAMPLE_LINEAR_COMMON_H

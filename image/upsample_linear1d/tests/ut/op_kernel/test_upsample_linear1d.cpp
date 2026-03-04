@@ -64,30 +64,10 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
     UpsampleLinear1dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleLinear1dTilingData *>(tiling);
-    tilingDatafromBin->mode = 1;
     tilingDatafromBin->align_corners = false;
     tilingDatafromBin->slide_size_w = 128;
-    tilingDatafromBin->slide_size_h = 16;
-    tilingDatafromBin->dataType = 2;
     tilingDatafromBin->scale_w = 0.25;
-    tilingDatafromBin->scale_h = 1;
-    tilingDatafromBin->radio_matrix_size_w = 512;
-    tilingDatafromBin->radio_matrix_size_h = 0;
     tilingDatafromBin->need_core_num_w = 1;
-    tilingDatafromBin->need_core_num_h = 0;
-    tilingDatafromBin->intermediate_matrix_size = 128;
-    tilingDatafromBin->eachCoreSlideNumW = 0;
-    tilingDatafromBin->tailStartSlideNumW = 0;
-    tilingDatafromBin->slideNumW = 1;
-    tilingDatafromBin->groupCoreNumW = 1;
-    tilingDatafromBin->tailAvergingRowsW = 128;
-    tilingDatafromBin->remainderW = 1;
-    tilingDatafromBin->eachCoreSlideNumH = 0;
-    tilingDatafromBin->tailStartSlideNumH = 0;
-    tilingDatafromBin->slideNumH = 0;
-    tilingDatafromBin->groupCoreNumH = 0;
-    tilingDatafromBin->tailAvergingRowsH = 0;
-    tilingDatafromBin->remainderH = 0;
 
     tilingDatafromBin->input_shapes[0] = 1;
     tilingDatafromBin->input_shapes[1] = 1;
@@ -97,6 +77,34 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     tilingDatafromBin->output_shapes[1] = 1;
     tilingDatafromBin->output_shapes[2] = 1;
     tilingDatafromBin->output_shapes[3] = 16;
+
+    tilingDatafromBin->radio_matrix_size_w = 512;
+    tilingDatafromBin->eachCoreSlideNumW = 0;
+    tilingDatafromBin->tailStartSlideNumW = 0;
+    tilingDatafromBin->slideNumW = 1;
+    tilingDatafromBin->groupCoreNumW = 1;
+    tilingDatafromBin->tailAvergingRowsW = 128;
+    tilingDatafromBin->remainderW = 1;
+
+    tilingDatafromBin->mPerTime = 1;
+    tilingDatafromBin->loopTimes = 1;
+    tilingDatafromBin->loopTail = 0;
+    tilingDatafromBin->loopTailTimes = 1;
+    tilingDatafromBin->loopTailTail = 0;
+    
+    tilingDatafromBin->remainderLoopTailTimes = 1;
+    tilingDatafromBin->remainderLoopTailTimes = 0;
+
+    tilingDatafromBin->inputUbSize = 1024;
+    tilingDatafromBin->outputUbSize = 8192;
+    tilingDatafromBin->matmulLoopTimes = 1;
+    tilingDatafromBin->matmulBlockTail = 0;
+    
+    tilingDatafromBin->remainderMatmulLoopTimes = 128;
+    tilingDatafromBin->remainderMatmulBlockTail = 0;
+    tilingDatafromBin->matmulBlockPerTime = 1;
+    tilingDatafromBin->singleCoreK = 16;
+    
 
     tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
     tilingDatafromBin->matmulTiling_w.M = 1;
@@ -126,35 +134,6 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_w.batchN = 1;
     tilingDatafromBin->matmulTiling_w.singleBatchM = 1;
     tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
-
-    tilingDatafromBin->matmulTiling_h.usedCoreNum = 0;
-    tilingDatafromBin->matmulTiling_h.M = 1;
-    tilingDatafromBin->matmulTiling_h.N = 16;
-    tilingDatafromBin->matmulTiling_h.Ka = 4;
-    tilingDatafromBin->matmulTiling_h.Kb = 4;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 1;
-    tilingDatafromBin->matmulTiling_h.singleCoreN = 128;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 4;
-    tilingDatafromBin->matmulTiling_h.baseM = 16;
-    tilingDatafromBin->matmulTiling_h.baseN = 128;
-    tilingDatafromBin->matmulTiling_h.baseK = 8;
-    tilingDatafromBin->matmulTiling_h.depthA1 = 1;
-    tilingDatafromBin->matmulTiling_h.depthB1 = 1;
-    tilingDatafromBin->matmulTiling_h.stepM = 1;
-    tilingDatafromBin->matmulTiling_h.stepN = 1;
-    tilingDatafromBin->matmulTiling_h.stepKa = 1;
-    tilingDatafromBin->matmulTiling_h.stepKb = 1;
-    tilingDatafromBin->matmulTiling_h.isBias = 0;
-    tilingDatafromBin->matmulTiling_h.transLength = 0;
-    tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
-    tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 4608;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 8192;
-    tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
-    tilingDatafromBin->matmulTiling_h.batchM = 1;
-    tilingDatafromBin->matmulTiling_h.batchN = 1;
-    tilingDatafromBin->matmulTiling_h.singleBatchM = 1;
-    tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
 

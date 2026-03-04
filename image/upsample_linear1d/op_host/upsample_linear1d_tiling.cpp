@@ -22,7 +22,6 @@
 namespace optiling {
 constexpr uint32_t BEST_PERFORMANCE_SIZE_16 = 16;
 constexpr uint32_t BEST_PERFORMANCE_SIZE_32 = 32;
-constexpr uint32_t BEST_PERFORMANCE_SIZE_48 = 48;
 constexpr uint32_t BEST_PERFORMANCE_SIZE_64 = 64;
 constexpr uint32_t BEST_PERFORMANCE_SIZE_128 = 128;
 
@@ -48,17 +47,14 @@ constexpr int8_t DIM_ONE = 1;
 constexpr int8_t DIM_TWO = 2;
 constexpr int8_t DIM_THREE = 3;
 
-constexpr int8_t MODE_LINEAR = 1;
-constexpr int8_t MODE_BILINEAR = 2;
-
 constexpr uint32_t ALIGN_CORNERS_ATTR = 0;
 constexpr uint32_t SCALES_ATTR = 1;
 
-constexpr uint64_t DATE_TYPE_FLOAT16 = 1;
-constexpr uint64_t DATE_TYPE_FLOAT = 2;
-constexpr uint64_t DATE_TYPE_HALF = 3;
+constexpr uint64_t DATA_TYPE_FLOAT16 = 1;
+constexpr uint64_t DATA_TYPE_FLOAT = 2;
+constexpr uint64_t DATA_TYPE_HALF = 3;
 
-constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
+constexpr uint64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint32_t BYTE_LEN_4 = 4;
 constexpr uint32_t BYTE_LEN_2 = 2;
 
@@ -67,7 +63,7 @@ constexpr uint32_t ADDR_ALIGN_SIZE = 512;
 
 constexpr int8_t NUM_ONE = 1;
 constexpr int8_t NUM_TWO = 2;
-constexpr int8_t NUM_FIVE = 5;
+constexpr int8_t NUM_FIVE = 4;
 constexpr int64_t NUM_1024 = 1024;
 
 constexpr float MAX_SUPPORT_SHRINK_SCALE = 50.0f;
@@ -78,32 +74,33 @@ constexpr float support = 1.0;
 constexpr int64_t max_interp_size = 2;
 constexpr int64_t max_interp_size_10 = 10;
 constexpr uint8_t SCHEDULE_MODE = 1;
+constexpr int64_t UB_FREE = 1024;
 
 class UpsampleLinear1dTiling {
 public:
     explicit UpsampleLinear1dTiling(gert::TilingContext *context) : tilingContext(context){};
-    ge::graphStatus RunBigKernelTiling(const uint8_t modeNum);
+    ge::graphStatus RunBigKernelTiling();
 
 private:
-    void setScale(const uint8_t mode);
-    void get_scale_from_out(const uint8_t mode);
+    void setScale();
+    void get_scale_from_out();
     inline float compute_scale_value(
         const int64_t input_size, const int64_t output_size, const bool align_corner, const float scale) const;
-    bool getWorkSpace(const uint32_t needCoreNum);
-    void getShapes(const uint8_t mode);
-    void setSlideSize(const uint32_t coreNumPlatFormInfo, const uint8_t mode);
-    inline int64_t calculateSlideSize(const uint32_t coreNumPlatFormInfo, uint8_t direction);
-    inline int64_t getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, uint8_t direction, float real_scale);
+    bool getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize);
+    void getWorkspaceBlock(const uint64_t input_h, const uint64_t mPerTime, const uint64_t slide_size, uint64_t& matmulBlockPerTime);
+    bool getWorkLoopInfo(const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, const uint64_t slide_size, const uint32_t needCoreNum);
+    void getShapes();
+    void setSlideSize(const uint32_t coreNumPlatFormInfo);
+    inline int64_t calculateSlideSize(const uint32_t coreNumPlatFormInfo);
+    inline int64_t getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, float real_scale);
     uint8_t GetDataTypeSize() const;
     uint64_t GetDataTypeVal() const;
-    uint32_t GetNeedCoreNum(const uint32_t coreNumPlatFormInfo, const uint8_t mode);
+    uint32_t GetNeedCoreNum(const uint32_t coreNumPlatFormInfo);
     uint32_t GetNeedCoreNumW(const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size);
-    uint32_t GetNeedCoreNumH(const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size);
     void FillTilingData();
     void getTCubeTiling_w();
-    void getTCubeTiling_h();
     inline bool CheckScales(
-        const gert::TilingContext *context, const float scales_w, const float scales_h, const uint8_t mode) const;
+        const gert::TilingContext *context, const float scales_w) const;
     inline int64_t getSingleCoreK(const int64_t slideSize, const float scale, const bool alignCorners) const;
     template <typename T1, typename T2>
     inline T1 CeilA2B(T1 a, T2 b) const;
@@ -113,7 +110,6 @@ private:
 
 private:
     int64_t slide_size_w{16};
-    int64_t slide_size_h{16};
     UpsampleLinear1dTilingData tilingData;
     gert::TilingContext *tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
@@ -121,55 +117,34 @@ private:
     gert::Shape input_shape;
     gert::Shape output_shape;
     const bool *align_corners{nullptr};
-    float scale_h = 0.0f;
     float scale_w = 0.0f;
-    float realScale_h{0.0f};
     float realScale_w{0.0f};
 
     int64_t output_shapes[4] = {0};
     int64_t input_shapes[4] = {0};
 
-    int64_t slide_size_list[5] = {BEST_PERFORMANCE_SIZE_16,
+    int64_t slide_size_list[4] = {BEST_PERFORMANCE_SIZE_16,
         BEST_PERFORMANCE_SIZE_32,
-        BEST_PERFORMANCE_SIZE_48,
         BEST_PERFORMANCE_SIZE_64,
         BEST_PERFORMANCE_SIZE_128};
 
     TCubeTiling matmulTiling_w;
-    TCubeTiling matmulTiling_h;
     int64_t singleCoreK_w = 0;
-    int64_t singleCoreK_h = 0;
     uint32_t coreNumPlatForm = 20;
 };
 
-void UpsampleLinear1dTiling::setScale(const uint8_t mode)
+void UpsampleLinear1dTiling::setScale()
 {
-    if (mode == MODE_BILINEAR) {
-        realScale_h = compute_scale_value(input_shapes[H_INDEX], output_shapes[H_INDEX], *align_corners, scale_h);
-        realScale_w = compute_scale_value(input_shapes[W_INDEX], output_shapes[W_INDEX], *align_corners, scale_w);
-    } else {
-        realScale_h = 1.0;
-        realScale_w = compute_scale_value(input_shapes[W_INDEX], output_shapes[W_INDEX], *align_corners, scale_w);
-    }
-
-    tilingData.set_scale_h(realScale_h);
+    realScale_w = compute_scale_value(input_shapes[W_INDEX], output_shapes[W_INDEX], *align_corners, scale_w);
     tilingData.set_scale_w(realScale_w);
 }
 
-void UpsampleLinear1dTiling::get_scale_from_out(const uint8_t mode)
+void UpsampleLinear1dTiling::get_scale_from_out()
 {
     const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
-    if (mode == MODE_LINEAR) {
-        const float *scales = attrs->GetAttrPointer<float>(SCALES_ATTR);
-        scale_h = 1.0f;
-        scale_w = *scales;
-    } else {
-        const gert::ContinuousVector *scalesAttr = attrs->GetAttrPointer<gert::ContinuousVector>(SCALES_ATTR);
-        const float *scalesArray = reinterpret_cast<const float *>(scalesAttr->GetData());
-        scale_h = scalesArray[DIM_ZERO];
-        scale_w = scalesArray[DIM_ONE];
-    }
+    const float *scales = attrs->GetAttrPointer<float>(SCALES_ATTR);
+    scale_w = *scales;
 }
 
 inline float UpsampleLinear1dTiling::compute_scale_value(
@@ -190,26 +165,17 @@ inline float UpsampleLinear1dTiling::compute_scale_value(
 }
 
 inline bool UpsampleLinear1dTiling::CheckScales(
-    const gert::TilingContext *context, const float scales_w, const float scales_h, const uint8_t mode) const
+    const gert::TilingContext *context, const float scales_w) const
 {
-    if (mode == MODE_LINEAR) {
-        // 1D的放大支持800倍，缩小支持50倍
-        float maxSupport = scales_w < 1 ? MAX_SUPPORT_ZOOM_SCALE : MAX_SUPPORT_SHRINK_SCALE;
-        OP_CHECK_IF(((scales_w < 1 && scales_w < MAX_SUPPORT_ZOOM_SCALE_REV) || (scales_w > MAX_SUPPORT_SHRINK_SCALE)),
-            OP_LOGE(context->GetNodeName(),
-                "Scales should not exceed %f, but got scale (scales: %f) ",
-                maxSupport,
-                scales_w),
-            return false);
-    } else {
-        // 2D都限制50倍
-        OP_CHECK_IF((scales_h > MAX_SUPPORT_SHRINK_SCALE || scales_w > MAX_SUPPORT_SHRINK_SCALE),
-            OP_LOGE(context->GetNodeName(),
-                "Scales should not exceed 50, but got scale (scales_w: %f, scales_h: %f) ",
-                scales_w,
-                scales_h),
-            return false);
-    }
+    // 1D的放大支持800倍，缩小支持50倍
+    float maxSupport = scales_w < 1 ? MAX_SUPPORT_ZOOM_SCALE : MAX_SUPPORT_SHRINK_SCALE;
+    OP_CHECK_IF(((scales_w < 1 && scales_w < MAX_SUPPORT_ZOOM_SCALE_REV) || (scales_w > MAX_SUPPORT_SHRINK_SCALE)),
+        OP_LOGE(context->GetNodeName(),
+            "Scales should not exceed %f, but got scale (scales: %f) ",
+            maxSupport,
+            scales_w),
+        return false);
+    
     return true;
 }
 
@@ -223,18 +189,14 @@ inline bool FloatEqual(const float a, const float b)
     }
 };
 
-ge::graphStatus UpsampleLinear1dTiling::RunBigKernelTiling(const uint8_t modeNum)
+ge::graphStatus UpsampleLinear1dTiling::RunBigKernelTiling()
 {
     auto srcTensor = tilingContext->GetInputTensor(0);
-    if (srcTensor == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
-    get_scale_from_out(modeNum);
-
     auto temp = tilingContext->GetInputDesc(0);
-    if (temp == nullptr) {
+    if (srcTensor == nullptr || temp == nullptr) {
         return ge::GRAPH_FAILED;
     }
+    get_scale_from_out();
 
     ge::DataType srcDtype = ge::DT_UNDEFINED;
     srcDtype = temp->GetDataType();
@@ -260,31 +222,34 @@ ge::graphStatus UpsampleLinear1dTiling::RunBigKernelTiling(const uint8_t modeNum
     if (coreNumPlatFormInfo < 1) {
         return ge::GRAPH_FAILED;
     }
+    uint64_t ubSize = compileInfo->totalUbSize;
     tilingContext->SetTilingKey(1);
-    tilingData.set_mode(modeNum);
     tilingData.set_align_corners(*align_corners);
-    getShapes(modeNum);
-    setScale(modeNum);
-    if (!CheckScales(tilingContext, realScale_w, realScale_h, modeNum)) {
+    getShapes();
+    setScale();
+    if (!CheckScales(tilingContext, realScale_w)) {
         return ge::GRAPH_FAILED;
     }
 
-    setSlideSize(coreNumPlatFormInfo, modeNum);
-    uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatFormInfo, modeNum);
+    setSlideSize(coreNumPlatFormInfo);
+    uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatFormInfo);
     // 计算workspace，每个核的系数矩阵（是否要乘2，避免doubelBuffer矩阵相互影响？），中间矩阵大小
-    if (!getWorkSpace(needCoreNum)) {
+    if (!getWorkSpace(needCoreNum, ubSize)) {
         return ge::GRAPH_FAILED;
+    }
+
+    if (!FloatEqual(realScale_w, 1.0)) {
+        getTCubeTiling_w();
     }
     tilingContext->SetBlockDim(needCoreNum);
     FillTilingData();
     return ge::GRAPH_SUCCESS;
 }
 
-uint32_t UpsampleLinear1dTiling::GetNeedCoreNum(const uint32_t coreNumPlatFormInfo, const uint8_t mode)
+uint32_t UpsampleLinear1dTiling::GetNeedCoreNum(const uint32_t coreNumPlatFormInfo)
 {
     uint32_t needCoreNumW = 0;
-    uint32_t needCoreNumH = 0;
-    if (!FloatEqual(realScale_w, 1.0) || mode == MODE_LINEAR) {
+    if (!FloatEqual(realScale_w, 1.0)) {
         int64_t kMinValue = getSingleCoreK(0, realScale_w, *align_corners);
         int64_t kMaxValue = getSingleCoreK(slide_size_w, realScale_w, *align_corners);
         singleCoreK_w = kMaxValue - kMinValue + Ceil(max_interp_size_10);
@@ -292,19 +257,9 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNum(const uint32_t coreNumPlatFormIn
             singleCoreK_w = input_shapes[W_INDEX];
         }
         needCoreNumW = GetNeedCoreNumW(coreNumPlatFormInfo, NUM_TWO, slide_size_w);
-        getTCubeTiling_w();
     }
 
-    if (mode == MODE_BILINEAR && (!FloatEqual(realScale_h, 1.0) || FloatEqual(realScale_w, 1.0))) {
-        singleCoreK_h = Ceil(slide_size_h * realScale_h) + Ceil(max_interp_size);
-        if (singleCoreK_h > input_shapes[H_INDEX]) {
-            singleCoreK_h = input_shapes[H_INDEX];
-        }
-        needCoreNumH = GetNeedCoreNumH(coreNumPlatFormInfo, NUM_TWO, slide_size_h);
-        getTCubeTiling_h();
-    }
-
-    uint32_t needCoreNum = std::max(needCoreNumW, needCoreNumH);
+    uint32_t needCoreNum = needCoreNumW;
     needCoreNum = needCoreNum < 1 ? 1 : needCoreNum;
     return needCoreNum;
 }
@@ -313,89 +268,168 @@ void UpsampleLinear1dTiling::getTCubeTiling_w()
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_w;
-    mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
+    mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT, false);
+    mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT, false);
+    mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT);
     mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX],
         output_shapes[W_INDEX],
         input_shapes[W_INDEX]);
-    mmTiling_w.SetShape(
-        input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX], slide_size_w, singleCoreK_w);
+    if(dataTypeSize == 4) {
+        mmTiling_w.SetShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX], slide_size_w, singleCoreK_w);
+    } else {
+        uint64_t matmulBlockPerTime = tilingData.get_matmulBlockPerTime();
+        mmTiling_w.SetShape(matmulBlockPerTime, slide_size_w, singleCoreK_w);
+    }
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
         return;
     }
 }
 
-void UpsampleLinear1dTiling::getTCubeTiling_h()
+// 先只算w方向
+bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize)
 {
-    auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
-    matmul_tiling::MatmulApiTiling mmTiling_h;
-    mmTiling_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTiling_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTiling_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_h.SetOrgShape(output_shapes[H_INDEX], output_shapes[W_INDEX], input_shapes[W_INDEX]);
-    mmTiling_h.SetShape(slide_size_h, output_shapes[W_INDEX], singleCoreK_h);
-
-    if (mmTiling_h.GetTiling(tilingData.matmulTiling_h) == -1) {
-        return;
-    }
+    // 中间tensor
+    uint64_t intermediate_matrix_size = 0;
+    // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
+    uint64_t blockSizeNum = (32 / dataTypeSize);
+    uint64_t singleCoreK = singleCoreK_w;
+    uint64_t slide_size = slide_size_w;
+    uint64_t radioMatrixWorkspaceSize = slide_size * singleCoreK * 4;
+    uint64_t singleCoreKAlign = (singleCoreK + blockSizeNum - 1) / blockSizeNum * blockSizeNum;
+    tilingData.set_radio_matrix_size_w(slide_size_w * singleCoreK_w);
+    tilingData.set_intermediate_matrix_size(intermediate_matrix_size);
+    tilingData.set_singleCoreK(singleCoreKAlign);
+    bool res = getWorkLoopInfo(ubSize, radioMatrixWorkspaceSize, singleCoreKAlign, slide_size, needCoreNum);
+    return res;
 }
 
-// 先只算w方向
-bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum)
+void UpsampleLinear1dTiling::getWorkspaceBlock(
+    const uint64_t input_h, const uint64_t mPerTime, const uint64_t slide_size, uint64_t& matmulBlockPerTime) {
+    // 搬入搬出循环次数
+    uint64_t loopTimes = 1;
+    // 搬入搬出尾块大小
+    uint64_t loopTail = 0;
+    // matmul循环次数
+    uint64_t matmulLoopTimes = 1;
+    uint64_t matmulBlockTail = 0;
+    // 一次可以算完
+    if (matmulBlockPerTime > input_h) {
+        matmulLoopTimes = 1;
+        matmulBlockPerTime = input_h;
+        matmulBlockTail = 0;
+    } else {
+        matmulLoopTimes = matmulBlockPerTime == 0 ? 0 : input_h / matmulBlockPerTime;
+        matmulBlockTail = input_h - matmulLoopTimes * matmulBlockPerTime;
+    }
+    if (matmulBlockPerTime >= mPerTime) {
+        loopTimes = mPerTime == 0 ? 0 : matmulBlockPerTime / mPerTime;
+        loopTail = matmulBlockPerTime - loopTimes * mPerTime;
+    } else {
+        matmulBlockPerTime = mPerTime;
+        loopTimes = 1;
+        loopTail = 0;
+    }
+    
+    // 尾块搬入搬出循环次数
+    uint64_t loopTailTimes = 1;
+    // 搬入搬出尾块大小
+    uint64_t loopTailTail = 0;
+    if (matmulBlockTail > mPerTime) {
+        loopTailTimes = mPerTime == 0 ? 0 : matmulBlockTail / mPerTime;
+        loopTailTail = matmulBlockTail - loopTailTimes * mPerTime;
+    } else if (matmulBlockTail > 0) {
+        loopTailTimes = 0;
+        loopTailTail = matmulBlockTail;
+    }
+
+    tilingData.set_loopTimes(loopTimes);
+    tilingData.set_loopTail(loopTail);
+    tilingData.set_loopTailTimes(loopTailTimes);
+    tilingData.set_loopTailTail(loopTailTail);
+    tilingData.set_matmulLoopTimes(matmulLoopTimes);
+    tilingData.set_matmulBlockTail(matmulBlockTail);
+    tilingData.set_matmulBlockPerTime(matmulBlockPerTime);
+}
+
+bool UpsampleLinear1dTiling::getWorkLoopInfo(
+    const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, const uint64_t slide_size, const uint32_t needCoreNum) 
 {
     size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces == nullptr) {
         return false;
     }
-    // 中间tensor
-    uint64_t intermediate_matrix_size =
-        output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] * dataTypeSize;
-    intermediate_matrix_size = (intermediate_matrix_size + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
-    // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
-    int64_t singleCoreK = singleCoreK_w > singleCoreK_h ? singleCoreK_w : singleCoreK_h;
-    int64_t slide_size = std::max(slide_size_w, slide_size_h);
-    uint32_t radioMatrixWorkspaceSize = slide_size * singleCoreK * dataTypeSize;
-    workspaces[0] = intermediate_matrix_size + radioMatrixWorkspaceSize * needCoreNum + WORK_SPACE_SIZE;
-    tilingData.set_radio_matrix_size_w(slide_size_w * singleCoreK_w);
-    tilingData.set_radio_matrix_size_h(slide_size_h * singleCoreK_h);
-    tilingData.set_intermediate_matrix_size(intermediate_matrix_size);
-    return true;
-}
-
-void UpsampleLinear1dTiling::getShapes(const uint8_t mode)
-{
-    for (int8_t i = 0; i < SHAPE_SIZE; i++) {
-        input_shapes[i] = input_shape.GetDim(i);
-        output_shapes[i] = input_shape.GetDim(i);
-        if (i > C_INDEX && mode == MODE_BILINEAR) {
-            output_shapes[i] = output_shape.GetDim(i);
-        } else {
-            output_shapes[DIM_TWO] = 1;
-            output_shapes[DIM_THREE] = output_shape.GetDim(DIM_TWO);
-        }
+    uint64_t blockSizeNum = (32 / dataTypeSize);
+    int64_t input_h = input_shapes[0] * input_shapes[1] * input_shapes[2];
+    uint64_t ubEnable = static_cast<uint64_t>(ubSize) - UB_FREE - radioMatrixWorkspaceSize;
+    uint64_t workspaceEnablePerCore = (1024 * 1024 * 16) / 20;
+    uint64_t mPerTime = ubEnable / (4 * singleCoreKAlign + 4 * slide_size);
+    mPerTime = mPerTime / blockSizeNum * blockSizeNum;
+    uint64_t tailAvergingRowsW = tilingData.get_tailAvergingRowsW();
+    mPerTime = mPerTime >= input_h ? input_h : mPerTime;
+    uint64_t matmulBlockPerTime = (workspaceEnablePerCore - radioMatrixWorkspaceSize) / (4 * (singleCoreKAlign + slide_size));
+    matmulBlockPerTime = matmulBlockPerTime / blockSizeNum * blockSizeNum;
+    getWorkspaceBlock(input_h, mPerTime, slide_size, matmulBlockPerTime);
+    uint64_t remainderMatmulLoopTimes = 1;
+    uint64_t remainderMatmulBlockTail = 0;
+    if (matmulBlockPerTime > tailAvergingRowsW) {
+        remainderMatmulLoopTimes = 0;
+        remainderMatmulBlockTail = tailAvergingRowsW;
+    } else {
+        remainderMatmulLoopTimes = tailAvergingRowsW / matmulBlockPerTime;
+        remainderMatmulBlockTail = tailAvergingRowsW - remainderMatmulLoopTimes * matmulBlockPerTime;
     }
+    uint64_t remainderLoopTailTimes = 1;
+    uint64_t remainderLoopTailTail = 0;
+    if (remainderMatmulBlockTail > mPerTime) {
+        remainderLoopTailTimes = remainderMatmulBlockTail / mPerTime;
+        remainderLoopTailTail = remainderMatmulBlockTail - remainderLoopTailTimes * mPerTime;
+    } else if (remainderMatmulBlockTail > 0) {
+        remainderLoopTailTimes = 0;
+        remainderLoopTailTail = remainderMatmulBlockTail;
+    }
+    uint64_t mPerTimeUpAlign = (mPerTime + blockSizeNum - 1) / blockSizeNum * blockSizeNum;
+    uint64_t inputUbSize = mPerTimeUpAlign * singleCoreKAlign * 4;
+    uint64_t outputUbSize = mPerTimeUpAlign * slide_size * 4;
+    tilingData.set_inputUbSize(inputUbSize);
+    tilingData.set_outputUbSize(outputUbSize);
+    tilingData.set_mPerTime(mPerTime);
+    tilingData.set_remainderMatmulLoopTimes(remainderMatmulLoopTimes);
+    tilingData.set_remainderMatmulBlockTail(remainderMatmulBlockTail);
+    tilingData.set_remainderLoopTailTimes(remainderLoopTailTimes);
+    tilingData.set_remainderLoopTailTail(remainderLoopTailTail);
+    uint64_t inputWorkSpaceSize = matmulBlockPerTime * singleCoreKAlign * 4 * needCoreNum;
+    uint64_t outputWorkSpaceSize = matmulBlockPerTime * slide_size * 4 * needCoreNum;
+    uint64_t middleRatioSize = radioMatrixWorkspaceSize * needCoreNum;
+    workspaces[0] = middleRatioSize + inputWorkSpaceSize + outputWorkSpaceSize + WORK_SPACE_SIZE;
+    return true;
+};
 
+void UpsampleLinear1dTiling::getShapes()
+{
+    for (int8_t i = 0; i < 2; i++) {
+        input_shapes[i] = input_shape.GetDim(i);
+        output_shapes[i] = output_shape.GetDim(i);
+    }
+    output_shapes[DIM_TWO] = 1;
+    output_shapes[DIM_THREE] = output_shape.GetDim(DIM_TWO);
+    input_shapes[DIM_TWO] = 1;
+    input_shapes[DIM_THREE] = input_shape.GetDim(DIM_THREE);
     tilingData.set_input_shapes(input_shapes);
     tilingData.set_output_shapes(output_shapes);
 }
 
-void UpsampleLinear1dTiling::setSlideSize(const uint32_t coreNumPlatFormInfo, const uint8_t mode)
+void UpsampleLinear1dTiling::setSlideSize(const uint32_t coreNumPlatFormInfo)
 {
-    slide_size_w = getSlideSizeByScale(coreNumPlatFormInfo, NUM_ONE, realScale_w);
-    if (mode == MODE_BILINEAR) {
-        slide_size_h = getSlideSizeByScale(coreNumPlatFormInfo, NUM_TWO, realScale_h);
-    }
+    slide_size_w = getSlideSizeByScale(coreNumPlatFormInfo, realScale_w);
     tilingData.set_slide_size_w(slide_size_w);
-    tilingData.set_slide_size_h(slide_size_h);
 }
 
 inline int64_t UpsampleLinear1dTiling::getSlideSizeByScale(
-    const uint32_t coreNumPlatFormInfo, uint8_t direction, float real_scale)
+    const uint32_t coreNumPlatFormInfo, float real_scale)
 {
     int64_t slide_size = 16;
 
-    int64_t slideSizeBysize = calculateSlideSize(coreNumPlatFormInfo, direction);
+    int64_t slideSizeBysize = calculateSlideSize(coreNumPlatFormInfo);
     if (input_shapes[DIM_TWO] == NUM_ONE && input_shapes[DIM_THREE] == NUM_ONE) {
         slideSizeBysize = NUM_1024;
     }
@@ -403,8 +437,6 @@ inline int64_t UpsampleLinear1dTiling::getSlideSizeByScale(
         slide_size = std::min(static_cast<int64_t>(BEST_PERFORMANCE_SIZE_128), slideSizeBysize);
     } else if (real_scale <= BEST_PERFORMANCE_SCALE_BELOW_5) {
         slide_size = std::min(static_cast<int64_t>(BEST_PERFORMANCE_SIZE_64), slideSizeBysize);
-    } else if (real_scale <= BEST_PERFORMANCE_SCALE_BELOW_8) {
-        slide_size = std::min(static_cast<int64_t>(BEST_PERFORMANCE_SIZE_48), slideSizeBysize);
     } else if (real_scale <= BEST_PERFORMANCE_SCALE_BELOW_20) {
         slide_size = std::min(static_cast<int64_t>(BEST_PERFORMANCE_SIZE_32), slideSizeBysize);
     } else {
@@ -413,18 +445,14 @@ inline int64_t UpsampleLinear1dTiling::getSlideSizeByScale(
     return slide_size;
 }
 
-inline int64_t UpsampleLinear1dTiling::calculateSlideSize(const uint32_t coreNumPlatFormInfo, uint8_t direction)
+inline int64_t UpsampleLinear1dTiling::calculateSlideSize(const uint32_t coreNumPlatFormInfo)
 {
     int64_t slide_size = BEST_PERFORMANCE_SIZE_16;
     uint32_t neeCoreNumMax = 0;
 
     for (uint32_t coreIndex = 0; coreIndex < NUM_FIVE; coreIndex++) {
         uint32_t res = 0;
-        if (direction == NUM_ONE) {
-            res = GetNeedCoreNumW(coreNumPlatFormInfo, NUM_ONE, slide_size_list[coreIndex]);
-        } else {
-            res = GetNeedCoreNumH(coreNumPlatFormInfo, NUM_ONE, slide_size_list[coreIndex]);
-        }
+        res = GetNeedCoreNumW(coreNumPlatFormInfo, NUM_ONE, slide_size_list[coreIndex]);
         slide_size = res >= neeCoreNumMax ? slide_size_list[coreIndex] : slide_size;
         neeCoreNumMax = std::max(res, neeCoreNumMax);
     }
@@ -483,11 +511,11 @@ uint64_t UpsampleLinear1dTiling::GetDataTypeVal() const
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return DATE_TYPE_FLOAT;
+            return DATA_TYPE_FLOAT;
         case ge::DT_FLOAT16:
-            return DATE_TYPE_FLOAT16;
+            return DATA_TYPE_FLOAT16;
         case ge::DT_BF16:
-            return DATE_TYPE_HALF;
+            return DATA_TYPE_HALF;
         default:
             return 0;
     }
@@ -543,52 +571,6 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
     return needCoreNum;
 }
 
-uint32_t UpsampleLinear1dTiling::GetNeedCoreNumH(
-    const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size)
-{
-    int64_t outputSize = output_shapes[2];
-    int64_t slideNum = CeilA2B(outputSize, slide_size);
-    int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
-    int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
-
-    // Batch和W维度总数
-    int64_t batch = input_shapes[0] * input_shapes[1];
-    int64_t groupCoreNum = coreNumPlatform;
-    int64_t tailAvergingBatch = slide_size;
-    if (remainder != 0) {
-        // 按照剩余尾块数给核分组，然后每组核再均分行数
-        groupCoreNum = coreNumPlatform / remainder;
-        tailAvergingBatch = CeilA2B(batch, groupCoreNum);
-        groupCoreNum = std::min(groupCoreNum, CeilA2B(batch, tailAvergingBatch));
-    }
-
-    int64_t needCoreNum = 0;
-    int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
-
-    if (eachCoreSlideNum > 0) {
-        needCoreNum = coreNumPlatform;
-    } else if (remainder != 0) {
-        for (uint32_t coreIndexH = 0; coreIndexH < coreNumPlatform; coreIndexH++) {
-            groupCoreNum = groupCoreNum == 0 ? 1 : groupCoreNum;
-            // 尾块处理, 核数不全都一样
-            int64_t groupIndex = coreIndexH / groupCoreNum;
-            if (groupIndex < remainder) {
-                needCoreNum++;
-            }
-        }
-    }
-    if (isCalculate == NUM_TWO) {
-        tilingData.set_eachCoreSlideNumH(eachCoreSlideNum);
-        tilingData.set_tailStartSlideNumH(tailStartSlideNum);
-        tilingData.set_slideNumH(slideNum);
-        tilingData.set_groupCoreNumH(groupCoreNum);
-        tilingData.set_tailAvergingRowsH(tailAvergingBatch);
-        tilingData.set_remainderH(remainder);
-        tilingData.set_need_core_num_h(needCoreNum);
-    }
-    return needCoreNum;
-}
-
 void UpsampleLinear1dTiling::FillTilingData()
 {
     tilingData.set_dataType(GetDataTypeVal());
@@ -600,14 +582,7 @@ void UpsampleLinear1dTiling::FillTilingData()
 static ge::graphStatus tiling4UpsampleLinear1dTiling(gert::TilingContext *context)
 {
     UpsampleLinear1dTiling tilingObject(context);
-    return tilingObject.RunBigKernelTiling(MODE_LINEAR);
-}
-
-static ge::graphStatus tiling4UpsampleBilinear2dTiling(gert::TilingContext *context)
-{
-    UpsampleLinear1dTiling tilingObject(context);
-    context->SetScheduleMode(SCHEDULE_MODE);
-    return tilingObject.RunBigKernelTiling(MODE_BILINEAR);
+    return tilingObject.RunBigKernelTiling();
 }
 
 static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
@@ -617,6 +592,7 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
     auto platformInfo = context->GetPlatformInfo();
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
+    ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, compileInfo->totalUbSize);
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
         OP_LOGE(
@@ -627,9 +603,5 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
 
 IMPL_OP_OPTILING(UpsampleLinear1d)
     .Tiling(tiling4UpsampleLinear1dTiling)
-    .TilingParse<UpsampleLinear1dCompileInfo>(tilingPrepareTiling);
-
-IMPL_OP_OPTILING(UpsampleBilinear2d)
-    .Tiling(tiling4UpsampleBilinear2dTiling)
     .TilingParse<UpsampleLinear1dCompileInfo>(tilingPrepareTiling);
 }  // namespace optiling

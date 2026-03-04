@@ -190,19 +190,12 @@ static const aclTensor *GoUpsampleLinear1DAICORE(const aclTensor *selfRefContigu
     auto dataType = selfRefContiguous->GetDataType();
     auto size1 = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
     auto castSize = l0op::Cast(size1, op::DataType::DT_INT32, executor);
-    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
-        selfRefContiguous = l0op::Cast(selfRefContiguous, op::DataType::DT_FLOAT, executor);
-    }
+    CHECK_RET(castSize != nullptr, nullptr);
     const aclTensor *y =
-        executor->AllocTensor(out->GetViewShape(), op::DataType::DT_FLOAT, selfRefContiguous->GetViewFormat());
+        executor->AllocTensor(out->GetViewShape(), dataType, selfRefContiguous->GetViewFormat());
     CHECK_RET(y != nullptr, nullptr);
     const aclTensor *res = l0op::UpsampleLinear1dNcdhw(selfRefContiguous, castSize, alignCorners, y, scale, executor);
 
-    if (op::DataType::DT_FLOAT16 == dataType) {
-        res = l0op::Cast(res, op::DataType::DT_FLOAT16, executor);
-    } else if (op::DataType::DT_BF16 == dataType) {
-        res = l0op::Cast(res, op::DataType::DT_BF16, executor);
-    }
     return res;
 }
 

@@ -46,7 +46,7 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     size_t inputByteSize = 4 * sizeof(float);
     size_t sizeByteSize = 2 * sizeof(float);
     size_t outputByteSize = 16 * sizeof(float);
-    size_t tiling_data_size = sizeof(UpsampleLinear1dTilingData);
+    size_t tiling_data_size = sizeof(UpsampleBilinear2dTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t numBlocks = 16;
 
@@ -61,8 +61,7 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
 
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleLinear1dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleLinear1dTilingData *>(tiling);
-    tilingDatafromBin->mode = 1;
+    UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
     tilingDatafromBin->align_corners = false;
     tilingDatafromBin->slide_size_w = 64;
     tilingDatafromBin->slide_size_h = 64;

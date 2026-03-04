@@ -9,32 +9,35 @@
  */
 
 /*!
- * \file upsample_linear1d_tiling.h
+ * \file upsample_bilinear2d_tiling.h
  * \brief
  */
 
-#ifndef OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_LINEAR1D_TILING_H
-#define OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_LINEAR1D_TILING_H
+#ifndef OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BILINEAR2D_TILING_H
+#define OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BILINEAR2D_TILING_H
 
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 
 namespace optiling {
 
-struct UpsampleLinear1dCompileInfo {
+struct UpsampleBilinear2dCompileInfo {
     uint32_t coreNum;
-    uint64_t totalUbSize;
 };
 
-BEGIN_TILING_DATA_DEF(UpsampleLinear1dTilingData)
+BEGIN_TILING_DATA_DEF(UpsampleBilinear2dTilingData)
 TILING_DATA_FIELD_DEF(bool, align_corners);
 TILING_DATA_FIELD_DEF(int64_t, slide_size_w);
+TILING_DATA_FIELD_DEF(int64_t, slide_size_h);
 TILING_DATA_FIELD_DEF(int64_t, dataType);
 TILING_DATA_FIELD_DEF(float, scale_w);
+TILING_DATA_FIELD_DEF(float, scale_h);
 
 TILING_DATA_FIELD_DEF(uint64_t, intermediate_matrix_size);
 TILING_DATA_FIELD_DEF(uint32_t, radio_matrix_size_w);
+TILING_DATA_FIELD_DEF(uint32_t, radio_matrix_size_h);
 TILING_DATA_FIELD_DEF(uint32_t, need_core_num_w);
+TILING_DATA_FIELD_DEF(uint32_t, need_core_num_h);
 
 TILING_DATA_FIELD_DEF(int64_t, eachCoreSlideNumW);
 TILING_DATA_FIELD_DEF(int64_t, tailStartSlideNumW);
@@ -43,34 +46,22 @@ TILING_DATA_FIELD_DEF(int64_t, groupCoreNumW);
 TILING_DATA_FIELD_DEF(int64_t, tailAvergingRowsW);
 TILING_DATA_FIELD_DEF(int64_t, remainderW);
 
-TILING_DATA_FIELD_DEF(uint64_t, mPerTime);
-TILING_DATA_FIELD_DEF(uint64_t, loopTimes);
-TILING_DATA_FIELD_DEF(uint64_t, loopTail);
-TILING_DATA_FIELD_DEF(uint64_t, inputUbSize);
-TILING_DATA_FIELD_DEF(uint64_t, outputUbSize);
-
-TILING_DATA_FIELD_DEF(uint64_t, loopTailTimes);
-TILING_DATA_FIELD_DEF(uint64_t, loopTailTail);
-
-TILING_DATA_FIELD_DEF(uint64_t, matmulLoopTimes);
-TILING_DATA_FIELD_DEF(uint64_t, matmulBlockTail);
-
-TILING_DATA_FIELD_DEF(uint64_t, remainderMatmulLoopTimes);
-TILING_DATA_FIELD_DEF(uint64_t, remainderMatmulBlockTail);
-TILING_DATA_FIELD_DEF(uint64_t, remainderLoopTailTimes);
-TILING_DATA_FIELD_DEF(uint64_t, remainderLoopTailTail);
-
-TILING_DATA_FIELD_DEF(uint64_t, matmulBlockPerTime);
-TILING_DATA_FIELD_DEF(uint64_t, singleCoreK);
+TILING_DATA_FIELD_DEF(int64_t, eachCoreSlideNumH);
+TILING_DATA_FIELD_DEF(int64_t, tailStartSlideNumH);
+TILING_DATA_FIELD_DEF(int64_t, slideNumH);
+TILING_DATA_FIELD_DEF(int64_t, groupCoreNumH);
+TILING_DATA_FIELD_DEF(int64_t, tailAvergingRowsH);
+TILING_DATA_FIELD_DEF(int64_t, remainderH);
 
 TILING_DATA_FIELD_DEF_ARR(int64_t, 4, input_shapes);
 TILING_DATA_FIELD_DEF_ARR(int64_t, 4, output_shapes);
 
 TILING_DATA_FIELD_DEF_STRUCT(TCubeTiling, matmulTiling_w);
+TILING_DATA_FIELD_DEF_STRUCT(TCubeTiling, matmulTiling_h);
 
 END_TILING_DATA_DEF;
 
-REGISTER_TILING_DATA_CLASS(UpsampleLinear1d, UpsampleLinear1dTilingData)
+REGISTER_TILING_DATA_CLASS(UpsampleBilinear2d, UpsampleBilinear2dTilingData)
 }  // namespace optiling
 
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_LINEAR_1D_TILING_H
+#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BILINEAR_2D_TILING_H

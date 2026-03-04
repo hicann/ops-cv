@@ -40,9 +40,6 @@ def compare_data(golden_file_lists, output_file_lists, d_type):
         if len(diff_idx) == 0:
             print("PASSED!")
         else:
-            print("FAILED!")
-            for idx in diff_idx:
-                print(f"index: {idx}, output: {tmp_out[idx]}, golden: {tmp_gold[idx]}")
             data_same = False
     return data_same
 
