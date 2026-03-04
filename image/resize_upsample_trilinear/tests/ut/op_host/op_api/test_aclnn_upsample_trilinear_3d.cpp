@@ -15,6 +15,7 @@
 
 #include "op_api_ut_common/op_api_ut.h"
 #include "op_api_ut_common/tensor_desc.h"
+#include "opdev/platform.h"
 
 using namespace op;
 using namespace std;
@@ -419,6 +420,27 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_scales_normal)
     const double_t scales_h = 2.0;
     const double_t scales_w = 2.5;
     auto out_desc = TensorDesc({2, 2, 4, 8, 12}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
+        OUTPUT(out_desc));
+
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+}
+
+TEST_F(l2_upsample_trilinear_3d_test, ascend310B_case_scales_normal)
+{
+    auto self_desc = TensorDesc({2, 2, 3, 4, 5}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    vector<int64_t> output_size = {4, 8, 12};
+    auto output_size_desc = IntArrayDesc(output_size);
+    bool align_coreners = false;
+    const double_t scales_d = 1.5;
+    const double_t scales_h = 2.0;
+    const double_t scales_w = 2.5;
+    auto out_desc = TensorDesc({2, 2, 4, 8, 12}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    SetPlatformSocVersion(SocVersion::ASCEND310B);
 
     auto ut = OP_API_UT(
         aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
@@ -438,6 +460,7 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_NDHWC_normal)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
     auto out_desc = TensorDesc({2, 6, 8, 10, 5}, ACL_FLOAT, ACL_FORMAT_NDHWC);
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
 
     auto ut = OP_API_UT(
         aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
@@ -457,6 +480,7 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_half_normal)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
     auto out_desc = TensorDesc({2, 6, 8, 10, 5}, ACL_FLOAT16, ACL_FORMAT_NDHWC);
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
 
     auto ut = OP_API_UT(
         aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
@@ -476,6 +500,7 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_half_normal_600)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
     auto out_desc = TensorDesc({2, 600, 600, 600, 2}, ACL_FLOAT16, ACL_FORMAT_NDHWC);
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
 
     auto ut = OP_API_UT(
         aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
@@ -495,6 +520,7 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_half_normal_large_batch)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
     auto out_desc = TensorDesc({30, 600, 600, 600, 30}, ACL_FLOAT16, ACL_FORMAT_NDHWC);
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
 
     auto ut = OP_API_UT(
         aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
@@ -514,6 +540,7 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_half_normal_scale)
     const double_t scales_h = 6;
     const double_t scales_w = 6;
     auto out_desc = TensorDesc({30, 600, 600, 600, 30}, ACL_FLOAT16, ACL_FORMAT_NDHWC);
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
 
     auto ut = OP_API_UT(
         aclnnUpsampleTrilinear3d, INPUT(self_desc, output_size_desc, align_coreners, scales_d, scales_h, scales_w),
@@ -521,4 +548,5 @@ TEST_F(l2_upsample_trilinear_3d_test, ascend310P_case_half_normal_scale)
 
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }
