@@ -1,6 +1,8 @@
 # 图模式适配指南
 
-自定义算子如需运行图模式，整体流程与算子开发指南（[AI Core算子开发指南](aicore_develop_guide.md)/[AI CPU算子开发指南](aicpu_develop_guide.md)）一致。值得注意的是，**不需要aclnn适配**，只需做如下交付件适配。
+## 概述
+
+本文档介绍自定义算子的图模式适配方法，整体流程与算子开发指南（[AI Core算子开发指南](aicore_develop_guide.md)/[AI CPU算子开发指南](aicpu_develop_guide.md)）一致。值得注意的是，**不需要进行aclnn适配**，只需做如下交付件适配，即可实现图模式调用算子。
 
 ```
 ${op_name}                              # 替换为实际算子名的小写下划线形式
