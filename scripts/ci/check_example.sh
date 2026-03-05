@@ -7,24 +7,30 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# ----------------------------------------------------------------------------
+# ============================================================================
+
+# 查找符合条件的二级目录：
+#    1. 二级目录下存在examples文件夹
+#    2. examples文件夹中存在前缀为test_aclnn_的文件
+#    3. 构建出valid_dirs清单
 
 current_dir=$(pwd)
 variables_cmake="cmake/variables.cmake"
-op_category_list=$(perl -0777 -ne 'if (/set\(OPS_CATEGORY_LIST\s*(.*?)\)/s) { print $1 }' "$current_dir/$variables_cmake" | grep -oP '"[^"]+"' | sed 's/"//g' | xargs)
-
+op_category_list=$(grep -oP 'set\(OP_CATEGORY_LIST\s*\K".*"' $current_dir/$variables_cmake | sed 's/"//g')
 IFS=' ' read -r -a op_categories <<< "$op_category_list"
 valid_dirs=()
 pr_file=$(realpath "${1:-pr_filelist.txt}")
 
 for category in "${op_categories[@]}"
-do
+do  
     first_level="$current_dir/$category"
     if [ -d "$first_level" ]; then
         for second_level in "$first_level"/*/
         do
             examples_dir="$second_level""examples"
+            # 检查 examples 目录是否存在
             if [ -d "$examples_dir" ]; then
+                # 检查 examples 目录中是否有以 test_aclnn_ 开头的文件
                 if ls "$examples_dir"/test_aclnn_* 1> /dev/null 2> /dev/null; then
                     dir_name=$(basename "$second_level")
                     valid_dirs+=("$dir_name")
@@ -34,31 +40,70 @@ do
     fi
 done
 
+
+#搜索变更的文件名，将存在于valid_dirs清单中的算子保存到ops_name中
 ops_name=()
 mapfile -t lines < ${pr_file}
 for file_path in "${lines[@]}"
 do
+    # 去除前后空格
     file_path=$(echo "$file_path" | xargs)
+    # 跳过空行
     if [ -z "$file_path" ]; then
         continue
     fi
+    # 跳过 .md 后缀的文件
     if [[ "$file_path" == *.md ]]; then
         continue
     fi
+    # 检查该路径是否包含 valid_dirs 中的任意一个目录名
     for dir in "${valid_dirs[@]}"
     do
         if [[ "$file_path" == *"/$dir/"* ]]; then
+            # 去重后添加到 ops_name 数组中
             if [[ ! " ${ops_name[@]} " =~ " $dir " ]]; then
                 ops_name+=("$dir")
             fi
             break
         fi
     done
+
+    #如果file_path为scripts/ci/mirror_update_time.txt，则将准备好的需验证算子列表加到ops_name中
+    if [[ "$file_path" == "scripts/ci/mirror_update_time.txt" ]]; then
+
+        image_ops_910b=("grid_sample" "upsample_nearest3d" "upsample_linear1d" "upsample_bicubic2d" "grid_sampler2_d_grad")
+        objdetec_ops_910b=("iou_v2")
+        operator_list_910b=("${image_ops_910b[@]}" "${objdetec_ops_910b[@]}")
+
+        image_ops_950=("resize_bilinear_v2" "resize_nearest_neighbor_v2" "resize_bicubic_v2" "resize_linear")
+        objdetec_ops_950=("iou_v2")
+        operator_list_950=("${image_ops_950[@]}" "${objdetec_ops_950[@]}")
+        
+        for op in "${operator_list_910b[@]}"; do
+            op_exists=0
+            for existing_op in "${ops_name[@]}"; do
+                if [ "$existing_op" = "$op" ]; then
+                    op_exists=1
+                    break
+                fi
+            done
+            if [ "$op_exists" -eq 0 ]; then
+                ops_name+=("$op")
+            fi
+        done
+    fi
+
 done
 
+
+#自定义算子包验证run_example
 for name in "${ops_name[@]}"
 do
-    ./single/cann-ops-cv-${name}_linux*.run
+    #安装指定路径的自定义算子包
+    echo "--------------------------------"
+    echo "${name}"
+    ./single/cann-ops-cv-${name}-linux.*.run
+    echo "[EXECUTE_COMMAND] bash build.sh --run_example $name eager cust --vendor_name=$name"
     bash build.sh --run_example $name eager cust --vendor_name=$name
     status=$?
     if [ $status -ne 0 ]; then
