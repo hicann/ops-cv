@@ -17,7 +17,7 @@ import numpy as np
 import re
 import torch
 from torch.nn.functional import interpolate
-
+import tensorflow as tf
 
 def parse_str_to_shape_list(shape_str):
     shape_str = shape_str.strip('(').strip(')')
@@ -28,6 +28,7 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     d_type_dict = {
         "float32": np.float32,
         "float16": np.float16,
+        "bfloat16": tf.bfloat16.as_numpy_dtype,
     }
     np_type = d_type_dict[d_type]
     input_shape, _ = parse_str_to_shape_list(input_shape_str)
@@ -35,7 +36,7 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
 
     size = np.prod(input_shape)
     tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
-    x_tensor = torch.tensor(tmp_input, dtype=torch.float32).requires_grad_(True)
+    x_tensor = torch.tensor(tmp_input.astype(np.float32), dtype=torch.float32).requires_grad_(True)
     y_tensor = interpolate(x_tensor, output_size, mode='bicubic', align_corners=False, antialias=True)
     
     grad_output = torch.rand_like(y_tensor)

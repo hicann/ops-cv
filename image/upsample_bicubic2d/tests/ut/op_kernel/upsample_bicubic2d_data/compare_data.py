@@ -12,13 +12,15 @@ import sys
 import numpy as np
 import glob
 import os
+import tensorflow as tf
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 
 def compare_data(golden_file_lists, output_file_lists, d_type):
     d_type_dict = {
         "float32": np.float32,
-        "float16": np.float16
+        "float16": np.float16,
+        "bfloat16": tf.bfloat16.as_numpy_dtype,
     }
     np_dtype = d_type_dict[d_type]
     
@@ -26,7 +28,7 @@ def compare_data(golden_file_lists, output_file_lists, d_type):
     for gold, out in zip(golden_file_lists, output_file_lists):
         tmp_out = np.fromfile(out, np_dtype)
         tmp_gold = np.fromfile(gold, np_dtype)
-        diff_res = np.isclose(tmp_out, tmp_gold, 0.01, 0.01, True)
+        diff_res = np.isclose(tmp_out.astype(np.float32), tmp_gold.astype(np.float32), 0.01, 0.01, True)
         diff_idx = np.where(diff_res != True)[0]
         if len(diff_idx) == 0:
             print("PASSED!")

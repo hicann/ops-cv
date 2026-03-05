@@ -71,3 +71,24 @@ TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_002)
     std::vector<size_t> expectWorkspaces = {33625344};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_003)
+{
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 0;
+    } compile_info;
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAAGrad",
+                                                {{{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({128, 128})),
+                                                gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1, 128, 128})),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+                                                &compile_info, socVersion, 48, 192*1024, 8192);
+    uint64_t expectTilingKey = 65536;
+    string expectTilingData = "341 1 1 128 128 128 128 0 68719501304 4575657222473777152 4575657222473777152 4611686019501129728 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}

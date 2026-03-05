@@ -207,3 +207,46 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_4)
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
 }
+
+TEST_F(upsample_bicubic2d_grad_test, test_case_5)
+{
+    struct UpsampleBicubic2dGradCompileInfo {
+        uint32_t aicNum = 20;
+        uint32_t aivNum = 40;
+        uint64_t ubSize = 196608;
+        uint64_t l1Size = 524288;
+        uint64_t l2Size = 201326592;
+        uint64_t l0CSize = 131072;
+        uint64_t l0ASize = 65536;
+        uint64_t l0BSize = 65536;
+        platform_ascendc::SocVersion socVersion;
+        std::string socVersionStr = "";
+    } compile_info;
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dGrad",
+                                                {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
+                                                &compile_info);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
+
+    size_t inputByteSize = 2 * 16 * 64 * 64 * sizeof(half);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    size_t outputByteSize = 2 * 16 * 16 * 16 * sizeof(half);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(10000002);
+    uint32_t numBlocks = 20;
+    ICPU_RUN_KF(upsample_bicubic2d_grad, numBlocks, x, y, workspace, tiling);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+}

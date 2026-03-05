@@ -38,7 +38,7 @@ constexpr int64_t THREAD_NUM = 512; // simt开的线程数
 constexpr int32_t CACHE_LINE = 128;
 constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
 
-struct BaseTilingData {
+struct Bicubic2dAAGradBaseTilingData {
     int64_t dimN = 0;
     int64_t dimC = 0;
     int64_t inH = 0;
@@ -90,7 +90,7 @@ private:
     float ComputeScale(int64_t inSize, int64_t outSize, float originalScale);
 
 private:
-    BaseTilingData baseTiling_;
+    Bicubic2dAAGradBaseTilingData baseTiling_;
     gert::TilingContext *context_ = nullptr;
     UpsampleBicubic2dAAGradRegBaseTilingData *tilingData_{ nullptr };
 };
