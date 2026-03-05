@@ -13,7 +13,7 @@
 
 ## 功能说明
 
-- 算子功能：实现RoiPoolingWithArgMax的反向。遍历每个ROI的池化结果，将feature map坐标上的反向梯度贡献累加，即完成整张图上的反向计算。
+- 接口功能：实现RoiPoolingWithArgMax的反向。遍历每个ROI的池化结果，将feature map坐标上的反向梯度贡献累加，即完成整张图上的反向计算。
 - 计算公式：
   
   $$
@@ -34,144 +34,143 @@
 
 ```cpp
 aclnnStatus aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(
-    const aclTensor 	*gradOutput,
-    const aclTensor 	*gradInputRef,
-    const aclTensor 	*rois,
-    const aclTensor	*argmax,
-    int64_t pooledH,
-    int64_t pooledW,
-    double spatialScale,
-    uint64_t *workspaceSize,
-    aclOpExecutor **executor);
+    const aclTensor*      gradOutput,
+    const aclTensor*      gradInputRef,
+    const aclTensor*      rois,
+    const aclTensor*      argmax,
+    int64_t               pooledH,
+    int64_t               pooledW,
+    double                spatialScale,
+    uint64_t*             workspaceSize,
+    aclOpExecutor**       executor);
 ```
 
 ```cpp
 aclnnStatus aclnnRoiPoolingGradWithArgMax(
-  void* workspace, 
-  uint64_t workspace_size, 
-  aclOpExecutor* executor, 
-  const aclrtStream stream)
+  void*                   workspace, 
+  uint64_t                workspace_size, 
+  aclOpExecutor*          executor, 
+  const aclrtStream       stream)
 ```
 
 ## aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize
 
 - **参数说明**
   
-  <div style="overflow-x: auto;">
-    <table style="undefined;table-layout: fixed; width: 1497px"><colgroup> 
-     <col style="width: 150px"> 
-     <col style="width: 120px"> 
-     <col style="width: 300px"> 
-     <col style="width: 330px"> 
-     <col style="width: 212px"> 
-     <col style="width: 100px">  
-     <col style="width: 140px">  
-     <col style="width: 145px">  
-     </colgroup>
-    <thead>
+  <table style="undefined;table-layout: fixed; width: 1497px"><colgroup> 
+    <col style="width: 200px"> 
+    <col style="width: 120px"> 
+    <col style="width: 250px"> 
+    <col style="width: 120px"> 
+    <col style="width: 212px"> 
+    <col style="width: 120px">  
+    <col style="width: 200px">  
+    <col style="width: 145px">  
+    </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+      <th>使用说明</th>
+      <th>数据类型</th>
+      <th>数据格式</th>
+      <th>维度(shape)</th>
+      <th>非连续Tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>gradOutput（aclTensor*）</td>
+      <td>输入</td>
+      <td>梯度输入。</td>
+      <td>-</td>
+      <td>FLOAT16、FLOAT32</td>
+      <td>ND</td>
+      <td>等于4维，shape为(roisN, C, pooledH, pooledW)。</td>
+      <td>√</td>
+    </tr>
       <tr>
-        <th>参数名</th>
-        <th>输入/输出</th>
-        <th>描述</th>
-        <th>使用说明</th>
-        <th>数据类型</th>
-        <th>数据格式</th>
-        <th>维度(shape)</th>
-        <th>非连续Tensor</th>
-      </tr></thead>
-    <tbody>
+      <td>gradInputRef（aclTensor*）</td>
+      <td>输入/输出</td>
+      <td>输出结果。</td>
+      <td>-</td>
+      <td>FLOAT16、FLOAT32</td>
+      <td>ND</td>
+      <td>等于4维，shape为(N, C, H, W)。</td>
+      <td>√</td>
+    </tr>
       <tr>
-        <td>gradOutput</td>
-        <td>输入</td>
-        <td>梯度输入。</td>
-        <td>-</td>
-        <td>FLOAT16、FLOAT32</td>
-        <td>ND</td>
-        <td>等于4维</td>
-        <td>支持</td>
-      </tr>
-        <tr>
-        <td>gradInputRef</td>
-        <td>输入/输出</td>
-        <td>输出结果。</td>
-        <td>-</td>
-        <td>FLOAT16、FLOAT32</td>
-        <td>ND</td>
-        <td>等于4维</td>
-        <td>支持</td>
-      </tr>
-        <tr>
-        <td>rois</td>
-        <td>输入</td>
-        <td>ROI区域。</td>
-        <td>-</td>
-        <td>FLOAT16、FLOAT32</td>
-        <td>ND</td>
-        <td>等于2维</td>
-        <td>支持</td>
-      </tr>
-        <tr>
-        <td>argmax</td>
-        <td>输入</td>
-        <td>指定目标梯度的索引。</td>
-        <td>-</td>
-        <td>INT32</td>
-        <td>ND</td>
-        <td>等于4维</td>
-        <td>支持</td>
-      </tr>
+      <td>rois（aclTensor*）</td>
+      <td>输入</td>
+      <td>ROI区域。</td>
+      <td>-</td>
+      <td>FLOAT16、FLOAT32</td>
+      <td>ND</td>
+      <td>等于2维，shape为(roisN, 5)。shape中的5指(batchId, x1, x2, y1, y2)。</td>
+      <td>√</td>
+    </tr>
       <tr>
-        <td>pooledH</td>
-        <td>属性</td>
-        <td>池化高度。</td>
-        <td>-</td>
-        <td>INT64</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-      </tr>
-        <tr>
-        <td>pooledW</td>
-        <td>属性</td>
-        <td>池化宽度。</td>
-        <td>-</td>
-        <td>INT64</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-      </tr>
+      <td>argmax（aclTensor*）</td>
+      <td>输入</td>
+      <td>指定目标梯度的索引。</td>
+      <td>-</td>
+      <td>INT32</td>
+      <td>ND</td>
+      <td>等于4维，shape为(roisN, C, pooledH, pooledW)。</td>
+      <td>√</td>
+    </tr>
+    <tr>
+      <td>pooledH（int64_t）</td>
+      <td>属性</td>
+      <td>池化高度。</td>
+      <td>-</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
       <tr>
-        <td>spatialScale</td>
-        <td>属性</td>
-        <td>输入坐标映射到ROI坐标的缩放比例。</td>
-        <td>-</td>
-        <td>DOUBLE</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>workspaceSize</td>
-        <td>输出</td>
-        <td>返回用户需要在Device侧申请的workspace大小。</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-        <td>1</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>executor</td>
-        <td>输出</td>
-        <td>返回op执行器，包含了算子计算流程。</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-        <td>1</td>
-        <td>-</td>
-      </tr>
-    </tbody></table>
-    </div>
+      <td>pooledW（int64_t）</td>
+      <td>属性</td>
+      <td>池化宽度。</td>
+      <td>-</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>spatialScale（double）</td>
+      <td>属性</td>
+      <td>输入坐标映射到ROI坐标的缩放比例。</td>
+      <td>-</td>
+      <td>DOUBLE</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>workspaceSize（uint64_t*）</td>
+      <td>输出</td>
+      <td>返回用户需要在Device侧申请的workspace大小。</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>executor（aclOpExecutor**）</td>
+      <td>输出</td>
+      <td>返回op执行器，包含了算子计算流程。</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>1</td>
+      <td>-</td>
+    </tr>
+  </tbody></table>
+
 - **返回值**
   
   返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -196,8 +195,8 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>传入的gradOutput、rois、argmax 、gradInput是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="10">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="10">161002</td>
+      <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="11">161002</td>
       <td>gradOutput、rois、argmax 、gradInputRef的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
@@ -227,50 +226,54 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
     <tr>
       <td>rois.shape[0]、gradOutput.shape[0]小于等于1024</td>
     </tr>
+    <tr>
+      <td>gradInputRef.shape[1]等于gradOutput.shape[1]</td>
+    </tr>
   </tbody>
   </table>
 
-## aclnnRoiPoolingWithArgMax
+## aclnnRoiPoolingGradWithArgMax
 
 * ​**参数说明**​：
 
-<div style="overflow-x: auto;">
-    <table style="undefined;table-layout: fixed; width: 900px"><colgroup>
-    <col style="width: 150px">
-    <col style="width: 100px">
-    <col style="width: 650px">
-    </colgroup>
-    <thead>
-      <tr>
-        <th>参数名</th>
-        <th>输入/输出</th>
-        <th>描述</th>
-      </tr></thead>
-    <tbody>
-      <tr>
-        <td>workspace</td>
-        <td>输入</td>
-        <td>在Device侧申请的workspace内存地址。</td>
-      </tr>
-      <tr>
-        <td>workspaceSize</td>
-        <td>输入</td>
-        <td>在Device侧申请的workspace大小，由第一段接口aclnnRoiPoolingWithArgMax获取。</td>
-      </tr>
-      <tr>
-        <td>executor</td>
-        <td>输入</td>
-        <td>op执行器，包含了算子计算流程。</td>
-      </tr>
-      <tr>
-        <td>stream</td>
-        <td>输入</td>
-        <td>指定执行任务的Stream。</td>
-      </tr>
-    </tbody></table>
-    </div>
+  <div style="overflow-x: auto;">
+      <table style="undefined;table-layout: fixed; width: 900px"><colgroup>
+      <col style="width: 150px">
+      <col style="width: 100px">
+      <col style="width: 650px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>参数名</th>
+          <th>输入/输出</th>
+          <th>描述</th>
+        </tr></thead>
+      <tbody>
+        <tr>
+          <td>workspace</td>
+          <td>输入</td>
+          <td>在Device侧申请的workspace内存地址。</td>
+        </tr>
+        <tr>
+          <td>workspaceSize</td>
+          <td>输入</td>
+          <td>在Device侧申请的workspace大小，由第一段接口aclnnRoiPoolingGradWithArgMax获取。</td>
+        </tr>
+        <tr>
+          <td>executor</td>
+          <td>输入</td>
+          <td>op执行器，包含了算子计算流程。</td>
+        </tr>
+        <tr>
+          <td>stream</td>
+          <td>输入</td>
+          <td>指定执行任务的Stream。</td>
+        </tr>
+      </tbody></table>
+      </div>
 
 * ​**返回值**​：
+
   返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
@@ -294,7 +297,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 #include <iostream>
 #include <vector>
 #include "acl/acl.h"
-#include "/home/m00892392/run/0212/ascend-toolkit/latest/opp/vendors/roi_pooling_grad_with_arg_max_cv/op_api/include/aclnn_roi_pooling_grad_with_arg_max.h"
+#include "aclnnop/aclnn_roi_pooling_grad_with_arg_max.h"
 #include <iostream>
 using namespace std;
 
