@@ -452,3 +452,29 @@ TEST_F(l2_iou_test, case_attr_invalid_3)
   ;
   EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
+
+TEST_F(l2_iou_test, case_valid_0)
+{
+  auto bBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+  auto gtBoxes = TensorDesc({30, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+  auto overlap = TensorDesc({20, 30}, ACL_FLOAT, ACL_FORMAT_ND);
+
+  auto ut = OP_API_UT(aclnnIou, INPUT(bBoxes, gtBoxes, "iou", 0.01, false), OUTPUT(overlap));
+  uint64_t workspace_size = 0;
+  aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+  ;
+  EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
+TEST_F(l2_iou_test, case_valid_1)
+{
+  auto bBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+  auto gtBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+  auto overlap = TensorDesc({20, 1}, ACL_FLOAT, ACL_FORMAT_ND);
+
+  auto ut = OP_API_UT(aclnnIou, INPUT(bBoxes, gtBoxes, "iou", 0.01, true), OUTPUT(overlap));
+  uint64_t workspace_size = 0;
+  aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+  ;
+  EXPECT_EQ(aclRet, ACL_SUCCESS);
+}

@@ -74,3 +74,399 @@ TEST_F(iou_v2_test, test_aligned_iou_fp32)
     AscendC::GmFree(workspace);
     AscendC::GmFree(tiling);
 }
+
+TEST_F(iou_v2_test, test_aligned_iou_fp16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(5);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_iou_bf16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(6);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_flase_iou_fp32)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 8;
+    tilingData->subTileLen = 8;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(7);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_flase_iou_fp16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(8);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_flase_iou_bf16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(9);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_iof_iou_fp32)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 8;
+    tilingData->subTileLen = 8;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(14);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_iof_iou_fp16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(15);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_iof_iou_bf16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(16);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_false_iof_iou_fp32)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 8;
+    tilingData->subTileLen = 8;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(17);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_false_iof_iou_fp16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(18);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(iou_v2_test, test_aligned_false_iof_iou_bf16)
+{
+
+    size_t bboxesByteSize = 4 * 8 * sizeof(float);
+    size_t gtboxesByteSize = 4 * 8 * sizeof(float);
+    size_t overlapByteSize = 8 * 1 * sizeof(float);
+    size_t tilingDataSize = sizeof(IouV2TilingData);
+
+    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint32_t numBlocks = 1;
+
+    IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
+    tilingData->bBoxLength = 8;
+    tilingData->gtBoxLength = 8;
+    tilingData->frontCoreNum = 0;
+    tilingData->loopNum = 1;
+    tilingData->tileLength = 16;
+    tilingData->subTileLen = 16;
+    tilingData->eps = 1;
+
+    ICPU_SET_TILING_KEY(19);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(iou_v2, numBlocks, bboxes, gtboxes, overlap, workspace, tiling);
+
+    AscendC::GmFree(bboxes);
+    AscendC::GmFree(gtboxes);
+    AscendC::GmFree(overlap);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}

@@ -62,6 +62,56 @@ TEST_F(IouV2Tiling, test_tiling_iou_aligned_f32)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
+TEST_F(IouV2Tiling, test_tiling_iou_aligned_fp16)
+{
+    IouV2CompileInfo compileInfo = {48, 196608, false};
+    gert::TilingContextPara tilingContextPara("IouV2",
+                                                {{{{4, 1024}, {4, 1024}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
+                                                {{{4, 1024}, {4, 1024}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                                {{{{1024, 1}, {1024, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<string>("iou")),
+                                                gert::TilingContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+                                                gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    uint64_t expectTilingKey = 8;
+    string expectTilingData = "1024 1024 0 1 16 16 1065353216 ";
+    std::vector<size_t> expectWorkspaces = {0};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(IouV2Tiling, test_tiling_iou_aligned_bf16)
+{
+    IouV2CompileInfo compileInfo = {48, 196608, false};
+    gert::TilingContextPara tilingContextPara("IouV2",
+                                                {{{{4, 1024}, {4, 1024}}, ge::DT_BF16, ge::FORMAT_ND}, 
+                                                {{{4, 1024}, {4, 1024}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {{{{1024, 1}, {1024, 1}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<string>("iou")),
+                                                gert::TilingContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+                                                gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+                                                &compileInfo);
+    uint64_t expectTilingKey = 9;
+    string expectTilingData = "1024 1024 0 1 16 16 1065353216 ";
+    std::vector<size_t> expectWorkspaces = {0};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(IouV2Tiling, test_tiling_iou_aligned_true_bf16)
+{
+    IouV2CompileInfo compileInfo = {48, 196608, false};
+    gert::TilingContextPara tilingContextPara("IouV2",
+                                                {{{{4, 1024}, {4, 1024}}, ge::DT_BF16, ge::FORMAT_ND}, 
+                                                {{{4, 1024}, {4, 1024}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {{{{1024, 1}, {1024, 1}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<string>("iou")),
+                                                gert::TilingContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+                                                gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+                                                &compileInfo);
+    uint64_t expectTilingKey = 6;
+    string expectTilingData = "1024 1024 0 1 64 64 1065353216 ";
+    std::vector<size_t> expectWorkspaces = {0};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
 
 // TEST_F(IouV2Tiling, test_tiling_iou_not_aligned_f16)
 // {
