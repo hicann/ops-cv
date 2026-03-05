@@ -104,3 +104,73 @@ TEST_F(upsample_nearest3d_test, test_case_float_1)
 
     system("cd ./upsample_nearest3d_data/ && python3 compare_data.py 'float32'");
 }
+
+TEST_F(upsample_nearest3d_test, test_case_float_2)
+{
+    system("cp -rf "
+           "../../../../image/upsample_nearest3d/tests/ut/op_kernel/upsample_nearest3d_data ./");
+    system("chmod -R 755 ./upsample_nearest3d_data/");
+    system("cd ./upsample_nearest3d_data/ && python3 gen_data.py '(1, 16, 1, 1, 4)' '(1, 1, 16)' 'float32'");
+
+    size_t inputByteSize = 16 * 4 * sizeof(float);
+    size_t outputByteSize = 16 * 16 * sizeof(float);
+    size_t tiling_data_size = sizeof(UpsampleNearest3dTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 16;
+
+    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
+    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest3d_data/float32_input_upsample_nearest3d.bin";
+
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearest3dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleNearest3dTilingData *>(tiling);
+
+    tilingDatafromBin->dataType = 0;
+    tilingDatafromBin->batches = 1;
+    tilingDatafromBin->scaleW = 1;
+    tilingDatafromBin->scaleH = 1;
+    tilingDatafromBin->scaleD = 0.25;
+
+    tilingDatafromBin->slideSizeW = 2048;
+    tilingDatafromBin->tensorSizeW = 8196;
+    tilingDatafromBin->tensorSizeH = 1;
+    tilingDatafromBin->tensorSizeD = 1;
+    tilingDatafromBin->slideNumH = 1;
+    tilingDatafromBin->slideNumD = 1;
+
+    tilingDatafromBin->eachCoreSlideNum = 0;
+    tilingDatafromBin->remainder = 1;
+    tilingDatafromBin->tailStartSlideNum = 0;
+    tilingDatafromBin->groupCoreNum = 16;
+    tilingDatafromBin->inputRow = 1;
+    tilingDatafromBin->tailAvergingRow = 16;
+    tilingDatafromBin->needCoreNum = 1;
+
+    tilingDatafromBin->inputShapes[0] = 1;
+    tilingDatafromBin->inputShapes[1] = 1;
+    tilingDatafromBin->inputShapes[2] = 4;
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 1;
+    tilingDatafromBin->outputShapes[2] = 16;
+
+    tilingDatafromBin->isView1DAndSmallW = true;
+
+    ICPU_SET_TILING_KEY(5140);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    auto func = upsample_nearest3d<UPSAMPLE_NEAREST3D_TPL_FP32, UPSAMPLE_NEAREST3D_TPL_FP32>; 
+    ICPU_RUN_KF(func, numBlocks, x, y, workspace, (uint8_t *)(tilingDatafromBin));
+    fileName = "./upsample_nearest3d_data/float32_output_upsample_nearest3d.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void *)(x));
+    AscendC::GmFree((void *)(y));
+    AscendC::GmFree((void *)workspace);
+    AscendC::GmFree((void *)tiling);
+
+    system("cd ./upsample_nearest3d_data/ && python3 compare_data.py 'float32'");
+}

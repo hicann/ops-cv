@@ -12,6 +12,9 @@
 #include "../../../../op_host/op_api/aclnn_upsample_nearest_1d_v2.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
+#include "opdev/platform.h"
+
+using namespace op;
 
 class l2_upsamplenearest1dv2_test : public testing::Test {
 protected:
@@ -206,17 +209,16 @@ TEST_F(l2_upsamplenearest1dv2_test, l2_upsamplenearest1dv2_test_dtype_float32)
 }
 
 // dtype double, aicpu
-// TEST_F(l2_upsamplenearest1dv2_test, l2_upsamplenearest1dv2_test_dtype_double)
-// {
-//     auto selfDesc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
-//     auto outDesc = TensorDesc({1, 1, 4}, ACL_DOUBLE, ACL_FORMAT_NCL);
-//     auto sizeDesc = IntArrayDesc({4});
-//     float scaleL = -99.0;
-//     auto ut = OP_API_UT(aclnnUpsampleNearest1dV2, INPUT(selfDesc, sizeDesc, scaleL), OUTPUT(outDesc));
-//     uint64_t workspaceSize = 0;
-//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-// }
+TEST_F(l2_upsamplenearest1dv2_test, l2_upsamplenearest1dv2_test_dtype_double)
+{
+    auto selfDesc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
+    auto outDesc = TensorDesc({1, 1, 4}, ACL_DOUBLE, ACL_FORMAT_NCL);
+    auto sizeDesc = IntArrayDesc({4});
+    float scaleL = -99.0;
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dV2, INPUT(selfDesc, sizeDesc, scaleL), OUTPUT(outDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+}
 
 // dtype uint8, aicpu
 // TEST_F(l2_upsamplenearest1dv2_test, l2_upsamplenearest1dv2_test_dtype_uint8)
@@ -323,8 +325,10 @@ TEST_F(l2_upsamplenearest1dv2_test, Ascend950DT_9591_case_float_scale_03)
     auto outDesc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
     auto sizeDesc = IntArrayDesc({2});
     float scaleL = 0.5;
+    SetPlatformSocVersion(SocVersion::ASCEND950);
     auto ut = OP_API_UT(aclnnUpsampleNearest1dV2, INPUT(selfDesc, sizeDesc, scaleL), OUTPUT(outDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }

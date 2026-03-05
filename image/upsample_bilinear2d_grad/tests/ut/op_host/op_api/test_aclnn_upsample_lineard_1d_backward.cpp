@@ -12,6 +12,9 @@
 #include "../../../../op_host/op_api/aclnn_upsample_linear_1d_backward.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
+#include "opdev/platform.h"
+
+using namespace op;
 
 class l2_upsamplelinear1d_backward_test : public testing::Test {
 protected:
@@ -637,23 +640,24 @@ TEST_F(l2_upsamplelinear1d_backward_test, ascend910B3_checkNC)
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
-/*
 TEST_F(l2_upsamplelinear1d_backward_test, Ascend95089_l2_upsamplelinear1d_backward_test_001) {
-  const double_t scales_l = 2.0;
-  bool align_corners = false;
-  vector<int64_t> output_size = {3};
-  vector<int64_t> input_size = {1, 1, 6};
+    const double_t scales_l = 2.0;
+    bool align_corners = false;
+    vector<int64_t> output_size = {3};
+    vector<int64_t> input_size = {1, 1, 6};
 
-  auto self_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
-  auto output_size_desc = IntArrayDesc(output_size);
-  auto input_size_desc = IntArrayDesc(input_size);
-  auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto self_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-  auto ut = OP_API_UT(aclnnUpsampleLinear1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, align_corners,
-                      scales_l), OUTPUT(output_desc));
-  uint64_t workspaceSize = 0;
-  aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-  EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND950);
+    auto ut = OP_API_UT(aclnnUpsampleLinear1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, align_corners,
+                        scales_l), OUTPUT(output_desc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }
 
 TEST_F(l2_upsamplelinear1d_backward_test, Ascend95089_l2_upsamplelinear1d_backward_test_002)
@@ -668,10 +672,11 @@ TEST_F(l2_upsamplelinear1d_backward_test, Ascend95089_l2_upsamplelinear1d_backwa
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_ND);
 
+    SetPlatformSocVersion(SocVersion::ASCEND950);
     auto ut =
         OP_API_UT(aclnnUpsampleLinear1dBackward,
                   INPUT(self_desc, output_size_desc, input_size_desc, align_corners, scales_l), OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }
-*/

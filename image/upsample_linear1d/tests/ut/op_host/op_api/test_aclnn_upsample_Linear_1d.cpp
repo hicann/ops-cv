@@ -12,6 +12,9 @@
 #include "../../../../op_host/op_api/aclnn_upsample_linear_1d.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
+#include "opdev/platform.h"
+
+using namespace op;
 
 class l2_upsamplelinear1d_test : public testing::Test {
 protected:
@@ -244,4 +247,19 @@ TEST_F(l2_upsamplelinear1d_test, Ascend910B2_l2_upsamplelinear1d_test_fp16)
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+}
+
+TEST_F(l2_upsamplelinear1d_test, ascend910_l2_upsamplelinear1d_test_dtype_float16)
+{
+    auto selfDesc = TensorDesc({1, 1, 2}, ACL_FLOAT16, ACL_FORMAT_NCL);
+    auto outDesc = TensorDesc({1, 1, 4}, ACL_FLOAT16, ACL_FORMAT_NCL);
+    auto sizeDesc = IntArrayDesc({4});
+    const double_t scales_h = 2.0;
+    bool align_corners = false;
+    SetPlatformSocVersion(SocVersion::ASCEND910);
+    auto ut = OP_API_UT(aclnnUpsampleLinear1d, INPUT(selfDesc, sizeDesc, align_corners, scales_h), OUTPUT(outDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }

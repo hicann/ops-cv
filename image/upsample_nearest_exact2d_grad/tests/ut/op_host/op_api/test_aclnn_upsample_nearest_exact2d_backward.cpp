@@ -240,3 +240,57 @@ TEST_F(l2_upsample_nearest_exact2d_backward_test, l2_upsample_nearest_exact2d_ba
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
+
+// gradOutput and out format different
+TEST_F(l2_upsample_nearest_exact2d_backward_test, l2_upsample_nearest_exact2d_backward_test_format_different)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5, 5}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NHWC);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5, 5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    const double_t scales_h = 0.0;
+    const double_t scales_w = 0.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact2dBackward,
+        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales_h, scales_w), OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// scale
+TEST_F(l2_upsample_nearest_exact2d_backward_test, l2_upsample_nearest_exact2d_backward_test_scale)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 6, 6}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NHWC);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{6, 6});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    const double_t scales_h = 2.0;
+    const double_t scales_w = 2.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact2dBackward,
+        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales_h, scales_w), OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// scale negative
+TEST_F(l2_upsample_nearest_exact2d_backward_test, l2_upsample_nearest_exact2d_backward_test_scale_negative)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 6, 6}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NHWC);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{6, 6});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    const double_t scales_h = -2.0;
+    const double_t scales_w = -2.0;
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearestExact2dBackward,
+        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales_h, scales_w), OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}

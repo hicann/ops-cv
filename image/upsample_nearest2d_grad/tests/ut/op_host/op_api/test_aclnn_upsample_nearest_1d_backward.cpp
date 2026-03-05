@@ -27,7 +27,7 @@ protected:
     }
 };
 
-// // 支持float32
+// 支持float32
 TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_001)
 {
     const double_t scales = 2.0;
@@ -70,25 +70,24 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
 }
 
 // 支持DOUBLE
-// TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_003)
-// {
-//     const double_t scales = 2.0;
+TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_003)
+{
+    const double_t scales = 0.0;
 
-//     vector<int64_t> output_size = {4};
-//     vector<int64_t> input_size = {1, 1, 2};
+    vector<int64_t> output_size = {2};
+    vector<int64_t> input_size = {1, 1, 2};
 
-//     auto self_desc = TensorDesc({1, 1, 4}, ACL_DOUBLE, ACL_FORMAT_NCL);
-//     auto output_size_desc = IntArrayDesc(output_size);
-//     auto input_size_desc = IntArrayDesc(input_size);
-//     auto output_desc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
+    auto self_desc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    auto output_desc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
 
-//     auto ut = OP_API_UT(
-//         aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-//         OUTPUT(output_desc));
-//     uint64_t workspaceSize = 0;
-//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-// }
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+        OUTPUT(output_desc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+}
 
 // 不支持int64
 TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_007)

@@ -583,6 +583,26 @@ TEST_F(l2_upsample_nearest_2d_backward_test, ascend910B2_case_float_scale_invali
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
+TEST_F(l2_upsample_nearest_2d_backward_test, case_float_normal_2)
+{
+    auto grad_out_desc = TensorDesc({1, 1, 20, 40}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    vector<int64_t> output_size = {20, 40};
+    vector<int64_t> input_size = {1, 1, 20, 40};
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    const double_t scales_h = 1.0;
+    const double_t scales_w = 1.0;
+    auto grad_input_desc = TensorDesc({1, 1, 20, 40}, ACL_FLOAT, ACL_FORMAT_NCHW);
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearest2dBackward, INPUT(grad_out_desc, output_size_desc, input_size_desc, scales_h, scales_w),
+        OUTPUT(grad_input_desc));
+
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
 TEST_F(l2_upsample_nearest_2d_backward_test, ascend910B2_case_float_normal_NHWC_1)
 {
     auto grad_out_desc = TensorDesc({1, 20, 40, 1}, ACL_FLOAT, ACL_FORMAT_NHWC);
@@ -593,6 +613,46 @@ TEST_F(l2_upsample_nearest_2d_backward_test, ascend910B2_case_float_normal_NHWC_
     const double_t scales_h = 2.0;
     const double_t scales_w = 2.0;
     auto grad_input_desc = TensorDesc({1, 10, 20, 1}, ACL_FLOAT, ACL_FORMAT_NHWC);
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearest2dBackward, INPUT(grad_out_desc, output_size_desc, input_size_desc, scales_h, scales_w),
+        OUTPUT(grad_input_desc));
+
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
+TEST_F(l2_upsample_nearest_2d_backward_test, ascend910B2_case_float_normal_NHWC_2)
+{
+    auto grad_out_desc = TensorDesc({1, 20, 40, 1}, ACL_FLOAT16, ACL_FORMAT_NHWC);
+    vector<int64_t> output_size = {20, 40};
+    vector<int64_t> input_size = {1, 10, 20, 1};
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    const double_t scales_h = 2.0;
+    const double_t scales_w = 2.0;
+    auto grad_input_desc = TensorDesc({1, 10, 20, 1}, ACL_FLOAT16, ACL_FORMAT_NHWC);
+
+    auto ut = OP_API_UT(
+        aclnnUpsampleNearest2dBackward, INPUT(grad_out_desc, output_size_desc, input_size_desc, scales_h, scales_w),
+        OUTPUT(grad_input_desc));
+
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
+TEST_F(l2_upsample_nearest_2d_backward_test, ascend910B2_case_float_size)
+{
+    auto grad_out_desc = TensorDesc({2, 2, 6, 10}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    vector<int64_t> output_size = {6, 10};
+    vector<int64_t> input_size = {2, 2, 6, 10};
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    const double_t scales_h = 0.0;
+    const double_t scales_w = 0.0;
+    auto grad_input_desc = TensorDesc({2, 2, 6, 10}, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(
         aclnnUpsampleNearest2dBackward, INPUT(grad_out_desc, output_size_desc, input_size_desc, scales_h, scales_w),

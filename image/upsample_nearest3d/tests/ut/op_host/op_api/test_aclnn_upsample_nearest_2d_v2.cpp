@@ -12,6 +12,9 @@
 #include "../../../../op_host/op_api/aclnn_upsample_nearest_2d_v2.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
+#include "opdev/platform.h"
+
+using namespace op;
 
 class l2_upsamplenearest2dv2_test : public testing::Test {
 protected:
@@ -284,25 +287,24 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float_02)
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
 }
 
-// TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_01)
-// {
-//     vector<int64_t> inp_dims = {1, 1, 3, 3};
-//     vector<int64_t> output_size = {6, 6};
-//     vector<int64_t> out = {1, 1, 6, 6};
+TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_01)
+{
+    vector<int64_t> inp_dims = {1, 1, 3, 3};
+    vector<int64_t> output_size = {6, 6};
+    vector<int64_t> out = {1, 1, 6, 6};
 
-//     auto self_desc = TensorDesc(inp_dims, ACL_DOUBLE, ACL_FORMAT_NCHW);
-//     auto output_size_desc = IntArrayDesc(output_size);
-//     auto output_desc = TensorDesc(out, ACL_DOUBLE, ACL_FORMAT_NCHW);
-//     float scalesH = -99.0;
-//     float scalesW = -99.0;
+    auto self_desc = TensorDesc(inp_dims, ACL_DOUBLE, ACL_FORMAT_NCHW);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto output_desc = TensorDesc(out, ACL_DOUBLE, ACL_FORMAT_NCHW);
+    float scalesH = -99.0;
+    float scalesW = -99.0;
 
-//     auto ut =
-//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut =
+        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
 
-//     uint64_t workspaceSize = 0;
-//     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
-//     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-// }
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+}
 
 // TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_02)
 // {
@@ -536,10 +538,12 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_NHWC)
     float scalesH = 0.5;
     float scalesW = 0.5;
 
+    SetPlatformSocVersion(SocVersion::ASCEND950);
     auto ut =
         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }
