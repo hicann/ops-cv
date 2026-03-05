@@ -108,13 +108,12 @@ int main() {
   bool trans = false;
   bool isCross = false;
   const char* mode = "iou";
-  bool atanSubFlag = true;
 
   uint64_t workspaceSize = 0;
   aclOpExecutor* executor;
 
   // 3. 调用CANN算子库API，需要修改为具体的Api名称
-  ret = aclnnCIoUGetWorkspaceSize(bBoxes, gtBoxes, trans, isCross, mode, atanSubFlag, overlap, atanSub, &workspaceSize, &executor);
+  ret = aclnnCIoUGetWorkspaceSize(bBoxes, gtBoxes, trans, isCross, mode, overlap, atanSub, &workspaceSize, &executor);
   CHECK_RET(
       ret == ACL_SUCCESS,
       LOG_PRINT("aclnnCIoUGetWorkspaceSize failed. ERROR: %d\n", ret);
