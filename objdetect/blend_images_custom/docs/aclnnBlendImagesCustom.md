@@ -14,7 +14,7 @@
 
 ## 功能说明
 
-- 算子功能：完成张量rgb、frame和alpha的透明度乘法计算。
+- 接口功能：完成张量rgb、frame和alpha的透明度乘法计算。
 
 - 计算公式：
 
@@ -26,38 +26,184 @@ $$
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnBlendImagesCustomGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnBlendImagesCustom”接口执行计算。
 
-* `aclnnStatus aclnnBlendImagesCustomGetWorkspaceSize(const aclTensor *rgb, const aclTensor *alpha, const aclTensor *frame, const aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)`
-* `aclnnStatus aclnnBlendImagesCustom(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnBlendImagesCustomGetWorkspaceSize(
+  const aclTensor*      rgb, 
+  const aclTensor*      alpha, 
+  const aclTensor*      frame, 
+  const aclTensor*      out, 
+  uint64_t*             workspaceSize, 
+  aclOpExecutor**       executor)
+```
+
+```Cpp
+aclnnStatus aclnnBlendImagesCustom(
+  void*                 workspace, 
+  uint64_t              workspaceSize, 
+  aclOpExecutor*        executor, 
+  aclrtStream           stream)
+```
 
 ## aclnnBlendImagesCustomGetWorkspaceSize
 
 - **参数说明：**
   
-  - rgb(aclTensor*, 计算输入): Device侧的aclTensor，数据类型支持UINT8，shape支持HWC(C=3)，与alpha满足[broadcast关系](../../../docs/zh/context/broadcast关系.md)。只支持连续Tensor,[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-  - alpha(aclTensor*, 计算输入): Device侧的aclTensor，数据类型支持UINT8，shape支持HWC(C=1)，与rgb满足[broadcast关系](../../../docs/zh/context/broadcast关系.md)。只支持连续Tensor,[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-  - frame(aclTensor*, 计算输入): Device侧的aclTensor，数据类型支持UINT8，shape支持HWC(C=3)，与alpha满足[broadcast关系](../../../docs/zh/context/broadcast关系.md)。只支持连续Tensor,[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-  - out(aclTensor*, 计算输出): Device侧的aclTensor，数据类型支持UINT8，shape支持HWC(C=3)，与frameshape一致。只支持连续Tensor,[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-  - workspaceSize(uint64_t\*, 出参): 返回需要在Device侧申请的workspace大小。
-  - executor(aclOpExecutor\*\*, 出参): 返回op执行器，包含了算子计算流程。
-  
+  <table class="tg" style="undefined;table-layout: fixed; width: 1384px"><colgroup>
+  <col style="width: 233px">
+  <col style="width: 120px">
+  <col style="width: 238px">
+  <col style="width: 184px">
+  <col style="width: 167px">
+  <col style="width: 120px">
+  <col style="width: 199px">
+  <col style="width: 120px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-5agr">参数名</th>
+      <th class="tg-0pky">输入/输出</th>
+      <th class="tg-0pky">描述</th>
+      <th class="tg-0pky">使用说明</th>
+      <th class="tg-0pky">数据类型</th>
+      <th class="tg-0pky">数据格式</th>
+      <th class="tg-0pky">维度(shape)</th>
+      <th class="tg-0pky">非连续tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">rgb（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">输入tensor。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">UINT8</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">shape支持HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">alpha（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">输入tensor。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">UINT8</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">shape支持HWC(C=1)，与rgb满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">frame（aclTensor*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">输入tensor。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">UINT8</td>
+      <td class="tg-0lax">ND</td>
+      <td class="tg-0lax">shape支持HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">out（aclTensor*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">输出tensor。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">UINT8</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">shape支持HWC(C=3)，与frameshape一致。</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">workspaceSize（uint64_t*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回需要在Device侧申请的workspace大小。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">executor（aclOpExecutor**）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回op执行器，包括了算子计算流程。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+  </tbody></table>
+
 - **返回值：**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-  ```
   第一段接口完成入参校验，出现以下场景时报错：
-  返回161001 (ACLNN_ERR_PARAM_NULLPTR)：1. 传入的rgb、alpha、frame或out是空指针。
-  返回161002 (ACLNN_ERR_PARAM_INVALID)：1. rgb、alpha、frame的数据类型和数据格式不在支持的范围之内。
-                                       2. rgb、alpha、frame的shape无法做broadcast，rgb和frame支持HWC(C=3), alpha支持HWC(C=1)。
-  ```
+
+  <table style="undefined;table-layout: fixed; width: 1148px"><colgroup>
+  <col style="width: 290px">
+  <col style="width: 134px">
+  <col style="width: 844px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的rgb、alpha、frame或out是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="2">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="2">161002</td>
+      <td>rgb、alpha、frame的数据类型和数据格式不在支持的范围之内。</td>
+    </tr>
+    <tr>
+      <td>rgb、alpha、frame的shape无法做broadcast，rgb和frame支持HWC(C=3), alpha支持HWC(C=1)。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnBlendImagesCustom
 
 - **参数说明：**
-  - workspace(void \*, 入参): 在Device侧申请的workspace内存地址。
-  - workspaceSize(uint64_t, 入参): 在Device侧申请的workspace大小，由第一段接口aclnnBlendImagesCustomGetWorkspaceSize获取。
-  - executor(aclOpExecutor \*, 入参): op执行器，包含了算子计算流程。
-  - stream(aclrtStream, 入参): 指定执行任务的Stream。
+
+  <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
+  <col style="width: 170px">
+  <col style="width: 144px">
+  <col style="width: 671px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnBlendImagesCustomGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回值：**
 

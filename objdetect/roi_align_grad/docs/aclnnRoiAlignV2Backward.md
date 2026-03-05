@@ -16,65 +16,247 @@
 
 ## 功能说明
 
-算子功能：[aclnnRoiAlignV2](../../roi_align/docs/aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
+[aclnnRoiAlignV2](../../roi_align/docs/aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
 
 ## 函数原型
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignV2BackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlignV2Backward”接口执行计算。
 
-- `aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape, int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio, bool aligned, aclTensor* gradInput, uint64_t* workspaceSize, aclOpExecutor** executor)`
-- `aclnnStatus aclnnRoiAlignV2Backward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(
+  const aclTensor*        gradOutput, 
+  const aclTensor*        boxes, 
+  const aclIntArray*      inputShape, 
+  int64_t                 pooledHeight, 
+  int64_t                 pooledWidth, 
+  float                   spatialScale, 
+  int64_t                 samplingRatio, 
+  bool                    aligned, 
+  aclTensor*              gradInput, 
+  uint64_t*               workspaceSize, 
+  aclOpExecutor**         executor)
+```
+
+```Cpp
+aclnnStatus aclnnRoiAlignV2Backward(
+  void*                   workspace, 
+  uint64_t                workspaceSize, 
+  aclOpExecutor*          executor, 
+  aclrtStream             stream)
+```
 
 ## aclnnRoiAlignV2BackwardGetWorkspaceSize
 
 - **参数说明：**
 
-  - gradOutput（aclTensor\*，计算输入）：反向传播的输入。Device侧的aclTensor，数据类型支持FLOAT，必须与boxes、gradInput数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为（K，C，pooledHeight，pooledWidth），表示反向传播的输入梯度张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight \* pooledWidth的特征图，K需要与boxes第0维保持一致。
-
-  - boxes（aclTensor\*，计算输入）：感兴趣区域box坐标。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、gradInput数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。维度为2维，shape为（K，5），5代表box相关信息（image_id，x1，y1，x2，y2）。image_id取值范围\[0, B\)，向下取整到图像id，B为inputShape第一个值。坐标满足0 <= x1 <= x2 <= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。
-
-  - inputShape（aclIntArray\*，计算输入）：正向输入的shape，用来指定反向传播的输出shape。Host侧的aclIntArray，支持的数据类型为INT32、INT64。size大小为4，值为（B, C, inputHeight, inputWidth），表示正向RoiAlign的输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight \* inputWidth的特征图。
-
-  - pooledHeight（int64_t，计算输入）：正向RoiAlign池化后输出图像的高度。Host侧的输入参数。
-
-  - pooledWidth（int64_t，计算输入）：正向RoiAlign池化后输出图像的宽度。Host侧的输入参数。
-  
-  - spatialScale（float，计算输入）：乘法空间尺度因子，将ROI坐标从其输入空间尺度转换为池化时使用的尺度，即输入特征图X相对于输入图像的空间尺度。Host侧的输入参数，需大于0。
-
-  - samplingRatio（int64_t，计算输入）：RoiAlign中用于计算每个输出元素在H和W方向上的采样频率。Host侧的输入参数，需大于等于0。
-  
-  - aligned（bool，计算输入）：如果为false，则对齐[aclnnRoiAlign](../../roi_align/docs/aclnnRoiAlign.md)版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。Host侧的输入参数。
-
-  - gradInput（aclTensor\*，计算输出）：反向传播的输出。Device侧的aclTensor，数据类型支持FLOAT，必须与gradOutput、boxes数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为（B, C, inputHeight, inputWidth）。
-
-  - workspaceSize（uint64_t*，出参）：返回需要在Device侧申请的workspace大小。
-
-  - executor（aclOpExecutor**，出参）：返回op执行器，包含了算子计算流程。
+  <table class="tg" style="undefined;table-layout: fixed; width: 1384px"><colgroup>
+  <col style="width: 233px">
+  <col style="width: 120px">
+  <col style="width: 238px">
+  <col style="width: 184px">
+  <col style="width: 167px">
+  <col style="width: 120px">
+  <col style="width: 199px">
+  <col style="width: 120px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-5agr">参数名</th>
+      <th class="tg-0pky">输入/输出</th>
+      <th class="tg-0pky">描述</th>
+      <th class="tg-0pky">使用说明</th>
+      <th class="tg-0pky">数据类型</th>
+      <th class="tg-0pky">数据格式</th>
+      <th class="tg-0pky">维度(shape)</th>
+      <th class="tg-0pky">非连续tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">gradOutput（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">反向传播的输入。</td>
+      <td class="tg-0pky">必须与boxes、gradInput数据类型一致。</td>
+      <td class="tg-0pky">FLOAT</td>
+      <td class="tg-0pky">NCHW</td>
+      <td class="tg-0pky">维度为4维，shape为（K，C，pooledHeight，pooledWidth），表示反向传播的输入梯度张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight * pooledWidth的特征图，K需要与boxes第0维保持一致。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">boxes（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">感兴趣区域box坐标。</td>
+      <td class="tg-0pky">必须与gradOutput、gradInput数据类型一致。</td>
+      <td class="tg-0pky">FLOAT</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">维度为2维，shape为（K，5），5代表box相关信息（image_id，x1，y1，x2，y2）。image_id取值范围[0, B)，向下取整到图像id，B为inputShape第一个值。坐标满足0 <= x1 <= x2 <= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">inputShape（aclIntArray*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">正向输入的shape，用来指定反向传播的输出shape。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">INT32、INT64</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">size大小为4，值为（B, C, inputHeight, inputWidth），表示正向RoiAlign的输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight * inputWidth的特征图。</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">pooledHeight（int64_t）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">正向RoiAlign池化后输出图像的高度。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">INT64</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">pooledWidth（int64_t）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">正向RoiAlign池化后输出图像的宽度。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">INT64</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">spatialScale（float）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">乘法空间尺度因子，将ROI坐标从其输入空间尺度转换为池化时使用的尺度，即输入特征图X相对于输入图像的空间尺度。</td>
+      <td class="tg-0pky">需大于0。</td>
+      <td class="tg-0pky">FLOAT32</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">samplingRatio（int64_t）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">RoiAlign中用于计算每个输出元素在H和W方向上的采样频率。</td>
+      <td class="tg-0pky">需大于等于0。</td>
+      <td class="tg-0pky">INT64</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">aligned（bool）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">如果为false，则对齐<a href="../../roi_align/docs/aclnnRoiAlign.md">aclnnRoiAlign</a>版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">BOOL</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">out（aclTensor*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">反向传播的输出。</td>
+      <td class="tg-0pky">必须与gradOutput、boxes数据类型一致。</td>
+      <td class="tg-0pky">FLOAT</td>
+      <td class="tg-0pky">NCHW</td>
+      <td class="tg-0pky">维度为4维，shape为（B, C, inputHeight, inputWidth）。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">workspaceSize（uint64_t*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回需要在Device侧申请的workspace大小。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">executor（aclOpExecutor**）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回op执行器，包括了算子计算流程。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+  </tbody></table>
 
 
 - **返回码：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-```
-第一段接口完成入参校验，出现以下场景时报错：
-返回161001(ACLNN_ERR_PARAM_NULLPTR)：传入的gradOutput、boxes、inputShape、gradInput是空指针。
-返回161002(ACLNN_ERR_PARAM_INVALID)：1. gradOutput和gradInput的数据类型和数据格式不在支持的范围内。
-                                      2. gradOutput、boxes、inputShape和gradInput的shape不满足约束限制。
-                                      3. spatialScale需大于0，samplingRatio需大于等于0。
-```
+  第一段接口完成入参校验，出现以下场景时报错：
+  <table style="undefined;table-layout: fixed; width: 1148px"><colgroup>
+  <col style="width: 290px">
+  <col style="width: 134px">
+  <col style="width: 844px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的gradOutput、boxes、inputShape、gradInput是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="3">161002</td>
+      <td>gradOutput和gradInput的数据类型和数据格式不在支持的范围内。</td>
+    </tr>
+    <tr>
+      <td>gradOutput、boxes、inputShape和gradInput的shape不满足约束限制。</td>
+    </tr>
+    <tr>
+      <td>spatialScale需大于0，samplingRatio需大于等于0。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnRoiAlignV2Backward
 
 - **参数说明：**
 
-  - workspace（void*, 入参）：在Device侧申请的workspace内存地址。
-
-  - workspaceSize（uint64_t, 入参）：在Device侧申请的workspace大小，由第一段接口aclnnRoiAlignV2BackwardGetWorkspaceSize获取。
-
-  - executor（aclOpExecutor*, 入参）：op执行器，包含了算子计算流程。
-
-  - stream（aclrtStream, 入参）：指定执行任务的Stream。
-
+  <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
+  <col style="width: 170px">
+  <col style="width: 144px">
+  <col style="width: 671px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnRoiAlignV2BackwardGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回码：**
 

@@ -34,60 +34,235 @@
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnIouGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnIou”接口执行计算。
 
-- `aclnnStatus aclnnIouGetWorkspaceSize(const aclTensor* bBoxes, const aclTensor* gtBoxes, const char* mode, float eps, bool aligned, aclTensor* overlap, uint64_t* workspaceSize, aclOpExecutor** executor)`
+```Cpp
+aclnnStatus aclnnIouGetWorkspaceSize(
+  const aclTensor*        bBoxes, 
+  const aclTensor*        gtBoxes, 
+  const char*             mode, 
+  float                   eps, 
+  bool                    aligned, 
+  aclTensor*              overlap, 
+  uint64_t*               workspaceSize, 
+  aclOpExecutor**         executor)
+```
 
-- `aclnnStatus aclnnIou(void* workspace, uint64_t workspaceSize,  aclOpExecutor* executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnIou(
+  void*                   workspace, 
+  uint64_t                workspaceSize,  
+  aclOpExecutor*          executor, 
+  aclrtStream             stream)
+```
 
 ## aclnnIouGetWorkspaceSize
 
 - **参数说明：**
 
-  - bBoxes（aclTensor*，计算输入）：预测矩形框，shape为(m, 4)的二维tensor，m为bounding boxes的数量，4指[x0, y0, x1, y1]，(x0, y0)和(x1, y1)分别表示矩形框的左上角和右下角，需满足x1 > x0, y1 > y0。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-    - <term>Atlas 推理系列产品</term>：FLOAT、FLOAT16
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：FLOAT、FLOAT16、BFLOAT16
-  - gtBoxes（aclTensor*，计算输入）：真值矩形框，shape为(n, 4)的二维tensor，n为bounding boxes的数量，4指[x2, y2, x3, y3]，(x2, y2)和(x3, y3)分别表示矩形框的左上角和右下角，需满足x3 > x2, y3 > y2。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND，数据类型需要和bBoxes保持一致。
-    - <term>Atlas 推理系列产品</term>：FLOAT、FLOAT16
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：FLOAT、FLOAT16、BFLOAT16
-  - mode（char*，计算输入）: 用于选择计算方式"iou"或"iof"。Host侧的字符串，数据类型支持String。
-    - "iou"：计算交并比。
-    - “iof"：计算前景交叉比。
-  - eps（float，计算输入）：防止除零，计算面积时长和宽都会加上eps。Host侧的浮点型，数据类型支持FLOAT。
-  - aligned（bool，计算输入）：用于标识两个输入的shape是否相同。Host侧的布尔型，数据类型支持BOOL。
-    - True：bBoxes和gtBoxes的shape保持一致，都是(m, 4)，输出的shape为(m, 1)。
-    - False：bBoxes和gtBoxes的shape不一致，分别是(m, 4)和(n, 4)，输出的shape为(m, n)。
-  - overlap（aclTensor*，计算输出）：根据两个输入计算得到的交并比/前景交叉比，shape为(m, n)或(m, 1)的二维tensor。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND，数据类型需要和bBoxes保持一致。
-    - <term>Atlas 推理系列产品</term>：FLOAT、FLOAT16
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：FLOAT、FLOAT16、BFLOAT16
-  - workspaceSize（uint64_t*，出参）：返回需要在Device侧申请的workspace大小。
-  - executor（aclOpExecutor**，出参）：返回op执行器，包含了算子计算流程。
+  <table class="tg" style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 233px">
+  <col style="width: 120px">
+  <col style="width: 200px">
+  <col style="width: 400px">
+  <col style="width: 167px">
+  <col style="width: 120px">
+  <col style="width: 120px">
+  <col style="width: 120px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-5agr">参数名</th>
+      <th class="tg-0pky">输入/输出</th>
+      <th class="tg-0pky">描述</th>
+      <th class="tg-0pky">使用说明</th>
+      <th class="tg-0pky">数据类型</th>
+      <th class="tg-0pky">数据格式</th>
+      <th class="tg-0pky">维度(shape)</th>
+      <th class="tg-0pky">非连续tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">bBoxes（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">预测矩形框。</td>
+      <td class="tg-0pky"><ul><li>shape中的m为bounding boxes的数量。</li><li>shape中的4指[x0, y0, x1, y1]，(x0, y0)和(x1, y1)分别表示矩形框的左上角和右下角，需满足x1 > x0, y1 > y0。</li></ul></td>
+      <td class="tg-0pky">FLOAT、FLOAT16、BFLOAT16</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">为(m, 4)。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">gtBoxes（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">真值矩形框。</td>
+      <td class="tg-0pky"><ul><li>n为bounding boxes的数量。</li><li>4指[x2, y2, x3, y3]，(x2, y2)和(x3, y3)分别表示矩形框的左上角和右下角，需满足x3 > x2, y3 > y2。</li><li>数据类型需要和bBoxes保持一致。</li></ul></td>
+      <td class="tg-0pky">FLOAT、FLOAT16、BFLOAT16</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">为(n, 4)。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">mode（char*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">用于选择计算方式"iou"或"iof"。</td>
+      <td class="tg-0lax"><ul><li>“iou”：计算交并比。</li><li>“iof”：计算前景交叉比。</li></ul></td>
+      <td class="tg-0lax">String</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">eps（float）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">防止除零，计算面积时长和宽都会加上eps。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">FLOAT</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">aligned（bool）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">用于标识两个输入的shape是否相同。</td>
+      <td class="tg-0lax"><ul><li>True：bBoxes和gtBoxes的shape保持一致，都是(m, 4)，输出的shape为(m, 1)。</li><li>False：bBoxes和gtBoxes的shape不一致，分别是(m, 4)和(n, 4)，输出的shape为(m, n)。</li></ul></td>
+      <td class="tg-0lax">BOOL</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">overlap（aclTensor*）</td>
+      <td class="tg-0lax">输出</td>
+      <td class="tg-0lax">根据两个输入计算得到的交并比/前景交叉比。</td>
+      <td class="tg-0lax">数据类型需要和bBoxes保持一致。</td>
+      <td class="tg-0lax">FLOAT、FLOAT16、BFLOAT16</td>
+      <td class="tg-0lax">ND</td>
+      <td class="tg-0lax">为(m, n)或(m, 1)。</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">workspaceSize（uint64_t*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回需要在Device侧申请的workspace大小。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">executor（aclOpExecutor**）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回op执行器，包括了算子计算流程。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+  </tbody></table>
+
+  - <term>Atlas 推理系列产品</term>：数据类型不支持BFLOAT16。
 
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-  ```
   第一段接口完成入参校验，出现以下场景时报错：
-  返回161001 (ACLNN_ERR_PARAM_NULLPTR)：传入的bBoxes、gtBoxes和输出overlap是空指针。
-  返回161002 (ACLNN_ERR_PARAM_INVALID)：1. bBoxes、gtBoxes、overlap不是二维。
-                                        2. bBoxes、gtBoxes、overlap的数据类型不一致。
-                                        3. bBoxes、gtBoxes、overlap的数据类型和数据格式不在支持的范围内。
-                                        4. bBoxes或gtBoxes的第二维不是4。
-                                        5. aligned为true时，bBoxes和gtBoxes的第一维不相同。
-                                        6. aligned为true时，overlap的第二维不是1。
-                                        7. mode不是"iou"或"iof"。
-                                        8. eps小于0。
-  返回561103 (ACLNN_ERR_INNER_NULLPTR): 1. API内部校验错误，通常由于输入数据或属性的规格不在支持的范围之内导致。
-  返回361001 (ACLNN_ERR_RUNTIME_ERROR)：1. API调用npu runtime的接口异常，如SocVersion不支持。
-  ```
+  <table style="undefined;table-layout: fixed; width: 1148px"><colgroup>
+  <col style="width: 290px">
+  <col style="width: 134px">
+  <col style="width: 844px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的bBoxes、gtBoxes和输出overlap是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="8">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="8">161002</td>
+      <td>bBoxes、gtBoxes、overlap不是二维。</td>
+    </tr>
+    <tr>
+      <td>bBoxes、gtBoxes、overlap的数据类型不一致。</td>
+    </tr>
+    <tr>
+      <td>bBoxes、gtBoxes、overlap的数据类型和数据格式不在支持的范围内。</td>
+    </tr>
+    <tr>
+      <td>bBoxes或gtBoxes的第二维不是4。</td>
+    </tr>
+    <tr>
+      <td>aligned为true时，bBoxes和gtBoxes的第一维不相同。</td>
+    </tr>
+    <tr>
+      <td>aligned为true时，overlap的第二维不是1。</td>
+    </tr>
+    <tr>
+      <td>mode不是"iou"或"iof"。</td>
+    </tr>
+    <tr>
+      <td>eps小于0。</td>
+    </tr>
+    <tr>
+      <td>ACLNN_ERR_INNER_NULLPTR</td>
+      <td>561103</td>
+      <td>API内部校验错误，通常由于输入数据或属性的规格不在支持的范围之内导致。</td>
+    </tr>
+    <tr>
+      <td>ACLNN_ERR_RUNTIME_ERROR</td>
+      <td>361001</td>
+      <td>API调用npu runtime的接口异常，如SocVersion不支持。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnIou
 
 - **参数说明：**
 
-  - workspace（void*，入参）：在Device侧申请的workspace内存地址。
-  - workspaceSize（uint64_t，入参）：在Device侧申请的workspace大小，由第一段接口aclnnIouGetWorkspaceSize获取。
-  - executor（aclOpExecutor*，入参）：op执行器，包含了算子计算流程。
-  - stream（aclrtStream，入参）：指定执行任务的Stream。
+  <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
+  <col style="width: 170px">
+  <col style="width: 144px">
+  <col style="width: 671px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnIouGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 
 - **返回值：**

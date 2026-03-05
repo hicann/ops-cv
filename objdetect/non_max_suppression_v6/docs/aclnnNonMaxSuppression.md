@@ -16,67 +16,242 @@
 
 ## 功能说明
 
-算子功能：删除分数小于scoreThreshold的边界框，筛选出与之前被选中部分重叠较高（IOU较高）的框。
+删除分数小于scoreThreshold的边界框，筛选出与之前被选中部分重叠较高（IOU较高）的框。
 
 ## 函数原型
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnNonMaxSuppressionGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnNonMaxSuppression”接口执行计算。
 
-- `aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor *boxes, const aclTensor *scores, aclIntArray *maxOutputBoxesPerClass, aclFloatArray *iouThreshold, aclFloatArray *scoreThreshold, int32_t centerPointBox, aclTensor *selectedIndices, uint64_t *workspaceSize, aclOpExecutor **executor)`
-- `aclnnStatus aclnnNonMaxSuppression(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(
+  const aclTensor*        boxes, 
+  const aclTensor*        scores, 
+  aclIntArray*            maxOutputBoxesPerClass, 
+  aclFloatArray*          iouThreshold, 
+  aclFloatArray*          scoreThreshold, 
+  int32_t                 centerPointBox, 
+  aclTensor*              selectedIndices, 
+  uint64_t*               workspaceSize, 
+  aclOpExecutor**         executor)
+```
+
+```Cpp
+aclnnStatus aclnnNonMaxSuppression(
+  void*                   workspace, 
+  uint64_t                workspaceSize, 
+  aclOpExecutor*          executor, 
+  aclrtStream             stream)
+```
 
 ## aclnnNonMaxSuppressionGetWorkspaceSize
 
 - **参数说明：**
 
-  - boxes(aclTensor*, 计算输入)：Device侧的aclTensor，数据类型支持FLOAT、FLOAT16。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，支持[数据格式ND](../../../docs/zh/context/数据格式.md)。shape为[num_batches, spatial_dimension, 4]。
-
-  - scores(aclTensor*, 计算输入)：Device侧的aclTensor，数据类型支持FLOAT、FLOAT16。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，支持[数据格式ND](../../../docs/zh/context/数据格式.md)。shape为[num_batches, num_classes, spatial_dimension]。
-
-  - maxOutputBoxesPerClass(aclIntArray*, 计算输入)：表示每个批次每个类别选择的最大框数。Host侧的aclIntArray，数据类型支持INT32。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，支持[数据格式ND](../../../docs/zh/context/数据格式.md)。数值上限为700。
-
-  - iouThreshold(aclFloatArray*, 计算输入)：Host侧的aclFloatArray，数据类型支持FLOAT。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，支持[数据格式ND](../../../docs/zh/context/数据格式.md)。取值范围[0, 1]。表示判断框相对于IOU是否重叠过多的阈值。
-
-  - scoreThreshold(aclFloatArray*, 计算输入)：Host侧的aclFloatArray，数据类型支持FLOAT。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，支持[数据格式ND](../../../docs/zh/context/数据格式.md)。取值范围[0, 1]。表示根据得分决定何时移除框的阈值。
-
-  - centerPointBox(int, 计算输入)：Host侧的整数，数据类型支持INT32。取值范围[0, 1]。用于决定边界框格式。当等于0时，主要用于TensorFlow模型, 数据以(y1, x1, y2, x2)形式提供，其中(y1, x1) 、(y2, x2)是对角线框角坐标，需要用户自行保证x1<x2、y1<y2。当等于1时，主要用于PyTorch模型，数据以(x_center, y_center, width, height)形式提供。
-
-  - selectedIndices(aclTensor*, 计算输出)：Device侧的aclTensor，数据类型支持INT32。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，支持[数据格式ND](../../../docs/zh/context/数据格式.md)。shape为[num_selected_indices, 3]，数据以[batch_index, class_index, box_index]形式提供。
-
-  - workspaceSize(uint64_t*, 出参)：返回需要在Device侧申请的workspace大小。
-
-  - executor(aclOpExecutor**, 出参)：返回op执行器，包含了算子计算流程。
-
+  <table class="tg" style="undefined;table-layout: fixed; width: 1500px"><colgroup>
+  <col style="width: 233px">
+  <col style="width: 120px">
+  <col style="width: 238px">
+  <col style="width: 300px">
+  <col style="width: 167px">
+  <col style="width: 120px">
+  <col style="width: 199px">
+  <col style="width: 120px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-5agr">参数名</th>
+      <th class="tg-0pky">输入/输出</th>
+      <th class="tg-0pky">描述</th>
+      <th class="tg-0pky">使用说明</th>
+      <th class="tg-0pky">数据类型</th>
+      <th class="tg-0pky">数据格式</th>
+      <th class="tg-0pky">维度(shape)</th>
+      <th class="tg-0pky">非连续tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">boxes（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">输入tensor。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">FLOAT、FLOAT16</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">为[num_batches, spatial_dimension, 4]。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">scores（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">输入tensor。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">FLOAT、FLOAT16</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">为[num_batches, num_classes, spatial_dimension]。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">maxOutputBoxesPerClass（aclIntArray*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">表示每个批次每个类别选择的最大框数。</td>
+      <td class="tg-0lax">数值上限为700。</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">iouThreshold（aclFloatArray*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">表示判断框相对于IOU是否重叠过多的阈值。</td>
+      <td class="tg-0lax">取值范围[0, 1]。</td>
+      <td class="tg-0lax">FLOAT</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">scoreThreshold（aclFloatArray*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">表示根据得分决定何时移除框的阈值。</td>
+      <td class="tg-0lax">取值范围[0, 1]。</td>
+      <td class="tg-0lax">FLOAT</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">centerPointBox（int）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">用于决定边界框格式。</td>
+      <td class="tg-0lax"><ul><li>取值范围[0, 1]。</li><li>当等于0时，主要用于TensorFlow模型, 数据以(y1, x1, y2, x2)形式提供，其中(y1, x1) 、(y2, x2)是对角线框角坐标，需要用户自行保证x1 < x2、y1 < y2。</li><li>当等于1时，主要用于PyTorch模型，数据以(x_center, y_center, width, height)形式提供。</li></ul></td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">selectedIndices（aclTensor*）</td>
+      <td class="tg-0lax">输出</td>
+      <td class="tg-0lax">输出Tensor</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">ND</td>
+      <td class="tg-0lax">shape为[num_selected_indices, 3]，数据以[batch_index, class_index, box_index]形式提供。</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">workspaceSize（uint64_t*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回需要在Device侧申请的workspace大小。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">executor（aclOpExecutor**）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回op执行器，包括了算子计算流程。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+  </tbody></table>
 
 - **返回码：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-```
-第一段接口完成入参校验，出现以下场景时报错：
-返回361001(ACLNN_ERR_RUNTIME_ERROR)：1. 当前产品不支持。
-返回161001(ACLNN_ERR_PARAM_NULLPTR)：1. 传入的boxes、scores、out是空指针。
-返回161002(ACLNN_ERR_PARAM_INVALID)：1. boxes、scores和maxOutputBoxesPerClass的数据类型不在支持的范围内。
-                                    2. boxes、scores和 selectedIndices 的数据格式不在支持的范围内。
-                                    3. boxes、scores 的shape不在支持的范围内：
-                                        1) boxes、scores需为3维
-                                        2) boxes第0维必须等于scores第0维度
-                                        3) boxes第1维必须等于scores第2维度
-                                        4) boxes第2维必须等于4
-                                    4. iouThreshold、scoreThreshold、centerPointBox、maxOutputBoxesPerClass数值不在支持的范围内。
-```
+  第一段接口完成入参校验，出现以下场景时报错：
+  <table style="undefined;table-layout: fixed; width: 1148px"><colgroup>
+  <col style="width: 290px">
+  <col style="width: 134px">
+  <col style="width: 844px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_RUNTIME_ERROR</td>
+      <td>361001</td>
+      <td>当前产品不支持。</td>
+    </tr>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的boxes、scores、out是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="7">161002</td>
+      <td>boxes、scores和maxOutputBoxesPerClass的数据类型不在支持的范围内。</td>
+    </tr>
+    <tr>
+      <td>boxes、scores和 selectedIndices 的数据格式不在支持的范围内。</td>
+    </tr>
+    <tr>
+      <td>boxes、scores需为3维。</td>
+    </tr>
+    <tr>
+      <td>boxes第0维必须等于scores第0维度。</td>
+    </tr>
+    <tr>
+      <td>boxes第1维必须等于scores第2维度。</td>
+    </tr>
+    <tr>
+      <td>boxes第2维必须等于4。</td>
+    </tr>
+    <tr>
+      <td>iouThreshold、scoreThreshold、centerPointBox、maxOutputBoxesPerClass数值不在支持的范围内。</td>
+    </tr>
+  </tbody>
+  </table>
+
 
 ## aclnnNonMaxSuppression
 
 - **参数说明：**
 
-  - workspace(void*, 入参)：在Device侧申请的workspace内存地址。
-
-  - workspaceSize(uint64_t, 入参)：在Device侧申请的workspace大小，由第一段接口aclnnNonMaxSuppressionGetWorkspaceSize获取。
-
-  - executor(aclOpExecutor*, 入参)：op执行器，包含了算子计算流程。
-
-  - stream(aclrtStream, 入参)：指定执行任务的Stream。
-
+  <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
+  <col style="width: 170px">
+  <col style="width: 144px">
+  <col style="width: 671px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnNonMaxSuppressionGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回码：**
 

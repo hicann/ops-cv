@@ -16,76 +16,271 @@
 
 ## 功能说明
 
-算子功能：RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
+RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
 
 ## 函数原型
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlign”接口执行计算。
 
-- `aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices, const char* mode, int outputHeight, int outputWidth, int samplingRatio, float spatialScale, aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)`
-- `aclnnStatus aclnnRoiAlign(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, const aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnRoiAlignGetWorkspaceSize(
+  const aclTensor*        self, 
+  const aclTensor*        rois, 
+  const aclTensor*        batchIndices, 
+  const char*             mode, 
+  int                     outputHeight, 
+  int                     outputWidth, 
+  int                     samplingRatio, 
+  float                   spatialScale, 
+  aclTensor*              out, 
+  uint64_t*               workspaceSize, 
+  aclOpExecutor**         executor)
+```
+
+```Cpp
+aclnnStatus aclnnRoiAlign(
+  void*                   workspace, 
+  uint64_t                workspaceSize, 
+  aclOpExecutor*          executor, 
+  const aclrtStream       stream)
+```
 
 ## aclnnRoiAlignGetWorkspaceSize
 
 - **参数说明：**
 
-  - self(aclTensor*, 计算输入)：Device侧的aclTensor，数据类型支持FLOAT、FLOAT16，必须与rois/out数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为(N, C, H, W)。
-
-  - rois(aclTensor*, 计算输入)：感兴趣区域。Device侧的aclTensor，数据类型支持FLOAT、FLOAT16，必须与self/out数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。维度为2维，shape为(numRois, 4)。坐标格式为(x1, y1, x2, y2)，且满足0 <= x1 <= x2 <= W/spatialScale、0 <= y1 <= y2 <= H/spatialScale。
-
-  - batchIndices(aclTensor*, 计算输入)：Device侧的aclTensor，数据类型支持INT32。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。表示每batch对应图像的索引。维度为1维，shape为(numRois,)。
-
-  - out(aclTensor*, 计算输出)：Device侧的aclTensor，数据类型支持FLOAT、FLOAT16，必须与self/rois数据类型一致。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。维度为4维，shape为(numRois, C, outputHeight, outputWidth)。
-
-  - mode(char\*, 计算输入)：支持"avg"和"max"。池化模式。
-
-  - outputHeight(int, 计算输入)：输出图像的高度。整型，建议传值1。
-
-  - outputWidth(int, 计算输入)：输出图像的宽度。整型，建议传值1。
-
-  - samplingRatio(int, 计算输入)：用于计算每个输出元素在H和W方向上的采样频率，整型，建议传值0。
-
-  - spatialScale(float, 计算输入)：乘法空间尺度因子，将ROI坐标从其输入空间尺度转换为池化时使用的尺度，即输入特征图X相对于输入图像的空间尺度。浮点型，建议传值1.0。
-
-  - workspaceSize(uint64_t*, 出参)：返回需要在Device侧申请的workspace大小。
-
-  - executor(aclOpExecutor**, 出参)：返回op执行器，包含了算子计算流程。
+  <table class="tg" style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <col style="width: 233px">
+  <col style="width: 120px">
+  <col style="width: 238px">
+  <col style="width: 350px">
+  <col style="width: 167px">
+  <col style="width: 120px">
+  <col style="width: 199px">
+  <col style="width: 120px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-5agr">参数名</th>
+      <th class="tg-0pky">输入/输出</th>
+      <th class="tg-0pky">描述</th>
+      <th class="tg-0pky">使用说明</th>
+      <th class="tg-0pky">数据类型</th>
+      <th class="tg-0pky">数据格式</th>
+      <th class="tg-0pky">维度(shape)</th>
+      <th class="tg-0pky">非连续tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">self（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">输入tensor。</td>
+      <td class="tg-0pky">必须与rois/out数据类型一致。</td>
+      <td class="tg-0pky">FLOAT、FLOAT16</td>
+      <td class="tg-0pky">NCHW</td>
+      <td class="tg-0pky">为4维，shape为(N, C, H, W)。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">rois（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">感兴趣区域。</td>
+      <td class="tg-0pky"><ul><li>必须与self/out数据类型一致。</li><li>坐标格式为(x1, y1, x2, y2)，且满足0 <= x1 <= x2 <= W/spatialScale、0 <= y1 <= y2 <= H/spatialScale。</li></ul></td>
+      <td class="tg-0pky">FLOAT、FLOAT16</td>
+      <td class="tg-0pky">ND</td>
+      <td class="tg-0pky">维度为2维，shape为(numRois, 4)。</td>
+      <td class="tg-0pky">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">batchIndices（aclTensor*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">表示每batch对应图像的索引。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">ND</td>
+      <td class="tg-0lax">为1维，shape为(numRois,)。</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">mode（char*）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">支持"avg"和"max"。池化模式。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">String</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">outputHeight（int）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">输出图像的高度。</td>
+      <td class="tg-0lax">建议传值1。</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">outputWidth（int）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">输出图像的宽度。</td>
+      <td class="tg-0lax">建议传值1。</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">samplingRatio（int）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">用于计算每个输出元素在H和W方向上的采样频率。</td>
+      <td class="tg-0lax">建议传值0。</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">spatialScale（float）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">乘法空间尺度因子，将ROI坐标从其输入空间尺度转换为池化时使用的尺度，即输入特征图X相对于输入图像的空间尺度。</td>
+      <td class="tg-0lax">建议传值1.0。</td>
+      <td class="tg-0lax">FLOAT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">out（aclTensor*）</td>
+      <td class="tg-0lax">输出</td>
+      <td class="tg-0lax">输出Tensor</td>
+      <td class="tg-0lax">必须与self/rois数据类型一致。</td>
+      <td class="tg-0lax">FLOAT、FLOAT16</td>
+      <td class="tg-0lax">NCHW</td>
+      <td class="tg-0lax">维度为4维，shape为(numRois, C, outputHeight, outputWidth)。</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">workspaceSize（uint64_t*）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回需要在Device侧申请的workspace大小。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">executor（aclOpExecutor**）</td>
+      <td class="tg-0pky">输出</td>
+      <td class="tg-0pky">返回op执行器，包括了算子计算流程。</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">-</td>
+    </tr>
+  </tbody></table>
 
 
 - **返回码：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-```
-第一段接口完成入参校验，出现以下场景时报错：
-返回161001(ACLNN_ERR_PARAM_NULLPTR)：1. 传入的self、rois、batchIndices、out是空指针。
-返回161002(ACLNN_ERR_PARAM_INVALID)：1. self和out的数据类型不在支持的范围内：
-                                     1) self、rois和out仅支持FLOAT、FLOAT16；
-                                     2) batchIndices仅支持INT32；
-                                     3) self、rois和out的数据类型不一致。
-                                    2. self、rois、batchIndices和out的数据格式不在支持的范围内：
-                                     1) self和out支持NCHW；
-                                     2) rois和batchIndices支持ND。
-                                    3. self、rois、batchIndices和out的shape不在支持的范围内。
-                                     1) self和out需为4维；
-                                     2) rois需为2维；
-                                     3) batchIndices需为1维。
-                                    4. mode仅支持"avg"和"max"两种取值。
-                                    5. samplingRatio需大于等于0。
-                                    6. spatialScale需大于0。
-```
+  第一段接口完成入参校验，出现以下场景时报错：
+  <table style="undefined;table-layout: fixed; width: 1148px"><colgroup>
+  <col style="width: 290px">
+  <col style="width: 134px">
+  <col style="width: 844px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的self、rois、batchIndices、out是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="11">161002</td>
+      <td>self、rois和out仅支持FLOAT、FLOAT16。</td>
+    </tr>
+    <tr>
+      <td>batchIndices仅支持INT32。</td>
+    </tr>
+    <tr>
+      <td>self、rois和out的数据类型不一致。</td>
+    </tr>
+    <tr>
+      <td>self和out支持NCHW。</td>
+    </tr>
+    <tr>
+      <td>rois和batchIndices支持ND。</td>
+    </tr>
+    <tr>
+      <td>self和out需为4维。</td>
+    </tr>
+    <tr>
+      <td>rois需为2维。</td>
+    </tr>
+    <tr>
+      <td>batchIndices需为1维。</td>
+    </tr>
+    <tr>
+      <td>mode仅支持"avg"和"max"两种取值。</td>
+    </tr>
+    <tr>
+      <td>samplingRatio需大于等于0。</td>
+    </tr>
+    <tr>
+      <td>spatialScale需大于0。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnRoiAlign
 
 - **参数说明：**
 
-  - workspace(void*, 入参)：在Device侧申请的workspace内存地址。
-
-  - workspaceSize(uint64_t, 入参)：在Device侧申请的workspace大小，由第一段接口aclnnRoiAlignGetWorkspaceSize获取。
-
-  - executor(aclOpExecutor*, 入参)：op执行器，包含了算子计算流程。
-
-  - stream(aclrtStream, 入参)：指定执行任务的Stream。
-
+  <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
+  <col style="width: 170px">
+  <col style="width: 144px">
+  <col style="width: 671px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnRoiAlignGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回码：**
 
