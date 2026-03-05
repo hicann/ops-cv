@@ -71,7 +71,7 @@
         {
           "name": "align_corners",
           "dtype": "bool",
-          "value": false
+          "value": null
         }
       ]
     },
@@ -145,7 +145,7 @@
         {
           "name": "align_corners",
           "dtype": "bool",
-          "value": false
+          "value": null
         }
       ]
     },
@@ -219,7 +219,7 @@
         {
           "name": "align_corners",
           "dtype": "bool",
-          "value": false
+          "value": null
         }
       ]
     }
