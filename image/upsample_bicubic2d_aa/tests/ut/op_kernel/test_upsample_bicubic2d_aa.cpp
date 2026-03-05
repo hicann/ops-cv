@@ -124,3 +124,48 @@ TEST_F(upsample_bicubic2d_aa_test, test_case_float16)
 
     system("cd ./upsample_bicubic2d_aa_data/ && python3 compare_data.py 'float32'");
 }
+
+TEST_F(upsample_bicubic2d_aa_test, test_case_bfloat16)
+{
+    system("cp -rf ../../../../image/upsample_bicubic2d_aa/tests/ut/op_kernel/upsample_bicubic2d_aa_data ./");
+    system("chmod -R 755 ./upsample_bicubic2d_aa_data/");
+
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 24;
+    } compile_info;
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAA",
+                                                {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({16, 16})),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+                                                &compile_info);
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
+
+    system("cd ./upsample_bicubic2d_aa_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'bfloat16'");
+    size_t inputByteSize = 4 * 4  * sizeof(half);
+    std::string fileName = "./upsample_bicubic2d_aa_data/bfloat16_input_bicubic2d_aa.bin";
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+    size_t outputByteSize = 16 * 16 * sizeof(half);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
+    uint32_t numBlocks = 1;
+    ICPU_RUN_KF(upsample_bicubic2d_aa, numBlocks, x, y, workspace, tiling);
+    fileName = "./upsample_bicubic2d_aa_data/bfloat16_output_bicubic2d_aa.bin";
+    WriteFile(fileName, y, outputByteSize);
+    
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_bicubic2d_aa_data/ && python3 compare_data.py 'float32'");
+}

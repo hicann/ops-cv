@@ -105,6 +105,7 @@ TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_004)
     std::vector<size_t> expectWorkspaces = {33570816};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
 TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_005)
 {
     optiling::UpsampleBicubic2dAACompileInfo compileInfo = {64};
@@ -138,5 +139,65 @@ TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_006)
     uint64_t expectTilingKey = 257;
     string expectTilingData = "4 2 2 4 4 8 8 0 0 4539628425446424576 4575657222473777152 4611686019501129728 ";
     std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_007)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 0;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAA",
+        {{{{1, 1, 200, 200}, {1, 1, 200, 200}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{1, 1, 36, 36}, {1, 1, 36, 36}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({36, 36})),
+        gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+        gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info);
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "4661726013463578396 4483423504145338860 4697754810490930972 107374182425 15393162792448 0 16 14848 4294967297 858993459400 4294967297 154618822692 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 858993459201 858993459236 858993459400 481036337168 68719476944 8589934656 4294967298 1 0 246290604621824 13312 4294967297 4294967297 8589934594 0 8589934594 1 0 0 0 0 0 0 0 0 68719476737 858993459236 68719476936 481036337188 206158430224 4294967408 4294967297 1 0 61572651155456 3072 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {33569280};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_008)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 0;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAA",
+        {{{{1, 1, 200, 200}, {1, 1, 200, 200}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {{{{1, 1, 36, 36}, {1, 1, 36, 36}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({36, 36})),
+        gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+        gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info);
+    uint64_t expectTilingKey = 3;
+    string expectTilingData = "4661726013463578396 4483423504145338860 4697754810490930972 107374182425 15393162792448 0 16 14848 4294967297 858993459400 4294967297 154618822692 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 858993459201 858993459236 858993459400 481036337168 68719476944 8589934656 4294967298 1 0 246290604621824 13312 4294967297 4294967297 8589934594 0 8589934594 1 0 0 0 0 0 0 0 0 68719476737 858993459236 68719476936 481036337188 206158430224 4294967408 4294967297 1 0 61572651155456 3072 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {33569280};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_009)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 40;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dAA",
+                                                {{{{1, 1, 200, 200}, {1, 1, 200, 200}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {{{{1, 1, 20, 20}, {1, 1, 20, 20}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({20, 20})),
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+                                                &compile_info);
+    uint64_t expectTilingKey = 2;
+    string expectTilingData = "4692750812812673024 4453159313439771853 4728779609840025600 176093659177 54975581401600 8589934632 16 16384 4294967297 858993459400 4294967297 85899345940 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 0 0 0 0 0 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 68719476752 85899345940 85899345940 85899345940 85899345940 85899345940 85899345940 85899345940 85899345940 85899345940 85899345940 0 0 0 0 0 42949672960 128849018900 214748364840 300647710780 386547056720 472446402660 558345748600 644245094540 730144440480 816043786420 42949672960 128849018900 214748364840 300647710780 386547056720 472446402660 558345748600 644245094540 730144440480 816043786420 0 0 0 0 0 85899345930 171798691870 257698037810 343597383750 429496729690 515396075630 601295421570 687194767510 773094113450 858993459390 85899345930 171798691870 257698037810 343597383750 429496729690 515396075630 601295421570 687194767510 773094113450 858993459390 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68719476736 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 85899345936 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4294967297 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 858993459201 858993459220 858993459400 858993459216 68719476944 30064771104 4294967303 1 0 862017116176384 13312 4294967297 4294967297 30064771079 0 8589934594 1 0 0 0 0 0 0 0 0 68719476737 858993459220 68719476936 858993459220 137438953488 4294967496 4294967297 1 0 164926744166400 2048 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {34594816};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
