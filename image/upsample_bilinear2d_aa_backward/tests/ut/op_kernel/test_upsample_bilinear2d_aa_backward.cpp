@@ -142,3 +142,47 @@ TEST_F(upsample_bilinear2d_aa_backward_test, test_case_float16_2) {
 
     system("cd ./upsample_bilinear2d_aa_backward_data/ && python3 compare_data.py 'float16'");
 }
+
+TEST_F(upsample_bilinear2d_aa_backward_test, test_case_bfloat16_3) {
+    UpsampleBilinear2dAABackwardCompileInfo compileInfo = {24};
+    std::vector<int64_t> output_size = {16, 16};
+    std::vector<int64_t> input_size = {1, 1, 4, 4};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAABackward",
+                                              {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND},},
+                                              {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND},},
+                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+                                              {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+                                                {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+                                                {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
+                                              &compileInfo, socVersion, 24, 192*1024,8192);
+
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_EQ(tilingRet, true);
+
+    system("cd ./upsample_bilinear2d_aa_backward_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)'  'bfloat16'");
+    size_t inputByteSize = 1 * 1 * 16 * 16 * sizeof(half);
+    std::string fileName = "./upsample_bilinear2d_aa_backward_data/bfloat16_input_upsample_bilinear2d_aa_backward.bin";
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(CeilAlign(inputByteSize, 32));
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+    size_t outputByteSize = 1 * 1 * 4 * 4 * sizeof(half);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(CeilAlign(outputByteSize, 32));
+
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
+    ICPU_RUN_KF(upsample_bilinear2d_aa_backward, tilingInfo.blockNum, x, y, workspace, tiling);
+
+    fileName = "./upsample_bilinear2d_aa_backward_data/bfloat16_output_upsample_bilinear2d_aa_backward.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_bilinear2d_aa_backward_data/ && python3 compare_data.py 'bfloat16'");
+}

@@ -13,6 +13,7 @@ import os
 import numpy as np
 import re
 import torch
+import tensorflow as tf
 
 def parse_str_to_shape_list(shape_str):
     shape_str = shape_str.strip('(').strip(')')
@@ -22,14 +23,15 @@ def parse_str_to_shape_list(shape_str):
 def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     d_type_dict = {
         "float32": np.float32,
-        "float16": np.float16
+        "float16": np.float16,
+        "bfloat16": tf.bfloat16.as_numpy_dtype
     }
     np_type = d_type_dict[d_type]
     input_shape, _ = parse_str_to_shape_list(input_shape_str)
     _, output_size = parse_str_to_shape_list(output_size_str)
     size = np.prod(input_shape)
     tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
-    x_tensor = torch.tensor(tmp_input, dtype=torch.float32)
+    x_tensor = torch.tensor(tmp_input.astype(np.float32), dtype=torch.float32)
     x_tensor.requires_grad_(True)
     y_tensor = torch.nn.functional.interpolate(x_tensor, output_size, mode='trilinear', align_corners=False)
     grad_f = torch.randn_like(y_tensor)
@@ -39,8 +41,8 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     grad_output = np.array(grad_f).astype(np_type)
     tmp_golden = np.array(grad_golden).astype(np_type)
 
-    grad_output.astype(np_type).tofile(f"{d_type}_grad_output_trilinear3d_grad.bin")
-    tmp_golden.astype(np_type).tofile(f"{d_type}_golden_trilinear3d_grad.bin")
+    grad_output.astype(np_type).tofile(f"{d_type}_input_upsample_trilinear3d_backward.bin")
+    tmp_golden.astype(np_type).tofile(f"{d_type}_golden_upsample_trilinear3d_backward.bin")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:

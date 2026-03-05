@@ -35,7 +35,7 @@ constexpr int64_t INPUT_DIMS = 4;
 constexpr int32_t CACHE_LINE = 128;
 constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
 
-struct BaseTilingData {
+struct UpsampleBilinear2dAABaseTiling {
     int64_t dimN = 0;
     int64_t dimC = 0;
     int64_t inH = 0;
@@ -78,17 +78,17 @@ private:
     ge::graphStatus CheckInputShapeAndAttr();
     void ComputeScalesSupportValues(float originalScaleH, float originalScaleW);
     void CalTilingData();
-    void ComputeDataCopy();
+    void DataCopyTiling();
     void FillTilingData();
     void PrintTilingData();
 
 private:
-    BaseTilingData baseTiling_;
+    UpsampleBilinear2dAABaseTiling baseTiling_;
     gert::TilingContext *context_ = nullptr;
     UpsampleBilinear2dAARegBaseTilingData *tilingData_{ nullptr };
 };
 
-void UpsampleBilinear2dAARegbaseTiling::ComputeDataCopy()
+void UpsampleBilinear2dAARegbaseTiling::DataCopyTiling()
 {
     baseTiling_.cacheLineNum = CACHE_LINE / baseTiling_.dtypeSize;
     if (baseTiling_.outSize <= static_cast<int64_t>(baseTiling_.cacheLineNum * baseTiling_.coreNum)) {
@@ -112,7 +112,7 @@ void UpsampleBilinear2dAARegbaseTiling::CalTilingData()
         OP_LOGI(context_, "enter datacopy");
         baseTiling_.schId = CONST_0; // 纯copy模板
         baseTiling_.isInt32 = 0;
-        ComputeDataCopy();
+        DataCopyTiling();
     } else {
         OP_LOGI(context_, "enter simt nchw");
         int64_t coreNum = static_cast<int64_t>(baseTiling_.coreNum);

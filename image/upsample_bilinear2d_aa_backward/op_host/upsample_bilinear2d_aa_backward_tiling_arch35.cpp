@@ -36,7 +36,7 @@ constexpr int64_t INPUT_DIMS = 4;
 constexpr int32_t CACHE_LINE = 128;
 constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
 
-struct BaseTilingData {
+struct UpsampleBilinear2dAABackwardBaseTiling {
     int64_t dimN = 0;
     int64_t dimC = 0;
     int64_t inH = 0;
@@ -91,7 +91,7 @@ private:
     void PrintTilingData();
 
 private:
-    BaseTilingData baseTiling_;
+    UpsampleBilinear2dAABackwardBaseTiling baseTiling_;
     gert::TilingContext *context_ = nullptr;
     UpsampleBilinear2dAABackwardRegBaseTilingData *tilingData_{ nullptr };
 };
