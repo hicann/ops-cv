@@ -49,7 +49,7 @@ aclnnStatus aclnnBackgroundReplace(
 
 - **参数说明：**
 
-  <table class="tg" style="undefined;table-layout: fixed; width: 1384px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1409px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
   <col style="width: 238px">
@@ -57,7 +57,7 @@ aclnnStatus aclnnBackgroundReplace(
   <col style="width: 167px">
   <col style="width: 120px">
   <col style="width: 199px">
-  <col style="width: 120px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -78,7 +78,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">shape支持HWC(C=1、3)。</td>
+      <td class="tg-0pky">HWC(C=1、3)。</td>
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
@@ -88,7 +88,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">shape支持HWC(C=1、3)。</td>
+      <td class="tg-0pky">HWC(C=1、3)。</td>
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
@@ -98,7 +98,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">FLOAT16</td>
       <td class="tg-0lax">ND</td>
-      <td class="tg-0lax">shape支持HWC(C=1)。</td>
+      <td class="tg-0lax">HWC(C=1)。</td>
       <td class="tg-0lax">-</td>
     </tr>
     <tr>
@@ -108,7 +108,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0pky">数据类型和shape与输入背景图片bkg一致。</td>
       <td class="tg-0pky">UINT8、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">shape支持HWC(C=1、3)。</td>
+      <td class="tg-0pky">HWC(C=1、3)。</td>
       <td class="tg-0pky">-</td>
     </tr>
     <tr>

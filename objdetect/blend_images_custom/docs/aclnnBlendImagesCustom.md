@@ -48,15 +48,15 @@ aclnnStatus aclnnBlendImagesCustom(
 
 - **参数说明：**
   
-  <table class="tg" style="undefined;table-layout: fixed; width: 1384px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1409px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
   <col style="width: 238px">
   <col style="width: 184px">
-  <col style="width: 167px">
+  <col style="width: 127px">
   <col style="width: 120px">
-  <col style="width: 199px">
-  <col style="width: 120px">
+  <col style="width: 239px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -77,7 +77,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">shape支持HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
+      <td class="tg-0pky">HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
@@ -87,7 +87,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">shape支持HWC(C=1)，与rgb满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
+      <td class="tg-0pky">HWC(C=1)，与rgb满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
@@ -97,7 +97,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">UINT8</td>
       <td class="tg-0lax">ND</td>
-      <td class="tg-0lax">shape支持HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
+      <td class="tg-0lax">HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
       <td class="tg-0lax">-</td>
     </tr>
     <tr>
@@ -107,7 +107,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">shape支持HWC(C=3)，与frameshape一致。</td>
+      <td class="tg-0pky">HWC(C=3)，与frameshape一致。</td>
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
@@ -210,6 +210,7 @@ aclnnStatus aclnnBlendImagesCustom(
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
 - 确定性计算：
   - aclnnBlendImagesCustom默认确定性实现
 

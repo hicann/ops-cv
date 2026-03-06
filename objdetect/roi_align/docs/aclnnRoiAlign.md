@@ -19,6 +19,7 @@
 RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlign”接口执行计算。
 
 ```Cpp
@@ -48,15 +49,15 @@ aclnnStatus aclnnRoiAlign(
 
 - **参数说明：**
 
-  <table class="tg" style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1575px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
   <col style="width: 238px">
-  <col style="width: 350px">
+  <col style="width: 330px">
   <col style="width: 167px">
   <col style="width: 120px">
-  <col style="width: 199px">
-  <col style="width: 120px">
+  <col style="width: 219px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -77,7 +78,7 @@ aclnnStatus aclnnRoiAlign(
       <td class="tg-0pky">必须与rois/out数据类型一致。</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">NCHW</td>
-      <td class="tg-0pky">为4维，shape为(N, C, H, W)。</td>
+      <td class="tg-0pky">4维，为(N, C, H, W)</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -87,7 +88,7 @@ aclnnStatus aclnnRoiAlign(
       <td class="tg-0pky"><ul><li>必须与self/out数据类型一致。</li><li>坐标格式为(x1, y1, x2, y2)，且满足0 <= x1 <= x2 <= W/spatialScale、0 <= y1 <= y2 <= H/spatialScale。</li></ul></td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">维度为2维，shape为(numRois, 4)。</td>
+      <td class="tg-0pky">2维，为(numRois, 4)</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -97,7 +98,7 @@ aclnnStatus aclnnRoiAlign(
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">INT32</td>
       <td class="tg-0lax">ND</td>
-      <td class="tg-0lax">为1维，shape为(numRois,)。</td>
+      <td class="tg-0lax">1维，为(numRois,)</td>
       <td class="tg-0lax">√</td>
     </tr>
     <tr>
@@ -157,7 +158,7 @@ aclnnStatus aclnnRoiAlign(
       <td class="tg-0lax">必须与self/rois数据类型一致。</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
       <td class="tg-0lax">NCHW</td>
-      <td class="tg-0lax">维度为4维，shape为(numRois, C, outputHeight, outputWidth)。</td>
+      <td class="tg-0lax">4维，为(numRois, C, outputHeight, outputWidth)</td>
       <td class="tg-0lax">√</td>
     </tr>
     <tr>
@@ -294,6 +295,7 @@ aclnnStatus aclnnRoiAlign(
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>

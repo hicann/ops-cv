@@ -23,7 +23,9 @@
   IOU = \frac {Area_3} {Area_1 + Area_2 - Area_3} \\
   IOF = \frac {Area_3} {Area_2} 
   $$
+
   其中，Area_1为bBox的面积，Area_2为gtBox的面积，Area_3为两者重叠部分面积，x和y的定义见参数说明。
+
   $$
   Area_1 = (X_1 - X_0)(Y_1 - Y_0) \\
   Area_2 = (X_3 - X_2)(Y_3 - Y_2) \\
@@ -58,7 +60,7 @@ aclnnStatus aclnnIou(
 
 - **参数说明：**
 
-  <table class="tg" style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1575px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
   <col style="width: 200px">
@@ -66,7 +68,7 @@ aclnnStatus aclnnIou(
   <col style="width: 167px">
   <col style="width: 120px">
   <col style="width: 120px">
-  <col style="width: 120px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -277,6 +279,7 @@ aclnnStatus aclnnIou(
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```c++
 #include <iostream>
 #include <vector>

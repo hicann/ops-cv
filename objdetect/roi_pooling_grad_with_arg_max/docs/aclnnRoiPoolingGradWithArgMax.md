@@ -57,14 +57,14 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 
 - **参数说明**
   
-  <table style="undefined;table-layout: fixed; width: 1497px"><colgroup> 
+  <table style="undefined;table-layout: fixed; width: 1547px"><colgroup> 
     <col style="width: 200px"> 
     <col style="width: 120px"> 
     <col style="width: 250px"> 
     <col style="width: 120px"> 
     <col style="width: 212px"> 
     <col style="width: 120px">  
-    <col style="width: 200px">  
+    <col style="width: 250px">  
     <col style="width: 145px">  
     </colgroup>
   <thead>
@@ -86,7 +86,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>-</td>
       <td>FLOAT16、FLOAT32</td>
       <td>ND</td>
-      <td>等于4维，shape为(roisN, C, pooledH, pooledW)。</td>
+      <td>4维，shape为(roisN, C, pooledH, pooledW)</td>
       <td>√</td>
     </tr>
       <tr>
@@ -96,7 +96,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>-</td>
       <td>FLOAT16、FLOAT32</td>
       <td>ND</td>
-      <td>等于4维，shape为(N, C, H, W)。</td>
+      <td>4维，shape为(N, C, H, W)</td>
       <td>√</td>
     </tr>
       <tr>
@@ -106,7 +106,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>-</td>
       <td>FLOAT16、FLOAT32</td>
       <td>ND</td>
-      <td>等于2维，shape为(roisN, 5)。shape中的5指(batchId, x1, x2, y1, y2)。</td>
+      <td>2维，shape为(roisN, 5)<br>5指(batchId, x1, x2, y1, y2)</td>
       <td>√</td>
     </tr>
       <tr>
@@ -116,7 +116,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>-</td>
       <td>INT32</td>
       <td>ND</td>
-      <td>等于4维，shape为(roisN, C, pooledH, pooledW)。</td>
+      <td>4维，shape为(roisN, C, pooledH, pooledW)</td>
       <td>√</td>
     </tr>
     <tr>

@@ -51,15 +51,15 @@ aclnnStatus aclnnCIoU(
 
 - **参数说明**
 
-  <table style="undefined;table-layout: fixed; width: 1499px"><colgroup>
+  <table style="undefined;table-layout: fixed; width: 1533px"><colgroup>
   <col style="width: 161px">
   <col style="width: 121px">
   <col style="width: 287px">
-  <col style="width: 260px">
+  <col style="width: 290px">
   <col style="width: 252px">
   <col style="width: 128px">
   <col style="width: 149px">
-  <col style="width: 141px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -70,7 +70,7 @@ aclnnStatus aclnnCIoU(
       <th>数据类型</th>
       <th>格式类型</th>
       <th>维度（shape）</th>
-      <th>非连续张量Tensor</th>
+      <th>非连续Tensor</th>
     </tr></thead>
   <tbody>
     <tr>
@@ -97,7 +97,7 @@ aclnnStatus aclnnCIoU(
       <td>trans</td>
       <td>输入</td>
       <td>用于指定矩形框的格式。</td>
-      <td>true：指定输入的格式为[x, y, w, h]；<br>false：指定输入的格式为[x0, y0, x1, y1]。</td>
+      <td>true：指定输入的格式为[x, y, w, h]。<br>false：指定输入的格式为[x0, y0, x1, y1]。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>
@@ -107,7 +107,7 @@ aclnnStatus aclnnCIoU(
       <td>isCross</td>
       <td>输入</td>
       <td>用于指定bBoxes与gtBoxes之间是否进行交叉运算。</td>
-      <td>true：输出的shape为[M, N]；<br>false：输出的shape为[1, N]。</td>
+      <td>true：输出的shape为[M, N]。<br>false：输出的shape为[1, N]。</td>
       <td>BOOL</td>
       <td>-</td>
       <td>-</td>

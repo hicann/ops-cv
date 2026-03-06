@@ -19,6 +19,7 @@
 删除分数小于scoreThreshold的边界框，筛选出与之前被选中部分重叠较高（IOU较高）的框。
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnNonMaxSuppressionGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnNonMaxSuppression”接口执行计算。
 
 ```Cpp
@@ -46,15 +47,15 @@ aclnnStatus aclnnNonMaxSuppression(
 
 - **参数说明：**
 
-  <table class="tg" style="undefined;table-layout: fixed; width: 1500px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
   <col style="width: 238px">
   <col style="width: 300px">
   <col style="width: 167px">
   <col style="width: 120px">
-  <col style="width: 199px">
-  <col style="width: 120px">
+  <col style="width: 224px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -75,7 +76,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">为[num_batches, spatial_dimension, 4]。</td>
+      <td class="tg-0pky">[num_batches, spatial_dimension, 4]</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -85,7 +86,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">为[num_batches, num_classes, spatial_dimension]。</td>
+      <td class="tg-0pky">[num_batches, num_classes, spatial_dimension]</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -135,7 +136,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">INT32</td>
       <td class="tg-0lax">ND</td>
-      <td class="tg-0lax">shape为[num_selected_indices, 3]，数据以[batch_index, class_index, box_index]形式提供。</td>
+      <td class="tg-0lax">[num_selected_indices, 3]<br>数据以[batch_index, class_index, box_index]形式提供。</td>
       <td class="tg-0lax">√</td>
     </tr>
     <tr>
@@ -265,6 +266,7 @@ aclnnStatus aclnnNonMaxSuppression(
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>

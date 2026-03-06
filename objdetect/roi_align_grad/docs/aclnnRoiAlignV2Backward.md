@@ -19,6 +19,7 @@
 [aclnnRoiAlignV2](../../roi_align/docs/aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignV2BackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlignV2Backward”接口执行计算。
 
 ```Cpp
@@ -48,15 +49,15 @@ aclnnStatus aclnnRoiAlignV2Backward(
 
 - **参数说明：**
 
-  <table class="tg" style="undefined;table-layout: fixed; width: 1384px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1570px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
-  <col style="width: 238px">
+  <col style="width: 298px">
   <col style="width: 184px">
   <col style="width: 167px">
   <col style="width: 120px">
-  <col style="width: 199px">
-  <col style="width: 120px">
+  <col style="width: 300px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -77,7 +78,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0pky">必须与boxes、gradInput数据类型一致。</td>
       <td class="tg-0pky">FLOAT</td>
       <td class="tg-0pky">NCHW</td>
-      <td class="tg-0pky">维度为4维，shape为（K，C，pooledHeight，pooledWidth），表示反向传播的输入梯度张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight * pooledWidth的特征图，K需要与boxes第0维保持一致。</td>
+      <td class="tg-0pky">4维，shape为（K，C，pooledHeight，pooledWidth）<br>表示反向传播的输入梯度张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight * pooledWidth的特征图。<br>K需要与boxes第0维保持一致。</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -87,7 +88,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0pky">必须与gradOutput、gradInput数据类型一致。</td>
       <td class="tg-0pky">FLOAT</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">维度为2维，shape为（K，5），5代表box相关信息（image_id，x1，y1，x2，y2）。image_id取值范围[0, B)，向下取整到图像id，B为inputShape第一个值。坐标满足0 <= x1 <= x2 <= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。</td>
+      <td class="tg-0pky">2维，shape为（K，5）<br>5代表box相关信息（image_id，x1，y1，x2，y2）。<br>image_id取值范围[0, B)，向下取整到图像id，B为inputShape第一个值。<br>坐标满足0 <= x1 <= x2 <= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -97,7 +98,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">INT32、INT64</td>
       <td class="tg-0lax">-</td>
-      <td class="tg-0lax">size大小为4，值为（B, C, inputHeight, inputWidth），表示正向RoiAlign的输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight * inputWidth的特征图。</td>
+      <td class="tg-0lax">size大小为4，值为（B, C, inputHeight, inputWidth）<br>表示正向RoiAlign的输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight * inputWidth的特征图。</td>
       <td class="tg-0lax">-</td>
     </tr>
     <tr>
@@ -143,7 +144,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
     <tr>
       <td class="tg-0pky">aligned（bool）</td>
       <td class="tg-0pky">输入</td>
-      <td class="tg-0pky">如果为false，则对齐<a href="../../roi_align/docs/aclnnRoiAlign.md">aclnnRoiAlign</a>版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。</td>
+      <td class="tg-0pky">如果为false，则对齐<a href="../../roi_align/docs/aclnnRoiAlign.md">aclnnRoiAlign</a>版本实现。<br>如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。</td>
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">BOOL</td>
       <td class="tg-0pky">-</td>
@@ -157,7 +158,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0pky">必须与gradOutput、boxes数据类型一致。</td>
       <td class="tg-0pky">FLOAT</td>
       <td class="tg-0pky">NCHW</td>
-      <td class="tg-0pky">维度为4维，shape为（B, C, inputHeight, inputWidth）。</td>
+      <td class="tg-0pky">4维，shape为（B, C, inputHeight, inputWidth）</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -270,6 +271,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>

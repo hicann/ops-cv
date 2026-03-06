@@ -19,6 +19,7 @@
 RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。[aclnnRoiAlign](./aclnnRoiAlign.md)对标ONNX opset 10算子原型，aclnnRoiAlignV2对标torchvision算子原型。aclnnRoiAlignV2使用boxes替代aclnnRoiAlign的rois和batch_indices，并增加aligned入参，同时取消mode入参、默认执行mode="avg"场景。
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiAlignV2GetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiAlignV2”接口执行计算。
 
 ```Cpp
@@ -47,15 +48,15 @@ aclnnStatus aclnnRoiAlignV2(
 
 - **参数说明：**
 
-  <table class="tg" style="undefined;table-layout: fixed; width: 1384px"><colgroup>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1540px"><colgroup>
   <col style="width: 233px">
   <col style="width: 120px">
-  <col style="width: 238px">
+  <col style="width: 268px">
   <col style="width: 184px">
   <col style="width: 167px">
   <col style="width: 120px">
-  <col style="width: 199px">
-  <col style="width: 120px">
+  <col style="width: 300px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -76,7 +77,7 @@ aclnnStatus aclnnRoiAlignV2(
       <td class="tg-0pky">必须与boxes、out数据类型一致。</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">NCHW</td>
-      <td class="tg-0pky">为4维，shape为（B, C, inputHeight, inputWidth），表示输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight * inputWidth的特征图。B、inputHeight、inputWidth不支持0维。</td>
+      <td class="tg-0pky">4维，为（B, C, inputHeight, inputWidth）<br>表示输入张量一个batch内有B张图像，每个图像有C个尺寸为inputHeight * inputWidth的特征图。<br>B、inputHeight、inputWidth不支持0维。</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -86,7 +87,7 @@ aclnnStatus aclnnRoiAlignV2(
       <td class="tg-0pky">必须与self、out数据类型一致。</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">为2维，shape为（K, 5），5代表box相关信息（image_id, x1, y1, x2, y2），K需要与out第0维保持一致。image_id取值范围[0, B)，向下取整到图像id，B为self第0维大小。坐标满足0 &lt;= x1 &lt;= x2 &lt;= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。</td>
+      <td class="tg-0pky">2维，为（K, 5）<br>5代表box相关信息（image_id, x1, y1, x2, y2）<br>K需要与out第0维保持一致。<br>image_id取值范围[0, B)，向下取整到图像id，B为self第0维大小。坐标满足0 &lt;= x1 &lt;= x2 &lt;= inputWidth/spatialScale、0 <= y1 <= y2 <= inputHeight/spatialScale。</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -132,7 +133,7 @@ aclnnStatus aclnnRoiAlignV2(
     <tr>
       <td class="tg-0lax">aligned（bool）</td>
       <td class="tg-0lax">输入</td>
-      <td class="tg-0lax">如果为false，则对齐<a href="./aclnnRoiAlign.md">aclnnRoiAlign</a>版本实现；如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。</td>
+      <td class="tg-0lax">如果为false，则对齐<a href="./aclnnRoiAlign.md">aclnnRoiAlign</a>版本实现。<br>如果为true，则box坐标像素偏移-0.5来使相邻像素索引更好对齐。</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">BOOL</td>
       <td class="tg-0lax">-</td>
@@ -146,7 +147,7 @@ aclnnStatus aclnnRoiAlignV2(
       <td class="tg-0lax">必须与self、boxes数据类型一致。</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
       <td class="tg-0lax">NCHW</td>
-      <td class="tg-0lax">维度为4维，shape为（K，C，pooledHeight，pooledWidth），表示输出张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight * pooledWidth的特征图。</td>
+      <td class="tg-0lax">4维，为（K，C，pooledHeight，pooledWidth）<br>表示输出张量一个batch内有K个元素，每个元素有C个尺寸为pooledHeight * pooledWidth的特征图。</td>
       <td class="tg-0lax">√</td>
     </tr>
     <tr>
@@ -259,6 +260,7 @@ aclnnStatus aclnnRoiAlignV2(
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>
