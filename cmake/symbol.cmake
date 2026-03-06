@@ -457,6 +457,7 @@ function(gen_onnx_plugin_symbol)
             -Wl,--no-whole-archive
             unified_dlog
             ascendalog
+            $<$<CONFIG:Release>:-s>
     )
 
   target_link_directories(${ONNX_PLUGIN_NAME} PRIVATE ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64)
