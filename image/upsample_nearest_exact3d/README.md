@@ -97,6 +97,8 @@
   </tbody></table>
 
 <term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
+- Kirin X90/Kirin 9030 处理器系列产品: 不支持BFLOAT16。
+
 
 ## 约束说明
 

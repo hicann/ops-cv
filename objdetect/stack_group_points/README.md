@@ -62,6 +62,9 @@
     </tr>
   </tbody></table>
 
+- Kirin X90/Kirin 9030 处理器系列产品: 不支持DOUBLE、INT32、INT64、INT16、INT8、UINT8、BOOL。
+
+
 
 ## 约束说明
 

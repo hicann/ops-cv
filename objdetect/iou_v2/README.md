@@ -102,6 +102,9 @@
     </tr>
   </tbody></table>
 
+- Kirin X90/Kirin 9030 处理器系列产品: 不支持BFLOAT16。
+
+
 ## 约束说明
 
 * 输入shape限制：输入shape为(N, 4)的二维张量，第二维的四个值(X1, Y1, X2, Y2)需满足X1 < X2, Y1 < Y2
