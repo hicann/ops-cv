@@ -173,7 +173,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_bfloat16)
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    system("cd ./resize_upsample_trilinear_data/ && python3 gen_data.py '(1, 2, 2, 4, 4)' '(8, 8, 16)' 'float16'");
+    system("cd ./resize_upsample_trilinear_data/ && python3 gen_data.py '(1, 2, 2, 4, 4)' '(8, 8, 16)' 'bfloat16'");
 
     size_t inputByteSize = 2 * 2 * 4 * 4 * sizeof(half);
     size_t outputByteSize = 2 * 8 * 8 * 16 * sizeof(half);
@@ -182,7 +182,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_bfloat16)
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    std::string fileName = "./resize_upsample_trilinear_data/float16_input_trilinear.bin";
+    std::string fileName = "./resize_upsample_trilinear_data/bfloat16_input_trilinear.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -192,11 +192,13 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_bfloat16)
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
     ICPU_RUN_KF(resize_upsample_trilinear, numBlocks, x, y, workspace, tiling);
-    fileName = "./resize_upsample_trilinear_data/float16_output_trilinear.bin";
+    fileName = "./resize_upsample_trilinear_data/bfloat16_output_trilinear.bin";
     WriteFile(fileName, y, outputByteSize);
 
     AscendC::GmFree((void*)(x));
     AscendC::GmFree((void*)(y));
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
+
+    system("cd ./resize_upsample_trilinear_data/ && python3 compare_data.py 'float16'");
 }

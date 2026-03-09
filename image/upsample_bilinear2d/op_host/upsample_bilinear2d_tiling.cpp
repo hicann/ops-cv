@@ -77,7 +77,7 @@ private:
     void getShapes();
     void setSlideSize(const uint32_t coreNumPlatFormInfo);
     inline int64_t calculateSlideSize(const uint32_t coreNumPlatFormInfo, uint8_t direction);
-    inline int64_t getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, uint8_t direction, float real_scale);
+    inline int64_t getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, uint8_t direction, float realScale);
     uint8_t GetDataTypeSize() const;
     uint64_t GetDataTypeVal() const;
     uint32_t GetNeedCoreNum(const uint32_t coreNumPlatFormInfo);
@@ -90,7 +90,7 @@ private:
         const gert::TilingContext *context, const float scales_w, const float scales_h) const;
     inline int64_t getSingleCoreK(const int64_t slideSize, const float scale, const bool alignCorners) const;
     template <typename T1, typename T2>
-    inline T1 CeilA2B(T1 a, T2 b) const;
+    inline T1 CeilA2B(T1 m, T2 n) const;
 
     template <typename T1>
     inline int32_t Ceil(T1 x) const;

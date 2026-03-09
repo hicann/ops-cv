@@ -343,7 +343,7 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::DoTiling()
     uint64_t schId = static_cast<uint64_t>(baseTiling_.schId);
     uint64_t isInt32 = static_cast<uint64_t>(baseTiling_.isInt32);
     uint64_t isDeterministic = static_cast<uint64_t>(baseTiling_.isDeterministic);
-    const uint64_t tilingKey = GET_TPL_TILING_KEY((uint64_t)schId, (uint64_t)isInt32, (uint64_t)isDeterministic);
+    const uint64_t tilingKey = GET_TPL_TILING_KEY(schId, isInt32, isDeterministic);
     OP_LOGI(context_, "tilingKey %lu, schId %lu, isInt32 %lu, isDeterministic %lu, realCoreNum %d", tilingKey, schId, isInt32,
         isDeterministic, baseTiling_.realCoreNum);
     context_->SetTilingKey(tilingKey);

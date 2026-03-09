@@ -72,7 +72,7 @@ static bool CheckNearest3dGradScales(
 }
 
 static const aclTensor* UpsampleNearest3dGradAICORE(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclFloatArray* scales,
+    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
     const aclFloatArray* castScales, op::Shape gradInputStorageShape, op::Shape gradInputOriginalShape,
     aclOpExecutor* executor)
 {
@@ -129,7 +129,7 @@ const aclTensor* UpsampleNearest3dGradNcdhw(
     if (CheckNearest3dGradScales(gradOut, inputSize, castScales) && (curArch == NpuArch::DAV_2201) &&
         CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
         return UpsampleNearest3dGradAICORE(
-            gradOut, outputSize, inputSize, scales, castScales, gradInputStorageShape, gradInputOriginalShape,
+            gradOut, outputSize, inputSize, castScales, gradInputStorageShape, gradInputOriginalShape,
             executor);
     }
 
