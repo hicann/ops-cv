@@ -198,6 +198,23 @@ TEST_F(l2_grid_sampler3d_backward_test, ascend910B2_case_transpose)
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
+// formart NDHWC
+TEST_F(l2_grid_sampler3d_backward_test, ascend910B2_case_no_transpose)
+{
+    auto gradOutputDesc = TensorDesc({1, 1, 2, 2, 1}, ACL_FLOAT16, ACL_FORMAT_NDHWC);
+    auto inputDesc = TensorDesc({1, 1, 3, 3, 1}, ACL_FLOAT16, ACL_FORMAT_NDHWC);
+    auto gridDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT16, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto inputGradDesc = TensorDesc({1, 1, 3, 3, 1}, ACL_FLOAT16, ACL_FORMAT_NCDHW);
+    auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT16, ACL_FORMAT_NCDHW);
+    auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
+    auto ut = OP_API_UT(
+        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+        OUTPUT(inputGradDesc, gridGradDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
 // output_mask false false
 TEST_F(l2_grid_sampler3d_backward_test, output_mask_false_false)
 {

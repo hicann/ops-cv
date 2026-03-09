@@ -26,7 +26,8 @@ def parse_str_to_shape_list(shape_str):
 def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     d_type_dict = {
         "float32": np.float32,
-        "float16": np.float16
+        "float16": np.float16,
+        "bfloat16": np.float16
     }
     np_type = d_type_dict[d_type]
     input_shape, _ = parse_str_to_shape_list(input_shape_str)
