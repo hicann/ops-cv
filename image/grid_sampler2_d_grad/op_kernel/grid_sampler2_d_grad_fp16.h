@@ -129,14 +129,6 @@ private:
     TBuf<TPosition::VECCALC> computeIndexBuf;
     TBuf<TPosition::VECCALC> computeIndexBuf1;
     TBuf<TPosition::VECCALC> computeIndexBuf2;
-    TBuf<TPosition::VECCALC> computeIndexBuf3;
-    TBuf<TPosition::VECCALC> computeIndexBuf4;
-    TBuf<TPosition::VECCALC> computeIndexBuf5;
-
-    TBuf<TPosition::VECCALC> computeIndexBuf6;
-    TBuf<TPosition::VECCALC> computeIndexBuf7;
-    TBuf<TPosition::VECCALC> computeIndexBuf8;
-    TBuf<TPosition::VECCALC> computeIndexBuf9;
 
     TBuf<TPosition::VECCALC> gixBuf;
     TBuf<TPosition::VECCALC> giyBuf;
@@ -337,15 +329,8 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
         pipe->InitBuffer(tmp9Buf, ubFactorElement * sizeof(T));
 
         pipe->InitBuffer(computeIndexBuf1, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf3, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf4, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf5, ubFactorElement * sizeof(int32_t));
+        pipe->InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(int32_t) * 8);
 
-        pipe->InitBuffer(computeIndexBuf6, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf7, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf8, ubFactorElement * sizeof(int32_t));
-        pipe->InitBuffer(computeIndexBuf9, ubFactorElement * sizeof(int32_t));
         pipe->InitBuffer(gixBuf, alignChannel * sizeof(T));
         pipe->InitBuffer(giyBuf, alignChannel * sizeof(T));
         pipe->InitBuffer(sumXBuf, alignChannel * sizeof(T));
@@ -884,15 +869,15 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
         LocalTensor<T> sw = swBuf.Get<T>(ubFactorElement);
         LocalTensor<T> se = seBuf.Get<T>(ubFactorElement);
 
-        LocalTensor<int32_t> nwIndex = computeIndexBuf2.Get<int32_t>(ubFactorElement);
-        LocalTensor<int32_t> neIndex = computeIndexBuf3.Get<int32_t>(ubFactorElement);
-        LocalTensor<int32_t> swIndex = computeIndexBuf4.Get<int32_t>(ubFactorElement);
-        LocalTensor<int32_t> seIndex = computeIndexBuf5.Get<int32_t>(ubFactorElement);
+        LocalTensor<int32_t> nwIndex = computeIndexBuf2.Get<int32_t>();
+        LocalTensor<int32_t> neIndex = nwIndex[ubFactorElement * 1];
+        LocalTensor<int32_t> swIndex = nwIndex[ubFactorElement * 2];
+        LocalTensor<int32_t> seIndex = nwIndex[ubFactorElement * 3];
 
-        LocalTensor<int32_t> nwIndex2 = computeIndexBuf6.Get<int32_t>(ubFactorElement);
-        LocalTensor<int32_t> neIndex2 = computeIndexBuf7.Get<int32_t>(ubFactorElement);
-        LocalTensor<int32_t> swIndex2 = computeIndexBuf8.Get<int32_t>(ubFactorElement);
-        LocalTensor<int32_t> seIndex2 = computeIndexBuf9.Get<int32_t>(ubFactorElement);
+        LocalTensor<int32_t> nwIndex2 = nwIndex[ubFactorElement * 4];
+        LocalTensor<int32_t> neIndex2 = nwIndex[ubFactorElement * 5];
+        LocalTensor<int32_t> swIndex2 = nwIndex[ubFactorElement * 6];
+        LocalTensor<int32_t> seIndex2 = nwIndex[ubFactorElement * 7];
 
         gixLocalTensor = gixBuf.Get<T>(alignChannel);
         giyLocalTensor = giyBuf.Get<T>(alignChannel);
