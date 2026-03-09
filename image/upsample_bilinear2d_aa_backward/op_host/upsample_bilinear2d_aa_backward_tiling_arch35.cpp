@@ -329,7 +329,7 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::Init()
         tilingData_ = context_->GetTilingData<UpsampleBilinear2dAABackwardRegBaseTilingData>();
         OP_CHECK_IF(tilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
     }
-    baseTiling_.isDetermine = 1;
+    baseTiling_.isDetermine = context_->GetDeterministic();
     OP_CHECK_IF((memset_s(tilingData_, sizeof(UpsampleBilinear2dAABackwardRegBaseTilingData), 0,
         sizeof(UpsampleBilinear2dAABackwardRegBaseTilingData)) != EOK),
         OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);

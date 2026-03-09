@@ -324,7 +324,7 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::Init()
         tilingData_ = context_->GetTilingData<UpsampleBicubic2dAAGradRegBaseTilingData>();
         OP_CHECK_IF(tilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
     }
-    baseTiling_.isDeterministic = 1;
+    baseTiling_.isDeterministic = context_->GetDeterministic();
     OP_CHECK_IF((memset_s(tilingData_, sizeof(UpsampleBicubic2dAAGradRegBaseTilingData), 0,
         sizeof(UpsampleBicubic2dAAGradRegBaseTilingData)) != EOK),
         OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);
