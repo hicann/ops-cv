@@ -73,8 +73,8 @@ TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tilin
                                                 {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
                                                 {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
                                               &compileInfo, socVersion, 48, 192*1024, 8192);
-    uint64_t expectTilingKey = 65793;
-    string expectTilingData = "1365 48 16 0 0 0 1 1 256 256 128 128 12 12 4611686018427387904 4539628425463201792 4611686019484352512 1073741824 ";
+    uint64_t expectTilingKey = 257;
+    string expectTilingData = "341 48 16 1365 48 16 1 1 256 256 128 128 12 12 4611686018427387904 4539628425463201792 4611686019484352512 1073741824 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
