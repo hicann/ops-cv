@@ -47,14 +47,15 @@ def compare_data(golden_file_lists, output_file_lists, d_type):
             data_same = False
     return data_same
 
-def get_file_lists(dtype):
-    golden_file_lists = sorted(glob.glob(curr_dir + "/*golden*.bin"))
-    output_file_lists = sorted(glob.glob(curr_dir + "/*output*.bin"))
+def get_file_lists(dtype, case_id):
+    golden_file_lists = sorted(glob.glob(curr_dir + "/" + str(case_id) + "*golden*.bin"))
+    output_file_lists = sorted(glob.glob(curr_dir + "/" + str(case_id) + "*output*.bin"))
     return golden_file_lists, output_file_lists
 
-def process(d_type):
-    golden_file_lists, output_file_lists = get_file_lists(d_type)
+def process(d_type, case_id):
+    golden_file_lists, output_file_lists = get_file_lists(d_type, case_id)
     result = compare_data(golden_file_lists, output_file_lists, d_type)
+    return result
 
 if __name__ == '__main__':
-    process(sys.argv[1])
+    process(sys.argv[1], sys.argv[2])

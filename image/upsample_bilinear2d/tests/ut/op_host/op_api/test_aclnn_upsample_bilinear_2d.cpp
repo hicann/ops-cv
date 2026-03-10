@@ -552,6 +552,72 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1010)
     EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
 }
 
+TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1011)
+{
+    const double_t scales_h = 2.0;
+    const double_t scales_w = 10.0;
+    bool align_corners = false;
+    vector<int64_t> inp_dims = {1, 1, 80, 1};
+    vector<int64_t> output_size = {160, 10};
+    vector<int64_t> out = {1, 1, 160, 10};
+
+    auto self_desc = TensorDesc(inp_dims, ACL_FLOAT16, ACL_FORMAT_ND);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_ND);
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
+        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
+        OUTPUT(output_desc));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1012)
+{
+    const double_t scales_h = 1.0;
+    const double_t scales_w = 10.0;
+    bool align_corners = true;
+    vector<int64_t> inp_dims = {1, 1, 80, 1};
+    vector<int64_t> output_size = {160, 1};
+    vector<int64_t> out = {1, 1, 160, 1};
+
+    auto self_desc = TensorDesc(inp_dims, ACL_FLOAT16, ACL_FORMAT_NCHW);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
+        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
+        OUTPUT(output_desc));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
+}
+
+TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1013)
+{
+    const double_t scales_h = 1.0;
+    const double_t scales_w = 1.0;
+    bool align_corners = true;
+    vector<int64_t> inp_dims = {1, 1, 80, 1};
+    vector<int64_t> output_size = {160, 10};
+    vector<int64_t> out = {1, 1, 160, 10};
+
+    auto self_desc = TensorDesc(inp_dims, ACL_BF16, ACL_FORMAT_NCHW);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto output_desc = TensorDesc(out, ACL_BF16, ACL_FORMAT_NCHW);
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
+        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
+        OUTPUT(output_desc));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACL_SUCCESS);
+}
+
 TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_001)
 {
     const double_t scales_h = 2.0;

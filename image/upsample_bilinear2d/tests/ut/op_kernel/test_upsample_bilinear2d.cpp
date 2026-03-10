@@ -41,11 +41,11 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
 {
     system("cp -rf ../../../../image/upsample_bilinear2d/tests/ut/op_kernel/upsample_bilinear2d_data ./");
     system("chmod -R 755 ./upsample_bilinear2d_data/");
-    system("cd ./upsample_bilinear2d_data/ && python3 gen_data.py '(1, 1, 4)' '(16)' 'float32'");
+    system("cd ./upsample_bilinear2d_data/ && python3 gen_data.py '(1, 1, 1, 4)' '(2, 16)' '1001' 'float32'");
 
     size_t inputByteSize = 4 * sizeof(float);
     size_t sizeByteSize = 2 * sizeof(float);
-    size_t outputByteSize = 16 * sizeof(float);
+    size_t outputByteSize = 32 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleBilinear2dTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t numBlocks = 16;
@@ -57,34 +57,34 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
 
-    std::string fileName = "./upsample_bilinear2d_data/float32_input_upsample_bilinear2d.bin";
+    std::string fileName = "./upsample_bilinear2d_data/1001_float32_input_upsample_bilinear2d.bin";
 
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
     UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
     tilingDatafromBin->align_corners = false;
-    tilingDatafromBin->slide_size_w = 64;
-    tilingDatafromBin->slide_size_h = 64;
+    tilingDatafromBin->slide_size_w = 128;
+    tilingDatafromBin->slide_size_h = 128;
     tilingDatafromBin->dataType = 2;
     tilingDatafromBin->scale_w = 0.25;
-    tilingDatafromBin->scale_h = 1;
-    tilingDatafromBin->radio_matrix_size_w = 256;
-    tilingDatafromBin->radio_matrix_size_h = 0;
+    tilingDatafromBin->scale_h = 0.5;
+    tilingDatafromBin->radio_matrix_size_w = 512;
+    tilingDatafromBin->radio_matrix_size_h = 128;
     tilingDatafromBin->need_core_num_w = 1;
-    tilingDatafromBin->need_core_num_h = 0;
+    tilingDatafromBin->need_core_num_h = 1;
     tilingDatafromBin->intermediate_matrix_size = 128;
     tilingDatafromBin->eachCoreSlideNumW = 0;
     tilingDatafromBin->tailStartSlideNumW = 0;
     tilingDatafromBin->slideNumW = 1;
     tilingDatafromBin->groupCoreNumW = 1;
-    tilingDatafromBin->tailAvergingRowsW = 64;
+    tilingDatafromBin->tailAvergingRowsW = 128;
     tilingDatafromBin->remainderW = 1;
     tilingDatafromBin->eachCoreSlideNumH = 0;
     tilingDatafromBin->tailStartSlideNumH = 0;
-    tilingDatafromBin->slideNumH = 0;
-    tilingDatafromBin->groupCoreNumH = 0;
-    tilingDatafromBin->tailAvergingRowsH = 0;
-    tilingDatafromBin->remainderH = 0;
+    tilingDatafromBin->slideNumH = 1;
+    tilingDatafromBin->groupCoreNumH = 1;
+    tilingDatafromBin->tailAvergingRowsH = 1;
+    tilingDatafromBin->remainderH = 1;
 
     tilingDatafromBin->input_shapes[0] = 1;
     tilingDatafromBin->input_shapes[1] = 1;
@@ -92,7 +92,7 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     tilingDatafromBin->input_shapes[3] = 4;
     tilingDatafromBin->output_shapes[0] = 1;
     tilingDatafromBin->output_shapes[1] = 1;
-    tilingDatafromBin->output_shapes[2] = 1;
+    tilingDatafromBin->output_shapes[2] = 2;
     tilingDatafromBin->output_shapes[3] = 16;
 
     tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
@@ -101,10 +101,10 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_w.Ka = 4;
     tilingDatafromBin->matmulTiling_w.Kb = 4;
     tilingDatafromBin->matmulTiling_w.singleCoreM = 1;
-    tilingDatafromBin->matmulTiling_w.singleCoreN = 64;
+    tilingDatafromBin->matmulTiling_w.singleCoreN = 128;
     tilingDatafromBin->matmulTiling_w.singleCoreK = 4;
     tilingDatafromBin->matmulTiling_w.baseM = 16;
-    tilingDatafromBin->matmulTiling_w.baseN = 64;
+    tilingDatafromBin->matmulTiling_w.baseN = 128;
     tilingDatafromBin->matmulTiling_w.baseK = 8;
     tilingDatafromBin->matmulTiling_w.depthA1 = 1;
     tilingDatafromBin->matmulTiling_w.depthB1 = 1;
@@ -116,8 +116,8 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_w.transLength = 0;
     tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_w.shareMode = 0;
-    tilingDatafromBin->matmulTiling_w.shareL1Size = 2560;
-    tilingDatafromBin->matmulTiling_w.shareL0CSize = 4096;
+    tilingDatafromBin->matmulTiling_w.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_w.shareL0CSize = 8192;
     tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_w.batchM = 1;
     tilingDatafromBin->matmulTiling_w.batchN = 1;
@@ -125,15 +125,15 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
 
     tilingDatafromBin->matmulTiling_h.usedCoreNum = 1;
-    tilingDatafromBin->matmulTiling_h.M = 1;
+    tilingDatafromBin->matmulTiling_h.M = 2;
     tilingDatafromBin->matmulTiling_h.N = 16;
     tilingDatafromBin->matmulTiling_h.Ka = 4;
     tilingDatafromBin->matmulTiling_h.Kb = 4;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 1;
-    tilingDatafromBin->matmulTiling_h.singleCoreN = 64;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 4;
-    tilingDatafromBin->matmulTiling_h.baseM = 16;
-    tilingDatafromBin->matmulTiling_h.baseN = 64;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 128;
+    tilingDatafromBin->matmulTiling_h.singleCoreN = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 1;
+    tilingDatafromBin->matmulTiling_h.baseM = 128;
+    tilingDatafromBin->matmulTiling_h.baseN = 16;
     tilingDatafromBin->matmulTiling_h.baseK = 8;
     tilingDatafromBin->matmulTiling_h.depthA1 = 1;
     tilingDatafromBin->matmulTiling_h.depthB1 = 1;
@@ -145,8 +145,8 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_h.transLength = 0;
     tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 2560;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 4096;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 8192;
     tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_h.batchM = 1;
     tilingDatafromBin->matmulTiling_h.batchN = 1;
@@ -156,7 +156,7 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     ICPU_SET_TILING_KEY(1);
 
     ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
-    fileName = "./upsample_bilinear2d_data/float32_output_upsample_bilinear2d.bin";
+    fileName = "./upsample_bilinear2d_data/1001_float32_output_upsample_bilinear2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
     AscendC::GmFree((void *)(x));
@@ -164,5 +164,266 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     AscendC::GmFree((void *)workspace);
     AscendC::GmFree((void *)tiling);
 
-    system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float32'");
+    system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float32' '1001'");
+}
+
+
+TEST_F(upsample_bilinear2d_test, test_case_float_2)
+{
+    system("cp -rf ../../../../image/upsample_bilinear2d/tests/ut/op_kernel/upsample_bilinear2d_data ./");
+    system("chmod -R 755 ./upsample_bilinear2d_data/");
+    system("cd ./upsample_bilinear2d_data/ && python3 gen_data.py '(1, 1, 1, 4)' '(3, 16)' '1002' 'float16'");
+
+    size_t inputByteSize = 4 * sizeof(float);
+    size_t sizeByteSize = 2 * sizeof(float);
+    size_t outputByteSize = 48 * sizeof(float);
+    size_t tiling_data_size = sizeof(UpsampleBilinear2dTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 20;
+
+    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
+    uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
+    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_bilinear2d_data/1002_float16_input_upsample_bilinear2d.bin";
+
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
+    tilingDatafromBin->align_corners = false;
+    tilingDatafromBin->slide_size_w = 128;
+    tilingDatafromBin->slide_size_h = 128;
+    tilingDatafromBin->dataType = 2;
+    tilingDatafromBin->scale_w = 0.25;
+    tilingDatafromBin->scale_h = 0.333333;
+    tilingDatafromBin->radio_matrix_size_w = 512;
+    tilingDatafromBin->radio_matrix_size_h = 128;
+    tilingDatafromBin->need_core_num_w = 1;
+    tilingDatafromBin->need_core_num_h = 1;
+    tilingDatafromBin->intermediate_matrix_size = 128;
+    tilingDatafromBin->eachCoreSlideNumW = 0;
+    tilingDatafromBin->tailStartSlideNumW = 0;
+    tilingDatafromBin->slideNumW = 1;
+    tilingDatafromBin->groupCoreNumW = 1;
+    tilingDatafromBin->tailAvergingRowsW = 128;
+    tilingDatafromBin->remainderW = 1;
+    tilingDatafromBin->eachCoreSlideNumH = 0;
+    tilingDatafromBin->tailStartSlideNumH = 0;
+    tilingDatafromBin->slideNumH = 1;
+    tilingDatafromBin->groupCoreNumH = 1;
+    tilingDatafromBin->tailAvergingRowsH = 1;
+    tilingDatafromBin->remainderH = 1;
+
+    tilingDatafromBin->input_shapes[0] = 1;
+    tilingDatafromBin->input_shapes[1] = 1;
+    tilingDatafromBin->input_shapes[2] = 1;
+    tilingDatafromBin->input_shapes[3] = 4;
+    tilingDatafromBin->output_shapes[0] = 1;
+    tilingDatafromBin->output_shapes[1] = 1;
+    tilingDatafromBin->output_shapes[2] = 3;
+    tilingDatafromBin->output_shapes[3] = 16;
+
+    tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
+    tilingDatafromBin->matmulTiling_w.M = 1;
+    tilingDatafromBin->matmulTiling_w.N = 16;
+    tilingDatafromBin->matmulTiling_w.Ka = 4;
+    tilingDatafromBin->matmulTiling_w.Kb = 4;
+    tilingDatafromBin->matmulTiling_w.singleCoreM = 1;
+    tilingDatafromBin->matmulTiling_w.singleCoreN = 128;
+    tilingDatafromBin->matmulTiling_w.singleCoreK = 4;
+    tilingDatafromBin->matmulTiling_w.baseM = 16;
+    tilingDatafromBin->matmulTiling_w.baseN = 128;
+    tilingDatafromBin->matmulTiling_w.baseK = 8;
+    tilingDatafromBin->matmulTiling_w.depthA1 = 1;
+    tilingDatafromBin->matmulTiling_w.depthB1 = 1;
+    tilingDatafromBin->matmulTiling_w.stepM = 1;
+    tilingDatafromBin->matmulTiling_w.stepN = 1;
+    tilingDatafromBin->matmulTiling_w.stepKa = 1;
+    tilingDatafromBin->matmulTiling_w.stepKb = 1;
+    tilingDatafromBin->matmulTiling_w.isBias = 0;
+    tilingDatafromBin->matmulTiling_w.transLength = 0;
+    tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
+    tilingDatafromBin->matmulTiling_w.shareMode = 0;
+    tilingDatafromBin->matmulTiling_w.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_w.shareL0CSize = 8192;
+    tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
+    tilingDatafromBin->matmulTiling_w.batchM = 1;
+    tilingDatafromBin->matmulTiling_w.batchN = 1;
+    tilingDatafromBin->matmulTiling_w.singleBatchM = 1;
+    tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
+
+    tilingDatafromBin->matmulTiling_h.usedCoreNum = 1;
+    tilingDatafromBin->matmulTiling_h.M = 3;
+    tilingDatafromBin->matmulTiling_h.N = 16;
+    tilingDatafromBin->matmulTiling_h.Ka = 4;
+    tilingDatafromBin->matmulTiling_h.Kb = 4;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 128;
+    tilingDatafromBin->matmulTiling_h.singleCoreN = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 1;
+    tilingDatafromBin->matmulTiling_h.baseM = 128;
+    tilingDatafromBin->matmulTiling_h.baseN = 16;
+    tilingDatafromBin->matmulTiling_h.baseK = 8;
+    tilingDatafromBin->matmulTiling_h.depthA1 = 1;
+    tilingDatafromBin->matmulTiling_h.depthB1 = 1;
+    tilingDatafromBin->matmulTiling_h.stepM = 1;
+    tilingDatafromBin->matmulTiling_h.stepN = 1;
+    tilingDatafromBin->matmulTiling_h.stepKa = 1;
+    tilingDatafromBin->matmulTiling_h.stepKb = 1;
+    tilingDatafromBin->matmulTiling_h.isBias = 0;
+    tilingDatafromBin->matmulTiling_h.transLength = 0;
+    tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
+    tilingDatafromBin->matmulTiling_h.shareMode = 0;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 8192;
+    tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
+    tilingDatafromBin->matmulTiling_h.batchM = 1;
+    tilingDatafromBin->matmulTiling_h.batchN = 1;
+    tilingDatafromBin->matmulTiling_h.singleBatchM = 1;
+    tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
+
+    ICPU_SET_TILING_KEY(1);
+
+    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    fileName = "./upsample_bilinear2d_data/1002_float16_output_upsample_bilinear2d.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void *)(x));
+    AscendC::GmFree((void *)(y));
+    AscendC::GmFree((void *)workspace);
+    AscendC::GmFree((void *)tiling);
+
+    system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float16' '1002'");
+}
+
+TEST_F(upsample_bilinear2d_test, test_case_float_3)
+{
+    system("cp -rf ../../../../image/upsample_bilinear2d/tests/ut/op_kernel/upsample_bilinear2d_data ./");
+    system("chmod -R 755 ./upsample_bilinear2d_data/");
+    system("cd ./upsample_bilinear2d_data/ && python3 gen_data.py '(1, 1, 1, 4)' '(3, 16)' '1003' 'float16'");
+
+    size_t inputByteSize = 4 * 2;
+    size_t sizeByteSize = 2 * sizeof(float);
+    size_t outputByteSize = 48 * 2;
+    size_t tiling_data_size = sizeof(UpsampleBilinear2dTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 20;
+
+    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
+    uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
+    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
+    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_bilinear2d_data/1003_float16_input_upsample_bilinear2d.bin";
+
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
+    tilingDatafromBin->align_corners = false;
+    tilingDatafromBin->slide_size_w = 128;
+    tilingDatafromBin->slide_size_h = 128;
+    tilingDatafromBin->dataType = 1;
+    tilingDatafromBin->scale_w = 0.25;
+    tilingDatafromBin->scale_h = 0.333333;
+    tilingDatafromBin->radio_matrix_size_w = 512;
+    tilingDatafromBin->radio_matrix_size_h = 128;
+    tilingDatafromBin->need_core_num_w = 1;
+    tilingDatafromBin->need_core_num_h = 1;
+    tilingDatafromBin->intermediate_matrix_size = 128;
+    tilingDatafromBin->eachCoreSlideNumW = 0;
+    tilingDatafromBin->tailStartSlideNumW = 0;
+    tilingDatafromBin->slideNumW = 1;
+    tilingDatafromBin->groupCoreNumW = 1;
+    tilingDatafromBin->tailAvergingRowsW = 128;
+    tilingDatafromBin->remainderW = 1;
+    tilingDatafromBin->eachCoreSlideNumH = 0;
+    tilingDatafromBin->tailStartSlideNumH = 0;
+    tilingDatafromBin->slideNumH = 1;
+    tilingDatafromBin->groupCoreNumH = 1;
+    tilingDatafromBin->tailAvergingRowsH = 1;
+    tilingDatafromBin->remainderH = 1;
+
+    tilingDatafromBin->input_shapes[0] = 1;
+    tilingDatafromBin->input_shapes[1] = 1;
+    tilingDatafromBin->input_shapes[2] = 1;
+    tilingDatafromBin->input_shapes[3] = 4;
+    tilingDatafromBin->output_shapes[0] = 1;
+    tilingDatafromBin->output_shapes[1] = 1;
+    tilingDatafromBin->output_shapes[2] = 3;
+    tilingDatafromBin->output_shapes[3] = 16;
+
+    tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
+    tilingDatafromBin->matmulTiling_w.M = 1;
+    tilingDatafromBin->matmulTiling_w.N = 16;
+    tilingDatafromBin->matmulTiling_w.Ka = 4;
+    tilingDatafromBin->matmulTiling_w.Kb = 4;
+    tilingDatafromBin->matmulTiling_w.singleCoreM = 1;
+    tilingDatafromBin->matmulTiling_w.singleCoreN = 128;
+    tilingDatafromBin->matmulTiling_w.singleCoreK = 4;
+    tilingDatafromBin->matmulTiling_w.baseM = 16;
+    tilingDatafromBin->matmulTiling_w.baseN = 128;
+    tilingDatafromBin->matmulTiling_w.baseK = 8;
+    tilingDatafromBin->matmulTiling_w.depthA1 = 1;
+    tilingDatafromBin->matmulTiling_w.depthB1 = 1;
+    tilingDatafromBin->matmulTiling_w.stepM = 1;
+    tilingDatafromBin->matmulTiling_w.stepN = 1;
+    tilingDatafromBin->matmulTiling_w.stepKa = 1;
+    tilingDatafromBin->matmulTiling_w.stepKb = 1;
+    tilingDatafromBin->matmulTiling_w.isBias = 0;
+    tilingDatafromBin->matmulTiling_w.transLength = 0;
+    tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
+    tilingDatafromBin->matmulTiling_w.shareMode = 0;
+    tilingDatafromBin->matmulTiling_w.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_w.shareL0CSize = 8192;
+    tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
+    tilingDatafromBin->matmulTiling_w.batchM = 1;
+    tilingDatafromBin->matmulTiling_w.batchN = 1;
+    tilingDatafromBin->matmulTiling_w.singleBatchM = 1;
+    tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
+
+    tilingDatafromBin->matmulTiling_h.usedCoreNum = 1;
+    tilingDatafromBin->matmulTiling_h.M = 3;
+    tilingDatafromBin->matmulTiling_h.N = 16;
+    tilingDatafromBin->matmulTiling_h.Ka = 4;
+    tilingDatafromBin->matmulTiling_h.Kb = 4;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 128;
+    tilingDatafromBin->matmulTiling_h.singleCoreN = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 1;
+    tilingDatafromBin->matmulTiling_h.baseM = 128;
+    tilingDatafromBin->matmulTiling_h.baseN = 16;
+    tilingDatafromBin->matmulTiling_h.baseK = 8;
+    tilingDatafromBin->matmulTiling_h.depthA1 = 1;
+    tilingDatafromBin->matmulTiling_h.depthB1 = 1;
+    tilingDatafromBin->matmulTiling_h.stepM = 1;
+    tilingDatafromBin->matmulTiling_h.stepN = 1;
+    tilingDatafromBin->matmulTiling_h.stepKa = 1;
+    tilingDatafromBin->matmulTiling_h.stepKb = 1;
+    tilingDatafromBin->matmulTiling_h.isBias = 0;
+    tilingDatafromBin->matmulTiling_h.transLength = 0;
+    tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
+    tilingDatafromBin->matmulTiling_h.shareMode = 0;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 4608;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 8192;
+    tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
+    tilingDatafromBin->matmulTiling_h.batchM = 1;
+    tilingDatafromBin->matmulTiling_h.batchN = 1;
+    tilingDatafromBin->matmulTiling_h.singleBatchM = 1;
+    tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
+
+    ICPU_SET_TILING_KEY(1);
+
+    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    fileName = "./upsample_bilinear2d_data/1003_float16_output_upsample_bilinear2d.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void *)(x));
+    AscendC::GmFree((void *)(y));
+    AscendC::GmFree((void *)workspace);
+    AscendC::GmFree((void *)tiling);
+
+    system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float16' '1003'");
 }

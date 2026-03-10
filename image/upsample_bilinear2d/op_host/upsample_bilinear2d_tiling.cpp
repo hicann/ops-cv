@@ -33,8 +33,6 @@ constexpr int8_t SHAPE_SIZE = 4;
 constexpr float HALF_NUM = 0.5;
 constexpr uint32_t BYTE = 8;
 
-
-
 constexpr int8_t C_INDEX = 1;
 constexpr int8_t H_INDEX = 2;
 constexpr int8_t N_INDEX = 0;
@@ -330,9 +328,6 @@ void UpsampleBilinear2dTiling::getShapes()
         output_shapes[i] = input_shape.GetDim(i);
         if (i > C_INDEX) {
             output_shapes[i] = output_shape.GetDim(i);
-        } else {
-            output_shapes[DIM_TWO] = 1;
-            output_shapes[DIM_THREE] = output_shape.GetDim(DIM_TWO);
         }
     }
 
