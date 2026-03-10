@@ -11,6 +11,7 @@
 #include <vector>
 #include <array>
 #include "gtest/gtest.h"
+#include "opdev/platform.h"
 
 #include "../../../../op_host/op_api/aclnn_grid_sampler3d.h"
 
@@ -247,3 +248,35 @@ TEST_F(l2_grid_sampler3d_test, isNCDHW_special_case) {
   aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
   EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
+
+TEST_F(l2_grid_sampler3d_test, ascend910B2_NDHWC_case_01) {
+  auto inputDesc = TensorDesc({2, 1, 3, 3, 1}, ACL_FLOAT, ACL_FORMAT_NDHWC);
+  auto gridDesc = TensorDesc({2, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+  auto outDesc = TensorDesc({2, 1, 2, 2, 1}, ACL_FLOAT, ACL_FORMAT_NDHWC);
+  auto ut = OP_API_UT(aclnnGridSampler3D, INPUT(inputDesc, gridDesc, 0, 0, false), OUTPUT(outDesc));
+  uint64_t workspaceSize = 0;
+  aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+  EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
+TEST_F(l2_grid_sampler3d_test, ascend950_case_01) {
+  SetPlatformSocVersion(SocVersion::ASCEND950);
+  auto inputDesc = TensorDesc({2, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+  auto gridDesc = TensorDesc({2, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+  auto outDesc = TensorDesc({2, 1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+  auto ut = OP_API_UT(aclnnGridSampler3D, INPUT(inputDesc, gridDesc, 0, 0, false), OUTPUT(outDesc));
+  uint64_t workspaceSize = 0;
+  aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+  EXPECT_EQ(aclRet, ACL_SUCCESS);
+  SetPlatformSocVersion(SocVersion::ASCEND910B);
+}
+
+// TEST_F(l2_grid_sampler3d_test, ascend910B2_NDHWC_case_01) {
+//   auto inputDesc = TensorDesc({2, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NDHWC);
+//   auto gridDesc = TensorDesc({2, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+//   auto outDesc = TensorDesc({2, 1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_NDHWC);
+//   auto ut = OP_API_UT(aclnnGridSampler3D, INPUT(inputDesc, gridDesc, 0, 0, false), OUTPUT(outDesc));
+//   uint64_t workspaceSize = 0;
+//   aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+//   EXPECT_EQ(aclRet, ACL_SUCCESS);
+// }

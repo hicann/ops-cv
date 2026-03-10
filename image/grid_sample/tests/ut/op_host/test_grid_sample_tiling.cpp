@@ -33,7 +33,7 @@ protected:
 };
 
 struct GridSampleCompileInfo {
-    uint32_t coreNum = 0;
+    int64_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
     bool isDavid = false;
 };
@@ -52,7 +52,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_1)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000220;
-    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 0 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 200 200 0 2 2 0 0 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -81,7 +81,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_2)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000220;
-    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 1 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 200 200 0 2 2 0 1 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -110,7 +110,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_3)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000220;
-    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 2 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 200 200 0 2 2 0 2 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -139,7 +139,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float16)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000210;
-    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 2 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 200 200 0 2 2 0 2 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16781312};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -168,7 +168,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_nearest)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000221;
-    string expectTilingData = "64 2 1 0 2 2 0 2 2 1 2 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 2 2 0 2 2 1 2 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -197,7 +197,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_bicubic)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000222;
-    string expectTilingData = "64 2 1 0 2 2 0 2 2 2 2 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 2 2 0 2 2 2 2 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -226,7 +226,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_slicing_window)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1001220;
-    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 1 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 200 200 0 2 2 0 1 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -255,7 +255,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_full_load_c2)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 2001220;
-    string expectTilingData = "64 2 2 0 2 2 0 2 2 0 1 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 2 0 2 2 0 2 2 0 1 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -284,7 +284,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_full_load_c1)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 2101220;
-    string expectTilingData = "64 2 1 0 2 2 0 2 2 0 1 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 0 2 2 0 2 2 0 1 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -313,7 +313,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_test_full_load_c32)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 2201220;
-    string expectTilingData = "64 2 32 0 10 10 0 10 10 0 1 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 32 0 10 10 0 10 10 0 1 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -344,7 +344,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_1)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1010320;
-    string expectTilingData = "64 2 1 200 200 200 2 2 2 0 0 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 200 200 200 2 2 2 0 0 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -375,7 +375,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float16_2)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1010310;
-    string expectTilingData = "64 2 1 200 200 200 2 2 2 0 0 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 200 200 200 2 2 2 0 0 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16781312};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -406,7 +406,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_nearest)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1010321;
-    string expectTilingData = "64 2 1 200 200 200 2 2 2 1 0 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 200 200 200 2 2 2 1 0 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -437,7 +437,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float16_nearest)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1010311;
-    string expectTilingData = "64 2 1 200 200 200 2 2 2 1 0 1 1 2 0 0 0 ";
+    string expectTilingData = "48 2 1 200 200 200 2 2 2 1 0 1 1 2 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16781312};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -468,8 +468,8 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float16_bilinear_te)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1011310;
-    string expectTilingData = "64 88 4 16 64 64 16 64 64 0 0 1 0 64 0 0 0 ";
-    std::vector<size_t> expectWorkspaces = {17301504};
+    string expectTilingData = "48 88 4 16 64 64 16 64 64 0 0 1 0 48 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {17170432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
@@ -499,7 +499,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_bilinear_te)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1011320;
-    string expectTilingData = "64 22 4 16 64 64 16 64 64 0 0 1 0 64 0 0 0 ";
+    string expectTilingData = "48 22 4 16 64 64 16 64 64 0 0 1 0 48 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -518,7 +518,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_david_test_1)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 1000;
-    string expectTilingData = "64 2 1 0 200 200 0 2 2 0 0 1 0 1 0 0 0 ";
+    string expectTilingData = "56 2 1 0 200 200 0 2 2 0 0 1 0 1 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -537,7 +537,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_david_test_2)
                                                 gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 2000;
-    string expectTilingData = "64 2 1 200 200 200 2 2 2 0 0 1 0 1 0 0 0 ";
+    string expectTilingData = "56 2 1 200 200 200 2 2 2 0 0 1 0 1 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

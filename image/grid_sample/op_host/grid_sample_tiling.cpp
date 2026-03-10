@@ -240,15 +240,7 @@ ge::graphStatus GridSampleTiling::GetPlatformInfo()
 {
     auto compileInfo = reinterpret_cast<const GridSampleCompileInfo *>(context_->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context_, compileInfo);
-    auto platformInfoPtr = context_->GetPlatformInfo();
-    if (platformInfoPtr == nullptr) {
-        OP_LOGD(context_->GetNodeName(), "Entering into get core num from compile info.");
-        coreNumVar = compileInfo->coreNum;
-    } else {
-        OP_LOGD(context_->GetNodeName(), "Entering into get core num from platform.");
-        auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-        coreNumVar = ascendcPlatform.GetCoreNumAiv();
-    }
+    coreNumVar = compileInfo->coreNum;
     isDavid = compileInfo->isDavid;
     return ge::GRAPH_SUCCESS;
 }

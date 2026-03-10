@@ -18,6 +18,9 @@
 #include "infershape_context_faker.h"
 #include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
+// #include "op_proto_test_util.h"
+// #include "experiment_ops.h"
+// #include "op_api/utils/ut_op_common.h"
 
 class GridSample : public testing::Test {
 protected:
@@ -42,58 +45,56 @@ TEST_F(GridSample, GridSample_infershape_test_unknown_rank)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-// TEST_F(GridSample, GridSample_infershape_test_2D_channel_first)
-// {
-//     ge::op::GridSample op1;
-//     ge::DataType xDtype = ge::DT_FLOAT;
-//     ge::Format xFormat = ge::FORMAT_NCHW;
-//     std::vector<int64_t> xShape = {1, 2, 2, 3};
-//     std::vector<std::pair<int64_t, int64_t>> xRange = {{1, 1}, {2, 2}, {2, 2}, {3, 3}};
-//     op1.UpdateInputDesc("x", create_desc_shape_range(xShape, xDtype, xFormat, xShape, xFormat, xRange));
+TEST_F(GridSample, GridSample_infershape_test_2D_channel_first)
+{
+    gert::InfershapeContextPara infershapeContextPara("GridSample",
+                                                      {{{{1, 2, 2, 3}, {1, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{1, 1, 3, 2}, {1, 1, 3, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                       gert::InfershapeContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                       gert::InfershapeContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<bool>(1))
+                                                    }
+                                                    );
+    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 2, 1, 3},};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
 
-//     ge::Format gridFormat = ge::FORMAT_ND;
-//     std::vector<int64_t> gridShape = {1, 1, 3, 2};
-//     std::vector<std::pair<int64_t, int64_t>> gridRange = {{1, 1}, {2, 2}, {3, 3}, {2, 2}};
-//     op1.UpdateInputDesc(
-//         "grid", create_desc_shape_range(gridShape, xDtype, gridFormat, gridShape, gridFormat, gridRange));
-//     op1.SetAttr("channel_last", false);
-//     std::vector<int64_t> expectShape = {1, 2, 1, 3};
-
-//     Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners", "channel_last"}};
-//     EXPECT_EQ(InferShapeTest(op1, param1), ge::GRAPH_SUCCESS);
-
-//     auto yDesc = op1.GetOutputDescByName("y");
-//     EXPECT_EQ(yDesc.GetDataType(), xDtype);
-//     EXPECT_EQ(yDesc.GetShape().GetDims(), expectShape);
-// }
-
-// TEST_F(GridSample, GridSample_infershape_test_2D_channel_last_unknown_dim)
-// {
-//     ge::op::GridSample op1;
-//     ge::DataType xDtype = ge::DT_FLOAT;
-//     ge::Format xFormat = ge::FORMAT_NHWC;
-//     std::vector<int64_t> xShape = {1, -1, 2, 3};
-//     std::vector<std::pair<int64_t, int64_t>> xRange = {{1, 1}, {2, 2}, {2, 2}, {3, 3}};
-//     op1.UpdateInputDesc("x", create_desc_shape_range(xShape, xDtype, xFormat, xShape, xFormat, xRange));
-
-//     ge::Format gridFormat = ge::FORMAT_ND;
-//     std::vector<int64_t> gridShape = {1, 1, -1, 2};
-//     std::vector<std::pair<int64_t, int64_t>> gridRange = {{1, 1}, {2, 2}, {3, 3}, {2, 2}};
-//     op1.UpdateInputDesc(
-//         "grid", create_desc_shape_range(gridShape, xDtype, gridFormat, gridShape, gridFormat, gridRange));
-//     op1.SetAttr("channel_last", true);
-//     std::vector<int64_t> expectShape = {1, 3, 1, -1};
-
-//     Runtime2TestParam param1{{"interpolation_mode", "padding_mode", "align_corners", "channel_last"}};
-//     EXPECT_EQ(InferShapeTest(op1, param1), ge::GRAPH_SUCCESS);
-
-//     auto yDesc = op1.GetOutputDescByName("y");
-//     EXPECT_EQ(yDesc.GetDataType(), xDtype);
-//     EXPECT_EQ(yDesc.GetShape().GetDims(), expectShape);
-// }
+TEST_F(GridSample, GridSample_infershape_test_2D_channel_last_unknown_dim)
+{
+    gert::InfershapeContextPara infershapeContextPara("GridSample",
+                                                      {{{{1, -1, 2, 3}, {1, -1, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      {{{1, 1, -1, 2}, {1, 1, -1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                       gert::InfershapeContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                       gert::InfershapeContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<bool>(1))
+                                                    }
+                                                    );
+    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 3, 1, -1},};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
 
 // TEST_F(GridSample, GridSample_infershaperange_test_2D_channel_first)
 // {
+//     gert::InfershapeContextPara infershapeContextPara("GridSample",
+//                                                       {{{{1, -1, 2, 3}, {1, -1, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+//                                                       {{{1, 1, -1, 2}, {1, 1, -1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+//                                                       {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+//                                                       {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+//                                                        gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+//                                                        gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+//                                                        gert::InfershapeContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+//                                                        gert::InfershapeContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<bool>(1))
+//                                                     }
+//                                                     );
+//     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 3, 1, -1},};
+//     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+
 //     gert::Shape x_range_max{4, 6, 32, 32};
 //     gert::Shape x_range_min{2, 3, 16, 16};
 //     gert::Shape grid_range_max{4, 44, 55, 2};
@@ -225,4 +226,50 @@ TEST_F(GridSample, GridSample_infershape_test_unknown_rank)
 
 //     EXPECT_EQ(context->GetOutputShapeRange(0)->GetMin()->GetDim(0), 3);
 //     EXPECT_EQ(context->GetOutputShapeRange(0)->GetMax()->GetDim(0), 7);
+// }
+
+
+TEST_F(GridSample, GridSample_infershape_test_3D_channel_last_unknown_dim)
+{
+    gert::InfershapeContextPara infershapeContextPara("GridSample",
+                                                      {{{{1, -1, 2, 1, 3}, {1, -1, 2, 1, 3}}, ge::DT_FLOAT, ge::FORMAT_NDHWC},
+                                                      {{{1, 1, 1, -1, 3}, {1, 1, 1, -1, 3}}, ge::DT_FLOAT, ge::FORMAT_NDHWC}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
+                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                       gert::InfershapeContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                       gert::InfershapeContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<bool>(1))
+                                                    }
+                                                    );
+    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 3, 1, 1, -1},};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// TEST_F(GridSample, GridSample_infershapedatatype_test_2D)
+// {
+//     ASSERT_NE(gert::OpImplRegistry::GetInstance().GetOpImpl("GridSample"), nullptr);
+//     auto data_type_func = gert::OpImplRegistry::GetInstance().GetOpImpl("GridSample")->infer_datatype;
+
+//     if (data_type_func != nullptr) {
+//         ge::DataType featureType = ge::DT_FLOAT16;
+//         ge::DataType weightType = ge::DT_FLOAT16;
+//         ge::DataType outType = ge::DT_FLOAT16; // 初始化的时候设置为未定义的类型
+
+//         auto holder = gert::InferDataTypeContextFaker()
+//                           .IrInputNum(3)
+//                           .NodeIoNum(3, 1)
+//                           .NodeInputTd(0, ge::DT_FLOAT16, ge::FORMAT_ND, ge::FORMAT_ND)
+//                           .NodeInputTd(2, ge::DT_FLOAT16, ge::FORMAT_ND, ge::FORMAT_ND)
+//                           .NodeOutputTd(0, ge::DT_FLOAT16, ge::FORMAT_ND, ge::FORMAT_ND)
+//                           .InputDataTypes({&featureType, &weightType})
+//                           .OutputDataTypes({&outType})
+//                           .Build();
+
+//         auto context = holder.GetContext<gert::InferDataTypeContext>();
+//         ASSERT_EQ(data_type_func(context), ge::GRAPH_SUCCESS);
+//         ASSERT_NE(context, nullptr);
+
+//         EXPECT_EQ(context->GetOutputDataType(0), outType);
+//     }
 // }

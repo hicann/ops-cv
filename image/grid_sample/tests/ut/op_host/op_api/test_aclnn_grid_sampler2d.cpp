@@ -15,7 +15,7 @@
 #include <vector>
 #include <array>
 #include "gtest/gtest.h"
-
+#include "opdev/platform.h"
 #include "../../../../op_host/op_api/aclnn_grid_sampler2d.h"
 
 #include "op_api_ut_common/op_api_ut.h"
@@ -158,7 +158,7 @@ TEST_F(l2_grid_sampler2d_test, case_6)
     // ut.TestPrecision();
 }
 
-// // double
+// double
 // TEST_F(l2_grid_sampler2d_test, case_7)
 // {
 //     aclDataType dtype = aclDataType::ACL_DOUBLE;
@@ -583,7 +583,7 @@ TEST_F(l2_grid_sampler2d_test, ascend910B2_case_28)
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
-// // double
+// double
 // TEST_F(l2_grid_sampler2d_test, ascend910B2_case_30)
 // {
 //     aclDataType dtype = aclDataType::ACL_DOUBLE;
@@ -697,21 +697,65 @@ TEST_F(l2_grid_sampler2d_test, ascend310P_case_36)
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
-// // ascend310P bfloat16
-// TEST_F(l2_grid_sampler2d_test, ascend310P_case_37)
-// {
-//     auto input =
-//         TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-//                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-//                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-//                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
-//     auto grid = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND)
-//                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
-//     auto out = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_ND);
-//     bool alignCorners = false;
-//     auto ut = OP_API_UT(aclnnGridSampler2D, INPUT(input, grid, 0, 0, alignCorners), OUTPUT(out));
+TEST_F(l2_grid_sampler2d_test, ascend310P_case_37)
+{
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
+    auto input =
+        TensorDesc({1, 1, 5, 8}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT16, ACL_FORMAT_ND)
+                    .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
+    auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT16, ACL_FORMAT_ND);
+    bool alignCorners = false;
+    auto ut = OP_API_UT(aclnnGridSampler2D, INPUT(input, grid, 0, 0, alignCorners), OUTPUT(out));
 
-//     uint64_t workspaceSize = 0;
-//     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
-//     EXPECT_EQ(aclRet, ACL_SUCCESS);
-// }
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
+}
+
+// ascend310P bfloat16
+TEST_F(l2_grid_sampler2d_test, ascend310P_case_38)
+{
+    SetPlatformSocVersion(SocVersion::ASCEND310P);
+    auto input =
+        TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+                                                                              10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+                                                                              20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                                                              30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto grid = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND)
+                    .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
+    auto out = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_ND);
+    bool alignCorners = false;
+    auto ut = OP_API_UT(aclnnGridSampler2D, INPUT(input, grid, 0, 0, alignCorners), OUTPUT(out));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
+}
+
+TEST_F(l2_grid_sampler2d_test, ascend950_case_39)
+{
+    SetPlatformSocVersion(SocVersion::ASCEND950);
+    auto input =
+        TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto grid = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND)
+                    .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
+    auto out = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_ND);
+    bool alignCorners = false;
+    auto ut = OP_API_UT(aclnnGridSampler2D, INPUT(input, grid, 1, 0, alignCorners), OUTPUT(out));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
+}
