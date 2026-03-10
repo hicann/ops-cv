@@ -51,14 +51,31 @@ if(ENABLE_COVERAGE)
 
   if(ENABLE_UT_EXEC)
     set(GENERATE_CPP_COV ${CMAKE_SOURCE_DIR}/scripts/util/generate_cpp_cov.sh)
+    # always capture whole build tree; filtering will remove unrelated modules later
     set(_ops_capture_path ${CMAKE_BINARY_DIR})
+    # decide type for downstream filtering
+    if(OP_KERNEL_UT AND NOT UT_TEST_ALL)
+      set(_ut_type op_kernel)
+    elseif(OP_HOST_UT AND NOT UT_TEST_ALL)
+      set(_ut_type op_host)
+    elseif(OP_API_UT AND NOT UT_TEST_ALL)
+      set(_ut_type op_api)
+    elseif(OP_KERNEL_AICPU_UT AND NOT UT_TEST_ALL)
+      set(_ut_type op_kernel_aicpu)
+    else()
+      set(_ut_type all)
+    endif()
+
     set(_ops_cov_report ${CMAKE_BINARY_DIR}/tests/ut/cov_report)
     set(_ops_cov_html ${_ops_cov_report}/cpp_utest)
     set(_ops_cov_data ${_ops_cov_report}/cpp_utest/ops.info)
     message(STATUS "GENERATE_CPP_COV is ${GENERATE_CPP_COV}")
+    message(STATUS "ASCEND_OP_NAME is ${ASCEND_OP_NAME}")
+    message(STATUS "_ut_type: ${_ut_type}")
     add_custom_command(
       TARGET generate_ops_cpp_cov
       COMMAND bash ${GENERATE_CPP_COV} ${_ops_capture_path} ${_ops_cov_data}
-              ${_ops_cov_html})
+              ${_ops_cov_html} ${_ut_type} "${ASCEND_OP_NAME}"
+      VERBATIM) ## ASCEND_OP_NAME为分号分隔的算子列表，在传递给bash时被解析为多个参数，增加VERBATIM以防止被展开，保持为一个参数。
   endif()
 endif()

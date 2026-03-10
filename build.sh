@@ -1029,10 +1029,9 @@ parse_changed_files() {
     OP_KERNEL_UT=TRUE
     ENABLE_CUSTOM=TRUE
   fi
-  if [[ "$related_ut" =~ "OP_KERNEL_AICPU_UT" ]]; then
+  if [[ "$related_ut" =~ "OP_KERNEL_AICPU_UT" && "$OP_KERNEL_AICPU" == "TRUE" ]]; then
     echo "OP_KERNEL_AICPU_UT is triggered!"
     OP_KERNEL_AICPU_UT=TRUE
-    OP_KERNEL_AICPU=TRUE
     ENABLE_CUSTOM=TRUE
   fi
 }
@@ -1086,6 +1085,7 @@ assemble_cmake_args() {
   fi
   if [[ "$ENABLE_TEST" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_TEST=TRUE"
+    custom_cmake_args
   fi
   if [[ "$ENABLE_UT_EXEC" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_UT_EXEC=TRUE"

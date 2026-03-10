@@ -87,6 +87,8 @@ generate_coverage() {
 filter_coverage() {
   local _coverage_file="$1"
   local _filtered_file="$2"
+  local _ut_type="$3"    # op_kernel/op_host/op_api/op_kernel_aicpu/all
+  local _op_names="$4"   # optional semicolon/comma separated
 
   if [[ ! -f "${_coverage_file}" ]]; then
     logging "coverage data file required"
@@ -103,12 +105,52 @@ filter_coverage() {
     _ignore_opt="--ignore-errors inconsistent"
   fi
 
-  # 移除不需要的库文件 (Ascend, /usr/include 等)
-  lcov --remove "${_coverage_file}" "${ASCEND_PARENT_PATH}/*" \
-    '/usr/include/*' \
-    '*/third_party/*' \
-    '*/common/*' \
-    '*/tests/*' -o "${_filtered_file}" ${_ignore_opt}
+  # 构建移除列表
+  echo "ASCEND_PARENT_PATH: ${ASCEND_PARENT_PATH}"
+  local remove_patterns=("${ASCEND_PARENT_PATH}/*" '/usr/include/*' )
+  # 保留第三方 headers 还是视情况而定；对测试和公共代码我们默认去掉
+  remove_patterns+=( '*/third_party/*' '*/tests/*' )
+
+  # 针对具体 ut type 增加额外移除规则（例如运行 op_kernel 测试时剔除 op_host 库）
+  case "${_ut_type}" in
+    op_kernel)
+      remove_patterns+=( '*/op_host/*' '*/op_api/*' )
+      ;;
+    op_host)
+      remove_patterns+=( '*/op_kernel/*' )
+      ;;
+    op_api)
+      remove_patterns+=( '*/op_host/*' '*/op_kernel/*' )
+      ;;
+    op_kernel_aicpu)
+      remove_patterns+=( '*/op_host/*' '*/op_api/*' )
+      ;;
+    *)
+      ;; # all 或未指定，不额外过滤
+  esac
+
+  # 执行过滤
+  lcov --remove "${_coverage_file}" "${remove_patterns[@]}" -o "${_filtered_file}" ${_ignore_opt}
+
+  # op_name filtering: if specified, keep only coverage records whose source file
+  # path contains one of the given operator names.  Use lcov --extract to filter
+  # by operator directories.
+  if [[ -n "${_op_names}" ]]; then
+    IFS=';, ' read -r -a ops <<< "${_op_names}"
+    extract_patterns=""
+    for op in "${ops[@]}"; do
+      if [[ -z "${extract_patterns}" ]]; then
+        extract_patterns="*/${op}/*"
+      else
+        extract_patterns="${extract_patterns} */${op}/*"
+      fi
+    done
+    logging "Extracting coverage for operators: ${_op_names}"
+    # Use lcov --extract to keep only files matching the operator patterns
+    lcov --extract "${_filtered_file}" ${extract_patterns} -o "${_filtered_file}.tmp" ${_ignore_opt}
+    mv "${_filtered_file}.tmp" "${_filtered_file}"
+  fi
+
 }
 
 # generate html report
@@ -136,14 +178,18 @@ generate_html() {
   genhtml "${_filtered_file}" -o "${_out_path}" ${_ignore_opt}
 }
 
-if [[ $# -ne 3 ]]; then
-  logging "Usage: $0 DIR COV_FILE OUT_PATH"
+if [[ $# -lt 3 ]]; then
+  logging "Usage: $0 DIR COV_FILE OUT_PATH [UT_TYPE] [OP_NAMES]"
+  logging "  UT_TYPE one of op_kernel,op_host,op_api,op_kernel_aicpu,all"
+  logging "  OP_NAMES optional semicolon/comma-separated operator list (e.g. grid_sample)"
   exit 1
 fi
 
 _src="$1"
 _cov_file="$2"
 _out="$3"
+_ut_type="${4:-all}"
+_op_names="${5:-}"
 
 if [[ -z "${ASCEND_HOME_PATH}" ]]; then
   logging "ASCEND_HOME_PATH is not set"
@@ -157,5 +203,5 @@ if [[ -z "${ASCEND_PARENT_PATH}" ]]; then
 fi
 
 generate_coverage "${_src}" "${_cov_file}"
-filter_coverage "${_cov_file}" "${_cov_file}_filtered"
+filter_coverage "${_cov_file}" "${_cov_file}_filtered" "${_ut_type}" "${_op_names}"
 generate_html "${_cov_file}_filtered" "${_out}"
