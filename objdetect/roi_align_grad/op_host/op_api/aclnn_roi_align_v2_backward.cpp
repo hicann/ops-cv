@@ -60,8 +60,14 @@ static bool CheckDtypeValid(const aclTensor *gradOutput, const aclTensor *boxes,
 
 static bool CheckFormatValid(const aclTensor *gradOutput, const aclTensor *boxes, const aclTensor *gradInput)
 {
-    return gradOutput->GetStorageFormat() == op::Format::FORMAT_NCHW && boxes->GetStorageFormat() == op::Format::FORMAT_ND &&
-        gradInput->GetStorageFormat() == op::Format::FORMAT_NCHW;
+    bool formatValid = gradOutput->GetStorageFormat() == op::Format::FORMAT_NCHW &&
+                    boxes->GetStorageFormat() == op::Format::FORMAT_ND &&
+                    gradInput->GetStorageFormat() == op::Format::FORMAT_NCHW;
+    if (formatValid == false) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "gradOutput's format should be NCHW, boxes's format should be ND, gradInput's format should be NCHW");
+    }
+    return formatValid;
 }
 
 static bool CheckInputShape(const aclTensor *gradOutput, const aclTensor *boxes, const aclIntArray *inputShape, 
