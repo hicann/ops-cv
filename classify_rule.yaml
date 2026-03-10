@@ -44,3 +44,40 @@ ops-cv:
       - "*/*/*/*_def.cpp"
       # - "*/*/*/*_apt.cpp"
       - "*/*/op_host/config/"
+
+image@ops-cv:
+  src:
+    release:
+      style:
+        - ops/ops-cv/image/grid_sample
+        - ops/ops-cv/image/grid_sample2_d
+        - ops/ops-cv/image/grid_sample3_d
+        - ops/ops-cv/image/grid_sampler2_d_grad
+        - ops/ops-cv/image/grid_sampler3_d_grad
+        - ops/ops-cv/image/resize_upsample_trilinear
+        - ops/ops-cv/image/upsample_bicubic2d
+        - ops/ops-cv/image/upsample_bicubic2d_aa
+        - ops/ops-cv/image/upsample_bicubic2d_aa_grad
+        - ops/ops-cv/image/upsample_bicubic2d_grad
+        - ops/ops-cv/image/upsample_bilinear2d
+        - ops/ops-cv/image/upsample_bilinear2d_aa
+        - ops/ops-cv/image/upsample_bilinear2d_aa_backward
+        - ops/ops-cv/image/upsample_bilinear2d_grad
+        - ops/ops-cv/image/upsample_linear1d
+        - ops/ops-cv/image/upsample_nearest
+        - ops/ops-cv/image/upsample_nearest2d_grad
+        - ops/ops-cv/image/upsample_nearest3d
+        - ops/ops-cv/image/upsample_nearest3d_grad
+        - ops/ops-cv/image/upsample_nearest_exact2d_grad
+        - ops/ops-cv/image/upsample_nearest_exact3d
+        - ops/ops-cv/image/upsample_nearest_exact3d_grad
+        - ops/ops-cv/image/upsample_trilinear3d_backward
+      opensource_style: null
+      kernel_style: null
+    unrelease:
+      test_code:
+        - ops/ops-cv/image/*/docs
+        - ops/ops-cv/image/*/examples
+        - ops/ops-cv/image/*/tests
+      non_delivery: null
+      open_source: null
