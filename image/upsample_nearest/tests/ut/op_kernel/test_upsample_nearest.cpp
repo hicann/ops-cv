@@ -397,3 +397,63 @@ TEST_F(upsample_nearest_test, test_case_float16_2)
 
     system("cd ./upsample_nearest_data/ && python3 compare_data.py 'float16'");
 }
+
+TEST_F(upsample_nearest_test, test_case_float16_3)
+{
+    system(
+        "cp -rf "
+        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("chmod -R 755 ./upsample_nearest_data/");
+    system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 1, 1, 1)' '(1, 1)' 'float16'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    size_t inputByteSize = 1 * 1 * sizeof(half);
+    size_t outputByteSize = 1 * 1 * sizeof(half);
+    size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 1;
+
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest_data/float16_input_upsample_nearest.bin";
+
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearestTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestTilingData*>(tiling);
+
+    tilingDatafromBin->dataType = 2;
+    tilingDatafromBin->exactMode = true;
+    tilingDatafromBin->scaleW = 1;
+    tilingDatafromBin->scaleH = 1;
+
+    tilingDatafromBin->inputShapes[0] = 1;
+    tilingDatafromBin->inputShapes[1] = 1;
+    tilingDatafromBin->inputShapes[2] = 1;
+    tilingDatafromBin->inputShapes[3] = 1;
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 1;
+    tilingDatafromBin->outputShapes[2] = 1;
+    tilingDatafromBin->outputShapes[3] = 1;
+
+    tilingDatafromBin->tailColStartList[0] = 0;
+    tilingDatafromBin->tailColEndList[0] = 1;
+    tilingDatafromBin->tailRowStartList[0] = 0;
+    tilingDatafromBin->tailRowEndList[0] = 1;
+
+    ICPU_SET_TILING_KEY(1003);
+
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    fileName = "./upsample_nearest_data/float16_output_upsample_nearest.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_nearest_data/ && python3 compare_data.py 'float16'");
+}

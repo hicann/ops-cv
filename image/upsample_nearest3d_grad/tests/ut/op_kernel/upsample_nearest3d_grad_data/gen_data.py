@@ -16,6 +16,7 @@ import os
 import numpy as np
 import re
 import torch
+import tensorflow as tf
 from torch.nn.functional import interpolate
 
 
@@ -28,6 +29,7 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     d_type_dict = {
         "float32": np.float32,
         "float16": np.float16,
+        "bfloat16": tf.bfloat16.as_numpy_dtype
     }
     np_type = d_type_dict[d_type]
     grad_input_shape, _ = parse_str_to_shape_list(input_shape_str)
@@ -35,7 +37,7 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
 
     size = np.prod(grad_input_shape)
     tmp_input = np.random.random(size).reshape(grad_input_shape).astype(np_type)
-    input_tensor = torch.tensor(tmp_input, dtype=torch.float32).requires_grad_(True)
+    input_tensor = torch.tensor(tmp_input.astype(np.float32), dtype=torch.float32).requires_grad_(True)
     grad_output_tensor = interpolate(input_tensor, grad_output_size, mode='nearest')
     grad_output_tensor.backward(grad_output_tensor)
     grad_input_golden = np.array(input_tensor.grad).astype(np_type)

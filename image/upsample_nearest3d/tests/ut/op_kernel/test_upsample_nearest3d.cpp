@@ -110,13 +110,13 @@ TEST_F(upsample_nearest3d_test, test_case_float_2)
     system("cp -rf "
            "../../../../image/upsample_nearest3d/tests/ut/op_kernel/upsample_nearest3d_data ./");
     system("chmod -R 755 ./upsample_nearest3d_data/");
-    system("cd ./upsample_nearest3d_data/ && python3 gen_data.py '(1, 16, 1, 1, 4)' '(1, 1, 16)' 'float32'");
+    system("cd ./upsample_nearest3d_data/ && python3 gen_data.py '(1, 64, 1, 1, 1)' '(1, 1, 4)' 'float32'");
 
-    size_t inputByteSize = 16 * 4 * sizeof(float);
-    size_t outputByteSize = 16 * 16 * sizeof(float);
+    size_t inputByteSize = 64 * sizeof(float);
+    size_t outputByteSize = 64 * 4 * sizeof(float);
     size_t tiling_data_size = sizeof(UpsampleNearest3dTilingData);
     size_t workspaceSize = 32 * 1024 * 1024;
-    uint32_t numBlocks = 16;
+    uint32_t numBlocks = 32;
 
     uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
@@ -131,13 +131,13 @@ TEST_F(upsample_nearest3d_test, test_case_float_2)
     UpsampleNearest3dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleNearest3dTilingData *>(tiling);
 
     tilingDatafromBin->dataType = 0;
-    tilingDatafromBin->batches = 1;
+    tilingDatafromBin->batches = 64;
     tilingDatafromBin->scaleW = 1;
     tilingDatafromBin->scaleH = 1;
     tilingDatafromBin->scaleD = 0.25;
 
     tilingDatafromBin->slideSizeW = 2048;
-    tilingDatafromBin->tensorSizeW = 8196;
+    tilingDatafromBin->tensorSizeW = 516;
     tilingDatafromBin->tensorSizeH = 1;
     tilingDatafromBin->tensorSizeD = 1;
     tilingDatafromBin->slideNumH = 1;
@@ -146,17 +146,17 @@ TEST_F(upsample_nearest3d_test, test_case_float_2)
     tilingDatafromBin->eachCoreSlideNum = 0;
     tilingDatafromBin->remainder = 1;
     tilingDatafromBin->tailStartSlideNum = 0;
-    tilingDatafromBin->groupCoreNum = 16;
-    tilingDatafromBin->inputRow = 1;
-    tilingDatafromBin->tailAvergingRow = 16;
-    tilingDatafromBin->needCoreNum = 1;
+    tilingDatafromBin->groupCoreNum = 32;
+    tilingDatafromBin->inputRow = 64;
+    tilingDatafromBin->tailAvergingRow = 2;
+    tilingDatafromBin->needCoreNum = 32;
 
     tilingDatafromBin->inputShapes[0] = 1;
     tilingDatafromBin->inputShapes[1] = 1;
-    tilingDatafromBin->inputShapes[2] = 4;
+    tilingDatafromBin->inputShapes[2] = 1;
     tilingDatafromBin->outputShapes[0] = 1;
     tilingDatafromBin->outputShapes[1] = 1;
-    tilingDatafromBin->outputShapes[2] = 16;
+    tilingDatafromBin->outputShapes[2] = 4;
 
     tilingDatafromBin->isView1DAndSmallW = true;
 
