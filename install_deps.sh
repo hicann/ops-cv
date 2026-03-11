@@ -337,6 +337,32 @@ install_dos2unix() {
     fi
 }
 
+install_patch() {
+    echo -e "\n==== Checking patch ===="
+
+    if command -v patch &> /dev/null; then
+        echo "patch has been installed"
+        return
+    fi
+
+    echo "Installing patch..."
+    case "$OS" in
+        debian|rhel)
+            run_command sudo $PKG_MANAGER install -y patch
+            ;;
+        macos)
+            run_command brew install patch
+            ;;
+    esac
+
+    if command -v patch &> /dev/null; then
+        echo "patch installed successfully"
+    else
+        echo "patch installation failed"
+        exit 1
+    fi
+}
+
 install_googletest() {
     # Recommended googletest version: release-1.11.0
     echo -e "\n==== Checking googletest ===="
@@ -414,6 +440,7 @@ main() {
     install_cmake
     install_pigz
     install_dos2unix
+    install_patch
     install_googletest
 
     echo -e "===================================================="
