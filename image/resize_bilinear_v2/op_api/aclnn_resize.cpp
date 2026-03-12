@@ -275,15 +275,15 @@ aclnnStatus aclnnResizeGetWorkspaceSize(
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     if (extendFlag && IsRegBase()) {
-        auto sizes = CreateSizesRegBase(self, scales, uniqueExecutor.get());
+        auto sizes = CreateSizesRegBase(selfContiguous, scales, uniqueExecutor.get());
         CHECK_RET(sizes != nullptr, ACLNN_ERR_INNER_NULLPTR);
         // 不必转到5HD，直接执行L0算子 带scales参数
         const aclTensor* resizeRet = nullptr;
         if (strncmp(mode, "nearest", strlen("nearest")) == 0) {
             resizeRet =
-                l0op::ResizeNearestNeighborV2(self, sizes, nullptr, false, false, outContiguous, uniqueExecutor.get());
+                l0op::ResizeNearestNeighborV2(selfContiguous, sizes, nullptr, false, false, outContiguous, uniqueExecutor.get());
         } else {
-            resizeRet = l0op::ResizeBilinearV2With4d(self, sizes, false, nullptr, outContiguous, uniqueExecutor.get());
+            resizeRet = l0op::ResizeBilinearV2With4d(selfContiguous, sizes, false, nullptr, outContiguous, uniqueExecutor.get());
         }
         CHECK_RET(resizeRet != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -293,7 +293,7 @@ aclnnStatus aclnnResizeGetWorkspaceSize(
     } else {
         auto sizes = CreateSizesV35(out, uniqueExecutor.get());
         CHECK_RET(sizes != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        auto selfData = l0op::TransDataSpecial(self, Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+        auto selfData = l0op::TransDataSpecial(selfContiguous, Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
         CHECK_RET(selfData != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         auto outData = l0op::TransDataSpecial(outContiguous, Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
