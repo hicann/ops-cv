@@ -16,7 +16,6 @@
 #define _ROI_ALIGN_ROTATED_GRAD_H_
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
-#include "kernel_utils.h"
 
 using namespace AscendC;
 constexpr float half_value = -0.5f;
