@@ -43,3 +43,46 @@ TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_001) {
     std::vector<size_t> expectWorkspaces = {16810752};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_002) {
+    optiling::UpsampleLinear1dCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+                                            "UpsampleLinear1d",
+                                            {
+                                                {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+                                                {{{1}, {1}}, ge::DT_INT32, ge::FORMAT_ND},
+                                            },
+                                            {
+                                                {{{1, 1, 128}, {1, 1, 128}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+                                            },
+                                            {
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+                                                gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>({1}))
+                                            },
+                                            &compileInfo);
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "0 128 2 1065353216 0 0 0 0 0 0 0 0 1 1 0 0 4096 1 0 1 0 0 0 1 0 1 0 1 1 1 128 1 1 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16777728};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_003) {
+    optiling::UpsampleLinear1dCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara("UpsampleLinear1d",
+                                            {
+                                                {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+                                                {{{1}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                            },
+                                            {
+                                                {{{1, 1, 256}, {1, 1, 256}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+                                            },
+                                            {
+                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+                                                gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>({2}))
+                                            },
+                                            &compileInfo);
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "1 128 2 1056898815 0 4294976640 2 2 2 1 128 0 1 1 0 2560 4096 1 0 1 0 128 0 1 0 1 80 1 1 1 128 1 1 1 256 4294967297 549755814144 4294967424 313532612736 549755813904 8589934656 4294967298 1 0 316659348799488 8192 4294967297 4294967297 8589934594 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16815424};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}

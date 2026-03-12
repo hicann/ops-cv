@@ -53,6 +53,7 @@ constexpr uint32_t SCALES_ATTR = 1;
 constexpr uint64_t DATA_TYPE_FLOAT16 = 1;
 constexpr uint64_t DATA_TYPE_FLOAT = 2;
 constexpr uint64_t DATA_TYPE_HALF = 3;
+constexpr uint64_t DATA_TYPE_FP32_SIZE = 4;
 
 constexpr uint64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint32_t BYTE_LEN_4 = 4;
@@ -274,7 +275,7 @@ void UpsampleLinear1dTiling::getTCubeTiling_w()
     mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX],
         output_shapes[W_INDEX],
         input_shapes[W_INDEX]);
-    if(dataTypeSize == 4) {
+    if(dataTypeSize == DATA_TYPE_FP32_SIZE) {
         mmTiling_w.SetShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX], slide_size_w, singleCoreK_w);
     } else {
         uint64_t matmulBlockPerTime = tilingData.get_matmulBlockPerTime();
@@ -406,7 +407,7 @@ bool UpsampleLinear1dTiling::getWorkLoopInfo(
 
 void UpsampleLinear1dTiling::getShapes()
 {
-    for (int8_t i = 0; i < 2; i++) {
+    for (int8_t i = 0; i < DIM_TWO; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = output_shape.GetDim(i);
     }

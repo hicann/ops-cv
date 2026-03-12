@@ -24,7 +24,7 @@ def parse_str_to_shape_list(shape_str):
     shape_list = [int(x) for x in shape_str.split(",")]
     return np.array(shape_list), shape_list
 
-def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
+def gen_data_and_golden(input_shape_str, output_size_str, case_id, d_type="float32"):
     d_type_dict = {
         "float32": np.float32,
         "float16": np.float16,
@@ -36,16 +36,16 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     size = np.prod(input_shape)
     tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
     x_tensor = torch.tensor(tmp_input, dtype=torch.float32)
-    y_golden = interpolate(x_tensor, output_size, mode='linear')
+    y_golden = interpolate(x_tensor, output_size, mode='bilinear')
     tmp_golden = np.array(y_golden).astype(np_type)
 
-    tmp_input.astype(np_type).tofile(f"{d_type}_input_upsample_bilinear2d.bin")
-    tmp_golden.astype(np_type).tofile(f"{d_type}_golden_upsample_bilinear2d.bin")
+    tmp_input.astype(np_type).tofile(f"{case_id}_{d_type}_input_upsample_bilinear2d.bin")
+    tmp_golden.astype(np_type).tofile(f"{case_id}_{d_type}_golden_upsample_bilinear2d.bin")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Param num must be 4, actually is ", len(sys.argv))
+    if len(sys.argv) != 5:
+        print("Param num must be 5, actually is ", len(sys.argv))
         exit(1)
     # 清理bin文件
     os.system("rm -rf *.bin")
-    gen_data_and_golden(sys.argv[1], sys.argv[2], sys.argv[3])
+    gen_data_and_golden(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

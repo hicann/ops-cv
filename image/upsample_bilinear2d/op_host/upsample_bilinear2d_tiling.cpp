@@ -33,8 +33,6 @@ constexpr int8_t SHAPE_SIZE = 4;
 constexpr float HALF_NUM = 0.5;
 constexpr uint32_t BYTE = 8;
 
-
-
 constexpr int8_t C_INDEX = 1;
 constexpr int8_t H_INDEX = 2;
 constexpr int8_t N_INDEX = 0;
@@ -77,7 +75,7 @@ private:
     void getShapes();
     void setSlideSize(const uint32_t coreNumPlatFormInfo);
     inline int64_t calculateSlideSize(const uint32_t coreNumPlatFormInfo, uint8_t direction);
-    inline int64_t getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, uint8_t direction, float real_scale);
+    inline int64_t getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, uint8_t direction, float realScale);
     uint8_t GetDataTypeSize() const;
     uint64_t GetDataTypeVal() const;
     uint32_t GetNeedCoreNum(const uint32_t coreNumPlatFormInfo);
@@ -90,7 +88,7 @@ private:
         const gert::TilingContext *context, const float scales_w, const float scales_h) const;
     inline int64_t getSingleCoreK(const int64_t slideSize, const float scale, const bool alignCorners) const;
     template <typename T1, typename T2>
-    inline T1 CeilA2B(T1 a, T2 b) const;
+    inline T1 CeilA2B(T1 m, T2 n) const;
 
     template <typename T1>
     inline int32_t Ceil(T1 x) const;
@@ -330,9 +328,6 @@ void UpsampleBilinear2dTiling::getShapes()
         output_shapes[i] = input_shape.GetDim(i);
         if (i > C_INDEX) {
             output_shapes[i] = output_shape.GetDim(i);
-        } else {
-            output_shapes[DIM_TWO] = 1;
-            output_shapes[DIM_THREE] = output_shape.GetDim(DIM_TWO);
         }
     }
 
