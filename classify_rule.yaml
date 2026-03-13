@@ -44,6 +44,7 @@ ops-cv:
       - "*/*/*/*_def.cpp"
       # - "*/*/*/*_apt.cpp"
       - "*/*/op_host/config/"
+      - "build/third_party/src/external_eigen_cv/"
 
 
 objdetect@ops-cv:
