@@ -59,9 +59,10 @@ constexpr uint32_t PADDING_MODE_BORDER = 1;
 constexpr uint32_t PADDING_MODE_REFLECTION = 2;
 constexpr uint32_t ALIGN_CORNERS_FALSE = 0;
 constexpr uint32_t ALIGN_CORNERS_TRUE = 1;
-constexpr uint32_t VF_MAX_THREAD_NUM = 128;
+constexpr uint32_t VF_MAX_THREAD_NUM = 256;
 constexpr uint32_t GRID_LAST_NUM = 3;
 constexpr uint32_t DAVID_MAX_CORE_NUM = 56;
+constexpr uint32_t DETERMINISTIC_BATCH_NUM = 1;
 
 template <typename TilingData>
 class GridSampler3DGradTiling {
@@ -168,6 +169,15 @@ void GridSampler3DGradTiling<TilingData>::GetUsedCore()
         usedCoreNum = tmpCoreNum <= DAVID_MAX_CORE_NUM ? tmpCoreNum : DAVID_MAX_CORE_NUM;
         pNumPerCore = 0;
         tailPNum = 0;
+        if (isDeterministic == 1) {
+            if (batch > coreNum) {
+                usedCoreNum = coreNum;
+                pNumPerCore = Ceil(batch, usedCoreNum);
+                return;
+            }
+            usedCoreNum = batch;
+            pNumPerCore = DETERMINISTIC_BATCH_NUM;
+        }
         return;
     }
     if (isDeterministic == 0) {
@@ -357,6 +367,15 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
 
     size_t* currentWorkspace = tilingContext->GetWorkspaceSizes(1);
     size_t sysWorkspaceSize = WORKSPACE_SIZE;
+    if (params.isDavid) {
+        uint32_t deterministic = tilingContext->GetDeterministic();
+        if (deterministic == 1) {
+            uint32_t batchNumPerCore = params.batch > DAVID_MAX_CORE_NUM ? (params.batch / DAVID_MAX_CORE_NUM) : 1;
+            sysWorkspaceSize = WORKSPACE_SIZE + VF_MAX_THREAD_NUM * sizeof(int32_t) * 8 * 2 * DAVID_MAX_CORE_NUM * params.batch;
+        } else {
+            sysWorkspaceSize = 0;
+        }
+    }
     OP_CHECK_IF(
         (currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
         return false);
@@ -396,10 +415,19 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
 
     if (inputDatatype == ge::DT_FLOAT) {
         tilingContext->SetTilingKey(1);
+        if (deterministic == 1) {
+            tilingContext->SetTilingKey(4);
+        }
     } else if (inputDatatype == ge::DT_FLOAT16) {
         tilingContext->SetTilingKey(2);
+        if (deterministic == 1) {
+            tilingContext->SetTilingKey(5);
+        }
     } else if (inputDatatype == ge::DT_BF16) {
         tilingContext->SetTilingKey(3);
+        if (deterministic == 1) {
+            tilingContext->SetTilingKey(6);
+        }
     }
 
     tilingContext->SetBlockDim(tilingData.get_blockNum());

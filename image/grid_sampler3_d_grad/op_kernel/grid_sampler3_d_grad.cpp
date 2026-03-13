@@ -17,10 +17,14 @@
 #include "grid_sampler3_d_grad.h"
 #else
 #include "arch35/grid_sampler3_d_grad_simt.h"
+#include "arch35/grid_sampler3_d_grad_simt_det.h"
 #endif
 
 #if __CCE_AICORE__ == 220
 using namespace GridSampler3DGrad;
+#else
+using namespace GridSampler3DGradSimtNS;
+using namespace GridSampler3DGradSimtDetNS;
 #endif
 
 extern "C" __global__ __aicore__ void grid_sampler3_d_grad(
@@ -56,6 +60,18 @@ extern "C" __global__ __aicore__ void grid_sampler3_d_grad(
         op.Process();
     } else if (TILING_KEY_IS(3)) {
         GridSampler3DGradSimt<bfloat16_t> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(4)) {
+        GridSampler3DGradSimtDet<float> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(5)) {
+        GridSampler3DGradSimtDet<half> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    } else if (TILING_KEY_IS(6)) {
+        GridSampler3DGradSimtDet<bfloat16_t> op;
         op.Init(&tilingData, gmTensor);
         op.Process();
     }

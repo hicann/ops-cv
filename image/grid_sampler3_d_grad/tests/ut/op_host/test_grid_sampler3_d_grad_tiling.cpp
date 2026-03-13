@@ -329,8 +329,8 @@ TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_float32_case12)
                                                 &compileInfo);
     uint64_t expectTilingKey = 1;
     string expectTilingData =
-        "68719476738 68719476752 34359738371 34359738376 1 103079215105 0 6322191859744 0 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
+        "68719476738 68719476752 34359738371 34359738376 1 51539607553 0 6322191859744 0 ";
+    std::vector<size_t> expectWorkspaces = {0};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
