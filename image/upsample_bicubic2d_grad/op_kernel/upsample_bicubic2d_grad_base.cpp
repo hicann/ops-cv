@@ -175,9 +175,9 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int32_t o
         bool need = false;
         for (int j = -1; j < 3; j++) {
             int32_t idx_ = idx[i] + j;
-            float coeff_value = coeffUbBuff.GetValue(((j + 4) % 4) * NUM_FRACTAL + i);
+            float coeffValue = coeffUbBuff.GetValue(((j + 4) % 4) * NUM_FRACTAL + i);
             if (idx_ <= 0) {
-                sum_head += coeff_value;
+                sum_head += coeffValue;
                 need = true;
                 if (j == 2)
                     coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
@@ -190,7 +190,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int32_t o
                     }
                     need = false;
                 }
-                sum_end += coeff_value;
+                sum_end += coeffValue;
                 if (j == 2)
                     coeffUbRes.SetValue(tilingData->outputW - 1 - base[0] + i * tilingData->baseNW, sum_end);
             } else {
@@ -198,7 +198,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int32_t o
                     coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
                     need = false;
                 }
-                coeffUbRes.SetValue(idx_ - base[0] + i * tilingData->baseNW, coeff_value);
+                coeffUbRes.SetValue(idx_ - base[0] + i * tilingData->baseNW, coeffValue);
             }
         }
     }

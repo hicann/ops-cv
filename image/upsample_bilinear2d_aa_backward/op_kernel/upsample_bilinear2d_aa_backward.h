@@ -67,9 +67,9 @@ private:
         return a < b ? a : b;
     };
     template <typename T1>
-    __aicore__ inline T1 Max(T1 a, T1 b)
+    __aicore__ inline T1 Max(T1 m, T1 n)
     {
-        return a > b ? a : b;
+        return m > n ? m : n;
     };
     __aicore__ inline void ParseTilingData(UpsampleBilinear2dAABackwardTilingData *tilingData);
     __aicore__ inline void WDirectionExpansion();

@@ -101,14 +101,14 @@ __aicore__ inline void Bicubic2dAAGradDataCopy<T1>::Process()
     }
     if (blockIdx_ < tailBlockNum_) {
         totalLength_ += 1;
-        totalOffset_ = blockIdx_ * totalLength_;
+        totalOffset_ = totalLength_ * blockIdx_;
     } else {
         totalOffset_ = blockIdx_ * totalLength_ + tailBlockNum_;
     }
 
-    for (int64_t loop = 0; loop < totalLength_; loop += ubFactor_) {
-        int64_t length = Min(ubFactor_, totalLength_ - loop);
-        int64_t offset = totalOffset_ + loop;
+    for (int64_t loopIdx = 0; loopIdx < totalLength_; loopIdx += ubFactor_) {
+        int64_t length = Min(ubFactor_, totalLength_ - loopIdx);
+        int64_t offset = totalOffset_ + loopIdx;
         CopyIn(offset, length);
         CopyOut(offset, length);
     }

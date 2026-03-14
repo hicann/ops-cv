@@ -261,8 +261,8 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
-    auto ret = CheckParams(self, outputSize, out);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+    auto checkTrilinear3dRet = CheckParams(self, outputSize, out);
+    CHECK_RET(checkTrilinear3dRet == ACLNN_SUCCESS, checkTrilinear3dRet);
 
     if (self->IsEmpty()) {
         *workspaceSize = 0;
@@ -301,8 +301,8 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
     selfShape[DIM_FOUR] = (*outputSize)[DIM_TWO];
 
     uint64_t size = 0;
-    ret = aclGetFloatArraySize(castScales, &size);
-    if (ret == ACLNN_SUCCESS && size == DIM_THREE) {
+    checkTrilinear3dRet = aclGetFloatArraySize(castScales, &size);
+    if (checkTrilinear3dRet == ACLNN_SUCCESS && size == DIM_THREE) {
         scalesD1 = (*castScales)[DIM_ZERO];
         scalesH1 = (*castScales)[DIM_ONE];
         scalesW1 = (*castScales)[DIM_TWO];

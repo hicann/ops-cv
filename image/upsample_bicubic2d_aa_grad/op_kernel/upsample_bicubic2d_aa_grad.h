@@ -68,12 +68,12 @@ private:
         return (((float)2.5 - (float)0.5 * x) * x - (float)4.0) * x + (float)2.0;
     };
     template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    __aicore__ inline T1 CeilA2B(T1 x1, T2 x2)
     {
-        if (b == 0) {
-            return a;
+        if (x2 == 0) {
+            return x1;
         }
-        return (a + b - 1) / b;
+        return (x1 + x2 - 1) / x2;
     };
     template <typename T1>
     __aicore__ inline T1 Min(T1 a, T1 b)
@@ -81,12 +81,12 @@ private:
         return a < b ? a : b;
     };
     template <typename T1>
-    __aicore__ inline T1 getMax(T1 x, T1 y)
+    __aicore__ inline T1 getMax(T1 m, T1 n)
     {
-        if (x >= y) {
-            return x;
+        if (m >= n) {
+            return m;
         } else {
-            return y;
+            return n;
         }
     }
     template <typename T1>
@@ -140,17 +140,17 @@ private:
     GM_ADDR inTensorsPtr = nullptr;
     GM_ADDR outTensorsPtr = nullptr;
 
-    int64_t blockIdx = 0;
     int64_t slide_size = 0;
+    int64_t blockIdx = 0;
 
-    float scale_w;
     float scale_h;
-    float invscale_w;
+    float scale_w;
     float invscale_h;
-    float support_w;
+    float invscale_w;
     float support_h;
-    int64_t max_interp_size_w;
+    float support_w;
     int64_t max_interp_size_h;
+    int64_t max_interp_size_w;
 
     uint64_t intermediate_matrix_size = 16;
     uint32_t radio_matrix_size;
@@ -602,9 +602,9 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateRadioTensor(LocalT
     }
 
     if (dataType != 2) {
-        LocalTensor<T> radioCastTensor_w = radioCastQueue.AllocTensor<T>();
-        Cast(radioCastTensor_w, radioTensor, RoundMode::CAST_RINT, radioTensor.GetSize());
-        radioCastQueue.EnQue(radioCastTensor_w);
+        LocalTensor<T> radioCastLocalTensorW = radioCastQueue.AllocTensor<T>();
+        Cast(radioCastLocalTensorW, radioTensor, RoundMode::CAST_RINT, radioTensor.GetSize());
+        radioCastQueue.EnQue(radioCastLocalTensorW);
         radioQueue.FreeTensor(radioTensor);
     } else {
         radioQueue.EnQue(radioTensor);
@@ -619,14 +619,14 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::copyRadioTensorToGm()
     int8_t size = 32 / sizeof(T);
 
     if (dataType == 2) {
-        LocalTensor<T> radioTensor = radioQueue.DeQue<T>();
+        LocalTensor<T> radioBuf = radioQueue.DeQue<T>();
         DataCopy(
-            intermediateTensorGm[workSpaceRadioOffset], radioTensor, (radioTensor.GetSize() + size - 1) / size * size);
+            intermediateTensorGm[workSpaceRadioOffset], radioBuf, (radioBuf.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
 
-        radioQueue.FreeTensor(radioTensor);
+        radioQueue.FreeTensor(radioBuf);
     } else {
         LocalTensor<T> radioCastTensor = radioCastQueue.DeQue<T>();
         DataCopy(intermediateTensorGm[workSpaceRadioOffset],
@@ -728,13 +728,13 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::ParseTilingData(UpsampleBic
     invscale_w = tilingData->invscale_w;
     invscale_h = tilingData->invscale_h;
 
-    support_w = tilingData->support_w;
     support_h = tilingData->support_h;
-    max_interp_size_w = tilingData->max_interp_size_w;
+    support_w = tilingData->support_w;
     max_interp_size_h = tilingData->max_interp_size_h;
+    max_interp_size_w = tilingData->max_interp_size_w;
 
-    need_core_num_w = tilingData->need_core_num_w;
     need_core_num_h = tilingData->need_core_num_h;
+    need_core_num_w = tilingData->need_core_num_w;
 
     for (int8_t i = 0; i < 4; i++) {
         output_shapes[i] = tilingData->output_shapes[i];
@@ -748,22 +748,22 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::ParseTilingData(UpsampleBic
     radio_matrix_size_h = tilingData->radio_matrix_size_h;
 
     slideStart_w = tilingData->slideStartList_w[blockIdx];
-    slideEnd_w = tilingData->slideEndList_w[blockIdx];
     tailSlideStart_w = tilingData->tailSlideStartList_w[blockIdx];
-    tailSlideEnd_w = tilingData->tailSlideEndList_w[blockIdx];
     tailRowStart_w = tilingData->tailRowStartList_w[blockIdx];
+    slideEnd_w = tilingData->slideEndList_w[blockIdx];
+    tailSlideEnd_w = tilingData->tailSlideEndList_w[blockIdx];
     tailRowEnd_w = tilingData->tailRowEndList_w[blockIdx];
 
     slideStart_h = tilingData->slideStartList_h[blockIdx];
-    slideEnd_h = tilingData->slideEndList_h[blockIdx];
     tailSlideStart_h = tilingData->tailSlideStartList_h[blockIdx];
-    tailSlideEnd_h = tilingData->tailSlideEndList_h[blockIdx];
     tailRowStart_h = tilingData->tailRowStartList_h[blockIdx];
+    slideEnd_h = tilingData->slideEndList_h[blockIdx];
+    tailSlideEnd_h = tilingData->tailSlideEndList_h[blockIdx];
     tailRowEnd_h = tilingData->tailRowEndList_h[blockIdx];
-    dataType = tilingData->dataType;
-
-    matmulTiling_w = &tilingData->matmulTiling_w;
+    
     matmulTiling_h = &tilingData->matmulTiling_h;
+    matmulTiling_w = &tilingData->matmulTiling_w;
+    dataType = tilingData->dataType;
 }
 
 }  // namespace UpSampleBicubic2dAAGrad

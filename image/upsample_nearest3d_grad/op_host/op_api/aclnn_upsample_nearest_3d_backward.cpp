@@ -33,17 +33,17 @@ extern "C" {
 static bool CheckInputElement(
     const aclTensor* gradOut, const aclTensor* gradInput, const aclIntArray* outputSize, const aclIntArray* inputSize)
 {
-    int64_t outD = (*outputSize)[DIM_ZERO];
-    int64_t outH = (*outputSize)[DIM_ONE];
-    int64_t outW = (*outputSize)[DIM_TWO];
     int64_t batch = (*inputSize)[DIM_ZERO];
     int64_t channels = (*inputSize)[DIM_ONE];
     int64_t inputD = (*inputSize)[DIM_TWO];
     int64_t inputH = (*inputSize)[DIM_THREE];
     int64_t inputW = (*inputSize)[DIM_FOUR];
-    FVector<int64_t> fullOutputSize = {batch, channels, outD, outH, outW};
+    int64_t outD = (*outputSize)[DIM_ZERO];
+    int64_t outH = (*outputSize)[DIM_ONE];
+    int64_t outW = (*outputSize)[DIM_TWO];
+    FVector<int64_t> fullOutSize = {batch, channels, outD, outH, outW};
     if (gradOut->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
-        fullOutputSize = {batch, outD, outH, outW, channels};
+        fullOutSize = {batch, outD, outH, outW, channels};
     }
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
@@ -53,11 +53,10 @@ static bool CheckInputElement(
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0, but got input (H: %ld,"
-            " W: %ld) output (H: %ld, W: %ld)",
-            inputH, inputW, outH, outW),
+            " W: %ld) output (H: %ld, W: %ld)", inputH, inputW, outH, outW),
         return false);
 
-    auto res = CheckSizeLoop(dimNum, gradOutShape, fullOutputSize);
+    auto res = CheckSizeLoop(dimNum, gradOutShape, fullOutSize);
     CHECK_RET(res == true, res);
 
     op::Shape expectShape = op::Shape{batch, channels, inputD, inputH, inputW};
@@ -113,8 +112,8 @@ aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto ret = CheckParams(gradOut, outputSize, inputSize, gradInput);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+    auto checkNearest3dBackwardRet = CheckParams(gradOut, outputSize, inputSize, gradInput);
+    CHECK_RET(checkNearest3dBackwardRet == ACLNN_SUCCESS, checkNearest3dBackwardRet);
 
     // 空tensor支持
     if (gradOut->IsEmpty()) {
@@ -128,12 +127,12 @@ aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(
     auto gradOutContiguous = l0op::Contiguous(gradOut, uniqueExecutor.get());
     CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    vector<float> scalesList{};
+    vector<float> scaleList{};
     if (scalesD > 0 && scalesH > 0 && scalesW > 0) {
-        scalesList.insert(scalesList.end(), {static_cast<float>(scalesD), static_cast<float>(scalesH), static_cast<float>(scalesW)});
+        scaleList.insert(scaleList.end(), {static_cast<float>(scalesD), static_cast<float>(scalesH), static_cast<float>(scalesW)});
         outputSize = uniqueExecutor.get()->AllocIntArray({}, 0);
     }
-    const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
+    const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scaleList.data(), scaleList.size());
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto gradOutTranspose = gradOutContiguous;

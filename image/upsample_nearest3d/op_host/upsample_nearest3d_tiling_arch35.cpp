@@ -54,10 +54,10 @@ struct BaseTilingData {
     float scaleW = 0.0;
     int32_t isUint32 = 1;
     int32_t schId = 0;
-    int32_t coreNum = 0;
-    int32_t ubSize = 0;
     int32_t realCoreNum = 0;
     int32_t tailBlockNum = 0;
+    int32_t coreNum = 0;
+    int32_t ubSize = 0;
     int32_t ubFactor = 0;
     int32_t dtypeSize = 0;
     int32_t cacheLineNum = 0;
@@ -217,10 +217,10 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputShapeAndAttr()
     int64_t outN = outShape.GetDim(CONST_0);
     int64_t outC = outShape.GetDim(CONST_1);
     OP_CHECK_IF((outN != baseTiling_.dimN) || (outC != baseTiling_.dimC),
-        OP_LOGE(context_, "The N and C dimensions of the input and output need to be the same."),
+        OP_LOGE(context_, "The N and C dimensions of the output need to be same as input."),
         return ge::GRAPH_FAILED);
     auto *attrs = context_->GetAttrs();
-    OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_, "attrs is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_, "the attrs is nullptr"), return ge::GRAPH_FAILED);
     auto outputSize = attrs->GetAttrPointer<gert::ContinuousVector>(CONST_0);
     OP_CHECK_IF(outputSize == nullptr, OP_LOGE(context_, "outputSize is nullptr"), return ge::GRAPH_FAILED);
     const float *scaleDPtr = attrs->GetAttrPointer<float>(1);

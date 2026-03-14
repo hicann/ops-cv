@@ -33,8 +33,8 @@ constexpr int32_t CONST_2 = 2;
 constexpr int32_t CONST_3 = 3;
 constexpr int32_t CONST_4 = 4;
 constexpr int64_t INPUT_DIMS = 5;
-constexpr int64_t THREAD_NUM = 2048; // simt开的线程数
 constexpr int32_t CACHE_LINE = 128;
+constexpr int64_t THREAD_NUM = 2048; // simt开的线程数
 constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
 constexpr const float EPSILON = 1e-8f;
 
@@ -42,10 +42,10 @@ struct BaseTilingData {
     int64_t dimN = 0;
     int64_t dimC = 0;
     int64_t inD = 0;
-    int64_t inH = 0;
-    int64_t inW = 0;
     int64_t outD = 0;
+    int64_t inH = 0;
     int64_t outH = 0;
+    int64_t inW = 0;
     int64_t outW = 0;
     int64_t outSize = 0;
     int64_t blkProcessNum = 0;
@@ -53,13 +53,13 @@ struct BaseTilingData {
     float scaleH = 0.0;
     float scaleW = 0.0;
     int32_t isUint32 = 1;
-    int32_t schId = 0;
-    int32_t coreNum = 0;
     int32_t ubSize = 0;
+    int32_t coreNum = 0;
+    int32_t schId = 0;
     int32_t realCoreNum = 0;
     int32_t tailBlockNum = 0;
-    int32_t ubFactor = 0;
     int32_t dtypeSize = 0;
+    int32_t ubFactor = 0;
     int32_t cacheLineNum = 0;
     int32_t oneBlockNum = 0;
 };
@@ -78,8 +78,8 @@ private:
     ge::graphStatus CheckInputParams();
     ge::graphStatus CheckInputShapeAndAttr();
     void ComputeScales(float scaleD, float scaleH, float scaleW);
-    void CalTilingData();
     void ComputeDataCopy();
+    void CalTilingData();
     void FillTilingData();
     void PrintTilingData();
 
