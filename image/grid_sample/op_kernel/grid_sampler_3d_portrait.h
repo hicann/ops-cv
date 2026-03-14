@@ -123,30 +123,30 @@ private:
     int64_t blockIDX = 0;
 
     // tiling params
-    int64_t coreNum_ = 0;
-    int64_t inputN_ = 0;
-    int64_t inputC_ = 0;
-    int64_t inputD_ = 0;
-    int64_t inputH_ = 0;
-    int64_t inputW_ = 0;
-    int64_t outputD_ = 0;
-    int64_t outputH_ = 0;
-    int64_t outputW_ = 0;
     int64_t interpolationMode_ = 0;
     int64_t paddingMode_ = 0;
     int64_t alignCorners_ = 0;
     int64_t channelLast_ = 0;
     int64_t needCoreNum_ = 0;
+    int64_t coreNum_ = 0;
+    int64_t outputD_ = 0;
+    int64_t outputH_ = 0;
+    int64_t outputW_ = 0;
+    int64_t inputN_ = 0;
+    int64_t inputC_ = 0;
+    int64_t inputD_ = 0;
+    int64_t inputH_ = 0;
+    int64_t inputW_ = 0;
 
     int64_t gridDHW_ = 0;
     int64_t lastLoopHW_ = 0;
+    int64_t perLoopChannel_ = 0;
+    int64_t lastLoopChannel_ = 0;
     int64_t preNUbLoop_ = 0;
     int64_t totalUbLoop_ = 0;
     int64_t preCoreLoop_ = 0;
     int64_t lastCoreLoop_ = 0;
     int64_t channelLoop_ = 0;
-    int64_t perLoopChannel_ = 0;
-    int64_t lastLoopChannel_ = 0;
     int32_t alignT = 0;
     bool setAtomicAdd_ = false;
 
@@ -425,20 +425,20 @@ __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesGetMaskWithRange(Loc
 
     PipeBarrier<PIPE_V>();
 
-    int32_t maskNum = (MASK_UB_SIZE + 1) / 2;  // 除2数据量按照uint16类型折半
-    auto maskTmpXUbTmp = maskTmpXUb.ReinterpretCast<uint16_t>();
-    auto maskXUbTmp = maskXUb.ReinterpretCast<uint16_t>();
-    auto maskTmpYUbTmp = maskTmpYUb.ReinterpretCast<uint16_t>();
-    auto maskYUbTmp = maskYUb.ReinterpretCast<uint16_t>();
-    auto maskTmpZUbTmp = maskTmpZUb.ReinterpretCast<uint16_t>();
-    auto maskZUbTmp = maskZUb.ReinterpretCast<uint16_t>();
-    And(maskXUbTmp, maskTmpXUbTmp, maskXUbTmp, maskNum);
-    And(maskYUbTmp, maskTmpYUbTmp, maskYUbTmp, maskNum);
-    And(maskZUbTmp, maskTmpZUbTmp, maskZUbTmp, maskNum);
+    int32_t maskNumVal = (MASK_UB_SIZE + 1) / 2;  // 除2数据量按照uint16类型折半
+    auto maskTmpXUbTmpVal = maskTmpXUb.ReinterpretCast<uint16_t>();
+    auto maskXUbTmpVal = maskXUb.ReinterpretCast<uint16_t>();
+    auto maskTmpYUbTmpVal = maskTmpYUb.ReinterpretCast<uint16_t>();
+    auto maskYUbTmpVal = maskYUb.ReinterpretCast<uint16_t>();
+    auto maskTmpZUbTmpVal = maskTmpZUb.ReinterpretCast<uint16_t>();
+    auto maskZUbTmpVal = maskZUb.ReinterpretCast<uint16_t>();
+    And(maskXUbTmpVal, maskTmpXUbTmpVal, maskXUbTmpVal, maskNumVal);
+    And(maskYUbTmpVal, maskTmpYUbTmpVal, maskYUbTmpVal, maskNumVal);
+    And(maskZUbTmpVal, maskTmpZUbTmpVal, maskZUbTmpVal, maskNumVal);
     PipeBarrier<PIPE_V>();
-    maskXUb = maskXUbTmp.ReinterpretCast<uint8_t>();
-    maskYUb = maskYUbTmp.ReinterpretCast<uint8_t>();
-    maskZUb = maskZUbTmp.ReinterpretCast<uint8_t>();
+    maskXUb = maskXUbTmpVal.ReinterpretCast<uint8_t>();
+    maskYUb = maskYUbTmpVal.ReinterpretCast<uint8_t>();
+    maskZUb = maskZUbTmpVal.ReinterpretCast<uint8_t>();
 }
 
 template <typename T>
@@ -461,39 +461,39 @@ template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesSelectTensor(
     LocalTensor<float> src0, LocalTensor<float> src1, LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb)
 {
-    BinaryRepeatParams repParams;
-    repParams.src0BlkStride = B32_BLOCK_STRIDE;
-    repParams.src0RepStride = B32_REPEAT_STRIDE;
-    repParams.src1BlkStride = B32_BLOCK_STRIDE;
-    repParams.src1RepStride = B32_REPEAT_STRIDE;
-    repParams.dstBlkStride = B32_BLOCK_STRIDE;
-    repParams.dstRepStride = B32_REPEAT_STRIDE;
-    uint8_t repeat = (CAL_D_H_W_BLOCK + B32_VECTOR_MASK - 1) / B32_VECTOR_MASK;
-    Select(coorUb, maskUb, src0, src1, SELMODE::VSEL_TENSOR_TENSOR_MODE, B32_VECTOR_MASK, repeat, repParams);
+    BinaryRepeatParams repParamsVal;
+    repParamsVal.src0BlkStride = B32_BLOCK_STRIDE;
+    repParamsVal.src0RepStride = B32_REPEAT_STRIDE;
+    repParamsVal.src1BlkStride = B32_BLOCK_STRIDE;
+    repParamsVal.src1RepStride = B32_REPEAT_STRIDE;
+    repParamsVal.dstBlkStride = B32_BLOCK_STRIDE;
+    repParamsVal.dstRepStride = B32_REPEAT_STRIDE;
+    uint8_t repeatVal = (CAL_D_H_W_BLOCK + B32_VECTOR_MASK - 1) / B32_VECTOR_MASK;
+    Select(coorUb, maskUb, src0, src1, SELMODE::VSEL_TENSOR_TENSOR_MODE, B32_VECTOR_MASK, repeatVal, repParamsVal);
     PipeBarrier<PIPE_V>();
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::ComputeMask(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
-    LocalTensor<float> iZFpUb, LocalTensor<uint8_t> maskUb, LocalTensor<float> tmpUb)
+__aicore__ inline void GridSampler3DPortrait<T>::ComputeMask(LocalTensor<float> iXFpUbVal, LocalTensor<float> iYFpUbVal,
+    LocalTensor<float> iZFpUbVal, LocalTensor<uint8_t> maskUbVal, LocalTensor<float> tmpUbVal)
 {
-    Muls(tmpUb, iXFpUb, (float)(0.0), CAL_D_H_W_BLOCK);
+    Muls(tmpUbVal, iXFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    Compare(maskUbVal, tmpUbVal, tmpUbVal, CMPMODE::EQ, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iXFpUb, iXFpUb, maskUb, 0.0f, CAL_D_H_W_BLOCK);
+    CoordinatesSelectScalar(iXFpUbVal, iXFpUbVal, maskUbVal, 0.0f, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Muls(tmpUb, iYFpUb, (float)(0.0), CAL_D_H_W_BLOCK);
+    Muls(tmpUbVal, iYFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    Compare(maskUbVal, tmpUbVal, tmpUbVal, CMPMODE::EQ, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iYFpUb, iYFpUb, maskUb, 0.0f, CAL_D_H_W_BLOCK);
+    CoordinatesSelectScalar(iYFpUbVal, iYFpUbVal, maskUbVal, 0.0f, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Muls(tmpUb, iZFpUb, (float)(0.0), CAL_D_H_W_BLOCK);
+    Muls(tmpUbVal, iZFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    Compare(maskUbVal, tmpUbVal, tmpUbVal, CMPMODE::EQ, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iZFpUb, iZFpUb, maskUb, 0.0f, CAL_D_H_W_BLOCK);
+    CoordinatesSelectScalar(iZFpUbVal, iZFpUbVal, maskUbVal, 0.0f, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 }
 
@@ -554,8 +554,8 @@ template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesBefore(
     LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb, float negMinS, float spanS)
 {
-    LocalTensor<float> extraFpUb = xBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK, extraBufOffset_);
-    LocalTensor<int32_t> tmpIntUb = intTmpBuf_.Get<int32_t>(CAL_D_H_W_BLOCK);
+    LocalTensor<float> extraFpUbVal = xBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK, extraBufOffset_);
+    LocalTensor<int32_t> tmpIntUbVal = intTmpBuf_.Get<int32_t>(CAL_D_H_W_BLOCK);
     // new relative position
     Adds(coorSubUb, iFpUb, negMinS, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
@@ -563,23 +563,23 @@ __aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesBefore(
     PipeBarrier<PIPE_V>();
 
     // extra
-    Muls(extraFpUb, coorSubUb, static_cast<float>(1.0f / spanS), CAL_D_H_W_BLOCK);
+    Muls(extraFpUbVal, coorSubUb, static_cast<float>(1.0f / spanS), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Cast(tmpIntUb, extraFpUb, RoundMode::CAST_FLOOR, CAL_D_H_W_BLOCK);
+    Cast(tmpIntUbVal, extraFpUbVal, RoundMode::CAST_FLOOR, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Cast(extraFpUb, tmpIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(extraFpUbVal, tmpIntUbVal, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Muls(extraFpUb, extraFpUb, spanS, CAL_D_H_W_BLOCK);
+    Muls(extraFpUbVal, extraFpUbVal, spanS, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Sub(extraFpUb, coorSubUb, extraFpUb, CAL_D_H_W_BLOCK);
+    Sub(extraFpUbVal, coorSubUb, extraFpUbVal, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
     // flip
     Muls(coorSubUb, coorSubUb, static_cast<float>(1.0f / spanS), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Cast(tmpIntUb, coorSubUb, RoundMode::CAST_FLOOR, CAL_D_H_W_BLOCK);
+    Cast(tmpIntUbVal, coorSubUb, RoundMode::CAST_FLOOR, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Cast(coorSubUb, tmpIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    Cast(coorSubUb, tmpIntUbVal, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 }
 
@@ -601,33 +601,33 @@ __aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesGeneral(Local
     float spanS = static_cast<float>(twiceHigh - twiceLow) / 2;
     ReflectCoordinatesBefore(iFpUb, coorSubUb, negMinS, spanS);
 
-    LocalTensor<float> out1 = tmpFpUb;
-    LocalTensor<float> out2 = extraFpUb;
-    LocalTensor<float> mods = fmodFpUb;
+    LocalTensor<float> out1Val = tmpFpUb;
+    LocalTensor<float> out2Val = extraFpUb;
+    LocalTensor<float> modsVal = fmodFpUb;
 
-    Adds(out1, extraFpUb, minS, CAL_D_H_W_BLOCK);
-    Muls(out2, extraFpUb, -1.0f, CAL_D_H_W_BLOCK);
+    Adds(out1Val, extraFpUb, minS, CAL_D_H_W_BLOCK);
+    Muls(out2Val, extraFpUb, -1.0f, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Adds(out2, out2, spanS, CAL_D_H_W_BLOCK);
+    Adds(out2Val, out2Val, spanS, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Adds(out2, out2, minS, CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-
-    Muls(mods, coorSubUb, static_cast<float>(1 / 2.0), CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-    Cast(tmpIntUb, mods, RoundMode::CAST_FLOOR, CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-    Cast(mods, tmpIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-    Muls(mods, mods, 2.0f, CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-    Sub(mods, coorSubUb, mods, CAL_D_H_W_BLOCK);
+    Adds(out2Val, out2Val, minS, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    CompareScalar(maskUb, mods, static_cast<float>(0.0), CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    Muls(modsVal, coorSubUb, static_cast<float>(1 / 2.0), CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+    Cast(tmpIntUb, modsVal, RoundMode::CAST_FLOOR, CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+    Cast(modsVal, tmpIntUb, RoundMode::CAST_NONE, CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+    Muls(modsVal, modsVal, 2.0f, CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+    Sub(modsVal, coorSubUb, modsVal, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    CoordinatesSelectTensor(out1, out2, coorSubUb, maskUb);
+    CompareScalar(maskUb, modsVal, static_cast<float>(0.0), CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+
+    CoordinatesSelectTensor(out1Val, out2Val, coorSubUb, maskUb);
 }
 
 template <typename T>

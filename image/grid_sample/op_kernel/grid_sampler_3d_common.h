@@ -206,15 +206,15 @@ __aicore__ inline void CoordinatesGetMaskWithRange(InputTensorStruct inputTensor
 __aicore__ inline void CoordinatesSelectScalar(LocalTensor<float> iFpUb, LocalTensor<float> oFpUb,
     LocalTensor<uint8_t> maskUb, const float scalarVal, const uint32_t calNum)
 {
-    BinaryRepeatParams repParams;
-    repParams.src0BlkStride = B32_BLOCK_STRIDE;
-    repParams.src0RepStride = B32_REPEAT_STRIDE;
-    repParams.src1BlkStride = 0;
-    repParams.src1RepStride = 0;
-    repParams.dstBlkStride = B32_BLOCK_STRIDE;
-    repParams.dstRepStride = B32_REPEAT_STRIDE;
+    BinaryRepeatParams binaryRepParams;
+    binaryRepParams.src0BlkStride = B32_BLOCK_STRIDE;
+    binaryRepParams.src0RepStride = B32_REPEAT_STRIDE;
+    binaryRepParams.src1BlkStride = 0;
+    binaryRepParams.src1RepStride = 0;
+    binaryRepParams.dstBlkStride = B32_BLOCK_STRIDE;
+    binaryRepParams.dstRepStride = B32_REPEAT_STRIDE;
     uint8_t repeat = (calNum + B32_VECTOR_MASK - 1) / B32_VECTOR_MASK;
-    Select(oFpUb, maskUb, iFpUb, scalarVal, SELMODE::VSEL_TENSOR_SCALAR_MODE, B32_VECTOR_MASK, repeat, repParams);
+    Select(oFpUb, maskUb, iFpUb, scalarVal, SELMODE::VSEL_TENSOR_SCALAR_MODE, B32_VECTOR_MASK, repeat, binaryRepParams);
     PipeBarrier<PIPE_V>();
 }
 

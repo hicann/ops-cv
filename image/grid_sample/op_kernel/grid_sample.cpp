@@ -46,7 +46,6 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
         return;
     }
     TPipe pipe;
-
     GET_TILING_DATA(tilingData, tiling);
 
 #if __CCE_AICORE__ == 200

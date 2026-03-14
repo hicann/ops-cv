@@ -67,14 +67,12 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
 
 static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode)
 {
-    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
-        input->GetDataType() != op::DataType::DT_BF16) {
-        OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s",
-            op::ToString(input->GetDataType()).GetString());
+    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 && input->GetDataType() != op::DataType::DT_BF16) {
+        OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s", op::ToString(input->GetDataType()).GetString());
         return false;
     }
-    bool isRegBaseArch = IsRegBase();
-    if (isRegBaseArch && interpolationMode == INTERPOLATION_MODE_MIN_VALUE) {
+    bool isRegBaseArchFlag = IsRegBase();
+    if (isRegBaseArchFlag && interpolationMode == INTERPOLATION_MODE_MIN_VALUE) {
         return true;
     }
     return false;
@@ -206,7 +204,7 @@ static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclT
 }
 
 static aclnnStatus CheckParams(
-    const aclTensor *input, const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode, const aclTensor *out)
+    const aclTensor *input, const aclTensor *grid, int64_t interpMode, int64_t padMode, const aclTensor *out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(input, grid, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -218,7 +216,7 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckFormatValid(input, out), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 检查属性参数是否在支持范围内
-    CHECK_RET(CheckAttrValid(interpolationMode, paddingMode), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckAttrValid(interpMode, padMode), ACLNN_ERR_PARAM_INVALID);
 
     // 5. 检查输入、输出的shape匹配关系
     CHECK_RET(CheckShape(input, grid, out), ACLNN_ERR_PARAM_INVALID);
@@ -339,11 +337,11 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
         return ACLNN_SUCCESS;
     }
     // 固定写法，将输入input转换成连续的tensor
-    auto inputContiguous = l0op::Contiguous(input, uniqueExecutor.get());
-    CHECK_RET(inputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto inputTensor = l0op::Contiguous(input, uniqueExecutor.get());
+    CHECK_RET(inputTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
     // 固定写法，将输入grid转换成连续的tensor
-    auto gridContiguous = l0op::Contiguous(grid, uniqueExecutor.get());
-    CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto gridTensor = l0op::Contiguous(grid, uniqueExecutor.get());
+    CHECK_RET(gridTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
     bool supportAiCore = CheckAiCoreSuppport(input, interpolationMode);
     bool supportAiCpu = CheckAiCpuSuppport(input);
     const op::Format inputFormat = input->GetStorageFormat();
@@ -351,17 +349,17 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
     bool isDavid = CheckDavidSuppport(input, interpolationMode);
     const aclTensor *gridSampler3DOut = nullptr;
     if (supportAiCore) {
-        inputContiguous = CheckAndTranspose(inputContiguous, inputFormat, true, isSpecialcase, uniqueExecutor.get());
-        gridSampler3DOut = l0op::GridSample3D(inputContiguous,
-            gridContiguous,
+        inputTensor = CheckAndTranspose(inputTensor, inputFormat, true, isSpecialcase, uniqueExecutor.get());
+        gridSampler3DOut = l0op::GridSample3D(inputTensor,
+            gridTensor,
             interpolationMode,
             paddingMode,
             alignCorners,
             !isSpecialcase,
             uniqueExecutor.get());
     } else if (isDavid) {
-        gridSampler3DOut = l0op::GridSample3D(inputContiguous,
-            gridContiguous,
+        gridSampler3DOut = l0op::GridSample3D(inputTensor,
+            gridTensor,
             interpolationMode,
             paddingMode,
             alignCorners,
@@ -369,7 +367,7 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
             uniqueExecutor.get());
     } else if (supportAiCpu) {
         gridSampler3DOut = l0op::GridSampler3D(
-            inputContiguous, gridContiguous, interpolationMode, paddingMode, alignCorners, uniqueExecutor.get());
+            inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners, uniqueExecutor.get());
     } else {
         std::string alignCornerStr = alignCorners ? "true" : "false";
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,

@@ -377,12 +377,12 @@ __aicore__ inline void GridSampler3DNearest<T>::MTE3ForNCHWFp16(
         PipeBarrier<PIPE_MTE3>();
         DataCopyPad(gmY_[gmYBaseOffset], outLocalFP16, {1, blockLength, 0, 0, 0});
     } else {
-        for (int32_t i = 0; i < TRANSE_MUL_WEGHT_LOOPS; i++) {
-            int32_t outOffset = i * B32_MASK;
-            int32_t weightOffset = pointNearestParam.loopOffset + i * B32_MASK;
-            Mul(outValueUb[outOffset],
-                outValueUb[outOffset],
-                weightUb[weightOffset],
+        for (int32_t j = 0; j < TRANSE_MUL_WEGHT_LOOPS; j++) {
+            int32_t outOffVal = j * B32_MASK;
+            int32_t weightOffVal = pointNearestParam.loopOffset + j * B32_MASK;
+            Mul(outValueUb[outOffVal],
+                outValueUb[outOffVal],
+                weightUb[weightOffVal],
                 B32_MASK,
                 pointNearestParam.calCElems,
                 {1, 1, 1, 16, 16, 0});
