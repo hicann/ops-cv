@@ -136,6 +136,20 @@ __aicore__ __attribute__((always_inline)) inline void GetGradOutPointValueAndDxI
     }
 }
 
+template <typename T>
+__aicore__ __attribute__((always_inline)) inline void GetGradOutValueAndDxIndex(
+    __gm__ T* gradOutGmAddr, int32_t inputXHeight, int32_t inputXWidth, uint32_t gridH, uint32_t gridW,
+    uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t channelIndex,
+    uint32_t newInputIndex, uint32_t xH, uint32_t xW, uint32_t channel, float* gradOutValue, uint32_t* dxIndex)
+{
+    if (inputXHeight >= 0 && inputXWidth >= 0 && inputXHeight < xH && inputXWidth < xW) {
+        uint32_t gradOutValueIndex = batchNum * channel * gridH * gridW + channelIndex * gridH * gridW +
+                                    heightCol * gridW + widthCol;
+        *gradOutValue = static_cast<float>(gradOutGmAddr[gradOutValueIndex]);
+        *dxIndex = static_cast<uint32_t>(newInputIndex + channelIndex * xH * xW + inputXHeight * xW + inputXWidth);
+    }
+}
+
 __aicore__ __attribute__((always_inline)) inline float ComputeSourceIndexSetGrad(
     float coord, uint32_t size, uint32_t padding, uint32_t alignCorners, float* gradInValue)
 {

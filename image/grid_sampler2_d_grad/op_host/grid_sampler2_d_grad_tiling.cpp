@@ -68,7 +68,10 @@ constexpr uint32_t ALIGN_256_BYTES = 256;
 constexpr uint8_t SCHEDULE_MODE = 1;
 constexpr uint32_t GRID_LAST_NUM = 2;
 constexpr uint32_t VF_MAX_THREAD_NUM = 1024;
+constexpr uint32_t VF_MAX_THREAD_NUM_DET = 256;
 constexpr uint32_t DAVID_MAX_CORE_NUM = 56;
+constexpr uint32_t WORKSPACE_SIZE = 16 * 1024 * 1024;
+constexpr uint32_t DETERMINISTIC_BATCH_NORM = 1;
 
 static std::map<std::string, int> INTER_MODE_MAP = {{"bilinear", 0}, {"nearest", 1}, {"bicubic", 2}};
 static std::map<std::string, int> PADDING_MODE_MAP = {{"zeros", 0}, {"border", 1}, {"reflection", 2}};
@@ -189,6 +192,17 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
         usedCoreNum = tmpCoreNum <= DAVID_MAX_CORE_NUM ? tmpCoreNum : DAVID_MAX_CORE_NUM;
         pNumPerCore = 0;
         tailPNum = 0;
+        if (isDeterministic == 1){
+            tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM_DET);
+            usedCoreNum = tmpCoreNum <= DAVID_MAX_CORE_NUM ? tmpCoreNum : DAVID_MAX_CORE_NUM;
+            if (batch > coreNum) {
+                usedCoreNum = coreNum;
+                pNumPerCore = Ceil(batch, usedCoreNum);
+                return;
+            }
+            usedCoreNum = batch;
+            pNumPerCore = 1;
+        }
         return;
     }
     if (isDeterministic == 0) {
@@ -377,9 +391,9 @@ static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputPara
     }
     return ge::GRAPH_SUCCESS;
 }
-static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
+
+static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params)
 {
-    OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
     if (GetNCHWInfo(tilingContext, params) != ge::GRAPH_SUCCESS) {
         OP_LOGW(tilingContext->GetNodeName(), "Failed to Parse input params NCHW, please check inputs");
         return ge::GRAPH_FAILED;
@@ -400,6 +414,16 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
 
     if (params.padding < ZEROS || params.padding > REFLECTION) {
         OP_LOGW(tilingContext->GetNodeName(), "paddingMode %d is not supported", params.padding);
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
+static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
+{
+    OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
+    if (CheckInputInfo(tilingContext, params) != ge::GRAPH_SUCCESS) {
+        OP_LOGW(tilingContext->GetNodeName(), "Check inputs info failed, please check inputs");
         return ge::GRAPH_FAILED;
     }
 
@@ -433,7 +457,14 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
         return false);
     currentWorkspace[0] = sysWorkspaceSize;
     if (params.isDavid) {
-        currentWorkspace[0] = 0;
+        uint32_t isDeterministic = tilingContext->GetDeterministic();
+        if (isDeterministic == 1) {
+            params.tilingKey += 6;
+            uint32_t batchNumPerCore = params.batch > DAVID_MAX_CORE_NUM ? (params.batch / DAVID_MAX_CORE_NUM) : 1;
+            currentWorkspace[0] = WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * 2 * 4 * params.batch * batchNumPerCore;
+        } else {
+            currentWorkspace[0] = 0;
+        }
     }
     OP_LOGI(tilingContext->GetNodeName(), "sysWorkspaceSize is %zu.", sysWorkspaceSize);
     return ge::GRAPH_SUCCESS;
