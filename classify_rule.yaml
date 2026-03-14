@@ -50,11 +50,17 @@ objdetect@ops-cv:
     src:
         release:
             style:
+                - ops/image/col2im/
+                - ops/image/three_interpolate_backward/
                 - ops/ops-cv/objdetect/
             opensource_style: null
             kernel_style: null
         unrelease:
             test_code: 
+                - ops/image/col2im/examples/
+                - ops/image/col2im/tests/
+                - ops/image/three_interpolate_backward/examples/
+                - ops/image/three_interpolate_backward/tests/
                 - ops/ops-cv/objdetect/stack_group_points/examples/
                 - ops/ops-cv/objdetect/stack_group_points/tests/
                 - ops/ops-cv/objdetect/iou_v2/examples/
