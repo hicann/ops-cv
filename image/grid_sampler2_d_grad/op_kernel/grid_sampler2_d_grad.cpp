@@ -19,6 +19,9 @@
 #include "grid_sampler2_d_grad_cast.h"
 #else
 #include "arch35/grid_sampler2_d_grad_simt.h"
+#include "arch35/grid_sampler2_d_grad_simt_det.h"
+using namespace GridSampler2DSimtA5;
+using namespace GridSampler2DSimtA5Det;
 #endif
 
 __aicore__ inline void InitWorkspace(const GridSampler2DGradTilingData& tiling, GM_ADDR workSpace)
@@ -133,18 +136,42 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
         castOp.Process();
     }
 #else
-    if (TILING_KEY_IS(1) || TILING_KEY_IS(2)) {
+    TILING_KEY_IS(1);
+    TILING_KEY_IS(2);
+    TILING_KEY_IS(3);
+    TILING_KEY_IS(4);
+    TILING_KEY_IS(5);
+    TILING_KEY_IS(6);
+    TILING_KEY_IS(7);
+    TILING_KEY_IS(8);
+    TILING_KEY_IS(9);
+    TILING_KEY_IS(10);
+    TILING_KEY_IS(11);
+    TILING_KEY_IS(12);
+    #if TILING_KEY_VAR == 1 || TILING_KEY_VAR == 2 
         GridSampler2DGradSimt<float> op;
         op.Init(&tilingData, gmTensor);
         op.Process();
-    } else if (TILING_KEY_IS(3) || TILING_KEY_IS(4)) {
+    #elif TILING_KEY_VAR == 3 || TILING_KEY_VAR == 4 
         GridSampler2DGradSimt<half> op;
         op.Init(&tilingData, gmTensor);
         op.Process();
-    } else if (TILING_KEY_IS(5) || TILING_KEY_IS(6)) {
+    #elif TILING_KEY_VAR == 5 || TILING_KEY_VAR == 6 
         GridSampler2DGradSimt<bfloat16_t> op;
         op.Init(&tilingData, gmTensor);
         op.Process();
-    }
+    #elif TILING_KEY_VAR == 7 || TILING_KEY_VAR == 8 
+        GridSampler2DGradSimtDet<float> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 9 || TILING_KEY_VAR == 10
+        GridSampler2DGradSimtDet<half> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 11 || TILING_KEY_VAR == 12
+        GridSampler2DGradSimtDet<bfloat16_t> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #endif
 #endif
 }
