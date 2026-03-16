@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
+static const std::initializer_list<op::DataType> DTYPE_AICORE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
 static const int64_t DIM_LIMIT = 3;
@@ -41,15 +41,15 @@ static constexpr size_t EXPECT_SIZE = 1;
 static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
 {
     OP_CHECK_NULL(self, return false);
-    OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(out, return false);
+    OP_CHECK_NULL(outputSize, return false);
     return true;
 }
 
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
     // 检查self的数据类型是否在UpsampleNearestExact1d算子的支持列表内
-    OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_AICORE_SUPPORT_LIST, return false);
     // 检查self的数据类型是否与out一致
     OP_CHECK_DTYPE_NOT_MATCH(self, out->GetDataType(), return false);
     return true;

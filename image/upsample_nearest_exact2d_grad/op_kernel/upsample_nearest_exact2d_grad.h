@@ -37,12 +37,12 @@ public:
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         MDL_CFG>
-        matmulW;
+        matmulH;
     matmul::Matmul<
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         MDL_CFG>
-        matmulH;
+        matmulW;
     __aicore__ inline UpSampleNearestExact2dGradND(){};
     __aicore__ inline void calculateIntermediateTensorX(
         LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor,
@@ -56,29 +56,29 @@ public:
     __aicore__ inline void Process();
 
 private:
-    __aicore__ inline bool FloatEqual(float a, float b)
+    __aicore__ inline bool FloatEqual(float m, float n)
     {
         float closeTo0 = static_cast<float>(1e-6);
-        if (a > b) {
-            return a - b < closeTo0;
+        if (m > n) {
+            return m - n < closeTo0;
         } else {
-            return b - a < closeTo0;
+            return n - m < closeTo0;
         }
     };
 
     template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    __aicore__ inline T1 CeilA2B(T1 m, T2 n)
     {
-        if (b == 0) {
-            return a;
+        if (n == 0) {
+            return m;
         }
-        return (a + b - 1) / b;
+        return (m + n - 1) / n;
     };
 
     template <typename T1>
-    __aicore__ inline T1 Min(T1 a, T1 b)
+    __aicore__ inline T1 Min(T1 m, T1 n)
     {
-        return a < b ? a : b;
+        return m < n ? m : n;
     };
 
     template <typename T1>
@@ -88,16 +88,6 @@ private:
             return x;
         } else {
             return y;
-        }
-    }
-
-    template <typename T1>
-    __aicore__ inline T1 getMin(T1 x, T1 y)
-    {
-        if (x >= y) {
-            return y;
-        } else {
-            return x;
         }
     }
 
@@ -136,8 +126,8 @@ private:
 
     float scale_w;
     float scale_h;
-    float invscale_w;
     float invscale_h;
+    float invscale_w;
     float support_w;
     float support_h;
     int64_t max_interp_size_w;
@@ -148,10 +138,10 @@ private:
     uint32_t radio_matrix_size_h;
     uint32_t slideStart_w;
     uint32_t slideEnd_w;
-    uint32_t tailSlideStart_w;
-    uint32_t tailSlideEnd_w;
     uint32_t tailRowStart_w;
     uint32_t tailRowEnd_w;
+    uint32_t tailSlideStart_w;
+    uint32_t tailSlideEnd_w;
 
     uint32_t slidelen;
     uint32_t slidelen_h;
@@ -412,9 +402,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorW(
     }
 
     if (dataType != 2) {
-        LocalTensor<T> radioCastTensor_w = radioCastQueue.AllocTensor<T>();
-        Cast(radioCastTensor_w, radioTensor, RoundMode::CAST_RINT, radioTensor.GetSize());
-        radioCastQueue.EnQue(radioCastTensor_w);
+        LocalTensor<T> radioCastTensorW = radioCastQueue.AllocTensor<T>();
+        Cast(radioCastTensorW, radioTensor, RoundMode::CAST_RINT, radioTensor.GetSize());
+        radioCastQueue.EnQue(radioCastTensorW);
         radioQueue.FreeTensor(radioTensor);
     } else {
         radioQueue.EnQue(radioTensor);
@@ -557,7 +547,7 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateHeightExtension
         instartIndex = 0;
     }
     int64_t xIndex = instartIndex * output_shapes[3] + batchStart * middleSize;
-    int64_t tensorCIndexWithOffset = tensorCIndex * output_shapes[3] + batchStart * cubeSize;
+    int64_t tensorCIdxWithOffset = tensorCIndex * output_shapes[3] + batchStart * cubeSize;
     int64_t radioSize = getMax(radio_matrix_size, radio_matrix_size_h);
     matmulH.SetTensorA(intermediateTensorGm[workSpaceRadioOffset], false);
     for (int64_t i = batchStart; i < batchEnd; i++) {
@@ -567,9 +557,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateHeightExtension
         } else {
             matmulH.SetTensorB(intermediateTensorGm[xIndex], false);
         }
-        matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset], false);
+        matmulH.IterateAll(outTensorsGM[tensorCIdxWithOffset], false);
         xIndex += middleSize;
-        tensorCIndexWithOffset += cubeSize;
+        tensorCIdxWithOffset += cubeSize;
         matmulH.End();
     }
 }
@@ -579,24 +569,24 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::ParseTilingData(
     UpsampleNearestExact2dGradTilingData* tilingData)
 {
     slide_size = tilingData->slide_size;
-    scale_w = tilingData->scale_w;
     scale_h = tilingData->scale_h;
-    invscale_w = tilingData->invscale_w;
+    scale_w = tilingData->scale_w;
     invscale_h = tilingData->invscale_h;
+    invscale_w = tilingData->invscale_w;
 
-    support_w = tilingData->support_w;
     support_h = tilingData->support_h;
-    max_interp_size_w = tilingData->max_interp_size_w;
+    support_w = tilingData->support_w;
     max_interp_size_h = tilingData->max_interp_size_h;
+    max_interp_size_w = tilingData->max_interp_size_w;
 
     need_core_num_w = tilingData->need_core_num_w;
     need_core_num_h = tilingData->need_core_num_h;
 
     for (int8_t i = 0; i < 4; i++) {
-        output_shapes[i] = tilingData->output_shapes[i];
+        input_shapes[i] = tilingData->input_shapes[i];
     }
     for (int8_t i = 0; i < 4; i++) {
-        input_shapes[i] = tilingData->input_shapes[i];
+        output_shapes[i] = tilingData->output_shapes[i];
     }
 
     intermediate_matrix_size = tilingData->intermediate_matrix_size;
@@ -606,9 +596,9 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::ParseTilingData(
     slideStart_w = tilingData->slideStartList_w[blockIdx];
     slideEnd_w = tilingData->slideEndList_w[blockIdx];
     tailSlideStart_w = tilingData->tailSlideStartList_w[blockIdx];
-    tailSlideEnd_w = tilingData->tailSlideEndList_w[blockIdx];
     tailRowStart_w = tilingData->tailRowStartList_w[blockIdx];
     tailRowEnd_w = tilingData->tailRowEndList_w[blockIdx];
+    tailSlideEnd_w = tilingData->tailSlideEndList_w[blockIdx];
 
     slideStart_h = tilingData->slideStartList_h[blockIdx];
     slideEnd_h = tilingData->slideEndList_h[blockIdx];

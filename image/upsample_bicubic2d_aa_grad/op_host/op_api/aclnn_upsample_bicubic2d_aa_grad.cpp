@@ -19,11 +19,11 @@
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
+#include "opdev/make_op_executor.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
-#include "opdev/make_op_executor.h"
 #include "op_api/aclnn_check.h"
 
 using namespace op;
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
+    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
 static const int64_t DIM_LIMIT = 4;
 static constexpr size_t DIM_ZERO = 0;
@@ -51,10 +51,10 @@ static bool CheckNotNull(const aclTensor *gradOutput, const aclIntArray *inputSi
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *gradOutput, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *out)
 {
-    OP_CHECK_DTYPE_NOT_SUPPORT(gradOutput, DTYPE_SUPPORT_LIST, return false);
-    OP_CHECK_DTYPE_NOT_MATCH(gradOutput, out->GetDataType(), return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_MATCH(gradOut, out->GetDataType(), return false);
     return true;
 }
 
@@ -69,10 +69,10 @@ static bool CheckShape(
             op::ToString(out->GetStorageFormat()).GetString());
         return false;
     }
-    size_t inputSizeNum = inputSize->Size();
-    size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOutput, DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
+    size_t inputSizeNum = inputSize->Size();
+    size_t outputSizeNum = outputSize->Size();
     OP_CHECK(inputSizeNum == EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
         return false);
@@ -198,8 +198,8 @@ aclnnStatus aclnnUpsampleBicubic2dAAGradGetWorkspaceSize(const aclTensor *gradOu
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto ret = CheckParams(gradOutput, outputSize, inputSize, scalesH, scalesW, out);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+    auto checkRet = CheckParams(gradOutput, outputSize, inputSize, scalesH, scalesW, out);
+    CHECK_RET(checkRet == ACLNN_SUCCESS, checkRet);
 
     if (gradOutput->IsEmpty() || out->IsEmpty()) {
         *workspaceSize = 0;

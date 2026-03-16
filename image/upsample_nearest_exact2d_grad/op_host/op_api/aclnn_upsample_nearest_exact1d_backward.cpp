@@ -138,7 +138,7 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
     int64_t selfDimC = self->GetViewShape().GetDim(DIM_ONE);
     int64_t outDimN = out->GetViewShape().GetDim(DIM_ZERO);
     int64_t outDimC = out->GetViewShape().GetDim(DIM_ONE);
-    if ((outDimC != selfDimC) || (outDimN != selfDimN)) {
+    if ((selfDimC != outDimC) || (selfDimN != outDimN)) {
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .", selfDimC,
             outDimC, selfDimN, outDimN);

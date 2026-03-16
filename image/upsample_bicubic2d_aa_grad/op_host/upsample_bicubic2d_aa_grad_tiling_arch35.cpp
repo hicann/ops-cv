@@ -46,8 +46,8 @@ struct Bicubic2dAAGradBaseTilingData {
     int64_t outH = 0;
     int64_t outW = 0;
     int64_t outSize = 0;
-    int64_t alignCorners = 0;
     int64_t blkProcessNum = 0;
+    int64_t alignCorners = 0;
     float scaleH = 0.0;
     float scaleW = 0.0;
     float invScaleH = 0.0;
@@ -98,7 +98,7 @@ private:
 void UpsampleBicubic2dAAGradRegbaseTiling::ComputeDataCopy()
 {
     int64_t coreNum = static_cast<int64_t>(baseTiling_.coreNum);
-    if (baseTiling_.outSize <= static_cast<int64_t>(baseTiling_.cacheLineNum * baseTiling_.coreNum)) {
+    if (baseTiling_.outSize <= static_cast<int64_t>(baseTiling_.coreNum * baseTiling_.cacheLineNum)) {
         baseTiling_.realCoreNum = static_cast<int32_t>(baseTiling_.outSize) / baseTiling_.cacheLineNum;
     }
     if (baseTiling_.realCoreNum == 0) {
@@ -108,7 +108,7 @@ void UpsampleBicubic2dAAGradRegbaseTiling::ComputeDataCopy()
     baseTiling_.tailBlockNum =
         static_cast<int32_t>(baseTiling_.outSize % static_cast<int64_t>(baseTiling_.realCoreNum));
     baseTiling_.ubFactor =
-        (baseTiling_.ubSize - baseTiling_.oneBlockNum * baseTiling_.dtypeSize) / (CONST_2 * baseTiling_.dtypeSize);
+        (baseTiling_.ubSize - baseTiling_.oneBlockNum * baseTiling_.dtypeSize) / (baseTiling_.dtypeSize * CONST_2);
     baseTiling_.ubFactor = (baseTiling_.ubFactor / baseTiling_.oneBlockNum) * baseTiling_.oneBlockNum;
     return;
 }
@@ -121,8 +121,8 @@ void UpsampleBicubic2dAAGradRegbaseTiling::CalTilingData()
     int64_t maxNum = static_cast<int64_t>(baseTiling_.coreNum) * THREAD_NUM;
     bool isDataCopy = baseTiling_.outH == baseTiling_.inH && baseTiling_.outW == baseTiling_.inW && 
         baseTiling_.scaleH == 1.0f && baseTiling_.scaleW == 1.0f;
-    baseTiling_.realCoreNum = baseTiling_.coreNum;
     baseTiling_.cacheLineNum = CACHE_LINE / baseTiling_.dtypeSize;
+    baseTiling_.realCoreNum = baseTiling_.coreNum;
     if (isDataCopy) {
         OP_LOGI(context_, "enter datacopy");
         baseTiling_.schId = CONST_0; // 纯copy模板
@@ -188,40 +188,43 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::CheckInputParams()
     auto input = context_->GetInputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, input);
     auto inputDtype = input->GetDataType();
-    OP_CHECK_IF(inputDtypeList.count(inputDtype) == 0,
-        OP_LOGE(context_, "input dtype is not support, but input dtype is %d", inputDtype), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        inputDtypeList.count(inputDtype) == 0,
+        OP_LOGE(context_, "Input dtype is not support, but input dtype is %d", inputDtype), return ge::GRAPH_FAILED);
     auto inputFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(input->GetStorageFormat()));
-    OP_CHECK_IF((inputFormat != ge::Format::FORMAT_ND && inputFormat != ge::Format::FORMAT_NCHW),
-        OP_LOGE(context_, "input format is not support, but input format is %d", inputDtype), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        (inputFormat != ge::Format::FORMAT_NCHW && inputFormat != ge::Format::FORMAT_ND),
+        OP_LOGE(context_, "Input format is not support, but input format is %d", inputDtype), return ge::GRAPH_FAILED);
     baseTiling_.dtypeSize = inputDtypeList.find(inputDtype)->second;
     int32_t ubBlockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context_));
     baseTiling_.oneBlockNum = ubBlockSize / baseTiling_.dtypeSize;
-    auto outDescPtr0 = context_->GetOutputDesc(0);
+    auto outDescPtr0 = context_->GetOutputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outDescPtr0);
-    auto outDtype = outDescPtr0->GetDataType();
-    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(context_, "input and output dtype must be same"),
-        return ge::GRAPH_FAILED);
+    auto outputDtype = outDescPtr0->GetDataType();
+    OP_CHECK_IF(
+        outputDtype != inputDtype, OP_LOGE(context_, "Input and output dtype must be same"), return ge::GRAPH_FAILED);
     auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outDescPtr0->GetStorageFormat()));
-    OP_CHECK_IF(outFormat != inputFormat, OP_LOGE(context_, "input and output format must be same"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        outFormat != inputFormat, OP_LOGE(context_, "Input and output format must be same"), return ge::GRAPH_FAILED);
     auto inputX = context_->GetInputShape(0);
     auto outY = context_->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outY);
     auto inputShape = EnsureNotScalar(inputX->GetStorageShape());
     auto outShape = EnsureNotScalar(outY->GetStorageShape());
-    OP_CHECK_IF((inputShape.GetDimNum() != INPUT_DIMS) || (outShape.GetDimNum() != INPUT_DIMS),
+    OP_CHECK_IF(
+        (inputShape.GetDimNum() != INPUT_DIMS) || (outShape.GetDimNum() != INPUT_DIMS),
         OP_LOGE(context_, "The dim of input0 or output0 should be equal to 4."), return ge::GRAPH_FAILED);
-    int64_t inputSize = inputShape.GetShapeSize();
     int64_t outputSize = outShape.GetShapeSize();
+    int64_t inputSize = inputShape.GetShapeSize();
     baseTiling_.dimN = inputShape.GetDim(CONST_0);
     baseTiling_.dimC = inputShape.GetDim(CONST_1);
     baseTiling_.inH = inputShape.GetDim(CONST_2);
-    baseTiling_.inW = inputShape.GetDim(CONST_3);
     baseTiling_.outH = outShape.GetDim(CONST_2);
+    baseTiling_.inW = inputShape.GetDim(CONST_3);
     baseTiling_.outW = outShape.GetDim(CONST_3);
     baseTiling_.outSize = outputSize;
-    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(context_, "not support empty input or output"),
+    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(context_, "do not support empty input or output"),
         ge::GRAPH_FAILED);
     int64_t int32Max = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
     int32_t isInt32 = static_cast<int32_t>((inputSize <= int32Max) && (outputSize <= int32Max));
@@ -235,23 +238,24 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::CheckInputShapeAndAttr()
     auto outShape = outDescPtr0->GetStorageShape();
     int64_t outN = outShape.GetDim(CONST_0);
     int64_t outC = outShape.GetDim(CONST_1);
-    OP_CHECK_IF((outN != baseTiling_.dimN) || (outC != baseTiling_.dimC),
-        OP_LOGE(context_, "The N and C dimensions of the input and output need to be the same."),
+    OP_CHECK_IF(
+        (outN != baseTiling_.dimN) || (outC != baseTiling_.dimC),
+        OP_LOGE(context_, "The N dimension and C dimension of the input and output need to be the same."),
         return ge::GRAPH_FAILED);
     auto *attrs = context_->GetAttrs();
-    OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_, "attrs is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_, "attrs should not be nullptr."), return ge::GRAPH_FAILED);
     auto outputSize = attrs->GetAttrPointer<gert::ContinuousVector>(CONST_0);
-    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(context_, "outputSize is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(context_, "outputSize should not be nullptr."), return ge::GRAPH_FAILED);
     auto inputSize = attrs->GetAttrPointer<gert::ContinuousVector>(CONST_1);
-    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(context_, "inputSize is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(context_, "inputSize is nullptr."), return ge::GRAPH_FAILED);
     const bool *alignCornersPtr = attrs->GetAttrPointer<bool>(CONST_2);
-    OP_CHECK_IF(alignCornersPtr == nullptr, OP_LOGE(context_, "alignCornersPtr is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(alignCornersPtr == nullptr, OP_LOGE(context_, "alignCornersPtr is nullptr."), return ge::GRAPH_FAILED);
     baseTiling_.alignCorners = *alignCornersPtr ? 1 : 0;
     const float *scaleHPtr = attrs->GetAttrPointer<float>(CONST_3);
-    OP_CHECK_IF(scaleHPtr == nullptr, OP_LOGE(context_, "scaleHPtr is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scaleHPtr == nullptr, OP_LOGE(context_, "scaleHPtr is nullptr."), return ge::GRAPH_FAILED);
     float originalScaleH = *scaleHPtr;
     const float *scaleWPtr = attrs->GetAttrPointer<float>(CONST_4);
-    OP_CHECK_IF(scaleWPtr == nullptr, OP_LOGE(context_, "scaleWPtr is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scaleWPtr == nullptr, OP_LOGE(context_, "scaleWPtr is nullptr."), return ge::GRAPH_FAILED);
     float originalScaleW = *scaleWPtr;
     OP_LOGI(context_, "alignCorners %ld, originalScaleH %f, originalScaleW %f", baseTiling_.alignCorners, originalScaleH, originalScaleW);
     int64_t outSizeNum = outputSize->GetSize();
@@ -281,7 +285,6 @@ void UpsampleBicubic2dAAGradRegbaseTiling::FillTilingData()
     tilingData_->outH = baseTiling_.outH;
     tilingData_->outW = baseTiling_.outW;
     tilingData_->alignCorners = baseTiling_.alignCorners;
-    tilingData_->ubFactor = baseTiling_.ubFactor;
     tilingData_->tailBlockNum = baseTiling_.tailBlockNum;
     tilingData_->scaleH = baseTiling_.scaleH;
     tilingData_->scaleW = baseTiling_.scaleW;
@@ -289,6 +292,7 @@ void UpsampleBicubic2dAAGradRegbaseTiling::FillTilingData()
     tilingData_->invScaleW = baseTiling_.invScaleW;
     tilingData_->supportH = baseTiling_.supportH;
     tilingData_->supportW = baseTiling_.supportW;
+    tilingData_->ubFactor = baseTiling_.ubFactor;
     tilingData_->perCoreInitEle = baseTiling_.perCoreInitEle;
     tilingData_->initHeadCoreNum = baseTiling_.initHeadCoreNum;
 }
@@ -314,12 +318,12 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::Init()
     OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than zero, but is %ld", coreNum),
         return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNum;
-    uint64_t ubSize = 0;
-    ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
+    uint64_t ubMemSize = 0;
+    ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubMemSize);
+    OP_CHECK_IF(ubMemSize <= 0UL, OP_LOGE(context_, "ubMemSize must greater than zero, but is %lu", ubMemSize),
         return ge::GRAPH_FAILED);
-    OP_LOGI(context_, "coreNum is %ld, ubSize is %lu", coreNum, ubSize);
-    baseTiling_.ubSize = static_cast<int32_t>(ubSize);
+    OP_LOGI(context_, "coreNum is %ld, ubMemSize is %lu", coreNum, ubMemSize);
+    baseTiling_.ubSize = static_cast<int32_t>(ubMemSize);
     if (tilingData_ == nullptr) {
         tilingData_ = context_->GetTilingData<UpsampleBicubic2dAAGradRegBaseTilingData>();
         OP_CHECK_IF(tilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
@@ -333,9 +337,9 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::Init()
 
 ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::DoTiling()
 {
-    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams is failed"),
+    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams failed!"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes is failed"),
+    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes failed!"),
         return ge::GRAPH_FAILED);
     CalTilingData();
     FillTilingData();
@@ -343,7 +347,7 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::DoTiling()
     uint64_t schId = static_cast<uint64_t>(baseTiling_.schId);
     uint64_t isInt32 = static_cast<uint64_t>(baseTiling_.isInt32);
     uint64_t isDeterministic = static_cast<uint64_t>(baseTiling_.isDeterministic);
-    const uint64_t tilingKey = GET_TPL_TILING_KEY(schId, isInt32, isDeterministic);
+    const uint64_t tilingKey = GET_TPL_TILING_KEY((uint64_t)schId, (uint64_t)isInt32, (uint64_t)isDeterministic);
     OP_LOGI(context_, "tilingKey %lu, schId %lu, isInt32 %lu, isDeterministic %lu, realCoreNum %d", tilingKey, schId, isInt32,
         isDeterministic, baseTiling_.realCoreNum);
     context_->SetTilingKey(tilingKey);

@@ -165,12 +165,12 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::Init(
     scale_w = tilingData->scale_w;
     scale_h = tilingData->scale_h;
     scale_d = tilingData->scale_d;
-    output_w = tilingData->output_w;
-    output_h = tilingData->output_h;
-    output_d = tilingData->output_d;
     input_w = tilingData->input_w;
     input_h = tilingData->input_h;
     input_d = tilingData->input_d;
+    output_w = tilingData->output_w;
+    output_h = tilingData->output_h;
+    output_d = tilingData->output_d;
     batches = tilingData->batches;
     align_corners = tilingData->align_corners;
     total_core_num = tilingData->total_core_num;

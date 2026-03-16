@@ -46,18 +46,18 @@ private:
     };
 
     template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    __aicore__ inline T1 CeilA2B(T1 u, T2 v)
     {
-        if (b == 0) {
-            return a;
+        if (v == 0) {
+            return u;
         }
-        return (a + b - 1) / b;
+        return (u + v - 1) / v;
     };
 
     template <typename T1>
-    __aicore__ inline T1 Min(T1 a, T1 b)
+    __aicore__ inline T1 Min(T1 i, T1 j)
     {
-        return a < b ? a : b;
+        return i < j ? i : j;
     };
 
     template <typename T1>
@@ -366,10 +366,10 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ComputeLargeBatch(int64_t
                 float weightH = h == 0 ? static_cast<float>(1) - lambdaH1 : lambdaH1;
                 for (int64_t w = 0; w < wSize; w++) {
                     float weightW = w == 0 ? static_cast<float>(1) - lambdaW1 : lambdaW1;
-                    int64_t indexInput =
+                    int64_t inputIndex =
                         ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w + srcIndexW0 + w) * batches +
                         batchOffset;
-                    CopyIn(indexInput, CeilA2B(batchCount, blockSize) * blockSize);
+                    CopyIn(inputIndex, CeilA2B(batchCount, blockSize) * blockSize);
                     LocalTensor<float> srcDataLocal = inputQueue.DeQue<float>();
                     Muls(castInputTensor, srcDataLocal, weightD * weightH * weightW, batchCount);
                     Add(dstDataLocal, dstDataLocal, castInputTensor, batchCount);

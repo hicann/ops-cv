@@ -42,7 +42,7 @@ constexpr uint8_t FLOAT_TYPE = 2;
 constexpr uint8_t BFLOAT_TYPE = 3;
 
 constexpr uint8_t BYTE_LEN_4 = 4;
-constexpr uint8_t BYTE_LEN_2 = 2;
+constexpr uint8_t BYTE_SIZE_2 = 2;
 
 constexpr uint8_t BATCH_DIM = 2;
 constexpr uint8_t DIM = 3;
@@ -539,9 +539,9 @@ uint8_t UpsampleNearest3dGradTiling::GetDataTypeSize() const
         case ge::DT_FLOAT:
             return BYTE_LEN_4;
         case ge::DT_FLOAT16:
-            return BYTE_LEN_2;
+            return BYTE_SIZE_2;
         case ge::DT_BF16:
-            return BYTE_LEN_2;
+            return BYTE_SIZE_2;
         default:
             return BYTE_LEN_4;
     }
@@ -552,10 +552,10 @@ uint8_t UpsampleNearest3dGradTiling::GetDataTypeVal() const
     switch (dataType) {
         case ge::DT_FLOAT16:
             return HALF_TYPE;
-        case ge::DT_FLOAT:
-            return FLOAT_TYPE;
         case ge::DT_BF16:
             return BFLOAT_TYPE;
+        case ge::DT_FLOAT:
+            return FLOAT_TYPE;
         default:
             return 0;
     }

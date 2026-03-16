@@ -21,11 +21,11 @@
 #include "opdev/shape_utils.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
+#include "opdev/tensor_view_utils.h"
+#include "opdev/make_op_executor.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
-#include "opdev/tensor_view_utils.h"
-#include "opdev/make_op_executor.h"
 #include "op_api/aclnn_check.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"
@@ -41,10 +41,10 @@ static const int64_t ZERO = 0;
 static const uint64_t ONE = 1;
 static const double DOUBLE_ONE = 1.0;
 
-static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_LIST = {
+static const std::initializer_list<op::DataType> ASCEND910_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8};
 
-static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
+static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
     op::DataType::DT_FLOAT,
     op::DataType::DT_DOUBLE,
     op::DataType::DT_UINT8,
@@ -65,16 +65,16 @@ static const std::initializer_list<DataType> &GetDtypeSupportList()
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
-        return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
+        return ASCEND910B_DTYPE_SUPPORT_LIST;
     } else {
-        return ASCEND910_DTYPE_DTYPE_SUPPORT_LIST;
+        return ASCEND910_DTYPE_SUPPORT_LIST;
     }
 }
 
 static bool CheckDtypeValid(const aclTensor *self)
 {
-    auto supportList = GetDtypeSupportList();
-    OP_CHECK_DTYPE_NOT_SUPPORT(self, supportList, return false);
+    auto supportDtypeList = GetDtypeSupportList();
+    OP_CHECK_DTYPE_NOT_SUPPORT(self, supportDtypeList, return false);
     return true;
 }
 
@@ -200,10 +200,10 @@ static const aclTensor *View4dAs5d(const aclTensor *input, aclOpExecutor *execut
     const int64_t appendDim[] = {2};
     aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
     CHECK_RET(dimUnsqueeze != nullptr, nullptr);
-    auto unsqueezedInput = l0op::UnsqueezeNd(input, dimUnsqueeze, executor);
-    CHECK_RET(unsqueezedInput != nullptr, nullptr);
+    auto unsqueezedInputTensor = l0op::UnsqueezeNd(input, dimUnsqueeze, executor);
+    CHECK_RET(unsqueezedInputTensor != nullptr, nullptr);
 
-    auto reformatInput = l0op::ReFormat(unsqueezedInput, op::Format::FORMAT_NCDHW);
+    auto reformatInput = l0op::ReFormat(unsqueezedInputTensor, op::Format::FORMAT_NCDHW);
     CHECK_RET(reformatInput != nullptr, nullptr);
     return reformatInput;
 }
@@ -213,10 +213,10 @@ static const aclTensor *View5dAs4d(const aclTensor *input, aclOpExecutor *execut
     const int64_t removeDim[] = {2};
     aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, 1);
     CHECK_RET(dimSqueeze != nullptr, nullptr);
-    auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
-    CHECK_RET(squeezedInput != nullptr, nullptr);
+    auto squeezedInputTensor = l0op::SqueezeNd(input, dimSqueeze, executor);
+    CHECK_RET(squeezedInputTensor != nullptr, nullptr);
 
-    auto reformatInput = l0op::ReFormat(squeezedInput, op::Format::FORMAT_NCHW);
+    auto reformatInput = l0op::ReFormat(squeezedInputTensor, op::Format::FORMAT_NCHW);
     CHECK_RET(reformatInput != nullptr, nullptr);
     return reformatInput;
 }
@@ -320,11 +320,11 @@ aclnnStatus aclnnUpsampleNearest1dV2GetWorkspaceSize(const aclTensor *self, cons
                 vector<float> scalesList{};
                 scalesList.push_back(1.0f);
                 scalesList.push_back(scaleL);
-                const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
-                CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
+                const aclFloatArray *scaleArray = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
+                CHECK_RET(scaleArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 resizeNearestOut =
-                    l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, false, outContiguous, uniqueExecutor.get());
+                    l0op::ResizeNearestNeighborV2(selfContiguous, size, scaleArray, false, false, outContiguous, uniqueExecutor.get());
             } else {
                 auto selfTransdata =
                     l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
