@@ -53,6 +53,15 @@ public:
     __aicore__ inline void Process();
 
 private:
+    template <typename T1, typename T2>
+    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    {
+        if (b == 0) {
+            return a;
+        }
+        return (a + b - 1) / b;
+    };
+
     template <typename T1>
     __aicore__ inline T1 Ceil(T1 x)
     {
@@ -67,15 +76,6 @@ private:
     __aicore__ inline T1 Min(T1 a, T1 b)
     {
         return a < b ? a : b;
-    };
-
-    template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
-    {
-        if (b == 0) {
-            return a;
-        }
-        return (a + b - 1) / b;
     };
 
     __aicore__ inline void ParseTilingData(UpsampleNearestExact2dGradTransposeTilingData* tilingData);

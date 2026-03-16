@@ -502,15 +502,15 @@ uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumH(
     int64_t outputSize = output_shapes[2];
     int64_t slideNum = CeilA2B(outputSize, slide_size);
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
-    int64_t remainderH = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
+    int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
 
     // Batch和W维度总数
     int64_t batch = input_shapes[0] * input_shapes[1];
     int64_t groupCoreNum = coreNumPlatform;
     int64_t tailAvergingBatch = slide_size;
-    if (remainderH != 0) {
+    if (remainder != 0) {
         // 按照剩余尾块数给核分组，然后每组核再均分行数
-        groupCoreNum = coreNumPlatform / remainderH;
+        groupCoreNum = coreNumPlatform / remainder;
         tailAvergingBatch = CeilA2B(batch, groupCoreNum);
         groupCoreNum = std::min(groupCoreNum, CeilA2B(batch, tailAvergingBatch));
     }
@@ -520,12 +520,12 @@ uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumH(
 
     if (eachCoreSlideNum > 0) {
         needCoreNum = coreNumPlatform;
-    } else if (remainderH != 0) {
+    } else if (remainder != 0) {
         for (uint32_t coreIndexH = 0; coreIndexH < coreNumPlatform; coreIndexH++) {
             groupCoreNum = groupCoreNum == 0 ? 1 : groupCoreNum;
             // 尾块处理, 核数不全都一样
             int64_t groupIndex = coreIndexH / groupCoreNum;
-            if (groupIndex < remainderH) {
+            if (groupIndex < remainder) {
                 needCoreNum++;
             }
         }
@@ -536,7 +536,7 @@ uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumH(
         tilingData.set_slideNumH(slideNum);
         tilingData.set_groupCoreNumH(groupCoreNum);
         tilingData.set_tailAvergingRowsH(tailAvergingBatch);
-        tilingData.set_remainderH(remainderH);
+        tilingData.set_remainderH(remainder);
         tilingData.set_need_core_num_h(needCoreNum);
     }
     return needCoreNum;

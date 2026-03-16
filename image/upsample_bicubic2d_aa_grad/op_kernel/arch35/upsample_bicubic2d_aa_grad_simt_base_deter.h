@@ -73,15 +73,15 @@ __aicore__ __attribute__((always_inline)) inline void SimtDeterCompute(__gm__ T1
     float supportH, float supportW)
 {
     for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+        idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 W = 0;
         T2 H = 0;
-        T2 Batch = 0;
+        T2 NC = 0;
         T2 tmpRes = Simt::UintDiv(static_cast<T2>(yGmIdx), mW, shiftW);
         W = yGmIdx - tmpRes * lenDstW;
-        Batch = Simt::UintDiv(tmpRes, mH, shiftH);
-        H = tmpRes - Batch * lenDstH;
+        NC = Simt::UintDiv(tmpRes, mH, shiftH);
+        H = tmpRes - NC * lenDstH;
 
         // 计算中心位置
         float centerH = static_cast<float>(H) + 0.5f;
@@ -110,7 +110,7 @@ __aicore__ __attribute__((always_inline)) inline void SimtDeterCompute(__gm__ T1
                 }
 
                 const T3 clampedW = Simt::Max(static_cast<T3>(0), Simt::Min(lenSrcW - 1, w));              
-                const T3 input_idx = Batch * lenSrcHw + clampedH * lenSrcW + clampedW;
+                const T3 input_idx = NC * lenSrcHw + clampedH * lenSrcW + clampedW;
                 value += inputGm[input_idx] * weightH * weightW;
             }
         }

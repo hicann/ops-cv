@@ -29,15 +29,15 @@ constexpr uint32_t BYTE_BASIC_BLOCK = 1024;
 
 constexpr uint64_t TILING_KEY_HALF = 1;
 constexpr uint64_t TILING_KEY_FLOAT = 2;
-constexpr uint64_t TILING_KEY_BFLOAT16 = 3;
+constexpr uint64_t TILING_KEY_BF16 = 3;
 
 constexpr uint64_t TILING_HALF_N_SCALAR = 14;
 constexpr uint64_t TILING_FLOAT_N_SCALAR = 4;
 constexpr uint64_t TILING_INT_N_SCALAR = 4;
 
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
-constexpr uint32_t BYTE_LEN_FP32 = 4;
-constexpr uint32_t BYTE_LEN_HALF = 2;
+constexpr uint32_t BYTE_LEN_4 = 4;
+constexpr uint32_t BYTE_LEN_2 = 2;
 
 constexpr float MIN_SUPPORT_SCALE = 0.02;
 
@@ -58,7 +58,7 @@ constexpr uint8_t BYTE_PER_BLOCK = 32;
 
 constexpr uint64_t DATE_TYPE_FLOAT16 = 1;
 constexpr uint64_t DATE_TYPE_FLOAT = 2;
-constexpr uint64_t DATE_TYPE_BFLOAT16 = 3;
+constexpr uint64_t DATE_TYPE_HALF = 3;
 
 constexpr int8_t SHAPE_SIZE = 4;
 constexpr int8_t N_INDEX = 0;
@@ -119,13 +119,12 @@ private:
     float realScale_w = 0;
     const gert::ContinuousVector *output_size = nullptr;
     const gert::ContinuousVector *input_size = nullptr;
-    
+    int64_t slideStartList_w[MAX_CORE_CONT] = {0};
+    int64_t slideEndList_w[MAX_CORE_CONT] = {0};
     int64_t tailSlideStartList_w[MAX_CORE_CONT] = {0};
     int64_t tailSlideEndList_w[MAX_CORE_CONT] = {0};
     int64_t tailRowStartList_w[MAX_CORE_CONT] = {0};
     int64_t tailRowEndList_w[MAX_CORE_CONT] = {0};
-    int64_t slideStartList_w[MAX_CORE_CONT] = {0};
-    int64_t slideEndList_w[MAX_CORE_CONT] = {0};
 
     int64_t slideStartList_h[MAX_CORE_CONT] = {0};
     int64_t slideEndList_h[MAX_CORE_CONT] = {0};
@@ -148,11 +147,11 @@ private:
 
 inline bool FloatEqual(float a, float b)
 {
-    float closeTozero = float(1e-6);
+    float closeTo0 = float(1e-6);
     if (a > b) {
-        return a - b < closeTozero;
+        return a - b < closeTo0;
     } else {
-        return b - a < closeTozero;
+        return b - a < closeTo0;
     }
 };
 
@@ -186,8 +185,8 @@ void UpsampleBicubic2dAAGradTiling::setScale()
         int16_t max_interp_size_w = Ceil(support_w) * 2 + 1;
         int16_t max_interp_size_h = Ceil(support_h) * 2 + 1;
 
-        tilingData.set_max_interp_size_h(max_interp_size_h);
         tilingData.set_max_interp_size_w(max_interp_size_w);
+        tilingData.set_max_interp_size_h(max_interp_size_h);
 
         float invscale_w = (realScale_w >= 1.0) ? 1.0 / realScale_w : 1.0;
         float invscale_h = (realScale_h >= 1.0) ? 1.0 / realScale_h : 1.0;
@@ -238,12 +237,12 @@ ge::graphStatus UpsampleBicubic2dAAGradTiling::RunBigKernelTiling()
     scale_h = attrs->GetAttrPointer<float>(SCALEX_INDEX);
     scale_w = attrs->GetAttrPointer<float>(SCALEY_INDEX);
 
-    auto tempTensor = tilingContext->GetInputDesc(TEMP_INDEX);
-    if (tempTensor == nullptr) {
+    auto temp = tilingContext->GetInputDesc(TEMP_INDEX);
+    if (temp == nullptr) {
         return ge::GRAPH_FAILED;
     }
     ge::DataType srcDtype = ge::DT_UNDEFINED;
-    srcDtype = tempTensor->GetDataType();
+    srcDtype = temp->GetDataType();
 
     if (dataType == ge::DT_UNDEFINED) {
         dataType = srcDtype;
@@ -362,12 +361,12 @@ uint32_t UpsampleBicubic2dAAGradTiling::GetNeedCoreNumH(uint32_t coreNumPlatform
 
 void UpsampleBicubic2dAAGradTiling::getTCubeTiling_h()
 {
-    auto mmDType = static_cast<matmul_tiling::DataType>(dataType);
+    auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
 
     matmul_tiling::MatmulApiTiling mmTiling_h;
-    mmTiling_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDType, false);
-    mmTiling_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDType, false);
-    mmTiling_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDType);
+    mmTiling_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
+    mmTiling_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
+    mmTiling_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
     mmTiling_h.SetOrgShape(output_shapes[H_INDEX], output_shapes[W_INDEX], input_shapes[W_INDEX]);
     mmTiling_h.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
 
@@ -457,13 +456,13 @@ uint8_t UpsampleBicubic2dAAGradTiling::GetDataTypeSize() const
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return BYTE_LEN_FP32;
+            return BYTE_LEN_4;
         case ge::DT_FLOAT16:
-            return BYTE_LEN_HALF;
+            return BYTE_LEN_2;
         case ge::DT_BF16:
-            return BYTE_LEN_HALF;
+            return BYTE_LEN_2;
         default:
-            return BYTE_LEN_FP32;
+            return BYTE_LEN_4;
     }
 }
 
@@ -475,7 +474,7 @@ uint64_t UpsampleBicubic2dAAGradTiling::GetDataTypeVal() const
         case ge::DT_FLOAT16:
             return DATE_TYPE_FLOAT16;
         case ge::DT_BF16:
-            return DATE_TYPE_BFLOAT16;
+            return DATE_TYPE_HALF;
         default:
             return 0;
     }
@@ -489,7 +488,7 @@ uint64_t UpsampleBicubic2dAAGradTiling::GetTilingKeyVal() const
         case ge::DT_FLOAT16:
             return TILING_KEY_HALF;
         case ge::DT_BF16:
-            return TILING_KEY_BFLOAT16;
+            return TILING_KEY_BF16;
         default:
             return 0;
     }
@@ -577,10 +576,10 @@ void UpsampleBicubic2dAAGradTiling::FillTilingData()
 {
     tilingData.set_slideStartList_w(slideStartList_w);
     tilingData.set_slideEndList_w(slideEndList_w);
-    tilingData.set_tailRowStartList_w(tailRowStartList_w);
-    tilingData.set_tailRowEndList_w(tailRowEndList_w);
     tilingData.set_tailSlideStartList_w(tailSlideStartList_w);
     tilingData.set_tailSlideEndList_w(tailSlideEndList_w);
+    tilingData.set_tailRowStartList_w(tailRowStartList_w);
+    tilingData.set_tailRowEndList_w(tailRowEndList_w);
 
     tilingData.set_slideStartList_h(slideStartList_h);
     tilingData.set_slideEndList_h(slideEndList_h);

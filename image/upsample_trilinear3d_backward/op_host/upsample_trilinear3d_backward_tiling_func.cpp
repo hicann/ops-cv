@@ -33,7 +33,7 @@ static constexpr int32_t SCALE_W_IDX = 5;
 
 constexpr uint8_t RESERVED_LENGTH = 4;
 
-constexpr uint8_t HALF_DTYPE = 1;
+constexpr uint8_t HALF_TYPE = 1;
 constexpr uint8_t FLOAT_TYPE = 2;
 constexpr uint8_t BFLOAT_TYPE = 3;
 
@@ -385,8 +385,8 @@ void UpsampleTrilinear3dBackwardTiling::FillTilingData()
     tilingData.set_remainders(remainders);
     tilingData.set_tailStartSlideNums(tailStartSlideNums);
     tilingData.set_groupCoreNums(groupCoreNums);
-    tilingData.set_tailAvergingRows(tailAvergingRows);
     tilingData.set_inputRows(inputRows);
+    tilingData.set_tailAvergingRows(tailAvergingRows);
     tilingData.set_needCoreNums(needCoreNums);
     tilingData.set_dataType(GetDataTypeVal());
     tilingData.SaveToBuffer(
@@ -407,7 +407,7 @@ uint8_t UpsampleTrilinear3dBackwardTiling::GetDataTypeVal() const
 {
     switch (dataType) {
         case ge::DT_FLOAT16:
-            return HALF_DTYPE;
+            return HALF_TYPE;
         case ge::DT_FLOAT:
             return FLOAT_TYPE;
         case ge::DT_BF16:

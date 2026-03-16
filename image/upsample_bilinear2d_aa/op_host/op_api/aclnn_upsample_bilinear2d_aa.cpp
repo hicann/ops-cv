@@ -17,11 +17,11 @@
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
-#include "opdev/make_op_executor.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
+#include "opdev/make_op_executor.h"
 #include "aclnn_upsample_bilinear2d_aa.h"
 #include "op_api/aclnn_check.h"
 
@@ -200,16 +200,16 @@ aclnnStatus aclnnUpsampleBilinear2dAAGetWorkspaceSize(const aclTensor *input, co
     int64_t inputH = selfShape.GetDim(DIM_TWO);
     int64_t inputW = selfShape.GetDim(DIM_THREE);
 
-    const aclTensor *upsampleBilinearAAOut;
+    const aclTensor *upsampleOut;
     if (IsRegBase()) {
         const float realScalesH = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
         const float realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
 
-        upsampleBilinearAAOut = l0op::UpsampleBilinear2dAA(
+        upsampleOut = l0op::UpsampleBilinear2dAA(
             selfContiguous, outputSize, out, alignCorners, realScalesH, realScalesW, uniqueExecutor.get());
-        CHECK_RET(upsampleBilinearAAOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
     } else if (inputH == (*outputSize)[DIM_ZERO] && inputW == (*outputSize)[DIM_ONE]) {
-        upsampleBilinearAAOut = selfContiguous;
+        upsampleOut = selfContiguous;
     } else {
         auto dtype = input->GetDataType();
         // 将fp16/bf16类型转为fp32处理，保证精度
@@ -223,18 +223,18 @@ aclnnStatus aclnnUpsampleBilinear2dAAGetWorkspaceSize(const aclTensor *input, co
         const float realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
 
         // 调用算子计算
-        upsampleBilinearAAOut = l0op::UpsampleBilinear2dAA(
+        upsampleOut = l0op::UpsampleBilinear2dAA(
             selfContiguous, outputSize, out, alignCorners, realScalesH, realScalesW, uniqueExecutor.get());
-        CHECK_RET(upsampleBilinearAAOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
         if (dtype == op::DataType::DT_BF16) {
-            upsampleBilinearAAOut = l0op::Cast(upsampleBilinearAAOut, op::DataType::DT_BF16, uniqueExecutor.get());
+            upsampleOut = l0op::Cast(upsampleOut, op::DataType::DT_BF16, uniqueExecutor.get());
         } else if (dtype == op::DataType::DT_FLOAT16) {
-            upsampleBilinearAAOut = l0op::Cast(upsampleBilinearAAOut, op::DataType::DT_FLOAT16, uniqueExecutor.get());
+            upsampleOut = l0op::Cast(upsampleOut, op::DataType::DT_FLOAT16, uniqueExecutor.get());
         }
-        CHECK_RET(upsampleBilinearAAOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
     }
 
-    auto viewCopyResult = l0op::ViewCopy(upsampleBilinearAAOut, out, uniqueExecutor.get());
+    auto viewCopyResult = l0op::ViewCopy(upsampleOut, out, uniqueExecutor.get());
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();

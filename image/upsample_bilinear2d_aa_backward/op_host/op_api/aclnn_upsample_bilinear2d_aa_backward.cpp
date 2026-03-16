@@ -22,8 +22,8 @@
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
-#include "opdev/make_op_executor.h"
 #include "opdev/tensor_view_utils.h"
+#include "opdev/make_op_executor.h"
 #include "op_api/aclnn_check.h"
 
 using namespace op;
@@ -89,7 +89,7 @@ static bool CheckShape(
 
 static bool CheckScalesValid(const double weight, const double high)
 {
-    if ((high < 0) || (weight < 0)) {
+    if ((weight < 0) || (high < 0)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
             "scales_w and scales_h cannot be negative , scales_w [%f], scales_h [%f].",
             weight,

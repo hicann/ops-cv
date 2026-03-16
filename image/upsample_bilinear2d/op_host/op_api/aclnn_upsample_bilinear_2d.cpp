@@ -23,8 +23,8 @@
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
 #include "opdev/op_dfx.h"
-#include "opdev/op_log.h"
 #include "opdev/op_executor.h"
+#include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "op_api/aclnn_check.h"
 

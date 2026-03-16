@@ -53,47 +53,47 @@ public:
     __aicore__ inline void Process();
 
 private:
+    template <typename T1, typename T2>
+    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    {
+        if (b == 0) {
+            return a;
+        }
+        return (a + b - 1) / b;
+    };
+    template <typename T1>
+    __aicore__ inline T1 weightCalculate(T1 x)
+    {
+        if (x < 0) {
+            x = -1 * x;
+        }
+        if (x < (float)1.0) {
+            return (float)1.0 - x;
+        }
+        return 0.0;
+    };
     template <typename T1>
     __aicore__ inline T1 Min(T1 a, T1 b)
     {
         return a < b ? a : b;
-    };
-    template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 x, T2 y)
-    {
-        if (y == 0) {
-            return x;
-        }
-        return (x + y - 1) / y;
-    };
-    template <typename T1>
-    __aicore__ inline T1 weightCalculate(T1 m)
-    {
-        if (m < 0) {
-            m = -1 * m;
-        }
-        if (m < (float)1.0) {
-            return (float)1.0 - m;
-        }
-        return 0.0;
-    };
-    __aicore__ inline bool FloatEqual(float m, float n)
-    {
-        float closeTo0 = static_cast<float>(1e-6);
-        if (m > n) {
-            return m - n < closeTo0;
-        } else {
-            return n - m < closeTo0;
-        }
     };
     template <typename T1>
     __aicore__ inline T1 Max(T1 a, T1 b)
     {
         return a > b ? a : b;
     };
+    __aicore__ inline bool FloatEqual(float a, float b)
+    {
+        float closeTo0 = static_cast<float>(1e-6);
+        if (a > b) {
+            return a - b < closeTo0;
+        } else {
+            return b - a < closeTo0;
+        }
+    };
     __aicore__ inline void ParseTilingData(const UpsampleBilinearAATilingData *tilingData);
-    __aicore__ inline void WExpansion();
-    __aicore__ inline void HExpansion();
+    __aicore__ inline void WDirectionExpansion();
+    __aicore__ inline void HDirectionExpansion();
     __aicore__ inline void calculateIntermediateTensor(int64_t index, int64_t length, int8_t direction);
     __aicore__ inline void calculateRadioTensorW(int64_t index, int64_t length, float invscale);
     __aicore__ inline void calculateRadioTensorH(int64_t index, int64_t length, float invscale);
@@ -142,8 +142,8 @@ private:
     GM_ADDR inTensorsPtr = nullptr;
     GM_ADDR outTensorsPtr = nullptr;
 
-    int64_t slide_size = 0;
     int64_t blockIdx = 0;
+    int64_t slide_size = 0;
     float scale_w;
     float scale_h;
     float invscale_w;
@@ -152,41 +152,41 @@ private:
     float support_h;
     int64_t max_interp_size_w = 16;
     int64_t max_interp_size_h;
-    int64_t need_core_num_h;
     int64_t need_core_num_w;
+    int64_t need_core_num_h;
     int64_t dataType;
 
     uint64_t intermediate_matrix_size;
     uint32_t radio_matrix_size_h;
     uint32_t radio_matrix_size_w;
 
-    int64_t slideNumW;
     int64_t eachCoreSlideNumW;
     int64_t tailStartSlideNumW;
+    int64_t slideNumW;
     int64_t groupCoreNumW;
     int64_t tailAvergingRowsW;
     int64_t remainderW;
 
-    int64_t slideNumH;
     int64_t eachCoreSlideNumH;
     int64_t tailStartSlideNumH;
+    int64_t slideNumH;
     int64_t groupCoreNumH;
     int64_t tailAvergingRowsH;
     int64_t remainderH;
 
     int64_t slideStart_w = 0;
     int64_t slideEnd_w = 0;
-    int64_t tailRowStart_w = 0;
-    int64_t tailRowEnd_w = 0;
     int64_t tailSlideStart_w = 0;
     int64_t tailSlideEnd_w = 0;
+    int64_t tailRowStart_w = 0;
+    int64_t tailRowEnd_w = 0;
 
     int64_t slideStart_h = 0;
     int64_t slideEnd_h = 0;
-    int64_t tailRowStart_h = 0;
-    int64_t tailRowEnd_h = 0;
     int64_t tailSlideStart_h = 0;
     int64_t tailSlideEnd_h = 0;
+    int64_t tailRowStart_h = 0;
+    int64_t tailRowEnd_h = 0;
 
     int64_t input_shapes[4] = {0, 0, 0, 0};
     int64_t output_shapes[4] = {0, 0, 0, 0};
@@ -246,12 +246,12 @@ __aicore__ inline void UpsampleBilinearAAND<T>::Process()
     }
 
     // 先横向扩展
-    WExpansion();
+    WDirectionExpansion();
 
     SyncAll();
 
     // 再纵向扩展
-    HExpansion();
+    HDirectionExpansion();
 }
 
 template <typename T>
@@ -271,7 +271,7 @@ __aicore__ inline int64_t UpsampleBilinearAAND<T>::getHeightTensorSize()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::WExpansion()
+__aicore__ inline void UpsampleBilinearAAND<T>::WDirectionExpansion()
 {
     if (!FloatEqual(scale_w, 1.0)) {
         if (blockIdx < need_core_num_w) {
@@ -309,7 +309,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::WExpansion()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::HExpansion()
+__aicore__ inline void UpsampleBilinearAAND<T>::HDirectionExpansion()
 {
     if (!FloatEqual(scale_h, 1.0) || FloatEqual(scale_w, 1.0)) {
         if (blockIdx < need_core_num_h) {
@@ -534,8 +534,8 @@ template <typename T>
 __aicore__ inline void UpsampleBilinearAAND<T>::calculateWidthExtension(
     int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
 {
-    int64_t singleCoreN = matmulTiling_w->singleCoreN;
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
+    int64_t singleCoreN = matmulTiling_w->singleCoreN;
     // 尾块batch分批处理
     if (rowEnd != 0) {
         singleCoreM = rowEnd - rowStart;
@@ -546,15 +546,15 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateWidthExtension(
     if (tensorCIndex + slide_size > output_shapes[3]) {
         matmulW.SetTail(singleCoreM, output_shapes[3] - tensorCIndex, singleCoreK);
     }
-    int64_t xIndex = xMin + input_shapes[3] * rowStart;
-    int64_t cIndexWithOffset = tensorCIndex + rowStart * output_shapes[3];
+    int64_t xIndex = xMin + rowStart * input_shapes[3];
+    int64_t tensorCIndexWithOffset = tensorCIndex + rowStart * output_shapes[3];
 
     matmulW.SetTensorA(inTensorsGM[xIndex], false);
     matmulW.SetTensorB(intermediateTensorGm[workSpaceRadioOffset], false);
     if (FloatEqual(scale_h, 1.0)) {
-        matmulW.IterateAll(outTensorsGM[cIndexWithOffset], false);
+        matmulW.IterateAll(outTensorsGM[tensorCIndexWithOffset], false);
     } else {
-        matmulW.IterateAll(intermediateTensorGm[cIndexWithOffset], false);
+        matmulW.IterateAll(intermediateTensorGm[tensorCIndexWithOffset], false);
     }
     matmulW.End();
 
@@ -615,17 +615,17 @@ __aicore__ inline void UpsampleBilinearAAND<T>::ParseTilingData(const UpsampleBi
     invscale_h = tilingData->invscale_h;
     support_w = tilingData->support_w;
     support_h = tilingData->support_h;
-    max_interp_size_h = tilingData->max_interp_size_h;
     max_interp_size_w = tilingData->max_interp_size_w;
+    max_interp_size_h = tilingData->max_interp_size_h;
 
-    need_core_num_h = tilingData->need_core_num_h;
     need_core_num_w = tilingData->need_core_num_w;
+    need_core_num_h = tilingData->need_core_num_h;
 
-    for (int8_t i = 0; i < 4; i++) {
-        input_shapes[i] = tilingData->input_shapes[i];
-    }
     for (int8_t i = 0; i < 4; i++) {
         output_shapes[i] = tilingData->output_shapes[i];
+    }
+    for (int8_t i = 0; i < 4; i++) {
+        input_shapes[i] = tilingData->input_shapes[i];
     }
 
     intermediate_matrix_size = tilingData->intermediate_matrix_size / sizeof(T);

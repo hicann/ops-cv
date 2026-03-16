@@ -19,11 +19,11 @@
 #include "aclnn_kernels/transpose.h"
 #include "aclnn/aclnn_base.h"
 #include "opdev/common_types.h"
-#include "opdev/format_utils.h"
 #include "opdev/data_type_utils.h"
+#include "opdev/format_utils.h"
 #include "opdev/op_dfx.h"
-#include "opdev/op_log.h"
 #include "opdev/op_executor.h"
+#include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "aclnn_kernels/common/op_error_check.h"
@@ -49,7 +49,10 @@ static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_L
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8};
 
 static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
-    op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8, op::DataType::DT_BF16};
+    op::DataType::DT_FLOAT,
+    op::DataType::DT_DOUBLE,
+    op::DataType::DT_UINT8,
+    op::DataType::DT_BF16};
 
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
@@ -131,8 +134,10 @@ static bool CheckOutEqual(const aclTensor *out, const aclIntArray *outputSize)
             outputSize->GetData()[ONE] != outShape.GetDim(THREE)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "Expected output size (H: %ld, W: %ld), but got output tensor size (H: %ld, W: %ld).",
-                outputSize->GetData()[ZERO], outputSize->GetData()[ONE],
-                outShape.GetDim(TWO), outShape.GetDim(THREE));
+                outputSize->GetData()[ZERO],
+                outputSize->GetData()[ONE],
+                outShape.GetDim(TWO),
+                outShape.GetDim(THREE));
             return false;
         }
         return true;

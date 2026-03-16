@@ -151,9 +151,9 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
 
     // unsqeeze(2)
     const int64_t appendDim[] = {2};
-    aclIntArray *dimArray = executor->AllocIntArray(appendDim, 1);
-    CHECK_RET(dimArray != nullptr, nullptr);
-    auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimArray, executor);
+    aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
+    CHECK_RET(dimUnsqueeze != nullptr, nullptr);
+    auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
     CHECK_RET(unsqueezedInput != nullptr, nullptr);
 
     return unsqueezedInput;

@@ -56,8 +56,8 @@ constexpr uint64_t DATA_TYPE_HALF = 3;
 constexpr uint64_t DATA_TYPE_FP32_SIZE = 4;
 
 constexpr uint64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
-constexpr uint32_t BYTE_LENGTH_4 = 4;
-constexpr uint32_t BYTE_LENGTH_2 = 2;
+constexpr uint32_t BYTE_LEN_4 = 4;
+constexpr uint32_t BYTE_LEN_2 = 2;
 
 constexpr uint32_t DIM_LEN = 4;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
@@ -498,13 +498,13 @@ uint8_t UpsampleLinear1dTiling::GetDataTypeSize() const
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return BYTE_LENGTH_4;
+            return BYTE_LEN_4;
         case ge::DT_FLOAT16:
-            return BYTE_LENGTH_2;
+            return BYTE_LEN_2;
         case ge::DT_BF16:
-            return BYTE_LENGTH_2;
+            return BYTE_LEN_2;
         default:
-            return BYTE_LENGTH_4;
+            return BYTE_LEN_4;
     }
 }
 
@@ -532,8 +532,8 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
 
     // H维度总数
     int64_t input_h = input_shapes[0] * input_shapes[1] * input_shapes[2];
-    int64_t tailAvergingRows = slide_size;
     int64_t groupCoreNum = coreNumPlatform;
+    int64_t tailAvergingRows = slide_size;
 
     if (remainder != 0) {
         // 获取最小分行数
@@ -543,9 +543,8 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
         tailAvergingRows = std::max(CeilA2B(input_h, groupCoreNum), minAvergingRows);
         groupCoreNum = std::min(groupCoreNum, CeilA2B(input_h, tailAvergingRows));
     }
-    
-    int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
     int64_t needCoreNum = 0;
+    int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
 
     if (eachCoreSlideNum > 0) {
         needCoreNum = coreNumPlatform;

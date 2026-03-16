@@ -39,17 +39,17 @@ constexpr int8_t C_INDEX = 1;
 constexpr int8_t H_INDEX = 2;
 constexpr int8_t W_INDEX = 3;
 
-constexpr uint64_t DATE_TYPE_FLOAT16 = 1;
-constexpr uint64_t DATE_TYPE_FLOAT = 2;
-constexpr uint64_t DATE_TYPE_BF16 = 3;
-
 constexpr uint32_t OUTPUT_SIZE_ATTR = 0;
 constexpr uint32_t ALIGN_CORNERS_ATTR = 1;
 constexpr uint32_t SCALE_H_ATTR = 2;
 constexpr uint32_t SCALE_W_ATTR = 3;
 
+constexpr uint64_t DATE_TYPE_FLOAT16 = 1;
+constexpr uint64_t DATE_TYPE_FLOAT = 2;
+constexpr uint64_t DATE_TYPE_HALF = 3;
+
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
-constexpr uint32_t BYTE_LENGTH_4 = 4;
+constexpr uint32_t BYTE_LEN_4 = 4;
 constexpr uint32_t BYTE_LEN_2 = 2;
 
 constexpr uint32_t DIM_LEN = 4;
@@ -92,7 +92,7 @@ private:
     UpsampleBicubic2dTilingData tilingData;
     gert::TilingContext *tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
-    uint16_t dataTypeSize = BYTE_LENGTH_4;
+    uint16_t dataTypeSize = BYTE_LEN_4;
     gert::Shape input_shape;
     uint8_t dim = 0;
     const bool *align_corners = nullptr;
@@ -164,13 +164,13 @@ inline float UpsampleBicubic2dTiling::compute_scale_value(
     }
 }
 
-inline bool FloatEqual(float x, float y)
+inline bool FloatEqual(float a, float b)
 {
     float closeTo0 = float(1e-6);
-    if (x > y) {
-        return x - y < closeTo0;
+    if (a > b) {
+        return a - b < closeTo0;
     } else {
-        return y - x < closeTo0;
+        return b - a < closeTo0;
     }
 }
 
@@ -422,13 +422,13 @@ uint8_t UpsampleBicubic2dTiling::GetDataTypeSize()
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return BYTE_LENGTH_4;
+            return BYTE_LEN_4;
         case ge::DT_FLOAT16:
             return BYTE_LEN_2;
         case ge::DT_BF16:
             return BYTE_LEN_2;
         default:
-            return BYTE_LENGTH_4;
+            return BYTE_LEN_4;
     }
 }
 
@@ -440,7 +440,7 @@ uint64_t UpsampleBicubic2dTiling::GetDataTypeVal()
         case ge::DT_FLOAT16:
             return DATE_TYPE_FLOAT16;
         case ge::DT_BF16:
-            return DATE_TYPE_BF16;
+            return DATE_TYPE_HALF;
         default:
             return 0;
     }
@@ -559,12 +559,11 @@ uint32_t UpsampleBicubic2dTiling::GetNeedCoreNumH(uint32_t coreNumPlatform)
 void UpsampleBicubic2dTiling::FillTilingData()
 {
     tilingData.set_slideStartList_w(slideStartList_w);
-    tilingData.set_tailSlideStartList_w(tailSlideStartList_w);
-    tilingData.set_tailRowStartList_w(tailRowStartList_w);
     tilingData.set_slideEndList_w(slideEndList_w);
+    tilingData.set_tailSlideStartList_w(tailSlideStartList_w);
     tilingData.set_tailSlideEndList_w(tailSlideEndList_w);
+    tilingData.set_tailRowStartList_w(tailRowStartList_w);
     tilingData.set_tailRowEndList_w(tailRowEndList_w);
-    tilingData.set_dataType(GetDataTypeVal());
 
     tilingData.set_slideStartList_h(slideStartList_h);
     tilingData.set_slideEndList_h(slideEndList_h);
@@ -574,6 +573,8 @@ void UpsampleBicubic2dTiling::FillTilingData()
     tilingData.set_tailRowEndList_h(tailRowEndList_h);
 
     tilingData.set_align_corners(*align_corners);
+    tilingData.set_dataType(GetDataTypeVal());
+
     tilingData.SaveToBuffer(
         tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());

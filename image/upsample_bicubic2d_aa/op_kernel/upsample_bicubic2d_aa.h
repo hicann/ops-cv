@@ -72,14 +72,14 @@ private:
         return 0.0;
     };
     template <typename T1, typename T2>
-    __aicore__ inline T1 MaxFun(T1 a, T2 b)
-    {
-        return a > b ? a : b;
-    };
-    template <typename T1, typename T2>
     __aicore__ inline T1 MinFun(T1 a, T2 b)
     {
         return a < b ? a : b;
+    };
+    template <typename T1, typename T2>
+    __aicore__ inline T1 MaxFun(T1 a, T2 b)
+    {
+        return a > b ? a : b;
     };
 
     __aicore__ inline bool FloatEqual(float a, float b)

@@ -21,11 +21,11 @@ namespace ops {
 static constexpr size_t IN_X = 0;
 static constexpr size_t OUT_Y = 0;
 static constexpr size_t SUPPORTED_DIM_NUM = 5;
+static constexpr size_t SUPPORTED_OUTPUT_DIM_NUM = 3;
 static constexpr size_t INDEX_INPUT_SIZE = 0;
 static constexpr size_t INDEX_OUTPUT_SIZE = 1;
 static constexpr size_t INDEX_SCALES = 2;
 static constexpr size_t NOT_CHANGE_DIM = 2;
-static constexpr size_t SUPPORTED_OUTPUT_DIM_NUM = 3;
 
 static ge::graphStatus SetUpsample3dGradInferShape(const gert::InferShapeContext *context,
     const gert::Shape *grad_output_shape, gert::Shape *y_shape, const gert::ContinuousVector *input_size)

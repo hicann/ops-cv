@@ -100,17 +100,17 @@ __aicore__ inline void Bilinear2dAADataCopy<T1>::Process()
         return;
     }
     if (blockIdx_ < tailBlockNum_) {
-        totalLength_ = totalLength_ + 1;
+        totalLength_ += 1;
         totalOffset_ = blockIdx_ * totalLength_;
     } else {
         totalOffset_ = blockIdx_ * totalLength_ + tailBlockNum_;
     }
 
     for (int64_t loop = 0; loop < totalLength_; loop += ubFactor_) {
-        int64_t lenCopy = Min(ubFactor_, totalLength_ - loop);
+        int64_t length = Min(ubFactor_, totalLength_ - loop);
         int64_t offset = totalOffset_ + loop;
-        CopyIn(offset, lenCopy);
-        CopyOut(offset, lenCopy);
+        CopyIn(offset, length);
+        CopyOut(offset, length);
     }
 }
 } // namespace UpsampleBilinear2dAA

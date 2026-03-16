@@ -14,8 +14,8 @@
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
-#include "opdev/make_op_executor.h"
 #include "opdev/tensor_view_utils.h"
+#include "opdev/make_op_executor.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/common/op_error_check.h"
@@ -99,9 +99,9 @@ static bool CheckInputElement(
     int64_t inputD = (*inputSize)[DIM_TWO];
     int64_t inputH = (*inputSize)[DIM_THREE];
     int64_t inputW = (*inputSize)[DIM_FOUR];
-    FVector<int64_t> expectOutputSize = {batch, channels, outD, outH, outW};
+    FVector<int64_t> fullOutputSize = {batch, channels, outD, outH, outW};
     if (gradOut->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
-        expectOutputSize = {batch, outD, outH, outW, channels};
+        fullOutputSize = {batch, outD, outH, outW, channels};
     }
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
@@ -116,12 +116,12 @@ static bool CheckInputElement(
         return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
-        if (gradOutShape.GetDim(i) != expectOutputSize[i]) {
+        if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(
                 ACLNN_ERR_PARAM_INVALID,
                 "Expected grad_output to have the same shape as output;"
                 " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, expectOutputSize[i], i, gradOutShape.GetDim(i));
+                i, fullOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }

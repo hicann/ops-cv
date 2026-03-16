@@ -9,11 +9,11 @@
  */
 
 #include "upsample_nearest_exact2d_grad.h"
-#include "aclnn/aclnn_base.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_kernels/cast.h"
+#include "aclnn/aclnn_base.h"
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"

@@ -69,8 +69,8 @@ struct BicubicV2Data {
 
 static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
 {
-    OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(self, return false);
+    OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(out, return false);
     return true;
 }
@@ -277,8 +277,8 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(const aclTensor *self,
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto checkBicubic2dRet = CheckParams(self, outputSize, out);
-    CHECK_RET(checkBicubic2dRet == ACLNN_SUCCESS, checkBicubic2dRet);
+    auto ret = CheckParams(self, outputSize, out);
+    CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     // 空tensor在kernel中支持
     if (self->IsEmpty()) {

@@ -20,8 +20,6 @@
 #include "aclnn_upsample_bicubic_2d_backward.h"
 
 #include "aclnn/aclnn_base.h"
-#include "op_api/aclnn_check.h"
-#include "op_api/level2_base.h"
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
@@ -30,7 +28,9 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "op_api/aclnn_check.h"
 #include "runtime/context.h"
+#include "op_api/level2_base.h"
 
 using namespace op;
 #ifdef __cplusplus

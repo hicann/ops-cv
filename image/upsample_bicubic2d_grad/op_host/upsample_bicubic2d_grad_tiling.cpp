@@ -36,11 +36,11 @@ bool AddWorkspaces(gert::TilingContext *context, const size_t workspace)
 
 inline bool FloatEqual(float a, float b)
 {
-    float closeToZero = float(1e-6);
+    float closeTo0 = float(1e-6);
     if (a > b) {
-        return a - b < closeToZero;
+        return a - b < closeTo0;
     } else {
-        return b - a < closeToZero;
+        return b - a < closeTo0;
     }
 }
 

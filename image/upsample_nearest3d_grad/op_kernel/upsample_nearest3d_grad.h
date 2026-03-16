@@ -39,7 +39,7 @@ public:
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         MDL_CFG>
-        matmulD;
+        matmulW;
 
     matmul::Matmul<
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
@@ -51,7 +51,7 @@ public:
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
         MDL_CFG>
-        matmulW;
+        matmulD;
 
     __aicore__ inline UpsampleNearest3dGradND(){};
     __aicore__ inline void Init(
@@ -60,26 +60,21 @@ public:
 
 private:
     template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 m, T2 n)
+    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
     {
-        if (n == 0) {
-            return m;
+        if (b == 0) {
+            return a;
         }
-        return (m + n - 1) / n;
+        return (a + b - 1) / b;
     };
-    __aicore__ inline bool FloatEqual(float i, float j)
+    __aicore__ inline bool FloatEqual(float a, float b)
     {
         float closeTo0 = float(1e-6);
-        if (i > j) {
-            return i - j < closeTo0;
+        if (a > b) {
+            return a - b < closeTo0;
         } else {
-            return j - i < closeTo0;
+            return b - a < closeTo0;
         }
-    };
-    template <typename T1>
-    __aicore__ inline T1 Max(T1 a, T1 b)
-    {
-        return a > b ? a : b;
     };
     template <typename T1>
     __aicore__ inline int64_t CeilNum(T1 x)
@@ -94,6 +89,11 @@ private:
     __aicore__ inline T1 Min(T1 a, T1 b)
     {
         return a < b ? a : b;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Max(T1 a, T1 b)
+    {
+        return a > b ? a : b;
     };
     __aicore__ inline void ParseTilingData(UpsampleNearest3dGradTilingData* tilingData);
     __aicore__ inline void GetSlideRange();
@@ -147,13 +147,13 @@ private:
     int64_t intermediateMatrixSizeW;
     int64_t intermediateMatrixSizeH;
 
-    int64_t needCoreNums[3] = {0, 0, 0};
     int64_t eachCoreSlideNums[3] = {0, 0, 0};
     int64_t remainders[3] = {0, 0, 0};
     int64_t tailStartSlideNums[3] = {0, 0, 0};
     int64_t groupCoreNums[3] = {0, 0, 0};
     int64_t inputRows[3] = {0, 0, 0};
     int64_t tailAvergingRows[3] = {0, 0, 0};
+    int64_t needCoreNums[3] = {0, 0, 0};
 
     int64_t slideStarts[3] = {0, 0, 0};
     int64_t slideEnds[3] = {0, 0, 0};
@@ -223,17 +223,17 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::Process()
         return;
     }
 
-    if (blockIdx < needCoreNums[W_DIRECTION] && needResizeW) {
+    if (needResizeW && blockIdx < needCoreNums[W_DIRECTION]) {
         DirectionExpansion(W_DIRECTION, scaleW);
     }
     SyncAll();
 
-    if (blockIdx < needCoreNums[H_DIRECTION] && needResizeH) {
+    if (needResizeH && blockIdx < needCoreNums[H_DIRECTION]) {
         DirectionExpansion(H_DIRECTION, scaleH);
     }
     SyncAll();
 
-    if (blockIdx < needCoreNums[D_DIRECTION] && needResizeD) {
+    if (needResizeD && blockIdx < needCoreNums[D_DIRECTION]) {
         DirectionExpansion(D_DIRECTION, scaleD);
     }
 }
@@ -264,8 +264,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::DirectionExpansion(int8_t dir
     }
 
     int64_t tailSlideStart = tailSlideStarts[direction];
-    int64_t tailRowStart = tailRowStarts[direction];
     int64_t tailSlideEnd = tailSlideEnds[direction];
+    int64_t tailRowStart = tailRowStarts[direction];
     int64_t tailRowEnd = tailRowEnds[direction];
     // 处理尾块部分数据
     if (tailSlideStart < tailSlideEnd) {
@@ -474,7 +474,7 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateDepthExtension(
     for (int64_t i = start, inOffset = start * inStep, outOffset = start * outStep; i < end;
          i++, inOffset += inStep, outOffset += outStep) {
         matmulD.SetTensorA(intermediateTensorGm[workSpaceRadioOffset], false);
-        if (!needResizeH && !needResizeW) {
+        if (!needResizeW && !needResizeH) {
             matmulD.SetTensorB(inTensorsGM[xIndex + inOffset], false);
         } else if (!needResizeH) {
             matmulD.SetTensorB(intermediateTensorGm[xIndex + inOffset], false);
@@ -496,8 +496,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::ParseTilingData(UpsampleNeare
         gradInputShapes[i] = tilingData->gradInputShapes[i];
 
         eachCoreSlideNums[i] = tilingData->eachCoreSlideNums[i];
-        tailStartSlideNums[i] = tilingData->tailStartSlideNums[i];
         remainders[i] = tilingData->remainders[i];
+        tailStartSlideNums[i] = tilingData->tailStartSlideNums[i];
         groupCoreNums[i] = tilingData->groupCoreNums[i];
         inputRows[i] = tilingData->inputRows[i];
         tailAvergingRows[i] = tilingData->tailAvergingRows[i];

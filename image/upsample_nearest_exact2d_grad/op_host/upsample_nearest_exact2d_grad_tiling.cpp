@@ -38,7 +38,7 @@ constexpr uint8_t TILING_KEY_FLOAT = 2;
 constexpr uint8_t TILING_KEY_BF16 = 3;
 
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
-constexpr uint8_t BYTE_SIZE_4 = 4;
+constexpr uint8_t BYTE_LEN_4 = 4;
 constexpr uint8_t BYTE_LEN_2 = 2;
 constexpr uint64_t DATE_TYPE_FLOAT16 = 1;
 constexpr uint64_t DATE_TYPE_FLOAT = 2;
@@ -104,9 +104,8 @@ private:
     int64_t tailSlideEndList_h[MAX_CORE_CONT] = {0};
     int64_t tailRowStartList_h[MAX_CORE_CONT] = {0};
     int64_t tailRowEndList_h[MAX_CORE_CONT] = {0};
-    
-    int64_t input_shapes[4] = {0};
     int64_t output_shapes[4] = {0};
+    int64_t input_shapes[4] = {0};
 
     int32_t tailBatchStartListH[MAX_CORE_CONT] = {0};
     int32_t tailBatchEndListH[MAX_CORE_CONT] = {0};
@@ -289,13 +288,13 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNumH(uint32_t coreNumPlatf
 void UpsampleNearestExact2dGradTiling::getTCubeTiling_h()
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
-    matmul_tiling::MatmulApiTiling mmTiling_H;
-    mmTiling_H.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTiling_H.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTiling_H.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_H.SetOrgShape(output_shapes[H_INDEX], output_shapes[W_INDEX], input_shapes[W_INDEX]);
-    mmTiling_H.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
-    if (mmTiling_H.GetTiling(tilingData.matmulTiling_h) == -1) {
+    matmul_tiling::MatmulApiTiling mmTiling_h;
+    mmTiling_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
+    mmTiling_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
+    mmTiling_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
+    mmTiling_h.SetOrgShape(output_shapes[H_INDEX], output_shapes[W_INDEX], input_shapes[W_INDEX]);
+    mmTiling_h.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
+    if (mmTiling_h.GetTiling(tilingData.matmulTiling_h) == -1) {
         return;
     }
 }
@@ -352,12 +351,12 @@ void UpsampleNearestExact2dGradTiling::getOutputShape()
 
 void UpsampleNearestExact2dGradTiling::getSlideSize()
 {
-    auto maxScale = realScale_h > realScale_w ? realScale_h : realScale_w;
-    if (maxScale <= BEST_PERFORMANCE_SCALE_4) {
+    auto max_scale = realScale_h > realScale_w ? realScale_h : realScale_w;
+    if (max_scale <= BEST_PERFORMANCE_SCALE_4) {
         slide_size = BEST_PERFORMANCE_SIZE_4;
-    } else if (maxScale <= BEST_PERFORMANCE_SCALE_3) {
+    } else if (max_scale <= BEST_PERFORMANCE_SCALE_3) {
         slide_size = BEST_PERFORMANCE_SIZE_3;
-    } else if (maxScale <= BEST_PERFORMANCE_SCALE_2) {
+    } else if (max_scale <= BEST_PERFORMANCE_SCALE_2) {
         slide_size = BEST_PERFORMANCE_SIZE_2;
     } else {
         slide_size = BEST_PERFORMANCE_SIZE_1;
@@ -389,13 +388,13 @@ uint8_t UpsampleNearestExact2dGradTiling::GetDataTypeSize()
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return BYTE_SIZE_4;
+            return BYTE_LEN_4;
         case ge::DT_FLOAT16:
             return BYTE_LEN_2;
         case ge::DT_BF16:
             return BYTE_LEN_2;
         default:
-            return BYTE_SIZE_4;
+            return BYTE_LEN_4;
     }
 }
 
@@ -464,7 +463,7 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNumW(uint32_t coreNumPlatf
     int64_t tailAvergingRows = std::max(CeilA2B(input_h, groupCoreNum), minAvergingRows);
 
     groupCoreNum = std::min(groupCoreNum, CeilA2B(input_h, tailAvergingRows));
-    int64_t needCoreCount = 0;
+    int64_t needCoreNum = 0;
     int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
     for (uint32_t coreIndex = 0; coreIndex < coreNumPlatform; coreIndex++) {
         slideStartList_w[coreIndex] = coreIndex * eachCoreSlideNum * slide_size;
@@ -481,22 +480,22 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNumW(uint32_t coreNumPlatf
             tailSlideStartList_w[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
             tailSlideEndList_w[coreIndex] =
                 std::min(tailSlideStartList_w[coreIndex] + slide_size, static_cast<int64_t>(outputSize));
-            int64_t coreIndexInGroupNum = 0;
+            int64_t coreIndexInGroup = 0;
             if (groupCoreNum != 0) {
-                coreIndexInGroupNum = coreIndex % groupCoreNum;
+                coreIndexInGroup = coreIndex % groupCoreNum;
             }
-            tailRowStartList_w[coreIndex] = coreIndexInGroupNum * tailAvergingRows;
+            tailRowStartList_w[coreIndex] = coreIndexInGroup * tailAvergingRows;
             tailRowEndList_w[coreIndex] =
                 std::min(tailRowStartList_w[coreIndex] + tailAvergingRows, static_cast<int64_t>(input_h));
 
-            needCoreCount++;
+            needCoreNum++;
         }
     }
 
     if (eachCoreSlideNum > 0) {
-        needCoreCount = coreNumPlatform;
+        needCoreNum = coreNumPlatform;
     }
-    return needCoreCount;
+    return needCoreNum;
 }
 
 void UpsampleNearestExact2dGradTiling::FillTilingData()
@@ -505,14 +504,14 @@ void UpsampleNearestExact2dGradTiling::FillTilingData()
     tilingData.set_slideEndList_w(slideEndList_w);
     tilingData.set_tailSlideStartList_w(tailSlideStartList_w);
     tilingData.set_tailSlideEndList_w(tailSlideEndList_w);
-    tilingData.set_slideStartList_h(slideStartList_h);
-    tilingData.set_slideEndList_h(slideEndList_h);
     tilingData.set_tailRowStartList_w(tailRowStartList_w);
     tilingData.set_tailRowEndList_w(tailRowEndList_w);
-    tilingData.set_tailRowStartList_h(tailRowStartList_h);
-    tilingData.set_tailRowEndList_h(tailRowEndList_h);
+    tilingData.set_slideStartList_h(slideStartList_h);
+    tilingData.set_slideEndList_h(slideEndList_h);
     tilingData.set_tailSlideStartList_h(tailSlideStartList_h);
     tilingData.set_tailSlideEndList_h(tailSlideEndList_h);
+    tilingData.set_tailRowStartList_h(tailRowStartList_h);
+    tilingData.set_tailRowEndList_h(tailRowEndList_h);
     tilingData.set_tailBatchStartListH(tailBatchStartListH);
     tilingData.set_tailBatchEndListH(tailBatchEndListH);
 

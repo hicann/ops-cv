@@ -59,8 +59,8 @@ public:
 
 private:
     __aicore__ inline void ParseTilingData(UpsampleBilinear2dTilingData *tilingData);
-    __aicore__ inline void ExpansionW();
-    __aicore__ inline void ExpansionH();
+    __aicore__ inline void WDirectionExpansion();
+    __aicore__ inline void HDirectionExpansion();
     __aicore__ inline void calculateRadioTensorW(int64_t loopIndex, int64_t length);
     __aicore__ inline void calculateRadioTensorH(int64_t loopIndex, int64_t length);
     __aicore__ inline void calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
@@ -198,10 +198,10 @@ __aicore__ inline void UpsampleBilinear2dND<T>::Process()
         return;
     }
     // 先横向扩展
-    ExpansionW();
+    WDirectionExpansion();
     SyncAll();
     // 再纵向扩展
-    ExpansionH();
+    HDirectionExpansion();
 }
 
 template <typename T>
@@ -221,7 +221,7 @@ __aicore__ inline int64_t UpsampleBilinear2dND<T>::getHeightTensorSize()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dND<T>::ExpansionW()
+__aicore__ inline void UpsampleBilinear2dND<T>::WDirectionExpansion()
 {
     if (!FloatEqual(scale_w, 1.0)) {
         if (blockIdx < need_core_num_w) {
@@ -251,7 +251,7 @@ __aicore__ inline void UpsampleBilinear2dND<T>::ExpansionW()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dND<T>::ExpansionH()
+__aicore__ inline void UpsampleBilinear2dND<T>::HDirectionExpansion()
 {
     if (!FloatEqual(scale_h, 1.0) || FloatEqual(scale_w, 1.0)) {
         if (blockIdx < need_core_num_h) {
@@ -382,23 +382,23 @@ __aicore__ inline void UpsampleBilinear2dND<T>::copyRadioTensorToGm(int8_t direc
     }
 
     if (dataType == 2) {
-        LocalTensor<T> radioLocalTensor = initRadioTensor(direction);
-        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioLocalTensor, radioLocalTensor.GetSize());
+        LocalTensor<T> radioTensor = initRadioTensor(direction);
+        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioTensor, radioTensor.GetSize());
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
 
-        releaseRadioTensor(direction, radioLocalTensor);
+        releaseRadioTensor(direction, radioTensor);
     } else {
         int8_t size = 32 / sizeof(T);
-        LocalTensor<T> radioLocalTensor = initRadioTensor(direction);
+        LocalTensor<T> radioTensor = initRadioTensor(direction);
         DataCopy(
-            intermediateTensorGm[workSpaceRadioOffset], radioLocalTensor, (radioLocalTensor.GetSize() + size - 1) / size * size);
+            intermediateTensorGm[workSpaceRadioOffset], radioTensor, (radioTensor.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
 
-        releaseRadioTensor(direction, radioLocalTensor);
+        releaseRadioTensor(direction, radioTensor);
     }
 }
 
@@ -481,7 +481,7 @@ __aicore__ inline void UpsampleBilinear2dND<T>::calculateHeightExtension(
     int64_t tensorCIndexWithOffset = tensorCIndex * output_shapes[3];
 
     int64_t middleHWSize = input_shapes[2] * output_shapes[3];
-    int64_t outHWSize = output_shapes[2] * output_shapes[3];
+    int64_t outputHWSize = output_shapes[2] * output_shapes[3];
 
     matmulH.SetTensorA(intermediateTensorGm[workSpaceRadioOffset], false);
     for (int i = rowStart; i < rowEnd; i++) {
@@ -490,7 +490,7 @@ __aicore__ inline void UpsampleBilinear2dND<T>::calculateHeightExtension(
         } else {
             matmulH.SetTensorB(intermediateTensorGm[xIndex + i * middleHWSize], false);
         }
-        matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset + i * outHWSize], false);
+        matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset + i * outputHWSize], false);
         matmulH.End();
 
         event_t eventID3 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
@@ -508,8 +508,8 @@ __aicore__ inline void UpsampleBilinear2dND<T>::ParseTilingData(UpsampleBilinear
     scale_w = tilingData->scale_w;
     scale_h = tilingData->scale_h;
 
-    need_core_num_h = tilingData->need_core_num_h;
     need_core_num_w = tilingData->need_core_num_w;
+    need_core_num_h = tilingData->need_core_num_h;
 
     for (int8_t i = 0; i < 4; i++) {
         output_shapes[i] = tilingData->output_shapes[i];
@@ -519,15 +519,8 @@ __aicore__ inline void UpsampleBilinear2dND<T>::ParseTilingData(UpsampleBilinear
     }
 
     intermediate_matrix_size = tilingData->intermediate_matrix_size / sizeof(T);
-    radio_matrix_size_h = (tilingData->radio_matrix_size_h + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     radio_matrix_size_w = (tilingData->radio_matrix_size_w + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
-
-    eachCoreSlideNumH = tilingData->eachCoreSlideNumH;
-    tailStartSlideNumH = tilingData->tailStartSlideNumH;
-    slideNumH = tilingData->slideNumH;
-    groupCoreNumH = tilingData->groupCoreNumH;
-    tailAvergingRowsH = tilingData->tailAvergingRowsH;
-    remainderH = tilingData->remainderH;
+    radio_matrix_size_h = (tilingData->radio_matrix_size_h + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
 
     eachCoreSlideNumW = tilingData->eachCoreSlideNumW;
     tailStartSlideNumW = tilingData->tailStartSlideNumW;
@@ -536,10 +529,17 @@ __aicore__ inline void UpsampleBilinear2dND<T>::ParseTilingData(UpsampleBilinear
     tailAvergingRowsW = tilingData->tailAvergingRowsW;
     remainderW = tilingData->remainderW;
 
+    eachCoreSlideNumH = tilingData->eachCoreSlideNumH;
+    tailStartSlideNumH = tilingData->tailStartSlideNumH;
+    slideNumH = tilingData->slideNumH;
+    groupCoreNumH = tilingData->groupCoreNumH;
+    tailAvergingRowsH = tilingData->tailAvergingRowsH;
+    remainderH = tilingData->remainderH;
+
     dataType = tilingData->dataType;
 
-    matmulTiling_h = &tilingData->matmulTiling_h;
     matmulTiling_w = &tilingData->matmulTiling_w;
+    matmulTiling_h = &tilingData->matmulTiling_h;
 
     wInMaxIdx = input_shapes[3] - 1;
     hInMaxIdx = input_shapes[2] - 1;

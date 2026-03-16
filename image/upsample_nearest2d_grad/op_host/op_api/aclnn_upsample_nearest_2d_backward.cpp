@@ -78,15 +78,15 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
     int64_t inputW = (*inputSize)[DIM_THREE];
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
-    FVector<int64_t> fullOutSize = {batch, channels, outH, outW};
+    FVector<int64_t> fullOutputSize = {batch, channels, outH, outW};
 
     if (gradOut->GetStorageFormat() == op::Format::FORMAT_NHWC) {
         inputH = (*inputSize)[DIM_ONE];
         inputW = (*inputSize)[DIM_TWO];
         channels = (*inputSize)[DIM_THREE];
-        fullOutSize[DIM_ONE] = outH;
-        fullOutSize[DIM_TWO] = outW;
-        fullOutSize[DIM_THREE] = channels;
+        fullOutputSize[DIM_ONE] = outH;
+        fullOutputSize[DIM_TWO] = outW;
+        fullOutputSize[DIM_THREE] = channels;
     }
 
     OP_CHECK(
@@ -94,16 +94,17 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
         OP_LOGE(
             ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0, but got input (H: %ld,"
-            " W: %ld) output (H: %ld, W: %ld)",inputH, inputW, outH, outW),
+            " W: %ld) output (H: %ld, W: %ld)",
+            inputH, inputW, outH, outW),
         return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
-        if (gradOutShape.GetDim(i) != fullOutSize[i]) {
+        if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(
                 ACLNN_ERR_PARAM_INVALID,
                 "Expected grad_output to have the same shape as output;"
                 " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, fullOutSize[i], i, gradOutShape.GetDim(i));
+                i, fullOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
@@ -331,8 +332,8 @@ aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto checkRet = CheckParams(gradOut, outputSize, inputSize, gradInput);
-    CHECK_RET(checkRet == ACLNN_SUCCESS, checkRet);
+    auto ret = CheckParams(gradOut, outputSize, inputSize, gradInput);
+    CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     // resize_nearest_neighbor_v2_grad算子的空tensor在kernel中支持
     if (gradOut->IsEmpty() || gradInput->IsEmpty()) {

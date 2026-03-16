@@ -97,7 +97,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
     int64_t inputL = (*inputSize)[DIM_TWO];
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
-    FVector<int64_t> outputShape = {batch, channels, outL};
+    FVector<int64_t> fullOutputSize = {batch, channels, outL};
 
     OP_CHECK(
         inputL > 0 && outL > 0,
@@ -109,12 +109,12 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
         return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
-        if (gradOutShape.GetDim(i) != outputShape[i]) {
+        if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(
                 ACLNN_ERR_PARAM_INVALID,
                 "Expected grad_output to have the same shape as output;"
                 " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, outputShape[i], i, gradOutShape.GetDim(i));
+                i, fullOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }

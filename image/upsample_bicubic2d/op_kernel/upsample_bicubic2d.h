@@ -56,48 +56,48 @@ public:
 
 private:
     template <typename T1>
-    __aicore__ inline T1 weightCalculate(T1 x, int64_t m, int64_t n, int64_t width)
+    __aicore__ inline T1 weightCalculate(T1 x, int64_t i, int64_t j, int64_t width)
     {
         float weight1 = 0;
         float weight2 = 0;
         float weight3 = 0;
         float weight4 = 0;
         float t = (float)1.0 - x;
-        switch (n) {
+        switch (j) {
             case 0:
                 weight1 = calWeights2(1 + x);
                 weight2 = calWeights1(x);
                 weight3 = calWeights1(t);
-                return getWeightIndex0(m, width, weight1, weight2, weight3);
+                return getWeightIndex0(i, width, weight1, weight2, weight3);
             case 1:
                 weight2 = calWeights1(x);
                 weight3 = calWeights1(t);
                 weight4 = calWeights2(1 + t);
-                return getWeightIndex1(m, width, weight2, weight3, weight4);
+                return getWeightIndex1(i, width, weight2, weight3, weight4);
             case 2:
                 weight3 = calWeights1(t);
                 weight4 = calWeights2(1 + t);
-                return getWeightIndex2(m, width, weight3, weight4);
+                return getWeightIndex2(i, width, weight3, weight4);
             case 3:
                 weight4 = calWeights2(1 + t);
-                return getWeightIndex3(m, width, weight4);
+                return getWeightIndex3(i, width, weight4);
             default:
                 return 0.0;
         }
     };
 
     template <typename T1>
-    __aicore__ inline T1 getWeightIndex0(int64_t x, int64_t width, T1 weight1, T1 weight2, T1 weight3)
+    __aicore__ inline T1 getWeightIndex0(int64_t i, int64_t width, T1 weight1, T1 weight2, T1 weight3)
     {
         if (width == MIN_SIZE) {
             return 1.0;
-        } else if (x < 0) {
+        } else if (i < 0) {
             return (weight1 + weight2 + weight3);
-        } else if (x == 0) {
+        } else if (i == 0) {
             return (weight1 + weight2);
-        } else if (out_of_range(x, width)) {
+        } else if (out_of_range(i, width)) {
             return weight1;
-        } else if (on_board(x, width)) {
+        } else if (on_board(i, width)) {
             return weight1;
         } else {
             return weight1;
@@ -105,17 +105,17 @@ private:
     }
 
     template <typename T1>
-    __aicore__ inline T1 getWeightIndex1(int64_t x, int64_t width, T1 weight2, T1 weight3, T1 weight4)
+    __aicore__ inline T1 getWeightIndex1(int64_t i, int64_t width, T1 weight2, T1 weight3, T1 weight4)
     {
         if (width == MIN_SIZE) {
             return 0.0;
-        } else if (x < 0) {
+        } else if (i < 0) {
             return weight4;
-        } else if (x == 0) {
+        } else if (i == 0) {
             return (width == TWO_SIZE) ? (weight3 + weight4) : weight3;
-        } else if (out_of_range(x, width)) {
+        } else if (out_of_range(i, width)) {
             return (weight2 + weight3 + weight4);
-        } else if (on_board(x, width)) {
+        } else if (on_board(i, width)) {
             return weight2;
         } else {
             return weight2;
@@ -123,15 +123,15 @@ private:
     }
 
     template <typename T1>
-    __aicore__ inline T1 getWeightIndex2(int64_t x, int64_t width, T1 weight3, T1 weight4)
+    __aicore__ inline T1 getWeightIndex2(int64_t i, int64_t width, T1 weight3, T1 weight4)
     {
-        if (width == MIN_SIZE || x < 0) {
+        if (width == MIN_SIZE || i < 0) {
             return 0.0;
-        } else if (x == 0) {
+        } else if (i == 0) {
             return (width == TWO_SIZE) ? static_cast<float>(0.0) : weight4;
-        } else if (out_of_range(x, width)) {
+        } else if (out_of_range(i, width)) {
             return 0.0;
-        } else if (on_board(x, width)) {
+        } else if (on_board(i, width)) {
             return (weight3 + weight4);
         } else {
             return weight3;
@@ -139,11 +139,11 @@ private:
     }
 
     template <typename T1>
-    __aicore__ inline T1 getWeightIndex3(int64_t x, int64_t width, T1 weight4)
+    __aicore__ inline T1 getWeightIndex3(int64_t i, int64_t width, T1 weight4)
     {
-        if (width == MIN_SIZE || x <= 0) {
+        if (width == MIN_SIZE || i <= 0) {
             return 0.0;
-        } else if (out_of_range(x, width) || on_board(x, width)) {
+        } else if (out_of_range(i, width) || on_board(i, width)) {
             return 0.0;
         } else {
             return weight4;
@@ -151,27 +151,27 @@ private:
     }
 
     template <typename T1>
-    __aicore__ inline T1 calWeights1(T1 m)
+    __aicore__ inline T1 calWeights1(T1 x)
     {
-        float res = ((T1)1.25 * m - (T1)2.25) * m * m + (T1)1.0;
+        float res = ((T1)1.25 * x - (T1)2.25) * x * x + (T1)1.0;
         return res;
     }
 
     template <typename T1>
-    __aicore__ inline T1 calWeights2(T1 m)
+    __aicore__ inline T1 calWeights2(T1 x)
     {
-        float res = (((T1)-0.75 * m + (T1)3.75) * m - (T1)6.0) * m + (T1)3.0;
+        float res = (((T1)-0.75 * x + (T1)3.75) * x - (T1)6.0) * x + (T1)3.0;
         return res;
     }
 
-    __aicore__ inline bool out_of_range(int64_t m, int64_t width)
+    __aicore__ inline bool out_of_range(int64_t x, int64_t width)
     {
-        return m >= (width - MIN_SIZE);
+        return x >= (width - MIN_SIZE);
     };
 
-    __aicore__ inline bool on_board(int64_t m, int64_t width)
+    __aicore__ inline bool on_board(int64_t x, int64_t width)
     {
-        if (m >= (width - TWO_SIZE) && m < (width - MIN_SIZE)) {
+        if (x >= (width - TWO_SIZE) && x < (width - MIN_SIZE)) {
             return true;
         } else {
             return false;
@@ -179,15 +179,15 @@ private:
     };
 
     template <typename T1>
-    __aicore__ inline T1 Min(T1 x, T1 y)
+    __aicore__ inline T1 Min(T1 a, T1 b)
     {
-        return x < y ? x : y;
+        return a < b ? a : b;
     };
 
     template <typename T1>
-    __aicore__ inline T1 Max(T1 x, T1 y)
+    __aicore__ inline T1 Max(T1 a, T1 b)
     {
-        return x > y ? x : y;
+        return a > b ? a : b;
     };
 
     __aicore__ inline bool FloatEqual(float a, float b)
@@ -610,14 +610,14 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateWidthExtension(
         matmulW.SetTail(singleCoreM, output_shapes[3] - tensorCIndex, singleCoreK);
     }
     int64_t xIndex = xMin + rowStart * input_shapes[3];
-    int64_t tensorCIdxOffset = tensorCIndex + rowStart * output_shapes[3];
+    int64_t tensorCIndexWithOffset = tensorCIndex + rowStart * output_shapes[3];
 
     matmulW.SetTensorA(inTensorsGM[xIndex], false);
     matmulW.SetTensorB(intermediateTensorGm[workSpaceRatioOffset], false);
     if (floatEqual_h) {
-        matmulW.IterateAll(outTensorsGM[tensorCIdxOffset], false);
+        matmulW.IterateAll(outTensorsGM[tensorCIndexWithOffset], false);
     } else {
-        matmulW.IterateAll(intermediateTensorGm[tensorCIdxOffset], false);
+        matmulW.IterateAll(intermediateTensorGm[tensorCIndexWithOffset], false);
     }
     matmulW.End();
 
@@ -630,8 +630,8 @@ template <typename T>
 __aicore__ inline void UpsampleBicubic2dND<T>::calculateHeightExtension(
     int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
 {
-    int64_t singleCoreN = matmulTiling_h->singleCoreN;
     int64_t singleCoreM = matmulTiling_h->singleCoreM;
+    int64_t singleCoreN = matmulTiling_h->singleCoreN;
     if (tensorCIndex + slide_size > output_shapes[2]) {
         singleCoreM = output_shapes[2] - tensorCIndex;
     }
@@ -643,23 +643,23 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateHeightExtension(
         matmulH.SetTail(output_shapes[2] - tensorCIndex, singleCoreN, singleCoreK);
     }
     if (rowEnd == 0) {
-        rowEnd = input_shapes[1] * input_shapes[0];
+        rowEnd = input_shapes[0] * input_shapes[1];
     }
 
     int64_t xIndex = xMin * output_shapes[3];
     int64_t tensorCIndexWithOffset = tensorCIndex * output_shapes[3];
 
-    int64_t middleHW = input_shapes[2] * output_shapes[3];
-    int64_t outputHW = output_shapes[2] * output_shapes[3];
+    int64_t middleHWSize = input_shapes[2] * output_shapes[3];
+    int64_t outputHWSize = output_shapes[2] * output_shapes[3];
 
     matmulH.SetTensorA(intermediateTensorGm[workSpaceRatioOffset], false);
     for (int i = rowStart; i < rowEnd; i++) {
         if (floatEqual_w) {
-            matmulH.SetTensorB(inTensorsGM[xIndex + i * middleHW], false);
+            matmulH.SetTensorB(inTensorsGM[xIndex + i * middleHWSize], false);
         } else {
-            matmulH.SetTensorB(intermediateTensorGm[xIndex + i * middleHW], false);
+            matmulH.SetTensorB(intermediateTensorGm[xIndex + i * middleHWSize], false);
         }
-        matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset + i * outputHW], false);
+        matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset + i * outputHWSize], false);
         matmulH.End();
 
         event_t eventID3 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
@@ -688,9 +688,9 @@ __aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(const UpsampleBic
         input_shapes[i] = tilingData->input_shapes[i];
     }
 
+    intermediate_matrix_size = tilingData->intermediate_matrix_size / sizeof(T);
     ratio_matrix_size_w = (tilingData->ratio_matrix_size_w + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     ratio_matrix_size_h = (tilingData->ratio_matrix_size_h + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
-    intermediate_matrix_size = tilingData->intermediate_matrix_size / sizeof(T);
 
     slideStart_w = tilingData->slideStartList_w[blockIdx];
     slideEnd_w = tilingData->slideEndList_w[blockIdx];
@@ -709,8 +709,8 @@ __aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(const UpsampleBic
 
     dataType = tilingData->dataType;
 
-    matmulTiling_h = &tilingData->matmulTiling_h;
     matmulTiling_w = &tilingData->matmulTiling_w;
+    matmulTiling_h = &tilingData->matmulTiling_h;
 }
 }  // namespace UpsampleBicubic2d
 

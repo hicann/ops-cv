@@ -48,8 +48,8 @@ constexpr uint64_t DATE_TYPE_FLOAT = 2;
 constexpr uint64_t DATE_TYPE_HALF = 3;
 
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
-constexpr uint32_t BYTE_LEN_FOUR = 4;
-constexpr uint32_t BYTE_LEN_TWO = 2;
+constexpr uint32_t BYTE_LEN_4 = 4;
+constexpr uint32_t BYTE_LEN_2 = 2;
 
 constexpr uint32_t DIM_LEN = 4;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
@@ -294,14 +294,14 @@ void UpsampleBilinearAATiling::getTCubeTiling_w()
 void UpsampleBilinearAATiling::getTCubeTiling_h()
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
-    matmul_tiling::MatmulApiTiling mmTilingH;
-    mmTilingH.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTilingH.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
-    mmTilingH.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTilingH.SetOrgShape(output_shapes[H_INDEX], output_shapes[W_INDEX], input_shapes[W_INDEX]);
-    mmTilingH.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
+    matmul_tiling::MatmulApiTiling mmTiling_h;
+    mmTiling_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
+    mmTiling_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
+    mmTiling_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
+    mmTiling_h.SetOrgShape(output_shapes[H_INDEX], output_shapes[W_INDEX], input_shapes[W_INDEX]);
+    mmTiling_h.SetShape(slide_size, output_shapes[W_INDEX], singleCoreK_h);
 
-    if (mmTilingH.GetTiling(tilingData.matmulTiling_h) == -1) {
+    if (mmTiling_h.GetTiling(tilingData.matmulTiling_h) == -1) {
         OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_h Error, please Check inputShapes.");
         return;
     }
@@ -382,25 +382,25 @@ uint8_t UpsampleBilinearAATiling::GetDataTypeSize() const
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return BYTE_LEN_FOUR;
+            return BYTE_LEN_4;
         case ge::DT_FLOAT16:
-            return BYTE_LEN_TWO;
+            return BYTE_LEN_2;
         case ge::DT_BF16:
-            return BYTE_LEN_TWO;
+            return BYTE_LEN_2;
         default:
-            return BYTE_LEN_FOUR;
+            return BYTE_LEN_4;
     }
 }
 
 uint64_t UpsampleBilinearAATiling::GetDataTypeVal() const
 {
     switch (dataType) {
+        case ge::DT_FLOAT:
+            return DATE_TYPE_FLOAT;
         case ge::DT_FLOAT16:
             return DATE_TYPE_FLOAT16;
         case ge::DT_BF16:
             return DATE_TYPE_HALF;
-        case ge::DT_FLOAT:
-            return DATE_TYPE_FLOAT;
         default:
             return 0;
     }
@@ -411,18 +411,18 @@ uint32_t UpsampleBilinearAATiling::GetNeedCoreNumW(uint32_t coreNumPlatform)
     int64_t outputSize = output_shapes[3];
     int64_t slideNum = CeilA2B(outputSize, slide_size);
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
-    int64_t remainderW = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
+    int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
 
     // H维度总数
     int64_t input_h = input_shapes[0] * input_shapes[1] * input_shapes[2];
     int64_t groupCoreNum = coreNumPlatform;
     int64_t tailAvergingRows = slide_size;
 
-    if (remainderW != 0) {
+    if (remainder != 0) {
         // 获取最小分行数
         int64_t minAvergingRows = slide_size;
         // 按照剩余尾块数给核分组，然后每组核再均分行数
-        groupCoreNum = coreNumPlatform / remainderW;
+        groupCoreNum = coreNumPlatform / remainder;
         tailAvergingRows = std::max(CeilA2B(input_h, groupCoreNum), minAvergingRows);
         groupCoreNum = std::min(groupCoreNum, CeilA2B(input_h, tailAvergingRows));
     }
@@ -434,16 +434,16 @@ uint32_t UpsampleBilinearAATiling::GetNeedCoreNumW(uint32_t coreNumPlatform)
     tilingData.set_slideNumW(slideNum);
     tilingData.set_groupCoreNumW(groupCoreNum);
     tilingData.set_tailAvergingRowsW(tailAvergingRows);
-    tilingData.set_remainderW(remainderW);
+    tilingData.set_remainderW(remainder);
 
     if (eachCoreSlideNum > 0) {
         needCoreNum = coreNumPlatform;
-    } else if (remainderW != 0) {
-        for (uint32_t index = 0; index < coreNumPlatform; index++) {
+    } else if (remainder != 0) {
+        for (uint32_t coreIndex = 0; coreIndex < coreNumPlatform; coreIndex++) {
             groupCoreNum = groupCoreNum == 0 ? 1 : groupCoreNum;
             // 尾块处理
-            int64_t groupIndex = index / groupCoreNum;
-            if (groupIndex < remainderW) {
+            int64_t groupIndex = coreIndex / groupCoreNum;
+            if (groupIndex < remainder) {
                 needCoreNum++;
             }
         }
@@ -485,10 +485,10 @@ uint32_t UpsampleBilinearAATiling::GetNeedCoreNumH(uint32_t coreNumPlatform)
     if (eachCoreSlideNum > 0) {
         needCoreNum = coreNumPlatform;
     } else if (remainder != 0) {
-        for (uint32_t indexH = 0; indexH < coreNumPlatform; indexH++) {
+        for (uint32_t coreIndexH = 0; coreIndexH < coreNumPlatform; coreIndexH++) {
             groupCoreNum = groupCoreNum == 0 ? 1 : groupCoreNum;
             // 尾块处理, 核数不全都一样
-            int64_t groupIndex = indexH / groupCoreNum;
+            int64_t groupIndex = coreIndexH / groupCoreNum;
             if (groupIndex < remainder) {
                 needCoreNum++;
             }

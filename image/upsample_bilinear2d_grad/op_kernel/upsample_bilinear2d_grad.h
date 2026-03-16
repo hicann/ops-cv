@@ -51,38 +51,47 @@ public:
     __aicore__ inline void Process();
 
 private:
-    __aicore__ inline bool FloatEqual(float x, float y)
+    __aicore__ inline bool FloatEqual(float a, float b)
     {
         float closeTo0 = float(1e-6);
-        if (x > y) {
-            return x - y < closeTo0;
+        if (a > b) {
+            return a - b < closeTo0;
         } else {
-            return y - x < closeTo0;
+            return b - a < closeTo0;
         }
     };
 
     template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 i, T2 j)
+    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
     {
-        if (j == 0) {
-            return i;
+        if (b == 0) {
+            return a;
         }
-        return (i + j - 1) / j;
+        return (a + b - 1) / b;
     };
 
     template <typename T1>
-    __aicore__ inline T1 Min(T1 x, T1 y)
+    __aicore__ inline T1 Min(T1 a, T1 b)
     {
-        return x < y ? x : y;
+        return a < b ? a : b;
     };
 
     template <typename T1>
-    __aicore__ inline T1 Max(T1 x, T1 y)
+    __aicore__ inline T1 getMax(T1 x, T1 y)
     {
         if (x >= y) {
             return x;
         } else {
             return y;
+        }
+    }
+    template <typename T1>
+    __aicore__ inline T1 getMin(T1 x, T1 y)
+    {
+        if (x >= y) {
+            return y;
+        } else {
+            return x;
         }
     }
     __aicore__ inline void setRadioValueW(LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor,
@@ -173,8 +182,8 @@ private:
     int32_t singleCoreK_h = 0;
     int32_t tailBatchStart_h = 0;
     int32_t tailBatchEnd_h = 0;
-    bool needExpendW = false;
-    bool needExpendH = false;
+    bool needExpendX = false;
+    bool needExpendY = false;
 };
 
 template <typename T>
@@ -188,12 +197,12 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::Init(
     ParseTilingData(tilingData);
     middleSize = input_shapes[2] * output_shapes[3];
     cubeSize = output_shapes[2] * output_shapes[3];
-    needExpendW = !FloatEqual(scale_w, 1.0);
-    needExpendH = !FloatEqual(scale_h, 1.0);
+    needExpendX = !FloatEqual(scale_w, 1.0);
+    needExpendY = !FloatEqual(scale_h, 1.0);
     getQueueSize();
-    radioSize = Max(slide_size, queueSize);
+    radioSize = getMax(slide_size, queueSize);
 
-    radio_matrix_size = Max(radio_matrix_size, radio_matrix_size_h);
+    radio_matrix_size = getMax(radio_matrix_size, radio_matrix_size_h);
 
     int64_t a = (queueSize * sizeof(float) + 31) / 32 * 32;
     int64_t b = sizeof(float);
@@ -217,14 +226,14 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::Process()
     }
 
     // 先横向扩展
-    if (needExpendW) {
+    if (needExpendX) {
         WDirectionExpansion();
     }
 
     SyncAll();
 
     // 再纵向扩展
-    if (needExpendH || !needExpendW) {
+    if (needExpendY || !needExpendX) {
         HDirectionExpansion();
     }
 }
@@ -647,15 +656,15 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateWidthExtension(
         matmulW.SetTail(singleCoreM, output_shapes[3] - tensorCIndex, singleCoreK);
     }
     int64_t xIndex = offset + rowStart * input_shapes[3];
-    int64_t tensorCIndexOffset = tensorCIndex + rowStart * output_shapes[3];
+    int64_t tensorCIndexWithOffset = tensorCIndex + rowStart * output_shapes[3];
 
     matmulW.SetTensorA(inTensorsGM[xIndex], false);
     matmulW.SetTensorB(intermediateTensorGm[workSpaceRadioOffset], false);
 
-    if (!needExpendH) {
-        matmulW.IterateAll(outTensorsGM[tensorCIndexOffset], false);
+    if (!needExpendY) {
+        matmulW.IterateAll(outTensorsGM[tensorCIndexWithOffset], false);
     } else {
-        matmulW.IterateAll(intermediateTensorGm[tensorCIndexOffset], false);
+        matmulW.IterateAll(intermediateTensorGm[tensorCIndexWithOffset], false);
     }
 
     matmulW.End();
@@ -696,7 +705,7 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateHeightExtension(
     matmulH.SetTensorA(intermediateTensorGm[workSpaceRadioOffset], false);
     for (int64_t i = batchStart; i < batchEnd; i++) {
         // 系数矩阵起始位置
-        if (!needExpendW) {
+        if (!needExpendX) {
             matmulH.SetTensorB(inTensorsGM[xIndex], false);
         } else {
             matmulH.SetTensorB(intermediateTensorGm[xIndex], false);
@@ -726,15 +735,15 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::ParseTilingData(UpsampleBili
         input_shapes[i] = tilingData->input_shapes[i];
     }
 
+    intermediate_matrix_size = tilingData->intermediate_matrix_size;
     radio_matrix_size = tilingData->radio_matrix_size;
     radio_matrix_size_h = tilingData->radio_matrix_size_h;
-    intermediate_matrix_size = tilingData->intermediate_matrix_size;
 
     slideStart_w = tilingData->slideStartList_w[blockIdx];
-    tailSlideStart_w = tilingData->tailSlideStartList_w[blockIdx];
-    tailRowStart_w = tilingData->tailRowStartList_w[blockIdx];
     slideEnd_w = tilingData->slideEndList_w[blockIdx];
+    tailSlideStart_w = tilingData->tailSlideStartList_w[blockIdx];
     tailSlideEnd_w = tilingData->tailSlideEndList_w[blockIdx];
+    tailRowStart_w = tilingData->tailRowStartList_w[blockIdx];
     tailRowEnd_w = tilingData->tailRowEndList_w[blockIdx];
 
     slideStart_h = tilingData->slideStartList_h[blockIdx];
@@ -745,10 +754,10 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::ParseTilingData(UpsampleBili
     tailRowEnd_h = tilingData->tailRowEndList_h[blockIdx];
     tailBatchStart_h = tilingData->tailBatchStartList_h[blockIdx];
     tailBatchEnd_h = tilingData->tailBatchEndList_h[blockIdx];
-    
+    dataType = tilingData->dataType;
+
     matmulTiling_w = &tilingData->matmulTiling_w;
     matmulTiling_h = &tilingData->matmulTiling_h;
-    dataType = tilingData->dataType;
 }
 
 }  // namespace UpSampleBilinear2dGrad
