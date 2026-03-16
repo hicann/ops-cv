@@ -59,10 +59,9 @@ private:
     __aicore__ inline void ReflectCoordinatesGeneral(LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb,
         LocalTensor<float> extraFpUb, LocalTensor<float> fmodFpUb, LocalTensor<uint8_t> maskUb,
         LocalTensor<float> tmpFpUb, LocalTensor<int32_t> tmpIntUb, const int64_t twiceLow, const int64_t twiceHigh);
-
-    __aicore__ inline void MTE3ForNCHW(int32_t cIdx, int32_t calCElems, int32_t loopElems, int64_t outBaseOffset,
-        LocalTensor<float> weightUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
     __aicore__ inline void MTE3ForNCHWToWorkSpace(int32_t cIdx, int32_t calCElems, int32_t loopElems,
+        LocalTensor<float> weightUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
+    __aicore__ inline void MTE3ForNCHW(int32_t cIdx, int32_t calCElems, int32_t loopElems, int64_t outBaseOffset,
         LocalTensor<float> weightUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
     __aicore__ inline void MTE3ForC32(GlobalTensor<float> gm_, int32_t calCElems, int32_t loopElems,
         LocalTensor<float> weightUb, LocalTensor<float> outValueUb, bool isAutomicAdd);
@@ -155,17 +154,17 @@ private:
     int64_t inputW_ = 0;
     int64_t outputH_ = 0;
     int64_t outputW_ = 0;
-    int64_t interpolationMode_ = 0;
     int64_t paddingMode_ = 0;
     int64_t alignCorners_ = 0;
     int64_t channelLast_ = 0;
     int64_t needCoreNum_ = 0;
+    int64_t interpolationMode_ = 0;
 
     int64_t gridHW_ = 0;
     int64_t lastLoopHW_ = 0;
     int64_t preNUbLoop_ = 0;
-    int64_t totalUbLoop_ = 0;
     int64_t preCoreLoop_ = 0;
+    int64_t totalUbLoop_ = 0;
     int64_t lastCoreLoop_ = 0;
     int64_t channelLoop_ = 0;
     int64_t perLoopChannel_ = 0;
@@ -669,14 +668,10 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::MTE3ForNCHWToWork
             DataCopyPad(gmWorkspace_[gmYBaseOffset], outValueUb, {1, (uint16_t)(loopElems * sizeof(float)), 0, 0});
         }
     } else {
-        for (int32_t i = 0; i < mulWeightLoop; i++) {
-            int32_t outOffset = i * B32_MASK;
-            int32_t weightOffset = i * B32_MASK;
-            Mul(outValueUb[outOffset],
-                outValueUb[outOffset],
-                weightUb[weightOffset],
-                B32_MASK,
-                calCElems,
+        for (int32_t j = 0; j < mulWeightLoop; j++) {
+            int32_t outOffVal = j * B32_MASK;
+            int32_t weightOffVal = j * B32_MASK;
+            Mul(outValueUb[outOffVal], outValueUb[outOffVal], weightUb[weightOffVal], B32_MASK, calCElems,
                 {1, 1, 1, 128, 128, 0});
         }
 
@@ -924,29 +919,29 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinear(int
     if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
         PointBilinearForHalf(calHWElems, coordinatesUb, weightUb, weightMaskUb, outValueUb, isAutomicAdd);
     } else {
-        for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
-            int32_t calCElems = perLoopChannel_;
-            if (cIdx == channelLoop_ - 1) {
-                calCElems = lastLoopChannel_;
+        for (int32_t chanIdx = 0; chanIdx < channelLoop_; chanIdx++) {
+            int32_t calCElemsVal = perLoopChannel_;
+            if (chanIdx == channelLoop_ - 1) {
+                calCElemsVal = lastLoopChannel_;
             }
             PipeBarrier<PIPE_V>();
             event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
             SetFlag<HardEvent::V_S>(eventIdVToS);
             WaitFlag<HardEvent::V_S>(eventIdVToS);
 
-            for (int32_t c_idx = 0; c_idx < calCElems; c_idx++) {
-                uint32_t srcBaseAddr = cIdx * perLoopChannel_ * sizeof(T) + (uint32_t)c_idx * sizeof(T);
+            for (int32_t c_idx = 0; c_idx < calCElemsVal; c_idx++) {
+                uint32_t srcBaseAddr = chanIdx * perLoopChannel_ * sizeof(T) + (uint32_t)c_idx * sizeof(T);
                 Gather(outValueUb[c_idx * calHWBlock], xLocal, coorUb, srcBaseAddr, calHWBlock);
             }
 
             PipeBarrier<PIPE_V>();
-            for (size_t i = 0; i < calCElems; i++) {
+            for (size_t i = 0; i < calCElemsVal; i++) {
                 ubOffset = i * calHWBlock;
                 Select(outValueUb[ubOffset], weightMaskUb, outValueUb[ubOffset], 0.0f, SELMODE::VSEL_TENSOR_SCALAR_MODE, calHWBlock);
             }
 
             PipeBarrier<PIPE_V>();
-            MTE3ForNCHW(cIdx, calCElems, loop_elems, outBaseOffset, weightUb, outValueUb, isAutomicAdd);
+            MTE3ForNCHW(chanIdx, calCElemsVal, loop_elems, outBaseOffset, weightUb, outValueUb, isAutomicAdd);
             event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
             SetFlag<HardEvent::MTE3_V>(eventMte3V);
             WaitFlag<HardEvent::MTE3_V>(eventMte3V);
@@ -1044,11 +1039,11 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC32(
 
     PipeBarrier<PIPE_V>();
     Muls(coordinatesUb, coordinatesUb, (int32_t)(sizeof(T) * inputC_), calHWBlock);
-    int64_t outBaseOffset = nIdx * gridHW_ * inputC_ + hwIdx * calHWBlock;
-    auto coorUb = coordinatesUb.ReinterpretCast<uint32_t>();
-    int32_t loop_elems = calHWElems;
-    int32_t ubOffset = 0;
-    LocalTensor<T> xLocal = xBuf_.Get<T>();
+    int64_t outBaseOffVal = nIdx * gridHW_ * inputC_ + hwIdx * calHWBlock;
+    auto coorUbVal = coordinatesUb.ReinterpretCast<uint32_t>();
+    int32_t loopElemsVal = calHWElems;
+    int32_t ubOffVal = 0;
+    LocalTensor<T> xLocalVal = xBuf_.Get<T>();
 
     if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {
         PointBilinearC32ForHalf(calHWElems, coordinatesUb, weightUb, weightMaskUb, outValueUb, isAutomicAdd);
@@ -1056,12 +1051,12 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC32(
         auto outValueUbUint = outValueUb.ReinterpretCast<uint32_t>();
         LocalTensor<uint32_t> xLocalUint = xBuf_.Get<uint32_t>();
         for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
-            int32_t calCElems = perLoopChannel_;
-            int32_t loop_num_tmp = Ceil(loop_elems, C32_H_W_BLOCK);
-            int32_t loop_elems_tmp = C32_H_W_BLOCK;
-            for (auto HWLoop = 0; HWLoop < loop_num_tmp; HWLoop++) {
-                if (HWLoop == loop_num_tmp - 1) {
-                    loop_elems_tmp = loop_elems - HWLoop * C32_H_W_BLOCK;
+            int32_t calCElemsVal = perLoopChannel_;
+            int32_t loopNumTmp = Ceil(loopElemsVal, C32_H_W_BLOCK);
+            int32_t loopElemsTmp = C32_H_W_BLOCK;
+            for (auto HWLoop = 0; HWLoop < loopNumTmp; HWLoop++) {
+                if (HWLoop == loopNumTmp - 1) {
+                    loopElemsTmp = loopElemsVal - HWLoop * C32_H_W_BLOCK;
                 }
                 PipeBarrier<PIPE_V>();
                 event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
@@ -1071,19 +1066,25 @@ __aicore__ inline void GridSampler2DFullLoad<T, templateCNum>::PointBilinearC32(
                 uint8_t repeatTime = (C32_H_W_BLOCK * perLoopChannel_ * sizeof(uint32_t)) / 256;
                 GatherRepeatParams params{1, 8};
 
-                Gatherb<uint32_t>(outValueUbUint[perLoopChannel_ * C32_H_W_BLOCK], xLocalUint[cIdx * perLoopChannel_], coorUb[HWLoop * C32_H_W_BLOCK], repeatTime, params);
+                Gatherb<uint32_t>(
+                    outValueUbUint[perLoopChannel_ * C32_H_W_BLOCK], xLocalUint[cIdx * perLoopChannel_],
+                    coorUbVal[HWLoop * C32_H_W_BLOCK], repeatTime, params);
 
                 PipeBarrier<PIPE_V>();
                 OutTranspose(32 / sizeof(T), outValueUb[perLoopChannel_ * C32_H_W_BLOCK], outValueUb);
                 PipeBarrier<PIPE_V>();
-                for (size_t i = 0; i < calCElems; i++) {
-                    ubOffset = i * C32_H_W_BLOCK;
-                    Select(outValueUb[ubOffset], weightMaskUb[HWLoop * C32_H_W_BLOCK / 8], outValueUb[ubOffset], 0.0f, SELMODE::VSEL_TENSOR_SCALAR_MODE, C32_H_W_BLOCK);
+                for (size_t i = 0; i < calCElemsVal; i++) {
+                    ubOffVal = i * C32_H_W_BLOCK;
+                    Select(
+                        outValueUb[ubOffVal], weightMaskUb[HWLoop * C32_H_W_BLOCK / 8], outValueUb[ubOffVal], 0.0f,
+                        SELMODE::VSEL_TENSOR_SCALAR_MODE, C32_H_W_BLOCK);
                 }
 
                 PipeBarrier<PIPE_V>();
-                int64_t gmYBaseOffset = outBaseOffset + HWLoop * C32_H_W_BLOCK + cIdx * CHANNEL_BLOCK * gridHW_;
-                MTE3ForC32(gmY_[gmYBaseOffset], calCElems, loop_elems_tmp, weightUb[HWLoop * C32_H_W_BLOCK], outValueUb, isAutomicAdd);
+                int64_t gmYBaseOffset = outBaseOffVal + HWLoop * C32_H_W_BLOCK + cIdx * CHANNEL_BLOCK * gridHW_;
+                MTE3ForC32(
+                    gmY_[gmYBaseOffset], calCElemsVal, loopElemsTmp, weightUb[HWLoop * C32_H_W_BLOCK], outValueUb,
+                    isAutomicAdd);
                 event_t eventMte3V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
                 SetFlag<HardEvent::MTE3_V>(eventMte3V);
                 WaitFlag<HardEvent::MTE3_V>(eventMte3V);

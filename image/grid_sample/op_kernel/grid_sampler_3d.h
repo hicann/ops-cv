@@ -312,29 +312,29 @@ __aicore__ inline void GridSampler3D<T>::Clip(
 
 template <typename T>
 __aicore__ inline void GridSampler3D<T>::ZeroClip(
-    LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb)
+    LocalTensor<float> iXFpUbVal, LocalTensor<float> iYFpUbVal, LocalTensor<float> iZFpUbVal)
 {
-    LocalTensor<uint8_t> maskUb = indexBuffer.weightMaskBuf_.Get<uint8_t>(MASK_UB_SIZE);
-    LocalTensor<float> tmpUb = indexBuffer.inputXYZFPBuf_.Get<float>();
-    Muls(tmpUb, iXFpUb, (float)(0.0), CAL_D_H_W_BLOCK);
+    LocalTensor<uint8_t> maskUbVal = indexBuffer.weightMaskBuf_.Get<uint8_t>(MASK_UB_SIZE);
+    LocalTensor<float> tmpUbVal = indexBuffer.inputXYZFPBuf_.Get<float>();
+    Muls(tmpUbVal, iXFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    Compare(maskUbVal, tmpUbVal, tmpUbVal, CMPMODE::EQ, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iXFpUb, iXFpUb, maskUb, -100.0f, CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-
-    Muls(tmpUb, iYFpUb, (float)(0.0), CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_D_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iYFpUb, iYFpUb, maskUb, -100.0f, CAL_D_H_W_BLOCK);
+    CoordinatesSelectScalar(iXFpUbVal, iXFpUbVal, maskUbVal, -100.0f, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    Muls(tmpUb, iZFpUb, (float)(0.0), CAL_D_H_W_BLOCK);
+    Muls(tmpUbVal, iYFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    Compare(maskUbVal, tmpUbVal, tmpUbVal, CMPMODE::EQ, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iZFpUb, iZFpUb, maskUb, -100.0f, CAL_D_H_W_BLOCK);
+    CoordinatesSelectScalar(iYFpUbVal, iYFpUbVal, maskUbVal, -100.0f, CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+
+    Muls(tmpUbVal, iZFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+    Compare(maskUbVal, tmpUbVal, tmpUbVal, CMPMODE::EQ, CAL_D_H_W_BLOCK);
+    PipeBarrier<PIPE_V>();
+    CoordinatesSelectScalar(iZFpUbVal, iZFpUbVal, maskUbVal, -100.0f, CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 }
 
@@ -344,21 +344,21 @@ __aicore__ inline void GridSampler3D<T>::MTE2ForNCHW(
 {
     for (int32_t i = 0; i < pointBilinearParam.loopElems; i++) {
         int64_t coordVal = coorUb.GetValue(pointBilinearParam.loopOffset + i);
-        int64_t baseLocation = nIdx * commonParam.inputC_ * commonParam.inputH_ * commonParam.inputW_ + coordVal +
+        int64_t baseLoc = nIdx * commonParam.inputC_ * commonParam.inputH_ * commonParam.inputW_ + coordVal +
                                pointBilinearParam.cIdx * CHANNEL_BLOCK * commonParam.inputH_ * commonParam.inputW_;
         for (int cIter = 0; cIter < pointBilinearParam.channelAlign; cIter++) {
-            int32_t xLocalOffset = i * pointBilinearParam.channelAlign + cIter;
+            int32_t xLocalOff = i * pointBilinearParam.channelAlign + cIter;
             if (cIter >= pointBilinearParam.calCElems) {
                 if constexpr (IsSameType<T, bfloat16_t>::value) {
-                    xLocal.SetValue(xLocalOffset, ToBfloat16(0.0));
+                    xLocal.SetValue(xLocalOff, ToBfloat16(0.0));
                 } else {
-                    xLocal.SetValue(xLocalOffset, static_cast<T>(0.0));
+                    xLocal.SetValue(xLocalOff, static_cast<T>(0.0));
                 }
                 continue;
             }
 
-            int64_t coordinate = baseLocation + cIter * commonParam.inputH_ * commonParam.inputW_;
-            xLocal.SetValue(xLocalOffset, gmX_.GetValue(coordinate));
+            int64_t coord = baseLoc + cIter * commonParam.inputH_ * commonParam.inputW_;
+            xLocal.SetValue(xLocalOff, gmX_.GetValue(coord));
         }
     }
 }

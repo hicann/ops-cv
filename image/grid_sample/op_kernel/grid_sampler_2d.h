@@ -345,19 +345,19 @@ __aicore__ inline void GridSampler2D<T>::BorderClip(LocalTensor<float> iXFpUb, L
     Maxs(iYFpUb, iYFpUb, (float)0, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
-    LocalTensor<uint8_t> maskUb = weightMaskBuf_.Get<uint8_t>(MASK_UB_SIZE);
+    LocalTensor<uint8_t> maskUbTmp = weightMaskBuf_.Get<uint8_t>(MASK_UB_SIZE);
     LocalTensor<T> tmpUb = inputXYFPBuf_.Get<T>();
     Muls(tmpUb, iXFpUb, (float)(0.0), CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
+    Compare(maskUbTmp, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iXFpUb, iXFpUb, maskUb, 0.0f, CAL_H_W_BLOCK);
+    CoordinatesSelectScalar(iXFpUb, iXFpUb, maskUbTmp, 0.0f, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     Muls(tmpUb, iYFpUb, (float)(0.0), CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
+    Compare(maskUbTmp, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iYFpUb, iYFpUb, maskUb, 0.0f, CAL_H_W_BLOCK);
+    CoordinatesSelectScalar(iYFpUb, iYFpUb, maskUbTmp, 0.0f, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 }
 
@@ -367,7 +367,7 @@ __aicore__ inline void GridSampler2D<T>::ReflectClip(LocalTensor<float> iXFpUb, 
     LocalTensor<float> coorSubUb = coorTmpBuf_.Get<float>(CAL_H_W_BLOCK);
     LocalTensor<float> extraFpUb = extraBuf_.Get<float>(CAL_H_W_BLOCK);
     LocalTensor<float> fmodFpUb = modBuf_.Get<float>(CAL_H_W_BLOCK);
-    LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
+    LocalTensor<uint8_t> maskTmpUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
     LocalTensor<float> tmpFpUb = outTmpBuf_.Get<float>(CAL_H_W_BLOCK);
     LocalTensor<int32_t> tmpIntUb = intTmpBuf_.Get<int32_t>(CAL_H_W_BLOCK);
 
@@ -380,23 +380,23 @@ __aicore__ inline void GridSampler2D<T>::ReflectClip(LocalTensor<float> iXFpUb, 
         twiceLowY = REFLECT_RATIO * inputH_ - 1;
         twiceLowX = REFLECT_RATIO * inputW_ - 1;
     }
-    ReflectCoordinatesGeneral(iYFpUb, iYFpUb, extraFpUb, fmodFpUb, maskUb, tmpFpUb, tmpIntUb, twiceLow, twiceLowY);
+    ReflectCoordinatesGeneral(iYFpUb, iYFpUb, extraFpUb, fmodFpUb, maskTmpUb, tmpFpUb, tmpIntUb, twiceLow, twiceLowY);
     PipeBarrier<PIPE_V>();
-    ReflectCoordinatesGeneral(iXFpUb, iXFpUb, extraFpUb, fmodFpUb, maskUb, tmpFpUb, tmpIntUb, twiceLow, twiceLowX);
+    ReflectCoordinatesGeneral(iXFpUb, iXFpUb, extraFpUb, fmodFpUb, maskTmpUb, tmpFpUb, tmpIntUb, twiceLow, twiceLowX);
     PipeBarrier<PIPE_V>();
 
     LocalTensor<T> tmpUb = inputXYFPBuf_.Get<T>();
     Muls(tmpUb, iXFpUb, (float)(0.0), CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
+    Compare(maskTmpUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iXFpUb, iXFpUb, maskUb, 0.0f, CAL_H_W_BLOCK);
+    CoordinatesSelectScalar(iXFpUb, iXFpUb, maskTmpUb, 0.0f, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
     Muls(tmpUb, iYFpUb, (float)(0.0), CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    Compare(maskUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
+    Compare(maskTmpUb, tmpUb, tmpUb, CMPMODE::EQ, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
-    CoordinatesSelectScalar(iYFpUb, iYFpUb, maskUb, 0.0f, CAL_H_W_BLOCK);
+    CoordinatesSelectScalar(iYFpUb, iYFpUb, maskTmpUb, 0.0f, CAL_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
 
     Mins(iXFpUb, iXFpUb, (float)(inputW_ - 1), CAL_H_W_BLOCK);
@@ -501,8 +501,8 @@ __aicore__ inline void GridSampler2D<T>::MTE2ForNCHW(int32_t nIdx, int32_t cIdx,
                 continue;
             }
 
-            int64_t coordinate = baseLocation + cIter * inputH_ * inputW_;
-            xLocal.SetValue(xLocalOffset, gmX_.GetValue(coordinate));
+            int64_t coordinateVal = baseLocation + cIter * inputH_ * inputW_;
+            xLocal.SetValue(xLocalOffset, gmX_.GetValue(coordinateVal));
         }
     }
 }
@@ -530,23 +530,23 @@ __aicore__ inline void GridSampler2D<T>::MTE2ForNHWC(int32_t nIdx, int32_t cIdx,
         int64_t coordVal_5 = coorUb.GetValue(loopOffset + i * 8 + 5) * inputC_;
         int64_t coordVal_6 = coorUb.GetValue(loopOffset + i * 8 + 6) * inputC_;
         int64_t coordVal_7 = coorUb.GetValue(loopOffset + i * 8 + 7) * inputC_;
-        int64_t location_0 = base + coordVal_0;
-        int64_t location_1 = base + coordVal_1;
-        int64_t location_2 = base + coordVal_2;
-        int64_t location_3 = base + coordVal_3;
-        int64_t location_4 = base + coordVal_4;
-        int64_t location_5 = base + coordVal_5;
-        int64_t location_6 = base + coordVal_6;
-        int64_t location_7 = base + coordVal_7;
+        int64_t location_0_val = base + coordVal_0;
+        int64_t location_1_val = base + coordVal_1;
+        int64_t location_2_val = base + coordVal_2;
+        int64_t location_3_val = base + coordVal_3;
+        int64_t location_4_val = base + coordVal_4;
+        int64_t location_5_val = base + coordVal_5;
+        int64_t location_6_val = base + coordVal_6;
+        int64_t location_7_val = base + coordVal_7;
 
-        DataCopyPad(xLocal[(i * 8) * channelAlign], gmX_[location_0], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 1) * channelAlign], gmX_[location_1], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 2) * channelAlign], gmX_[location_2], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 3) * channelAlign], gmX_[location_3], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 4) * channelAlign], gmX_[location_4], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 5) * channelAlign], gmX_[location_5], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 6) * channelAlign], gmX_[location_6], params, padParams);
-        DataCopyPad(xLocal[(i * 8 + 7) * channelAlign], gmX_[location_7], params, padParams);
+        DataCopyPad(xLocal[(i * 8) * channelAlign], gmX_[location_0_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 1) * channelAlign], gmX_[location_1_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 2) * channelAlign], gmX_[location_2_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 3) * channelAlign], gmX_[location_3_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 4) * channelAlign], gmX_[location_4_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 5) * channelAlign], gmX_[location_5_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 6) * channelAlign], gmX_[location_6_val], params, padParams);
+        DataCopyPad(xLocal[(i * 8 + 7) * channelAlign], gmX_[location_7_val], params, padParams);
     }
     for (auto i = loopElems / 8 * 8; i < loopElems; i++) {
         int64_t coordVal_0 = coorUb.GetValue(loopOffset + i) * inputC_;
@@ -760,9 +760,9 @@ __aicore__ inline void GridSampler2D<T>::PerLoopCompute(int32_t nIdx, int32_t hw
     Adds(inputXYUb, gridLocal, (float)1.0, CAL_H_W_BLOCK * 2);
 
     uint32_t mask = CAL_H_W_BLOCK * 2;
-    uint64_t rsvdCnt = 0;
     uint8_t xPattern = 1;
     uint8_t yPattern = 2;
+    uint64_t rsvdCnt = 0;
 
     uint8_t src0RepeatStride = 8;
     uint8_t src1RepeatStride = 8;

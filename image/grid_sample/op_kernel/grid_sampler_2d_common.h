@@ -26,6 +26,7 @@ using namespace AscendC;
 struct InputTensorStruct2D {
     LocalTensor<float> iXFpUb;
     LocalTensor<float> iYFpUb;
+    
     LocalTensor<int32_t> iXIntUb;
     LocalTensor<int32_t> iYIntUb;
 

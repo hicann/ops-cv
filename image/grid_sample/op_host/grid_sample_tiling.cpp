@@ -59,7 +59,6 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
                     (gridShape.GetDimNum() != DIM_NUM_4D && gridShape.GetDimNum() != DIM_NUM_5D),
         OP_LOGE(context_->GetNodeName(), "x / grid shape length should be 4 or 5"),
         return ge::GRAPH_FAILED);
-
     OP_CHECK_IF(xShape.GetDimNum() != gridShape.GetDimNum(),
         OP_LOGE(context_->GetNodeName(), "x / grid shape length should be equal."),
         return ge::GRAPH_FAILED);

@@ -50,7 +50,6 @@ const int64_t NUM_2 = 2;
 const int64_t NUM_3 = 3;
 const int64_t NUM_4 = 4;
 const int64_t NUM_5 = 5;
-
 const int64_t MIN_CHANNEL_ALIGN = 8;
 const int64_t REPEAT_TIME = 8;
 const int64_t NUM_16 = 16;

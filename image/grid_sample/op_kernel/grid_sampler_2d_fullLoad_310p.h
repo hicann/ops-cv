@@ -105,15 +105,15 @@ private:
     const int64_t B32_MASK = 64;
     const int64_t BATCH_BLOCK = 8;
     const int64_t CHANNEL_BLOCK = 8;
-    const int64_t ORI_X_SIZE = 80 * 1024;
-    const int64_t FP16_X_SIZE = 40 * 1024;
     const int64_t C1_X_SIZE = 16 * 1024;
     const int64_t C1_X_COUNT = 4096;
+    const int64_t ORI_X_SIZE = 80 * 1024;
+    const int64_t FP16_X_SIZE = 40 * 1024;
     const int64_t ORI_H_W_BLOCK = 1024;
     const int64_t C1_H_W_BLOCK = 2048;
     const int64_t MASK_COUNT = 8;
-    const int64_t BLOCK_SIZE = 32;
-    const int64_t BLOCK_NUM = BLOCK_SIZE / sizeof(T);
+    const int64_t BLOCK_SIZE_310P = 32;
+    const int64_t BLOCK_NUM = BLOCK_SIZE_310P / sizeof(T);
 
     int64_t xUbSize = ORI_X_SIZE;
     int64_t calHWBlock = ORI_H_W_BLOCK;
@@ -246,7 +246,7 @@ __aicore__ inline void GridSampler2DFullLoad310P<T>::Init(
     pipe.InitBuffer(maskBuf_, maskUbSize * 8);        // 1k
     pipe.InitBuffer(weightMaskBuf_, maskUbSize * 4);  // 512B
 
-    pipe.InitBuffer(bufferMaskBuf_, BLOCK_SIZE * 2 * BATCH_BLOCK);
+    pipe.InitBuffer(bufferMaskBuf_, BLOCK_SIZE_310P * 2 * BATCH_BLOCK);
 
     // C不等于1场景，输出是带上了C通道，需要使用outValueBuf_进行计算 C通道当前使用的是8
     if (templateNum == 0) {
@@ -1205,21 +1205,21 @@ __aicore__ inline void GridSampler2DFullLoad310P<T>::ResetGMToZero()
     LocalTensor<float> outValueLocal = outValueBuf_.Get<float>();
     Duplicate(outValueLocal, (float)0.0, BLOCK_NUM);
 
-    int32_t nIdx = 0;
-    int32_t hwIdx = 0;
-    int32_t preLoopNum = blockIDX * preCoreLoop_;  // 每个核开始的block数
+    int32_t nIdxVal = 0;
+    int32_t hwIdxVal = 0;
+    int32_t preLoopNumVal = blockIDX * preCoreLoop_;  // 每个核开始的block数
 
-    int64_t loopSize = preCoreLoop_;  // 要处理的block数量
+    int64_t loopSizeTmp = preCoreLoop_;  // 要处理的block数量
     if (blockIDX == needCoreNum_ - 1) {
-        loopSize = lastCoreLoop_;
+        loopSizeTmp = lastCoreLoop_;
     }
 
-    for (int32_t loopIdx = 0; loopIdx < loopSize; loopIdx++) {
-        nIdx = (preLoopNum + loopIdx) / preNUbLoop_;   // N维的index
-        hwIdx = (preLoopNum + loopIdx) % preNUbLoop_;  // h、w在block中位置
-        if (hwIdx == preNUbLoop_ - 1) {
+    for (int32_t loopIdx = 0; loopIdx < loopSizeTmp; loopIdx++) {
+        nIdxVal = (preLoopNumVal + loopIdx) / preNUbLoop_;   // N维的index
+        hwIdxVal = (preLoopNumVal + loopIdx) % preNUbLoop_;  // h、w在block中位置
+        if (hwIdxVal == preNUbLoop_ - 1) {
             for (int64_t cIdx = 0; cIdx < inputC_; cIdx++) {
-                int64_t gmYBaseOffset = nIdx * gridHW_ * inputC_ + hwIdx * calHWBlock + cIdx * gridHW_;
+                int64_t gmYBaseOffset = nIdxVal * gridHW_ * inputC_ + hwIdxVal * calHWBlock + cIdx * gridHW_;
                 DataCopy(gmY_[gmYBaseOffset], outValueLocal, BLOCK_NUM);
             }
         }
@@ -1251,15 +1251,15 @@ __aicore__ inline void GridSampler2DFullLoad310P<T>::Process()
         alignmentType = 1;
     }
 
-    int64_t loopSize = preCoreLoop_;  // 要处理的block数量
+    int64_t loopSizeVal = preCoreLoop_;  // 要处理的block数量
     if (blockIDX == needCoreNum_ - 1) {
-        loopSize = lastCoreLoop_;
+        loopSizeVal = lastCoreLoop_;
     }
 
-    LocalTensor<T> xLocal = xBuf_.AllocTensor<T>();
-    int32_t xElems = inputC_ * inputH_ * inputW_;
+    LocalTensor<T> xLocalVal = xBuf_.AllocTensor<T>();
+    int32_t xElemsVal = inputC_ * inputH_ * inputW_;
 
-    for (int32_t loopIdx = 0; loopIdx < loopSize; loopIdx++) {
+    for (int32_t loopIdx = 0; loopIdx < loopSizeVal; loopIdx++) {
         nIdx = (preLoopNum + loopIdx) / preNUbLoop_;   // N维的index
         hwIdx = (preLoopNum + loopIdx) % preNUbLoop_;  // h、w在block中位置
         calHWElems = calHWBlock;
@@ -1281,7 +1281,7 @@ __aicore__ inline void GridSampler2DFullLoad310P<T>::Process()
 
             lastXNIdx_ = nIdx;
             int64_t xOffset = nIdx * inputC_ * inputH_ * inputW_;
-            DataCopy(xLocal, gmX_[xOffset], (xElems + BLOCK_NUM - 1) / BLOCK_NUM * BLOCK_NUM);
+            DataCopy(xLocalVal, gmX_[xOffset], (xElemsVal + BLOCK_NUM - 1) / BLOCK_NUM * BLOCK_NUM);
 
             event_t eventIdMte2ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
             SetFlag<HardEvent::MTE2_V>(eventIdMte2ToV);
