@@ -65,6 +65,19 @@ static bool CheckDtype(const aclTensor *x, const aclTensor *rois, const aclTenso
     return true;
 }
 
+static bool CheckFormatValid(const aclTensor *x, const aclTensor *rois, const aclTensor *y, const aclTensor *argmax)
+{
+    bool formatValid = x->GetStorageFormat() == op::Format::FORMAT_ND &&
+                       rois->GetStorageFormat() == op::Format::FORMAT_ND &&
+                       y->GetStorageFormat() == op::Format::FORMAT_ND &&
+                       argmax->GetStorageFormat() == op::Format::FORMAT_ND;
+    if (!formatValid) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "x's format should be ND, rois's format should be ND, y's format should be ND, argmax's format should be ND.");
+    }
+    return formatValid;
+}
+
 static bool CheckShape(const aclTensor *x, const aclTensor *rois, int64_t pooled_h, int64_t pooled_w,
     const aclTensor *y, const aclTensor *argmax)
 {
@@ -110,6 +123,7 @@ static aclnnStatus CheckParams(const aclTensor *x, const aclTensor *rois, int64_
 {
     CHECK_RET(CheckNotNull(x, rois, y, argmax), ACLNN_ERR_PARAM_NULLPTR);
     CHECK_RET(CheckDtype(x, rois, y, argmax), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckFormatValid(x, rois, y, argmax), ACLNN_ERR_PARAM_INVALID);
     CHECK_RET(CheckShape(x, rois, pooled_h, pooled_w, y, argmax), ACLNN_ERR_PARAM_INVALID);
     CHECK_RET(CheckAttr(pooled_h, pooled_w, spatial_scale_h, spatial_scale_w), ACLNN_ERR_PARAM_INVALID);
     return ACLNN_SUCCESS;

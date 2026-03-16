@@ -8,12 +8,17 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 #include <vector>
+#include <array>
+
 #include "gtest/gtest.h"
 #include "../../../../op_api/aclnn_roi_pooling_with_arg_max.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
+#include "op_api_ut_common/scalar_desc.h"
 #include "opdev/platform.h"
 
+
+using namespace op;
 using namespace std;
 
 class l2_roi_pooling_with_arg_max_test : public testing::Test {
@@ -43,6 +48,7 @@ TEST_F(l2_roi_pooling_with_arg_max_test, success_case_float)
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    SetPlatformSocVersion(SocVersion::ASCEND910B); 
 }
 
 TEST_F(l2_roi_pooling_with_arg_max_test, success_case_fp16)
@@ -425,6 +431,44 @@ TEST_F(l2_roi_pooling_with_arg_max_test, case_invalid_x_shape_not_4d)
 {
     auto x_desc = TensorDesc({2, 16, 25}, ACL_FLOAT, ACL_FORMAT_ND);
     auto rois_desc = TensorDesc({2, 5}, ACL_FLOAT, ACL_FORMAT_ND);
+    int64_t pooled_h = 3;
+    int64_t pooled_w = 3;
+    float spatial_scale_h = 1.0f;
+    float spatial_scale_w = 1.0f;
+    auto y_desc = TensorDesc({2, 16, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto argmax_desc = TensorDesc({2, 16, 3, 3}, ACL_INT32, ACL_FORMAT_ND);
+    SetPlatformSocVersion(SocVersion::ASCEND950);
+    auto ut = OP_API_UT(aclnnRoiPoolingWithArgMax,
+        INPUT(x_desc, rois_desc, pooled_h, pooled_w, spatial_scale_h, spatial_scale_w),
+        OUTPUT(y_desc, argmax_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_roi_pooling_with_arg_max_test, case_invalid_format_x_not_nd)
+{
+    auto x_desc = TensorDesc({2, 16, 25, 42}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto rois_desc = TensorDesc({2, 5}, ACL_FLOAT, ACL_FORMAT_ND);
+    int64_t pooled_h = 3;
+    int64_t pooled_w = 3;
+    float spatial_scale_h = 1.0f;
+    float spatial_scale_w = 1.0f;
+    auto y_desc = TensorDesc({2, 16, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto argmax_desc = TensorDesc({2, 16, 3, 3}, ACL_INT32, ACL_FORMAT_ND);
+    SetPlatformSocVersion(SocVersion::ASCEND950);
+    auto ut = OP_API_UT(aclnnRoiPoolingWithArgMax,
+        INPUT(x_desc, rois_desc, pooled_h, pooled_w, spatial_scale_h, spatial_scale_w),
+        OUTPUT(y_desc, argmax_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_roi_pooling_with_arg_max_test, case_invalid_format_rois_not_nd)
+{
+    auto x_desc = TensorDesc({2, 16, 25, 42}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto rois_desc = TensorDesc({2, 5}, ACL_FLOAT, ACL_FORMAT_NCHW);
     int64_t pooled_h = 3;
     int64_t pooled_w = 3;
     float spatial_scale_h = 1.0f;

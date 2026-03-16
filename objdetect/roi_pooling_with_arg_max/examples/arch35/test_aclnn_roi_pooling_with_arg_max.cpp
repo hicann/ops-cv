@@ -44,7 +44,7 @@ int Init(int32_t deviceId, aclrtStream* stream) {
 
 template <typename T>
 int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
-                    aclDataType dataType, aclTensor** tensor) {
+                    aclDataType dataType, aclTensor** tensor, aclFormat format) {
   auto size = GetShapeSize(shape) * sizeof(T);
   auto ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
@@ -56,14 +56,14 @@ int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& 
   for (int64_t i = shape.size() - 2; i >= 0; i--) {
     strides[i] = shape[i + 1] * strides[i + 1];
   }
-  *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
+  *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, format,
                             shape.data(), shape.size(), *deviceAddr);
   return 0;
 }
 
 template <typename T>
 int CreateAclTensorOutput(const std::vector<int64_t>& shape, void** deviceAddr, aclDataType dataType,
-                          aclTensor** tensor) {
+                          aclTensor** tensor, aclFormat format) {
   auto size = GetShapeSize(shape) * sizeof(T);
   auto ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
@@ -72,7 +72,7 @@ int CreateAclTensorOutput(const std::vector<int64_t>& shape, void** deviceAddr, 
   for (int64_t i = shape.size() - 2; i >= 0; i--) {
     strides[i] = shape[i + 1] * strides[i + 1];
   }
-  *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
+  *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, format,
                             shape.data(), shape.size(), *deviceAddr);
   return 0;
 }
@@ -83,10 +83,10 @@ int main() {
   auto ret = Init(deviceId, &stream);
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
 
-  std::vector<int64_t> xShape = {2, 16, 25, 42};
+  std::vector<int64_t> xShape = {2, 2, 6, 8};
   std::vector<int64_t> roisShape = {2, 5};
-  std::vector<int64_t> yShape = {2, 16, 3, 3};
-  std::vector<int64_t> argmaxShape = {2, 16, 3, 3};
+  std::vector<int64_t> yShape = {2, 2, 2, 2};
+  std::vector<int64_t> argmaxShape = {2, 2, 2, 2};
 
   void* xDeviceAddr = nullptr;
   void* roisDeviceAddr = nullptr;
@@ -104,25 +104,27 @@ int main() {
   roisHostData[0] = 0.0f;
   roisHostData[1] = 0.0f;
   roisHostData[2] = 0.0f;
-  roisHostData[3] = 24.0f;
-  roisHostData[4] = 41.0f;
+  roisHostData[3] = 7.0f;
+  roisHostData[4] = 5.0f;
   roisHostData[5] = 1.0f;
   roisHostData[6] = 0.0f;
   roisHostData[7] = 0.0f;
-  roisHostData[8] = 24.0f;
-  roisHostData[9] = 41.0f;
+  roisHostData[8] = 7.0f;
+  roisHostData[9] = 5.0f;
 
-  ret = CreateAclTensor(xHostData, xShape, &xDeviceAddr, aclDataType::ACL_FLOAT, &x);
+  ret = CreateAclTensor(xHostData, xShape, &xDeviceAddr, aclDataType::ACL_FLOAT, &x, aclFormat::ACL_FORMAT_ND);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
-  ret = CreateAclTensor(roisHostData, roisShape, &roisDeviceAddr, aclDataType::ACL_FLOAT, &rois);
+  ret = CreateAclTensor(roisHostData, roisShape, &roisDeviceAddr, aclDataType::ACL_FLOAT, &rois,
+                        aclFormat::ACL_FORMAT_ND);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
-  ret = CreateAclTensorOutput<float>(yShape, &yDeviceAddr, aclDataType::ACL_FLOAT, &y);
+  ret = CreateAclTensorOutput<float>(yShape, &yDeviceAddr, aclDataType::ACL_FLOAT, &y, aclFormat::ACL_FORMAT_ND);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
-  ret = CreateAclTensorOutput<int32_t>(argmaxShape, &argmaxDeviceAddr, aclDataType::ACL_INT32, &argmax);
+  ret = CreateAclTensorOutput<int32_t>(argmaxShape, &argmaxDeviceAddr, aclDataType::ACL_INT32, &argmax,
+                                         aclFormat::ACL_FORMAT_ND);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
 
-  int64_t pooledH = 3;
-  int64_t pooledW = 3;
+  int64_t pooledH = 2;
+  int64_t pooledW = 2;
   float spatialScaleH = 1.0f;
   float spatialScaleW = 1.0f;
 
@@ -157,12 +159,12 @@ int main() {
                     argmaxElem * sizeof(int32_t), ACL_MEMCPY_DEVICE_TO_HOST);
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy argmax from device to host failed. ERROR: %d\n", ret); return ret);
 
-  LOG_PRINT("y size: %ld, first 8: ", yElem);
-  for (int64_t i = 0; i < 8 && i < yElem; i++) {
+  LOG_PRINT("y: ");
+  for (int64_t i = 0; i < yElem; i++) {
     LOG_PRINT("%f ", yResult[i]);
   }
-  LOG_PRINT("\nargmax size: %ld, first 8: ", argmaxElem);
-  for (int64_t i = 0; i < 8 && i < argmaxElem; i++) {
+  LOG_PRINT("\nargmax: ");
+  for (int64_t i = 0; i < argmaxElem; i++) {
     LOG_PRINT("%d ", argmaxResult[i]);
   }
   LOG_PRINT("\n");
