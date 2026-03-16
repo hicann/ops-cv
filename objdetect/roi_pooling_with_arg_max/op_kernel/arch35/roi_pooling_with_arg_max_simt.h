@@ -78,34 +78,17 @@ __aicore__ __attribute__((always_inline)) inline void RoiPoolingBinMax(float& ma
 
 template <typename dT>
 __simt_vf__ LAUNCH_BOUND(ROI_POOLING_SIMT_LAUNCH_BOUND) inline void RoiPoolingWithArgMaxCompute(
-    __gm__ dT* x,
-    __gm__ dT* rois,
-    __gm__ dT* roi_actual_num,
-    __gm__ dT* y,
-    __gm__ int32_t* argmax,
-    const int32_t channels,
-    const int32_t fm_height,
-    const int32_t fm_width,
-    const int32_t roi_number,
-    const int32_t pooled_h,
-    const int32_t pooled_w,
-    const float spatial_scale_h,
-    const float spatial_scale_w,
-    const uint32_t mPoolW,
-    const uint32_t shiftPoolW,
-    const uint32_t mPoolH,
-    const uint32_t shiftPoolH,
-    const uint32_t mCH,
-    const uint32_t shiftCH) {
-  const int64_t poolH = static_cast<int64_t>(pooled_h);
-  const int64_t poolW = static_cast<int64_t>(pooled_w);
-  const uint32_t upoolW = static_cast<uint32_t>(poolW);
-  const uint32_t upoolH = static_cast<uint32_t>(poolH);
-  const uint32_t uchan = static_cast<uint32_t>(channels);
-  const int64_t fmW = static_cast<int64_t>(fm_width);
-  const int64_t fmH = static_cast<int64_t>(fm_height);
-  const int64_t count =
-      static_cast<int64_t>(roi_number) * static_cast<int64_t>(channels) * poolH * poolW;
+    __gm__ dT* x, __gm__ dT* rois, __gm__ dT* roi_actual_num, __gm__ dT* y, __gm__ int32_t* argmax,
+    const int32_t channels, const int32_t fm_height, const int32_t fm_width, const int32_t roi_number,
+    const int32_t pooled_h, const int32_t pooled_w, const float spatial_scale_h, const float spatial_scale_w,
+    const uint32_t mPoolW, const uint32_t shiftPoolW, const uint32_t mPoolH, const uint32_t shiftPoolH,
+    const uint32_t mCH, const uint32_t shiftCH)
+{
+  const int64_t poolH = static_cast<int64_t>(pooled_h), poolW = static_cast<int64_t>(pooled_w);
+  const int64_t fmW = static_cast<int64_t>(fm_width), fmH = static_cast<int64_t>(fm_height);
+  const uint32_t upoolW = static_cast<uint32_t>(poolW), upoolH = static_cast<uint32_t>(poolH),
+                 uchan = static_cast<uint32_t>(channels);
+  const int64_t count = static_cast<int64_t>(roi_number) * static_cast<int64_t>(channels) * poolH * poolW;
   for (int64_t idx = AscendC::Simt::GetThreadIdx() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>();
        idx < count;
        idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
@@ -119,33 +102,31 @@ __simt_vf__ LAUNCH_BOUND(ROI_POOLING_SIMT_LAUNCH_BOUND) inline void RoiPoolingWi
 
     const __gm__ dT* offset_rois = rois + n * ROI_BOX_ELEMS;
     const int64_t roi_batch_ind = static_cast<int64_t>(static_cast<float>(offset_rois[ROI_BATCH_IDX]));
-    float roi_w = static_cast<float>(offset_rois[ROI_X2_IDX] - offset_rois[ROI_X1_IDX] + ROI_RIGHT_BOTTOM_OFFSET) *
-                  spatial_scale_w;
-    float roi_h = static_cast<float>(offset_rois[ROI_Y2_IDX] - offset_rois[ROI_Y1_IDX] + ROI_RIGHT_BOTTOM_OFFSET) *
-                  spatial_scale_h;
+    float roi_w = static_cast<float>(offset_rois[ROI_X2_IDX] - offset_rois[ROI_X1_IDX] + ROI_RIGHT_BOTTOM_OFFSET)
+        * spatial_scale_w;
+    float roi_h = static_cast<float>(offset_rois[ROI_Y2_IDX] - offset_rois[ROI_Y1_IDX] + ROI_RIGHT_BOTTOM_OFFSET)
+        * spatial_scale_h;
     if (roi_w <= 0 || roi_h <= 0) {
+      y[idx] = static_cast<dT>(ROI_EMPTY_BIN_VAL);
+      if (argmax != nullptr) {
+        argmax[idx] = static_cast<int32_t>(INVALID_ARGMAX_OFFSET);
+      }
       continue;
     }
 
     int64_t bin_x1 = 0, bin_y1 = 0, bin_x2 = 0, bin_y2 = 0;
     bool is_empty = false;
-    RoiPoolingBinRange<dT>(bin_x1, bin_y1, bin_x2, bin_y2, is_empty, offset_rois, ph, pw,
-                           poolH, poolW, spatial_scale_h, spatial_scale_w, fmH, fmW);
-
+    RoiPoolingBinRange<dT>(bin_x1, bin_y1, bin_x2, bin_y2, is_empty, offset_rois, ph, pw, poolH, poolW,
+                           spatial_scale_h, spatial_scale_w, fmH, fmW);
     const __gm__ dT* offset_input =
         x + (roi_batch_ind * static_cast<int64_t>(channels) + c) * fmH * fmW;
-
     float max_val = ROI_EMPTY_BIN_VAL;
     int64_t max_idx = INVALID_ARGMAX_OFFSET;
-    if (is_empty) {
-      max_val = ROI_EMPTY_BIN_VAL;
-    } else {
+    if (!is_empty) {
       RoiPoolingBinMax<dT>(max_val, max_idx, offset_input, bin_x1, bin_y1, bin_x2, bin_y2, fmW);
     }
     y[idx] = static_cast<dT>(max_val);
-    if (argmax != nullptr) {
-      argmax[idx] = static_cast<int32_t>(max_idx);
-    }
+    if (argmax != nullptr) { argmax[idx] = static_cast<int32_t>(max_idx); }
   }
 }
 #endif

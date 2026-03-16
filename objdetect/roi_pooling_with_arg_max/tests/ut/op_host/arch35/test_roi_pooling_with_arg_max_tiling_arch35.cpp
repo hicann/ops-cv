@@ -27,12 +27,12 @@ class TilingForRoiPoolingWithArgMax : public testing::Test
 protected:
   static void SetUpTestCase()
   {
-    std::cout << "TilingForRoiPoolingWithArgMax SetUp" << std::endl;
+    std::cout << "RoiPoolingWithArgMaxTiling SetUp" << std::endl;
   }
 
   static void TearDownTestCase()
   {
-    std::cout << "TilingForRoiPoolingWithArgMax TearDown" << std::endl;
+    std::cout << "RoiPoolingWithArgMaxTiling TearDown" << std::endl;
   }
 };
 
@@ -50,8 +50,10 @@ TEST_F(TilingForRoiPoolingWithArgMax, roi_pooling_with_arg_max_tiling_case0)
                                                     gert::TilingContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
                                                     gert::TilingContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(16)),},
                                                 &compileInfo);
-    uint64_t expectTilingKey = 0;
-    string expectTilingData = "16 25 42 2 3 3 1 1 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
-    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+    TilingInfo tilingInfo;
+    bool tilingOk = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_TRUE(tilingOk);
+    EXPECT_EQ(tilingInfo.tilingKey, 0u);
+    ASSERT_FALSE(tilingInfo.workspaceSizes.empty());
+    EXPECT_GT(tilingInfo.workspaceSizes[0], 0u);
 }

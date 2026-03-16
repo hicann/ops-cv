@@ -27,7 +27,7 @@ protected:
         std::cout << "RoiPoolingGradWithArgMaxTiling TearDown" << std::endl;
     }
 };
-
+    
 struct RoiPoolingGradWithArgMaxCompileInfo {
     uint32_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
