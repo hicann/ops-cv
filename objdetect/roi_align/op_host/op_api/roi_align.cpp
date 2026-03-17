@@ -25,12 +25,14 @@ static const size_t DIM_3 = 3;
 
 OP_TYPE_REGISTER(ROIAlign);
 
-static const aclTensor *AllocRoiAlignOutputTensor(const aclTensor *self, const aclTensor *roisOrBoxes,
-    int64_t outputHeight, int64_t outputWidth, aclOpExecutor *executor)
+const aclTensor *ROIAlign(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
+    float spatialScale, int outputHeight, int outputWidth, int samplingRatio, const char *mode, aclOpExecutor *executor)
 {
+    L0_DFX(ROIAlign, self, rois, batchIndices, spatialScale, outputHeight, outputWidth, samplingRatio, mode);
+
     op::Shape outStorageShape = self->GetStorageShape();
     op::Shape outOriginalShape = self->GetOriginalShape();
-    op::Shape roisStorageShape = roisOrBoxes->GetStorageShape();
+    op::Shape roisStorageShape = rois->GetStorageShape();
     auto numRois = roisStorageShape.GetDim(0);
     outStorageShape.SetDim(DIM_0, numRois);
     outStorageShape.SetDim(DIM_2, outputHeight);
@@ -43,18 +45,6 @@ static const aclTensor *AllocRoiAlignOutputTensor(const aclTensor *self, const a
         self->GetOriginalFormat());
     if (out == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc out tensor failed");
-        return nullptr;
-    }
-    return out;
-}
-
-const aclTensor *ROIAlign(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    float spatialScale, int outputHeight, int outputWidth, int samplingRatio, const char *mode, aclOpExecutor *executor)
-{
-    L0_DFX(ROIAlign, self, rois, batchIndices, spatialScale, outputHeight, outputWidth, samplingRatio, mode);
-
-    auto out = AllocRoiAlignOutputTensor(self, rois, outputHeight, outputWidth, executor);
-    if (out == nullptr) {
         return nullptr;
     }
 
@@ -71,8 +61,21 @@ const aclTensor *ROIAlignV2(const aclTensor *self, const aclTensor *boxes, float
 {
     L0_DFX(ROIAlignV2, self, boxes, spatialScale, outputHeight, outputWidth, samplingRatio, mode, roiEndMode);
 
-    auto out = AllocRoiAlignOutputTensor(self, boxes, outputHeight, outputWidth, executor);
+    op::Shape outStorageShape = self->GetStorageShape();
+    op::Shape outOriginalShape = self->GetOriginalShape();
+    op::Shape roisStorageShape = boxes->GetStorageShape();
+    auto numRois = roisStorageShape.GetDim(0);
+    outStorageShape.SetDim(DIM_0, numRois);
+    outStorageShape.SetDim(DIM_2, outputHeight);
+    outStorageShape.SetDim(DIM_3, outputWidth);
+    outOriginalShape.SetDim(DIM_0, numRois);
+    outOriginalShape.SetDim(DIM_2, outputHeight);
+    outOriginalShape.SetDim(DIM_3, outputWidth);
+
+    auto out = executor->AllocTensor(outStorageShape, outOriginalShape, self->GetDataType(), self->GetStorageFormat(),
+        self->GetOriginalFormat());
     if (out == nullptr) {
+        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc out tensor failed");
         return nullptr;
     }
 

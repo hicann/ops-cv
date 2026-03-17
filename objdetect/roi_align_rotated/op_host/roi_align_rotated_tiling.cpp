@@ -25,9 +25,9 @@ using namespace std;
 
 namespace optiling
 {
-    const uint32_t INPUT_INDEX = 0;
+    const uint32_t INPUT_INDEX = 0; // 算子输入2个，输入Tensor序号分别为0和1
     const uint32_t ROIS_INDEX = 1;
-    const uint32_t OUTPUT_INDEX = 0;
+    const uint32_t OUTPUT_INDEX = 0; // 算子输出1个，输出Tensor序号为0
     const uint32_t ROIS_NUM_INDEX = 1;
 
     const uint32_t BS_INDEX = 0;
@@ -46,36 +46,21 @@ namespace optiling
     const uint32_t TILING_KEY = 1;
     const uint32_t TILE_NUM = 8;
 
-    static ge::graphStatus GetRoiAlignRotatedPlatformInfo(const void *platform,
-        uint32_t &BLOCK_DIM, uint64_t &ub_total_size)
-    {
-        if (platform == nullptr) {
-            return ge::GRAPH_FAILED;
-        }
-        auto platform_info = platform_ascendc::PlatformAscendC(platform);
-        platform_info.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_total_size);
-        BLOCK_DIM = platform_info.GetCoreNumAiv();
-        if (BLOCK_DIM == 0) {
-            return ge::GRAPH_FAILED;
-        }
-        return ge::GRAPH_SUCCESS;
-    }
-
-    static uint32_t AlignRoisNum(uint32_t rois_num)
-    {
-        if (static_cast<uint32_t>(rois_num % ALIGN_VALUE) == 0) {
-            return rois_num;
-        }
-        return (static_cast<uint32_t>(rois_num / ALIGN_VALUE) + 1) * ALIGN_VALUE;
-    }
-
     static ge::graphStatus TilingPrepare4RoiAlignRotated(gert::TilingParseContext *context)
     {
-        uint32_t BLOCK_DIM = 0;
-        uint64_t ub_total_size = 0;
-        ge::graphStatus ret = GetRoiAlignRotatedPlatformInfo(context->GetPlatformInfo(), BLOCK_DIM, ub_total_size);
-        if (ret != ge::GRAPH_SUCCESS) {
-            return ret;
+        auto platform = context->GetPlatformInfo();
+        if (platform == nullptr)
+        {
+            return ge::GRAPH_FAILED;
+        }
+
+        auto platform_info = platform_ascendc::PlatformAscendC(platform);
+        uint64_t ub_total_size;
+        platform_info.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_total_size);
+        uint32_t BLOCK_DIM = platform_info.GetCoreNumAiv();
+        if (BLOCK_DIM == 0)
+        {
+            return ge::GRAPH_FAILED;
         }
 
         auto compileInfo = context->GetCompiledInfo<RoiAlignRotatedCompileInfo>();
@@ -129,14 +114,31 @@ namespace optiling
             return ge::GRAPH_FAILED;
         }
 
-        uint32_t BLOCK_DIM = 0;
-        uint64_t ub_total_size = 0;
-        ge::graphStatus ret = GetRoiAlignRotatedPlatformInfo(context->GetPlatformInfo(), BLOCK_DIM, ub_total_size);
-        if (ret != ge::GRAPH_SUCCESS) {
-            return ret;
+        auto platform = context->GetPlatformInfo();
+        if (platform == nullptr)
+        {
+            return ge::GRAPH_FAILED;
         }
 
-        uint32_t rois_num_aligned = AlignRoisNum(rois_num);
+        auto platform_info = platform_ascendc::PlatformAscendC(platform);
+        uint64_t ub_total_size;
+        platform_info.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_total_size);
+        uint32_t BLOCK_DIM = platform_info.GetCoreNumAiv();
+        if (BLOCK_DIM == 0)
+        {
+            return ge::GRAPH_FAILED;
+        }
+
+        uint32_t rois_num_aligned;
+        if (static_cast<uint32_t>(rois_num % ALIGN_VALUE) == 0)
+        {
+            rois_num_aligned = rois_num;
+        }
+        else
+        {
+            rois_num_aligned = (static_cast<uint32_t>(rois_num / ALIGN_VALUE) + 1) * ALIGN_VALUE;
+        }
+
         uint32_t tail_num = rois_num_aligned - rois_num; // 获取计算完成后需要丢弃的rois数目
         uint32_t rois_num_per_Score = (rois_num_aligned / BLOCK_DIM / ALIGN_VALUE) * ALIGN_VALUE;
         uint32_t rois_num_per_Lcore = rois_num_per_Score + ALIGN_VALUE;

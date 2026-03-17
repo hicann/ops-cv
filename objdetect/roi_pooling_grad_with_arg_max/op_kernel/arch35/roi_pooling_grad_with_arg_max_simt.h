@@ -27,19 +27,6 @@ using namespace AscendC;
 
 const uint32_t VF_MAX_THREAD_NUM = 1024;
 
-// 公共循环：根据 idx 计算 c, n, roi_batch_ind, y_offset, argmax_index，然后执行 ACTION（避免 67-79 与 87-99 行重复）
-#define ROI_POOLING_GRAD_SIMT_FOR_LOOP(pooled_w, pooled_h, pool_channel, height, width, count, roisGmAddr, argMaxGmAddr, ACTION) \
-    Simt::ThreadBarrier(); \
-    for (int32_t idx = AscendC::Simt::GetThreadIdx<0>() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>(); \
-         idx < (count); idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) { \
-        int32_t c = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>((idx) / (pooled_w)) / (pooled_h))) % (pool_channel)); \
-        int32_t n = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>((idx) / (pooled_w)) / (pooled_h)) / (pool_channel)); \
-        int32_t roi_batch_ind = (roisGmAddr)[(n) * 5]; \
-        int32_t y_offset = (((roi_batch_ind) * (pool_channel) + (c)) * (height) * (width)); \
-        int32_t argmax_index = (argMaxGmAddr)[(idx)]; \
-        if ((argmax_index) != -1) { ACTION; } \
-    }
-
 template <typename ACC_T, typename D_T>
 class RoiPoolingGradWithArgMaxSimt {
 public:
@@ -79,16 +66,40 @@ template <typename ACC_T, typename D_T>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void RoiPoolingGradWithArgMaxComputeSIMT(
     __gm__ D_T* gradGmAddr, __gm__ D_T* xGmAddr, __gm__ D_T* roisGmAddr, __gm__ int32_t* argMaxGmAddr, __gm__ D_T* yGmAddr, __gm__ ACC_T* userWSGmAddr, const int32_t pooled_h, const int32_t pooled_w, const int32_t pool_channel, const int32_t height, const int32_t width, const int32_t count)
 {
-    ROI_POOLING_GRAD_SIMT_FOR_LOOP(pooled_w, pooled_h, pool_channel, height, width, count, roisGmAddr, argMaxGmAddr,
-        asc_atomic_add(userWSGmAddr + y_offset + argmax_index, static_cast<ACC_T>(gradGmAddr[idx])));
+    Simt::ThreadBarrier();
+    for(int32_t idx = AscendC::Simt::GetThreadIdx<0>() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>(); idx < count; idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
+        // (n, c) is an element in the pooled output
+        int32_t c = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h)) % pool_channel);
+        int32_t n = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h) / pool_channel);
+
+        int32_t roi_batch_ind = roisGmAddr[n * 5];
+        int32_t y_offset = ((roi_batch_ind * pool_channel + c) * height * width);
+        int32_t argmax_index = argMaxGmAddr[idx];
+
+        if (argmax_index != -1) {
+            asc_atomic_add(userWSGmAddr + y_offset + argmax_index, static_cast<ACC_T>(gradGmAddr[idx]));
+        }
+    }
 }
 
 template <typename ACC_T, typename D_T>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void RoiPoolingGradWithArgMaxCopyGmSIMT(
     __gm__ D_T* gradGmAddr, __gm__ D_T* xGmAddr, __gm__ D_T* roisGmAddr, __gm__ int32_t* argMaxGmAddr, __gm__ D_T* yGmAddr, __gm__ ACC_T* userWSGmAddr, const int32_t pooled_h, const int32_t pooled_w, const int32_t pool_channel, const int32_t height, const int32_t width, const int32_t count)
 {
-    ROI_POOLING_GRAD_SIMT_FOR_LOOP(pooled_w, pooled_h, pool_channel, height, width, count, roisGmAddr, argMaxGmAddr,
-        yGmAddr[y_offset + argmax_index] = static_cast<D_T>(userWSGmAddr[y_offset + argmax_index]));
+    Simt::ThreadBarrier();
+    for(int32_t idx = AscendC::Simt::GetThreadIdx<0>() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>(); idx < count; idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
+        // (n, c) is an element in the pooled output
+        int32_t c = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h)) % pool_channel);
+        int32_t n = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h) / pool_channel);
+
+        int32_t roi_batch_ind = roisGmAddr[n * 5];
+        int32_t y_offset = ((roi_batch_ind * pool_channel + c) * height * width);
+        int32_t argmax_index = argMaxGmAddr[idx];
+
+        if (argmax_index != -1) {
+            yGmAddr[y_offset + argmax_index] = static_cast<D_T>(userWSGmAddr[y_offset + argmax_index]);
+        }
+    }
 }
 
 template <typename ACC_T, typename D_T>
