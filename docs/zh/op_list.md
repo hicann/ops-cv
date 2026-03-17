@@ -46,16 +46,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/deformable_offsets_grad/README.md">deformable_offsets_grad</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>DeformableOffsets 算子的目的是根据 offsets（ kernel 采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便 Conv2d 算子进行卷积计算。而 DeformableOffsetsGrad 即为这一过程的反向。  </td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/grid_sample/README.md">grid_sample</a></td>
     <td>&check;</td>
     <td>&check;</td>
