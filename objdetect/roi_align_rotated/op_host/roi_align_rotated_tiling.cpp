@@ -52,7 +52,7 @@ namespace optiling
         if (platform == nullptr) {
             return ge::GRAPH_FAILED;
         }
-        auto platform_info = platform_ascendc::PlatformAscendC(static_cast<fe::PlatFormInfos*>(platform));
+        auto platform_info = platform_ascendc::PlatformAscendC(platform);
         platform_info.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_total_size);
         BLOCK_DIM = platform_info.GetCoreNumAiv();
         if (BLOCK_DIM == 0) {
@@ -105,13 +105,10 @@ namespace optiling
         return ge::GRAPH_SUCCESS;
     }
 
-    static ge::graphStatus ComputeRoiBlockPartition(uint32_t rois_num, uint32_t &BLOCK_DIM,
+    static void ComputeRoiBlockPartition(uint32_t rois_num, uint32_t &BLOCK_DIM,
         uint32_t &rois_num_aligned, uint32_t &tail_num, uint32_t &rois_num_per_Score, uint32_t &rois_num_per_Lcore,
         uint32_t &Score_num, uint32_t &Lcore_num)
     {
-        if (BLOCK_DIM == 0) {
-            return ge::GRAPH_FAILED;  // 避免 rois_num_aligned / BLOCK_DIM 除零
-        }
         rois_num_aligned = AlignRoisNum(rois_num);
         tail_num = rois_num_aligned - rois_num;
         rois_num_per_Score = (rois_num_aligned / BLOCK_DIM / ALIGN_VALUE) * ALIGN_VALUE;
@@ -124,7 +121,6 @@ namespace optiling
         if (rois_num_per_Lcore == 0) {
             BLOCK_DIM = BLOCK_DIM - Lcore_num;
         }
-        return ge::GRAPH_SUCCESS;
     }
 
     static void FillTilingAndFlushToContext(gert::TilingContext *context, uint32_t BLOCK_DIM, uint64_t ub_total_size,
@@ -200,10 +196,8 @@ namespace optiling
 
         uint32_t rois_num_aligned = 0, tail_num = 0, rois_num_per_Score = 0, rois_num_per_Lcore = 0;
         uint32_t Score_num = 0, Lcore_num = 0;
-        if (ComputeRoiBlockPartition(rois_num, BLOCK_DIM, rois_num_aligned, tail_num,
-                rois_num_per_Score, rois_num_per_Lcore, Score_num, Lcore_num) != ge::GRAPH_SUCCESS) {
-            return ge::GRAPH_FAILED;
-        }
+        ComputeRoiBlockPartition(rois_num, BLOCK_DIM, rois_num_aligned, tail_num,
+            rois_num_per_Score, rois_num_per_Lcore, Score_num, Lcore_num);
 
         uint32_t input_buffer_size =
             static_cast<uint32_t>(ceil(static_cast<float>(channels_aligned) / ALIGN_VALUE)) * ALIGN_VALUE * sizeof(float);
