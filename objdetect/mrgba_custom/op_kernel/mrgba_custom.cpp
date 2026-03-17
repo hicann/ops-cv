@@ -14,7 +14,7 @@
  * \brief
  */
 #include "kernel_operator.h"
-#include "../../blend_images_custom/op_kernel/vector_scheduler.h"
+#include "vector_scheduler.h"
 
 using namespace AscendC;
 
