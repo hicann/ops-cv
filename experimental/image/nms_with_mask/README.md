@@ -70,14 +70,14 @@
       <td>scores_threshold</td>
       <td>输入</td>
       <td>置信度阈值。</td>
-      <td>FLOAT</td>
+      <td>FLOAT32</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>z</td>
       <td>输出</td>
       <td>选中候选框对应掩码。</td>
-      <td>UINT_8</td>
+      <td>UINT8</td>
       <td>ND</td>
     </tr>
   </tbody></table>

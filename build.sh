@@ -646,16 +646,16 @@ set_ut_mode() {
   fi
 
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_HOST_UT" == "TRUE" ]]; then
-    UT_TARGES+=("${REPOSITORY_NAME}_op_host_ut")
+    UT_TARGETS+=("${REPOSITORY_NAME}_op_host_ut")
   fi
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_API_UT" == "TRUE" ]]; then
-    UT_TARGES+=("${REPOSITORY_NAME}_op_api_ut")
+    UT_TARGETS+=("${REPOSITORY_NAME}_op_api_ut")
   fi
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_KERNEL_UT" == "TRUE" ]]; then
-    UT_TARGES+=("${REPOSITORY_NAME}_op_kernel_ut")
+    UT_TARGETS+=("${REPOSITORY_NAME}_op_kernel_ut")
   fi
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_KERNEL_AICPU_UT" == "TRUE" ]]; then
-    UT_TARGES+=("${REPOSITORY_NAME}_aicpu_op_kernel_ut")
+    UT_TARGETS+=("${REPOSITORY_NAME}_aicpu_op_kernel_ut")
   fi
 }
 
@@ -739,7 +739,7 @@ checkopts() {
   ENABLE_CREATE_LIB=FALSE
   ENABLE_RUN_EXAMPLE=FALSE
   BUILD_LIBS=()
-  UT_TARGES=()
+  UT_TARGETS=()
 
   ENABLE_GENOP=FALSE
   ENABLE_GENOP_AICPU=FALSE
@@ -1346,7 +1346,7 @@ build_ut() {
 
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
 
-  for lib in "${UT_TARGES[@]}"; do
+  for lib in "${UT_TARGETS[@]}"; do
     `find . -name "${lib}*" -type f -delete`
     cmake --build . --target ${lib} -- ${VERBOSE} -j $THREAD_NUM
   done

@@ -686,7 +686,7 @@ if __name__ == "__main__":
             args.build_type = args.build_type.lower()
         status = main(args.pkg_name, args.xml_file, main_args=args)
     except Exception as e:
-        CommLog.cilog_error("exception is occurred (%s)!", e)
+        CommLog.cilog_error("exception occurred (%s)!", e)
         CommLog.cilog_info("%s", traceback.format_exc())
         status = FAIL
     sys.exit(status)
