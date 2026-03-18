@@ -26,6 +26,7 @@ constexpr uint32_t NUM_FRACTAL = 16;
 constexpr uint32_t NUM_PER_BLOCK_FLOAT16 = 16;
 constexpr uint32_t NUM_PER_BLOCK_FLOAT32 = 8;
 constexpr uint32_t SPECIAL_INIT_VAL = 210715;
+constexpr int32_t POINT_INDEX = 3;
 
 template <typename T>
 class UpsampleBicubic2dGradBase {
@@ -53,13 +54,15 @@ protected:
     __aicore__ inline void InitGlobalTensors(GM_ADDR grad_output, GM_ADDR grad_input);
     __aicore__ inline void InitWorkspaceTensors(GM_ADDR usrWorkspace);
     __aicore__ inline void InitLocalTensors();
-    __aicore__ inline void computeCoeff(int32_t offset, float scale, uint32_t scaleN, int32_t idx[16]);
-    __aicore__ inline void fillAndCastCoeffW(int32_t offset, int32_t base[2], int32_t idx[16]);
-    __aicore__ inline void fillAndCastCoeffH(int32_t offset, int32_t base[2], int32_t idx[16]);
+    __aicore__ inline void computeCoeff(int64_t offset, float scale, int64_t scaleN, int64_t idx[16]);
+    __aicore__ inline void fillAndCastCoeffW(int64_t offset, int64_t base[2], int64_t idx[16]);
+    __aicore__ inline void fillAndCastCoeffH(int64_t offset, int64_t base[2], int64_t idx[16]);
+    __aicore__ inline void fillCoeffW(int32_t i, int64_t base[2], int64_t idx[16]);
+    __aicore__ inline void fillCoeffH(int32_t i, int64_t base[2], int64_t idx[16]);
     __aicore__ inline void ProcessW();
     __aicore__ inline void ProcessH();
     __aicore__ inline void ClearGM(
-        const GlobalTensor<T> &dstGlobal, uint32_t loop, uint32_t baseN, uint32_t tailN, uint32_t tailCoreNum);
+        const GlobalTensor<T> &dstGlobal, int64_t loop, int64_t baseN, int64_t tailN, int64_t tailCoreNum);
     const UpsampleBicubic2dGradTilingData *__restrict tilingData;
 
     uint32_t block_id;

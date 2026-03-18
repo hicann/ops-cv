@@ -76,7 +76,7 @@ private:
     inline float ComputeScaleValue(int64_t inputSize, int64_t outputSize, const float scale) const;
     void GetWorkSpace() const;
     uint32_t GetDataTypeVal() const;
-    uint32_t GetBestAvergingCols(uint32_t coreNumPlatform);
+    int64_t GetBestAvergingCols(uint32_t coreNumPlatform);
     uint32_t GetNeedCoreNum(uint32_t coreNumPlatform);
     void FillTilingData();
     void GetTilingKey();
@@ -85,7 +85,7 @@ private:
     inline T1 CeilA2B(T1 a, T2 b) const;
 
     template <typename T1>
-    inline int32_t Ceil(T1 x);
+    inline int64_t Ceil(T1 x);
 
 private:
     UpsampleNearestTilingData tilingData;
@@ -194,10 +194,10 @@ void UpsampleNearestTiling::GetTilingKey()
     if (inputFormat == ge::Format::FORMAT_NCHW) {
         tilingKey = SMALL_NCH_TILING_KEY;
     } else {
-        uint32_t inputC = inputShapes[NHWC_C_INDEX];
-        uint32_t outputH = inputShapes[NHWC_H_INDEX];
-        uint32_t outputW = inputShapes[NHWC_W_INDEX];
-        uint32_t inputW = outputShapes[NHWC_W_INDEX];
+        int64_t inputC = inputShapes[NHWC_C_INDEX];
+        int64_t outputH = inputShapes[NHWC_H_INDEX];
+        int64_t outputW = inputShapes[NHWC_W_INDEX];
+        int64_t inputW = outputShapes[NHWC_W_INDEX];
         if (inputC * inputW < MAX_SMALL_SHPAE && inputC * outputW < MAX_SMALL_SHPAE && outputH > 1) {
             tilingKey = SMALL_CW_TILING_KEY;
         } else if (inputC < MAX_SMALL_SHPAE && outputW < MAX_SMALL_SHPAE && realScaleW < MAX_SMALL_SACALE) {
@@ -249,20 +249,20 @@ uint32_t UpsampleNearestTiling::GetDataTypeVal() const
     }
 }
 
-uint32_t UpsampleNearestTiling::GetBestAvergingCols(uint32_t coreNumPlatform)
+int64_t UpsampleNearestTiling::GetBestAvergingCols(uint32_t coreNumPlatform)
 {
-    uint32_t outputH = outputShapes[NHWC_H_INDEX];
-    uint32_t outputW = outputShapes[NHWC_W_INDEX];
+    int64_t outputH = outputShapes[NHWC_H_INDEX];
+    int64_t outputW = outputShapes[NHWC_W_INDEX];
     if (inputFormat == ge::Format::FORMAT_NCHW) {
         outputH = outputShapes[NCHW_H_INDEX];
         outputW = outputShapes[NCHW_W_INDEX];
     }
     uint32_t dataTypeSize = GetDataTypeVal();
-    uint32_t minAvergingCols = dataTypeSize > 0 ? 32 / dataTypeSize : outputW;
+    int64_t minAvergingCols = dataTypeSize > 0 ? 32 / dataTypeSize : outputW;
 
-    for (uint32_t i = 1; i <= coreNumPlatform; i++) {
+    for (int64_t i = 1; i <= coreNumPlatform; i++) {
         if ((coreNumPlatform % i == 0) && (outputW % i == 0)) {
-            uint32_t j = coreNumPlatform / i;
+            int64_t j = coreNumPlatform / i;
             if (outputH % j == 0) {
                 minAvergingCols = coreNumPlatform / i;
                 break;
@@ -278,44 +278,44 @@ uint32_t UpsampleNearestTiling::GetBestAvergingCols(uint32_t coreNumPlatform)
 
 uint32_t UpsampleNearestTiling::GetNeedCoreNum(uint32_t coreNumPlatform)
 {
-    uint32_t outputH = outputShapes[NHWC_H_INDEX];
-    uint32_t outputW = outputShapes[NHWC_W_INDEX];
+    int64_t outputH = outputShapes[NHWC_H_INDEX];
+    int64_t outputW = outputShapes[NHWC_W_INDEX];
     if (inputFormat == ge::Format::FORMAT_NCHW) {
         outputH = outputShapes[NCHW_H_INDEX];
         outputW = outputShapes[NCHW_W_INDEX];
     }
-    uint32_t realCoreNum = 0;
-    uint32_t slideSizeW = 0;
-    uint32_t slideSizeH = 0;
-    uint32_t colGroupNum = 0;
-    uint32_t groupRowCoreNum = 0;
-    uint32_t groupColCoreNum = 0;
-    uint32_t minAvergingCols = GetBestAvergingCols(coreNumPlatform);
+    int64_t realCoreNum = 0;
+    int64_t slideSizeW = 0;
+    int64_t slideSizeH = 0;
+    int64_t colGroupNum = 0;
+    int64_t groupRowCoreNum = 0;
+    int64_t groupColCoreNum = 0;
+    int64_t minAvergingCols = GetBestAvergingCols(coreNumPlatform);
 
     if (outputH < coreNumPlatform) {
-        uint32_t tailAvergingCols = std::max(CeilA2B(outputW, coreNumPlatform), minAvergingCols);
-        colGroupNum = std::min(coreNumPlatform, CeilA2B(outputW, tailAvergingCols));
+        int64_t tailAvergingCols = std::max(CeilA2B(outputW, coreNumPlatform), minAvergingCols);
+        colGroupNum = std::min(static_cast<int64_t>(coreNumPlatform), CeilA2B(outputW, tailAvergingCols));
         slideSizeW = tailAvergingCols;
     } else {
         colGroupNum = 1;
         slideSizeW = outputW;
     }
     groupColCoreNum = colGroupNum > 0 ? coreNumPlatform / colGroupNum : 0;
-    uint32_t row = groupColCoreNum > 0 ? outputH / groupColCoreNum : 0;
-    uint32_t tailAvergingRows = std::max(row, static_cast<uint32_t>(1));
+    int64_t row = groupColCoreNum > 0 ? outputH / groupColCoreNum : 0;
+    int64_t tailAvergingRows = std::max(row, static_cast<int64_t>(1));
     groupRowCoreNum = std::min(groupColCoreNum, CeilA2B(outputH, tailAvergingRows));
     realCoreNum = colGroupNum * groupRowCoreNum;
-    uint32_t tailRowRemainder = outputH - groupRowCoreNum * tailAvergingRows;
+    int64_t tailRowRemainder = outputH - groupRowCoreNum * tailAvergingRows;
     slideSizeH = tailAvergingRows;
 
-    uint32_t realNeedCoreNum = 0;
-    uint32_t tailRowOffset = 0;
-    uint32_t tempTailRowRemainder = tailRowRemainder;
-    for (uint32_t coreIndex = 0; coreIndex < realCoreNum; coreIndex++) {
-        uint32_t groupColIndex = groupRowCoreNum > 0 ? coreIndex / groupRowCoreNum : 0;
+    int64_t realNeedCoreNum = 0;
+    int64_t tailRowOffset = 0;
+    int64_t tempTailRowRemainder = tailRowRemainder;
+    for (int64_t coreIndex = 0; coreIndex < realCoreNum; coreIndex++) {
+        int64_t groupColIndex = groupRowCoreNum > 0 ? coreIndex / groupRowCoreNum : 0;
         tailColStartList[coreIndex] = groupColIndex * slideSizeW;
         tailColEndList[coreIndex] = std::min((groupColIndex + 1) * slideSizeW, outputW);
-        int32_t groupRowIndex = groupRowCoreNum > 0 ? coreIndex % groupRowCoreNum : 0;
+        int64_t groupRowIndex = groupRowCoreNum > 0 ? coreIndex % groupRowCoreNum : 0;
         if (groupRowIndex == 0) {
             tempTailRowRemainder = tailRowRemainder;
             tailRowOffset = 0;
