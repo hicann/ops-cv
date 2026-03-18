@@ -107,7 +107,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::InitLocalTensors()
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::computeCoeff(
-    int32_t offset, float scale, uint32_t scaleN, int32_t idx[16])
+    int64_t offset, float scale, int64_t scaleN, int64_t idx[16])
 {
     LocalTensor<float> coeffUbBuff0 = coeffUbBuff;
     LocalTensor<float> coeffUbBuff1 = coeffUbBuff0[NUM_FRACTAL];
@@ -123,7 +123,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::computeCoeff(
         } else {
             tmp = (tmp + static_cast<float>(0.5)) * scale - static_cast<float>(0.5);
         }
-        idx[i] = static_cast<int32_t>(tmp);
+        idx[i] = static_cast<int64_t>(tmp);
         if (tmp < 0)
             idx[i]--;
         tmp -= idx[i];
@@ -158,7 +158,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::computeCoeff(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int32_t offset, int32_t base[2], int32_t idx[16])
+__aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int64_t offset, int64_t base[2], int64_t idx[16])
 {
     for (int i = 0; i < 16; i++) {
         if (offset + i >= tilingData->inputW) {
@@ -171,36 +171,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int32_t o
         }
         base[1] = idx[i] + 2;
 
-        float sum_head = 0, sum_end = 0;
-        bool need = false;
-        for (int j = -1; j < 3; j++) {
-            int32_t idx_ = idx[i] + j;
-            float coeff_value = coeffUbBuff.GetValue(((j + 4) % 4) * NUM_FRACTAL + i);
-            if (idx_ <= 0) {
-                sum_head += coeff_value;
-                need = true;
-                if (j == 2)
-                    coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
-            } else if (idx_ >= (tilingData->outputW - 1)) {
-                if (need) {
-                    if (tilingData->outputW == 1) {
-                        sum_end += sum_head;
-                    } else {
-                        coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
-                    }
-                    need = false;
-                }
-                sum_end += coeff_value;
-                if (j == 2)
-                    coeffUbRes.SetValue(tilingData->outputW - 1 - base[0] + i * tilingData->baseNW, sum_end);
-            } else {
-                if (need) {
-                    coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
-                    need = false;
-                }
-                coeffUbRes.SetValue(idx_ - base[0] + i * tilingData->baseNW, coeff_value);
-            }
-        }
+        fillCoeffW(i, base, idx);
     }
     base[1] = base[1] > 0 ? base[1] : 0;
     base[1] = base[1] < tilingData->outputW ? base[1] : (tilingData->outputW - 1);
@@ -221,7 +192,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffW(int32_t o
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffH(int32_t offset, int32_t base[2], int32_t idx[16])
+__aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffH(int64_t offset, int64_t base[2], int64_t idx[16])
 {
     for (int i = 0; i < 16; i++) {
         if (offset + i >= tilingData->inputH) {
@@ -233,36 +204,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffH(int32_t o
             base[0] = base[0] < tilingData->outputH ? base[0] : (tilingData->outputH - 1);
         }
         base[1] = idx[i] + 2;
-        float sum_head = 0, sum_end = 0;
-        bool need = false;
-        for (int j = -1; j < 3; j++) {
-            int32_t idx_ = idx[i] + j;
-            float coeff_value = coeffUbBuff.GetValue(((j + 4) % 4) * NUM_FRACTAL + i);
-            if (idx_ <= 0) {
-                sum_head += coeff_value;
-                need = true;
-                if (j == 2)
-                    coeffUbRes.SetValue(i, sum_head);
-            } else if (idx_ >= (tilingData->outputH - 1)) {
-                if (need) {
-                    if (tilingData->outputH == 1) {
-                        sum_end += sum_head;
-                    } else {
-                        coeffUbRes.SetValue(i, sum_head);
-                    }
-                    need = false;
-                }
-                sum_end += coeff_value;
-                if (j == 2)
-                    coeffUbRes.SetValue((tilingData->outputH - 1 - base[0]) * NUM_FRACTAL + i, sum_end);
-            } else {
-                if (need) {
-                    coeffUbRes.SetValue(i, sum_head);
-                    need = false;
-                }
-                coeffUbRes.SetValue((idx_ - base[0]) * NUM_FRACTAL + i, coeff_value);
-            }
-        }
+        fillCoeffH(i, base, idx);
     }
     base[1] = base[1] > 0 ? base[1] : 0;
     base[1] = base[1] < tilingData->outputH ? base[1] : (tilingData->outputH - 1);
@@ -283,18 +225,89 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::fillAndCastCoeffH(int32_t o
 }
 
 template <typename T>
+__aicore__ inline void UpsampleBicubic2dGradBase<T>::fillCoeffW(int32_t i, int64_t base[2], int64_t idx[16])
+{
+    float sum_head = 0;
+    float sum_end = 0;
+    bool need = false;
+    for (int j = -1; j < POINT_INDEX; j++) {
+        int64_t idx_ = idx[i] + j;
+        float coeff_value = coeffUbBuff.GetValue(((j + 4) % 4) * NUM_FRACTAL + i);
+        if (idx_ <= 0) {
+            sum_head += coeff_value;
+            need = true;
+            if (j == 2)
+                coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
+        } else if (idx_ >= (tilingData->outputW - 1)) {
+            if (need) {
+                if (tilingData->outputW == 1) {
+                    sum_end += sum_head;
+                } else {
+                    coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
+                }
+                need = false;
+            }
+            sum_end += coeff_value;
+            if (j == 2)
+                coeffUbRes.SetValue(tilingData->outputW - 1 - base[0] + i * tilingData->baseNW, sum_end);
+        } else {
+            if (need) {
+                coeffUbRes.SetValue(i * tilingData->baseNW, sum_head);
+                need = false;
+            }
+            coeffUbRes.SetValue(idx_ - base[0] + i * tilingData->baseNW, coeff_value);
+        }
+    }
+}
+
+template <typename T>
+__aicore__ inline void UpsampleBicubic2dGradBase<T>::fillCoeffH(int32_t i, int64_t base[2], int64_t idx[16])
+{
+    float sum_head = 0, sum_end = 0;
+    bool need = false;
+    for (int j = -1; j < POINT_INDEX; j++) {
+        int64_t idx_ = idx[i] + j;
+        float coeff_value = coeffUbBuff.GetValue(((j + 4) % 4) * NUM_FRACTAL + i);
+        if (idx_ <= 0) {
+            sum_head += coeff_value;
+            need = true;
+            if (j == 2)
+                coeffUbRes.SetValue(i, sum_head);
+        } else if (idx_ >= (tilingData->outputH - 1)) {
+            if (need) {
+                if (tilingData->outputH == 1) {
+                    sum_end += sum_head;
+                } else {
+                    coeffUbRes.SetValue(i, sum_head);
+                }
+                need = false;
+            }
+            sum_end += coeff_value;
+            if (j == 2)
+                coeffUbRes.SetValue((tilingData->outputH - 1 - base[0]) * NUM_FRACTAL + i, sum_end);
+        } else {
+            if (need) {
+                coeffUbRes.SetValue(i, sum_head);
+                need = false;
+            }
+            coeffUbRes.SetValue((idx_ - base[0]) * NUM_FRACTAL + i, coeff_value);
+        }
+    }
+}
+
+template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessW()
 {
     if (block_w >= tilingData->CoreNumW) {
         return;
     }
-    uint32_t offsetW =
+    int64_t offsetW =
         block_w * tilingData->loopW + (block_w < tilingData->loopTailCoreW ? block_w : tilingData->loopTailCoreW);
-    uint32_t realLoopW = tilingData->loopW + ((block_w < tilingData->loopTailCoreW) ? 1 : 0);
-    uint32_t offsetInnerBatchW =
+    int64_t realLoopW = tilingData->loopW + ((block_w < tilingData->loopTailCoreW) ? 1 : 0);
+    int64_t offsetInnerBatchW =
         block_inner_w * tilingData->innerBatchW +
         (block_inner_w < tilingData->innerBatchTailCoreW ? block_inner_w : tilingData->innerBatchTailCoreW);
-    uint32_t realInnerBatchW = tilingData->innerBatchW + (block_inner_w < tilingData->innerBatchTailCoreW ? 1 : 0);
+    int64_t realInnerBatchW = tilingData->innerBatchW + (block_inner_w < tilingData->innerBatchTailCoreW ? 1 : 0);
     if (realInnerBatchW != 0) {
         MMW.SetOrgShape(realInnerBatchW * tilingData->inputH,
             tilingData->baseNW,
@@ -302,7 +315,7 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessW()
             NUM_FRACTAL,
             tilingData->outputW);
         for (int i = offsetW; i < (offsetW + realLoopW); i++) {
-            int32_t base[2], idx[16];
+            int64_t base[2], idx[16];
             computeCoeff(i * NUM_FRACTAL, tilingData->scalesW, tilingData->baseNW, idx);
             fillAndCastCoeffW(i * NUM_FRACTAL, base, idx);
             MMW.SetTail(realInnerBatchW * tilingData->inputH,
@@ -323,16 +336,16 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessH()
     if (block_h >= tilingData->CoreNumH) {
         return;
     }
-    uint32_t offsetH =
+    int64_t offsetH =
         block_h * tilingData->loopH + (block_h < tilingData->loopTailCoreH ? block_h : tilingData->loopTailCoreH);
-    uint32_t realLoopH = tilingData->loopH + ((block_h < tilingData->loopTailCoreH) ? 1 : 0);
-    uint32_t offsetInnerBatchH =
+    int64_t realLoopH = tilingData->loopH + ((block_h < tilingData->loopTailCoreH) ? 1 : 0);
+    int64_t offsetInnerBatchH =
         block_inner_h * tilingData->innerBatchH +
         (block_inner_h < tilingData->innerBatchTailCoreH ? block_inner_h : tilingData->innerBatchTailCoreH);
-    uint32_t realInnerBatchH = tilingData->innerBatchH + (block_inner_h < tilingData->innerBatchTailCoreH ? 1 : 0);
+    int64_t realInnerBatchH = tilingData->innerBatchH + (block_inner_h < tilingData->innerBatchTailCoreH ? 1 : 0);
     if (realInnerBatchH > 0) {
         for (int i = offsetH; i < (offsetH + realLoopH); i++) {
-            int32_t base[2], idx[16];
+            int64_t base[2], idx[16];
             computeCoeff(i * NUM_FRACTAL, tilingData->scalesH, tilingData->baseNH, idx);
             fillAndCastCoeffH(i * NUM_FRACTAL, base, idx);
             SetFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
@@ -354,11 +367,11 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessH()
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::ClearGM(
-    const GlobalTensor<T> &dstGlobal, uint32_t loop, uint32_t baseN, uint32_t tailN, uint32_t tailCoreNum)
+    const GlobalTensor<T> &dstGlobal, int64_t loop, int64_t baseN, int64_t tailN, int64_t tailCoreNum)
 {
-    uint32_t offset =
+    int64_t offset =
         (loop * baseN + tailN) * block_id + (block_id < tailCoreNum ? block_id : tailCoreNum) * GetNumPerBlock();
-    uint32_t tail = tailN + (block_id < tailCoreNum ? GetNumPerBlock() : 0);
+    int64_t tail = tailN + (block_id < tailCoreNum ? GetNumPerBlock() : 0);
 
     SetMaskCount();
     if (loop > 0) {
