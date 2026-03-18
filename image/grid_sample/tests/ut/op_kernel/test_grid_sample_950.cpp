@@ -52,7 +52,7 @@ TEST_F(grid_sample_950_test, test_case_fp32_test01)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-        bool isDavid = true;
+        bool regBase = true;
     }compileInfo;
     string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("GridSample",
@@ -110,7 +110,7 @@ TEST_F(grid_sample_950_test, test_case_fp32_test02)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-        bool isDavid = true;
+        bool regBase = true;
     }compileInfo;
     string socVersion = "Ascend950";
     gert::TilingContextPara tilingContextPara("GridSample",

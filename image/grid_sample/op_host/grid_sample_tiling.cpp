@@ -83,18 +83,18 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
 
     auto compileInfo = reinterpret_cast<const GridSampleCompileInfo *>(context_->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context_, compileInfo);
-    isDavid = compileInfo->isDavid;
+    regBase = compileInfo->regBase;
 
-    OP_CHECK_IF((!isDavid && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
+    OP_CHECK_IF((!regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
         OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32 or FLOAT16"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF((!isDavid && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
+    OP_CHECK_IF((!regBase && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
         OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32 or FLOAT16"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF((isDavid && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
+    OP_CHECK_IF((regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
         OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF((isDavid && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 && gridDtype != ge::DT_BF16),
+    OP_CHECK_IF((regBase && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 && gridDtype != ge::DT_BF16),
         OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF((dimension == 1 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
@@ -240,13 +240,13 @@ ge::graphStatus GridSampleTiling::GetPlatformInfo()
     auto compileInfo = reinterpret_cast<const GridSampleCompileInfo *>(context_->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context_, compileInfo);
     coreNumVar = compileInfo->coreNum;
-    isDavid = compileInfo->isDavid;
+    regBase = compileInfo->regBase;
     return ge::GRAPH_SUCCESS;
 }
 
 bool GridSampleTiling::IsCapable()
 {
-    if (isDavid && interpolationMode == INTERPOLATION_MODE_BILINEAR && channelLast == 0) {
+    if (regBase && interpolationMode == INTERPOLATION_MODE_BILINEAR && channelLast == 0) {
         OP_LOGD(context_->GetNodeName(),"GridSampleTiling template is not capabled, enter next template.");
         return false;
     }
@@ -343,7 +343,7 @@ static ge::graphStatus TilingPrepare4GridSample(gert::TilingParseContext *contex
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAiv();
-    compileInfo->isDavid = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
+    compileInfo->regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     OP_CHECK_IF((compileInfo->coreNum <= 0),
         OP_LOGE(
             context->GetNodeName(), "Get core num failed, core num: %u", static_cast<uint32_t>(compileInfo->coreNum)),

@@ -62,7 +62,7 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
     return true;
 }
 
-static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode)
+static bool CheckRegBaseSuppport(const aclTensor *input, int64_t interpolationMode)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_BF16) {
@@ -303,7 +303,7 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
     CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const aclTensor *gridSampler2DOut = nullptr;
-    bool isDavid = CheckDavidSuppport(input, interpolationMode);
+    bool regBase = CheckRegBaseSuppport(input, interpolationMode);
     if (CheckAiCoreSuppport(input, interpolationMode, paddingMode)) {
         // 310p支持fp16/bf16数据类型, Cast为fp32进行计算
         bool dtypeNeedCast = input->GetDataType() == op::DataType::DT_FLOAT16;
@@ -339,7 +339,7 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
                 gridSampler2DOut = l0op::Cast(gridSampler2DOut, op::DataType::DT_FLOAT16, uniqueExecutor.get());
             }
         }
-    } else if (isDavid) {
+    } else if (regBase) {
         gridSampler2DOut = l0op::GridSample(inputContiguous,
             gridContiguous,
             interpolationMode,

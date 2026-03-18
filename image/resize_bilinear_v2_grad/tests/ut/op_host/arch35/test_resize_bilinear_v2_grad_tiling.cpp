@@ -36,7 +36,7 @@ protected:
     }
 };
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case01)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case01)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -61,7 +61,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case01)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case02)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case02)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -86,7 +86,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case02)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case03)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case03)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -111,7 +111,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case03)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case04)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case04)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -136,7 +136,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case04)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case05)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case05)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -161,7 +161,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case05)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case06)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case06)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -186,7 +186,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case06)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case07)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case07)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -211,7 +211,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case07)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case08)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case08)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -236,7 +236,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case08)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case09)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case09)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -260,7 +260,7 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case09)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_david_tiling_case10)
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case10)
 {
     optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(

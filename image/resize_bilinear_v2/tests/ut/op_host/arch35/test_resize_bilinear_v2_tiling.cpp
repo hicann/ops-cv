@@ -35,7 +35,7 @@ protected:
     }
 };
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case01)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case01)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -61,7 +61,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case01)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case02)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case02)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -88,7 +88,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case02)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case03)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case03)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -114,7 +114,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case03)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case04)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case04)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -141,7 +141,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case04)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case05)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case05)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -167,7 +167,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case05)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case06)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case06)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -193,7 +193,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case06)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case07)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case07)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -219,7 +219,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case07)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case08)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case08)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -245,7 +245,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case08)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case09)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case09)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -271,7 +271,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case09)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case10)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case10)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -299,7 +299,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case10)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case11)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case11)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -323,7 +323,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case11)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case12)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case12)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -347,7 +347,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case12)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case13)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case13)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -371,7 +371,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case13)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case14)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case14)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -398,7 +398,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case14)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case15)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case15)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -425,7 +425,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case15)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case16)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case16)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -450,7 +450,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case16)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case17)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case17)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -477,7 +477,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_tiling_case17)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case01)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_fail_tiling_case01)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -502,7 +502,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case01)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case02)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_fail_tiling_case02)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -527,7 +527,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case02)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case03)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_fail_tiling_case03)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(
@@ -552,7 +552,7 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case03)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_david_fail_tiling_case04)
+TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_fail_tiling_case04)
 {
     optiling::ResizeBilinearV2CompileInfo compileInfo = {64, 245760};
     gert::TilingContextPara tilingContextPara(

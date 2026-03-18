@@ -33,7 +33,7 @@ namespace optiling {
 struct GridSampleCompileInfo {
     int64_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
-    bool isDavid {false};
+    bool regBase {false};
 };
 
 BEGIN_TILING_DATA_DEF(GridSampleTilingData)
@@ -139,7 +139,7 @@ protected:
     int64_t templateCNum{0};
     int64_t hwFactor{512};
     int64_t dimension{0};
-    bool isDavid {false};
+    bool regBase {false};
     int64_t outputSize;
 
 private:
