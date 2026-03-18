@@ -65,7 +65,7 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
     return true;
 }
 
-static bool CheckDavidSuppport(const aclTensor *input, int64_t interpolationMode)
+static bool CheckRegBaseSuppport(const aclTensor *input, int64_t interpolationMode)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 && input->GetDataType() != op::DataType::DT_BF16) {
         OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s", op::ToString(input->GetDataType()).GetString());
@@ -346,7 +346,7 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
     bool supportAiCpu = CheckAiCpuSuppport(input);
     const op::Format inputFormat = input->GetStorageFormat();
     bool isSpecialcase = interpolationMode == 0 && CheckSpecialCase(input, grid);
-    bool isDavid = CheckDavidSuppport(input, interpolationMode);
+    bool regBase = CheckRegBaseSuppport(input, interpolationMode);
     const aclTensor *gridSampler3DOut = nullptr;
     if (supportAiCore) {
         inputTensor = CheckAndTranspose(inputTensor, inputFormat, true, isSpecialcase, uniqueExecutor.get());
@@ -357,7 +357,7 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
             alignCorners,
             !isSpecialcase,
             uniqueExecutor.get());
-    } else if (isDavid) {
+    } else if (regBase) {
         gridSampler3DOut = l0op::GridSample3D(inputTensor,
             gridTensor,
             interpolationMode,

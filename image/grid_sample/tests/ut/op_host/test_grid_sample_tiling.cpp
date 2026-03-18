@@ -35,7 +35,7 @@ protected:
 struct GridSampleCompileInfo {
     int64_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
-    bool isDavid = false;
+    bool regBase = false;
 };
 
 TEST_F(GridSampleTiling, grid_sample_tiling_test_float32_1)
@@ -504,7 +504,7 @@ TEST_F(GridSampleTiling, grid_sample_3d_tiling_test_float32_bilinear_te)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(GridSampleTiling, grid_sample_tiling_david_test_1)
+TEST_F(GridSampleTiling, grid_sample_tiling_regbase_test_1)
 {
     GridSampleCompileInfo compileInfo = {56, 196608, true};
     gert::TilingContextPara tilingContextPara("GridSample",
@@ -523,7 +523,7 @@ TEST_F(GridSampleTiling, grid_sample_tiling_david_test_1)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(GridSampleTiling, grid_sample_tiling_david_test_2)
+TEST_F(GridSampleTiling, grid_sample_tiling_regbase_test_2)
 {
     GridSampleCompileInfo compileInfo = {56, 196608, true};
     gert::TilingContextPara tilingContextPara("GridSample",

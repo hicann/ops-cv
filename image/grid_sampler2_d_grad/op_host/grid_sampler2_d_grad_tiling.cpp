@@ -69,7 +69,7 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 constexpr uint32_t GRID_LAST_NUM = 2;
 constexpr uint32_t VF_MAX_THREAD_NUM = 1024;
 constexpr uint32_t VF_MAX_THREAD_NUM_DET = 256;
-constexpr uint32_t DAVID_MAX_CORE_NUM = 56;
+constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
 constexpr uint32_t WORKSPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint32_t DETERMINISTIC_BATCH_NORM = 1;
 
@@ -99,7 +99,7 @@ public:
         this->dataTypeSize = dataTypeLen;
         this->elementsPerBlock = BYTE_BLOCK / dataTypeSize;
         this->isDeterministic = deterministic;
-        this->isDavid = param.isDavid;
+        this->regBase = param.regBase;
         return;
     }
 
@@ -180,21 +180,21 @@ private:
     uint32_t extraUbSize = 0;
     uint32_t isDeterministic = 0;
     uint32_t tailBNum = 0;
-    bool isDavid = false;
+    bool regBase = false;
 };
 
 template <typename TilingData, int32_t dataTypeLen>
 void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
 {
-    if (isDavid) {
+    if (regBase) {
         uint32_t mulNCHW = static_cast<uint32_t>(batch * gridH * gridW * GRID_LAST_NUM);
         uint32_t tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM);
-        usedCoreNum = tmpCoreNum <= DAVID_MAX_CORE_NUM ? tmpCoreNum : DAVID_MAX_CORE_NUM;
+        usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
         pNumPerCore = 0;
         tailPNum = 0;
         if (isDeterministic == 1){
             tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM_DET);
-            usedCoreNum = tmpCoreNum <= DAVID_MAX_CORE_NUM ? tmpCoreNum : DAVID_MAX_CORE_NUM;
+            usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
             if (batch > coreNum) {
                 usedCoreNum = coreNum;
                 pNumPerCore = Ceil(batch, usedCoreNum);
@@ -369,7 +369,7 @@ static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputPara
         return ge::GRAPH_FAILED;
     }
     auto compileInfo = reinterpret_cast<const Tiling4GridSampler2DGradCompileInfo*>(tilingContext->GetCompileInfo());
-    params.isDavid = compileInfo->isDavid;
+    params.regBase = compileInfo->regBase;
     uint32_t outH = gradShape->GetStorageShape().GetDim(DIM_INDEX1);
     uint32_t outW = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
     params.batch = xShape->GetStorageShape().GetDim(DIM_INDEX0);
@@ -378,7 +378,7 @@ static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputPara
     params.width = xShape->GetStorageShape().GetDim(DIM_INDEX2);
     params.gridH = gridShape->GetStorageShape().GetDim(DIM_INDEX1);
     params.gridW = gridShape->GetStorageShape().GetDim(DIM_INDEX2);
-    if (params.isDavid) {
+    if (params.regBase) {
         outH = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
         outW = gradShape->GetStorageShape().GetDim(DIM_INDEX3);
         params.channel = xShape->GetStorageShape().GetDim(DIM_INDEX1);
@@ -456,11 +456,11 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
         (currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
         return false);
     currentWorkspace[0] = sysWorkspaceSize;
-    if (params.isDavid) {
+    if (params.regBase) {
         uint32_t isDeterministic = tilingContext->GetDeterministic();
         if (isDeterministic == 1) {
             params.tilingKey += 6;
-            uint32_t batchNumPerCore = params.batch > DAVID_MAX_CORE_NUM ? (params.batch / DAVID_MAX_CORE_NUM) : 1;
+            uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
             currentWorkspace[0] = WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * 2 * 4 * params.batch * batchNumPerCore;
         } else {
             currentWorkspace[0] = 0;
@@ -488,7 +488,7 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
 
     OP_LOGI(tilingContext->GetNodeName(), "ubSizePlatForm:%lu, coreNum:%u", ubSizePlatForm, coreNum);
     ge::DataType inputDatatype = tilingContext->GetInputDesc(0)->GetDataType();
-    if (inputDatatype != ge::DT_FLOAT && !compileInfo->isDavid) {
+    if (inputDatatype != ge::DT_FLOAT && !compileInfo->regBase) {
         coreNum = 1;
     } else { 
          coreNum = compileInfo->coreNum; 
@@ -531,7 +531,7 @@ static ge::graphStatus TilingPrepare4GridSampler2DGrad(gert::TilingParseContext*
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAiv();
-    compileInfo->isDavid = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
+    compileInfo->regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     OP_CHECK_IF(
         (compileInfo->coreNum <= 0), OP_LOGE(context->GetNodeName(), "Failed to get core num."),
         return ge::GRAPH_FAILED);

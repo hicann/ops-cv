@@ -31,7 +31,7 @@ protected:
 struct GridSampler2DGradCompileInfo {
     uint32_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
-    bool isDavid{false};
+    bool regBase{false};
 };
 
 TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_float32_case1)
