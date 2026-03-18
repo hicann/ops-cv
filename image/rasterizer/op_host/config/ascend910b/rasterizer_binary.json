@@ -1,0 +1,89 @@
+{
+  "op_type": "Rasterizer",
+  "op_list": [
+    {
+      "bin_filename": "Rasterizer_2450a03646a5377043c5905eca553761",
+      "inputs": [
+        {
+          "name": "v",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "f",
+          "index": 1,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "d",
+          "index": 2,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "findices",
+          "index": 0,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "barycentric",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "width",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "height",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "occlusion_truncation",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "use_depth_prior",
+          "dtype": "int",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}
