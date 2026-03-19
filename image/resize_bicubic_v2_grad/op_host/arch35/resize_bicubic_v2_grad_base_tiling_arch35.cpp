@@ -41,7 +41,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetPlatformInfo()
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
         compileInfo_.ubSize = ubSize;
     } else {
-        auto compileInfo = reinterpret_cast<const ResizeBicubicV2GradCompileInfo*>(context_->GetCompileInfo());
+        auto compileInfo = static_cast<const ResizeBicubicV2GradCompileInfo*>(context_->GetCompileInfo());
         OP_CHECK_NULL_WITH_CONTEXT(context_, compileInfo);
         compileInfo_.coreNum = compileInfo->coreNum;
         compileInfo_.ubSize = compileInfo->ubSize;
@@ -196,7 +196,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetAttrInfo()
             scales->GetSize() != NUM_2,
             OP_LOGE(context_->GetNodeName(), "Scales size %ld is invalid.", scales->GetSize()),
             return ge::GRAPH_FAILED);
-        const float* scalesData = reinterpret_cast<const float*>(scales->GetData());
+        const float* scalesData = static_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scalesData);
         inputInfo_.oriScaleH = scalesData[NUM_0];
         inputInfo_.oriScaleW = scalesData[NUM_1];

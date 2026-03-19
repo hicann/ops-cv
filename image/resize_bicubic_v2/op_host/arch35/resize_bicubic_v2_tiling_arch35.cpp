@@ -465,7 +465,7 @@ ge::graphStatus ResizeBicubicV2Tiling::Compute()
     auto scales = attrs->GetAttrPointer<gert::ContinuousVector>(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, scales);
     int64_t scalesNum = scales->GetSize();
-    const float* scalesData = reinterpret_cast<const float*>(scales->GetData());
+    const float* scalesData = static_cast<const float*>(scales->GetData());
     OP_CHECK_IF(
         scalesNum != DIM_2, OP_LOGE(context_->GetNodeName(), "the num of scales is %ld, invalid, must be 2", scalesNum),
         return ge::GRAPH_FAILED);
@@ -564,7 +564,7 @@ ge::graphStatus ResizeBicubicV2Tiling::SetTilingData()
 
 static ge::graphStatus Tiling4ResizeBicubicV2(gert::TilingContext* context)
 {
-    auto compileInfo = reinterpret_cast<const ResizeBicubicV2CompileInfo*>(context->GetCompileInfo());
+    auto compileInfo = static_cast<const ResizeBicubicV2CompileInfo*>(context->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
     ResizeBicubicV2Tiling tilingObject(context);
     tilingObject.GetPlatformData(compileInfo);

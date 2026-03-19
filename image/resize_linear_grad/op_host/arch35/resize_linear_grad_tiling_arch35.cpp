@@ -425,7 +425,7 @@ ge::graphStatus ResizeLinearGradTiling::SetTilingData()
 
 static ge::graphStatus Tiling4ResizeLinearGrad(gert::TilingContext* context)
 {
-    auto compileInfo = reinterpret_cast<const ResizeLinearGradCompileInfo*>(context->GetCompileInfo());
+    auto compileInfo = static_cast<const ResizeLinearGradCompileInfo*>(context->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
     ResizeLinearGradTiling tilingObject(context);
     tilingObject.LinearGetPlatformData(compileInfo);
