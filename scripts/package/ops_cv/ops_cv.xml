@@ -8,8 +8,9 @@
         <install_script>share/info/ops_cv/script/install.sh</install_script>
         <help>share/info/ops_cv/script/help.info</help>
         <cleanup>share/info/ops_cv/script/cleanup.sh</cleanup>
+        <copy_all>true</copy_all>
     </package_info>
-    <generate_info value="ops_cv_version.h" dst_path="share/info/ops_cv" install_path="$(TARGET_ENV)/include/version" install_mod="440" install_type="devel" generator="version_header">
+    <generate_info value="ops_cv_version.h" dst_path="$(TARGET_ENV)/include/version" install_path="$(TARGET_ENV)/include/version" install_mod="440" install_type="devel" generator="version_header">
        <OPS_CV_VERSION>$(ASCEND_VER)</OPS_CV_VERSION>
        <OPS_CV_TIMESTAMP>$(TIMESTAMP_NO)</OPS_CV_TIMESTAMP>
     </generate_info>
@@ -22,7 +23,7 @@
         <file value="script" entity="true"/>
         <file value="version.info"/>
     </file_info>
-    <block_info dependtree="false" dst_path="ops_cv" block_conf_path="ascend">
+    <block_info dependtree="false" dst_path="" block_conf_path="ascend">
         <block name="EngineeringCommon"/>
         <block name="EngineeringFiles"/>
         <block name="OpsCv"/>

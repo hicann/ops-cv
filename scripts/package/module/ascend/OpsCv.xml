@@ -6,20 +6,20 @@
         <path value="$(TARGET_ENV)/include/aclnn_kernels"/>
         <path value="$(TARGET_ENV)/include/aclnnop"/>
     </dir_info>
-    <file_info value="opapi_cv_lib" copy_type="delivery" src_path="" dst_path="built-in/op_impl/ai_core/tbe/op_api/lib/linux/$(ARCH)/" install_path="$(TARGET_ENV)/lib64/">
+    <file_info value="opapi_cv_lib" copy_type="delivery" src_path="" dst_path="$(TARGET_ENV)/lib64/" install_path="$(TARGET_ENV)/lib64/">
         <file value="libopapi_cv.so" install_mod="550"/>
     </file_info>
-    <file_info copy_type="delivery" src_path="" dst_path="built-in/op_impl/ai_core/tbe/op_api/include" install_path="$(TARGET_ENV)/include/" install_type="all">
+    <file_info copy_type="delivery" src_path="" dst_path="$(TARGET_ENV)/include/" install_path="$(TARGET_ENV)/include/" install_type="all">
         <file value="aclnnop" install_mod="550"/>
     </file_info>
     <file_info value="ops_es_packages_lib" copy_type="delivery" src_path=""
- 	    dst_path="es_packages/lib64"
+ 	    dst_path="$(TARGET_ENV)/lib64"
  	    install_path="$(TARGET_ENV)/lib64" install_mod="550">
  	    <file value="libes_cv.so"
  	        file_type="shared"/>
  	</file_info>
  	<file_info copy_type="source" src_path=""
- 	    dst_path="es_packages/include"
+ 	    dst_path="$(TARGET_ENV)/include/es"
  	    install_path="$(TARGET_ENV)/include/es" install_type="all">
  	    <file value="es_cv" install_mod="550" entity="true"/>
  	</file_info>

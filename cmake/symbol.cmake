@@ -85,8 +85,18 @@ function(gen_es_cv_lib_ready)
     OUTPUT_PATH ${CMAKE_BINARY_DIR}/es_packages
   )
   install(
-    DIRECTORY ${CMAKE_BINARY_DIR}/es_packages
-    DESTINATION ${VERSION_INFO_INSTALL_DIR}
+    FILES ${CMAKE_BINARY_DIR}/es_packages/lib64/libes_cv.so
+    DESTINATION ${VERSION_INFO_INSTALL_DIR}/lib64
+    OPTIONAL
+    )
+  install(
+    DIRECTORY ${CMAKE_BINARY_DIR}/es_packages/include/es_cv
+    DESTINATION ${VERSION_INFO_INSTALL_DIR}/include/es
+    OPTIONAL
+    )
+  install(
+    DIRECTORY ${CMAKE_BINARY_DIR}/es_packages/whl/
+    DESTINATION ${WHL_INSTALL_DIR}/es_packages/whl
     OPTIONAL
     )
 endfunction()
@@ -470,8 +480,6 @@ function(gen_onnx_plugin_symbol)
 endfunction()
 
 function(gen_norm_symbol)
-  gen_common_symbol()
-
   gen_ophost_symbol()
 
   gen_opgraph_symbol()
