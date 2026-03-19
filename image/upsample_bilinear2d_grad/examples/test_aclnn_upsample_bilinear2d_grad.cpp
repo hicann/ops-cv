@@ -93,7 +93,7 @@ int main()
     void *outDeviceAddr = nullptr;
     aclTensor *self = nullptr;
     aclTensor *out = nullptr;
-    std::vector<float> selfHostData = {1, 2, 3, 4.1};
+    std::vector<float> selfHostData(36, 1);
     std::vector<float> outHostData = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // 创建self aclTensor

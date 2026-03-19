@@ -308,7 +308,7 @@ int main()
     aclTensor *out = nullptr;
     std::vector<float> selfHostData = {0, 1, 2, 3, 4, 5, 6, 7, 8};
     std::vector<int64_t> outputSizeHostData = {5};
-    std::vector<float> outHostData(5);
+    std::vector<float> outHostData(15, 0);
 
     // 创建self aclTensor
     ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &self);
