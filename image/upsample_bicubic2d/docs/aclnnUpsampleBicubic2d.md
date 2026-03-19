@@ -419,7 +419,7 @@ int main()
     aclTensor *self = nullptr;
     aclTensor *out = nullptr;
     std::vector<float> selfHostData = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::vector<float> outHostData = {25, 0};
+    std::vector<float> outHostData(25, 0);
     std::vector<int64_t> outputSizeData = {5, 5};
     bool alignCorners = false;
     double scalesH = 0.0;
