@@ -205,22 +205,35 @@ static bool CheckOutShape(
     return true;
 }
 
+static void CheckFormat(const aclTensor* gradOutput, const aclTensor* out)
+{
+    // 检查format，若是NZ格式，则添加警告
+    if (gradOutput->GetStorageFormat() == Format::FORMAT_FRACTAL_NZ || 
+        out->GetStorageFormat() == Format::FORMAT_FRACTAL_NZ) {
+        OP_LOGW("Format of gradOutput gets [%s], Format of out gets [%s], these formats may lead to precision failure.", 
+        op::ToString(gradOutput->GetStorageFormat()).GetString(), op::ToString(out->GetStorageFormat()).GetString());
+    }
+}
+
 static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclIntArray *kernelSize,
     const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride, const aclTensor *out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOutput, inputSize, kernelSize, dilation, padding, stride, out), ACLNN_ERR_PARAM_NULLPTR);
 
-    // 2. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
+    // 2. 检查format，若是NZ格式，则添加警告
+    CheckFormat(gradOutput, out);
+
+    // 3. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
     CHECK_RET(CheckDtype(gradOutput, out), ACLNN_ERR_PARAM_INVALID);
 
-    // 3. 检查shape
+    // 4. 检查shape
     CHECK_RET(CheckShape(gradOutput, out), ACLNN_ERR_PARAM_INVALID);
 
-    // 4. 检查数组是否满足要求
+    // 5. 检查数组是否满足要求
     CHECK_RET(CheckArray(gradOutput, inputSize, kernelSize, dilation, padding, stride), ACLNN_ERR_PARAM_INVALID);
 
-    // 5. 检查gradOutput和out的shape是否满足要求
+    // 6. 检查gradOutput和out的shape是否满足要求
     CHECK_RET(CheckOutShape(gradOutput, inputSize, kernelSize, out), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
