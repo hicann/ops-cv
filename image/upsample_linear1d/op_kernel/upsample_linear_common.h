@@ -42,13 +42,13 @@ __aicore__ inline T1 CeilA2B(const T1 a, const T2 b)
 };
 
 template <typename T1>
-__aicore__ inline T1 weightCalculate(T1 x)
+__aicore__ inline T1 weightCalculate(T1 a)
 {
-    if (x < 0) {
-        x = -1 * x;
+    if (a < 0) {
+        a = -1 * a;
     }
-    if (x < (float)1.0) {
-        return (float)1.0 - x;
+    if (a < (float)1.0) {
+        return (float)1.0 - a;
     }
     return 0.0;
 };

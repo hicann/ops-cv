@@ -19,8 +19,8 @@
 #include "opdev/make_op_executor.h"
 #include "opdev/op_def.h"
 #include "opdev/op_dfx.h"
-#include "opdev/op_executor.h"
 #include "opdev/op_log.h"
+#include "opdev/op_executor.h"
 #include "opdev/shape_utils.h"
 #include "opdev/common_types.h"
 #include "opdev/platform.h"
@@ -70,14 +70,14 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
         scales_w = (*scales)[DIM_TWO];
     }
     // 生成out shape为 (N，C，outputSize[0], outputSize[1], outputSize[2])
-    op::Shape selfStorageShape = self->GetStorageShape();
     op::Shape selfOriginalShape = self->GetOriginalShape();
-    selfStorageShape.SetDim(DIM_TWO, sizeD);
-    selfStorageShape.SetDim(DIM_THREE, sizeH);
-    selfStorageShape.SetDim(DIM_FOUR, sizeW);
+    op::Shape selfStorageShape = self->GetStorageShape();
     selfOriginalShape.SetDim(DIM_TWO, sizeD);
     selfOriginalShape.SetDim(DIM_THREE, sizeH);
     selfOriginalShape.SetDim(DIM_FOUR, sizeW);
+    selfStorageShape.SetDim(DIM_TWO, sizeD);
+    selfStorageShape.SetDim(DIM_THREE, sizeH);
+    selfStorageShape.SetDim(DIM_FOUR, sizeW);
 
     const aclTensor *out = executor->AllocTensor(
         selfStorageShape, selfOriginalShape, self->GetDataType(), self->GetStorageFormat(), self->GetOriginalFormat());

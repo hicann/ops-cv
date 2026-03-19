@@ -47,22 +47,22 @@ public:
 
 private:
     template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
+    __aicore__ inline T1 CeilA2B(T1 x, T2 y)
     {
-        if (b == 0) {
-            return a;
+        if (y == 0) {
+            return x;
         }
-        return (a + b - 1) / b;
+        return (x + y - 1) / y;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Max(T1 x, T1 y)
+    {
+        return x > y ? x : y;
     };
     template <typename T1>
     __aicore__ inline T1 Min(T1 a, T1 b)
     {
         return a < b ? a : b;
-    };
-    template <typename T1>
-    __aicore__ inline T1 Max(T1 a, T1 b)
-    {
-        return a > b ? a : b;
     };
     __aicore__ inline void ClearGM();
     __aicore__ inline void ParseTilingData(const UpsampleNearest3dTilingData* tilingData);

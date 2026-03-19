@@ -16,12 +16,12 @@
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
 #include "opdev/make_op_executor.h"
+#include "opdev/shape_utils.h"
+#include "opdev/common_types.h"
 #include "opdev/op_def.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
-#include "opdev/shape_utils.h"
-#include "opdev/common_types.h"
 
 using namespace op;
 

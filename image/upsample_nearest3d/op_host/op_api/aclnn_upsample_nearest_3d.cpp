@@ -42,8 +42,8 @@ static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST =
 static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
 {
     OP_CHECK_NULL(self, return false);
-    OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(out, return false);
+    OP_CHECK_NULL(outputSize, return false);
     return true;
 }
 
@@ -90,9 +90,9 @@ static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, con
     return true;
 }
 
-static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSize)
+static bool CheckInputElement(const aclTensor *input, const aclIntArray *outputSize)
 {
-    auto selfShape = self->GetViewShape();
+    auto selfShape = input->GetViewShape();
     int64_t outC = selfShape.GetDim(DIM_ONE);
     int64_t inputD = selfShape.GetDim(DIM_TWO);
     int64_t inputH = selfShape.GetDim(DIM_THREE);
@@ -100,7 +100,7 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
     int64_t outD = (*outputSize)[DIM_ZERO];
     int64_t outH = (*outputSize)[DIM_ONE];
     int64_t outW = (*outputSize)[DIM_TWO];
-    if (self->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
+    if (input->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
         outC = selfShape.GetDim(DIM_FOUR);
         inputD = selfShape.GetDim(DIM_ONE);
         inputH = selfShape.GetDim(DIM_TWO);
@@ -108,21 +108,18 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
     }
 
     OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID,
             "Input and output sizes should greater than 0, but got input (D: %ld,"
             " H: %ld, W: %ld) output (D: %ld, H: %ld, W: %ld)",
-            inputD,
-            inputH,
-            inputW,
-            outD,
-            outH,
-            outW),
+            inputD, inputH, inputW, outD, outH, outW),
         return false);
 
-    OP_CHECK(outC > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Non-empty 5D data tensor expected but got a tensor with sizes %s.",
-            op::ToString(self->GetViewShape()).GetString()),
+    OP_CHECK(
+        outC > 0,
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID, "Non-empty 5D data tensor expected but got a tensor with sizes %s.",
+            op::ToString(input->GetViewShape()).GetString()),
         return false);
     return true;
 }
@@ -180,8 +177,8 @@ aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor *self, const 
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto ret = CheckParams(self, outputSize, out);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+    auto checkNearest3dRet = CheckParams(self, outputSize, out);
+    CHECK_RET(checkNearest3dRet == ACLNN_SUCCESS, checkNearest3dRet);
     // 空tensor支持
     if (self->IsEmpty()) {
         // 根据实际支持情况补充

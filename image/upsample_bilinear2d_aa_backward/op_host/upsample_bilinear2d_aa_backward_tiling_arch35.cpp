@@ -184,24 +184,24 @@ void UpsampleBilinear2dAABackwardRegbaseTiling::ComputeScalesSupportValues(float
 
 ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::CheckInputParams()
 {
-    auto input = context_->GetInputDesc(CONST_0);
-    OP_CHECK_NULL_WITH_CONTEXT(context_, input);
-    auto inputDtype = input->GetDataType();
+    auto inputDesc = context_->GetInputDesc(CONST_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, inputDesc);
+    auto inputDtype = inputDesc->GetDataType();
     OP_CHECK_IF(inputDtypeList.count(inputDtype) == 0,
-        OP_LOGE(context_, "input dtype is not support, but input dtype is %d", inputDtype), return ge::GRAPH_FAILED);
-    auto inputFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(input->GetStorageFormat()));
+        OP_LOGE(context_, "Input dtype is not support, but input dtype is %d", inputDtype), return ge::GRAPH_FAILED);
+    auto inputFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(inputDesc->GetStorageFormat()));
     OP_CHECK_IF((inputFormat != ge::Format::FORMAT_ND && inputFormat != ge::Format::FORMAT_NCHW),
-        OP_LOGE(context_, "input format is not support, but input format is %d", inputDtype), return ge::GRAPH_FAILED);
+        OP_LOGE(context_, "Input format is not support, but input format is %d", inputDtype), return ge::GRAPH_FAILED);
     baseTiling_.dtypeSize = inputDtypeList.find(inputDtype)->second;
     int32_t ubBlockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context_));
     baseTiling_.oneBlockNum = ubBlockSize / baseTiling_.dtypeSize;
-    auto outDescPtr0 = context_->GetOutputDesc(0);
+    auto outDescPtr0 = context_->GetOutputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outDescPtr0);
     auto outDtype = outDescPtr0->GetDataType();
-    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(context_, "input and output dtype must be same"),
+    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(context_, "Input and output dtype must be same"),
         return ge::GRAPH_FAILED);
     auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outDescPtr0->GetStorageFormat()));
-    OP_CHECK_IF(outFormat != inputFormat, OP_LOGE(context_, "input and output format must be same"),
+    OP_CHECK_IF(outFormat != inputFormat, OP_LOGE(context_, "Input and output format must be same"),
         return ge::GRAPH_FAILED);
     auto gradInput = context_->GetOutputShape(0);
     auto gradOutput = context_->GetInputShape(0);
@@ -314,13 +314,13 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::Init()
 {
     fe::PlatFormInfos *platformInfoPtr = context_->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    int32_t coreNum = ascendcPlatform.GetCoreNumAiv();
+    auto platformAscendc = platform_ascendc::PlatformAscendC(platformInfoPtr);
+    int32_t coreNum = platformAscendc.GetCoreNumAiv();
     OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than zero, but is %ld", coreNum),
         return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNum;
     uint64_t ubSize = 0;
-    ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
+    platformAscendc.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
     OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
         return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubSize is %lu", coreNum, ubSize);

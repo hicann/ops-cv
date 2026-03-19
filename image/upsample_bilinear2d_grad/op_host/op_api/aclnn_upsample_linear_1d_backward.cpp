@@ -71,11 +71,11 @@ static bool CheckNotNull(
 
 static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inputSize)
 {
-    auto gradOutShape = gradOut->GetViewShape();
-    size_t dimNum = gradOutShape.GetDimNum();
+    auto outShape = gradOut->GetViewShape();
+    size_t dimNum = outShape.GetDimNum();
 
     for (size_t i = 0; i < dimNum; ++i) {
-        if (gradOutShape.GetDim(i) != (*inputSize)[i]) {
+        if (outShape.GetDim(i) != (*inputSize)[i]) {
             return false;
         }
     }
@@ -322,11 +322,11 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     const int64_t appendDim[] = {2};
     aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
     CHECK_RET(dimUnsqueeze != nullptr, nullptr);
-    auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
-    CHECK_RET(unsqueezedInput != nullptr, nullptr);
+    auto unsqueezedResult = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
+    CHECK_RET(unsqueezedResult != nullptr, nullptr);
 
     // reformat
-    auto reformatInput = l0op::ReFormat(unsqueezedInput, op::Format::FORMAT_NCHW);
+    auto reformatInput = l0op::ReFormat(unsqueezedResult, op::Format::FORMAT_NCHW);
     CHECK_RET(reformatInput != nullptr, nullptr);
 
     return reformatInput;

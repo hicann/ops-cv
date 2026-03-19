@@ -43,7 +43,7 @@ constexpr uint64_t TILING_KEY_BF16 = 3;
 
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
 constexpr uint32_t BYTE_LEN_4 = 4;
-constexpr uint32_t BYTE_LEN_2 = 2;
+constexpr uint32_t BYTE_LENGTH_2 = 2;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
 constexpr uint8_t SCHEDULE_MODE = 1;
 
@@ -332,12 +332,12 @@ void UpsampleBicubic2dAATiling::GetWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBicubic2dAATiling::GetOutputShape()
 {
-    const int64_t *outputSizeArray = reinterpret_cast<const int64_t *>(outputSizeVevtor->GetData());
+    const int64_t *outputSizeArr = reinterpret_cast<const int64_t *>(outputSizeVevtor->GetData());
     for (int8_t i = 0; static_cast<uint32_t>(i) < MAX_ATTR_COUNT; i++) {
         inputShapes[i] = inputShape.GetDim(i);
         outputShapes[i] = inputShape.GetDim(i);
         if (i > 1) {
-            outputShapes[i] = outputSizeArray[i - 2];
+            outputShapes[i] = outputSizeArr[i - 2];
         }
     }
     tilingData.set_inputShapes(inputShapes);
@@ -377,9 +377,9 @@ uint8_t UpsampleBicubic2dAATiling::GetDataTypeSize() const
         case ge::DT_FLOAT:
             return BYTE_LEN_4;
         case ge::DT_FLOAT16:
-            return BYTE_LEN_2;
+            return BYTE_LENGTH_2;
         case ge::DT_BF16:
-            return BYTE_LEN_2;
+            return BYTE_LENGTH_2;
         default:
             return BYTE_LEN_4;
     }
@@ -388,12 +388,12 @@ uint8_t UpsampleBicubic2dAATiling::GetDataTypeSize() const
 uint64_t UpsampleBicubic2dAATiling::GetTilingKeyVal() const
 {
     switch (dataType) {
-        case ge::DT_FLOAT:
-            return TILING_KEY_FLOAT;
         case ge::DT_FLOAT16:
             return TILING_KEY_HALF;
         case ge::DT_BF16:
             return TILING_KEY_BF16;
+        case ge::DT_FLOAT:
+            return TILING_KEY_FLOAT;
         default:
             return 0;
     }
@@ -412,12 +412,12 @@ uint32_t UpsampleBicubic2dAATiling::GetNeedCoreNumWidth(uint32_t coreNumPlatform
     int64_t inputH = inputShapes[0] * inputShapes[1] * inputShapes[2];
 
     int64_t minAvergingRows = sliceSize * 2 / dataTypeSize;
-    int64_t groupCoreNum = 0;
+    int64_t groupCore = 0;
     if (remainder > 0) {
-        groupCoreNum = coreNumPlatform / remainder;
+        groupCore = coreNumPlatform / remainder;
     }
-    int64_t tailAvergingRows = std::max(CeilA2B(inputH, groupCoreNum), minAvergingRows);
-    groupCoreNum = std::min(groupCoreNum, CeilA2B(inputH, tailAvergingRows));
+    int64_t tailAvergingRows = std::max(CeilA2B(inputH, groupCore), minAvergingRows);
+    groupCore = std::min(groupCore, CeilA2B(inputH, tailAvergingRows));
 
     int64_t needCoreNum = 0;
 
@@ -426,15 +426,15 @@ uint32_t UpsampleBicubic2dAATiling::GetNeedCoreNumWidth(uint32_t coreNumPlatform
         sliceStartListW[coreIndex] = coreIndex * eachCoreSliceNum * sliceSize;
         sliceEndListW[coreIndex] = (std::min((coreIndex + 1) * eachCoreSliceNum, sliceCount)) * sliceSize;
 
-        if (groupCoreNum == 0) {
+        if (groupCore == 0) {
             continue;
         }
-        int64_t groupIndex = coreIndex / groupCoreNum;
+        int64_t groupIndex = coreIndex / groupCore;
         if (groupIndex < remainder) {
             tailSliceStartListW[coreIndex] = (tailStartSliceNum + groupIndex) * sliceSize;
             tailsliceEndListW[coreIndex] =
                 std::min(tailSliceStartListW[coreIndex] + sliceSize, static_cast<int64_t>(outputSize));
-            int64_t coreIndexInGroup = coreIndex % groupCoreNum;
+            int64_t coreIndexInGroup = coreIndex % groupCore;
             tailRowStartListW[coreIndex] = coreIndexInGroup * tailAvergingRows;
             tailRowEndListW[coreIndex] =
                 std::min(tailRowStartListW[coreIndex] + tailAvergingRows, static_cast<int64_t>(inputH));

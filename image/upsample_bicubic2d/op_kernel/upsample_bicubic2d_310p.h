@@ -172,9 +172,9 @@ private:
     };
 
     template <typename T1>
-    __aicore__ inline T1 Min(T1 a, T1 b)
+    __aicore__ inline T1 Min(T1 m, T1 n)
     {
-        return a < b ? a : b;
+        return m < n ? m : n;
     };
 
     template <typename T1>
@@ -324,7 +324,7 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::ClearGM()
     }
     int64_t preCoreDataCnt = preCoreBlockCnt * blockSize;
     int32_t loopCnt = preCoreDataCnt / DEFAULT_CLEAR_UB_SIZE;
-    int64_t tailCnt = preCoreDataCnt % DEFAULT_CLEAR_UB_SIZE;
+    int64_t tailNum = preCoreDataCnt % DEFAULT_CLEAR_UB_SIZE;
     int64_t offset = blockIdx * preCoreDataCnt;
 
     Duplicate(clearUb, (T)0, DEFAULT_CLEAR_UB_SIZE);
@@ -337,14 +337,14 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::ClearGM()
         DataCopy(outTensorsGM[offset], clearUb, DEFAULT_CLEAR_UB_SIZE);
         offset += DEFAULT_CLEAR_UB_SIZE;
     }
-    if (tailCnt > 0) {
-        tailCnt = (tailCnt + blockSize - 1) / blockSize * blockSize;
-        DataCopy(outTensorsGM[offset], clearUb, tailCnt);
+    if (tailNum > 0) {
+        tailNum = (tailNum + blockSize - 1) / blockSize * blockSize;
+        DataCopy(outTensorsGM[offset], clearUb, tailNum);
     }
     if ((tailBlockCnt > 0) && (blockIdx == 0)) {
-        tailCnt = tailBlockCnt * blockSize;
+        tailNum = tailBlockCnt * blockSize;
         offset = preCoreDataCnt * realNeedCore;
-        DataCopy(outTensorsGM[offset], clearUb, tailCnt);
+        DataCopy(outTensorsGM[offset], clearUb, tailNum);
     }
 }
 
@@ -370,12 +370,12 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::BicubicComputeBatch()
             int64_t endIdxH = Min(outputH, startIdxH + DEFAULT_UB_MAX_DATA_COUNT);
             CalculateIntermediateTensor(startIdxH, ratioLengthH, H_DIRECTION);
             for (int64_t indexW = startIdxW; indexW < endIdxW; indexW += slideSize) {
-                int64_t lengthW = Min(slideSize, endIdxW - indexW);
-                CalculateRatioTensor(indexW - startIdxW, lengthW, W_DIRECTION);
+                int64_t lenW = Min(slideSize, endIdxW - indexW);
+                CalculateRatioTensor(indexW - startIdxW, lenW, W_DIRECTION);
                 for (int64_t indexH = startIdxH; indexH < endIdxH; indexH += slideSize) {
                     int64_t lengthH = Min(slideSize, endIdxH - indexH);
                     CalculateRatioTensor(indexH - startIdxH, lengthH, H_DIRECTION);
-                    CalculateConvolution(indexW, indexH, lengthW, lengthH);
+                    CalculateConvolution(indexW, indexH, lenW, lengthH);
                 }
             }
         }
@@ -535,9 +535,9 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CopyOut(int64_t indexOutput, 
     if ((calCount % blockSize) == 0) {
         DataCopy(outTensorsGM[indexOutput], dstDataLocal, calCount);
     } else {
-        int64_t blockCalCount = (calCount + blockSize - 1) / blockSize * blockSize;
+        int64_t blockCalCnt = (calCount + blockSize - 1) / blockSize * blockSize;
         SetAtomicAdd<T>();
-        DataCopy(outTensorsGM[indexOutput], dstDataLocal, blockCalCount);
+        DataCopy(outTensorsGM[indexOutput], dstDataLocal, blockCalCnt);
         SetAtomicNone();
     }
 

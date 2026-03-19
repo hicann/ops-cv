@@ -17,9 +17,9 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transpose.h"
-#include "aclnn_kernels/common/op_error_check.h"
 #include "upsample_nearest_exact3d.h"
 #include "aclnn_upsample_nearest_exact3d.h"
 
@@ -79,17 +79,17 @@ static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, con
         return false);
 
     // out的shape应该等于推导后的shape
-    op::Shape selfShape = self->GetViewShape();
+    op::Shape inputShape = self->GetViewShape();
     op::Shape expectShape;
     if (self->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
-        expectShape.AppendDim(selfShape.GetDim(DIM_ZERO));
+        expectShape.AppendDim(inputShape.GetDim(DIM_ZERO));
         expectShape.AppendDim((*outputSize)[DIM_ZERO]);
         expectShape.AppendDim((*outputSize)[DIM_ONE]);
         expectShape.AppendDim((*outputSize)[DIM_TWO]);
-        expectShape.AppendDim(selfShape.GetDim(DIM_FOUR));
+        expectShape.AppendDim(inputShape.GetDim(DIM_FOUR));
     } else {
-        expectShape.AppendDim(selfShape.GetDim(DIM_ZERO));
-        expectShape.AppendDim(selfShape.GetDim(DIM_ONE));
+        expectShape.AppendDim(inputShape.GetDim(DIM_ZERO));
+        expectShape.AppendDim(inputShape.GetDim(DIM_ONE));
         expectShape.AppendDim((*outputSize)[DIM_ZERO]);
         expectShape.AppendDim((*outputSize)[DIM_ONE]);
         expectShape.AppendDim((*outputSize)[DIM_TWO]);
@@ -230,7 +230,7 @@ aclnnStatus aclnnUpsampleNearestExact3dGetWorkspaceSize(const aclTensor *self, c
 
     // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
     vector<float> scalesList{};
-    if (scalesD > 0 && scalesH > 0 && scalesW > 0) {
+    if (scalesW > 0 && scalesH > 0 && scalesD > 0) {
         scalesList.push_back(static_cast<float>(1.0 / scalesD));
         scalesList.push_back(static_cast<float>(1.0 / scalesH));
         scalesList.push_back(static_cast<float>(1.0 / scalesW));

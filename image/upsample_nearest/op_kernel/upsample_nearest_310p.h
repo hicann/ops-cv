@@ -66,9 +66,9 @@ private:
         return a < b ? a : b;
     };
     template <typename T1>
-    __aicore__ inline T1 Max(T1 a, T1 b)
+    __aicore__ inline T1 Max(T1 x, T1 y)
     {
-        return a > b ? a : b;
+        return x > y ? x : y;
     };
 
 private:

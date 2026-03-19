@@ -138,12 +138,12 @@ static inline bool FloatEqual(float a, float b)
     }
 }
 
-static float AreaPixelComputeScale(bool alignCorners, int64_t inputSize, int64_t outputSize, float scale)
+static float AreaPixelComputeScale(bool alignCorner, int64_t inputSize, int64_t outputSize, float scale)
 {
     if (outputSize == inputSize) {
         return static_cast<float>(1);
     }
-    if (alignCorners) {
+    if (alignCorner) {
         if (outputSize > 1) {
             return static_cast<float>(inputSize - 1) / (outputSize - 1);
         } else {

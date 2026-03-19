@@ -22,10 +22,10 @@
 namespace UpsampleNearest3d {
 using namespace AscendC;
 
-constexpr int32_t BUFFER_NUM = 2;
 constexpr int8_t D_INDEX = 0;
 constexpr int8_t H_INDEX = 1;
 constexpr int8_t W_INDEX = 2;
+constexpr int32_t BUFFER_NUM = 2;
 
 constexpr uint32_t BYTE_BLOCK = 32;
 constexpr float BEST_PERFORMANCE_SCALE = 100.0f;
@@ -46,23 +46,23 @@ public:
     __aicore__ inline void Process();
 
 private:
-    template <typename T1, typename T2>
-    __aicore__ inline T1 CeilA2B(T1 a, T2 b)
-    {
-        if (b == 0) {
-            return a;
-        }
-        return (a + b - 1) / b;
-    };
     template <typename T1>
     __aicore__ inline T1 Min(T1 a, T1 b)
     {
         return a < b ? a : b;
     };
-    template <typename T1>
-    __aicore__ inline T1 Max(T1 a, T1 b)
+    template <typename T1, typename T2>
+    __aicore__ inline T1 CeilA2B(T1 p, T2 q)
     {
-        return a > b ? a : b;
+        if (q == 0) {
+            return p;
+        }
+        return (p + q - 1) / q;
+    };
+    template <typename T1>
+    __aicore__ inline T1 Max(T1 m, T1 n)
+    {
+        return m > n ? m : n;
     };
     __aicore__ inline void ParseTilingData(const UpsampleNearest3dTilingData* tilingData);
     __aicore__ inline void GatherData(int64_t slideIndex, int64_t rowStart, int64_t rowEnd);
@@ -107,19 +107,20 @@ private:
     float scales[3] = {ZERO_FLOAT};
 
     int64_t slideSizeW = 0;
-    int64_t tensorSizeW = 0;
-    int64_t tensorSizeH = 0;
     int64_t tensorSizeD = 0;
+    int64_t tensorSizeH = 0;
+    int64_t tensorSizeW = 0;
 
-    int64_t slideNumH = 0;
+    int64_t needCoreNum = 0;
+    int64_t batchNum = 0;
     int64_t slideNumD = 0;
+    int64_t slideNumH = 0;
     int64_t eachCoreSlideNum = 0;
     int64_t remainder = 0;
     int64_t tailStartSlideNum = 0;
     int64_t groupCoreNum = 0;
     int64_t inputRow = 0;
     int64_t tailAvergingRow = 0;
-    int64_t needCoreNum = 0;
 
     int64_t lastStartW = -1;
     int64_t startW = 0;
@@ -129,7 +130,6 @@ private:
     int64_t srcEndW = 0;
     int64_t srcDataCount = 0;
     int64_t srcDataLength = 0;
-    int64_t batchNum = 0;
     uint32_t srcBlockLen = 0;
     uint32_t srcStride = 0;
 
@@ -172,35 +172,35 @@ __aicore__ inline void UpsampleNearest3dND<T>::Process()
     if (isView1DAndSmallW) {
         ComputeView1DSmallW();
     } else {
+        srcOffsetTensor = srcOffsetQueue.AllocTensor<int32_t>();
         srcIndexTensorW = srcIndexQueueW.AllocTensor<float>();
         srcIndexTensorH = srcIndexQueueH.AllocTensor<float>();
         srcIndexTensorD = srcIndexQueueD.AllocTensor<float>();
-        srcOffsetTensor = srcOffsetQueue.AllocTensor<int32_t>();
         lastStartW = -1;
 
         int64_t slideStart = blockIdx * eachCoreSlideNum;
         int64_t slideEnd = slideStart + eachCoreSlideNum;
         // 计算批量分组的数据
         if (slideStart < slideEnd) {
-            for (int64_t slideIndex = slideStart; slideIndex < slideEnd; slideIndex++) {
-                GatherData(slideIndex, 0, inputRow);
+            for (int64_t slideIdx = slideStart; slideIdx < slideEnd; slideIdx++) {
+                GatherData(slideIdx, 0, inputRow);
             }
         }
 
         int64_t groupIndex = blockIdx / groupCoreNum;
         if (groupIndex < remainder) {
             // 处理尾块部分数据
-            int64_t slideIndex = tailStartSlideNum + groupIndex;
+            int64_t slideIdx = tailStartSlideNum + groupIndex;
             int64_t blockIdxInGroup = blockIdx % groupCoreNum;
             int64_t tailRowStart = blockIdxInGroup * tailAvergingRow;
             int64_t tailRowEnd = Min(tailRowStart + tailAvergingRow, inputRow);
-            GatherData(slideIndex, tailRowStart, tailRowEnd);
+            GatherData(slideIdx, tailRowStart, tailRowEnd);
         }
 
-        srcOffsetQueue.FreeTensor(srcOffsetTensor);
         srcIndexQueueD.FreeTensor(srcIndexTensorD);
         srcIndexQueueH.FreeTensor(srcIndexTensorH);
         srcIndexQueueW.FreeTensor(srcIndexTensorW);
+        srcOffsetQueue.FreeTensor(srcOffsetTensor);
     }
 }
 
@@ -305,7 +305,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::GatherData(int64_t slideIndex, in
 {
     GetRangeH(slideIndex);
     GetRangeD(slideIndex);
-    if (heightCount == 0 || depthCount == 0) {
+    if (depthCount == 0 || heightCount == 0) {
         return;
     }
 
@@ -316,13 +316,13 @@ __aicore__ inline void UpsampleNearest3dND<T>::GatherData(int64_t slideIndex, in
             srcStartW = static_cast<int64_t>(srcIndexTensorW.GetValue(j));
             j++;
         }
-        int64_t inputOffsetInBatch =
+        int64_t inputOffsetsInBatch =
             srcIndexD * inputShapes[H_INDEX] * inputShapes[W_INDEX] + srcIndexH * inputShapes[W_INDEX] + srcStartW;
         int64_t outputOffsetInBatch =
             indexD * outputShapes[H_INDEX] * outputShapes[W_INDEX] + indexH * outputShapes[W_INDEX] + startW;
         for (int64_t batchIndex = rowStart; batchIndex < rowEnd; batchIndex += batchNum) {
             int64_t inputOffset =
-                batchIndex * inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] + inputOffsetInBatch;
+                batchIndex * inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] + inputOffsetsInBatch;
             int64_t outputOffset = batchIndex * outputShapes[D_INDEX] * outputShapes[H_INDEX] * outputShapes[W_INDEX] +
                                    outputOffsetInBatch;
             uint16_t blockCount = Min(batchNum, rowEnd - batchIndex);
@@ -388,8 +388,8 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeW(int64_t slideIndex)
         endW = Min(startW + slideSizeW, outputShapes[W_INDEX]);
         dataCount = endW - startW;
         CalculateSrcIndexTensor(startW, dataCount, W_INDEX, srcIndexTensorW);
-        srcStartW = static_cast<int64_t>(srcIndexTensorW.GetValue(0));
         srcEndW = static_cast<int64_t>(srcIndexTensorW.GetValue(dataCount - 1)) + 1;
+        srcStartW = static_cast<int64_t>(srcIndexTensorW.GetValue(0));
         if (scales[W_INDEX] > BEST_PERFORMANCE_SCALE) {
             dataCount = 1;
             srcDataCount = 1;
@@ -409,7 +409,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeW(int64_t slideIndex)
 template <typename T>
 __aicore__ inline void UpsampleNearest3dND<T>::GetRangeH(int64_t slideIndex)
 {
-    if (scales[H_INDEX] >= ONE_FLOAT) {
+    if (ONE_FLOAT <= scales[H_INDEX]) {
         indexH = slideIndex % slideNumH;
         CalculateSrcIndexTensor(indexH, 1, H_INDEX, srcIndexTensorH);
         srcIndexH = static_cast<int64_t>(srcIndexTensorH.GetValue(0));
@@ -417,13 +417,13 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeH(int64_t slideIndex)
         return;
     }
     srcIndexH = slideIndex % slideNumH;
-    indexH = Max(static_cast<int64_t>((float)srcIndexH / scales[H_INDEX] - 2), static_cast<int64_t>(0));
+    indexH = Max(static_cast<int64_t>(0), static_cast<int64_t>((float)srcIndexH / scales[H_INDEX] - 2));
     int64_t length = Min(tensorSizeH, outputShapes[H_INDEX] - indexH);
     CalculateSrcIndexTensor(indexH, length, H_INDEX, srcIndexTensorH);
     heightCount = 0;
     for (int64_t j = 0; j < length; j++) {
         int64_t srcIndex = static_cast<int64_t>(srcIndexTensorH.GetValue(j));
-        if (srcIndex == srcIndexH) {
+        if (srcIndexH == srcIndex) {
             heightCount = 1;
             indexH += j;
             break;
@@ -433,13 +433,13 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeH(int64_t slideIndex)
         return;
     }
 
-    int64_t lastIndexH = Max(static_cast<int64_t>((float)(srcIndexH + 1) / scales[H_INDEX] - 2), indexH);
+    int64_t lastIndexH = Max(indexH, static_cast<int64_t>((float)(srcIndexH + 1) / scales[H_INDEX] - 2));
     lastIndexH = Min(lastIndexH, outputShapes[H_INDEX] - 1);
     length = Min(tensorSizeH, outputShapes[H_INDEX] - lastIndexH);
     CalculateSrcIndexTensor(lastIndexH, length, H_INDEX, srcIndexTensorH);
     for (int64_t j = 0; j < length; j++) {
         int64_t srcIndex = static_cast<int64_t>(srcIndexTensorH.GetValue(j));
-        if (srcIndex == srcIndexH) {
+        if (srcIndexH == srcIndex) {
             lastIndexH++;
         }
     }
@@ -449,7 +449,7 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeH(int64_t slideIndex)
 template <typename T>
 __aicore__ inline void UpsampleNearest3dND<T>::GetRangeD(int64_t slideIndex)
 {
-    if (scales[D_INDEX] >= ONE_FLOAT) {
+    if (ONE_FLOAT <= scales[D_INDEX]) {
         indexD = (slideIndex % (slideNumD * slideNumH)) / slideNumH;
         CalculateSrcIndexTensor(indexD, 1, D_INDEX, srcIndexTensorD);
         srcIndexD = static_cast<int64_t>(srcIndexTensorD.GetValue(0));
@@ -457,13 +457,13 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeD(int64_t slideIndex)
         return;
     }
     srcIndexD = (slideIndex % (slideNumD * slideNumH)) / slideNumH;
-    indexD = Max(static_cast<int64_t>((float)srcIndexD / scales[D_INDEX] - 2), static_cast<int64_t>(0));
+    indexD = Max(static_cast<int64_t>(0), static_cast<int64_t>((float)srcIndexD / scales[D_INDEX] - 2));
     int64_t length = Min(tensorSizeD, outputShapes[D_INDEX] - indexD);
     CalculateSrcIndexTensor(indexD, length, D_INDEX, srcIndexTensorD);
     depthCount = 0;
     for (int64_t j = 0; j < length; j++) {
         int64_t srcIndex = static_cast<int64_t>(srcIndexTensorD.GetValue(j));
-        if (srcIndex == srcIndexD) {
+        if (srcIndexD == srcIndex) {
             depthCount = 1;
             indexD += j;
             break;
@@ -473,13 +473,13 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeD(int64_t slideIndex)
         return;
     }
 
-    int64_t lastIndexD = Max(static_cast<int64_t>((float)(srcIndexD + 1) / scales[D_INDEX] - 2), indexD);
+    int64_t lastIndexD = Max(indexD, static_cast<int64_t>((float)(srcIndexD + 1) / scales[D_INDEX] - 2));
     lastIndexD = Min(lastIndexD, outputShapes[D_INDEX] - 1);
     length = Min(tensorSizeD, outputShapes[D_INDEX] - lastIndexD);
     CalculateSrcIndexTensor(lastIndexD, length, D_INDEX, srcIndexTensorD);
     for (int64_t j = 0; j < length; j++) {
         int64_t srcIndex = static_cast<int64_t>(srcIndexTensorD.GetValue(j));
-        if (srcIndex == srcIndexD) {
+        if (srcIndexD == srcIndex) {
             lastIndexD++;
         }
     }
@@ -521,20 +521,20 @@ __aicore__ inline void UpsampleNearest3dND<T>::ParseTilingData(const UpsampleNea
 {
     batches = tilingData->batches;
     for (int8_t i = 0; i < 3; i++) {
-        outputShapes[i] = tilingData->outputShapes[i];
         inputShapes[i] = tilingData->inputShapes[i];
+        outputShapes[i] = tilingData->outputShapes[i];
     }
 
-    scales[W_INDEX] = tilingData->scaleW;
-    scales[H_INDEX] = tilingData->scaleH;
     scales[D_INDEX] = tilingData->scaleD;
+    scales[H_INDEX] = tilingData->scaleH;
+    scales[W_INDEX] = tilingData->scaleW;
     slideSizeW = tilingData->slideSizeW;
-    tensorSizeW = tilingData->tensorSizeW;
-    tensorSizeH = tilingData->tensorSizeH;
     tensorSizeD = tilingData->tensorSizeD;
+    tensorSizeH = tilingData->tensorSizeH;
+    tensorSizeW = tilingData->tensorSizeW;
 
-    slideNumH = tilingData->slideNumH;
     slideNumD = tilingData->slideNumD;
+    slideNumH = tilingData->slideNumH;
     eachCoreSlideNum = tilingData->eachCoreSlideNum;
     remainder = tilingData->remainder;
     tailStartSlideNum = tilingData->tailStartSlideNum;

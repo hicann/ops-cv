@@ -40,8 +40,8 @@ constexpr int8_t W_INDEX = 3;
 constexpr uint32_t MATRIX_NUM = 2;
 
 constexpr uint64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
-constexpr uint32_t BYTE_LEN_4 = 4;
-constexpr uint32_t BYTE_LEN_2 = 2;
+constexpr uint32_t BYTE_LENGTH_FOUR = 4;
+constexpr uint32_t BYTE_LENGTH_TWO = 2;
 constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinear2dAABackwardTiling {
@@ -79,7 +79,7 @@ private:
     UpsampleBilinear2dAABackwardTilingData tilingData;
     gert::TilingContext *tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
-    uint8_t dataTypeSize = BYTE_LEN_4;
+    uint8_t dataTypeSize = BYTE_LENGTH_FOUR;
     gert::Shape inputShape;
     const bool *alignCorners = nullptr;
     const float *scaleH = nullptr;
@@ -491,13 +491,13 @@ uint8_t UpsampleBilinear2dAABackwardTiling::GetDataTypeSize() const
 {
     switch (dataType) {
         case ge::DT_FLOAT:
-            return BYTE_LEN_4;
+            return BYTE_LENGTH_FOUR;
         case ge::DT_FLOAT16:
-            return BYTE_LEN_2;
+            return BYTE_LENGTH_TWO;
         case ge::DT_BF16:
-            return BYTE_LEN_2;
+            return BYTE_LENGTH_TWO;
         default:
-            return BYTE_LEN_4;
+            return BYTE_LENGTH_FOUR;
     }
 }
 

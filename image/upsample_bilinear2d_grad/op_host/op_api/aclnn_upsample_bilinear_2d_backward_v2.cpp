@@ -81,20 +81,20 @@ bool CheckInputsElement(const aclTensor *gradOut, const aclIntArray *outputSize,
     int64_t outH = (*outputSize)[DIM_ZERO];
     int64_t outW = (*outputSize)[DIM_ONE];
     int64_t batch = (*inputSize)[DIM_ZERO];
-    int64_t channels = (*inputSize)[DIM_ONE];
+    int64_t channel = (*inputSize)[DIM_ONE];
     int64_t inputH = (*inputSize)[DIM_TWO];
     int64_t inputW = (*inputSize)[DIM_THREE];
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
-    FVector<int64_t> fullOutputSize = {batch, channels, outH, outW};
+    FVector<int64_t> fullOutputSize = {batch, channel, outH, outW};
 
     if (gradOut->GetStorageFormat() == op::Format::FORMAT_NHWC) {
         inputH = (*inputSize)[DIM_ONE];
         inputW = (*inputSize)[DIM_TWO];
-        channels = (*inputSize)[DIM_THREE];
+        channel = (*inputSize)[DIM_THREE];
         fullOutputSize[DIM_ONE] = outH;
         fullOutputSize[DIM_TWO] = outW;
-        fullOutputSize[DIM_THREE] = channels;
+        fullOutputSize[DIM_THREE] = channel;
     }
 
     OP_CHECK(inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
@@ -109,13 +109,11 @@ bool CheckInputsElement(const aclTensor *gradOut, const aclIntArray *outputSize,
 
     for (size_t i = 0; i < dimNum; ++i) {
         if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Expected grad_output to have the same shape as output;"
-                " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i,
-                fullOutputSize[i],
-                i,
-                gradOutShape.GetDim(i));
+            OP_LOGE(
+                ACLNN_ERR_PARAM_INVALID,
+                "Expected gradOutput to have the same shape as output;"
+                " output.size(%zu) = %ld but got gradOutput.size(%zu) = %ld",
+                i, fullOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
@@ -170,14 +168,14 @@ static bool CheckUplimit(const aclTensor* gradOut)
     if (IsRegBase()) {
         return true;
     }
-    int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
-    int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
-    int64_t gradOutH = gradOut->GetViewShape().GetDim(DIM_TWO);
-    int64_t gradOutW = gradOut->GetViewShape().GetDim(DIM_THREE);
     int64_t outN = gradOut->GetViewShape().GetDim(DIM_ZERO);
     int64_t outC = gradOut->GetViewShape().GetDim(DIM_ONE);
     int64_t outH = gradOut->GetViewShape().GetDim(DIM_TWO);
     int64_t outW = gradOut->GetViewShape().GetDim(DIM_THREE);
+    int64_t gradOutN = gradOut->GetViewShape().GetDim(DIM_ZERO);
+    int64_t gradOutC = gradOut->GetViewShape().GetDim(DIM_ONE);
+    int64_t gradOutH = gradOut->GetViewShape().GetDim(DIM_TWO);
+    int64_t gradOutW = gradOut->GetViewShape().GetDim(DIM_THREE);
 
     OP_CHECK(gradOutN <= INT32_MAX && gradOutC <= INT32_MAX && gradOutH <= INT32_MAX && gradOutW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
