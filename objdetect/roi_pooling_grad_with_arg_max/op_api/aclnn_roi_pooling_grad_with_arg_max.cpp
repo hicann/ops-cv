@@ -73,6 +73,29 @@ static bool CheckDtype(const aclTensor *gradOutput, const aclTensor *rois,
     return true;
 }
 
+static bool CheckFormat(const aclTensor *gradOutput, const aclTensor *rois,
+    const aclTensor *argmax, const aclTensor *gradInputRef)
+{
+    if (IsRegBase()) {
+        // 如果输入格式是私有格式，记录日志，直接报错
+        if (op::IsPrivateFormat(gradOutput->GetStorageFormat()) || op::IsPrivateFormat(rois->GetStorageFormat()) ||
+            op::IsPrivateFormat(argmax->GetStorageFormat()) || op::IsPrivateFormat(gradInputRef->GetStorageFormat())) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format only support ND.");
+            return false;
+        }
+
+        OP_CHECK(gradOutput->GetViewFormat() == rois->GetViewFormat() &&
+            gradOutput->GetViewFormat() == argmax->GetViewFormat() &&
+            gradOutput->GetViewFormat() == gradInputRef->GetViewFormat(),
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Format of input and output should be equal, gradOutput [%s], rois [%s], argmax [%s], gradInputRef [%s].",
+                    op::ToString(gradOutput->GetViewFormat()).GetString(), op::ToString(rois->GetViewFormat()).GetString(),
+                    op::ToString(argmax->GetViewFormat()).GetString(), op::ToString(gradInputRef->GetViewFormat()).GetString()),
+            return false);
+    }
+    return true;
+}
+
 static bool CheckShape(const aclTensor *gradOutput, const aclTensor *rois,
     const aclTensor *argmax, const aclTensor *gradInputRef, int64_t pooledH, int64_t pooledW)
 {
@@ -174,10 +197,13 @@ static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclTensor *roi
     // 2. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
     CHECK_RET(CheckDtype(gradOutput, rois, argmax, gradInputRef), ACLNN_ERR_PARAM_INVALID);
 
-    // 3. 检查shape
+    // 3. 检查输入的数据格式是否在API支持的数据格式范围之内，需要根据api定义校验
+    CHECK_RET(CheckFormat(gradOutput, rois, argmax, gradInputRef), ACLNN_ERR_PARAM_INVALID);
+
+    // 4. 检查shape
     CHECK_RET(CheckShape(gradOutput, rois, argmax, gradInputRef, pooledH, pooledW), ACLNN_ERR_PARAM_INVALID);
 
-    // 4. 检查数组是否满足要求
+    // 5. 检查数组是否满足要求
     CHECK_RET(CheckAttr(spatialScale, pooledH, pooledW), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
