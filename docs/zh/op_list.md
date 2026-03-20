@@ -106,6 +106,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/rasterizer/README.md">rasterizer</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>实现光栅化计算。根据给定的三维空间中的点和面，获取屏幕中每个像素点的最小深度及其对应的面片索引，并计算该面片的重心坐标透视矫正插值。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/resize_bicubic_v2/README.md">resize_bicubic_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
