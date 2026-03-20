@@ -23,6 +23,8 @@
 
 #include "tiling_context_faker.h"
 
+using namespace std;
+
 #define DO_TILING(tilingContextPara)                                                                                   \
     auto contextFaker = gert::TilingContextFaker();                                                                    \
     /* 1. input/output information */                                                                                  \

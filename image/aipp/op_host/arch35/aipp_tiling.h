@@ -33,9 +33,10 @@
 #include "op_host/tiling_util.h"
 #include "../../op_kernel/arch35/aipp_struct.h"
 
+namespace optiling {
 using namespace std;
 using namespace ge;
-namespace optiling {
+
 constexpr int64_t MAX_RGB_BOUND = 255;
 constexpr int64_t MIN_MATRIX_BOUND = -32677;
 constexpr int64_t MAX_MATRIX_BOUND = 32676;

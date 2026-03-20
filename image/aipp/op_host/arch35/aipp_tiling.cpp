@@ -75,15 +75,15 @@ uint64_t AippTiling::GetTilingKey() const
 {
     uint64_t tilingKey = 0;
     if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) &&
-        !(bool)tilingData.cscParam.cscSwitch) {
+        !static_cast<bool>(tilingData.cscParam.cscSwitch)) {
         tilingKey = FORMAT_RGB_INDICE_UINT32;
     }
     if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
-        (bool)tilingData.cscParam.cscSwitch) {
+        static_cast<bool>(tilingData.cscParam.cscSwitch)) {
         tilingKey = FORMAT_YUV_INDICE_UINT32;
     }
     if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) && 
-        (bool)tilingData.cscParam.cscSwitch) {
+        static_cast<bool>(tilingData.cscParam.cscSwitch)) {
         tilingKey = FORMAT_RGB_SWITCH_OPEN_UINT32;
     }
     if (tilingKey == 0) {
@@ -229,7 +229,7 @@ ge::graphStatus AippTiling::CheckInputImage()
             OP_LOGE(context_->GetNodeName(), \
             "When input_format is YUV420SP_U8, src_image_size_h/w must be even number"), return ge::GRAPH_FAILED);
     } else {
-        errorCheckLog << (int)IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT;
+        errorCheckLog << static_cast<int>(IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT);
         OP_CHECK_IF((inputImageSize <
              tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT),
             OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
@@ -378,7 +378,7 @@ ge::graphStatus AippTiling::SetCropValue()
 
 ge::graphStatus AippTiling::CheckCropSize()
 {
-    if ((bool)tilingData.cropParam.cropSwitch) {
+    if (static_cast<bool>(tilingData.cropParam.cropSwitch)) {
         OP_CHECK_IF(tilingData.cropParam.cropSizeW > tilingData.inputSizeW,
             OP_LOGE(context_->GetNodeName(), "aipp.cfg's crop_size_w should smaller than src_image_size_w."),
             return ge::GRAPH_FAILED);
@@ -511,12 +511,13 @@ void AippTiling::SetSySTilingData()
 void AippTiling::PrintTilingData()
 {
     stringstream ss;
-    ss << "imageFormat: " << (int)tilingData.imageFormat << ", outputFormat: " << (int)tilingData.outputFormat
+    ss << "imageFormat: " << static_cast<int>(tilingData.imageFormat)
+       << ", outputFormat: " << static_cast<int>(tilingData.outputFormat)
        << ", batchNum: " << tilingData.batchNum << ", channelNum: " << tilingData.channelNum
        << ", inputSizeW: " << tilingData.inputSizeW << ", inputSizeH: " << tilingData.inputSizeH
        << ", cropSwitch: " << tilingData.cropParam.cropSwitch
        << ", cropStartPosH: " << tilingData.cropParam.cropStartPosH
-       << ", cropStartPosW: " << tilingData.cropParam.cropStartPosW 
+       << ", cropStartPosW: " << tilingData.cropParam.cropStartPosW
        << ", cropSizeH: " << tilingData.cropParam.cropSizeH
        << ", cropSizeW: " << tilingData.cropParam.cropSizeW << ", cscSwitch: " << tilingData.cscParam.cscSwitch
        << ", cscMatrix00: " << tilingData.cscParam.cscMatrix00 << ", cscMatrix01: " << tilingData.cscParam.cscMatrix01
