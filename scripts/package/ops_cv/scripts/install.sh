@@ -50,7 +50,9 @@ OPP_COMMON_FILE="${CURR_PATH}/opp_common.sh"
 . "${OPP_COMMON_FILE}"
 
 ARCH_INFO=$(grep -e "arch" "$RUN_PKG_INFO_FILE" | cut --only-delimited -d"=" -f2-)
-
+# 包内路径
+GRAPH_SO_PATH="${CURR_PATH}/../../../../opp/built-in/op_graph/lib/linux/${ARCH_INFO}/libopgraph_cv.so"
+HOST_SO_PATH="${CURR_PATH}/../../../../opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}/libophost_cv.so"
 # defaluts info determinated by user's inputs
 ASCEND_INSTALL_INFO="ascend_install.info"
 TARGET_INSTALL_PATH="${DEFAULT_INSTALL_PATH}" #--input-path
@@ -151,7 +153,7 @@ clean_before_reinstall() {
  path or clean the previous version opp install info (${INSTALL_INFO_FILE}) and then reinstall it."
       return 1
     fi
-    bash "${UNINSTALL_SHELL_FILE}" "${TARGET_VERSION_DIR}" "upgrade" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
+    bash "${UNINSTALL_SHELL_FILE}" "${TARGET_VERSION_DIR}" "upgrade" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$PKG_VERSION_DIR"
     if [ "$?" != 0 ]; then
       logandprint "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Clean the installed directory failed."
       return 1
@@ -268,6 +270,13 @@ get_run_path() {
 
 check_arch() {
   local architecture=$(uname -m)
+  # check platform
+  if [ "${architecture}" != "${ARCH_INFO}" ]; then
+    logandprint "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:the architecture of the run package arch:${ARCH_INFO}\
+  is inconsistent with that of the current environment ${architecture}. "
+    exitlog
+    exit 1
+  fi
 }
 
 get_opts() {
@@ -363,12 +372,12 @@ init_env() {
   comm_init_log
 
   if is_version_dirpath "$TARGET_INSTALL_PATH"; then
-    pkg_version_dir="$(basename "$TARGET_INSTALL_PATH")"
+    PKG_VERSION_DIR="$(basename "$TARGET_INSTALL_PATH")"
     TARGET_INSTALL_PATH="$(dirname "$TARGET_INSTALL_PATH")"
   else
-    pkg_version_dir="cann"
+    PKG_VERSION_DIR="cann"
   fi
-  TARGET_VERSION_DIR="$TARGET_INSTALL_PATH/$pkg_version_dir"
+  TARGET_VERSION_DIR="$TARGET_INSTALL_PATH/$PKG_VERSION_DIR"
 
   # Splicing docker-root and install-path
   if [ "${IS_DOCKER_INSTALL}" = "y" ]; then
@@ -453,27 +462,48 @@ mkdir_install_path() {
   fi
 }
 
+handle_multi_arch_install() {
+  local target_dir="$1"
+  local so_file="$2"
+  local lib_dir
+  lib_dir=$(dirname "${target_dir}")
+  local need_restore_lib_w="n"
+  local need_restore_target_w="n"
+
+  if [ -d "${lib_dir}" ]; then
+    if [ ! -w "${lib_dir}" ]; then
+      need_restore_lib_w="y"
+      chmod u+w "${lib_dir}"
+    fi
+  else
+    mkdir -p "${lib_dir}"
+  fi
+  if [ -d "${target_dir}" ]; then
+    if [ ! -w "${target_dir}" ]; then
+      need_restore_target_w="y"
+      chmod u+w "${target_dir}"
+    fi
+  else
+    mkdir -p "${target_dir}"
+  fi
+  cp -f "${so_file}" "${target_dir}"
+  chmod 755 "${target_dir}"/*
+  [ "${need_restore_target_w}" = "y" ] && chmod u-w "${target_dir}"
+  [ "${need_restore_lib_w}" = "y" ] && chmod u-w "${lib_dir}"
+}
+
 install_package() {
   if [ "${IS_INSTALL}" = "n" ] && [ "${IS_UPGRADE}" = "n" ]; then
     return
   fi
 
-  architecture=$(uname -m)
-  graph_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${ARCH_INFO}"
-  ophost_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}"
-  if [ "$architecture" != "$ARCH_INFO" ]; then
+  local architecture=$(uname -m)
+  local graph_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${ARCH_INFO}"
+  local host_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}"
+  if [ "${architecture}" != "${ARCH_INFO}" ]; then
     logandprint "[INFO]: The architecture of the run package is inconsistent with that of the current environment, just copy the graph and host so file to the correct directory."
-    echo "CURR_PATH is ${CURR_PATH}"
-    chmod u+w ${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux
-    chmod u+w ${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux
-    mkdir -p "${graph_so_dir_path}"
-    cp -f "${CURR_PATH}/../../../../${OPP_PLATFORM_DIR}/built-in/op_graph/lib/linux/${ARCH_INFO}/libopgraph_cv.so" "${graph_so_dir_path}"
-    mkdir -p "${ophost_so_dir_path}"
-    cp -f "${CURR_PATH}/../../../../${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}/libophost_cv.so" "${ophost_so_dir_path}"
-    chmod 755 ${graph_so_dir_path}/*
-    chmod 755 ${ophost_so_dir_path}/*
-    chmod u-w ${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux
-    chmod u-w ${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux
+    handle_multi_arch_install "${graph_so_dir_path}" "${GRAPH_SO_PATH}"
+    handle_multi_arch_install "${host_so_dir_path}" "${HOST_SO_PATH}"
     exit 0
   fi
   # use uninstall to clean the install folder
@@ -483,7 +513,7 @@ install_package() {
   fi
 
   bash "${INSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "${TARGET_USERNAME}" "${TARGET_USERGROUP}" "${IN_FEATURE}" \
-    "${IN_INSTALL_TYPE}" "${IS_FOR_ALL}" "${IS_SETENV}" "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "${PYLOCAL}"  "$pkg_version_dir"
+    "${IN_INSTALL_TYPE}" "${IS_FOR_ALL}" "${IS_SETENV}" "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "${PYLOCAL}"  "$PKG_VERSION_DIR"
   if [ "$?" != 0 ]; then
     comm_log_operation "Install" "${IN_INSTALL_TYPE}" "OpsCv" "$?" "${CMD_LIST}"
   fi
@@ -497,6 +527,40 @@ install_package() {
     chmod 440 "${TARGET_SHARED_INFO_DIR}/${OPP_PLATFORM_DIR}/script/filelist.csv" 2>/dev/null
   fi
   comm_log_operation "Install" "${IN_INSTALL_TYPE}" "OpsCv" "$?" "${CMD_LIST}"
+}
+
+# 通用函数：删除so文件和空目录（带权限检查）
+# 参数: $1 - so文件完整路径
+remove_so_and_empty_dir() {
+  local so_path="$1"
+  local so_dir_path=$(dirname "${so_path}")
+  local parent_dir=$(dirname "${so_dir_path}")
+  local so_dir_w_added=0
+  local parent_dir_w_added=0
+
+  # 删除so文件
+  if [ -f "${so_path}" ]; then
+    # 检查目录写权限，无权限时临时添加
+    if [ -d "${so_dir_path}" ] && [ ! -w "${so_dir_path}" ]; then
+      chmod u+w "${so_dir_path}" 2>/dev/null
+      so_dir_w_added=1
+    fi
+    rm -f "${so_path}"
+  fi
+
+  # 删除空目录
+  if [ -d "${so_dir_path}" ] && [ -z "$(ls -A "${so_dir_path}")" ]; then
+    # 检查父目录写权限，无权限时临时添加
+    if [ -d "${parent_dir}" ] && [ ! -w "${parent_dir}" ]; then
+      chmod u+w "${parent_dir}" 2>/dev/null
+      parent_dir_w_added=1
+    fi
+    rm -rf "${so_dir_path}"
+  fi
+
+  # 恢复权限
+  [ ${parent_dir_w_added} -eq 1 ] && chmod -w "${parent_dir}" 2>/dev/null
+  [ ${so_dir_w_added} -eq 1 ] && chmod -w "${so_dir_path}" 2>/dev/null
 }
 
 uninstall_package() {
@@ -516,56 +580,37 @@ uninstall_package() {
     exit 0
   fi
 
-  # 卸载异构
+  # 如果是异构卸载
   local architecture=$(uname -m)
+  local target_arch=""
   if [ "${architecture}" != "${ARCH_INFO}" ]; then
     target_arch="${ARCH_INFO}"
   else
-    # 判断异构so文件是否存在，存在则删除
+    # 判断异构so是否存在，存在则删除
     if [ "${architecture}" = "x86_64" ]; then
       target_arch="aarch64"
     else
       target_arch="x86_64"
     fi
   fi
-  
-  graph_so_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${target_arch}/libopgraph_cv.so"
-  graph_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${target_arch}"
-  if [ -f "${graph_so_path}" ]; then
-    rm -f "${graph_so_path}"
-  fi
-  # 判断目录是否存在且为空
-  if [ -d "${graph_so_dir_path}" ]; then
-    if [ -z "$(ls -A ${graph_so_dir_path})" ]; then
-      rm -rf "${graph_so_dir_path}"
-    fi
-  fi
 
-  ophost_so_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${target_arch}/libophost_cv.so"
-  ophost_so_dir_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${target_arch}"
-  
-  if [ -f "${ophost_so_path}" ]; then
-    rm -f "${ophost_so_path}"
-  fi
-  # 判断目录是否存在且为空
-  if [ -d "${ophost_so_dir_path}" ]; then
-    if [ -z "$(ls -A ${ophost_so_dir_path})" ]; then
-      rm -rf "${ophost_so_dir_path}"
-    fi
-  fi
+  # 删除异构so文件和空目录
+  local graph_so_path="${TARGET_VERSION_DIR}/opp/built-in/op_graph/lib/linux/${target_arch}/libopgraph_cv.so"
+  local host_so_path="${TARGET_VERSION_DIR}/opp/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${target_arch}/libophost_cv.so"
+  remove_so_and_empty_dir "${graph_so_path}"
+  remove_so_and_empty_dir "${host_so_path}"
 
   if [ "${architecture}" != "${ARCH_INFO}" ]; then
     return
   fi
 
-  bash "${UNINSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "uninstall" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
+  bash "${UNINSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "uninstall" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$PKG_VERSION_DIR"
   logandprint "[INFO]: Remove precheck info."
 
   comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "OpsCv" "$?" "${CMD_LIST}"
 }
 
 main() {
-  check_arch
 
   get_run_path "$@"
 
