@@ -102,9 +102,9 @@ namespace optiling
         }
 
         float spatial_scale = *(attrsPtr->GetAttrPointer<float>(SPATIAL_INDEX));
-        int32_t sampling_ratio = *(attrsPtr->GetAttrPointer<int32_t>(SAMPLING_INDEX));
-        int32_t pooled_height = *(attrsPtr->GetAttrPointer<int32_t>(PH_INDEX));
-        int32_t pooled_width = *(attrsPtr->GetAttrPointer<int32_t>(PW_INDEX));
+        int64_t sampling_ratio = *(attrsPtr->GetAttrPointer<int64_t>(SAMPLING_INDEX));
+        int64_t pooled_height = *(attrsPtr->GetAttrPointer<int64_t>(PH_INDEX));
+        int64_t pooled_width = *(attrsPtr->GetAttrPointer<int64_t>(PW_INDEX));
         bool aligned = *(attrsPtr->GetAttrPointer<bool>(ALIGNED_INDEX));
         bool clockwise = *(attrsPtr->GetAttrPointer<bool>(CLOCKWISE_INDEX));
 

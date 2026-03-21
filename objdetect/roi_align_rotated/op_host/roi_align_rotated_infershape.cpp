@@ -67,8 +67,8 @@ namespace ops
             return ge::GRAPH_FAILED;
         }
 
-        const int32_t *pooled_height = attrsPtr->GetAttrPointer<int32_t>(PH_INDEX);
-        const int32_t *pooled_width = attrsPtr->GetAttrPointer<int32_t>(PW_INDEX);
+        const int64_t *pooled_height = attrsPtr->GetAttrPointer<int64_t>(PH_INDEX);
+        const int64_t *pooled_width = attrsPtr->GetAttrPointer<int64_t>(PW_INDEX);
 
         auto output_shape_length = 4;
         output_shape->SetDimNum(output_shape_length);

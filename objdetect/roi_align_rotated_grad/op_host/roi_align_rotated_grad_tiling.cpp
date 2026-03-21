@@ -104,8 +104,8 @@ namespace optiling
             return ge::GRAPH_FAILED;
         }
         uint32_t boxSize = roiShape.GetDim(BOX_SIZE_DIM);
-        int32_t pooledHeight = *(attrs->GetAttrPointer<uint32_t>(INPUT_POOLED_H));
-        int32_t pooledWidth = *(attrs->GetAttrPointer<uint32_t>(INPUT_POOLED_W));
+        int64_t pooledHeight = *(attrs->GetAttrPointer<int64_t>(INPUT_POOLED_H));
+        int64_t pooledWidth = *(attrs->GetAttrPointer<int64_t>(INPUT_POOLED_W));
 
         auto inputShape = attrs->GetListInt(INPUT_Y_GRAD_LIST)->GetData();
         uint32_t batchSize = inputShape[BATCH_SIZE_DIM];
@@ -115,7 +115,7 @@ namespace optiling
 
         bool aligned = *(attrs->GetAttrPointer<bool>(INPUT_ALIGNED));
         bool clockwise = *(attrs->GetAttrPointer<bool>(INPUT_CLOCKWISE));
-        int32_t samplingRatio = *(attrs->GetAttrPointer<uint32_t>(INPUT_SAMPLING_RATIO));
+        int64_t samplingRatio = *(attrs->GetAttrPointer<int64_t>(INPUT_SAMPLING_RATIO));
         float spatialScale = *(attrs->GetAttrPointer<float>(INPUT_SPATIAL_SCALE));
 
         uint32_t coreRoisNums = boxSize / coreNum;
