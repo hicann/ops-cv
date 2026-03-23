@@ -272,7 +272,7 @@ function(gen_opapi_symbol)
   target_link_libraries(
     ${OPAPI_NAME}
     PUBLIC $<BUILD_INTERFACE:intf_pub_cxx17>
-    PRIVATE c_sec nnopbase
+    PRIVATE c_sec nnopbase -Wl,-Bsymbolic
     $<$<BOOL:${BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG}>:$<BUILD_INTERFACE:opapi_math>>
     )
 
