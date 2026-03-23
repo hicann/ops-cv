@@ -100,14 +100,14 @@ const aclTensor *GridSample(const aclTensor *x, const aclTensor *grid, int64_t i
     bool alignCorners, bool channelLast, int64_t schedulerMode, aclOpExecutor *executor)
 {
     L0_DFX(GridSample, x, grid, interpolationMode, paddingMode, alignCorners, channelLast, schedulerMode);
-    op::Shape yShape;
-    yShape.AppendDim(x->GetViewShape().GetDim(FIRST_DIM));
     if (x == nullptr || x->GetViewShape().GetDimNum() != SPATIAL_DIM_NUM) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR,
             "input tensor x is nullptr or its dimension is not equal to %ld.",
             SPATIAL_DIM_NUM);
         return nullptr;
     }
+    op::Shape yShape;
+    yShape.AppendDim(x->GetViewShape().GetDim(FIRST_DIM));
     // 'C' dim of output shape
     if (channelLast) {
         yShape.AppendDim(x->GetViewShape().GetDim(FOURTH_DIM));
