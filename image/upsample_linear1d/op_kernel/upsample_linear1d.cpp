@@ -13,44 +13,35 @@
  * \brief
  */
 
-#include "upsample_linear1d.h"
+#include "upsample_linear1d_split.h"
+#include "upsample_linear1d_mix.h"
 
 using namespace UpsampleLinear1d;
 
 extern "C" __global__ __aicore__ void upsample_linear1d(
     GM_ADDR input, GM_ADDR size, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
 {
-    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_1);
+   
     GET_TILING_DATA(tilingData, tiling);
-
-    // foreach(vector) not need workspace
     GM_ADDR userWS = GetUserWorkspace(workspace);
     if (userWS == nullptr) {
         return;
     }
-
-    const UpsampleLinear1dTilingData *__restrict tiling_data = &tilingData;
-    const TCubeTiling *__restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
-
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_1);
     if (TILING_KEY_IS(1)) {
-        if (tiling_data->dataType == 2) {
-            UpsampleLinear1dND<float> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling);
-            op.Init(input, output, userWS, &tilingData);
-            op.Process();
-        } else if (tiling_data->dataType == 1) {
-            UpsampleLinear1dND<half> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling);
-            op.Init(input, output, userWS, &tilingData);
-            op.Process();
-        } else if (tiling_data->dataType == 3) {
-            UpsampleLinear1dND<bfloat16_t> op;
-            REGIST_MATMUL_OBJ(
-                &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling);
-            op.Init(input, output, userWS, &tilingData);
-            op.Process();
-        }
+        TPipe pipe;
+        KERNEL_TASK_TYPE(1, KERNEL_TYPE_MIX_AIC_1_2);
+        UpsampleLinear1dND<DTYPE_X> op(&pipe);
+        op.Init(input, output, userWS, &tilingData);
+        op.Process();
+    } else if (TILING_KEY_IS(2)) {
+        KERNEL_TASK_TYPE(2, KERNEL_TYPE_MIX_AIC_1_1);
+        const UpsampleLinear1dTilingData *__restrict tiling_data = &tilingData;
+        const TCubeTiling *__restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
+        UpsampleLinear1dMixND<DTYPE_X> op;
+        REGIST_MATMUL_OBJ(
+            &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling);
+        op.Init(input, output, userWS, &tilingData);
+        op.Process();
     }
 }

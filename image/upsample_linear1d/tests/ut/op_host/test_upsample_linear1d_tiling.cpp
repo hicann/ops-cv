@@ -39,8 +39,8 @@ TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_001) {
                                                gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(2))},
                                               &compileInfo);
     uint64_t expectTilingKey = 1;
-    string expectTilingData = "0 64 1 1073741824 0 8192 0 0 0 1 64 0 1 1 0 8192 4096 1 0 1 0 64 0 1 0 1 128 1 1 1 128 2 0 1 0 4294967297 549755813888 4294967424 549755813952 274877906960 4294967424 4294967297 1 0 175921860444160 4096 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
-    std::vector<size_t> expectWorkspaces = {16810752};
+    string expectTilingData = "0 64 550829555712 0 0 0 0 1 64 0 1 1 0 0 0 1024 4096 0 0 0 0 1 0 0 1 0 0 0 0 0 0 1 1 1 16 208 16 1 1 1 2 0 0 4294967297 4294967296 4294967297 4294967360 274877906960 4294967304 4294967297 1 0 10995116277760 4096 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16778048};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
@@ -60,9 +60,9 @@ TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_002) {
                                                 gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>({1}))
                                             },
                                             &compileInfo);
-    uint64_t expectTilingKey = 1;
-    string expectTilingData = "0 128 2 1065353216 0 0 0 0 0 0 0 0 1 1 0 0 4096 1 0 1 0 0 0 1 0 1 0 1 1 1 128 1 1 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
-    std::vector<size_t> expectWorkspaces = {16777728};
+    uint64_t expectTilingKey = 2;
+    string expectTilingData = "0 128 1065353216 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 1 1 1 1 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
@@ -81,8 +81,8 @@ TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_003) {
                                                 gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>({2}))
                                             },
                                             &compileInfo);
-    uint64_t expectTilingKey = 1;
-    string expectTilingData = "1 128 2 1056898815 0 4294976640 2 2 2 1 128 0 1 1 0 2560 4096 1 0 1 0 128 0 1 0 1 80 1 1 1 128 1 1 1 256 4294967297 549755814144 4294967424 313532612736 549755813904 8589934656 4294967298 1 0 316659348799488 8192 4294967297 4294967297 8589934594 0 8589934594 1 0 0 0 0 0 0 0 0 ";
-    std::vector<size_t> expectWorkspaces = {16815424};
+    uint64_t expectTilingKey = 2;
+    string expectTilingData = "1 128 549755813888 1 2 2 2 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 1 1 1 1 1 256 4294967297 4294967552 4294967297 4294967424 549755813904 4294967304 4294967297 1 0 19791209299968 8192 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {16777728};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
