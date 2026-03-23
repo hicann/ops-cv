@@ -36,12 +36,14 @@ namespace ops
         auto const gtboxesShape = context->GetInputShape(INPUT_INDEX_GTBOXES);
 
         auto attrs = context->GetAttrs();
-        const bool *aligned = attrs->GetAttrPointer<bool>(ALIGNED_INFO_IDX);
 
         if (bboxesShape == nullptr || gtboxesShape == nullptr || attrs == nullptr)
         {
+            OP_LOGE(
+                context, "Either bboxesShape, gtboxesShape, or attrs is nullptr");
             return ge::GRAPH_FAILED;
         }
+        const bool *aligned = attrs->GetAttrPointer<bool>(ALIGNED_INFO_IDX);
 
         // update output shape.
         overlapShape->SetDimNum(IOUS_DIM); // the output dimensions are 2.
