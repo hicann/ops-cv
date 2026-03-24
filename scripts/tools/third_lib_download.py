@@ -10,14 +10,14 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
 import urllib.request
+import subprocess
 import os
 
 
 def down_files_native(url_list):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
     for url in url_list:
-        
         file_name = url.split('/')[-1]
         
         if not file_name:
@@ -28,9 +28,26 @@ def down_files_native(url_list):
         
         urllib.request.urlretrieve(url, file_path)
 
+
+def git_download(url_list):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    for url in url_list:
+        file_name = url.split('/')[-1]
+        file_name = file_name.rsplit(".git", 1)[0]
+        if not file_name:
+            file_name = "downloaded_file"
+        file_path = os.path.join(current_dir, file_name)
+
+        result = subprocess.run(
+            ["git", "clone", url, file_path],
+            capture_output = True
+        )
+        if result.returncode != 0:
+            print(f"Failed to clone {url}, {result.stderr}")
+
+
 if __name__ == "__main__":
     my_urls = [
-        "https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz",
         "https://gitcode.com/cann-src-third-party/json/releases/download/v3.11.3/include.zip",
         ("https://gitcode.com/cann-src-third-party/makeself/releases/download/"
         "release-2.5.0-patch1.0/makeself-release-2.5.0-patch1.tar.gz"),
@@ -41,3 +58,9 @@ if __name__ == "__main__":
     ]
     
     down_files_native(my_urls)
+
+    my_git_urls = [
+        "https://gitcode.com/cann/opbase.git"
+    ]
+
+    git_download(my_git_urls)

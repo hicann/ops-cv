@@ -1,7 +1,7 @@
 # 算子列表
 
 > 说明：
-> - **算子目录**：目录名为算子名小写下划线形式，每个目录承载该算子所有交付件，包括代码实现、examples、文档等，目录介绍参见[项目目录](./context/dir_structure.md)。
+> - **算子目录**：目录名为算子名小写下划线形式，每个目录承载该算子所有交付件，包括代码实现、examples、文档等，目录介绍参见[项目目录](./install/dir_structure.md)。
 > - **算子执行硬件单元**：大部分算子运行在AI Core，少部分算子运行在AI CPU。默认情况下，项目中提到的算子一般指AI Core算子。关于AI Core和AI CPU详细介绍参见[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)中“概念原理和术语 > 硬件架构与数据处理原理”。
 > - **算子接口列表**：为方便调用算子，CANN提供一套C API执行算子，一般以aclnn为前缀，全量接口参见[aclnn列表](op_api_list.md)。
 
@@ -52,7 +52,7 @@
     <td>&cross;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>DeformableOffsets 算子的目的是根据 offsets（ kernel 采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便 Conv2d 算子进行卷积计算。而 DeformableOffsetsGrad 即为这一过程的反向。  </td>
+    <td>DeformableOffsets 算子的目的是根据 offsets（ kernel 采样点的偏移值）来收集用于卷积的特征采样点，并对其进行重组，方便 Conv2d 算子进行卷积计算。而 DeformableOffsetsGrad 即为这一过程的反向。  </td>
   </tr>
   <tr>
     <td>image</td>
