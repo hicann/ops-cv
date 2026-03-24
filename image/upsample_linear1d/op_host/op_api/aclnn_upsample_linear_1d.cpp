@@ -236,25 +236,25 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
         auto viewCopyResult = l0op::ViewCopy(self, out, uniqueExecutor.get());
         CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
     } else {
-        // 固定写法，将输入self升维
-        auto selfRefContiguous = View3dAs4d(self, uniqueExecutor.get());
-        CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-        // scale转为aclFloatArray
-        auto scalesRes = (scale < 0) ? 0 : scale;
-        const float scalesList[] = {static_cast<float>(scalesRes)};
-        const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, 1);
-        CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-        auto dataType = selfRefContiguous->GetDataType();
         const aclTensor *ResizeDOut;
-
-        if ((curArch == NpuArch::DAV_2201) &&
-            CheckLinear1dScales(self, out, outputSize, scale, alignCorners)) {
+        auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+        if ((curArch == NpuArch::DAV_2201)) {
+            auto selfRefContiguous = l0op::Contiguous(self, uniqueExecutor.get());
+            CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
             // 调用UpsampleLinear1d算子kernel
             ResizeDOut =
                 GoUpsampleLinear1DAICORE(selfRefContiguous, outputSize, alignCorners, scale, out, uniqueExecutor.get());
         } else {
+            // 固定写法，将输入self升维
+            auto selfRefContiguous = View3dAs4d(self, uniqueExecutor.get());
+            CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            auto dataType = selfRefContiguous->GetDataType();
+        
+            // scale转为aclFloatArray
+            auto scalesRes = (scale < 0) ? 0 : scale;
+            const float scalesList[] = {static_cast<float>(scalesRes)};
+            const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, 1);
+            CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
             if (op::DataType::DT_BF16 == dataType) {
                 selfRefContiguous = l0op::Cast(selfRefContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             }

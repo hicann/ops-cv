@@ -86,26 +86,6 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     tilingDatafromBin->tailAvergingRowsW = 128;
     tilingDatafromBin->remainderW = 1;
 
-    tilingDatafromBin->mPerTime = 1;
-    tilingDatafromBin->loopTimes = 1;
-    tilingDatafromBin->loopTail = 0;
-    tilingDatafromBin->loopTailTimes = 1;
-    tilingDatafromBin->loopTailTail = 0;
-    
-    tilingDatafromBin->remainderLoopTailTimes = 1;
-    tilingDatafromBin->remainderLoopTailTimes = 0;
-
-    tilingDatafromBin->inputUbSize = 1024;
-    tilingDatafromBin->outputUbSize = 8192;
-    tilingDatafromBin->matmulLoopTimes = 1;
-    tilingDatafromBin->matmulBlockTail = 0;
-    
-    tilingDatafromBin->remainderMatmulLoopTimes = 128;
-    tilingDatafromBin->remainderMatmulBlockTail = 0;
-    tilingDatafromBin->matmulBlockPerTime = 1;
-    tilingDatafromBin->singleCoreK = 16;
-    
-
     tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
     tilingDatafromBin->matmulTiling_w.M = 1;
     tilingDatafromBin->matmulTiling_w.N = 16;
@@ -135,7 +115,7 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     tilingDatafromBin->matmulTiling_w.singleBatchM = 1;
     tilingDatafromBin->matmulTiling_w.singleBatchN = 1;
 
-    ICPU_SET_TILING_KEY(1);
+    ICPU_SET_TILING_KEY(2);
 
     ICPU_RUN_KF(upsample_linear1d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
     fileName = "./upsample_linear1d_data/float32_output_upsample_linear1d.bin";

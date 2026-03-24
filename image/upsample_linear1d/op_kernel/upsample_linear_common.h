@@ -23,7 +23,9 @@ constexpr int32_t BUFFER_NUM = 1;
 constexpr uint32_t ADDR_ALIGN_SIZE = 128;
 constexpr uint8_t SYNC_MODE2 = 2;
 constexpr uint8_t VEC_FLAG_ID_0 = 0;
-
+constexpr uint8_t VEC_FLAG_ID_1 = 1;
+constexpr uint8_t VEC_FLAG_ID_2 = 2;
+constexpr uint8_t VEC_FLAG_ID_3 = 3;
 __aicore__ inline int64_t ROUND_UP(const int64_t x, const int64_t block_number)
 {
     if (block_number > 0) {
@@ -91,17 +93,11 @@ __aicore__ inline bool FloatEqual(const float a, const float b)
     }
 };
 
-__aicore__ inline void calculateRadioTensorW(
-    int64_t loopIndex, int64_t length, LocalTensor<float> radioTensor,
-    int64_t& xMin, int64_t& singleCoreK, float scale_w, bool align_corners, 
-    int64_t wIn, int64_t slide_size_w, TPipe pipe)
+__aicore__ inline void calculateSingleCoreK(
+    int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK, 
+    float scale_w, bool align_corners, int64_t wIn)
 {
     singleCoreK = 0;
-    // 计算横向系数矩阵
-    Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
-    event_t eventIDVToS = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_S));
-    SetFlag<HardEvent::V_S>(eventIDVToS);
-    WaitFlag<HardEvent::V_S>(eventIDVToS);
     xMin = getCenterValue(loopIndex, scale_w, align_corners);
     int64_t xMax = getCenterValue(loopIndex + length - 1, scale_w, align_corners);
     int64_t xMaxNext = Min(xMax + (int64_t)2, wIn);
@@ -110,6 +106,13 @@ __aicore__ inline void calculateRadioTensorW(
     if ((singleCoreK + xMin) > wIn) {
         singleCoreK = wIn - xMin;
     }
+}
+
+__aicore__ inline void calculateRadioTensorW(
+    int64_t loopIndex, int64_t length, LocalTensor<float> radioTensor,
+    int64_t xMin, int64_t singleCoreK, float scale_w, bool align_corners, 
+    int64_t wIn, int64_t slide_size_w)
+{
     for (int64_t i = 0; i < length; i++) {
         float i_rel_idx = getCenterValue(i + loopIndex, scale_w, align_corners);
         int64_t i_min = Min(static_cast<int64_t>(i_rel_idx), wIn - 1);
@@ -129,18 +132,6 @@ __aicore__ inline void calculateRadioTensorW(
             radioTensor.SetValue(indexMax, i_lambda_1);
         }
     }
-}
-
-__aicore__ inline void getWorkSize(
-    int64_t& totalPerCore, int64_t& inputWorkStartOffset_0, int64_t& outputWorkStartOffset_0,
-    int64_t matmulBlockPerTime, int64_t singleCoreKTiling, int64_t slide_size_w, 
-    int64_t radio_matrix_size_w, int64_t blockIdx)
-{
-    int64_t inputSize = matmulBlockPerTime * singleCoreKTiling;
-    int64_t outputSize = matmulBlockPerTime * slide_size_w;
-    totalPerCore = radio_matrix_size_w + inputSize + outputSize;
-    inputWorkStartOffset_0 = totalPerCore * blockIdx + radio_matrix_size_w;
-    outputWorkStartOffset_0 = totalPerCore * blockIdx + radio_matrix_size_w + inputSize;
 }
 
 #endif  // UPSAMPLE_LINEAR_COMMON_H
