@@ -22,17 +22,20 @@ class BackgroundReplace : public OpDef {
         .ParamType(REQUIRED)
         .DataType({ge::DT_FLOAT16, ge::DT_UINT8})
         .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
+        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     this->Input("src")
         .ParamType(REQUIRED)
         .DataType({ge::DT_FLOAT16, ge::DT_UINT8})
         .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
+        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     this->Input("mask")
         .ParamType(REQUIRED)
         .DataType({ge::DT_FLOAT16, ge::DT_FLOAT16})
         .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
+        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     this->Output("out")
         .ParamType(REQUIRED)
         .DataType({ge::DT_FLOAT16, ge::DT_UINT8})

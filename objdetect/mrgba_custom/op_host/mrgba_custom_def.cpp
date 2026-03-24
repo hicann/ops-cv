@@ -24,12 +24,14 @@ namespace ops {
                 .ParamType(REQUIRED)
                 .DataType({ge::DT_UINT8})
                 .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND});
+                .UnknownShapeFormat({ge::FORMAT_ND})
+                .AutoContiguous();
             this->Input("alpha")
                 .ParamType(REQUIRED)
                 .DataType({ge::DT_UINT8})
                 .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND});
+                .UnknownShapeFormat({ge::FORMAT_ND})
+                .AutoContiguous();
             this->Output("dst")
                 .ParamType(REQUIRED)
                 .DataType({ge::DT_UINT8})
