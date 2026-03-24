@@ -43,7 +43,14 @@
       <td>features</td>
       <td>输入</td>
       <td>待重组的点云特征。</td>
-      <td>FLOAT、FLOAT16、DOUBLE、INT32、INT64、INT16、INT8、UINT8、BOOL</td>
+      <td>FLOAT、FLOAT16</td>
+      <td>ND</td>
+    </tr>
+    <tr>
+      <td>features_batch_cnt</td>
+      <td>输入</td>
+      <td>每个批次中包含的点云特征数量。</td>
+      <td>INT32</td>
       <td>ND</td>
     </tr>
     <tr>
@@ -54,10 +61,17 @@
       <td>ND</td>
     </tr>
     <tr>
+      <td>indices_batch_cnt</td>
+      <td>输入</td>
+      <td>每个批次中包含的重组indices数量。</td>
+      <td>INT32</td>
+      <td>ND</td>
+    </tr>
+    <tr>
       <td>out</td>
       <td>输出</td>
       <td>输出点云特征。</td>
-      <td>FLOAT、FLOAT16、DOUBLE、INT32、INT64、INT16、INT8、UINT8、BOOL</td>
+      <td>FLOAT、FLOAT16</td>
       <td>ND</td>
     </tr>
   </tbody></table>
