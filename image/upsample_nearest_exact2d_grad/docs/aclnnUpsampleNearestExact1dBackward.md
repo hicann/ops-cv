@@ -340,11 +340,11 @@ int main()
     void *outDeviceAddr = nullptr;
     aclTensor *input = nullptr;
     aclTensor *out = nullptr;
-    std::vector<float> inputHostData = {0, 1};
-    std::vector<float> outHostData(32, 0);
+    std::vector<float> inputHostData = {1, 2};
+    std::vector<float> outHostData(4, 0);
     std::vector<int64_t> outputSize = {2};
-    std::vector<int64_t> inputSize = {1, 1, 2};
-    double scales = 2.0;
+    std::vector<int64_t> inputSize = {1, 1, 4};
+    double scales = 0.5;
 
     // 创建input aclTensor
     ret = CreateAclNchTensor(inputHostData, inputShape, &inputDeviceAddr, aclDataType::ACL_FLOAT, &input);
