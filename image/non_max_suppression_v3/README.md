@@ -27,7 +27,6 @@
 | offset            | 可选属性     | • 可选整数。<br>• 默认值为 0。                                                              | INT           | -    |
 | selected_indices  | 输出       | 一维整数 Tensor，shape 为 (M)，表示从输入 boxes Tensor 中选中的索引，其中 M <= max_output_size。        | INT32 | ND   |
 
-
 ## 约束说明
 
 - 输入的 boxes 和 scores 必须是 float 类型。
@@ -37,5 +36,3 @@
 | 调用方式 | 调用样例                                                                   | 说明                                                             |
 |--------------|------------------------------------------------------------------------|----------------------------------------------------------------|
 | 图模式调用 | [test_geir_non_max_suppression_v3](./examples/test_geir_non_max_suppression_v3.cpp)   | 通过[算子IR](./op_graph/non_max_suppression_v3_proto.h)构图方式调用NonMaxSuppressionV3算子。 |
-
-

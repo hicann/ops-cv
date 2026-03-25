@@ -11,7 +11,6 @@
 |  <term>Atlas 推理系列产品</term>    |     √    |
 |  <term>Atlas 训练系列产品</term>    |     ×    |
 
-
 ## 功能说明
 
 - 算子功能：[UpsampleBicubic2d](../upsample_bicubic2d/README.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
@@ -54,7 +53,6 @@
     其中：
     - $a=-0.75$
     - $d = |(h, w) - (h_i, w_j)|$
-
 
 ## 参数说明
 
