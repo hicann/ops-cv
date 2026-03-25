@@ -11,7 +11,6 @@
 |  <term>Atlas 推理系列产品</term>    |     ×    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
-
 ## 功能说明
 
 - 算子功能：[GridSampler](../grid_sample/README.md)中3D场景的反向传播，完成张量input与张量grid的梯度计算。

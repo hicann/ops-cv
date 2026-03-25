@@ -17,7 +17,6 @@
   \frac{\alpha L}{\alpha X_i} = \frac{\alpha L}{\alpha Y_i} \times \frac{y_1 - y_0}{x_1 - x_0}
   $$
 
-
 ## 参数说明
 
 <table style="undefined;table-layout: fixed; width: 1005px">

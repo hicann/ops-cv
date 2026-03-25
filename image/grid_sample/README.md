@@ -13,7 +13,6 @@
 |  <term>Kirin X90 处理器系列产品</term> | √ |
 |  <term>Kirin 9030 处理器系列产品</term> | √ |
 
-
 ## 功能说明
 
 - 算子功能：提供一个输入tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。
@@ -47,7 +46,6 @@
       $$
   
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
-
 
     - 对于超出范围的坐标，会根据paddingMode进行不同处理：
   
@@ -149,9 +147,7 @@
   - 不支持3D场景。
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：2D场景下，数据类型不支持BFLOAT16。
-
-- Kirin X90/Kirin 9030 处理器系列产品: 不支持BFLOAT16。
-
+- <term>Kirin X90 处理器系列产品</term>、<term>Kirin 9030 处理器系列产品</term>：不支持BFLOAT16。
 
 ## 约束说明
 
@@ -163,7 +159,6 @@
 - 输入`x`的（D轴的大小 * H轴的大小 * W轴的大小） < INT32的最大值。
 - grid的输入值*图片（长或宽）大于24位的二进制数（16777216），采样点可能存在误差，精度可能产生偏差。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：如果grid存在超出[-1, 1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
-
 
 ## 调用说明
 

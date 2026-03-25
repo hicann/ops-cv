@@ -11,7 +11,6 @@
 |  <term>Atlas 推理系列产品</term>    |     √    |
 |  <term>Atlas 训练系列产品</term>    |     ×    |
 
-
 ## 功能说明
 
 - 算子功能：对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。
@@ -160,6 +159,7 @@
   </tbody></table>
 
 <term>Atlas 推理系列产品</term>：
+
 - 输入和输出的数据类型不支持BFLOAT16。
 - 入参`input`不支持输入inf、-inf。
 

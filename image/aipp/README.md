@@ -92,17 +92,15 @@
       <td>FLOAT16</td>
       <td>NCHW、NHWC</td>
     </tr>
-    <tr>
   </tbody></table>
-
-
 
 ## 约束说明
 
 - aipp_config_path配置文件说明：仅支持静态AIPP配置、图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置(DTC)。同时输入图片仅支持三通道。
 
 - aipp_config_path文件配置示例如下，具体参数说明参见下表。
-    ```
+    
+    ```Cpp
     aipp_op {
         aipp_mode : static
         src_image_size_w : 608

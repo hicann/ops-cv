@@ -27,7 +27,6 @@
 | method   | 可选属性     | • 指定调整大小时的采样方法，为可选字符串。提供的方法有：“bilinear”，“nearest”，“bilinear_V2”。<br>• 默认值为“bilinear”。                                                                                                                                                                                                        | STRING                                                  | -    |
 | y   | 输出       | 返回一个四维Tensor，shape大小为(num_boxes, crop_height, crop_width, depth)。                                                                                                                                                                                                                          | FLOAT16、FLOAT                                           | NHWC |
 
-
 ## 约束说明
 
 无
@@ -37,5 +36,3 @@
 | 调用方式 | 调用样例                                                                   | 说明                                                             |
 |--------------|------------------------------------------------------------------------|----------------------------------------------------------------|
 | 图模式调用 | [test_geir_crop_and_resize](./examples/test_geir_crop_and_resize.cpp)   | 通过[算子IR](./op_graph/crop_and_resize_proto.h)构图方式调用CropAndResize算子。 |
-
-
