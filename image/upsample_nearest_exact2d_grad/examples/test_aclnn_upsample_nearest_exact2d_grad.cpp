@@ -97,8 +97,8 @@ int main()
     std::vector<float> outHostData(32, 0);
     std::vector<int64_t> outputSize = {4, 2};
     std::vector<int64_t> inputSize = {1, 1, 8, 4};
-    double scalesH = 2.0;
-    double scalesW = 2.0;
+    double scalesH = 0.5;
+    double scalesW = 0.5;
     // 创建input aclTensor
     ret = CreateAclNchTensor(inputHostData, inputShape, &inputDeviceAddr, aclDataType::ACL_FLOAT, &input);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
