@@ -31,6 +31,7 @@ constexpr uint32_t BEST_PERFORMANCE_SCALE_BELOW_8 = 8;
 constexpr uint32_t BEST_PERFORMANCE_SCALE_BELOW_5 = 5;
 constexpr uint32_t BEST_PERFORMANCE_SCALE_BELOW_1 = 1;
 
+constexpr uint32_t WORKSPACE_SIZE_1D_LIMIT = 160 * 1024 * 1024;
 constexpr float HALF_NUM = 0.5;
 
 constexpr uint32_t BYTE = 8;
@@ -82,11 +83,11 @@ private:
     void get_scale_from_out();
     inline float compute_scale_value(
         const int64_t input_size, const int64_t output_size, const bool align_corner, const float scale) const;
-    bool getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize);
-    void getWorkspaceBlock(const uint64_t input_h, const uint64_t mPerTime, uint64_t& matmulBlockPerTime);
-    uint64_t getWorkspaceBlockPart1(const uint64_t input_h, const uint64_t mPerTime, uint64_t& matmulBlockPerTime);
-    void getWorkspaceRemainder(uint64_t input_h, uint64_t mPerTime, uint64_t matmulBlockPerTime);
-    bool getWorkLoopInfo(const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, const uint64_t slide_size, const uint32_t needCoreNum);
+    bool getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize, const uint32_t coreNumPlatFormInfo);
+    void getWorkspaceBlock(const uint64_t mPerTime, uint64_t& matmulBlockPerTime);
+    uint64_t getWorkspaceBlockPart1(const uint64_t mPerTime, uint64_t& matmulBlockPerTime);
+    void getWorkspaceRemainder(uint64_t mPerTime, uint64_t matmulBlockPerTime);
+    bool getWorkLoopInfo(const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, const uint64_t slide_size, const uint32_t needCoreNum, const uint32_t coreNumPlatFormInfo);
     void getShapes();
     void setSlideSize(const uint32_t coreNumPlatFormInfo);
     inline int64_t calculateSlideSize(const uint32_t coreNumPlatFormInfo);
@@ -117,6 +118,7 @@ private:
     float scale_w = 0.0f;
     float realScale_w{0.0f};
 
+    int64_t inputH = 0;
     int64_t output_shapes[3] = {0};
     int64_t input_shapes[3] = {0};
 
@@ -222,7 +224,7 @@ ge::graphStatus UpsampleLinear1dTiling::RunBigKernelTiling()
     setSlideSize(coreNumPlatFormInfo);
     uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatFormInfo);
     // 计算workspace，每个核的系数矩阵（是否要乘2，避免doubelBuffer矩阵相互影响？），中间矩阵大小
-    if (!getWorkSpace(needCoreNum, ubSize)) {
+    if (!getWorkSpace(needCoreNum, ubSize, coreNumPlatFormInfo)) {
         return ge::GRAPH_FAILED;
     }
 
@@ -274,7 +276,7 @@ void UpsampleLinear1dTiling::getTCubeTiling_w()
 }
 
 // 先只算w方向
-bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize)
+bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize, const uint32_t coreNumPlatFormInfo)
 {
     // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
     uint64_t blockSizeNum = (32 / dataTypeSize);
@@ -294,13 +296,12 @@ bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int6
         workspaces[0] = radioMatrixWorkspaceSize * needCoreNum + WORK_SPACE_SIZE;
         return true;
     } else {
-        bool res = getWorkLoopInfo(ubSize, radioMatrixWorkspaceSize, singleCoreKAlign, slide_size, needCoreNum);
+        bool res = getWorkLoopInfo(ubSize, radioMatrixWorkspaceSize, singleCoreKAlign, slide_size, needCoreNum, coreNumPlatFormInfo);
         return res;
     }
 }
 
-uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(
-    const uint64_t input_h, const uint64_t mPerTime, uint64_t& matmulBlockPerTime) 
+uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(const uint64_t mPerTime, uint64_t& matmulBlockPerTime) 
 {
     // 搬入搬出循环次数
     uint64_t loopTimes_0 = 1;
@@ -311,15 +312,15 @@ uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(
     // matmul循环次数
     uint64_t matmulLoopTimes = 1;
     uint64_t matmulBlockTail = 0;
-    // input_h = matmulLoopTimes * matmulBlockPerTime + matmulBlockTail
+    // inputH = matmulLoopTimes * matmulBlockPerTime + matmulBlockTail
     // 一次可以算完
-    if (matmulBlockPerTime > input_h) {
+    if (matmulBlockPerTime > inputH) {
         matmulLoopTimes = 1;
-        matmulBlockPerTime = input_h;
+        matmulBlockPerTime = inputH;
         matmulBlockTail = 0;
     } else {
-        matmulLoopTimes = matmulBlockPerTime == 0 ? 0 : input_h / matmulBlockPerTime;
-        matmulBlockTail = input_h - matmulLoopTimes * matmulBlockPerTime;
+        matmulLoopTimes = matmulBlockPerTime == 0 ? 0 : inputH / matmulBlockPerTime;
+        matmulBlockTail = inputH - matmulLoopTimes * matmulBlockPerTime;
     }
 
     // matmulBlockPerTime = (loopTimes_0 + loopTimes_1) * mPerTime + loopTail_0 + loopTail_1
@@ -355,10 +356,9 @@ uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(
     return matmulBlockTail;
 }
 
-void UpsampleLinear1dTiling::getWorkspaceBlock(
-    const uint64_t input_h, const uint64_t mPerTime, uint64_t& matmulBlockPerTime) {
+void UpsampleLinear1dTiling::getWorkspaceBlock(const uint64_t mPerTime, uint64_t& matmulBlockPerTime) {
     // matmul循环次数
-    uint64_t matmulBlockTail = getWorkspaceBlockPart1(input_h, mPerTime, matmulBlockPerTime);
+    uint64_t matmulBlockTail = getWorkspaceBlockPart1(mPerTime, matmulBlockPerTime);
     // 尾块搬入搬出循环次数
     uint64_t loopTailTimes_0 = 1;
     uint64_t loopTailTimes_1 = 1;
@@ -386,10 +386,9 @@ void UpsampleLinear1dTiling::getWorkspaceBlock(
     tilingData.set_loopTailTail1(loopTailTail_1);
 }
 
-void UpsampleLinear1dTiling::getWorkspaceRemainder(
-    uint64_t input_h, uint64_t mPerTime, uint64_t matmulBlockPerTime) 
+void UpsampleLinear1dTiling::getWorkspaceRemainder(uint64_t mPerTime, uint64_t matmulBlockPerTime) 
 {
-    uint64_t tailAvergingRowsW = std::min(static_cast<uint64_t>(tilingData.get_tailAvergingRowsW()), input_h);
+    uint64_t tailAvergingRowsW = std::min(static_cast<uint64_t>(tilingData.get_tailAvergingRowsW()), static_cast<uint64_t>(inputH));
     uint64_t remainderMatmulLoopTimes = 1;
     uint64_t remainderMatmulBlockTail = 0;
     // tailAvergingRowsW = remainderMatmulLoopTimes * matmulBlockPerTime + remainderMatmulBlockTail
@@ -418,33 +417,33 @@ void UpsampleLinear1dTiling::getWorkspaceRemainder(
 }
 
 bool UpsampleLinear1dTiling::getWorkLoopInfo(
-    const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, const uint64_t slide_size, const uint32_t needCoreNum) 
+    const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, 
+    const uint64_t slide_size, const uint32_t needCoreNum, const uint32_t coreNumPlatFormInfo) 
 {
     size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces == nullptr) {
         return false;
     }
     uint64_t blockSizeNum = (32 / dataTypeSize);
-    int64_t input_h = input_shapes[N_INDEX] * input_shapes[C_INDEX];
+    
     uint64_t ubEnable = static_cast<uint64_t>(ubSize) - UB_FREE - radioMatrixWorkspaceSize;
     // 单aic核可以使用的内存大小
-    uint64_t workspaceEnablePerCore = (1024 * 1024 * 16) / 20;
+    uint64_t workspaceEnablePerCore = coreNumPlatFormInfo > 0 ? (WORKSPACE_SIZE_1D_LIMIT / coreNumPlatFormInfo) : 0;
     // ub下可以使用的最大内存大小
-    uint64_t mPerTime = ubEnable / (4 * singleCoreKAlign + 4 * slide_size);
+    uint64_t mPerTime = ubEnable / (DATA_TYPE_FP32_SIZE * singleCoreKAlign + DATA_TYPE_FP32_SIZE * slide_size);
     mPerTime = mPerTime / blockSizeNum * blockSizeNum;
    
-    mPerTime = mPerTime >= input_h ? input_h : mPerTime;
+    mPerTime = mPerTime >= inputH ? inputH : mPerTime;
     // workspaceEnablePerCore = radioMatrixWorkspaceSize + sizeof(float) * matmulBlockPerTime * (singleCoreKAlign + slide_size)
     uint64_t matmulBlockPerTime = (workspaceEnablePerCore - radioMatrixWorkspaceSize) / (4 * (singleCoreKAlign + slide_size));
     matmulBlockPerTime = matmulBlockPerTime / blockSizeNum * blockSizeNum;
-    getWorkspaceBlock(input_h, mPerTime, matmulBlockPerTime);
-    getWorkspaceRemainder(input_h, mPerTime, matmulBlockPerTime);
+    getWorkspaceBlock(mPerTime, matmulBlockPerTime);
+    getWorkspaceRemainder(mPerTime, matmulBlockPerTime);
     uint64_t mPerTimeUpAlign = (mPerTime + blockSizeNum - 1) / blockSizeNum * blockSizeNum;
     uint64_t inputUbSize = mPerTimeUpAlign * singleCoreKAlign * 4;
     uint64_t outputUbSize = mPerTimeUpAlign * slide_size * 4;
     tilingData.set_inputUbSize(inputUbSize);
     tilingData.set_outputUbSize(outputUbSize);
-    tilingData.set_inputH(input_h);
     tilingData.set_mPerTime(mPerTime);
    
     uint64_t mmInputNum = matmulBlockPerTime * singleCoreKAlign;
@@ -466,6 +465,8 @@ void UpsampleLinear1dTiling::getShapes()
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = output_shape.GetDim(i);
     }
+    inputH = input_shapes[N_INDEX] * input_shapes[C_INDEX];
+    tilingData.set_inputH(inputH);
     tilingData.set_input_shapes(input_shapes);
     tilingData.set_output_shapes(output_shapes);
 }
@@ -567,8 +568,6 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
     int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
 
-    // H维度总数
-    int64_t input_h = input_shapes[N_INDEX] * input_shapes[C_INDEX];
     int64_t tailAvergingRows = slide_size;
     int64_t groupCoreNum = coreNumPlatform;
 
@@ -577,8 +576,8 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
         int64_t minAvergingRows = slide_size;
         // 按照剩余尾块数给核分组，然后每组核再均分行数
         groupCoreNum = coreNumPlatform / remainder;
-        tailAvergingRows = std::max(CeilA2B(input_h, groupCoreNum), minAvergingRows);
-        groupCoreNum = std::min(groupCoreNum, CeilA2B(input_h, tailAvergingRows));
+        tailAvergingRows = std::max(CeilA2B(inputH, groupCoreNum), minAvergingRows);
+        groupCoreNum = std::min(groupCoreNum, CeilA2B(inputH, tailAvergingRows));
     }
     
     int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;

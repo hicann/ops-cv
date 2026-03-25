@@ -35,10 +35,9 @@ extern "C" __global__ __aicore__ void upsample_linear1d(
         op.Init(input, output, userWS, &tilingData);
         op.Process();
     } else if (TILING_KEY_IS(2)) {
-        KERNEL_TASK_TYPE(2, KERNEL_TYPE_MIX_AIC_1_1);
         const UpsampleLinear1dTilingData *__restrict tiling_data = &tilingData;
         const TCubeTiling *__restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
-        UpsampleLinear1dMixND<DTYPE_X> op;
+        UpsampleLinear1dMixND<float> op;
         REGIST_MATMUL_OBJ(
             &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling);
         op.Init(input, output, userWS, &tilingData);

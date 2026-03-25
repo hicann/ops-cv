@@ -80,7 +80,6 @@ private:
     int64_t output_shapes[3] = {0, 0, 0};
     int64_t input_shapes[3] = {0, 0, 0};
     
-    int64_t singleCoreKTiling = 0;
     int64_t workSpaceRadioOffset = 0;
     int64_t singleCoreK = 0;
     
@@ -204,20 +203,20 @@ __aicore__ inline void UpsampleLinear1dMixND<T>::ParseTilingData(const UpsampleL
         input_shapes[i] = tilingData->input_shapes[i];
     }
 
-    radio_matrix_size_w = (tilingData->radio_matrix_size_w + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
+    radio_matrix_size_w = tilingData->radio_matrix_size_w;
     eachCoreSlideNumW = tilingData->eachCoreSlideNumW;
     groupCoreNumW = tilingData->groupCoreNumW;
     tailStartSlideNumW = tilingData->tailStartSlideNumW;
     slideNumW = tilingData->slideNumW;
     remainderW = tilingData->remainderW;
     tailAvergingRowsW = tilingData->tailAvergingRowsW;
+    inputH = tilingData->inputH;
     matmulTiling_w = &tilingData->matmulTiling_w;
 }
 
 template <typename T>
 __aicore__ inline void UpsampleLinear1dMixND<T>::getSlideRange()
 {
-    inputH = input_shapes[0] * input_shapes[1];
     slideStart_w = blockIdxMix * eachCoreSlideNumW * slide_size_w;
     slideEnd_w = Min((Min((blockIdxMix + 1) * eachCoreSlideNumW, slideNumW)) * slide_size_w, output_shapes[2]);
     int64_t groupIndex = groupCoreNumW > 0 ? blockIdxMix / groupCoreNumW : 0;
