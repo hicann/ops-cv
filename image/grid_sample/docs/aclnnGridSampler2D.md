@@ -134,7 +134,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式，设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</td>
-      <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</li></ul></td>
+      <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -225,7 +225,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>input、grid、out的数据类型不在支持的范围之内或数据类型不一致。</td>
     </tr>
     <tr>
-      <td>interpolationMode或paddingMode的值不在支持范围内。</tr>
+      <td>interpolationMode或paddingMode的值不在支持范围内。</td></tr>
     <tr>
       <td>interpolationMode为bicubic时，input、grid、out的数据类型不是FLOAT32或者FLOAT16。</td>
     </tr>

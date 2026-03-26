@@ -131,7 +131,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式。</td>
-      <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</li></ul></td>
+      <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -207,7 +207,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>input、grid、out的数据格式不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>interpolationMode或paddingMode的值不在支持范围内。</tr>
+      <td>interpolationMode或paddingMode的值不在支持范围内。</td></tr>
     <tr>
       <td>input、grid和out的维度关系不匹配。</td>
     </tr>

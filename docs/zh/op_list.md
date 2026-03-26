@@ -405,7 +405,6 @@
     <td>用于边界框回归的损失函数，在IoU的基础上同时考虑了中心点距离、宽高比和重叠面积，以更全面地衡量预测框与真实框之间的差异。</td>
   </tr>
   <tr>
-  <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/iou_v2/README.md">iou_v2</a></td>
     <td>&check;</td>

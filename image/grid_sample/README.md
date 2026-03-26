@@ -134,7 +134,6 @@
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>ND</td>
     </tr>
-    <tr>
   </tbody></table>
 
 - <term>Atlas 推理系列产品</term>：
