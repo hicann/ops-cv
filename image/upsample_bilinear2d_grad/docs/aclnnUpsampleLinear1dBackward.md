@@ -125,7 +125,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>outputSize（aclIntArray*）</td>
       <td>输入</td>
       <td>表示输入`gradOut`在L维度上的空间大小，对应公式中的`outputSize`。</td>
-      <td>size为1，且取值大于0。</li></ul></td>
+      <td>size为1，且取值大于0。</td>
       <td>INT64</td>
       <td>-</td>
       <td>-</td>
@@ -145,8 +145,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>BOOL类型参数，对应公式中的`alignCorners`。</td>
-      <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；
-      <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值对边界外的值进行填充。</li></ul></td>
+      <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值；</li><li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值对边界外的值进行填充。</li></ul></td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -156,7 +155,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
       <td>scales（double）</td>
       <td>输入</td>
       <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
-      <td>取值不大于500。</li></ul></td>
+      <td>取值不大于500。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>

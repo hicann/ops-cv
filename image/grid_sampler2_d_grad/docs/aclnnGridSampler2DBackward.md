@@ -253,7 +253,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gradOutput、input、grid的shape维度值不为四维。</td>
     </tr>
     <tr>
-      <td>interpolationMode或paddingMode的值不在支持范围内。</tr>
+      <td>interpolationMode或paddingMode的值不在支持范围内。</td></tr>
     <tr>
       <td>input的第一个维度和grid、gradOutput的第一个维度值不相同。</td>
     </tr>

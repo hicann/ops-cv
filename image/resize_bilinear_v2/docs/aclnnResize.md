@@ -178,7 +178,7 @@ aclnnStatus aclnnResize(
       <td>数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>out与self的数据格式或者数据类型不一致。</tr>
+      <td>out与self的数据格式或者数据类型不一致。</td></tr>
     <tr>
       <td>shape不满足要求：<ol><li>self和out的shape必须为4维。</li><li>self和out的N维和C维必须相同。</li><li>out在H维的size必须等于self的H维size乘以scales对应H维的值。</li><li>out在W维的size必须等于self的W维乘以scales对应W维的值。</li></ol></td>
     </tr>

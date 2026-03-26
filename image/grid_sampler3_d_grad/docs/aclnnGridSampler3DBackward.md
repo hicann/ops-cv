@@ -156,7 +156,7 @@ aclnnStatus aclnnGridSampler3DBackward(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式，对应公式描述中的`alignCorners`。</td>
-      <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</li></ul></td>
+      <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -166,7 +166,7 @@ aclnnStatus aclnnGridSampler3DBackward(
       <td>outputMask（aclBoolArray*）</td>
       <td>输入</td>
       <td>用于表示输出的掩码。</td>
-      <td>outputMask[0]为True/False，表示是否获取输出inputGrad；outputMask[1]为True/False，表示是否获取输出gridGrad。</li></ul></td>
+      <td>outputMask[0]为True/False，表示是否获取输出inputGrad；outputMask[1]为True/False，表示是否获取输出gridGrad。</td>
       <td>BOOLARRAY</td>
       <td>-</td>
       <td>-</td>

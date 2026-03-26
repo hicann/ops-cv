@@ -243,13 +243,11 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     <tr>
       <td>gradOut的维度不为4维。</td>
     </tr>
-    </tr>
     <tr>
       <td>outputSize的size不等于2。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值小于1。</td>
-    </tr>
     </tr>
     <tr>
       <td>inputSize的size不等于4。</td>
@@ -257,13 +255,11 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     <tr>
       <td>inputSize的某个元素值小于1。</td>
     </tr>
-    </tr>
     <tr>
       <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
       <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不一致。</td>
-    </tr>
     </tr>
     <tr>
       <td>gradOut和gradInput的N/C轴的维度大小不相等。</td>
