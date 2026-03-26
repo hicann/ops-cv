@@ -61,7 +61,7 @@ TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_002) {
                                             },
                                             &compileInfo);
     uint64_t expectTilingKey = 2;
-    string expectTilingData = "0 128 1065353216 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 1 1 1 1 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+    string expectTilingData = "0 128 1065353216 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 8 1 1 1 1 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -82,7 +82,7 @@ TEST_F(UpsampleLinear1dTiling, upsample_linear1d_tiling_003) {
                                             },
                                             &compileInfo);
     uint64_t expectTilingKey = 2;
-    string expectTilingData = "1 128 549755813888 1 2 2 2 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 1 1 1 1 1 256 4294967297 4294967552 4294967297 4294967424 549755813904 4294967304 4294967297 1 0 19791209299968 8192 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+    string expectTilingData = "1 128 549755813888 1 2 2 2 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 8 1 1 1 1 1 256 4294967297 4294967552 4294967297 4294967424 549755813904 4294967304 4294967297 1 0 19791209299968 8192 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777728};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

@@ -46,6 +46,10 @@ static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 
+static constexpr size_t WORKSPACE_LIMIT = 500 * 1024 * 1024;
+static constexpr size_t UB_LIMIT = 192 * 1024 * 20;
+static constexpr size_t DTYPE_FLOAT_SIZE = 4;
+
 static const float MAX_SUPPORT_SHRINK_SCALE = 50.0f;
 static const float MAX_SUPPORT_ZOOM_SCALE_REV = 0.00125f;
 
@@ -159,43 +163,54 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     return unsqueezedInput;
 }
 
-static bool CheckLinear1dScales(
-    const aclTensor *x, const aclTensor *y, const aclIntArray *size, const double scale, const bool alignCorners)
+static bool CheckLinear1dSize(const aclTensor *x, const aclTensor *y)
 {
-    float scales_w = 0.0;
     auto inputShape = x->GetViewShape();
     auto outputShape = y->GetViewShape();
-    int64_t input_size = inputShape.GetDim(DIM_TWO);
-    int64_t output_size = (*size)[DIM_ZERO];
+    int64_t inputNC = inputShape.GetDim(DIM_ZERO) * inputShape.GetDim(DIM_ONE);
+    int64_t inputW = inputShape.GetDim(DIM_TWO);
+    int64_t outputW = outputShape.GetDim(DIM_TWO);
 
-    if (scale > 0) {
-        output_size = outputShape.GetDim(DIM_TWO);
+    int64_t inputSize= inputNC * inputW * DTYPE_FLOAT_SIZE;
+    int64_t outputSize= inputNC * outputW * DTYPE_FLOAT_SIZE;
+    int64_t middlSize = UB_LIMIT;
+    int64_t totalSize = inputSize + outputSize + middlSize;
+    if (totalSize > WORKSPACE_LIMIT) {
+        return true;
     }
-
-    if (alignCorners) {
-        if (output_size > 1) {
-            scales_w = static_cast<float>(input_size - 1) / (output_size - 1);
-        } else {
-            scales_w = static_cast<float>(0);
-        }
-    } else {
-        scales_w = (scale > 0) ? static_cast<float>(1.0 / scale) : (static_cast<float>(input_size) / output_size);
-    }
-    return (scales_w <= MAX_SUPPORT_SHRINK_SCALE && scales_w >= MAX_SUPPORT_ZOOM_SCALE_REV);
+    return false;
 }
 
 static const aclTensor *GoUpsampleLinear1DAICORE(const aclTensor *selfRefContiguous, const aclIntArray *outputSize,
     const bool alignCorners, const double scale, const aclTensor *out, aclOpExecutor *executor)
 {
     auto dataType = selfRefContiguous->GetDataType();
+    auto outputType = dataType;
+    bool isBigInput = false;
+    if (dataType != op::DataType::DT_FLOAT) {
+        isBigInput = CheckLinear1dSize(selfRefContiguous, out);
+        // 小于500M的数据，输入输出做cast
+        if (isBigInput && (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType)) {
+            selfRefContiguous = l0op::Cast(selfRefContiguous, op::DataType::DT_FLOAT, executor);
+            outputType = op::DataType::DT_FLOAT;
+        }
+    }
     auto size1 = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
     auto castSize = l0op::Cast(size1, op::DataType::DT_INT32, executor);
     CHECK_RET(castSize != nullptr, nullptr);
     const aclTensor *y =
-        executor->AllocTensor(out->GetViewShape(), dataType, selfRefContiguous->GetViewFormat());
+        executor->AllocTensor(out->GetViewShape(), outputType, selfRefContiguous->GetViewFormat());
     CHECK_RET(y != nullptr, nullptr);
     const aclTensor *res = l0op::UpsampleLinear1dNcdhw(selfRefContiguous, castSize, alignCorners, y, scale, executor);
 
+    // 数据类型非fp32，需要将输出做一次cast
+    if (dataType != op::DataType::DT_FLOAT && isBigInput) {
+        if (op::DataType::DT_FLOAT16 == dataType) {
+            res = l0op::Cast(res, op::DataType::DT_FLOAT16, executor);
+        } else if (op::DataType::DT_BF16 == dataType) {
+            res = l0op::Cast(res, op::DataType::DT_BF16, executor);
+        }
+    }
     return res;
 }
 
