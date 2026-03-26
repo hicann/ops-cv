@@ -41,7 +41,7 @@ public:
 
     __aicore__ inline void Init( GM_ADDR v, GM_ADDR f, GM_ADDR d, GM_ADDR findices, GM_ADDR barycentric, 
         GM_ADDR workSpace, RasterizerTilingData* tilingData);
-    __aicore__ inline void Process(/*参数列表*/);
+    __aicore__ inline void Process();
 
 private:
     __aicore__ inline void InitBuf();
@@ -212,6 +212,7 @@ __aicore__ inline void Rasterizer<T>::InitGM()
     }
     copyParams.blockLen = static_cast<uint32_t>(remainder * sizeof(int32_t));
     DataCopyPad(findicesGM[turns * NUM_PIXEL], fIdxLocal, copyParams);
+    PipeBarrier<PIPE_ALL>();
 }
 
 template <typename T>
@@ -253,7 +254,6 @@ __aicore__ inline void Rasterizer<T>::ToScreenCoordinate()
     const uint32_t offsetZ = count * 2;
     const uint32_t offsetW = count * 3;
     const T diff = static_cast<T>(0.5f);
-    // PipeBarrier<PIPE_ALL>();
     Div(verticesLocal, verticesLocal, verticesLocal[offsetW], count);
     PipeBarrier<PIPE_V>();
     Muls(verticesLocal, verticesLocal, diff, count);
@@ -263,7 +263,6 @@ __aicore__ inline void Rasterizer<T>::ToScreenCoordinate()
     Muls(verticesLocal, verticesLocal, static_cast<T>(this->width - 1), count);
     PipeBarrier<PIPE_V>();
     Adds(verticesLocal, verticesLocal, diff, count);
-    // PipeBarrier<PIPE_ALL>();
     Muls(verticesLocal[offsetY], verticesLocal[offsetY], diff, count);
     PipeBarrier<PIPE_V>();
     Div(verticesLocal[offsetY], verticesLocal[offsetY], verticesLocal[offsetW], count);
@@ -493,7 +492,6 @@ __aicore__ inline void Rasterizer<T>::CopyInFaces(uint32_t progress, uint32_t nu
 {
     DataCopyExtParams copyParams{1, static_cast<uint32_t>(num * NUM_V_PER_F * sizeof(int32_t)), 0, 0, 0};
     DataCopyPadExtParams<int32_t> padParams{false, 0, 0, 0};
-    // PipeBarrier<PIPE_ALL>();
     DataCopyPad(facesLocal, this->fGM[progress * NUM_FACES * NUM_V_PER_F], copyParams, padParams);
 }
 
