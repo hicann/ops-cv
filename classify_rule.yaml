@@ -125,3 +125,16 @@ image@ops-cv:
       non_delivery: null
       open_source: null
 
+conv_forward_ascendc@ops-cv:
+  src:
+    release:
+      style:
+        - ops/ops-cv/image/aipp/
+      opensource_style: null
+      kernel_style: null
+    unrelease:
+      test_code:
+        - ops/ops-cv/image/aipp/examples/
+        - ops/ops-cv/image/aipp/tests/
+      non_delivery: null
+      open_source: null
