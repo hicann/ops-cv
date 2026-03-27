@@ -22,11 +22,10 @@
 
 namespace Aipp_Kernel {
 using namespace AscendC;
-constexpr uint32_t MAX_TGHREAD_NUM = 256;
+constexpr uint32_t MAX_THREAD_NUM = 256;
 constexpr uint32_t CSC_MATRIX_SCALE = 512;
-constexpr uint8_t MAX_CHANNEL_NUM = 4;
-constexpr uint8_t RGB_CHANNEL_NUM = 3;
-constexpr uint8_t YUV_CHANNEL_NUM = 3;
+constexpr uint32_t MAX_UINT8 = 255;
+constexpr uint8_t CHANNEL_THREE = 3;
 constexpr uint8_t YUV_PER_DEAL_NUM = 4;
 constexpr uint8_t YUV_DEAL_NUM_0 = 0;
 constexpr uint8_t YUV_DEAL_NUM_1 = 1;
@@ -35,30 +34,11 @@ constexpr uint8_t YUV_DEAL_NUM_3 = 3;
 constexpr uint8_t CHANNEL_NUM_0 = 0;
 constexpr uint8_t CHANNEL_NUM_1 = 1;
 constexpr uint8_t CHANNEL_NUM_2 = 2;
-constexpr uint8_t DIGIT_TWO = 2;
+constexpr uint8_t DIGIT_2 = 2;
+constexpr uint8_t DIGIT_3 = 3;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
-
-template <typename T>
-struct RgbPack {
-    T r = 0;
-    T g = 0;
-    T b = 0;
-};
-
-template <typename T>
-struct YuvPack {
-    T y = 0;
-    T u = 0;
-    T v = 0;
-};
-
-template <typename T>
-struct CoordPack {
-    T nIdx = 0;
-    T hIdx = 0;
-    T wIdx = 0;
-};
+constexpr uint8_t XRGB8888_U8_FORMAT = 3;
 
 template <typename T, typename DataType>
 class AippBase {
@@ -81,14 +61,14 @@ __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& til
 
     blockNum_ = GetBlockNum();
     blockIdx_ = GetBlockIdx();
-    totalNum_ = tilingData_.batchNum * tilingData_.cropParam.cropSizeH * tilingData_.cropParam.cropSizeW;
+    totalNum_ = tilingData_.batchNum * tilingData_.outputSizeH * tilingData_.outputSizeW;
 }
 
 template <typename T>
 __aicore__ __attribute__((always_inline)) inline void DataConversion(
     T& dst, uint8_t src, const DtcParam& dtcParam, int32_t channelIndex)
 {
-    if constexpr (sizeof(T) == DIGIT_TWO) {
+    if constexpr (sizeof(T) == DIGIT_2) {
         if (channelIndex == 0) {
             dst = (static_cast<T>(src - dtcParam.dtcPixelMeanChn0) - static_cast<T>(dtcParam.dtcPixelMinChn0)) *
                   static_cast<T>(dtcParam.dtcPixelVarReciChn0);
@@ -99,14 +79,79 @@ __aicore__ __attribute__((always_inline)) inline void DataConversion(
             dst = (static_cast<T>(src - dtcParam.dtcPixelMeanChn2) - static_cast<T>(dtcParam.dtcPixelMinChn2)) *
                   static_cast<T>(dtcParam.dtcPixelVarReciChn2);
         } else if (channelIndex == 3) {
-            // 4th channel is reserved
-            dst = 0;
+            dst = (static_cast<T>(src - dtcParam.dtcPixelMeanChn3) - static_cast<T>(dtcParam.dtcPixelMinChn3)) *
+                  static_cast<T>(dtcParam.dtcPixelVarReciChn3);
         }
     } else {
         dst = src;
     }
 }
 
-} // namespace Aipp_Kernel
+template <typename T>
+__aicore__ __attribute__((always_inline)) inline void AssignPadValue(T& dst, float padValue)
+{
+    if constexpr (sizeof(T) == sizeof(uint8_t)) {
+        dst = static_cast<T>(CLIP3(padValue, 0.0f, 255.0f));
+    } else {
+        dst = static_cast<T>(padValue);
+    }
+}
 
+template <typename DataType>
+__aicore__ __attribute__((always_inline)) inline void RgbComputeDstIdx(
+    RgbPack<DataType> &dstIdx, const CoordPack<DataType>& coord, const AippTilingData& tD)
+{
+    if (tD.outputFormat == NCHW_FORMAT_INDEX) {
+        dstIdx.r = coord.nIdx * tD.outputSizeH * tD.outputSizeW * CHANNEL_THREE +
+                   coord.hIdx * tD.outputSizeW  + coord.wIdx;
+        dstIdx.g = dstIdx.r + tD.outputSizeH * tD.outputSizeW;
+        dstIdx.b = dstIdx.g + tD.outputSizeH * tD.outputSizeW;
+    } else {
+        dstIdx.r = coord.nIdx * tD.outputSizeH * tD.outputSizeW * CHANNEL_THREE +
+                   coord.hIdx * tD.outputSizeW * CHANNEL_THREE + coord.wIdx * CHANNEL_THREE;
+        dstIdx.g = dstIdx.r + 1;
+        dstIdx.b = dstIdx.g + 1;
+    }
+}
+
+template <typename DataType>
+__aicore__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(
+    RgbPack<DataType> &srcIdx, const CoordPack<DataType>& coord, const AippTilingData& tD,
+    const DataType offset = 0)
+{
+    srcIdx.r = coord.nIdx * tD.inputSizeH * tD.inputSizeW * tD.channelNum +
+        (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW * tD.channelNum +
+        (tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize) * tD.channelNum + offset;
+    srcIdx.g = srcIdx.r + 1;
+    srcIdx.b = srcIdx.g + 1;
+}
+
+template <typename DataType>
+__aicore__ __attribute__((always_inline)) inline bool IsPixelInPadding(
+    DataType hIdx, DataType wIdx, const AippTilingData& tD)
+{
+    if (tD.paddingParam.paddingSwitch == 0) {
+        return false;
+    }
+    int32_t leftPaddingSize = tD.paddingParam.leftPaddingSize;
+    int32_t topPaddingSize = tD.paddingParam.topPaddingSize;
+    uint32_t cropSizeH = tD.cropParam.cropSizeH;
+    uint32_t cropSizeW = tD.cropParam.cropSizeW;
+    return (hIdx < topPaddingSize) ||
+           (hIdx >= topPaddingSize + cropSizeH) ||
+           (wIdx < leftPaddingSize) ||
+           (wIdx >= leftPaddingSize + cropSizeW);
+}
+
+template <typename DataType>
+__aicore__ __attribute__((always_inline)) inline void ComputeCoordFromIndex(
+    DataType idx, uint32_t outputSizeH, uint32_t outputSizeW,
+    CoordPack<DataType>& coord)
+{
+    coord.nIdx = idx / (outputSizeH * outputSizeW);
+    DataType newIdx = idx - coord.nIdx * outputSizeH * outputSizeW;
+    coord.hIdx = newIdx / outputSizeW;
+    coord.wIdx = newIdx - coord.hIdx * outputSizeW;
+}
+} // namespace Aipp_Kernel
 #endif // AIPP_OP_KERNEL_ARCH35_BASE_H

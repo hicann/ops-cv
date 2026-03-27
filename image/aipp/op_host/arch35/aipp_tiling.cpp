@@ -15,8 +15,8 @@
 
 #include <stdexcept>
 #include <typeinfo>
-#include "aipp_tiling.h"
 #include "log/log.h"
+#include "aipp_tiling.h"
 
 namespace optiling {
 inline static int64_t CeilDiv(int64_t value, int64_t factor)
@@ -74,17 +74,27 @@ ge::graphStatus AippTiling::ParseNumAndValidateRange(
 uint64_t AippTiling::GetTilingKey() const
 {
     uint64_t tilingKey = 0;
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) &&
+    if ((tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
+        tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
         !static_cast<bool>(tilingData.cscParam.cscSwitch)) {
         tilingKey = FORMAT_RGB_INDICE_UINT32;
     }
     if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
-        static_cast<bool>(tilingData.cscParam.cscSwitch)) {
+        static_cast<bool>(tilingData.cscParam.cscSwitch) && !isGray) {
         tilingKey = FORMAT_YUV_INDICE_UINT32;
     }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) && 
-        static_cast<bool>(tilingData.cscParam.cscSwitch)) {
+    if ((tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
+        tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
+        static_cast<bool>(tilingData.cscParam.cscSwitch) && !isGray) {
         tilingKey = FORMAT_RGB_SWITCH_OPEN_UINT32;
+    }
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) &&
+        static_cast<bool>(tilingData.cscParam.cscSwitch) && isGray) {
+        tilingKey = FORMAT_RGB_SWITCH_OPEN_UINT32_TO_GRAY;
+    }
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
+        static_cast<bool>(tilingData.cscParam.cscSwitch) && isGray) {
+        tilingKey = FORMAT_YUV_INDICE_UINT32_TO_GRAY;
     }
     if (tilingKey == 0) {
         OP_LOGE(context_->GetNodeName(), "tilingKey is:0, please check aipp.cfg's inputformat and csc_switch");
@@ -133,6 +143,13 @@ ge::graphStatus AippTiling::GetShapeAttrsInfo()
     OP_CHECK_IF(SetDTCValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetDTCValue fail."),
         return ge::GRAPH_FAILED);
 
+    OP_CHECK_IF(
+        SetPaddingValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetPaddingValue fail."),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        CheckPaddingSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckPaddingSize fail."),
+        return ge::GRAPH_FAILED);
+
     OP_LOGD(context_->GetNodeName(), "GetShapeAttrsInfo end.");
     return ge::GRAPH_SUCCESS;
 }
@@ -145,13 +162,14 @@ ge::graphStatus AippTiling::CheckInputFormat()
     OP_CHECK_IF(inputFormatLocal != ge::FORMAT_NHWC, OP_LOGE(context_->GetNodeName(),\
         "aipp input format only support NHWC."), return ge::GRAPH_FAILED);
 
-    auto outputImges = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
-    OP_CHECK_NULL_WITH_CONTEXT(context_, outputImges);
-    auto outputFormatLocal = outputImges->GetOriginFormat();
+    auto outputImages = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
+    auto outputFormatLocal = outputImages->GetOriginFormat();
     OP_CHECK_IF(outputFormatLocal != ge::FORMAT_NCHW && outputFormatLocal != ge::FORMAT_NHWC,
         OP_LOGE(context_->GetNodeName(), "aipp output format only support NCHW and NHWC."), return ge::GRAPH_FAILED);
 
     auto inputShapePtr = context_->GetInputShape(INPUT_IMAGES_IDX);
+    
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputShapePtr);
     auto inputStorageShape = inputShapePtr->GetStorageShape();
     tilingData.batchNum = inputStorageShape.GetDim(IMAGE_BATCH_DIM);
@@ -160,6 +178,16 @@ ge::graphStatus AippTiling::CheckInputFormat()
     tilingData.inputSizeW = inputStorageShape.GetDim(NHWC_IMAGE_W_DIM);
     tilingData.outputFormat = (outputFormatLocal == ge::FORMAT_NCHW) ? NCHW_FORMAT_INDEX : NHWC_FORMAT_INDEX;
     inputImageSize = inputStorageShape.GetShapeSize();
+
+    auto outputShapePtr = context_->GetOutputShape(OUTPUT_FEATURES_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, outputShapePtr);
+    auto outputStorageShape = outputShapePtr->GetStorageShape();
+    tilingData.outputSizeH = tilingData.outputFormat == NCHW_FORMAT_INDEX ?
+                        outputStorageShape.GetDim(NCHW_IMAGE_H_DIM) :
+                        outputStorageShape.GetDim(NHWC_IMAGE_H_DIM);
+    tilingData.outputSizeW = tilingData.outputFormat == NCHW_FORMAT_INDEX ?
+                        outputStorageShape.GetDim(NCHW_IMAGE_W_DIM) :
+                        outputStorageShape.GetDim(NHWC_IMAGE_W_DIM);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -180,8 +208,9 @@ ge::graphStatus AippTiling::SetImagesValue()
     if (aippCfg.find(AIPP_INPUT_FORMAT) != aippCfg.end()) {
         OP_CHECK_IF(
             aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_RGB888_U8 &&
-                aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_YUV420SP_U8,
-            OP_LOGE(context_->GetNodeName(), "aipp input_format only support RGB888_U8 or YUV420SP_U8."),
+                aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_YUV420SP_U8 &&
+                aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_XRGB8888_U8,
+            OP_LOGE(context_->GetNodeName(), "aipp input_format only support RGB888_U8 or XRGB8888_U8 or YUV420SP_U8."),
             return ge::GRAPH_FAILED);
         OP_CHECK_IF(
             IMAGE_FORMART_MAP.find(aippCfg.at(AIPP_INPUT_FORMAT)) == IMAGE_FORMART_MAP.end(),
@@ -228,10 +257,15 @@ ge::graphStatus AippTiling::CheckInputImage()
         OP_CHECK_IF(tilingData.inputSizeW % EVEN_NUMBER_BASE != 0 || tilingData.inputSizeH % EVEN_NUMBER_BASE != 0,
             OP_LOGE(context_->GetNodeName(), \
             "When input_format is YUV420SP_U8, src_image_size_h/w must be even number"), return ge::GRAPH_FAILED);
-    } else {
+    } else if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
         errorCheckLog << static_cast<int>(IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT);
         OP_CHECK_IF((inputImageSize <
              tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT),
+            OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
+    } else {
+        errorCheckLog << static_cast<int>(IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT);
+        OP_CHECK_IF((inputImageSize <
+             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT),
             OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
     }
     return ge::GRAPH_SUCCESS;
@@ -244,11 +278,101 @@ ge::graphStatus AippTiling::CheckInputDtype()
     OP_CHECK_IF(inputImges->GetDataType() != ge::DT_UINT8, \
         OP_LOGE(context_->GetNodeName(), "inputImges only support uint8."), return ge::GRAPH_FAILED);
 
-    auto outputImges = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
-    OP_CHECK_NULL_WITH_CONTEXT(context_, outputImges);
-    OP_CHECK_IF(outputImges->GetDataType() != ge::DT_FLOAT16,
-        OP_LOGE(context_->GetNodeName(), "outputImges only support float16."), return ge::GRAPH_FAILED);
+    auto outputImages = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
+    OP_CHECK_IF(outputImages->GetDataType() != ge::DT_FLOAT16 && outputImages->GetDataType() != ge::DT_UINT8,
+        OP_LOGE(context_->GetNodeName(), "outputImages only support float16 or uint8."), return ge::GRAPH_FAILED);
 
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus AippTiling::ValidPaddingValue(float padValue, ge::DataType outputDtype)
+{
+    if (outputDtype == ge::DT_UINT8) {
+        OP_CHECK_IF(tilingData.paddingParam.padValue < MIN_PADDING_VALUE_UINT8 ||
+            tilingData.paddingParam.padValue > MAX_PADDING_VALUE_UINT8,
+            OP_LOGE(context_->GetNodeName(), "padding value should between [0, 255] for uint8 output."),
+            return ge::GRAPH_FAILED);
+    } else if (outputDtype == ge::DT_FLOAT16) {
+        OP_CHECK_IF(tilingData.paddingParam.padValue < MIN_PADDING_VALUE_FP16 ||
+            tilingData.paddingParam.padValue > MAX_PADDING_VALUE_FP16,
+            OP_LOGE(context_->GetNodeName(), "padding value should between [-65504, 65504] for fp16 output."),
+            return ge::GRAPH_FAILED);
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus AippTiling::SetPaddingValue()
+{
+    if (aippCfg.find(AIPP_PADDING) == aippCfg.end()) {
+        tilingData.paddingParam.paddingSwitch = 0;
+        return ge::GRAPH_SUCCESS;
+    }
+
+    if (aippCfg.at(AIPP_PADDING) != "true" && aippCfg.at(AIPP_PADDING) != "false") {
+        return ge::GRAPH_FAILED;
+    }
+
+    if (aippCfg.at(AIPP_PADDING) == "false") {
+        tilingData.paddingParam.paddingSwitch = 0;
+        return ge::GRAPH_SUCCESS;
+    }
+
+    tilingData.paddingParam.paddingSwitch = 1;
+
+    const std::map<string, int32_t*> PADDING_SIZE_MAP = {
+        {AIPP_LEFT_PADDING_SIZE, &tilingData.paddingParam.leftPaddingSize},
+        {AIPP_RIGHT_PADDING_SIZE, &tilingData.paddingParam.rightPaddingSize},
+        {AIPP_TOP_PADDING_SIZE, &tilingData.paddingParam.topPaddingSize},
+        {AIPP_BOTTOM_PADDING_SIZE, &tilingData.paddingParam.bottomPaddingSize}
+    };
+
+    OP_CHECK_IF(ParseNumAndValidateRange(PADDING_SIZE_MAP, 0, MAX_PADDING_SIZE) != ge::GRAPH_SUCCESS,
+        OP_LOGE(context_->GetNodeName(), "PADDING_SIZE_MAP parse and validate range failed."),
+        return ge::GRAPH_FAILED);
+
+    if (aippCfg.find(AIPP_PADDING_VALUE) != aippCfg.end()) {
+        OP_CHECK_IF(!StringToNum(aippCfg.at(AIPP_PADDING_VALUE), tilingData.paddingParam.padValue),
+            OP_LOGE(context_->GetNodeName(), "AIPP_PADDING_VALUE failed to parse."),
+            return ge::GRAPH_FAILED);
+        
+        auto outputImages = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
+        OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
+        OP_CHECK_IF(ValidPaddingValue(tilingData.paddingParam.padValue, outputImages->GetDataType()) !=
+            ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "PadValue is invalidate."),
+            return ge::GRAPH_FAILED);
+    } else {
+        tilingData.paddingParam.padValue = 0;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus AippTiling::CheckPaddingSize()
+{
+    if (!static_cast<bool>(tilingData.paddingParam.paddingSwitch)) {
+        return ge::GRAPH_SUCCESS;
+    }
+
+    uint32_t expectedH = tilingData.cropParam.cropSizeH +
+                        tilingData.paddingParam.topPaddingSize +
+                        tilingData.paddingParam.bottomPaddingSize;
+    uint32_t expectedW = tilingData.cropParam.cropSizeW +
+                        tilingData.paddingParam.leftPaddingSize +
+                        tilingData.paddingParam.rightPaddingSize;
+    OP_CHECK_IF(expectedH != tilingData.outputSizeH || expectedW != tilingData.outputSizeW,
+        OP_LOGE(context_->GetNodeName(),
+        "output size mismatch: output=%dx%d,expectedOut=crop(%dx%d)+padding(%d,%d,%d,%d)=%dx%d.",
+        tilingData.outputSizeH, tilingData.outputSizeW,
+        tilingData.cropParam.cropSizeH, tilingData.cropParam.cropSizeW,
+        tilingData.paddingParam.topPaddingSize, tilingData.paddingParam.bottomPaddingSize,
+        tilingData.paddingParam.leftPaddingSize, tilingData.paddingParam.rightPaddingSize,
+        expectedH, expectedW),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tilingData.outputSizeW > MAX_PADDING_OUT_W,
+        OP_LOGE(context_->GetNodeName(),
+        "After padding, aipp output w[%d] should be less than or eaqual to 1080.",
+        tilingData.outputSizeW),
+        return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -340,8 +464,55 @@ ge::graphStatus AippTiling::GetWorkspaceSize()
 
 ge::graphStatus AippTiling::DoOpTiling()
 {
+    IsGrayForCSC();
+    SwapChannelForCSC();
     PrintTilingData();
     return ge::GRAPH_SUCCESS;
+}
+
+void AippTiling::SwapChannelForCSC()
+{
+    if ((tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
+        tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
+        tilingData.cscParam.rbuvSwapSwitch == 1) {
+        swap(tilingData.cscParam.cscMatrix00, tilingData.cscParam.cscMatrix02);
+        swap(tilingData.cscParam.cscMatrix10, tilingData.cscParam.cscMatrix12);
+        swap(tilingData.cscParam.cscMatrix20, tilingData.cscParam.cscMatrix22);
+    }
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
+        tilingData.cscParam.rbuvSwapSwitch == 1) {
+        swap(tilingData.cscParam.cscMatrix01, tilingData.cscParam.cscMatrix02);
+        swap(tilingData.cscParam.cscMatrix11, tilingData.cscParam.cscMatrix12);
+        swap(tilingData.cscParam.cscMatrix21, tilingData.cscParam.cscMatrix22);
+    }
+}
+
+void AippTiling::IsGrayForCSC()
+{
+    bool anyMatrix1NotZero = (tilingData.cscParam.cscMatrix10 != 0) || 
+                             (tilingData.cscParam.cscMatrix11 != 0) || 
+                             (tilingData.cscParam.cscMatrix12 != 0);
+    bool anyMatrix2NotZero = (tilingData.cscParam.cscMatrix20 != 0) || 
+                             (tilingData.cscParam.cscMatrix21 != 0) || 
+                             (tilingData.cscParam.cscMatrix22 != 0);
+    if (anyMatrix1NotZero || anyMatrix2NotZero) {
+        return;
+    }
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
+        if ((tilingData.cscParam.outBias0 == 0) &&
+            (tilingData.cscParam.outBias1 == 0) && 
+            (tilingData.cscParam.outBias2 == 0)) {
+            isGray = true;
+        }
+    }
+    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
+        tilingData.cscParam.cscMatrix01 == 0 && tilingData.cscParam.cscMatrix02 == 0) {
+        if ((tilingData.cscParam.inBias0 == 0) && 
+            (tilingData.cscParam.inBias1 == 0) && 
+            (tilingData.cscParam.inBias2 == 0)) {
+            isGray = true;
+        }
+    }
 }
 
 ge::graphStatus AippTiling::SetCropValue()
@@ -413,7 +584,6 @@ ge::graphStatus AippTiling::SetCscValue()
 {
     if ((aippCfg.find(AIPP_CFG_CSC_SWITCH) != aippCfg.end()) && (aippCfg.at(AIPP_CFG_CSC_SWITCH) == "true")) {
         tilingData.cscParam.cscSwitch = 1;
-
         const std::map<string, int16_t*> CSC_MATRIX_MAP = {
             {AIPP_CFG_MATRIX_R0C0, &tilingData.cscParam.cscMatrix00},
             {AIPP_CFG_MATRIX_R0C1, &tilingData.cscParam.cscMatrix01},
@@ -425,7 +595,6 @@ ge::graphStatus AippTiling::SetCscValue()
             {AIPP_CFG_MATRIX_R2C1, &tilingData.cscParam.cscMatrix21},
             {AIPP_CFG_MATRIX_R2C2, &tilingData.cscParam.cscMatrix22},
         };
-
         const std::map<string, int16_t*> CSC_BIAS_MAP = {
             {AIPP_CFG_OUTPUT_BIAS_0, &tilingData.cscParam.outBias0},
             {AIPP_CFG_OUTPUT_BIAS_1, &tilingData.cscParam.outBias1},
@@ -434,7 +603,6 @@ ge::graphStatus AippTiling::SetCscValue()
             {AIPP_CFG_INPUT_BIAS_1, &tilingData.cscParam.inBias1},
             {AIPP_CFG_INPUT_BIAS_2, &tilingData.cscParam.inBias2},
         };
-
         OP_CHECK_IF(
             ParseNumAndValidateRange(CSC_MATRIX_MAP, MIN_MATRIX_BOUND, MAX_MATRIX_BOUND) != ge::GRAPH_SUCCESS,
             OP_LOGE(context_->GetNodeName(), "CSC_MATRIX_MAP parse and validate range failed."),
@@ -443,18 +611,26 @@ ge::graphStatus AippTiling::SetCscValue()
         OP_CHECK_IF(ParseNumAndValidateRange(CSC_BIAS_MAP, 0, MAX_RGB_BOUND) != ge::GRAPH_SUCCESS,
             OP_LOGE(context_->GetNodeName(), "CSC_BIAS_MAP parse and validate range failed."),
             return ge::GRAPH_FAILED);
+    }
+    OP_CHECK_IF(
+        SetSwapSwitch() != ge::GRAPH_SUCCESS,
+        OP_LOGE(context_->GetNodeName(), "Only XRGB888_U8 supports ax_swap_switch being true."),
+        return ge::GRAPH_FAILED);
 
-        bool hasInBiasFlag = aippCfg.find(AIPP_CFG_INPUT_BIAS_0) != aippCfg.end() &&
-                             aippCfg.find(AIPP_CFG_INPUT_BIAS_1) != aippCfg.end() &&
-                             aippCfg.find(AIPP_CFG_INPUT_BIAS_2) != aippCfg.end();
-        bool hasOutBiasFlag = aippCfg.find(AIPP_CFG_OUTPUT_BIAS_0) != aippCfg.end() &&
-                              aippCfg.find(AIPP_CFG_OUTPUT_BIAS_1) != aippCfg.end() &&
-                              aippCfg.find(AIPP_CFG_OUTPUT_BIAS_2) != aippCfg.end();
-        if ( hasInBiasFlag && !hasOutBiasFlag) {
-            tilingData.cscParam.outBias0 = tilingData.cscParam.inBias0;
-            tilingData.cscParam.outBias1 = tilingData.cscParam.inBias1;
-            tilingData.cscParam.outBias2 = tilingData.cscParam.inBias2;
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus AippTiling::SetSwapSwitch()
+{
+    if (aippCfg.find(AIPP_RBUV_SWAP_SWITCH) != aippCfg.end() && aippCfg.at(AIPP_RBUV_SWAP_SWITCH) == "true") {
+        tilingData.cscParam.rbuvSwapSwitch = 1;
+    }
+
+    if (aippCfg.find(AIPP_AX_SWAP_SWITCH) != aippCfg.end() && aippCfg.at(AIPP_AX_SWAP_SWITCH) == "true") {
+        if (tilingData.imageFormat != IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) {
+            return ge::GRAPH_FAILED;
         }
+        tilingData.cscParam.axSwapSwitch = 1;
     }
 
     return ge::GRAPH_SUCCESS;
@@ -508,12 +684,14 @@ void AippTiling::SetSySTilingData()
     context_->SetLocalMemorySize(simtLocalMem);
 }
 
-void AippTiling::PrintTilingData()
+void AippTiling::PrintTilingData() const
 {
     stringstream ss;
     ss << "imageFormat: " << static_cast<int>(tilingData.imageFormat)
        << ", outputFormat: " << static_cast<int>(tilingData.outputFormat)
        << ", batchNum: " << tilingData.batchNum << ", channelNum: " << tilingData.channelNum
+       << ", rbuvSwapSwitch: " << tilingData.cscParam.rbuvSwapSwitch
+       << ", axSwapSwitch: " << tilingData.cscParam.axSwapSwitch
        << ", inputSizeW: " << tilingData.inputSizeW << ", inputSizeH: " << tilingData.inputSizeH
        << ", cropSwitch: " << tilingData.cropParam.cropSwitch
        << ", cropStartPosH: " << tilingData.cropParam.cropStartPosH
@@ -524,7 +702,8 @@ void AippTiling::PrintTilingData()
        << ", cscMatrix02: " << tilingData.cscParam.cscMatrix02 << ", cscMatrix10: " << tilingData.cscParam.cscMatrix10
        << ", cscMatrix11: " << tilingData.cscParam.cscMatrix11 << ", cscMatrix12: " << tilingData.cscParam.cscMatrix12
        << ", cscMatrix20: " << tilingData.cscParam.cscMatrix20 << ", cscMatrix21: " << tilingData.cscParam.cscMatrix21
-       << ", cscMatrix22: " << tilingData.cscParam.cscMatrix22;
+       << ", cscMatrix22: " << tilingData.cscParam.cscMatrix22
+       << ", paddingSwitch: " << tilingData.paddingParam.paddingSwitch;
     OP_LOGI(context_->GetNodeName(), "%s", ss.str().c_str());
 
     stringstream strs;
@@ -544,6 +723,14 @@ void AippTiling::PrintTilingData()
          << ", dtcPixelVarReciChn2: " << tilingData.dtcParam.dtcPixelVarReciChn2
          << ", dtcPixelVarReciChn3: " << tilingData.dtcParam.dtcPixelVarReciChn3;
     OP_LOGI(context_->GetNodeName(), "%s", strs.str().c_str());
+
+    stringstream strp;
+    strp << "leftPaddingSize: " << tilingData.paddingParam.leftPaddingSize
+        << ", rightPaddingSize: " << tilingData.paddingParam.rightPaddingSize
+        << ", topPaddingSize: " << tilingData.paddingParam.topPaddingSize
+        << ", bottomPaddingSize: " << tilingData.paddingParam.bottomPaddingSize
+        << ", padValue: " << tilingData.paddingParam.padValue;
+    OP_LOGI(context_->GetNodeName(), "%s", strp.str().c_str());
 }
 
 ge::graphStatus AippTiling::PostTiling()

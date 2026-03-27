@@ -89,14 +89,14 @@
       <td>输出</td>
       <td>处理后的图片。
       </td>
-      <td>FLOAT16</td>
+      <td>UINT8、FLOAT16</td>
       <td>NCHW、NHWC</td>
     </tr>
   </tbody></table>
 
 ## 约束说明
 
-- aipp_config_path配置文件说明：仅支持静态AIPP配置、图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置(DTC)。同时输入图片仅支持三通道。
+- aipp_config_path配置文件说明：仅支持静态AIPP配置、图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置(DTC)。
 
 - aipp_config_path文件配置示例如下，具体参数说明参见下表。
 
@@ -121,6 +121,26 @@
         input_bias_0 : 16
         input_bias_1 : 128
         input_bias_2 : 128
+
+        padding : false
+        left_padding_size : 0
+        right_padding_size : 0
+        top_padding_size : 0
+        bottom_padding_size : 0
+        padding_value : 0
+
+        mean_chn_0: 0
+        mean_chn_1: 0
+        mean_chn_2: 0
+        mean_chn_3: 0
+        min_chn_0: 0.0
+        min_chn_1: 0.0
+        min_chn_2: 0.0
+        min_chn_3: 0.0
+        var_reci_chn_0: 1.0
+        var_reci_chn_1: 1.0
+        var_reci_chn_2: 1.0
+        var_reci_chn_3: 1.0
     }
     ```
 
@@ -151,7 +171,7 @@
         <td rowspan="3">静态AIPP参数设置</td>
         <td>input_format</td>
         <td>必选属性</td>
-        <td>输入图片类型，目前只支持RGB888_U8、YUV420SP_U8。</td>
+        <td>输入图片类型，目前只支持RGB888_U8、XRGB8888_U8、YUV420SP_U8。</td>
         <td>ENUM</td>
         </tr>
         <tr>
@@ -198,10 +218,22 @@
         <td>INT32</td>
         </tr>
         <tr>
-        <td rowspan="4">CSC 参数设置</td>
+        <td rowspan="6">CSC 参数设置</td>
         <td>csc_switch</td>
         <td>可选属性</td>
         <td>色域转换开关，静态AIPP配置，true表示开启色域转换，false表示关闭。</td>
+        <td>BOOL</td>
+        </tr>
+        <tr>
+        <td>rbuv_swap_switch</td>
+        <td>可选属性</td>
+        <td>R通道与B通道交换开关/U通道与V通道交换开关，true表示使能通道交换，false表示不使能。</td>
+        <td>BOOL</td>
+        </tr>
+        <tr>
+        <td>ax_swap_switch</td>
+        <td>可选属性</td>
+        <td>RGBA->ARGB交换开关，true表示使能交换，false表示不使能。</td>
         <td>BOOL</td>
         </tr>
         <tr>
@@ -228,22 +260,41 @@
         </tr>
         <tr>
         <td rowspan="3">DTC参数设置</td>
-        <td>mean_chn_0 mean_chn_1 mean_chn_2</td>
+        <td>mean_chn_0 mean_chn_1 mean_chn_2 mean_chn_3</td>
         <td>可选属性</td>
         <td>每个通道的均值，取值范围：[0, 255]。</td>
         <td>UINT8</td>
         </tr>
         <tr>
-        <td>min_chn_0 min_chn_1 min_chn_2</td>
+        <td>min_chn_0 min_chn_1 min_chn_2 min_chn_3</td>
         <td>可选属性</td>
         <td>每个通道的最小值，取值范围：[0, 255]。</td>
         <td>FLOAT16</td>
         </tr>
         <tr>
-        <td>var_reci_chn_0 var_reci_chn_1 var_reci_chn_2</td>
+        <td>var_reci_chn_0 var_reci_chn_1 var_reci_chn_2 var_reci_chn_3</td>
         <td>可选属性</td>
         <td>每个通道方差的倒数，取值范围：[-65504, 65504]。</td>
         <td>FLOAT16</td>
+        </tr>
+        <tr>
+        <td rowspan="3">padding参数设置</td>
+        <td>padding</td>
+        <td>可选属性</td>
+        <td>AIPP处理图片时padding使能开关，取值范围：true/false。</td>
+        <td>BOOL</td>
+        </tr>
+        <tr>
+        <td>left_padding_size right_padding_size top_padding_size bottom_padding_size</td>
+        <td>可选属性</td>
+        <td>H和W的填充值，静态AIPP配置，取值范围：[0, 32]。</td>
+        <td>INT32</td>
+        </tr>
+        <tr>
+        <td>padding_value</td>
+        <td>可选属性</td>
+        <td>上下左右方向上padding的像素取值，静态AIPP配置。取值范围：[0, 255]/[-65504, 65504]。</td>
+        <td>UINT8/FLOAT16</td>
         </tr>
     </tbody></table>
 

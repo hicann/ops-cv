@@ -36,6 +36,7 @@
 namespace optiling {
 using namespace std;
 using namespace ge;
+using namespace Aipp_Kernel;
 
 constexpr int64_t MAX_RGB_BOUND = 255;
 constexpr int64_t MIN_MATRIX_BOUND = -32677;
@@ -54,6 +55,7 @@ constexpr uint8_t CONST_VALUE_ZERO = 0;
 constexpr uint8_t CONST_VALUE_ONE = 1;
 constexpr uint8_t CONST_VALUE_TWO = 2;
 constexpr uint8_t CONST_VALUE_THREE = 3;
+constexpr uint8_t CONST_VALUE_FOUR = 4;
 
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
@@ -61,6 +63,8 @@ constexpr uint8_t NHWC_FORMAT_INDEX = 2;
 constexpr int64_t FORMAT_RGB_INDICE_UINT32 = 1;
 constexpr int64_t FORMAT_YUV_INDICE_UINT32 = 2;
 constexpr int64_t FORMAT_RGB_SWITCH_OPEN_UINT32 = 3;
+constexpr int64_t FORMAT_RGB_SWITCH_OPEN_UINT32_TO_GRAY = 4;
+constexpr int64_t FORMAT_YUV_INDICE_UINT32_TO_GRAY = 6;
 
 constexpr size_t INPUT_IMAGES_IDX = 0;
 constexpr size_t INPUT_PARAMS_IDX = 1;
@@ -70,17 +74,30 @@ constexpr size_t IMAGE_BATCH_DIM = 0;
 constexpr size_t NHWC_IMAGE_H_DIM = 1;
 constexpr size_t NHWC_IMAGE_W_DIM = 2;
 constexpr size_t NHWC_IMAGE_CHANNEL_DIM = 3;
+constexpr size_t NCHW_IMAGE_H_DIM = 2;
+constexpr size_t NCHW_IMAGE_W_DIM = 3;
+
+constexpr int64_t MAX_PADDING_SIZE = 32;
+constexpr int64_t MIN_PADDING_VALUE_UINT8 = 0;
+constexpr int64_t MAX_PADDING_VALUE_UINT8 = 255;
+constexpr float MIN_PADDING_VALUE_FP16 = (-65504.0f);
+constexpr float MAX_PADDING_VALUE_FP16 = (65504.0f);
+constexpr int64_t MAX_PADDING_OUT_W = 1080;
 
 const string IMAGE_FORMAT_RGB888_U8 = "RGB888_U8";
 const string IMAGE_FORMAT_YUV420SP_U8 = "YUV420SP_U8";
+const string IMAGE_FORMAT_XRGB8888_U8 = "XRGB8888_U8";
 constexpr uint8_t IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT = (3);
 constexpr float IMAGE_FORMAT_YUV420SP_U8_SIZE_LIMIT = (1.5f);
+constexpr uint8_t IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT = (4);
 
 const string AIPP_MODE = "aipp_mode";
 const string AIPP_MODE_STATIC = "static";
 const string AIPP_INPUT_FORMAT = "input_format";
 const string AIPP_SRC_IMAGE_SIZE_W = "src_image_size_w";
 const string AIPP_SRC_IMAGE_SIZE_H = "src_image_size_h";
+const string AIPP_RBUV_SWAP_SWITCH = "rbuv_swap_switch";
+const string AIPP_AX_SWAP_SWITCH = "ax_swap_switch";
 const string AIPP_CROP = "crop";
 const string AIPP_CROP_SIZE_W = "crop_size_w";
 const string AIPP_CROP_SIZE_H = "crop_size_h";
@@ -117,8 +134,16 @@ const string AIPP_VAR_RECI_CHN_1 = "var_reci_chn_1";
 const string AIPP_VAR_RECI_CHN_2 = "var_reci_chn_2";
 const string AIPP_VAR_RECI_CHN_3 = "var_reci_chn_3";
 
+const string AIPP_PADDING = "padding";
+const string AIPP_LEFT_PADDING_SIZE = "left_padding_size";
+const string AIPP_RIGHT_PADDING_SIZE = "right_padding_size";
+const string AIPP_TOP_PADDING_SIZE = "top_padding_size";
+const string AIPP_BOTTOM_PADDING_SIZE = "bottom_padding_size";
+const string AIPP_PADDING_VALUE = "padding_value";
+
 const std::map<string, uint8_t> IMAGE_FORMART_MAP = {{IMAGE_FORMAT_YUV420SP_U8, 1},
-                                                     {IMAGE_FORMAT_RGB888_U8, 2}};
+                                                     {IMAGE_FORMAT_RGB888_U8, 2},
+                                                     {IMAGE_FORMAT_XRGB8888_U8, 3}};
 
 struct AippCompileInfo {
     int64_t coreNum = 0;
@@ -157,11 +182,17 @@ private:
     ge::graphStatus CheckCropSize();
     ge::graphStatus SetCscValue();
     ge::graphStatus SetDTCValue();
+    ge::graphStatus SetSwapSwitch();
+    void IsGrayForCSC();
+    void SwapChannelForCSC();
+    ge::graphStatus SetPaddingValue();
+    ge::graphStatus CheckPaddingSize();
+    ge::graphStatus ValidPaddingValue(float padValue, ge::DataType outputDtype);
 
     map<string, string> parseAippConfig(string jsonStr);
     map<string, string> parseAippCfgFromPath(string fileName);
     void SetSySTilingData();
-    void PrintTilingData();
+    void PrintTilingData() const;
 
     template <typename T>
     ge::graphStatus ParseNumAndValidateRange(const std::map<std::string, T*>& valueMap,\
@@ -172,6 +203,7 @@ private:
     AippTilingData tilingData;
 
     int32_t inputImageSize = 1;
+    bool isGray = false;
 };
 
 } // namespace optiling

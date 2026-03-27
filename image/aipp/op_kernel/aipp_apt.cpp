@@ -16,11 +16,14 @@
 #include "arch35/aipp_rgb.h"
 #include "arch35/aipp_yuv.h"
 #include "arch35/aipp_rgb_yuv.h"
+#include "arch35/aipp_yuv_gray.h"
+#include "arch35/aipp_rgb_gray.h"
 
 #define FORMAT_RGB_INDICE_UINT32 1
 #define FORMAT_YUV_INDICE_UINT32 2
 #define FORMAT_RGB_2_YUV_INDICE_UINT32 3
-
+#define FORMAT_RGB_2_GRAY_INDICE_UINT32 4
+#define FORMAT_YUV_2_GRAY_INDICE_UINT32 6
 using namespace Aipp_Kernel;
 
 extern "C" __global__ __aicore__ void Aipp(
@@ -48,6 +51,14 @@ extern "C" __global__ __aicore__ void Aipp(
         op.Process(images, features);
     } else if (TILING_KEY_IS(FORMAT_RGB_2_YUV_INDICE_UINT32)) {
         Aipp_Kernel::AippRgbYuv<DTYPE_FEATURES, uint32_t> op;
+        op.Init(tilingData);
+        op.Process(images, features);
+    } else if (TILING_KEY_IS(FORMAT_RGB_2_GRAY_INDICE_UINT32)) {
+        Aipp_Kernel::AippRgbGray<DTYPE_FEATURES, uint32_t> op;
+        op.Init(tilingData);
+        op.Process(images, features);
+    } else if (TILING_KEY_IS(FORMAT_YUV_2_GRAY_INDICE_UINT32)) {
+        Aipp_Kernel::AippYuvGray<DTYPE_FEATURES, uint32_t> op;
         op.Init(tilingData);
         op.Process(images, features);
     }

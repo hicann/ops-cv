@@ -30,7 +30,7 @@ public:
     __aicore__ inline void Process(GM_ADDR x, GM_ADDR y);
 
 private:
-    uint16_t blockDimX_ = MAX_TGHREAD_NUM;
+    uint16_t blockDimX_ = MAX_THREAD_NUM;
 };
 
 template <typename T, typename DataType>
@@ -42,60 +42,50 @@ __aicore__ inline void AippRgbYuv<T, DataType>::Init(const AippTilingData& tilin
 __aicore__ __attribute__((always_inline)) inline void Rgb2Yuv(
     YuvPack<uint8_t>& dstYuv, uint8_t r, uint8_t g, uint8_t b, const CscParam& cscParam)
 {
-    auto yTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix00 * r * 2 +
-        cscParam.cscMatrix01 * g * 2 + cscParam.cscMatrix02 * b * 2 + 1) / CSC_MATRIX_SCALE));
-    auto uTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix10 * r * 2 +
-        cscParam.cscMatrix11 * g * 2 + cscParam.cscMatrix12 * b * 2 + 1) / CSC_MATRIX_SCALE));
-    auto vTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix20 * r * 2 +
-        cscParam.cscMatrix21 * g * 2 + cscParam.cscMatrix22 * b * 2 + 1) / CSC_MATRIX_SCALE));
+    auto yTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix00 * r * DIGIT_2 +
+        cscParam.cscMatrix01 * g * DIGIT_2 + cscParam.cscMatrix02 * b * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
+    auto uTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix10 * r * DIGIT_2 +
+        cscParam.cscMatrix11 * g * DIGIT_2 + cscParam.cscMatrix12 * b * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
+    auto vTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix20 * r * DIGIT_2 +
+        cscParam.cscMatrix21 * g * DIGIT_2 + cscParam.cscMatrix22 * b * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
 
-    dstYuv.y = CLIP3(yTmp + cscParam.outBias0, 0, 255);
-    dstYuv.u = CLIP3(uTmp + cscParam.outBias1, 0, 255);
-    dstYuv.v = CLIP3(vTmp + cscParam.outBias2, 0, 255);
+    dstYuv.y = CLIP3(yTmp + cscParam.outBias0, 0, MAX_UINT8);
+    dstYuv.u = CLIP3(uTmp + cscParam.outBias1, 0, MAX_UINT8);
+    dstYuv.v = CLIP3(vTmp + cscParam.outBias2, 0, MAX_UINT8);
 }
 
 template <typename T, typename DataType>
-__simt_vf__ LAUNCH_BOUND(MAX_TGHREAD_NUM) __aicore__ void SimtComputeRgb2Yuv(
+__simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Yuv(
     __gm__ uint8_t* rgbGM, __gm__ T* yuvGM, const AippTilingData tD,
     uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize)
 {
-    uint8_t outputFormat = tD.outputFormat;
-    uint32_t inputSizeH = tD.inputSizeH;
-    uint32_t inputSizeW = tD.inputSizeW;
-    uint32_t cropSizeH = tD.cropParam.cropSizeH;
-    uint32_t cropSizeW = tD.cropParam.cropSizeW;
-    uint32_t cropStartPosH = tD.cropParam.cropStartPosH;
-    uint32_t cropStartPosW = tD.cropParam.cropStartPosW;
+    uint32_t outputSizeH = tD.outputSizeH;
+    uint32_t outputSizeW = tD.outputSizeW;
+    float padValue = tD.paddingParam.padValue;
 
     for (DataType idx = Simt::GetThreadIdx() + blockIdx * Simt::GetThreadNum(); idx < batchSize;
          idx += blockNum * Simt::GetThreadNum()) {
-        DataType nIdx = idx / (cropSizeH * cropSizeW);
-        DataType newIdx = idx - nIdx * cropSizeH * cropSizeW;
-        DataType hIdx = newIdx / cropSizeW;
-        DataType wIdx = newIdx - hIdx * cropSizeW;
+        CoordPack<DataType> coord;
+        ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
 
-        YuvPack<DataType> dstYuvIdx;
-        if (outputFormat == NCHW_FORMAT_INDEX) {
-            dstYuvIdx.y = nIdx * cropSizeH * cropSizeW * YUV_CHANNEL_NUM + hIdx * cropSizeW  + wIdx;
-            dstYuvIdx.u = dstYuvIdx.y + cropSizeH * cropSizeW;
-            dstYuvIdx.v = dstYuvIdx.u + cropSizeH * cropSizeW;
+        RgbPack<DataType> dstYuvIdx;
+        RgbComputeDstIdx(dstYuvIdx, coord, tD);
+        bool isPadding = IsPixelInPadding(coord.hIdx, coord.wIdx, tD);
+
+        if (isPadding) {
+            AssignPadValue(yuvGM[dstYuvIdx.r], padValue);
+            AssignPadValue(yuvGM[dstYuvIdx.g], padValue);
+            AssignPadValue(yuvGM[dstYuvIdx.b], padValue);
         } else {
-            dstYuvIdx.y = nIdx * cropSizeH * cropSizeW * YUV_CHANNEL_NUM + hIdx * cropSizeW * YUV_CHANNEL_NUM + wIdx * YUV_CHANNEL_NUM;
-            dstYuvIdx.u = dstYuvIdx.y + 1;
-            dstYuvIdx.v = dstYuvIdx.u + 1;
+            RgbPack<DataType> srcRgbIdx;
+            RgbComputeSrcIdx(srcRgbIdx, coord, tD);
+
+            YuvPack<uint8_t> dstYuv;
+            Rgb2Yuv(dstYuv, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
+            DataConversion(yuvGM[dstYuvIdx.r], dstYuv.y, tD.dtcParam, CHANNEL_NUM_0);
+            DataConversion(yuvGM[dstYuvIdx.g], dstYuv.u, tD.dtcParam, CHANNEL_NUM_1);
+            DataConversion(yuvGM[dstYuvIdx.b], dstYuv.v, tD.dtcParam, CHANNEL_NUM_2);
         }
-
-        RgbPack<DataType> srcRgbIdx;
-        srcRgbIdx.r = nIdx * inputSizeH * inputSizeW * RGB_CHANNEL_NUM + (cropStartPosH + hIdx) * inputSizeW * RGB_CHANNEL_NUM +
-                      (cropStartPosW + wIdx) * RGB_CHANNEL_NUM;
-        srcRgbIdx.g = srcRgbIdx.r + 1;
-        srcRgbIdx.b = srcRgbIdx.g + 1;
-
-        YuvPack<uint8_t> dstYuv;
-        Rgb2Yuv(dstYuv, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
-        DataConversion(yuvGM[dstYuvIdx.y], dstYuv.y, tD.dtcParam, CHANNEL_NUM_0);
-        DataConversion(yuvGM[dstYuvIdx.u], dstYuv.u, tD.dtcParam, CHANNEL_NUM_1);
-        DataConversion(yuvGM[dstYuvIdx.v], dstYuv.v, tD.dtcParam, CHANNEL_NUM_2);
     }
 }
 
