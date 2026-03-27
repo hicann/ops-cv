@@ -79,7 +79,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0pky">UINT8、FLOAT16</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">HWC(C=1、3)。</td>
-      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">√</td>
     </tr>
     <tr>
       <td class="tg-0pky">src（aclTensor*）</td>
@@ -89,7 +89,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0pky">UINT8、FLOAT16</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">HWC(C=1、3)。</td>
-      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">√</td>
     </tr>
     <tr>
       <td class="tg-0lax">mask（aclTensor*）</td>
@@ -99,7 +99,7 @@ aclnnStatus aclnnBackgroundReplace(
       <td class="tg-0lax">FLOAT16</td>
       <td class="tg-0lax">ND</td>
       <td class="tg-0lax">HWC(C=1)。</td>
-      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">√</td>
     </tr>
     <tr>
       <td class="tg-0pky">out（aclTensor*）</td>

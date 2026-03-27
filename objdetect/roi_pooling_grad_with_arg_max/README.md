@@ -112,7 +112,7 @@
     <tr>
       <td>pool_channel</td>
       <td>属性</td>
-      <td>输入坐标的宽映射到ROI坐标的缩放比例。</td>
+      <td>指定池化的通道数。</td>
       <td>INT</td>
       <td>-</td>
     </tr>
