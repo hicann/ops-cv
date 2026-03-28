@@ -32,7 +32,7 @@ constexpr float ROI_EMPTY_BIN_VAL = 0.0f;
 constexpr uint32_t ROI_POOLING_SIMT_LAUNCH_BOUND = 2048;
 
 template <typename dT>
-__aicore__ __attribute__((always_inline)) inline void RoiPoolingBinRange(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void RoiPoolingBinRange(
     int64_t& bin_x1, int64_t& bin_y1, int64_t& bin_x2, int64_t& bin_y2, bool& is_empty,
     const __gm__ dT* offset_rois, uint32_t ph, uint32_t pw, int64_t poolH, int64_t poolW,
     float spatial_scale_h, float spatial_scale_w, int64_t fmH, int64_t fmW) {
