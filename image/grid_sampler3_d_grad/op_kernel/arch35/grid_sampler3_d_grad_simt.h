@@ -52,7 +52,7 @@ __aicore__ inline void GridSampler3DGradSimt<T>::Init(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeTopPoints(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTopPoints(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, float iz, float iy, float ix, uint32_t gridD,
     uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol,
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,
@@ -117,7 +117,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeTopPoints(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeBottomPoints(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBottomPoints(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, float iz, float iy, float ix, uint32_t gridD,
     uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol,
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,
@@ -182,7 +182,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeBottomPoints(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, float iz, float iy, float ix,
     uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t depthCol, uint32_t heightCol,
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,
@@ -228,7 +228,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeNearest(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNearest(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, float iz, float iy, float ix,
     uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t depthCol, uint32_t heightCol,
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,

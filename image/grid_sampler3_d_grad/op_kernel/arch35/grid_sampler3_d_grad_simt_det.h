@@ -58,7 +58,7 @@ __aicore__ inline void GridSampler3DGradSimtDet<T>::Init(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void deterministicCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void deterministicCompute(
     __gm__ uint32_t* dxOutGmAddr, __gm__ T* dxOutValueGmAddr, __gm__ T* dxGmAddr, uint32_t dxGmIndex, float dxOutValue,
     uint32_t gridSize, uint32_t blockNum, uint32_t batchNum, uint32_t blockId, uint32_t pointIndex)
 {
@@ -90,7 +90,7 @@ __aicore__ __attribute__((always_inline)) inline void deterministicCompute(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeTop1Points(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop1Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
     __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
@@ -135,7 +135,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeTop1Points(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeTop2Points(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop2Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
     __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
@@ -180,7 +180,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeTop2Points(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeBottom1Points(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBottom1Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
     __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
@@ -225,7 +225,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeBottom1Points(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeBottom2Points(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBottom2Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
     __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
@@ -270,7 +270,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeBottom2Points(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, __gm__ uint32_t* dxOutGmAddr,
     __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
@@ -329,7 +329,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeNearest(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNearest(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, __gm__ uint32_t* dxOutGmAddr,
     __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,

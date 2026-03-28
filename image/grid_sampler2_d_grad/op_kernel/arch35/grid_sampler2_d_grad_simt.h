@@ -57,7 +57,7 @@ __aicore__ inline void GridSampler2DGradSimt<T>::Init(
 }
 
 template <typename T>
-    __aicore__ __attribute__((always_inline)) inline void ComputePoints(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputePoints(
         __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, float iy, float ix, uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t channelIndex, uint32_t heightCol,
         uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel, float tnw, float tne, float tsw, float tse, int32_t iy_tnw, int32_t ix_tnw,
         float* gix, float* giy)
@@ -108,7 +108,7 @@ template <typename T>
 
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, 
 	float iy, float ix, uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, 
 	uint32_t xH, uint32_t xW, uint32_t channel, float* ixGradMultValue, float* iyGradMultValue)
@@ -138,7 +138,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ComputeNearest(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNearest(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, float iy, float ix,
     uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol,
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW,

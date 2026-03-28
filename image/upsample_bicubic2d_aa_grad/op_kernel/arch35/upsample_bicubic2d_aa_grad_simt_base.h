@@ -25,7 +25,7 @@ namespace UpsampleBicubic2dAAGrad {
 using namespace AscendC;
 
 template <typename T2, typename T3>
-static __aicore__ inline void CalculateBoundariesAndWeights(const T2 coord, const float scale, 
+static __simt_callee__ __aicore__ inline void CalculateBoundariesAndWeights(const T2 coord, const float scale, 
     const float invScale, const float support, const T3 lenDst, T3 &minCoord, 
     T3 &maxCoord, float &totalWeight)
 {
@@ -43,7 +43,7 @@ static __aicore__ inline void CalculateBoundariesAndWeights(const T2 coord, cons
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
     T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
     T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
     float supportH, float supportW)

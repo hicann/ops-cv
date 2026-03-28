@@ -27,15 +27,15 @@ const int32_t THREAD_NUM_B32 = 2048;
 const int32_t THREAD_NUM_B64 = 512;
 const uint64_t SCH_ID_1 = 1;
 
-static __aicore__ inline float CubicConvolution1(float x)
+static __simt_callee__ __aicore__ inline float CubicConvolution1(float x)
 {
     return static_cast<float>((1.5f * x - 2.5f) * x * x + 1.0f);
 }
-static __aicore__ inline float CubicConvolution2(float x)
+static __simt_callee__ __aicore__ inline float CubicConvolution2(float x)
 {
     return static_cast<float>(((-0.5f * x + 2.5f) * x - 4.0f) * x + 2.0f);
 }
-static __aicore__ inline float CubicFilterAA(float x)
+static __simt_callee__ __aicore__ inline float CubicFilterAA(float x)
 {
     x = Simt::Abs(x);
     if (x < 1.0f) {

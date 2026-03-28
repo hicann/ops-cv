@@ -55,7 +55,7 @@ __aicore__ inline void GridSampler2dBilinearSimt<T, T_IDX>::Init(
 }
 
 template <typename T, typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline T GetInputPointValue(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T GetInputPointValue(
     __gm__ T* inputImgGmAddr, int32_t inputHeight, int32_t inputWidth, T_IDX channelIndex,
     T_IDX inputDataBatchOffset, T_IDX inH, T_IDX inW, T_IDX inC)
 {
@@ -66,7 +66,7 @@ __aicore__ __attribute__((always_inline)) inline T GetInputPointValue(
 }
 
 template <typename T, typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline T ComputeBilinear(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBilinear(
     __gm__ T* inputImgGmAddr, float pointHeight, float pointWidth, T_IDX channelIndex, T_IDX inputDataBatchOffset,
     T_IDX inH, T_IDX inW, T_IDX inC)
 {
