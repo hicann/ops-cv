@@ -77,7 +77,7 @@ aclnnStatus aclnnMrgbaCustom(
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">HWC(C=3)，与alpha满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
-      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">√</td>
     </tr>
     <tr>
       <td class="tg-0pky">alpha（aclTensor*）</td>
@@ -87,7 +87,7 @@ aclnnStatus aclnnMrgbaCustom(
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">HWC(C=1)，与rgb满足<a href="../../../docs/zh/context/broadcast关系.md">broadcast关系</a>。</td>
-      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">√</td>
     </tr>
     <tr>
       <td class="tg-0pky">out（aclTensor*）</td>

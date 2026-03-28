@@ -18,7 +18,7 @@
 
 $$
 CIoU = IoU - \frac{\rho^2(b^p, b^g)}{c^2} - \alpha v \\
-v = \frac{4}{\pi^2}(arctan(\frac{w^g}{h^g} - \frac{w^p}{g^g})) \\
+v = \frac{4}{\pi^2}(arctan(\frac{w^g}{h^g}) - arctan(\frac{w^p}{h^g}))^2 \\
 \alpha = \frac{v}{1 - IoU + v} \\
 $$
 
