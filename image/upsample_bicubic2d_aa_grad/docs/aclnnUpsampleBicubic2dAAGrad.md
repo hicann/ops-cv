@@ -13,7 +13,6 @@
 |  <term>Atlas 推理系列产品</term>    |     ×    |
 |  <term>Atlas 训练系列产品</term>    |     ×    |
 
-
 ## 功能说明
 
 - 接口功能：[aclnnUpsampleBicubic2dAA](../../upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
@@ -80,7 +79,6 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
   aclOpExecutor *executor,
   aclrtStream    stream)
 ```
-
 
 ## aclnnUpsampleBicubic2dAAGradGetWorkspaceSize
 

@@ -13,8 +13,6 @@
 |  <term>Atlas 推理系列产品</term>    |     √    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
-
-
 ## 功能说明
 
 - 接口功能：[aclnnUpsampleNearest2dV2](../../upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md)的反向传播。

@@ -13,7 +13,6 @@
 | <term>Atlas 推理系列产品</term>                             |    √     |
 | <term>Atlas 训练系列产品</term>                              |    √     |
 
-
 ## 功能说明
 
 RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。[aclnnRoiAlign](./aclnnRoiAlign.md)对标ONNX opset 10算子原型，aclnnRoiAlignV2对标torchvision算子原型。aclnnRoiAlignV2使用boxes替代aclnnRoiAlign的rois和batch_indices，并增加aligned入参，同时取消mode入参、默认执行mode="avg"场景。
@@ -171,7 +170,6 @@ aclnnStatus aclnnRoiAlignV2(
       <td class="tg-0pky">-</td>
     </tr>
   </tbody></table>
-
 
 - **返回码：**
 
