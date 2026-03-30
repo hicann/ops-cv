@@ -31,7 +31,7 @@ constexpr int32_t THREAD_NUM = 512;
 constexpr int32_t THREAD_NUM_MIDDLE = 256;
 
 template <typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputeDetermine(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputeDetermine(
     T_IDX& tmp, T_IDX& mW, T_IDX shiftW, T_IDX& W, T_IDX lenSrcW, T_IDX& mH, T_IDX shiftH, T_IDX& H, T_IDX lenSrcH,
     T_IDX& mC, T_IDX shiftC, T_IDX& C, T_IDX lenC, T_IDX& mN, T_IDX shiftN, T_IDX& N, T_IDX lenN)
 {
