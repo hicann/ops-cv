@@ -13,7 +13,6 @@
 | <term>Atlas 推理系列产品</term>                             |    √     |
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
-
 ## 功能说明
 
 - 算子功能：对两个输入矩形框集合，计算交并比（IOU）或前景交叉比（IOF），用于评价预测框（bBox）和真值框（gtBox）的重叠度。
@@ -265,7 +264,6 @@ aclnnStatus aclnnIou(
     </tr>
   </tbody>
   </table>
-
 
 - **返回值：**
 

@@ -15,7 +15,7 @@
 
 - 接口功能：实现RoiPoolingWithArgMax的反向。遍历每个ROI的池化结果，将feature map坐标上的反向梯度贡献累加，即完成整张图上的反向计算。
 - 计算公式：
-  
+
   $$
   \frac{\partial L}{\partial x_i} = \sum_{r}\sum_{j}[i = i^*(r,j)]\frac{\partial L}{\partial y_{rj}}
   $$
@@ -25,7 +25,7 @@
   $$
   [i = i^*(r,j)]  = \begin{cases} 1, & i^*(r,j) \geq 1 \\ 0, & otherwise \end{cases}
   $$
-  
+
   判决函数`[i = i^*(r,j)]`表示i节点是否被候选区域r的第j个输出节点选为最大值输出
 
 ## 函数原型
@@ -474,5 +474,4 @@ int main()
     return 0;
 }
 
-​
 ```

@@ -39,8 +39,10 @@ ops-cv是[CANN](https://hiascend.com/software/cann) （Compute Architecture for 
 除了上述关键教程，还有其他文档介绍，例如算子调用方式、build参数说明、术语概念等，全量文档请访问[docs](docs/README.md)。
 
 ## 🔍目录结构
+
 关键目录如下，详细目录介绍参见[项目目录](./docs/zh/install/dir_structure.md)。
-```
+
+```Cpp
 ├── build.sh                       # 项目工程编译脚本
 ├── cmake                          # 项目工程编译目录
 ├── CMakeLists.txt

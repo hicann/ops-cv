@@ -12,10 +12,27 @@
 |  <term>Atlas 训练系列产品</term>    |     ×    |
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnThreeInterpolateBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnThreeInterpolateBackward”接口执行计算。
 
-* `aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor *grad_x, const aclTensor *idx, const aclTensor *weight, int m, aclTensor *grad_y, uint64_t *workspaceSize, aclOpExecutor **executor)`
-* `aclnnStatus aclnnThreeInterpolateBackward(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(
+  const aclTensor *grad_x,
+  const aclTensor *idx,
+  const aclTensor *weight,
+  int              m, 
+  aclTensor       *grad_y,
+  uint64_t        *workspaceSize,
+  aclOpExecutor  **executor)
+```
+
+```Cpp
+aclnnStatus aclnnThreeInterpolateBackward(
+  void          *workspace, 
+  uint64_t       workspaceSize, 
+  aclOpExecutor *executor, 
+  aclrtStream    stream)
+```
 
 ## 功能说明
 
@@ -32,38 +49,179 @@
 
 - **参数说明：**
 
-  - grad_x（aclTensor\*, 计算输入）：网络反向传播前一步的梯度值，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, c, n），支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。
-  - idx（aclTensor\*, 计算输入）：目标特征的三个最近邻特征索引，Device侧的aclTensor。数据类型支持INT32、INT64，shape支持（b, n, 3）。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-  - weight（aclTensor\*, 计算输入）：目标特征的三个最近邻特征权重，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, n, 3）。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/zh/context/数据格式.md)支持ND。
-  - m（uint32_t\*, 计算输入）：输入特征最低维度的大小，用于指导infershape的时候推导grad_y的形状。数据类型支持INT32。
-  - grad_y（aclTensor\*, 计算输出）：梯度计算结果，Device侧的aclTensor。数据类型支持FLOAT、FLOAT16，shape支持（b, c, m）。支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)，不支持空Tensor。[数据格式](../../../docs/zh/context/数据格式.md)支持NCHW。
-  - workspaceSize（uint64_t\*, 出参）: 返回需要在Device侧申请的workspace大小。
-  - executor（aclOpExecutor\*\*, 出参）: 返回op执行器，包含了算子计算流程。 
+  </style>
+  <table class="tg" style="undefined;table-layout: fixed; width: 1556px"><colgroup>
+  <col style="width: 171px">
+  <col style="width: 121px">
+  <col style="width: 271px">
+  <col style="width: 331px">
+  <col style="width: 224px">
+  <col style="width: 103px">
+  <col style="width: 190px">
+  <col style="width: 145px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-0pky">参数名</th>
+      <th class="tg-0pky">输入/输出</th>
+      <th class="tg-0pky">描述</th>
+      <th class="tg-0lax">使用说明</th>
+      <th class="tg-0lax">数据类型</th>
+      <th class="tg-0lax">数据格式</th>
+      <th class="tg-0lax">维度(shape)</th>
+      <th class="tg-0lax">非连续Tensor</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">grad_x（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">网络反向传播前一步的梯度值。</td>
+      <td class="tg-0lax">shape支持（b, c, n）</td>
+      <td class="tg-0lax">FLOAT、FLOAT16</td>
+      <td class="tg-0lax">支持NCHW</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">idx（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">目标特征的三个最近邻特征索引。</td>
+      <td class="tg-0lax">shape支持（b, n, 3），不支持空Tensor。</td>
+      <td class="tg-0lax">INT32、INT64</td>
+      <td class="tg-0lax">ND</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky">weight（aclTensor*）</td>
+      <td class="tg-0pky">输入</td>
+      <td class="tg-0pky">目标特征的三个最近邻特征权重。</td>
+      <td class="tg-0lax">shape支持（b, n, 3），不支持空Tensor。</td>
+      <td class="tg-0lax">FLOAT、FLOAT16</td>
+      <td class="tg-0lax">ND</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">√</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">m（int）</td>
+      <td class="tg-0lax">输入</td>
+      <td class="tg-0lax">输入特征最低维度的大小，用于指导infershape的时候推导grad_y的形状。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">INT32</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">grad_y（aclTensor*）</td>
+      <td class="tg-0lax">输出</td>
+      <td class="tg-0lax">梯度计算结果。</td>
+      <td class="tg-0lax">shape支持（b, c, m）。</td>
+      <td class="tg-0lax">FLOAT、FLOAT16</td>
+      <td class="tg-0lax">支持NCHW</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">对</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">workspaceSize（uint64_t*）</td>
+      <td class="tg-0lax">输出</td>
+      <td class="tg-0lax">返回需要在Device侧申请的workspace大小。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">executor（aclOpExecutor**）</td>
+      <td class="tg-0lax">输出</td>
+      <td class="tg-0lax">返回op执行器，包含了算子计算流程。</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+      <td class="tg-0lax">-</td>
+    </tr>
+  </tbody></table>
 
 - **返回值：**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-```
-第一段接口完成入参校验，出现以下场景时报错：
-返回161001（ACLNN_ERR_PARAM_NULLPTR）：1. 传入的grad_x、idx、weight、grad_y为空指针。
-返回161002（ACLNN_ERR_PARAM_INVALID）：1. grad_x、idx、weight、m、grad_y的数据类型和数据格式不在支持的范围内。
-        2. 当grad_x、idx、weight、grad_y不为空指针，其数据类型和数据格式或shape不在支持的范围内。
-```
+  </style>
+  <table class="tg" style="undefined;table-layout: fixed; width: 859px"><colgroup>
+  <col style="width: 302px">
+  <col style="width: 142px">
+  <col style="width: 415px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="tg-0pky">返回值</th>
+      <th class="tg-0pky">错误码</th>
+      <th class="tg-0pky">描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td class="tg-0pky">ACLNN_ERR_PARAM_NULLPTR</td>
+      <td class="tg-0pky">161001</td>
+      <td class="tg-0pky">传入的grad_x、idx、weight、grad_y为空指针。</td>
+    </tr>
+    <tr>
+      <td class="tg-0pky" rowspan="2">ACLNN_ERR_PARAM_INVALID</td>
+      <td class="tg-0pky" rowspan="2">161002</td>
+      <td class="tg-0pky">grad_x、idx、weight、m、grad_y的数据类型和数据格式不在支持的范围内。</td>
+    </tr>
+    <tr>
+      <td class="tg-0lax">当grad_x、idx、weight、grad_y不为空指针，其数据类型和数据格式或shape不在支持的范围内。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnThreeInterpolateBackward
 
 - **参数说明：**
-  - workspace（void\*, 入参）: 在Device侧申请的workspace内存地址。
-  - workspaceSize（uint64_t, 入参）: 在Device侧申请的workspace大小，由第一段接口aclnnThreeInterpolateBackwardGetWorkspaceSize获取。
-  - executor（aclOpExecutor\*, 入参）: op执行器，包含了算子计算流程。
-  - stream（aclrtStream, 入参）: 指定执行任务的AscendCL Stream流。
+
+  <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
+  <col style="width: 173px">
+  <col style="width: 112px">
+  <col style="width: 668px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnThreeInterpolateBackward获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回值：**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
 - idx中的取值应该小于m。
 - 确定性计算：
   - aclnnThreeInterpolateBackward默认非确定性实现，不支持配置开启。
@@ -72,7 +230,7 @@
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
-```
+```cpp
 #include <iostream>
 #include <vector>
 #include "acl/acl.h"

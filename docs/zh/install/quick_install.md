@@ -21,13 +21,13 @@
 
 对于无昇腾设备的开发者，可直接使用WebIDE开发平台，即“**算子一站式开发平台**”，该平台为您提供在线可直接运行的昇腾环境，环境中已安装必备的驱动固件、软件包和依赖，无需手动安装。
 
-> **说明**：环境默认安装最新商发版CANN包，源码下载时注意与软件配套。更多关于开发平台的介绍请参考[LINK](https://gitcode.com/org/cann/discussions/54)。
+> **说明**：环境默认安装最新商发版CANN包，源码下载时注意与软件配套。更多关于开发平台的介绍请参考[一站式算子开发工具平台操作指导](https://gitcode.com/org/cann/discussions/54)。
 
 1. 进入开源项目，单击“`云开发`”按钮，使用已认证过的华为云账号登录。若未注册或认证，请根据页面提示进行注册和认证。
 
    <img src="../figures/cloudIDE.png" alt="云平台"  width="750px" height="90px">
 
-2. 根据页面提示创建并启动云开发环境，单击“`连接 > WebIDE`”进入算子一站式开发平台，开源项目的源码资源默认在`/mnt/workspace`目录下。
+2. 根据页面提示创建并启动云开发环境，单击“`连接>WebIDE`”进入算子一站式开发平台，开源项目的源码资源默认在`/mnt/workspace`目录下。
 
    <img src="../figures/webIDE.png" alt="云平台"  width="1000px" height="150px">
 
@@ -63,6 +63,7 @@
 ```bash
 docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_manager --device /dev/devmm_svm --device /dev/hisi_hdc -v /usr/local/dcmi:/usr/local/dcmi -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info -v /etc/ascend_install.info:/etc/ascend_install.info -it swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops bash
 ```
+
 | 参数 | 说明 | 注意事项 |
 | :--- | :--- | :--- |
 | `--name cann_container` | 为容器指定名称，便于管理。 | 可自定义。 |
@@ -118,8 +119,8 @@ pip3 install -r requirements.txt
         下载和安装操作请参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》中“准备软件包”和“安装NPU驱动和固件”章节。驱动与固件是运行态依赖，若仅编译算子，可以不安装。
 
     2. **安装CANN包**
- 	 
- 	    请单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/)，选择最新时间版本，并根据产品型号和环境架构下载对应包。安装命令如下，更多指导参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》。
+
+        请单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/)，选择最新时间版本，并根据产品型号和环境架构下载对应包。安装命令如下，更多指导参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》。
  	 
         - 安装CANN toolkit包
 
@@ -154,13 +155,14 @@ pip3 install -r requirements.txt
 
 安装完CANN包后，需验证环境和驱动是否正常。
 
--   **检查NPU设备**
+- **检查NPU设备**
 
     ```bash
     # 运行npu-smi，若能正常显示设备信息，则驱动正常
     npu-smi info
     ```
--   **检查CANN版本**
+
+- **检查CANN版本**
 
     ```bash
     # 查看CANN toolkit包版本信息（默认路径安装），WebIDE场景下将/usr/local替换为/home/developer
@@ -172,6 +174,7 @@ pip3 install -r requirements.txt
 ## 环境变量配置
 
 按需选择合适的命令使环境变量生效。
+
 ```bash
 # 默认路径安装，以root用户为例（非root用户，将/usr/local替换为${HOME}）
 source /usr/local/Ascend/cann/set_env.sh

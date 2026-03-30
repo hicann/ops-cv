@@ -13,7 +13,6 @@
 |  <term>Atlas 推理系列产品</term>    |     √    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
-
 ## 功能说明
 
 - 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1])。本接口相较于[aclnnUpsampleNearest2d](../../resize_nearest_neighbor_v2/docs/aclnnUpsampleNearest2d.md)，增加入参scalesH、scalesW，请根据实际情况选择合适的接口。
@@ -54,7 +53,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   aclOpExecutor *executor, 
   aclrtStream    stream)
 ```
-
 
 ## aclnnUpsampleNearest2dV2GetWorkspaceSize
 
@@ -198,7 +196,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
       <td>outputSize中存在值为0的元素。</td>
     </tr>
   </tbody></table>
-
 
 ## aclnnUpsampleNearest2dV2
 

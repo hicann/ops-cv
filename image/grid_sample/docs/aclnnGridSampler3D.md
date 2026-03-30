@@ -13,7 +13,6 @@
 |  <term>Atlas 推理系列产品</term>    |     ×    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
-
 ## 功能说明
 
 - 接口功能：提供一个输入张量input，以及一个对应的grid网格，根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到grid指定的位置，得到最终的输出。
@@ -258,7 +257,7 @@ aclnnStatus aclnnGridSampler3D(
 
 ## 约束说明
 
-- 输入`input`的（D轴的大小 * H轴的大小 * W轴的大小） < INT32的最大值。
+- 输入`input`的（D轴的大小 * H轴的大小 * W轴的大小 < INT32的最大值。
 - 确定性计算：
   - aclnnGridSampler3D默认确定性实现。
 

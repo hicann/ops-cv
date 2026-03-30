@@ -13,7 +13,6 @@
 | <term>Atlas 推理系列产品</term>                             |    ×     |
 | <term>Atlas 训练系列产品</term>                              |    √     |
 
-
 ## 功能说明
 
 [aclnnRoiAlignV2](../../roi_align/docs/aclnnRoiAlignV2.md)的反向传播，RoiAlign是一种池化层，用于非均匀输入尺寸的特征图，并输出固定尺寸的特征图。
@@ -182,7 +181,6 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0pky">-</td>
     </tr>
   </tbody></table>
-
 
 - **返回码：**
 
