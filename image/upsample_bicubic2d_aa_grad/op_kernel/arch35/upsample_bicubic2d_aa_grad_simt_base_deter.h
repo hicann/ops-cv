@@ -25,7 +25,7 @@ namespace UpsampleBicubic2dAAGrad {
 using namespace AscendC;
 
 template <typename T3>
-static __aicore__ inline void CalculateBounds(T3 &minVal, T3 &maxVal, float center, float scale, float support, T3 lenSrc)
+static __simt_callee__ __aicore__ inline void CalculateBounds(T3 &minVal, T3 &maxVal, float center, float scale, float support, T3 lenSrc)
 {
     if (likely(scale > 0.0f)) {
         minVal = static_cast<T3>(Simt::Floor((center - support) / scale + 0.5f));
@@ -39,7 +39,7 @@ static __aicore__ inline void CalculateBounds(T3 &minVal, T3 &maxVal, float cent
 }
 
 template <typename T3>
-static __aicore__ inline float CalculateWeight(float center, float outputCenter, float invScale, float support, T3 lenDst)
+static __simt_callee__ __aicore__ inline float CalculateWeight(float center, float outputCenter, float invScale, float support, T3 lenDst)
 {
     float weight = CubicFilterAA((center - outputCenter) * invScale);
     if (weight == 0.0f) {
@@ -67,7 +67,7 @@ static __aicore__ inline float CalculateWeight(float center, float outputCenter,
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__aicore__ __attribute__((always_inline)) inline void SimtDeterCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
     T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
     T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
     float supportH, float supportW)

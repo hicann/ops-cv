@@ -27,7 +27,7 @@ const int32_t THREAD_NUM_B32 = 512;
 const int32_t THREAD_NUM_B64 = 512;
 
 template <typename T2, typename T3>
-static __aicore__ inline T3 GetLeftIndex(T2 index, float scale, float support)
+static __simt_callee__ __aicore__ inline T3 GetLeftIndex(T2 index, float scale, float support)
 {
     T3 leftIndex = 0;
     if (scale != 0.0f) {
@@ -39,7 +39,7 @@ static __aicore__ inline T3 GetLeftIndex(T2 index, float scale, float support)
     return leftIndex;
 }
 
-static __aicore__ inline float WeightCalculate(float x)
+static __simt_callee__ __aicore__ inline float WeightCalculate(float x)
 {
     x = Simt::Abs(x);
     if (x < 1.0f) {
@@ -49,7 +49,7 @@ static __aicore__ inline float WeightCalculate(float x)
 }
 
 template <typename T2, typename T3>
-static __aicore__ inline float GetWeights(T2 index, T3 min, T3 max, float center, float invScale) {
+static __simt_callee__ __aicore__ inline float GetWeights(T2 index, T3 min, T3 max, float center, float invScale) {
     float totalWeights = 0.0f;
     for (T3 j = min; j < max; j++) {
         const float distance = (static_cast<float>(j) - center + 0.5f) * invScale;
@@ -65,7 +65,7 @@ static __aicore__ inline float GetWeights(T2 index, T3 min, T3 max, float center
 }
 
 template <typename T1, typename T2, typename T3>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
     __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
     T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, T3 maxInterpSizeH, T3 maxInterpSizeW,
     float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
@@ -120,7 +120,7 @@ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
 }
 
 template <typename T1, typename T2, typename T3>
-__aicore__ __attribute__((always_inline)) inline void SimtComputeDetermine(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeDetermine(
     __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
     T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, T3 maxInterpSizeH, T3 maxInterpSizeW,
     float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)

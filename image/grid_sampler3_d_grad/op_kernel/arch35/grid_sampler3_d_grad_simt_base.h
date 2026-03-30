@@ -42,7 +42,7 @@ namespace GridSampler3DGradSimtBase {
     constexpr float DEFAULT_FAULT_VALUE = -100.0f;
     constexpr uint32_t VF_MAX_THREAD_NUM = 256;
 
-__aicore__ __attribute__((always_inline)) inline float UnnormallizeSetGrad(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormallizeSetGrad(
     float coord, uint32_t size, uint32_t padding, uint32_t alignCorners, float* gradInValue)
 {
     if (alignCorners == 1) {
@@ -57,7 +57,7 @@ __aicore__ __attribute__((always_inline)) inline float UnnormallizeSetGrad(
     return coord;
 }
 
-__aicore__ __attribute__((always_inline)) inline float ClipCoorDinatesSetGrad(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoorDinatesSetGrad(
     float coord, uint32_t clip_limit, float* gradClipValue)
 {
     if (coord <= static_cast<float>(0)) {
@@ -75,7 +75,7 @@ __aicore__ __attribute__((always_inline)) inline float ClipCoorDinatesSetGrad(
     }
 }
 
-__aicore__ __attribute__((always_inline)) inline float ReflectCoordinatesSetGrad(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ReflectCoordinatesSetGrad(
     float coord, int twiceLow, uint32_t twiceHigh, float* gradReflValue)
 {
     if (twiceLow == twiceHigh) {
@@ -104,7 +104,7 @@ __aicore__ __attribute__((always_inline)) inline float ReflectCoordinatesSetGrad
     }
 }
 
-__aicore__ __attribute__((always_inline)) inline float SafeDowngradeToIntRange(float coord)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float SafeDowngradeToIntRange(float coord)
 {
     if (!Simt::IsFinite(coord)) {
         return DEFAULT_FAULT_VALUE;
@@ -112,7 +112,7 @@ __aicore__ __attribute__((always_inline)) inline float SafeDowngradeToIntRange(f
     return coord;
 }
 
-__aicore__ __attribute__((always_inline)) inline int32_t GetFloorValue(float x)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t GetFloorValue(float x)
 {
     float negativeValue = static_cast<float>(0.0);
     float floorFactor = static_cast<float>(-1);
@@ -120,7 +120,7 @@ __aicore__ __attribute__((always_inline)) inline int32_t GetFloorValue(float x)
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void GetGradOutPointValueAndDxIndex(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetGradOutPointValueAndDxIndex(
     __gm__ T* gradOutGmAddr, int32_t inputXDepth, int32_t inputXHeight, int32_t inputXWidth, uint32_t gridD,
     uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
     uint32_t channelIndex, uint32_t gridoffsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel,
@@ -137,7 +137,7 @@ __aicore__ __attribute__((always_inline)) inline void GetGradOutPointValueAndDxI
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void GetGradOutValueAndDxIndex(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetGradOutValueAndDxIndex(
     __gm__ T* gradOutGmAddr, int32_t inputXHeight, int32_t inputXWidth, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t channelIndex,
     uint32_t newInputIndex, uint32_t xH, uint32_t xW, uint32_t channel, float* gradOutValue, uint32_t* dxIndex)
@@ -150,7 +150,7 @@ __aicore__ __attribute__((always_inline)) inline void GetGradOutValueAndDxIndex(
     }
 }
 
-__aicore__ __attribute__((always_inline)) inline float ComputeSourceIndexSetGrad(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeSourceIndexSetGrad(
     float coord, uint32_t size, uint32_t padding, uint32_t alignCorners, float* gradInValue)
 {
     float gradClipValue = 0;

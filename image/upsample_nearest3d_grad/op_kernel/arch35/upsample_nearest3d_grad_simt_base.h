@@ -29,7 +29,7 @@ const uint64_t SCH_ID_2 = 2;
 const uint64_t SCH_ID_3 = 3;
 
 template <typename T2, bool isExtra>
-__aicore__ __attribute__((always_inline)) inline void ComputeOrig(T2 idx, T2 limit, float scale, T2& orig)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeOrig(T2 idx, T2 limit, float scale, T2& orig)
 {
     if constexpr (isExtra) {
         orig = Simt::Ceil((static_cast<float>(idx) * scale - 0.5f));
@@ -40,7 +40,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeOrig(T2 idx, T2 lim
 }
 
 template <typename T1, typename T2>
-__aicore__ __attribute__((always_inline)) inline void ComputeForSplitNcdhw(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeForSplitNcdhw(
     __gm__ T1* inputGm, __gm__ T1* outputGm, T2 lenSrcW, T2 lenSrcHw, T2 lenSrcDhw, T2 N, T2 origD, T2 origDUp,
     T2 origH, T2 origHUp, T2 origW, T2 origWUp, T2 yGmIdx)
 {
@@ -57,7 +57,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeForSplitNcdhw(
 }
 
 template <typename T1, typename T2>
-__aicore__ __attribute__((always_inline)) inline void ComputeForSplitDhw(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeForSplitDhw(
     __gm__ T1* inputGm, __gm__ T1* outputGm, T2 lenN, T2 lenSrcW, T2 lenSrcHw, T2 lenSrcDhw, T2 lenDstDhw, T2 origD,
     T2 origDUp, T2 origH, T2 origHUp, T2 origW, T2 origWUp, T2 yGmIdx)
 {
@@ -78,7 +78,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeForSplitDhw(
 }
 
 template <typename T1, typename T2>
-__aicore__ __attribute__((always_inline)) inline void ComputeForSplitCdhw(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeForSplitCdhw(
     __gm__ T1* inputGm, __gm__ T1* outputGm, T2 lenN, T2 lenC, T2 lenSrcW, T2 lenSrcHw, T2 lenSrcDhw, T2 lenDstDhw,
     T2 C, T2 origD, T2 origDUp, T2 origH, T2 origHUp, T2 origW, T2 origWUp, T2 yGmIdx)
 {
@@ -99,7 +99,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeForSplitCdhw(
 }
 
 template <typename T1, typename T2, bool isExtra, uint64_t schId>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
     __gm__ T1* inputGm, __gm__ T1* outputGm, T2 blkStartOffset, T2 blkProcessNum, T2 lenN, T2 lenC, T2 mD, T2 shiftD,
     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW, T2 lenDstD, T2 lenDstH, T2 lenDstW,
     float scaleD, float scaleH, float scaleW)

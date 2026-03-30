@@ -26,7 +26,7 @@ using namespace AscendC;
 const int32_t THREAD_NUM_B32 = 512;
 const int32_t THREAD_NUM_B64 = 512;
 
-static __aicore__ inline float CubilFilterAA(float x)
+static __simt_callee__ __aicore__ inline float CubilFilterAA(float x)
 {
     x = Simt::Abs(x);
     if (x < 1.0f) {
@@ -36,7 +36,7 @@ static __aicore__ inline float CubilFilterAA(float x)
 }
 
 template <typename T1, typename T2, typename T3>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
     T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
     T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
     float supportH, float supportW)

@@ -32,7 +32,7 @@ const uint32_t VF_MAX_THREAD_NUM = 1024;
 const uint32_t VF_MAX_THREAD_NUM_3D = 512;
 
 
-__aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coord, int32_t size)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coord, int32_t size)
 {
     coord = coord < 0 ? 0 : coord;
     coord = coord > (size - 1) ? (float)size - 1 : coord;
@@ -42,7 +42,7 @@ __aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coo
     return coord;
 }
 
-__aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow, int32_t twiceHigh)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow, int32_t twiceHigh)
 {
     if (twiceLow == twiceHigh) {
         return 0;
@@ -60,7 +60,7 @@ __aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float 
     return coord;
 }
 
-__aicore__ __attribute__((always_inline)) inline float safeDowngradeToIntRange(float coord)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float safeDowngradeToIntRange(float coord)
 {
     if (!Simt::IsFinite(coord)) {
         return DEFAULT_FAULT_VALUE;
@@ -68,7 +68,7 @@ __aicore__ __attribute__((always_inline)) inline float safeDowngradeToIntRange(f
     return coord;
 }
 
-__aicore__ __attribute__((always_inline)) inline float Clip(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float Clip(
     float coord, int32_t size, int32_t paddingMode, int32_t alignCorners)
 {
     if (paddingMode == PADDING_MODE_BORDER_95) {
