@@ -1,4 +1,4 @@
-/**
+/* *
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
@@ -19,17 +19,18 @@
 
 namespace ResizeBicubicV2 {
 using namespace AscendC;
-static __aicore__ inline float CubicConvolution2(float x, float a)
+static __simt_callee__ __aicore__ inline float CubicConvolution2(float x, float a)
 {
     return static_cast<float>(((a * x - 5 * a) * x + 8 * a) * x - 4 * a);
 }
 
-static __aicore__ inline float CubicConvolution1(float x, float a)
+static __simt_callee__ __aicore__ inline float CubicConvolution1(float x, float a)
 {
     return static_cast<float>(((a + 2) * x - (a + 3)) * x * x + 1);
 }
 
-static __aicore__ inline void GetCubicCoeff(float lep, float &cof0, float &cof1, float &cof2, float &cof3)
+static __simt_callee__ __aicore__ inline void GetCubicCoeff(float lep, float &cof0, float &cof1, float &cof2,
+    float &cof3)
 {
     float A = -0.75f;
     cof0 = CubicConvolution2((lep + 1.0f), A);
@@ -38,8 +39,7 @@ static __aicore__ inline void GetCubicCoeff(float lep, float &cof0, float &cof1,
     cof3 = CubicConvolution2(2.0f - lep, A);
 }
 
-template <typename T_IDX2>
-static __aicore__ inline T_IDX2 GetSrc(T_IDX2 src, T_IDX2 maxLimt)
+template <typename T_IDX2> static __simt_callee__ __aicore__ inline T_IDX2 GetSrc(T_IDX2 src, T_IDX2 maxLimt)
 {
     if (src < 0) {
         src = 0;
@@ -51,7 +51,7 @@ static __aicore__ inline T_IDX2 GetSrc(T_IDX2 src, T_IDX2 maxLimt)
 }
 
 template <typename T_IDX, uint64_t halfPixel>
-__aicore__ __attribute__((always_inline)) inline float ComputeOri(T_IDX H, float scaleH)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOri(T_IDX H, float scaleH)
 {
     if constexpr (halfPixel == 1) {
         float orig = static_cast<float>((H + 0.5f) * scaleH) - 0.5f;
@@ -63,8 +63,9 @@ __aicore__ __attribute__((always_inline)) inline float ComputeOri(T_IDX H, float
 }
 
 template <typename T1, typename T_IDX, typename T_IDX2>
-__aicore__ __attribute__((always_inline)) inline void ComputeNchwMode0(T_IDX origBaseIdx, T_IDX yGmIdx, T_IDX lenSrcW,
-    float origHeight, float origWidth, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNchwMode0(T_IDX origBaseIdx, T_IDX yGmIdx,
+    T_IDX lenSrcW, float origHeight, float origWidth, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, __gm__ T1 *inputGm,
+    __gm__ T1 *outputGm)
 {
     T_IDX2 leftX = Simt::Floor(origWidth);
     T_IDX2 topY = Simt::Floor(origHeight);
@@ -117,9 +118,9 @@ __aicore__ __attribute__((always_inline)) inline void ComputeNchwMode0(T_IDX ori
 }
 
 template <typename T1, typename T_IDX, typename T_IDX2>
-__aicore__ __attribute__((always_inline)) inline void ComputeNhwcMode0(T_IDX yGmIdx, float origWidth, float origHeight,
-    T_IDX origBaseIdx, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, T_IDX lenC, T_IDX lenSrcWc, __gm__ T1 *inputGm,
-    __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNhwcMode0(T_IDX yGmIdx, float origWidth,
+    float origHeight, T_IDX origBaseIdx, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, T_IDX lenC, T_IDX lenSrcWc,
+    __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     T_IDX2 leftX = Simt::Floor(origWidth);
     T_IDX2 topY = Simt::Floor(origHeight);
@@ -166,5 +167,5 @@ __aicore__ __attribute__((always_inline)) inline void ComputeNhwcMode0(T_IDX yGm
     float valueDst = valueW0 * coffH0 + valueW1 * coffH1 + valueW2 * coffH2 + valueW3 * coffH3;
     outputGm[yGmIdx] = static_cast<T1>(valueDst);
 }
-}  // namespace ResizeBicubicV2
-#endif  // RESIZE_NEAREAST_NEIGHBOR_V2_BASE_H
+} // namespace ResizeBicubicV2
+#endif // RESIZE_NEAREAST_NEIGHBOR_V2_BASE_H

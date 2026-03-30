@@ -51,9 +51,9 @@ __aicore__ inline void ResizeBicubicV2GradSimt<T_DATA, T_IDX, T_IDX2, FORMAT, AL
 }
 
 template <typename T_IDX, int32_t FORMAT>
-__aicore__ __attribute__((always_inline)) inline void CalcInputDimIdx(T_IDX gradsIdx, T_IDX lenC, T_IDX lenDstH,
-    T_IDX lenDstW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW, T_IDX &idxN, T_IDX &idxC,
-    T_IDX &gradsIdxH, T_IDX &gradsIdxW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcInputDimIdx(T_IDX gradsIdx, T_IDX lenC,
+    T_IDX lenDstH, T_IDX lenDstW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW,
+        T_IDX shiftW, T_IDX &idxN, T_IDX &idxC, T_IDX &gradsIdxH, T_IDX &gradsIdxW)
 {
     T_IDX tmpIdx = gradsIdx;
     T_IDX tmpRes = 0;
@@ -81,7 +81,7 @@ __aicore__ __attribute__((always_inline)) inline void CalcInputDimIdx(T_IDX grad
 }
 
 template <typename T_IDX, int32_t FORMAT>
-__aicore__ __attribute__((always_inline)) inline T_IDX CalcOutputIdx(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T_IDX CalcOutputIdx(
     T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX idxN, T_IDX idxC, T_IDX idxH, T_IDX idxW)
 {
     if constexpr (FORMAT == FORMAT_NCHW) {
@@ -92,8 +92,8 @@ __aicore__ __attribute__((always_inline)) inline T_IDX CalcOutputIdx(
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT>
-__aicore__ __attribute__((always_inline)) inline void CalcOutputValue(__gm__ T_DATA *y, T_IDX lenC, T_IDX lenSrcH,
-    T_IDX lenSrcW, T_IDX idxN, T_IDX idxC, T_IDX2 yIdxH, T_IDX2 yIdxW, float addValue)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcOutputValue(__gm__ T_DATA *y, T_IDX lenC,
+    T_IDX lenSrcH, T_IDX lenSrcW, T_IDX idxN, T_IDX idxC, T_IDX2 yIdxH, T_IDX2 yIdxW, float addValue)
 {
     T_IDX yFinalIdxH =
         static_cast<T_IDX>(Simt::Max(static_cast<T_IDX2>(0), Simt::Min(yIdxH, static_cast<T_IDX2>(lenSrcH) - 1)));
@@ -104,9 +104,10 @@ __aicore__ __attribute__((always_inline)) inline void CalcOutputValue(__gm__ T_D
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenC,
-    T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX coreFactor,
-    T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T_DATA *grads,
+    __gm__ T_DATA *y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
+        float scaleH, float scaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC,
+            T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
     for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < coreFactor;
          idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {

@@ -1,4 +1,4 @@
-/**
+/* *
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
@@ -38,8 +38,8 @@ private:
 };
 
 template <typename T1, typename T2>
-__aicore__ __attribute__((always_inline)) inline void ComputeMode0(
-    float origWidth, T2 srcL1, T2 origBaseIdx, T2 yGmIdx, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeMode0(float origWidth, T2 srcL1,
+    T2 origBaseIdx, T2 yGmIdx, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     // 计算原图中坐标点
     T2 leftX = Simt::Floor(origWidth);
@@ -57,7 +57,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeMode0(
 }
 
 template <typename T2, uint64_t halfPixel>
-__aicore__ __attribute__((always_inline)) inline float ComputeOriL(T2 L, float scaleL)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOriL(T2 L, float scaleL)
 {
     if constexpr (halfPixel == 1) {
         float origWidth = static_cast<float>((L + 0.5f) * scaleL) - 0.5f;
@@ -72,12 +72,12 @@ __aicore__ __attribute__((always_inline)) inline float ComputeOriL(T2 L, float s
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
-    T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(T2 blkStartOffset, T2 blkProcessNum,
+    T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     T2 srcL1 = lenSrcL - 1;
     for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
         T2 yGmIdx = blkStartOffset + idx;
         if constexpr (mode == 1) {
             // 纯搬运，输出完全等于输入，直接赋值
@@ -117,21 +117,21 @@ template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
 __simt_vf__ LAUNCH_BOUND(512) __aicore__ void calleeInt64(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
     T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
-    SimtCompute<T1, T2, halfPixel, mode>(
-        blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcL, scaleL, inputGm, outputGm);
+    SimtCompute<T1, T2, halfPixel, mode>(blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcL, scaleL, inputGm,
+        outputGm);
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
 __simt_vf__ LAUNCH_BOUND(1024) __aicore__ void calleeInt32(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
     T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
-    SimtCompute<T1, T2, halfPixel, mode>(
-        blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcL, scaleL, inputGm, outputGm);
+    SimtCompute<T1, T2, halfPixel, mode>(blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcL, scaleL, inputGm,
+        outputGm);
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
-__aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, const ResizeLinearTilingData *tilingData)
+__aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y,
+    const ResizeLinearTilingData *tilingData)
 {
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
@@ -154,7 +154,7 @@ __aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Process()
     } else {
         blkProcessNum = tilingData_->blkProcessNum;
         blkStartOffset = tilingData_->splitBlockTailFactor * (tilingData_->blkProcessNum + 1) +
-                         (blockIdx_ - tilingData_->splitBlockTailFactor) * blkProcessNum;
+            (blockIdx_ - tilingData_->splitBlockTailFactor) * blkProcessNum;
     }
     T2 mL = 0;
     T2 shiftL = 0;
@@ -164,28 +164,12 @@ __aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Process()
     T2 lenSrcL = (T2)(tilingData_->lenSrcL);
     float scaleL = tilingData_->scaleL;
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, T2, halfPixel, mode>>(Simt::Dim3(512),
-            blkStartOffset,
-            blkProcessNum,
-            mL,
-            shiftL,
-            lenDesL,
-            lenSrcL,
-            scaleL,
-            (__gm__ T1 *)(inputGm_.GetPhyAddr()),
-            (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+        Simt::VF_CALL<calleeInt64<T1, T2, halfPixel, mode>>(Simt::Dim3(512), blkStartOffset, blkProcessNum, mL, shiftL,
+            lenDesL, lenSrcL, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
     } else {
-        Simt::VF_CALL<calleeInt32<T1, T2, halfPixel, mode>>(Simt::Dim3(1024),
-            blkStartOffset,
-            blkProcessNum,
-            mL,
-            shiftL,
-            lenDesL,
-            lenSrcL,
-            scaleL,
-            (__gm__ T1 *)(inputGm_.GetPhyAddr()),
-            (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+        Simt::VF_CALL<calleeInt32<T1, T2, halfPixel, mode>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum, mL, shiftL,
+            lenDesL, lenSrcL, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
     }
 }
-}  // namespace ResizeLinear
-#endif  // CANN_RESIZE_LINEAR_SIMT_NCL_H
+} // namespace ResizeLinear
+#endif // CANN_RESIZE_LINEAR_SIMT_NCL_H

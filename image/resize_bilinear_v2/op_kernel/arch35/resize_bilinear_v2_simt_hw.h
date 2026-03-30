@@ -50,7 +50,7 @@ __aicore__ inline void ResizeBilinearV2SimtHW<T1, T2, halfPixel, mode, T_IDX>::I
 }
 
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
     float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH, T_IDX lenSrcW,
     T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ volatile T2* output, T_IDX blkStartOffset,
     T_IDX blkProcessNum)

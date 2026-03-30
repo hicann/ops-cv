@@ -53,7 +53,7 @@ ResizeBilinearV2GradSimtDetermine<T1, T2, halfPixel, T_IDX, format>::Init(
 }
 
 template <typename T1, typename T2, bool halfPixel, typename T_IDX, int32_t format>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
     float scaleW, float scaleH, float inverseScaleW, float inverseScaleH, T_IDX resizedHeight, T_IDX resizedWidth,
     T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX coreNum, T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC,
     T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* grads, __gm__ T2* y, int32_t blockId,

@@ -31,7 +31,7 @@ public:
 };
 
 template <typename T_IDX, int32_t FORMAT>
-__aicore__ __attribute__((always_inline)) inline void CalcOutputDimIdx(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcOutputDimIdx(
     T_IDX yIdx, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW,
     T_IDX shiftW, T_IDX& idxN, T_IDX& idxC, T_IDX& yIdxH, T_IDX& yIdxW)
 {
@@ -61,7 +61,7 @@ __aicore__ __attribute__((always_inline)) inline void CalcOutputDimIdx(
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT>
-__aicore__ __attribute__((always_inline)) inline float GetInputValue(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetInputValue(
     __gm__ T_DATA* grads, T_IDX lenC, T_IDX lenDstH, T_IDX lenDstW, T_IDX idxN, T_IDX idxC, T_IDX gradsIdxH,
     T_IDX gradsIdxW)
 {
@@ -77,7 +77,7 @@ __aicore__ __attribute__((always_inline)) inline float GetInputValue(
 }
 
 template <typename T_IDX, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline void CalGradsIdx(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalGradsIdx(
     float scale, T_IDX yIdx, T_IDX gradsSize, T_IDX& idx)
 {
     float offset = 0.0f;
@@ -89,7 +89,7 @@ __aicore__ __attribute__((always_inline)) inline void CalGradsIdx(
 
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline void SimtDetermineCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermineCompute(
     __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
     float scaleH, float scaleW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC,
     T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
