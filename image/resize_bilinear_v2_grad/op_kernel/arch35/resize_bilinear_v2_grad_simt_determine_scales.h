@@ -53,7 +53,7 @@ ResizeBilinearV2GradSimtDetermineScales<T1, T2, halfPixel, T_IDX, format>::Init(
 }
 
 template <typename T_IDX, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline float CalcSourceIndex(float scale, T_IDX dstIdx)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcSourceIndex(float scale, T_IDX dstIdx)
 {
     if constexpr (HALF_PIXEL) {
         return scale * (static_cast<float>(dstIdx) + 0.5f) - 0.5f;
@@ -63,7 +63,7 @@ __aicore__ __attribute__((always_inline)) inline float CalcSourceIndex(float sca
 }
 
 template <typename T_IDX, int32_t FORMAT>
-__aicore__ __attribute__((always_inline)) inline T_IDX CalcInputIdx(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T_IDX CalcInputIdx(
     T_IDX lenC, T_IDX resizedHeight, T_IDX resizedWidth, T_IDX N, T_IDX C, T_IDX H, T_IDX W)
 {
     if constexpr (FORMAT == FORMAT_NCHW) {
@@ -74,7 +74,7 @@ __aicore__ __attribute__((always_inline)) inline T_IDX CalcInputIdx(
 }
 
 template <typename T1, typename T2, typename T_IDX, int32_t FORMAT, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline float CalcInternalPoint(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcInternalPoint(
     __gm__ T1* grads, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX resizedHeight, T_IDX resizedWidth, float scaleH,
     float scaleW, T_IDX N, T_IDX C, T_IDX H, T_IDX W, T_IDX inYStart, float outYStart, T_IDX inXStart, float outXStart)
 {
@@ -105,7 +105,7 @@ __aicore__ __attribute__((always_inline)) inline float CalcInternalPoint(
 }
 
 template <typename T1, typename T2, typename T_IDX, int32_t FORMAT, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline float CalcHBoundaryPoint(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoundaryPoint(
     __gm__ T1* grads, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX resizedHeight, T_IDX resizedWidth, float scaleH,
     float scaleW, T_IDX N, T_IDX C, T_IDX H, T_IDX W, T_IDX inYStart, float outYStart, T_IDX inXStart, float outXStart)
 {
@@ -144,7 +144,7 @@ __aicore__ __attribute__((always_inline)) inline float CalcHBoundaryPoint(
 }
 
 template <typename T1, typename T2, typename T_IDX, int32_t FORMAT, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline float CalcWBoundaryPoint(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoundaryPoint(
     __gm__ T1* grads, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX resizedHeight, T_IDX resizedWidth, float scaleH,
     float scaleW, T_IDX N, T_IDX C, T_IDX H, T_IDX W, T_IDX inYStart, float outYStart, T_IDX inXStart, float outXStart)
 {
@@ -183,7 +183,7 @@ __aicore__ __attribute__((always_inline)) inline float CalcWBoundaryPoint(
 }
 
 template <typename T1, typename T2, typename T_IDX, int32_t FORMAT, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline float CalcCornerPoint(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCornerPoint(
     __gm__ T1* grads, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX resizedHeight, T_IDX resizedWidth, float scaleH,
     float scaleW, T_IDX N, T_IDX C, T_IDX H, T_IDX W, T_IDX inYStart, float outYStart, T_IDX inXStart, float outXStart)
 {
@@ -229,7 +229,7 @@ __aicore__ __attribute__((always_inline)) inline float CalcCornerPoint(
 }
 
 template <typename T1, typename T2, bool halfPixel, typename T_IDX, int32_t format>
-__aicore__ __attribute__((always_inline)) inline void SimtScalesCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtScalesCompute(
     float scaleW, float scaleH, float inverseScaleW, float inverseScaleH, T_IDX resizedHeight, T_IDX resizedWidth,
     T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX coreNum, T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC,
     T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* grads, __gm__ T2* y, int32_t blockId,

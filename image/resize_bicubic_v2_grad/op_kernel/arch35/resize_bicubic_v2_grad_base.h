@@ -34,17 +34,17 @@ __aicore__ inline int64_t Min(int64_t a, int64_t b)
     return (a < b) ? a : b;
 }
 
-__aicore__ __attribute__((always_inline)) inline float CalcCubicConvolution1(float t, float a)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCubicConvolution1(float t, float a)
 {
     return ((a + 2.0f) * t - (a + 3.0f)) * t * t + 1.0f;
 }
 
-__aicore__ __attribute__((always_inline)) inline float CalcCubicConvolution2(float t, float a)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCubicConvolution2(float t, float a)
 {
     return ((a * t - 5.0f * a) * t + 8.0f * a) * t - 4.0f * a;
 }
 
-__aicore__ __attribute__((always_inline)) inline float CalcCubicCoefficient(float idxDiff)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCubicCoefficient(float idxDiff)
 {
     float a = -0.75f;
     float coeff = 0.0f;
@@ -58,7 +58,8 @@ __aicore__ __attribute__((always_inline)) inline float CalcCubicCoefficient(floa
     return coeff;
 }
 
-__aicore__ __attribute__((always_inline)) inline void CalcCubicCoefficients(float coeffs[4], float idxDiff)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcCubicCoefficients(float coeffs[4],
+    float idxDiff)
 {
     float a = -0.75f;
 
@@ -72,7 +73,7 @@ __aicore__ __attribute__((always_inline)) inline void CalcCubicCoefficients(floa
 }
 
 template <typename T_IDX, bool ALIGN_CORNERS>
-__aicore__ __attribute__((always_inline)) inline float CalcSourceIndex(float scale, T_IDX dstIdx)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcSourceIndex(float scale, T_IDX dstIdx)
 {
     if constexpr (ALIGN_CORNERS) {
         return scale * static_cast<float>(dstIdx);

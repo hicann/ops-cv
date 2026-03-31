@@ -42,7 +42,7 @@ private:
 
 
 template <typename T1, typename T2>
-__aicore__ __attribute__((always_inline)) inline void SimtComputeMode3(T2 blkStartOffset, T2 blkProcessNum,
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeMode3(T2 blkStartOffset, T2 blkProcessNum,
     T2 lenSrcLOrUb, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;

@@ -1,4 +1,4 @@
-/**
+/* *
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
@@ -8,7 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-/*!
+/* !
  * \file resize_nearest_neighbor_v2_grad_simt_determine_hw.h
  * \brief ResizeNearestNeighborV2Grad simt determine hw
  */
@@ -18,16 +18,16 @@
 
 #include "resize_nearest_neighbor_v2_grad_simt_base.h"
 
-namespace ResizeNearestNeighborV2Grad
-{
+namespace ResizeNearestNeighborV2Grad {
 using namespace AscendC;
 
 constexpr bool IS_UNROLL_W = true;
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline void SimtDetermineHWCompute(
-    __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
-    float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermineHWCompute(__gm__ T_DATA *grads,
+    __gm__ T_DATA *y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
+    float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW,
+    T_IDX shiftW)
 {
     for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < coreFactor;
         idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
@@ -42,7 +42,7 @@ __aicore__ __attribute__((always_inline)) inline void SimtDetermineHWCompute(
         tmpIdx = tmpRes;
         tmpRes = Simt::UintDiv(tmpIdx, mH, shiftH);
         yIdxH = tmpIdx - tmpRes * lenSrcH;
-        
+
         T_IDX gradsIdxHStart = 0;
         T_IDX gradsIdxWStart = 0;
         T_IDX gradsIdxHEnd = 0;
@@ -73,28 +73,27 @@ __aicore__ __attribute__((always_inline)) inline void SimtDetermineHWCompute(
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT32) __aicore__ void calleeSimtDetermineHWInt32(
-    __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
-    float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT32)__aicore__
+    void calleeSimtDetermineHWInt32(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH,
+    T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor,
+    T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    SimtDetermineHWCompute<T_DATA, T_IDX, HALF_PIXEL>(
-        grads, y, lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, coreFactor,
-        coreOffset, mH, shiftH, mW, shiftW);
+    SimtDetermineHWCompute<T_DATA, T_IDX, HALF_PIXEL>(grads, y, lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
+        inverseScaleH, inverseScaleW, coreFactor, coreOffset, mH, shiftH, mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT64) __aicore__ void calleeSimtDetermineHWInt64(
-    __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
-    float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT64)__aicore__
+    void calleeSimtDetermineHWInt64(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH,
+    T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor,
+    T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    SimtDetermineHWCompute<T_DATA, T_IDX, HALF_PIXEL>(
-        grads, y, lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, coreFactor,
-        coreOffset, mH, shiftH, mW, shiftW);
+    SimtDetermineHWCompute<T_DATA, T_IDX, HALF_PIXEL>(grads, y, lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
+        inverseScaleH, inverseScaleW, coreFactor, coreOffset, mH, shiftH, mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-class ResizeNearestNeighborV2GradSimtDetermineHW : public ResizeNearestNeighborV2GradBase<T_DATA>
-{
+class ResizeNearestNeighborV2GradSimtDetermineHW : public ResizeNearestNeighborV2GradBase<T_DATA> {
 public:
     __aicore__ inline ResizeNearestNeighborV2GradSimtDetermineHW(){};
     __aicore__ inline void Process();
@@ -124,7 +123,7 @@ __aicore__ inline void ResizeNearestNeighborV2GradSimtDetermineHW<T_DATA, T_IDX,
     } else {
         blkStartOffset += this->tilingData_->splitBlockTailFactor;
     }
-    
+
     T_IDX mC = 1;
     T_IDX mH = 1;
     T_IDX mW = 1;
@@ -136,19 +135,17 @@ __aicore__ inline void ResizeNearestNeighborV2GradSimtDetermineHW<T_DATA, T_IDX,
 
     if (this->blockIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
-            Simt::VF_CALL<calleeSimtDetermineHWInt32<T_DATA, T_IDX, HALF_PIXEL>>(
-                Simt::Dim3(SIMT_THREAD_NUM_INT32), (__gm__ T_DATA*)(this->gradsGm_.GetPhyAddr()),
-                (__gm__ T_DATA*)(this->yGm_.GetPhyAddr()), lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW,
-                blkProcessNum, blkStartOffset, mH, shiftH, mW, shiftW);
+            Simt::VF_CALL<calleeSimtDetermineHWInt32<T_DATA, T_IDX, HALF_PIXEL>>(Simt::Dim3(SIMT_THREAD_NUM_INT32),
+                (__gm__ T_DATA *)(this->gradsGm_.GetPhyAddr()), (__gm__ T_DATA *)(this->yGm_.GetPhyAddr()), lenN, lenC,
+                lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH,
+                shiftH, mW, shiftW);
         } else {
-            Simt::VF_CALL<calleeSimtDetermineHWInt64<T_DATA, T_IDX, HALF_PIXEL>>(
-                Simt::Dim3(SIMT_THREAD_NUM_INT64), (__gm__ T_DATA*)(this->gradsGm_.GetPhyAddr()),
-                (__gm__ T_DATA*)(this->yGm_.GetPhyAddr()), lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW,
-                blkProcessNum, blkStartOffset, mH, shiftH, mW, shiftW);
+            Simt::VF_CALL<calleeSimtDetermineHWInt64<T_DATA, T_IDX, HALF_PIXEL>>(Simt::Dim3(SIMT_THREAD_NUM_INT64),
+                (__gm__ T_DATA *)(this->gradsGm_.GetPhyAddr()), (__gm__ T_DATA *)(this->yGm_.GetPhyAddr()), lenN, lenC,
+                lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH,
+                shiftH, mW, shiftW);
         }
     }
 }
-
 } // namespace ResizeNearestNeighborV2Grad
 #endif // CANN_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_SIMT_DETERMINE_HW_H
-

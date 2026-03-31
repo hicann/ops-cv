@@ -22,7 +22,7 @@ namespace ResizeLinearGrad {
 using namespace AscendC;
 
 template <typename T2, uint64_t isCenter>
-__aicore__ __attribute__((always_inline)) inline float ComputeOriL(T2 L, float scaleL)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOriL(T2 L, float scaleL)
 {
     // 调用Fma是为了规避编译器问题，不然后面算权重编译器自动优化成ffma，导致权重升精度，但是ori没有，从而某些情况会计算错误
     if constexpr (isCenter == 0) {
@@ -36,7 +36,7 @@ __aicore__ __attribute__((always_inline)) inline float ComputeOriL(T2 L, float s
 }
 
 template <typename T2, uint64_t isCenter>
-__aicore__ __attribute__((always_inline)) inline float ComputeOutL(T2 inLStart, float scaleL)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOutL(T2 inLStart, float scaleL)
 {
     if constexpr (isCenter == 1) {
         float outLStart = static_cast<float>(inLStart) * scaleL;

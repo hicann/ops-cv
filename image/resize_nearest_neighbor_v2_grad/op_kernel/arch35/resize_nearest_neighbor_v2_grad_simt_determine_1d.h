@@ -23,7 +23,7 @@ namespace ResizeNearestNeighborV2Grad
 using namespace AscendC;
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline void SimtDetermine1DNCHWCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermine1DNCHWCompute(
     __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcW, T_IDX lenDstW, float inverseScaleW,
     T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mW, T_IDX shiftW)
 {
@@ -51,7 +51,7 @@ __aicore__ __attribute__((always_inline)) inline void SimtDetermine1DNCHWCompute
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__aicore__ __attribute__((always_inline)) inline void SimtDetermine1DNHWCCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermine1DNHWCCompute(
     __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcW, T_IDX lenDstW, float inverseScaleW,
     T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mW, T_IDX shiftW)
 {

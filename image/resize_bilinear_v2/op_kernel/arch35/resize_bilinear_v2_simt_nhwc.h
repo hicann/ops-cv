@@ -54,7 +54,7 @@ __aicore__ inline void ResizeBilinearV2SimtNHWC<T1, T2, halfPixel, mode, T_IDX>:
 }
 
 template <typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputenhwc(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputenhwc(
     T_IDX& N, T_IDX& H, T_IDX& W, T_IDX& C, T_IDX tmp, T_IDX mC_, T_IDX shiftC_, T_IDX lenC_, T_IDX mW_, T_IDX shiftW_,
     T_IDX lenDesW_, T_IDX mH_, T_IDX shiftH_, T_IDX lenDesH_, T_IDX mN_, T_IDX shiftN_, T_IDX lenN_)
 {
@@ -76,7 +76,7 @@ __aicore__ __attribute__((always_inline)) inline void QuickDivForSimtComputenhwc
 }
 
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
     float scaleW_, float scaleH_, T_IDX lenN_, T_IDX lenC_, T_IDX lenSrcH_, T_IDX lenSrcW_, T_IDX lenDesH_,
     T_IDX lenDesW_, T_IDX splitBlockFactor_, T_IDX splitBlockTailFactor_, T_IDX shiftN_, T_IDX mN_, T_IDX shiftC_,
     T_IDX mC_, T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_, __gm__ T1* input, __gm__ T2* output,

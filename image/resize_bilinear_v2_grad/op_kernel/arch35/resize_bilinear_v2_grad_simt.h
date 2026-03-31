@@ -52,9 +52,9 @@ __aicore__ inline void ResizeBilinearV2GradSimt<T1, T2, halfPixel, T_IDX, format
     inputGm_.SetGlobalBuffer((__gm__ T1*)grads);
     outputGm_.SetGlobalBuffer((__gm__ T2*)y);
 }
-//__aicore__ __attribute__((always_inline)) inline float
+
 template <typename T1, typename T2, bool halfPixel, typename T_IDX, int32_t format>
-__aicore__ __attribute__((always_inline)) inline void GetEachDimIdx(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetEachDimIdx(
     T_IDX gradsIdx, T_IDX& N, T_IDX& C, T_IDX& H, T_IDX& W, T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC,
     T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, T_IDX lenN, T_IDX lenC, T_IDX lenGradH, T_IDX lenGradW)
 {
@@ -87,7 +87,7 @@ __aicore__ __attribute__((always_inline)) inline void GetEachDimIdx(
 }
 
 template <typename T1, typename T2, bool halfPixel, typename T_IDX, int32_t format>
-__aicore__ __attribute__((always_inline)) inline T_IDX CalOutputIdx(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T_IDX CalOutputIdx(
     T_IDX gradsIdx, T_IDX N, T_IDX C, T_IDX h, T_IDX w, T_IDX lenC, T_IDX lenSrcW, T_IDX lenSrcH, T_IDX lenSrcWH,
     T_IDX lenSrcWC)
 {
@@ -99,7 +99,7 @@ __aicore__ __attribute__((always_inline)) inline T_IDX CalOutputIdx(
 }
 
 template <typename T1, typename T2, bool halfPixel, typename T_IDX, int32_t format>
-__aicore__ __attribute__((always_inline)) inline void SimtCompute(
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
     float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenGradH, T_IDX lenGradW, T_IDX lenSrcH, T_IDX lenSrcW,
     T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* grads,
     __gm__ T2* y, T_IDX blkStartOffset, T_IDX blkProcessNum)
