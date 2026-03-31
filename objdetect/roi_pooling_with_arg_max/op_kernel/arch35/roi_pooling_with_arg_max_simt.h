@@ -60,7 +60,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void RoiPooling
 }
 
 template <typename dT>
-__aicore__ __attribute__((always_inline)) inline void RoiPoolingBinMax(float& max_val, int64_t& max_idx,
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void RoiPoolingBinMax(float& max_val, int64_t& max_idx,
     const __gm__ dT* offset_input, int64_t bin_x1, int64_t bin_y1, int64_t bin_x2, int64_t bin_y2, int64_t fmW) {
   max_val = -INFINITY;
   max_idx = INVALID_ARGMAX_OFFSET;
