@@ -65,15 +65,9 @@ static bool GetSizeFor2D(const gert::InferShapeContext* context, const gert::Ten
                 OP_LOGE(context->GetNodeName(), "Get size const for int32 failed!"), return false);
             break;
         }
-        case ge::DT_INT64: {
-            OP_CHECK_IF(
-                !GetSizeValueFor2D<int64_t>(context, size_tensor, out_size),
-                OP_LOGE(context->GetNodeName(), "Get size const for int64 failed!"), return false);
-            break;
-        }
         default:
             OP_LOGE_WITH_INVALID_INPUT_DTYPE(
-                context->GetNodeName(), "size", Ops::Base::ToString(size_dtype).c_str(), "[int32, int64]");
+                context->GetNodeName(), "size", Ops::Base::ToString(size_dtype).c_str(), "[int32]");
             return false;
     }
     return true;

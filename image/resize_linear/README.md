@@ -49,7 +49,7 @@
       <td>size</td>
       <td>输入</td>
       <td>输出图像的高和宽。</td>
-      <td>FLOAT16、FLOAT32、BFLOAT16</td>
+      <td>INT32</td>
       <td>ND</td>
     </tr>
     <tr>

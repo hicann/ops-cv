@@ -13,11 +13,11 @@
 
 ## 功能说明
 
-- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。
+- 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，H, W），则输出shape为（N，C，size[0], size[1]）。
 - 计算公式：
 
   $$
-  out(N, C, l) = self(N, C, min(floor(l * scale),  L-1)), \ scale = self\_L / outputSize[0]
+  y(N, C, H, W) = x(N, C, min(floor(H * scaleH),  H-1), min(floor(W * scaleW),  W-1)), \ scaleH = x\_H / size[0] scaleW = x\_W / size[1]
   $$
 
 ## 参数说明
@@ -39,25 +39,25 @@
     </tr></thead>
   <tbody>
     <tr>
-      <td>self</td>
+      <td>x</td>
       <td>输入</td>
-      <td>表示进行上采样的输入数据，对应公式中的`self`。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
-      <td>NCL</td>
+      <td>输入图像的四维Tensor，对应公式中`x`。</td>
+      <td>FLOAT16、FLOAT32、BFLOAT16</td>
+      <td>NCHW、NHWC</td>
     </tr>
     <tr>
-      <td>outputSize</td>
+      <td>size</td>
       <td>输入</td>
-      <td>表示输出out在L维度上的空间大小。</td>
-      <td>INT64</td>
+      <td>输出图像的高和宽。</td>
+      <td>INT32</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>y</td>
       <td>输出</td>
-      <td>表示进行上采样的输出结果，对应公式中的`out`。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16、DOUBLE、UINT8</td>
-      <td>NCL</td>
+      <td>最近邻插值后的图像，对应公式中的`y`。</td>
+      <td>FLOAT16、FLOAT32、BFLOAT16</td>
+      <td>NCHW、NHWC</td>
     </tr>
   </tbody>
   </table>
@@ -70,4 +70,4 @@
 
 | 调用方式   | 样例代码           | 说明                                                                      |
 | -------------- | --------------------------- |-------------------------------------------------------------------------|
-| aclnn  | [test_aclnn_upsample_nearest1d.cpp](examples/test_aclnn_upsample_nearest1d.cpp) | 通过[aclnnUpsampleNearest1d](docs/aclnnUpsampleNearest1d.md)接口方式调用ResizeNearestNeighborV2算子。 |
+| aclnn  | [test_aclnn_upsample_nearest2d.cpp](examples/test_aclnn_upsample_nearest2d.cpp) | 通过[aclnnUpsampleNearest2d](docs/aclnnUpsampleNearest2d.md)接口方式调用ResizeNearestNeighborV2算子。 |
