@@ -115,6 +115,7 @@ endif()
 ### 代码实现
 
 Tiling一共需要三个交付件：```${op_name}_tiling.cpp``` ```${op_name}_tiling_key.h``` ```${op_name}_tiling_data.h```
+
 > 说明：
 
 > 1. `${op_name}_tiling.cpp`放在`${op_name}/op_host`目录下；
@@ -217,6 +218,7 @@ ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(
     ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, ELEMENTWISE_TPL_SCH_MODE_0, ELEMENTWISE_TPL_SCH_MODE_1)));
 
 ```
+
 **交付件3：${op_name}_tiling_data.h**
 
 切分算法相关的参数，比如总数据量大小、每个核数据切块数量，通过结构体存储。
@@ -255,6 +257,7 @@ graph LR
 ### 代码实现
 
 Kernel一共需要两个交付件：```${op_name}.cpp``` ```${op_name}.h```
+
 > 说明：
 
 > 1. `${op_name}.cpp`为kernel的入口函数只能放在`${op_name}/op_kernel`目录下；
@@ -405,12 +408,12 @@ __aicore__ inline void AddExample<T>::Process()
 
     根据实际场景，选择合适的命令。
 
-    ```bash
-    # 默认路径安装，以root用户为例（非root用户，将/usr/local替换为${HOME}）
-    source /usr/local/Ascend/cann/set_env.sh
-    # 指定路径安装
-    # source ${install_path}/cann/set_env.sh
-    ```
+   ```bash
+   # 默认路径安装，以root用户为例（非root用户，将/usr/local替换为${HOME}）
+   source /usr/local/Ascend/cann/set_env.sh
+   # 指定路径安装
+   # source ${install_path}/cann/set_env.sh
+   ```
 
 3. **编译自定义算子包。**
 
@@ -428,6 +431,7 @@ __aicore__ inline void AddExample<T>::Process()
    bash build.sh --pkg --soc=${soc_version} --vendor_name=${vendor_name} --ops=${op_list} [--experimental] [-j${n}]
 
    ```
+
    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"。
    - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
    - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"--ops=add_example"。
@@ -454,7 +458,7 @@ __aicore__ inline void AddExample<T>::Process()
 5. **（可选）卸载自定义算子包。**
 
     自定义算子包安装后在```${ASCEND_HOME_PATH}/opp/vendors/custom_cv/scripts```目录会生成`uninstall.sh`，通过该脚本可卸载自定义算子包，命令如下：
-
+    
     ```bash
     bash ${ASCEND_HOME_PATH}/opp/vendors/custom_cv/scripts/uninstall.sh
     ```

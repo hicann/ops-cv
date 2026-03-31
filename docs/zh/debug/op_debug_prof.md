@@ -1,4 +1,3 @@
-
 # 算子调试调优
 
 ## 调试定位（AI Core算子）
@@ -150,7 +149,7 @@
 3. 采集仿真流水图。
 
    msProf工具进行算子仿真调优之前，需执行如下命令配置环境变量：
-
+   
    ```bash
    export LD_LIBRARY_PATH=${INSTALL_DIR}/tools/simulator/Ascendxxxyy/lib:$LD_LIBRARY_PATH 
    ```
@@ -158,7 +157,7 @@
    请根据CANN软件包实际安装路径和AI处理器型号对以上环境变量进行修改。
 
    之后进入算子可执行文件所在目录，执行如下命令：
-
+   
    ```bash
    msprof op simulator --output=$PWD/pipeline_auto --kernel-name"AddExample" ./test_aclnn_add_example
    ```
@@ -178,7 +177,7 @@
 
 2. 执行仿真命令，生成仿真数据
 
-   ```sh
+   ```bash
    cannsim record ./test_aclnn_add_example -s Ascend950 --gen-report
    ```
 

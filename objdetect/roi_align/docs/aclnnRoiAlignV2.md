@@ -45,7 +45,7 @@ aclnnStatus aclnnRoiAlignV2(
 
 ## aclnnRoiAlignV2GetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table class="tg" style="undefined;table-layout: fixed; width: 1540px"><colgroup>
   <col style="width: 233px">
@@ -209,7 +209,7 @@ aclnnStatus aclnnRoiAlignV2(
 
 ## aclnnRoiAlignV2
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
   <col style="width: 170px">

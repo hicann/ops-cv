@@ -45,7 +45,7 @@ aclnnStatus aclnnBlendImagesCustom(
 
 ## aclnnBlendImagesCustomGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
   
   <table class="tg" style="undefined;table-layout: fixed; width: 1409px"><colgroup>
   <col style="width: 233px">
@@ -131,7 +131,7 @@ aclnnStatus aclnnBlendImagesCustom(
     </tr>
   </tbody></table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -167,7 +167,7 @@ aclnnStatus aclnnBlendImagesCustom(
 
 ## aclnnBlendImagesCustom
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
   <col style="width: 170px">
@@ -204,7 +204,7 @@ aclnnStatus aclnnBlendImagesCustom(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

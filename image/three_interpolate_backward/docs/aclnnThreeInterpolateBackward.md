@@ -47,7 +47,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 ## aclnnThreeInterpolateBackwardGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   </style>
   <table class="tg" style="undefined;table-layout: fixed; width: 1556px"><colgroup>
@@ -144,7 +144,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
     </tr>
   </tbody></table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -179,7 +179,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 ## aclnnThreeInterpolateBackward
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -216,7 +216,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -230,7 +230,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
-```cpp
+```Cpp
 #include <iostream>
 #include <vector>
 #include "acl/acl.h"

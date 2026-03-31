@@ -23,13 +23,13 @@
 1. 进入`examples/fast_kernel_launch_example`目录。
 
 2. 安装依赖 | Install Dependencies:
-
+    
     ```sh
     python3 -m pip install -r requirements.txt
     ```
 
 3. 构建Wheel包 | Build the Wheel:
-
+    
     ```sh
     # -n: non-isolated build (uses existing environment)
     python3 -m build --wheel -n
@@ -39,7 +39,7 @@
     `${python_version}`表示当前环境中的python版本(python3.8.3为cp38)，`${arch}`表示CPU架构。
 
 4. 安装Wheel包 | Install Package:
-
+    
     ```sh
     python3 -m pip install dist/*.whl --force-reinstall --no-deps
     ```
@@ -207,7 +207,6 @@ print("Verification successful!")
 
     }  // namespace Add
     }  // namespace ascend_ops
-
     ```
     
 4. 参考[安装步骤](#安装步骤--installation-steps)章节重新构建Wheel包并安装。

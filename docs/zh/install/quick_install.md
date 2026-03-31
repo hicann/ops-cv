@@ -42,23 +42,23 @@
 
 1.**安装驱动与固件（运行态依赖）**
 
-    驱动与固件的下载和安装操作请参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》中“准备软件包”和“安装NPU驱动和固件”章节。驱动与固件是运行态依赖，若仅编译算子，可以不安装。
+  驱动与固件的下载和安装操作请参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》中“准备软件包”和“安装NPU驱动和固件”章节。驱动与固件是运行态依赖，若仅编译算子，可以不安装。
 
 2.**下载镜像**
 
 - 步骤1：以root用户登录宿主机。确保宿主机已安装Docker引擎（版本1.11.2及以上）。
 - 步骤2：从[昇腾镜像仓库](https://www.hiascend.com/developer/ascendhub/detail/17da20d1c2b6493cb38765adeba85884)拉取已预集成CANN软件包及`ops-cv`所需依赖的镜像。命令如下，根据实际架构选择：
 
-    ```bash
-    # 示例：拉取ARM架构的CANN开发镜像
-    docker pull --platform=arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
-    # 示例：拉取X86架构的CANN开发镜像
-    docker pull --platform=amd64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
-    ```
+  ```bash
+  # 示例：拉取ARM架构的CANN开发镜像
+  docker pull --platform=arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.  5.0-910b-ubuntu22.04-py3.10-ops
+  # 示例：拉取X86架构的CANN开发镜像
+  docker pull --platform=amd64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.  5.0-910b-ubuntu22.04-py3.10-ops
+  ```
 
 3.**运行Docker**
 
-拉取镜像后，需要以特定参数启动容器，以便容器内能访问宿主的昇腾设备。
+  拉取镜像后，需要以特定参数启动容器，以便容器内能访问宿主的昇腾设备。
 
 ```bash
 docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_manager --device /dev/devmm_svm --device /dev/hisi_hdc -v /usr/local/dcmi:/usr/local/dcmi -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info -v /etc/ascend_install.info:/etc/ascend_install.info -it swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops bash
@@ -122,36 +122,36 @@ pip3 install -r requirements.txt
 
         请单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/)，选择最新时间版本，并根据产品型号和环境架构下载对应包。安装命令如下，更多指导参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》。
  	 
-        - 安装CANN toolkit包
+       - 安装CANN toolkit包
 
-        ```bash
-        # 确保安装包具有可执行权限
-        chmod +x Ascend-cann-toolkit_${cann_version}_linux-${arch}.run
-        # 安装命令
-        ./Ascend-cann-toolkit_${cann_version}_linux-${arch}.run --install --install-path=${install_path}
-        ```
+       ```bash
+       # 确保安装包具有可执行权限
+       chmod +x Ascend-cann-toolkit_${cann_version}_linux-${arch}.run
+       # 安装命令
+       ./Ascend-cann-toolkit_${cann_version}_linux-${arch}.run --install    -install-path=${install_path}
+       ```
 
-        - 安装CANN ops包（运行态依赖）
+      - 安装CANN ops包（运行态依赖）
 
-        ops包是运行态依赖，若仅编译算子，可不安装此包。
+       ops包是运行态依赖，若仅编译算子，可不安装此包。
 
-        ```bash
-        # 确保安装包具有可执行权限
-        chmod +x Ascend-cann-${soc_name}-ops_${cann_version}_linux-${arch}.run
-        # 安装命令
-        ./Ascend-cann-${soc_name}-ops_${cann_version}_linux-${arch}.run --install --install-path=${install_path}
-            ```
+       ```bash
+       # 确保安装包具有可执行权限
+       chmod +x Ascend-cann-${soc_name}-ops_${cann_version}_linux-${arch}.run
+       # 安装命令
+       ./Ascend-cann-${soc_name}-ops_${cann_version}_linux-${arch}.run --install    --install-path=${install_path}
+       ```
+       
+       - \$\{cann\_version\}：表示CANN包版本号。
+       - \$\{arch\}：表示CPU架构，如aarch64、x86_64。
+       - \$\{soc\_name\}：表示NPU型号名称。
+       - \$\{install\_path\}：表示指定安装路径，ops包需与toolkit包安装在相同路径，root   用户默认安装在`/usr/local/Ascend`目录。
 
-        - \$\{cann\_version\}：表示CANN包版本号。
-        - \$\{arch\}：表示CPU架构，如aarch64、x86_64。
-        - \$\{soc\_name\}：表示NPU型号名称。
-        - \$\{install\_path\}：表示指定安装路径，ops包需与toolkit包安装在相同路径，root用户默认安装在`/usr/local/Ascend`目录。
+  - **场景2：体验已发布版本能力或基于已发布版本进行开发**
+ 	 
+ 	请访问[CANN官网下载中心](https://www.hiascend.com/cann/download)，选择发布版本（仅支持CANN 8.5.0及后续版本），并根据产品型号和环境架构下载对应包，最后参考网页提供的命令完成安装。
 
-- **场景2：体验已发布版本能力或基于已发布版本进行开发**
-
-    请访问[CANN官网下载中心](https://www.hiascend.com/cann/download)，选择发布版本（仅支持CANN 8.5.0及后续版本），并根据产品型号和环境架构下载对应包，最后参考网页提供的命令完成安装。
-
-## 环境验证
+## 环境验 证
 
 安装完CANN包后，需验证环境和驱动是否正常。
 
@@ -164,12 +164,14 @@ pip3 install -r requirements.txt
 
 - **检查CANN版本**
 
-    ```bash
-    # 查看CANN toolkit包版本信息（默认路径安装），WebIDE场景下将/usr/local替换为/home/developer
-    cat /usr/local/Ascend/cann/${arch}-linux/ascend_toolkit_install.info
-    # 查看CANN ops包版本信息（默认路径安装），WebIDE场景下将/usr/local替换为/home/developer
-    cat /usr/local/Ascend/cann/${arch}-linux/ascend_ops_install.info
-    ```
+- **检查CANN安装**
+
+  ```bash
+  # 查看CANN toolkit包版本信息（默认路径安装），WebIDE场景下将/usr/local替换为/home/developer
+  cat /usr/local/Ascend/cann/${arch}-linux/ascend_toolkit_install.info
+  # 查看CANN ops包版本信息（默认路径安装），WebIDE场景下将/usr/local替换为/home/developer
+  cat /usr/local/Ascend/cann/${arch}-linux/ascend_ops_install.info
+  ```
 
 ## 环境变量配置
 

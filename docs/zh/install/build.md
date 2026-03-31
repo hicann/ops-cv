@@ -9,7 +9,7 @@ build.sh是本项目的构建脚本，默认在项目根目录下，作用是将
 1. **配置环境变量**
    
    参考[环境部署](./quick_install.md#环境准备三选一)完成环境变量配置。
-
+   
    ```bash
    # 默认路径安装，以root用户为例
    source /usr/local/Ascend/cann/set_env.sh
@@ -18,7 +18,7 @@ build.sh是本项目的构建脚本，默认在项目根目录下，作用是将
 2. **构建命令格式**
 
    以编译算子包命令为例，样式如下，其中`--vendor_name`与`--ops`在该场景为可选项。
-
+   
    ```bash
    bash build.sh --pkg --soc=${soc_version} [--vendor_name=${vendor_name}] [--ops=${op_list}]
    ```

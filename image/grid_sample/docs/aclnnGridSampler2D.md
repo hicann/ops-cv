@@ -65,7 +65,7 @@ aclnnStatus aclnnGridSampler2D(
 
 ## aclnnGridSampler2DGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -194,7 +194,7 @@ aclnnStatus aclnnGridSampler2D(
     - 参数`input`的shape需要满足C维的值为32或者C*H*W < 20480。
     - 参数`input`的数据格式不支持NHWC。
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -238,7 +238,7 @@ aclnnStatus aclnnGridSampler2D(
 
 ## aclnnGridSampler2D
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -275,7 +275,7 @@ aclnnStatus aclnnGridSampler2D(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

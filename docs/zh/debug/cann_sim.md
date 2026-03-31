@@ -213,12 +213,12 @@ cannsim --help
 cannsim record --help
 ```
   
-查询工具 report 子命令的帮助信息： 
+查询工具 report 子命令的帮助信息：
 
- ``` sh
+ ```sh
  cannsim report --help 
- ``` 
- 
+ ```
+
 ## 参数说明
 
 无

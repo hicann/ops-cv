@@ -137,7 +137,7 @@ aclnnStatus aclnnRasterizer(
 
 ## aclnnRasterizerGetWorkspaceSize
 
-- **参数说明**：
+- **参数说明**
   
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -273,7 +273,7 @@ aclnnStatus aclnnRasterizer(
     </tr>
   </tbody>
   </table>
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](https://gitcode.com/cann/ops-cv/blob/master/docs/zh/context/aclnn%E8%BF%94%E5%9B%9E%E7%A0%81.md)。
   
@@ -314,7 +314,7 @@ aclnnStatus aclnnRasterizer(
 
 ## aclnnRasterizer
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -350,7 +350,7 @@ aclnnStatus aclnnRasterizer(
     </tr>
   </tbody>
   </table>
-- **返回值**：
+- **返回值**
   
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
