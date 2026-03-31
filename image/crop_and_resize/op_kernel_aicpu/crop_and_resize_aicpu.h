@@ -30,6 +30,208 @@ constexpr int kDimNumTwo = 2;
 constexpr size_t kInputIndex2 = 2;
 constexpr size_t kInputIndex3 = 3;
 
+namespace {
+
+inline void CalcCropWindow(float y1, float x1, float y2, float x2, int64_t imgH, int64_t imgW,
+                          int64_t& y1o, int64_t& x1o, int64_t& y2o, int64_t& x2o, int64_t& wo, int64_t& ho)
+{
+  y1o = static_cast<int64_t>(y1 * imgH);
+  x1o = static_cast<int64_t>(x1 * imgW);
+  y2o = static_cast<int64_t>(y2 * imgH);
+  x2o = static_cast<int64_t>(x2 * imgW);
+  wo = 1;
+  ho = 1;
+  if ((x2o - x1o + 1) > 1) {
+    wo = x2o - x1o + 1;
+  }
+  if ((y2o - y1o + 1) > 1) {
+    ho = y2o - y1o + 1;
+  }
+}
+
+inline void GetV2Indices(int64_t pos, int64_t cropSz, int64_t winSz,
+                         int64_t& lower, int64_t& upper, float& ratio)
+{
+  float ratioVal = (pos + 0.5f) * (winSz / static_cast<float>(cropSz)) - 0.5f;
+  lower = static_cast<int64_t>(std::floor(ratioVal));
+  lower = std::max(static_cast<int64_t>(0), lower);
+  lower = std::min(lower, winSz - 1);
+  upper = static_cast<int64_t>(std::ceil(ratioVal));
+  upper = std::max(static_cast<int64_t>(0), upper);
+  upper = std::min(upper, winSz - 1);
+  ratio = ratioVal - lower;
+}
+
+inline void GetInterpolateIndices(float inPos, int64_t imgSize,
+                                  int64_t& lower, int64_t& upper, float& ratio)
+{
+  lower = static_cast<int64_t>(std::floor(inPos));
+  upper = static_cast<int64_t>(std::ceil(inPos));
+  ratio = inPos - lower;
+}
+
+inline void RoundToNearest(float inY, float inX, int64_t& outY, int64_t& outX)
+{
+  outY = static_cast<int64_t>(std::round(inY));
+  outX = static_cast<int64_t>(std::round(inX));
+}
+
+inline void CalcScaleRatio(float coord1, float coord2, int64_t cropSz, int64_t imgSz, float& ratio)
+{
+  ratio = (cropSz > 1) ? (coord2 - coord1) * (imgSz - 1) / (cropSz - 1) : 0;
+}
+
+inline void MapOutputToInput(float coord1, float coord2, int64_t cropSz, int64_t imgSz, int64_t outPos,
+                            float scaleRatio, float& inPos)
+{
+  inPos = (cropSz > 1) ? coord1 * (imgSz - 1) + outPos * scaleRatio
+                       : 0.5f * (coord1 + coord2) * (imgSz - 1);
+}
+
+template <typename T>
+inline void ComputeBilinearV2(
+    typename TTypes<T, kDimNumFour>::Tensor image,
+    typename TTypes<float, kDimNumFour>::Tensor crops,
+    int64_t b, int32_t b_in, int64_t y1, int64_t x1,
+    int64_t cropHeight, int64_t cropWidth, int64_t depth, int64_t w, int64_t h)
+{
+  for (int64_t y = 0; y < cropHeight; ++y) {
+    int64_t y_base, y_top;
+    float y_ratio;
+    GetV2Indices(y, cropHeight, h, y_base, y_top, y_ratio);
+    for (int64_t x = 0; x < cropWidth; ++x) {
+      int64_t x_base, x_top;
+      float x_ratio;
+      GetV2Indices(x, cropWidth, w, x_base, x_top, x_ratio);
+      for (int64_t d = 0; d < depth; ++d) {
+        float v00 = static_cast<float>(image(b_in, y1 + y_base, x1 + x_base, d));
+        float v01 = static_cast<float>(image(b_in, y1 + y_base, x1 + x_top, d));
+        float v10 = static_cast<float>(image(b_in, y1 + y_top, x1 + x_base, d));
+        float v11 = static_cast<float>(image(b_in, y1 + y_top, x1 + x_top, d));
+        float result = v00 * (1 - y_ratio) * (1 - x_ratio) +
+                       v11 * y_ratio * x_ratio +
+                       v01 * (1 - y_ratio) * x_ratio +
+                       v10 * y_ratio * (1 - x_ratio);
+        crops(b, y, x, d) = result;
+      }
+    }
+  }
+}
+
+template <typename T>
+inline void FillWithExtrapolation(typename TTypes<float, kDimNumFour>::Tensor crops,
+                                  int64_t b, int64_t y, int64_t cropWidth, int64_t depth,
+                                  float extrapolation_value)
+{
+  for (int64_t x = 0; x < cropWidth; ++x) {
+    for (int64_t d = 0; d < depth; ++d) {
+      crops(b, y, x, d) = extrapolation_value;
+    }
+  }
+}
+
+template <typename T>
+inline void FillWithExtrapolationSingle(typename TTypes<float, kDimNumFour>::Tensor crops,
+                                        int64_t b, int64_t y, int64_t x, int64_t depth,
+                                        float extrapolation_value)
+{
+  for (int64_t d = 0; d < depth; ++d) {
+    crops(b, y, x, d) = extrapolation_value;
+  }
+}
+
+template <typename T>
+inline void ProcessCropRow(
+    typename TTypes<T, kDimNumFour>::Tensor image,
+    typename TTypes<float, kDimNumFour>::Tensor crops,
+    int64_t b, int32_t b_in, int64_t cropWidth, int64_t depth,
+    int64_t imageHeight, int64_t imageWidth, float extrapolation_value,
+    float x1, float x2, float widthScale, int64_t y, float yPos,
+    bool isBilinear)
+{
+  for (int64_t x = 0; x < cropWidth; ++x) {
+    float xPos;
+    MapOutputToInput(x1, x2, cropWidth, imageWidth, x, widthScale, xPos);
+    if (xPos < 0 || xPos > imageWidth - 1) {
+      FillWithExtrapolationSingle<T>(crops, b, y, x, depth, extrapolation_value);
+      continue;
+    }
+    if (isBilinear) {
+      int64_t topY = static_cast<int64_t>(std::floor(yPos));
+      int64_t bottomY = static_cast<int64_t>(std::ceil(yPos));
+      int64_t leftX = static_cast<int64_t>(std::floor(xPos));
+      int64_t rightX = static_cast<int64_t>(std::ceil(xPos));
+      float yRatio = yPos - topY;
+      float xRatio = xPos - leftX;
+      for (int64_t d = 0; d < depth; ++d) {
+        float v00 = static_cast<float>(image(b_in, topY, leftX, d));
+        float v01 = static_cast<float>(image(b_in, topY, rightX, d));
+        float v10 = static_cast<float>(image(b_in, bottomY, leftX, d));
+        float v11 = static_cast<float>(image(b_in, bottomY, rightX, d));
+        float row0 = v00 + (v01 - v00) * xRatio;
+        float row1 = v10 + (v11 - v10) * xRatio;
+        crops(b, y, x, d) = row0 + (row1 - row0) * yRatio;
+      }
+    } else {
+      int64_t rndX = static_cast<int64_t>(std::round(xPos));
+      int64_t rndY = static_cast<int64_t>(std::round(yPos));
+      for (int64_t d = 0; d < depth; ++d) {
+        crops(b, y, x, d) = static_cast<float>(image(b_in, rndY, rndX, d));
+      }
+    }
+  }
+}
+
+template <typename T>
+inline void ComputeCropByMethod(
+    typename TTypes<T, kDimNumFour>::Tensor image,
+    typename TTypes<float, kDimNumFour>::Tensor crops,
+    int64_t b, int32_t b_in, int64_t cropHeight, int64_t cropWidth, int64_t depth,
+    int64_t imageHeight, int64_t imageWidth, float extrapolation_value,
+    float y1, float x1, float y2, float x2, float heightScale, float widthScale,
+    bool isBilinear)
+{
+  for (int64_t y = 0; y < cropHeight; ++y) {
+    float yPos;
+    MapOutputToInput(y1, y2, cropHeight, imageHeight, y, heightScale, yPos);
+    if (yPos < 0 || yPos > imageHeight - 1) {
+      FillWithExtrapolation<T>(crops, b, y, cropWidth, depth, extrapolation_value);
+      continue;
+    }
+    ProcessCropRow<T>(image, crops, b, b_in, cropWidth, depth,
+                      imageHeight, imageWidth, extrapolation_value,
+                      x1, x2, widthScale, y, yPos, isBilinear);
+  }
+}
+
+template <typename T>
+inline void ComputeBilinear(
+    typename TTypes<T, kDimNumFour>::Tensor image,
+    typename TTypes<float, kDimNumFour>::Tensor crops,
+    int64_t b, int32_t b_in, int64_t cropHeight, int64_t cropWidth, int64_t depth,
+    int64_t imageHeight, int64_t imageWidth, float extrapolation_value,
+    float y1, float x1, float y2, float x2, float heightScale, float widthScale)
+{
+  ComputeCropByMethod<T>(image, crops, b, b_in, cropHeight, cropWidth, depth,
+                          imageHeight, imageWidth, extrapolation_value,
+                          y1, x1, y2, x2, heightScale, widthScale, true);
+}
+
+template <typename T>
+inline void ComputeNearest(
+    typename TTypes<T, kDimNumFour>::Tensor image,
+    typename TTypes<float, kDimNumFour>::Tensor crops,
+    int64_t b, int32_t b_in, int64_t cropHeight, int64_t cropWidth, int64_t depth,
+    int64_t imageHeight, int64_t imageWidth, float extrapolation_value,
+    float y1, float x1, float y2, float x2, float heightScale, float widthScale)
+{
+  ComputeCropByMethod<T>(image, crops, b, b_in, cropHeight, cropWidth, depth,
+                         imageHeight, imageWidth, extrapolation_value,
+                         y1, x1, y2, x2, heightScale, widthScale, false);
+}
+
+}  // namespace
+
 class CropAndResizeMsCpuKernel : public CpuKernel {
  public:
   ~CropAndResizeMsCpuKernel() = default;
@@ -55,7 +257,6 @@ class CropAndResizeMsCpuKernel : public CpuKernel {
 
   template <typename T>
   struct CropAndResize {
-    // We assume that the tensor sizes are correct.
     bool operator()(typename TTypes<T, kDimNumFour>::Tensor image,
                     typename TTypes<float, kDimNumTwo>::Tensor boxes,
                     typename TTypes<int32_t, 1>::Tensor box_index,
@@ -64,206 +265,83 @@ class CropAndResizeMsCpuKernel : public CpuKernel {
                     const CpuKernelContext &ctx) {
       const int64_t imageHeight = image.dimension(1);
       const int64_t imageWidth = image.dimension(2);
-
       const int64_t numBoxes = crops.dimension(0);
       const int64_t cropHeight = crops.dimension(1);
       const int64_t cropWidth = crops.dimension(2);
       const int64_t depth = crops.dimension(3);
 
-      auto CropAndResizePerBox = [&imageHeight, &imageWidth, &cropHeight, &depth, &crops, &image,
-                                  &method_name, &boxes, &box_index, &cropWidth,
-                                  &extrapolation_value](int64_t start_box, int64_t limit_box) {
+      auto CropAndResizePerBox = [&](int64_t start_box, int64_t limit_box) {
         for (int64_t b = start_box; b < limit_box; ++b) {
           if (method_name == "bilinear_v2") {
-            int64_t y1 = static_cast<int64_t>(boxes(b, 0) * imageHeight);
-            int64_t x1 = static_cast<int64_t>(boxes(b, 1) * imageWidth);
-            int64_t y2 = static_cast<int64_t>(boxes(b, 2) * imageHeight);
-            int64_t x2 = static_cast<int64_t>(boxes(b, 3) * imageWidth);
-            int64_t w = 1;
-            int64_t h = 1;
-            if ((x2 - x1 + 1) > 1) {
-              w = x2 - x1 + 1;
-            };
-            if ((y2 - y1 + 1) > 1) {
-              h = y2 - y1 + 1;
-            };
-            const int32_t b_in = box_index(b);
-            for (int64_t y = 0; y < cropHeight; ++y) {
-              float y_point =
-                  (y + 0.5f) * (h / static_cast<float>(cropHeight)) - 0.5f;
-              int64_t y_base = static_cast<int64_t>(std::floor(y_point));
-              y_base = std::max(static_cast<int64_t>(0), y_base);
-              y_base = std::min(y_base, h - 1);
-              int64_t y_top = static_cast<int64_t>(std::ceil(y_point));
-              y_top = std::max(static_cast<int64_t>(0), y_top);
-              y_top = std::min(y_top, h - 1);
-              float y_shift = y_point - y_base;
-              for (int64_t x = static_cast<int64_t>(0); x < cropWidth; ++x) {
-                float x_point =
-                    (x + 0.5f) * (w / static_cast<float>(cropWidth)) - 0.5f;
-                int64_t x_base = static_cast<int64_t>(std::floor(x_point));
-                x_base = std::max(static_cast<int64_t>(0), x_base);
-                x_base = std::min(x_base, w - 1);
-                int64_t x_top = static_cast<int64_t>(std::ceil(x_point));
-                x_top = std::max(static_cast<int64_t>(0), x_top);
-                x_top = std::min(x_top, w - 1);
-                float x_shift = x_point - x_base;
-                for (int64_t d = 0; d < depth; ++d) {
-                  const float top_left(static_cast<float>(
-                      image(b_in, y1 + y_base, x1 + x_base, d)));
-                  const float top_right(static_cast<float>(
-                      image(b_in, y1 + y_base, x1 + x_top, d)));
-                  const float bottom_left(static_cast<float>(
-                      image(b_in, y1 + y_top, x1 + x_base, d)));
-                  const float bottom_right(
-                      static_cast<float>(image(b_in, y1 + y_top, x1 + x_top, d)));
-                  float ret = top_left * (1 - y_shift) * (1 - x_shift) +
-                              bottom_right * y_shift * x_shift +
-                              top_right * (1 - y_shift) * x_shift +
-                              bottom_left * y_shift * (1 - x_shift);
-                  crops(b, y, x, d) = ret;
-                }
-              }
-            }
+            int64_t y1, x1, y2, x2, w, h;
+            CalcCropWindow(boxes(b, 0), boxes(b, 1), boxes(b, 2), boxes(b, 3),
+                          imageHeight, imageWidth, y1, x1, y2, x2, w, h);
+            ComputeBilinearV2<T>(image, crops, b, box_index(b), y1, x1, cropHeight, cropWidth, depth, w, h);
           } else {
             const float y1 = boxes(b, 0);
             const float x1 = boxes(b, 1);
             const float y2 = boxes(b, 2);
             const float x2 = boxes(b, 3);
-            const int32_t b_in = box_index(b);
-            const float height_scale =
-                (cropHeight > 1)
-                    ? (y2 - y1) * (imageHeight - 1) / (cropHeight - 1)
-                    : 0;
-            const float width_scale =
-                (cropWidth > 1)
-                    ? (x2 - x1) * (imageWidth - 1) / (cropWidth - 1)
-                    : 0;
-            for (int64_t y = 0; y < cropHeight; ++y) {
-              const float in_y = (cropHeight > 1)
-                                    ? y1 * (imageHeight - 1) + y * height_scale
-                                    : 0.5f * (y1 + y2) * (imageHeight - 1);
-              if (in_y < 0 || in_y > imageHeight - 1) {
-                for (int64_t x = 0; x < cropWidth; ++x) {
-                  for (int64_t d = 0; d < depth; ++d) {
-                    crops(b, y, x, d) = extrapolation_value;
-                  }
-                }
-                continue;
-              }
-              if (method_name == "bilinear") {
-                const int64_t top_y_index = static_cast<int64_t>(floorf(in_y));
-                const int64_t bottom_y_index = static_cast<int64_t>(ceilf(in_y));
-                const float y_lerp = in_y - top_y_index;
-                for (int64_t x = 0; x < cropWidth; ++x) {
-                  const float in_x =
-                      (cropWidth > 1) ? x1 * (imageWidth - 1) + x * width_scale
-                                      : 0.5f * (x1 + x2) * (imageWidth - 1);
-                  if (in_x < 0 || in_x > imageWidth - 1) {
-                    for (int64_t d = 0; d < depth; ++d) {
-                      crops(b, y, x, d) = extrapolation_value;
-                    }
-                    continue;
-                  }
-                  const int64_t left_x_index = static_cast<int64_t>(floorf(in_x));
-                  const int64_t right_x_index = static_cast<int64_t>(ceilf(in_x));
-                  const float x_lerp = in_x - left_x_index; 
-                  for (int64_t d = 0; d < depth; ++d) {
-                    const float top_left(static_cast<float>(
-                        image(b_in, top_y_index, left_x_index, d)));
-                    const float top_right(static_cast<float>(
-                        image(b_in, top_y_index, right_x_index, d)));
-                    const float bottom_left(static_cast<float>(
-                        image(b_in, bottom_y_index, left_x_index, d)));
-                    const float bottom_right(static_cast<float>(
-                        image(b_in, bottom_y_index, right_x_index, d)));
-                    const float top = top_left + (top_right - top_left) * x_lerp;
-                    const float bottom =
-                        bottom_left + (bottom_right - bottom_left) * x_lerp;
-                    crops(b, y, x, d) = top + (bottom - top) * y_lerp;
-                  }
-                }
-              } else {
-                for (int64_t w = 0; w < cropWidth; ++w) {
-                  const float in_x =
-                      (cropWidth > 1) ? x1 * (imageWidth - 1) + w * width_scale
-                                      : 0.5f * (x1 + x2) * (imageWidth - 1);
-                  if (in_x < 0 || in_x > imageWidth - 1) {
-                    for (int64_t d = 0; d < depth; ++d) {
-                      crops(b, y, w, d) = extrapolation_value;
-                    }
-                    continue;
-                  }
-                  const int64_t closest_x_index = static_cast<int64_t>(roundf(in_x));
-                  const int64_t closest_y_index = static_cast<int64_t>(roundf(in_y));
-                  for (int64_t d = 0; d < depth; ++d) {
-                    crops(b, y, w, d) = static_cast<float>(
-                        image(b_in, closest_y_index, closest_x_index, d));
-                  }
-                }
-              }
+            float heightScale, widthScale;
+            CalcScaleRatio(y1, y2, cropHeight, imageHeight, heightScale);
+            CalcScaleRatio(x1, x2, cropWidth, imageWidth, widthScale);
+            if (method_name == "bilinear") {
+              ComputeBilinear<T>(image, crops, b, box_index(b), cropHeight, cropWidth, depth,
+                                 imageHeight, imageWidth, extrapolation_value,
+                                 y1, x1, y2, x2, heightScale, widthScale);
+            } else {
+              ComputeNearest<T>(image, crops, b, box_index(b), cropHeight, cropWidth, depth,
+                               imageHeight, imageWidth, extrapolation_value,
+                               y1, x1, y2, x2, heightScale, widthScale);
             }
           }
         }
       };
-      // Sharding across boxes.
       if (numBoxes != 0) {
         KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, numBoxes, 1, CropAndResizePerBox),
                             "CropAndResize Compute failed.");
       }
-      
       return true;
     }
   };
 
   template <typename T>
   static uint32_t CalCropAndResize(std::vector<Tensor *> &inputs,
-                                   std::vector<Tensor *> &outputs,
-                                   const std::vector<int64_t> &x_shape,
-                                   const std::vector<int64_t> &boxes_shape,
-                                   const std::string &method,
-                                   float extrapolation_value,
-                                   const CpuKernelContext &ctx) {
-    // input
+                                    std::vector<Tensor *> &outputs,
+                                    const std::vector<int64_t> &x_shape,
+                                    const std::vector<int64_t> &boxes_shape,
+                                    const std::string &method,
+                                    float extrapolation_value,
+                                    const CpuKernelContext &ctx) {
     EigenTensor image(inputs[0], inputs[0]->GetData());
     EigenTensor boxes(inputs[1], inputs[1]->GetData());
     EigenTensor box_index(inputs[kInputIndex2], inputs[kInputIndex2]->GetData());
     EigenTensor crop_size(inputs[kInputIndex3], inputs[kInputIndex3]->GetData());
 
     auto batch_size = x_shape[0];
-    // need in old kernel: auto depth = x_shape[3];
-
     auto numBoxes = boxes_shape[0];
     auto crop_size_vec = crop_size.vec<int32_t>();
     int64_t cropHeight = crop_size_vec(0);
     int64_t cropWidth = crop_size_vec(1);
     if (!(cropHeight > 0 && cropWidth > 0)) {
-      KERNEL_LOG_ERROR(
-          "The value of cropHeight: [%ld] and cropWidth: [%ld] should > 0",
-          cropHeight, cropWidth);
+      KERNEL_LOG_ERROR("The value of cropHeight: [%ld] and cropWidth: [%ld] should > 0", cropHeight, cropWidth);
       return KERNEL_STATUS_PARAM_INVALID;
     }
 
-    // output
     const int kOutputY = 0;
     EigenTensor output(outputs[kOutputY], outputs[kOutputY]->GetData());
 
-    typename TTypes<int32_t, 1>::Tensor box_index_t =
-        box_index.tensor<int32_t, 1>();
+    typename TTypes<int32_t, 1>::Tensor box_index_t = box_index.tensor<int32_t, 1>();
     for (int64_t b = 0; b < numBoxes; ++b) {
-      if (!(box_index_t(b) >= 0 &&
-            box_index_t(b) < static_cast<int>(batch_size))) {
-        KERNEL_LOG_ERROR("Invalid box_index[%ld] value: [%d],"
-                         "should be in [0, %ld)!",
-                         b, box_index_t(b), batch_size);
+      if (!(box_index_t(b) >= 0 && box_index_t(b) < static_cast<int>(batch_size))) {
+        KERNEL_LOG_ERROR("Invalid box_index[%ld] value: [%d], should be in [0, %ld)!", b, box_index_t(b), batch_size);
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }
 
     if (CropAndResize<T>()(image.tensor<T, kDimNumFour>(), boxes.tensor<float, kDimNumTwo>(),
                            box_index.tensor<int32_t, 1>(), method,
-                           extrapolation_value, output.tensor<float, kDimNumFour>(),
-                           ctx)) {
+                           extrapolation_value, output.tensor<float, kDimNumFour>(), ctx)) {
       return KERNEL_STATUS_OK;
     }
 
@@ -272,4 +350,4 @@ class CropAndResizeMsCpuKernel : public CpuKernel {
 };
 }  // namespace aicpu
 
-#endif  // AICPU_CROP_AND_RESIZE_H
+#endif  // AICPU_CROP_AND_RESIZE_H_
