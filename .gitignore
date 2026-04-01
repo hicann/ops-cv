@@ -63,3 +63,6 @@ tbetoolkits-*.log
 
 # third_party
 third_party/
+oat_reports/
+
+log/
