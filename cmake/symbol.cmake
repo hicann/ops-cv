@@ -202,65 +202,6 @@ function(gen_opgraph_symbol)
 
 endfunction()
 
-# op_graph shared
-function(gen_opgraph_symbol)
-  gen_es_cv_lib_ready()
-
-  if(TARGET ${OP_GRAPH_NAME}_obj)
-    unset(GRAPH_SOURCE)
-    get_target_property(GRAPH_SOURCE ${OP_GRAPH_NAME}_obj SOURCES)
-    if(GRAPH_SOURCE)
-      # 添加obj依赖es
-      add_dependencies(${OP_GRAPH_NAME}_obj
-        build_es_math
-        build_es_cv
-      )
-      target_link_libraries(${OP_GRAPH_NAME}_obj
-        PRIVATE
-        es_math
-        es_cv
-      )
-      add_library(
-        ${OPGRAPH_NAME} SHARED
-        $<$<TARGET_EXISTS:${OP_GRAPH_NAME}_obj>:$<TARGET_OBJECTS:${OP_GRAPH_NAME}_obj>>
-        $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>
-        $<$<TARGET_EXISTS:opbase_infer_objs>:$<TARGET_OBJECTS:opbase_infer_objs>>
-      )
-
-      target_link_libraries(
-        ${OPGRAPH_NAME}
-        PRIVATE $<BUILD_INTERFACE:intf_pub_cxx17>
-                c_sec
-                -Wl,--no-as-needed
-                register
-                -Wl,--as-needed
-                -Wl,--whole-archive
-                rt2_registry_static
-                -Wl,--no-whole-archive
-                -Wl,-Bsymbolic
-                unified_dlog
-                ascendalog
-      )
-
-      target_link_directories(${OPGRAPH_NAME} PRIVATE ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64)
-      set_target_properties(${OPGRAPH_NAME} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/opp/built-in/op_proto
-      )
-
-      install(
-        TARGETS ${OPGRAPH_NAME}
-        LIBRARY DESTINATION ${OPGRAPH_LIB_INSTALL_DIR}
-        )
-    endif()
-  endif()
-
-  install(
-    FILES ${ASCEND_GRAPH_CONF_DST}/ops_proto_cv.h
-    DESTINATION ${OPGRAPH_INC_INSTALL_DIR}
-    OPTIONAL
-    )
-endfunction()
-
 function(gen_opapi_symbol)
   # opapi shared
   add_library(
@@ -353,6 +294,7 @@ function(gen_cust_proto_symbol)
   target_link_libraries(
     cust_proto
     PUBLIC $<BUILD_INTERFACE:intf_pub_cxx17>
+    ge_compiler
     )
 
   if(NEED_LINK_ES)
@@ -450,6 +392,10 @@ function(gen_aicpu_kernel_symbol enable_built_in)
 endfunction()
 
 function(gen_onnx_plugin_symbol)
+  if (NOT TARGET ${ONNX_PLUGIN_NAME}_obj)
+    return()
+  endif()
+
   add_library(
     ${ONNX_PLUGIN_NAME} SHARED
     $<$<TARGET_EXISTS:${ONNX_PLUGIN_NAME}_obj>:$<TARGET_OBJECTS:${ONNX_PLUGIN_NAME}_obj>>
