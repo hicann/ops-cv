@@ -18,7 +18,6 @@
 #include "opdev/shape_utils.h"
 #include "aclnn/aclnn_base.h"
 #include "acl/acl_rt.h"
-#include "runtime/context.h"
 
 using namespace op;
 

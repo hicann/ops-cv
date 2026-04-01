@@ -19,6 +19,7 @@
 #include "aclnn_kernels/reshape.h"
 #include "aclnn_upsample_bicubic_2d_backward.h"
 
+#include "acl/acl_rt.h"
 #include "aclnn/aclnn_base.h"
 #include "op_api/aclnn_check.h"
 #include "op_api/level2_base.h"
@@ -30,7 +31,6 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
-#include "runtime/context.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -388,8 +388,8 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
         auto dtype = gradOut->GetDataType();
         int64_t castFp32Condition = 0;
         int64_t deterministicValue = 1;
-        rtError_t retRts = rtCtxGetSysParamOpt(SYS_OPT_DETERMINISTIC, &deterministicValue);
-        if (retRts != RT_ERROR_NONE) {
+        aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
+        if (retRts != ACL_ERROR_NONE) {
             deterministicValue = 0;
             OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
         }
