@@ -118,7 +118,7 @@ endif()
 Tiling一共需要三个交付件：```${op_name}_tiling.cpp``` ```${op_name}_tiling_key.h``` ```${op_name}_tiling_data.h```
 
 > 说明：
-
+>
 > 1. `${op_name}_tiling.cpp`放在`${op_name}/op_host`目录下；
 > 2. `${op_name}_tiling_key.h`和`${op_name}_tiling_data.h`放在`${op_name}/op_kernel`目录下；
 > 3. 如果`${op_name}_tiling.cpp`中需要引用`${op_name}_tiling_data.h`，请使用相对路径的方式，例如：`#incldue "../op_kernel/${op_name}_tiling_data.h"`。
@@ -130,6 +130,7 @@ Tiling主要切分逻辑。
 如需查看详细实现，请参考[add_example_tiling.cpp](../../../examples/add_example/op_host/add_example_tiling.cpp)。
 
 > **样例中函数空实现说明：**
+>
 > 1. **TilingParse**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
 > 2. **CompileInfo**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
 
@@ -260,7 +261,7 @@ graph LR
 Kernel一共需要两个交付件：```${op_name}.cpp``` ```${op_name}.h```
 
 > 说明：
-
+>
 > 1. `${op_name}.cpp`为kernel的入口函数只能放在`${op_name}/op_kernel`目录下；
 > 2. `${op_name}.h`文件可以按照不同SoC或模板放在对应目录下，例如：`${op_name}/op_kernel/arch32`、`${op_name}/op_kernel/arch35`或`${op_name}/op_kernel/impl`等目录下；
 

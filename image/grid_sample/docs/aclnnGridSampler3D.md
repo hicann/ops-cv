@@ -257,7 +257,7 @@ aclnnStatus aclnnGridSampler3D(
 
 ## 约束说明
 
-- 输入`input`的（D轴的大小 * H轴的大小 * W轴的大小 < INT32的最大值。
+- 输入`input`的$（D轴的大小 * H轴的大小 * W轴的大小） < INT32的最大值$。
 - 确定性计算：
   - aclnnGridSampler3D默认确定性实现。
 

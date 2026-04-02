@@ -121,7 +121,7 @@ pip3 install -r requirements.txt
     2. **安装CANN包**
 
         请单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/)，选择最新时间版本，并根据产品型号和环境架构下载对应包。安装命令如下，更多指导参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》。
- 	 
+
        - 安装CANN toolkit包
 
        ```bash
@@ -148,10 +148,10 @@ pip3 install -r requirements.txt
        - \$\{install\_path\}：表示指定安装路径，ops包需与toolkit包安装在相同路径，root   用户默认安装在`/usr/local/Ascend`目录。
 
   - **场景2：体验已发布版本能力或基于已发布版本进行开发**
- 	 
- 	请访问[CANN官网下载中心](https://www.hiascend.com/cann/download)，选择发布版本（仅支持CANN 8.5.0及后续版本），并根据产品型号和环境架构下载对应包，最后参考网页提供的命令完成安装。
 
-## 环境验 证
+    请访问[CANN官网下载中心](https://www.hiascend.com/cann/download)，选择发布版本（仅支持CANN 8.5.0及后续版本），并根据产品型号和环境架构下载对应包，最后参考网页提供的命令完成安装。
+
+## 环境验证
 
 安装完CANN包后，需验证环境和驱动是否正常。
 
