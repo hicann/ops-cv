@@ -141,6 +141,16 @@ static bool CheckScalesValid(const double weight, const double high)
 
 static bool CheckOutputSize(const aclTensor *out, const aclIntArray *outputSize)
 {
+    if (outputSize == nullptr) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "outputSize must not be null.");
+        return false;
+    }
+    if (outputSize->Size() != TWO) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "outputSize size must be 2, but got %zu.",
+            outputSize->Size());
+        return false;
+    }
     auto outShape = out->GetViewShape();
     const op::Format outFormat = out->GetStorageFormat();
     if (outFormat == op::Format::FORMAT_NCHW) {
