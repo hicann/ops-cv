@@ -44,7 +44,7 @@ aclnnStatus aclnnNonMaxSuppression(
 
 ## aclnnNonMaxSuppressionGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table class="tg" style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 233px">
@@ -215,7 +215,7 @@ aclnnStatus aclnnNonMaxSuppression(
 
 ## aclnnNonMaxSuppression
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
   <col style="width: 170px">

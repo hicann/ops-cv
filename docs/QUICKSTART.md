@@ -192,7 +192,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 
 当算子功能验证正确后，可通过`msprof`工具采集算子性能数据。
 
- -  **生成可执行文件**
+ - **生成可执行文件**
    
     调用AddExample算子的example样例，生成可执行文件（test_aclnn_add_example），该文件位于项目`ops-cv/build`目录。
 
@@ -200,7 +200,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
     bash build.sh --run_example add_example eager cust --vendor_name=custom
     ```
 
- -  **采集性能数据**
+ - **采集性能数据**
 
     进入AddExample算子可执行文件目录`ops-cv/build/`，执行如下命令：
 

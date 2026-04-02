@@ -117,7 +117,7 @@ endif()
 
 Tiling一共需要三个交付件：```${op_name}_tiling.cpp``` ```${op_name}_tiling_key.h``` ```${op_name}_tiling_data.h```
 > 说明：
-
+>
 > 1. `${op_name}_tiling.cpp`放在`${op_name}/op_host`目录下；
 > 2. `${op_name}_tiling_key.h`和`${op_name}_tiling_data.h`放在`${op_name}/op_kernel`目录下；
 > 3. 如果`${op_name}_tiling.cpp`中需要引用`${op_name}_tiling_data.h`，请使用相对路径的方式，例如：`#incldue "../op_kernel/${op_name}_tiling_data.h"`。
@@ -129,6 +129,7 @@ Tiling主要切分逻辑。
 如需查看详细实现，请参考[add_example_tiling.cpp](../../../examples/add_example/op_host/add_example_tiling.cpp)。
 
 > **样例中函数空实现说明：**
+>
 > 1. **TilingParse**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
 > 2. **CompileInfo**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
 
@@ -216,8 +217,8 @@ ASCENDC_TPL_ARGS_DECL(
 
 ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(
     ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, ELEMENTWISE_TPL_SCH_MODE_0, ELEMENTWISE_TPL_SCH_MODE_1)));
-
 ```
+
 **交付件3：${op_name}_tiling_data.h**
 
 切分算法相关的参数，比如总数据量大小、每个核数据切块数量，通过结构体存储。
@@ -257,7 +258,7 @@ graph LR
 
 Kernel一共需要两个交付件：```${op_name}.cpp``` ```${op_name}.h```
 > 说明：
-
+>
 > 1. `${op_name}.cpp`为kernel的入口函数只能放在`${op_name}/op_kernel`目录下；
 > 2. `${op_name}.h`文件可以按照不同SoC或模板放在对应目录下，例如：`${op_name}/op_kernel/arch32`、`${op_name}/op_kernel/arch35`或`${op_name}/op_kernel/impl`等目录下；
 
@@ -427,8 +428,8 @@ __aicore__ inline void AddExample<T>::Process()
 
    # 编译experimental目录下指定算子
    bash build.sh --pkg --soc=${soc_version} --vendor_name=${vendor_name} --ops=${op_list} [--experimental] [-j${n}]
-
    ```
+
    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"。
    - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
    - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"--ops=add_example"。

@@ -46,7 +46,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
 
 ## aclnnRoiAlignV2BackwardGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table class="tg" style="undefined;table-layout: fixed; width: 1570px"><colgroup>
   <col style="width: 233px">
@@ -220,7 +220,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
 
 ## aclnnRoiAlignV2Backward
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1155px"><colgroup>
   <col style="width: 170px">

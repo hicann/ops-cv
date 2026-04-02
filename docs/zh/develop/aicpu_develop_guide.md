@@ -117,7 +117,6 @@ Kernel一共需要两个交付件：```${op_name}_aicpu.cpp``` ```${op_name}_aic
 Kernel实现的第一步，需在头文件```op_kernel_aicpu/${op_name}_aicpu.h```进行算子类的声明，算子类需继承CpuKernel基类。
 如需查看详细实现，请参考[add_example_aicpu.h](../../../examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu.h)。
 
-
 ```CPP
 // 1、算子类声明
 // 包含AI CPU基础库头文件

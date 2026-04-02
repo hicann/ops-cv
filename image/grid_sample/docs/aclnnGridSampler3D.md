@@ -62,7 +62,7 @@ aclnnStatus aclnnGridSampler3D(
 
 ## aclnnGridSampler3DGetWorkspaceSize
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -173,7 +173,7 @@ aclnnStatus aclnnGridSampler3D(
   
     参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
   
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -214,7 +214,7 @@ aclnnStatus aclnnGridSampler3D(
 
 ## aclnnGridSampler3D
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -251,13 +251,13 @@ aclnnStatus aclnnGridSampler3D(
   </tbody>
   </table>
 
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
-- 输入`input`的（D轴的大小 * H轴的大小 * W轴的大小 < INT32的最大值。
+- 输入`input`的$（D轴的大小 * H轴的大小 * W轴的大小 < INT32的最大值$。
 - 确定性计算：
   - aclnnGridSampler3D默认确定性实现。
 
