@@ -37,6 +37,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/col2im/README.md">col2im</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/crop_and_resize/README.md">crop_and_resize</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -477,10 +487,20 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/roi_pooling_grad_with_arg_max/README.md">roi_pooling_grad_with_arg_max</a></td>
+    <td><a href="../../objdetect/roi_pooling_with_arg_max/README.md">roi_pooling_with_arg_max</a></td>
+    <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
+    <td>AI Core</td>
+    <td>对输入特征图按 ROI（感兴趣区域）进行池化，在每个 ROI 内按空间划分格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/roi_pooling_grad_with_arg_max/README.md">roi_pooling_grad_with_arg_max</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
     <td>遍历每个ROI的池化结果，将feature map坐标上的反向梯度贡献累加，即完成整张图上的反向计算。</td>
@@ -494,36 +514,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>根据特征点所属的组，重组点云中的特征点。 </td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/background_replace/README.md">background_replace</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/blend_images_custom/README.md">blend_images_custom</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>完成张量rgb、frame和alpha的透明度乘法计算。 </td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>完成张量rgb和张量alpha的透明度乘法计算。 </td>
   </tr>
 </tbody>
 </table>

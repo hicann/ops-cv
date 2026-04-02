@@ -156,7 +156,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>-</td>
       <td>-</td>
       <td>-</td>
-      <td>1</td>
+      <td>-</td>
       <td>-</td>
     </tr>
     <tr>
@@ -166,7 +166,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>-</td>
       <td>-</td>
       <td>-</td>
-      <td>1</td>
+      <td>-</td>
       <td>-</td>
     </tr>
   </tbody></table>
@@ -192,7 +192,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
-      <td>传入的gradOutput、rois、argmax 、gradInput是空指针。</td>
+      <td>传入的gradOutput、rois、argmax 、gradInputRef是空指针。</td>
     </tr>
     <tr>
       <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
@@ -212,22 +212,22 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>gradOutput、argmax的shape[1]相等。</td>
     </tr>
     <tr>
-      <td>gradOutput、argmax的shape[2]等于pooledH和shape[3]等于pooledW。</td>
+      <td>gradOutput、argmax的shape[2]等于pooledH，shape[3]等于pooledW。</td>
     </tr>
     <tr>
       <td>rois的值大于等于0。</td>
     </tr>
     <tr>
-      <td>pooled_h、pooled_w大于0。</td>
+      <td>pooledH、pooledW大于0。</td>
     </tr>
     <tr>
       <td>rois[:, 1] 小于 rois[:, 2] 且 rois[:, 3] 小于 rois[:, 4]。</td>
     </tr>
     <tr>
-      <td>rois.shape[0]、gradOutput.shape[0]小于等于1024</td>
+      <td>rois.shape[0]、gradOutput.shape[0]小于等于1024。</td>
     </tr>
     <tr>
-      <td>gradInputRef.shape[1]等于gradOutput.shape[1]</td>
+      <td>gradInputRef.shape[1]等于gradOutput.shape[1]。</td>
     </tr>
   </tbody>
   </table>
