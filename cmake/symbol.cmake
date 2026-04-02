@@ -322,30 +322,44 @@ function(gen_cust_proto_symbol)
     )
 endfunction()
 
-function(gen_aicpu_json_symbol enable_built_in)
-  get_property(ALL_AICPU_JSON_FILES GLOBAL PROPERTY AICPU_JSON_FILES)
-  if(NOT ALL_AICPU_JSON_FILES)
-    message(STATUS "No aicpu json files to merge, skipping.")
+function(gen_aicpu_op_def_symbol)
+  message(STATUS "enter gen_aicpu_op_def_symbol")
+  get_property(ALL_AICPU_OP_DEF_FILES GLOBAL PROPERTY AICPU_OP_DEF_FILES)
+  if(NOT ALL_AICPU_OP_DEF_FILES)
+    message(STATUS "No aicpu op def files, skipping.")
     return()
   endif()
+  message(STATUS "ALL_AICPU_OP_DEF_FILES:${ALL_AICPU_OP_DEF_FILES}")
+ 	# 调用opbuild命令生成固定文件 aicpu_kernel.ini
+ 	opbuild_aicpu_ini(OPS_SRC ${ALL_AICPU_OP_DEF_FILES}
+ 	                  OUT_DIR ${ASCEND_AUTOGEN_PATH}
+ 	)
+endfunction()
 
+function(gen_aicpu_json_symbol enable_built_in)
+  gen_aicpu_op_def_symbol()
   set(MERGED_JSON ${CMAKE_BINARY_DIR}/cust_aicpu_kernel.json)
   if(enable_built_in)
     set(MERGED_JSON ${CMAKE_BINARY_DIR}/aicpu_cv.json)
   endif()
 
-  add_custom_command(
-    OUTPUT ${MERGED_JSON}
-    COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/util/merge_aicpu_info_json.sh ${CMAKE_SOURCE_DIR} ${MERGED_JSON} ${ALL_AICPU_JSON_FILES}
-    DEPENDS ${ALL_AICPU_JSON_FILES}
-    COMMENT "Merging Json files into ${MERGED_JSON}"
-    VERBATIM
+ 	set(cmd "python3 ${CMAKE_SOURCE_DIR}/scripts/kernel/binary_script/parser_ini.py ${ASCEND_AUTOGEN_PATH}/aicpu_kernel.ini ${MERGED_JSON}")
+ 	message("cmd: ${cmd}")
+
+  execute_process(
+      COMMAND bash -c "${cmd}"
+      WORKING_DIRECTORY ${ASCEND_AUTOGEN_PATH}
+      OUTPUT_VARIABLE result
+      ERROR_VARIABLE error
+      RESULT_VARIABLE code
+      OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  add_custom_target(merge_aicpu_json ALL DEPENDS ${MERGED_JSON})
+ 	message("convert ini to json finish.")
+
   install(
-    FILES ${MERGED_JSON}
-    DESTINATION ${AICPU_JSON_CONFIG}
-    OPTIONAL
+      FILES ${MERGED_JSON}
+      DESTINATION ${AICPU_JSON_CONFIG}
+      OPTIONAL
   )
 endfunction()
 

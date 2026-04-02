@@ -379,7 +379,7 @@ macro(add_modules_sources)
     target_sources(${OPHOST_NAME}_tiling_obj PRIVATE ${OPTILING_SRCS})
   endif()
 
-  file(GLOB AICPU_SRCS ${SOURCE_DIR}/*_aicpu*.cpp)
+  file(GLOB AICPU_SRCS ${SOURCE_DIR}/*_aicpu.cpp)
   if(AICPU_SRCS)
     add_aicpu_kernel_modules()
     target_sources(${OPHOST_NAME}_aicpu_obj PRIVATE ${AICPU_SRCS})
