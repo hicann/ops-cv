@@ -110,15 +110,15 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
 
 - **参数说明**
 
-  <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
+  <table style="undefined;table-layout: fixed; width: 1560px"><colgroup>
   <col style="width: 170px">
   <col style="width: 120px">
-  <col style="width: 311px">
+  <col style="width: 270px">
   <col style="width: 330px">
-  <col style="width: 223px">
-  <col style="width: 101px">
-  <col style="width: 150px">
-  <col style="width: 145px">
+  <col style="width: 220px">
+  <col style="width: 120px">
+  <col style="width: 190px">
+  <col style="width: 140px">
   </colgroup>
   <thead>
     <tr>
@@ -241,10 +241,10 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
 
   第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
-  <col style="width: 268px">
-  <col style="width: 140px">
-  <col style="width: 762px">
+  <table style="undefined;table-layout: fixed;width: 1151px"><colgroup>
+  <col style="width: 184px">
+  <col style="width: 134px">
+  <col style="width: 833px">
   </colgroup>
   <thead>
     <tr>
@@ -278,10 +278,10 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
 
 - **参数说明**
 
-  <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
-  <col style="width: 173px">
-  <col style="width: 112px">
-  <col style="width: 668px">
+  <table style="undefined;table-layout: fixed; width: 1151px"><colgroup>
+  <col style="width: 184px">
+  <col style="width: 134px">
+  <col style="width: 833px">
   </colgroup>
   <thead>
     <tr>
