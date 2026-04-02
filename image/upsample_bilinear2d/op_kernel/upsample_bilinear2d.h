@@ -18,11 +18,7 @@
 #include <type_traits>
 #include "kernel_operator.h"
 #include "lib/matmul_intf.h"
-#ifdef __CCE_KT_TEST__	 
-#include "../../upsample_linear1d/op_kernel/upsample_linear_common.h" 
-#else 
-#include "../upsample_linear1d/upsample_linear_common.h" 
-#endif
+#include "upsample_bilinear2d_common.h" 
 
 namespace UpsampleBilinear2d {
 using namespace AscendC;
