@@ -109,4 +109,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口 | [test_aclnn_roi_align_rotated](examples/test_aclnn_roi_align_rotated.cpp) | 通过[aclnnRoiAlignRotated](docs/aclnnRoiAlignRotated.md)接口方式调用RoiAlignRotated算子。 |
+| 图模式 | [test_geir_roi_align_rotated](examples/test_geir_roi_align_rotated.cpp) | 通过[算子IR](./op_graph/roi_align_rotated_proto.h)接口方式调用RoiAlignRotated算子。 |

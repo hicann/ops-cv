@@ -11,7 +11,6 @@
 | <term>Atlas 推理系列产品</term>                             |    √     |
 | <term>Atlas 训练系列产品</term>                              |     ×      |
 
-
 ## 功能说明
 
 - 接口功能：完成张量rgb和张量alpha的透明度乘法计算
@@ -155,7 +154,6 @@ aclnnStatus aclnnMrgbaCustom(
   </tbody>
   </table>
 
-
 ## aclnnMrgbaCustom
 
 - **参数说明**：
@@ -194,7 +192,6 @@ aclnnStatus aclnnMrgbaCustom(
     </tr>
   </tbody>
   </table>
-
 
 - **返回值**：
 

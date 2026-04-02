@@ -13,7 +13,6 @@
 |  <term>Atlas 推理系列产品</term>    |     ×    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
-
 ## 功能说明
 
 - 接口功能：[aclnnUpsampleLinear1d](../../upsample_linear1d/docs/aclnnUpsampleLinear1d.md)的反向传播。

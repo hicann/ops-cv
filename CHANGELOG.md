@@ -3,6 +3,7 @@
 > 本文档记录各版本的重要变更，版本按时间倒序排列。
 
 ## v8.5.0-beta.1
+
 发布日期：2025-12-30
 
 ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
@@ -11,9 +12,10 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 使用方式请参阅[官方文档](https://gitcode.com/cann/ops-cv/blob/master/README.md)。
 
 ### 🔗 版本地址
+
 [CANN 8.5.0-beta 1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/)
 
-```
+```Cpp
 版本目录说明如下：
 ├── aarch64                 # CPU为ARM类型
 │   ├── ops                  # ops算子包目录，用于归档算子子包
@@ -22,6 +24,7 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 │   ├── ops                  # ops算子包目录，用于归档算子子包
 │   ├── ...
 ```
+
 ### 📌 版本配套
 
 **ops-cv子包及相关组件与CANN版本配套关系**
@@ -34,6 +37,7 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 | [cann-ops-transformer   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/ops-transformer/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
 | [cann-hccl   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/hccl/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
 | [cann-hixl   8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/) | [v8.5.0-beta.1](https://gitcode.com/cann/hixl/tags/v8.5.0-beta.1) | CANN   8.5.0-beta.1 |
+
 ### 🚀 关键特性
 
 - 【工程能力】cv类onnx算子插件支持。([#97](https://gitcode.com/cann/ops-cv/pull/97))
@@ -45,6 +49,7 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 - 【性能优化】增加asc_opc算子并行编译能力，优化编译效率；增加ccache，优化编译时长。([80](https://gitcode.com/cann/ops-cv/pull/80))
 
 ### 🐛 问题修复
+
 - add_example样例算子执行调用问题修复。([Issue16](https://gitcode.com/cann/ops-cv/issues/16))
 - 修复编译不存在算子时提示编译成功问题。([Issue25](https://gitcode.com/cann/ops-cv/issues/25))
 - 使用constexpr修饰if使能编译优化。([Issue32](https://gitcode.com/cann/ops-cv/issues/32))

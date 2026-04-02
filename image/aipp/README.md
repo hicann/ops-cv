@@ -25,7 +25,7 @@
 
         - YUV 转 RGB：
 
-            ```
+            ```text
             | R |   | matrix_r0c0 matrix_r0c1 matrix_r0c2 | | Y - input_bias_0 |
             | G | = | matrix_r1c0 matrix_r1c1 matrix_r1c2 | | U - input_bias_1 | >> 8
             | B |   | matrix_r2c0 matrix_r2c1 matrix_r2c2 | | V - input_bias_2 |
@@ -33,7 +33,7 @@
 
         - RGB 转 YUV：
 
-            ```
+            ```text
             | Y |   | matrix_r0c0 matrix_r0c1 matrix_r0c2 | | R |        | output_bias_0 |
             | U | = | matrix_r1c0 matrix_r1c1 matrix_r1c2 | | G | >> 8 + | output_bias_1 |
             | V |   | matrix_r2c0 matrix_r2c1 matrix_r2c2 | | B |        | output_bias_2 |
@@ -41,7 +41,7 @@
 
     3. 对数据进行归一化，计算公式如下:
 
-        ```
+        ```text
         pixel_out_chx(i) = [pixel_in_chx(i) - mean_chn_i - min_chn_i] * var_reci_chn_i
         ```
 

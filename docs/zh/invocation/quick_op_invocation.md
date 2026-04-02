@@ -40,6 +40,7 @@
   > 说明：若您需要**基于本项目进行二次发布**并且对**软件包大小有要求**时，建议采用静态库编译，该库可以链接您的应用开发程序，仅保留业务所需的算子，从而实现软件最小化部署。
 
 ### 联网编译
+
 #### 自定义算子包
 
 1. **编译自定义算子包**
@@ -143,7 +144,6 @@
     
     \$\{repo\_path\}表示项目根目录，\$\{soc\_name\}表示NPU型号名称，即\$\{soc\_version\}删除“ascend”后剩余的内容。编译成功后，压缩包存放于build_out目录下。
 
-
 2. **解压ops-cv静态库**
 
     进入build_out目录执行解压命令：
@@ -153,8 +153,8 @@
     ```
     
     \$\{static\_lib\_path\}表示静态库解压路径。解压后目录结构如下：
-    
-    ```
+
+    ```cpp
     ├── cann-${soc_name}-ops-cv-static_${cann_version}_linux-${arch}
     │   ├── lib64
     │   │   ├── libcann_cv_static.a                 # 静态库文件
@@ -245,7 +245,7 @@
     # 以GridSample算子example执行为例
     # bash build.sh --run_example grid_sample eager cust --vendor_name=custom
     ```
-    
+
     - \$\{op\}：表示待执行算子，算子名小写下划线形式，如grid_sample。
     - \$\{mode\}：表示执行模式，目前支持eager（aclnn调用）、graph（图模式调用）。
     - \$\{pkg_mode\}：表示包模式，目前仅支持cust，即自定义算子包。         
@@ -337,7 +337,7 @@
 
 无论上述哪种方式，算子样例执行后会打印结果，以GridSample算子执行为例：
 
-```
+```sh
 This environment does not have the ASAN library, no need enable ASAN
 CMAKE_ARGS: -DENABLE_UT_EXEC=TRUE
 ----------------------------------------------------------------

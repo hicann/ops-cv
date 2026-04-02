@@ -13,7 +13,6 @@
 | <term>Atlas 推理系列产品</term>                             |    √     |
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
-
 ## 功能说明
 
 删除分数小于scoreThreshold的边界框，筛选出与之前被选中部分重叠较高（IOU较高）的框。
@@ -213,7 +212,6 @@ aclnnStatus aclnnNonMaxSuppression(
     </tr>
   </tbody>
   </table>
-
 
 ## aclnnNonMaxSuppression
 
