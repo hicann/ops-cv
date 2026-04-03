@@ -36,6 +36,7 @@ extern "C" {
 static const int64_t TENSOR_DIM_NUM = 2;
 static const int64_t INPUT_FIRST_DIM = 4;
 static const int64_t CIoU_RESULT_SIZE = 2;
+static const int64_t INPUT_SECOND_DIM_CONSTRAINT = 1024;
 
 static const std::initializer_list<op::DataType> TYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
 
@@ -111,6 +112,10 @@ static bool CheckShape(
     OP_CHECK(
         bBoxes->GetViewShape().GetDim(0) == INPUT_FIRST_DIM && gtBoxes->GetViewShape().GetDim(0) == INPUT_FIRST_DIM,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "the first dim of inputs should be 4."), return false);
+    OP_CHECK(
+        bBoxes->GetViewShape().GetDim(1) % INPUT_SECOND_DIM_CONSTRAINT == 0 &&
+        gtBoxes->GetViewShape().GetDim(1) % INPUT_SECOND_DIM_CONSTRAINT == 0,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "the second dim of inputs should be a multiple of 1024."), return false);
     if (isCross == false) {
         OP_CHECK(
             bBoxes->GetViewShape().GetDim(1) == gtBoxes->GetViewShape().GetDim(1) &&
