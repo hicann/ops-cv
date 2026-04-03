@@ -114,7 +114,7 @@ aclnnStatus aclnnIou(
     <tr>
       <td class="tg-0lax">eps（float）</td>
       <td class="tg-0lax">输入</td>
-      <td class="tg-0lax">防止除零，计算面积时长和宽都会加上eps。</td>
+      <td class="tg-0lax">防止除零，计算面积时，长和宽都会加上eps。</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">FLOAT</td>
       <td class="tg-0lax">-</td>

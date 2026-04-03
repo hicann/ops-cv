@@ -80,7 +80,7 @@
     <tr>
       <td>aligned</td>
       <td>属性</td>
-      <td>是否量化，true则将目标框中心坐标值-0.5。</td>
+      <td>是否量化，true则将目标框中心坐标值减0.5。</td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
