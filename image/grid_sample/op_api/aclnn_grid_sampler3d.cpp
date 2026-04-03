@@ -350,6 +350,7 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
     const aclTensor *gridSampler3DOut = nullptr;
     if (supportAiCore) {
         inputTensor = CheckAndTranspose(inputTensor, inputFormat, true, isSpecialcase, uniqueExecutor.get());
+        CHECK_RET(inputTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
         gridSampler3DOut = l0op::GridSample3D(inputTensor,
             gridTensor,
             interpolationMode,
