@@ -226,6 +226,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::getQueueSize()
                                     : static_cast<int64_t>(2 * (slide_size + support_w) / zeroScaleW) + 1;
     queueSizeH = scale_h > 0 ? static_cast<int64_t>(2 * (slide_size + support_h) / scale_h) + 1
                                     : static_cast<int64_t>(2 * (slide_size + support_h) / zeroScaleH) + 1;
+    queueSizeW++;
+    queueSizeH++;
 
     queueSize = getMax(static_cast<int64_t>(1), getMax(queueSizeW, queueSizeH));
 };
