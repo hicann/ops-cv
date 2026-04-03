@@ -185,7 +185,7 @@ aclnnStatus aclnnNonMaxSuppression(
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
-      <td>传入的boxes、scores、out是空指针。</td>
+      <td>传入的boxes、scores、selectedIndices是空指针。</td>
     </tr>
     <tr>
       <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
