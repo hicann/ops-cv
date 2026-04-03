@@ -78,14 +78,14 @@ int main() {
 
   // 2. 构造输入与输出，需要根据API的接口自定义构造
   // input
-  std::vector<float> bBoxesHostData = {1.0, 1.0, 5.0, 3.0};
-  std::vector<float> gtBoxesHostData = {4.0, 2.0, 9.0, 5.0};
-  std::vector<float> overlapHostData = {0.045455};
-  std::vector<float> atanSubHostData = {0.045455};
-  std::vector<int64_t> bBoxesShape = {4, 1};
-  std::vector<int64_t> gtBoxesShape = {4, 1};
-  std::vector<int64_t> overlapShape = {1, 1};
-  std::vector<int64_t> atanSubShape = {1, 1};
+  std::vector<float> bBoxesHostData(4096, 1);
+  std::vector<float> gtBoxesHostData(4096, 2);
+  std::vector<float> overlapHostData(1024, 0);
+  std::vector<float> atanSubHostData(1024, 0);
+  std::vector<int64_t> bBoxesShape = {4, 1024};
+  std::vector<int64_t> gtBoxesShape = {4, 1024};
+  std::vector<int64_t> overlapShape = {1, 1024};
+  std::vector<int64_t> atanSubShape = {1, 1024};
   void* bBoxesDeviceAddr = nullptr;
   void* gtBoxesDeviceAddr = nullptr;
   void* overlapDeviceAddr = nullptr;
