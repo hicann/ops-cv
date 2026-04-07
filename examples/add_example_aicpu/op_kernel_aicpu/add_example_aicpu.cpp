@@ -22,16 +22,28 @@
 #include "log.h"
 
 namespace {
+// Operator name used for registration
 const char* const kAddExample = "AddExampleAicpu";
+// Input/output tensor indices
 const uint32_t kFirstInputIndex = 0;
 const uint32_t kSecondInputIndex = 1;
 const uint32_t kFirstOutputIndex = 0;
+// Return codes
 const uint32_t kSuccess = 0;
 const uint32_t kParamInvalid = 1;
 const uint32_t kError = 2;
 }  // namespace
 
 namespace aicpu {
+/*!
+ * \brief Main entry point for AddExample CPU kernel computation.
+ *
+ * Validates input/output tensors, determines data type, and dispatches
+ * to the appropriate template instantiation of AddCompute.
+ *
+ * \param ctx Kernel context containing input/output tensors.
+ * \return kSuccess on success, kParamInvalid on invalid arguments.
+ */
 uint32_t AddExampleCpuKernel::Compute(CpuKernelContext& ctx) {
   Tensor* input0 = ctx.Input(kFirstInputIndex);
   Tensor* input1 = ctx.Input(kSecondInputIndex);
@@ -58,6 +70,15 @@ uint32_t AddExampleCpuKernel::Compute(CpuKernelContext& ctx) {
   return kSuccess;
 }
 
+/*!
+ * \brief Type-specific element-wise addition implementation.
+ *
+ * Retrieves input/output data pointers and performs element-wise addition:
+ * y[i] = x0[i] + x1[i] for all elements.
+ *
+ * \param ctx Kernel context containing input/output tensors.
+ * \return kSuccess on success, kParamInvalid on null pointer.
+ */
 template <typename T>
 uint32_t AddExampleCpuKernel::AddCompute(CpuKernelContext& ctx) {
   Tensor* input0 = ctx.Input(kFirstInputIndex);

@@ -10,7 +10,9 @@
 
 /*!
  * \file add_example_infershape.cpp
- * \brief
+ * \brief Implementation of shape inference for AddExampleAicpu operator.
+ *        This file provides the inference logic to determine the output tensor shape
+ *        based on the input tensor of the AddExampleAicpu operator.
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
@@ -20,6 +22,14 @@ using namespace ge;
 namespace ops {
 static constexpr int64_t IDX_0 = 0;
 
+/*!
+ * \brief Infer the output shape of AddExampleAicpu operator.
+ * \param context Pointer to the inference context for shape inference.
+ * \return ge::graphStatus GRAPH_SUCCESS if inference succeeds, otherwise error code.
+ *
+ * This function retrieves the input tensor shape and propagates it to the output tensor.
+ * For the AddExampleAicpu operator, the output shape is identical to the input shape.
+ */
 static ge::graphStatus InferShapeAddExample(gert::InferShapeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferShapeAddExample");

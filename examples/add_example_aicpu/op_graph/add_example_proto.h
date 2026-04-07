@@ -10,7 +10,8 @@
 
 /*!
  * \file add_example_proto.h
- * \brief
+ * \brief Operator registration for AddExampleAicpu.
+ *        Defines the operator interface including input/output types and compatibility.
  */
 #ifndef OPS_OP_PROTO_INC_AddEXAMPLE_H_
 #define OPS_OP_PROTO_INC_AddEXAMPLE_H_

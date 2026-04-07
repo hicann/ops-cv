@@ -10,7 +10,9 @@
 
 /*!
  * \file add_example_aicpu_graph_infer.cpp
- * \brief add example graph graph infer
+ * \brief Graph-level data type inference for AddExampleAicpu operator.
+ *        This file provides the inference logic to determine the output tensor
+ *        data type based on the input tensor at graph compilation time.
  */
 
 #include "register/op_impl_registry.h"
@@ -21,6 +23,14 @@ using namespace ge;
 
 static constexpr int64_t IDX_0 = 0;
 
+/*!
+ * \brief Infer the output data type of AddExampleAicpu operator.
+ * \param context Pointer to the inference context for data type inference.
+ * \return ge::graphStatus GRAPH_SUCCESS if inference succeeds, otherwise error code.
+ *
+ * This function retrieves the input tensor data type and propagates it to the output tensor.
+ * For the AddExampleAicpu operator, the output data type is identical to the input data type.
+ */
 static ge::graphStatus InferDataTypeAddExample(gert::InferDataTypeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferDataTypeAddExample");

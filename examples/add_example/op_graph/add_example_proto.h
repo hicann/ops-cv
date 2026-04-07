@@ -10,7 +10,7 @@
 
 /*!
  * \file add_example_proto.h
- * \brief
+ * \brief Add算子原型定义
  */
 #ifndef OPS_OP_PROTO_INC_AddEXAMPLE_H_
 #define OPS_OP_PROTO_INC_AddEXAMPLE_H_
@@ -25,7 +25,7 @@ namespace ge {
 *@par Inputs:
 *Two inputs, including:
 * @li x1: A NCHW or NHWC Tensor. Must be one of the following types: float32.
-* @li x2: A NCHW or NHWC Tensor. Must be one of the following types: float32. \n
+* @li x2: A NCHW or NHWC Tensor. Must be one of the following types: float32.
 
 *@par Outputs:
 *y: A NCHW or NHWC Tensor. Must be one of the following types: float32.

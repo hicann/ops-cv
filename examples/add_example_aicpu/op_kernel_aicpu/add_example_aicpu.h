@@ -14,17 +14,37 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  */
- 
+
+/*!
+ * \file add_example_aicpu.h
+ * \brief CPU kernel implementation of AddExample operator.
+ *        This file defines the AddExampleCpuKernel class which performs element-wise
+ *        addition of two input tensors on the CPU (AICPU).
+ */
 #ifndef AICPU_ADD_EXAMPLE_CPU_KERNELS_H_
 #define AICPU_ADD_EXAMPLE_CPU_KERNELS_H_
 
 #include "cpu_kernel.h"
 
 namespace aicpu {
+/*!
+ * \brief AddExample CPU kernel class.
+ *        Implements element-wise tensor addition on CPU.
+ */
 class AddExampleCpuKernel : public CpuKernel {
  public:
   ~AddExampleCpuKernel() = default;
+  /*!
+   * \brief Entry point for kernel computation.
+   * \param ctx Kernel context containing input/output tensors.
+   * \return kSuccess on success, error code on failure.
+   */
   uint32_t Compute(CpuKernelContext &ctx) override;
+  /*!
+   * \brief Template function for type-specific addition computation.
+   * \param ctx Kernel context containing input/output tensors.
+   * \return kSuccess on success, error code on failure.
+   */
   template<typename T>
   uint32_t AddCompute(CpuKernelContext &ctx);
 };
