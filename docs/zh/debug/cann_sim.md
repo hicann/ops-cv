@@ -16,7 +16,7 @@ CANN Simulator是一款面向算子开发场景的SoC级芯片仿真工具，用
 * 工具推荐环境配置：CPU 16核，内存32GB以上。
 * 本文中举例路径均需要确保运行用户具有读或读写权限。
 * 出于安全性和权限最小化考虑，建议使用普通用户权限执行本工具，避免使用root等高权限账户。
-* 本工具依赖CANN软件包，在使用前请先安装CANN软件包，无需安装赖驱动和固件，并通过source命令执行CANN的set_env.sh环境变量文件。为确保安全，执行source命令后请勿修改set_env.sh中涉及的环境变量。
+* 本工具依赖CANN软件包，在使用前请先安装CANN软件包，无需安装驱动和固件，并通过source命令执行CANN的set_env.sh环境变量文件。为确保安全，执行source命令后请勿修改set_env.sh中涉及的环境变量。
 * 用户应遵循最小权限原则，例如，给工具输入的文件要求other用户不可写，在一些对安全要求更严格的功能场景下还需确保输入的文件group用户不可写。
 * 本工具为开发工具，不建议在生产环境使用。
 * 工具的仿真功能仅支持单卡场景，无法仿真多卡环境，代码中只能设置为0卡。若修改可见卡号，将导致仿真失败。
@@ -51,11 +51,8 @@ bash build.sh --pkg --soc=Ascend950 --vendor_name=custom --ops=add_example
 cannsim record ./test_aclnn_add_example -s Ascend950 --gen-report
 ```
 
-仿真工具执行日志文件在examples/add_example/examples/build/bin/cannsim_*目录，执行日志文件为
+仿真工具执行日志文件在examples/add_example/examples/build/bin/cannsim_*目录，执行日志文件为 cannsim.log。
 
-```sh
-cannsim.log
-```
 
 从仿真工具日志文件可以看到示例中的打印信息：
 
@@ -164,7 +161,7 @@ cannsim report [options]
     cannsim report -e /path/to/cannsim_{timestamp}_${user_app} 
 
     在指定目录下生成核0、核1、核11、核12的性能分析报告
-    cannsim report -e /path/to/cannsim_{timestamp}_${user_app} -o /path/to/report -n ‘0-1, 11-12’
+    cannsim report -e /path/to/cannsim_{timestamp}_${user_app} -o /path/to/report -n '0-1, 11-12'
     ```
 
 3. 命令执行完后，会在output配置的目录下生成对应的流水文件，文件格式为json格式，输出结果示例如下：
@@ -176,7 +173,7 @@ cannsim report [options]
     ```
 
 4. 仿真结果查看
-    在Chrome浏览器中输入“chrome://tracing”地址，并将通过生成指令流水图文件（trace.json）拖到空白处打开，键盘上输入快捷键（W：放大，S：缩小，A：左移，D：右移）可进行查看。
+    在Chrome浏览器中输入“chrome://tracing”地址，并将生成的指令流水图文件（trace.json）拖到空白处打开，键盘上输入快捷键（W：放大，S：缩小，A：左移，D：右移）可进行查看。
     ![指令流水图](../figures/指令流水图%20.png)
 
     表2 关键字段说明
