@@ -89,8 +89,6 @@ endif()
 
 算子定义需要完成两个交付件：`README.md` ```${op_name}_def.cpp```
 
-> 💡 **进阶内容**：关于算子原型定义的详细说明，包括输入/输出/属性定义、AI处理器配置、多硬件平台差异化注册等，请参考[《AI Core算子开发进阶指南 - 算子原型定义》](./aicore_develop_advanced_guide.md#算子原型定义)。
-
 **交付件1：README.md**
 
 开发算子前需要先确定目标算子的功能和计算逻辑。
@@ -104,8 +102,6 @@ endif()
 以自定义`AddExample`算子说明为例，请参考[AddExample算子信息库](../../../examples/add_example/op_host/add_example_def.cpp)。
 
 ## Tiling实现
-
-> 💡 **进阶内容**：关于Host侧Tiling实现的详细说明，包括基本流程、Tiling结构体定义、Tiling模板编程等，请参考[《AI Core算子开发进阶指南 - Host侧Tiling实现》](./aicore_develop_advanced_guide.md#host侧tiling实现)。
 
 ### Tiling简介
 
@@ -236,8 +232,6 @@ struct ${op_name}TilingData {
 ```
 
 ## Kernel实现
-
-> 💡 **进阶内容**：关于Kernel侧算子实现的详细说明，包括核函数定义、GET_TILING_DATA获取Tiling参数、核函数内推导输入数据类型和格式等，请参考[《AI Core算子开发进阶指南 - Kernel侧算子实现》](./aicore_develop_advanced_guide.md#kernel侧算子实现)。
 
 ### Kernel简介
 
@@ -379,14 +373,10 @@ __aicore__ inline void AddExample<T>::Process()
 
 ## 图模式适配
 
-> 💡 **进阶内容**：关于GE图模式原型定义的详细说明，包括REG_OP接口、TensorType类等，请参考[《AI Core算子开发进阶指南 - GE图模式原型定义》](./aicore_develop_advanced_guide.md#ge图模式原型定义)。
-
 图模式一共需要三个交付件：```${op_name}_graph_infer.cpp``` ```${op_name}_infershape.cpp``` ```${op_name}_proto.h```
 详细说明见图模式适配指南[graph_develop_guide.md](./graph_develop_guide.md)。
 
 ## aclnn适配
-
-> 💡关于Aclnn接口的详细说明，包括自动生成配置方式、动态库路径等，请参考[《AI Core算子开发进阶指南 - Aclnn指导》](./aicore_develop_advanced_guide.md#aclnn指导)。
 
 通常算子开发和编译完成后，会自动生成aclnn接口（一套基于C 的API），可直接在应用程序中调用aclnn接口实现调用算子。
 
@@ -756,10 +746,6 @@ export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/op_api/
 ## 附录
 
 自定义算子如需运行图模式，不需要aclnn适配，详细内容请参考[图模式开发指南](./graph_develop_guide.md)。
-
-> 💡 **进阶内容**：
->
-> - 关于多芯片代际隔离的详细说明，包括芯片架构映射、隔离位置清单、Kernel入口配置等，请参考[《AI Core算子开发进阶指南 - 代际隔离说明》](./aicore_develop_advanced_guide.md#代际隔离说明)。
 
 ### 算子工程迁移
 

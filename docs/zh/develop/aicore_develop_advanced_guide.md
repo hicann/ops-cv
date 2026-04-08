@@ -156,7 +156,7 @@ flowchart TB
 
 ### 算子工程目录结构
 
-```
+```tex
 {op_name}/                      # 算子根目录（如 add/）
 ├── CMakeLists.txt              # 构建配置（必需）
 ├── README.md                   # 算子说明
@@ -320,7 +320,7 @@ OP_ADD(AddCustom);
 
 ### 算子命名规则示例
 
-```
+```tex
 算子类型（大驼峰）  →  实现文件名/核函数名（下划线）
 ─────────────────────────────────────────────────
 AddCustom           →  add_custom
@@ -339,6 +339,7 @@ StatelessRandom    →  stateless_random
 > 当算子有多个输入输出时，**算子原型注册**需要明确标明输入输出之间的数据类型对应关系（排列组合），而**IR定义**只需要各自列举支持的数据类型即可。
 >
 > 例如：某算子输入x支持float32/float16，输出y支持float32/float16，但对应关系为：
+>
 > - float32 → float32
 > - float16 → float16
 > - float16 → float32
