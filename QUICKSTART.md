@@ -17,11 +17,11 @@
 
 为方便您能快速了解算子开发的全流程，我们将以**AddExample**算子作为实践对象，其源文件位于`ops-cv/examples/add_example`，具体操作步骤如下：
 
-1.  **[环境安装](#一环境安装二选一)**：搭建算子开发和运行环境。
-2.  **[编译部署](#二编译部署)**：编译自定义算子包并部署安装，实现快速调用算子。
-3.  **[算子开发](#三算子开发)**：通过修改现有算子Kernel，体验开发、编译、验证的完整闭环。
-4.  **[算子调试](#四算子调试)**：掌握算子打印和性能采集方法。
-5.  **[算子验证](#五算子验证)**：学习如何修改算子example样例，以验证算子在不同输入下的功能正确性。
+1. **[环境安装](#一环境安装二选一)**：搭建算子开发和运行环境。
+2. **[编译部署](#二编译部署)**：编译自定义算子包并部署安装，实现快速调用算子。
+3. **[算子开发](#三算子开发)**：通过修改现有算子Kernel，体验开发、编译、验证的完整闭环。
+4. **[算子调试](#四算子调试)**：掌握算子打印和性能采集方法。
+5. **[算子验证](#五算子验证)**：学习如何修改算子example样例，以验证算子在不同输入下的功能正确性。
 
 ## 一、环境安装（二选一）
 
@@ -33,7 +33,7 @@
 
    <img src="docs/zh/figures/cloudIDE.png" alt="云平台"  width="750px" height="90px">
 
-2. 根据页面提示创建并启动云开发环境，单击“`连接 > WebIDE `”进入算子一站式开发平台，开源项目的资源默认在`/mnt/workspace`目录下。
+2. 根据页面提示创建并启动云开发环境，单击“`连接 > WebIDE`”进入算子一站式开发平台，开源项目的资源默认在`/mnt/workspace`目录下。
 
     <img src="docs/zh/figures/webIDE.png" alt="云平台"  width="1000px" height="150px">
     
@@ -41,7 +41,7 @@
 
     在云平台终端窗口，执行如下命令验证环境和驱动是否正常。
 
-    -   **检查NPU设备**
+    - **检查NPU设备**
 
         执行如下命令，若返回驱动相关信息说明已成功挂载。    
         
@@ -49,7 +49,7 @@
         npu-smi info
         ```
 
-    -   **检查CANN版本**
+    - **检查CANN版本**
 
         执行如下命令查看CANN Toolkit版本信息。
         
@@ -68,21 +68,24 @@
     > **注意**：使用`npu-smi info`查看对应的驱动与固件版本。
 
 #### 下载镜像
+
 拉取已预集成CANN软件包及`ops-cv`所需依赖的镜像。
 
-1.  以root用户登录宿主机。
-2.  执行拉取命令（请根据你的宿主机架构选择）：
+1. 以root用户登录宿主机。
+2. 执行拉取命令（请根据你的宿主机架构选择）：
     
     * ARM架构：
       
         ```bash
         docker pull --platform=arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
         ```
+
     * X86架构：
     
         ```bash
         docker pull --platform=amd64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
         ```
+
 > **注意**：正常网速下，镜像下载时间约为5-10分钟。
 
 #### Docker运行
@@ -92,7 +95,9 @@
 ```bash
 docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_manager --device /dev/devmm_svm --device /dev/hisi_hdc -v /usr/local/dcmi:/usr/local/dcmi -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info -v /etc/ascend_install.info:/etc/ascend_install.info -it swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops bash
 ```
+
 以下为用户需关注的参数说明：
+
 | 参数 | 说明 | 注意事项 |
 | :--- | :--- | :--- |
 | `--name cann_container` | 为容器指定名称，便于管理。 | 可自定义。 |
@@ -103,13 +108,15 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 
 进入容器后，验证环境和驱动是否正常。
 
--   **检查NPU设备**
+- **检查NPU设备**
 
     执行如下命令，若返回驱动相关信息说明已成功挂载。    
+    
     ```bash    
     npu-smi info
     ```
--   **检查CANN版本**
+
+- **检查CANN版本**
     
     执行如下命令查看CANN Toolkit版本信息。
     
@@ -128,18 +135,22 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 1. 获取项目源码。
 
     Docker或WebIDE环境默认提供最新商发分支源码。如需其他分支源码，可通过如下命令下载，\$\{tag\_version\}需替换为目标分支标签名，算子仓标签与CANN版本配套关系可参见[release仓库](https://gitcode.com/cann/release-management)。
-
+   
     ```bash
     git clone -b ${tag_version} https://gitcode.com/cann/ops-cv.git
     ```
+
     若出现“`fatal: destination path 'ops-cv' already exists and is not an empty directory.`”说明项目源码已存在，如需刷新项目代码可使用`git pull`命令。
     
 2. 进入项目根目录，命令如下，请区分Docker和WebIDE场景。
     - Docker场景：
+      
       ```bash
       cd ops-cv
       ```
+
     - WebIDE场景：
+      
       ```bash
       cd /mnt/workspace/ops-cv
       ```
@@ -227,7 +238,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 
 ### 2. 编译与验证
 
-重复[编译运行](#一编译运行)章节中的步骤：
+重复[编译运行](#二编译部署)章节中的步骤：
 
 1. **重新编译**：
 
@@ -300,7 +311,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 
 当算子功能验证正确后，可通过`msprof`工具采集算子性能数据。
 
- -  **生成可执行文件**
+ - **生成可执行文件**
    
     调用AddExample算子的example样例，生成可执行文件（test_aclnn_add_example），该文件位于项目`ops-cv/build`目录。
 
@@ -308,7 +319,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
     bash build.sh --run_example add_example eager cust --vendor_name=custom
     ```
 
- -  **采集性能数据**
+ - **采集性能数据**
 
     进入AddExample算子可执行文件目录`ops-cv/build/`，执行如下命令：
 

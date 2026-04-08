@@ -62,7 +62,7 @@ aclnnStatus aclnnGridSampler3D(
 
 ## aclnnGridSampler3DGetWorkspaceSize
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -130,7 +130,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式。</td>
-      <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</li></ul></td>
+      <td>如果为True，则将极值-1和1视为参考输入的角像素点的中心点。如果为False，则视为参考输入的角像素点的角点。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -173,7 +173,7 @@ aclnnStatus aclnnGridSampler3D(
   
     参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
   
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -206,7 +206,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>input、grid、out的数据格式不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>interpolationMode或paddingMode的值不在支持范围内。</tr>
+      <td>interpolationMode或paddingMode的值不在支持范围内。</td></tr>
     <tr>
       <td>input、grid和out的维度关系不匹配。</td>
     </tr>
@@ -214,7 +214,7 @@ aclnnStatus aclnnGridSampler3D(
 
 ## aclnnGridSampler3D
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -251,13 +251,13 @@ aclnnStatus aclnnGridSampler3D(
   </tbody>
   </table>
 
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
-- 输入`input`的（D轴的大小 * H轴的大小 * W轴的大小） < INT32的最大值。
+- 输入`input`的$（D轴的大小 * H轴的大小 * W轴的大小） < INT32的最大值$。
 - 确定性计算：
   - aclnnGridSampler3D默认确定性实现。
 

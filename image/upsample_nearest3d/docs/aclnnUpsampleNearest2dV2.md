@@ -56,7 +56,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
 
 ## aclnnUpsampleNearest2dV2GetWorkspaceSize
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -131,7 +131,6 @@ aclnnStatus aclnnUpsampleNearest2dV2(
       <td>√</td>
     </tr>
     <tr>
-    <tr>
       <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回用户需要在Device侧申请的workspace大小。</td>
@@ -158,7 +157,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   
     入参`self`和出参`out`的数据类型不支持FLOAT32、BFLOAT16。
 
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -200,7 +199,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
 
 ## aclnnUpsampleNearest2dV2
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -237,7 +236,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   </tbody>
   </table>
 
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

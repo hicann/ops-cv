@@ -1,6 +1,6 @@
 # 环境部署
 
-在学习[QuickStart](../../QUICKSTART.md)或各类[学习教程](../../../README.md#学习教程)操作之前，请您先参考下面步骤完成基础环境搭建和源码下载，确保已安装NPU驱动、固件和CANN软件（`Ascend-cann-toolkit`和`Ascend-cann-ops`）等。
+在学习[QuickStart](../../../QUICKSTART.md)或各类[学习教程](../../../README.md#学习教程)操作之前，请您先参考下面步骤完成基础环境搭建和源码下载，确保已安装NPU驱动、固件和CANN软件（`Ascend-cann-toolkit`和`Ascend-cann-ops`）等。
 
 ## 环境准备
 
@@ -121,7 +121,7 @@ pip3 install -r requirements.txt
     2. **安装CANN包**
 
         请单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/)，选择最新时间版本，并根据产品型号和环境架构下载对应包。安装命令如下，更多指导参考《[CANN软件安装指南](https://www.hiascend.com/document/redirect/CannCommunityInstWizard)》。
- 	 
+
         - 安装CANN toolkit包
 
         ```bash

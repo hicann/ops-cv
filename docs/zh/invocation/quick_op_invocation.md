@@ -79,6 +79,7 @@
 3. **（可选）卸载自定义算子包**
 
    自定义算子包安装后在```${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts```目录下会生成`uninstall.sh`脚本，通过执行该脚本可卸载自定义算子包，具体命令如下：
+    
     ```bash
    bash ${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts/uninstall.sh
     ```
@@ -122,6 +123,7 @@
     # 卸载命令
     ./${install_path}/cann/share/info/ops_cv/script/uninstall.sh
     ```
+
 #### ops-cv静态库
 
 > 说明：静态库仅支持Atlas A2、Atlas A3系列产品。experimental算子暂不支持使用静态库。
@@ -129,6 +131,7 @@
 1. **编译ops-cv静态库**
 
     进入项目根目录，执行如下编译命令：
+    
     ```bash
     bash build.sh --pkg --static --soc=${soc_version}
     ```
@@ -184,6 +187,7 @@
         ```bash
         python ${scripts_dir}/third_lib_download.py
         ```
+
     \$\{scripts\_dir\}表示脚本存放路径，下载的第三方软件包默认存放在当前脚本所在目录。
 
 3. **编译算子包**
@@ -251,7 +255,6 @@
     - \$\{pkg_mode\}：表示包模式，目前仅支持cust，即自定义算子包。         
     - \$\{vendor\_name\}（可选）：与构建的自定义算子包设置一致，默认名为custom。       
     - \$\{soc_version\}（可选）：表示NPU型号。当设置为"ascend950"时会额外运行"arch35"目录下的示例文件。
-      
     
     说明：\$\{mode\}为graph时，不指定\$\{pkg_mode\}和\$\{vendor\_name\}
     
@@ -333,7 +336,6 @@
         ```bash
         bash run.sh
         ```
-    
 
 无论上述哪种方式，算子样例执行后会打印结果，以GridSample算子执行为例：
 
@@ -384,15 +386,18 @@ bash build.sh -u --[opapi|ophost|opkernel] --ops=iou_v2
 ```
 
 如需验证ophost功能是否正常，执行如下命令
+
 ```bash
 bash build.sh -u --ophost
 ```
 
 执行完成后出现如下内容，表示执行成功。
+
 ```bash
 Global Environment TearDown
 [==========] ${n} tests from ${m} test suites ran. (${x} ms total)
 [  PASSED  ] ${n} tests.
 [100%] Built target cv_op_host_ut
 ```
+
 \$\{n\}表示执行了n个用例，\$\{m\}表示m项测试，\$\{x\}表示执行用例消耗的时间，单位为毫秒。

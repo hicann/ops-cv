@@ -23,7 +23,6 @@
 | offsets             | 输入       | 四维 Tensor，其 shape 为(batch, 4, new_height, new_width)。                      | FLOAT、INT32         | ND   |
 | warp_images         | 输出       | 五维 Tensor，其 shape 为(batch, 4, new_height, new_width, 3)，数据类型与输入 images 相同。 | UINT8、FLOAT16、FLOAT             | ND   |
 
-
 ## 约束说明
 
 - 当 offsets 的数据类型为 INT32 时，images 必须为 FLOAT16。
@@ -33,5 +32,3 @@
 | 调用方式 | 调用样例                                                                   | 说明                                                             |
 |--------------|------------------------------------------------------------------------|----------------------------------------------------------------|
 | 图模式调用 | [test_geir_image_warp_offsets](./examples/test_geir_image_warp_offsets.cpp)   | 通过[算子IR](./op_graph/image_warp_offsets_proto.h)构图方式调用IMGWarpOffsets算子。 |
-
-

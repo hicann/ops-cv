@@ -77,7 +77,7 @@ aclnnStatus aclnnGridSampler2DBackward(
 
 ## aclnnGridSampler2DBackwardGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -218,7 +218,7 @@ aclnnStatus aclnnGridSampler2DBackward(
   
     参数`gradOutput`、`input`、`grid`、`inputGrad`、`gridGrad`的数据类型不支持BFLOAT16、DOUBLE。
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -251,7 +251,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gradOutput、input、grid的shape维度值不为四维。</td>
     </tr>
     <tr>
-      <td>interpolationMode或paddingMode的值不在支持范围内。</tr>
+      <td>interpolationMode或paddingMode的值不在支持范围内。</td></tr>
     <tr>
       <td>input的第一个维度和grid、gradOutput的第一个维度值不相同。</td>
     </tr>
@@ -277,7 +277,7 @@ aclnnStatus aclnnGridSampler2DBackward(
 
 ## aclnnGridSampler2DBackward
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -314,7 +314,7 @@ aclnnStatus aclnnGridSampler2DBackward(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

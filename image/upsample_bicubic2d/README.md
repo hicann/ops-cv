@@ -13,7 +13,6 @@
 |  <term>Kirin X90 处理器系列产品</term> | √ |
 |  <term>Kirin 9030 处理器系列产品</term> | √ |
 
-
 ## 功能说明
 
 - 算子功能：对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
@@ -119,9 +118,8 @@
   </tbody></table>
 
   - <term>Atlas 200I/500 A2 推理产品</term>、<term>Atlas 推理系列产品</term>：输入和输出的数据类型不支持BFLOAT16。
-  - Kirin X90/Kirin 9030 处理器系列产品: 不支持BFLOAT16。
+  - <term>Kirin X90 处理器系列产品</term>、<term>Kirin 9030 处理器系列产品</term>: 不支持BFLOAT16。
   
-
 ## 约束说明
 
 无

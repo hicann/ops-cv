@@ -83,7 +83,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
 
 ## aclnnUpsampleBicubic2dBackwardGetWorkspaceSize
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -207,7 +207,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   
     参数`gradOut`、`gradInput`的数据格式不支持NHWC。
 
-- **返回值**：
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -242,13 +242,11 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     <tr>
       <td>gradOut的维度不为4维。</td>
     </tr>
-    </tr>
     <tr>
       <td>outputSize的size不等于2。</td>
     </tr>
     <tr>
       <td>outputSize的某个元素值小于1。</td>
-    </tr>
     </tr>
     <tr>
       <td>inputSize的size不等于4。</td>
@@ -256,13 +254,11 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     <tr>
       <td>inputSize的某个元素值小于1。</td>
     </tr>
-    </tr>
     <tr>
       <td>gradOut与inputSize在N、C维度上的size不同。</td>
     </tr>
     <tr>
       <td>gradOut在H、W维度上的size与outputSize[0]和outputSize[1]不一致。</td>
-    </tr>
     </tr>
     <tr>
       <td>gradOut和gradInput的N/C轴的维度大小不相等。</td>
@@ -274,7 +270,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
 
 ## aclnnUpsampleBicubic2dBackward
 
-- **参数说明**：
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -311,7 +307,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   </tbody>
   </table>
 
-- **返回值**：
+- **返回值**
   
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

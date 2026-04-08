@@ -65,7 +65,7 @@ aclnnStatus aclnnGridSampler2D(
 
 ## aclnnGridSampler2DGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -133,7 +133,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>表示设定特征图坐标与特征值的对应方式，设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</td>
-      <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</li></ul></td>
+      <td>设定为true时，特征值位于像素中心。设定为false时，特征值位于像素的角点。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -194,7 +194,7 @@ aclnnStatus aclnnGridSampler2D(
     - 参数`input`的shape需要满足C维的值为32或者C*H*W < 20480。
     - 参数`input`的数据格式不支持NHWC。
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -224,7 +224,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>input、grid、out的数据类型不在支持的范围之内或数据类型不一致。</td>
     </tr>
     <tr>
-      <td>interpolationMode或paddingMode的值不在支持范围内。</tr>
+      <td>interpolationMode或paddingMode的值不在支持范围内。</td></tr>
     <tr>
       <td>interpolationMode为bicubic时，input、grid、out的数据类型不是FLOAT32或者FLOAT16。</td>
     </tr>
@@ -238,7 +238,7 @@ aclnnStatus aclnnGridSampler2D(
 
 ## aclnnGridSampler2D
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -275,7 +275,7 @@ aclnnStatus aclnnGridSampler2D(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

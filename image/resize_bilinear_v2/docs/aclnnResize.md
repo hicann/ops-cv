@@ -52,7 +52,7 @@ aclnnStatus aclnnResize(
 
 ## aclnnResizeGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -143,7 +143,7 @@ aclnnStatus aclnnResize(
     - 参数`self`、`out`的数据类型不支持BFLOAT16。
     - 参数`self`、`out`的数据格式不支持NHWC。
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -176,7 +176,7 @@ aclnnStatus aclnnResize(
       <td>数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
-      <td>out与self的数据格式或者数据类型不一致。</tr>
+      <td>out与self的数据格式或者数据类型不一致。</td></tr>
     <tr>
       <td>shape不满足要求：<ol><li>self和out的shape必须为4维。</li><li>self和out的N维和C维必须相同。</li><li>out在H维的size必须等于self的H维size乘以scales对应H维的值。</li><li>out在W维的size必须等于self的W维乘以scales对应W维的值。</li></ol></td>
     </tr>
@@ -184,7 +184,7 @@ aclnnStatus aclnnResize(
 
 ## aclnnResize
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -221,7 +221,7 @@ aclnnStatus aclnnResize(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

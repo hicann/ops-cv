@@ -13,7 +13,6 @@
 |  <term>Atlas 推理系列产品</term>    |     √    |
 |  <term>Atlas 训练系列产品</term>    |     √    |
 
-
 ## 功能说明
 
 - 接口功能：[aclnnUpsampleTrilinear3d.md](../../resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md)的反向计算。
@@ -128,7 +127,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
 
 ## aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
@@ -259,7 +258,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   
     参数`gradOut`和`gradInput`的数据类型不支持BFLOAT16。
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -319,7 +318,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
 
 ## aclnnUpsampleTrilinear3dBackward
 
-- **参数说明：**
+- **参数说明**
 
   <table style="undefined;table-layout: fixed; width: 953px"><colgroup>
   <col style="width: 173px">
@@ -356,7 +355,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

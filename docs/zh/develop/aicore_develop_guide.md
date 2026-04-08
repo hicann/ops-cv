@@ -112,7 +112,7 @@ endif()
 
 Tiling一共需要三个交付件：```${op_name}_tiling.cpp``` ```${op_name}_tiling_key.h``` ```${op_name}_tiling_data.h```
 > 说明：
-
+>
 > 1. `${op_name}_tiling.cpp`放在`${op_name}/op_host`目录下；
 > 2. `${op_name}_tiling_key.h`和`${op_name}_tiling_data.h`放在`${op_name}/op_kernel`目录下；
 > 3. 如果`${op_name}_tiling.cpp`中需要引用`${op_name}_tiling_data.h`，请使用相对路径的方式，例如：`#incldue "../op_kernel/${op_name}_tiling_data.h"`。
@@ -212,8 +212,8 @@ ASCENDC_TPL_ARGS_DECL(
 
 ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(
     ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, ELEMENTWISE_TPL_SCH_MODE_0, ELEMENTWISE_TPL_SCH_MODE_1)));
-
 ```
+
 **交付件3：${op_name}_tiling_data.h**
 
 切分算法相关的参数，比如总数据量大小、每个核数据切块数量，通过结构体存储。
@@ -247,13 +247,11 @@ graph LR
     F -->G([Kernel执行完成])
 ```
 
-
-
 ### 代码实现
 
 Kernel一共需要两个交付件：```${op_name}.cpp``` ```${op_name}.h```
 > 说明：
-
+>
 > 1. `${op_name}.cpp`为kernel的入口函数只能放在`${op_name}/op_kernel`目录下；
 > 2. `${op_name}.h`文件可以按照不同SoC或模板放在对应目录下，例如：`${op_name}/op_kernel/arch32`、`${op_name}/op_kernel/arch35`或`${op_name}/op_kernel/impl`等目录下；
 
@@ -285,6 +283,7 @@ __global__ __aicore__ void add_example(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR 
     ....
 }
 ```
+
 **交付件2：${op_name}.h**
 
 定义Kernel头文件，包含函数声明、结构定义、逻辑实现等。
@@ -422,9 +421,10 @@ __aicore__ inline void AddExample<T>::Process()
 4. **（可选）卸载自定义算子包**
 
    自定义算子包安装后在```${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts```目录下会生成`uninstall.sh`脚本，通过执行该脚本可卸载自定义算子包，具体命令如下：
-    ```bash
+    
+   ```bash
    bash ${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/scripts/uninstall.sh
-    ```
+   ```
 
 ## 算子验证
 
