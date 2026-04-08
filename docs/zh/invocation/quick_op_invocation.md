@@ -132,7 +132,7 @@
 
 #### ops-cv静态库
 
-> 说明：静态库仅支持Atlas A2、Atlas A3系列产品。experimental算子暂不支持使用静态库。
+> 说明：静态库仅支持Atlas A2、Atlas A3系列产品、Ascend950系列产品。experimental算子暂不支持使用静态库。
 
 1. **编译ops-cv静态库**
 
@@ -142,7 +142,7 @@
     bash build.sh --pkg --static --soc=${soc_version} [-j${n}]
     ```
 
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend950系列产品使用"ascend950"。
     - -j（可选）：指定编译线程数，加快编译速度。
     若提示如下信息，说明编译并压缩成功。
 
@@ -283,9 +283,9 @@
 
     1. **前提条件**
 
-        ops-cv静态库依赖于ops-legacy静态库，将上述静态库准备好，解压并将所有lib64、include目录移动至统一目录\$\{static\_lib\_path\}下。
+        ops-cv静态库依赖于ops-legacy静态库和ops-math静态库，将上述静态库准备好，解压并将所有lib64、include目录移动至统一目录\$\{static\_lib\_path\}下。
 
-        > 说明：ops-legacy静态库```cann-${soc_name}-ops-legacy-static_${cann_version}_linux-${arch}.tar.gz```可通过单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master)获取，ops-cv静态库暂未提供软件包，请通过本地编译生成。
+        > 说明：ops-legacy静态库```cann-${soc_name}-ops-legacy-static_${cann_version}_linux-${arch}.tar.gz```可通过单击[下载链接](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master)获取，ops-cv静态库、ops-math静态库暂未提供软件包，请通过本地编译生成。
 
     2. **创建run.sh**
 
