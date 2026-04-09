@@ -51,9 +51,9 @@
 
   ```bash
   # 示例：拉取ARM架构的CANN开发镜像
-  docker pull --platform=arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.  5.0-910b-ubuntu22.04-py3.10-ops
+  docker pull --platform=arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
   # 示例：拉取X86架构的CANN开发镜像
-  docker pull --platform=amd64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.  5.0-910b-ubuntu22.04-py3.10-ops
+  docker pull --platform=amd64 swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops
   ```
 
 3.**运行Docker**

@@ -135,5 +135,5 @@
 ├── classify_rule.yaml                                  # 组件划分信息
 ├── install_deps.sh                                     # 项目安装依赖包脚本
 ├── requirements.txt                                    # 项目的第三方依赖包
-└── version.info                                        # 项目版本信息
+└── version.cmake                                       # 项目版本信息
 ```

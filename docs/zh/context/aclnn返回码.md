@@ -122,7 +122,7 @@
 <td class="cellrowborder" valign="top" width="53.295329532953296%" headers="mcps1.2.4.1.3 "><p id="zh-cn_topic_0000001563019104_p48969225564"><a name="zh-cn_topic_0000001563019104_p48969225564"></a><a name="zh-cn_topic_0000001563019104_p48969225564"></a>内部异常：aclnn API内部发生异常，算子的属性个数异常。</p>
 </td>
 </tr>
-<tr id="zh-cn_topic_0000001563019104_row989662295618"><td class="cellrowborder" valign="top" width="30.183018301830185%" headers="mcps1.2.4.1.1 "><p id="zh-cn_topic_0000001563019104_p14896022205612"><a name="zh-cn_topic_0000001563019104_p14896022205612"></a><a name="zh-cn_topic_0000001563019104_p14896022205612"></a>ACLNN_ERR_INNER_KEY_CONFILICT</p>
+<tr id="zh-cn_topic_0000001563019104_row989662295618"><td class="cellrowborder" valign="top" width="30.183018301830185%" headers="mcps1.2.4.1.1 "><p id="zh-cn_topic_0000001563019104_p14896022205612"><a name="zh-cn_topic_0000001563019104_p14896022205612"></a><a name="zh-cn_topic_0000001563019104_p14896022205612"></a>ACLNN_ERR_INNER_KEY_CONFLICT</p>
 </td>
 <td class="cellrowborder" valign="top" width="16.521652165216523%" headers="mcps1.2.4.1.2 "><p id="zh-cn_topic_0000001563019104_p1489632285612"><a name="zh-cn_topic_0000001563019104_p1489632285612"></a><a name="zh-cn_topic_0000001563019104_p1489632285612"></a>561105</p>
 </td>

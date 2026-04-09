@@ -207,7 +207,7 @@ REGISTER_CPU_KERNEL(kAddExample, AddExampleCpuKernel);
 
 2. **编译自定义算子包。**
 
-    以`AddExample`算子为例，假设开发交付件在`examples`目录，完整代码参见[add_example](../../../examples/add_example_aicpu)目录。
+    以`AddExample`算子为例，假设开发交付件在`examples`目录，完整代码参见[add_example_aicpu](../../../examples/add_example_aicpu)目录。
 
     ```bash
     # 编译指定算子，如bash build.sh --pkg --ops=add_example
