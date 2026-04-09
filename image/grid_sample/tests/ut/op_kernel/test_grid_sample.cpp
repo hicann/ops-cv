@@ -1650,7 +1650,7 @@ TEST_F(grid_sample_test, test_case_bilinear_bf16_test06)
         int64_t coreNum = 48;
     }compileInfo;
     gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_BF16, ge::FORMAT_ND},
+                                                {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_BF16, ge::FORMAT_ND},
                                                 {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_BF16, ge::FORMAT_ND}},
                                                 {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
