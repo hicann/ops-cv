@@ -9,7 +9,7 @@
 
 * **plog获取**
 
-   程序执行结束后，默认可在"$HOME/ascendc/log"下查看，host日志文件存储路径如下：
+   程序执行结束后，默认可在"$HOME/ascend/log"下查看，host日志文件存储路径如下：
 
    ```sh
    $HOME/ascend/log/debug/plog/plog-pid_*.log
@@ -34,7 +34,7 @@
    打印错误信息样例如下：
 
    ```sh
-   [PID:646612] 2026-01-24-11:53:44.671.727 AclNN_Parameter_Error(EZ1001): Expected a proper Tensor but got null for argument addmmTennsor.self.
+   [PID:646612] 2026-01-24-11:53:44.671.727 AclNN_Parameter_Error(EZ1001): Expected a proper Tensor but got null for argument addmmTensor.self.
    ```
 
 ### 2、Kernel调试

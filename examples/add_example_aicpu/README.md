@@ -38,21 +38,21 @@ $$
     <tr>
       <td>x1</td>
       <td>输入</td>
-      <td>待进行add_example计算的入参，公式中的x1。</td>
+      <td>待进行AddExample计算的入参，公式中的x1。</td>
       <td>FLOAT、INT32</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>x2</td>
       <td>输入</td>
-      <td>待进行add_example计算的入参，公式中的x2。</td>
+      <td>待进行AddExample计算的入参，公式中的x2。</td>
       <td>FLOAT、INT32</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>y</td>
       <td>输出</td>
-      <td>待进行add_example计算的出参，公式中的y。</td>
+      <td>待进行AddExample计算的出参，公式中的y。</td>
       <td>FLOAT、INT32</td>
       <td>ND</td>
     </tr>
