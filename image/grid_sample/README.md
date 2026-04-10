@@ -19,8 +19,8 @@
 - 计算公式：
 
   - 计算流程：
-    1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，这些坐标和alignCorners、paddingMode有关。
-    2. 坐标根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
+    1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，这些坐标和align_corners、padding_mode有关。
+    2. 坐标根据输入的interpolation_mode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
   
   - 其中：
     - 3D场景：
@@ -47,17 +47,17 @@
   
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
 
-    - 对于超出范围的坐标，会根据paddingMode进行不同处理：
+    - 对于超出范围的坐标，会根据padding_mode进行不同处理：
   
-      - paddingMode="zeros"，表示对越界位置用0填充。
-      - paddingMode="border"，表示对越界位置用边界值填充。
-      - paddingMode="reflection"，表示对越界位置用边界值的对称值填充。
+      - padding_mode="zeros"，表示对越界位置用0填充。
+      - padding_mode="border"，表示对越界位置用边界值填充。
+      - padding_mode="reflection"，表示对越界位置用边界值的对称值填充。
   
-    - 对input采样时，会根据interpolationMode进行不同处理：
+    - 对input采样时，会根据interpolation_mode进行不同处理：
   
-      - interpolationMode="bilinear"，表示取input中(x, y)或者(x, y, z)周围四个或八个坐标的加权平均值。
-      - interpolationMode="nearest"，表示取input中距离(x, y)或者(x, y, z)最近的坐标值。
-      - interpolationMode="bicubic"，表示取input中(x, y)周围十六个坐标的加权平均值。
+      - interpolation_mode="bilinear"，表示取input中(x, y)或者(x, y, z)周围四个或八个坐标的加权平均值。
+      - interpolation_mode="nearest"，表示取input中距离(x, y)或者(x, y, z)最近的坐标值。
+      - interpolation_mode="bicubic"，表示取input中(x, y)周围十六个坐标的加权平均值。
 
 ## 参数说明
 
@@ -94,14 +94,14 @@
     <tr>
       <td>interpolation_mode</td>
       <td>可选属性</td>
-      <td><ul><li>表示插值模式，对应公式描述中的`interpolationMode`。支持bilinear（双线性插值）、nearest（最邻近插值）、bicubic（双三次插值）。</li><li>默认值为"bilinear"。</li></ul></td>
+      <td><ul><li>表示插值模式，对应公式描述中的`interpolation_mode`。支持bilinear（双线性插值）、nearest（最邻近插值）、bicubic（双三次插值）。</li><li>默认值为"bilinear"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>
     <tr>
       <td>padding_mode</td>
       <td>可选属性</td>
-      <td><ul><li>表示填充模式，对应公式描述中的`paddingMode`。支持zeros(0)、border(1)、reflection(2)三种模式。</li><li>默认值为"zeros"。</li></ul></td>
+      <td><ul><li>表示填充模式，对应公式描述中的`padding_mode`。支持zeros(0)、border(1)、reflection(2)三种模式。</li><li>默认值为"zeros"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>

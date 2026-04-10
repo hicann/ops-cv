@@ -79,7 +79,7 @@
     - 假设：正向插值的输出图像out $(x, y)$受原图像input $(x_i, y_j)$影响，则有:
   
       $$
-      gradInput(x_i,y_j) += gradOutput(x,y) * lambd(x_i,y_j)
+      gradInput(x_i,y_j) += gradOutput(x,y) * lambda(x_i,y_j) * lambdb(x_i,y_j)
       $$
 
 ## 函数原型

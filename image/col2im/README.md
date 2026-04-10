@@ -16,12 +16,12 @@
 - 算子功能：从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。
 - 计算公式：
   
-  考虑一个形状为 $(N,C,∗)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$∗$表示任意空间维度。
+  考虑一个形状为$(N,C,∗)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$∗$表示任意空间维度。
 
-  此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel_size),L)$ 的 3-D output张量的列（即最后一维）。
+  此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel_size),L)$的3-D output张量的列（即最后一维）。
 
   其中：
-  - $C×\prod(kernel_size)$ 是每个块内的值的数量（一个块有$\prod(kernel_size)$ 个空间位置，每个空间位置都包含一个$C$ 通道向量），而$L$是这些块的总数：
+  - $C×\prod(kernel_size)$是每个块内的值的数量（一个块有$\prod(kernel_size)$个空间位置，每个空间位置都包含一个$C$通道向量），而$L$是这些块的总数：
 
     $$
     L=\prod_d⌊{\frac{spatial\_size[d]+2×padding[d]−dilation[d]×(kernel\_size[d]−1)−1}{stride[d]}+1}⌋

@@ -97,7 +97,7 @@
   - 结合深度图$d$，遮挡截断$occlusion\_truncation$计算点$v = (x, y)$的深度阈值$depth\_thres$
   
     $$
-    depth\_thres = d(x, y) * 0.49999 + 0.5 + occlustion\_truncation
+    depth\_thres = d(x, y) * 0.49999 + 0.5 + occlusion\_truncation
     $$
   
   - 根据重心坐标$(\alpha, \beta, \gamma)$判断顶点是否在三角形内
