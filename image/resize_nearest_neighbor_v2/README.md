@@ -17,7 +17,15 @@
 - 计算公式：
 
   $$
-  y(N, C, H, W) = x(N, C, min(floor(H * scaleH),  H-1), min(floor(W * scaleW),  W-1)), \ scaleH = x\_H / size[0] scaleW = x\_W / size[1]
+  y(N, C, H, W) = x(N, C, min(floor(H * scaleH),  H-1), min(floor(W * scaleW),  W-1))
+  $$
+
+  $$
+  scaleH = x\_H / size[0]
+  $$
+
+  $$
+  scaleW = x\_W / size[1]
   $$
 
 ## 参数说明

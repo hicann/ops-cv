@@ -66,7 +66,7 @@
     <tr>
       <td>y</td>
       <td>输出</td>
-      <td>单线性插值调整后图像，对应公式中y。</td>
+      <td>双线性插值调整后图像，对应公式中y。</td>
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>ND</td>
     </tr>
@@ -80,4 +80,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_resize](examples/test_aclnn_resize.cpp) | 通过[aclnnResize](docs/aclnnResize.md)接口方式调用ResizeBlinearV2算子。 |
+| aclnn接口  | [test_aclnn_resize](examples/test_aclnn_resize.cpp) | 通过[aclnnResize](docs/aclnnResize.md)接口方式调用ResizeBilinearV2算子。 |

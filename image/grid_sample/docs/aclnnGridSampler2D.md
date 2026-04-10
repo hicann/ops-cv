@@ -182,14 +182,14 @@ aclnnStatus aclnnGridSampler2D(
     
     当接口运行在AI Core时，需要满足如下条件：
     - 入参`interpolationMode`为bilinear。
-    - 入参`paddingMode`为zero。
+    - 入参`paddingMode`为zeros。
     - 入参`dtype`为FLOAT16。
     - 参数`input`的shape需要满足C维的值为32。
   - <term>Atlas 推理系列产品</term>：
     
     当接口运行在AI Core时，需要满足如下条件：
     - 入参`interpolationMode`为bilinear。
-    - 入参`paddingMode`为zero。
+    - 入参`paddingMode`为zeros。
     - 入参`dtype`为FLOAT32。
     - 参数`input`的shape需要满足C维的值为32或者C*H*W < 20480。
     - 参数`input`的数据格式不支持NHWC。

@@ -17,8 +17,8 @@
 
   $$
   W(x) = \begin{cases}
-  (a + 2)|x|^3 - (a + 3)|x|2 + 1 & \text{for } |x|\leq1 \\
-  a|x|^3 -5a|x|^2 + 8a|x| - 4a  & \text{for } 1\lt|x|\lt2 \\
+  (a + 2)|x|^3 - (a + 3)|x|^2 + 1 & \text{for } |x|≤1 \\
+  a|x|^3 -5a|x|^2 + 8a|x| - 4a  & \text{for } 1<|x|<2 \\
   0 & \text{otherwise} \\
   \end{cases}
   $$

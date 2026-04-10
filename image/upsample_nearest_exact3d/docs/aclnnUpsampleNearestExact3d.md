@@ -213,9 +213,6 @@ aclnnStatus aclnnUpsampleNearestExact3d(
       <td>outputSize的某个元素值不大于0。</td>
     </tr>
     <tr>
-      <td>self的C维度为0。</td>
-    </tr>
-    <tr>
       <td>out的shape不等于由self和outputSize推导得到的shape。</td>
     </tr>
   </tbody></table>

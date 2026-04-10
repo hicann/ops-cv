@@ -38,7 +38,7 @@
   
       - padding_mode="zeros"，表示对越界位置用0填充。
       - padding_mode="border"，表示对越界位置用边界值填充。
-      - paddingMode="reflection"，表示对越界位置用边界值的对称值填充。
+      - padding_mode="reflection"，表示对越界位置用边界值的对称值填充。
   
     - 对input采样时，会根据interpolation_mode进行不同处理：
   

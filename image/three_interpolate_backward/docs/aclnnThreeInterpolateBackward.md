@@ -119,7 +119,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0lax">FLOAT、FLOAT16</td>
       <td class="tg-0lax">支持NCHW</td>
       <td class="tg-0lax">-</td>
-      <td class="tg-0lax">对</td>
+      <td class="tg-0lax">√</td>
     </tr>
     <tr>
       <td class="tg-0lax">workspaceSize（uint64_t*）</td>

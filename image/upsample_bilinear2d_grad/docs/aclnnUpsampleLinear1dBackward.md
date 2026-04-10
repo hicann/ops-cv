@@ -84,7 +84,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   aclrtStream     stream)
 ```
 
-## aclnnUpsampleLinear1dGetWorkspaceSize
+## aclnnUpsampleLinear1dBackwardGetWorkspaceSize
 
 - **参数说明**
 
