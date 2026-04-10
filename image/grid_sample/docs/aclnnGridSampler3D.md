@@ -99,7 +99,7 @@ aclnnStatus aclnnGridSampler3D(
     <tr>
       <td>grid（aclTensor*）</td>
       <td>输入</td>
-      <td>采样的网络，对应公式中描述的`grid`。</td>
+      <td>采样的网格，对应公式中描述的`grid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>D</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 3)，且N与入参`input`的shape中的N一致。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>ND</td>

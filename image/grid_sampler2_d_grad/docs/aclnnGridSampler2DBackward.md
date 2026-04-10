@@ -105,7 +105,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>gradOutput（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向传播过程中上一层的输出梯度，对应公式描述中的`grad`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>)。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>
@@ -115,7 +115,7 @@ aclnnStatus aclnnGridSampler2DBackward(
       <td>input（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>`input`和`gradOutput`的N轴和C轴的值保持一致，且`input`最后两维的维度值不可为0。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>`input`和`gradOutput`的N轴和C轴的值保持一致，且`input`最后两维的维度值不可为0。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>in</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>in</em>)。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>
       <td>4</td>

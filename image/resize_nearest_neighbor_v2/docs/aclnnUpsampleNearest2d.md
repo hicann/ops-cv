@@ -227,7 +227,7 @@ aclnnStatus aclnnUpsampleNearest2d(
   - 内存占用需小于60G。内存占用的计算公式如下：
   
     $$
-    N *  (ceil(C/16) * 16) * (self\_H * self\_W + out\_H * out\_D) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
+    N *  (ceil(C/16) * 16) * (self\_H * self\_W + out\_H * out\_W) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：

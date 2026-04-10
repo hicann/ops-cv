@@ -111,7 +111,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradOut（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOut`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li><li>gradOutput的所有维度取值均小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li><li>`gradOut`的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -171,7 +171,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradInput（aclTensor*）</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式与`gradOut`保持一致。</li><li>shape的N轴和C轴与`gradOut`保持一致。</li><li>out的所有维度取值均小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式与`gradOut`保持一致。</li><li>shape的N轴和C轴与`gradOut`保持一致。</li><li>`gradInput`的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
