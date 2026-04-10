@@ -376,6 +376,16 @@
     <td>ResizeUpsampleTrilinear的反向计算。</td>
   </tr>
   <tr>
+    <td>image</td>
+    <td><a href="../../image/spatial_transformer/README.md">spatial_transformer</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Cpu</td>
+    <td>用于对输入图像或特征图进行几何变换等操作。</td>
+  </tr>
+  <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
     <td>&check;</td>
