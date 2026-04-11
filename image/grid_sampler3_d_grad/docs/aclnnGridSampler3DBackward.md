@@ -20,7 +20,7 @@
 
   - 计算流程：
     1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，这些坐标和alignCorners、paddingMode有关。
-    2. 坐标根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
+    2. 坐标根据输入的interpolationMode，选择使用bilinear、nearest不同插值模式计算输出值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
