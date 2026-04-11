@@ -395,6 +395,7 @@ function(gen_aicpu_kernel_symbol enable_built_in)
       -o ${ARM_SO_OUTPUT}
     DEPENDS ${AICPU_CUST_OBJ_TARGETS}
     COMMENT "Linking aicpu_kernels.so using ARM toolchain"
+    COMMAND_EXPAND_LISTS
   )
 
   add_custom_target(aicpu_kernels ALL DEPENDS ${ARM_SO_OUTPUT})
