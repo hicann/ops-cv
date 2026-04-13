@@ -29,7 +29,7 @@ CANN Simulator集成在CANN toolkit包里，参考[环境部署](../context/quic
 
 # 快速开始
 
-下面以[add_examples](../../../examples/add_example/)为例，对算子仿真进行详细说明
+下面以[add_examples](../../../examples/add_example)为例，对算子仿真进行详细说明
 
 ## 算子编译
 

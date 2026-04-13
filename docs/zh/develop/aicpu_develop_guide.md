@@ -14,7 +14,7 @@
 
 2. [算子定义](#算子定义)：确定算子功能与原型定义。
 
-3. [Kernel实现](#Kernel实现)：实现Device侧算子核函数。
+3. [Kernel实现](#kernel实现)：实现Device侧算子核函数。
 
 4. [aclnn适配](#aclnn适配)：自定义算子推荐aclnn接口调用，需提前完成二进制发布。**如采用图模式调用算子**，请参考[图模式适配指南](./graph_develop_guide.md)。
 
