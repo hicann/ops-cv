@@ -263,26 +263,34 @@ main() {
         else
           cmd="asc_opc ${op_python_path} --main_func=${op_func} --input_param=${new_file} --soc_version=${opc_soc_version} --output=${binary_bin_path} --impl_mode=${impl_mode} ${simplified_key_param} --op_mode=dynamic"
         fi
-        if [ "${enable_mssanitizer}" = "TRUE" ]; then
-
-          cmd="${cmd} --op_debug_config=sanitizer"
-
+        echo "bisheng_flags is: ${bisheng_flags}"
+        if [[ -n "$bisheng_flags" ]]; then
+          cmd="${cmd} --op_debug_config=${bisheng_flags}"
+        else
+          op_debug_configs=()
+          if [ "${enable_mssanitizer}" = "TRUE" ]; then
+            op_debug_configs+=("sanitizer")
+          fi
+          if [ "${enable_oom}" = "TRUE" ]; then
+            op_debug_configs+=("oom")
+          fi
+          if [ "${enable_dump_cce}" = "TRUE" ]; then
+            op_debug_configs+=("dump_cce")
+          fi
+          if [ ${#op_debug_configs[@]} -gt 0 ]; then
+            OLD_IFS="${IFS}"
+            IFS=','
+            cmd="${cmd} --op_debug_config=${op_debug_configs[*]}"
+            IFS="$OLD_IFS"
+          fi
         fi
-
-        if [ "${enable_oom}" = "TRUE" ]; then
-
-          cmd="${cmd} --op_debug_config=oom"
-
-        fi
-        
-        if [ "${enable_dump_cce}" = "TRUE" ]; then
-          cmd="${cmd} --op_debug_config=dump_cce"
+        if [[ "$cmd" == *"dump_cce"* ]]; then
           cmd="${cmd} --debug_dir=${output_path}/kernel_metas"
         fi
 
         if [[ -n "$kernel_template_input" ]]; then
-          echo "kernel_template_input is: ${kernel_template_input}"
-          cmd="${cmd} --kernel-template-input=${kernel_template_input}"
+          echo "kernel-template-input is: ${kernel_template_input}"
+          cmd="${cmd} --kernel-template-input='${kernel_template_input}'"
         fi
 
         echo "[INFO] op:${op_type} do opc cmd is ${cmd}"
