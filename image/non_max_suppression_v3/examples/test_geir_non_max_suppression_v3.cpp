@@ -26,7 +26,6 @@
 #include "array_ops.h"
 #include "ge_ir_build.h"
 
-#include "experiment_ops.h"
 #include "nn_other.h"
 #include "../op_graph/non_max_suppression_v3_proto.h"
 
@@ -262,6 +261,12 @@ int main(int argc, char *argv[]) {
     ret = session->RunGraph(graph_id, input, output);
     if (ret != SUCCESS) {
         printf("%s - INFO - [XIR]: Run graph failed\n", GetTime().c_str());
+        ge::AscendString error_msg = ge::GEGetErrorMsgV2();
+        std::string error_str(error_msg.GetString());
+        std::cout << "Error message: " << error_str << std::endl;
+        ge::AscendString warning_msg = ge::GEGetWarningMsgV2();
+        std::string warning_str(warning_msg.GetString());
+        std::cout << "Warning message: " << warning_str << std::endl;
         delete session;
         GEFinalize();
         return FAILED;
@@ -294,12 +299,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    ge::AscendString error_msg = ge::GEGetErrorMsgV2();
-    std::string error_str(error_msg.GetString());
-    std::cout << "Error message: " << error_str << std::endl;
-    ge::AscendString warning_msg = ge::GEGetWarningMsgV2();
-    std::string warning_str(warning_msg.GetString());
-    std::cout << "Warning message: " << warning_str << std::endl;
     printf("%s - INFO - [XIR]: Start to finalize ir graph session\n", GetTime().c_str());
     ret = ge::GEFinalize();
     if (ret != SUCCESS) {

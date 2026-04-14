@@ -25,7 +25,6 @@
 #include "ge_api.h"
 #include "ge_ir_build.h"
 
-#include "experiment_ops.h"
 #include "nn_other.h"
 #include "../op_graph/spatial_transformer_proto.h"
 
@@ -188,6 +187,11 @@ bool DumpAndRunGraph(
     Status ret = session->RunGraph(graph_id, input, output);
     if (ret != SUCCESS) {
         LOG_PRINT("%s - INFO - [XIR]: Run graph failed\n", GetTime().c_str());
+        ge::AscendString error_msg = ge::GEGetErrorMsgV2();
+        std::string error_str(error_msg.GetString());
+        ge::AscendString warning_msg = ge::GEGetWarningMsgV2();
+        std::string warning_str(warning_msg.GetString());
+        std::cout << "Warning message: " << warning_str << std::endl;
         delete session;
         ge::GEFinalize();
         return false;
@@ -208,11 +212,6 @@ void ProcessOutputData(std::vector<ge::Tensor>& output) {
 }
 
 int FinalizeRes() {
-    ge::AscendString error_msg = ge::GEGetErrorMsgV2();
-    std::string error_str(error_msg.GetString());
-    ge::AscendString warning_msg = ge::GEGetWarningMsgV2();
-    std::string warning_str(warning_msg.GetString());
-    std::cout << "Warning message: " << warning_str << std::endl;
     Status ret = ge::GEFinalize();
     if (ret != SUCCESS) {
         LOG_PRINT("%s - INFO - [XIR]: Finalize ir graph session failed\n", GetTime().c_str());
