@@ -46,6 +46,7 @@ static const int64_t VOLUMETRIC_DIM_NUM = 5;
 static const int64_t GRAD_RESULT_SIZE = 2;
 static const int64_t DIM_LIMIT = 5;
 static const int64_t AICORE_CHANNEL_LIMIT = 2048;
+static const int64_t OUTPUTMASK_MAX_SIZE = 2;
 
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
@@ -97,6 +98,17 @@ static bool CheckTupleNullptr(std::tuple<aclTensor*, aclTensor*> tensorTuple)
         return false;
     }
     return (std::get<0>(tensorTuple) != nullptr) && (std::get<1>(tensorTuple) != nullptr);
+}
+
+static bool CheckOutputMask(const aclBoolArray *outputMask)
+{
+    if (outputMask->Size() != OUTPUTMASK_MAX_SIZE) {
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID, "Expected aclnnGridSampler3DBackward outputMask len to be %ld, but got %zu.",
+            OUTPUTMASK_MAX_SIZE, outputMask->Size());
+        return false;
+    }
+    return true;
 }
 
 static bool CheckShape(
@@ -158,7 +170,7 @@ static bool CheckShape(
 
 static aclnnStatus CheckParams(
     const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
-    int64_t paddingMode, const aclTensor* inputGrad, const aclTensor* gridGrad)
+    int64_t paddingMode, const aclTensor* inputGrad, const aclTensor* gridGrad, const aclBoolArray *outputMask)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull2In1Out(gradOutput, input, grid, inputGrad, gridGrad), ACLNN_ERR_PARAM_NULLPTR);
@@ -171,6 +183,9 @@ static aclnnStatus CheckParams(
 
     // 4. 检查输入、输出的shape匹配关系
     CHECK_RET(CheckShape(gradOutput, input, grid, inputGrad, gridGrad), ACLNN_ERR_PARAM_INVALID);
+    
+    // 5. 检查outputMask长度
+    CHECK_RET(CheckOutputMask(outputMask), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }
@@ -206,18 +221,19 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 输出掩码校验
-    if (outputMask == nullptr || ((*outputMask)[0] == false && (*outputMask)[1] == false)) {
+    if (outputMask == nullptr) {
         *workspaceSize = 0;
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
 
     // 固定写法，参数检查
-    auto ret = CheckParams(gradOutput, input, grid, interpolationMode, paddingMode, inputGrad, gridGrad);
+    auto ret = CheckParams(gradOutput, input, grid, interpolationMode, paddingMode, inputGrad, gridGrad, outputMask);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     // GridSampler3DGrad算子的空tensor在kernel中支持
-    if (gradOutput->IsEmpty() || input->IsEmpty() || grid->IsEmpty()) {
+    if (gradOutput->IsEmpty() || input->IsEmpty() || grid->IsEmpty() ||
+        ((*outputMask)[0] == false && (*outputMask)[1] == false)) {
         // 根据实际支持情况补充
         *workspaceSize = 0;
         uniqueExecutor.ReleaseTo(executor);
