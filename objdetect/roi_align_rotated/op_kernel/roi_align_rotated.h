@@ -316,7 +316,7 @@ private:
         PipeBarrier<PIPE_ALL>();
     }
 
-    __aicore__ inline float ComputeOutputIndex(uint32_t progress)
+    __aicore__ inline int32_t ComputeOutputIndex(uint32_t progress)
     {
         int32_t output_index;
         if (GetBlockIdx() < Lcore_num)
