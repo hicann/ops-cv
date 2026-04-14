@@ -592,8 +592,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateRadioTensor(LocalT
                     yIndexValue = i - instartIndex;
 
                     singleCoreK = singleCoreK < yIndexValue + 1 ? yIndexValue + 1 : singleCoreK;
-                    if (instartIndex + singleCoreK > input_shapes[3]) {
-                        singleCoreK = input_shapes[3] - instartIndex;
+                    if (instart_w + instartIndex + singleCoreK > input_shapes[3]) {
+                        singleCoreK = input_shapes[3] - instartIndex - instart_w;
                     }
                     int64_t index = yIndexValue * length + insertx;
 
