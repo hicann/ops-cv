@@ -839,7 +839,12 @@ __aicore__ inline void GridSampler2DNearest<T>::PointNearest(int32_t nIdx, int32
         maskUbTmp.SetValue(0, weightMaskUbTmp.GetValue(maskOffset));
         maskUbTmp.SetValue(1, weightMaskUbTmp.GetValue(maskOffset + 1));
 
-        LocalTensor<T> xLocal = xBuf_.AllocTensor<T>();
+        LocalTensor<T> xLocal;
+        if constexpr (IsSameType<T, bfloat16_t>::value) {  // T: bf16
+            xLocal = yFp16Buf_.AllocTensor<T>();
+        } else {
+            xLocal = xBuf_.AllocTensor<T>();
+        }
         for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
             int32_t calCElems = perLoopChannel_;
             if (cIdx == channelLoop_ - 1) {
@@ -858,7 +863,12 @@ __aicore__ inline void GridSampler2DNearest<T>::PointNearest(int32_t nIdx, int32
             SetFlag<HardEvent::MTE2_V>(eventMte2V);
             WaitFlag<HardEvent::MTE2_V>(eventMte2V);
 
-            if constexpr (IsSameType<T, half>::value || IsSameType<T, bfloat16_t>::value) {  // T: fp16
+            if constexpr (IsSameType<T, bfloat16_t>::value) {  // T: bf16
+                LocalTensor<float> xFp32Ub = xBuf_.Get<float>();
+                Cast(xFp32Ub, xLocal, RoundMode::CAST_NONE, channelAlign * TRANSE_REP_STRIDE);
+                PipeBarrier<PIPE_V>();
+                OutTransposeFp32(channelAlign, xFp32Ub, outValueUb);
+            } else if constexpr (IsSameType<T, half>::value) { // T: fp16
                 LocalTensor<T> yFp16Ub = yFp16Buf_.Get<T>();
                 OutTransposeFp16(channelAlign, xLocal, yFp16Ub);
                 PipeBarrier<PIPE_V>();
@@ -910,6 +920,7 @@ __aicore__ inline void GridSampler2DNearest<T>::PointNearest(int32_t nIdx, int32
         }
     }
 }
+
 template <typename T>
 __aicore__ inline void GridSampler2DNearest<T>::CopyOutFp16(int32_t nIdx, int32_t hwIdx, int32_t calHWElems)
 {

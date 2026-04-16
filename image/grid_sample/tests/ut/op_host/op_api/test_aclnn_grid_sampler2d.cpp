@@ -132,7 +132,7 @@ TEST_F(l2_grid_sampler2d_test, case_5)
 
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
-    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
 // float16

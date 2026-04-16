@@ -84,12 +84,23 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     auto compileInfo = reinterpret_cast<const GridSampleCompileInfo *>(context_->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context_, compileInfo);
     regBase = compileInfo->regBase;
+    auto ascendc_platform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
+    platform_ascendc::SocVersion gridSampleSocVersion = ascendc_platform.GetSocVersion();
+    bool is310P = gridSampleSocVersion == platform_ascendc::SocVersion::ASCEND310P;
 
-    OP_CHECK_IF((!regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
+    OP_CHECK_IF((is310P && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
         OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32 or FLOAT16"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF((!regBase && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
+    OP_CHECK_IF((is310P && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
         OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32 or FLOAT16"),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((!regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 &&
+                xDtype != ge::DT_BF16),
+        OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((!regBase && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 &&
+                gridDtype != ge::DT_BF16),
+        OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF((regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
         OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
@@ -169,9 +180,7 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
             (inC * inH * inW <= X_MAX_HWC_FACTOR)) {
             tempType = FULL_LOAD_TYPE;
             hwFactor = TILING_HW_FACTOR;
-            auto ascendc_platform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
-            platform_ascendc::SocVersion gridSampleSocVersion = ascendc_platform.GetSocVersion();
-            if ((outH * outW < BLOCK_NUM) && (inN < coreNumVar * BLOCK_NUM) && (gridSampleSocVersion == platform_ascendc::SocVersion::ASCEND310P)) {
+            if ((outH * outW < BLOCK_NUM) && (inN < coreNumVar * BLOCK_NUM) && is310P) {
                 context_->SetScheduleMode(SCHEDULE_MODE);
             }
             OP_LOGD(context_->GetNodeName(), "Get in FullLoad Template.");

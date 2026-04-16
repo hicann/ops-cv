@@ -50,8 +50,6 @@ static const int64_t SUPPORT_CHANNEL_310P = 32;
 
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE};
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
 
 static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
@@ -82,13 +80,16 @@ static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const
     // 检查input、grid、out的数据类型是否一致
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(out, input->GetDataType(), return false);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
 
     // 检查input的数据类型是否在gridsampler2d算子的支持列表内
-    if (IsRegBase()) {
-        OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST_REGBASE, return false);
+    if (curArch == NpuArch::DAV_2002 && input->GetDataType() == op::DataType::DT_BF16) {
+        OP_LOGD("input dtype does not support bf16 on this chip.");
+        return false;
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST, return false);
     }
+    
     return true;
 }
 
@@ -228,8 +229,9 @@ static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMod
     }
 
     const auto &inputShape = input->GetViewShape();
-    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16) {
-        OP_LOGD("Only support float16 or float32 on AICore, but got data type is %s",
+    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
+        input->GetDataType() != op::DataType::DT_BF16) {
+        OP_LOGD("Only support float16, bfloat16 or float32 on AICore, but got data type is %s",
             op::ToString(input->GetDataType()).GetString());
         return false;
     }

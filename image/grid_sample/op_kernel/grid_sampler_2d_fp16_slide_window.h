@@ -61,6 +61,8 @@ private:
     __aicore__ inline void MTE2ForNHWC(int32_t nIdx, int32_t cIdx, int32_t calCElems, int32_t channelAlign,
         int32_t loopOffset, int32_t loopElems, LocalTensor<int32_t> coorUb, LocalTensor<T> xLocal);
     __aicore__ inline void OutTranspose(int32_t channelAlign, LocalTensor<T> xLocal, LocalTensor<T> outValueUb);
+    __aicore__ inline void OutTransposeBf16(int32_t channelAlign, LocalTensor<float> xLocal,
+        LocalTensor<float> outValueUb);
     __aicore__ inline void MTE3ForNCHW(int32_t nIdx, int32_t cIdx, int32_t calCElems, int32_t channelAlign,
         int32_t hwIdx, int32_t loopOffset, int32_t loopElems, int64_t outBaseOffset, LocalTensor<float> weightUb,
         LocalTensor<float> outValueUb, bool isAutomicAdd);
@@ -796,6 +798,61 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::OutTranspose(
 }
 
 template <typename T>
+__aicore__ inline void GridSampler2DFP16SlideWindow<T>::OutTransposeBf16(
+    int32_t channelAlign, LocalTensor<float> xLocal, LocalTensor<float> outValueUb)
+{
+    LocalTensor<float> dstList[16];
+    LocalTensor<float> srcList[16];
+
+    event_t event_vs = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
+    event_t event_sv = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
+
+    TransDataTo5HDParams transDataParams;
+    transDataParams.dstHighHalf = false;
+    transDataParams.srcHighHalf = false;
+    if (channelAlign == 8) {
+        transDataParams.repeatTimes = 8;
+        transDataParams.dstRepStride = 2;
+        transDataParams.srcRepStride = 16;
+
+        for (int32_t iVal = 0; iVal < 16; iVal++) {
+            srcList[iVal] = xLocal[iVal * 8];
+        }
+
+        for (int32_t iVal = 0; iVal < 8; iVal++) {
+            dstList[iVal * 2] = outValueUb[iVal * TRANSE_REP_STRIDE];
+            dstList[iVal * 2 + 1] = outValueUb[iVal * TRANSE_REP_STRIDE + 8];
+        }
+
+        SetFlag<HardEvent::S_V>(event_sv);
+        WaitFlag<HardEvent::S_V>(event_sv);
+        TransDataTo5HD<float>(dstList, srcList, transDataParams);
+        SetFlag<HardEvent::V_S>(event_vs);
+        WaitFlag<HardEvent::V_S>(event_vs);
+    } else if (channelAlign <= 64) {
+        transDataParams.repeatTimes = channelAlign / 8;
+        transDataParams.dstRepStride = TRANSE_REP_STRIDE;
+        transDataParams.srcRepStride = 1;
+        for (int32_t j = 0; j < 8; j++) {
+            for (int32_t iVal = 0; iVal < 16; iVal++) {
+                srcList[iVal] = xLocal[iVal * channelAlign + j * 16 * channelAlign];
+            }
+
+            for (int32_t iVal = 0; iVal < 8; iVal++) {
+                dstList[iVal * 2] = outValueUb[iVal * TRANSE_REP_STRIDE + j * 16];
+                dstList[iVal * 2 + 1] = outValueUb[iVal * TRANSE_REP_STRIDE + 8 + j * 16];
+            }
+
+            SetFlag<HardEvent::S_V>(event_sv);
+            WaitFlag<HardEvent::S_V>(event_sv);
+            TransDataTo5HD<float>(dstList, srcList, transDataParams);
+            SetFlag<HardEvent::V_S>(event_vs);
+            WaitFlag<HardEvent::V_S>(event_vs);
+        }
+    }
+}
+
+template <typename T>
 __aicore__ inline void GridSampler2DFP16SlideWindow<T>::MTE3ForNCHW(int32_t nIdx, int32_t cIdx, int32_t calCElems,
     int32_t channelAlign, int32_t hwIdx, int32_t loopOffset, int32_t loopElems, int64_t outBaseOffset,
     LocalTensor<float> weightUb, LocalTensor<float> outValueUb, bool isAutomicAdd)
@@ -887,7 +944,12 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinear(int32_t nI
         maskUbTmpLocal.SetValue(2, weightMaskUbTmp.GetValue(maskOffset));
         maskUbTmpLocal.SetValue(3, weightMaskUbTmp.GetValue(maskOffset + 1));
         auto weightMaskUbTmpfp32 = maskUbTmpLocal.ReinterpretCast<float>();
-        LocalTensor<T> xLocal = xBuf_.AllocTensor<T>();
+        LocalTensor<T> xLocal;
+        if constexpr (IsSameType<T, bfloat16_t>::value) {  // T: bf16
+            xLocal = outValueFp16Buf_.AllocTensor<T>();
+        } else {
+            xLocal = xBuf_.AllocTensor<T>();
+        }
         // channel先按64大小循环
         for (int32_t cIdx = 0; cIdx < channelLoop_; cIdx++) {
             int32_t calCElems = perLoopChannel_;
@@ -904,10 +966,17 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinear(int32_t nI
             SetFlag<HardEvent::MTE2_V>(eventMte2V);
             WaitFlag<HardEvent::MTE2_V>(eventMte2V);
 
-            LocalTensor<T> outValueFp16Ub = outValueFp16Buf_.Get<T>();
-            OutTranspose(channelAlign, xLocal, outValueFp16Ub);
-            PipeBarrier<PIPE_V>();
-            Cast(outValueUb, outValueFp16Ub, RoundMode::CAST_NONE, calCElems * TRANSE_REP_STRIDE);
+            if constexpr (IsSameType<T, bfloat16_t>::value) {  // T: bf16
+                LocalTensor<float> xLocalFp32Ub = xBuf_.Get<float>();
+                Cast(xLocalFp32Ub, xLocal, RoundMode::CAST_NONE, channelAlign * TRANSE_REP_STRIDE);
+                PipeBarrier<PIPE_V>();
+                OutTransposeBf16(channelAlign, xLocalFp32Ub, outValueUb);
+            } else {  // T: fp16
+                LocalTensor<T> outValueFp16Ub = outValueFp16Buf_.Get<T>();
+                OutTranspose(channelAlign, xLocal, outValueFp16Ub);
+                PipeBarrier<PIPE_V>();
+                Cast(outValueUb, outValueFp16Ub, RoundMode::CAST_NONE, calCElems * TRANSE_REP_STRIDE);
+            }
             PipeBarrier<PIPE_V>();
             if (calCElems >= 16) {
                 BinaryRepeatParams repParams{1, 1, 0, 8, 8, 0};
@@ -997,16 +1066,22 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinearXInLocal(in
         }
     }
 
-    for (size_t i = 0; i < inputC_; i++) {
-        auto ubOffset = i * CAL_H_W_BLOCK;
-        if constexpr (IsSameType<T, bfloat16_t>::value) {
-            Select(outValueFp16Ub[ubOffset],
+    if constexpr (IsSameType<T, bfloat16_t>::value) {
+        Cast(outValueUb, outValueFp16Ub, RoundMode::CAST_NONE, inputC_ * CAL_H_W_BLOCK);
+        PipeBarrier<PIPE_V>();
+        for (size_t i = 0; i < inputC_; i++) {
+            auto ubOffset = i * CAL_H_W_BLOCK;
+            Select(outValueUb[ubOffset],
                 weightMaskUbTmp,
-                outValueFp16Ub[ubOffset],
-                ToBfloat16(0.0),
+                outValueUb[ubOffset],
+                (float)0.0,
                 SELMODE::VSEL_TENSOR_SCALAR_MODE,
                 CAL_H_W_BLOCK);
-        } else {
+        }
+        PipeBarrier<PIPE_V>();
+    } else {
+        for (size_t i = 0; i < inputC_; i++) {
+            auto ubOffset = i * CAL_H_W_BLOCK;
             Select(outValueFp16Ub[ubOffset],
                 weightMaskUbTmp,
                 outValueFp16Ub[ubOffset],
@@ -1014,11 +1089,10 @@ __aicore__ inline void GridSampler2DFP16SlideWindow<T>::PointBilinearXInLocal(in
                 SELMODE::VSEL_TENSOR_SCALAR_MODE,
                 CAL_H_W_BLOCK);
         }
+        PipeBarrier<PIPE_V>();
+        Cast(outValueUb, outValueFp16Ub, RoundMode::CAST_NONE, inputC_ * CAL_H_W_BLOCK);
+        PipeBarrier<PIPE_V>();
     }
-    PipeBarrier<PIPE_V>();
-
-    Cast(outValueUb, outValueFp16Ub, RoundMode::CAST_NONE, inputC_ * CAL_H_W_BLOCK);
-    PipeBarrier<PIPE_V>();
 
     int32_t trans_loop = Ceil(calHWElems, B32_MASK);
     // 权重处理
