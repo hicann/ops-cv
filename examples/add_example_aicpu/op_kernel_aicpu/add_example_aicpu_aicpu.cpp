@@ -15,7 +15,7 @@
  *
  */
 
-#include "add_example_aicpu.h"
+#include "add_example_aicpu_aicpu.h"
 
 #include <cmath>
 #include <string>

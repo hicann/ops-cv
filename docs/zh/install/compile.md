@@ -267,17 +267,17 @@ pip3 install -r requirements.txt
 # 安装根目录下test相关requirements.txt依赖
 pip3 install -r tests/requirements.txt
 # 方式1: 编译并执行指定算子和对应功能的UT测试用例（选其一）
-bash build.sh -u --[opapi|ophost|opkernel] --ops=grid_sample
+bash build.sh -u --[opapi|ophost|opkernel|opkernel_aicpu] --ops=grid_sample
 # 方式2: 编译并执行所有的UT测试用例
 # bash build.sh -u
 # 方式3: 编译所有的UT测试用例但不执行
 # bash build.sh -u --noexec
 # 方式4: 编译并执行对应功能的UT测试用例（选其一）
-# bash build.sh -u --[opapi|ophost|opkernel]
+# bash build.sh -u --[opapi|ophost|opkernel|opkernel_aicpu]
 # 方式5: 编译对应功能的UT测试用例但不执行（选其一）
-# bash build.sh -u --noexec --[opapi|ophost|opkernel]
+# bash build.sh -u --noexec --[opapi|ophost|opkernel|opkernel_aicpu]
 # 方式6: 执行UT测试用例时可指定soc编译
-# bash build.sh -u --[opapi|ophost|opkernel] [--soc=${soc_version}]
+# bash build.sh -u --[opapi|ophost|opkernel|opkernel_aicpu] [--soc=${soc_version}]
 ```
 
 以验证ophost功能是否正常为例，执行如下命令：

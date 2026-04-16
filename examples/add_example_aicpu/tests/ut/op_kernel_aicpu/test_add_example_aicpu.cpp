@@ -33,12 +33,12 @@ class TEST_AddExample_UT : public testing::Test {};
         .Input({"x2", data_types[1], shapes[1], datas[1]})           \
         .Output({"y", data_types[2], shapes[2], datas[2]});
 
-TEST_F(TEST_ADD_UT, INT32_VECTOR_ADD_SCALAR_SUCC) {
+TEST_F(TEST_AddExample_UT, INT32_VECTOR_ADD_SUCC) {
   vector<DataType> data_types = {DT_INT32, DT_INT32, DT_INT32};
-  vector<vector<int64_t>> shapes = {{2}, {1}, {2}};
+  vector<vector<int64_t>> shapes = {{2}, {2}, {2}};
 
   int32_t input1[2] = {2, 5};
-  int32_t input2[1] = {3};
+  int32_t input2[2] = {3, 3};
   int32_t output[2] = {0};
   vector<void *> datas = {(void *)input1,
                           (void *)input2,

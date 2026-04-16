@@ -1810,8 +1810,8 @@ Software:samples 0.6.0
 Official Repository: https://gitee.com/ascend/samples
 
 Usage: "
-examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu.cpp
-examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu.h"
+examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu_aicpu.cpp
+examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu_aicpu.h"
 
 Copyright Notice: 
 Copyright 2021 Huawei Technologies Co., Ltd
