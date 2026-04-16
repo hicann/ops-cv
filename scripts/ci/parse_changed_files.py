@@ -61,7 +61,7 @@ def get_file_change_info_from_ci(changed_file_info_from_ci, ops_path):
     """
     or_file_path = os.path.realpath(changed_file_info_from_ci)
     if not os.path.exists(or_file_path):
-        logging.error("[ERROR] change file is not exist, can not get file change info in this pull request.")
+        logging.error("[ERROR] change file does not exist, can not get file change info in this pull request.")
         return None
     
     def _compile_patterns(ops_path):

@@ -53,7 +53,7 @@ def get_res_from_file(json_file):
     get_res_from_file get the module name and module func from json_file
     """
     if not os.path.exists(json_file):
-        print("[ERROR]the json_file is not existed: ", json_file)
+        print("[ERROR]the json_file does not exist: ", json_file)
         sys.exit(1)
     with open(json_file, "r") as file_op:
         ops_info_json = json.load(file_op)

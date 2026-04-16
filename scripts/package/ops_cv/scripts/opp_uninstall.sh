@@ -104,7 +104,7 @@ check_directory_exist() {
 check_file_exist() {
   local path_param="${1}"
   if [ ! -f "${path_param}" ]; then
-    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:The file (${path_param}) does not existed."
+    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:The file (${path_param}) does not exist."
     exit 1
   fi
 }
@@ -201,7 +201,7 @@ whl_uninstall_package() {
   if [ ! -d "${_module_apth}/${_module}" ]; then
       pip3 show "${_module}" > /dev/null 2>&1
       if [ $? -ne 0 ]; then
-          logandprint "WARNING" "${_module} is not exist."
+          logandprint "WARNING" "${_module} does not exist."
       else
           pip3 uninstall -y "${_module}" 1> /dev/null
           local ret=$?

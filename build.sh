@@ -409,7 +409,7 @@ usage() {
   echo "    --asan enable asan with pkg on the host side"
   echo "    --valgrind run ut with valgrind. This option will disable asan, noexec and run utest by valgrind"
   echo ""
-  echo "    --ops Compile specified operator, use snake name, like: --ops=add,add_lora, use ',' to separate different operator"
+  echo "    --ops Compile specified operator, use snake name, like: --ops=grid_sample,iou_v2, use ',' to separate different operator"
   echo "    --soc Compile binary with specified Ascend SoC, like: --soc=ascend910b"
   echo "    --vendor_name Specify the custom operator package vendor name, like: --vendor_name=customize, default to customize-cv"
   echo "    --aicpu build aicpu task"

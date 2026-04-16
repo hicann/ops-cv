@@ -2,12 +2,12 @@
 
 ## 使用须知
 
-本指南旨在帮助您快速上手CANN和`ops-cv`算子仓的使用。为方便快速了解算子开发全流程，将以**AddExample**算子为实践对象，其源文件位于`ops-cv/examples/add_example`，具体操作流程如下：
+本指南旨在帮助您快速上手CANN和`ops-cv`算子仓的使用。为方便您快速了解算子开发全流程，以**AddExample**算子为实践对象，算子源码位于`ops-cv/examples/add_example`，操作流程如下：
 
-1. **[环境部署](zh/install/quick_install.md)**：完成软件安装和源码下载，此处不再赘述。快速入门场景下，**推荐WebIDE或Docker环境**，安装操作简单。
+1. **[前提条件](../README.md)**：参考项目README完成环境准备和源码下载，此处不再赘述。快速入门场景**推荐WebIDE或Docker部署**，操作简单。
+
+   > **说明**：WebIDE或Docker环境默认提供最新商发版CANN包；如需体验master分支最新能力，可手动搭建环境。
     
-    > **说明**：WebIDE或Docker环境默认提供最新商发版CANN包；如需体验master分支最新能力，可手动搭建环境。注意软件包与源码版本是否配套。
-   
 2. **[编译运行](#一编译运行)**：编译自定义算子包并安装，实现快速调用算子。
 
 3. **[算子开发](#二算子开发)**：通过修改现有算子Kernel，体验开发、编译、验证的完整闭环。
@@ -20,21 +20,29 @@
 
 本阶段目的是**快速体验项目标准流程**，验证环境能否成功进行算子源码编译、打包、安装和运行。
 
-### 1. 进入项目目录
+### 1. 进入项目源码
+
+1. 检查源码版本。
+
+    根据[release仓库](https://gitcode.com/cann/release-management)CANN版本配套关系检查源码版本是否配套，若不配套请参考下述命令重新下载，\$\{tag\_version\}替换为目标分支标签。
+
+    > 说明：对于WebIDE环境，**已默认提供最新商发版CANN配套的项目源码**。
     
-环境准备好后（注意软件与源码版本配套），进入项目目录。
+    ```bash
+    git clone -b ${tag_version} https://gitcode.com/cann/ops-cv.git
+    ```
+
+    若出现提示信息`fatal: destination path 'ops-cv' already exists and is not an empty directory.`，说明项目源码已存在。
     
-- 对于Docker部署或手动安装场景，项目源码位于
-
-```bash
-cd ops-cv
-```
-
-- 对于WebIDE场景，项目源码位于
-
-```bash
-cd /mnt/workspace/ops-cv
-```
+2. 进入源码目录。
+    - Docker或手动安装场景下源码位于：
+      ```bash
+      cd ops-cv
+      ```
+    - WebIDE场景下源码位于：
+      ```bash
+      cd /mnt/workspace/ops-cv
+      ```
 
 ### 2. 编译AddExample算子
 
@@ -82,7 +90,7 @@ bash build.sh --run_example add_example eager cust --vendor_name=custom
 
 预期输出：打印算子`AddExample`的加法计算结果，表明算子已成功部署并正确执行。
 
-```bash
+```
 add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 2.000000
 add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 2.000000
 add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 2.000000
@@ -143,7 +151,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 
 4. **成功标志**：输出结果变成乘法结果。
 
-    ```bash
+    ```
     add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 1.000000
     add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 1.000000
     add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 1.000000
@@ -167,7 +175,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 
 * **printf**
 
-  该接口支持打印Scalar类型数据，如整数、字符型、布尔型等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > printf”。
+  该接口支持打印Scalar类型数据，如整数、字符型、布尔型等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中"算子调测API > printf"。
   
   ```c++
   blockLength_ = (tilingData->totalLength + AscendC::GetBlockNum() - 1) / AscendC::GetBlockNum();
@@ -181,7 +189,7 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 * **DumpTensor**
 
   该接口支持Dump指定Tensor的内容，同时支持打印自定义附加信息，比如当前行号等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > DumpTensor”。
-
+  
   ```c++
   AscendC::LocalTensor<T> zLocal = outputQueueZ.DeQue<T>();
   // 打印zLocal Tensor信息
@@ -193,22 +201,22 @@ __aicore__ inline void AddExample<T>::Compute(int32_t progress)
 当算子功能验证正确后，可通过`msprof`工具采集算子性能数据。
 
 - **生成可执行文件**
-   
-  调用AddExample算子的example样例，生成可执行文件（test_aclnn_add_example），该文件位于项目`ops-cv/build`目录。
+  
+    调用AddExample算子的example样例，生成可执行文件（test_aclnn_add_example），该文件位于项目`ops-cv/build`目录。
 
-  ```bash
-  bash build.sh --run_example add_example eager cust --vendor_name=custom
-  ```
+    ```bash
+    bash build.sh --run_example add_example eager cust --vendor_name=custom
+    ```
 
 - **采集性能数据**
 
-  进入AddExample算子可执行文件目录`ops-cv/build/`，执行如下命令：
-  
-  ```bash
-  msprof --application="./test_aclnn_add_example"
-  ```
+    进入AddExample算子可执行文件目录`ops-cv/build/`，执行如下命令：
 
-  采集结果在项目`ops-cv/build/`目录，msprof命令执行完后会自动解析并导出性能数据结果文件，详细内容请参见[msprof](https://www.hiascend.com/document/detail/zh/mindstudio/82RC1/T&ITools/Profiling/atlasprofiling_16_0110.html#ZH-CN_TOPIC_0000002504160251)。
+    ```bash
+    msprof --application="./test_aclnn_add_example"
+    ```
+
+采集结果在项目`ops-cv/build/`目录，msprof命令执行完后会自动解析并导出性能数据结果文件，详细内容请参见[msprof](https://www.hiascend.com/document/detail/zh/mindstudio/82RC1/T&ITools/Profiling/atlasprofiling_16_0110.html#ZH-CN_TOPIC_0000002504160251)。
 
 ## 四、算子验证
 
@@ -228,7 +236,7 @@ int main() {
     // 修改前：shape = {32, 4, 4, 4}, 数值全为1
     // 修改后：将输入shape改为 {8, 8, 8, 8}，并填充不同的测试数据
     std::vector<int64_t> selfXShape = {8, 8, 8, 8};
-    std::vector<float> selfXHostData(4096); // 4096 = 8 * 8 * 8 * 8
+    std::vector<float> selfXHostData(4096); // 4096 = 8 * 8 * 8 *8
     // 可使用循环填充更有区分度的数据，例如递增序列
     for (int i = 0; i < 4096; ++i) {
         selfXHostData[i] = static_cast<float>(i % 10); // 填充0-9的循环值
@@ -253,4 +261,5 @@ int main() {
 
 ## 结语
 
-体验完上述流程后，您已基本完成一个算子开发，如果您想贡献算子或学习更多高阶技能，请访问本项目README，进一步了解[学习教程](../README.md#学习教程)和[贡献指南](../README.md#相关信息)等。
+体验完上述流程，您已基本完成算子开发过程，如果您想进一步贡献新算子或学习更多高阶开发、调试等技能，请访问本项目README学习[进阶教程](../README.md#学习教程)和[贡献指南](../README.md#相关信息)等。
+

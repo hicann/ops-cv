@@ -176,7 +176,7 @@ update_install_infos() {
 check_file_exist() {
   local path_param="${1}"
   if [ ! -f "${path_param}" ]; then
-    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:The file (${path_param}) does not existed."
+    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:The file (${path_param}) does not exist."
     exit 1
   fi
 }
