@@ -470,6 +470,7 @@ function(compile_from_config)
   )
 
   set(OPC_NUM_UNIT "OPC_NUM_${CONFCMP_COMPUTE_UNIT}")
+  message(STATUS "[INFO] Binary compile tasks: ${OPC_NUM_UNIT}")
   foreach(idx RANGE 1 ${${OPC_NUM_UNIT}})
     set(_BUILD_COMMAND)
     List(APPEND _BUILD_COMMAND export TILINGKEY_PAR_COMPILE=1 &&)
@@ -648,6 +649,8 @@ function(gen_ops_info_and_python)
         endif()
       endforeach()
       # binary compile from binary json config
+
+      message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary from config.")
       compile_from_config(
               TARGET ascendc_bin_${compute_unit}_${op_name}
               OUT_DIR ${CMAKE_BINARY_DIR}/binary/${compute_unit}

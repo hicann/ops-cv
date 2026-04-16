@@ -1258,11 +1258,22 @@ build_binary() {
   local all_targets=$(cmake --build . --target help)
   if echo "${all_targets}" | grep -wq "ascendc_impl_gen"; then
     cmake --build . --target ascendc_impl_gen -- ${VERBOSE} -j $THREAD_NUM
-    if [ $? -ne 0 ]; then exit 1; fi
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] Failed to execute ascendc_impl_gen."
+      exit 1;
+    fi
+  else
+    echo "[WARNING] Build target 'ascendc_impl_gen' not found in cmake targets, available targets: ${all_targets}"
   fi
+
   if echo "${all_targets}" | grep -wq "gen_bin_scripts"; then
     cmake --build . --target gen_bin_scripts -- ${VERBOSE} -j $THREAD_NUM
-    if [ $? -ne 0 ]; then exit 1; fi
+    if [ $? -ne 0 ]; then
+      echo "[ERROR] Failed to execute gen_bin_scripts."
+      exit 1;
+    fi
+  else
+    echo "[WARNING] Build target 'gen_bin_scripts' not found in cmake targets, available targets: ${all_targets}"
   fi
   echo "--------------- prepare build end ---------------"
 
@@ -1302,10 +1313,14 @@ build_binary() {
     if [ $? -ne 0 ]; then
       echo "[ERROR] Kernel compile failed!" && exit 1
     fi
+  else
+    echo "[WARNING] Compile kernel 'binary' failed! Build target 'binary' not found in cmake targets. Available targets: ${all_targets}"
   fi
   if echo "${all_targets}" | grep -wq "gen_bin_info_config"; then
     cmake --build . --target gen_bin_info_config -- ${VERBOSE} -j $THREAD_NUM
     if [ $? -ne 0 ]; then exit 1; fi
+  else
+    echo "[WARNING] Generate 'gen_bin_info_config' failed! Build target 'gen_bin_info_config' not found in cmake targets. Available targets: ${all_targets}"
   fi
   echo "--------------- binary build end ---------------"
 
