@@ -390,11 +390,11 @@ int main()
     ret = CreateAclTensor(gradOutputHostData, gradOutputShape, &gradOutputDeviceAddr, aclDataType::ACL_FLOAT, &gradOutput);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
-    aclTensor* x = nullptr;
-    void* xDeviceAddr = nullptr;
-    std::vector<int64_t> xShape = {4, 3, 3, 32};
-    std::vector<float> xHostData(1152, 1.0);
-    ret = CreateAclTensor(xHostData, xShape, &xDeviceAddr, aclDataType::ACL_FLOAT, &x);
+    aclTensor* gradInputRef = nullptr;
+    void* gradInputRefDeviceAddr = nullptr;
+    std::vector<int64_t> gradInputRefShape = {4, 32, 3, 3};
+    std::vector<float> gradInputRefHostData(1152, 1.0);
+    ret = CreateAclTensor(gradInputRefHostData, gradInputRefShape, &gradInputRefDeviceAddr, aclDataType::ACL_FLOAT, &gradInputRef);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     aclTensor* rois = nullptr;
@@ -415,19 +415,12 @@ int main()
     int32_t pooledW = 2;
     double spatialScale = 1.0;
 
-    aclTensor* out = nullptr;
-    void* outDeviceAddr = nullptr;
-    std::vector<int64_t> outShape = {4, 32, 3, 3};
-    std::vector<float> outHostData(1152, 0.0);
-    ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &out);
-    CHECK_RET(ret == ACL_SUCCESS, return ret);
-
     // 3. 调用CANN算子库API，需要修改为具体的Api名称
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
 
     // 4. 调用aclnnAddExample第一段接口
-    ret = aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(gradOutput, x, rois, argmax, pooledH, pooledW, spatialScale, out, &workspaceSize, &executor);
+    ret = aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(gradOutput, gradInputRef, rois, argmax, pooledH, pooledW, spatialScale, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
 
     // 根据第一段接口计算出的workspaceSize申请device内存
@@ -447,21 +440,19 @@ int main()
     LOG_PRINT("aclnnRoiPoolingGradWithArgMax run success.\n");
 
     // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
-    PrintOutResult(outShape, &outDeviceAddr);
+    PrintOutResult(gradInputRefShape, &gradInputRefDeviceAddr);
 
     // 7. 释放aclTensor，需要根据具体API的接口定义修改
     aclDestroyTensor(gradOutput);
-    aclDestroyTensor(x);
+    aclDestroyTensor(gradInputRef);
     aclDestroyTensor(rois);
     aclDestroyTensor(argmax);
-    aclDestroyTensor(out);
 
     // 8. 释放device资源
     aclrtFree(gradOutputDeviceAddr);
-    aclrtFree(xDeviceAddr);
+    aclrtFree(gradInputRefDeviceAddr);
     aclrtFree(roisDeviceAddr);
     aclrtFree(argmaxDeviceAddr);
-    aclrtFree(outDeviceAddr);
     if (workspaceSize > static_cast<uint64_t>(0)) {
         aclrtFree(workspaceAddr);
     }
