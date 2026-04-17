@@ -50,8 +50,17 @@ ge::graphStatus GridSampleArch35Tiling::DoOpTiling()
     // output format is [N, C, H, W]
     int64_t outputD = outD == 0 ? 1 : outD;
     outputSize = inN * inC * outputD * outH * outW;
+    inputSize = inN * inC * inH * inW;
+    gridSize = inN * outH * outW;
+    if (dimension == 0) {
+        gridSize = gridSize * 2;
+    } else {
+        gridSize = gridSize * outD * 3;
+        inputSize = inputSize * inD;
+    }
+
     int32_t threadNum = VF_MAX_THREAD_NUM_2D;
-    if (outputSize > MAX_OUTPUT_SIZE || dimension != 0) {
+    if (outputSize > MAX_OUTPUT_SIZE || inputSize > MAX_OUTPUT_SIZE || gridSize > MAX_OUTPUT_SIZE || dimension != 0) {
         threadNum = VF_MAX_THREAD_NUM_3D;
     }
     
@@ -95,7 +104,8 @@ uint64_t GridSampleArch35Tiling::GetTilingKey() const
     if (dimension != 0) {
         tilingKey = SIMT_COMMON_3D_TILING_KEY;
     }
-    if (outputSize > MAX_OUTPUT_SIZE) {
+    
+    if (outputSize > MAX_OUTPUT_SIZE || inputSize > MAX_OUTPUT_SIZE || gridSize > MAX_OUTPUT_SIZE) {
         tilingKey += USE_UINT64_TYPE;
     }
     return tilingKey;

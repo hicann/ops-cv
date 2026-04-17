@@ -50,6 +50,8 @@ protected:
 
 private:
     GridSampleTilingData tilingData;
+    int64_t inputSize;
+    int64_t gridSize;
 };
 
 }
