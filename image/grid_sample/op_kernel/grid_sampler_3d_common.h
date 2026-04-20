@@ -15,7 +15,11 @@
 #ifndef GIRD_SAMPLER_3D_COMMON
 #define GIRD_SAMPLER_3D_COMMON
 
+#if ASC_DEVKIT_MAJOR >=9
 #include "kernel_vec_intf.h"
+#else
+#include "kernel_operator.h"
+#endif
 #include "kernel_tiling/kernel_tiling.h"
 #include "grid_sample_common.h"
 

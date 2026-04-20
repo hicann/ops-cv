@@ -15,8 +15,13 @@
 #ifndef GRID_SAMPLER_2D_FP16_SLIDE_WINDOW
 #define GRID_SAMPLER_2D_FP16_SLIDE_WINDOW
 
+
+#if ASC_DEVKIT_MAJOR >=9
 #include "kernel_vec_intf.h"
 #include "pad/broadcast.h"
+#else
+#include "kernel_operator.h"
+#endif
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {
