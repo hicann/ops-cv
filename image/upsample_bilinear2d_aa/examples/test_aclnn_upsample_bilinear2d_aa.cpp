@@ -110,7 +110,7 @@ int main()
     // 3. 调用CANN算子库API，需要修改为具体的API名称
     uint64_t workspaceSize = 0;
     aclOpExecutor *executor;
-    // 调用aclnnUpsampleBilinear2d第一段接口
+    // 调用aclnnUpsampleBilinear2dAA第一段接口
     ret = aclnnUpsampleBilinear2dAAGetWorkspaceSize(
         input, outputSizeArray, alignCorners, scalesH, scalesW, out, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBilinear2dAAGetWorkspaceSize failed. ERROR: %d\n", ret);
@@ -121,7 +121,7 @@ int main()
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
-    // 调用aclnnUpsampleBilinear2d第二段接口
+    // 调用aclnnUpsampleBilinear2dAA第二段接口
     ret = aclnnUpsampleBilinear2dAA(workspaceAddr, workspaceSize, executor, stream);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBilinear2dAA failed. ERROR: %d\n", ret); return ret);
     // 4. （固定写法）同步等待任务执行结束
