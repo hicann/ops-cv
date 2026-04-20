@@ -1720,10 +1720,6 @@ package_static() {
 
 main() {
   checkopts "$@"
-  if [ "$THREAD_NUM" -gt "$CORE_NUMS" ]; then
-    echo "compile thread num:$THREAD_NUM over core num:$CORE_NUMS, adjust to core num"
-    THREAD_NUM=$CORE_NUMS
-  fi
   assemble_cmake_args
   echo "CMAKE_ARGS: ${CMAKE_ARGS}"
 
