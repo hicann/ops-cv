@@ -15,8 +15,12 @@
 #ifndef GIRD_SAMPLER_BICUBIC_2D
 #define GIRD_SAMPLER_BICUBIC_2D
 
+#if ASC_DEVKIT_MAJOR >=9
 #include "kernel_vec_intf.h"
 #include "math/floor.h"
+#else
+#include "kernel_operator.h"
+#endif
 #include "kernel_tiling/kernel_tiling.h"
 
 namespace GridSample {
