@@ -174,7 +174,7 @@ int main()
         LOG_PRINT("findices[%ld] is: %d\n", i, findicesOutData[i]);
     }
     for (int64_t i = 0; i < barycentricSize; i++) {
-        LOG_PRINT("barycentric[%ld] is: %d\n", i, baryOutData[i]);
+        LOG_PRINT("barycentric[%ld] is: %f\n", i, baryOutData[i]);
     }
 
     // 6. 释放aclTensor，需要根据具体API的接口定义修改
