@@ -102,7 +102,7 @@ aclnnStatus aclnnGridSampler2D(
     <tr>
       <td>grid（aclTensor*）</td>
       <td>输入</td>
-      <td>采样的网络，对应公式中描述的`grid`。</td>
+      <td>采样的网格，对应公式中描述的`grid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 2)，且N与入参`input`的shape中的N一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
@@ -183,14 +183,14 @@ aclnnStatus aclnnGridSampler2D(
     当接口运行在AI Core时，需要满足如下条件：
     - 入参`interpolationMode`为bilinear。
     - 入参`paddingMode`为zeros。
-    - 入参`dtype`为FLOAT16。
+    - 参数`input`、`grid`、`out`的数据类型为FLOAT16。
     - 参数`input`的shape需要满足C维的值为32。
   - <term>Atlas 推理系列产品</term>：
     
     当接口运行在AI Core时，需要满足如下条件：
     - 入参`interpolationMode`为bilinear。
     - 入参`paddingMode`为zeros。
-    - 入参`dtype`为FLOAT32。
+    - 参数`input`、`grid`、`out`的数据类型为FLOAT32。
     - 参数`input`的shape需要满足C维的值为32或者C*H*W < 20480。
     - 参数`input`的数据格式不支持NHWC。
 
@@ -283,7 +283,7 @@ aclnnStatus aclnnGridSampler2D(
 
 - 参数`input`、`grid`、`out`的数据格式只支持(N, C, H, W)，当输入其他数据格式时，默认按照(N, C, H, W)格式处理。
 - 输入`input`的（H轴的大小 * W轴的大小） < INT32的最大值。
-- grid的输入值*图片（长或宽）大于24位的二进制数（16777216），采样点可能存在误差，精度可能产生偏差。
+- 当grid的输入值*图片（长或宽）大于24位的二进制数（16777216）时，采样点可能存在误差，精度可能产生偏差。
 - 如果grid含有大量超过[-1, 1]范围的数据，使用zeros或者border的填充策略时，计算结果中的值会大量重复。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   - 如果grid存在超出[-1, 1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。

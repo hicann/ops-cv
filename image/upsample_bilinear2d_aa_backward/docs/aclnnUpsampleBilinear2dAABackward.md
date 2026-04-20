@@ -42,7 +42,6 @@
     - $kW$、$kH$分别表示W方向和H方向影响插值点大小的点的数量
     - 如果$scaleH >= 1$，则$kH = floor(scaleH) * 2 + 1$，否则$kH = 3$
     - 如果$scaleW >= 1$，则$kW = floor(scaleW) * 2 + 1$，否则$kW = 3$
-    - $f(h_i, w_j)$是原图像在$(h_i, w_j)$的像素值
     - $w(i)$、$w(j)$是双线性抗锯齿插值的W方向和H方向权重，计算公式为：
 
       $$
@@ -62,7 +61,7 @@
   - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有:
   
     $$
-    gradInput(h_i,w_j) += gradOutput(h,w) * f(h_i,w_j)
+    gradInput(h_i,w_j) += gradOutput(h,w) * w(i) * w(j)
     $$
   
 ## 函数原型

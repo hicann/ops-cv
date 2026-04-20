@@ -36,7 +36,7 @@
     <tr>
       <td>x</td>
       <td>输入</td>
-      <td>输入张量。</tdtd>
+      <td>输入张量。</td>
       <td>INT8、INT16、INT32、INT64、UINT8、UINT16、UINT32、UINT64<br>
           FLOAT16、FLOAT、DOUBLE</td>
       <td>NCHW、NC1HWC0</td>

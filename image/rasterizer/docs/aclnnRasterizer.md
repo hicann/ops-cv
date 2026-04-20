@@ -19,7 +19,7 @@
 
 - 计算公式：
   $findices$记录每个像素点最小深度对应的面索引，$barycentric$记录每个顶点相对于$findices$中记录的面的重心坐标透视矫正插值。
-  计算过程中使用的zbuffer记录每个像素点$(x, y)$的最小深度$z_{\min}(x, y)$以及该深度对应的三角形面片索引$\text{face\_idx}(x, y)$。
+  计算过程中使用的Z-Buffer记录每个像素点$(x, y)$的最小深度$z_{\min}(x, y)$以及该深度对应的三角形面片索引$\text{face\_idx}(x, y)$。
   
   计算过程如下：
   对空间中的每个三角形面片$f$：
@@ -32,12 +32,12 @@
      b. 计算$v_c$相对于三角形$f$的重心坐标$(\alpha, \beta, \gamma)$  
      c. 根据$(\alpha, \beta, \gamma)$判断$v_c$是否在三角形内部。若$v_c$不在三角形内部，则处理矩形内下个像素点，否则执行下述步骤  
      d. 使用$(\alpha, \beta, \gamma)$和$v_{s0}$,$v_{s1}$,$v_{s2}$得到当前像素的深度值depth  
-     e. 若启用了深度先验：
+     e. 若启用了深度先验；否则，直接执行下一步“Z-Buffer更新”
      
      - 使用深度先验图计算深度阈值depth_thres
      - 如果depth < depth_thres，处理矩形内下个像素点，否则执行下述步骤
      
-     f. zbuffer更新：
+     f. Z-Buffer更新：
      
      - 若$depth < z_{\min}(x_i, y_i)$：
      
@@ -54,7 +54,7 @@
   
   按上述步骤对空间中所有的三角形面片进行处理后，对大小为$height * width$的屏幕上每个像素点$v_i = (x_i, y_i)$：
   
-  1. 取zbuffer中$v_i$对应的面片索引$f_{idx}$，$findices (x_i, y_i) \gets f_{idx}$
+  1. 取Z-Buffer中$v_i$对应的面片索引$f_{idx}$，$findices (x_i, y_i) \gets f_{idx}$
   2. 将$f$的三个顶点坐标$v_0$,$v_1$,$v_2$转换为屏幕坐标$v_{s0}$,$v_{s1}$,$v_{s2}$
   3. 计算$v_i$的中心点坐标$v_c$
   4. 计算$v_c$相对于三角形$f$的重心坐标$(\alpha, \beta, \gamma)$
