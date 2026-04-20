@@ -280,7 +280,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
 
 - 参数`x`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
-  - 参数`out`的N轴和C轴与`self`保持一致，且C轴、H轴、W轴大于0。
+  - 参数`out`的N轴和C轴与`x`保持一致，且C轴、H轴、W轴大于0。
   - 内存占用需小于60G。内存占用的计算公式如下：
 
     $$

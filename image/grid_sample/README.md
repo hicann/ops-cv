@@ -87,7 +87,7 @@
     <tr>
       <td>grid</td>
       <td>输入</td>
-      <td>采样的网络，对应公式中描述的`grid`。</td>
+      <td>采样的网格，对应公式中描述的`grid`。</td>
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>ND</td>
     </tr>

@@ -61,7 +61,7 @@
   - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有:
   
     $$
-    gradInput(h_i,w_j) += gradOutput(h,w) * f(h_i,w_j)
+    gradInput(h_i,w_j) += gradOutput(h,w) * w(i) * w(j)
     $$
 
 ## 参数说明
@@ -92,7 +92,7 @@
     <tr>
       <td>output_size</td>
       <td>可选属性</td>
-      <td><ul><li>指定输出空间大小，对应公式中的`outputSize`。size为2，且各元素均大于0。表示指定`grad_output`在H和W维度上的空间大小。</li><li>默认值为空。</li></ul></td>
+      <td><ul><li>指定输入空间大小，对应公式中的`outputSize`。size为2，且各元素均大于0。表示指定`grad_output`在H和W维度上的空间大小。</li><li>默认值为空。</li></ul></td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>

@@ -110,7 +110,7 @@ aclnnStatus aclnnResize(
       <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>输出张量，对应公式中的`out`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据格式、数据类型与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li><li>shape的H轴和W轴符合output_dimension = floor(self_dimension * scales)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据格式、数据类型与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li><li>shape的H轴和W轴符合out_dimension = floor(self_dimension * scales)。</li></ul></td>
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>NCHW、NHWC</td>
       <td>4</td>

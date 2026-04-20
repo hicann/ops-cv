@@ -32,7 +32,7 @@
       dgrid: (N, H_{out}, W_{out}, 2)
       $$
   
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+      其中grad、input、grid、dx、dgrid中的N均相同，grad、input和dx中的C相同，input和dx中的$H_{in}$、$W_{in}$相同，grad、grid和dgrid中的$H_{out}$、$W_{out}$相同，grid最后一维大小为2，表示input像素位置信息为(x, y)。x和y的取值范围归一化到[-1, 1]，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
 
     - 对于超出范围的坐标，会根据padding_mode进行不同处理：
   
@@ -75,7 +75,7 @@
       <td>输入</td>
       <td>表示反向传播的输入张量，对应公式描述中的`input`。shape仅支持四维，且需满足`x`和`grad`的N轴和C轴的值保持一致，`x`最后两维的维度值不可为0。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
-      <td>NHWC</td>
+      <td>ND</td>
     </tr>
     <tr>
       <td>grid</td>
@@ -87,14 +87,14 @@
     <tr>
       <td>interpolation_mode</td>
       <td>可选属性</td>
-      <td><ul><li>表示插值模式，对应公式描述中的`interpolation_mode`。支持bilinear（0：双线性插值）和nearest（1：最邻近插值）。</li><li>默认值为"bilinear"。</li></ul></td>
+      <td><ul><li>表示插值模式，对应公式描述中的`interpolation_mode`。支持"bilinear"（双线性插值）和"nearest"（最邻近插值）。</li><li>默认值为"bilinear"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>
     <tr>
       <td>padding_mode</td>
       <td>可选属性</td>
-      <td><ul><li>用于表示填充模式，对应公式描述中的`padding_mode`。支持0：zeros、1：border、2：reflection三种模式。</li><li>默认值为"zeros"。</li></ul></td>
+      <td><ul><li>用于表示填充模式，对应公式描述中的`padding_mode`。支持"zeros"、"border"、"reflection"三种模式。</li><li>默认值为"zeros"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>
@@ -110,14 +110,14 @@
       <td>输出</td>
       <td>表示反向传播的输出梯度，对应公式描述中的`dx`。数据类型、数据格式和shape与`x`的数据类型、数据格式和shape保持一致。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
-      <td>NHWC</td>
+      <td>ND</td>
     </tr>
     <tr>
       <td>dgrid</td>
       <td>输出</td>
       <td>表示grid梯度，对应公式描述中的`dgrid`。数据类型、数据格式和shape与`grid`的数据类型、数据格式和shape保持一致。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
-      <td>NHWC</td>
+      <td>ND</td>
     </tr>
   </tbody></table>
 
