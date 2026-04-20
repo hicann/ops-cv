@@ -240,9 +240,13 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
     auto outDesc = context_->GetOutputDesc(DIM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outDesc);
     ge::DataType dtypeOut = outDesc->GetDataType();
-    OP_CHECK_IF(
-        (dtypeOut != dtypeOri) || (dtypeGrads != dtypeOri),
-        OP_LOGE(context_->GetNodeName(), "all inputs and output must have the same dtype"), return ge::GRAPH_FAILED);
+    if ((dtypeOut != dtypeOri) || (dtypeGrads != dtypeOri)) {
+        std::string dtypeMsg = Ops::Base::ToString(dtypeGrads) + ", " + Ops::Base::ToString(dtypeOri) + " and " +
+                               Ops::Base::ToString(dtypeOut);
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(),
+            "Dtypes of input grads, original_image and output y must be same");
+        return ge::GRAPH_FAILED;
+    }
     auto ori = context_->GetInputShape(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, ori);
     gert::Shape gradsShape = grads->GetStorageShape();
@@ -254,12 +258,18 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
     OP_CHECK_NULL_WITH_CONTEXT(context_, y);
     gert::Shape yShape = y->GetStorageShape();
     int32_t yshapeDims = yShape.GetDimNum();
-    OP_CHECK_IF(
-        gradsDims != DIM_3 || yshapeDims != DIM_3,
-        OP_LOGE(context_->GetNodeName(), "rank of all input or output shape must be three"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        oriShape != yShape, OP_LOGE(context_->GetNodeName(), "the shape of original_image must be same as y shape"),
-        return ge::GRAPH_FAILED);
+    if (gradsDims != DIM_3 || yshapeDims != DIM_3) {
+        std::string dimMsg = std::to_string(gradsDims) + " and " + std::to_string(yshapeDims);
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
+            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "Shapes of grads and y must be 3D");
+        return ge::GRAPH_FAILED;
+    }
+    if (oriShape != yShape) {
+        std::string shapeMsg = Ops::Base::ToString(oriShape) + " and " + Ops::Base::ToString(yShape);
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context_->GetNodeName(), "original_image and y", shapeMsg.c_str(), "Shapes of original_image and y must be same");
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -278,20 +288,25 @@ ge::graphStatus ResizeLinearGradTiling::CheckParams()
     int64_t c = gradsShape.GetDim(DIM_1);
     int64_t oN = yShape.GetDim(DIM_0);
     int64_t oC = yShape.GetDim(DIM_1);
-    OP_CHECK_IF(
-        n != oN || c != oC,
-        OP_LOGE(
-            context_->GetNodeName(),
-            "the input N and C dimensions of grads shape must be equal to the output shape N and C"),
-        return ge::GRAPH_FAILED);
+    if (n != oN || c != oC) {
+        std::string shapeMsg = Ops::Base::ToString(gradsShape) + " and " + Ops::Base::ToString(yShape);
+        std::string reasonMsg = "N and C dims of grads and y must be same, "
+                                "where N is the size of axis 0, and C is the size of axis 1";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     OP_LOGI(context_->GetNodeName(), "n is %ld, c is %ld", n, c);
     ySize_ = gradsShape.GetShapeSize();
     xSize_ = yShape.GetShapeSize();
     OP_LOGI(context_->GetNodeName(), "xSize is %ld, ySize is %ld", xSize_, ySize_);
-    OP_CHECK_IF(
-        n <= 0 || c <= 0 || lenDesL_ <= 0 || lenSrcLOrUb_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "any dimension of the input or output must be greater than zero"),
-        return ge::GRAPH_FAILED);
+    if (n <= 0 || c <= 0 || lenDesL_ <= 0 || lenSrcLOrUb_ <= 0) {
+        std::string shapeMsg = Ops::Base::ToString(gradsShape) + " and " + Ops::Base::ToString(yShape);
+        std::string reasonMsg = "All shape dims of grads and y must be greater than zero";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 

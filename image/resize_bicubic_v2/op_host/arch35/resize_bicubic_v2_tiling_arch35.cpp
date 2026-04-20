@@ -50,6 +50,10 @@ public:
     void GetPlatformData(const ResizeBicubicV2CompileInfo* compileInfo);
     ge::graphStatus Compute();
     ge::graphStatus CheckParams();
+    ge::graphStatus CheckShapeDimValid();
+    ge::graphStatus CheckFormatValid();
+    ge::graphStatus ExtractDimsFromShape();
+    ge::graphStatus CheckDimsValid();
     ge::graphStatus GetInputSize();
     float ComputeScale(float scale, int64_t lenSrc, int64_t lenDes);
     ge::graphStatus SetTilingData();
@@ -114,32 +118,36 @@ ge::graphStatus ResizeBicubicV2Tiling::GetInputSize()
     auto size = context_->GetInputShape(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, size);
     gert::Shape sizeShape = size->GetStorageShape();
-    int32_t sizeDims = sizeShape.GetShapeSize();
-    OP_CHECK_IF(
-        sizeDims != DIM_2, OP_LOGE(context_->GetNodeName(), "size shape dims is not two"), return ge::GRAPH_FAILED);
+    int32_t sizeElms = sizeShape.GetShapeSize();
+    OP_CHECK_IF(sizeElms != DIM_2,
+        OP_LOGE_FOR_INVALID_SHAPESIZE(
+            context_->GetNodeName(), "size", std::to_string(sizeElms).c_str(), std::to_string(DIM_2).c_str()),
+        return ge::GRAPH_FAILED);
     const gert::Tensor* sizeTensor = context_->GetInputTensor(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, sizeTensor);
-    OP_CHECK_IF(
-        sizeTensor->GetDataType() != ge::DT_INT32, OP_LOGE(context_->GetNodeName(), "size dtype only support int32"),
+    OP_CHECK_IF(sizeTensor->GetDataType() != ge::DT_INT32,
+        OP_LOGE_FOR_INVALID_DTYPE(
+            context_->GetNodeName(), "size", Ops::Base::ToString(sizeTensor->GetDataType()).c_str(),
+            "int32"),
         return ge::GRAPH_FAILED);
     std::vector<int64_t> sizeList;
     sizeList.resize(DIM_2);
     auto* tensorData = sizeTensor->GetData<int32_t>();
     OP_CHECK_IF(
-        tensorData == nullptr, OP_LOGE(context_->GetNodeName(), "tensorData is nullptr"), return ge::GRAPH_FAILED);
+        tensorData == nullptr, OP_LOGE(context_->GetNodeName(), "GetData failed, tensorData is nullptr"), return ge::GRAPH_FAILED);
 
     for (int32_t i = 0; i < DIM_2; i++) {
         sizeList[i] = static_cast<int64_t>(*(tensorData + i));
     }
-    OP_CHECK_IF(
-        (sizeList[0] != lenDesH_) || (sizeList[1] != lenDesW_),
-        OP_LOGE(context_->GetNodeName(), "size not equal output h w"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        lenDesH_ <= 0 || lenDesW_ <= 0 || lenSrcH_ <= 0 || lenSrcW_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "input h w and output h w must greater than zero"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        lenC_ <= 0 || lenN_ <= 0, OP_LOGE(context_->GetNodeName(), "n and c must greater than zero"),
-        return ge::GRAPH_FAILED);
+    if ((sizeList[0] != lenDesH_) || (sizeList[1] != lenDesW_)) {
+        std::string sizeTensorDatas = "(" + std::to_string(sizeList[0]) + ", " + std::to_string(sizeList[1]) + ")";
+        std::string reasonMsg = "Input size value should be (H, W) - (" + std::to_string(lenDesH_) + ", " +
+                                std::to_string(lenDesW_) + "), where H and W are inferred from the 4D shape "
+                                "of output y based on its format: axes 2/3 for NCHW, or axes 1/2 for NHWC";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "size", sizeTensorDatas.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
     return ge::GRAPH_SUCCESS;
 }
 
@@ -153,13 +161,18 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDtype()
     yDtype_ = outputDesc->GetDataType();
     xDtypeSize_ = GetSizeByDataType(xDtype_);
     yDtypeSize_ = GetSizeByDataType(yDtype_);
-    OP_CHECK_IF(
-        xDtypeSize_ <= 0 || yDtypeSize_ <= 0, OP_LOGE(context_->GetNodeName(), "Input or output dtype is invalid."),
-        return ge::GRAPH_FAILED);
+    if (xDtypeSize_ <= 0 || yDtypeSize_ <= 0) {
+        std::string dtypeMsg =
+            Ops::Base::ToString(xDtype_) + " and " + Ops::Base::ToString(yDtype_);
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+            context_->GetNodeName(), "x and y", dtypeMsg.c_str(),
+            "Dtype size of input x and output y must be greater than zero");
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ResizeBicubicV2Tiling::CheckParams()
+ge::graphStatus ResizeBicubicV2Tiling::CheckShapeDimValid()
 {
     auto images = context_->GetInputShape(DIM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, images);
@@ -167,47 +180,137 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckParams()
     auto y = context_->GetOutputShape(DIM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, y);
     gert::Shape yShape = y->GetStorageShape();
-    OP_CHECK_IF(
-        imagesShape.GetDimNum() != DIM_4 || yShape.GetDimNum() != DIM_4,
-        OP_LOGE(context_->GetNodeName(), "images shape dims or y shape dims is not four"), return ge::GRAPH_FAILED);
+    if (imagesShape.GetDimNum() != DIM_4 || yShape.GetDimNum() != DIM_4) {
+        std::string dimMsg = std::to_string(imagesShape.GetDimNum()) + " and " + std::to_string(yShape.GetDimNum());
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
+            context_->GetNodeName(), "x and y", dimMsg.c_str(), "Input x and output y must both be 4D");
+        return ge::GRAPH_FAILED;
+    }
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeBicubicV2Tiling::CheckFormatValid()
+{
     auto inputDesc = context_->GetInputDesc(DIM_0);
     auto outputDesc = context_->GetOutputDesc(DIM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputDesc);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputDesc);
+
     dataFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(inputDesc->GetStorageFormat()));
     ge::Format outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outputDesc->GetStorageFormat()));
-    OP_CHECK_IF(
-        dataFormat != outFormat, OP_LOGE(context_->GetNodeName(), "Input format not same as out format"),
+    if (dataFormat != outFormat) {
+        std::string formatMsg = Ops::Base::ToString(dataFormat) + " and " + Ops::Base::ToString(outFormat);
+        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
+            context_->GetNodeName(), "x and y", formatMsg.c_str(), "Formats of input x and output y must be same");
+        return ge::GRAPH_FAILED;
+    }
+
+    OP_CHECK_IF(((dataFormat != ge::FORMAT_NCHW) && (dataFormat != ge::FORMAT_NHWC) && (dataFormat != ge::FORMAT_ND)),
+        OP_LOGE_FOR_INVALID_FORMAT(
+            context_->GetNodeName(), "x", Ops::Base::ToString(dataFormat).c_str(), "NCHW, NHWC and ND"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        ((dataFormat != ge::FORMAT_NCHW) && (dataFormat != ge::FORMAT_NHWC) && (dataFormat != ge::FORMAT_ND)),
-        OP_LOGE(context_->GetNodeName(), "Input or output format is invalid."), return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeBicubicV2Tiling::ExtractDimsFromShape()
+{
+    auto images = context_->GetInputShape(DIM_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, images);
+    gert::Shape imagesShape = images->GetStorageShape();
+    auto y = context_->GetOutputShape(DIM_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, y);
+    gert::Shape yShape = y->GetStorageShape();
+
     int64_t cDim = dataFormat == ge::FORMAT_NHWC ? DIM_3 : DIM_1;
     int64_t hDim = dataFormat == ge::FORMAT_NHWC ? DIM_1 : NUM_2;
     int64_t wDim = dataFormat == ge::FORMAT_NHWC ? NUM_2 : DIM_3;
+
     lenDesH_ = yShape.GetDim(hDim);
     lenDesW_ = yShape.GetDim(wDim);
     lenSrcH_ = imagesShape.GetDim(hDim);
     lenSrcW_ = imagesShape.GetDim(wDim);
     lenC_ = imagesShape.GetDim(cDim);
     lenN_ = imagesShape.GetDim(DIM_0);
+
+    ySize_ = yShape.GetShapeSize();
+    xSize_ = imagesShape.GetShapeSize();
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeBicubicV2Tiling::CheckDimsValid()
+{
+    auto images = context_->GetInputShape(DIM_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, images);
+    gert::Shape imagesShape = images->GetStorageShape();
+    auto y = context_->GetOutputShape(DIM_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, y);
+    gert::Shape yShape = y->GetStorageShape();
+    int64_t cDim = dataFormat == ge::FORMAT_NHWC ? DIM_3 : DIM_1;
+
+    if (lenDesH_ <= 0 || lenDesW_ <= 0 || lenSrcH_ <= 0 || lenSrcW_ <= 0) {
+        std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
+        std::string reasonMsg = "Both input and output must have H and W axis sizes greater than 0, "
+                                "where H and W are inferred from the 4D shapes of input x and output y "
+                                "based on their formats: axes 2/3 for NCHW, or axes 1/2 for NHWC";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
+    if (lenC_ <= 0 || lenN_ <= 0) {
+        std::string reasonMsg = "Both C and N axis sizes of input x must be greater than 0, "
+                                "where C is inferred from the 4D shape of input x based on its format "
+                                "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
+            context_->GetNodeName(), "x", Ops::Base::ToString(imagesShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
+    if (lenN_ != yShape.GetDim(DIM_0) || lenC_ != yShape.GetDim(cDim)) {
+        std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
+        std::string reasonMsg = "Both C and N axis sizes of input x and output y must be same, "
+                                "where C is inferred from the 4D shape of x/y combined with their format "
+                                "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0 of x/y";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeBicubicV2Tiling::CheckParams()
+{
     OP_CHECK_IF(
-        lenN_ != yShape.GetDim(DIM_0) || lenC_ != yShape.GetDim(cDim),
-        OP_LOGE(context_->GetNodeName(), "n or c is not equal"), return ge::GRAPH_FAILED);
+        (CheckShapeDimValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckShapeDimValid failed."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(
+        (CheckFormatValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckFormatValid failed."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(
+        (ExtractDimsFromShape() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "ExtractDimsFromShape failed."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(
+        (CheckDimsValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckDimsValid failed."),
+        return ge::GRAPH_FAILED);
+
     isNchw_ = DIM_1;
     if ((dataFormat == ge::FORMAT_NHWC) && (lenDesH_ != lenSrcH_ && lenDesW_ != lenSrcW_)) {
         isNchw_ = DIM_0;
     }
-    ySize_ = yShape.GetShapeSize();
-    xSize_ = imagesShape.GetShapeSize();
+
     OP_CHECK_IF(
         GetInputSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "get input size failed"),
         return ge::GRAPH_FAILED);
 
-    if (CheckDtype() != ge::GRAPH_SUCCESS) {
-        return ge::GRAPH_FAILED;
-    }
-    // Set N,C,H,W dim length
+    OP_CHECK_IF(
+        CheckDtype() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "check dtype failed"),
+        return ge::GRAPH_FAILED);
+
     SetDimsByFormat();
     return ge::GRAPH_SUCCESS;
 }
@@ -466,8 +569,9 @@ ge::graphStatus ResizeBicubicV2Tiling::Compute()
     OP_CHECK_NULL_WITH_CONTEXT(context_, scales);
     int64_t scalesNum = scales->GetSize();
     const float* scalesData = static_cast<const float*>(scales->GetData());
-    OP_CHECK_IF(
-        scalesNum != DIM_2, OP_LOGE(context_->GetNodeName(), "the num of scales is %ld, invalid, must be 2", scalesNum),
+    OP_CHECK_IF(scalesNum != DIM_2,
+        OP_LOGE_WITH_INVALID_ATTR_SIZE(
+            context_->GetNodeName(), "scales", std::to_string(scalesNum).c_str(), std::to_string(DIM_2).c_str()),
         return ge::GRAPH_FAILED);
 
     scaleH_ = scalesData[DIM_0];

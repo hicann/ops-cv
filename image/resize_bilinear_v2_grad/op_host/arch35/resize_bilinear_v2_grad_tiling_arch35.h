@@ -76,6 +76,8 @@ private:
     ge::graphStatus CheckDtypeValid();
     ge::graphStatus CheckFormatValid();
     ge::graphStatus CheckShapeValid();
+    ge::graphStatus CheckShapeDimValid();
+    ge::graphStatus CheckAxesValid();
 
     void SetScales(bool isDetermine);
     void SetFactors();

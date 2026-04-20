@@ -153,21 +153,26 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::CheckFormatMatchDims()
 {
     OP_CHECK_IF(
         alignCorners_ && halfPixelCenters_,
-        OP_LOGE(context_->GetNodeName(), "alignCorners and halfPixelCenters cannot both be True."),
+        OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(
+            context_->GetNodeName(), "align_corners and half_pixel_centers", "true and true",
+            "Attrs align_corners and half_pixel_centers cannot both be True"),
         return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        xShape_.GetDimNum() != DIM_LEN_4D || yShape_.GetDimNum() != DIM_LEN_4D,
-        OP_LOGE(
-            context_->GetNodeName(), "format dismatch dims. format:%s, shape:%s.", Ops::Base::ToString(format_).c_str(),
-            Ops::Base::ToString(xShape_).c_str()),
-        return ge::GRAPH_FAILED);
+    if (xShape_.GetDimNum() != DIM_LEN_4D || yShape_.GetDimNum() != DIM_LEN_4D) {
+        std::string dimMsg = std::to_string(xShape_.GetDimNum()) + " and " + std::to_string(yShape_.GetDimNum());
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(),
+            "Input x and output y dims must be 4D");
+        return ge::GRAPH_FAILED;
+    }
 
     const int64_t inputSize = xShape_.GetShapeSize();
     const int64_t outSize = yShape_.GetShapeSize();
-    OP_CHECK_IF(
-        inputSize == 0 || outSize == 0, OP_LOGE(context_->GetNodeName(), "input or output size is zero"),
-        return ge::GRAPH_FAILED);
+    if (inputSize == 0 || outSize == 0) {
+        std::string shapesizeMsg = std::to_string(inputSize) + " and " + std::to_string(outSize);
+        OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(
+            context_->GetNodeName(), "x and y", shapesizeMsg.c_str(), "Input x and output y cannot be empty");
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -724,8 +729,10 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::SetScales()
         int64_t scales_num = scales->GetSize();
         const float* scales_data = reinterpret_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scales_data);
-        OP_CHECK_IF(
-            scales_num != SCALES_NUM, OP_LOGE(context_->GetNodeName(), "Scales num %ld is invalid.", scales_num),
+        OP_CHECK_IF(scales_num != SCALES_NUM,
+            OP_LOGE_WITH_INVALID_ATTR_SIZE(
+                context_->GetNodeName(), "scales", std::to_string(scales_num).c_str(),
+                std::to_string(SCALES_NUM).c_str()),
             return ge::GRAPH_FAILED);
         OP_LOGI(
             context_->GetNodeName(), "ResizeBilinearV2AscendCTilingImpl init: num[%ld]scales(%f %f)", scales_num,
@@ -752,17 +759,25 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::CheckDtypeAndFormat()
     dtypeY_ = outputYDesc->GetDataType();
     dtypeSizeX_ = GetSizeByDataType(dtypeX_);
     dtypeSizeY_ = GetSizeByDataType(dtypeY_);
-    OP_CHECK_IF(
-        dtypeSizeX_ <= 0 || dtypeSizeY_ <= 0, OP_LOGE(context_->GetNodeName(), "Input or output dtype is invalid."),
-        return ge::GRAPH_FAILED);
+    if (dtypeSizeX_ <= 0 || dtypeSizeY_ <= 0) {
+        std::string dtypeMsg = Ops::Base::ToString(dtypeX_) + " and " + Ops::Base::ToString(dtypeY_);
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+            context_->GetNodeName(), "x and y", dtypeMsg.c_str(), "Dtype sizes of input x and output y should be greater than zero");
+        return ge::GRAPH_FAILED;
+    }
 
     format_ = static_cast<ge::Format>(ge::GetPrimaryFormat(inputXDesc->GetStorageFormat()));
-    OP_CHECK_IF(
-        format_ != static_cast<ge::Format>(ge::GetPrimaryFormat(outputYDesc->GetStorageFormat())),
-        OP_LOGE(context_->GetNodeName(), "Input or output format is invalid."), return ge::GRAPH_FAILED);
+    auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outputYDesc->GetStorageFormat()));
+    if (format_ != outFormat) {
+        std::string formatMsg = Ops::Base::ToString(format_) + " and " + Ops::Base::ToString(outFormat);
+        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
+            context_->GetNodeName(), "x and y", formatMsg.c_str(), "Formats of input x and output y must be same");
+        return ge::GRAPH_FAILED;
+    }
     OP_CHECK_IF(
         (format_ != ge::FORMAT_NCHW && format_ != ge::FORMAT_NHWC),
-        OP_LOGE(context_->GetNodeName(), "Input or output format is invalid."), return ge::GRAPH_FAILED);
+        OP_LOGE_FOR_INVALID_FORMAT(context_->GetNodeName(), "x", Ops::Base::ToString(format_).c_str(), "NCHW and NHWC"),
+        return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }

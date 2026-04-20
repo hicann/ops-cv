@@ -146,6 +146,8 @@ protected:
     ge::graphStatus CheckDtypeValid();
     ge::graphStatus CheckFormatValid();
     ge::graphStatus CheckShapeValid();
+    ge::graphStatus CheckShapeDimValid();
+    ge::graphStatus CheckAxesValid();
     ge::graphStatus GetAttrInfo();
     void SetScales();
     bool IsUseIdx32() const;

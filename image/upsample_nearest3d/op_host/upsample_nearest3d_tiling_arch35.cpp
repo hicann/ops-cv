@@ -78,7 +78,11 @@ public:
 
 private:
     ge::graphStatus CheckInputParams();
+    ge::graphStatus CheckDtypeAndFormat();
+    ge::graphStatus GetAndCheckShapes();
     ge::graphStatus CheckInputShapeAndAttr();
+    ge::graphStatus CheckNCAxesConsistency();
+    ge::graphStatus GetAndCheckAttrs();
     void ComputeScales(float scaleD, float scaleH, float scaleW);
     void CalTilingData();
     void ComputeDataCopy();
@@ -89,6 +93,8 @@ private:
     BaseTilingData baseTiling_;
     gert::TilingContext *context_ = nullptr;
     UpsampleNearest3dRegBaseTilingData *tilingData_{ nullptr };
+    gert::Shape inputShape_;
+    gert::Shape outShape_;
 };
 void UpsampleNearest3dRegbaseTiling::ComputeDataCopy()
 {
@@ -151,45 +157,76 @@ void UpsampleNearest3dRegbaseTiling::CalTilingData()
     return;
 }
 
-ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputParams()
+ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckDtypeAndFormat()
 {
     auto input = context_->GetInputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, input);
     auto inputDtype = input->GetDataType();
     OP_CHECK_IF(inputDtypeList.count(inputDtype) == 0,
-        OP_LOGE(context_, "input dtype is not support, but input dtype is %d", inputDtype), return ge::GRAPH_FAILED);
+        OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeName(), "x", Ops::Base::ToString(inputDtype).c_str(),
+            "uint8, float, float16 and bfloat16"), return ge::GRAPH_FAILED);
     baseTiling_.dtypeSize = inputDtypeList.find(inputDtype)->second;
     int32_t ubBlockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context_));
     baseTiling_.oneBlockNum = ubBlockSize / baseTiling_.dtypeSize;
     auto outDescPtr0 = context_->GetOutputDesc(0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outDescPtr0);
     auto outDtype = outDescPtr0->GetDataType();
-    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(context_, "input and output dtype must be same"),
-        return ge::GRAPH_FAILED);
+    if (outDtype != inputDtype) {
+        std::string dtypeMsg = Ops::Base::ToString(inputDtype) + " and " + Ops::Base::ToString(outDtype);
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+            context_->GetNodeName(), "x and y", dtypeMsg.c_str(), "Dtypes of input x and output y must be same");
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckShapes()
+{
     auto inputX = context_->GetInputShape(0);
     auto outY = context_->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outY);
-    auto inputShape = EnsureNotScalar(inputX->GetStorageShape());
-    auto outShape = EnsureNotScalar(outY->GetStorageShape());
-    OP_CHECK_IF((inputShape.GetDimNum() != INPUT_DIMS) || (outShape.GetDimNum() != INPUT_DIMS),
-        OP_LOGE(context_, "The dim of input0 or output0 should be equal to 5."), return ge::GRAPH_FAILED);
-    int64_t inputSize = inputShape.GetShapeSize();
-    int64_t outputSize = outShape.GetShapeSize();
-    baseTiling_.dimN = inputShape.GetDim(CONST_0);
-    baseTiling_.dimC = inputShape.GetDim(CONST_1);
-    baseTiling_.inD = inputShape.GetDim(CONST_2);
-    baseTiling_.inH = inputShape.GetDim(CONST_3);
-    baseTiling_.inW = inputShape.GetDim(CONST_4);
-    baseTiling_.outD = outShape.GetDim(CONST_2);
-    baseTiling_.outH = outShape.GetDim(CONST_3);
-    baseTiling_.outW = outShape.GetDim(CONST_4);
+    inputShape_ = EnsureNotScalar(inputX->GetStorageShape());
+    outShape_ = EnsureNotScalar(outY->GetStorageShape());
+    if ((inputShape_.GetDimNum() != INPUT_DIMS) || (outShape_.GetDimNum() != INPUT_DIMS)) {
+        std::string dimMsg = std::to_string(inputShape_.GetDimNum()) + " and " + std::to_string(outShape_.GetDimNum());
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
+            context_->GetNodeName(), "x and y", dimMsg.c_str(), "Shapes of input x and output y must be 5D");
+        return ge::GRAPH_FAILED;
+    }
+    int64_t inputSize = inputShape_.GetShapeSize();
+    int64_t outputSize = outShape_.GetShapeSize();
+    baseTiling_.dimN = inputShape_.GetDim(CONST_0);
+    baseTiling_.dimC = inputShape_.GetDim(CONST_1);
+    baseTiling_.inD = inputShape_.GetDim(CONST_2);
+    baseTiling_.inH = inputShape_.GetDim(CONST_3);
+    baseTiling_.inW = inputShape_.GetDim(CONST_4);
+    baseTiling_.outD = outShape_.GetDim(CONST_2);
+    baseTiling_.outH = outShape_.GetDim(CONST_3);
+    baseTiling_.outW = outShape_.GetDim(CONST_4);
     baseTiling_.outSize = outputSize;
-    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(context_, "not support empty input or output"),
-        ge::GRAPH_FAILED);
+    if (inputSize == 0 || outputSize == 0) {
+        std::string shapeMsg = Ops::Base::ToString(inputShape_) + " and " + Ops::Base::ToString(outShape_);
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context_->GetNodeName(), "x and y", shapeMsg.c_str(), "Input x and output y cannot be empty tensors");
+        return ge::GRAPH_FAILED;
+    }
     int64_t uint32Max = static_cast<int64_t>(std::numeric_limits<uint32_t>::max());
     int32_t isUint32 = static_cast<int32_t>((inputSize <= uint32Max) && (outputSize <= uint32Max));
     baseTiling_.isUint32 = isUint32;
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputParams()
+{
+    OP_CHECK_IF(
+        (CheckDtypeAndFormat() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckDtypeAndFormat failed."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(
+        (GetAndCheckShapes() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "GetAndCheckShapes failed."),
+        return ge::GRAPH_FAILED);
+
     return ge::GRAPH_SUCCESS;
 }
 
@@ -210,32 +247,42 @@ void UpsampleNearest3dRegbaseTiling::ComputeScales(float scaleD, float scaleH, f
     return;
 }
 
-ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputShapeAndAttr()
+ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckNCAxesConsistency()
 {
-    auto outDescPtr0 = context_->GetOutputShape(0);
-    auto outShape = outDescPtr0->GetStorageShape();
-    int64_t outN = outShape.GetDim(CONST_0);
-    int64_t outC = outShape.GetDim(CONST_1);
-    OP_CHECK_IF((outN != baseTiling_.dimN) || (outC != baseTiling_.dimC),
-        OP_LOGE(context_, "The N and C dimensions of the output need to be same as input."),
-        return ge::GRAPH_FAILED);
-    auto *attrs = context_->GetAttrs();
-    OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_, "the attrs is nullptr"), return ge::GRAPH_FAILED);
+    int64_t outN = outShape_.GetDim(CONST_0);
+    int64_t outC = outShape_.GetDim(CONST_1);
+    if ((outN != baseTiling_.dimN) || (outC != baseTiling_.dimC)) {
+        std::string shapeMsg = Ops::Base::ToString(inputShape_) + " and " + Ops::Base::ToString(outShape_);
+        std::string reasonMsg = "N and C dims of x and y must be same, "
+                                "where N is the size of axis 0, and C is the size of axis 1";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckAttrs()
+{
+    auto attrs = context_->GetAttrs();
+    OP_CHECK_NULL_WITH_CONTEXT(context_, attrs);
     auto outputSize = attrs->GetAttrPointer<gert::ContinuousVector>(CONST_0);
-    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(context_, "outputSize is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, outputSize);
     const float *scaleDPtr = attrs->GetAttrPointer<float>(1);
-    OP_CHECK_IF(scaleDPtr == nullptr, OP_LOGE(context_, "scaleDPtr is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, scaleDPtr);
     float scaleD = *scaleDPtr;
     const float *scaleHPtr = attrs->GetAttrPointer<float>(CONST_2);
-    OP_CHECK_IF(scaleHPtr == nullptr, OP_LOGE(context_, "scaleHPtr is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, scaleHPtr);
     float scaleH = *scaleHPtr;
     const float *scaleWPtr = attrs->GetAttrPointer<float>(CONST_3);
-    OP_CHECK_IF(scaleWPtr == nullptr, OP_LOGE(context_, "scaleWPtr is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, scaleWPtr);
     float scaleW = *scaleWPtr;
     OP_LOGI(context_, "scaleD %f, scaleH %f, scaleW %f", scaleD, scaleH, scaleW);
     int64_t outSizeNum = outputSize->GetSize();
     OP_CHECK_IF(outSizeNum > 0 && (outSizeNum != CONST_3),
-        OP_LOGE(context_, "the num of outputSize is %ld, invalid, must be 3", outSizeNum), return ge::GRAPH_FAILED);
+        OP_LOGE_WITH_INVALID_ATTR_SIZE(
+            context_->GetNodeName(), "output_size", std::to_string(outSizeNum).c_str(), "0 or 3"),
+        return ge::GRAPH_FAILED);
     const int64_t *outData = reinterpret_cast<const int64_t *>(outputSize->GetData());
     int64_t outD = baseTiling_.outD;
     int64_t outH = baseTiling_.outH;
@@ -245,10 +292,28 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputShapeAndAttr()
         outH = outData[CONST_1];
         outW = outData[CONST_2];
     }
-    OP_CHECK_IF((baseTiling_.outD != outD) || (baseTiling_.outH != outH) || (baseTiling_.outW != outW),
-        OP_LOGE(context_, "The output D H W dimensions must be the same as the attribute outputSize."),
-        return ge::GRAPH_FAILED);
+    if ((baseTiling_.outD != outD) || (baseTiling_.outH != outH) || (baseTiling_.outW != outW)) {
+        std::string reasonMsg =
+            "The D/H/W axis sizes of output y (its axis 2/3/4) must be the same as the attribute output_size's value ("
+            + std::to_string(outD) + ", " + std::to_string(outH) + ", " + std::to_string(outW) + ")";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
+            context_->GetNodeName(), "y", Ops::Base::ToString(outShape_).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     ComputeScales(scaleD, scaleH, scaleW);
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputShapeAndAttr()
+{
+    OP_CHECK_IF(
+        (CheckNCAxesConsistency() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckNCAxesConsistency failed."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(
+        (GetAndCheckAttrs() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "GetAndCheckAttrs failed."),
+        return ge::GRAPH_FAILED);
+
     return ge::GRAPH_SUCCESS;
 }
 

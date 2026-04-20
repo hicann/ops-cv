@@ -98,82 +98,140 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckDtypeValid()
     OP_CHECK_IF(
         inputInfo_.gradsDtype != ge::DT_FLOAT && inputInfo_.gradsDtype != ge::DT_FLOAT16 &&
             inputInfo_.gradsDtype != ge::DT_BF16,
-        OP_LOGE(context_->GetNodeName(), "Data type of grads must be FLOAT or FLOAT16 or BFLOAT16."),
+        OP_LOGE_FOR_INVALID_DTYPE(
+            context_->GetNodeName(), "grads", Ops::Base::ToString(inputInfo_.gradsDtype).c_str(),
+            "FLOAT, FLOAT16 and BFLOAT16"),
         return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        inputInfo_.originalImageDtype != inputInfo_.gradsDtype || inputInfo_.yDtype != inputInfo_.gradsDtype,
-        OP_LOGE(context_->GetNodeName(), "Data types of grads, original_image and y must be same."),
-        return ge::GRAPH_FAILED);
+    if (inputInfo_.originalImageDtype != inputInfo_.gradsDtype || inputInfo_.yDtype != inputInfo_.gradsDtype) {
+        std::string dtypeMsg = Ops::Base::ToString(inputInfo_.gradsDtype) + ", " +
+                               Ops::Base::ToString(inputInfo_.originalImageDtype) + " and " +
+                               Ops::Base::ToString(inputInfo_.yDtype);
+        std::string reasonMsg = "Dtypes of input grads, original_image and output y must be same";
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+            context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
 
     calcInfo_.gradsDtypeSize = GetSizeByDataType(inputInfo_.gradsDtype);
     calcInfo_.yDtypeSize = GetSizeByDataType(inputInfo_.yDtype);
-    OP_CHECK_IF(
-        calcInfo_.gradsDtypeSize <= 0 || calcInfo_.yDtypeSize <= 0,
-        OP_LOGE(context_->GetNodeName(), "grads or y dtype size is invalid."), return ge::GRAPH_FAILED);
+    if (calcInfo_.gradsDtypeSize <= 0 || calcInfo_.yDtypeSize <= 0) {
+        std::string dtypeMsg = Ops::Base::ToString(inputInfo_.gradsDtype) + " and " +
+                               Ops::Base::ToString(inputInfo_.yDtype);
+        std::string reasonMsg = "Dtype sizes of input grads and output y should be greater than zero";
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+            context_->GetNodeName(), "grads and y", dtypeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
 
     return ge::GRAPH_SUCCESS;
 }
 
 ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckFormatValid()
 {
-    OP_CHECK_IF(
-        inputInfo_.gradsFormat != ge::FORMAT_NCHW && inputInfo_.gradsFormat != ge::FORMAT_NHWC && inputInfo_.gradsFormat != ge::FORMAT_ND,
-        OP_LOGE(context_->GetNodeName(), "grads format must be NCHW or NHWC or ND"), return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(
-        inputInfo_.originalImageFormat != inputInfo_.gradsFormat ||
-            inputInfo_.originalImageFormat != inputInfo_.yFormat,
-        OP_LOGE(context_->GetNodeName(), "Formats of grads, original_image and y must be same."),
+    OP_CHECK_IF(inputInfo_.gradsFormat != ge::FORMAT_NCHW && inputInfo_.gradsFormat != ge::FORMAT_NHWC &&
+            inputInfo_.gradsFormat != ge::FORMAT_ND,
+        OP_LOGE_FOR_INVALID_FORMAT(
+            context_->GetNodeName(), "grads", Ops::Base::ToString(inputInfo_.gradsFormat).c_str(), "NCHW, NHWC and ND"),
         return ge::GRAPH_FAILED);
 
+    if (inputInfo_.originalImageFormat != inputInfo_.gradsFormat || inputInfo_.originalImageFormat != inputInfo_.yFormat) {
+        std::string formatMsg = Ops::Base::ToString(inputInfo_.gradsFormat) + ", " +
+                                Ops::Base::ToString(inputInfo_.originalImageFormat) + " and " +
+                                Ops::Base::ToString(inputInfo_.yFormat);
+        std::string reasonMsg = "Formats of input grads, original_image and output y must be same";
+        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
+            context_->GetNodeName(), "grads, original_image and y", formatMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
     inputInfo_.format = inputInfo_.yFormat == ge::FORMAT_NHWC ? 1 : 0;
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckShapeDimValid()
+{
+    if (inputInfo_.gradsShape.GetDimNum() != NUM_4 || inputInfo_.yShape.GetDimNum() != NUM_4) {
+        std::string dimMsg =
+            std::to_string(inputInfo_.gradsShape.GetDimNum()) + " and " + std::to_string(inputInfo_.yShape.GetDimNum());
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
+            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "Shapes of grads and y must be 4D");
+        return ge::GRAPH_FAILED;
+    }
+
+    if (inputInfo_.originalImageShape != inputInfo_.yShape) {
+        std::string shapeMsg =
+            Ops::Base::ToString(inputInfo_.originalImageShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "original_image and y", shapeMsg.c_str(),
+            "Shapes of original_image and y must be same");
+        return ge::GRAPH_FAILED;
+    }
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckAxesValid()
+{
+    if (inputInfo_.gradsShape.GetDim(NUM_0) != inputInfo_.yShape.GetDim(NUM_0)) {
+        std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
+            "The N axis sizes of input grads and output y (their axis 0) must be equal");
+        return ge::GRAPH_FAILED;
+    }
+    inputInfo_.lenN = inputInfo_.gradsShape.GetDim(NUM_0);
+
+    bool formatIsNHWC = false;
+    if (inputInfo_.gradsFormat == ge::FORMAT_NCHW || inputInfo_.gradsFormat == ge::FORMAT_ND) {
+        if (inputInfo_.gradsShape.GetDim(NUM_1) != inputInfo_.yShape.GetDim(NUM_1)) {
+            std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
+            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
+                "The C axis sizes of input grads and output y (their axis 1 when their formats are NCHW or ND) must be equal");
+            return ge::GRAPH_FAILED;
+        }
+    } else if (inputInfo_.gradsFormat == ge::FORMAT_NHWC) {
+        if (inputInfo_.gradsShape.GetDim(NUM_3) != inputInfo_.yShape.GetDim(NUM_3)) {
+            std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
+            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
+                "The C axis sizes of input grads and output y (their axis 3 when their formats are NHWC) must be equal");
+            return ge::GRAPH_FAILED;
+        }
+        formatIsNHWC = true;
+    }
+    inputInfo_.lenC = inputInfo_.gradsShape.GetDim(formatIsNHWC ? NUM_3 : NUM_1);
+    inputInfo_.lenSrcH = inputInfo_.yShape.GetDim(formatIsNHWC ? NUM_1 : NUM_2);
+    inputInfo_.lenSrcW = inputInfo_.yShape.GetDim(formatIsNHWC ? NUM_2 : NUM_3);
+    inputInfo_.lenDstH = inputInfo_.gradsShape.GetDim(formatIsNHWC ? NUM_1 : NUM_2);
+    inputInfo_.lenDstW = inputInfo_.gradsShape.GetDim(formatIsNHWC ? NUM_2 : NUM_3);
+
+    if (inputInfo_.lenN <= 0 || inputInfo_.lenC <= 0) {
+        std::string reasonMsg = "N and C dims of grads and y must be greater than zero, "
+                                "where C is inferred from the 4D shape of grads based on its format "
+                                "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
+            context_->GetNodeName(), "grads", Ops::Base::ToString(inputInfo_.gradsShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
+    if (inputInfo_.lenSrcH <= 0 || inputInfo_.lenSrcW <= 0 || inputInfo_.lenDstH <= 0 || inputInfo_.lenDstW <= 0) {
+        std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
+        std::string reasonMsg = "Both input and output must have H and W axis sizes greater than 0, "
+                                "where H and W are inferred from the 4D shapes of input grads and output y "
+                                "based on their formats: axes 2/3 for NCHW, or axes 1/2 for NHWC";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
     return ge::GRAPH_SUCCESS;
 }
 
 ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckShapeValid()
 {
     OP_CHECK_IF(
-        inputInfo_.gradsShape.GetDimNum() != NUM_4 || inputInfo_.yShape.GetDimNum() != NUM_4,
-        OP_LOGE(context_->GetNodeName(), "Shapes of grads and y must be 4D."), return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(
-        inputInfo_.originalImageShape != inputInfo_.yShape,
-        OP_LOGE(context_->GetNodeName(), "Shapes of original_image and y must be same."), return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(
-        inputInfo_.gradsShape.GetDim(NUM_0) != inputInfo_.yShape.GetDim(NUM_0),
-        OP_LOGE(context_->GetNodeName(), "N dims of grads and y must be same."), return ge::GRAPH_FAILED);
-    inputInfo_.lenN = inputInfo_.gradsShape.GetDim(NUM_0);
-
-    if (inputInfo_.gradsFormat == ge::FORMAT_NCHW || inputInfo_.gradsFormat == ge::FORMAT_ND) {
-        OP_CHECK_IF(
-            inputInfo_.gradsShape.GetDim(NUM_1) != inputInfo_.yShape.GetDim(NUM_1),
-            OP_LOGE(context_->GetNodeName(), "C dims of grads and y must be same."), return ge::GRAPH_FAILED);
-        inputInfo_.lenC = inputInfo_.gradsShape.GetDim(NUM_1);
-        inputInfo_.lenSrcH = inputInfo_.yShape.GetDim(NUM_2);
-        inputInfo_.lenSrcW = inputInfo_.yShape.GetDim(NUM_3);
-        inputInfo_.lenDstH = inputInfo_.gradsShape.GetDim(NUM_2);
-        inputInfo_.lenDstW = inputInfo_.gradsShape.GetDim(NUM_3);
-    } else if (inputInfo_.gradsFormat == ge::FORMAT_NHWC) {
-        OP_CHECK_IF(
-            inputInfo_.gradsShape.GetDim(NUM_3) != inputInfo_.yShape.GetDim(NUM_3),
-            OP_LOGE(context_->GetNodeName(), "C dims of grads and y must be same."), return ge::GRAPH_FAILED);
-        inputInfo_.lenSrcH = inputInfo_.yShape.GetDim(NUM_1);
-        inputInfo_.lenSrcW = inputInfo_.yShape.GetDim(NUM_2);
-        inputInfo_.lenDstH = inputInfo_.gradsShape.GetDim(NUM_1);
-        inputInfo_.lenDstW = inputInfo_.gradsShape.GetDim(NUM_2);
-        inputInfo_.lenC = inputInfo_.gradsShape.GetDim(NUM_3);
-    }
-
-    OP_CHECK_IF(
-        inputInfo_.lenN <= 0 || inputInfo_.lenC <= 0,
-        OP_LOGE(context_->GetNodeName(), "N and C dims of grads and y must be greater than 0."),
+        (CheckShapeDimValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckShapeDimValid failed."),
         return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(
-        inputInfo_.lenSrcH <= 0 || inputInfo_.lenSrcW <= 0 || inputInfo_.lenDstH <= 0 || inputInfo_.lenDstW <= 0,
-        OP_LOGE(context_->GetNodeName(), "H and W dims of grads and y must be greater than 0."),
+        (CheckAxesValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckAxesValid failed."),
         return ge::GRAPH_FAILED);
 
     calcInfo_.gradsShapeSize = inputInfo_.gradsShape.GetShapeSize();
@@ -194,7 +252,9 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetAttrInfo()
         auto scales = attrs->GetAttrPointer<gert::ContinuousVector>(NUM_1);
         OP_CHECK_IF(
             scales->GetSize() != NUM_2,
-            OP_LOGE(context_->GetNodeName(), "Scales size %ld is invalid.", scales->GetSize()),
+            OP_LOGE_WITH_INVALID_ATTR_SIZE(
+                context_->GetNodeName(), "scales", std::to_string(scales->GetSize()).c_str(),
+                std::to_string(NUM_2).c_str()),
             return ge::GRAPH_FAILED);
         const float* scalesData = static_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scalesData);

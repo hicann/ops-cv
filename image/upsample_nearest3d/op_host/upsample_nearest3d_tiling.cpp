@@ -152,54 +152,52 @@ void UpsampleNearest3dTiling::getWorkSpace()
 
 inline bool UpsampleNearest3dTiling::CheckMaxSizes(const gert::TilingContext* context)
 {
-    OP_CHECK_IF(
-        inputShape.GetDim(0) > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of N should not exceed %d, but got size of N (%ld) ", INT32_MAX,
-            inputShape.GetDim(0)),
-        return false);
-    OP_CHECK_IF(
-        inputShape.GetDim(1) > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of C should not exceed %d, but got size of C (%ld) ", INT32_MAX,
-            inputShape.GetDim(1)),
-        return false);
-    OP_CHECK_IF(
-        inputShapes[0] > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of input_d should not exceed %d, but got size of input_d (%ld) ",
-            INT32_MAX, inputShapes[0]),
-        return false);
-    OP_CHECK_IF(
-        inputShapes[1] > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of input_h should not exceed %d, but got size of input_h (%ld) ",
-            INT32_MAX, inputShapes[1]),
-        return false);
-    OP_CHECK_IF(
-        inputShapes[2] > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of input_w should not exceed %d, but got size of input_w (%ld) ",
-            INT32_MAX, inputShapes[2]),
-        return false);
-    OP_CHECK_IF(
-        outputShapes[0] > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of output_d should not exceed %d, but got size of output_d (%ld) ",
-            INT32_MAX, outputShapes[0]),
-        return false);
-    OP_CHECK_IF(
-        outputShapes[1] > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of output_h should not exceed %d, but got size of output_h (%ld) ",
-            INT32_MAX, outputShapes[1]),
-        return false);
-    OP_CHECK_IF(
-        outputShapes[2] > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(), "The size of output_w should not exceed %d, but got size of output_w (%ld) ",
-            INT32_MAX, outputShapes[2]),
-        return false);
+    if (inputShape.GetDim(0) > INT32_MAX) {
+        std::string reasonMsg = "The N axis size of x (its axis 0) must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (inputShape.GetDim(1) > INT32_MAX) {
+        std::string reasonMsg = "The C axis size of x (its axis 1) must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (inputShapes[0] > INT32_MAX) {
+        std::string reasonMsg = "The D axis size of x (its axis 2) must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (inputShapes[1] > INT32_MAX) {
+        std::string reasonMsg = "The H axis size of x (its axis 3) must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (inputShapes[2] > INT32_MAX) {
+        std::string reasonMsg = "The W axis size of x (its axis 4) must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (outputShapes[0] > INT32_MAX) {
+        std::string reasonMsg = "The D axis size of output (specified by value #0 of attribute output_size) "
+                                "must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+            context->GetNodeName(), "output_size", std::to_string(outputShapes[0]).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (outputShapes[1] > INT32_MAX) {
+        std::string reasonMsg = "The H axis size of output (specified by value #1 of attribute output_size) "
+                                "must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+            context->GetNodeName(), "output_size", std::to_string(outputShapes[1]).c_str(), reasonMsg.c_str());
+        return false;
+    }
+    if (outputShapes[2] > INT32_MAX) {
+        std::string reasonMsg = "The W axis size of output (specified by value #2 of attribute output_size) "
+                                "must be less than or equal to INT32_MAX";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+            context->GetNodeName(), "output_size", std::to_string(outputShapes[2]).c_str(), reasonMsg.c_str());
+        return false;
+    }
     return true;
 }
 

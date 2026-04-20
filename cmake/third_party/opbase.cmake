@@ -7,7 +7,8 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ----------------------------------------------------------------------------
-set(OPBASE_TAG_ID 929902e577bb809a377a6ab17cb7b00a4dfddc1a)
+set(OPBASE_TAG_ID 457c785379dbf4f830f097bcba5be8df030e3b35)
+
 if(EXISTS "${PROJECT_SOURCE_DIR}/../../ops-base")
   get_filename_component(OPBASE_SOURCE_PATH
                          ${PROJECT_SOURCE_DIR}/../../ops-base REALPATH)
@@ -16,10 +17,17 @@ elseif(EXISTS "${CANN_3RD_LIB_PATH}/opbase")
   get_filename_component(OPBASE_SOURCE_PATH
                          ${CANN_3RD_LIB_PATH}/opbase REALPATH)
   message(STATUS "Find opbase source dir: ${OPBASE_SOURCE_PATH}")
+
   execute_process(
- 	     COMMAND git checkout ${OPBASE_TAG_ID}
- 	     WORKING_DIRECTORY ${OPBASE_SOURCE_PATH}
- 	   )
+    COMMAND git fetch origin ${OPBASE_TAG_ID}
+    WORKING_DIRECTORY ${OPBASE_SOURCE_PATH}
+    ERROR_QUIET
+  )
+
+  execute_process(
+    COMMAND git checkout ${OPBASE_TAG_ID}
+    WORKING_DIRECTORY ${OPBASE_SOURCE_PATH}
+  )
 else()
   if(EXISTS "${PROJECT_SOURCE_DIR}/build/_deps/opbase-subbuild")
     file(REMOVE_RECURSE ${PROJECT_SOURCE_DIR}/build/_deps/opbase-subbuild)

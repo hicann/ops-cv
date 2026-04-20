@@ -89,6 +89,7 @@ private:
     ge::graphStatus GetAttrInfo();
     ge::graphStatus GetDtypeInfo();
     ge::graphStatus CheckInputSize();
+    ge::graphStatus CheckDimsValid();
     void FillTilingData();
     void PrintTilingData();
     int64_t CalTimes(int64_t a, int64_t b) const;
@@ -165,23 +166,24 @@ private:
 };
 
 ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::CheckFormatMatchDims() {
-    OP_CHECK_IF(alignCorners_ && halfPixelCenters_,
-                    OP_LOGE(context_->GetNodeName(),
-                    "alignCorners and halfPixelCenters is all true, not support"),
-                    return ge::GRAPH_FAILED);
     condition_ = alignCorners_ ? NUM_2 : 0;
     if ((format_ == ge::FORMAT_NCHW) || (format_ == ge::FORMAT_NHWC) || (format_ == ge::FORMAT_ND)) {
-      OP_CHECK_IF(xShape_.GetDimNum() != DIM_LEN_4D || yShape_.GetDimNum() != DIM_LEN_4D,
-                      OP_LOGE(context_->GetNodeName(), "format dismatch dims. format:%s, shape:%s.",
-                            Ops::Base::ToString(format_).c_str(), Ops::Base::ToString(xShape_).c_str()),
-                      return ge::GRAPH_FAILED);
+        if (xShape_.GetDimNum() != DIM_LEN_4D || yShape_.GetDimNum() != DIM_LEN_4D) {
+            std::string dimMsg = std::to_string(xShape_.GetDimNum()) + " and " + std::to_string(yShape_.GetDimNum());
+            OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(),
+                "Input x and output y dims must be 4D when format is NCHW, NHWC or ND");
+            return ge::GRAPH_FAILED;
+        }
     }
 
     const int64_t inputSize = xShape_.GetShapeSize();
     const int64_t outSize = yShape_.GetShapeSize();
-    OP_CHECK_IF(inputSize == 0 || outSize == 0,
-                    OP_LOGE(context_->GetNodeName(), "input or output size is zero"),
-                    return ge::GRAPH_FAILED);
+    if (inputSize == 0 || outSize == 0) {
+        std::string shapesizeMsg = std::to_string(inputSize) + " and " + std::to_string(outSize);
+        OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(context_->GetNodeName(), "x and y",
+            shapesizeMsg.c_str(), "Input x and output y cannot be empty tensors");
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -804,38 +806,66 @@ void ResizeNearestNeighborV2AscendCTilingImpl::PrintTilingData() {
             tilingData_.get_scaleH());
 }
 
+ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::CheckDimsValid()
+{
+    if (lenDesH_ <= 0 || lenDesW_ <= 0 || lenSrcH_ <= 0 || lenSrcW_ <= 0) {
+        std::string shapeMsg = Ops::Base::ToString(xShape_) + " and " + Ops::Base::ToString(yShape_);
+        std::string reasonMsg = "Both input and output must have H and W axis sizes greater than 0, "
+                                "where H and W are inferred from the 4D shapes of input x and output y "
+                                "based on their formats: axes 2/3 for NCHW/ND, or axes 1/2 for NHWC";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (lenC_ <= 0 || lenN_ <= 0) {
+        std::string reasonMsg = "Both C and N axis sizes of input x must be greater than 0, "
+                                "where C is inferred from the 4D shape of input x based on its format "
+                                "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
+            context_->GetNodeName(), "x", Ops::Base::ToString(xShape_).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (lenCOut_ != lenC_ || lenNOut_ != lenN_) {
+        std::string shapeMsg = Ops::Base::ToString(xShape_) + " and " + Ops::Base::ToString(yShape_);
+        std::string reasonMsg = "Both C and N axis sizes of input x and output y must be same, "
+                                "where C is inferred from the 4D shape of x/y combined with their format "
+                                "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0 of x/y";
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::CheckInputSize()
 {
     auto size = context_->GetInputShape(INPUT_IDX_SIZE);
     OP_CHECK_NULL_WITH_CONTEXT(context_, size);
     gert::Shape sizeShape = size->GetStorageShape();
-    int32_t sizeDims = sizeShape.GetShapeSize();
-    OP_CHECK_IF(sizeDims != NUM_2,
-        OP_LOGE(context_->GetNodeName(), "size shape dims is not two"), return ge::GRAPH_FAILED);
+    int32_t sizeElms = sizeShape.GetShapeSize();
+    OP_CHECK_IF(sizeElms != NUM_2,
+        OP_LOGE_FOR_INVALID_SHAPESIZE(context_->GetNodeName(), "size", std::to_string(sizeElms).c_str(), "2"),
+        return ge::GRAPH_FAILED);
     const gert::Tensor *sizeTensor = context_->GetInputTensor(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, sizeTensor);
     OP_CHECK_IF(sizeTensor->GetDataType() != ge::DT_INT32,
-        OP_LOGE(context_->GetNodeName(), "size dtype only support int32"),
+        OP_LOGE_FOR_INVALID_DTYPE(
+            context_->GetNodeName(), "size", Ops::Base::ToString(sizeTensor->GetDataType()).c_str(), "int32"),
         return ge::GRAPH_FAILED);
     std::vector<int64_t> sizeList(NUM_2);
     auto *tensorData = sizeTensor->GetData<int32_t>();
     OP_CHECK_IF(tensorData == nullptr,
-        OP_LOGE(context_->GetNodeName(), "tensorData is nullptr"), return ge::GRAPH_FAILED);
+        OP_LOGE(context_->GetNodeName(), "GetData failed, tensorData is nullptr"), return ge::GRAPH_FAILED);
 
     for (int32_t i = 0; i < NUM_2; i++) {
         sizeList[i] = static_cast<int64_t>(*(tensorData + i));
     }
-    OP_CHECK_IF((sizeList[0] != lenDesH_) || (sizeList[1] != lenDesW_),
-        OP_LOGE(context_->GetNodeName(), "size not equal output h w"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(lenDesH_ <= 0 || lenDesW_ <= 0 || lenSrcH_ <= 0 || lenSrcW_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "input h w and output h w must greater than zero"),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(lenC_ <= 0 || lenN_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "n and c must greater than zero"),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(lenCOut_ != lenC_ || lenNOut_ != lenN_,
-        OP_LOGE(context_->GetNodeName(), "out_shape n or c is not equal as input_shape n or c"),
-        return ge::GRAPH_FAILED);
+    if ((sizeList[0] != lenDesH_) || (sizeList[1] != lenDesW_)) {
+        std::string sizeTensorDatas = "(" + std::to_string(sizeList[0]) + ", " + std::to_string(sizeList[1]) + ")";
+        std::string reasonMsg = "Input size value should be (H, W) - (" + std::to_string(lenDesH_) + ", " +
+                                std::to_string(lenDesW_) + "), where H and W are inferred from the 4D shape "
+                                "of output y based on its format: axes 2/3 for NCHW/ND, or axes 1/2 for NHWC";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "size", sizeTensorDatas.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -850,17 +880,19 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::GetAttrInfo()
     if (attrs->GetAttrNum() > ATTR_HALF_PIXEL_CENTERS_IDX) {
         halfPixelCenters_ = *(attrs->GetAttrPointer<bool>(ATTR_HALF_PIXEL_CENTERS_IDX)) ? 1 : 0;
     }
-    OP_CHECK_IF(
-        alignCorners_ && halfPixelCenters_,
-        OP_LOGE(context_->GetNodeName(), "alignCorners and halfPixelCenters do not support both being true"),
+    OP_CHECK_IF(alignCorners_ && halfPixelCenters_,
+        OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(
+            context_->GetNodeName(), "align_corners and half_pixel_centers", "true and true",
+            "Attrs align_corners and half_pixel_centers cannot both be True"),
         return ge::GRAPH_FAILED);
 
     if (attrs->GetAttrNum() > ATTR_SCALES_IDX) {
         auto scales = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_SCALES_IDX);
         int64_t scalesNum = scales->GetSize();
         OP_CHECK_IF(scalesNum != SCALES_NUM,
-                        OP_LOGE(context_->GetNodeName(), "scales size %ld is invalid.", scalesNum),
-                        return ge::GRAPH_FAILED);
+            OP_LOGE_WITH_INVALID_ATTR_SIZE(context_->GetNodeName(), "scales",
+                std::to_string(scalesNum).c_str(), std::to_string(SCALES_NUM).c_str()),
+            return ge::GRAPH_FAILED);
         const float* scalesData = reinterpret_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scalesData);
         originalScaleH_ = scalesData[SCALE_H];
@@ -882,12 +914,21 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::GetDtypeInfo()
     format_ = static_cast<ge::Format>(ge::GetPrimaryFormat(inputXDesc->GetStorageFormat()));
     dtypeSize_ = GetSizeByDataType(dtype_);
     auto outputDtypeSize = GetSizeByDataType(outputXDesc->GetDataType());
-    OP_CHECK_IF(dtypeSize_ <= 0 || outputDtypeSize <= 0 || dtype_ != outputXDesc->GetDataType(),
-                    OP_LOGE(context_->GetNodeName(), "Input or output dtype is invalid."),
-                    return ge::GRAPH_FAILED);
-    OP_CHECK_IF(format_ != static_cast<ge::Format>(ge::GetPrimaryFormat(outputXDesc->GetStorageFormat())),
-                    OP_LOGE(context_->GetNodeName(), "Input or output format is invalid."),
-                    return ge::GRAPH_FAILED);
+    if (dtypeSize_ <= 0 || outputDtypeSize <= 0 || dtype_ != outputXDesc->GetDataType()) {
+        std::string dtypeMsg = Ops::Base::ToString(dtype_) + " and " +
+                               Ops::Base::ToString(outputXDesc->GetDataType());
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "x and y", dtypeMsg.c_str(),
+            "Dtype size of input x and output y must be greater than zero, and dtypes of them must be same");
+        return ge::GRAPH_FAILED;
+    }
+
+    auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outputXDesc->GetStorageFormat()));
+    if (format_ != outFormat) {
+        std::string formatMsg = Ops::Base::ToString(format_) + " and " + Ops::Base::ToString(outFormat);
+        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
+            context_->GetNodeName(), "x and y", formatMsg.c_str(), "Formats of input x and output y must be same");
+        return ge::GRAPH_FAILED;
+    }
 
     // Get xshape, yshape
     auto xStorage = context_->GetInputShape(INPUT_X_IDX);
@@ -930,6 +971,11 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::Init() {
 
     // Set N,C,H,W dim length
     SetDimsByFormat();
+
+    // Check dims valid
+    OP_CHECK_IF(CheckDimsValid() != ge::GRAPH_SUCCESS,
+        OP_LOGE(context_->GetNodeName(), "check dims valid failed"),
+        return ge::GRAPH_FAILED);
 
     // Check input size
     OP_CHECK_IF(CheckInputSize() != ge::GRAPH_SUCCESS,
