@@ -40,7 +40,7 @@ private:
     GlobalTensor<D_T> gradGm_;
     GlobalTensor<D_T> xGm_;
     GlobalTensor<D_T> roisGm_;
-    GlobalTensor<D_T> argMaxGm_;
+    GlobalTensor<int32_t> argMaxGm_;
     GlobalTensor<D_T> yGm_;
     GlobalTensor<ACC_T> userWSGm_;
     uint32_t coreIdx_;
@@ -54,7 +54,7 @@ template <typename ACC_T, typename D_T>
     gradGm_.SetGlobalBuffer((__gm__ D_T*)(grad));
     xGm_.SetGlobalBuffer((__gm__ D_T*)(x));
     roisGm_.SetGlobalBuffer((__gm__ D_T*)(rois));
-    argMaxGm_.SetGlobalBuffer((__gm__ D_T*)(argmax));
+    argMaxGm_.SetGlobalBuffer((__gm__ int32_t*)(argmax));
     yGm_.SetGlobalBuffer((__gm__ D_T*)(y));
     userWSGm_.SetGlobalBuffer((__gm__ ACC_T*)(workspace));
 
