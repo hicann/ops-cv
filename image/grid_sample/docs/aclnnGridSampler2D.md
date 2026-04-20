@@ -176,8 +176,8 @@ aclnnStatus aclnnGridSampler2D(
     - 入参`interpolationMode`不支持插值模式2：bicubic（双三次插值）。
     - 参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-    - 入参`interpolationMode`，仅当input数据类型为FLOAT32或者FLOAT16时支持2：bicubic（双三次插值）。
-    - 参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
+    
+    入参`interpolationMode`，仅当input数据类型为FLOAT32、FLOAT16或者BFLOAT16时，支持2：bicubic（双三次插值）。
   - <term>Atlas 200I/500 A2 推理产品</term>：
     
     当接口运行在AI Core时，需要满足如下条件：
