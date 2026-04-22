@@ -26,7 +26,7 @@ using NodeProto = ge::onnx::NodeProto;
 
 static Status ParseParamsUpsample(const Message* op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = reinterpret_cast<const NodeProto*>(op_src);
+    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
     if (node == nullptr) {
         return FAILED;
     }
