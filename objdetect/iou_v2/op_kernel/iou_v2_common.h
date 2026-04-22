@@ -38,6 +38,11 @@ namespace IouV2
     {
         LocalTensor<float> box1Local = box1Que.AllocTensor<float>();
         LocalTensor<float> box2Local = box2Que.AllocTensor<float>();
+        bool isLastCore = GetBlockIdx() ==  GetBlockNum() - 1;
+        uint32_t lastCoreLen = totalLength % tileLen == 0 ?  tileLen : totalLength % tileLen;
+        uint32_t blockLen = isLastCore ? lastCoreLen : tileLen;
+        AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(blockLen * sizeof(inType)), 0, 0, 0};
+        AscendC::DataCopyPadExtParams<inType> padParams{false, 0, 0, 0};
         if constexpr (!std::is_same<inType, float>::value)
         {
             LocalTensor<inType> fp16Buf = fp16Tensor.Get<inType>();
@@ -49,8 +54,13 @@ namespace IouV2
             WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
             for (uint8_t posId = 0; posId < POS_NUM; ++posId)
             { // 第一维输入为4
+#if __CCE_AICORE__ == 200 // 310p
                 DataCopy(fp16Buf[tileLen * posId], box1Gm[bBoxLoop * tileLen + posId * totalLength], tileLen);
                 DataCopy(fp16Buf[tileLen * (posId + 4)], box2Gm[bBoxLoop * tileLen + posId * totalLength], tileLen); // 第一维输入为4
+#else
+                AscendC::DataCopyPad(fp16Buf[tileLen * posId], box1Gm[bBoxLoop * tileLen + posId * totalLength], copyParams, padParams);
+                AscendC::DataCopyPad(fp16Buf[tileLen * (posId + 4)], box2Gm[bBoxLoop * tileLen + posId * totalLength], copyParams, padParams);
+#endif
             }
             event_t eventMTE2ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
             SetFlag<HardEvent::MTE2_V>(eventMTE2ToV);
@@ -62,8 +72,13 @@ namespace IouV2
         {
             for (uint8_t posId = 0; posId < POS_NUM; ++posId)
             { // 第一维输入为4
+#if __CCE_AICORE__ == 200 // 310p
                 DataCopy(box1Local[tileLen * posId].ReinterpretCast<inType>(), box1Gm[bBoxLoop * tileLen + posId * totalLength], tileLen);
                 DataCopy(box2Local[tileLen * posId].ReinterpretCast<inType>(), box2Gm[bBoxLoop * tileLen + posId * totalLength], tileLen); // 第一维输入为4
+#else
+                AscendC::DataCopyPad(box1Local[tileLen * posId].ReinterpretCast<inType>(), box1Gm[bBoxLoop * tileLen + posId * totalLength], copyParams, padParams);
+                AscendC::DataCopyPad(box2Local[tileLen * posId].ReinterpretCast<inType>(), box2Gm[bBoxLoop * tileLen + posId * totalLength], copyParams, padParams);
+#endif
             }
         }
         box1Que.EnQue(box1Local);
@@ -75,10 +90,15 @@ namespace IouV2
         TQue<QuePosition::VECOUT, 1> &outQue,
         const GlobalTensor<inType> &outGm,
         TBuf<TPosition::VECCALC> &fp16Tensor,
+        uint64_t totalLength,
         uint64_t tileLen,
         uint32_t bBoxLoop)
     {
         LocalTensor<float> outLocal = outQue.DeQue<float>();
+        bool isLastCore = GetBlockIdx() ==  GetBlockNum() - 1;
+        uint32_t lastCoreLen = totalLength % tileLen == 0 ?  tileLen : totalLength % tileLen;
+        uint32_t blockLen = isLastCore ? lastCoreLen : tileLen;
+        AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(blockLen * sizeof(inType)), 0, 0, 0};
         if constexpr (!std::is_same<inType, float>::value)
         {
             LocalTensor<inType> fp16Buf = fp16Tensor.Get<inType>();
@@ -90,11 +110,19 @@ namespace IouV2
             event_t eventVToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
             SetFlag<HardEvent::V_MTE3>(eventVToMTE3);
             WaitFlag<HardEvent::V_MTE3>(eventVToMTE3);
+#if __CCE_AICORE__ == 200 // 310p
             DataCopy(outGm[bBoxLoop * tileLen], fp16Buf, tileLen);
+#else
+            AscendC::DataCopyPad(outGm[bBoxLoop * tileLen], fp16Buf, copyParams);
+#endif
         }
         else
         {
+#if __CCE_AICORE__ == 200 // 310p
             DataCopy(outGm[bBoxLoop * tileLen], outLocal.ReinterpretCast<inType>(), tileLen);
+#else
+            AscendC::DataCopyPad(outGm[bBoxLoop * tileLen], outLocal.ReinterpretCast<inType>(), copyParams);
+#endif
         }
         outQue.FreeTensor(outLocal);
     }
@@ -149,7 +177,7 @@ namespace IouV2
             {
                 AlignCopyIn<inType>(box1Que, box2Que, box1Gm, box2Gm, totalLength, tileLen, quadTileLen, fp16Tensor, bBoxLoop);
                 static_cast<AlignDerived<inType> *>(this)->Compute();
-                AlignCopyOut<inType>(outQue, outGm, fp16Tensor, tileLen, bBoxLoop);
+                AlignCopyOut<inType>(outQue, outGm, fp16Tensor, totalLength, tileLen, bBoxLoop);
             }
         }
 
@@ -250,14 +278,28 @@ namespace IouV2
         __aicore__ inline void CopyIn(uint32_t bBoxLoop)
         {
             LocalTensor<float> boxLocal = inQue.AllocTensor<float>();
+            bool isLastCore = GetBlockIdx() ==  GetBlockNum() - 1;
+            bool isLastLoop = bBoxLoop == loopTileNum - 1;
+            uint32_t lastCoreLen = gtBoxLength % tileLen == 0 ? tileLen : gtBoxLength % tileLen;
+            uint32_t lastLoopLen = bBoxLength % loopTileLen == 0 ? loopTileLen : bBoxLength % loopTileLen;
+            uint32_t blockLen0 = isLastLoop ? lastLoopLen * 4 : quadLoopTileLen;
+            uint32_t blockLen1 = isLastCore ? lastCoreLen * 4 : quadTileLen;
+            AscendC::DataCopyExtParams copyParams0{1, static_cast<uint32_t>(blockLen0 * sizeof(inType)), 0, 0, 0};
+            AscendC::DataCopyExtParams copyParams1{1, static_cast<uint32_t>(blockLen1 * sizeof(inType)), 0, 0, 0};
+            AscendC::DataCopyPadExtParams<inType> padParams{false, 0, 0, 0};
             if constexpr (!std::is_same<inType, float>::value)
             {
                 LocalTensor<inType> fp16Buf = fp16Tensor.Get<inType>();
                 event_t eventMTE3ToMTE2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
                 SetFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
                 WaitFlag<HardEvent::MTE3_MTE2>(eventMTE3ToMTE2);
+#if __CCE_AICORE__ == 200 // 310p
                 DataCopy(fp16Buf, box1Gm[bBoxLoop * quadLoopTileLen], quadLoopTileLen);
                 DataCopy(fp16Buf[quadLoopTileLen], box2Gm[gmOffset], quadTileLen);
+#else
+                AscendC::DataCopyPad(fp16Buf, box1Gm[bBoxLoop * quadLoopTileLen], copyParams0, padParams);
+                AscendC::DataCopyPad(fp16Buf[quadLoopTileLen], box2Gm[gmOffset], copyParams1, padParams);
+#endif
                 event_t eventMTE2ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
                 SetFlag<HardEvent::MTE2_V>(eventMTE2ToV);
                 WaitFlag<HardEvent::MTE2_V>(eventMTE2ToV);
@@ -265,8 +307,14 @@ namespace IouV2
             }
             else
             {
+                uint32_t blockLen = quadLoopTileLen;
+#if __CCE_AICORE__ == 200 // 310p
                 DataCopy(boxLocal.ReinterpretCast<inType>(), box1Gm[bBoxLoop * quadLoopTileLen], quadLoopTileLen);
                 DataCopy(boxLocal[quadLoopTileLen].ReinterpretCast<inType>(), box2Gm[gmOffset], quadTileLen);
+#else
+                AscendC::DataCopyPad(boxLocal.ReinterpretCast<inType>(), box1Gm[bBoxLoop * quadLoopTileLen], copyParams0, padParams);
+                AscendC::DataCopyPad(boxLocal[quadLoopTileLen].ReinterpretCast<inType>(), box2Gm[gmOffset], copyParams1, padParams);
+#endif
             }
             event_t eventMTE2ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
             SetFlag<HardEvent::MTE2_V>(eventMTE2ToV);
@@ -339,7 +387,18 @@ namespace IouV2
             addNum += bBoxNotAlign;
             if (i == num1 - 1)
             {
+                bool isLastCore = GetBlockIdx() ==  GetBlockNum() - 1;
+                uint32_t lastCoreLen = gtBoxLength % tileLen == 0 ?  tileLen : gtBoxLength % tileLen;
+                uint32_t gmLen = isLastCore ? bBoxLength * lastCoreLen : bBoxLength * tileLen;
+                uint32_t blockLen = gmLen - tmpGmOffsetVal + bBoxLength - headNum;//bBoxLength % loopTileLen;
+                blockLen = blockLen > loopTileLen ? loopTileLen : blockLen;
+                
+                AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(blockLen * sizeof(inType)), 0, 0, 0};
+#if __CCE_AICORE__ == 200 // 310p
                 DataCopy(outGm[tmpGmOffsetVal + bBoxLength - headNum], tmpLocal[tmpUbOffset], loopTileLen);
+#else
+                AscendC::DataCopyPad(outGm[tmpGmOffsetVal + bBoxLength - headNum], tmpLocal[tmpUbOffset], copyParams);
+#endif
             }
         }
 
@@ -370,7 +429,18 @@ namespace IouV2
                 }
                 else
                 {
+
+                    bool isLastCore = GetBlockIdx() ==  GetBlockNum() - 1;
+                    uint32_t lastCoreLen = gtBoxLength % tileLen == 0 ?  tileLen : gtBoxLength % tileLen;
+                    uint32_t gmLen = isLastCore ? bBoxLength * lastCoreLen : bBoxLength * tileLen;
+                    uint32_t blockLen = gmLen - offset;//bBoxLength % loopTileLen;
+                    blockLen = blockLen > loopTileLen ? loopTileLen : blockLen;
+                    AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(blockLen * sizeof(inType)), 0, 0, 0};
+#if __CCE_AICORE__ == 200 // 310p
                     DataCopy(outGm[offset], tmpLocal[loopTileLen * i], loopTileLen);
+#else
+                    AscendC::DataCopyPad(outGm[offset], tmpLocal[loopTileLen * i], copyParams);
+#endif
                     tmpGmOffset = offset;
                     tmpUbOffset = loopTileLen * i;
                 }
