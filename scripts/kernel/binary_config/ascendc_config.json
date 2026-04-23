@@ -586,5 +586,6 @@
     {"name":"Bincount", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"Addr", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"NMSWithMask", "compute_units": ["ascend910b"], "auto_sync" : false, "impl_mode" : ""},
-    {"name":"Rasterizer", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false, "impl_mode" : ""}
+    {"name":"Rasterizer", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false, "impl_mode" : ""},
+    {"name":"RoiAlignV2", "compute_units": ["ascend910b"], "auto_sync":false, "impl_mode" : ""}
 ]
