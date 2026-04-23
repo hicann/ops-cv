@@ -1,6 +1,6 @@
 # 环境部署
 
-在学习[QuickStart](../../QUICKSTART.md)或各类[学习教程](../../../README.md#学习教程)操作之前，请您先参考下面步骤完成基础环境搭建和源码下载，确保已安装NPU驱动、固件和CANN软件（`Ascend-cann-toolkit`和`Ascend-cann-ops`）等。
+ 在学习各类[学习教程](../../../README.md#学习教程)操作之前，请您先参考下面步骤完成基础环境搭建和源码下载，确保已安装NPU驱动、固件和CANN软件（`Ascend-cann-toolkit`和`Ascend-cann-ops`）等。
 
 ## 环境安装
 
@@ -19,15 +19,17 @@
 
 ### 方式1：WebIDE环境
 
-对于无昇腾设备的开发者，可直接使用WebIDE开发平台，即“**算子一站式开发平台**”，该平台为您提供在线可直接运行的昇腾环境，环境中已安装必备的驱动固件、软件包和依赖，无需手动安装。
+对于无昇腾设备的开发者，可直接使用WebIDE开发平台，即“**一站式开发平台**”，该平台为您提供在线可直接运行的昇腾环境，环境中已安装必备的驱动固件、软件包和依赖，无需手动安装。
 
-> **说明**：环境默认安装最新商发版CANN包，源码下载时注意与软件配套。更多关于开发平台的介绍请参考[一站式算子开发工具平台操作指导](https://gitcode.com/org/cann/discussions/54)。
+> **说明**：环境默认安装最新商发版CANN包，源码下载时注意与软件配套。更多关于开发平台的介绍请参考[WebIDE指导](https://gitcode.com/org/cann/discussions/54)。
 
 1. 进入开源项目，单击“`云开发`”按钮，使用已认证过的华为云账号登录。若未注册或认证，请根据页面提示进行注册和认证。
 
    <img src="../figures/cloudIDE.png" alt="云平台"  width="750px" height="90px">
 
-2. 根据页面提示创建并启动云开发环境，单击“`连接>WebIDE`”进入算子一站式开发平台，开源项目的源码资源默认在`/mnt/workspace`目录下。
+2. 根据页面提示创建NPU环境并配置规格，启动云开发环境后，单击“`连接 > WebIDE`”进入一站式开发平台。
+  
+   当前开源项目资源默认在`/mnt/workspace/gitCode/${gitCode_id}`目录下，\$\{gitCode\_id\}表示开发者个人gitCode账号。
 
    <img src="../figures/webIDE.png" alt="云平台"  width="1000px" height="150px">
 
@@ -84,7 +86,33 @@ docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_ma
 
 对于有昇腾设备的开发者，若您想手动搭建昇腾环境，请参考下述步骤。
 
-#### 软件安装
+#### 前置依赖
+  
+  请确保环境已安装项目基础库依赖，注意满足版本号要求。
+  
+  - python >= 3.7.0（建议版本 <= 3.10）
+  - gcc >= 7.3.0
+  - cmake >= 3.16.0
+  - pigz（可选，安装后可提升打包速度，建议版本 >= 2.4）
+  - dos2unix
+  - gawk
+  - make
+  - patch
+  - googletest（仅执行UT时依赖，建议版本 [release-1.11.0](https://github.com/google/googletest/releases/tag/release-1.11.0)）
+  
+  上述依赖可通过项目根目录install\_deps.sh一键安装，命令如下，若遇到不支持系统，请参考该文件自行适配。
+  
+  ```bash
+  bash install_deps.sh
+  ```
+  
+  安装完上述依赖后，可通过项目根目录requirements.txt继续安装python三方库依赖，命令如下。
+  
+  ```bash
+  pip3 install -r requirements.txt
+  ```
+  
+#### 安装软件
 
 - **场景1：体验master版本能力或基于master版本进行开发**
 
