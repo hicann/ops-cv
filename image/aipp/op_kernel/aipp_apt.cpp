@@ -15,15 +15,17 @@
 
 #include "arch35/aipp_rgb.h"
 #include "arch35/aipp_yuv.h"
+#include "arch35/aipp_yuv_rgb.h"
 #include "arch35/aipp_rgb_yuv.h"
 #include "arch35/aipp_yuv_gray.h"
 #include "arch35/aipp_rgb_gray.h"
 
-#define FORMAT_RGB_INDICE_UINT32 1
-#define FORMAT_YUV_INDICE_UINT32 2
-#define FORMAT_RGB_2_YUV_INDICE_UINT32 3
-#define FORMAT_RGB_2_GRAY_INDICE_UINT32 4
-#define FORMAT_YUV_2_GRAY_INDICE_UINT32 6
+#define AIPP_RGB_PASS_THROUGH 1
+#define AIPP_YUV_PASS_THROUGH 2
+#define AIPP_RGB_TO_YUV 3
+#define AIPP_RGB_TO_GRAY 4
+#define AIPP_YUV_TO_RGB 5
+#define AIPP_YUV_TO_GRAY 6
 using namespace Aipp_Kernel;
 
 extern "C" __global__ __aicore__ void Aipp(
@@ -41,24 +43,28 @@ extern "C" __global__ __aicore__ void Aipp(
     REGISTER_TILING_DEFAULT(AippTilingData);
     GET_TILING_DATA(tilingData, tiling);
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
-    if (TILING_KEY_IS(FORMAT_RGB_INDICE_UINT32)) {
+    if (TILING_KEY_IS(AIPP_RGB_PASS_THROUGH)) {
         Aipp_Kernel::AippRgb<DTYPE_FEATURES, uint32_t> op;
         op.Init(tilingData);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(FORMAT_YUV_INDICE_UINT32)) {
+    } else if (TILING_KEY_IS(AIPP_YUV_PASS_THROUGH)) {
         Aipp_Kernel::AippYuv<DTYPE_FEATURES, uint32_t> op;
         op.Init(tilingData);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(FORMAT_RGB_2_YUV_INDICE_UINT32)) {
+    } else if (TILING_KEY_IS(AIPP_RGB_TO_YUV)) {
         Aipp_Kernel::AippRgbYuv<DTYPE_FEATURES, uint32_t> op;
         op.Init(tilingData);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(FORMAT_RGB_2_GRAY_INDICE_UINT32)) {
+    } else if (TILING_KEY_IS(AIPP_RGB_TO_GRAY)) {
         Aipp_Kernel::AippRgbGray<DTYPE_FEATURES, uint32_t> op;
         op.Init(tilingData);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(FORMAT_YUV_2_GRAY_INDICE_UINT32)) {
+    } else if (TILING_KEY_IS(AIPP_YUV_TO_GRAY)) {
         Aipp_Kernel::AippYuvGray<DTYPE_FEATURES, uint32_t> op;
+        op.Init(tilingData);
+        op.Process(images, features);
+    } else if (TILING_KEY_IS(AIPP_YUV_TO_RGB)) {
+        Aipp_Kernel::AippYuvRgb<DTYPE_FEATURES, uint32_t> op;
         op.Init(tilingData);
         op.Process(images, features);
     }

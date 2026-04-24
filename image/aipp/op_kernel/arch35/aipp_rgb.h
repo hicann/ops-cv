@@ -47,10 +47,8 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb(
     uint32_t outputSizeW = tD.outputSizeW;
     float padValue = tD.paddingParam.padValue;
 
-    DataType xrgbChannelOffset = 
-        (tD.imageFormat == XRGB8888_U8_FORMAT && tD.cscParam.axSwapSwitch) ? 1 : 0;
-    for (DataType idx = Simt::GetThreadIdx() + blockIdx * Simt::GetThreadNum(); idx < batchSize;
-        idx += blockNum * Simt::GetThreadNum()) {
+    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
+        idx += blockNum * blockDim.x) {
 
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
@@ -65,17 +63,13 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb(
             AssignPadValue(outputGM[dstRgbIdx.b], padValue);
         } else {
             RgbPack<DataType> srcRgbIdx;
-            RgbComputeSrcIdx(srcRgbIdx, coord, tD, xrgbChannelOffset);
+            RgbComputeSrcIdx(srcRgbIdx, coord, tD, (DataType)tD.srcChannelOffset);
 
-            if (tD.cscParam.rbuvSwapSwitch) {
-                DataConversion(outputGM[dstRgbIdx.b], rgbGM[srcRgbIdx.r], tD.dtcParam, CHANNEL_NUM_2);
-                DataConversion(outputGM[dstRgbIdx.g], rgbGM[srcRgbIdx.g], tD.dtcParam, CHANNEL_NUM_1);
-                DataConversion(outputGM[dstRgbIdx.r], rgbGM[srcRgbIdx.b], tD.dtcParam, CHANNEL_NUM_0);
-            } else {
-                DataConversion(outputGM[dstRgbIdx.r], rgbGM[srcRgbIdx.r], tD.dtcParam, CHANNEL_NUM_0);
-                DataConversion(outputGM[dstRgbIdx.g], rgbGM[srcRgbIdx.g], tD.dtcParam, CHANNEL_NUM_1);
-                DataConversion(outputGM[dstRgbIdx.b], rgbGM[srcRgbIdx.b], tD.dtcParam, CHANNEL_NUM_2);
-            }
+            RgbPack<uint8_t> result;
+            ApplyCscMatrix(result, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
+            DataConversion(outputGM[dstRgbIdx.r], result.r, tD.dtcParam, CHANNEL_NUM_0);
+            DataConversion(outputGM[dstRgbIdx.g], result.g, tD.dtcParam, CHANNEL_NUM_1);
+            DataConversion(outputGM[dstRgbIdx.b], result.b, tD.dtcParam, CHANNEL_NUM_2);
         }
     }
 }
@@ -83,7 +77,7 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb(
 template <typename T, typename DataType>
 __aicore__ inline void AippRgb<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
-    Simt::VF_CALL<Aipp_Kernel::SimtComputeRgb<T, DataType>>(Simt::Dim3(this->blockDimX_), 
+    asc_vf_call<Aipp_Kernel::SimtComputeRgb<T, DataType>>(dim3(this->blockDimX_), 
         (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->blockIdx_, this->blockNum_, this->totalNum_);
 }
 

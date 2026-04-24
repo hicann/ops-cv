@@ -17,6 +17,8 @@
 
 #include "kernel_operator.h"
 #include "aipp_struct.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/math_functions.h"
 
 #define CLIP3(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
@@ -39,6 +41,9 @@ constexpr uint8_t DIGIT_3 = 3;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
 constexpr uint8_t XRGB8888_U8_FORMAT = 3;
+constexpr uint8_t YUV420SP_U8_FORMAT = 1;
+constexpr uint8_t RGB888_U8_FORMAT = 2;
+constexpr uint8_t YUV400_U8_FORMAT = 4;
 
 template <typename T, typename DataType>
 class AippBase {
@@ -59,8 +64,8 @@ __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& til
 {
     tilingData_ = tilingData;
 
-    blockNum_ = GetBlockNum();
-    blockIdx_ = GetBlockIdx();
+    blockNum_ = gridDim.x;
+    blockIdx_ = blockIdx.x;
     totalNum_ = tilingData_.batchNum * tilingData_.outputSizeH * tilingData_.outputSizeW;
 }
 
@@ -141,6 +146,42 @@ __aicore__ __attribute__((always_inline)) inline bool IsPixelInPadding(
            (hIdx >= topPaddingSize + cropSizeH) ||
            (wIdx < leftPaddingSize) ||
            (wIdx >= leftPaddingSize + cropSizeW);
+}
+
+__aicore__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(
+    uint32_t pixelH, uint32_t pixelW, const AippTilingData& tD,
+    bool allEvenPadding, bool blockAllInPadding)
+{
+    if (tD.paddingParam.paddingSwitch == 0) {
+        return false;
+    }
+    if (allEvenPadding) {
+        return blockAllInPadding;
+    }
+    return (pixelH < (uint32_t)tD.paddingParam.topPaddingSize) ||
+           (pixelH >= (uint32_t)tD.paddingParam.topPaddingSize + tD.cropParam.cropSizeH) ||
+           (pixelW < (uint32_t)tD.paddingParam.leftPaddingSize) ||
+           (pixelW >= (uint32_t)tD.paddingParam.leftPaddingSize + tD.cropParam.cropSizeW);
+}
+
+__aicore__ __attribute__((always_inline)) inline void ApplyCscMatrix(
+    RgbPack<uint8_t>& dst, uint8_t ch0, uint8_t ch1, uint8_t ch2, const CscParam& cscParam)
+{
+    auto t0 = static_cast<int16_t>(ch0) - cscParam.inBias0;
+    auto t1 = static_cast<int16_t>(ch1) - cscParam.inBias1;
+    auto t2 = static_cast<int16_t>(ch2) - cscParam.inBias2;
+    auto r = static_cast<int16_t>(roundf(static_cast<float>(
+        cscParam.cscMatrix00 * t0 * 2 + cscParam.cscMatrix01 * t1 * 2 +
+        cscParam.cscMatrix02 * t2 * 2 + 1) / CSC_MATRIX_SCALE));
+    auto g = static_cast<int16_t>(roundf(static_cast<float>(
+        cscParam.cscMatrix10 * t0 * 2 + cscParam.cscMatrix11 * t1 * 2 +
+        cscParam.cscMatrix12 * t2 * 2 + 1) / CSC_MATRIX_SCALE));
+    auto b = static_cast<int16_t>(roundf(static_cast<float>(
+        cscParam.cscMatrix20 * t0 * 2 + cscParam.cscMatrix21 * t1 * 2 +
+        cscParam.cscMatrix22 * t2 * 2 + 1) / CSC_MATRIX_SCALE));
+    dst.r = static_cast<uint8_t>(CLIP3(r + cscParam.outBias0, 0, MAX_UINT8));
+    dst.g = static_cast<uint8_t>(CLIP3(g + cscParam.outBias1, 0, MAX_UINT8));
+    dst.b = static_cast<uint8_t>(CLIP3(b + cscParam.outBias2, 0, MAX_UINT8));
 }
 
 template <typename DataType>

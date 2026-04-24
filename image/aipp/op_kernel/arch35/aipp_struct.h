@@ -84,6 +84,8 @@ struct AippTilingData {
     uint32_t outputSizeW = 0;
     uint32_t outputSizeH = 0;
 
+    uint8_t srcChannelOffset = 0;
+
     CscParam cscParam;
     CropParam cropParam;
     DtcParam dtcParam;

@@ -39,16 +39,6 @@ __aicore__ inline void AippRgbGray<T, DataType>::Init(const AippTilingData& tili
     this->BaseInit(tilingData);
 }
 
-__aicore__ __attribute__((always_inline)) inline uint8_t Rgb2Gray(uint8_t r, uint8_t g, uint8_t b,
-    const CscParam& cscParam)
-{
-    auto gTmp = static_cast<int16_t>(roundf(static_cast<float>(
-        cscParam.cscMatrix00 * static_cast<int16_t>(r) * DIGIT_2 +
-        cscParam.cscMatrix01 * static_cast<int16_t>(g) * DIGIT_2 +
-        cscParam.cscMatrix02 * static_cast<int16_t>(b) * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
-    return CLIP3(gTmp, 0, MAX_UINT8);
-}
-
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Gray(
     __gm__ uint8_t* rgbGM, __gm__ T* grayGM, const AippTilingData tD,
@@ -58,8 +48,8 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Gray(
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
 
-    for (DataType idx = Simt::GetThreadIdx() + blockIdx * Simt::GetThreadNum(); idx < batchSize;
-         idx += blockNum * Simt::GetThreadNum()) {
+    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
+         idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
 
@@ -74,10 +64,11 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Gray(
             AssignPadValue(grayGM[dstGrayIdx.b], padValue);
         } else {
             RgbPack<DataType> srcRgbIdx;
-            RgbComputeSrcIdx(srcRgbIdx, coord, tD);
+            RgbComputeSrcIdx(srcRgbIdx, coord, tD, (DataType)tD.srcChannelOffset);
 
-            uint8_t grayValue = Rgb2Gray(rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
-            DataConversion(grayGM[dstGrayIdx.r], grayValue, tD.dtcParam, CHANNEL_NUM_0);
+            RgbPack<uint8_t> result;
+            ApplyCscMatrix(result, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
+            DataConversion(grayGM[dstGrayIdx.r], result.r, tD.dtcParam, CHANNEL_NUM_0);
             DataConversion(grayGM[dstGrayIdx.g], 0, tD.dtcParam, CHANNEL_NUM_1);
             DataConversion(grayGM[dstGrayIdx.b], 0, tD.dtcParam, CHANNEL_NUM_2);
         }
@@ -87,7 +78,7 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Gray(
 template <typename T, typename DataType>
 __aicore__ inline void AippRgbGray<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
-    Simt::VF_CALL<Aipp_Kernel::SimtComputeRgb2Gray<T, DataType>>(Simt::Dim3(this->blockDimX_),
+    asc_vf_call<Aipp_Kernel::SimtComputeRgb2Gray<T, DataType>>(dim3(this->blockDimX_),
         (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->blockIdx_, this->blockNum_, this->totalNum_);
 }
 } // namespace Aipp_Kernel

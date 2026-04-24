@@ -39,21 +39,6 @@ __aicore__ inline void AippRgbYuv<T, DataType>::Init(const AippTilingData& tilin
     this->BaseInit(tilingData);
 }
 
-__aicore__ __attribute__((always_inline)) inline void Rgb2Yuv(
-    YuvPack<uint8_t>& dstYuv, uint8_t r, uint8_t g, uint8_t b, const CscParam& cscParam)
-{
-    auto yTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix00 * r * DIGIT_2 +
-        cscParam.cscMatrix01 * g * DIGIT_2 + cscParam.cscMatrix02 * b * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
-    auto uTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix10 * r * DIGIT_2 +
-        cscParam.cscMatrix11 * g * DIGIT_2 + cscParam.cscMatrix12 * b * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
-    auto vTmp = static_cast<int16_t>(roundf(static_cast<float>(cscParam.cscMatrix20 * r * DIGIT_2 +
-        cscParam.cscMatrix21 * g * DIGIT_2 + cscParam.cscMatrix22 * b * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
-
-    dstYuv.y = CLIP3(yTmp + cscParam.outBias0, 0, MAX_UINT8);
-    dstYuv.u = CLIP3(uTmp + cscParam.outBias1, 0, MAX_UINT8);
-    dstYuv.v = CLIP3(vTmp + cscParam.outBias2, 0, MAX_UINT8);
-}
-
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Yuv(
     __gm__ uint8_t* rgbGM, __gm__ T* yuvGM, const AippTilingData tD,
@@ -63,8 +48,8 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Yuv(
     uint32_t outputSizeW = tD.outputSizeW;
     float padValue = tD.paddingParam.padValue;
 
-    for (DataType idx = Simt::GetThreadIdx() + blockIdx * Simt::GetThreadNum(); idx < batchSize;
-         idx += blockNum * Simt::GetThreadNum()) {
+    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
+         idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
 
@@ -78,13 +63,13 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Yuv(
             AssignPadValue(yuvGM[dstYuvIdx.b], padValue);
         } else {
             RgbPack<DataType> srcRgbIdx;
-            RgbComputeSrcIdx(srcRgbIdx, coord, tD);
+            RgbComputeSrcIdx(srcRgbIdx, coord, tD, (DataType)tD.srcChannelOffset);
 
-            YuvPack<uint8_t> dstYuv;
-            Rgb2Yuv(dstYuv, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
-            DataConversion(yuvGM[dstYuvIdx.r], dstYuv.y, tD.dtcParam, CHANNEL_NUM_0);
-            DataConversion(yuvGM[dstYuvIdx.g], dstYuv.u, tD.dtcParam, CHANNEL_NUM_1);
-            DataConversion(yuvGM[dstYuvIdx.b], dstYuv.v, tD.dtcParam, CHANNEL_NUM_2);
+            RgbPack<uint8_t> dstYuv;
+            ApplyCscMatrix(dstYuv, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
+            DataConversion(yuvGM[dstYuvIdx.r], dstYuv.r, tD.dtcParam, CHANNEL_NUM_0);
+            DataConversion(yuvGM[dstYuvIdx.g], dstYuv.g, tD.dtcParam, CHANNEL_NUM_1);
+            DataConversion(yuvGM[dstYuvIdx.b], dstYuv.b, tD.dtcParam, CHANNEL_NUM_2);
         }
     }
 }
@@ -92,7 +77,7 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Yuv(
 template <typename T, typename DataType>
 __aicore__ inline void AippRgbYuv<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
-    Simt::VF_CALL<Aipp_Kernel::SimtComputeRgb2Yuv<T, DataType>>(Simt::Dim3(this->blockDimX_),
+    asc_vf_call<Aipp_Kernel::SimtComputeRgb2Yuv<T, DataType>>(dim3(this->blockDimX_),
         (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->blockIdx_, this->blockNum_, this->totalNum_);
 }
 } // namespace Aipp_Kernel

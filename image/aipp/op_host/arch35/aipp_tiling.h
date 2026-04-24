@@ -60,11 +60,13 @@ constexpr uint8_t CONST_VALUE_FOUR = 4;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
 
-constexpr int64_t FORMAT_RGB_INDICE_UINT32 = 1;
-constexpr int64_t FORMAT_YUV_INDICE_UINT32 = 2;
-constexpr int64_t FORMAT_RGB_SWITCH_OPEN_UINT32 = 3;
-constexpr int64_t FORMAT_RGB_SWITCH_OPEN_UINT32_TO_GRAY = 4;
-constexpr int64_t FORMAT_YUV_INDICE_UINT32_TO_GRAY = 6;
+constexpr int64_t AIPP_ERROR_TILINGKEY = 0;
+constexpr int64_t AIPP_RGB_PASS_THROUGH = 1;
+constexpr int64_t AIPP_YUV_PASS_THROUGH = 2;
+constexpr int64_t AIPP_RGB_TO_YUV = 3;
+constexpr int64_t AIPP_RGB_TO_GRAY = 4;
+constexpr int64_t AIPP_YUV_TO_RGB = 5;
+constexpr int64_t AIPP_YUV_TO_GRAY = 6;
 
 constexpr size_t INPUT_IMAGES_IDX = 0;
 constexpr size_t INPUT_PARAMS_IDX = 1;
@@ -86,9 +88,11 @@ constexpr int64_t MAX_PADDING_OUT_W = 1080;
 
 const string IMAGE_FORMAT_RGB888_U8 = "RGB888_U8";
 const string IMAGE_FORMAT_YUV420SP_U8 = "YUV420SP_U8";
+const string IMAGE_FORMAT_YUV400_U8 = "YUV400_U8";
 const string IMAGE_FORMAT_XRGB8888_U8 = "XRGB8888_U8";
 constexpr uint8_t IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT = (3);
 constexpr float IMAGE_FORMAT_YUV420SP_U8_SIZE_LIMIT = (1.5f);
+constexpr uint8_t IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT = (1);
 constexpr uint8_t IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT = (4);
 
 const string AIPP_MODE = "aipp_mode";
@@ -141,9 +145,10 @@ const string AIPP_TOP_PADDING_SIZE = "top_padding_size";
 const string AIPP_BOTTOM_PADDING_SIZE = "bottom_padding_size";
 const string AIPP_PADDING_VALUE = "padding_value";
 
-const std::map<string, uint8_t> IMAGE_FORMART_MAP = {{IMAGE_FORMAT_YUV420SP_U8, 1},
-                                                     {IMAGE_FORMAT_RGB888_U8, 2},
-                                                     {IMAGE_FORMAT_XRGB8888_U8, 3}};
+const std::map<string, uint8_t> IMAGE_FORMAT_MAP = {{IMAGE_FORMAT_YUV420SP_U8, 1},
+                                                    {IMAGE_FORMAT_RGB888_U8, 2},
+                                                    {IMAGE_FORMAT_XRGB8888_U8, 3},
+                                                    {IMAGE_FORMAT_YUV400_U8, 4}};
 
 struct AippCompileInfo {
     int64_t coreNum = 0;
@@ -183,7 +188,7 @@ private:
     ge::graphStatus SetCscValue();
     ge::graphStatus SetDTCValue();
     ge::graphStatus SetSwapSwitch();
-    void IsGrayForCSC();
+    void SetGrayFlag();
     void SwapChannelForCSC();
     ge::graphStatus SetPaddingValue();
     ge::graphStatus CheckPaddingSize();

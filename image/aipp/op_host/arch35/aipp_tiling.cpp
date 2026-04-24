@@ -73,33 +73,31 @@ ge::graphStatus AippTiling::ParseNumAndValidateRange(
 
 uint64_t AippTiling::GetTilingKey() const
 {
-    uint64_t tilingKey = 0;
-    if ((tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
-        tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
-        !static_cast<bool>(tilingData.cscParam.cscSwitch)) {
-        tilingKey = FORMAT_RGB_INDICE_UINT32;
+    const bool cscSwitch = static_cast<bool>(tilingData.cscParam.cscSwitch);
+    const bool isRgbFormat = (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
+                              tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_XRGB8888_U8));
+    const bool isYuvFormat = (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8) ||
+                              tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8));
+
+    if (isGray) {
+        if (isRgbFormat) {
+            return AIPP_RGB_TO_GRAY;
+        }
+        if (isYuvFormat) {
+            return AIPP_YUV_TO_GRAY;
+        }
     }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
-        static_cast<bool>(tilingData.cscParam.cscSwitch) && !isGray) {
-        tilingKey = FORMAT_YUV_INDICE_UINT32;
+
+    if (isRgbFormat) {
+        return cscSwitch ? AIPP_RGB_TO_YUV : AIPP_RGB_PASS_THROUGH;
     }
-    if ((tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
-        tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
-        static_cast<bool>(tilingData.cscParam.cscSwitch) && !isGray) {
-        tilingKey = FORMAT_RGB_SWITCH_OPEN_UINT32;
+
+    if (isYuvFormat) {
+        return cscSwitch ? AIPP_YUV_TO_RGB : AIPP_YUV_PASS_THROUGH;
     }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) &&
-        static_cast<bool>(tilingData.cscParam.cscSwitch) && isGray) {
-        tilingKey = FORMAT_RGB_SWITCH_OPEN_UINT32_TO_GRAY;
-    }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
-        static_cast<bool>(tilingData.cscParam.cscSwitch) && isGray) {
-        tilingKey = FORMAT_YUV_INDICE_UINT32_TO_GRAY;
-    }
-    if (tilingKey == 0) {
-        OP_LOGE(context_->GetNodeName(), "tilingKey is:0, please check aipp.cfg's inputformat and csc_switch");
-    }
-    return tilingKey;
+
+    OP_LOGE(context_->GetNodeName(), "tilingKey is:0, please check aipp.cfg's inputformat and csc_switch");
+    return AIPP_ERROR_TILINGKEY;
 }
 
 ge::graphStatus AippTiling::GetShapeAttrsInfo()
@@ -207,17 +205,11 @@ ge::graphStatus AippTiling::SetImagesValue()
 {
     if (aippCfg.find(AIPP_INPUT_FORMAT) != aippCfg.end()) {
         OP_CHECK_IF(
-            aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_RGB888_U8 &&
-                aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_YUV420SP_U8 &&
-                aippCfg.at(AIPP_INPUT_FORMAT) != IMAGE_FORMAT_XRGB8888_U8,
-            OP_LOGE(context_->GetNodeName(), "aipp input_format only support RGB888_U8 or XRGB8888_U8 or YUV420SP_U8."),
-            return ge::GRAPH_FAILED);
-        OP_CHECK_IF(
-            IMAGE_FORMART_MAP.find(aippCfg.at(AIPP_INPUT_FORMAT)) == IMAGE_FORMART_MAP.end(),
-            OP_LOGE(context_->GetNodeName(), "can not find image format in IMAGE_FORMART_MAP."),
+            IMAGE_FORMAT_MAP.find(aippCfg.at(AIPP_INPUT_FORMAT)) == IMAGE_FORMAT_MAP.end(),
+            OP_LOGE(context_->GetNodeName(), "aipp input_format only support RGB888_U8 or XRGB8888_U8 or YUV420SP_U8 or YUV400_U8."),
             return ge::GRAPH_FAILED);
 
-        tilingData.imageFormat = IMAGE_FORMART_MAP.at(aippCfg.at(AIPP_INPUT_FORMAT));
+        tilingData.imageFormat = IMAGE_FORMAT_MAP.at(aippCfg.at(AIPP_INPUT_FORMAT));
     } else {
         OP_LOGE(context_->GetNodeName(), "can not find input_format in aipp config.");
         return ge::GRAPH_FAILED;
@@ -248,7 +240,7 @@ ge::graphStatus AippTiling::CheckInputImage()
     stringstream errorCheckLog;
     errorCheckLog << "when input_format is " << aippCfg.at(AIPP_INPUT_FORMAT)
                   << ", input image size should be bigger than N * src_image_size_w * src_image_size_h * ";
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
         errorCheckLog << IMAGE_FORMAT_YUV420SP_U8_SIZE_LIMIT;
         OP_CHECK_IF((inputImageSize * CONST_VALUE_TWO <
             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * CONST_VALUE_THREE),
@@ -257,7 +249,12 @@ ge::graphStatus AippTiling::CheckInputImage()
         OP_CHECK_IF(tilingData.inputSizeW % EVEN_NUMBER_BASE != 0 || tilingData.inputSizeH % EVEN_NUMBER_BASE != 0,
             OP_LOGE(context_->GetNodeName(), \
             "When input_format is YUV420SP_U8, src_image_size_h/w must be even number"), return ge::GRAPH_FAILED);
-    } else if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
+    } else if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8)) {
+        errorCheckLog << static_cast<int>(IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT);
+        OP_CHECK_IF((inputImageSize <
+             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT),
+            OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
+    } else if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
         errorCheckLog << static_cast<int>(IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT);
         OP_CHECK_IF((inputImageSize <
              tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT),
@@ -464,7 +461,7 @@ ge::graphStatus AippTiling::GetWorkspaceSize()
 
 ge::graphStatus AippTiling::DoOpTiling()
 {
-    IsGrayForCSC();
+    SetGrayFlag();
     SwapChannelForCSC();
     PrintTilingData();
     return ge::GRAPH_SUCCESS;
@@ -472,14 +469,14 @@ ge::graphStatus AippTiling::DoOpTiling()
 
 void AippTiling::SwapChannelForCSC()
 {
-    if ((tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
-        tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
+    if ((tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
+        tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) &&
         tilingData.cscParam.rbuvSwapSwitch == 1) {
         swap(tilingData.cscParam.cscMatrix00, tilingData.cscParam.cscMatrix02);
         swap(tilingData.cscParam.cscMatrix10, tilingData.cscParam.cscMatrix12);
         swap(tilingData.cscParam.cscMatrix20, tilingData.cscParam.cscMatrix22);
     }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
         tilingData.cscParam.rbuvSwapSwitch == 1) {
         swap(tilingData.cscParam.cscMatrix01, tilingData.cscParam.cscMatrix02);
         swap(tilingData.cscParam.cscMatrix11, tilingData.cscParam.cscMatrix12);
@@ -487,8 +484,14 @@ void AippTiling::SwapChannelForCSC()
     }
 }
 
-void AippTiling::IsGrayForCSC()
+void AippTiling::SetGrayFlag()
 {
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8) &&
+        !static_cast<bool>(tilingData.cscParam.cscSwitch)) {
+        isGray = true;
+        return;
+    }
+
     bool anyMatrix1NotZero = (tilingData.cscParam.cscMatrix10 != 0) || 
                              (tilingData.cscParam.cscMatrix11 != 0) || 
                              (tilingData.cscParam.cscMatrix12 != 0);
@@ -498,14 +501,15 @@ void AippTiling::IsGrayForCSC()
     if (anyMatrix1NotZero || anyMatrix2NotZero) {
         return;
     }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_RGB888_U8) ||
+        tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) {
         if ((tilingData.cscParam.outBias0 == 0) &&
             (tilingData.cscParam.outBias1 == 0) && 
             (tilingData.cscParam.outBias2 == 0)) {
             isGray = true;
         }
     }
-    if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8) &&
         tilingData.cscParam.cscMatrix01 == 0 && tilingData.cscParam.cscMatrix02 == 0) {
         if ((tilingData.cscParam.inBias0 == 0) && 
             (tilingData.cscParam.inBias1 == 0) && 
@@ -568,7 +572,7 @@ ge::graphStatus AippTiling::CheckCropSize()
                 "aipp.cfg's crop_start_pos_h + crop_size_h should smaller than src_image_size_h."),
             return ge::GRAPH_FAILED);
 
-        if (tilingData.imageFormat == IMAGE_FORMART_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
+        if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
             OP_CHECK_IF( tilingData.cropParam.cropStartPosW % EVEN_NUMBER_BASE != 0 ||
                 tilingData.cropParam.cropStartPosH % EVEN_NUMBER_BASE != 0, \
                 OP_LOGE( context_->GetNodeName(), \
@@ -584,6 +588,10 @@ ge::graphStatus AippTiling::SetCscValue()
 {
     if ((aippCfg.find(AIPP_CFG_CSC_SWITCH) != aippCfg.end()) && (aippCfg.at(AIPP_CFG_CSC_SWITCH) == "true")) {
         tilingData.cscParam.cscSwitch = 1;
+        OP_CHECK_IF(
+            tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8), OP_LOGE(context_->GetNodeName(), 
+            "When input format is YUV400_U8, it doesn't make sense to convert to RGB, csc_switch : true."),
+            return ge::GRAPH_FAILED);
         const std::map<string, int16_t*> CSC_MATRIX_MAP = {
             {AIPP_CFG_MATRIX_R0C0, &tilingData.cscParam.cscMatrix00},
             {AIPP_CFG_MATRIX_R0C1, &tilingData.cscParam.cscMatrix01},
@@ -611,13 +619,21 @@ ge::graphStatus AippTiling::SetCscValue()
         OP_CHECK_IF(ParseNumAndValidateRange(CSC_BIAS_MAP, 0, MAX_RGB_BOUND) != ge::GRAPH_SUCCESS,
             OP_LOGE(context_->GetNodeName(), "CSC_BIAS_MAP parse and validate range failed."),
             return ge::GRAPH_FAILED);
+    } else {
+        tilingData.cscParam.cscMatrix00 = 256; tilingData.cscParam.cscMatrix01 = 0;   tilingData.cscParam.cscMatrix02 = 0;
+        tilingData.cscParam.cscMatrix10 = 0;   tilingData.cscParam.cscMatrix11 = 256; tilingData.cscParam.cscMatrix12 = 0;
+        tilingData.cscParam.cscMatrix20 = 0;   tilingData.cscParam.cscMatrix21 = 0;   tilingData.cscParam.cscMatrix22 = 256;
+        tilingData.cscParam.inBias0 = 0;       tilingData.cscParam.inBias1 = 0;       tilingData.cscParam.inBias2 = 0;
+        tilingData.cscParam.outBias0 = 0;      tilingData.cscParam.outBias1 = 0;      tilingData.cscParam.outBias2 = 0;
     }
-    OP_CHECK_IF(
-        SetSwapSwitch() != ge::GRAPH_SUCCESS,
-        OP_LOGE(context_->GetNodeName(), "Only XRGB888_U8 supports ax_swap_switch being true."),
-        return ge::GRAPH_FAILED);
 
-    return ge::GRAPH_SUCCESS;
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
+        tilingData.cscParam.outBias0 = 0; tilingData.cscParam.outBias1 = 0; tilingData.cscParam.outBias2 = 0;
+    } else {
+        tilingData.cscParam.inBias0 = 0;  tilingData.cscParam.inBias1 = 0;  tilingData.cscParam.inBias2 = 0;
+    }
+
+    return SetSwapSwitch();
 }
 
 ge::graphStatus AippTiling::SetSwapSwitch()
@@ -627,11 +643,16 @@ ge::graphStatus AippTiling::SetSwapSwitch()
     }
 
     if (aippCfg.find(AIPP_AX_SWAP_SWITCH) != aippCfg.end() && aippCfg.at(AIPP_AX_SWAP_SWITCH) == "true") {
-        if (tilingData.imageFormat != IMAGE_FORMART_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) {
+        if (tilingData.imageFormat != IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) {
+            OP_LOGE(context_->GetNodeName(), "Only XRGB888_U8 supports ax_swap_switch being true.");
             return ge::GRAPH_FAILED;
         }
         tilingData.cscParam.axSwapSwitch = 1;
     }
+
+    tilingData.srcChannelOffset =
+        (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_XRGB8888_U8) &&
+         tilingData.cscParam.axSwapSwitch == 1) ? 1 : 0;
 
     return ge::GRAPH_SUCCESS;
 }

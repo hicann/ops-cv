@@ -11,6 +11,10 @@
 /*!
  * \file aipp_yuv_gray.h
  * \brief aipp yuv to gray
+ *
+ * Supports YUV420SP_U8 -> GRAY and YUV400_U8 -> GRAY
+ * YUV420SP: YUV420SP format with size H*W*1.5, extracts Y component from interleaved storage
+ * YUV400: Single-channel grayscale format with size H*W, direct access
  */
 
 #ifndef AIPP_OP_KERNEL_ARCH35_YUV_GRAY_H
@@ -39,13 +43,6 @@ __aicore__ inline void AippYuvGray<T, DataType>::Init(const AippTilingData& tili
     this->BaseInit(tilingData);
 }
 
-__aicore__ __attribute__((always_inline)) inline uint8_t Yuv2Gray(uint8_t y, const CscParam& cscParam)
-{
-    auto gTmp = static_cast<int16_t>(roundf(static_cast<float>(
-        cscParam.cscMatrix00 * static_cast<int16_t>(y) * DIGIT_2 + 1) / CSC_MATRIX_SCALE));
-    return CLIP3(gTmp, 0, MAX_UINT8);
-}
-
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
     __gm__ uint8_t* yuvGM, __gm__ T* outputGM, const AippTilingData tD,
@@ -54,9 +51,10 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
     float padValue = tD.paddingParam.padValue;
+    bool isYuv400 = (tD.imageFormat == YUV400_U8_FORMAT);
 
-    for (DataType idx = Simt::GetThreadIdx() + blockIdx * Simt::GetThreadNum(); idx < batchSize;
-         idx += blockNum * Simt::GetThreadNum()) {
+    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
+         idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         RgbPack<DataType> dstGrayIdx;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
@@ -68,11 +66,19 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
             AssignPadValue(outputGM[dstGrayIdx.g], padValue);
             AssignPadValue(outputGM[dstGrayIdx.b], padValue);
         } else {
-            DataType srcYuvYIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW * DIGIT_3 / DIGIT_2 +
-                (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
-                tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
-            uint8_t grayValue = Yuv2Gray(yuvGM[srcYuvYIdx], tD.cscParam);
-            DataConversion(outputGM[dstGrayIdx.r], grayValue, tD.dtcParam, CHANNEL_NUM_0);
+            DataType srcIdx;
+            if (isYuv400) {
+                srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW +
+                    (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
+                    tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
+            } else {
+                srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW * DIGIT_3 / DIGIT_2 +
+                    (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
+                    tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
+            }
+            RgbPack<uint8_t> result;
+            ApplyCscMatrix(result, yuvGM[srcIdx], 0, 0, tD.cscParam);
+            DataConversion(outputGM[dstGrayIdx.r], result.r, tD.dtcParam, CHANNEL_NUM_0);
             DataConversion(outputGM[dstGrayIdx.g], 0, tD.dtcParam, CHANNEL_NUM_1);
             DataConversion(outputGM[dstGrayIdx.b], 0, tD.dtcParam, CHANNEL_NUM_2);
         }
@@ -85,7 +91,7 @@ __aicore__ inline void AippYuvGray<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
     uint64_t batchSize = static_cast<uint64_t>(this->tilingData_.batchNum) *
         this->tilingData_.outputSizeH * this->tilingData_.outputSizeW;
 
-    Simt::VF_CALL<Aipp_Kernel::SimtComputeYuvGray<T, DataType>>(Simt::Dim3(this->blockDimX_),
+    asc_vf_call<Aipp_Kernel::SimtComputeYuvGray<T, DataType>>(dim3(this->blockDimX_),
         (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->blockIdx_, this->blockNum_, batchSize);
 }
 

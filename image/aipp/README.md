@@ -171,7 +171,7 @@
         <td rowspan="3">静态AIPP参数设置</td>
         <td>input_format</td>
         <td>必选属性</td>
-        <td>输入图片类型，目前只支持RGB888_U8、XRGB8888_U8、YUV420SP_U8。</td>
+        <td>输入图片类型，目前只支持RGB888_U8、XRGB8888_U8、YUV420SP_U8、YUV400_U8。</td>
         <td>ENUM</td>
         </tr>
         <tr>
