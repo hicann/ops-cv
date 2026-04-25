@@ -1759,4 +1759,4 @@ set -o pipefail
 if [ $# -eq 0 ]; then
   usage
 fi
-main "$@" | gawk '{print strftime("[%Y-%m-%d %H:%M:%S]"), $0}'
+main "$@" | while IFS= read -r line; do echo "$(date '+[%Y-%m-%d %H:%M:%S]') $line"; done
