@@ -328,7 +328,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   $$
 
 - 确定性计算：
-  - aclnnUpsampleNearestExact3dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
+  - aclnnUpsampleNearestExact3dBackward默认确定性实现。
 
 ## 调用示例
 
