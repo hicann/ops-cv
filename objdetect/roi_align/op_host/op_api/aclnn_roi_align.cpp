@@ -115,6 +115,10 @@ static bool CheckShape(const aclTensor *self, const aclTensor *rois, const aclTe
 
 static bool CheckAttr(const char *mode, int samplingRatio, float spatialScale)
 {
+    if (mode == nullptr) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode is null, please check input arguments");
+        return false;
+    }
     if (strcmp(mode, "avg") != 0 && strcmp(mode, "max") != 0) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be [avg] or [max], but get [%s]", mode);
         return false;

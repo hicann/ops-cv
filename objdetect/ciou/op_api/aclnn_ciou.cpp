@@ -90,6 +90,10 @@ static bool CheckDtypeValid(
 
 static bool CheckAttr(bool isCross, const char* mode)
 {
+    if (mode == nullptr) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode is null, please check input arguments");
+        return false;
+    }
     // 检查self和other能否做数据类型推导
     OP_CHECK(
         isCross == false,
