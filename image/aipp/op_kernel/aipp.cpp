@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file aipp_apt.cpp
+ * \file aipp.cpp
  * \brief aipp kernel main
  */
 

@@ -64,8 +64,13 @@ __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& til
 {
     tilingData_ = tilingData;
 
+#if defined(ASCENDC_CPU_DEBUG)
+    blockIdx_ = static_cast<uint32_t>(::get_block_idx());
+    blockNum_ = static_cast<uint32_t>(::get_block_num());
+#else
     blockNum_ = gridDim.x;
     blockIdx_ = blockIdx.x;
+#endif
     totalNum_ = tilingData_.batchNum * tilingData_.outputSizeH * tilingData_.outputSizeW;
 }
 

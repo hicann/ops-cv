@@ -584,14 +584,49 @@ ge::graphStatus AippTiling::CheckCropSize()
     return ge::GRAPH_SUCCESS;
 }
 
+
+void AippTiling::SetCscDefaultMatrix()
+{
+    tilingData.cscParam.cscMatrix00 = CSC_IDENTITY_SCALE; 
+    tilingData.cscParam.cscMatrix01 = 0; 
+    tilingData.cscParam.cscMatrix02 = 0;
+    tilingData.cscParam.cscMatrix10 = 0; 
+    tilingData.cscParam.cscMatrix11 = CSC_IDENTITY_SCALE; 
+    tilingData.cscParam.cscMatrix12 = 0;
+    tilingData.cscParam.cscMatrix20 = 0; 
+    tilingData.cscParam.cscMatrix21 = 0; 
+    tilingData.cscParam.cscMatrix22 = CSC_IDENTITY_SCALE;
+    tilingData.cscParam.inBias0 = 0;  
+    tilingData.cscParam.inBias1 = 0;  
+    tilingData.cscParam.inBias2 = 0;
+    tilingData.cscParam.outBias0 = 0; 
+    tilingData.cscParam.outBias1 = 0; 
+    tilingData.cscParam.outBias2 = 0;
+}
+
+void AippTiling::SetCscFormatBias()
+{
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
+        tilingData.cscParam.outBias0 = 0;
+        tilingData.cscParam.outBias1 = 0;
+        tilingData.cscParam.outBias2 = 0;
+    } else {
+        tilingData.cscParam.inBias0 = 0;
+        tilingData.cscParam.inBias1 = 0;
+        tilingData.cscParam.inBias2 = 0;
+    }
+}
+
 ge::graphStatus AippTiling::SetCscValue()
 {
     if ((aippCfg.find(AIPP_CFG_CSC_SWITCH) != aippCfg.end()) && (aippCfg.at(AIPP_CFG_CSC_SWITCH) == "true")) {
         tilingData.cscParam.cscSwitch = 1;
+
         OP_CHECK_IF(
             tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8), OP_LOGE(context_->GetNodeName(), 
             "When input format is YUV400_U8, it doesn't make sense to convert to RGB, csc_switch : true."),
             return ge::GRAPH_FAILED);
+
         const std::map<string, int16_t*> CSC_MATRIX_MAP = {
             {AIPP_CFG_MATRIX_R0C0, &tilingData.cscParam.cscMatrix00},
             {AIPP_CFG_MATRIX_R0C1, &tilingData.cscParam.cscMatrix01},
@@ -620,18 +655,10 @@ ge::graphStatus AippTiling::SetCscValue()
             OP_LOGE(context_->GetNodeName(), "CSC_BIAS_MAP parse and validate range failed."),
             return ge::GRAPH_FAILED);
     } else {
-        tilingData.cscParam.cscMatrix00 = 256; tilingData.cscParam.cscMatrix01 = 0;   tilingData.cscParam.cscMatrix02 = 0;
-        tilingData.cscParam.cscMatrix10 = 0;   tilingData.cscParam.cscMatrix11 = 256; tilingData.cscParam.cscMatrix12 = 0;
-        tilingData.cscParam.cscMatrix20 = 0;   tilingData.cscParam.cscMatrix21 = 0;   tilingData.cscParam.cscMatrix22 = 256;
-        tilingData.cscParam.inBias0 = 0;       tilingData.cscParam.inBias1 = 0;       tilingData.cscParam.inBias2 = 0;
-        tilingData.cscParam.outBias0 = 0;      tilingData.cscParam.outBias1 = 0;      tilingData.cscParam.outBias2 = 0;
+        SetCscDefaultMatrix();
     }
 
-    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
-        tilingData.cscParam.outBias0 = 0; tilingData.cscParam.outBias1 = 0; tilingData.cscParam.outBias2 = 0;
-    } else {
-        tilingData.cscParam.inBias0 = 0;  tilingData.cscParam.inBias1 = 0;  tilingData.cscParam.inBias2 = 0;
-    }
+    SetCscFormatBias();
 
     return SetSwapSwitch();
 }

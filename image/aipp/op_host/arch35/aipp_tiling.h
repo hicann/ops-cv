@@ -41,6 +41,7 @@ using namespace Aipp_Kernel;
 constexpr int64_t MAX_RGB_BOUND = 255;
 constexpr int64_t MIN_MATRIX_BOUND = -32677;
 constexpr int64_t MAX_MATRIX_BOUND = 32676;
+constexpr int16_t CSC_IDENTITY_SCALE = 256;
 constexpr int64_t MIN_CHN_BOUND = -65504;
 constexpr int64_t MAX_CHN_BOUND = 65504;
 constexpr int64_t MAX_IMAGE_HIGH = 4096;
@@ -188,6 +189,8 @@ private:
     ge::graphStatus SetCscValue();
     ge::graphStatus SetDTCValue();
     ge::graphStatus SetSwapSwitch();
+    void SetCscDefaultMatrix();
+    void SetCscFormatBias();
     void SetGrayFlag();
     void SwapChannelForCSC();
     ge::graphStatus SetPaddingValue();

@@ -47,7 +47,7 @@ public:
             .DynamicShapeSupportFlag(true)
             .NeedCheckSupportFlag(false)
             .PrecisionReduceFlag(true)
-            .ExtendCfgInfo("opFile.value", "aipp_apt")
+            .ExtendCfgInfo("opFile.value", "aipp")
             .ExtendCfgInfo("opInterface.value", "Aipp");
         this->AICore().AddConfig("ascend950", aicoreConfig);
     }

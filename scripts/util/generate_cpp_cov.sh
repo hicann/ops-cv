@@ -27,11 +27,11 @@ get_lcov_version() {
 # 根据 lcov 版本构建 --ignore-errors 参数
 build_ignore_errors_opt() {
   local version="$1"
-  # lcov 2.0+ supports: mismatch, gcov, source, empty, etc.
+  # lcov 2.0+ supports: mismatch, gcov, source, empty,negative etc.
   # lcov 1.x supports: gcov, inconsistent, etc.
   
   if [[ "${version}" =~ ^2\. ]]; then
-    echo "--ignore-errors mismatch,gcov,source,empty"
+    echo "--ignore-errors mismatch,gcov,source,empty,negative"
   else
     # lcov 1.14 and earlier
     echo "--ignore-errors gcov"
