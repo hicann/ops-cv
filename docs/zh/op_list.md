@@ -303,7 +303,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）。</td>
+    <td>对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。</td>
   </tr>
   <tr>
     <td>image</td>

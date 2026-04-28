@@ -54,7 +54,7 @@
       {V(p_{x})} = {V(p_{x0})} * {lambda_{0}} + {V(p_{x1})} * {lambda_{1}}
       $$
 
-    - 假设：正向插值的输出图像out $(x)$受原图像input $(x_i)$影响，则有:
+    - 假设：正向插值的输出图像out $(x)$受原图像input $(x_i)$影响，则有：
   
       $$
       gradInput(x_i) += gradOut(x) * lambda(x_i)

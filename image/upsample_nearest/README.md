@@ -18,8 +18,8 @@
 - 算子功能：
  
   对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
-  - 如果输入shape为（N，C，L），则输出shape为（N，C，outputSize）；
-  - 如果输入shape为（N，C，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]）。
+  - 如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)；
+  - 如果输入shape为(N, C, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1])。
 
 - 计算公式：
 

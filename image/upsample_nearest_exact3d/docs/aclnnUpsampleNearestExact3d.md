@@ -15,7 +15,7 @@
 
 ## 功能说明
 
-- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D，H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, D, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1], outputSize[2])。
 - 计算公式：
 
   $$
@@ -193,7 +193,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
-      <td>传入的self 、outputSize或out是空指针时。</td>
+      <td>传入的self、outputSize或out是空指针时。</td>
     </tr>
     <tr>
       <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>

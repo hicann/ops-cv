@@ -58,7 +58,7 @@
         \end{cases}
       $$
 
-  - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有:
+  - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有：
   
     $$
     gradInput(h_i,w_j) += gradOutput(h,w) * w(i) * w(j)

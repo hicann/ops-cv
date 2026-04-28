@@ -22,7 +22,7 @@
   $$
 
   $$
-  \frac{\alpha L}{\alpha X_{i,j}} = \sum_{i'} \sum_{j'} \frac{\alpha L}{\alpha Y_{i',j'}} \times W(i' - i) \times W(j' - j)
+  \frac{\partial L}{\partial X_{i,j}} = \sum_{i'} \sum_{j'} \frac{\partial L}{\partial Y_{i',j'}} \times W(i' - i) \times W(j' - j)
   $$
 
 ## 参数说明
