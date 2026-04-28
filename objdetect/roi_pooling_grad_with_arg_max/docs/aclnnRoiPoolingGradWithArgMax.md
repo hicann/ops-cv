@@ -192,12 +192,12 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
-      <td>传入的gradOutput、rois、argmax 、gradInputRef是空指针。</td>
+      <td>传入的gradOutput、rois、argmax、gradInputRef是空指针。</td>
     </tr>
     <tr>
       <td rowspan="11">ACLNN_ERR_PARAM_INVALID</td>
       <td rowspan="11">161002</td>
-      <td>gradOutput、rois、argmax 、gradInputRef的数据类型不在支持的范围之内。</td>
+      <td>gradOutput、rois、argmax、gradInputRef的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
       <td>gradOutput、argmax与gradInputRef具有相同的数据类型。</td>
@@ -278,7 +278,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 
 ## 约束说明
 
-1. gradOutput、rois、argmax 、gradInputRef的数据类型在支持的范围之内。
+1. gradOutput、rois、argmax、gradInputRef的数据类型在支持的范围之内。
 2. gradOutput、argmax与gradInputRef具有相同的数据类型
 3. gradOutput、argmax、gradInputRef的shape大小为4，rois的shape大小为2
 4. gradOutput、argmax、rois的shape[0]相等

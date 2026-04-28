@@ -39,7 +39,7 @@
             | V |   | matrix_r2c0 matrix_r2c1 matrix_r2c2 | | B |        | output_bias_2 |
             ```
 
-    3. 对数据进行归一化，计算公式如下:
+    3. 对数据进行归一化，计算公式如下：
 
         ```text
         pixel_out_chx(i) = [pixel_in_chx(i) - mean_chn_i - min_chn_i] * var_reci_chn_i

@@ -127,7 +127,7 @@
 
 ## 约束说明
 
-* gradOutput、rois、argmax 、gradInputRef的数据类型在支持的范围之内。
+* gradOutput、rois、argmax、gradInputRef的数据类型在支持的范围之内。
 * gradOutput、argmax与gradInputRef具有相同的数据类型
 * gradOutput、argmax、gradInputRef的shape大小为4，rois的shape大小为2
 * gradOutput、argmax、rois的shape[0]相等
