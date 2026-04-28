@@ -96,7 +96,7 @@
     <tr>
       <td>padding_mode</td>
       <td>可选属性</td>
-      <td><ul><li>用于表示填充模式，对应公式描述中的`padding_mode`。支持0（'zeros'） 、 1（'border'） 、2（'reflection'）三种模式。</li><li>默认值为"zeros"。</li></ul></td>
+      <td><ul><li>用于表示填充模式，对应公式描述中的`padding_mode`。支持0（'zeros'）、1（'border'）、2（'reflection'）三种模式。</li><li>默认值为"zeros"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>

@@ -16,7 +16,7 @@
 ## 功能说明
 
 - 接口功能：[aclnnUpsampleBilinear2dAA](../../upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md)的反向传播。
-- 计算公式：对于一个二维插值点$(N, C, H, W)$, 插值$I(N, C, H, W)$可以表示为：
+- 计算公式：对于一个二维插值点$(N, C, H, W)$，插值$I(N, C, H, W)$可以表示为：
   
   $$
   {I(N, C, H, W)} = \sum_{i=0}^{kW}\sum_{j=0}^{kH}{w(i) * w(j)} * {f(h_i, w_j)}/\sum_{i=0}^{kW}w(i)/\sum_{j=0}^{kH}w(j)
@@ -58,7 +58,7 @@
         \end{cases}
       $$
 
-  - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有:
+  - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有：
   
     $$
     gradInput(h_i,w_j) += gradOutput(h,w) * w(i) * w(j)

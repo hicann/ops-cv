@@ -73,7 +73,7 @@
   
   - 点$v$相对于三角形 $(v_0, v_1, v_2)$的重心坐标$(\alpha, \beta, \gamma)$
     
-    1. 分别计算计算三角形$(v_0, v_1, v_2)$ 、$(v_0, v, v_2)$和$(v_0, v_1, v)$的有向面积$area$、$beta\_tri$和$gamma\_tri$
+    1. 分别计算计算三角形$(v_0, v_1, v_2)$、$(v_0, v, v_2)$和$(v_0, v_1, v)$的有向面积$area$、$beta\_tri$和$gamma\_tri$
     2. 若$area$为0，则$\alpha = \beta = \gamma = -1$， 否则
     
       $$

@@ -15,7 +15,7 @@
 
 ## 功能说明
 
-- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为（N，C，D, H，W），则输出shape为（N，C，outputSize[0]，outputSize[1]，outputSize[2]）。
+- 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, D, H, W)，则输出shape为(N, C, outputSize[0], outputSize[1], outputSize[2])。
 - 计算公式：
   - 核心算法逻辑：
     1. 将目标图像的每一个点映射回原图，得到一个带小数点的坐标。
@@ -205,8 +205,8 @@ aclnnStatus aclnnUpsampleNearest3d(
       <td>如果传入参数是必选输入，输出或者必选属性，且是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="7">161002</td>
+      <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="6">161002</td>
       <td>self的数据类型不在支持的范围之内或self与out数据类型不同。</td>
     </tr>
     <tr>

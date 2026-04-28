@@ -264,11 +264,11 @@ aclnnStatus aclnnUpsampleTrilinear3d(
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
-      <td>传入的self 、outputSize或out是空指针时。</td>
+      <td>传入的self、outputSize或out是空指针时。</td>
     </tr>
     <tr>
-      <td rowspan="6">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="6">161002</td>
+      <td rowspan="5">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="5">161002</td>
       <td>self的数据类型不在支持的范围之内或self与out数据类型不同。</td>
     </tr>
     <tr>

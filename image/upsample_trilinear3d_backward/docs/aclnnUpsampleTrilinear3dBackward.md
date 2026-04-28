@@ -93,7 +93,7 @@
       {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}} 
       $$
 
-    - 假设：正向插值的输出图像out $(x, y, z)$受原图像input $(x_i, y_j, z_k)$影响，则有:
+    - 假设：正向插值的输出图像out $(x, y, z)$受原图像input $(x_i, y_j, z_k)$影响，则有：
   
       $$
       gradInput(x_i,y_j,z_k) += gradOut(x,y,z) * lambda(x_i,y_j,z_k)* lambdb(x_i,y_j,z_k)* lambdc(x_i,y_j,z_k)
