@@ -135,7 +135,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>x（aclTensor*）</td>
       <td>输入</td>
-      <td>输入特征图，格式为 NCHW，（N，C，H，W）。</td>
+      <td>输入特征图，格式为 NCHW，(N, C, H, W)。</td>
       <td><ul><li>不支持空 Tensor。</li><li>输入维度必须为 4 维。</li></ul></td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
