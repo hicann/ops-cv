@@ -45,7 +45,7 @@ __aicore__ inline void AippYuvRgb<T, DataType>::Init(const AippTilingData& tilin
 }
 
 template <typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ComputeYuvRgbDstIdx(
+__simt_callee__ __attribute__((always_inline)) inline void ComputeYuvRgbDstIdx(
     RgbPack<DataType>* dstRgbIdx, const CoordPack<DataType>& coord, const AippTilingData& tD)
 {
     if (tD.outputFormat == NCHW_FORMAT_INDEX) {
@@ -92,7 +92,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeYuvRgbDstIdx(
 // IsPixelInPaddingForYuv is defined in aipp_base.h
 
 template <typename T, typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ProcessYuvRgbPixel(
+__simt_callee__ __attribute__((always_inline)) inline void ProcessYuvRgbPixel(
     __gm__ uint8_t* yuvGM, __gm__ T* outputGM, const RgbPack<DataType> dstIdx,
     uint32_t nIdx, uint32_t croodH, uint32_t croodW, const AippTilingData& tD)
 {
@@ -112,7 +112,7 @@ __aicore__ __attribute__((always_inline)) inline void ProcessYuvRgbPixel(
 }
 
 template <typename T, typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ProcessYuvRgbBlock(
+__simt_callee__ __attribute__((always_inline)) inline void ProcessYuvRgbBlock(
     __gm__ uint8_t* yuvGM, __gm__ T* outputGM,
     const RgbPack<DataType>* dstRgbIdx, const CoordPack<DataType>& coord,
     const AippTilingData& tD, float padValue, bool allEvenPadding, bool blockAllInPadding)

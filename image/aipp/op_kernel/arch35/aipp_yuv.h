@@ -50,7 +50,7 @@ __aicore__ inline void AippYuv<T, DataType>::Init(const AippTilingData& tilingDa
 }
 
 template <typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ComputeDstYuv444Idx(
+__simt_callee__ __attribute__((always_inline)) inline void ComputeDstYuv444Idx(
     DataType dstYIdx[YUV_PER_DEAL_NUM],
     DataType& dstUBase,
     DataType& dstVBase,
@@ -85,7 +85,7 @@ __aicore__ __attribute__((always_inline)) inline void ComputeDstYuv444Idx(
 }
 
 template <typename T, typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(
+__simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(
     __gm__ uint8_t* inputGM, __gm__ T* outputGM,
     DataType dstYIdx, DataType dstUIdx, DataType dstVIdx,
     uint32_t nIdx, uint32_t croodH, uint32_t croodW,
@@ -110,7 +110,7 @@ __aicore__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(
 }
 
 template <typename T, typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ProcessYuv444Block(
+__simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Block(
     __gm__ uint8_t* inputGM, __gm__ T* outputGM,
     const DataType dstYIdx[YUV_PER_DEAL_NUM],
     DataType dstUBase, DataType dstVBase,

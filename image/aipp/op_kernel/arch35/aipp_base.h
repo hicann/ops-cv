@@ -75,7 +75,7 @@ __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& til
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void DataConversion(
+__simt_callee__ __attribute__((always_inline)) inline void DataConversion(
     T& dst, uint8_t src, const DtcParam& dtcParam, int32_t channelIndex)
 {
     if constexpr (sizeof(T) == DIGIT_2) {
@@ -98,7 +98,7 @@ __aicore__ __attribute__((always_inline)) inline void DataConversion(
 }
 
 template <typename T>
-__aicore__ __attribute__((always_inline)) inline void AssignPadValue(T& dst, float padValue)
+__simt_callee__ __attribute__((always_inline)) inline void AssignPadValue(T& dst, float padValue)
 {
     if constexpr (sizeof(T) == sizeof(uint8_t)) {
         dst = static_cast<T>(CLIP3(padValue, 0.0f, 255.0f));
@@ -108,7 +108,7 @@ __aicore__ __attribute__((always_inline)) inline void AssignPadValue(T& dst, flo
 }
 
 template <typename DataType>
-__aicore__ __attribute__((always_inline)) inline void RgbComputeDstIdx(
+__simt_callee__ __attribute__((always_inline)) inline void RgbComputeDstIdx(
     RgbPack<DataType> &dstIdx, const CoordPack<DataType>& coord, const AippTilingData& tD)
 {
     if (tD.outputFormat == NCHW_FORMAT_INDEX) {
@@ -125,7 +125,7 @@ __aicore__ __attribute__((always_inline)) inline void RgbComputeDstIdx(
 }
 
 template <typename DataType>
-__aicore__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(
+__simt_callee__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(
     RgbPack<DataType> &srcIdx, const CoordPack<DataType>& coord, const AippTilingData& tD,
     const DataType offset = 0)
 {
@@ -137,7 +137,7 @@ __aicore__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(
 }
 
 template <typename DataType>
-__aicore__ __attribute__((always_inline)) inline bool IsPixelInPadding(
+__simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPadding(
     DataType hIdx, DataType wIdx, const AippTilingData& tD)
 {
     if (tD.paddingParam.paddingSwitch == 0) {
@@ -153,7 +153,7 @@ __aicore__ __attribute__((always_inline)) inline bool IsPixelInPadding(
            (wIdx >= leftPaddingSize + cropSizeW);
 }
 
-__aicore__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(
+__simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(
     uint32_t pixelH, uint32_t pixelW, const AippTilingData& tD,
     bool allEvenPadding, bool blockAllInPadding)
 {
@@ -169,7 +169,7 @@ __aicore__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(
            (pixelW >= (uint32_t)tD.paddingParam.leftPaddingSize + tD.cropParam.cropSizeW);
 }
 
-__aicore__ __attribute__((always_inline)) inline void ApplyCscMatrix(
+__simt_callee__ __attribute__((always_inline)) inline void ApplyCscMatrix(
     RgbPack<uint8_t>& dst, uint8_t ch0, uint8_t ch1, uint8_t ch2, const CscParam& cscParam)
 {
     auto t0 = static_cast<int16_t>(ch0) - cscParam.inBias0;
@@ -190,7 +190,7 @@ __aicore__ __attribute__((always_inline)) inline void ApplyCscMatrix(
 }
 
 template <typename DataType>
-__aicore__ __attribute__((always_inline)) inline void ComputeCoordFromIndex(
+__simt_callee__ __attribute__((always_inline)) inline void ComputeCoordFromIndex(
     DataType idx, uint32_t outputSizeH, uint32_t outputSizeW,
     CoordPack<DataType>& coord)
 {
