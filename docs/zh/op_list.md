@@ -53,7 +53,7 @@
     <td>&cross;</td>
     <td>&check;</td>
     <td>AI CPU</td>
-    <td>从输入图像中提取多个裁剪区域,并将它们统一调整为指定大小，支持双线性插值和最近邻插值。  </td>
+    <td>从输入图像中提取多个裁剪区域,并将它们统一调整为指定大小，支持双线性插值和最近邻插值。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -213,7 +213,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensorx的shape为(N,C,H,W)，则输出Tensorout的shape为(N,C,outputSize[0],outputSize[1])。 </td>
+    <td>对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensorx的shape为(N,C,H,W)，则输出Tensorout的shape为(N,C,outputSize[0],outputSize[1])。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -273,7 +273,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>UpsampleBilinear2dAA的反向传播。 </td>
+    <td>UpsampleBilinear2dAA的反向传播。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -333,7 +333,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>UpsampleNearestExact3d的反向计算。  </td>
+    <td>UpsampleNearestExact3d的反向计算。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -363,7 +363,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>UpsampleNearest3d的反向计算。 </td>
+    <td>UpsampleNearest3d的反向计算。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -513,7 +513,17 @@
     <td>&cross;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>根据特征点所属的组，重组点云中的特征点。 </td>
+    <td>根据特征点所属的组，重组点云中的特征点。 </td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/nms_with_mask/README.md">nms_with_mask</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>完成带掩码非极大值抑制计算。</td>
   </tr>
 </tbody>
 </table>
