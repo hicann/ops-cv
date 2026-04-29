@@ -54,7 +54,7 @@ public:
         aicoreConfig.DynamicCompileStaticFlag(true)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
-            .ExtendCfgInfo("opFile.value", "col2im_apt");
+            .ExtendCfgInfo("opFile.value", "col2im");
         this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };

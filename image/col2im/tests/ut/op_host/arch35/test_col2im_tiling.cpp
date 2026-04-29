@@ -58,7 +58,7 @@ TEST_F(Col2imTiling, col2im_tiling_test_float32_case1)
                                                        gert::TilingContextPara::OpAttr("padding", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
                                                        gert::TilingContextPara::OpAttr("stride", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 7}))},
                                                 &compileInfo);
-    uint64_t expectTilingKey = 1;
+    uint64_t expectTilingKey = 0;
     string expectTilingData = "215040 20 21 1 5 2 7 1 5 1 7 22 1 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);

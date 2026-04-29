@@ -30,11 +30,11 @@ const uint32_t VF_MAX_THREAD_NUM = 1024;
 template <typename ACC_T, typename D_T>
 class RoiPoolingGradWithArgMaxSimt {
 public:
-    [aicore] inline RoiPoolingGradWithArgMaxSimt() {};
-    [aicore] inline void Init(
+    __aicore__ inline RoiPoolingGradWithArgMaxSimt() {};
+    __aicore__ inline void Init(
         GM_ADDR grad, GM_ADDR x, GM_ADDR rois, GM_ADDR argmax, GM_ADDR y, GM_ADDR workspace,
         const RoiPoolingGradWithArgMaxRegBaseTilingData* __restrict tilingData);
-    [aicore] inline void Process();
+    __aicore__ inline void Process();
 
 private:
     GlobalTensor<D_T> gradGm_;
@@ -48,7 +48,7 @@ private:
 };
 
 template <typename ACC_T, typename D_T>
-[aicore] inline void RoiPoolingGradWithArgMaxSimt<ACC_T, D_T>::Init(
+__aicore__ inline void RoiPoolingGradWithArgMaxSimt<ACC_T, D_T>::Init(
     GM_ADDR grad, GM_ADDR x, GM_ADDR rois, GM_ADDR argmax, GM_ADDR y, GM_ADDR workspace, const RoiPoolingGradWithArgMaxRegBaseTilingData* __restrict tilingData)
 {
     gradGm_.SetGlobalBuffer((__gm__ D_T*)(grad));
@@ -103,7 +103,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void RoiPoolingGradWithArgMax
 }
 
 template <typename ACC_T, typename D_T>
-[aicore] inline void RoiPoolingGradWithArgMaxSimt<ACC_T, D_T>::Process()
+__aicore__ inline void RoiPoolingGradWithArgMaxSimt<ACC_T, D_T>::Process()
 {
     const uint32_t yTotalCoreNum = static_cast<uint32_t>(tiling_->yTotalCoreNum);
     const uint32_t yDataPerCore = static_cast<uint32_t>(tiling_->yDataPerCore);

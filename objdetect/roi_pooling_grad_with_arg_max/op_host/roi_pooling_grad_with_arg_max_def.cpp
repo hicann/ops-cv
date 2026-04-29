@@ -74,7 +74,7 @@ public:
         aicoreConfig.DynamicCompileStaticFlag(true)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
-            .ExtendCfgInfo("opFile.value", "roi_pooling_grad_with_arg_max_apt");
+            .ExtendCfgInfo("opFile.value", "roi_pooling_grad_with_arg_max");
         this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };

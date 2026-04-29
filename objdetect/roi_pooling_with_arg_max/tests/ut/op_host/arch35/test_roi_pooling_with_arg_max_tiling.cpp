@@ -15,7 +15,7 @@
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>
-#include "../../../op_host/arch35/roi_pooling_with_arg_max_tiling_arch35.h"
+#include "../../../../op_host/arch35/roi_pooling_with_arg_max_tiling_arch35.h"
 #include "tiling_case_executor.h"
 #include "tiling_context_faker.h"
 
