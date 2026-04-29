@@ -107,7 +107,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckDtypeValid()
         std::string dtypeMsg = Ops::Base::ToString(inputInfo_.gradsDtype) + ", " +
                                Ops::Base::ToString(inputInfo_.originalImageDtype) + " and " +
                                Ops::Base::ToString(inputInfo_.yDtype);
-        std::string reasonMsg = "Dtypes of input grads, original_image and output y must be same";
+        std::string reasonMsg = "The dtypes of input grads, original_image and output y must be the same";
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
             context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
@@ -118,7 +118,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckDtypeValid()
     if (calcInfo_.gradsDtypeSize <= 0 || calcInfo_.yDtypeSize <= 0) {
         std::string dtypeMsg = Ops::Base::ToString(inputInfo_.gradsDtype) + " and " +
                                Ops::Base::ToString(inputInfo_.yDtype);
-        std::string reasonMsg = "Dtype sizes of input grads and output y should be greater than zero";
+        std::string reasonMsg = "The dtype sizes of input grads and output y must be greater than zero";
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
             context_->GetNodeName(), "grads and y", dtypeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
@@ -139,7 +139,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckFormatValid()
         std::string formatMsg = Ops::Base::ToString(inputInfo_.gradsFormat) + ", " +
                                 Ops::Base::ToString(inputInfo_.originalImageFormat) + " and " +
                                 Ops::Base::ToString(inputInfo_.yFormat);
-        std::string reasonMsg = "Formats of input grads, original_image and output y must be same";
+        std::string reasonMsg = "The formats of input grads, original_image and output y must be the same";
         OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
             context_->GetNodeName(), "grads, original_image and y", formatMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
@@ -155,7 +155,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckShapeDimValid()
         std::string dimMsg =
             std::to_string(inputInfo_.gradsShape.GetDimNum()) + " and " + std::to_string(inputInfo_.yShape.GetDimNum());
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
-            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "Shapes of grads and y must be 4D");
+            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "The shapes of grads and y must be 4D");
         return ge::GRAPH_FAILED;
     }
 
@@ -163,7 +163,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckShapeDimValid()
         std::string shapeMsg =
             Ops::Base::ToString(inputInfo_.originalImageShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "original_image and y", shapeMsg.c_str(),
-            "Shapes of original_image and y must be same");
+            "The shapes of original_image and y must be the same");
         return ge::GRAPH_FAILED;
     }
 
@@ -175,7 +175,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckAxesValid()
     if (inputInfo_.gradsShape.GetDim(NUM_0) != inputInfo_.yShape.GetDim(NUM_0)) {
         std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
-            "The N axis sizes of input grads and output y (their axis 0) must be equal");
+            "The N-dimension of input grads and output y must be the same, where N is the 0th axis of them");
         return ge::GRAPH_FAILED;
     }
     inputInfo_.lenN = inputInfo_.gradsShape.GetDim(NUM_0);
@@ -185,14 +185,14 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckAxesValid()
         if (inputInfo_.gradsShape.GetDim(NUM_1) != inputInfo_.yShape.GetDim(NUM_1)) {
             std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
             OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
-                "The C axis sizes of input grads and output y (their axis 1 when their formats are NCHW or ND) must be equal");
+                "The C-dimension of input grads and output y must be the same, where C is the 1st axis when their formats are NCHW or ND");
             return ge::GRAPH_FAILED;
         }
     } else if (inputInfo_.gradsFormat == ge::FORMAT_NHWC) {
         if (inputInfo_.gradsShape.GetDim(NUM_3) != inputInfo_.yShape.GetDim(NUM_3)) {
             std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
             OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
-                "The C axis sizes of input grads and output y (their axis 3 when their formats are NHWC) must be equal");
+                "The C-dimension of input grads and output y must be the same, where C is the last axis when their formats are NHWC");
             return ge::GRAPH_FAILED;
         }
         formatIsNHWC = true;
@@ -204,7 +204,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckAxesValid()
     inputInfo_.lenDstW = inputInfo_.gradsShape.GetDim(formatIsNHWC ? NUM_2 : NUM_3);
 
     if (inputInfo_.lenN <= 0 || inputInfo_.lenC <= 0) {
-        std::string reasonMsg = "N and C dims of grads and y must be greater than zero, "
+        std::string reasonMsg = "The N-dimension and C-dimension of grads and y must be greater than zero, "
                                 "where C is inferred from the 4D shape of grads based on its format "
                                 "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
@@ -214,7 +214,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckAxesValid()
 
     if (inputInfo_.lenSrcH <= 0 || inputInfo_.lenSrcW <= 0 || inputInfo_.lenDstH <= 0 || inputInfo_.lenDstW <= 0) {
         std::string shapeMsg = Ops::Base::ToString(inputInfo_.gradsShape) + " and " + Ops::Base::ToString(inputInfo_.yShape);
-        std::string reasonMsg = "Both input and output must have H and W axis sizes greater than 0, "
+        std::string reasonMsg = "The H-dimension and W-dimension of grads and y must be greater than 0, "
                                 "where H and W are inferred from the 4D shapes of input grads and output y "
                                 "based on their formats: axes 2/3 for NCHW, or axes 1/2 for NHWC";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());

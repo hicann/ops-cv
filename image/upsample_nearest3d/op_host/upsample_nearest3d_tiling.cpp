@@ -153,49 +153,37 @@ void UpsampleNearest3dTiling::getWorkSpace()
 inline bool UpsampleNearest3dTiling::CheckMaxSizes(const gert::TilingContext* context)
 {
     if (inputShape.GetDim(0) > INT32_MAX) {
-        std::string reasonMsg = "The N axis size of x (its axis 0) must be less than or equal to INT32_MAX";
+        std::string reasonMsg = "The N-dimension of x must be less than or equal to INT32_MAX, where N is the 0th axis";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
         return false;
     }
     if (inputShape.GetDim(1) > INT32_MAX) {
-        std::string reasonMsg = "The C axis size of x (its axis 1) must be less than or equal to INT32_MAX";
+        std::string reasonMsg = "The C-dimension of x must be less than or equal to INT32_MAX, where C is the 1st axis";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
         return false;
     }
     if (inputShapes[0] > INT32_MAX) {
-        std::string reasonMsg = "The D axis size of x (its axis 2) must be less than or equal to INT32_MAX";
+        std::string reasonMsg = "The D-dimension of x must be less than or equal to INT32_MAX, where D is the 2nd axis";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
         return false;
     }
     if (inputShapes[1] > INT32_MAX) {
-        std::string reasonMsg = "The H axis size of x (its axis 3) must be less than or equal to INT32_MAX";
+        std::string reasonMsg = "The H-dimension of x must be less than or equal to INT32_MAX, where H is the 3rd axis";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
         return false;
     }
     if (inputShapes[2] > INT32_MAX) {
-        std::string reasonMsg = "The W axis size of x (its axis 4) must be less than or equal to INT32_MAX";
+        std::string reasonMsg = "The W-dimension of x must be less than or equal to INT32_MAX, where W is the last axis";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
         return false;
     }
-    if (outputShapes[0] > INT32_MAX) {
-        std::string reasonMsg = "The D axis size of output (specified by value #0 of attribute output_size) "
-                                "must be less than or equal to INT32_MAX";
+
+    if (outputShapes[0] > INT32_MAX || outputShapes[1] > INT32_MAX || outputShapes[2] > INT32_MAX) {
+        std::string valueMsg = "(" + std::to_string(outputShapes[0]) + ", " + std::to_string(outputShapes[1]) + ", " +
+                               std::to_string(outputShapes[2]) + ")";
+        std::string reasonMsg = "Each value of output_size must be less than or equal to INT32_MAX";
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
-            context->GetNodeName(), "output_size", std::to_string(outputShapes[0]).c_str(), reasonMsg.c_str());
-        return false;
-    }
-    if (outputShapes[1] > INT32_MAX) {
-        std::string reasonMsg = "The H axis size of output (specified by value #1 of attribute output_size) "
-                                "must be less than or equal to INT32_MAX";
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
-            context->GetNodeName(), "output_size", std::to_string(outputShapes[1]).c_str(), reasonMsg.c_str());
-        return false;
-    }
-    if (outputShapes[2] > INT32_MAX) {
-        std::string reasonMsg = "The W axis size of output (specified by value #2 of attribute output_size) "
-                                "must be less than or equal to INT32_MAX";
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
-            context->GetNodeName(), "output_size", std::to_string(outputShapes[2]).c_str(), reasonMsg.c_str());
+            context->GetNodeName(), "output_size", valueMsg.c_str(), reasonMsg.c_str());
         return false;
     }
     return true;

@@ -96,7 +96,7 @@ ge::graphStatus ResizeLinearTiling::CheckShapeAndAxes()
     int32_t yshapeDims = yShape.GetDimNum();
     if (imagesDims != DIM_3 || yshapeDims != DIM_3) {
         std::string dimMsg = std::to_string(imagesDims) + " and " + std::to_string(yshapeDims);
-        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(), "Shapes of x and y must be 3D");
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(), "The shapes of x and y must be 3D");
         return ge::GRAPH_FAILED;
     }
 
@@ -110,7 +110,7 @@ ge::graphStatus ResizeLinearTiling::CheckShapeAndAxes()
     int64_t oC = yShape.GetDim(DIM_1);
     if (n != oN || c != oC) {
         std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "N and C dims of x and y must be same, where N is the size of axis 0, and C is the size of axis 1";
+        std::string reasonMsg = "The N-dimension and C-dimension of x and y must be the same, where N is the 0th axis and C is the 1st axis";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
@@ -120,7 +120,7 @@ ge::graphStatus ResizeLinearTiling::CheckShapeAndAxes()
     xSize_ = imagesShape.GetShapeSize();
     if (n <= 0 || c <= 0 || lenDesL_ <= 0 || lenSrcL_ <= 0) {
         std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "All shape dims of x and y must be greater than zero";
+        std::string reasonMsg = "All axes of x and y must be greater than zero";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
@@ -147,7 +147,7 @@ ge::graphStatus ResizeLinearTiling::CheckSizeInput()
         return ge::GRAPH_FAILED);
     OP_LOGI(context_->GetNodeName(), "sizeL is %ld", sizeL);
     if (sizeL != lenDesL_) {
-        std::string reasonMsg = "Linear dim of output y must be same with the value of input size " + std::to_string(sizeL);
+        std::string reasonMsg = "The linear-dimension of output y must be equal to the value (" + std::to_string(sizeL) + ") of input parameter size";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "y", Ops::Base::ToString(yShape).c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }

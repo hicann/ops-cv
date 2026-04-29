@@ -174,7 +174,7 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckDtypeAndFormat()
     if (outDtype != inputDtype) {
         std::string dtypeMsg = Ops::Base::ToString(inputDtype) + " and " + Ops::Base::ToString(outDtype);
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
-            context_->GetNodeName(), "x and y", dtypeMsg.c_str(), "Dtypes of input x and output y must be same");
+            context_->GetNodeName(), "x and y", dtypeMsg.c_str(), "The dtypes of input x and output y must be the same");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -191,7 +191,7 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckShapes()
     if ((inputShape_.GetDimNum() != INPUT_DIMS) || (outShape_.GetDimNum() != INPUT_DIMS)) {
         std::string dimMsg = std::to_string(inputShape_.GetDimNum()) + " and " + std::to_string(outShape_.GetDimNum());
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
-            context_->GetNodeName(), "x and y", dimMsg.c_str(), "Shapes of input x and output y must be 5D");
+            context_->GetNodeName(), "x and y", dimMsg.c_str(), "The shapes of input x and output y must be 5D");
         return ge::GRAPH_FAILED;
     }
     int64_t inputSize = inputShape_.GetShapeSize();
@@ -253,8 +253,8 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckNCAxesConsistency()
     int64_t outC = outShape_.GetDim(CONST_1);
     if ((outN != baseTiling_.dimN) || (outC != baseTiling_.dimC)) {
         std::string shapeMsg = Ops::Base::ToString(inputShape_) + " and " + Ops::Base::ToString(outShape_);
-        std::string reasonMsg = "N and C dims of x and y must be same, "
-                                "where N is the size of axis 0, and C is the size of axis 1";
+        std::string reasonMsg = "The N-dimension and C-dimension of x and y must be the same, "
+                                "where N is the 0th axis and C is the 1st axis";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
             context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
@@ -294,8 +294,8 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckAttrs()
     }
     if ((baseTiling_.outD != outD) || (baseTiling_.outH != outH) || (baseTiling_.outW != outW)) {
         std::string reasonMsg =
-            "The D/H/W axis sizes of output y (its axis 2/3/4) must be the same as the attribute output_size's value ("
-            + std::to_string(outD) + ", " + std::to_string(outH) + ", " + std::to_string(outW) + ")";
+            "The D/H/W-dimensions of output y must be the same as the value (" + std::to_string(outD) + ", " +
+            std::to_string(outH) + ", " + std::to_string(outW) + ") of attribute output_size";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
             context_->GetNodeName(), "y", Ops::Base::ToString(outShape_).c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;

@@ -141,7 +141,7 @@ ge::graphStatus ResizeBicubicV2Tiling::GetInputSize()
     }
     if ((sizeList[0] != lenDesH_) || (sizeList[1] != lenDesW_)) {
         std::string sizeTensorDatas = "(" + std::to_string(sizeList[0]) + ", " + std::to_string(sizeList[1]) + ")";
-        std::string reasonMsg = "Input size value should be (H, W) - (" + std::to_string(lenDesH_) + ", " +
+        std::string reasonMsg = "The value of input size must be (H, W) - (" + std::to_string(lenDesH_) + ", " +
                                 std::to_string(lenDesW_) + "), where H and W are inferred from the 4D shape "
                                 "of output y based on its format: axes 2/3 for NCHW, or axes 1/2 for NHWC";
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "size", sizeTensorDatas.c_str(), reasonMsg.c_str());
@@ -166,7 +166,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDtype()
             Ops::Base::ToString(xDtype_) + " and " + Ops::Base::ToString(yDtype_);
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
             context_->GetNodeName(), "x and y", dtypeMsg.c_str(),
-            "Dtype size of input x and output y must be greater than zero");
+            "The dtype sizes of input x and output y must be greater than zero");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -183,7 +183,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckShapeDimValid()
     if (imagesShape.GetDimNum() != DIM_4 || yShape.GetDimNum() != DIM_4) {
         std::string dimMsg = std::to_string(imagesShape.GetDimNum()) + " and " + std::to_string(yShape.GetDimNum());
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
-            context_->GetNodeName(), "x and y", dimMsg.c_str(), "Input x and output y must both be 4D");
+            context_->GetNodeName(), "x and y", dimMsg.c_str(), "The shapes of input x and output y must be 4D");
         return ge::GRAPH_FAILED;
     }
 
@@ -202,7 +202,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckFormatValid()
     if (dataFormat != outFormat) {
         std::string formatMsg = Ops::Base::ToString(dataFormat) + " and " + Ops::Base::ToString(outFormat);
         OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
-            context_->GetNodeName(), "x and y", formatMsg.c_str(), "Formats of input x and output y must be same");
+            context_->GetNodeName(), "x and y", formatMsg.c_str(), "The formats of input x and output y must be the same");
         return ge::GRAPH_FAILED;
     }
 
@@ -252,7 +252,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDimsValid()
 
     if (lenDesH_ <= 0 || lenDesW_ <= 0 || lenSrcH_ <= 0 || lenSrcW_ <= 0) {
         std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "Both input and output must have H and W axis sizes greater than 0, "
+        std::string reasonMsg = "The H-dimensions and W-dimensions of x and y must be greater than 0, "
                                 "where H and W are inferred from the 4D shapes of input x and output y "
                                 "based on their formats: axes 2/3 for NCHW, or axes 1/2 for NHWC";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
@@ -260,7 +260,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDimsValid()
     }
 
     if (lenC_ <= 0 || lenN_ <= 0) {
-        std::string reasonMsg = "Both C and N axis sizes of input x must be greater than 0, "
+        std::string reasonMsg = "The C-dimension and N-dimension of input x must be greater than 0, "
                                 "where C is inferred from the 4D shape of input x based on its format "
                                 "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
@@ -270,7 +270,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDimsValid()
 
     if (lenN_ != yShape.GetDim(DIM_0) || lenC_ != yShape.GetDim(cDim)) {
         std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "Both C and N axis sizes of input x and output y must be same, "
+        std::string reasonMsg = "The C-dimensions and N-dimensions of x and y must be the same, "
                                 "where C is inferred from the 4D shape of x/y combined with their format "
                                 "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0 of x/y";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());

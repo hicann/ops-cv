@@ -69,14 +69,14 @@ bool CheckShapeValid(const gert::TilingContext* context, const gert::Shape& xSha
         dimLen = NC1HWC0_LEN;
     }
     if (xShape.GetDimNum() != dimLen) {
-        std::string reasonMsg = "Shape dim of grads must match its format " + Ops::Base::ToString(xFormat) +
+        std::string reasonMsg = "The shape of grads must match its format " + Ops::Base::ToString(xFormat) +
                                 ", which requires a 5D tensor in NC1HWC0 format or a 4D tensor in NCHW format";
         OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(
             context->GetNodeName(), "grads", std::to_string(xShape.GetDimNum()).c_str(), reasonMsg.c_str());
         return false;
     }
     if (yShape.GetDimNum() != dimLen) {
-        std::string reasonMsg = "Shape dim of y must match grads's format " + Ops::Base::ToString(xFormat) +
+        std::string reasonMsg = "The shape of y must match parameter grads's format " + Ops::Base::ToString(xFormat) +
                                 ", which requires a 5D tensor in NC1HWC0 format or a 4D tensor in NCHW format";
         OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(
             context->GetNodeName(), "y", std::to_string(yShape.GetDimNum()).c_str(), reasonMsg.c_str());

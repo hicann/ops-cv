@@ -244,7 +244,7 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
         std::string dtypeMsg = Ops::Base::ToString(dtypeGrads) + ", " + Ops::Base::ToString(dtypeOri) + " and " +
                                Ops::Base::ToString(dtypeOut);
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(),
-            "Dtypes of input grads, original_image and output y must be same");
+            "The dtypes of input grads, original_image and output y must be the same");
         return ge::GRAPH_FAILED;
     }
     auto ori = context_->GetInputShape(DIM_1);
@@ -261,13 +261,13 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
     if (gradsDims != DIM_3 || yshapeDims != DIM_3) {
         std::string dimMsg = std::to_string(gradsDims) + " and " + std::to_string(yshapeDims);
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
-            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "Shapes of grads and y must be 3D");
+            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "The shapes of grads and y must be 3D");
         return ge::GRAPH_FAILED;
     }
     if (oriShape != yShape) {
         std::string shapeMsg = Ops::Base::ToString(oriShape) + " and " + Ops::Base::ToString(yShape);
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-            context_->GetNodeName(), "original_image and y", shapeMsg.c_str(), "Shapes of original_image and y must be same");
+            context_->GetNodeName(), "original_image and y", shapeMsg.c_str(), "The shapes of original_image and y must be the same");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -290,8 +290,8 @@ ge::graphStatus ResizeLinearGradTiling::CheckParams()
     int64_t oC = yShape.GetDim(DIM_1);
     if (n != oN || c != oC) {
         std::string shapeMsg = Ops::Base::ToString(gradsShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "N and C dims of grads and y must be same, "
-                                "where N is the size of axis 0, and C is the size of axis 1";
+        std::string reasonMsg = "The N-dimension and C-dimension of grads and y must be the same, "
+                                "where N is the 0th axis and C is the 1st axis";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
             context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
@@ -302,7 +302,7 @@ ge::graphStatus ResizeLinearGradTiling::CheckParams()
     OP_LOGI(context_->GetNodeName(), "xSize is %ld, ySize is %ld", xSize_, ySize_);
     if (n <= 0 || c <= 0 || lenDesL_ <= 0 || lenSrcLOrUb_ <= 0) {
         std::string shapeMsg = Ops::Base::ToString(gradsShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "All shape dims of grads and y must be greater than zero";
+        std::string reasonMsg = "All axes of grads and y must be greater than zero";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
             context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
