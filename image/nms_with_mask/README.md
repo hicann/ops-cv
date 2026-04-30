@@ -20,16 +20,16 @@
 
 | 参数名 | 输入/输出/属性 | 描述 | 数据类型 | 数据格式 |
 |:-------------------------|:----------:|:-----|:-----|:----:|
-| box_scores | 输入 | 二维 Tensor，其 shape 为 (num_boxes, 5)，其中 5 表示 [y1, x1, y2, x2, score]。 | FLOAT16、FLOAT、BF16 | ND |
+| box_scores | 输入 | 二维 Tensor，其 shape 为 (num_boxes, 5)，其中 5 表示 [y1, x1, y2, x2, score]，num_boxes不超过39936。 | FLOAT16、FLOAT、BF16 | ND |
 | iou_threshold | 属性 | 浮点数，表示用于判断候选框是否在 IoU（交并比）上重叠过多的阈值。默认值为 0.5。 | FLOAT | - |
-| selected_boxes | 输出 | 二维 Tensor，其 shape 为 (num_boxes, 5)，表示经过 NMS 筛选后的框及分数。 | FLOAT16、FLOAT、BF16 | ND |
-| selected_idx | 输出 | 一维 Tensor，其 shape 为 (num_boxes)，表示被选中框的索引。 | INT32 | ND |
-| selected_mask | 输出 | 一维 Tensor，其 shape 为 (num_boxes)，表示被选中框的有效性掩码。 | UINT8 | ND |
+| selected_boxes | 输出 | 二维 Tensor，其 shape 为 (num_boxes, 5)，和原输入的box_scores一样。 | FLOAT16、FLOAT、BF16 | ND |
+| selected_idx | 输出 | 一维 Tensor，其 shape 为 (num_boxes)，表示0到 num_boxes - 1 的序列数。 | INT32 | ND |
+| selected_mask | 输出 | 一维 Tensor，其 shape 为 (num_boxes)，表示目标框的掩码情况。 | UINT8 | ND |
 
 
 ## 约束说明
 
-- 输入的 box_scores 最后一维必须为 5，依次表示 [x1, y1, x2, y2, score]。
+- 输入的 box_scores 最后一维必须为 5，依次表示 [y1, x1, y2, x2, score]。
 - 输出 selected_boxes、selected_idx、selected_mask 的 batch 维度与输入 box_scores 的 batch 维度保持一致。
 - 在 FLOAT16 或 BF16 场景下，算子进行排序和计算对比标杆可能会引入计算误差。
 
