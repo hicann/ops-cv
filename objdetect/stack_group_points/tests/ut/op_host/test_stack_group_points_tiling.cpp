@@ -31,3 +31,37 @@ protected:
         std::cout << "test TestStackGroupPointsTiling TearDown" << std::endl;
     }
 };
+
+TEST_F(StackGroupPointsTiling, case_float)
+{
+    optiling::StackGroupPointsCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("StackGroupPoints",
+        {{{{32, 64}, {32, 64}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{4,}, {4,}}, ge::DT_INT32, ge::FORMAT_ND},
+        {{{20, 3}, {20, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+        {{{4,}, {4,}}, ge::DT_INT32, ge::FORMAT_ND}},
+        {{{{20, 64, 3}, {20, 64, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        &compileInfo
+    );
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "4 20 64 3 5 8192 256 32 32 0 15360 32 3840 48 ";
+    std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(StackGroupPointsTiling, case_half)
+{
+    optiling::StackGroupPointsCompileInfo compileInfo = {48, 196608};
+    gert::TilingContextPara tilingContextPara("StackGroupPoints",
+        {{{{32, 64}, {32, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        {{{4,}, {4,}}, ge::DT_INT32, ge::FORMAT_ND},
+        {{{20, 3}, {20, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+        {{{4,}, {4,}}, ge::DT_INT32, ge::FORMAT_ND}},
+        {{{{20, 64, 3}, {20, 64, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        &compileInfo
+    );
+    uint64_t expectTilingKey = 0;
+    string expectTilingData = "4 20 64 3 5 4096 256 32 32 0 7680 32 3840 48 ";
+    std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}

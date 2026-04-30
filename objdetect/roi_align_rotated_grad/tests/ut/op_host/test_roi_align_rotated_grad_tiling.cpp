@@ -12,6 +12,7 @@
  * \file test_roi_align_rotated_grad_tiling.cpp
  * \brief
  */
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>
@@ -38,7 +39,6 @@ protected:
   }
 };
 
-
 TEST_F(TilingForRoiAlignRotatedGrad, roi_align_rotated_grad_tiling_0)
 {
     optiling::RoiAlignRotatedGradCompileInfo compileInfo = {48, 196608};
@@ -55,10 +55,28 @@ TEST_F(TilingForRoiAlignRotatedGrad, roi_align_rotated_grad_tiling_0)
                                                 gert::TilingContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
                                                 &compileInfo);
 
-    uint64_t expectTilingKey = {107133664673280};
-    string expectTilingData = "34359738368 8589934600 34359738370 8589934600 2 4539628424389459969 64 ";
     std::vector<size_t> expectWorkspaces = {16777216};
-//    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+    TilingInfo tilingInfo;
+    ExecuteTiling(tilingContextPara, tilingInfo);
+    uint8_t* tilingDataPtr = tilingInfo.tilingData.get();
+    EXPECT_EQ(tilingInfo.workspaceSizes.size(), expectWorkspaces.size());
+    for (size_t i = 0; i < tilingInfo.workspaceSizes.size(); i++) {
+        EXPECT_EQ(tilingInfo.workspaceSizes[i], expectWorkspaces[i]);
+    }
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr), 2);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 4), 0);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 8), 8);
+    // EXPECT_EQ(*reinterpret_cast<int32_t*>(tilingDataPtr + 12), 2);
+    // EXPECT_EQ(*reinterpret_cast<int32_t*>(tilingDataPtr + 16), 2);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 20), 8);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 24), 1);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 28), 1);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 32), 1);
+    // EXPECT_EQ(*reinterpret_cast<bool*>(tilingDataPtr + 36), false);
+    // EXPECT_EQ(*reinterpret_cast<bool*>(tilingDataPtr +37), false);
+    // EXPECT_EQ(*reinterpret_cast<int32_t*>(tilingDataPtr + 38), 0);
+    // EXPECT_EQ(*reinterpret_cast<float*>(tilingDataPtr + 42), 0.5);
+    // EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr + 46), 48);
 }
 
 // TEST_F(TilingForRoiAlignRotatedGrad, roi_align_rotated_grad_tiling_0)
@@ -98,7 +116,7 @@ TEST_F(TilingForRoiAlignRotatedGrad, roi_align_rotated_grad_tiling_0)
 //   kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
 //   kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap",
 //                                                                                           intrinsics);
-//   ASSERT_EQ(tiling_parse_func(kernel_holder.GetContext<gert::KernelContext>()), ge::GRAPH_SUCCESS);
+//   EXPECT_EQ(tiling_parse_func(kernel_holder.GetContext<gert::KernelContext>()), ge::GRAPH_SUCCESS);
 
 //   // tilingFunc simulate
 //   auto param = gert::TilingData::CreateCap(4096 * 16);
@@ -140,5 +158,5 @@ TEST_F(TilingForRoiAlignRotatedGrad, roi_align_rotated_grad_tiling_0)
 //   EXPECT_EQ(tiling_func(tiling_context), ge::GRAPH_SUCCESS);
 //   // todo check tiling result
 //   auto tiling_key = tiling_context->GetTilingKey();
-//   ASSERT_EQ(tiling_key, 0);
+//   EXPECT_EQ(tiling_key, 0);
 // }

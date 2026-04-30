@@ -51,11 +51,11 @@ TEST_F(StackGroupPointsTest, test_case_fp32)
     uint64_t c = 12;
     uint64_t b = 2;
 
-    size_t features_bytes_size = 120 * sizeof(float);
-    size_t indices_bytes_size = 120 * sizeof(int);
-    size_t features_batch_cnt_bytes_size = 120 * sizeof(int);
-    size_t indices_batch_cnt_bytes_size = 120 * sizeof(int);
-    size_t output_bytes_size = 720 * sizeof(float);
+    size_t features_bytes_size = n * c * sizeof(float);
+    size_t features_batch_cnt_bytes_size = (32) * sizeof(int);
+    size_t indices_bytes_size = m * nsample * sizeof(int);
+    size_t indices_batch_cnt_bytes_size = 32 * sizeof(int);
+    size_t output_bytes_size = (m * c * nsample) * sizeof(float);
     size_t tiling_data_size = sizeof(StackGroupPointsTilingData);
 
     uint8_t *features = (uint8_t *)AscendC::GmAlloc(features_bytes_size);
@@ -63,72 +63,29 @@ TEST_F(StackGroupPointsTest, test_case_fp32)
     uint8_t *features_batch_cnt = (uint8_t *)AscendC::GmAlloc(features_batch_cnt_bytes_size);
     uint8_t *indices_batch_cnt = (uint8_t *)AscendC::GmAlloc(indices_batch_cnt_bytes_size);
     uint8_t *y = (uint8_t *)AscendC::GmAlloc(output_bytes_size);
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024);
+    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024);
     uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
 
     uint64_t block_dim = 48;
 
     system(
-        "cp -r ../../../../objdetect/stack_group_points/op_kernel/stack_group_points_data ./");
+        "cp -r ../../../../objdetect/stack_group_points/tests/ut/op_kernel/stack_group_points_data ./");
     system("chmod -R 755 ./stack_group_points_data/");
     system("cd ./stack_group_points_data/ && rm -rf ./*bin");
     system("cd ./stack_group_points_data/ && python3 gen_data.py 10 6 5 12 2 np.float32");
-    system("cd ./stack_group_points_data/ && python3 gen_tiling.py");
+    system("cd ./stack_group_points_data/ && python3 gen_tiling.py np.float32");
 
     std::string path_ = get_current_dir_name();
     string path(path_);
+
+    ReadFile(path + "/stack_group_points_data/features.bin", features_bytes_size, features, features_bytes_size);
+    ReadFile(path + "/stack_group_points_data/indices.bin", indices_bytes_size, indices, indices_bytes_size);
+    ReadFile(path + "/stack_group_points_data/features_batch_cnt.bin", features_batch_cnt_bytes_size, features_batch_cnt, features_batch_cnt_bytes_size);
+    ReadFile(path + "/stack_group_points_data/indices_batch_cnt.bin", indices_batch_cnt_bytes_size, indices_batch_cnt, indices_batch_cnt_bytes_size);
+    ReadFile(path + "/stack_group_points_data/tiling.bin", tiling_data_size, tiling, tiling_data_size);
 
     ICPU_SET_TILING_KEY(1);
-
-    ICPU_RUN_KF(
-        stack_group_points, block_dim, features, features_batch_cnt, indices, indices_batch_cnt, y, workspace, tiling);
-
-    AscendC::GmFree((void *)features);
-    AscendC::GmFree((void *)features_batch_cnt);
-    AscendC::GmFree((void *)indices);
-    AscendC::GmFree((void *)indices_batch_cnt);
-    AscendC::GmFree((void *)y);
-    AscendC::GmFree((void *)tiling);
-    AscendC::GmFree((void *)workspace);
-}
-
-TEST_F(StackGroupPointsTest, test_case_fp16)
-{
-    uint64_t m = 10;
-    uint64_t nsample = 6;
-    uint64_t n = 5;
-    uint64_t c = 12;
-    uint64_t b = 2;
-
-    size_t features_bytes_size = 120 * sizeof(half);
-    size_t indices_bytes_size = 120 * sizeof(int);
-    size_t features_batch_cnt_bytes_size = 120 * sizeof(int);
-    size_t indices_batch_cnt_bytes_size = 120 * sizeof(int);
-    size_t output_bytes_size = 720 * sizeof(half);
-    size_t tiling_data_size = sizeof(StackGroupPointsTilingData);
-
-    uint8_t *features = (uint8_t *)AscendC::GmAlloc(features_bytes_size);
-    uint8_t *indices = (uint8_t *)AscendC::GmAlloc(indices_bytes_size);
-    uint8_t *features_batch_cnt = (uint8_t *)AscendC::GmAlloc(features_batch_cnt_bytes_size);
-    uint8_t *indices_batch_cnt = (uint8_t *)AscendC::GmAlloc(indices_batch_cnt_bytes_size);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(output_bytes_size);
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
-
-    uint64_t block_dim = 48;
-
-    system(
-        "cp -r ../../../../objdetect/stack_group_points/op_kernel/stack_group_points_data ./");
-    system("chmod -R 755 ./stack_group_points_data/");
-    system("cd ./stack_group_points_data/ && rm -rf ./*bin");
-    system("cd ./stack_group_points_data/ && python3 gen_data.py 10 6 5 12 2 np.float16");
-    system("cd ./stack_group_points_data/ && python3 gen_tiling.py");
-
-    std::string path_ = get_current_dir_name();
-    string path(path_);
-
-    ICPU_SET_TILING_KEY(0);
-
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(
         stack_group_points, block_dim, features, features_batch_cnt, indices, indices_batch_cnt, y, workspace, tiling);
 

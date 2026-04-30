@@ -12,19 +12,19 @@
 import numpy as np
 
 
-def gen_tiling():
+def gen_tiling(dtype):
     variables_dict = {
         "b": 2,
         "m": 10,
         "c": 12,
         "nsample": 6,
         "res": 0,
-        "featuresSize": 256,
+        "featuresSize": 256 if dtype == "np.float32" else 128,
         "indicesSize": 256,
         "fbcSize": 32,
         "ibcSize": 32,
-        "reminder": 10,
-        "outLength": 2880,
+        "reminder": 45,
+        "outLength": 2880 if dtype == "np.float32" else 1440,
         "n": 5,
         "standard": 720,
         "actCore": 48,
@@ -35,13 +35,21 @@ def gen_tiling():
     return variables_array
 
 
-def main():
-    params_list = gen_tiling()
-    base_params = np.array(params_list, dtype=np.uint32)
+def main(dtype):
+    params_list = gen_tiling(dtype)
+    base_params = np.array(params_list, dtype=np.int64)
 
     tiling_file = open("tiling.bin", "wb")
     base_params.tofile(tiling_file)
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) != 2:
+        print("Usage: python3 gen_tiling.py <dtype>")
+        sys.exit(1)
+    dtype = sys.argv[1]
+    if dtype not in ["np.float32", "np.float16"]:
+        print("Usage: python3 gen_tiling.py <dtype>")
+        sys.exit(1)
+    main(dtype)

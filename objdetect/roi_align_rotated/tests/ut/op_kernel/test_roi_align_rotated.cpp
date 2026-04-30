@@ -48,7 +48,7 @@ protected:
 private:
   const static std::string dataPath;
 };
-const std::string roi_align_rotated_test::dataPath = "../../../../objdetect/roi_align_rotated/op_kernel/roi_align_rotated_data";
+const std::string roi_align_rotated_test::dataPath = "../../../../objdetect/roi_align_rotated/tests/ut/op_kernel/roi_align_rotated_data";
 
 TEST_F(roi_align_rotated_test, test_case_0)
 {
