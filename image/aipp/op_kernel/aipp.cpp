@@ -26,6 +26,7 @@
 #define AIPP_RGB_TO_GRAY 4
 #define AIPP_YUV_TO_RGB 5
 #define AIPP_YUV_TO_GRAY 6
+#define AIPP_DYNAMIC_DEFAULT 100
 using namespace Aipp_Kernel;
 
 extern "C" __global__ __aicore__ void Aipp(
@@ -42,30 +43,37 @@ extern "C" __global__ __aicore__ void Aipp(
     }
     REGISTER_TILING_DEFAULT(AippTilingData);
     GET_TILING_DATA(tilingData, tiling);
+    GET_PARAM_DATA_WITH_STRUCT_TBUF(tilingParam, params, TILING_KEY_IS(AIPP_DYNAMIC_DEFAULT));
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
-    if (TILING_KEY_IS(AIPP_RGB_PASS_THROUGH)) {
+    uint8_t dynamicTilingKey = 0;
+    AippTilingData curTilingData = tilingData;
+    if (TILING_KEY_IS(AIPP_DYNAMIC_DEFAULT)) {
+        UpdateRealPara(curTilingData, tilingParam.Header(), dynamicTilingKey);
+        ResetDynamicTilingKey(curTilingData, dynamicTilingKey);
+    }
+    if (TILING_KEY_IS(AIPP_RGB_PASS_THROUGH) || dynamicTilingKey == AIPP_RGB_PASS_THROUGH) {
         Aipp_Kernel::AippRgb<DTYPE_FEATURES, uint32_t> op;
-        op.Init(tilingData);
+        op.Init(curTilingData, tilingParam.Header(), tilingParam.GetGMParamsPtr(), dynamicTilingKey);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(AIPP_YUV_PASS_THROUGH)) {
+    } else if (TILING_KEY_IS(AIPP_YUV_PASS_THROUGH) || dynamicTilingKey == AIPP_YUV_PASS_THROUGH) {
         Aipp_Kernel::AippYuv<DTYPE_FEATURES, uint32_t> op;
-        op.Init(tilingData);
+        op.Init(curTilingData, tilingParam.Header(), tilingParam.GetGMParamsPtr(), dynamicTilingKey);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(AIPP_RGB_TO_YUV)) {
+    } else if (TILING_KEY_IS(AIPP_RGB_TO_YUV) || dynamicTilingKey == AIPP_RGB_TO_YUV) {
         Aipp_Kernel::AippRgbYuv<DTYPE_FEATURES, uint32_t> op;
-        op.Init(tilingData);
+        op.Init(curTilingData, tilingParam.Header(), tilingParam.GetGMParamsPtr(), dynamicTilingKey);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(AIPP_RGB_TO_GRAY)) {
+    } else if (TILING_KEY_IS(AIPP_RGB_TO_GRAY) || dynamicTilingKey == AIPP_RGB_TO_GRAY) {
         Aipp_Kernel::AippRgbGray<DTYPE_FEATURES, uint32_t> op;
-        op.Init(tilingData);
+        op.Init(curTilingData, tilingParam.Header(), tilingParam.GetGMParamsPtr(), dynamicTilingKey);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(AIPP_YUV_TO_GRAY)) {
+    } else if (TILING_KEY_IS(AIPP_YUV_TO_GRAY) || dynamicTilingKey == AIPP_YUV_TO_GRAY) {
         Aipp_Kernel::AippYuvGray<DTYPE_FEATURES, uint32_t> op;
-        op.Init(tilingData);
+        op.Init(curTilingData, tilingParam.Header(), tilingParam.GetGMParamsPtr(), dynamicTilingKey);
         op.Process(images, features);
-    } else if (TILING_KEY_IS(AIPP_YUV_TO_RGB)) {
+    } else if (TILING_KEY_IS(AIPP_YUV_TO_RGB) || dynamicTilingKey == AIPP_YUV_TO_RGB) {
         Aipp_Kernel::AippYuvRgb<DTYPE_FEATURES, uint32_t> op;
-        op.Init(tilingData);
+        op.Init(curTilingData, tilingParam.Header(), tilingParam.GetGMParamsPtr(), dynamicTilingKey);
         op.Process(images, features);
     }
 }

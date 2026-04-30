@@ -68,6 +68,7 @@ constexpr int64_t AIPP_RGB_TO_YUV = 3;
 constexpr int64_t AIPP_RGB_TO_GRAY = 4;
 constexpr int64_t AIPP_YUV_TO_RGB = 5;
 constexpr int64_t AIPP_YUV_TO_GRAY = 6;
+constexpr int64_t AIPP_DYNAMIC_DEFAULT = 100;
 
 constexpr size_t INPUT_IMAGES_IDX = 0;
 constexpr size_t INPUT_PARAMS_IDX = 1;
@@ -98,6 +99,7 @@ constexpr uint8_t IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT = (4);
 
 const string AIPP_MODE = "aipp_mode";
 const string AIPP_MODE_STATIC = "static";
+const string AIPP_MODE_DYNAMIC = "dynamic";
 const string AIPP_INPUT_FORMAT = "input_format";
 const string AIPP_SRC_IMAGE_SIZE_W = "src_image_size_w";
 const string AIPP_SRC_IMAGE_SIZE_H = "src_image_size_h";
@@ -196,6 +198,7 @@ private:
     ge::graphStatus SetPaddingValue();
     ge::graphStatus CheckPaddingSize();
     ge::graphStatus ValidPaddingValue(float padValue, ge::DataType outputDtype);
+    ge::graphStatus ProcessStaticMode();
 
     map<string, string> parseAippConfig(string jsonStr);
     map<string, string> parseAippCfgFromPath(string fileName);

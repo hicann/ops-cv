@@ -26,7 +26,10 @@ template <typename T, typename DataType>
 class AippRgbGray : public AippBase<T, DataType> {
 public:
     __aicore__ inline AippRgbGray() {};
-    __aicore__ inline void Init(const AippTilingData& tilingData);
+    __aicore__ inline void Init(const AippTilingData& tilingData,
+        const tagAippDynamicParaHeader& tilingParamHeader,
+        const __gm__ uint8_t* gmParams,
+        uint8_t dynamicTilingKey);
     __aicore__ inline void Process(GM_ADDR x, GM_ADDR y);
 
 private:
@@ -34,15 +37,19 @@ private:
 };
 
 template <typename T, typename DataType>
-__aicore__ inline void AippRgbGray<T, DataType>::Init(const AippTilingData& tilingData)
+__aicore__ inline void AippRgbGray<T, DataType>::Init(const AippTilingData& tilingData,
+    const tagAippDynamicParaHeader& tilingParamHeader,
+    const __gm__ uint8_t* gmParams,
+    uint8_t dynamicTilingKey)
 {
-    this->BaseInit(tilingData);
+    this->BaseInit(tilingData, tilingParamHeader, gmParams, dynamicTilingKey);
 }
 
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Gray(
-    __gm__ uint8_t* rgbGM, __gm__ T* grayGM, const AippTilingData tD,
-    uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize)
+    __gm__ uint8_t* rgbGM, __gm__ T* grayGM, AippTilingData tD,
+    const __gm__ uint8_t* gmParams,
+    uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     float padValue = tD.paddingParam.padValue;
     uint32_t outputSizeH = tD.outputSizeH;
@@ -52,6 +59,9 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeRgb2Gray(
          idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
+        if (dynamicTilingKey != 0) {
+            UpdateDynamicBatchPara(coord, tD, gmParams);
+        }
 
         RgbPack<DataType> dstGrayIdx;
         RgbComputeDstIdx(dstGrayIdx, coord, tD);
@@ -79,7 +89,8 @@ template <typename T, typename DataType>
 __aicore__ inline void AippRgbGray<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
     asc_vf_call<Aipp_Kernel::SimtComputeRgb2Gray<T, DataType>>(dim3(this->blockDimX_),
-        (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->blockIdx_, this->blockNum_, this->totalNum_);
+        (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->gmParams_,
+         this->blockIdx_, this->blockNum_, this->totalNum_, this->dynamicTilingKey_);
 }
 } // namespace Aipp_Kernel
 #endif // AIPP_OP_KERNEL_ARCH35_GRAY_H

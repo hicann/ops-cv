@@ -15,7 +15,7 @@
 
 - 算子功能：
 
-    AIPP（Artificial Intelligence Pre-Processing）人工智能预处理，用于在AI Core上完成数据预处理，包括改变图像尺寸、色域转换（转换图像格式）、减均值/乘系数（改变图像像素），数据预处理之后再进行真正的模型推理。**目前仅支持使能静态AIPP功能**，全量的AIPP功能介绍请参考 [《ATC离线模型编译工具》](https://hiascend.com/document/redirect/CannCommunityAtc
+    AIPP（Artificial Intelligence Pre-Processing）人工智能预处理，用于在AI Core上完成数据预处理，包括改变图像尺寸、色域转换（转换图像格式）、减均值/乘系数（改变图像像素），数据预处理之后再进行真正的模型推理。**目前支持使能动态AIPP和静态AIPP功能**，全量的AIPP功能介绍请参考 [《ATC离线模型编译工具》](https://hiascend.com/document/redirect/CannCommunityAtc
       )中“高级功能 > AIPP使能”章节。
 
 - 计算流程：
@@ -73,7 +73,7 @@
     <tr>
       <td>params</td>
       <td>输入</td>
-      <td>可选参数，当前版本用不上，预留。</td>
+      <td>可选参数，用于动态AIPP接收预设参数。</td>
       <td>UINT8</td>
       <td>ND</td>
     </tr>
@@ -96,7 +96,7 @@
 
 ## 约束说明
 
-- aipp_config_path配置文件说明：仅支持静态AIPP配置、图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置(DTC)。
+- aipp_config_path配置文件说明：支持动态AIPP和静态AIPP配置，其中静态AIPP可配置图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置(DTC)；动态AIPP可配置输入处理标识(related_input_rank)参数和输入图像最大尺寸(max_src_image_size)参数。
 
 - aipp_config_path文件配置示例如下，具体参数说明参见下表。
 
@@ -142,6 +142,12 @@
         var_reci_chn_2: 1.0
         var_reci_chn_3: 1.0
     }
+    
+    aipp_op {
+        aipp_mode: dynamic
+        related_input_rank: 0
+        max_src_image_size: 752640
+    }
     ```
 
     <table style="undefined;table-layout: fixed; width: 1005px"><colgroup>
@@ -164,7 +170,7 @@
         <td rowspan="1">全局设置</td>
         <td>aipp_mode</td>
         <td>必选属性</td>
-        <td>AIPP算子运行模式，dynamic表示动态AIPP，static表示静态AIPP，目前只支持静态AIPP。</td>
+        <td>AIPP算子运行模式，dynamic表示动态AIPP，static表示静态AIPP。</td>
         <td>ENUM</td>
         </tr>
         <tr>
@@ -184,6 +190,19 @@
         <td>src_image_size_w</td>
         <td>可选属性</td>
         <td>输入图像宽度，取值范围：[1,4096]；当输入图片类型为YUV420SP_U8时，该值需为偶数。</td>
+        <td>INT32</td>
+        </tr>
+        <tr>
+        <td rowspan="2">动态AIPP参数设置</td>
+        <td>related_input_rank</td>
+        <td>可选属性</td>
+        <td>标识对第几个输入进行AIPP处理，例如0表示对第1个输入进行AIPP处理，该值需不小于0。</td>
+        <td>INT32</td>
+        </tr>
+        <tr>
+        <td>max_src_image_size</td>
+        <td>必选属性</td>
+        <td>输入图像最大的size，动态AIPP配置时必填。</td>
         <td>INT32</td>
         </tr>
         <tr>

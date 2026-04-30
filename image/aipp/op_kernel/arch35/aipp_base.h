@@ -40,29 +40,231 @@ constexpr uint8_t DIGIT_2 = 2;
 constexpr uint8_t DIGIT_3 = 3;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
-constexpr uint8_t XRGB8888_U8_FORMAT = 3;
-constexpr uint8_t YUV420SP_U8_FORMAT = 1;
-constexpr uint8_t RGB888_U8_FORMAT = 2;
 constexpr uint8_t YUV400_U8_FORMAT = 4;
+constexpr uint8_t AIPP_RGB_PASS_THROUGH = 1;
+constexpr uint8_t AIPP_YUV_PASS_THROUGH = 2;
+constexpr uint8_t AIPP_RGB_TO_YUV = 3;
+constexpr uint8_t AIPP_RGB_TO_GRAY = 4;
+constexpr uint8_t AIPP_YUV_TO_RGB = 5;
+constexpr uint8_t AIPP_YUV_TO_GRAY = 6;
+constexpr uint8_t IMAGE_FORMAT_YUV420SP_U8 = 1;
+constexpr uint8_t IMAGE_FORMAT_XRGB8888_U8 = 2;
+constexpr uint8_t IMAGE_FORMAT_RGB888_U8 = 5;
+constexpr uint8_t IMAGE_FORMAT_YUV400_U8 = 10;
+constexpr int16_t FP16_MAN_HIDE_BIT = 0x0400;
+constexpr int16_t FP16_MAX_EXP = 0x001F;
+constexpr uint32_t FP32_EXP_BIAS = 127U;
+constexpr uint32_t FP16_EXP_BIAS = 15U;
+constexpr uint32_t FP16_MAN_MASK = 0x03FFU;
+constexpr uint32_t FP32_MAN_LEN = 23U;
+constexpr uint32_t FP16_MAN_LEN = 10U;
+constexpr uint32_t FP32_MAX = 0x7FFFFFU;
+constexpr uint32_t FP32_SIGN_INDEX = 31U;
+
+class AippDynamicParam {
+public:
+    __aicore__ inline AippDynamicParam(tagAippDynamicParaHeader* header,
+        const __gm__ uint8_t* gmParams)
+        : header_(header), gmParams_(gmParams) {}
+
+    __aicore__ inline tagAippDynamicParaHeader& Header() { return *header_; }
+    __aicore__ inline const tagAippDynamicParaHeader& Header() const { return *header_; }
+
+    // Get GM pointer for passing into SIMT function
+    __aicore__ inline const __gm__ uint8_t* GetGMParamsPtr() const { return gmParams_; }
+
+    __aicore__ inline int8_t BatchNum() const { return header_->batchNum; }
+
+private:
+    tagAippDynamicParaHeader* header_;
+    const __gm__ uint8_t* gmParams_;
+};
+
+union TypeUnion {
+    float fVal;
+    uint32_t uVal;
+};
+
+#define FP16_EXTRAC_SIGN(x)            (((x) >> 15U) & 1U)
+#define FP16_EXTRAC_EXP(x)             (((x) >> 10U) & FP16_MAX_EXP)
+#define FP16_EXTRAC_MAN(x)             ((((x) >> 0U) & 0x3FFU) |          \
+                                       ((((((x) >> 10U) & 0x1FU) > 0U) ? 1U : 0U) * 0x400U))
+#define FP32_CONSTRUCTOR(s, e, m)        (((s) << FP32_SIGN_INDEX) |      \
+                                          ((e) << FP32_MAN_LEN) |         \
+                                          ((m) & FP32_MAX))
+
+__simt_callee__ __attribute__((always_inline)) inline void ExtractFP16(
+    const uint16_t val, uint16_t *const s, int16_t *const e, uint16_t *const m)
+{
+    // 1.Extract
+    *s = FP16_EXTRAC_SIGN(val);
+    *e = static_cast<int16_t>(FP16_EXTRAC_EXP(val));
+    *m = FP16_EXTRAC_MAN(val);
+
+    // Denormal
+    if ((*e) == 0) {
+        *e = 1;
+    }
+}
+
+__simt_callee__ __attribute__((always_inline)) inline float Fp16ToFloat(const uint16_t val)
+{
+    uint16_t hfSign;
+    uint16_t hfMan;
+    int16_t hfExp;
+    ExtractFP16(val, &hfSign, &hfExp, &hfMan);
+
+    while ((hfMan != 0U) && ((hfMan & FP16_MAN_HIDE_BIT) == 0U)) {
+        hfMan <<= 1U;
+        hfExp--;
+    }
+
+    uint32_t eRet;
+    uint32_t mRet;
+    if (hfMan == 0U) {
+        eRet = 0U;
+        mRet = 0U;
+    } else {
+        eRet = static_cast<uint32_t>(hfExp + static_cast<int16_t>(FP32_EXP_BIAS - FP16_EXP_BIAS));
+        mRet = static_cast<uint32_t>(hfMan & FP16_MAN_MASK);
+        mRet = mRet << (FP32_MAN_LEN - FP16_MAN_LEN);
+    }
+
+    const uint32_t sRet = hfSign;
+    TypeUnion u;
+    u.uVal = FP32_CONSTRUCTOR(sRet, eRet, mRet);
+    const auto ret = u.fVal;
+    return ret;
+}
+
+template <class ByteCountT>
+__inline__ __attribute__((always_inline)) __aicore__ void InitBatchParamData(
+    const __gm__ uint8_t *p_tilingdata, uint8_t *tilingdata, ByteCountT all_bytes)
+{
+    const uint64_t copy_bytes = static_cast<uint64_t>(all_bytes);
+#if defined(ASCENDC_CPU_DEBUG)
+    uint32_t *dst = (uint32_t *)tilingdata;
+    const __gm__ uint32_t *src = (const __gm__ uint32_t *)p_tilingdata;
+    for (uint64_t i = 0; i < (copy_bytes + 3) / 4; i++) {
+        *(dst + i) = *(src + i);
+    }
+#elif defined(__DAV_C220_CUBE__) || defined(__DAV_C310_CUBE__) || defined(__DAV_310R6_CUBE__) ||
+      defined(__GET_CODE_CHANNEL__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201))
+    copy_data_align64(tilingdata, (__gm__ uint8_t *)p_tilingdata, copy_bytes);
+#else
+    uint32_t len_burst = (copy_bytes + 31) / 32;
+    __ubuf__ uint8_t *tilingdata_in_ub = (__ubuf__ uint8_t *)get_imm(0);
+#if defined(__DAV_C310__) || defined(__DAV_310R6__)  // V100&V120
+    copy_gm_to_ubuf_align_v2((__ubuf__ uint8_t *)tilingdata_in_ub, (__gm__ uint8_t *)p_tilingdata,
+        0, 1, len_burst * 32, 0, 0, false, 0, 0, 0);
+    uint32_t DC_PRLOAD_LOOP = (copy_bytes)/512;
+    for (uint64_t loop_dc=0; loop_dc < DC_PRLOAD_LOOP; loop_dc++) {
+        uint64_t offset = loop_dc*512;
+        dc_preload((uint64_t *)tilingdata, offset);
+    }
+    uint64_t tiling_offset = ((uint64_t)(tilingdata))%64;
+    uint32_t DC_PRLOAD_LOOP1 = (copy_bytes+63+tiling_offset)/64;
+    for (uint64_t loop_dc=0; loop_dc < DC_PRLOAD_LOOP1; loop_dc++) {
+        uint64_t offset = loop_dc*64;
+        dc_preload((uint64_t *)tilingdata, offset);
+    }
+#endif
+    set_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
+    copy_data_align64(tilingdata, (__ubuf__ uint8_t *)tilingdata_in_ub, copy_bytes);
+#endif
+    pipe_barrier(PIPE_ALL);
+}
+
+template <class ByteCountT>
+__inline__ __attribute__((always_inline)) __aicore__ void InitHeaderParamData(
+    const __gm__ uint8_t *p_tilingdata, uint8_t *tilingdata, ByteCountT all_bytes)
+{
+    const uint64_t copy_bytes = static_cast<uint64_t>(all_bytes);
+#if defined(ASCENDC_CPU_DEBUG)
+    const __gm__ uint32_t *src = (const __gm__ uint32_t *)p_tilingdata;
+    uint32_t *dst = (uint32_t *)tilingdata;
+    for (uint64_t i = 0; i < (copy_bytes + 3) / 4; i++) {
+        *(dst + i) = *(src + i);
+    }
+#elif defined(__DAV_C220_CUBE__) || defined(__DAV_C310_CUBE__) || defined(__DAV_310R6_CUBE__) ||
+      defined(__GET_CODE_CHANNEL__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201))
+    copy_data_align64(tilingdata, (__gm__ uint8_t *)p_tilingdata, copy_bytes);
+#else
+    __ubuf__ uint8_t *tilingdata_in_ub = (__ubuf__ uint8_t *)get_imm(0);
+    uint32_t len_burst = (copy_bytes + 31) / 32;
+    copy_gm_to_ubuf_align_v2(tilingdata_in_ub, (__gm__ uint8_t *)p_tilingdata,
+        0, 1, len_burst * 32, 0, 0, false, 0, 0, 0);
+    set_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
+    copy_data_align64(tilingdata, tilingdata_in_ub, copy_bytes);
+#endif
+    pipe_barrier(PIPE_ALL);
+}
+
+__inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippHeader(
+    const __gm__ uint8_t *p_tilingdata, tagAippDynamicParaHeader *tilingdata, bool dynamic_flag)
+{
+    if (!dynamic_flag) {
+        return;
+    }
+    constexpr uint64_t header_size = sizeof(tagAippDynamicParaHeader);
+    InitHeaderParamData(p_tilingdata, reinterpret_cast<uint8_t*>(tilingdata), header_size);
+}
+
+__inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippBatchData(
+    const __gm__ uint8_t *p_tilingdata, uint8_t *batchBuf, int8_t batchNum)
+{
+    if (batchNum <= 0) {
+        return;
+    }
+    constexpr uint64_t header_size = sizeof(tagAippDynamicParaHeader);
+    uint64_t batch_bytes = static_cast<uint64_t>(batchNum) * sizeof(kAippDynamicBatchPara);
+    InitBatchParamData(p_tilingdata + header_size, batchBuf, batch_bytes);
+}
+
+#define GET_PARAM_DATA_WITH_STRUCT_TBUF(tiling_data, tiling_arg, dynamic_flag)                            \
+    tagAippDynamicParaHeader tiling_data##_header;                                          \
+    InitDynamicAippHeader(tiling_arg, &tiling_data##_header, dynamic_flag);                               \
+    AippDynamicParam tiling_data(&tiling_data##_header, tiling_arg)
+
+__aicore__ __attribute__((always_inline)) inline void SwapMatrixVal(int16_t& val1, int16_t& val2)
+{
+    int16_t temp = val1;
+    val1 = val2;
+    val2 = temp;
+}
 
 template <typename T, typename DataType>
 class AippBase {
 public:
     __aicore__ inline AippBase(){};
-    __aicore__ inline void BaseInit(const AippTilingData& tilingData);
+    __aicore__ inline void BaseInit(const AippTilingData& tilingData,
+        const tagAippDynamicParaHeader& tilingParamHeader,
+        const __gm__ uint8_t* gmParams,
+        uint8_t dynamicTilingKey);
 
 public:
     AippTilingData tilingData_ = {};
+    tagAippDynamicParaHeader tilingParamHeader_ = {};
+    const __gm__ uint8_t* gmParams_ = nullptr;
 
     uint64_t totalNum_ = 0;
     uint32_t blockIdx_ = 0;
     uint32_t blockNum_ = 0;
+    uint8_t dynamicTilingKey_ = 0;
 };
 
 template <typename T, typename DataType>
-__aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& tilingData)
+__aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& tilingData,
+    const tagAippDynamicParaHeader& tilingParamHeader,
+    const __gm__ uint8_t* gmParams,
+    uint8_t dynamicTilingKey)
 {
     tilingData_ = tilingData;
+    tilingParamHeader_ = tilingParamHeader;
+    gmParams_ = gmParams;
+    dynamicTilingKey_ = dynamicTilingKey;
 
 #if defined(ASCENDC_CPU_DEBUG)
     blockIdx_ = static_cast<uint32_t>(::get_block_idx());
@@ -72,6 +274,161 @@ __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& til
     blockIdx_ = blockIdx.x;
 #endif
     totalNum_ = tilingData_.batchNum * tilingData_.outputSizeH * tilingData_.outputSizeW;
+}
+
+__aicore__ __attribute__((always_inline)) inline void SetDynamicGrayFlag(const AippTilingData& tD, bool& isGray)
+{
+    if (tD.imageFormat == IMAGE_FORMAT_YUV400_U8 && !static_cast<bool>(tD.cscParam.cscSwitch)) {
+        isGray = true;
+        return;
+    }
+
+    bool anyMatrix1NotZero = (tD.cscParam.cscMatrix10 != 0) || (tD.cscParam.cscMatrix11 != 0) ||
+                             (tD.cscParam.cscMatrix12 != 0);
+    bool anyMatrix2NotZero = (tD.cscParam.cscMatrix20 != 0) || (tD.cscParam.cscMatrix21 != 0) ||
+                             (tD.cscParam.cscMatrix22 != 0);
+    if (anyMatrix1NotZero || anyMatrix2NotZero) {
+        return;
+    }
+    if (tD.imageFormat == IMAGE_FORMAT_RGB888_U8 || tD.imageFormat == IMAGE_FORMAT_XRGB8888_U8) {
+        if ((tD.cscParam.outBias0 == 0) && (tD.cscParam.outBias1 == 0) && (tD.cscParam.outBias2 == 0)) {
+            isGray = true;
+        }
+    }
+    if (tD.imageFormat == IMAGE_FORMAT_YUV420SP_U8 && tD.cscParam.cscMatrix01 == 0 && tD.cscParam.cscMatrix02 == 0) {
+        if ((tD.cscParam.inBias0 == 0) && (tD.cscParam.inBias1 == 0) && (tD.cscParam.inBias2 == 0)) {
+            isGray = true;
+        }
+    }
+}
+
+__aicore__ __attribute__((always_inline)) inline void SwapDynamicChannel(AippTilingData& tD)
+{
+    if ((tD.imageFormat == IMAGE_FORMAT_RGB888_U8 || tD.imageFormat == IMAGE_FORMAT_XRGB8888_U8) &&
+        tD.cscParam.rbuvSwapSwitch == 1) {
+        SwapMatrixVal(tD.cscParam.cscMatrix00, tD.cscParam.cscMatrix02);
+        SwapMatrixVal(tD.cscParam.cscMatrix10, tD.cscParam.cscMatrix12);
+        SwapMatrixVal(tD.cscParam.cscMatrix20, tD.cscParam.cscMatrix22);
+    }
+    if (tD.imageFormat == IMAGE_FORMAT_YUV420SP_U8 && tD.cscParam.rbuvSwapSwitch == 1) {
+        SwapMatrixVal(tD.cscParam.cscMatrix01, tD.cscParam.cscMatrix02);
+        SwapMatrixVal(tD.cscParam.cscMatrix11, tD.cscParam.cscMatrix12);
+        SwapMatrixVal(tD.cscParam.cscMatrix21, tD.cscParam.cscMatrix22);
+    }
+}
+
+__aicore__ __attribute__((always_inline)) inline void ResetDynamicTilingKey(AippTilingData& tD,
+                                                                            uint8_t& dynamicTilingKey)
+{
+    bool isGray = false;
+    SetDynamicGrayFlag(tD, isGray);
+    SwapDynamicChannel(tD);
+    const bool cscSwitch = static_cast<bool>(tD.cscParam.cscSwitch);
+    const bool isRgbFormat = (tD.imageFormat == IMAGE_FORMAT_RGB888_U8 || tD.imageFormat == IMAGE_FORMAT_XRGB8888_U8);
+    const bool isYuvFormat = (tD.imageFormat == IMAGE_FORMAT_YUV420SP_U8 || tD.imageFormat == IMAGE_FORMAT_YUV400_U8);
+
+    if (isGray) {
+        if (isRgbFormat) {
+            dynamicTilingKey = AIPP_RGB_TO_GRAY;
+            return;
+        } else if (isYuvFormat) {
+            dynamicTilingKey = AIPP_YUV_TO_GRAY;
+            return;
+        }
+    } else if (isRgbFormat) {
+        dynamicTilingKey = cscSwitch ? AIPP_RGB_TO_YUV : AIPP_RGB_PASS_THROUGH;
+        return;
+    } else if (isYuvFormat) {
+        dynamicTilingKey = cscSwitch ? AIPP_YUV_TO_RGB : AIPP_YUV_PASS_THROUGH;
+        return;
+    }
+}
+
+__aicore__ __attribute__((always_inline)) inline void resetRealPara(AippTilingData& tD,
+                                                                    const tagAippDynamicParaHeader& tP)
+{
+    if (tP.inputFormat == IMAGE_FORMAT_YUV420SP_U8) {
+        tD.cscParam.outBias0 = 0;
+        tD.cscParam.outBias1 = 0;
+        tD.cscParam.outBias2 = 0;
+        tD.cscParam.inBias0 = static_cast<int16_t>(tP.cscInputBiasR0);
+        tD.cscParam.inBias1 = static_cast<int16_t>(tP.cscInputBiasR1);
+        tD.cscParam.inBias2 = static_cast<int16_t>(tP.cscInputBiasR2);
+    } else {
+        tD.cscParam.inBias0 = 0;
+        tD.cscParam.inBias1 = 0;
+        tD.cscParam.inBias2 = 0;
+        tD.cscParam.outBias0 = static_cast<int16_t>(tP.cscOutputBiasR0);
+        tD.cscParam.outBias1 = static_cast<int16_t>(tP.cscOutputBiasR1);
+        tD.cscParam.outBias2 = static_cast<int16_t>(tP.cscOutputBiasR2);
+    }
+    if (tP.inputFormat == IMAGE_FORMAT_XRGB8888_U8 && (tD.cscParam.axSwapSwitch == 1)) {
+        tD.srcChannelOffset = 1;
+    }
+    if (tP.cscSwitch == 0) {
+        tD.cscParam.cscMatrix00 = 256;  tD.cscParam.cscMatrix01 = 0;    tD.cscParam.cscMatrix02 = 0;
+        tD.cscParam.cscMatrix10 = 0;    tD.cscParam.cscMatrix11 = 256;  tD.cscParam.cscMatrix12 = 0;
+        tD.cscParam.cscMatrix20 = 0;    tD.cscParam.cscMatrix21 = 0;    tD.cscParam.cscMatrix22 = 256;
+    }
+}
+
+__aicore__ __attribute__((always_inline)) inline void UpdateRealPara(AippTilingData& tD,
+    const tagAippDynamicParaHeader& tP, uint8_t dynamicTilingKey)
+{
+    tD.imageFormat = tP.inputFormat;
+    tD.channelNum = tP.inputFormat == IMAGE_FORMAT_YUV420SP_U8 ? 3 :
+                    tP.inputFormat == IMAGE_FORMAT_XRGB8888_U8 ? 4 :
+                    tP.inputFormat == IMAGE_FORMAT_RGB888_U8   ? 3 :
+                    tP.inputFormat == IMAGE_FORMAT_YUV400_U8   ? 1 : 0;
+    tD.cscParam.cscSwitch = static_cast<int16_t>(tP.cscSwitch);
+    tD.cscParam.rbuvSwapSwitch = static_cast<int16_t>(tP.rbuvSwapSwitch);
+    tD.cscParam.axSwapSwitch = static_cast<int16_t>(tP.axSwapSwitch);
+    tD.batchNum = static_cast<uint32_t>(tP.batchNum);
+    tD.inputSizeW = static_cast<uint32_t>(tP.srcImageSizeW);
+    tD.inputSizeH = static_cast<uint32_t>(tP.srcImageSizeH);
+    tD.cscParam.cscMatrix00 = tP.cscMatrixR0C0;
+    tD.cscParam.cscMatrix01 = tP.cscMatrixR0C1;
+    tD.cscParam.cscMatrix02 = tP.cscMatrixR0C2;
+    tD.cscParam.cscMatrix10 = tP.cscMatrixR1C0;
+    tD.cscParam.cscMatrix11 = tP.cscMatrixR1C1;
+    tD.cscParam.cscMatrix12 = tP.cscMatrixR1C2;
+    tD.cscParam.cscMatrix20 = tP.cscMatrixR2C0;
+    tD.cscParam.cscMatrix21 = tP.cscMatrixR2C1;
+    tD.cscParam.cscMatrix22 = tP.cscMatrixR2C2;
+    resetRealPara(tD, tP);
+}
+
+template <typename DataType>
+__simt_callee__ __attribute__((always_inline)) inline void UpdateDynamicBatchPara(
+    const CoordPack<DataType>& coord, AippTilingData& tD,
+    const __gm__ uint8_t* gmParams)
+{
+    constexpr uint64_t header_size = sizeof(tagAippDynamicParaHeader);
+    const __gm__ kAippDynamicBatchPara* gmBatchArr =
+        reinterpret_cast<const __gm__ kAippDynamicBatchPara*>(gmParams + header_size);
+    const __gm__ kAippDynamicBatchPara& para = gmBatchArr[coord.nIdx];
+    tD.cropParam.cropSwitch = static_cast<int16_t>(para.cropSwitch);
+    tD.paddingParam.paddingSwitch = static_cast<int32_t>(para.paddingSwitch);
+    tD.cropParam.cropStartPosW = static_cast<uint32_t>(para.cropStartPosW);
+    tD.cropParam.cropStartPosH = static_cast<uint32_t>(para.cropStartPosH);
+    tD.cropParam.cropSizeW = tD.cropParam.cropSwitch == 0 ? tD.inputSizeW : static_cast<uint32_t>(para.cropSizeW);
+    tD.cropParam.cropSizeH = tD.cropParam.cropSwitch == 0 ? tD.inputSizeH : static_cast<uint32_t>(para.cropSizeH);
+    tD.paddingParam.topPaddingSize = para.paddingSizeTop;
+    tD.paddingParam.bottomPaddingSize = para.paddingSizeBottom;
+    tD.paddingParam.leftPaddingSize = para.paddingSizeLeft;
+    tD.paddingParam.rightPaddingSize = para.paddingSizeRight;
+    tD.dtcParam.dtcPixelMeanChn0 = para.dtcPixelMeanChn0;
+    tD.dtcParam.dtcPixelMeanChn1 = para.dtcPixelMeanChn1;
+    tD.dtcParam.dtcPixelMeanChn2 = para.dtcPixelMeanChn2;
+    tD.dtcParam.dtcPixelMeanChn3 = para.dtcPixelMeanChn3;
+    tD.dtcParam.dtcPixelMinChn0 = Fp16ToFloat(para.dtcPixelMinChn0);
+    tD.dtcParam.dtcPixelMinChn1 = Fp16ToFloat(para.dtcPixelMinChn1);
+    tD.dtcParam.dtcPixelMinChn2 = Fp16ToFloat(para.dtcPixelMinChn2);
+    tD.dtcParam.dtcPixelMinChn3 = Fp16ToFloat(para.dtcPixelMinChn3);
+    tD.dtcParam.dtcPixelVarReciChn0 = Fp16ToFloat(para.dtcPixelVarReciChn0);
+    tD.dtcParam.dtcPixelVarReciChn1 = Fp16ToFloat(para.dtcPixelVarReciChn1);
+    tD.dtcParam.dtcPixelVarReciChn2 = Fp16ToFloat(para.dtcPixelVarReciChn2);
+    tD.dtcParam.dtcPixelVarReciChn3 = Fp16ToFloat(para.dtcPixelVarReciChn3);
 }
 
 template <typename T>
@@ -147,10 +504,8 @@ __simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPadding(
     int32_t topPaddingSize = tD.paddingParam.topPaddingSize;
     uint32_t cropSizeH = tD.cropParam.cropSizeH;
     uint32_t cropSizeW = tD.cropParam.cropSizeW;
-    return (hIdx < topPaddingSize) ||
-           (hIdx >= topPaddingSize + cropSizeH) ||
-           (wIdx < leftPaddingSize) ||
-           (wIdx >= leftPaddingSize + cropSizeW);
+    return (hIdx < topPaddingSize) || (hIdx >= topPaddingSize + cropSizeH) ||
+           (wIdx < leftPaddingSize) || (wIdx >= leftPaddingSize + cropSizeW);
 }
 
 __simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(
@@ -199,5 +554,6 @@ __simt_callee__ __attribute__((always_inline)) inline void ComputeCoordFromIndex
     coord.hIdx = newIdx / outputSizeW;
     coord.wIdx = newIdx - coord.hIdx * outputSizeW;
 }
+
 } // namespace Aipp_Kernel
 #endif // AIPP_OP_KERNEL_ARCH35_BASE_H

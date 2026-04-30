@@ -31,7 +31,10 @@ template <typename T, typename DataType>
 class AippYuvRgb : public AippBase<T, DataType> {
 public:
     __aicore__ inline AippYuvRgb(){};
-    __aicore__ inline void Init(const AippTilingData& tilingData);
+    __aicore__ inline void Init(const AippTilingData& tilingData,
+        const tagAippDynamicParaHeader& tilingParamHeader,
+        const __gm__ uint8_t* gmParams,
+        uint8_t dynamicTilingKey);
     __aicore__ inline void Process(GM_ADDR x, GM_ADDR y);
 
 private:
@@ -39,9 +42,12 @@ private:
 };
 
 template <typename T, typename DataType>
-__aicore__ inline void AippYuvRgb<T, DataType>::Init(const AippTilingData& tilingData)
+__aicore__ inline void AippYuvRgb<T, DataType>::Init(const AippTilingData& tilingData,
+    const tagAippDynamicParaHeader& tilingParamHeader,
+    const __gm__ uint8_t* gmParams,
+    uint8_t dynamicTilingKey)
 {
-    this->BaseInit(tilingData);
+    this->BaseInit(tilingData, tilingParamHeader, gmParams, dynamicTilingKey);
 }
 
 template <typename DataType>
@@ -139,22 +145,12 @@ __simt_callee__ __attribute__((always_inline)) inline void ProcessYuvRgbBlock(
 
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvRgb(
-    __gm__ uint8_t* yuvGM, __gm__ T* outputGM, const AippTilingData tD,
-    uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize)
+    __gm__ uint8_t* yuvGM, __gm__ T* outputGM, AippTilingData tD,
+    const __gm__ uint8_t* gmParams,
+    uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
-    int32_t paddingSwitch = tD.paddingParam.paddingSwitch;
-    int32_t leftPaddingSize = tD.paddingParam.leftPaddingSize;
-    int32_t rightPaddingSize = tD.paddingParam.rightPaddingSize;
-    int32_t topPaddingSize = tD.paddingParam.topPaddingSize;
-    int32_t bottomPaddingSize = tD.paddingParam.bottomPaddingSize;
-    float padValue = tD.paddingParam.padValue;
-
-    bool allEvenPadding = (topPaddingSize % DIGIT_2 == 0) &&
-                          (bottomPaddingSize % DIGIT_2 == 0) &&
-                          (leftPaddingSize % DIGIT_2 == 0) &&
-                          (rightPaddingSize % DIGIT_2 == 0);
 
     for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
          idx += blockNum * blockDim.x) {
@@ -163,6 +159,21 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvRgb(
         DataType newIdx = idx - coord.nIdx * ((outputSizeH >> 1) * (outputSizeW >> 1));
         coord.hIdx = newIdx / (outputSizeW >> 1);
         coord.wIdx = newIdx - coord.hIdx * (outputSizeW >> 1);
+        if (dynamicTilingKey != 0) {
+            UpdateDynamicBatchPara(coord, tD, gmParams);
+        }
+
+        int32_t paddingSwitch = tD.paddingParam.paddingSwitch;
+        int32_t leftPaddingSize = tD.paddingParam.leftPaddingSize;
+        int32_t rightPaddingSize = tD.paddingParam.rightPaddingSize;
+        int32_t topPaddingSize = tD.paddingParam.topPaddingSize;
+        int32_t bottomPaddingSize = tD.paddingParam.bottomPaddingSize;
+        float padValue = tD.paddingParam.padValue;
+
+        bool allEvenPadding = (topPaddingSize % DIGIT_2 == 0) &&
+                            (bottomPaddingSize % DIGIT_2 == 0) &&
+                            (leftPaddingSize % DIGIT_2 == 0) &&
+                            (rightPaddingSize % DIGIT_2 == 0);
 
         RgbPack<DataType> dstRgbIdx[YUV_PER_DEAL_NUM];
         ComputeYuvRgbDstIdx(dstRgbIdx, coord, tD);
@@ -188,7 +199,8 @@ __aicore__ inline void AippYuvRgb<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
                          ((this->tilingData_.outputSizeH) >> 1) * ((this->tilingData_.outputSizeW) >> 1);
 
     asc_vf_call<Aipp_Kernel::SimtComputeYuvRgb<T, DataType>>(dim3(this->blockDimX_),
-        (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->blockIdx_, this->blockNum_, batchSize);
+        (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->gmParams_,
+         this->blockIdx_, this->blockNum_, batchSize, this->dynamicTilingKey_);
 }
 
 } // namespace Aipp_Kernel

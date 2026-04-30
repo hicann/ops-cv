@@ -92,6 +92,81 @@ struct AippTilingData {
     PaddingParam paddingParam;
 };
 
+struct tagAippDynamicBatchPara {
+    int8_t cropSwitch;
+    int8_t scfSwitch;
+    int8_t paddingSwitch;
+    int8_t rotateSwitch;
+    int8_t reserve[4];
+    int32_t cropStartPosW;
+    int32_t cropStartPosH;
+    int32_t cropSizeW;
+    int32_t cropSizeH;
+
+    int32_t scfInputSizeW;
+    int32_t scfInputSizeH;
+    int32_t scfOutputSizeW;
+    int32_t scfOutputSizeH;
+
+    int32_t paddingSizeTop;
+    int32_t paddingSizeBottom;
+    int32_t paddingSizeLeft;
+    int32_t paddingSizeRight;
+
+    int16_t dtcPixelMeanChn0;
+    int16_t dtcPixelMeanChn1;
+    int16_t dtcPixelMeanChn2;
+    int16_t dtcPixelMeanChn3;
+
+    uint16_t dtcPixelMinChn0;
+    uint16_t dtcPixelMinChn1;
+    uint16_t dtcPixelMinChn2;
+    uint16_t dtcPixelMinChn3;
+    uint16_t dtcPixelVarReciChn0;
+    uint16_t dtcPixelVarReciChn1;
+    uint16_t dtcPixelVarReciChn2;
+    uint16_t dtcPixelVarReciChn3;
+
+    int8_t reserve1[16];
+};
+
+using kAippDynamicBatchPara = tagAippDynamicBatchPara;
+
+struct tagAippDynamicParaHeader {
+    uint8_t inputFormat;
+    int8_t cscSwitch;
+    int8_t rbuvSwapSwitch;
+    int8_t axSwapSwitch;
+    int8_t batchNum;
+    int8_t reserve1[3];
+    int32_t srcImageSizeW;
+    int32_t srcImageSizeH;
+    int16_t cscMatrixR0C0;
+    int16_t cscMatrixR0C1;
+    int16_t cscMatrixR0C2;
+    int16_t cscMatrixR1C0;
+    int16_t cscMatrixR1C1;
+    int16_t cscMatrixR1C2;
+    int16_t cscMatrixR2C0;
+    int16_t cscMatrixR2C1;
+    int16_t cscMatrixR2C2;
+    int16_t reserve2[3];
+    uint8_t cscOutputBiasR0;
+    uint8_t cscOutputBiasR1;
+    uint8_t cscOutputBiasR2;
+    uint8_t cscInputBiasR0;
+    uint8_t cscInputBiasR1;
+    uint8_t cscInputBiasR2;
+    uint8_t reserve3[2];
+    int8_t reserve4[16];
+
+    static constexpr int32_t MAX_AIPP_BATCH_NUM = 127;
+};
+
+struct tagAippDynamicPara : public tagAippDynamicParaHeader {
+    kAippDynamicBatchPara aippBatchPara[MAX_AIPP_BATCH_NUM];
+};
+
 template <typename T>
 struct RgbPack {
     T r = 0;

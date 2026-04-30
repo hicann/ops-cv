@@ -96,7 +96,11 @@ uint64_t AippTiling::GetTilingKey() const
         return cscSwitch ? AIPP_YUV_TO_RGB : AIPP_YUV_PASS_THROUGH;
     }
 
-    OP_LOGE(context_->GetNodeName(), "tilingKey is:0, please check aipp.cfg's inputformat and csc_switch");
+    if (aippCfg.at(AIPP_MODE) == AIPP_MODE_DYNAMIC) {
+        return AIPP_DYNAMIC_DEFAULT;
+    }
+         
+    OP_LOGE(context_->GetNodeName(), "TilingKey is:0, please check aipp.cfg's aipp_mode, inputformat and csc_switch.");
     return AIPP_ERROR_TILINGKEY;
 }
 
@@ -125,28 +129,16 @@ ge::graphStatus AippTiling::GetShapeAttrsInfo()
 
     OP_CHECK_IF(CheckAippCfg() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "aipp cfg is invalid."),
         return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(SetImagesValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetImagesValue fail."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInputImage() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputImage fail."),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(SetCropValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCropValue fail."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckCropSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckCropSize fail."),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(SetCscValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCscValue fail."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(SetDTCValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetDTCValue fail."),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(
-        SetPaddingValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetPaddingValue fail."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        CheckPaddingSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckPaddingSize fail."),
-        return ge::GRAPH_FAILED);
+    
+    bool isDynamic = (aippCfg.at(AIPP_MODE) == AIPP_MODE_DYNAMIC);
+    if (isDynamic) {
+        OP_LOGD(context_->GetNodeName(), "ProcessDynamicMode success.");
+        return ge::GRAPH_SUCCESS;
+    } else {
+        OP_CHECK_IF(ProcessStaticMode() != ge::GRAPH_SUCCESS,
+            OP_LOGE(context_->GetNodeName(), "ProcessStaticMode fail."),
+            return ge::GRAPH_FAILED);
+    }
 
     OP_LOGD(context_->GetNodeName(), "GetShapeAttrsInfo end.");
     return ge::GRAPH_SUCCESS;
@@ -196,8 +188,9 @@ ge::graphStatus AippTiling::CheckAippCfg()
         OP_LOGE(context_->GetNodeName(), "aippCfg is empty."), return ge::GRAPH_FAILED);
     OP_CHECK_IF(aippCfg.find(AIPP_MODE) == aippCfg.end(),
         OP_LOGE(context_->GetNodeName(), "aippCfg has no aipp_mode."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(aippCfg.at(AIPP_MODE) != AIPP_MODE_STATIC,
-        OP_LOGE(context_->GetNodeName(), "aippCfg value is not static."), return ge::GRAPH_FAILED);
+    string aippMode = aippCfg.at(AIPP_MODE);
+    OP_CHECK_IF(aippMode != AIPP_MODE_STATIC && aippMode != AIPP_MODE_DYNAMIC,
+        OP_LOGE(context_->GetNodeName(), "aipp_mode must be 'static' or 'dynamic'."), return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -279,6 +272,35 @@ ge::graphStatus AippTiling::CheckInputDtype()
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
     OP_CHECK_IF(outputImages->GetDataType() != ge::DT_FLOAT16 && outputImages->GetDataType() != ge::DT_UINT8,
         OP_LOGE(context_->GetNodeName(), "outputImages only support float16 or uint8."), return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus AippTiling::ProcessStaticMode()
+{
+    OP_CHECK_IF(SetImagesValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetImagesValue fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(SetCropValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCropValue fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(SetCscValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCscValue fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(SetDTCValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetDTCValue fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(SetPaddingValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetPaddingValue fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(CheckInputImage() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputImage fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(CheckCropSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckCropSize fail."),
+        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(CheckPaddingSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckPaddingSize fail."),
+        return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
