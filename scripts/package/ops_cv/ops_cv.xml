@@ -46,6 +46,7 @@
         <path value="opp/built-in" install_mod="550"/>
         <path value="opp/built-in/op_impl" install_mod="550"/>
         <path value="opp/built-in/op_impl/aicpu" install_mod="550"/>
+        <path value="opp/built-in/op_impl/host_cpu" install_mod="550"/>
         <path value="opp/built-in/op_impl/ai_core" install_mod="550"/>
         <path value="opp/built-in/op_impl/ai_core/tbe" install_mod="550"/>
         <path value="opp/built-in/op_impl/ai_core/tbe/op_host" install_mod="550"/>

@@ -406,6 +406,65 @@ function(gen_aicpu_kernel_symbol enable_built_in)
   )
 endfunction()
 
+# Collects AICPU_HOST_OBJ_TARGETS (registered by add_aicpu_host_kernel_modules in func.cmake)
+# and links all host OBJECT files into one SHARED library libcv_constant_folding_ops.so.
+# Reference: same pattern as gen_aicpu_kernel_symbol (device side).
+function(gen_aicpu_const_symbol)
+  if(NOT AICPU_HOST_OBJ_TARGETS)
+    message(STATUS "No builtin host aicpu targets found, skipping.")
+    return()
+  endif()
+
+  set(CONST_SO_OUTPUT ${CMAKE_BINARY_DIR}/libcv_constant_folding_ops.so)
+
+  set(ALL_OBJECTS "")
+  foreach(tgt IN LISTS AICPU_HOST_OBJ_TARGETS)
+    list(APPEND ALL_OBJECTS $<TARGET_OBJECTS:${tgt}>)
+  endforeach()
+
+  message(STATUS "Linking libcv_constant_folding_ops.so with host compiler")
+  message(STATUS "AICPU host all objects: ${ALL_OBJECTS}")
+  message(STATUS "AICPU host so output: ${CONST_SO_OUTPUT}")
+
+  set(AICPU_HOST_CONST_LIBS
+    -lc_sec
+    -lgraph
+    -lexe_graph
+    -lregister
+    -lpthread
+    -ldl
+  )
+
+  add_custom_command(
+    OUTPUT ${CONST_SO_OUTPUT}
+    COMMAND ${CMAKE_CXX_COMPILER} -shared ${ALL_OBJECTS}
+      -Wl,--whole-archive
+          ${ASCEND_DIR}/lib64/libaicpu_context_host.a
+          ${ASCEND_DIR}/lib64/libaicpu_nodedef_host.a
+          ${ASCEND_DIR}/lib64/libhost_ascend_protobuf.a
+      -Wl,--no-whole-archive
+      -Wl,-Bsymbolic
+      -Wl,--exclude-libs=libhost_ascend_protobuf.a
+      -Wl,-z,now
+      -s
+
+      -L${ASCEND_DIR}/lib64
+      ${AICPU_HOST_CONST_LIBS}
+
+      -o ${CONST_SO_OUTPUT}
+    DEPENDS ${AICPU_HOST_OBJ_TARGETS}
+    COMMENT "Linking libcv_constant_folding_ops.so using host compiler okay."
+    COMMAND_EXPAND_LISTS
+  )
+
+  add_custom_target(cv_constant_folding_ops_builtin ALL DEPENDS ${CONST_SO_OUTPUT})
+  install(
+    FILES ${CONST_SO_OUTPUT}
+    DESTINATION ${AICPU_HOST_KERNEL_IMPL}
+    OPTIONAL
+  )
+endfunction()
+
 function(gen_onnx_plugin_symbol)
   if (NOT TARGET ${ONNX_PLUGIN_NAME}_obj)
     return()
@@ -446,6 +505,8 @@ function(gen_norm_symbol)
   gen_opgraph_symbol()
 
   gen_opapi_symbol()
+
+  gen_aicpu_const_symbol()
 
   gen_onnx_plugin_symbol()
 endfunction()

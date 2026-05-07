@@ -252,6 +252,41 @@ function(add_aicpu_cust_kernel_modules target_name)
   endif()
 endfunction()
 
+# Compiles aicpu source as OBJECT for host side.
+# Collects into AICPU_HOST_OBJ_TARGETS; linking into libcv_constant_folding_ops.so
+# is done in symbol.cmake gen_aicpu_const_symbol().
+function(add_aicpu_host_kernel_modules host_target_name)
+  message(STATUS "add aicpu host kernel modules for ${host_target_name}")
+  if(NOT TARGET ${host_target_name})
+    add_library(${host_target_name} OBJECT)
+    target_include_directories(${host_target_name} PRIVATE
+        ${AICPU_INCLUDE}
+        ${CANN_3RD_LIB_PATH}/eigen
+    )
+    target_compile_definitions(
+      ${host_target_name} PRIVATE
+                    _FORTIFY_SOURCE=2
+                    google=ascend_private
+      )
+    target_compile_options(
+      ${host_target_name} PRIVATE
+                    -Dgoogle=ascend_private
+                    -fvisibility=hidden ${AICPU_DEFINITIONS}
+      )
+    target_link_libraries(
+      ${host_target_name}
+      PRIVATE $<BUILD_INTERFACE:$<IF:$<BOOL:${ENABLE_TEST}>,intf_llt_pub_asan_cxx17,intf_pub_cxx17>>
+              $<BUILD_INTERFACE:dlog_headers>
+              Eigen3::EigenCv
+      )
+    if (NOT ${host_target_name} IN_LIST AICPU_HOST_OBJ_TARGETS)
+      set(AICPU_HOST_OBJ_TARGETS
+          ${AICPU_HOST_OBJ_TARGETS} ${host_target_name}
+          CACHE INTERNAL "All aicpu host builtin obj targets")
+    endif()
+  endif()
+endfunction()
+
 function(add_aicpu_utils_modules)
   add_aicpu_cust_kernel_modules(utils_cust_obj)
   target_sources(utils_cust_obj PRIVATE ${OPS_CV_DIR}/common/src/common/allocator_utils.cpp)
