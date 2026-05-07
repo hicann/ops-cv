@@ -9,8 +9,13 @@
 # -----------------------------------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.16)
+
+include(cmake/fetch_cann_cmake.cmake)
+
 set(PKG_NAME cv)
 project(${PKG_NAME} VERSION 1.0.0)
+
+init_cann_project()
 
 set(CMAKE_C_FLAGS_RELEASE "")
 set(CMAKE_CXX_FLAGS_RELEASE "")
@@ -112,10 +117,8 @@ include(cmake/intf_pub_linux.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/ut.cmake)
 
 include(version.cmake)
-if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
-    check_pkg_build_deps("ops_cv")
-endif()
-add_version_info_targets()
+check_cann_pkg_build_deps("ops_cv")
+add_cann_version_info_targets()
 
 add_subdirectory(common)
 if(ENABLE_EXPERIMENTAL)

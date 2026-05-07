@@ -108,6 +108,14 @@ CORE_NUMS=$(cat /proc/cpuinfo | grep "processor" | wc -l)
 ARCH_INFO=$(uname -m)
 CANN_3RD_LIB_PATH="${BUILD_PATH}/third_party"
 
+if [ -z "$ASCEND_INSTALL_PATH" ]; then
+  if [ -n "$ASCEND_HOME_PATH" ]; then
+    ASCEND_INSTALL_PATH="$ASCEND_HOME_PATH"
+  else
+    ASCEND_INSTALL_PATH="/usr/local/Ascend/cann"
+  fi
+fi
+
 # Base paths
 export INCLUDE_PATH="${ASCEND_HOME_PATH}/include"
 export LIB_PATH="${ASCEND_HOME_PATH}/lib64"
@@ -1149,6 +1157,7 @@ assemble_cmake_args() {
     CMAKE_ARGS="$CMAKE_ARGS -DASCEND_COMPUTE_UNIT=$COMPUTE_UNIT"
   fi
   CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
+  CMAKE_ARGS="$CMAKE_ARGS -DASCEND_INSTALL_PATH=${ASCEND_INSTALL_PATH}"
 }
 
 cmake_init() {
