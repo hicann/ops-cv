@@ -30,6 +30,7 @@ OP_TYPE_REGISTER(GridSampler2DGrad);
 
 static const string INTERPOLATION_BILINEAR = "bilinear";
 static const string INTERPOLATION_NEAREST = "nearest";
+static const string INTERPOLATION_BICUBIC = "bicubic";
 
 static const string PADDING_ZEROS = "zeros";
 static const string PADDING_BORDER = "border";
@@ -39,8 +40,10 @@ inline const string &GetInterpolationModeStr(int64_t interpolationMode)
 {
     if (interpolationMode == 0) {
         return INTERPOLATION_BILINEAR;
+    } else if (interpolationMode == 1) {
+        return INTERPOLATION_NEAREST;
     }
-    return INTERPOLATION_NEAREST;
+    return INTERPOLATION_BICUBIC;
 }
 
 inline const string &GetPaddingModeStr(int64_t paddingMode)

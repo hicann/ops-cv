@@ -38,7 +38,7 @@ static const size_t THIRD_DIM = 2;
 static const size_t FOURTH_DIM = 3;
 
 static const int64_t INTERPOLATION_MODE_MIN_VALUE = 0;
-static const int64_t INTERPOLATION_MODE_MAX_VALUE = 1;
+static const int64_t INTERPOLATION_MODE_MAX_VALUE = 2;
 static const int64_t PADDING_MODE_MIN_VALUE = 0;
 static const int64_t PADDING_MODE_MAX_VALUE = 2;
 static const int64_t SPATIAL_GRID_LAST_DIM_SIZE = 2;
@@ -181,8 +181,7 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
 static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t interpolationMode)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    return input->GetDataType() != op::DataType::DT_DOUBLE && (interpolationMode == 0 || interpolationMode == 1) &&
-           (curArch != NpuArch::DAV_1001) &&
+    return input->GetDataType() != op::DataType::DT_DOUBLE && (curArch != NpuArch::DAV_1001) &&
            input->GetViewShape().GetDim(SECOND_DIM) <= MAX_CHANNEL_SIZE && (curArch != NpuArch::DAV_3510);
 }
 

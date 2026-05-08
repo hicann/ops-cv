@@ -52,6 +52,10 @@ constexpr uint32_t FLOAT16_BILINEAR_TILING_KEY = 3;
 constexpr uint32_t FLOAT16_NEAREST_TILING_KEY = 4;
 constexpr uint32_t BFLOAT16_BILINEAR_TILING_KEY = 5;
 constexpr uint32_t BFLOAT16_NEAREST_TILING_KEY = 6;
+constexpr uint32_t FLOAT_BICUBIC_TILING_KEY = 7;
+constexpr uint32_t FLOAT16_BICUBIC_TILING_KEY = 8;
+constexpr uint32_t BFLOAT16_BICUBIC_TILING_KEY = 9;
+constexpr int BICUBIC_DIVIDE_UB_NUM = 62;
 constexpr uint32_t CHANNEL_256 = 256;
 constexpr uint32_t CHANNEL_512 = 512;
 constexpr uint32_t CHANNEL_1024 = 1024;
@@ -72,9 +76,15 @@ constexpr uint32_t VF_MAX_THREAD_NUM_DET = 256;
 constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
 constexpr uint32_t WORKSPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint32_t DETERMINISTIC_BATCH_NORM = 1;
+const string INTERPOLATION_BILINEAR = "bilinear";
+const string INTERPOLATION_NEAREST = "nearest";
+const string INTERPOLATION_BICUBIC = "bicubic";
+const string PADDING_ZEROS = "zeros";
+const string PADDING_BORDER = "border";
+const string PADDING_REFLECTION = "reflection";
 
-static std::map<std::string, int> INTER_MODE_MAP = {{"bilinear", 0}, {"nearest", 1}, {"bicubic", 2}};
-static std::map<std::string, int> PADDING_MODE_MAP = {{"zeros", 0}, {"border", 1}, {"reflection", 2}};
+static std::map<std::string, int> INTER_MODE_MAP = {{INTERPOLATION_BILINEAR, 0}, {INTERPOLATION_NEAREST, 1}, {INTERPOLATION_BICUBIC, 2}};
+static std::map<std::string, int> PADDING_MODE_MAP = {{PADDING_ZEROS, 0}, {PADDING_BORDER, 1}, {PADDING_REFLECTION, 2}};
 static std::map<bool, int> ALIGN_MODE_MAP = {{true, 1}, {false, 0}};
 static std::map<ge::DataType, uint64_t> TILINGKEY_MAP = {{ge::DT_FLOAT16, 1}, {ge::DT_FLOAT, 2}};
 
@@ -276,6 +286,10 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::SplitUb()
             extraUbSize = BUFFER_NUM * CONST_TWO * alignChannel * static_cast<uint32_t>(DTYPE_SIZE_32);
             group = 1U;
         }
+    } else {
+        divideUbNum = static_cast<uint32_t>(BICUBIC_DIVIDE_UB_NUM);
+        extraUbSize = 19U * alignChannel * static_cast<uint32_t>(DTYPE_SIZE_32);
+        group = 1U;
     }
     uint32_t tilingDataSize = CeilAlign(sizeof(TilingData), BYTE_BLOCK);
     uint32_t canUseUbSize = FloorAlign(ubSize - tilingDataSize, BYTE_BLOCK);
@@ -402,7 +416,8 @@ static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputP
     const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     OP_CHECK_IF((attrs == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get attrs Failed."), return false);
     const string interpolationMode = string(attrs->GetAttrPointer<char>(INTERPOLATION_MODE_INDEX));
-    if (interpolationMode != "bilinear" && interpolationMode != "nearest") {
+    if (interpolationMode != INTERPOLATION_BILINEAR && interpolationMode != INTERPOLATION_NEAREST &&
+        interpolationMode != INTERPOLATION_BICUBIC) {
         OP_LOGW(tilingContext->GetNodeName(), "%s is not supported", interpolationMode.c_str());
         return ge::GRAPH_FAILED;
     }
@@ -417,6 +432,21 @@ static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputP
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
+}
+
+static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParamsInfo& params, size_t sysWorkspaceSize) {
+    if (params.regBase) {
+        uint32_t isDeterministic = tilingContext->GetDeterministic();
+        if (isDeterministic == 1) {
+            params.tilingKey += 6;
+            uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
+            return WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * 2 * 4 * params.batch * batchNumPerCore;
+        } else {
+            return 0;
+        }
+    } else {
+        return sysWorkspaceSize;
+    }
 }
 
 static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
@@ -450,22 +480,22 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
         sysWorkspaceSize += xWorkspaceSize;
         params.tilingKey = BFLOAT16_NEAREST_TILING_KEY; // mode2: bfloat16, nearest
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
+    } else if (dtype == ge::DT_FLOAT && params.interpolation == 2) {
+        params.tilingKey = FLOAT_BICUBIC_TILING_KEY; // mode7: float, bicubic
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 2) {
+        sysWorkspaceSize += xWorkspaceSize;
+        params.tilingKey = FLOAT16_BICUBIC_TILING_KEY; // mode8: float16, bicubic
+        tilingContext->SetScheduleMode(SCHEDULE_MODE);
+    } else if (dtype == ge::DT_BF16 && params.interpolation == 2) {
+        sysWorkspaceSize += xWorkspaceSize;
+        params.tilingKey = BFLOAT16_BICUBIC_TILING_KEY; // mode9: bfloat16, bicubic
+        tilingContext->SetScheduleMode(SCHEDULE_MODE);
     }
     size_t* currentWorkspace = tilingContext->GetWorkspaceSizes(1);
     OP_CHECK_IF(
         (currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
         return false);
-    currentWorkspace[0] = sysWorkspaceSize;
-    if (params.regBase) {
-        uint32_t isDeterministic = tilingContext->GetDeterministic();
-        if (isDeterministic == 1) {
-            params.tilingKey += 6;
-            uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
-            currentWorkspace[0] = WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * 2 * 4 * params.batch * batchNumPerCore;
-        } else {
-            currentWorkspace[0] = 0;
-        }
-    }
+    currentWorkspace[0] = GetCurWorkspaceSize(tilingContext, params, sysWorkspaceSize);
     OP_LOGI(tilingContext->GetNodeName(), "sysWorkspaceSize is %zu.", sysWorkspaceSize);
     return ge::GRAPH_SUCCESS;
 }

@@ -17,6 +17,8 @@
 #include "grid_sampler2_d_grad.h"
 #include "grid_sampler2_d_grad_fp16.h"
 #include "grid_sampler2_d_grad_cast.h"
+#include "grid_sampler2_d_grad_bicubic.h"
+#include "grid_sampler2_d_grad_bicubic_fp16.h"
 #else
 #include "arch35/grid_sampler2_d_grad_simt.h"
 #include "arch35/grid_sampler2_d_grad_simt_det.h"
@@ -127,6 +129,43 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
         op.Init(tilingData, gmTensor);
         op.InitBuffer(&pipe);
         op.InitNearestLocalTensor();
+        op.Process();
+        SyncAll();
+        pipe.Destroy();
+        TPipe tpipe;
+        GridSampler2DGradCast<bfloat16_t, GridSampler2DGradTilingData> castOp;
+        castOp.Init(tilingData, gmTensor, &tpipe);
+        castOp.Process();
+    }
+    if (TILING_KEY_IS(7)) {
+        GridSampler2DGradBicubic<float, GridSampler2DGradTilingData> op;
+        op.Init(tilingData, gmTensor);
+        op.InitBuffer(&pipe);
+        op.InitBicubicLocalTensor();
+        op.Process();
+    }
+    if (TILING_KEY_IS(8)) {
+        InitWorkspace(tilingData, workspace);
+        SyncAll();
+        GridSampler2DGradBicubicFP16<float, half, GridSampler2DGradTilingData> op;
+        op.Init(tilingData, gmTensor);
+        op.InitBuffer(&pipe);
+        op.InitBicubicLocalTensor();
+        op.Process();
+        SyncAll();
+        pipe.Destroy();
+        TPipe tpipe;
+        GridSampler2DGradCast<half, GridSampler2DGradTilingData> castOp;
+        castOp.Init(tilingData, gmTensor, &tpipe);
+        castOp.Process();
+    }
+    if (TILING_KEY_IS(9)) {
+        InitWorkspace(tilingData, workspace);
+        SyncAll();
+        GridSampler2DGradBicubicFP16<float, bfloat16_t, GridSampler2DGradTilingData> op;
+        op.Init(tilingData, gmTensor);
+        op.InitBuffer(&pipe);
+        op.InitBicubicLocalTensor();
         op.Process();
         SyncAll();
         pipe.Destroy();
