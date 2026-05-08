@@ -149,9 +149,9 @@ const string AIPP_BOTTOM_PADDING_SIZE = "bottom_padding_size";
 const string AIPP_PADDING_VALUE = "padding_value";
 
 const std::map<string, uint8_t> IMAGE_FORMAT_MAP = {{IMAGE_FORMAT_YUV420SP_U8, 1},
-                                                    {IMAGE_FORMAT_RGB888_U8, 2},
-                                                    {IMAGE_FORMAT_XRGB8888_U8, 3},
-                                                    {IMAGE_FORMAT_YUV400_U8, 4}};
+                                                    {IMAGE_FORMAT_XRGB8888_U8, 2},
+                                                    {IMAGE_FORMAT_RGB888_U8, 5},
+                                                    {IMAGE_FORMAT_YUV400_U8, 10}};
 
 struct AippCompileInfo {
     int64_t coreNum = 0;

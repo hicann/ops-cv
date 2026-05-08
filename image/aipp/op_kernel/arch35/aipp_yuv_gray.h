@@ -58,7 +58,7 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
     float padValue = tD.paddingParam.padValue;
-    bool isYuv400 = (tD.imageFormat == YUV400_U8_FORMAT);
+    bool isYuv400 = (tD.imageFormat == IMAGE_FORMAT_YUV400_U8);
 
     for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
          idx += blockNum * blockDim.x) {

@@ -346,7 +346,7 @@ TEST_F(AippTiling, aipp_tiling_test_0)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 10,
         .channelNum = 3,
@@ -430,7 +430,7 @@ TEST_F(AippTiling, aipp_tiling_test_1)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 2,
         .batchNum = 100,
         .channelNum = 3,
@@ -507,7 +507,7 @@ TEST_F(AippTiling, aipp_tiling_test_2)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -584,7 +584,7 @@ TEST_F(AippTiling, aipp_tiling_test_3)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -807,7 +807,7 @@ TEST_F(AippTiling, aipp_tiling_test_9)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3,
+        .imageFormat = 2,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 4,
@@ -919,7 +919,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_1)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -996,7 +996,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_2)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -1150,7 +1150,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_4)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -1227,7 +1227,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_5)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2,
+        .imageFormat = 5,
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -1484,7 +1484,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_14)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
+        .imageFormat = 5, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 3,
@@ -1562,7 +1562,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_15)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
+        .imageFormat = 5, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 3,
@@ -1638,7 +1638,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_16)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
+        .imageFormat = 5, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 3,
@@ -1716,7 +1716,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_17)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
+        .imageFormat = 5, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 3,
@@ -1794,7 +1794,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_18)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3, 
+        .imageFormat = 2, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 4,
@@ -1872,7 +1872,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_19)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3, 
+        .imageFormat = 2, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 4,
@@ -1950,7 +1950,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_20)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3, 
+        .imageFormat = 2, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 4,
@@ -2028,7 +2028,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_21)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3, 
+        .imageFormat = 2, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 4,
@@ -2106,7 +2106,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_22)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3, 
+        .imageFormat = 2, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 4,
@@ -2184,7 +2184,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_23)
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 3, 
+        .imageFormat = 2, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 4,
@@ -2262,7 +2262,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_24)
 
     int64_t expectTilingKey = optiling::AIPP_YUV_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 4, 
+        .imageFormat = 10, 
         .outputFormat = 1, 
         .batchNum = 1, 
         .channelNum = 1,

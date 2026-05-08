@@ -27,7 +27,10 @@ using namespace AscendC;
 constexpr uint32_t MAX_THREAD_NUM = 256;
 constexpr uint32_t CSC_MATRIX_SCALE = 512;
 constexpr uint32_t MAX_UINT8 = 255;
+constexpr uint32_t CSC_IDENTITY_SCALE = 256;
 constexpr uint8_t CHANNEL_THREE = 3;
+constexpr uint8_t CHANNEL_COUNT_3 = 3;
+constexpr uint8_t CHANNEL_COUNT_4 = 4;
 constexpr uint8_t YUV_PER_DEAL_NUM = 4;
 constexpr uint8_t YUV_DEAL_NUM_0 = 0;
 constexpr uint8_t YUV_DEAL_NUM_1 = 1;
@@ -40,7 +43,6 @@ constexpr uint8_t DIGIT_2 = 2;
 constexpr uint8_t DIGIT_3 = 3;
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
-constexpr uint8_t YUV400_U8_FORMAT = 4;
 constexpr uint8_t AIPP_RGB_PASS_THROUGH = 1;
 constexpr uint8_t AIPP_YUV_PASS_THROUGH = 2;
 constexpr uint8_t AIPP_RGB_TO_YUV = 3;
@@ -138,45 +140,6 @@ __simt_callee__ __attribute__((always_inline)) inline float Fp16ToFloat(const ui
 }
 
 template <class ByteCountT>
-__inline__ __attribute__((always_inline)) __aicore__ void InitBatchParamData(
-    const __gm__ uint8_t *p_tilingdata, uint8_t *tilingdata, ByteCountT all_bytes)
-{
-    const uint64_t copy_bytes = static_cast<uint64_t>(all_bytes);
-#if defined(ASCENDC_CPU_DEBUG)
-    uint32_t *dst = (uint32_t *)tilingdata;
-    const __gm__ uint32_t *src = (const __gm__ uint32_t *)p_tilingdata;
-    for (uint64_t i = 0; i < (copy_bytes + 3) / 4; i++) {
-        *(dst + i) = *(src + i);
-    }
-#elif defined(__DAV_C220_CUBE__) || defined(__DAV_C310_CUBE__) || defined(__DAV_310R6_CUBE__) ||
-      defined(__GET_CODE_CHANNEL__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201))
-    copy_data_align64(tilingdata, (__gm__ uint8_t *)p_tilingdata, copy_bytes);
-#else
-    uint32_t len_burst = (copy_bytes + 31) / 32;
-    __ubuf__ uint8_t *tilingdata_in_ub = (__ubuf__ uint8_t *)get_imm(0);
-#if defined(__DAV_C310__) || defined(__DAV_310R6__)  // V100&V120
-    copy_gm_to_ubuf_align_v2((__ubuf__ uint8_t *)tilingdata_in_ub, (__gm__ uint8_t *)p_tilingdata,
-        0, 1, len_burst * 32, 0, 0, false, 0, 0, 0);
-    uint32_t DC_PRLOAD_LOOP = (copy_bytes)/512;
-    for (uint64_t loop_dc=0; loop_dc < DC_PRLOAD_LOOP; loop_dc++) {
-        uint64_t offset = loop_dc*512;
-        dc_preload((uint64_t *)tilingdata, offset);
-    }
-    uint64_t tiling_offset = ((uint64_t)(tilingdata))%64;
-    uint32_t DC_PRLOAD_LOOP1 = (copy_bytes+63+tiling_offset)/64;
-    for (uint64_t loop_dc=0; loop_dc < DC_PRLOAD_LOOP1; loop_dc++) {
-        uint64_t offset = loop_dc*64;
-        dc_preload((uint64_t *)tilingdata, offset);
-    }
-#endif
-    set_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
-    wait_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
-    copy_data_align64(tilingdata, (__ubuf__ uint8_t *)tilingdata_in_ub, copy_bytes);
-#endif
-    pipe_barrier(PIPE_ALL);
-}
-
-template <class ByteCountT>
 __inline__ __attribute__((always_inline)) __aicore__ void InitHeaderParamData(
     const __gm__ uint8_t *p_tilingdata, uint8_t *tilingdata, ByteCountT all_bytes)
 {
@@ -187,7 +150,7 @@ __inline__ __attribute__((always_inline)) __aicore__ void InitHeaderParamData(
     for (uint64_t i = 0; i < (copy_bytes + 3) / 4; i++) {
         *(dst + i) = *(src + i);
     }
-#elif defined(__DAV_C220_CUBE__) || defined(__DAV_C310_CUBE__) || defined(__DAV_310R6_CUBE__) ||
+#elif defined(__DAV_C220_CUBE__) || defined(__DAV_C310_CUBE__) || defined(__DAV_310R6_CUBE__) || \
       defined(__GET_CODE_CHANNEL__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201))
     copy_data_align64(tilingdata, (__gm__ uint8_t *)p_tilingdata, copy_bytes);
 #else
@@ -210,17 +173,6 @@ __inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippHeader(
     }
     constexpr uint64_t header_size = sizeof(tagAippDynamicParaHeader);
     InitHeaderParamData(p_tilingdata, reinterpret_cast<uint8_t*>(tilingdata), header_size);
-}
-
-__inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippBatchData(
-    const __gm__ uint8_t *p_tilingdata, uint8_t *batchBuf, int8_t batchNum)
-{
-    if (batchNum <= 0) {
-        return;
-    }
-    constexpr uint64_t header_size = sizeof(tagAippDynamicParaHeader);
-    uint64_t batch_bytes = static_cast<uint64_t>(batchNum) * sizeof(kAippDynamicBatchPara);
-    InitBatchParamData(p_tilingdata + header_size, batchBuf, batch_bytes);
 }
 
 #define GET_PARAM_DATA_WITH_STRUCT_TBUF(tiling_data, tiling_arg, dynamic_flag)                            \
@@ -366,9 +318,15 @@ __aicore__ __attribute__((always_inline)) inline void resetRealPara(AippTilingDa
         tD.srcChannelOffset = 1;
     }
     if (tP.cscSwitch == 0) {
-        tD.cscParam.cscMatrix00 = 256;  tD.cscParam.cscMatrix01 = 0;    tD.cscParam.cscMatrix02 = 0;
-        tD.cscParam.cscMatrix10 = 0;    tD.cscParam.cscMatrix11 = 256;  tD.cscParam.cscMatrix12 = 0;
-        tD.cscParam.cscMatrix20 = 0;    tD.cscParam.cscMatrix21 = 0;    tD.cscParam.cscMatrix22 = 256;
+        tD.cscParam.cscMatrix00 = CSC_IDENTITY_SCALE;
+        tD.cscParam.cscMatrix01 = 0;
+        tD.cscParam.cscMatrix02 = 0;
+        tD.cscParam.cscMatrix10 = 0;
+        tD.cscParam.cscMatrix11 = CSC_IDENTITY_SCALE;
+        tD.cscParam.cscMatrix12 = 0;
+        tD.cscParam.cscMatrix20 = 0;
+        tD.cscParam.cscMatrix21 = 0;
+        tD.cscParam.cscMatrix22 = CSC_IDENTITY_SCALE;
     }
 }
 
@@ -376,9 +334,9 @@ __aicore__ __attribute__((always_inline)) inline void UpdateRealPara(AippTilingD
     const tagAippDynamicParaHeader& tP, uint8_t dynamicTilingKey)
 {
     tD.imageFormat = tP.inputFormat;
-    tD.channelNum = tP.inputFormat == IMAGE_FORMAT_YUV420SP_U8 ? 3 :
-                    tP.inputFormat == IMAGE_FORMAT_XRGB8888_U8 ? 4 :
-                    tP.inputFormat == IMAGE_FORMAT_RGB888_U8   ? 3 :
+    tD.channelNum = tP.inputFormat == IMAGE_FORMAT_YUV420SP_U8 ? CHANNEL_COUNT_3 :
+                    tP.inputFormat == IMAGE_FORMAT_XRGB8888_U8 ? CHANNEL_COUNT_4 :
+                    tP.inputFormat == IMAGE_FORMAT_RGB888_U8   ? CHANNEL_COUNT_3 :
                     tP.inputFormat == IMAGE_FORMAT_YUV400_U8   ? 1 : 0;
     tD.cscParam.cscSwitch = static_cast<int16_t>(tP.cscSwitch);
     tD.cscParam.rbuvSwapSwitch = static_cast<int16_t>(tP.rbuvSwapSwitch);

@@ -65,10 +65,10 @@ static float GetBytesPerPixel(uint8_t imageFormat)
 {
     // 1=YUV420SP_U8, 2=RGB888_U8, 3=XRGB8888_U8, 4=YUV400_U8
     switch (imageFormat) {
-        case 1: return 1.5f;  // YUV420SP
-        case 2: return 3.0f;  // RGB888
-        case 3: return 4.0f;  // XRGB8888
-        case 4: return 1.0f;  // YUV400
+        case 1: return 1.5f;    // YUV420SP
+        case 2: return 4.0f;    // XRGB8888
+        case 5: return 3.0f;    // RGB888
+        case 10: return 1.0f;   // YUV400
         default: return 3.0f;
     }
 }
