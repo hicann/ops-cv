@@ -19,6 +19,10 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_bilinear2d_aa_backward_tiling_data.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/device_atomic_functions.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
 
 namespace UpsampleBilinear2dAABackward {
 using namespace AscendC;
@@ -34,14 +38,14 @@ static __simt_callee__ __aicore__ inline T3 GetLeftIndex(T2 index, float scale, 
         if (index > 0) {
             index -= 1;
         }
-        leftIndex = Simt::Max(static_cast<T3>(static_cast<float>(index) / scale - support) - 1, static_cast<T3>(0));
+        leftIndex = max(static_cast<T3>(static_cast<float>(index) / scale - support) - 1, static_cast<T3>(0));
     }
     return leftIndex;
 }
 
 static __simt_callee__ __aicore__ inline float WeightCalculate(float x)
 {
-    x = Simt::Abs(x);
+    x = fabsf(x);
     if (x < 1.0f) {
         return 1.0f - x;
     }
@@ -71,8 +75,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
     T3 lenSrcHw = lenSrcH * lenSrcW;
-    for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         float inputValue = static_cast<float>(inputGm[yGmIdx]);
         T2 tmpRes = Simt::UintDiv(static_cast<T2>(yGmIdx), mW, shiftW);
@@ -81,8 +85,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         T2 H = tmpRes - NC * lenDstH;
 
         float centerH = scaleH * (static_cast<float>(H) + 0.5f);
-        T3 minH = Simt::Max(static_cast<T3>(Simt::Floor(centerH - supportH + 0.5f)), static_cast<T3>(0));
-        T3 maxH = Simt::Min(static_cast<T3>(Simt::Floor(centerH + supportH + 0.5f)), lenSrcH);
+        T3 minH = max(static_cast<T3>(floorf(centerH - supportH + 0.5f)), static_cast<T3>(0));
+        T3 maxH = min(static_cast<T3>(floorf(centerH + supportH + 0.5f)), lenSrcH);
         float totalWeightsH = 0.0f;
         for (T3 j = minH; j < maxH; j++) {
             const float distance = (static_cast<float>(j) - centerH + 0.5f) * invScaleH;
@@ -91,8 +95,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         }
 
         float centerW = scaleW * (static_cast<float>(W) + 0.5f);
-        T3 minW = Simt::Max(static_cast<T3>(Simt::Floor(centerW - supportW + 0.5f)), static_cast<T3>(0));
-        T3 maxW = Simt::Min(static_cast<T3>(Simt::Floor(centerW + supportW + 0.5f)), lenSrcW);
+        T3 minW = max(static_cast<T3>(floorf(centerW - supportW + 0.5f)), static_cast<T3>(0));
+        T3 maxW = min(static_cast<T3>(floorf(centerW + supportW + 0.5f)), lenSrcW);
         float totalWeightsW = 0.0f;
         for (T3 i = minW; i < maxW; i++) {
             const float distance = (static_cast<float>(i) - centerW + 0.5f) * invScaleW;
@@ -113,7 +117,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
                     weightW /= totalWeightsW;
                 }
                 const T3 input_idx = NC * lenSrcHw + h * lenSrcW + w;
-                Simt::AtomicAdd(outputGm + input_idx, static_cast<T1>(inputValue * weightH * weightW));
+                asc_atomic_add(outputGm + input_idx, static_cast<T1>(inputValue * weightH * weightW));
             }
         }
     }
@@ -126,8 +130,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
     T3 lenSrcHw = lenSrcH * lenSrcW;
-    for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 tmpRes = Simt::UintDiv(static_cast<T2>(yGmIdx), mW, shiftW);
         T2 W = yGmIdx - tmpRes * lenDstW;
@@ -136,13 +140,13 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 
         T3 leftH = GetLeftIndex<T2, T3>(H, scaleH, supportH);
         T3 leftW = GetLeftIndex<T2, T3>(W, scaleW, supportW);
-        T3 rightH = Simt::Min(leftH + maxInterpSizeH, lenSrcH);
-        T3 rightW = Simt::Min(leftW + maxInterpSizeW, lenSrcW);
+        T3 rightH = min(leftH + maxInterpSizeH, lenSrcH);
+        T3 rightW = min(leftW + maxInterpSizeW, lenSrcW);
         float value = 0.0f;
         for (T3 h = leftH; h < rightH; h++) {
             float centerH = scaleH * (static_cast<float>(h) + 0.5f);
-            T3 minH = Simt::Max(static_cast<T3>(Simt::Floor(centerH - supportH + 0.5f)), static_cast<T3>(0));
-            T3 maxH = Simt::Min(static_cast<T3>(Simt::Floor(centerH + supportH + 0.5f)), lenDstH);
+            T3 minH = max(static_cast<T3>(floorf(centerH - supportH + 0.5f)), static_cast<T3>(0));
+            T3 maxH = min(static_cast<T3>(floorf(centerH + supportH + 0.5f)), lenDstH);
             if (H >= maxH) {
                 continue;
             }
@@ -152,8 +156,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
             float weightH = GetWeights<T2, T3>(H, minH, maxH, centerH, invScaleH);
             for (T3 w = leftW; w < rightW; w++) {
                 float centerW = scaleW * (static_cast<float>(w) + 0.5f);
-                T3 minW = Simt::Max(static_cast<T3>(Simt::Floor(centerW - supportW + 0.5f)), static_cast<T3>(0));
-                T3 maxW = Simt::Min(static_cast<T3>(Simt::Floor(centerW + supportW + 0.5f)), lenDstW);
+                T3 minW = max(static_cast<T3>(floorf(centerW - supportW + 0.5f)), static_cast<T3>(0));
+                T3 maxW = min(static_cast<T3>(floorf(centerW + supportW + 0.5f)), lenDstW);
                 if (W >= maxW) {
                     continue;
                 }

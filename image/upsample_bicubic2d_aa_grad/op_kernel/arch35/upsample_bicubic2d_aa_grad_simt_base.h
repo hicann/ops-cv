@@ -20,6 +20,10 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_bicubic2d_aa_grad_tiling_data.h"
 #include "./upsample_bicubic2d_aa_grad_common.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/device_atomic_functions.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
 
 namespace UpsampleBicubic2dAAGrad {
 using namespace AscendC;
@@ -31,10 +35,10 @@ static __simt_callee__ __aicore__ inline void CalculateBoundariesAndWeights(cons
 {
     const float inputCenter = (scale > 0.0f) ? ((static_cast<float>(coord) + 0.5f) * scale) : 0.5f;
     
-    minCoord = static_cast<T3>(Simt::Floor(inputCenter - support + 0.5f));
-    maxCoord = static_cast<T3>(Simt::Floor(inputCenter + support + 0.5f));
-    minCoord = Simt::Max(minCoord, static_cast<T3>(0));
-    maxCoord = Simt::Min(maxCoord, lenDst);
+    minCoord = static_cast<T3>(floorf(inputCenter - support + 0.5f));
+    maxCoord = static_cast<T3>(floorf(inputCenter + support + 0.5f));
+    minCoord = max(minCoord, static_cast<T3>(0));
+    maxCoord = min(maxCoord, lenDst);
     
     totalWeight = 0.0f;
     for (T3 i = minCoord; i < maxCoord; ++i) {
@@ -48,8 +52,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
     float supportH, float supportW)
 {
-    for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T3>(blockDim.x)) {
         const T3 xGmIdx = blkStartOffset + idx;
         const float inputValue = static_cast<float>(inputGm[xGmIdx]);
         
@@ -79,17 +83,17 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
             if (weightH == 0.0f) {
                 continue;
             }
-            const T3 clampedHOffset = Simt::Max(static_cast<T3>(0), Simt::Min(lenDstH, h)) * lenDstW + baseOutputIdx;
+            const T3 clampedHOffset = max(static_cast<T3>(0), min(lenDstH, h)) * lenDstW + baseOutputIdx;
             
             for (T3 w = minW; w < maxW; ++w) {
                 const float weightW = CubicFilterAA((static_cast<float>(w) - inputCenterW + 0.5f) * invScaleW) / totalWeightW;
                 if (weightW == 0.0f) {
                     continue;
                 }
-                const T3 clampedW = Simt::Max(static_cast<T3>(0), Simt::Min(lenDstW - 1, w));
+                const T3 clampedW = max(static_cast<T3>(0), min(lenDstW - 1, w));
                 const T3 outputIdx = clampedHOffset + clampedW;
                 const float value = inputValue * weightH * weightW;
-                Simt::AtomicAdd(outputGm + outputIdx, static_cast<T1>(value));
+                asc_atomic_add(outputGm + outputIdx, static_cast<T1>(value));
             }
         }
     }

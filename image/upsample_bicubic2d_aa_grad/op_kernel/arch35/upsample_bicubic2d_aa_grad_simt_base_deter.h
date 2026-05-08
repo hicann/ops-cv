@@ -18,6 +18,8 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/math_functions.h"
 #include "./upsample_bicubic2d_aa_grad_tiling_data.h"
 #include "./upsample_bicubic2d_aa_grad_common.h"
 
@@ -28,10 +30,10 @@ template <typename T3>
 static __simt_callee__ __aicore__ inline void CalculateBounds(T3 &minVal, T3 &maxVal, float center, float scale, float support, T3 lenSrc)
 {
     if (likely(scale > 0.0f)) {
-        minVal = static_cast<T3>(Simt::Floor((center - support) / scale + 0.5f));
-        maxVal = static_cast<T3>(Simt::Floor((center + support) / scale - 0.5f)) + 1;
-        minVal = Simt::Max(minVal, static_cast<T3>(0));
-        maxVal = Simt::Min(maxVal, lenSrc);
+        minVal = static_cast<T3>(floorf((center - support) / scale + 0.5f));
+        maxVal = static_cast<T3>(floorf((center + support) / scale - 0.5f)) + 1;
+        minVal = max(minVal, static_cast<T3>(0));
+        maxVal = min(maxVal, lenSrc);
     } else {
         minVal = 0;
         maxVal = lenSrc;
@@ -47,14 +49,14 @@ static __simt_callee__ __aicore__ inline float CalculateWeight(float center, flo
     }
 
     float totalWeight = 0.0f;
-    T3 minDst = static_cast<T3>(Simt::Floor(outputCenter - support - 0.5f));
-    T3 maxDst = static_cast<T3>(Simt::Floor(outputCenter + support + 0.5f)) + 1;
-    minDst = Simt::Max(minDst, static_cast<T3>(0));
-    maxDst = Simt::Min(maxDst, lenDst);
+    T3 minDst = static_cast<T3>(floorf(outputCenter - support - 0.5f));
+    T3 maxDst = static_cast<T3>(floorf(outputCenter + support + 0.5f)) + 1;
+    minDst = max(minDst, static_cast<T3>(0));
+    maxDst = min(maxDst, lenDst);
 
     for (T3 k = minDst; k < maxDst; ++k) {
         float outCenter = static_cast<float>(k) + 0.5f;
-        if (Simt::Abs(outCenter - outputCenter) > support) {
+        if (fabsf(outCenter - outputCenter) > support) {
             continue;
         }
         totalWeight += CubicFilterAA((outCenter - outputCenter) * invScale);
@@ -72,8 +74,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterC
     T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
     float supportH, float supportW)
 {
-    for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 W = 0;
         T2 H = 0;
@@ -101,7 +103,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterC
                 continue;
             }
 
-            const T3 clampedH = Simt::Max(static_cast<T3>(0), Simt::Min(lenSrcH, h));               
+            const T3 clampedH = max(static_cast<T3>(0), min(lenSrcH, h));               
             for (T3 w = minW; w < maxW; ++w) {
                 const float outputCenterW = (static_cast<float>(w) + 0.5f) * scaleW;
                 float weightW = CalculateWeight(centerW, outputCenterW, invScaleW, supportW, lenDstW);
@@ -109,7 +111,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterC
                     continue;
                 }
 
-                const T3 clampedW = Simt::Max(static_cast<T3>(0), Simt::Min(lenSrcW - 1, w));              
+                const T3 clampedW = max(static_cast<T3>(0), min(lenSrcW - 1, w));              
                 const T3 input_idx = Batch * lenSrcHw + clampedH * lenSrcW + clampedW;
                 value += inputGm[input_idx] * weightH * weightW;
             }

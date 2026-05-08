@@ -20,6 +20,7 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_bilinear2d_aa_tiling_data.h"
 #include "./upsample_bilinear2d_aa_simt_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace UpsampleBilinear2dAA {
 using namespace AscendC;
@@ -72,12 +73,12 @@ __aicore__ inline void Bilinear2dAASimt<T1, T2, T3>::Process()
     GetUintDivMagicAndShift(mW, shiftW, static_cast<T2>(lenDstW));
     GetUintDivMagicAndShift(mH, shiftH, static_cast<T2>(lenDstH));
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, T2, T3>>(Simt::Dim3(THREAD_NUM_B64),
+        asc_vf_call<calleeInt64<T1, T2, T3>>(dim3(THREAD_NUM_B64),
             (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum, 
             lenN, lenC, mH, shiftH, mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, tilingData_->scaleH, tilingData_->scaleW, 
             tilingData_->invScaleH, tilingData_->invScaleW, tilingData_->supportH, tilingData_->supportW);
     } else {
-        Simt::VF_CALL<calleeInt32<T1, T2, T3>>(Simt::Dim3(THREAD_NUM_B32),
+        asc_vf_call<calleeInt32<T1, T2, T3>>(dim3(THREAD_NUM_B32),
             (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum, 
             lenN, lenC, mH, shiftH, mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, tilingData_->scaleH, tilingData_->scaleW, 
             tilingData_->invScaleH, tilingData_->invScaleW, tilingData_->supportH, tilingData_->supportW);

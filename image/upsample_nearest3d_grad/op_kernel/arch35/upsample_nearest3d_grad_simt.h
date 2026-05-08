@@ -18,6 +18,7 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
 #include "./upsample_nearest3d_grad_tiling_data.h"
 #include "./upsample_nearest3d_grad_simt_base.h"
 
@@ -78,13 +79,13 @@ __aicore__ inline void Nearest3dGradSimt<T1, T2, isExtra, schId>::Process()
     T2 lenSrcH = static_cast<T2>(tilingData->inH);
     T2 lenSrcD = static_cast<T2>(tilingData->inD);
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, T2, isExtra, schId>>(
-            Simt::Dim3(THREAD_NUM_B64), (__gm__ T1*)(inputGm.GetPhyAddr()), (__gm__ T1*)(outputGm.GetPhyAddr()),
+        asc_vf_call<calleeInt64<T1, T2, isExtra, schId>>(
+            dim3(THREAD_NUM_B64), (__gm__ T1*)(inputGm.GetPhyAddr()), (__gm__ T1*)(outputGm.GetPhyAddr()),
             blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW,
             lenDstD, lenDstH, lenDstW, tilingData->scaleD, tilingData->scaleH, tilingData->scaleW);
     } else {
-        Simt::VF_CALL<calleeInt32<T1, T2, isExtra, schId>>(
-            Simt::Dim3(THREAD_NUM_B32), (__gm__ T1*)(inputGm.GetPhyAddr()), (__gm__ T1*)(outputGm.GetPhyAddr()),
+        asc_vf_call<calleeInt32<T1, T2, isExtra, schId>>(
+            dim3(THREAD_NUM_B32), (__gm__ T1*)(inputGm.GetPhyAddr()), (__gm__ T1*)(outputGm.GetPhyAddr()),
             blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW,
             lenDstD, lenDstH, lenDstW, tilingData->scaleD, tilingData->scaleH, tilingData->scaleW);
     }

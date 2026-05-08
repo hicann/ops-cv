@@ -17,6 +17,8 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/math_functions.h"
 #include "./upsample_nearest3d_grad_tiling_data.h"
 
 namespace UpsampleNearest3dGrad {
@@ -32,11 +34,11 @@ template <typename T2, bool isExtra>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeOrig(T2 idx, T2 limit, float scale, T2& orig)
 {
     if constexpr (isExtra) {
-        orig = Simt::Ceil((static_cast<float>(idx) * scale - 0.5f));
+        orig = ceilf((static_cast<float>(idx) * scale - 0.5f));
     } else {
-        orig = Simt::Ceil((static_cast<float>(idx) * scale));
+        orig = ceilf((static_cast<float>(idx) * scale));
     }
-    orig = Simt::Min(orig, limit);
+    orig = min(orig, limit);
 }
 
 template <typename T1, typename T2>
@@ -104,8 +106,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW, T2 lenDstD, T2 lenDstH, T2 lenDstW,
     float scaleD, float scaleH, float scaleW)
 {
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         T2 W = 0, H = 0, D = 0, C = 0, N = 0;
         T2 tempRes = Simt::UintDiv(yGmIdx, mW, shiftW);

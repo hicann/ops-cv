@@ -18,6 +18,8 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/math_functions.h"
 #include "./upsample_bicubic2d_aa_grad_tiling_data.h"
 
 namespace UpsampleBicubic2dAAGrad {
@@ -37,7 +39,7 @@ static __simt_callee__ __aicore__ inline float CubicConvolution2(float x)
 }
 static __simt_callee__ __aicore__ inline float CubicFilterAA(float x)
 {
-    x = Simt::Abs(x);
+    x = fabsf(x);
     if (x < 1.0f) {
         return CubicConvolution1(x);
     } else if (x < 2.0f) {

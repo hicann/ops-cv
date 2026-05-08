@@ -19,6 +19,7 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_bilinear2d_aa_tiling_data.h"
+#include "simt_api/asc_simt.h"
 
 namespace UpsampleBilinear2dAA {
 using namespace AscendC;
@@ -28,7 +29,7 @@ const int32_t THREAD_NUM_B64 = 512;
 
 static __simt_callee__ __aicore__ inline float CubilFilterAA(float x)
 {
-    x = Simt::Abs(x);
+    x = fabsf(x);
     if (x < 1.0f) {
         return static_cast<float>(1.0f - x);
     } 
@@ -42,8 +43,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     float supportH, float supportW)
 {
     T3 lenSrcHw = lenSrcH * lenSrcW;
-    for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 tmpRes = Simt::UintDiv(static_cast<T2>(yGmIdx), mW, shiftW);
         T2 W = yGmIdx - tmpRes * lenDstW;
@@ -51,8 +52,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         T2 H = tmpRes - NC * lenDstH;
 
         const float centerH = scaleH * (static_cast<float>(H) + 0.5f);
-        T3 minH = Simt::Max(static_cast<T3>(Simt::Floor(centerH - supportH + 0.5f)), static_cast<T3>(0));
-        T3 maxH = Simt::Min(static_cast<T3>(Simt::Floor(centerH + supportH + 0.5f)), lenSrcH);
+        T3 minH = max(static_cast<T3>(floorf(centerH - supportH + 0.5f)), static_cast<T3>(0));
+        T3 maxH = min(static_cast<T3>(floorf(centerH + supportH + 0.5f)), lenSrcH);
         float totalWeightsH = 0.0f;
         for (T3 j = minH; j < maxH; j++) {
             const float distanceH = (static_cast<float>(j) - centerH + 0.5f) * invScaleH;
@@ -61,8 +62,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         }
 
         const float centerW = scaleW * (static_cast<float>(W) + 0.5f);
-        T3 minW = Simt::Max(static_cast<T3>(Simt::Floor(centerW - supportW + 0.5f)), static_cast<T3>(0));
-        T3 maxW = Simt::Min(static_cast<T3>(Simt::Floor(centerW + supportW + 0.5f)), lenSrcW);
+        T3 minW = max(static_cast<T3>(floorf(centerW - supportW + 0.5f)), static_cast<T3>(0));
+        T3 maxW = min(static_cast<T3>(floorf(centerW + supportW + 0.5f)), lenSrcW);
         float totalWeightsW = 0.0f;
         for (T3 i = minW; i < maxW; i++) {
             const float distanceW = (static_cast<float>(i) - centerW + 0.5f) * invScaleW;
