@@ -22,6 +22,11 @@
 #include "aclnn_kernels/common/op_error_check.h"
 #include "upsample_nearest_exact2d.h"
 #include "aclnn_upsample_nearest_exact1d.h"
+#include "image/resize_nearest_neighbor_v2/op_api/resize_nearest_neighbor_v2.h"
+#include "op_api/aclnn_check.h"
+#include "level0/squeeze.h"
+#include "level0/unsqueeze.h"
+#include "aclnn_kernels/transdata.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -37,6 +42,44 @@ static constexpr size_t DIM_ZERO = 0;
 static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t EXPECT_SIZE = 1;
+
+static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *executor)
+{
+    // NCL or ND -> contigious -> unsqueeze(2) -> reformat -> NCHW
+    // contigious
+    auto contiguousInput = l0op::Contiguous(input, executor);
+    CHECK_RET(contiguousInput != nullptr, nullptr);
+
+    // unsqeeze( 2 )
+    const int64_t appendDim[] = {DIM_TWO};
+    aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, DIM_ONE);
+    CHECK_RET(dimUnsqueeze != nullptr, nullptr);
+    auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
+    CHECK_RET(unsqueezedInput != nullptr, nullptr);
+
+    // reformat to NCHW
+    auto reformatInput = l0op::ReFormat(unsqueezedInput, op::Format::FORMAT_NCHW);
+    CHECK_RET(reformatInput != nullptr, nullptr);
+
+    return reformatInput;
+}
+
+static const aclTensor *View4dAs3d(const aclTensor *input, op::Format format, aclOpExecutor *executor)
+{
+    // NCHW -> squeeze -> reformat -> NCL or ND
+    // squeeze out into 3D
+    const int64_t removeDim[] = {DIM_TWO};
+    aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, DIM_ONE);
+    CHECK_RET(dimSqueeze != nullptr, nullptr);
+    auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
+    CHECK_RET(squeezedInput != nullptr, nullptr);
+
+    // reformat to NCL or ND
+    auto reformatInput = l0op::ReFormat(squeezedInput, format);
+    CHECK_RET(reformatInput != nullptr, nullptr);
+
+    return reformatInput;
+}
 
 static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
 {
@@ -106,29 +149,52 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
 }
 
 static const aclTensor *upsampleNearestExact1dCompute(
-    const aclTensor *selfContiguous, const aclIntArray *outputSize, float scales, aclOpExecutor *executor)
+    const aclTensor *selfContiguous, const aclIntArray *outputSize, float scales, const aclTensor* outContiguous, aclOpExecutor *executor)
 {
-    if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCL ||
-        selfContiguous->GetStorageFormat() == op::Format::FORMAT_ND) {
-        const int64_t permuteNCLList[] = {DIM_ZERO, DIM_TWO, DIM_ONE};
-        auto permuteNCLArray = executor->AllocIntArray(permuteNCLList, DIM_LIMIT);
-        CHECK_RET(permuteNCLArray != nullptr, nullptr);
+    if (IsRegBase()) {
+        // 仅支持NCL和ND格式的输入
+        if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCL ||
+            selfContiguous->GetStorageFormat() == op::Format::FORMAT_ND) {
+            auto self4d = View3dAs4d(selfContiguous, executor);
+            CHECK_RET(self4d != nullptr, nullptr);
 
-        auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCLArray, executor);
-        CHECK_RET(selfTranspose != nullptr, nullptr);
+            auto out4d = View3dAs4d(outContiguous, executor);
+            CHECK_RET(out4d != nullptr, nullptr);
 
-        auto selfUpsampleNearestExact =
-            l0op::UpsampleNearestExact2d(selfTranspose, outputSize, scales, scales, true, executor);
-        CHECK_RET(selfUpsampleNearestExact != nullptr, nullptr);
+            FVector<int64_t> outputSizeVector{1, outputSize->GetData()[0]};
+            aclIntArray *outputSizeArray = executor->AllocIntArray(outputSizeVector.data(), DIM_TWO);
+            CHECK_RET(outputSizeArray != nullptr, nullptr);
 
-        const int64_t permuteNLCList[] = {DIM_ZERO, DIM_TWO, DIM_ONE};
-        auto permuteNLCArray = executor->AllocIntArray(permuteNLCList, DIM_LIMIT);
-        CHECK_RET(permuteNLCArray != nullptr, nullptr);
+            auto size = executor->ConvertToTensor(outputSizeArray, op::ToOpDataType(ACL_INT32));
+            CHECK_RET(size != nullptr, nullptr);
+            auto result = l0op::ResizeNearestNeighborV2(self4d, size, nullptr, false, true, out4d, executor);
+            CHECK_RET(result != nullptr, nullptr);
+            return View4dAs3d(result, selfContiguous->GetStorageFormat(), executor);
+        }
+        return nullptr;
+    } else {
+        if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCL ||
+            selfContiguous->GetStorageFormat() == op::Format::FORMAT_ND) {
+            const int64_t permuteNCLList[] = {DIM_ZERO, DIM_TWO, DIM_ONE};
+            auto permuteNCLArray = executor->AllocIntArray(permuteNCLList, DIM_LIMIT);
+            CHECK_RET(permuteNCLArray != nullptr, nullptr);
 
-        return l0op::Transpose(selfUpsampleNearestExact, permuteNLCArray, executor);
+            auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCLArray, executor);
+            CHECK_RET(selfTranspose != nullptr, nullptr);
+
+            auto selfUpsampleNearestExact =
+                l0op::UpsampleNearestExact2d(selfTranspose, outputSize, scales, scales, true, executor);
+            CHECK_RET(selfUpsampleNearestExact != nullptr, nullptr);
+
+            const int64_t permuteNLCList[] = {DIM_ZERO, DIM_TWO, DIM_ONE};
+            auto permuteNLCArray = executor->AllocIntArray(permuteNLCList, DIM_LIMIT);
+            CHECK_RET(permuteNLCArray != nullptr, nullptr);
+
+            return l0op::Transpose(selfUpsampleNearestExact, permuteNLCArray, executor);
+        }
+        // NLC
+        return l0op::UpsampleNearestExact2d(selfContiguous, outputSize, scales, scales, true, executor);
     }
-    // NLC
-    return l0op::UpsampleNearestExact2d(selfContiguous, outputSize, scales, scales, true, executor);
 }
 
 aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize,
@@ -155,12 +221,13 @@ aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor *self, c
     // 固定写法，将输入self转换成连续的tensor
     auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
+    auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
+    CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
     float realScales = scales > 0 ? static_cast<float>(1.0 / scales) : 0;
 
     // 调用upsampleNearestExact1dCompute计算
-    auto result = upsampleNearestExact1dCompute(selfContiguous, outputSize, realScales, uniqueExecutor.get());
+    auto result = upsampleNearestExact1dCompute(selfContiguous, outputSize, realScales, outContiguous, uniqueExecutor.get());
     CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
