@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
-# Copyright (c) 2026 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -9,9 +9,12 @@
 # -----------------------------------------------------------------------------------------------------------
 
 file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+if(UT_TEST_ALL OR OP_HOST_UT)
+    add_modules_ut_sources(UT_NAME ${OP_INFERSHAPE_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
-if(NOT ENABLE_TEST AND NOT BENCHMARK)
-    list(REMOVE_ITEM CURRENT_DIRS tests)
+if(NOT (UT_TEST_ALL OR OP_API_UT))
+    list(REMOVE_ITEM CURRENT_DIRS op_api)
 endif()
 
 foreach(SUB_DIR ${CURRENT_DIRS})
@@ -19,9 +22,3 @@ foreach(SUB_DIR ${CURRENT_DIRS})
         add_subdirectory(${SUB_DIR})
     endif()
 endforeach()
-
-set(SUPPORT_COMPUTE_UNIT "ascend950" "mc62cm12a")
-
-set(SUPPORT_TILING_DIR "arch35" "arch35")
-
-add_all_modules_sources(OPTYPE resize_nearest_neighbor_v2 ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT} TILING_DIR ${SUPPORT_TILING_DIR} DISABLE_IN_OPP TRUE)

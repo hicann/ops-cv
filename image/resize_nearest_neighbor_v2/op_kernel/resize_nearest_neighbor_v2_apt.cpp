@@ -18,6 +18,7 @@
 #include "./arch35/resize_nearest_neighbor_v2_data_copy_jh.h"
 #include "./arch35/resize_nearest_neighbor_v2_data_copy_small_c.h"
 #include "./arch35/resize_nearest_neighbor_v2_data_copy_nhwc.h"
+#include "./arch35/resize_nearest_neighbor_v2_nchw_gather.h"
 #include "./arch35/resize_nearest_neighbor_v2_tiling_key.h"
 
 using namespace AscendC;
@@ -77,6 +78,18 @@ __global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, G
         ResizeNearestNeighborV2::ResizeNearestNeighborV2NHWC<DTYPE_X, 2> op;
         op.Init(x, size, y, &tilingData);
         op.Process();
+        return;
+    }
+    if constexpr (schId == TPL_SCH_MODE_GATHER_ALL_HW || schId == TPL_SCH_MODE_GATHER_CUT_H) {
+        if constexpr(sizeof(DTYPE_X) == sizeof(float)) {
+            ResizeNearestNeighborV2::ResizeGather<DTYPE_X, uint32_t ,schId, alignCorners> op;
+            op.Init(x, size, y, &tilingData);
+            op.Process();
+        } else {
+            ResizeNearestNeighborV2::ResizeGather<DTYPE_X, uint16_t ,schId, alignCorners> op;
+            op.Init(x, size, y, &tilingData);
+            op.Process();
+        }
         return;
     }
     if constexpr (idxInt32) {

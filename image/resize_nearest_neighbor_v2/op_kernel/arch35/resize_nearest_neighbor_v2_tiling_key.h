@@ -26,6 +26,8 @@
 #define TPL_SCH_MODE_DATA_COPY_ALL_W_OUT 6
 #define TPL_SCH_MODE_DATA_COPY_NOT_ALL_W_OUT 7
 #define TPL_SCH_MODE_DATA_COPY_CUT_NH 8
+#define TPL_SCH_MODE_GATHER_ALL_HW 9
+#define TPL_SCH_MODE_GATHER_CUT_H 10
 
 #define TPL_FORMAT_NCHW 0
 #define TPL_FORMAT_NHWC 1
@@ -52,7 +54,9 @@
         TPL_SCH_MODE_SIMT_INPUT_EQ_ONE,                                                                            \
         TPL_SCH_MODE_DATA_COPY_ALL_W_OUT,                                                                          \
         TPL_SCH_MODE_DATA_COPY_NOT_ALL_W_OUT,                                                                      \
-        TPL_SCH_MODE_DATA_COPY_CUT_NH),                                                                            \
+        TPL_SCH_MODE_DATA_COPY_CUT_NH,                                                                             \
+        TPL_SCH_MODE_GATHER_ALL_HW,                                                                                \
+        TPL_SCH_MODE_GATHER_CUT_H),                                                                                \
         ASCENDC_TPL_UINT_DECL(format, ASCENDC_TPL_2_BW, ASCENDC_TPL_UI_LIST, TPL_FORMAT_NCHW,                      \
             TPL_FORMAT_NHWC, TPL_FORMAT_ND),                                                                       \
         ASCENDC_TPL_UINT_DECL(                                                                                     \
@@ -91,8 +95,18 @@
             halfPixelCenters, ASCENDC_TPL_UI_LIST, TPL_HALF_PIXEL_CENTERS_0),                                      \
         ASCENDC_TPL_UINT_SEL(idxInt32, ASCENDC_TPL_UI_LIST, TPL_IDX_INT32_1)
 
+#define RESIZE_NEAREST_NEIGHBOR_V2_GATHER_TPL_KEY_SEL()                                                            \
+    ASCENDC_TPL_UINT_SEL(schId, ASCENDC_TPL_UI_LIST, TPL_SCH_MODE_GATHER_ALL_HW,                                   \
+        TPL_SCH_MODE_GATHER_CUT_H),                                                                                \
+        ASCENDC_TPL_UINT_SEL(format, ASCENDC_TPL_UI_LIST, TPL_FORMAT_NCHW),                                        \
+        ASCENDC_TPL_UINT_SEL(alignCorners, ASCENDC_TPL_UI_LIST, TPL_ALIGN_CORNERS_0, TPL_ALIGN_CORNERS_1),         \
+        ASCENDC_TPL_UINT_SEL(                                                                                      \
+            halfPixelCenters, ASCENDC_TPL_UI_LIST, TPL_HALF_PIXEL_CENTERS_0),                                      \
+        ASCENDC_TPL_UINT_SEL(idxInt32, ASCENDC_TPL_UI_LIST, TPL_IDX_INT32_1)
+
 ASCENDC_TPL_ARGS_DECL(ResizeNearestNeighborV2, RESIZE_NEAREST_NEIGHBOR_V2_TPL_KEY_DECL());
 ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(RESIZE_NEAREST_NEIGHBOR_V2_TPL_KEY_SEL()),
     ASCENDC_TPL_ARGS_SEL(RESIZE_NEAREST_NEIGHBOR_V2_SIMD_TPL_KEY_SEL()),
-    ASCENDC_TPL_ARGS_SEL(RESIZE_NEAREST_NEIGHBOR_V2_NHWC_TPL_KEY_SEL()));
+    ASCENDC_TPL_ARGS_SEL(RESIZE_NEAREST_NEIGHBOR_V2_NHWC_TPL_KEY_SEL()),
+    ASCENDC_TPL_ARGS_SEL(RESIZE_NEAREST_NEIGHBOR_V2_GATHER_TPL_KEY_SEL()));
 #endif
