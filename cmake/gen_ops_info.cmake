@@ -117,7 +117,7 @@ endfunction()
 # packages/vendors/${VENDOR_NAME}/op_impl/ai_core/tbe/${VENDOR_NAME}_impl/dynamic
 # ######################################################################################################################
 function(add_ops_impl_target)
-  set(oneValueArgs TARGET OPS_INFO_DIR IMPL_DIR OUT_DIR INSTALL_DIR)
+  set(oneValueArgs TARGET OPS_INFO_DIR IMPL_DIR OUT_DIR INSTALL_DIR DEPENDS)
   cmake_parse_arguments(OPIMPL "" "${oneValueArgs}" "OPS_BATCH;OPS_ITERATE" ${ARGN})
 
   add_custom_command(
@@ -133,6 +133,7 @@ function(add_ops_impl_target)
     COMMAND
       touch ${OPIMPL_OUT_DIR}/.impl_timestamp
     DEPENDS ${CMAKE_SOURCE_DIR}/scripts/util/ascendc_impl_build.py
+            ${OPIMPL_DEPENDS}
     )
   add_custom_target(${OPIMPL_TARGET} ALL DEPENDS ${OPIMPL_OUT_DIR}/.impl_timestamp)
 
@@ -390,6 +391,7 @@ function(prepare_compile_from_config)
             WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
             DEPENDS ${ASCEND_KERNEL_CONF_DST}/aic-${CONFCMP_COMPUTE_UNIT}-ops-info.ini
     )
+    add_dependencies(gen_opc_info_${CONFCMP_COMPUTE_UNIT} merge_ini_${compute_unit})
   endif()
   add_custom_target(
     config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME}
@@ -401,6 +403,7 @@ function(prepare_compile_from_config)
             bin_conf_${CONFCMP_OP_NAME}_${CONFCMP_COMPUTE_UNIT}_copy
           gen_opc_info_${CONFCMP_COMPUTE_UNIT}
     )
+    add_dependencies(config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME} ascendc_impl_gen)
 
   if(NOT TARGET prepare_binary_compile_${CONFCMP_COMPUTE_UNIT})
     add_custom_target(prepare_binary_compile_${CONFCMP_COMPUTE_UNIT})
@@ -566,11 +569,6 @@ function(gen_ops_info_and_python)
     ${ASCEND_KERNEL_SRC_DST}
     )
 
-  add_ops_impl_target(
-    TARGET ascendc_impl_gen OPS_INFO_DIR ${ASCEND_AUTOGEN_PATH} IMPL_DIR ${ASCEND_KERNEL_SRC_DST} OUT_DIR
-    ${CMAKE_BINARY_DIR}/tbe INSTALL_DIR ${IMPL_DYNAMIC_INSTALL_DIR}
-    )
-
   merge_graph_headers(TARGET merge_ops_proto ALL OUT_DIR ${ASCEND_GRAPH_CONF_DST})
 
   set(ascendc_impl_gen_depends ascendc_kernel_src_copy opbuild_custom_gen_aclnn_all)
@@ -591,6 +589,15 @@ function(gen_ops_info_and_python)
     merge_ini_files(TARGET merge_ini_${compute_unit} OPS_INFO_DIR ${ASCEND_AUTOGEN_PATH} COMPUTE_UNIT ${compute_unit})
     list(APPEND ascendc_impl_gen_depends ops_info_gen_${compute_unit})
   endforeach()
+
+  add_ops_impl_target(
+    TARGET ascendc_impl_gen
+    OPS_INFO_DIR ${ASCEND_AUTOGEN_PATH}
+    IMPL_DIR ${ASCEND_KERNEL_SRC_DST}
+    OUT_DIR ${CMAKE_BINARY_DIR}/tbe
+    INSTALL_DIR ${IMPL_DYNAMIC_INSTALL_DIR}
+    DEPENDS ${ascendc_impl_gen_depends}
+  )
   add_dependencies(ascendc_impl_gen ${ascendc_impl_gen_depends})
 
   if(ENABLE_BINARY OR ENABLE_CUSTOM)
@@ -645,7 +652,7 @@ function(gen_ops_info_and_python)
                 COMPUTE_UNIT
                 ${compute_unit}
           )
-          add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen)
+          add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen gen_bin_scripts)
         endif()
       endforeach()
       # binary compile from binary json config
