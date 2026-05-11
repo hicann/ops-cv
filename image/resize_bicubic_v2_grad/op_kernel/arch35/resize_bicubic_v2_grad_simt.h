@@ -17,6 +17,10 @@
 #define CANN_RESIZE_BICUBIC_V2_GRAD_SIMT_H
 
 #include "resize_bicubic_v2_grad_base.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/device_atomic_functions.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
 
 namespace ResizeBicubicV2Grad {
 using namespace AscendC;
@@ -96,11 +100,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcOutput
     T_IDX lenSrcH, T_IDX lenSrcW, T_IDX idxN, T_IDX idxC, T_IDX2 yIdxH, T_IDX2 yIdxW, float addValue)
 {
     T_IDX yFinalIdxH =
-        static_cast<T_IDX>(Simt::Max(static_cast<T_IDX2>(0), Simt::Min(yIdxH, static_cast<T_IDX2>(lenSrcH) - 1)));
+        static_cast<T_IDX>(max(static_cast<T_IDX2>(0), min(yIdxH, static_cast<T_IDX2>(lenSrcH) - 1)));
     T_IDX yFinalIdxW =
-        static_cast<T_IDX>(Simt::Max(static_cast<T_IDX2>(0), Simt::Min(yIdxW, static_cast<T_IDX2>(lenSrcW) - 1)));
+        static_cast<T_IDX>(max(static_cast<T_IDX2>(0), min(yIdxW, static_cast<T_IDX2>(lenSrcW) - 1)));
     T_IDX yIdx = CalcOutputIdx<T_IDX, FORMAT>(lenC, lenSrcH, lenSrcW, idxN, idxC, yFinalIdxH, yFinalIdxW);
-    Simt::AtomicAdd(y + yIdx, static_cast<T_DATA>(addValue));
+    asc_atomic_add(y + yIdx, static_cast<T_DATA>(addValue));
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
@@ -109,19 +113,19 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         float scaleH, float scaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC,
             T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < coreFactor;
-         idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor;
+         idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX gradsIdx = coreOffset + idx;
         T_IDX idxN = 0, idxC = 0, gradsIdxH = 0, gradsIdxW = 0;
         CalcInputDimIdx<T_IDX, FORMAT>(
             gradsIdx, lenC, lenDstH, lenDstW, mC, shiftC, mH, shiftH, mW, shiftW, idxN, idxC, gradsIdxH, gradsIdxW);
 
         float yRealIdxH = CalcSourceIndex<T_IDX, ALIGN_CORNERS>(scaleH, gradsIdxH);
-        T_IDX2 yFloorIdxH = static_cast<T_IDX2>(Simt::Floor(yRealIdxH));
+        T_IDX2 yFloorIdxH = static_cast<T_IDX2>(floorf(yRealIdxH));
         float yIdxDiffH = yRealIdxH - static_cast<float>(yFloorIdxH);
 
         float yRealIdxW = CalcSourceIndex<T_IDX, ALIGN_CORNERS>(scaleW, gradsIdxW);
-        T_IDX2 yFloorIdxW = static_cast<T_IDX2>(Simt::Floor(yRealIdxW));
+        T_IDX2 yFloorIdxW = static_cast<T_IDX2>(floorf(yRealIdxW));
         float yIdxDiffW = yRealIdxW - static_cast<float>(yFloorIdxW);
 
         float yCoeffsH[4];
@@ -239,8 +243,8 @@ __aicore__ inline void ResizeBicubicV2GradSimt<T_DATA, T_IDX, T_IDX2, FORMAT, AL
 
     if (coreIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
-            Simt::VF_CALL<calleeSimtInt32<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
-                Simt::Dim3(SIMT_THREAD_NUM_INT32),
+            asc_vf_call<calleeSimtInt32<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
+                dim3(SIMT_THREAD_NUM_INT32),
                 (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
                 (__gm__ T_DATA *)(yGm_.GetPhyAddr()),
                 lenC,
@@ -259,8 +263,8 @@ __aicore__ inline void ResizeBicubicV2GradSimt<T_DATA, T_IDX, T_IDX2, FORMAT, AL
                 mW,
                 shiftW);
         } else {
-            Simt::VF_CALL<calleeSimtInt64<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
-                Simt::Dim3(SIMT_THREAD_NUM_INT64),
+            asc_vf_call<calleeSimtInt64<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
+                dim3(SIMT_THREAD_NUM_INT64),
                 (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
                 (__gm__ T_DATA *)(yGm_.GetPhyAddr()),
                 lenC,

@@ -17,6 +17,7 @@
 #define CANN_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_SIMT_DETERMINE_HW_H
 
 #include "resize_nearest_neighbor_v2_grad_simt_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeNearestNeighborV2Grad {
 using namespace AscendC;
@@ -29,8 +30,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterm
     float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW,
     T_IDX shiftW)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < coreFactor;
-        idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor;
+        idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yIdx = coreOffset + idx;
 
         // calculate the index of y in H and W dim.
@@ -135,12 +136,12 @@ __aicore__ inline void ResizeNearestNeighborV2GradSimtDetermineHW<T_DATA, T_IDX,
 
     if (this->blockIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
-            Simt::VF_CALL<calleeSimtDetermineHWInt32<T_DATA, T_IDX, HALF_PIXEL>>(Simt::Dim3(SIMT_THREAD_NUM_INT32),
+            asc_vf_call<calleeSimtDetermineHWInt32<T_DATA, T_IDX, HALF_PIXEL>>(dim3(SIMT_THREAD_NUM_INT32),
                 (__gm__ T_DATA *)(this->gradsGm_.GetPhyAddr()), (__gm__ T_DATA *)(this->yGm_.GetPhyAddr()), lenN, lenC,
                 lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH,
                 shiftH, mW, shiftW);
         } else {
-            Simt::VF_CALL<calleeSimtDetermineHWInt64<T_DATA, T_IDX, HALF_PIXEL>>(Simt::Dim3(SIMT_THREAD_NUM_INT64),
+            asc_vf_call<calleeSimtDetermineHWInt64<T_DATA, T_IDX, HALF_PIXEL>>(dim3(SIMT_THREAD_NUM_INT64),
                 (__gm__ T_DATA *)(this->gradsGm_.GetPhyAddr()), (__gm__ T_DATA *)(this->yGm_.GetPhyAddr()), lenN, lenC,
                 lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH,
                 shiftH, mW, shiftW);

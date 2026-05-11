@@ -19,6 +19,7 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_bicubic2d_aa_tiling_data.h"
+#include "simt_api/asc_simt.h"
 
 namespace UpsampleBicubic2dAA {
 using namespace AscendC;
@@ -37,7 +38,7 @@ static __simt_callee__ __aicore__ inline float CubicConvolution2(float m)
 }
 static __simt_callee__ __aicore__ inline float CubicFilterAA(float m)
 {
-    m = Simt::Abs(m);
+    m = abs(m);
     if (m < 1.0f) {
         return CubicConvolution1(m);
     } else if (m < 2.0f) {
@@ -53,8 +54,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW,
     float supportH, float supportW)
 {
-    for (T3 idx = static_cast<T3>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T3>(Simt::GetThreadNum<0>())) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 W = 0;
         T2 H = 0;
@@ -69,17 +70,17 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         const float centerW = scaleW * (static_cast<float>(W) + 0.5f);
 
         // 计算垂直边界
-        T3 minH = static_cast<T3>(Simt::Floor(centerH - supportH + 0.5f));
-        T3 maxH = static_cast<T3>(Simt::Floor(centerH + supportH + 0.5f));
-        minH = Simt::Max(minH, static_cast<T3>(0));
-        maxH = Simt::Min(maxH, lenSrcH);
+        T3 minH = static_cast<T3>(floorf(centerH - supportH + 0.5f));
+        T3 maxH = static_cast<T3>(floorf(centerH + supportH + 0.5f));
+        minH = max(minH, static_cast<T3>(0));
+        maxH = min(maxH, lenSrcH);
         const T3 sizeH = maxH - minH;
 
         // 计算水平边界
-        T3 minW = static_cast<T3>(Simt::Floor(centerW - supportW + 0.5f));
-        T3 maxW = static_cast<T3>(Simt::Floor(centerW + supportW + 0.5f));
-        minW = Simt::Max(minW, static_cast<T3>(0));
-        maxW = Simt::Min(maxW, lenSrcW);
+        T3 minW = static_cast<T3>(floorf(centerW - supportW + 0.5f));
+        T3 maxW = static_cast<T3>(floorf(centerW + supportW + 0.5f));
+        minW = max(minW, static_cast<T3>(0));
+        maxW = min(maxW, lenSrcW);
         const T3 sizeW = maxW - minW;
 
         // 计算垂直权重和
@@ -109,7 +110,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
             if (totalWeightsH != 0.0f) {
                 weightsH /= totalWeightsH;
             }
-            const T3 clampedH = Simt::Max(static_cast<T3>(0), Simt::Min(lenSrcH - 1, mH));
+            const T3 clampedH = max(static_cast<T3>(0), min(lenSrcH - 1, mH));
             for (T3 n = 0; n < sizeW; ++n) {
                 const T3 nW = minW + n;
                 const float distanceW = (static_cast<float>(nW) - centerW + 0.5f) * invScaleW;
@@ -117,7 +118,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
                 if (totalWeightsW != 0.0f) {
                     weightsW /= totalWeightsW;
                 }
-                const T3 clampedW = Simt::Max(static_cast<T3>(0), Simt::Min(lenSrcW - 1, nW));
+                const T3 clampedW = max(static_cast<T3>(0), min(lenSrcW - 1, nW));
                 const T3 input_idx = NC * lenSrcHw + clampedH * lenSrcW + clampedW;
                 value += inputGm[input_idx] * weightsH * weightsW;
             }

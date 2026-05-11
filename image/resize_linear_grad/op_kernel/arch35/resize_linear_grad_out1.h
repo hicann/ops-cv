@@ -19,6 +19,7 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "resize_linear_grad_simt_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeLinearGrad {
 using namespace AscendC;
@@ -45,8 +46,8 @@ template <typename T1, typename T2>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeMode3(T2 blkStartOffset, T2 blkProcessNum,
     T2 lenSrcLOrUb, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         outputGm[yGmIdx * lenSrcLOrUb] = inputGm[yGmIdx];
     }
@@ -100,10 +101,10 @@ __aicore__ inline void ResizeLinearGradOut1<T1, T2>::Process()
     if (blockIdx_ < tilingData_->realCoreNum) {
         T2 lenSrcLOrUb = (T2)(tilingData_->lenSrcLOrUb);
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64<T1, T2>>(Simt::Dim3(512), blkStartOffset, blkProcessNum, lenSrcLOrUb,
+            asc_vf_call<calleeInt64<T1, T2>>(dim3(512), blkStartOffset, blkProcessNum, lenSrcLOrUb,
                 (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         } else {
-            Simt::VF_CALL<calleeInt32<T1, T2>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum, lenSrcLOrUb,
+            asc_vf_call<calleeInt32<T1, T2>>(dim3(1024), blkStartOffset, blkProcessNum, lenSrcLOrUb,
                 (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         }
     }

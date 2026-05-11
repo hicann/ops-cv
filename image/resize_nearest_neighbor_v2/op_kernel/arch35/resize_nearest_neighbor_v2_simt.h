@@ -18,6 +18,7 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeNearestNeighborV2 {
 using namespace AscendC;
@@ -102,18 +103,18 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalSrcIdx(
     T_IDX origHeight = 0;
     T_IDX origWidth = 0;
     if constexpr (align_corner && !half_pixel) {
-        origHeight = Simt::Round(static_cast<float>(h * scaleH));
-        origWidth = Simt::Round(static_cast<float>(w * scaleW));
+        origHeight = roundf(static_cast<float>(h * scaleH));
+        origWidth = roundf(static_cast<float>(w * scaleW));
     } else if constexpr (!align_corner && half_pixel) {
-        origHeight = Simt::Floor(static_cast<float>((h + HALF_PIXEL) * scaleH));
-        origWidth = Simt::Floor(static_cast<float>((w + HALF_PIXEL) * scaleW));
+        origHeight = floorf(static_cast<float>((h + HALF_PIXEL) * scaleH));
+        origWidth = floorf(static_cast<float>((w + HALF_PIXEL) * scaleW));
     } else if constexpr (!align_corner && !half_pixel) {
-        origHeight = Simt::Floor(static_cast<float>(h * scaleH));
-        origWidth = Simt::Floor(static_cast<float>(w * scaleW));
+        origHeight = floorf(static_cast<float>(h * scaleH));
+        origWidth = floorf(static_cast<float>(w * scaleW));
     }
 
-    origH = Simt::Min(origHeight, lenSrcH - 1);
-    origW = Simt::Min(origWidth, lenSrcW - 1);
+    origH = min(origHeight, lenSrcH - 1);
+    origW = min(origWidth, lenSrcW - 1);
 }
 
 template <typename T, typename T_IDX, int format, int mode, bool align_corner, bool half_pixel>
@@ -122,8 +123,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX mH, T_IDX shiftW, T_IDX mW, T_IDX lenSrcWH, T_IDX lenSrcWC, __gm__ T *inputGm, __gm__ T *outputGm,
     T_IDX blkStartOffset, T_IDX blkProcessNum)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         if constexpr (mode == ALL_COPY_MODE) {
             outputGm[yGmIdx] = inputGm[yGmIdx];
@@ -199,12 +200,12 @@ __aicore__ inline void ResizeNearestNeighborV2Simt<T, T_IDX, format, mode, align
 
     if (blockIdx_ < realCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64<T, T_IDX, format, mode, align_corner, half_pixel>>(Simt::Dim3(THREAD_NUM_MIDDLE),
+            asc_vf_call<calleeInt64<T, T_IDX, format, mode, align_corner, half_pixel>>(dim3(THREAD_NUM_MIDDLE),
                 scaleH, scaleW, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftC, mC, shiftH, mH, shiftW, mW, lenSrcWH,
                 lenSrcWC, (__gm__ T *)(inputGm_.GetPhyAddr()), (__gm__ T *)(outputGm_.GetPhyAddr()), blkStartOffset,
                 blkProcessNum);
         } else {
-            Simt::VF_CALL<calleeInt32<T, T_IDX, format, mode, align_corner, half_pixel>>(Simt::Dim3(THREAD_NUM), scaleH,
+            asc_vf_call<calleeInt32<T, T_IDX, format, mode, align_corner, half_pixel>>(dim3(THREAD_NUM), scaleH,
                 scaleW, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftC, mC, shiftH, mH, shiftW, mW, lenSrcWH,
                 lenSrcWC, (__gm__ T *)(inputGm_.GetPhyAddr()), (__gm__ T *)(outputGm_.GetPhyAddr()), blkStartOffset,
                 blkProcessNum);

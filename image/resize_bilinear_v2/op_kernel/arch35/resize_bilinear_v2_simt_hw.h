@@ -19,6 +19,7 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "resize_bilinear_v2_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
@@ -55,8 +56,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ volatile T2* output, T_IDX blkStartOffset,
     T_IDX blkProcessNum)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         T_IDX tmp = yGmIdx;
 
@@ -78,12 +79,12 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 
         origHeight = static_cast<float>((H + offset) * scaleH) - offset;
         origWidth = static_cast<float>((W + offset) * scaleW) - offset;
-        leftX = Simt::Max(Simt::Min(static_cast<T_IDX>(Simt::Floor(origWidth)), lenSrcW - 1), static_cast<T_IDX>(0));
-        deltaX = origWidth - Simt::Floor(origWidth);
-        rightX = Simt::Max(Simt::Min(static_cast<T_IDX>(Simt::Ceil(origWidth)), lenSrcW - 1), static_cast<T_IDX>(0));
-        topY = Simt::Max(Simt::Min(static_cast<T_IDX>(Simt::Floor(origHeight)), lenSrcH - 1), static_cast<T_IDX>(0));
-        deltaY = origHeight - Simt::Floor(origHeight);
-        bottomY = Simt::Max(Simt::Min(static_cast<T_IDX>(Simt::Ceil(origHeight)), lenSrcH - 1), static_cast<T_IDX>(0));
+        leftX = max(min(static_cast<T_IDX>(floorf(origWidth)), lenSrcW - 1), static_cast<T_IDX>(0));
+        deltaX = origWidth - floorf(origWidth);
+        rightX = max(min(static_cast<T_IDX>(ceilf(origWidth)), lenSrcW - 1), static_cast<T_IDX>(0));
+        topY = max(min(static_cast<T_IDX>(floorf(origHeight)), lenSrcH - 1), static_cast<T_IDX>(0));
+        deltaY = origHeight - floorf(origHeight);
+        bottomY = max(min(static_cast<T_IDX>(ceilf(origHeight)), lenSrcH - 1), static_cast<T_IDX>(0));
 
         for (T_IDX n = 0; n < lenN; n++) {
             for (T_IDX c = 0; c < lenC; c++) {
@@ -150,13 +151,13 @@ __aicore__ inline void ResizeBilinearV2SimtHW<T1, T2, halfPixel, mode, T_IDX>::P
     const T_IDX lenN = tiling_->lenN;
     const int32_t realCoreNum = tiling_->realCoreNum;
     if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, T2, halfPixel, mode, T_IDX>>(
-            Simt::Dim3(THREAD_NUM_MIDDLE), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH,
+        asc_vf_call<calleeInt64<T1, T2, halfPixel, mode, T_IDX>>(
+            dim3(THREAD_NUM_MIDDLE), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH,
             shiftW, mW, (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ volatile T2*)(outputGm_.GetPhyAddr()),
             blkStartOffset, blkProcessNum);
     } else {
-        Simt::VF_CALL<calleeInt32<T1, T2, halfPixel, mode, T_IDX>>(
-            Simt::Dim3(THREAD_NUM), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW,
+        asc_vf_call<calleeInt32<T1, T2, halfPixel, mode, T_IDX>>(
+            dim3(THREAD_NUM), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW,
             mW, (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ volatile T2*)(outputGm_.GetPhyAddr()), blkStartOffset,
             blkProcessNum);
     }

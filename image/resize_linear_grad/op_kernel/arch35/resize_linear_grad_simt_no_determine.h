@@ -18,6 +18,10 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/device_atomic_functions.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
 
 namespace ResizeLinearGrad {
 using namespace AscendC;
@@ -44,8 +48,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     __gm__ T1 *outputGm)
 {
     T2 srcL1 = lenSrcLOrUb - 1;
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         T2 NC = Simt::UintDiv(yGmIdx, mL, shiftL);
 
@@ -55,23 +59,23 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 
         if constexpr (mode == 5) {
             // POINT COPY
-            T2 leftX = Simt::Floor(origWidth);
-            leftX = Simt::Min(leftX, srcL1);
+            T2 leftX = floorf(origWidth);
+            leftX = min(leftX, srcL1);
             T1 gradVal = inputGm[yGmIdx];
-            Simt::AtomicAdd(outputGm + origBaseIdx + leftX, gradVal);
+            asc_atomic_add(outputGm + origBaseIdx + leftX, gradVal);
             continue;
         }
         if constexpr (mode == 0) {
             // LINEAR_GRAD 操作
-            T2 leftX = Simt::Floor(origWidth);
-            leftX = Simt::Min(leftX, srcL1);
+            T2 leftX = floorf(origWidth);
+            leftX = min(leftX, srcL1);
             T2 RightX = static_cast<T2>(leftX < srcL1);
             float deltaX = origWidth - static_cast<float>(leftX);
             float val = static_cast<float>(inputGm[yGmIdx]);
             float val2 = val * deltaX;
             float val1 = val - val2; // val * (1.0f - deltaX);
-            Simt::AtomicAdd(outputGm + origBaseIdx + leftX, static_cast<T1>(val1));
-            Simt::AtomicAdd(outputGm + origBaseIdx + leftX + RightX, static_cast<T1>(val2));
+            asc_atomic_add(outputGm + origBaseIdx + leftX, static_cast<T1>(val1));
+            asc_atomic_add(outputGm + origBaseIdx + leftX + RightX, static_cast<T1>(val2));
         }
     }
 }
@@ -131,11 +135,11 @@ __aicore__ inline void ResizeLinearGradNoDetermine<T1, T2, isCenter, mode>::Proc
         T2 lenSrcLOrUb = (T2)(tilingData_->lenSrcLOrUb);
         float scaleL = tilingData_->scaleL;
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64NoDeter<T1, T2, isCenter, mode>>(Simt::Dim3(512), blkStartOffset, blkProcessNum,
+            asc_vf_call<calleeInt64NoDeter<T1, T2, isCenter, mode>>(dim3(512), blkStartOffset, blkProcessNum,
                 mL, shiftL, lenDesL, lenSrcLOrUb, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()),
                 (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         } else {
-            Simt::VF_CALL<calleeInt32NoDeter<T1, T2, isCenter, mode>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum,
+            asc_vf_call<calleeInt32NoDeter<T1, T2, isCenter, mode>>(dim3(1024), blkStartOffset, blkProcessNum,
                 mL, shiftL, lenDesL, lenSrcLOrUb, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()),
                 (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         }

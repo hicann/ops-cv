@@ -18,6 +18,10 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/device_atomic_functions.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
 
 namespace ResizeBilinearV2GradSimt {
 using namespace AscendC;
@@ -104,8 +108,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* grads,
     __gm__ T2* y, T_IDX blkStartOffset, T_IDX blkProcessNum)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX gradsIdx = blkStartOffset + idx;
         T_IDX N = 0, C = 0, H = 0, W = 0;
         GetEachDimIdx<T1, T2, halfPixel, T_IDX, format>(
@@ -119,14 +123,14 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         origWidth = (static_cast<float>(W) + offset) * scaleW - offset;
 
         origWidth = (origWidth < 0.0f) ? 0.0f : origWidth;
-        leftX = Simt::Min(static_cast<T_IDX>(Simt::Floor(origWidth)), lenSrcW - 1);
-        deltaX = Simt::Min(Simt::Max(origWidth - static_cast<float>(leftX), 0.0f), 1.0f);
+        leftX = min(static_cast<T_IDX>(floorf(origWidth)), lenSrcW - 1);
+        deltaX = fminf(fmaxf(origWidth - static_cast<float>(leftX), 0.0f), 1.0f);
         rightX = (leftX < lenSrcW - 1) ? leftX + 1 : leftX;
         deltaX1 = 1.0f - deltaX;
 
         origHeight = (origHeight < 0.0f) ? 0.0f : origHeight;
-        topY = Simt::Min(static_cast<T_IDX>(Simt::Floor(origHeight)), lenSrcH - 1);
-        deltaY = Simt::Min(Simt::Max(origHeight - static_cast<float>(topY), 0.0f), 1.0f);
+        topY = min(static_cast<T_IDX>(floorf(origHeight)), lenSrcH - 1);
+        deltaY = fminf(fmaxf(origHeight - static_cast<float>(topY), 0.0f), 1.0f);
         bottomY = (topY < lenSrcH - 1) ? topY + 1 : topY;
         deltaY1 = 1.0f - deltaY;
 
@@ -140,10 +144,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
             gradsIdx, N, C, bottomY, rightX, lenC, lenSrcW, lenSrcH, lenSrcWH, lenSrcWC);
 
         float gradVal = static_cast<float>(grads[gradsIdx]);
-        Simt::AtomicAdd(y + leftTopIdx, static_cast<T2>(deltaX1 * deltaY1 * gradVal));
-        Simt::AtomicAdd(y + rightTopIdx, static_cast<T2>(deltaX * deltaY1 * gradVal));
-        Simt::AtomicAdd(y + leftBotIdx, static_cast<T2>(deltaX1 * deltaY * gradVal));
-        Simt::AtomicAdd(y + rightBotIdx, static_cast<T2>(deltaX * deltaY * gradVal));
+        asc_atomic_add(y + leftTopIdx, static_cast<T2>(deltaX1 * deltaY1 * gradVal));
+        asc_atomic_add(y + rightTopIdx, static_cast<T2>(deltaX * deltaY1 * gradVal));
+        asc_atomic_add(y + leftBotIdx, static_cast<T2>(deltaX1 * deltaY * gradVal));
+        asc_atomic_add(y + rightBotIdx, static_cast<T2>(deltaX * deltaY * gradVal));
     }
 }
 
@@ -218,13 +222,13 @@ __aicore__ inline void ResizeBilinearV2GradSimt<T1, T2, halfPixel, T_IDX, format
 
     if (blockIdx_ < realCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64<T1, T2, halfPixel, T_IDX, format>>(
-                Simt::Dim3(THREAD_NUM_MIDDLE), scaleH, scaleW, lenN, lenC, lenGradH, lenGradW, lenSrcH, lenSrcW, shiftN,
+            asc_vf_call<calleeInt64<T1, T2, halfPixel, T_IDX, format>>(
+                dim3(THREAD_NUM_MIDDLE), scaleH, scaleW, lenN, lenC, lenGradH, lenGradW, lenSrcH, lenSrcW, shiftN,
                 mN, shiftC, mC, shiftH, mH, shiftW, mW, (__gm__ T1*)(inputGm_.GetPhyAddr()),
                 (__gm__ T2*)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum);
         } else {
-            Simt::VF_CALL<calleeInt32<T1, T2, halfPixel, T_IDX, format>>(
-                Simt::Dim3(THREAD_NUM), scaleH, scaleW, lenN, lenC, lenGradH, lenGradW, lenSrcH, lenSrcW, shiftN, mN,
+            asc_vf_call<calleeInt32<T1, T2, halfPixel, T_IDX, format>>(
+                dim3(THREAD_NUM), scaleH, scaleW, lenN, lenC, lenGradH, lenGradW, lenSrcH, lenSrcW, shiftN, mN,
                 shiftC, mC, shiftH, mH, shiftW, mW, (__gm__ T1*)(inputGm_.GetPhyAddr()),
                 (__gm__ T2*)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum);
         }

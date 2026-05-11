@@ -19,6 +19,7 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "resize_linear_grad_simt_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeLinearGrad {
 using namespace AscendC;
@@ -45,12 +46,12 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T2 blkProcessNum, T2 srcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     T2 srcL1 = srcL - 1;
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         float srcIdsF = scaleL * 0.5f - 0.5f;
-        T2 floorIds = Simt::Floor(srcIdsF);
-        floorIds = Simt::Min(floorIds, srcL1);
+        T2 floorIds = floorf(srcIdsF);
+        floorIds = min(floorIds, srcL1);
         outputGm[yGmIdx * srcL + floorIds] = inputGm[yGmIdx];
     }
 }
@@ -104,10 +105,10 @@ __aicore__ inline void ResizeLinearGradOut1Half<T1, T2>::Process()
         float scaleL = tilingData_->scaleL;
         T2 srcL = (T2)(tilingData_->lenSrcLOrUb);
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64O1Half<T1, T2>>(Simt::Dim3(512), blkStartOffset, blkProcessNum, srcL, scaleL,
+            asc_vf_call<calleeInt64O1Half<T1, T2>>(dim3(512), blkStartOffset, blkProcessNum, srcL, scaleL,
                 (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         } else {
-            Simt::VF_CALL<calleeInt32O1Half<T1, T2>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum, srcL, scaleL,
+            asc_vf_call<calleeInt32O1Half<T1, T2>>(dim3(1024), blkStartOffset, blkProcessNum, srcL, scaleL,
                 (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         }
     }

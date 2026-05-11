@@ -18,6 +18,7 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeLinearGrad {
 using namespace AscendC;
@@ -42,9 +43,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeLim
     T2 NC, T2 L, float outLStart, float scaleL, float &acc, __gm__ T1 *inputGm)
 {
     while (inLStart < lenDesL) {
-        float posOutL = Simt::Max(0.0f, outLStart);
-        T2 LFloorIndex = static_cast<T2>(Simt::Floor(posOutL));
-        T2 LTempIndex = Simt::Min(LFloorIndex, srcL1);
+        float posOutL = fmaxf(0.0f, outLStart);
+        T2 LFloorIndex = static_cast<T2>(floorf(posOutL));
+        T2 LTempIndex = min(LFloorIndex, srcL1);
         float lep[2];
         lep[0] = 1.0f;
         lep[1] = posOutL - static_cast<float>(LTempIndex);
@@ -66,8 +67,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     T2 srcL1 = lenSrcLOrUb - 1;
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         T2 NC = Simt::UintDiv(yGmIdx, mL, shiftL);
         T2 L = yGmIdx - NC * lenSrcLOrUb;
@@ -75,19 +76,19 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         float outLStart = 0.0f;
         float acc = 0.0f;
         if constexpr (isCenter == 1) {
-            inLStart = static_cast<T2>(Simt::Max(static_cast<T3>(0),
-                static_cast<T3>(Simt::Ceil((static_cast<float>(L) - 1.0f) * inverseScaleL))));
+            inLStart = static_cast<T2>(max(static_cast<T3>(0),
+                static_cast<T3>(ceilf((static_cast<float>(L) - 1.0f) * inverseScaleL))));
             outLStart = static_cast<float>(inLStart) * scaleL;
         } else {
-            inLStart = static_cast<T2>(Simt::Max(static_cast<T3>(0),
-                static_cast<T3>(Simt::Ceil((static_cast<float>(L) - 1.0f + 0.5f) * inverseScaleL - 0.5f))));
+            inLStart = static_cast<T2>(max(static_cast<T3>(0),
+                static_cast<T3>(ceilf((static_cast<float>(L) - 1.0f + 0.5f) * inverseScaleL - 0.5f))));
             outLStart = (static_cast<float>(inLStart) + 0.5f) * scaleL - 0.5f;
         }
         float limetL = static_cast<float>(L) + 1.0f;
         if (L != srcL1) {
             while (outLStart < limetL && inLStart < lenDesL) {
-                float posOutL = Simt::Max(0.0f, outLStart);
-                float lep = 1.0f - Simt::Abs(posOutL - static_cast<float>(L));
+                float posOutL = fmaxf(0.0f, outLStart);
+                float lep = 1.0f - abs(posOutL - static_cast<float>(L));
                 T2 inIdx = NC * lenDesL + inLStart;
                 float inputValue = static_cast<float>(inputGm[inIdx]);
                 acc += inputValue * lep;
@@ -105,8 +106,8 @@ template <typename T1, typename T2>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeDetermineMode2(T2 blkStartOffset,
     T2 blkProcessNum, T2 lenDesL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T2>(blockDim.x)) {
         T2 NC = blkStartOffset + idx; // SRC_L=1, 就是reducesum操作
         float val = 0.0f;
         for (T2 l = 0; l < lenDesL; l++) {
@@ -173,10 +174,10 @@ __aicore__ inline void ResizeLinearGradDetermine<T1, T2, T3, isCenter, mode>::Pr
     T2 lenDesL = (T2)(tilingData_->lenDesL);
     if constexpr (mode == 2) {
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64Mode2<T1, T2>>(Simt::Dim3(512), blkStartOffset, blkProcessNum, lenDesL,
+            asc_vf_call<calleeInt64Mode2<T1, T2>>(dim3(512), blkStartOffset, blkProcessNum, lenDesL,
                 (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         } else {
-            Simt::VF_CALL<calleeInt32Mode2<T1, T2>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum, lenDesL,
+            asc_vf_call<calleeInt32Mode2<T1, T2>>(dim3(1024), blkStartOffset, blkProcessNum, lenDesL,
                 (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         }
     } else {
@@ -188,11 +189,11 @@ __aicore__ inline void ResizeLinearGradDetermine<T1, T2, T3, isCenter, mode>::Pr
         float scaleL = tilingData_->scaleL;
         float inverseScaleL = tilingData_->inverseScaleL;
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-            Simt::VF_CALL<calleeInt64Determine<T1, T2, T3, isCenter>>(Simt::Dim3(512), blkStartOffset, blkProcessNum,
+            asc_vf_call<calleeInt64Determine<T1, T2, T3, isCenter>>(dim3(512), blkStartOffset, blkProcessNum,
                 mL, shiftL, lenDesL, lenSrcLOrUb, scaleL, inverseScaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()),
                 (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         } else {
-            Simt::VF_CALL<calleeInt32Determine<T1, T2, T3, isCenter>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum,
+            asc_vf_call<calleeInt32Determine<T1, T2, T3, isCenter>>(dim3(1024), blkStartOffset, blkProcessNum,
                 mL, shiftL, lenDesL, lenSrcLOrUb, scaleL, inverseScaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()),
                 (__gm__ T1 *)(outputGm_.GetPhyAddr()));
         }

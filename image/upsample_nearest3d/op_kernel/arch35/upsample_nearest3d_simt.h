@@ -20,6 +20,7 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "./upsample_nearest3d_tiling_data.h"
 #include "./upsample_nearest3d_simt_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace UpsampleNearest3d {
 using namespace AscendC;
@@ -78,12 +79,12 @@ __aicore__ inline void Nearest3dSimt<T1, T2, isExtra, schId>::Process()
     T2 lenSrcH = static_cast<T2>(tilingData_->inH);
     T2 lenSrcD = static_cast<T2>(tilingData_->inD);
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, T2, isExtra, schId>>(Simt::Dim3(THREAD_NUM_B64),
+        asc_vf_call<calleeInt64<T1, T2, isExtra, schId>>(dim3(THREAD_NUM_B64),
             (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum,
             lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW,
             tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW);
     } else {
-        Simt::VF_CALL<calleeInt32<T1, T2, isExtra, schId>>(Simt::Dim3(THREAD_NUM_B32),
+        asc_vf_call<calleeInt32<T1, T2, isExtra, schId>>(dim3(THREAD_NUM_B32),
             (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum,
             lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW,
             tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW);

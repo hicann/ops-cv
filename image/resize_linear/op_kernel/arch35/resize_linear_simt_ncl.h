@@ -18,6 +18,7 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeLinear {
 using namespace AscendC;
@@ -42,7 +43,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeMod
     T2 origBaseIdx, T2 yGmIdx, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     // 计算原图中坐标点
-    T2 leftX = Simt::Floor(origWidth);
+    T2 leftX = floorf(origWidth);
     if (leftX >= srcL1) {
         outputGm[yGmIdx] = inputGm[origBaseIdx + srcL1];
     } else {
@@ -76,8 +77,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
     T2 srcL1 = lenSrcL - 1;
-    for (T2 idx = static_cast<T2>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T2>(Simt::GetThreadNum<0>())) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         if constexpr (mode == 1) {
             // 纯搬运，输出完全等于输入，直接赋值
@@ -100,7 +101,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         float origWidth = ComputeOriL<T2, halfPixel>(L, scaleL);
         if constexpr (mode == 4) {
             // 逐点搬运，scale为整数，也就是权重为0时，直接取原始src坐标位置的点
-            T2 leftX = Simt::Floor(origWidth);
+            T2 leftX = floorf(origWidth);
             if (leftX > srcL1) {
                 leftX = srcL1;
             }
@@ -164,10 +165,10 @@ __aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Process()
     T2 lenSrcL = (T2)(tilingData_->lenSrcL);
     float scaleL = tilingData_->scaleL;
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, T2, halfPixel, mode>>(Simt::Dim3(512), blkStartOffset, blkProcessNum, mL, shiftL,
+        asc_vf_call<calleeInt64<T1, T2, halfPixel, mode>>(dim3(512), blkStartOffset, blkProcessNum, mL, shiftL,
             lenDesL, lenSrcL, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
     } else {
-        Simt::VF_CALL<calleeInt32<T1, T2, halfPixel, mode>>(Simt::Dim3(1024), blkStartOffset, blkProcessNum, mL, shiftL,
+        asc_vf_call<calleeInt32<T1, T2, halfPixel, mode>>(dim3(1024), blkStartOffset, blkProcessNum, mL, shiftL,
             lenDesL, lenSrcL, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
     }
 }

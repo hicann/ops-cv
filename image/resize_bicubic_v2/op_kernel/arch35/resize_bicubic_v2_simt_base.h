@@ -16,6 +16,7 @@
 #define RESIZE_BICUBIC_v2_SIMT_BASE_H
 
 #include "kernel_operator.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeBicubicV2 {
 using namespace AscendC;
@@ -67,8 +68,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNch
     T_IDX lenSrcW, float origHeight, float origWidth, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, __gm__ T1 *inputGm,
     __gm__ T1 *outputGm)
 {
-    T_IDX2 leftX = Simt::Floor(origWidth);
-    T_IDX2 topY = Simt::Floor(origHeight);
+    T_IDX2 leftX = floorf(origWidth);
+    T_IDX2 topY = floorf(origHeight);
     float deltaX = origWidth - static_cast<float>(leftX);
     float deltaY = origHeight - static_cast<float>(topY);
     float coffW0 = 0.0f;
@@ -122,8 +123,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNhw
     float origHeight, T_IDX origBaseIdx, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, T_IDX lenC, T_IDX lenSrcWc,
     __gm__ T1 *inputGm, __gm__ T1 *outputGm)
 {
-    T_IDX2 leftX = Simt::Floor(origWidth);
-    T_IDX2 topY = Simt::Floor(origHeight);
+    T_IDX2 leftX = floorf(origWidth);
+    T_IDX2 topY = floorf(origHeight);
     float deltaX = origWidth - static_cast<float>(leftX);
     float deltaY = origHeight - static_cast<float>(topY);
     float coffW0 = 0.0f;

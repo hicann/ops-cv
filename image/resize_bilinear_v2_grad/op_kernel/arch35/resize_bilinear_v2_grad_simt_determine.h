@@ -62,8 +62,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     if (blockId >= coreNum) {
         return;
     }
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         T_IDX tmp = yGmIdx;
 
@@ -83,13 +83,13 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
             offset = HALF_PIXEL;
         }
 
-        T_IDX inYStart = static_cast<T_IDX>(Simt::Max(
+        T_IDX inYStart = static_cast<T_IDX>(max(
             static_cast<int64_t>(0),
-            static_cast<int64_t>(Simt::Ceil((static_cast<float>(H) - 1.0f + offset) * inverseScaleH - offset))));
+            static_cast<int64_t>(ceilf((static_cast<float>(H) - 1.0f + offset) * inverseScaleH - offset))));
         const float outYStart = (static_cast<float>(inYStart) + offset) * scaleH - offset;
-        T_IDX inXStart = static_cast<T_IDX>(Simt::Max(
+        T_IDX inXStart = static_cast<T_IDX>(max(
             static_cast<int64_t>(0),
-            static_cast<int64_t>(Simt::Ceil((static_cast<float>(W) - 1.0f + offset) * inverseScaleW - offset))));
+            static_cast<int64_t>(ceilf((static_cast<float>(W) - 1.0f + offset) * inverseScaleW - offset))));
         const float outXStart = (static_cast<float>(inXStart) + offset) * scaleW - offset;
         float acc = 0, outY = outYStart;
         T_IDX inY = inYStart;
@@ -107,10 +107,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
                 // Clamping to zero is necessary because outX and outY can be negative
                 // due to half-pixel adjustments to outYStart and outXStart.
                 // Clamping to height/width is necessary when upscaling.
-                float outYClamped = Simt::Max(0.0f, Simt::Min(outY, static_cast<float>(lenSrcH) - 1.0f));
-                float outXClamped = Simt::Max(0.0f, Simt::Min(outX, static_cast<float>(lenSrcW) - 1.0f));
-                float yLerp = (1.0f - Simt::Abs(outYClamped - static_cast<float>(H)));
-                float xLerp = (1.0f - Simt::Abs(outXClamped - static_cast<float>(W)));
+                float outYClamped = fmaxf(0.0f, fminf(outY, static_cast<float>(lenSrcH) - 1.0f));
+                float outXClamped = fmaxf(0.0f, fminf(outX, static_cast<float>(lenSrcW) - 1.0f));
+                float yLerp = (1.0f - fabsf(outYClamped - static_cast<float>(H)));
+                float xLerp = (1.0f - fabsf(outXClamped - static_cast<float>(W)));
                 float gradVal = static_cast<float>(grads[inIdx]);
                 acc += gradVal * yLerp * xLerp;
                 outX += scaleW;
@@ -174,15 +174,15 @@ __aicore__ inline void ResizeBilinearV2GradSimtDetermine<T1, T2, halfPixel, T_ID
     }
 
     if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64Determine<T1, T2, halfPixel, T_IDX, format>>(
-            Simt::Dim3{THREAD_NUM_MIDDLE, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->inverseScaleW,
+        asc_vf_call<calleeInt64Determine<T1, T2, halfPixel, T_IDX, format>>(
+            dim3{THREAD_NUM_MIDDLE, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->inverseScaleW,
             tilingData_->inverseScaleH, tilingData_->lenDesH, tilingData_->lenDesW, tilingData_->lenN,
             tilingData_->lenC, tilingData_->lenSrcH, tilingData_->lenSrcW, tilingData_->realCoreNum, shiftN_, mN,
             shiftC_, mC, shiftH_, mH, shiftW_, mW, (__gm__ T1*)(gradsGm_.GetPhyAddr()), (__gm__ T2*)(yGm_.GetPhyAddr()),
             blockIdx_, blkStartOffset, blkProcessNum);
     } else {
-        Simt::VF_CALL<calleeInt32Determine<T1, T2, halfPixel, T_IDX, format>>(
-            Simt::Dim3{THREAD_NUM, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->inverseScaleW,
+        asc_vf_call<calleeInt32Determine<T1, T2, halfPixel, T_IDX, format>>(
+            dim3{THREAD_NUM, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->inverseScaleW,
             tilingData_->inverseScaleH, tilingData_->lenDesH, tilingData_->lenDesW, tilingData_->lenN,
             tilingData_->lenC, tilingData_->lenSrcH, tilingData_->lenSrcW, tilingData_->realCoreNum, shiftN_, mN,
             shiftC_, mC, shiftH_, mH, shiftW_, mW, (__gm__ T1*)(gradsGm_.GetPhyAddr()), (__gm__ T2*)(yGm_.GetPhyAddr()),

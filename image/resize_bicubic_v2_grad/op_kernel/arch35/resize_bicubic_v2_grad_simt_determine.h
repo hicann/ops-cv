@@ -17,6 +17,7 @@
 #define CANN_RESIZE_BICUBIC_V2_GRAD_SIMT_DETERMINE_H
 
 #include "resize_bicubic_v2_grad_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeBicubicV2Grad {
 using namespace AscendC;
@@ -90,11 +91,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcIdxSta
         offset = 0.0f;
     }
 
-    gradsIdxHStart = static_cast<T_IDX>(Simt::Max(static_cast<T_IDX2>(0),
-        static_cast<T_IDX2>(Simt::Ceil((static_cast<float>(yIdxH) - 2.0f + offset) * inverseScaleH - offset))));
+    gradsIdxHStart = static_cast<T_IDX>(max(static_cast<T_IDX2>(0),
+        static_cast<T_IDX2>(ceilf((static_cast<float>(yIdxH) - 2.0f + offset) * inverseScaleH - offset))));
     yRealIdxHStart = (static_cast<float>(gradsIdxHStart) + offset) * scaleH - offset;
-    gradsIdxWStart = static_cast<T_IDX>(Simt::Max(static_cast<T_IDX2>(0),
-        static_cast<T_IDX2>(Simt::Ceil((static_cast<float>(yIdxW) - 2.0f + offset) * inverseScaleW - offset))));
+    gradsIdxWStart = static_cast<T_IDX>(max(static_cast<T_IDX2>(0),
+        static_cast<T_IDX2>(ceilf((static_cast<float>(yIdxW) - 2.0f + offset) * inverseScaleW - offset))));
     yRealIdxWStart = (static_cast<float>(gradsIdxWStart) + offset) * scaleW - offset;
 }
 
@@ -123,13 +124,13 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcInter
     float yRealIdxH = yRealIdxHStart;
     T_IDX gradsIdxH = gradsIdxHStart;
     while (yRealIdxH < (static_cast<float>(yIdxH) + 2.0f) && gradsIdxH < lenDstH) {
-        float yIdxDiffH = Simt::Abs(yRealIdxH - static_cast<float>(yIdxH));
+        float yIdxDiffH = abs(yRealIdxH - static_cast<float>(yIdxH));
         float yCoeffH = CalcCubicCoefficient(yIdxDiffH);
 
         float yRealIdxW = yRealIdxWStart;
         T_IDX gradsIdxW = gradsIdxWStart;
         while (yRealIdxW < (static_cast<float>(yIdxW) + 2.0f) && gradsIdxW < lenDstW) {
-            float yIdxDiffW = Simt::Abs(yRealIdxW - static_cast<float>(yIdxW));
+            float yIdxDiffW = abs(yRealIdxW - static_cast<float>(yIdxW));
             float yCoeffW = CalcCubicCoefficient(yIdxDiffW);
 
             float gradsValue =
@@ -157,13 +158,13 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoun
     float yRealIdxH = yRealIdxHStart;
     T_IDX gradsIdxH = gradsIdxHStart;
     while (yRealIdxH < (static_cast<float>(yIdxH) + 2.0f) && gradsIdxH < lenDstH) {
-        float yIdxDiffH = Simt::Abs(yRealIdxH - static_cast<float>(yIdxH));
+        float yIdxDiffH = abs(yRealIdxH - static_cast<float>(yIdxH));
         float yCoeffH = CalcCubicCoefficient(yIdxDiffH);
 
         float yRealIdxW = yRealIdxWStart;
         T_IDX gradsIdxW = gradsIdxWStart;
         while (gradsIdxW < lenDstW) {
-            T_IDX2 yFloorIdxW = static_cast<T_IDX2>(Simt::Floor(yRealIdxW));
+            T_IDX2 yFloorIdxW = static_cast<T_IDX2>(floorf(yRealIdxW));
             if (yIdxW == 0 && yFloorIdxW > 1 && lenSrcW > 1) {
                 break;
             }
@@ -176,7 +177,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoun
 
             for (T_IDX2 j = 0; j < 4; j++) {
                 T_IDX yTempIdxW = static_cast<T_IDX>(
-                    Simt::Max(static_cast<T_IDX2>(0), Simt::Min(yFloorIdxW - 1 + j, static_cast<T_IDX2>(lenSrcW) - 1)));
+                    max(static_cast<T_IDX2>(0), min(yFloorIdxW - 1 + j, static_cast<T_IDX2>(lenSrcW) - 1)));
                 if (yTempIdxW == yIdxW) {
                     addValue += gradsValue * yCoeffH * yCoeffsW[j];
                 }
@@ -202,7 +203,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoun
     float yRealIdxH = yRealIdxHStart;
     T_IDX gradsIdxH = gradsIdxHStart;
     while (gradsIdxH < lenDstH) {
-        T_IDX2 yFloorIdxH = static_cast<T_IDX2>(Simt::Floor(yRealIdxH));
+        T_IDX2 yFloorIdxH = static_cast<T_IDX2>(floorf(yRealIdxH));
         if (yIdxH == 0 && yFloorIdxH > 1 && lenSrcH > 1) {
             break;
         }
@@ -213,7 +214,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoun
         float yRealIdxW = yRealIdxWStart;
         T_IDX gradsIdxW = gradsIdxWStart;
         while (yRealIdxW < (static_cast<float>(yIdxW) + 2.0f) && gradsIdxW < lenDstW) {
-            float yIdxDiffW = Simt::Abs(yRealIdxW - static_cast<float>(yIdxW));
+            float yIdxDiffW = abs(yRealIdxW - static_cast<float>(yIdxW));
             float yCoeffW = CalcCubicCoefficient(yIdxDiffW);
 
             float gradsValue =
@@ -221,7 +222,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoun
 
             for (T_IDX2 i = 0; i < 4; i++) {
                 T_IDX yTempIdxH = static_cast<T_IDX>(
-                    Simt::Max(static_cast<T_IDX2>(0), Simt::Min(yFloorIdxH - 1 + i, static_cast<T_IDX2>(lenSrcH) - 1)));
+                    max(static_cast<T_IDX2>(0), min(yFloorIdxH - 1 + i, static_cast<T_IDX2>(lenSrcH) - 1)));
                 if (yTempIdxH == yIdxH) {
                     addValue += gradsValue * yCoeffsH[i] * yCoeffW;
                 }
@@ -247,7 +248,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCorne
     float yRealIdxH = yRealIdxHStart;
     T_IDX gradsIdxH = gradsIdxHStart;
     while (gradsIdxH < lenDstH) {
-        T_IDX2 yFloorIdxH = static_cast<T_IDX2>(Simt::Floor(yRealIdxH));
+        T_IDX2 yFloorIdxH = static_cast<T_IDX2>(floorf(yRealIdxH));
         if (yIdxH == 0 && yFloorIdxH > 1 && lenSrcH > 1) {
             break;
         }
@@ -258,7 +259,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCorne
         float yRealIdxW = yRealIdxWStart;
         T_IDX gradsIdxW = gradsIdxWStart;
         while (gradsIdxW < lenDstW) {
-            T_IDX2 yFloorIdxW = static_cast<T_IDX2>(Simt::Floor(yRealIdxW));
+            T_IDX2 yFloorIdxW = static_cast<T_IDX2>(floorf(yRealIdxW));
             if (yIdxW == 0 && yFloorIdxW > 1 && lenSrcW > 1) {
                 break;
             }
@@ -271,10 +272,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCorne
 
             for (T_IDX2 i = 0; i < 4; i++) {
                 T_IDX yTempIdxH = static_cast<T_IDX>(
-                    Simt::Max(static_cast<T_IDX2>(0), Simt::Min(yFloorIdxH - 1 + i, static_cast<T_IDX2>(lenSrcH) - 1)));
+                    max(static_cast<T_IDX2>(0), min(yFloorIdxH - 1 + i, static_cast<T_IDX2>(lenSrcH) - 1)));
                 for (T_IDX2 j = 0; j < 4; j++) {
-                    T_IDX yTempIdxW = static_cast<T_IDX>(Simt::Max(static_cast<T_IDX2>(0),
-                        Simt::Min(yFloorIdxW - 1 + j, static_cast<T_IDX2>(lenSrcW) - 1)));
+                    T_IDX yTempIdxW = static_cast<T_IDX>(max(static_cast<T_IDX2>(0),
+                        min(yFloorIdxW - 1 + j, static_cast<T_IDX2>(lenSrcW) - 1)));
                     if (yTempIdxH == yIdxH && yTempIdxW == yIdxW) {
                         addValue += gradsValue * yCoeffsH[i] * yCoeffsW[j];
                     }
@@ -297,8 +298,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterm
     float scaleW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC,
     T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < coreFactor;
-        idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor;
+        idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yIdx = coreOffset + idx;
         T_IDX idxN = 0, idxC = 0, yIdxH = 0, yIdxW = 0;
         CalcOutputDimIdx<T_IDX, FORMAT>(yIdx, lenC, lenSrcH, lenSrcW, mC, shiftC, mH, shiftH, mW, shiftW, idxN, idxC,
@@ -384,13 +385,13 @@ __aicore__ inline void ResizeBicubicV2GradSimtDetermine<T_DATA, T_IDX, T_IDX2, F
 
     if (coreIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
-            Simt::VF_CALL<calleeSimtDetermineInt32<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
-                Simt::Dim3(SIMT_DETERMINE_THREAD_NUM_INT32), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
+            asc_vf_call<calleeSimtDetermineInt32<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
+                dim3(SIMT_DETERMINE_THREAD_NUM_INT32), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
                 (__gm__ T_DATA *)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
                 inverseScaleH, inverseScaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
         } else {
-            Simt::VF_CALL<calleeSimtDetermineInt64<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
-                Simt::Dim3(SIMT_DETERMINE_THREAD_NUM_INT64), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
+            asc_vf_call<calleeSimtDetermineInt64<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
+                dim3(SIMT_DETERMINE_THREAD_NUM_INT64), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
                 (__gm__ T_DATA *)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
                 inverseScaleH, inverseScaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
         }

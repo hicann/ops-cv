@@ -19,6 +19,7 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "resize_bilinear_v2_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
@@ -82,8 +83,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX mC_, T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_, __gm__ T1* input, __gm__ T2* output,
     T_IDX blkStartOffset, T_IDX blkProcessNum)
 {
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < blkProcessNum;
-         idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
+         idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         T_IDX tmp = yGmIdx;
 
@@ -118,18 +119,18 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         }
 
         // 计算原图坐标点附近四点的横坐标以及权重值
-        leftX = (origWidth_ > 0.0f) ? Simt::Floor(origWidth_) : 0.0f;
+        leftX = (origWidth_ > 0.0f) ? floorf(origWidth_) : 0.0f;
         leftX = (leftX < lenSrcW_ - 1) ? leftX : lenSrcW_ - 1;
-        rightX = (origWidth_ > 0.0f) ? Simt::Ceil(origWidth_) : 0.0f;
+        rightX = (origWidth_ > 0.0f) ? ceilf(origWidth_) : 0.0f;
         rightX = (rightX < lenSrcW_ - 1) ? rightX : lenSrcW_ - 1;
-        deltaX = origWidth_ - Simt::Floor(origWidth_);
+        deltaX = origWidth_ - floorf(origWidth_);
 
         // 计算原图坐标点附近四点的纵坐标以及权重值
-        topY = (origHeight_ > 0.0f) ? Simt::Floor(origHeight_) : 0.0f;
+        topY = (origHeight_ > 0.0f) ? floorf(origHeight_) : 0.0f;
         topY = (topY < lenSrcH_ - 1) ? topY : lenSrcH_ - 1;
-        bottomY = (origHeight_ > 0.0f) ? Simt::Ceil(origHeight_) : 0.0f;
+        bottomY = (origHeight_ > 0.0f) ? ceilf(origHeight_) : 0.0f;
         bottomY = (bottomY < lenSrcH_ - 1) ? bottomY : lenSrcH_ - 1;
-        deltaY = origHeight_ - Simt::Floor(origHeight_);
+        deltaY = origHeight_ - floorf(origHeight_);
 
         // 计算原图坐标点附近四个点的像素值
         T_IDX origBaseIdx = N * (lenSrcH_ * lenSrcWC_) + C;
@@ -198,14 +199,14 @@ __aicore__ inline void ResizeBilinearV2SimtNHWC<T1, T2, halfPixel, mode, T_IDX>:
     }
 
     if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64nhwc<T1, T2, halfPixel, mode, T_IDX>>(
-            Simt::Dim3{THREAD_NUM_MIDDLE, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->lenN,
+        asc_vf_call<calleeInt64nhwc<T1, T2, halfPixel, mode, T_IDX>>(
+            dim3{THREAD_NUM_MIDDLE, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->lenN,
             tilingData_->lenC, tilingData_->lenSrcH, tilingData_->lenSrcW, tilingData_->lenDesH, tilingData_->lenDesW,
             splitBlockFactor_, splitBlockTailFactor_, shiftN_, mN_, shiftC_, mC_, shiftH_, mH_, shiftW_, mW_,
             (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T2*)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum);
     } else {
-        Simt::VF_CALL<calleeInt32nhwc<T1, T2, halfPixel, mode, T_IDX>>(
-            Simt::Dim3{THREAD_NUM, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->lenN,
+        asc_vf_call<calleeInt32nhwc<T1, T2, halfPixel, mode, T_IDX>>(
+            dim3{THREAD_NUM, 1, 1}, tilingData_->scaleW, tilingData_->scaleH, tilingData_->lenN,
             tilingData_->lenC, tilingData_->lenSrcH, tilingData_->lenSrcW, tilingData_->lenDesH, tilingData_->lenDesW,
             splitBlockFactor_, splitBlockTailFactor_, shiftN_, mN_, shiftC_, mC_, shiftH_, mH_, shiftW_, mW_,
             (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T2*)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum);

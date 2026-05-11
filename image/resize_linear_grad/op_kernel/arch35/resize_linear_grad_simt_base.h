@@ -17,6 +17,7 @@
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeLinearGrad {
 using namespace AscendC;
@@ -26,11 +27,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOr
 {
     // 调用Fma是为了规避编译器问题，不然后面算权重编译器自动优化成ffma，导致权重升精度，但是ori没有，从而某些情况会计算错误
     if constexpr (isCenter == 0) {
-        float origWidth = Simt::Fma((static_cast<float>(L) + 0.5f), scaleL, -0.5f);
-        float origWidthNew = Simt::Max(static_cast<float>(0.0f), origWidth);
+        float origWidth = fmaf((static_cast<float>(L) + 0.5f), scaleL, -0.5f);
+        float origWidthNew = fmaxf(static_cast<float>(0.0f), origWidth);
         return origWidthNew;
     } else {
-        float origWidth = Simt::Fma(static_cast<float>(L), scaleL, 0.0f);
+        float origWidth = fmaf(static_cast<float>(L), scaleL, 0.0f);
         return origWidth;
     }
 }

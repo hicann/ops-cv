@@ -18,6 +18,7 @@
 
 #include "kernel_operator.h"
 #include "resize_bicubic_v2_simt_base.h"
+#include "simt_api/asc_simt.h"
 
 namespace ResizeBicubicV2 {
 using namespace AscendC;
@@ -45,8 +46,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX lenSrcHw = lenSrcH * lenSrcW;
     T_IDX2 lenSrcH1 = lenSrcH - 1;
     T_IDX2 lenSrcW1 = lenSrcW - 1;
-    for (T_IDX idx = static_cast<T_IDX>(Simt::GetThreadIdx()); idx < blkProcessNum;
-        idx += static_cast<T_IDX>(Simt::GetThreadNum<0>())) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
+        idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         if constexpr (mode == 1) {
             // 纯搬运，输出完全等于输入，直接赋值
@@ -75,8 +76,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         float origHeight = ComputeOri<T_IDX, halfPixel>(H, scaleH);
         float origWidth = ComputeOri<T_IDX, halfPixel>(W, scaleW);
         if constexpr (mode == 4) {
-            T_IDX2 leftX = Simt::Floor(origWidth);
-            T_IDX2 topY = Simt::Floor(origHeight);
+            T_IDX2 leftX = floorf(origWidth);
+            T_IDX2 topY = floorf(origHeight);
             T_IDX2 newH = GetSrc<T_IDX2>(topY, lenSrcH1);
             T_IDX2 newW = GetSrc<T_IDX2>(leftX, lenSrcW1);
             outputGm[yGmIdx] = inputGm[origBaseIdx + newH * lenSrcW + newW];
@@ -153,11 +154,11 @@ __aicore__ inline void ResizeBicubicV2SimtNCHW<T1, halfPixel, mode, T_IDX, T_IDX
     GetUintDivMagicAndShift(mH, shiftH, lenDesH);
 
     if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
-        Simt::VF_CALL<calleeInt64<T1, halfPixel, mode, T_IDX, T_IDX2>>(Simt::Dim3(256), blkStartOffset, blkProcessNum,
+        asc_vf_call<calleeInt64<T1, halfPixel, mode, T_IDX, T_IDX2>>(dim3(256), blkStartOffset, blkProcessNum,
             mHw, shiftHw, mW, shiftW, mH, shiftH, lenSrcH, lenSrcW, lenDesH, lenDesW, scaleH, scaleW,
             (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
     } else {
-        Simt::VF_CALL<calleeInt32<T1, halfPixel, mode, T_IDX, T_IDX2>>(Simt::Dim3(512), blkStartOffset, blkProcessNum,
+        asc_vf_call<calleeInt32<T1, halfPixel, mode, T_IDX, T_IDX2>>(dim3(512), blkStartOffset, blkProcessNum,
             mHw, shiftHw, mW, shiftW, mH, shiftH, lenSrcH, lenSrcW, lenDesH, lenDesW, scaleH, scaleW,
             (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
     }
