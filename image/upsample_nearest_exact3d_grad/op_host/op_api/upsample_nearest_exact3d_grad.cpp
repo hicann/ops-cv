@@ -20,6 +20,7 @@
 #include "opdev/op_log.h"
 #include "opdev/shape_utils.h"
 #include "aclnn_kernels/cast.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 
@@ -54,7 +55,8 @@ const aclTensor* UpsampleNearestExact3dGradNcdhw(
     gradInputOriginalShape.SetDim(DIM_THREE, sizeH);
     gradInputOriginalShape.SetDim(DIM_FOUR, sizeW);
 
-    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+    bool isRegBase = IsRegBase();
+    if (!isRegBase && (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType)) {
         gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
     }
     const aclTensor* gradInput = executor->AllocTensor(
@@ -64,9 +66,9 @@ const aclTensor* UpsampleNearestExact3dGradNcdhw(
 
     ADD_TO_LAUNCHER_LIST_AICORE(
         UpsampleNearestExact3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, scales));
-    if (op::DataType::DT_BF16 == dataType) {
+    if (!isRegBase && op::DataType::DT_BF16 == dataType) {
         gradInput = l0op::Cast(gradInput, op::DataType::DT_BF16, executor);
-    } else if (op::DataType::DT_FLOAT16 == dataType) {
+    } else if (!isRegBase && op::DataType::DT_FLOAT16 == dataType) {
         gradInput = l0op::Cast(gradInput, op::DataType::DT_FLOAT16, executor);
     }
     return gradInput;

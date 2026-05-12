@@ -22,6 +22,7 @@
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "op_api/aclnn_check.h"
 
 #include "level0/squeeze.h"
 #include "level0/unsqueeze.h"
@@ -247,7 +248,8 @@ aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
 
     // 升精度计算
     auto dataType = gradOutput->GetDataType();
-    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+    bool isRegBase = IsRegBase();
+    if (!isRegBase && (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType)) {
         selfContiguous = l0op::Cast(selfContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
         CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     }
@@ -259,7 +261,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
     CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 转回初始精度
-    if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
+    if (!isRegBase && (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType)) {
         upsampleOut = l0op::Cast(upsampleOut, dataType, uniqueExecutor.get());
         CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
     }

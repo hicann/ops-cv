@@ -16,6 +16,8 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
+static const std::vector<ge::DataType> xDtype = {ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT};
+static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
 class UpsampleNearestExact2dGrad : public OpDef
 {
@@ -39,6 +41,23 @@ public:
 
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+
+        OpAICoreConfig regbaseConfig;
+        regbaseConfig.Input("grad_output")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("grad_input")
+            .ParamType(REQUIRED)
+            .DataType(xDtype)
+            .Format(xFormat)
+            .UnknownShapeFormat(xFormat);
+        regbaseConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "upsample_nearest_exact2d_grad_apt");
+        this->AICore().AddConfig("ascend950", regbaseConfig);
     }
 };
 

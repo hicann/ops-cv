@@ -18,6 +18,7 @@
 #include "log/log.h"
 #include "tiling/tiling_api.h"
 #include "tiling/platform/platform_ascendc.h"
+#include "op_host/tiling_util.h"
 #include "upsample_nearest_exact2d_grad_tiling.h"
 
 namespace optiling {
@@ -54,6 +55,7 @@ public:
     ge::graphStatus RunBigKernelTiling();
 
 private:
+    ge::graphStatus getAttrs();
     void setScale();
     void getWorkSpace(uint32_t needCoreNum);
     void getOutputShape();
@@ -135,17 +137,9 @@ void UpsampleNearestExact2dGradTiling::setScale()
     }
 }
 
-ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
-{
-    if (CheckTranspose()) {
-        OP_LOGI(tilingContext->GetNodeName(), "Enter tiling4UpsampleNearestExact2dGradTranspose");
-        return tiling4UpsampleNearestExact2dGradTransposeTiling(tilingContext);
-    }
-    auto srcTensor = tilingContext->GetInputTensor(0);
-    if (srcTensor == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
 
+ge::graphStatus UpsampleNearestExact2dGradTiling::getAttrs()
+{
     const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     if (attrs == nullptr) {
         return ge::GRAPH_FAILED;
@@ -159,6 +153,30 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scale_h);
     scale_w = attrs->GetAttrPointer<float>(W_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scale_w);
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
+{
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(tilingContext);
+    std::string opType(tilingContext->GetNodeType());
+    if (regBase && (opType == EXACT_2D_GRAD_TYPE)) {
+        OP_LOGI(tilingContext->GetNodeName(), "Enter Tiling4UpsampleNearestExact2dGradRegbase");
+        return Tiling4UpsampleNearestExact2dGradRegbase(tilingContext);
+    }
+    if (CheckTranspose()) {
+        OP_LOGI(tilingContext->GetNodeName(), "Enter Tiling4UpsampleNearestExact2dGradTranspose");
+        return tiling4UpsampleNearestExact2dGradTransposeTiling(tilingContext);
+    }
+    auto srcTensor = tilingContext->GetInputTensor(0);
+    if (srcTensor == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
+
+    OP_CHECK_IF(
+        (getAttrs() != ge::GRAPH_SUCCESS), OP_LOGE(tilingContext->GetNodeName(), "getAttrs failed."),
+        return ge::GRAPH_FAILED);
+
     auto temp = tilingContext->GetInputDesc(0);
     if (temp == nullptr) {
         return ge::GRAPH_FAILED;

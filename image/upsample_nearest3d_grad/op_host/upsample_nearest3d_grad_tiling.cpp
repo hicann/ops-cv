@@ -52,7 +52,6 @@ constexpr uint8_t W_INDEX = 2;
 constexpr uint8_t SCHEDULE_MODE = 1;
 
 constexpr int64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
-const std::string EXACT_3D_GRAD_TYPE = "UpsampleNearestExact3dGrad";
 
 class UpsampleNearest3dGradTiling
 {
@@ -159,7 +158,7 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
 {
     bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(tilingContext);
     std::string opType(tilingContext->GetNodeType());
-    if (regBase && (opType != EXACT_3D_GRAD_TYPE)) {
+    if (regBase) {
         OP_LOGI(tilingContext->GetNodeName(), "Enter Tiling4UpsampleNearest3dGradRegbase");
         return Tiling4UpsampleNearest3dGradRegbase(tilingContext);
     }

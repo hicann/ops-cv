@@ -111,6 +111,7 @@ REGISTER_TILING_DATA_CLASS(UpsampleNearest2dGrad_101, UpsampleNearestExact2dGrad
 REGISTER_TILING_DATA_CLASS(UpsampleNearest2dGrad_110, UpsampleNearestExact2dGradTransposeTilingData);
 
 ge::graphStatus tiling4UpsampleNearestExact2dGradTransposeTiling(gert::TilingContext* context);
+ge::graphStatus Tiling4UpsampleNearestExact2dGradRegbase(gert::TilingContext* context);
 
 inline float compute_scale_value(int64_t in_size, int64_t out_size, const float* scale)
 {
