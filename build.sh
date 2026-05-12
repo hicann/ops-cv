@@ -1167,6 +1167,9 @@ cmake_init() {
   if [ ! -d "${BUILD_PATH}" ]; then
     mkdir -p "${BUILD_PATH}"
   fi
+  if [ ! -d "${BUILD_OUT_PATH}" ]; then
+    mkdir -p "${BUILD_OUT_PATH}"
+  fi
 
   [ -f "${BUILD_PATH}/CMakeCache.txt" ] && rm -f ${BUILD_PATH}/CMakeCache.txt
 

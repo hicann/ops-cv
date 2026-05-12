@@ -4,6 +4,7 @@
         <product_name>cann</product_name>
         <chip_name>910b</chip_name>
         <func_name>ops-cv</func_name>
+        <share_info_name>ops_cv</share_info_name>
         <suffix>run</suffix>
         <install_script>share/info/ops_cv/script/install.sh</install_script>
         <help>share/info/ops_cv/script/help.info</help>
