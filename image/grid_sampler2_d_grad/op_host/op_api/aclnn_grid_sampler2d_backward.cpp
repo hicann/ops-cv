@@ -283,7 +283,7 @@ aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(const aclTensor *gradOutp
             gridContiguous = l0op::Cast(gridContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
         }
-        if (curArch == NpuArch::DAV_3510) {
+        if (curArch == NpuArch::DAV_3510 && input->GetDataType() != op::DataType::DT_DOUBLE) {
             gridSampler2DBackwardOut = l0op::GridSamplerGrad(gradOutputContiguous,
                 inputContiguous,
                 gridContiguous,
