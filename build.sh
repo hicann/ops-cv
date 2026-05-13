@@ -13,9 +13,7 @@ set -e
 RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin")
 UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
-                            "ascend910_55" "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62cm12a" "kirinx90" "kirin9030")
-SUPPORT_COMPUTE_UNIT_SHORT_PRINT=("ascend910b" "ascend910_93" "ascend950" "ascend310p" "ascend910" "ascend310b" "ascend630"
-                                  "ascend610lite" "ascend031" "ascend035" "kirinx90"  "kirin9030" "mc62cm12a")
+                            "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62cm12a" "kirinx90" "kirin9030")
 
 # 所有支持的短选项
 SUPPORTED_SHORT_OPTS="hj:vO:uf:-:"
@@ -419,7 +417,7 @@ usage() {
   echo ""
   echo "    --ops Compile specified operator, use snake name, like: --ops=grid_sample,iou_v2, use ',' to separate different operator"
   echo "    --soc Compile binary with specified Ascend SoC, like: --soc=ascend910b,ascend910_93,ascend950 use ',' to separate different SoC"
-  echo "    --soc supported parameters must only in [ascend910b ascend910_93 ascend950 ascend310p kirinx90 kirin9030 mc62cm12a], A3(--soc=ascedn910_93)"
+  echo "    --soc supported parameters must only in [ascend031 ascend035 ascend310b ascend310p ascend610lite ascend630 ascend910_93 ascend950 ascend910b ascend910 mc62cm12a kirinx90 kirin9030], A3(--soc=ascend910_93)"
   echo "    --vendor_name Specify the custom operator package vendor name, like: --vendor_name=customize, default to customize-cv"
   echo "    --aicpu build aicpu task"
   echo "    --opgraph build op_graph_cv.so"
@@ -700,6 +698,7 @@ checkopts_run_example() {
 }
 
 checkopts() {
+  THREAD_NUM=${CORE_NUMS}
   THREAD_NUM=8
   VERBOSE=""
   BUILD_MODE=""
@@ -1150,7 +1149,7 @@ assemble_cmake_args() {
       fi
     done
     if [[ $found -eq 0 ]]; then
-      echo "soc only support : ${SUPPORT_COMPUTE_UNIT_SHORT_PRINT[@]}"
+      echo "soc only support : ${SUPPORT_COMPUTE_UNIT_SHORT[@]}"
       exit 1
     fi
     echo "COMPUTE_UNIT: ${COMPUTE_UNIT}"
@@ -1463,49 +1462,71 @@ build_example_eager() {
     elif [[ "${PKG_MODE}" == "cust" ]]; then
       echo "pkg_mode:${PKG_MODE} vendor_name:${VENDOR}"
 
-      export CUST_LIBRARY_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/lib"
-      export CUST_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include"
-      CUST_ACLNNOP_INCLUDE_PATH="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include/aclnnop"
+      local cust_include_flags=""
+      local cust_library_flags=""
+      local cust_rpath_flags=""
+      local cust_aclnnop_paths=""
 
-      local include_dir_mode
-      include_dir_mode=$(stat -c %a $CUST_INCLUDE_PATH)
-
-      if [ ! -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
-        chmod u+w "$(dirname ${CUST_ACLNNOP_INCLUDE_PATH})"
-        ln -s ${CUST_INCLUDE_PATH} ${CUST_ACLNNOP_INCLUDE_PATH}
+      if [[ -n "${ASCEND_CUSTOM_OPP_PATH}" ]]; then
+        IFS=':' read -ra PATH_ARRAY <<< "${ASCEND_CUSTOM_OPP_PATH}"
+        for path in "${PATH_ARRAY[@]}"; do
+          cust_include_flags="${cust_include_flags} -I ${path}/op_api/include"
+          cust_library_flags="${cust_library_flags} -L ${path}/op_api/lib"
+          cust_rpath_flags="${cust_rpath_flags}:${path}/op_api/lib"
+          cust_aclnnop_paths="${cust_aclnnop_paths} ${path}/op_api/include/aclnnop"
+        done
+        cust_rpath_flags="${cust_rpath_flags#:}"
+      else
+        cust_include_flags="-I ${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include"
+        cust_library_flags="-L ${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/lib"
+        cust_rpath_flags="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/lib"
+        cust_aclnnop_paths="${ASCEND_HOME_PATH}/opp/vendors/${VENDOR}_cv/op_api/include/aclnnop"
       fi
+
+      for aclnnop_path in ${cust_aclnnop_paths}; do
+        local include_dir=$(dirname ${aclnnop_path})
+        local include_dir_mode=$(stat -c %a ${include_dir} 2>/dev/null)
+        if [ ! -L ${aclnnop_path} ]; then
+          chmod u+w ${include_dir} 2>/dev/null
+          ln -s ${include_dir} ${aclnnop_path} 2>/dev/null
+        fi
+      done
 
       if [[ -n "$sim_lib_path" ]]; then
         export LD_LIBRARY_PATH=${sim_lib_path}:${LD_LIBRARY_PATH}
         ln -sf ${sim_lib_path}/libruntime_camodel.so ${sim_lib_path}/libruntime.so
         ln -sf ${sim_lib_path}/libnpu_drv_camodel.so ${sim_lib_path}/libascend_hal.so
         g++ ${f} \
+          ${cust_include_flags} \
           -I ${INCLUDE_PATH} \
           -I ${INCLUDE_PATH}/aclnnop \
-          -I ${CUST_INCLUDE_PATH} \
-          -L ${CUST_LIBRARY_PATH} \
+          ${cust_library_flags} \
           -L ${EAGER_LIBRARY_PATH} \
           -lcust_opapi -lascendcl -lnnopbase \
           -L ${sim_lib_path} \
           -lruntime_camodel -lnpu_drv_camodel \
           -o test_aclnn_${EXAMPLE_NAME} \
-          -Wl,-rpath=${CUST_LIBRARY_PATH}:${sim_lib_path}
+          -Wl,-rpath=${cust_rpath_flags}:${sim_lib_path}
       else
         g++ ${f} \
+          ${cust_include_flags} \
           -I ${INCLUDE_PATH} \
           -I ${INCLUDE_PATH}/aclnnop \
-          -I ${CUST_INCLUDE_PATH} \
-          -L ${CUST_LIBRARY_PATH} \
+          ${cust_library_flags} \
           -L ${EAGER_LIBRARY_PATH} \
           -lcust_opapi -lascendcl -lnnopbase \
           -o test_aclnn_${EXAMPLE_NAME} \
-          -Wl,-rpath=${CUST_LIBRARY_PATH}
+          -Wl,-rpath=${cust_rpath_flags}
       fi
 
-      if [ -L ${CUST_ACLNNOP_INCLUDE_PATH} ]; then
-        rm ${CUST_ACLNNOP_INCLUDE_PATH}
-        chmod ${include_dir_mode} $CUST_INCLUDE_PATH
-      fi
+      for aclnnop_path in ${cust_aclnnop_paths}; do
+        if [ -L ${aclnnop_path} ]; then
+          local include_dir=$(dirname ${aclnnop_path})
+          local include_dir_mode=$(stat -c %a ${include_dir} 2>/dev/null)
+          rm ${aclnnop_path} 2>/dev/null
+          chmod ${include_dir_mode} ${include_dir} 2>/dev/null
+        fi
+      done
 
     else
       echo "Error: pkg_mode(${PKG_MODE}) must be cust."
