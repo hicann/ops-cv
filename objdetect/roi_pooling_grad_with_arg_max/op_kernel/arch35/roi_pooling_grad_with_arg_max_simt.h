@@ -66,8 +66,8 @@ template <typename ACC_T, typename D_T>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void RoiPoolingGradWithArgMaxComputeSIMT(
     __gm__ D_T* gradGmAddr, __gm__ D_T* xGmAddr, __gm__ D_T* roisGmAddr, __gm__ int32_t* argMaxGmAddr, __gm__ D_T* yGmAddr, __gm__ ACC_T* userWSGmAddr, const int32_t pooled_h, const int32_t pooled_w, const int32_t pool_channel, const int32_t height, const int32_t width, const int32_t count)
 {
-    Simt::ThreadBarrier();
-    for(int32_t idx = AscendC::Simt::GetThreadIdx<0>() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>(); idx < count; idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
+    asc_syncthreads();
+    for(int32_t idx = threadIdx.x + blockIdx.x * blockDim.x; idx < count; idx += gridDim.x * blockDim.x) {
         // (n, c) is an element in the pooled output
         int32_t c = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h)) % pool_channel);
         int32_t n = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h) / pool_channel);
@@ -86,8 +86,8 @@ template <typename ACC_T, typename D_T>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void RoiPoolingGradWithArgMaxCopyGmSIMT(
     __gm__ D_T* gradGmAddr, __gm__ D_T* xGmAddr, __gm__ D_T* roisGmAddr, __gm__ int32_t* argMaxGmAddr, __gm__ D_T* yGmAddr, __gm__ ACC_T* userWSGmAddr, const int32_t pooled_h, const int32_t pooled_w, const int32_t pool_channel, const int32_t height, const int32_t width, const int32_t count)
 {
-    Simt::ThreadBarrier();
-    for(int32_t idx = AscendC::Simt::GetThreadIdx<0>() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>(); idx < count; idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
+    asc_syncthreads();
+    for(int32_t idx = threadIdx.x + blockIdx.x * blockDim.x; idx < count; idx += gridDim.x * blockDim.x) {
         // (n, c) is an element in the pooled output
         int32_t c = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h)) % pool_channel);
         int32_t n = static_cast<int32_t>(static_cast<int32_t>(static_cast<int32_t>(idx / pooled_w) / pooled_h) / pool_channel);
@@ -121,8 +121,8 @@ __aicore__ inline void RoiPoolingGradWithArgMaxSimt<ACC_T, D_T>::Process()
     SyncAll();
 
     // simt执行计算
-    Simt::VF_CALL<RoiPoolingGradWithArgMaxComputeSIMT<ACC_T, D_T>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1},
+    asc_vf_call<RoiPoolingGradWithArgMaxComputeSIMT<ACC_T, D_T>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1},
         (__gm__ D_T*)(gradGm_.GetPhyAddr()), (__gm__ D_T*)(xGm_.GetPhyAddr()), (__gm__ D_T*)(roisGm_.GetPhyAddr()), (__gm__ int32_t*)(argMaxGm_.GetPhyAddr()), 
         (__gm__ D_T*)(yGm_.GetPhyAddr()), (__gm__ ACC_T*)(userWSGm_.GetPhyAddr()), static_cast<int32_t>(tiling_->pooledH), 
         static_cast<int32_t>(tiling_->pooledW), static_cast<int32_t>(tiling_->poolChannel), 
@@ -131,8 +131,8 @@ __aicore__ inline void RoiPoolingGradWithArgMaxSimt<ACC_T, D_T>::Process()
     SyncAll();
 
     // 数据搬到输出
-    Simt::VF_CALL<RoiPoolingGradWithArgMaxCopyGmSIMT<ACC_T, D_T>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1},
+    asc_vf_call<RoiPoolingGradWithArgMaxCopyGmSIMT<ACC_T, D_T>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1},
         (__gm__ D_T*)(gradGm_.GetPhyAddr()), (__gm__ D_T*)(xGm_.GetPhyAddr()), (__gm__ D_T*)(roisGm_.GetPhyAddr()), (__gm__ int32_t*)(argMaxGm_.GetPhyAddr()), 
         (__gm__ D_T*)(yGm_.GetPhyAddr()), (__gm__ ACC_T*)(userWSGm_.GetPhyAddr()), static_cast<int32_t>(tiling_->pooledH), 
         static_cast<int32_t>(tiling_->pooledW), static_cast<int32_t>(tiling_->poolChannel), 

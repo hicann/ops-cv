@@ -48,14 +48,14 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void RoiPooling
   float fy1 = static_cast<float>(ph) * bin_size_h + roi_y1;
   float fx2 = static_cast<float>(pw + 1) * bin_size_w + roi_x1;
   float fy2 = static_cast<float>(ph + 1) * bin_size_h + roi_y1;
-  bin_x1 = static_cast<int64_t>(Simt::Floor(fx1));
-  bin_y1 = static_cast<int64_t>(Simt::Floor(fy1));
-  bin_x2 = static_cast<int64_t>(Simt::Ceil(fx2));
-  bin_y2 = static_cast<int64_t>(Simt::Ceil(fy2));
-  bin_x1 = Simt::Min(Simt::Max(bin_x1, BIN_CLAMP_LB), fmW);
-  bin_y1 = Simt::Min(Simt::Max(bin_y1, BIN_CLAMP_LB), fmH);
-  bin_x2 = Simt::Min(Simt::Max(bin_x2, BIN_CLAMP_LB), fmW);
-  bin_y2 = Simt::Min(Simt::Max(bin_y2, BIN_CLAMP_LB), fmH);
+  bin_x1 = static_cast<int64_t>(floorf(fx1));
+  bin_y1 = static_cast<int64_t>(floorf(fy1));
+  bin_x2 = static_cast<int64_t>(ceilf(fx2));
+  bin_y2 = static_cast<int64_t>(ceilf(fy2));
+  bin_x1 = min(max(bin_x1, BIN_CLAMP_LB), fmW);
+  bin_y1 = min(max(bin_y1, BIN_CLAMP_LB), fmH);
+  bin_x2 = min(max(bin_x2, BIN_CLAMP_LB), fmW);
+  bin_y2 = min(max(bin_y2, BIN_CLAMP_LB), fmH);
   is_empty = (bin_y2 <= bin_y1) || (bin_x2 <= bin_x1);
 }
 
@@ -89,9 +89,9 @@ __simt_vf__ LAUNCH_BOUND(ROI_POOLING_SIMT_LAUNCH_BOUND) inline void RoiPoolingWi
   const uint32_t upoolW = static_cast<uint32_t>(poolW), upoolH = static_cast<uint32_t>(poolH),
                  uchan = static_cast<uint32_t>(channels);
   const int64_t count = static_cast<int64_t>(roi_number) * static_cast<int64_t>(channels) * poolH * poolW;
-  for (int64_t idx = AscendC::Simt::GetThreadIdx() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>();
+  for (int64_t idx = threadIdx.x + blockIdx.x * blockDim.x;
        idx < count;
-       idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
+       idx += gridDim.x * blockDim.x) {
     const uint32_t uidx = static_cast<uint32_t>(idx);
     const uint32_t divW = Simt::UintDiv(uidx, mPoolW, shiftPoolW);
     const uint32_t pw = uidx - divW * upoolW;

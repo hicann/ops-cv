@@ -19,6 +19,13 @@
 #include <cstdint>
 #include <cstring>
 
+inline int64_t max(int64_t x, int64_t y) { return x > y ? x : y; }
+inline int64_t min(int64_t x, int64_t y) { return x < y ? x : y; }
+inline uint64_t max(uint64_t x, uint64_t y) { return x > y ? x : y; }
+inline uint64_t min(uint64_t x, uint64_t y) { return x < y ? x : y; }
+inline uint32_t max(uint32_t x, uint32_t y) { return x > y ? x : y; }
+inline uint32_t min(uint32_t x, uint32_t y) { return x < y ? x : y; }
+
 #include "../../../op_kernel/arch35/roi_pooling_with_arg_max_tiling_data.h"
 #include "kernel_tiling/kernel_tiling.h"
 

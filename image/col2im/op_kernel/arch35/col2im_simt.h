@@ -61,7 +61,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void Col2imSimtCompute(
     uint32_t mGWH_, uint32_t shiftSW_, uint32_t mSW_, uint32_t shiftSH_, uint32_t mSH_, uint32_t shiftDH_, 
     uint32_t mDH_, uint32_t shiftDW_, uint32_t mDW_)
 {
-    for(uint32_t idx = AscendC::Simt::GetThreadIdx<0>() + AscendC::Simt::GetBlockIdx() * AscendC::Simt::GetThreadNum<0>(); idx < cnt; idx += AscendC::Simt::GetBlockNum() * AscendC::Simt::GetThreadNum<0>()) {
+    for(uint32_t idx = threadIdx.x + blockIdx.x * blockDim.x; idx < cnt; idx += gridDim.x * blockDim.x) {
         ACC_T valv = static_cast<ACC_T>(0);
         const uint32_t wIm = idx % gradInW + padWidth;
         const uint32_t hIm = Simt::UintDiv(idx, mGW_, shiftGW_) % gradInH + padHeight;
@@ -125,8 +125,8 @@ __aicore__ inline void Col2imSimt<ACC_T, D_T>::Process()
     GetUintDivMagicAndShift(mSH_, shiftSH_, strideHeight);
     GetUintDivMagicAndShift(mDH_, shiftDH_, dilationHeight);
     GetUintDivMagicAndShift(mDW_, shiftDW_, dilationWidth);
-    Simt::VF_CALL<Col2imSimtCompute<ACC_T, D_T>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ D_T*)(inputXGm_.GetPhyAddr()), (__gm__ D_T*)(yGm_.GetPhyAddr()),
+    asc_vf_call<Col2imSimtCompute<ACC_T, D_T>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ D_T*)(inputXGm_.GetPhyAddr()), (__gm__ D_T*)(yGm_.GetPhyAddr()),
         static_cast<uint32_t>(tiling_->totalLength), static_cast<uint32_t>(tiling_->outputSizeH), 
         static_cast<uint32_t>(tiling_->outputSizeW), static_cast<uint32_t>(tiling_->kernelSizeH), 
         static_cast<uint32_t>(tiling_->kernelSizeW), static_cast<uint32_t>(tiling_->paddingH), 
