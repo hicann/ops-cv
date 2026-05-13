@@ -23,9 +23,7 @@
 #include "image/upsample_nearest_exact2d_grad/op_kernel/arch35/upsample_nearest_exact2d_grad_tiling_data.h"
 #include "image/upsample_nearest_exact2d_grad/op_kernel/arch35/upsample_nearest_exact2d_grad_tiling_key.h"
 
-namespace optiling {
-using namespace Ops::Cv::OpTiling;
-
+namespace {
 constexpr int32_t CONST_0 = 0;
 constexpr int32_t CONST_1 = 1;
 constexpr int32_t CONST_2 = 2;
@@ -61,7 +59,11 @@ struct BaseTilingData {
 };
 
 static const std::map<ge::DataType, int32_t> inputDtypeList = {
-    {ge::DT_DOUBLE, 8}, {ge::DT_UINT8, 1}, {ge::DT_FLOAT, 4}, {ge::DT_FLOAT16, 2}, {ge::DT_BF16, 2}};
+    {ge::DT_FLOAT, 4}, {ge::DT_FLOAT16, 2}, {ge::DT_BF16, 2}};
+}
+
+namespace optiling {
+using namespace Ops::Cv::OpTiling;
 
 class UpsampleNearestExact2dGradRegbaseTiling {
 public:
