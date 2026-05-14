@@ -15,6 +15,7 @@
 #ifndef GRID_SAMPLER_2D_H
 #define GRID_SAMPLER_2D_H
 #include "kernel_operator.h"
+#include "simt_api/asc_simt.h"
 #include "grid_sampler_bilinear_smit_common.h"
 namespace GridSample {
 
@@ -70,8 +71,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBiline
     __gm__ T* inputImgGmAddr, float pointHeight, float pointWidth, T_IDX channelIndex, T_IDX inputDataBatchOffset,
     T_IDX inH, T_IDX inW, T_IDX inC)
 {
-    float heightFloor = Simt::Floor(pointHeight);
-    float widthFloor = Simt::Floor(pointWidth);
+    float heightFloor = floorf(pointHeight);
+    float widthFloor = floorf(pointWidth);
 
     float heightFloorDelta = pointHeight - heightFloor;
     float widthFloorDelta = pointWidth - widthFloor;
@@ -112,7 +113,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__ void ComputeGridSampler2d
     T_IDX outImgSize, T_IDX shiftB_, T_IDX mB_, T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_,
     uint32_t blockId_)
 {
-    for (T_IDX index = blockId_ * VF_MAX_THREAD_NUM + Simt::GetThreadIdx(); index < outImgSize * intN;
+    for (T_IDX index = blockId_ * VF_MAX_THREAD_NUM + threadIdx.x; index < outImgSize * intN;
          index += (blockNum * VF_MAX_THREAD_NUM)) {
         // output info (N H K_h W K_w, groups, groupC)
         T_IDX batchNum, heightCol, widthCol, channelIndex;
@@ -159,8 +160,8 @@ __aicore__ inline void GridSampler2dBilinearSimt<T, T_IDX>::Process()
     GetUintDivMagicAndShift(mB_, shiftB_, outImgSize);
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<T_IDX>(tiling_->outW * tiling_->outH));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<T_IDX>(tiling_->outW));
-    Simt::VF_CALL<ComputeGridSampler2d<T, T_IDX>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()), (__gm__ T*)(gridGm_.GetPhyAddr()),
+    asc_vf_call<ComputeGridSampler2d<T, T_IDX>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()), (__gm__ T*)(gridGm_.GetPhyAddr()),
         (__gm__ T*)(yGm_.GetPhyAddr()), tiling_->needCoreNum, tiling_->inN, tiling_->inC, tiling_->inH, tiling_->inW,
         tiling_->outH, tiling_->outW, tiling_->paddingMode, tiling_->alignCorners, outImgSize, shiftB_, mB_, shiftH_, 
         mH_, shiftW_, mW_, blockId_);

@@ -16,6 +16,9 @@
 #define GRID_SAMPLER2D_GRAD_SIMT_DET_H_
 
 #include "simt_api/asc_simt.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
+#include "simt_api/device_atomic_functions.h"
 #include "kernel_operator.h"
 #ifdef __CCE_KT_TEST__	 
 #include "../../../grid_sampler3_d_grad/op_kernel/arch35/grid_sampler3_d_grad_simt_base.h"
@@ -68,29 +71,29 @@ template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void DeterministicCompute(
     __gm__ uint32_t* dxOutGmAddr, __gm__ T* dxOutValueGmAddr, __gm__ T* dxGmAddr, uint32_t dxGmIndex, float dxOutValue, uint32_t gridSize, uint32_t blockNum, uint32_t batchNum, uint32_t blockId, uint32_t pointIndex, uint32_t channelIndex)
 {
-    uint32_t threadNum = Simt::GetThreadNum();
-    uint32_t threadIdx = Simt::GetThreadIdx();
+    uint32_t threadNum = blockDim.x;
+    uint32_t threadIdx_ = threadIdx.x;
     uint32_t tmpOutOffset = pointIndex * VF_MAX_THREAD_NUM + blockId * VF_MAX_THREAD_NUM * 4;
-    if (threadIdx >= 0 && threadIdx < VF_MAX_THREAD_NUM) {
+    if (threadIdx_ >= 0 && threadIdx_ < VF_MAX_THREAD_NUM) {
         if (dxGmIndex != -100) {
-            dxOutGmAddr[threadIdx + tmpOutOffset] = dxGmIndex;
-            dxOutValueGmAddr[threadIdx + tmpOutOffset] = dxOutValue;
+            dxOutGmAddr[threadIdx_ + tmpOutOffset] = dxGmIndex;
+            dxOutValueGmAddr[threadIdx_ + tmpOutOffset] = dxOutValue;
         } else {
-            dxOutGmAddr[threadIdx + tmpOutOffset] = 0;
-            dxOutValueGmAddr[threadIdx + tmpOutOffset] = 0;
+            dxOutGmAddr[threadIdx_ + tmpOutOffset] = 0;
+            dxOutValueGmAddr[threadIdx_ + tmpOutOffset] = 0;
         }
     }
-    Simt::ThreadBarrier();
-    if (threadIdx == 0) {
+    asc_syncthreads();
+    if (threadIdx_ == 0) {
         for (uint32_t i = 0; i < VF_MAX_THREAD_NUM; ++i){
             uint32_t dxOutIndex = dxOutGmAddr[i + tmpOutOffset];
             float dxOutRes = dxOutValueGmAddr[i + tmpOutOffset];
-            Simt::AtomicAdd(dxGmAddr + dxOutIndex, static_cast<T>(dxOutRes));
+            asc_atomic_add(dxGmAddr + dxOutIndex, static_cast<T>(dxOutRes));
             dxOutGmAddr[i + tmpOutOffset] = 0;
             dxOutValueGmAddr[i + tmpOutOffset] = 0;
         }
     }
-    Simt::ThreadBarrier();
+    asc_syncthreads();
 }
 
 template <typename T>
@@ -181,8 +184,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
     uint32_t channel, uint32_t pNumPerCore, uint32_t blockNum, uint32_t blockId)
 {
     uint32_t gridSize = gridH * gridW;
-    int32_t ix_nearest = Simt::Rint(ix);
-    int32_t iy_nearest = Simt::Rint(iy);
+    int32_t ix_nearest = rintf(ix);
+    int32_t iy_nearest = rintf(iy);
 
     for (uint32_t channelIndex = 0; channelIndex < channel; channelIndex++) {
         float gradOutValue = static_cast<float>(0.0);
@@ -205,7 +208,7 @@ __aicore__ void ComputeGridSampler2DGradDet(
     uint32_t gridW, uint32_t interpolation, uint32_t padding, uint32_t alignCorners, uint32_t pNumPerCore, uint32_t gridSize,
     uint32_t shiftH_, uint32_t mH_, uint32_t shiftW_, uint32_t mW_, uint32_t blockId_)
 {
-    for (uint32_t index = blockId_ * gridSize * pNumPerCore + Simt::GetThreadIdx(); index < (blockId_ + 1) * gridSize * pNumPerCore && (index < gridSize * batch); index += VF_MAX_THREAD_NUM) {
+    for (uint32_t index = blockId_ * gridSize * pNumPerCore + threadIdx.x; index < (blockId_ + 1) * gridSize * pNumPerCore && (index < gridSize * batch); index += VF_MAX_THREAD_NUM) {
         uint32_t batchNum, heightCol, widthCol;
         batchNum = Simt::UintDiv(index, mH_, shiftH_);
         uint32_t remain = index - batchNum * gridSize;
@@ -247,8 +250,8 @@ __aicore__ inline void GridSampler2DGradSimtDet<T>::Process()
     uint32_t shiftH_, mH_, shiftW_, mW_;
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<uint32_t>(tiling_->gridH * tiling_->gridW));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<uint32_t>(tiling_->gridW));
-    Simt::VF_CALL<ComputeGridSampler2DGradDet<T>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
+    asc_vf_call<ComputeGridSampler2DGradDet<T>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(inputGm[X_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[GRID_INPUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(inputGm[DX_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[DGRID_INPUT_INDEX].GetPhyAddr()),
         (__gm__ uint32_t*)(tmpOutGm[TMP_OUT_INDEX].GetPhyAddr()), (__gm__ T*)(tmpOutValueGm[TMP_OUT_INDEX].GetPhyAddr()), tiling_->blockNum, tiling_->batch, tiling_->channel, tiling_->height, tiling_->width, 

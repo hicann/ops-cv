@@ -62,31 +62,31 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void determinis
     __gm__ uint32_t* dxOutGmAddr, __gm__ T* dxOutValueGmAddr, __gm__ T* dxGmAddr, uint32_t dxGmIndex, float dxOutValue,
     uint32_t gridSize, uint32_t blockNum, uint32_t batchNum, uint32_t blockId, uint32_t pointIndex)
 {
-    uint32_t threadNum = Simt::GetThreadNum(); // VF_MAX_THREAD_NUM
-    uint32_t threadIdx = Simt::GetThreadIdx();
+    uint32_t threadNum = blockDim.x; // VF_MAX_THREAD_NUM
+    uint32_t thread_idx = threadIdx.x;
     uint32_t tmpOutOffset = pointIndex * VF_MAX_THREAD_NUM + blockId * VF_MAX_THREAD_NUM * 8;
 
-    if (threadIdx >= 0 && threadIdx < VF_MAX_THREAD_NUM) {
+    if (thread_idx >= 0 && thread_idx < VF_MAX_THREAD_NUM) {
         if (dxGmIndex != -100) {
-            dxOutGmAddr[threadIdx + tmpOutOffset] = dxGmIndex;
-            dxOutValueGmAddr[threadIdx + tmpOutOffset] = dxOutValue;
+            dxOutGmAddr[thread_idx + tmpOutOffset] = dxGmIndex;
+            dxOutValueGmAddr[thread_idx + tmpOutOffset] = dxOutValue;
         } else {
-            dxOutGmAddr[threadIdx + tmpOutOffset] = static_cast<uint32_t>(0);
-            dxOutValueGmAddr[threadIdx + tmpOutOffset] = static_cast<float>(0.0);
+            dxOutGmAddr[thread_idx + tmpOutOffset] = static_cast<uint32_t>(0);
+            dxOutValueGmAddr[thread_idx + tmpOutOffset] = static_cast<float>(0.0);
         }
     }
-    Simt::ThreadBarrier();
+    asc_syncthreads();
 
-    if (threadIdx == 0) {
+    if (thread_idx == 0) {
         for (uint32_t i = 0; i < VF_MAX_THREAD_NUM; i++) {
             uint32_t dxOutIndex = dxOutGmAddr[i + tmpOutOffset];
             float dxOutRes = dxOutValueGmAddr[i + tmpOutOffset];
-            Simt::AtomicAdd(dxGmAddr + dxOutIndex, static_cast<T>(dxOutRes));
+            asc_atomic_add(dxGmAddr + dxOutIndex, static_cast<T>(dxOutRes));
             dxOutGmAddr[i + tmpOutOffset] = static_cast<uint32_t>(0);
             dxOutValueGmAddr[i + tmpOutOffset] = static_cast<float>(0.0);
         }
     }
-    Simt::ThreadBarrier();
+    asc_syncthreads();
 }
 
 template <typename T>
@@ -338,9 +338,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
 {
     uint32_t gridSize = gridD * gridH * gridW;
 
-    int32_t ix_nearest = Simt::Rint(ix);
-    int32_t iy_nearest = Simt::Rint(iy);
-    int32_t iz_nearest = Simt::Rint(iz);
+    int32_t ix_nearest = rintf(ix);
+    int32_t iy_nearest = rintf(iy);
+    int32_t iz_nearest = rintf(iz);
 
     for (uint32_t channelIndex = 0; channelIndex < channel; channelIndex++) {
         float gradOutValue = static_cast<float>(0.0);
@@ -368,7 +368,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__ void ComputeGridSampler3D
     uint32_t shiftH_, uint32_t mH_, uint32_t shiftW_, uint32_t mW_, uint32_t blockId_)
 {
     // pNumPerCore : 每个核计算的N的个数
-    for (uint32_t index = blockId_ * gridSize * pNumPerCore + Simt::GetThreadIdx();
+    for (uint32_t index = blockId_ * gridSize * pNumPerCore + threadIdx.x;
          (index < (blockId_ + 1) * gridSize * pNumPerCore) && (index < gridSize * batch); index += VF_MAX_THREAD_NUM) {
         // output info (N D K_d H K_h W K_w, groups, groupC)
         uint32_t batchNum, depthCol, heightCol, widthCol;
@@ -426,8 +426,8 @@ __aicore__ inline void GridSampler3DGradSimtDet<T>::Process()
     GetUintDivMagicAndShift(mD_, shiftD_, gridSize);
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<uint32_t>(tiling_->gridH * tiling_->gridW));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<uint32_t>(tiling_->gridW));
-    Simt::VF_CALL<ComputeGridSampler3DGrad<T>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
+    asc_vf_call<ComputeGridSampler3DGrad<T>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(inputGm[X_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[GRID_INPUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(inputGm[DX_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[DGRID_INPUT_INDEX].GetPhyAddr()),
         (__gm__ uint32_t*)(tmpOutGm[TMP_OUT_INDEX].GetPhyAddr()),

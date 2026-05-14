@@ -15,6 +15,7 @@
 #ifndef GRID_SAMPLER_3D_BILINEAR_SIMT_H
 #define GRID_SAMPLER_3D_BILINEAR_SIMT_H
 #include "kernel_operator.h"
+#include "simt_api/asc_simt.h"
 #include "grid_sampler_bilinear_smit_common.h"
 
 namespace GridSample {
@@ -76,9 +77,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBiline
     __gm__ T* inputImgGmAddr, float pointDepth, float pointHeight, float pointWidth, T_IDX channelIndex,
     T_IDX inputDataBatchOffset, T_IDX inD, T_IDX inH, T_IDX inW, T_IDX inC, T_IDX index)
 {
-    float depthFloor = Simt::Floor(pointDepth);
-    float heightFloor = Simt::Floor(pointHeight);
-    float widthFloor = Simt::Floor(pointWidth);
+    float depthFloor = floorf(pointDepth);
+    float heightFloor = floorf(pointHeight);
+    float widthFloor = floorf(pointWidth);
 
     float depthFloorDelta = pointDepth - depthFloor;
     float heightFloorDelta = pointHeight - heightFloor;
@@ -151,7 +152,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSample
     int32_t alignCorners, T_IDX outImgSize, T_IDX shiftB_, T_IDX mB_, T_IDX shiftD_, T_IDX mD_,
     T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_, T_IDX blockId_)
 {
-    for (T_IDX index = blockId_ * VF_MAX_THREAD_NUM_3D + Simt::GetThreadIdx(); index < outImgSize * intN;
+    for (T_IDX index = blockId_ * VF_MAX_THREAD_NUM_3D + threadIdx.x; index < outImgSize * intN;
          index += (blockNum * VF_MAX_THREAD_NUM_3D)) {
         // output info (N H K_h W K_w, groups, groupC)
         T_IDX batchNum, depthCol, heightCol, widthCol, channelIndex;
@@ -208,8 +209,8 @@ __aicore__ inline void GridSampler3dBilinearSimt<T, T_IDX>::Process()
     GetUintDivMagicAndShift(mD_, shiftD_, static_cast<T_IDX>(tiling_->outW * tiling_->outH * tiling_->outD));
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<T_IDX>(tiling_->outW * tiling_->outH));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<T_IDX>(tiling_->outW));
-    Simt::VF_CALL<ComputeGridSampler3d<T, T_IDX>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM_3D, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()),
+    asc_vf_call<ComputeGridSampler3d<T, T_IDX>>(
+        dim3{VF_MAX_THREAD_NUM_3D, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()),
         (__gm__ T*)(gridGm_.GetPhyAddr()), (__gm__ T*)(yGm_.GetPhyAddr()), tiling_->needCoreNum, tiling_->inN,
         tiling_->inC, tiling_->inD, tiling_->inH, tiling_->inW, tiling_->outD, tiling_->outH, tiling_->outW,
         tiling_->paddingMode, tiling_->alignCorners, outImgSize, shiftB_, mB_, shiftD_, mD_, shiftH_, mH_, shiftW_, mW_,

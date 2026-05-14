@@ -16,6 +16,9 @@
 #define GRID_SAMPLER3D_GRAD_SIMT_H_
 
 #include "simt_api/asc_simt.h"
+#include "simt_api/device_atomic_functions.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_bf16.h"
 #include "kernel_operator.h"
 #include "grid_sampler3_d_grad_simt_base.h"
 
@@ -66,7 +69,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
         gradOutGmAddr, iz_tnw, iy_tnw, ix_tnw, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol,
         channelIndex, offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &tnwGradOutValue, &tnwDxIndex);
     if (tnwDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + tnwDxIndex, static_cast<T>(tnw * tnwGradOutValue));
+        asc_atomic_add(dxGmAddr + tnwDxIndex, static_cast<T>(tnw * tnwGradOutValue));
         float tnw_val = static_cast<float>(xGmAddr[tnwDxIndex]);
         *gix -= tnw_val * (iy_t1 - iy) * (iz_t1 - iz) * tnwGradOutValue;
         *giy -= tnw_val * (ix_t1 - ix) * (iz_t1 - iz) * tnwGradOutValue;
@@ -80,7 +83,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
         gradOutGmAddr, iz_tnw, iy_tnw, ix_t1, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol,
         channelIndex, offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &tneGradOutValue, &tneDxIndex);
     if (tneDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + tneDxIndex, static_cast<T>(tne * tneGradOutValue));
+        asc_atomic_add(dxGmAddr + tneDxIndex, static_cast<T>(tne * tneGradOutValue));
         float tne_val = static_cast<float>(xGmAddr[tneDxIndex]);
         *gix += tne_val * (iy_t1 - iy) * (iz_t1 - iz) * tneGradOutValue;
         *giy -= tne_val * (ix - ix_tnw) * (iz_t1 - iz) * tneGradOutValue;
@@ -94,7 +97,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
         gradOutGmAddr, iz_tnw, iy_t1, ix_tnw, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol,
         channelIndex, offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &tswGradOutValue, &tswDxIndex);
     if (tswDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + tswDxIndex, static_cast<T>(tsw * tswGradOutValue));
+        asc_atomic_add(dxGmAddr + tswDxIndex, static_cast<T>(tsw * tswGradOutValue));
         float tsw_val = static_cast<float>(xGmAddr[tswDxIndex]);
         *gix -= tsw_val * (iy - iy_tnw) * (iz_t1 - iz) * tswGradOutValue;
         *giy += tsw_val * (ix_t1 - ix) * (iz_t1 - iz) * tswGradOutValue;
@@ -108,7 +111,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
         gradOutGmAddr, iz_tnw, iy_t1, ix_t1, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol, channelIndex,
         offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &tseGradOutValue, &tseDxIndex);
     if (tseDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + tseDxIndex, static_cast<T>(tse * tseGradOutValue));
+        asc_atomic_add(dxGmAddr + tseDxIndex, static_cast<T>(tse * tseGradOutValue));
         float tse_val = static_cast<float>(xGmAddr[tseDxIndex]);
         *gix += tse_val * (iy - iy_tnw) * (iz_t1 - iz) * tseGradOutValue;
         *giy += tse_val * (ix - ix_tnw) * (iz_t1 - iz) * tseGradOutValue;
@@ -131,7 +134,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
         gradOutGmAddr, iz_t1, iy_tnw, ix_tnw, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol,
         channelIndex, offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &bnwGradOutValue, &bnwDxIndex);
     if (bnwDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + bnwDxIndex, static_cast<T>(bnw * bnwGradOutValue));
+        asc_atomic_add(dxGmAddr + bnwDxIndex, static_cast<T>(bnw * bnwGradOutValue));
         float bnw_val = static_cast<float>(xGmAddr[bnwDxIndex]);
         *gix -= bnw_val * (iy_t1 - iy) * (iz - iz_tnw) * bnwGradOutValue;
         *giy -= bnw_val * (ix_t1 - ix) * (iz - iz_tnw) * bnwGradOutValue;
@@ -145,7 +148,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
         gradOutGmAddr, iz_t1, iy_tnw, ix_t1, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol, channelIndex,
         offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &bneGradOutValue, &bneDxIndex);
     if (bneDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + bneDxIndex, static_cast<T>(bne * bneGradOutValue));
+        asc_atomic_add(dxGmAddr + bneDxIndex, static_cast<T>(bne * bneGradOutValue));
         float bne_val = static_cast<float>(xGmAddr[bneDxIndex]);
         *gix += bne_val * (iy_t1 - iy) * (iz - iz_tnw) * bneGradOutValue;
         *giy -= bne_val * (ix - ix_tnw) * (iz - iz_tnw) * bneGradOutValue;
@@ -159,7 +162,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
         gradOutGmAddr, iz_t1, iy_t1, ix_tnw, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol, channelIndex,
         offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &bswGradOutValue, &bswDxIndex);
     if (bswDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + bswDxIndex, static_cast<T>(bsw * bswGradOutValue));
+        asc_atomic_add(dxGmAddr + bswDxIndex, static_cast<T>(bsw * bswGradOutValue));
         float bsw_val = static_cast<float>(xGmAddr[bswDxIndex]);
         *gix -= bsw_val * (iy - iy_tnw) * (iz - iz_tnw) * bswGradOutValue;
         *giy += bsw_val * (ix_t1 - ix) * (iz - iz_tnw) * bswGradOutValue;
@@ -173,7 +176,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
         gradOutGmAddr, iz_t1, iy_t1, ix_t1, gridD, gridH, gridW, batchNum, depthCol, heightCol, widthCol, channelIndex,
         offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &bseGradOutValue, &bseDxIndex);
     if (bseDxIndex != -100) {
-        Simt::AtomicAdd(dxGmAddr + bseDxIndex, static_cast<T>(bse * bseGradOutValue));
+        asc_atomic_add(dxGmAddr + bseDxIndex, static_cast<T>(bse * bseGradOutValue));
         float bse_val = static_cast<float>(xGmAddr[bseDxIndex]);
         *gix += bse_val * (iy - iy_tnw) * (iz - iz_tnw) * bseGradOutValue;
         *giy += bse_val * (ix - ix_tnw) * (iz - iz_tnw) * bseGradOutValue;
@@ -234,9 +237,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,
     uint32_t channel)
 {
-    int32_t ix_nearest = Simt::Rint(ix);
-    int32_t iy_nearest = Simt::Rint(iy);
-    int32_t iz_nearest = Simt::Rint(iz);
+    int32_t ix_nearest = rintf(ix);
+    int32_t iy_nearest = rintf(iy);
+    int32_t iz_nearest = rintf(iz);
 
     for (uint32_t channelIndex = 0; channelIndex < channel; channelIndex++) {
         float gradOutValue = static_cast<float>(0.0);
@@ -245,7 +248,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
             gradOutGmAddr, iz_nearest, iy_nearest, ix_nearest, gridD, gridH, gridW, batchNum, depthCol, heightCol,
             widthCol, channelIndex, offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &gradOutValue, &dxIndex);
         if (dxIndex != -100) {
-            Simt::AtomicAdd(dxGmAddr + dxIndex, static_cast<T>(gradOutValue));
+            asc_atomic_add(dxGmAddr + dxIndex, static_cast<T>(gradOutValue));
         }
 
         dgridGmAddr[offsetBaseAddr] = static_cast<T>(0);
@@ -262,7 +265,7 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__ void ComputeGridSampler3D
     uint32_t gridH, uint32_t gridW, uint32_t interpolation, uint32_t padding, uint32_t alignCorners, uint32_t gridSize,
     uint32_t shiftD_, uint32_t mD_, uint32_t shiftH_, uint32_t mH_, uint32_t shiftW_, uint32_t mW_, uint32_t blockId_)
 {
-    for (uint32_t index = blockId_ * VF_MAX_THREAD_NUM + Simt::GetThreadIdx(); index < gridSize * batch;
+    for (uint32_t index = blockId_ * VF_MAX_THREAD_NUM + threadIdx.x; index < gridSize * batch;
          index += (blockNum * VF_MAX_THREAD_NUM)) {
         // output info (N D K_d H K_h W K_w, groups, groupC)
         uint32_t batchNum, depthCol, heightCol, widthCol;
@@ -318,8 +321,8 @@ __aicore__ inline void GridSampler3DGradSimt<T>::Process()
     GetUintDivMagicAndShift(mD_, shiftD_, gridSize);
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<uint32_t>(tiling_->gridH * tiling_->gridW));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<uint32_t>(tiling_->gridW));
-    Simt::VF_CALL<ComputeGridSampler3DGrad<T>>(
-        Simt::Dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
+    asc_vf_call<ComputeGridSampler3DGrad<T>>(
+        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(inputGm[X_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[GRID_INPUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(inputGm[DX_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[DGRID_INPUT_INDEX].GetPhyAddr()),
         tiling_->blockNum, tiling_->batch, tiling_->channel, tiling_->xD, tiling_->xH, tiling_->xW, tiling_->gridD,

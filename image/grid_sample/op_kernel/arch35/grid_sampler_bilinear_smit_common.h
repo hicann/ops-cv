@@ -15,6 +15,8 @@
 #ifndef GRID_SAMPLER_BILINEAR_SIMT_COMMON_H
 #define GRID_SAMPLER_BILINEAR_SIMT_COMMON_H
 #include "kernel_operator.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/math_functions.h"
 namespace GridSample {
 
 using namespace AscendC;
@@ -36,7 +38,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoord
 {
     coord = coord < 0 ? 0 : coord;
     coord = coord > (size - 1) ? (float)size - 1 : coord;
-    if (Simt::IsNan(coord) || Simt::IsInf(coord)) {
+    if (isnan(coord) || isinf(coord)) {
         return 0.0;
     }
     return coord;
@@ -49,9 +51,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCo
     }
     float min = static_cast<float>(twiceLow) / 2;
     float span = static_cast<float>(twiceHigh - twiceLow) / 2;
-    coord = Simt::Abs(coord - min);
-    float extra = Simt::Mod(coord, span);
-    int32_t flips = static_cast<int32_t>(Simt::Floor(coord / span));
+    coord = fabsf(coord - min);
+    float extra = fmodf(coord, span);
+    int32_t flips = static_cast<int32_t>(floorf(coord / span));
     if (flips % REFLECT_RATIO_95 == 0) {
         return extra + min;
     } else {
@@ -62,7 +64,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCo
 
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline float safeDowngradeToIntRange(float coord)
 {
-    if (!Simt::IsFinite(coord)) {
+    if (!isfinite(coord)) {
         return DEFAULT_FAULT_VALUE;
     }
     return coord;

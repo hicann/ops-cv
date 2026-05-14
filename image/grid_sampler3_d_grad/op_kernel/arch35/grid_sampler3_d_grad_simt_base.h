@@ -16,6 +16,7 @@
 #define GRID_SAMPLER3D_GRAD_SIMT_BASE_H_
 
 #include "simt_api/asc_simt.h"
+#include "simt_api/math_functions.h"
 #include "kernel_operator.h"
 
 using namespace AscendC;
@@ -93,8 +94,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ReflectCo
         gradInMult = static_cast<float>(1);
     }
     // `fmod` returns same sign as `in`, which is positive after the `if` above.
-    float extra = Simt::Mod(coord, span);
-    int32_t flips = static_cast<int32_t>(Simt::Floor(coord / span));
+    float extra = fmodf(coord, span);
+    int32_t flips = static_cast<int32_t>(floorf(coord / span));
     if (flips % 2 == 0) {
         *gradReflValue = gradInMult;
         return extra + min;
@@ -106,7 +107,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ReflectCo
 
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline float SafeDowngradeToIntRange(float coord)
 {
-    if (!Simt::IsFinite(coord)) {
+    if (!isfinite(coord)) {
         return DEFAULT_FAULT_VALUE;
     }
     return coord;
