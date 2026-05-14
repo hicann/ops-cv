@@ -104,7 +104,7 @@ REPOSITORY_NAME="cv"
 
 CORE_NUMS=$(cat /proc/cpuinfo | grep "processor" | wc -l)
 ARCH_INFO=$(uname -m)
-CANN_3RD_LIB_PATH="${BUILD_PATH}/third_party"
+CANN_3RD_LIB_PATH="${BASE_PATH}/third_party"
 
 if [ -z "$ASCEND_INSTALL_PATH" ]; then
   if [ -n "$ASCEND_HOME_PATH" ]; then
@@ -159,7 +159,7 @@ usage() {
         echo "                           Specify build type(TYPE options: Release/Debug), Default:Release"
         echo "    --experimental         Build experimental version"
         echo "    --cann_3rd_lib_path=<PATH>"
-        echo "                           Set ascend third_party package install path, default ./build/third_party"
+        echo "                           Set ascend third_party package install path, default ./third_party"
         echo "    --mssanitizer          Build with mssanitizer mode on the kernel side, with options: '-g --cce-enable-sanitizer'"
         echo "    --oom                  Build with oom mode on the kernel side, with options: '-g --cce-enable-oom'"
         echo "    --dump_cce             Dump kernel precompiled files"

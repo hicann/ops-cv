@@ -17,9 +17,6 @@ set(OPGRAPH_NAME opgraph_${PKG_NAME})
 set(OP_GRAPH_NAME op_graph_${PKG_NAME})
 set(GRAPH_PLUGIN_NAME graph_plugin_${PKG_NAME})
 set(ONNX_PLUGIN_NAME op_${PKG_NAME}_onnx_plugin)
-if(NOT CANN_3RD_LIB_PATH)
-  set(CANN_3RD_LIB_PATH ${PROJECT_SOURCE_DIR}/build/third_party)
-endif()
 
 set(OP_CATEGORY_LIST "image" "objdetect" "examples")
 
