@@ -187,6 +187,12 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
     TILING_KEY_IS(10);
     TILING_KEY_IS(11);
     TILING_KEY_IS(12);
+    TILING_KEY_IS(13);
+    TILING_KEY_IS(14);
+    TILING_KEY_IS(15);
+    TILING_KEY_IS(16);
+    TILING_KEY_IS(17);
+    TILING_KEY_IS(18);
     #if TILING_KEY_VAR == 1 || TILING_KEY_VAR == 2 
         GridSampler2DGradSimt<float> op;
         op.Init(&tilingData, gmTensor);
@@ -208,6 +214,36 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
         op.Init(&tilingData, gmTensor);
         op.Process();
     #elif TILING_KEY_VAR == 11 || TILING_KEY_VAR == 12
+        GridSampler2DGradSimtDet<bfloat16_t> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 13
+        // bicubic, float32, non-deterministic
+        GridSampler2DGradSimt<float> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 14
+        // bicubic, float16, non-deterministic
+        GridSampler2DGradSimt<half> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 15
+        // bicubic, bfloat16, non-deterministic
+        GridSampler2DGradSimt<bfloat16_t> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 16
+        // bicubic, float32, deterministic
+        GridSampler2DGradSimtDet<float> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 17
+        // bicubic, float16, deterministic
+        GridSampler2DGradSimtDet<half> op;
+        op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 18
+        // bicubic, bfloat16, deterministic
         GridSampler2DGradSimtDet<bfloat16_t> op;
         op.Init(&tilingData, gmTensor);
         op.Process();

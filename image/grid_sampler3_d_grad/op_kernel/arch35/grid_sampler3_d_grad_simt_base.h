@@ -38,13 +38,14 @@ namespace GridSampler3DGradSimtBase {
     constexpr int32_t DGRID_OUTPUT_INDEX = 1;
     constexpr int32_t BILINEAR = 0;
     constexpr int32_t NEAREST = 1;
+    constexpr int32_t BICUBIC = 2;
     constexpr int32_t BORDER = 1;
     constexpr int32_t REFLECTION = 2;
     constexpr float DEFAULT_FAULT_VALUE = -100.0f;
     constexpr uint32_t VF_MAX_THREAD_NUM = 256;
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormallizeSetGrad(
-    float coord, uint32_t size, uint32_t padding, uint32_t alignCorners, float* gradInValue)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormalizeSetGrad(
+    float coord, uint32_t size, uint32_t alignCorners, float* gradInValue)
 {
     if (alignCorners == 1) {
         // unnormalize coord from [-1, 1] to [0, size - 1]
@@ -156,7 +157,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeSo
 {
     float gradClipValue = 0;
     float gradReflValue = 0;
-    coord = UnnormallizeSetGrad(coord, size, padding, alignCorners, gradInValue);
+    coord = UnnormalizeSetGrad(coord, size, alignCorners, gradInValue);
 
     if (padding == BORDER) {
         // clip coordinates to image borders
@@ -176,5 +177,157 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeSo
     coord = SafeDowngradeToIntRange(coord);
     return coord;
 }
+
+// Bicubic interpolation helper functions for SIMT kernel
+// Cubic convolution for |x| <= 1: f(x) = (A+2)*|x|^3 - (A+3)*|x|^2 + 1, A=-0.75
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CubicConvolution1(float x)
+{
+    float A = -0.75f;
+    return ((A + 2.0f) * x - (A + 3.0f)) * x * x + 1.0f;
+}
+
+// Cubic convolution for 1 < |x| < 2: f(x) = A*|x|^3 - 5A*|x|^2 + 8A*|x| - 4A, A=-0.75
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CubicConvolution2(float x)
+{
+    float A = -0.75f;
+    return ((A * x - 5.0f * A) * x + 8.0f * A) * x - 4.0f * A;
+}
+
+// Compute 4 cubic interpolation coefficients for forward pass (used for grad_input)
+// coeffs[0] = CubicConv2(t+1), coeffs[1] = CubicConv1(t), coeffs[2] = CubicConv1(1-t), coeffs[3] = CubicConv2(2-t)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicUpsampleCoefficients(
+    float coeffs[4], float t)
+{
+    coeffs[0] = CubicConvolution2(t + 1.0f);
+    coeffs[1] = CubicConvolution1(t);
+    coeffs[2] = CubicConvolution1(1.0f - t);
+    coeffs[3] = CubicConvolution2(2.0f - t);
+}
+
+// Compute derivatives of cubic coefficients w.r.t. t (used for grad_grid)
+// d(CubicConv1(x))/dx = 3*(A+2)*x^2 - 2*(A+3)*x
+// d(CubicConv2(x))/dx = 3*A*x^2 - 10*A*x + 8*A
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCoefficientsGrad(
+    float coeffs[4], float t)
+{
+    float A = -0.75f;
+    float x;
+
+    // d(CubicConv2(t+1))/dt = CubicConv2Grad(t+1)
+    x = t + 1.0f;
+    coeffs[0] = (3.0f * A * x - 10.0f * A) * x + 8.0f * A;
+
+    // d(CubicConv1(t))/dt = CubicConv1Grad(t)
+    x = t;
+    coeffs[1] = (3.0f * (A + 2.0f) * x - 2.0f * (A + 3.0f)) * x;
+
+    // d(CubicConv1(1-t))/dt = -CubicConv1Grad(1-t) (chain rule: d(1-t)/dt = -1)
+    x = 1.0f - t;
+    coeffs[2] = -((3.0f * (A + 2.0f) * x - 2.0f * (A + 3.0f)) * x);
+
+    // d(CubicConv2(2-t))/dt = -CubicConv2Grad(2-t) (chain rule: d(2-t)/dt = -1)
+    x = 2.0f - t;
+    coeffs[3] = -((3.0f * A * x - 10.0f * A) * x + 8.0f * A);
+}
+
+// Apply padding (clip/reflect) to a single neighbor coordinate and return the clipped integer index
+// Returns -1 if the point is out of bounds (for zeros padding)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t ComputeBicubicNeighborIndex(
+    float coord, uint32_t size, uint32_t padding, uint32_t alignCorners)
+{
+    if (padding == 0) { // zeros
+        int32_t idx = GetFloorValue(coord);
+        if (idx < 0 || idx >= static_cast<int32_t>(size)) {
+            return -1; // out of bounds
+        }
+        return idx;
+    } else if (padding == BORDER) { // border
+        float clipped = coord;
+        if (clipped < 0.0f) clipped = 0.0f;
+        float maxVal = static_cast<float>(size - 1);
+        if (clipped > maxVal) clipped = maxVal;
+        return static_cast<int32_t>(clipped);
+    } else { // reflection
+        float gradReflValue = 0;
+        float gradClipValue = 0;
+        if (alignCorners) {
+            coord = ReflectCoordinatesSetGrad(coord, 0, 2 * (size - 1), &gradReflValue);
+        } else {
+            coord = ReflectCoordinatesSetGrad(coord, -1, 2 * size - 1, &gradReflValue);
+        }
+        coord = ClipCoorDinatesSetGrad(coord, size, &gradClipValue);
+        return static_cast<int32_t>(coord);
+    }
+}
+
+// Get value from input with boundary handling (for grad_grid computation)
+template <typename T>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetValueBounded(
+    __gm__ T* data, int32_t x, int32_t y, uint32_t W, uint32_t H,
+    uint32_t sW, uint32_t sH, uint32_t padding, uint32_t alignCorners)
+{
+    if (padding == 0) { // zeros
+        if (x < 0 || x >= static_cast<int32_t>(W) || y < 0 || y >= static_cast<int32_t>(H)) {
+            return 0.0f;
+        }
+    } else if (padding == BORDER) { // border
+        x = x < 0 ? 0 : (x >= static_cast<int32_t>(W) ? static_cast<int32_t>(W) - 1 : x);
+        y = y < 0 ? 0 : (y >= static_cast<int32_t>(H) ? static_cast<int32_t>(H) - 1 : y);
+    } else { // reflection
+        float fx = static_cast<float>(x);
+        float fy = static_cast<float>(y);
+        float gradReflX = 0, gradClipX = 0, gradReflY = 0, gradClipY = 0;
+        if (alignCorners) {
+            fx = ReflectCoordinatesSetGrad(fx, 0, 2 * (W - 1), &gradReflX);
+            fy = ReflectCoordinatesSetGrad(fy, 0, 2 * (H - 1), &gradReflY);
+        } else {
+            fx = ReflectCoordinatesSetGrad(fx, -1, 2 * W - 1, &gradReflX);
+            fy = ReflectCoordinatesSetGrad(fy, -1, 2 * H - 1, &gradReflY);
+        }
+        fx = ClipCoorDinatesSetGrad(fx, W, &gradClipX);
+        fy = ClipCoorDinatesSetGrad(fy, H, &gradClipY);
+        x = static_cast<int32_t>(SafeDowngradeToIntRange(fx));
+        y = static_cast<int32_t>(SafeDowngradeToIntRange(fy));
+    }
+    if (x >= 0 && x < static_cast<int32_t>(W) && y >= 0 && y < static_cast<int32_t>(H)) {
+        return static_cast<float>(data[y * sH + x * sW]);
+    }
+    return 0.0f;
+}
+
+// Add value to grad_input with boundary handling (for grad_input computation)
+template <typename T>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void AddValueBounded(
+    __gm__ T* data, int32_t x, int32_t y, uint32_t W, uint32_t H,
+    uint32_t sW, uint32_t sH, float delta, uint32_t padding, uint32_t alignCorners)
+{
+    if (padding == 0) { // zeros
+        if (x < 0 || x >= static_cast<int32_t>(W) || y < 0 || y >= static_cast<int32_t>(H)) {
+            return;
+        }
+    } else if (padding == BORDER) { // border
+        y = y < 0 ? 0 : (y >= static_cast<int32_t>(H) ? static_cast<int32_t>(H) - 1 : y);
+        x = x < 0 ? 0 : (x >= static_cast<int32_t>(W) ? static_cast<int32_t>(W) - 1 : x);
+    } else { // reflection
+        float fy = static_cast<float>(y);
+        float fx = static_cast<float>(x);
+        float gradReflX = 0, gradClipX = 0, gradReflY = 0, gradClipY = 0;
+        if (alignCorners) {
+            fy = ReflectCoordinatesSetGrad(fy, 0, 2 * (H - 1), &gradReflY);
+            fx = ReflectCoordinatesSetGrad(fx, 0, 2 * (W - 1), &gradReflX);
+        } else {
+            fy = ReflectCoordinatesSetGrad(fy, -1, 2 * H - 1, &gradReflY);
+            fx = ReflectCoordinatesSetGrad(fx, -1, 2 * W - 1, &gradReflX);
+        }
+        fy = ClipCoorDinatesSetGrad(fy, H, &gradClipY);
+        fx = ClipCoorDinatesSetGrad(fx, W, &gradClipX);
+        y = static_cast<int32_t>(SafeDowngradeToIntRange(fy));
+        x = static_cast<int32_t>(SafeDowngradeToIntRange(fx));
+    }
+    if (x >= 0 && x < static_cast<int32_t>(W) && y >= 0 && y < static_cast<int32_t>(H)) {
+        asc_atomic_add(data + y * sH + x * sW, static_cast<T>(delta));
+    }
+}
+
 } // namespace GridSampler3DGradSimtBase
 #endif // GRID_SAMPLER3D_GRAD_SIMT_BASE_H_
