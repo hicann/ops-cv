@@ -37,6 +37,15 @@ constexpr int64_t THREAD_NUM = 2048; // simt开的线程数
 constexpr int32_t CACHE_LINE = 128;
 constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
 constexpr const float EPSILON = 1e-8f;
+const std::string EXACT_1D_TYPE = "UpsampleNearestExact1d";
+const std::string EXACT_2D_TYPE = "UpsampleNearestExact2d";
+const std::string EXACT_3D_TYPE = "UpsampleNearestExact3d";
+
+constexpr int64_t SIMD_THRESHOLD_HIGH = 5000000;  // SIMD模式高阈值
+constexpr int64_t SIMD_THRESHOLD_LOW = 86400;   // SIMD模式低阈值
+constexpr int64_t SIMD_WIDTH_THRESHOLD = 95;    // SIMD宽度阈值
+constexpr int64_t OUTPUT_SIZE_EXPECTED = 3;     // 期望的输出尺寸数量
+constexpr int64_t SIMD_SCHEDULE_ID = 4;         // SIMD调度ID
 
 struct BaseTilingData {
     int64_t dimN = 0;
@@ -62,6 +71,21 @@ struct BaseTilingData {
     int32_t dtypeSize = 0;
     int32_t cacheLineNum = 0;
     int32_t oneBlockNum = 0;
+
+    int64_t batches = 0;
+    int64_t slideSizeW = 0;
+    int64_t tensorSizeW = 0;
+    int64_t tensorSizeH = 0;
+    int64_t tensorSizeD = 0;
+    int64_t slideNumH = 0;
+    int64_t slideNumD = 0;
+    int64_t eachCoreSlideNum = 0;
+    int64_t remainder = 0;
+    int64_t tailStartSlideNum = 0;
+    int64_t groupCoreNum = 0;
+    int64_t inputRow = 0;
+    int64_t tailAvergingRow = 0;
+    bool isView1DAndSmallW = false;
 };
 
 static const std::map<ge::DataType, int32_t> inputDtypeList = { { ge::DT_DOUBLE, 8 },
@@ -77,10 +101,28 @@ public:
     ge::graphStatus DoTiling();
 
 private:
+    static constexpr int64_t BEST_PERFORMANCE_SIZE_1 = 256;
+    static constexpr int64_t BEST_PERFORMANCE_SIZE_2 = 768;
+    static constexpr int64_t BEST_PERFORMANCE_SIZE_3 = 1536;
+    static constexpr int64_t BEST_PERFORMANCE_SIZE_4 = 2048;
+    static constexpr float BEST_PERFORMANCE_SCALE_1 = 100.0f;
+    static constexpr float BEST_PERFORMANCE_SCALE_2 = 24.0f;
+    static constexpr float BEST_PERFORMANCE_SCALE_3 = 10.0f;
+    static constexpr float BEST_PERFORMANCE_SCALE_4 = 6.0f;
+    static constexpr float ZERO_FLOAT = 0.0f;
+    static constexpr float ONE_FLOAT = 1.0f;
+    static constexpr int64_t RESERVED_LENGTH = 4;
+    static constexpr int64_t SMALL_W = 64;
+    static constexpr size_t SHAPE_SIZE = 3;
+    static constexpr uint8_t D_INDEX = 0;
+    static constexpr uint8_t H_INDEX = 1;
+    static constexpr uint8_t W_INDEX = 2;
+
     ge::graphStatus CheckInputParams();
     ge::graphStatus CheckDtypeAndFormat();
     ge::graphStatus GetAndCheckShapes();
     ge::graphStatus CheckInputShapeAndAttr();
+    ge::graphStatus CheckInitTilingData();
     ge::graphStatus CheckNCAxesConsistency();
     ge::graphStatus GetAndCheckAttrs();
     void ComputeScales(float scaleD, float scaleH, float scaleW);
@@ -89,13 +131,79 @@ private:
     void FillTilingData();
     void PrintTilingData();
 
+    void CalSimdTilingData();
+    void FillSimdTilingData();
+    void PrintSimdTilingData();
+    bool GetIsSimd();
+    void GetTensorSize();
+    void GetRealCoreNum();
+    bool GetISView1DAndSmallW();
+
+    template <typename T1, typename T2>
+    static T1 CeilA2B(T1 a, T2 b)
+    {
+        if (b != 0) {
+            return (a + b - 1) / b;
+        }
+        return a;
+    }
+
+    template <typename T1>
+    static int32_t Ceil(T1 x)
+    {
+        int32_t floorX = static_cast<int32_t>(x);
+        if (FloatEqual(x, floorX)) {
+            return floorX;
+        }
+        return floorX + 1;
+    }
+
+    static bool FloatEqual(float a, float b)
+    {
+        float closeTo0 = 1e-6f;
+        if (a > b) {
+            return a - b < closeTo0;
+        }
+        return b - a < closeTo0;
+    }
+
 private:
     BaseTilingData baseTiling_;
+
     gert::TilingContext *context_ = nullptr;
     UpsampleNearest3dRegBaseTilingData *tilingData_{ nullptr };
     gert::Shape inputShape_;
     gert::Shape outShape_;
+    UpsampleNearest3dRegBaseSimdTilingData *simDTilingData_{ nullptr };
+private:
+    bool isSimd{false};
+    bool isExact{false};
 };
+
+bool UpsampleNearest3dRegbaseTiling::GetIsSimd()
+{
+    if (!isExact) {
+        return false;
+    }
+    bool isDataCopy = baseTiling_.outD == baseTiling_.inD && baseTiling_.outH == baseTiling_.inH &&
+        baseTiling_.outW == baseTiling_.inW && std::abs(baseTiling_.scaleD - 1.0f) <= EPSILON && std::abs(baseTiling_.scaleH - 1.0f) <= EPSILON &&
+        std::abs(baseTiling_.scaleW - 1.0f) <= EPSILON;
+    if (isDataCopy) {
+        return false;
+    }
+
+    int64_t outDHW = baseTiling_.outD * baseTiling_.outH * baseTiling_.outW;
+    if (outDHW >= SIMD_THRESHOLD_HIGH) {
+        return true;
+    }
+    
+    if (outDHW >= SIMD_THRESHOLD_LOW && baseTiling_.outW >= SIMD_WIDTH_THRESHOLD) {
+        return true;
+    }
+    
+    return false;
+}
+
 void UpsampleNearest3dRegbaseTiling::ComputeDataCopy()
 {
     int64_t coreNum = static_cast<int64_t>(baseTiling_.coreNum);
@@ -230,6 +338,29 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInputParams()
     return ge::GRAPH_SUCCESS;
 }
 
+ge::graphStatus UpsampleNearest3dRegbaseTiling::CheckInitTilingData()
+{
+    isSimd = GetIsSimd();
+    if (isSimd) {
+        if (simDTilingData_ == nullptr) {
+            simDTilingData_ = context_->GetTilingData<UpsampleNearest3dRegBaseSimdTilingData>();
+            OP_CHECK_IF(simDTilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
+        }
+        OP_CHECK_IF((memset_s(simDTilingData_, sizeof(UpsampleNearest3dRegBaseSimdTilingData), 0,
+            sizeof(UpsampleNearest3dRegBaseSimdTilingData)) != EOK),
+            OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);  
+    } else {
+        if (tilingData_ == nullptr) {
+            tilingData_ = context_->GetTilingData<UpsampleNearest3dRegBaseTilingData>();
+            OP_CHECK_IF(tilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
+        }
+        OP_CHECK_IF((memset_s(tilingData_, sizeof(UpsampleNearest3dRegBaseTilingData), 0,
+            sizeof(UpsampleNearest3dRegBaseTilingData)) != EOK),
+            OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);      
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 void UpsampleNearest3dRegbaseTiling::ComputeScales(float scaleD, float scaleH, float scaleW)
 {
     baseTiling_.scaleD = static_cast<float>(baseTiling_.inD) / static_cast<float>(baseTiling_.outD);
@@ -360,25 +491,190 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::Init()
         return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubSize is %lu", coreNum, ubSize);
     baseTiling_.ubSize = static_cast<int32_t>(ubSize);
-    if (tilingData_ == nullptr) {
-        tilingData_ = context_->GetTilingData<UpsampleNearest3dRegBaseTilingData>();
-        OP_CHECK_IF(tilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
+    std::string opType(context_->GetNodeType());
+    if (opType == EXACT_3D_TYPE || opType == EXACT_2D_TYPE || opType == EXACT_1D_TYPE) {
+        isExact = true;
     }
-    OP_CHECK_IF((memset_s(tilingData_, sizeof(UpsampleNearest3dRegBaseTilingData), 0,
-        sizeof(UpsampleNearest3dRegBaseTilingData)) != EOK),
-        OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
+}
+
+void UpsampleNearest3dRegbaseTiling::GetTensorSize()
+{
+    float realScaleD = baseTiling_.scaleD;
+    float realScaleH = baseTiling_.scaleH;
+
+    int64_t slideNumH = baseTiling_.outH;
+    int64_t tensorSizeH = 1;
+    if (realScaleH > ZERO_FLOAT && realScaleH < ONE_FLOAT) {
+        slideNumH = baseTiling_.inH;
+        tensorSizeH = RESERVED_LENGTH;
+    }
+
+    int64_t slideNumD = baseTiling_.outD;
+    int64_t tensorSizeD = 1;
+    if (realScaleD > ZERO_FLOAT && realScaleD < ONE_FLOAT) {
+        slideNumD = baseTiling_.inD;
+        tensorSizeD = RESERVED_LENGTH;
+    }
+
+    baseTiling_.slideNumH = slideNumH;
+    baseTiling_.slideNumD = slideNumD;
+    baseTiling_.tensorSizeH = tensorSizeH;
+    baseTiling_.tensorSizeD = tensorSizeD;
+}
+
+void UpsampleNearest3dRegbaseTiling::GetRealCoreNum()
+{
+    float realScaleW = baseTiling_.scaleW;
+    int64_t batches = baseTiling_.batches;
+    int64_t slideNumH = baseTiling_.slideNumH;
+    int64_t slideNumD = baseTiling_.slideNumD;
+    int64_t slideSizeW = baseTiling_.slideSizeW;
+    int64_t coreNumPlatform = static_cast<int64_t>(baseTiling_.coreNum);
+
+    int64_t slideNumW = CeilA2B(baseTiling_.outW, slideSizeW);
+    int64_t tensorSizeW = Ceil(slideSizeW * std::min(realScaleW, BEST_PERFORMANCE_SCALE_1)) + RESERVED_LENGTH;
+
+    int64_t slideNum = slideNumW * slideNumH * slideNumD;
+    int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
+    int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
+    int64_t inputRow = batches;
+    int64_t groupCoreNum = coreNumPlatform;
+    int64_t tailAvergingRow = 1;
+    if (remainder > 0) {
+        groupCoreNum = coreNumPlatform / remainder;
+        tailAvergingRow = CeilA2B(inputRow, groupCoreNum);
+        groupCoreNum = std::min(groupCoreNum, CeilA2B(inputRow, tailAvergingRow));
+    }
+
+    int32_t realCoreNum = coreNumPlatform;
+    if (eachCoreSlideNum == 0 && remainder > 0) {
+        realCoreNum = remainder * groupCoreNum;
+    }
+
+    baseTiling_.tensorSizeW = tensorSizeW;
+    baseTiling_.eachCoreSlideNum = eachCoreSlideNum;
+    baseTiling_.remainder = remainder;
+    baseTiling_.tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
+    baseTiling_.groupCoreNum = groupCoreNum;
+    baseTiling_.inputRow = inputRow;
+    baseTiling_.tailAvergingRow = tailAvergingRow;
+    baseTiling_.realCoreNum = realCoreNum;
+}
+
+bool UpsampleNearest3dRegbaseTiling::GetISView1DAndSmallW()
+{
+    if (baseTiling_.inD != 1 || baseTiling_.outD != 1) {
+        return false;
+    }
+    if (baseTiling_.inH != 1 || baseTiling_.outH != 1) {
+        return false;
+    }
+    if (baseTiling_.scaleW > BEST_PERFORMANCE_SCALE_1) {
+        return false;
+    }
+    if (baseTiling_.outW > SMALL_W) {
+        return false;
+    }
+    return true;
+}
+
+void UpsampleNearest3dRegbaseTiling::CalSimdTilingData()
+{
+    OP_LOGI(context_, "enter simd");
+
+    baseTiling_.realCoreNum = baseTiling_.coreNum;
+    baseTiling_.batches = baseTiling_.dimN * baseTiling_.dimC;
+    baseTiling_.schId = SIMD_SCHEDULE_ID;
+    baseTiling_.isUint32 = 0;
+    if (baseTiling_.scaleW <= BEST_PERFORMANCE_SCALE_4) {
+        baseTiling_.slideSizeW = BEST_PERFORMANCE_SIZE_4;
+    } else if (baseTiling_.scaleW <= BEST_PERFORMANCE_SCALE_3) {
+        baseTiling_.slideSizeW = BEST_PERFORMANCE_SIZE_3;
+    } else if (baseTiling_.scaleW <= BEST_PERFORMANCE_SCALE_2) {
+        baseTiling_.slideSizeW = BEST_PERFORMANCE_SIZE_2;
+    } else {
+        baseTiling_.slideSizeW = BEST_PERFORMANCE_SIZE_1;
+    }
+
+    GetTensorSize();
+    GetRealCoreNum();
+
+    baseTiling_.isView1DAndSmallW = false;
+    if (GetISView1DAndSmallW()) {
+        baseTiling_.isView1DAndSmallW = true;
+        baseTiling_.realCoreNum = static_cast<int64_t>(baseTiling_.coreNum);
+        baseTiling_.tailAvergingRow = CeilA2B(baseTiling_.inputRow, static_cast<int64_t>(baseTiling_.coreNum));
+        baseTiling_.realCoreNum = CeilA2B(baseTiling_.inputRow, baseTiling_.tailAvergingRow);
+    }
+}
+
+void UpsampleNearest3dRegbaseTiling::FillSimdTilingData()
+{
+    simDTilingData_->lenN = baseTiling_.dimN;
+    simDTilingData_->lenC = baseTiling_.dimC;
+    simDTilingData_->inD = baseTiling_.inD;
+    simDTilingData_->inH = baseTiling_.inH;
+    simDTilingData_->inW = baseTiling_.inW;
+    simDTilingData_->outD = baseTiling_.outD;
+    simDTilingData_->outH = baseTiling_.outH;
+    simDTilingData_->outW = baseTiling_.outW;
+    simDTilingData_->scaleD = baseTiling_.scaleD;
+    simDTilingData_->scaleH = baseTiling_.scaleH;
+    simDTilingData_->scaleW = baseTiling_.scaleW;
+    simDTilingData_->slideSizeW = baseTiling_.slideSizeW;
+    simDTilingData_->tensorSizeW = baseTiling_.tensorSizeW;
+    simDTilingData_->tensorSizeH = baseTiling_.tensorSizeH;
+    simDTilingData_->tensorSizeD = baseTiling_.tensorSizeD;
+    simDTilingData_->slideNumH = baseTiling_.slideNumH;
+    simDTilingData_->slideNumD = baseTiling_.slideNumD;
+    simDTilingData_->eachCoreSlideNum = baseTiling_.eachCoreSlideNum;
+    simDTilingData_->remainder = baseTiling_.remainder;
+    simDTilingData_->tailStartSlideNum = baseTiling_.tailStartSlideNum;
+    simDTilingData_->groupCoreNum = baseTiling_.groupCoreNum;
+    simDTilingData_->inputRow = baseTiling_.inputRow;
+    simDTilingData_->tailAvergingRow = baseTiling_.tailAvergingRow;
+    simDTilingData_->realCoreNum = baseTiling_.realCoreNum;
+    simDTilingData_->isView1DAndSmallW = baseTiling_.isView1DAndSmallW;
+}
+
+void UpsampleNearest3dRegbaseTiling::PrintSimdTilingData()
+{
+    OP_LOGD(context_,
+        "lenN %ld, lenC %ld, inD %ld, inH %ld, inW %ld, outD %ld, "
+        "outH %ld, outW %ld, scaleD %f, scaleH %f, scaleW %f, slideSizeW %ld, tensorSizeW %ld, tensorSizeH %ld, "
+        "tensorSizeD %ld, slideNumH %ld, slideNumD %ld, eachCoreSlideNum %ld, remainder %ld, tailStartSlideNum %ld, "
+        "groupCoreNum %ld, inputRow %ld, tailAvergingRow %ld, realCoreNum %d, isView1DAndSmallW %d",
+        simDTilingData_->lenN, simDTilingData_->lenC, simDTilingData_->inD, simDTilingData_->inH, simDTilingData_->inW, 
+        simDTilingData_->outD, simDTilingData_->outH, simDTilingData_->outW, simDTilingData_->scaleD, simDTilingData_->scaleH,
+        simDTilingData_->scaleW, simDTilingData_->slideSizeW, simDTilingData_->tensorSizeW, simDTilingData_->tensorSizeH,
+        simDTilingData_->tensorSizeD, simDTilingData_->slideNumH, simDTilingData_->slideNumD,
+        simDTilingData_->eachCoreSlideNum, simDTilingData_->remainder, simDTilingData_->tailStartSlideNum,
+        simDTilingData_->groupCoreNum, simDTilingData_->inputRow, simDTilingData_->tailAvergingRow,
+        simDTilingData_->realCoreNum, simDTilingData_->isView1DAndSmallW);
+
 }
 
 ge::graphStatus UpsampleNearest3dRegbaseTiling::DoTiling()
 {
+
     OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams is failed"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes is failed"),
         return ge::GRAPH_FAILED);
-    CalTilingData();
-    FillTilingData();
-    PrintTilingData();
+    OP_CHECK_IF(CheckInitTilingData() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInitTilingData is failed"),
+        return ge::GRAPH_FAILED);
+
+    if (isSimd) {
+        CalSimdTilingData();
+        FillSimdTilingData();
+        PrintSimdTilingData();
+    } else {
+        CalTilingData();
+        FillTilingData();
+        PrintTilingData();
+    }
+
     uint64_t schId = static_cast<uint64_t>(baseTiling_.schId);
     uint64_t isUint32 = static_cast<uint64_t>(baseTiling_.isUint32);
     const uint64_t tilingKey = GET_TPL_TILING_KEY(schId, isUint32);

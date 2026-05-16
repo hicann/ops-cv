@@ -21,6 +21,7 @@
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transpose.h"
 #include "upsample_nearest_exact3d.h"
+#include "op_api/aclnn_check.h"
 #include "aclnn_upsample_nearest_exact3d.h"
 
 using namespace op;
@@ -40,6 +41,8 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
 static const int64_t DIM_LIMIT = 5;
 static constexpr size_t DIM_ZERO = 0;
@@ -63,6 +66,8 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
+    } else if (IsRegBase(curArch)) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_REGBASE, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     }
@@ -228,14 +233,20 @@ aclnnStatus aclnnUpsampleNearestExact3dGetWorkspaceSize(const aclTensor *self, c
     auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
-    vector<float> scalesList{};
-    if (scalesW > 0 && scalesH > 0 && scalesD > 0) {
-        scalesList.push_back(static_cast<float>(1.0 / scalesD));
-        scalesList.push_back(static_cast<float>(1.0 / scalesH));
-        scalesList.push_back(static_cast<float>(1.0 / scalesW));
+    const aclFloatArray *scales;
+    if (IsRegBase()){
+        const float scalesList[] = {float(scalesD), float(scalesH), float(scalesW)};
+        scales = uniqueExecutor->AllocFloatArray(scalesList, 3);
+    } else {
+        vector<float> scalesList{};
+        // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
+        if (scalesW > 0 && scalesH > 0 && scalesD > 0) {
+            scalesList.push_back(static_cast<float>(1.0 / scalesD));
+            scalesList.push_back(static_cast<float>(1.0 / scalesH));
+            scalesList.push_back(static_cast<float>(1.0 / scalesW));
+        }
+        scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
     }
-    const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 调用upsampleNearestExact3dCompute计算

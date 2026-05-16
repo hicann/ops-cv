@@ -31,4 +31,32 @@ struct UpsampleNearest3dRegBaseTilingData {
     float scaleH;
     float scaleW;
 };
+
+struct UpsampleNearest3dRegBaseSimdTilingData {
+    int64_t lenN;
+    int64_t lenC;
+    int64_t inD;
+    int64_t inH;
+    int64_t inW;
+    int64_t outD;
+    int64_t outH;
+    int64_t outW;
+    float scaleD;
+    float scaleH;
+    float scaleW;
+    int64_t slideSizeW;
+    int64_t tensorSizeW;
+    int64_t tensorSizeH;
+    int64_t tensorSizeD;
+    int64_t slideNumH;
+    int64_t slideNumD;
+    int64_t eachCoreSlideNum;
+    int64_t remainder;
+    int64_t tailStartSlideNum;
+    int64_t groupCoreNum;
+    int64_t inputRow;
+    int64_t tailAvergingRow;
+    int32_t realCoreNum;
+    bool isView1DAndSmallW;
+};
 #endif

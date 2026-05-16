@@ -1,0 +1,64 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/* !
+ * \file upsample_nearest3d_apt.cpp
+ * \brief upsample_nearest3d_apt
+ */
+
+#include "kernel_tiling/kernel_tiling.h"
+#include "kernel_operator.h"
+#include "../upsample_nearest3d/arch35/upsample_nearest3d_data_copy.h"
+#include "../upsample_nearest3d/arch35/upsample_nearest3d_simt.h"
+#include "../upsample_nearest3d/arch35/upsample_nearest3d_simd.h"
+#include "../upsample_nearest3d/arch35/upsample_nearest3d_tiling_key.h"
+#include "../upsample_nearest3d/arch35/upsample_nearest3d_tiling_data.h"
+
+
+using namespace AscendC;
+using namespace UpsampleNearest3d;
+
+template <uint64_t schId, uint64_t isUint32>
+__global__ __aicore__ void upsample_nearest_exact3d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
+{
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
+    GM_ADDR usrWorkspace = AscendC::GetUserWorkspace(workspace);
+    if(usrWorkspace == nullptr) {
+        return;
+    }
+    TPipe pipe;
+    REGISTER_TILING_DEFAULT(UpsampleNearest3dRegBaseTilingData);
+    if constexpr (schId == SCH_MODE_4) {
+        GET_TILING_DATA_WITH_STRUCT(UpsampleNearest3dRegBaseSimdTilingData, tilingData, tiling);
+        UpsampleNearest3dND<DTYPE_X, true> op;
+        op.Init(x, y, &pipe, &tilingData);
+        op.Process();
+    } else {
+        GET_TILING_DATA_WITH_STRUCT(UpsampleNearest3dRegBaseTilingData, tilingData, tiling);
+        if constexpr (schId == SCH_MODE_0) {
+            // 纯copy模板，输出完全等于输入
+            Nearest3dDataCopy<DTYPE_X> op;
+            op.Init(x, y, &pipe, &tilingData);
+            op.Process();
+            return;
+        } else {
+            if constexpr(isUint32 == SCH_MODE_1) {
+                Nearest3dSimt<DTYPE_X, uint32_t, true, schId> op;
+                op.Init(x, y, &tilingData);
+                op.Process();
+            } else {
+                Nearest3dSimt<DTYPE_X, uint64_t, true, schId> op;
+                op.Init(x, y, &tilingData);
+                op.Process();
+            }
+            return;
+        }
+    }
+}

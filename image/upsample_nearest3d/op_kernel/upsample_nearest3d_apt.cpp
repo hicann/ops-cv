@@ -33,13 +33,13 @@ __global__ __aicore__ void upsample_nearest3d(GM_ADDR x, GM_ADDR y, GM_ADDR work
 
     GM_ADDR usrWorkspace = AscendC::GetUserWorkspace(workspace);
     TPipe pipe;
-    if constexpr (schId == 0) {
+    if constexpr (schId == SCH_MODE_0) {
         // 纯copy模板，输出完全等于输入
         Nearest3dDataCopy<DTYPE_X> op;
         op.Init(x, y, &pipe, &tilingData);
         op.Process();
         return;
-    } else {
+    } else if constexpr (schId != SCH_MODE_4) {
         if constexpr(isUint32 == 1) {
             Nearest3dSimt<DTYPE_X, uint32_t, false, schId> op;
             op.Init(x, y, &tilingData);

@@ -26,6 +26,10 @@
 #include "aclnn_upsample_nearest_exact2d.h"
 #include "image/resize_nearest_neighbor_v2/op_api/resize_nearest_neighbor_v2.h"
 #include "op_api/aclnn_check.h"
+#include "level0/squeeze.h"
+#include "level0/unsqueeze.h"
+#include "aclnn_kernels/transdata.h"
+#include "image/upsample_nearest_exact3d/op_host/op_api/upsample_nearest_exact3d.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -43,6 +47,52 @@ static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t EXPECT_SIZE = 2;
+static constexpr size_t UP_BATCH = 17;
+
+// CaseNearestExact3d阈值常量定义
+static constexpr int64_t CASE_NEAREST_EXACT3D_INPUT_H_MIN = 740;
+static constexpr int64_t CASE_NEAREST_EXACT3D_INPUT_H_MAX = 750;
+static constexpr float CASE_NEAREST_EXACT3D_SCALE_H_MIN = 7.5f;
+static constexpr float CASE_NEAREST_EXACT3D_SCALE_H_MAX = 8.0f;
+static constexpr int64_t CASE_NEAREST_EXACT3D_INPUT_W_MIN = 740;
+static constexpr int64_t CASE_NEAREST_EXACT3D_INPUT_W_MAX = 750;
+static constexpr float CASE_NEAREST_EXACT3D_SCALE_W_MIN = 6.5f;
+static constexpr float CASE_NEAREST_EXACT3D_SCALE_W_MAX = 7.0f;
+
+static const aclTensor *View4dAs5d(const aclTensor *input, aclOpExecutor *executor)
+{
+    // NCHW or ND -> contigious -> unsqueeze(2) -> reformat -> NCDHW
+    // contiguous input to 5D tensor
+    auto contiguousInput = l0op::Contiguous(input, executor);
+    CHECK_RET(contiguousInput != nullptr, nullptr);
+
+    // unsqeeze( 2 )
+    auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, static_cast<int64_t>(DIM_TWO), executor);
+    CHECK_RET(unsqueezedInput != nullptr, nullptr);
+
+    // reformat to NCDHW
+    auto reformatInput = l0op::ReFormat(unsqueezedInput, op::Format::FORMAT_NCDHW);
+    CHECK_RET(reformatInput != nullptr, nullptr);
+
+    return reformatInput;
+}
+
+static const aclTensor *View5dAs4d(const aclTensor *input, op::Format format, aclOpExecutor *executor)
+{
+    // NCHW -> squeeze -> reformat -> NCHW or ND
+    // squeeze out into 4D
+    const int64_t removeDim[] = {DIM_TWO};
+    aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, 1);
+    CHECK_RET(dimSqueeze != nullptr, nullptr);
+    auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
+    CHECK_RET(squeezedInput != nullptr, nullptr);
+
+    // reformat to NCHW or ND
+    auto reformatInput = l0op::ReFormat(squeezedInput, format);
+    CHECK_RET(reformatInput != nullptr, nullptr);
+
+    return reformatInput;
+}
 
 static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
 {
@@ -146,14 +196,58 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     return ACLNN_SUCCESS;
 }
 
+static bool IsCaseNearestExact3d(const aclTensor *self, const aclIntArray *outputSize)
+{
+    if (self->GetStorageFormat() != op::Format::FORMAT_NCHW && self->GetStorageFormat() != op::Format::FORMAT_NHWC) {
+        return false;
+    }
+    auto selfShape = self->GetViewShape();
+    int64_t inputN = selfShape.GetDim(DIM_ZERO);
+    int64_t inputC = selfShape.GetDim(DIM_ONE);
+    int64_t inputH = selfShape.GetDim(DIM_TWO);
+    int64_t inputW = selfShape.GetDim(DIM_THREE);
+    int64_t outputH = (*outputSize)[DIM_ZERO];
+    int64_t outputW = (*outputSize)[DIM_ONE];
+    float scaleH = inputH > 0 ? static_cast<float>(outputH) / inputH : 0.0f;
+    float scaleW = inputW > 0 ? static_cast<float>(outputW) / inputW : 0.0f;
+    if (inputN * inputC != UP_BATCH) {    
+        return false;
+    }
+    if (inputH < CASE_NEAREST_EXACT3D_INPUT_H_MIN || inputH > CASE_NEAREST_EXACT3D_INPUT_H_MAX || 
+        scaleH < CASE_NEAREST_EXACT3D_SCALE_H_MIN || scaleH > CASE_NEAREST_EXACT3D_SCALE_H_MAX) {
+        return false;
+    }
+    if (inputW < CASE_NEAREST_EXACT3D_INPUT_W_MIN || inputW > CASE_NEAREST_EXACT3D_INPUT_W_MAX || 
+        scaleW < CASE_NEAREST_EXACT3D_SCALE_W_MIN || scaleW > CASE_NEAREST_EXACT3D_SCALE_W_MAX) {
+        return false;
+    }
+    return true;
+}
+
 static const aclTensor *upsampleNearestExact2dCompute(const aclTensor *selfContiguous, const aclIntArray *outputSize,
     const aclFloatArray *scales, const aclTensor* outContiguous, aclOpExecutor *executor)
 {
     float scalesH = (*scales)[DIM_ZERO];
     float scalesW = (*scales)[DIM_ONE];
     if (IsRegBase()) {
-        auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT32));
-        return l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, true, outContiguous, executor);
+        if (IsCaseNearestExact3d(selfContiguous, outputSize)) {
+            auto self5d = View4dAs5d(selfContiguous, executor);
+            CHECK_RET(self5d != nullptr, nullptr);
+
+            FVector<int64_t> outputSizeVector{1, outputSize->GetData()[0], outputSize->GetData()[1]};
+            aclIntArray *outputSizeArray = executor->AllocIntArray(outputSizeVector.data(), 3);
+            CHECK_RET(outputSizeArray != nullptr, nullptr);
+            FVector<float> scaleVector{1.0f, scalesH, scalesW};
+
+            auto scalesArr = executor->AllocFloatArray(scaleVector.data(), 3);
+
+            auto result = l0op::UpsampleNearestExact3dNcdhw(self5d, outputSizeArray, scalesArr, executor);
+            CHECK_RET(result != nullptr, nullptr);
+            return View5dAs4d(result, selfContiguous->GetStorageFormat(), executor);
+        } else {
+            auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT32));
+            return l0op::ResizeNearestNeighborV2(selfContiguous, size, scales, false, true, outContiguous, executor);
+        }
     } else {
         if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCHW ||
         selfContiguous->GetStorageFormat() == op::Format::FORMAT_ND) {

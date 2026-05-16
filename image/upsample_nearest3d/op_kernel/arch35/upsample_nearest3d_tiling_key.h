@@ -21,6 +21,7 @@
 #define SCH_MODE_1 1 // dhw 分线程， nc拉成一维
 #define SCH_MODE_2 2 // cdhw 分线程, 和竞品一致
 #define SCH_MODE_3 3 // ncdhw 分线程
+#define SCH_MODE_4 4 // simd模板
 
 #define UPSAMPLE_NEAREST3D_TPL_KEY_DECL()                          \
     ASCENDC_TPL_UINT_DECL(schId,                                   \
@@ -29,7 +30,8 @@
         SCH_MODE_0,                                                \
         SCH_MODE_1,                                                \
         SCH_MODE_2,                                                \
-        SCH_MODE_3),                                               \
+        SCH_MODE_3,                                                \
+        SCH_MODE_4),                                               \
     ASCENDC_TPL_UINT_DECL(isUint32,                                \
         ASCENDC_TPL_8_BW,                                          \
         ASCENDC_TPL_UI_LIST,                                       \
@@ -38,6 +40,10 @@
 
 #define UPSAMPLE_NEAREST3D_COPY_TPL_KEY_SEL()                      \
     ASCENDC_TPL_UINT_SEL(schId, ASCENDC_TPL_UI_LIST, SCH_MODE_0),  \
+        ASCENDC_TPL_UINT_SEL(isUint32, ASCENDC_TPL_UI_LIST, 0)     \
+
+#define UPSAMPLE_NEAREST3D_SIMD_TPL_KEY_SEL()                      \
+    ASCENDC_TPL_UINT_SEL(schId, ASCENDC_TPL_UI_LIST, SCH_MODE_4),  \
         ASCENDC_TPL_UINT_SEL(isUint32, ASCENDC_TPL_UI_LIST, 0)     \
 
 #define UPSAMPLE_NEAREST3D_ELSE_TPL_KEY_SEL()                      \
@@ -50,6 +56,7 @@
 
 ASCENDC_TPL_ARGS_DECL(UpsampleNearest3d, UPSAMPLE_NEAREST3D_TPL_KEY_DECL());
 ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(UPSAMPLE_NEAREST3D_COPY_TPL_KEY_SEL()),
+    ASCENDC_TPL_ARGS_SEL(UPSAMPLE_NEAREST3D_SIMD_TPL_KEY_SEL()),
     ASCENDC_TPL_ARGS_SEL(UPSAMPLE_NEAREST3D_ELSE_TPL_KEY_SEL()));
 
 #endif

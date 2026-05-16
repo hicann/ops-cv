@@ -65,7 +65,7 @@ ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling(gert::TilingContext*
 {
     bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     std::string opType(tilingContext->GetNodeType());
-    if (regBase && (opType != EXACT_3D_TYPE)) {
+    if (regBase) {
         OP_LOGI(tilingContext->GetNodeName(), "enter Tiling4UpsampleNearest3dRegbase");
         return Tiling4UpsampleNearest3dRegbase(tilingContext);
     }
