@@ -6,7 +6,7 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 |  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
@@ -217,6 +217,20 @@ aclnnStatus aclnnUpsampleNearestExact1d(
 
 ## 约束说明
 
+- <term>Ascend 950PR/Ascend 950DT</term>：
+
+  参数`self`、`out`的shape约束：
+  - 每个维度的取值小于等于2^20。
+  - 参数`out`的N轴和C轴与`self`保持一致。
+  - 内存占用需小于60G。内存占用的计算公式如下：
+  
+    $$
+    N *  (ceil(C/16) * 16) * (self\_L + out\_L) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
+    $$
+
+    其中：
+    - N代表输入和输出的N轴。
+    - C代表输入和输出的C轴。
 - 参数self、outputSize、scales需要满足如下约束：
 
   $$

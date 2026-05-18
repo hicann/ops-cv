@@ -18,7 +18,7 @@
   - 计算流程：
 
     1. 根据grid存储的(x, y)值，计算出映射到input上的坐标，这些坐标和align_corners、padding_mode有关。
-    2. 根据输入的interpolation_mode，选择使用bilinear、nearest不同插值模式计算该坐标周围点分配到梯度的权重值。
+    2. 根据输入的interpolation_mode，选择使用bilinear、nearest、bicubic不同插值模式计算该坐标周围点分配到梯度的权重值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
   - 其中：
@@ -44,6 +44,7 @@
   
       - interpolation_mode="bilinear"，表示取input中(x, y)周围四个坐标的加权平均值。
       - interpolation_mode="nearest"，表示取input中距离(x, y)最近的坐标值。
+      - interpolation_mode="bicubic"，表示取(x, y)周围十六个坐标的加权平均值。
 
 ## 参数说明
 
@@ -87,7 +88,7 @@
     <tr>
       <td>interpolation_mode</td>
       <td>可选属性</td>
-      <td><ul><li>表示插值模式，对应公式描述中的`interpolation_mode`。支持"bilinear"（双线性插值）和"nearest"（最邻近插值）。</li><li>默认值为"bilinear"。</li></ul></td>
+      <td><ul><li>表示插值模式，对应公式描述中的`interpolation_mode`。支持"bilinear"（双线性插值）、"nearest"（最邻近插值）、"bicubic"（双三次插值）。</li><li>默认值为"bilinear"。</li></ul></td>
       <td>STRING</td>
       <td>-</td>
     </tr>
