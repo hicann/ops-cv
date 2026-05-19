@@ -299,6 +299,9 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::SplitUb()
     }
     uint32_t tilingDataSize = CeilAlign(sizeof(TilingData), BYTE_BLOCK);
     uint32_t canUseUbSize = FloorAlign(ubSize - tilingDataSize, BYTE_BLOCK);
+    if (regBase) {
+        extraUbSize = 0U;
+    }
     if (canUseUbSize <= extraUbSize) {
         ubFactorElement = 0U;
         return;

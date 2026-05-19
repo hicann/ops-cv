@@ -149,7 +149,7 @@ TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_float32_case5)
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
                                                 &compileInfo);
     uint64_t expectTilingKey = 2;
-    string expectTilingData = "1 4294967296 4294967297 4294967297 7421703487489 4294967297 137438953473 4294967298 1 28864 0 ";
+    string expectTilingData = "1 4294967296 4294967297 4294967297 7696581394433 4294967297 137438953473 4294967298 1 28864 0 ";
     std::vector<size_t> expectWorkspaces = {0};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
