@@ -353,15 +353,14 @@ endfunction()
 # install path: ${BIN_KERNEL_INSTALL_DIR}/${compute_unit}
 # ######################################################################################################################
 function(prepare_compile_from_config)
-  set(oneValueArgs TARGET OP_NAME BINARY_JSON OPS_INFO_DIR IMPL_DIR CONFIG_DIR OP_PYTHON_DIR OUT_DIR INSTALL_DIR
+  set(oneValueArgs TARGET OP_NAME OP_TYPE BINARY_JSON OPS_INFO_DIR IMPL_DIR CONFIG_DIR OP_PYTHON_DIR OUT_DIR INSTALL_DIR
                    COMPUTE_UNIT
     )
   cmake_parse_arguments(CONFCMP "" "${oneValueArgs}" "" ${ARGN})
   file(MAKE_DIRECTORY ${CONFCMP_OUT_DIR}/src)
   file(MAKE_DIRECTORY ${CONFCMP_OUT_DIR}/bin)
   file(MAKE_DIRECTORY ${CONFCMP_OUT_DIR}/gen)
-  get_op_type_from_binary_json("${CONFCMP_BINARY_JSON}" OP_TYPE)
-  message(STATUS "start to compile op: ${CONFCMP_OP_NAME}, op_type: ${OP_TYPE}")
+  message(STATUS "start to compile op: ${CONFCMP_OP_NAME}, op_type: ${CONFCMP_OP_TYPE}")
   # add Environment Variable Configurations of python & ccache
   set(_ASCENDC_ENV_VAR)
   list(APPEND _ASCENDC_ENV_VAR export HI_PYTHON=${ASCEND_PYTHON_EXECUTABLE} &&)
@@ -396,7 +395,7 @@ function(prepare_compile_from_config)
   add_custom_target(
     config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME}
     COMMAND
-      ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_opc.sh ${OP_TYPE} ${CONFCMP_COMPUTE_UNIT}
+      ${_ASCENDC_ENV_VAR} bash ${OPS_KERNEL_BINARY_SCRIPT}/build_binary_opc.sh ${CONFCMP_OP_TYPE} ${CONFCMP_COMPUTE_UNIT}
       ${CONFCMP_OUT_DIR}/bin ${ENABLE_MSSANITIZER} ${CMAKE_BUILD_TYPE} ${ENABLE_OOM} ${ENABLE_DUMP_CCE} bisheng_flags=${BISHENG_FLAGS} kernel_template_input=${KERNEL_TEMPLATE_INPUT}
     WORKING_DIRECTORY ${OPS_KERNEL_BINARY_SCRIPT}
     DEPENDS ${ASCEND_KERNEL_CONF_DST}/aic-${CONFCMP_COMPUTE_UNIT}-ops-info.ini ascendc_kernel_src_copy
@@ -630,30 +629,34 @@ function(gen_ops_info_and_python)
         if(EXISTS ${binary_json})
           # binary compile from binary json config
           message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary with self config.")
-          prepare_compile_from_config(
-                TARGET
-                ascendc_bin_${compute_unit}_${op_name}
-                OP_NAME
-                ${op_name}
-                BINARY_JSON
-                ${binary_json}
-                OPS_INFO_DIR
-                ${ASCEND_AUTOGEN_PATH}
-                IMPL_DIR
-                ${OP_DIR}/op_kernel
-                CONFIG_DIR
-                ${OP_DIR}/op_host/config
-                OP_PYTHON_DIR
-                ${CMAKE_BINARY_DIR}/tbe/dynamic
-                OUT_DIR
-                ${CMAKE_BINARY_DIR}/binary/${compute_unit}
-                INSTALL_DIR
-                ${BIN_KERNEL_INSTALL_DIR}
-                COMPUTE_UNIT
-                ${compute_unit}
-          )
-          add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen gen_bin_scripts)
+        else()
+          message(STATUS "[INFO] On [${compute_unit}], [${op_name}] compile binary with auto gen config.")
         endif()
+        prepare_compile_from_config(
+              TARGET
+              ascendc_bin_${compute_unit}_${op_name}
+              OP_NAME
+              ${op_name}
+              OP_TYPE
+              ${op_type}
+              BINARY_JSON
+              ${binary_json}
+              OPS_INFO_DIR
+              ${ASCEND_AUTOGEN_PATH}
+              IMPL_DIR
+              ${OP_DIR}/op_kernel
+              CONFIG_DIR
+              ${OP_DIR}/op_host/config
+              OP_PYTHON_DIR
+              ${CMAKE_BINARY_DIR}/tbe/dynamic
+              OUT_DIR
+              ${CMAKE_BINARY_DIR}/binary/${compute_unit}
+              INSTALL_DIR
+              ${BIN_KERNEL_INSTALL_DIR}
+              COMPUTE_UNIT
+              ${compute_unit}
+        )
+        add_dependencies(ascendc_bin_${compute_unit}_${op_name} merge_ini_${compute_unit} ascendc_impl_gen gen_bin_scripts)
       endforeach()
       # binary compile from binary json config
 
