@@ -37,6 +37,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/adjust_saturation/README.md">adjust_saturation</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI CPU</td>
+    <td>对 RGB 图像的饱和度进行调整。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/col2im/README.md">col2im</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -195,6 +205,16 @@
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。</td>
   </tr>
+    <tr>
+      <td>image</td>
+      <td><a href="../../image/scale_and_translate/README.md">scale_and_translate</a></td>
+      <td>&check;</td>
+      <td>&check;</td>
+      <td>&cross;</td>
+      <td>&check;</td>
+      <td>AI CPU</td>
+      <td>按给定输出尺寸、缩放因子和平移量对输入图像执行二维重采样。</td>
+    </tr>
   <tr>
     <td>image</td>
     <td><a href="../../image/three_interpolate_backward/README.md">three_interpolate_backward</a></td>
