@@ -44,6 +44,7 @@ constexpr int64_t MAX_MATRIX_BOUND = 32676;
 constexpr int16_t CSC_IDENTITY_SCALE = 256;
 constexpr int64_t MIN_CHN_BOUND = -65504;
 constexpr int64_t MAX_CHN_BOUND = 65504;
+constexpr int64_t MIN_IMAGE_HIGH = 2;
 constexpr int64_t MAX_IMAGE_HIGH = 4096;
 constexpr int64_t MAX_IMAGE_WIDTH = 4096;
 
@@ -188,6 +189,7 @@ private:
     ge::graphStatus CheckInputImage();
     ge::graphStatus SetCropValue();
     ge::graphStatus CheckCropSize();
+    ge::graphStatus CheckCropStartPos();
     ge::graphStatus SetCscValue();
     ge::graphStatus SetDTCValue();
     ge::graphStatus SetSwapSwitch();
@@ -199,9 +201,9 @@ private:
     ge::graphStatus CheckPaddingSize();
     ge::graphStatus ValidPaddingValue(float padValue, ge::DataType outputDtype);
     ge::graphStatus ProcessStaticMode();
-
+    ge::graphStatus CheckInputImageHWC(uint32_t expectedH, uint32_t expectedW, uint32_t expectedC);
     map<string, string> parseAippConfig(string jsonStr);
-    map<string, string> parseAippCfgFromPath(string fileName);
+    ge::graphStatus parseAippCfgFromPath(string fileName, map<string, string>& aippConfig);
     void SetSySTilingData();
     void PrintTilingData() const;
 
@@ -211,6 +213,7 @@ private:
 
 private:
     map<string, string> aippCfg;
+    std::string configStr;
     AippTilingData tilingData;
 
     int32_t inputImageSize = 1;

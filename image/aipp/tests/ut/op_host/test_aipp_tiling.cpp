@@ -577,7 +577,7 @@ TEST_F(AippTiling, aipp_tiling_test_3)
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_02.cfg " + filePath;
     system(command.c_str());
     gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 1080, 3}, {1, 256, 1080, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 1080, 256, 3}, {1, 1080, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 224, 256}, {1, 3, 224, 256}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -744,12 +744,13 @@ TEST_F(AippTiling, aipp_tiling_test_5)
 TEST_F(AippTiling, aipp_tiling_test_6)
 {
     AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_28.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_28.cfg " + filePath;
+    system(command.c_str());
     gert::TilingContextPara tilingContextPara("Aipp",
         {{{{1, 256, 221, 3}, {1, 256, 221, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"YUV420SP_U8"})"))},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_ERROR_TILINGKEY;
@@ -1143,7 +1144,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_4)
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_09.cfg " + filePath;
     system(command.c_str());
     gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 1080, 3}, {1, 256, 1080, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 1080, 256, 3}, {1, 1080, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 234, 244}, {1, 3, 234, 244}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -2323,4 +2324,96 @@ TEST_F(AippTiling, aipp_tiling_csc_test_24)
     };
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_invaild_config_path_1)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_11.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_11.cfg " + filePath;
+    system(command.c_str());
+    std::string filePathNew = "../aipp_ut_test_11.cfg";
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePathNew))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_invaild_config_path_2)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_11.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_11.cfg " + filePath;
+    system(command.c_str());
+    std::string filePathNew = std::filesystem::current_path() / "aipp_ut_test_NA.cfg";
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePathNew))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_invaild_config_item_1)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_25.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_25.cfg " + filePath;
+    system(command.c_str());
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_invaild_config_item_2)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_26.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_26.cfg " + filePath;
+    system(command.c_str());
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+TEST_F(AippTiling, aipp_tiling_invaild_aipp_mode)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    std::string filePath = std::filesystem::current_path() / "aipp_ut_test_27.cfg";
+    std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_27.cfg " + filePath;
+    system(command.c_str());
+    gert::TilingContextPara tilingContextPara("Aipp",
+        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }

@@ -15,6 +15,8 @@
 
 #include <stdexcept>
 #include <typeinfo>
+#include <system_error>
+#include <cstring>
 #include "log/log.h"
 #include "aipp_tiling.h"
 
@@ -54,9 +56,6 @@ ge::graphStatus AippTiling::ParseNumAndValidateRange(
     const std::map<std::string, T*>& valueMap, int64_t minValue, int64_t maxValue)
 {
     const std::string parseErrorLog = " failed to parse.";
-    const std::string rangeErrorLog =
-        " should between [" + std::to_string(minValue) + ", " + std::to_string(maxValue) + "].";
-
     for (const auto& item : valueMap) {
         if (aippCfg.find(item.first) == aippCfg.end()) {
             continue;
@@ -64,9 +63,13 @@ ge::graphStatus AippTiling::ParseNumAndValidateRange(
 
         OP_CHECK_IF(!StringToNum(aippCfg.at(item.first), *item.second),
             OP_LOGE(context_->GetNodeName(), "%s", (item.first + parseErrorLog).c_str()), return ge::GRAPH_FAILED);
-
-        OP_CHECK_IF(*item.second > maxValue || *item.second < minValue,
-            OP_LOGE(context_->GetNodeName(), "%s", (item.first + rangeErrorLog).c_str()), return ge::GRAPH_FAILED);
+        if (*item.second > maxValue || *item.second < minValue) {
+            std::string reasonMsg = "The current value is not within the valid range. The valid range is [" + 
+                std::to_string(minValue) +", " + std::to_string(maxValue) + "]";
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                item.first.c_str(), std::to_string(*item.second).c_str(), reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -118,13 +121,15 @@ ge::graphStatus AippTiling::GetShapeAttrsInfo()
     OP_CHECK_NULL_WITH_CONTEXT(context_, attrs);
     const char* configData = attrs->GetAttrPointer<char>(ATTR_AIPP_CONFIG_PATH_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, configData);
-    string configStr(configData);
+    configStr = configData;
     if (!configStr.empty() && configStr.front() == '{' && configStr.back() == '}') {
         OP_LOGI(context_->GetNodeName(), "aippConfigData is: %s", configData);
         aippCfg = parseAippConfig(configData);
     } else {
         OP_LOGI(context_->GetNodeName(), "aippConfigPath is: %s", configData);
-        aippCfg = parseAippCfgFromPath(configData);
+        if (parseAippCfgFromPath(configData, aippCfg) == ge::GRAPH_FAILED) {
+            return ge::GRAPH_FAILED;
+        }
     }
 
     OP_CHECK_IF(CheckAippCfg() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "aipp cfg is invalid."),
@@ -149,14 +154,23 @@ ge::graphStatus AippTiling::CheckInputFormat()
     auto inputImges = context_->GetInputDesc(INPUT_IMAGES_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputImges);
     auto inputFormatLocal = inputImges->GetOriginFormat();
-    OP_CHECK_IF(inputFormatLocal != ge::FORMAT_NHWC, OP_LOGE(context_->GetNodeName(),\
-        "aipp input format only support NHWC."), return ge::GRAPH_FAILED);
+    if (inputFormatLocal != ge::FORMAT_NHWC) {
+        OP_LOGE_FOR_INVALID_FORMAT(context_->GetNodeType(), "images",
+            Ops::Base::ToString(inputFormatLocal).c_str(),
+            Ops::Base::ToString(ge::FORMAT_NHWC).c_str());
+        return ge::GRAPH_FAILED;
+    }
 
     auto outputImages = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
     auto outputFormatLocal = outputImages->GetOriginFormat();
-    OP_CHECK_IF(outputFormatLocal != ge::FORMAT_NCHW && outputFormatLocal != ge::FORMAT_NHWC,
-        OP_LOGE(context_->GetNodeName(), "aipp output format only support NCHW and NHWC."), return ge::GRAPH_FAILED);
+    if (outputFormatLocal != ge::FORMAT_NCHW && outputFormatLocal != ge::FORMAT_NHWC) {
+        std::string correctFormat = Ops::Base::ToString(ge::FORMAT_NCHW) + " or " +
+            Ops::Base::ToString(ge::FORMAT_NHWC);
+        OP_LOGE_FOR_INVALID_FORMAT(context_->GetNodeType(), "features",
+            Ops::Base::ToString(outputFormatLocal).c_str(), correctFormat.c_str());
+        return ge::GRAPH_FAILED;
+    }
 
     auto inputShapePtr = context_->GetInputShape(INPUT_IMAGES_IDX);
     
@@ -184,28 +198,46 @@ ge::graphStatus AippTiling::CheckInputFormat()
 
 ge::graphStatus AippTiling::CheckAippCfg()
 {
-    OP_CHECK_IF(aippCfg.size() == 0, 
-        OP_LOGE(context_->GetNodeName(), "aippCfg is empty."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(aippCfg.find(AIPP_MODE) == aippCfg.end(),
-        OP_LOGE(context_->GetNodeName(), "aippCfg has no aipp_mode."), return ge::GRAPH_FAILED);
+    if (aippCfg.size() == 0) {
+        OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(),
+            "The AIPP operator configuration file contains no configuration item");
+        return ge::GRAPH_FAILED;
+    }
+    if (aippCfg.find(AIPP_MODE) == aippCfg.end()) {
+        std::string reasonMsg = "The AIPP operator configuration file does not contain configuration item " + AIPP_MODE;
+        OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (aippCfg.find(AIPP_INPUT_FORMAT) == aippCfg.end()) {
+        std::string reasonMsg = "The AIPP operator configuration file does not contain configuration item " +
+            AIPP_INPUT_FORMAT;
+        OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     string aippMode = aippCfg.at(AIPP_MODE);
-    OP_CHECK_IF(aippMode != AIPP_MODE_STATIC && aippMode != AIPP_MODE_DYNAMIC,
-        OP_LOGE(context_->GetNodeName(), "aipp_mode must be 'static' or 'dynamic'."), return ge::GRAPH_FAILED);
+    if (aippMode != AIPP_MODE_STATIC && aippMode != AIPP_MODE_DYNAMIC) {
+        std::string expectValue = AIPP_MODE_STATIC + " or " + AIPP_MODE_DYNAMIC;
+        OP_LOGE_FOR_INVALID_CONFIG(context_->GetNodeType(), configStr.c_str(),
+            AIPP_MODE.c_str(), aippMode.c_str(), expectValue.c_str());
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
 ge::graphStatus AippTiling::SetImagesValue()
 {
     if (aippCfg.find(AIPP_INPUT_FORMAT) != aippCfg.end()) {
-        OP_CHECK_IF(
-            IMAGE_FORMAT_MAP.find(aippCfg.at(AIPP_INPUT_FORMAT)) == IMAGE_FORMAT_MAP.end(),
-            OP_LOGE(context_->GetNodeName(), "aipp input_format only support RGB888_U8 or XRGB8888_U8 or YUV420SP_U8 or YUV400_U8."),
-            return ge::GRAPH_FAILED);
-
+        string curInputFormat = aippCfg.at(AIPP_INPUT_FORMAT);
+        if (IMAGE_FORMAT_MAP.find(curInputFormat) == IMAGE_FORMAT_MAP.end()) {
+            std::string expectValue = IMAGE_FORMAT_YUV420SP_U8 + " or " +
+                IMAGE_FORMAT_XRGB8888_U8 + " or " +
+                IMAGE_FORMAT_RGB888_U8 + " or " +
+                IMAGE_FORMAT_YUV400_U8;
+            OP_LOGE_FOR_INVALID_CONFIG(context_->GetNodeType(), configStr.c_str(),
+                AIPP_INPUT_FORMAT.c_str(), curInputFormat.c_str(), expectValue.c_str());
+            return ge::GRAPH_FAILED;
+        }
         tilingData.imageFormat = IMAGE_FORMAT_MAP.at(aippCfg.at(AIPP_INPUT_FORMAT));
-    } else {
-        OP_LOGE(context_->GetNodeName(), "can not find input_format in aipp config.");
-        return ge::GRAPH_FAILED;
     }
 
     if (aippCfg.find(AIPP_SRC_IMAGE_SIZE_H) != aippCfg.end()) {
@@ -221,42 +253,88 @@ ge::graphStatus AippTiling::SetImagesValue()
     return ge::GRAPH_SUCCESS;
 }
 
+ge::graphStatus AippTiling::CheckInputImageHWC(uint32_t expectedH, uint32_t expectedW, uint32_t expectedC)
+{
+    auto inputShapePtr = context_->GetInputShape(INPUT_IMAGES_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, inputShapePtr);
+    auto inputStorageShape = inputShapePtr->GetStorageShape();
+    uint32_t imgSizeW = inputStorageShape.GetDim(NHWC_IMAGE_W_DIM);
+    if (imgSizeW != expectedW) {
+        std::string reasonMsg = "Shape[" + std::to_string(NHWC_IMAGE_W_DIM) +
+            "] of this parameter must be equal to " + std::to_string(expectedW);
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "images",
+                Ops::Base::ToString(inputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    uint32_t imgSizeH = inputStorageShape.GetDim(NHWC_IMAGE_H_DIM);
+    if (imgSizeH != expectedH) {
+        std::string reasonMsg = "Shape[" + std::to_string(NHWC_IMAGE_H_DIM) +
+            "] of this parameter must be equal to " + std::to_string(expectedH);
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "images",
+                Ops::Base::ToString(inputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    uint32_t imgSizeC = inputStorageShape.GetDim(NHWC_IMAGE_CHANNEL_DIM);
+    if (imgSizeC != expectedC) {
+        std::string reasonMsg = "Shape[" + std::to_string(NHWC_IMAGE_CHANNEL_DIM) +
+            "] of this parameter must be equal to " + std::to_string(expectedC);
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "images",
+                Ops::Base::ToString(inputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus AippTiling::CheckInputImage()
 {
-    OP_CHECK_IF(tilingData.inputSizeH == 1 || tilingData.inputSizeH > MAX_IMAGE_HIGH,
-        OP_LOGE(context_->GetNodeName(), "The value range of the src_image_size_h is 0, [2, 4096]."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(tilingData.inputSizeW > MAX_IMAGE_WIDTH,
-        OP_LOGE(context_->GetNodeName(), "The value range of the src_image_size_w is [0, 4096]."),
-        return ge::GRAPH_FAILED);
+    if (tilingData.inputSizeH == 1 || tilingData.inputSizeH > MAX_IMAGE_HIGH) {
+        std::string reasonMsg = "The current value is not within the valid range. The valid range is [0, 1), [" + 
+            std::to_string(MIN_IMAGE_HIGH) +", " + std::to_string(MAX_IMAGE_HIGH) + "]";
+        OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+            AIPP_SRC_IMAGE_SIZE_H.c_str(), std::to_string(tilingData.inputSizeH).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
 
-    stringstream errorCheckLog;
-    errorCheckLog << "when input_format is " << aippCfg.at(AIPP_INPUT_FORMAT)
-                  << ", input image size should be bigger than N * src_image_size_w * src_image_size_h * ";
+    if (tilingData.inputSizeW > MAX_IMAGE_WIDTH) {
+        std::string reasonMsg = "The current value is not within the valid range. The valid range is [" + 
+            std::to_string(0) +", " + std::to_string(MAX_IMAGE_WIDTH) + "]";
+        OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+            AIPP_SRC_IMAGE_SIZE_W.c_str(), std::to_string(tilingData.inputSizeW).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
-        errorCheckLog << IMAGE_FORMAT_YUV420SP_U8_SIZE_LIMIT;
+        if (tilingData.inputSizeW % EVEN_NUMBER_BASE != 0 || tilingData.inputSizeH % EVEN_NUMBER_BASE != 0) {
+            std::stringstream reasonMsg;
+            reasonMsg << "When input_format is YUV420SP_U8, ";
+            reasonMsg << "src_image_size_h and src_image_size_w must be even numbers";
+            std::string values = std::to_string(tilingData.inputSizeH) + ", " + std::to_string(tilingData.inputSizeW);
+            OP_LOGE_FOR_INVALID_CONFIGS_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                "src_image_size_h, src_image_size_w", values.c_str(), reasonMsg.str().c_str());
+            return ge::GRAPH_FAILED;
+        }
+
+        stringstream errorCheckLog;
+        errorCheckLog << "When input_format is YUV420SP_U8, ";
+        errorCheckLog << "input image size should be bigger than N * src_image_size_w * src_image_size_h * 1.5";
         OP_CHECK_IF((inputImageSize * CONST_VALUE_TWO <
             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * CONST_VALUE_THREE),
             OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
-
-        OP_CHECK_IF(tilingData.inputSizeW % EVEN_NUMBER_BASE != 0 || tilingData.inputSizeH % EVEN_NUMBER_BASE != 0,
-            OP_LOGE(context_->GetNodeName(), \
-            "When input_format is YUV420SP_U8, src_image_size_h/w must be even number"), return ge::GRAPH_FAILED);
     } else if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8)) {
-        errorCheckLog << static_cast<int>(IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT);
-        OP_CHECK_IF((inputImageSize <
-             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT),
-            OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
+        if (CheckInputImageHWC(tilingData.inputSizeH, tilingData.inputSizeW,
+                IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT) == ge::GRAPH_FAILED) {
+            return ge::GRAPH_FAILED;
+        }
+
     } else if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
-        errorCheckLog << static_cast<int>(IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT);
-        OP_CHECK_IF((inputImageSize <
-             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT),
-            OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
+        if (CheckInputImageHWC(tilingData.inputSizeH, tilingData.inputSizeW,
+                IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT) == ge::GRAPH_FAILED) {
+            return ge::GRAPH_FAILED;
+        }
     } else {
-        errorCheckLog << static_cast<int>(IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT);
-        OP_CHECK_IF((inputImageSize <
-             tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT),
-            OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
+        if (CheckInputImageHWC(tilingData.inputSizeH, tilingData.inputSizeW,
+                IMAGE_FORMAT_XRGB8888_U8_SIZE_LIMIT) == ge::GRAPH_FAILED) {
+            return ge::GRAPH_FAILED;
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -265,13 +343,21 @@ ge::graphStatus AippTiling::CheckInputDtype()
 {
     auto inputImges = context_->GetInputDesc(INPUT_IMAGES_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputImges);
-    OP_CHECK_IF(inputImges->GetDataType() != ge::DT_UINT8, \
-        OP_LOGE(context_->GetNodeName(), "inputImges only support uint8."), return ge::GRAPH_FAILED);
-
+    auto inputDtype = inputImges->GetDataType();
+    if (inputDtype != ge::DT_UINT8) {
+        OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeType(), "images",
+        Ops::Base::ToString(inputDtype).c_str(), Ops::Base::ToString(ge::DT_UINT8).c_str());
+        return ge::GRAPH_FAILED;
+    }
     auto outputImages = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
-    OP_CHECK_IF(outputImages->GetDataType() != ge::DT_FLOAT16 && outputImages->GetDataType() != ge::DT_UINT8,
-        OP_LOGE(context_->GetNodeName(), "outputImages only support float16 or uint8."), return ge::GRAPH_FAILED);
+    auto outDtype = outputImages->GetDataType();
+    if (outDtype != ge::DT_FLOAT16 && outDtype != ge::DT_UINT8) {
+        std::string correctDtype = Ops::Base::ToString(ge::DT_FLOAT16) + " or " + Ops::Base::ToString(ge::DT_UINT8);
+        OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeType(), "features",
+        Ops::Base::ToString(outDtype).c_str(), correctDtype.c_str());
+        return ge::GRAPH_FAILED;
+    }
 
     return ge::GRAPH_SUCCESS;
 }
@@ -308,15 +394,29 @@ ge::graphStatus AippTiling::ProcessStaticMode()
 ge::graphStatus AippTiling::ValidPaddingValue(float padValue, ge::DataType outputDtype)
 {
     if (outputDtype == ge::DT_UINT8) {
-        OP_CHECK_IF(tilingData.paddingParam.padValue < MIN_PADDING_VALUE_UINT8 ||
-            tilingData.paddingParam.padValue > MAX_PADDING_VALUE_UINT8,
-            OP_LOGE(context_->GetNodeName(), "padding value should between [0, 255] for uint8 output."),
-            return ge::GRAPH_FAILED);
+        if (tilingData.paddingParam.padValue < MIN_PADDING_VALUE_UINT8 ||
+            tilingData.paddingParam.padValue > MAX_PADDING_VALUE_UINT8) {
+            std::string reasonMsg = "If the dtype of the output features is " + Ops::Base::ToString(ge::DT_UINT8) +
+                ", the value of this configuration item must be within the range [" +
+                std::to_string(MIN_PADDING_VALUE_UINT8) + ", " +
+                std::to_string(MAX_PADDING_VALUE_UINT8) + "]";
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                AIPP_PADDING_VALUE.c_str(), std::to_string(tilingData.paddingParam.padValue).c_str(),
+                reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
     } else if (outputDtype == ge::DT_FLOAT16) {
-        OP_CHECK_IF(tilingData.paddingParam.padValue < MIN_PADDING_VALUE_FP16 ||
-            tilingData.paddingParam.padValue > MAX_PADDING_VALUE_FP16,
-            OP_LOGE(context_->GetNodeName(), "padding value should between [-65504, 65504] for fp16 output."),
-            return ge::GRAPH_FAILED);
+        if (tilingData.paddingParam.padValue < MIN_PADDING_VALUE_FP16 ||
+            tilingData.paddingParam.padValue > MAX_PADDING_VALUE_FP16) {
+            std::string reasonMsg = "If the dtype of the output features is " + Ops::Base::ToString(ge::DT_FLOAT16) +
+                ", the value of this configuration item must be within the range [" +
+                std::to_string(MIN_PADDING_VALUE_FP16) + ", " +
+                std::to_string(MAX_PADDING_VALUE_FP16) + "]";
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                AIPP_PADDING_VALUE.c_str(), std::to_string(tilingData.paddingParam.padValue).c_str(),
+                reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -378,34 +478,49 @@ ge::graphStatus AippTiling::CheckPaddingSize()
     uint32_t expectedW = tilingData.cropParam.cropSizeW +
                         tilingData.paddingParam.leftPaddingSize +
                         tilingData.paddingParam.rightPaddingSize;
-    OP_CHECK_IF(expectedH != tilingData.outputSizeH || expectedW != tilingData.outputSizeW,
-        OP_LOGE(context_->GetNodeName(),
-        "output size mismatch: output=%dx%d,expectedOut=crop(%dx%d)+padding(%d,%d,%d,%d)=%dx%d.",
-        tilingData.outputSizeH, tilingData.outputSizeW,
-        tilingData.cropParam.cropSizeH, tilingData.cropParam.cropSizeW,
-        tilingData.paddingParam.topPaddingSize, tilingData.paddingParam.bottomPaddingSize,
-        tilingData.paddingParam.leftPaddingSize, tilingData.paddingParam.rightPaddingSize,
-        expectedH, expectedW),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(tilingData.outputSizeW > MAX_PADDING_OUT_W,
-        OP_LOGE(context_->GetNodeName(),
-        "After padding, aipp output w[%d] should be less than or eaqual to 1080.",
-        tilingData.outputSizeW),
-        return ge::GRAPH_FAILED);
+    uint32_t hIdx = tilingData.outputFormat == NCHW_FORMAT_INDEX ? NCHW_IMAGE_H_DIM : NHWC_IMAGE_H_DIM;
+    uint32_t wIdx = tilingData.outputFormat == NCHW_FORMAT_INDEX ? NCHW_IMAGE_W_DIM : NHWC_IMAGE_W_DIM;
+    auto outputShapePtr = context_->GetOutputShape(OUTPUT_FEATURES_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, outputShapePtr);
+    auto outputStorageShape = outputShapePtr->GetStorageShape();
+    if (expectedH != tilingData.outputSizeH) {
+        std::string reasonMsg = "Shape[" + std::to_string(hIdx) +
+            "] of this parameter must be equal to the theoretical value " + std::to_string(expectedH) + " of Ho";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "features",
+            Ops::Base::ToString(outputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (expectedW != tilingData.outputSizeW) {
+        std::string reasonMsg = "Shape[" + std::to_string(wIdx) +
+            "] of this parameter must be equal to the theoretical value " + std::to_string(expectedW) + " of Wo";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "features",
+            Ops::Base::ToString(outputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+
+    if (tilingData.outputSizeW > MAX_PADDING_OUT_W) {
+        std::string reasonMsg = "When padding is enabled, shape[" + std::to_string(wIdx) +
+            "] of this parameter must be less than or equal to " + std::to_string(MAX_PADDING_OUT_W);
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "features",
+            Ops::Base::ToString(outputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
-map<string, string> AippTiling::parseAippCfgFromPath(string fileName)
+ge::graphStatus AippTiling::parseAippCfgFromPath(string fileName, map<string, string>& aippConfig)
 {
-    map<string, string> aippConfig;
     if (fileName.find("..") != string::npos) {
-        OP_LOGE(context_->GetNodeName(), "fileName: %s has invalid char.", fileName.c_str());
-        return aippConfig;
+        OP_LOGE_FOR_FILE_PATH(context_->GetNodeType(), fileName.c_str(),
+            "The file path contains invalid character '..'");
+        return ge::GRAPH_FAILED;
     }
     ifstream file(fileName);
     if (!file.is_open()) {
-        OP_LOGE(context_->GetNodeName(), "Failed to open file: %s", fileName.c_str());
-        return aippConfig;
+        std::error_code ec(errno, std::generic_category());
+        std::string reasonMsg = "[Errno " + std::to_string(errno) + "] " + ec.message();
+        OP_LOGE_FOR_FILE_OPEN(context_->GetNodeType(), fileName.c_str(), reasonMsg.c_str());    
+        return ge::GRAPH_FAILED;
     }
     string line;
     string currentSection;
@@ -433,7 +548,7 @@ map<string, string> AippTiling::parseAippCfgFromPath(string fileName)
         }
     }
     file.close();
-    return aippConfig;
+    return ge::GRAPH_SUCCESS;
 }
 
 map<string, string> AippTiling::parseAippConfig(string jsonStr)
@@ -573,33 +688,67 @@ ge::graphStatus AippTiling::SetCropValue()
     return ge::GRAPH_SUCCESS;
 }
 
+ge::graphStatus AippTiling::CheckCropStartPos()
+{
+    if (tilingData.cropParam.cropStartPosW + tilingData.cropParam.cropSizeW > tilingData.inputSizeW) {
+        std::stringstream reasonMsg;
+        reasonMsg << "The following constraint must be met: ";
+        reasonMsg << "load_start_pos_w + crop_size_w ≤ src_image_size_w";
+        std::string curValues = std::to_string(tilingData.cropParam.cropStartPosW) + ", " +
+            std::to_string(tilingData.cropParam.cropSizeW) + ", " +
+            std::to_string(tilingData.inputSizeW);
+        OP_LOGE_FOR_INVALID_CONFIGS_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+            "load_start_pos_w, crop_size_w, src_image_size_w", curValues.c_str(), reasonMsg.str().c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (tilingData.cropParam.cropStartPosH + tilingData.cropParam.cropSizeH > tilingData.inputSizeH) {
+        std::stringstream reasonMsg;
+        reasonMsg << "The following constraint must be met: ";
+        reasonMsg << "load_start_pos_h + crop_size_h ≤ src_image_size_h";
+        std::string curValues = std::to_string(tilingData.cropParam.cropStartPosH) + ", " +
+            std::to_string(tilingData.cropParam.cropSizeH) + ", " +
+            std::to_string(tilingData.inputSizeH);
+        OP_LOGE_FOR_INVALID_CONFIGS_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+            "load_start_pos_h, crop_size_h, src_image_size_h", curValues.c_str(), reasonMsg.str().c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
+        if (tilingData.cropParam.cropStartPosW % EVEN_NUMBER_BASE != 0 ||
+            tilingData.cropParam.cropStartPosH % EVEN_NUMBER_BASE != 0) {
+            std::stringstream reasonMsg;
+            reasonMsg << "When input_format is YUV420SP_U8, ";
+            reasonMsg << "load_start_pos_h and load_start_pos_w must be even numbers";
+            std::string curValues = std::to_string(tilingData.cropParam.cropStartPosH) + ", " +
+                std::to_string(tilingData.cropParam.cropStartPosW);
+            OP_LOGE_FOR_INVALID_CONFIGS_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                "load_start_pos_h, load_start_pos_w", curValues.c_str(), reasonMsg.str().c_str());
+            return ge::GRAPH_FAILED;
+        }
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus AippTiling::CheckCropSize()
 {
     if (static_cast<bool>(tilingData.cropParam.cropSwitch)) {
-        OP_CHECK_IF(tilingData.cropParam.cropSizeW > tilingData.inputSizeW,
-            OP_LOGE(context_->GetNodeName(), "aipp.cfg's crop_size_w should smaller than src_image_size_w."),
-            return ge::GRAPH_FAILED);
-        OP_CHECK_IF(tilingData.cropParam.cropSizeH > tilingData.inputSizeH,
-            OP_LOGE(context_->GetNodeName(), "aipp.cfg's crop_size_h should smaller than src_image_size_h."),
-            return ge::GRAPH_FAILED);
-
-        OP_CHECK_IF(tilingData.cropParam.cropStartPosW + tilingData.cropParam.cropSizeW > tilingData.inputSizeW,
-            OP_LOGE(context_->GetNodeName(), \
-            "aipp.cfg's crop_start_pos_w + crop_size_w should smaller than src_image_size_w."),
-            return ge::GRAPH_FAILED);
-
-        OP_CHECK_IF(
-            tilingData.cropParam.cropStartPosH + tilingData.cropParam.cropSizeH > tilingData.inputSizeH,
-            OP_LOGE(context_->GetNodeName(), \
-                "aipp.cfg's crop_start_pos_h + crop_size_h should smaller than src_image_size_h."),
-            return ge::GRAPH_FAILED);
-
-        if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV420SP_U8)) {
-            OP_CHECK_IF( tilingData.cropParam.cropStartPosW % EVEN_NUMBER_BASE != 0 ||
-                tilingData.cropParam.cropStartPosH % EVEN_NUMBER_BASE != 0, \
-                OP_LOGE( context_->GetNodeName(), \
-                "When input_format is YUV420SP_U8, crop_start_pos_w/h must be even number"),
-                return ge::GRAPH_FAILED);
+        if (tilingData.cropParam.cropSizeW > tilingData.inputSizeW) {
+            std::string reasonMsg = "crop_size_w must be less than or equal to src_image_size_w";
+            std::string curValues = std::to_string(tilingData.cropParam.cropSizeW) + ", " +
+                std::to_string(tilingData.inputSizeW);
+            OP_LOGE_FOR_INVALID_CONFIGS_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                "crop_size_w, src_image_size_w", curValues.c_str(), reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
+        if (tilingData.cropParam.cropSizeH > tilingData.inputSizeH) {
+            std::string reasonMsg = "crop_size_h must be less than or equal to src_image_size_h";
+            std::string curValues = std::to_string(tilingData.cropParam.cropSizeH) + ", " +
+                std::to_string(tilingData.inputSizeH);
+            OP_LOGE_FOR_INVALID_CONFIGS_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                "crop_size_h, src_image_size_h", curValues.c_str(), reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
+        if (CheckCropStartPos() == ge::GRAPH_FAILED) {
+            return ge::GRAPH_FAILED;
         }
     }
 
@@ -643,11 +792,14 @@ ge::graphStatus AippTiling::SetCscValue()
 {
     if ((aippCfg.find(AIPP_CFG_CSC_SWITCH) != aippCfg.end()) && (aippCfg.at(AIPP_CFG_CSC_SWITCH) == "true")) {
         tilingData.cscParam.cscSwitch = 1;
-
-        OP_CHECK_IF(
-            tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8), OP_LOGE(context_->GetNodeName(), 
-            "When input format is YUV400_U8, it doesn't make sense to convert to RGB, csc_switch : true."),
-            return ge::GRAPH_FAILED);
+        if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8)) {
+            std::stringstream reasonMsg;
+            reasonMsg << "If the format of the input images is YUV400_U8, ";
+            reasonMsg << "the value of this configuration item must be 'false'";
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+            AIPP_CFG_CSC_SWITCH.c_str(), "true", reasonMsg.str().c_str());
+            return ge::GRAPH_FAILED;
+        }
 
         const std::map<string, int16_t*> CSC_MATRIX_MAP = {
             {AIPP_CFG_MATRIX_R0C0, &tilingData.cscParam.cscMatrix00},
@@ -693,7 +845,12 @@ ge::graphStatus AippTiling::SetSwapSwitch()
 
     if (aippCfg.find(AIPP_AX_SWAP_SWITCH) != aippCfg.end() && aippCfg.at(AIPP_AX_SWAP_SWITCH) == "true") {
         if (tilingData.imageFormat != IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_XRGB8888_U8)) {
-            OP_LOGE(context_->GetNodeName(), "Only XRGB888_U8 supports ax_swap_switch being true.");
+            std::stringstream reasonMsg;
+            reasonMsg << "If the format of the input images is not XRGB8888_U8, ";
+            reasonMsg << "the value of this configuration item must be 'false'";
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                AIPP_AX_SWAP_SWITCH.c_str(), aippCfg.at(AIPP_AX_SWAP_SWITCH).c_str(),
+                reasonMsg.str().c_str());
             return ge::GRAPH_FAILED;
         }
         tilingData.cscParam.axSwapSwitch = 1;
