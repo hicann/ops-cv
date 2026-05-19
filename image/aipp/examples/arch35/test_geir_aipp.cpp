@@ -10,12 +10,12 @@
 
 #include <iostream>
 #include <fstream>
-#include <string.h>
-#include <stdint.h>
+#include <cstring>
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <map>
-#include "assert.h"
+#include <cassert>
 #include "graph.h"
 #include "types.h"
 #include "tensor.h"
