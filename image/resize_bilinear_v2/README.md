@@ -74,10 +74,11 @@
 
 ## 约束说明
 
-- 无
+无
 
 ## 调用说明
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_resize](examples/test_aclnn_resize.cpp) | 通过[aclnnResize](docs/aclnnResize.md)接口方式调用ResizeBilinearV2算子。 |
+| 图模式 | -  | 通过[算子IR](op_graph/resize_bilinear_v2_proto.h)构图方式调用ResizeBilinearV2算子。         |

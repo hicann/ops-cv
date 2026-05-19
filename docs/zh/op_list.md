@@ -131,7 +131,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>使用双三次插值调整图像大小到指定的大小。</td>
   </tr>
@@ -141,7 +141,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>计算输入图像在双三次插值基础下的梯度。</td>
   </tr>
@@ -151,7 +151,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>使用双线性插值调整图像大小到指定的大小。</td>
   </tr>
@@ -161,7 +161,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>ResizeBilinearV2的反向传播。</td>
   </tr>
@@ -171,7 +171,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>使用单线性插值调整图像大小到指定的大小。</td>
   </tr>
@@ -181,7 +181,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>计算输入图像在单线性插值基础下的梯度。</td>
   </tr>
@@ -191,7 +191,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
   </tr>
@@ -201,7 +201,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。</td>
   </tr>
@@ -231,7 +231,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensorx的shape为(N,C,H,W)，则输出Tensorout的shape为(N,C,outputSize[0],outputSize[1])。</td>
   </tr>
@@ -241,7 +241,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensorx的shape为(N,C,H,W)，则输出Tensorout的shape为(N,C,outputSize[0],outputSize[1])。</td>
   </tr>
@@ -251,7 +251,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>如果输入张量grad_output的shape为(N,C,H,W)，则输出张量grad_input的shape为(N,C,inputSize[2],inputSize[3])。</td>
   </tr>
@@ -261,7 +261,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>如果输入张量grad_output的shape为(N,C,H,W)，则输出张量grad_input的shape为(N,C,inputSize[2],inputSize[3])。</td>
   </tr>
@@ -271,7 +271,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用2D双线性上采样。</td>
   </tr>
@@ -281,7 +281,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。</td>
   </tr>
@@ -291,7 +291,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>UpsampleBilinear2dAA的反向传播。</td>
   </tr>
@@ -301,7 +301,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>UpsampleBilinear2d的反向传播。</td>
   </tr>
@@ -311,7 +311,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用线性插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。</td>
   </tr>
@@ -321,7 +321,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
   </tr>
@@ -331,7 +331,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>[UpsampleNearest](../../image/upsample_nearest/README.md)在exact_mode为true时的反向传播。</td>
   </tr>
@@ -361,7 +361,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>UpsampleNearest在exact_mode为false时的反向传播。</td>
   </tr>
@@ -391,7 +391,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>ResizeUpsampleTrilinear的反向计算。</td>
   </tr>

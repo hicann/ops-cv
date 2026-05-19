@@ -71,3 +71,4 @@
 | 调用方式 | 样例代码 | 说明                                                                                                 |
 | ---- | ---- |----------------------------------------------------------------------------------------------------|
 | aclnn接口  | [test_aclnn_resize_linear](examples/test_aclnn_resize_linear.cpp) | 通过[aclnnUpsampleLinear1d](../upsample_linear1d/docs/aclnnUpsampleLinear1d.md)接口方式调用ResizeLinear算子。 |
+| 图模式 | -  | 通过[算子IR](op_graph/resize_linear_proto.h)构图方式调用ResizeLinear算子。         |

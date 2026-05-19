@@ -79,3 +79,4 @@
 | 调用方式   | 样例代码           | 说明                                                                      |
 | -------------- | --------------------------- |-------------------------------------------------------------------------|
 | aclnn  | [test_aclnn_upsample_nearest2d.cpp](examples/test_aclnn_upsample_nearest2d.cpp) | 通过[aclnnUpsampleNearest2d](docs/aclnnUpsampleNearest2d.md)接口方式调用ResizeNearestNeighborV2算子。 |
+| 图模式 | -  | 通过[算子IR](op_graph/resize_nearest_neighbor_v2_proto.h)构图方式调用ResizeNearestNeighborV2算子。         |
