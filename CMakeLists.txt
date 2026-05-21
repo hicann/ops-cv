@@ -110,10 +110,14 @@ include(cmake/third_party/opbase.cmake) # 放在dependencies.cmake前面
 include(cmake/dependencies.cmake)
 include(cmake/variables.cmake)
 include(cmake/opbuild.cmake)
-include(cmake/third_party/eigen.cmake)
-include(cmake/third_party/abseil-cpp.cmake)
-include(cmake/third_party/ascend_protobuf.cmake)
-include(cmake/third_party/json.cmake)
+add_cann_third_party(eigen)
+add_cann_third_party(protobuf)
+add_cann_third_party(json)
+
+if(TARGET host_protoc)
+  get_target_property(Protobuf_PROTOC_EXECUTABLE host_protoc IMPORTED_LOCATION)
+endif()
+
 include(cmake/func.cmake)
 include(cmake/intf_pub_linux.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/ut.cmake)

@@ -10,6 +10,13 @@
 
 
 include_guard(GLOBAL)
+add_cann_third_party(gtest)
+if(TARGET GTest::gtest AND NOT TARGET gtest)
+  add_library(gtest ALIAS GTest::gtest)
+endif()
+if(TARGET GTest::gtest_main AND NOT TARGET gtest_main)
+  add_library(gtest_main ALIAS GTest::gtest_main)
+endif()
 
 if(UT_TEST_ALL OR OP_HOST_UT)
   set(OP_TILING_MODULE_NAME
@@ -165,7 +172,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     if(NOT TARGET ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj)
         add_library(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
     endif()
-    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl Eigen3::EigenCv)
+    target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE gcov -ldl Eigen3::Eigen)
     target_sources(${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj PRIVATE ${OP_KERNEL_AICPU_UT_UTILS_SRC})
 
     ## add opkernel ut cases shared lib: libcv_aicpu_op_kernel_ut_cases.so
@@ -188,7 +195,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
         -Wl,--no-whole-archive
         -Wl,-Bsymbolic
         -Wl,--exclude-libs=libhost_ascend_protobuf.a
-        Eigen3::EigenCv
+        Eigen3::Eigen
         ${AICPU_OP_KERNEL_MODULE_NAME}_common_obj
         ${AICPU_OP_KERNEL_MODULE_NAME}_cases_obj
     )
@@ -325,7 +332,6 @@ if(UT_TEST_ALL
 endif()
 
 if(UT_TEST_ALL OR OP_KERNEL_UT)
-  include(${PROJECT_SOURCE_DIR}/cmake/third_party/gtest.cmake)
   set(fastOpTestSocVersions
       ""
       CACHE STRING "fastOp Test SocVersions"
@@ -478,7 +484,6 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
 endif()
 
 if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
-  include(${PROJECT_SOURCE_DIR}/cmake/third_party/gtest.cmake)
   function(AddAicpuOpTestCase opName)
     get_filename_component(UT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
     get_filename_component(OP_NAME ${UT_DIR} NAME)
@@ -517,7 +522,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
             -ldl
             gtest
             c_sec
-            Eigen3::EigenCv
+            Eigen3::Eigen
             )
 
     ## add object: cv_op_kernel_ut_cases_obj
@@ -537,7 +542,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
             $<TARGET_OBJECTS:${opName}_cases_obj>
             gtest
             c_sec
-            Eigen3::EigenCv
+            Eigen3::Eigen
             )
   endfunction()
 endif()

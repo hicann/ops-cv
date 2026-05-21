@@ -15,7 +15,13 @@ set(UT_COMMON_INC ${CMAKE_CURRENT_SOURCE_DIR}/common CACHE STRING "ut common inc
 
 ## load ut common depends
 include(${PROJECT_SOURCE_DIR}/cmake/intf_pub_llt_gccnative.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/third_party/gtest.cmake)
+add_cann_third_party(gtest)
+if(TARGET GTest::gtest AND NOT TARGET gtest)
+  add_library(gtest ALIAS GTest::gtest)
+endif()
+if(TARGET GTest::gtest_main AND NOT TARGET gtest_main)
+  add_library(gtest_main ALIAS GTest::gtest_main)
+endif()
 
 file(
   GLOB SUBDIRECTORIES
