@@ -156,7 +156,7 @@ set(OPAPI_INCLUDE
   ${OPS_CV_DIR}/
   ${OPS_CV_DIR}/common/inc
   ${OPS_CV_DIR}/common/inc/op_api
-  ${OPS_CV_DIR}/common/inc/external
+  ${OPS_CV_DIR}/common/stub/op_api
   ${TOP_DIR}/output/${PRODUCT}/aclnnop_resource
   ${ASCEND_DIR}/${SYSTEM_PREFIX}/pkg_inc/profiling  # include profiling/prof_common.h
 )
