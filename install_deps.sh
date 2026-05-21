@@ -146,9 +146,17 @@ install_gcc() {
     case "$OS" in
         debian)
             run_command sudo $PKG_MANAGER update
-            run_command sudo $PKG_MANAGER install -y gcc-9 g++-9
-            run_command sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 \
-                --slave /usr/bin/g++ g++ /usr/bin/g++-9
+            local debian_ver=0
+            if [[ -f /etc/debian_version ]]; then
+                debian_ver=$(grep -oP '^\d+' /etc/debian_version 2>/dev/null || echo "0")
+            fi
+            if [[ "$debian_ver" -ge 10 ]] 2>/dev/null; then
+                run_command sudo $PKG_MANAGER install -y gcc g++
+            else
+                run_command sudo $PKG_MANAGER install -y gcc-9 g++-9
+                run_command sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 \
+                    --slave /usr/bin/g++ g++ /usr/bin/g++-9
+            fi
             ;;
         rhel)
             if grep -q "release 7" /etc/redhat-release; then
