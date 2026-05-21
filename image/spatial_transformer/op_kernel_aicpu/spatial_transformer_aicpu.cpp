@@ -96,6 +96,9 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
+  KERNEL_CHECK_FALSE((output_h_ >= 0 && output_w_ >= 0),
+                     KERNEL_STATUS_PARAM_INVALID, "output size is invalid.");
+
   bool dims_error_flag = (input_n_ == 0 || input_c_ == 0 || input_h_ == 0 ||
                           input_w_ == 0 || output_h_ == 0 || output_w_ == 0);
   if (dims_error_flag) {
