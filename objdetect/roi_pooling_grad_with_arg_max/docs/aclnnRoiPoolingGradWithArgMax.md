@@ -52,7 +52,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
   void*                   workspace, 
   uint64_t                workspace_size, 
   aclOpExecutor*          executor, 
-  aclrtStream       stream)
+  aclrtStream             stream)
 ```
 
 ## aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize
@@ -280,16 +280,19 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 
 ## 约束说明
 
-1. gradOutput、rois、argmax、gradInputRef的数据类型在支持的范围之内。
-2. gradOutput、argmax与gradInputRef具有相同的数据类型
-3. gradOutput、argmax、gradInputRef的shape大小为4，rois的shape大小为2
-4. gradOutput、argmax、rois的shape[0]相等
-5. gradOutput、argmax的shape[1]相等
-6. gradOutput、argmax的shape[2]等于pooledH和shape[3]等于pooledW
-7. rois的值大于等于0
-8. pooledH、pooledW大于0。
-9. rois[:, 1] 小于 rois[:, 2] 且  rois[:, 3] 小于 rois[:, 4]
-10. rois.shape[0]、gradOutput.shape[0]小于等于1024
+- gradOutput、rois、argmax、gradInputRef的数据类型在支持的范围之内。
+- gradOutput、argmax与gradInputRef具有相同的数据类型。
+- gradOutput、argmax、gradInputRef的shape大小为4，rois的shape大小为2。
+- gradOutput、argmax、rois的shape[0]相等。
+- gradOutput、argmax的shape[1]相等。
+- gradOutput、argmax的shape[2]等于pooledH和shape[3]等于pooledW。
+- rois的值大于等于0。
+- pooledH、pooledW大于0。
+- rois[:, 1] 小于 rois[:, 2] 且  rois[:, 3] 小于 rois[:, 4]。
+- rois.shape[0]、gradOutput.shape[0]小于等于1024。
+- 确定性计算：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品、Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：aclnnRoiPoolingGradWithArgMax默认确定性实现。
+  - <term>Ascend 950PR/Ascend 950DT</term>：aclnnRoiPoolingGradWithArgMax默认非确定性实现，不支持开启。
 
 ## 调用示例
 

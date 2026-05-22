@@ -272,7 +272,8 @@ aclnnStatus aclnnIm2colBackward(
 
 ## 约束说明
 
-无。
+- 确定性计算：
+  - aclnnIm2colBackward默认确定性实现。
 
 ## 调用示例
 

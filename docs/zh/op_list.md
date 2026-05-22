@@ -410,7 +410,7 @@
     <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
     <td>完成张量rgb和张量alpha的透明度乘法计算。</td>
@@ -420,7 +420,7 @@
     <td><a href="../../objdetect/blend_images_custom/README.md">blend_images_custom</a></td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
     <td>完成张量rgb、frame和alpha的透明度乘法计算。</td>
@@ -430,7 +430,7 @@
     <td><a href="../../objdetect/background_replace/README.md">background_replace</a></td>
     <td>&check;</td>
     <td>&check;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
     <td>将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。</td>
@@ -438,10 +438,10 @@
   <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/ciou/README.md">ciou</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
     <td>&cross;</td>
     <td>&check;</td>
+    <td>&cross;</td>
     <td>AI Core</td>
     <td>用于边界框回归的损失函数，在IoU的基础上同时考虑了中心点距离、宽高比和重叠面积，以更全面地衡量预测框与真实框之间的差异。</td>
   </tr>
@@ -491,7 +491,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
     <td>AI Core</td>
     <td>用于旋转候选框的ROI对齐池化层。</td>
   </tr>

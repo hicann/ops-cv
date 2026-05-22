@@ -258,8 +258,10 @@ aclnnStatus aclnnNonMaxSuppression(
 
 ## 约束说明
 
-1. maxOutputBoxesPerClass参数上限为700。输入参数boxes和scores的数据类型要求保持一致。
-2. 在FLOAT16场景下，算子进行排序和计算对比标杆可能会引入计算误差。
+- 参数maxOutputBoxesPerClass上限为700。输入参数boxes和scores的数据类型要求保持一致。
+- 在FLOAT16场景下，算子进行排序和计算对比标杆可能会引入计算误差。
+- 确定性计算：
+  - aclnnNonMaxSuppression默认确定性实现。
 
 ## 调用示例
 
