@@ -402,7 +402,7 @@
     <td>&check;</td>
     <td>&cross;</td>
     <td>&check;</td>
-    <td>AI Cpu</td>
+    <td>AI CPU</td>
     <td>用于对输入图像或特征图进行几何变换等操作。</td>
   </tr>
   <tr>
