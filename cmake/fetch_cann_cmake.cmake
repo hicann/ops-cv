@@ -21,7 +21,7 @@ if(NOT PROJECT_SOURCE_DIR)
             FetchContent_Declare(
                 cann-cmake
                 URL "${CANN_3RD_LIB_PATH}/cmake-${CANN_CMAKE_TAG}.tar.gz"
-                URL_HASH SHA256=7977eba5bed1a15d52f1ca2818cd95000a05b76f4b01e7b1212541260b371352
+                URL_HASH SHA256=e8bf3518f2f42fda7bbaa7deaca74b78f34727117f7b307dba6c11b436ad5d48
             )
         else()
             FetchContent_Declare(
