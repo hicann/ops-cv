@@ -72,7 +72,10 @@
     - 则有以下公式：
 
       $$
-      {V(p_{x, y})} = {V(p_{x0, y0})} * {lambda_{0}} * {lambdb_{0}} + {V(p_{x0, y1})} * {lambda_{0}} * {lambdb_{1}} + {V(p_{x1, y0})} * {lambda_{1}} * {lambdb_{0}} + {V(p_{x1, y1})} * {lambda_{1}} * {lambdb_{1}}
+      {V(p_{x, y})} = {V(p_{x0, y0})} * {lambda_{0}} * {lambdb_{0}} \\
+                      + {V(p_{x0, y1})} * {lambda_{0}} * {lambdb_{1}} \\
+                      + {V(p_{x1, y0})} * {lambda_{1}} * {lambdb_{0}} \\
+                      + {V(p_{x1, y1})} * {lambda_{1}} * {lambdb_{1}}
       $$
 
 ## 函数原型
