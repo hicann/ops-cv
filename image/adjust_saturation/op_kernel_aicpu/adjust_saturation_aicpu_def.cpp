@@ -25,7 +25,6 @@ public:
         this->Input("images").DataType({ge::DT_FLOAT16, ge::DT_FLOAT});
         this->Input("scale").DataType({ge::DT_FLOAT});
         this->Output("y").DataType({ge::DT_FLOAT16, ge::DT_FLOAT});
-        this->AICPU().ExtendCfgInfo(OP_INFO_OPS_FLAG.c_str(), OPEN_OPS_FLAG.c_str());
     }
 };
 

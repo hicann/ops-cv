@@ -31,7 +31,6 @@ public:
         this->Output("y").DataType({ge::DT_FLOAT});
         this->Attr("kernel_type").AttrType(OPTIONAL).String("lanczos3");
         this->Attr("antialias").AttrType(OPTIONAL).Bool(true);
-        this->AICPU().ExtendCfgInfo(OP_INFO_OPS_FLAG.c_str(), OPEN_OPS_FLAG.c_str());
     }
 };
 
