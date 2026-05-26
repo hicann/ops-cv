@@ -30,7 +30,7 @@ function(kernel_src_copy)
         COMMAND
           ${CMAKE_COMMAND} -E make_directory ${KNCPY_DST_DIR}/${OP_NAME}
         COMMAND
-          bash -c "find ${SRC_DIR} -mindepth 1 -maxdepth 1 -exec cp -r {} ${KNCPY_DST_DIR}/${OP_NAME} \\;"
+          find "${SRC_DIR}" -mindepth 1 -maxdepth 1 -exec cp -r {} "${KNCPY_DST_DIR}/${OP_NAME}" \;
         VERBATIM
         )
       add_dependencies(${KNCPY_TARGET} ${OP_NAME}_src_copy)
@@ -46,9 +46,9 @@ function(kernel_src_copy)
     COMMAND
       ${CMAKE_COMMAND} -E make_directory ${KNCPY_DST_DIR}/common
     COMMAND
-      bash -c "cp -r ${OPBASE_SOURCE_PATH}/pkg_inc/op_common/atvoss ${KNCPY_DST_DIR}/common"
+      cp -r "${OPBASE_SOURCE_PATH}/pkg_inc/op_common/atvoss" "${KNCPY_DST_DIR}/common"
     COMMAND
-      bash -c "cp -r ${OPBASE_SOURCE_PATH}/include/op_common/op_kernel ${KNCPY_DST_DIR}/common"
+      cp -r "${OPBASE_SOURCE_PATH}/include/op_common/op_kernel" "${KNCPY_DST_DIR}/common"
     VERBATIM
   )
   add_dependencies(${KNCPY_TARGET} atvoss_src_copy)
@@ -539,9 +539,8 @@ endfunction()
 # get op_type from *_def.cpp
 # ######################################################################################################################
 function(check_op_supported OP_NAME OP_DIR COMPUTE_UNIT OP_SUPPORTED_COMPUTE_UNIT)
-  set(cmd "find ${OP_DIR} -name ${OP_NAME}_def.cpp -exec grep '\.AddConfig(\\s*\"${COMPUTE_UNIT}\"' {} \;")
   execute_process(
-    COMMAND bash -c "${cmd}"
+    COMMAND find "${OP_DIR}" -name "${OP_NAME}_def.cpp" -exec grep "\\.AddConfig(\\s*\"${COMPUTE_UNIT}\"" {} \;
     OUTPUT_VARIABLE op_supported_compute_unit
     )
   if(NOT op_supported_compute_unit)

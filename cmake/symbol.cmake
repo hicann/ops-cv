@@ -343,11 +343,11 @@ function(gen_aicpu_json_symbol enable_built_in)
     set(MERGED_JSON ${CMAKE_BINARY_DIR}/aicpu_cv.json)
   endif()
 
- 	set(cmd "python3 ${CMAKE_SOURCE_DIR}/scripts/kernel/binary_script/parser_ini.py ${ASCEND_AUTOGEN_PATH}/aicpu_kernel.ini ${MERGED_JSON}")
- 	message("cmd: ${cmd}")
+  set(cmd python3 "${CMAKE_SOURCE_DIR}/scripts/kernel/binary_script/parser_ini.py" "${ASCEND_AUTOGEN_PATH}/aicpu_kernel.ini" "${MERGED_JSON}")
+  message("cmd: ${cmd}")
 
   execute_process(
-      COMMAND bash -c "${cmd}"
+      COMMAND ${cmd}
       WORKING_DIRECTORY ${ASCEND_AUTOGEN_PATH}
       OUTPUT_VARIABLE result
       ERROR_VARIABLE error

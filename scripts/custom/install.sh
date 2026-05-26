@@ -126,8 +126,9 @@ upgrade()
                         return 0
                     elif [ "$orn" = m ]; then
                         break;
-                    elif [ "$0rn" = r ]; then
-                        [ -n "${targetdir}/$vendordir/$1/" ] && rm -rf "${targetdir}/$vendordir/$1"/*
+                    elif [ "$orn" = r ]; then
+                        [ -n "$targetdir" ] && [ -n "$vendordir" ] && [ -n "$1" ] && \
+                            [ -d "${targetdir}/$vendordir/$1" ] && rm -rf "${targetdir}/$vendordir/$1"/*
                         break;
                     else
                         echo "[ERROR] input error, please input again!"

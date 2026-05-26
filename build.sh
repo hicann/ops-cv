@@ -977,14 +977,14 @@ parse_changed_files() {
     CHANGED_FILES=$PWD/$CHANGED_FILES
   fi
 
-  echo "changed files is "$CHANGED_FILES
-  echo $dotted_line
+  echo "changed files is $CHANGED_FILES"
+  echo "$dotted_line"
   echo "changed lines:"
-  cat $CHANGED_FILES
-  echo $dotted_line
+  cat "$CHANGED_FILES"
+  echo "$dotted_line"
 
-  COMPILED_OPS=$(python3 scripts/ci/parse_changed_ops.py $CHANGED_FILES "$ENABLE_EXPERIMENTAL")
-  echo "related ops "$COMPILED_OPS
+  COMPILED_OPS=$(python3 scripts/ci/parse_changed_ops.py "$CHANGED_FILES" "$ENABLE_EXPERIMENTAL")
+  echo "related ops $COMPILED_OPS"
 
   if [[ -z $COMPILED_OPS ]]; then
     if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
@@ -999,10 +999,10 @@ parse_changed_files() {
     return
   fi
 
-  local script_ret=$(python3 scripts/ci/parse_changed_files.py $CHANGED_FILES "$ENABLE_EXPERIMENTAL")
+  local script_ret=$(python3 scripts/ci/parse_changed_files.py "$CHANGED_FILES" "$ENABLE_EXPERIMENTAL")
   IFS='&&' read -r related_ut soc_info <<<"$script_ret"
-  echo "related ut "$related_ut
-  echo "related soc_info "$soc_info
+  echo "related ut $related_ut"
+  echo "related soc_info $soc_info"
 
   COMPUTE_UNIT=$soc_info
 
@@ -1170,36 +1170,36 @@ cmake_init() {
     mkdir -p "${BUILD_OUT_PATH}"
   fi
 
-  [ -f "${BUILD_PATH}/CMakeCache.txt" ] && rm -f ${BUILD_PATH}/CMakeCache.txt
+  [ -f "${BUILD_PATH}/CMakeCache.txt" ] && rm -f "${BUILD_PATH}/CMakeCache.txt"
 
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
 }
 
 clean_build() {
   if [ -d "${BUILD_PATH}" ]; then
-    rm -rf ${BUILD_PATH}/*
+    rm -rf "${BUILD_PATH}"/*
   fi
 }
 
 clean_build_out() {
   if [ -d "${BUILD_OUT_PATH}" ]; then
-    rm -rf ${BUILD_OUT_PATH}/*
+    rm -rf "${BUILD_OUT_PATH}"/*
   fi
 }
 
 clean_build_binary() {
   if [ -d "${BUILD_PATH}/tbe" ]; then
-    rm -rf ${BUILD_PATH}/tbe/
+    rm -rf "${BUILD_PATH}/tbe/"
   fi
   if [ -d "${BUILD_PATH}/autogen" ]; then
-    rm -rf ${BUILD_PATH}/autogen/
+    rm -rf "${BUILD_PATH}/autogen/"
   fi
   if [ -d "${BUILD_PATH}/binary" ]; then
-    rm -rf ${BUILD_PATH}/binary/
+    rm -rf "${BUILD_PATH}/binary/"
   fi
   if [[ "$ENABLE_STATIC" == "TRUE" ]]; then
     if [ -d "${BUILD_PATH}/static_library_files" ]; then
-      rm -rf ${BUILD_PATH}/static_library_files/
+      rm -rf "${BUILD_PATH}/static_library_files/"
     fi
   fi
 }
@@ -1210,8 +1210,8 @@ build_static_lib() {
 
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
   local all_targets=$(cmake --build . --target help)
-  rm -fr ${BUILD_PATH}/bin_tmp
-  mkdir -p ${BUILD_PATH}/bin_tmp
+  rm -fr "${BUILD_PATH}/bin_tmp"
+  mkdir -p "${BUILD_PATH}/bin_tmp"
   if grep -wq "ophost_cv_static" <<< "${all_targets}"; then
     cmake --build . --target ophost_cv_static -- ${VERBOSE} -j $THREAD_NUM
   fi
@@ -1222,9 +1222,9 @@ build_static_lib() {
   fi
   cmake --build . --target opapi_cv_static -- ${VERBOSE} -j $THREAD_NUM
   for unit in "${UNITS[@]}"; do
-    rm -fr ${BUILD_PATH}/bin_tmp/${unit}
-    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" GenStaticOpResourceIni -s ${unit} -b ${BUILD_PATH}
-    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" StaticCompile -s ${unit} -b ${BUILD_PATH} -n=0 -a=${ARCH_INFO}
+    rm -fr "${BUILD_PATH}/bin_tmp/${unit}"
+    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" GenStaticOpResourceIni -s ${unit} -b "${BUILD_PATH}"
+    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" StaticCompile -s ${unit} -b "${BUILD_PATH}" -n=0 -a=${ARCH_INFO}
   done
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
   cmake --build . --target cann_cv_static -- ${VERBOSE} -j $THREAD_NUM
@@ -1295,8 +1295,7 @@ build_binary() {
     UNITS+=("ascend910b")
   fi
   for unit in "${UNITS[@]}"; do
-    remove_opc_cmd="rm -rf ${BUILD_PATH}/binary/${unit}/bin/opc_cmd"
-    ${remove_opc_cmd}
+    rm -rf "${BUILD_PATH}/binary/${unit}/bin/opc_cmd"
     if grep -wq "prepare_binary_compile_${unit}" <<< "${all_targets}"; then
       cmake --build . --target prepare_binary_compile_${unit} -- ${VERBOSE} -j 1
       if [ $? -ne 0 ]; then
@@ -1310,16 +1309,16 @@ build_binary() {
   cd "$BUILD_PATH" && cmake .. ${CMAKE_ARGS}
 
   local cur_path=$(pwd)
-  mkdir -p ${cur_path}/op_impl/ai_core/tbe/op_tiling
+  mkdir -p "${cur_path}/op_impl/ai_core/tbe/op_tiling"
   if [ ! -L op_impl/ai_core/tbe/op_tiling/liboptiling.so ]; then
-    if [ -e ${cur_path}/libophost_cv.so ]; then
-      ln -s ${cur_path}/libophost_cv.so op_impl/ai_core/tbe/op_tiling/liboptiling.so
+    if [ -e "${cur_path}/libophost_cv.so" ]; then
+      ln -s "${cur_path}/libophost_cv.so" op_impl/ai_core/tbe/op_tiling/liboptiling.so
     else
       cmake --build . --target ophost_cv -- ${VERBOSE} -j $THREAD_NUM
-      ln -s ${cur_path}/libophost_cv.so op_impl/ai_core/tbe/op_tiling/liboptiling.so
+      ln -s "${cur_path}/libophost_cv.so" op_impl/ai_core/tbe/op_tiling/liboptiling.so
     fi
   fi
-  export ASCEND_CUSTOM_OPP_PATH=${cur_path}
+  export ASCEND_CUSTOM_OPP_PATH="${cur_path}"
   if echo "${all_targets}" | grep -wq "binary"; then
     cmake --build . --target binary -- ${VERBOSE} -j $THREAD_NUM
     if [ $? -ne 0 ]; then

@@ -421,13 +421,16 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       set(gen_tiling_head_file ${OPS_CV_DIR}/tests/ut/op_kernel/scripts/gen_tiling_head_file.sh)
       set(gen_tiling_so_path ${CMAKE_CURRENT_BINARY_DIR}/lib${opName}_${socVersion}_tiling_tmp.so)
       set(gen_tiling_head_tag ${opName}_${socVersion}_gen_head)
-      set(gen_cmd "bash ${gen_tiling_head_file} ${OP_TYPE} ${opName} ${gen_tiling_so_path} ${CUSTOM_TILING_DATA_KEYS}")
+      set(gen_cmd bash "${gen_tiling_head_file}" "${OP_TYPE}" "${opName}" "${gen_tiling_so_path}")
+      if(CUSTOM_TILING_DATA_KEYS)
+        list(APPEND gen_cmd "${CUSTOM_TILING_DATA_KEYS}")
+      endif()
       message("gen tiling head file to ${tilingFile}, command:")
       message("${gen_cmd}")
       add_custom_command(
         OUTPUT ${tilingFile}
         COMMAND rm -f ${tilingFile}
-        COMMAND bash -c ${gen_cmd}
+        COMMAND ${gen_cmd}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS ${opName}_${socVersion}_tiling_tmp
         )

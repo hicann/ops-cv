@@ -9,10 +9,10 @@
 # -----------------------------------------------------------------------------------------------------------
 
 echo "source ${ASCEND_OPP_PATH}/../bin/setenv.bash"
-source ${ASCEND_OPP_PATH}/../bin/setenv.bash
+source "${ASCEND_OPP_PATH}/../bin/setenv.bash"
 export ASCEND_GLOBAL_LOG_LEVEL=2
 export ASCEND_SLOG_PRINT_TO_STDOUT=1
 
-CURR_PATH=$(cd $(dirname $0); pwd)
-echo "python3 ${CURR_PATH}/gen_tiling_head_file.py $@"
-python3 ${CURR_PATH}/gen_tiling_head_file.py $@
+CURR_PATH=$(cd "$(dirname "$0")"; pwd)
+echo "python3 ${CURR_PATH}/gen_tiling_head_file.py $*"
+python3 "${CURR_PATH}/gen_tiling_head_file.py" "$@"
