@@ -15,7 +15,24 @@
 
 ## 功能说明
 
-删除分数小于scoreThreshold的边界框，筛选出与之前被选中部分重叠较高（IOU较高）的框。
+- 接口功能：对每个类别的检测框，先按置信度分数降序排序，依次选取分数最高的框作为选中框，并抑制与选中框 IoU 超过 `iouThreshold` 的候选框，同时移除分数不超过 `scoreThreshold` 的输出框。
+
+- 计算公式：
+  - IoU 计算公式：对于两个边界框 A 和 B，IoU 定义为交集面积与并集面积之比：
+
+    $$\text{IoU} = \frac{\text{Area}(A \cap B)}{\text{Area}(A \cup B)} = \frac{\text{Area}(A \cap B)}{\text{Area}(A) + \text{Area}(B) - \text{Area}(A \cap B)}$$
+
+  - 阈值比较规则
+
+    IoU 抑制采用**严格大于**比较，等价于以下代数变换：
+
+    $$\text{IoU} > \text{iouThreshold} \quad \Leftrightarrow \quad \text{Area}(A \cap B) > \bigl(\text{Area}(A) + \text{Area}(B)\bigr) \times \frac{\text{iouThreshold}}{1 + \text{iouThreshold}}$$
+
+    即当交集面积超过右式阈值时，候选框被抑制。
+
+    - **iouThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，控制 NMS 抑制强度。值越大，保留的框越多。
+    - **scoreThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，最终输出时过滤低分框，分数 ≤ `scoreThreshold` 的框填充 `-1` 表示无效。
+
 
 ## 函数原型
 
