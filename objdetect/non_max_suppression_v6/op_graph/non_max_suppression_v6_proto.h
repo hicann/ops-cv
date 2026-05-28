@@ -20,7 +20,7 @@ namespace ge {
 score . \n
 
 *@par Inputs:
-*Input boxes and  scores must be float16 type. Inputs include:
+*Input boxes and  scores must be float16, float type. Inputs include:
 *@li boxes: A input tensor with shape [num_batches,spatial_dimension,4].
 The single box data format is indicated by center_point_box.
 *@li scores: A input tensor with shape [num_batches,num_classes,spatial_dimension]
@@ -45,7 +45,7 @@ of box corners and the coordinates can be provided as normalized
 selected indices from the boxes tensor, where M <= max_output_size. \n
 
 *@attention Constraints:
-*Input boxes and  scores must be float16 type . \n
+*Input boxes and  scores must be float16, float type . \n
 
 *@par Third-party framework compatibility
 *Compatible with onnx NonMaxSuppression operator.

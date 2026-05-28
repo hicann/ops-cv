@@ -136,7 +136,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
       <td>x（aclTensor*）</td>
       <td>输入</td>
       <td>输入特征图，格式为 NCHW，(N, C, H, W)。</td>
-      <td><ul><li>不支持空 Tensor。</li><li>输入维度必须为 4 维。</li></ul></td>
+      <td><ul><li>不支持空 Tensor。</li><li>输入维度必须为 4 维。</li><li>N需要为16的倍数。</li><li>N小于等于1024。</li></ul></td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
       <td>4</td>
@@ -146,7 +146,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
       <td>rois（aclTensor*）</td>
       <td>输入</td>
       <td>ROI 框，每行 5 个元素：batch_idx, x1, y1, x2, y2。</td>
-      <td>shape 为（num_rois，5），不支持空 Tensor。</td>
+      <td><ul><li>shape 为（num_rois，5），不支持空 Tensor。</li><li>第0维小于等于1024。</li><li>x1, y1, x2, y2大于等于0.0。</li></ul></td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
       <td>2</td>
@@ -321,6 +321,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
 
 - 确定性计算：
   - aclnnRoiPoolingWithArgMax 默认确定性实现。
+- x、argmax、rois的shape[0]相等
 
 ## 调用示例
 

@@ -111,11 +111,46 @@
       <td>ND</td>
     </tr>
     <tr>
-      <td>rois_actual_num</td>
+      <td>roi_actual_num</td>
       <td>可选输入</td>
       <td>指定每个batch的ROI数量。</td>
       <td>INT32</td>
       <td>ND</td>
+    </tr>
+    <tr>
+      <td>pooled_h</td>
+      <td>属性</td>
+      <td>指定池化率的高。</td>
+      <td>INT</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>pooled_w</td>
+      <td>属性</td>
+      <td>指定池化率的宽。</td>
+      <td>INT</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>spatial_scale_h</td>
+      <td>属性</td>
+      <td>输入坐标的高映射到ROI坐标的缩放比例。</td>
+      <td>FLOAT32</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>spatial_scale_w</td>
+      <td>属性</td>
+      <td>输入坐标的宽映射到ROI坐标的缩放比例。</td>
+      <td>FLOAT32</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>pool_channel</td>
+      <td>属性</td>
+      <td>指定池化的通道数。</td>
+      <td>INT</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>y</td>
@@ -139,6 +174,11 @@
 * x 的 shape 是 4 维（NCHW）。
 * rois 的 shape 第二维是 5。
 * pooled_h、pooled_w、spatial_scale_h、spatial_scale_w 大于 0。
+* x、argmax、rois的shape[0]相等。
+* rois.shape[0]、x.shape[0]小于等于1024。
+* x.shape[1]等于pool_channel。
+* x.shape[1]为16的倍数。
+* rois.shape[0]等于roi_actual_num。
 
 ## 调用说明
 

@@ -68,7 +68,7 @@
       <td>ND</td>
     </tr>
     <tr>
-      <td>rois_actual_num</td>
+      <td>roi_actual_num</td>
       <td>可选输入</td>
       <td>指定每个batch的ROI数量。</td>
       <td>INT32</td>
