@@ -229,14 +229,13 @@ function(opbuild_aicpu_ini)
     if (NOT "${OPBUILD_ACCESS_PREFIX}x" STREQUAL "x")
       set(prefix_env "OPS_DIRECT_ACCESS_PREFIX=${OPBUILD_ACCESS_PREFIX}")
     endif()
-    set(ENV{ENABLE_SOURCE_PACKAGE} ${OPBUILD_ENABLE_SOURCE})
- 	  execute_process(COMMAND ${proj_env} ${prefix_env} ${ASCEND_CANN_PACKAGE_PATH}/toolkit/tools/opbuild/op_build
+    execute_process(COMMAND ${CMAKE_COMMAND} -E env ENABLE_SOURCE_PACKAGE=${OPBUILD_ENABLE_SOURCE}
+                    ${proj_env} ${prefix_env} ${ASCEND_CANN_PACKAGE_PATH}/toolkit/tools/opbuild/op_build
                     ${OPBUILD_OUT_DIR}/libaicpu_ops.so ${OPBUILD_OUT_DIR}  --aicpu
                     RESULT_VARIABLE EXEC_RESULT
                     OUTPUT_VARIABLE EXEC_INFO
                     ERROR_VARIABLE  EXEC_ERROR
  	  )	 
- 	  unset(ENV{ENABLE_SOURCE_PACKAGE})
  	  if (${EXEC_RESULT})
         message("opbuild ops info: ${EXEC_INFO}")
         message("opbuild ops error: ${EXEC_ERROR}")
