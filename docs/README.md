@@ -6,28 +6,28 @@ Docs目录结构说明如下：
 
 ```
 ├── zh
-  ├── context                            # 公共文档，如术语、基础概念等
-  ├── debug                              # 算子调试指导文档
-  │   ├── op_debug_prof.md
-  │   ├── ...
-  ├── develop                            # 算子开发指导文档
-  │   ├── aicore_develop_guide.md
-  │   ├── aicpu_develop_guide.md
-  │   ├── ...
-  ├── figures                            # 图片目录
-  ├── install                            # 环境安装和编译指导文档
-  │   ├── build.md  
-  │   ├── compile.md  
-  │   ├── quick_install.md 
-  │   └── ...
-  ├── invocation                         # 算子调用指导文档（包括aclnn调用、图模式调用等）
-  │   ├── quick_op_invocation.md
-  │   ├── ...
-  ├── op_api_list.md                     # 全量算子接口列表（aclnn）
-  ├── op_list.md                         # 全量算子列表      
+│    ├── context                            # 公共文档，如术语、基础概念等
+│    ├── debug                              # 算子调试指导文档
+│    │   ├── op_debug_prof.md
+│    │   ├── ...
+│    ├── develop                            # 算子开发指导文档
+│    │   ├── aicore_develop_guide.md
+│    │   ├── aicpu_develop_guide.md
+│    │   ├── ...
+│    ├── figures                            # 图片目录
+│    ├── install                            # 环境安装和编译指导文档
+│    │   ├── build.md
+│    │   ├── compile.md
+│    │   ├── quick_install.md
+│    │   └── ...
+│    ├── invocation                         # 算子调用指导文档（包括aclnn调用、图模式调用等）
+│    │   ├── quick_op_invocation.md
+│    │   ├── ...
+│    ├── op_api_list.md                     # 全量算子接口列表（aclnn）
+│    ├── op_list.md                         # 全量算子列表
 ├── CONTRIBUTING_DOCS.md                 # 文档贡献说明
 ├── QUICKSTART.md                        # 快速入门
-└── README.md                            
+└── README.md
 ```
 
 ## 进阶教程
@@ -65,4 +65,3 @@ Docs目录结构说明如下：
 | ----------------------------------- | ------------------------------------------------------------ |
 | [算子基本概念](zh/context/基本概念.md) | 介绍算子领域相关的基础概念和术语，如量化/稀疏、数据类型、数据格式等。 |
 | [build参数说明](zh/install/build.md)   | 介绍本项目build.sh参数功能和取值，包括源码编译、算子调用、调试等。 |
-

@@ -11,6 +11,7 @@
 #ifndef OPS_TEST_UTILS_AICPU_TEST_UTISL_H_
 #define OPS_TEST_UTILS_AICPU_TEST_UTISL_H_
 #include <random>
+#include <string>
 #include <vector>
 #include <math.h>
 #include <iostream>
@@ -51,7 +52,7 @@ void SetRandomValue(T input[], uint64_t num, float min = 0.0,
 }
 
 #define RUN_KERNEL(node_def, device_type, expect)                 \
-  string node_def_str;                                            \
+  std::string node_def_str;                                       \
   node_def->SerializeToString(node_def_str);                      \
   CpuKernelContext ctx(device_type);                              \
   EXPECT_EQ(ctx.Init(node_def.get()), KERNEL_STATUS_OK);          \
@@ -59,7 +60,7 @@ void SetRandomValue(T input[], uint64_t num, float min = 0.0,
   EXPECT_EQ(ret, expect)
 
 #define RUN_KERNEL_WITHBLOCK(node_def, device_type, expect, blkInfo)       \
-  string node_def_str;                                            \
+  std::string node_def_str;                                       \
   node_def->SerializeToString(node_def_str);                      \
   auto blockNum = CpuKernelUtils::CreateAttrValue();              \
   blockNum->SetInt(blkInfo->block_num);                            \

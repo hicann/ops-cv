@@ -82,7 +82,7 @@ endif()
 
 ## 算子定义
 
-算子定义需要完成两个交付件：`README.md` ```${op_name}.json```
+算子定义需要完成两个交付件：`README.md` 和 ```${op_name}.json```
 
 **交付件1：README.md**
 

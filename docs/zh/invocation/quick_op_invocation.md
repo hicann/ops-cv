@@ -237,7 +237,7 @@ int main()
     aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
 
-    // 9. acl去初始化
+    // 10. acl去初始化
     aclFinalize();
     return 0;
 }

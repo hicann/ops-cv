@@ -341,6 +341,37 @@ install_patch() {
     fi
 }
 
+install_pkg_config() {
+    echo -e "\n==== Checking pkg-config ===="
+
+    if command -v pkg-config &> /dev/null; then
+        echo "pkg-config has been installed"
+        return
+    fi
+
+    echo "pkg-config is not installed, installing..."
+    case "$OS" in
+        debian)
+            run_command sudo $PKG_MANAGER update
+            run_command sudo $PKG_MANAGER install -y pkg-config
+            ;;
+        rhel)
+            run_command sudo $PKG_MANAGER install -y pkgconfig
+            ;;
+        macos)
+            echo "pkg-config should be available via Xcode command line tools or brew"
+            run_command brew install pkg-config
+            ;;
+    esac
+
+    if command -v pkg-config &> /dev/null; then
+        echo "pkg-config installed successfully"
+    else
+        echo "pkg-config installation failed, cannot verify googletest. Please install pkg-config manually."
+        exit 1
+    fi
+}
+
 install_googletest() {
     # Recommended googletest version: release-1.11.0
     echo -e "\n==== Checking googletest ===="
@@ -348,7 +379,7 @@ install_googletest() {
     local curr_ver=""
     local gtest_src_dir="/usr/src/gtest"
 
-    if pkg-config --exists gtest; then
+    if pkg-config --exists gtest 2>/dev/null; then
         curr_ver=$(pkg-config --modversion gtest)
         echo "Current googletest version: $curr_ver"
         if version_ge "$curr_ver" "$req_ver"; then
@@ -397,11 +428,12 @@ install_googletest() {
             ;;
     esac
 
-    if pkg-config --exists gtest; then
+    if pkg-config --exists gtest 2>/dev/null; then
         curr_ver=$(pkg-config --modversion gtest)
         echo "googletest installed successfully ($curr_ver)"
     else
-        echo "googletest installation failed"
+        echo "Warning: Unable to verify googletest installation via pkg-config."
+        echo "Please verify googletest is correctly installed manually."
         exit 1
     fi
 }
@@ -418,6 +450,7 @@ main() {
     install_pigz
     install_dos2unix
     install_patch
+    install_pkg_config
     install_googletest
 
     echo -e "===================================================="

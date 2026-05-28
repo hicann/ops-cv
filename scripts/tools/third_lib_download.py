@@ -149,13 +149,14 @@ def down_files_native(url_list):
 if __name__ == "__main__":
     third_urls = [
         "https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz",
-        "https://gitcode.com/cann-src-third-party/json/releases/download/v3.11.3/include.zip",
+        "https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/json/json-3.11.3.tar.gz",
         ("https://gitcode.com/cann-src-third-party/makeself/releases/download/"
          "release-2.5.0-patch1.0/makeself-release-2.5.0-patch1.tar.gz"),
         "https://gitcode.com/cann-src-third-party/eigen/releases/download/5.0.0-h0.trunk/eigen-5.0.0.tar.gz",
         "https://gitcode.com/cann-src-third-party/protobuf/releases/download/v25.1/protobuf-25.1.tar.gz",
         ("https://gitcode.com/cann-src-third-party/abseil-cpp/releases/download/"
          "20230802.1/abseil-cpp-20230802.1.tar.gz"),
+        "https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/cmake/cmake-master-016.tar.gz",
         "https://gitcode.com/cann/opbase.git"   # Git 仓库
     ]
 

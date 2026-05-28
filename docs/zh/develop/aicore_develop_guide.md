@@ -91,7 +91,7 @@ endif()
 
 ## 算子定义
 
-算子定义需要完成两个交付件：`README.md` ```${op_name}_def.cpp```
+算子定义需要完成两个交付件：`README.md` 和 ```${op_name}_def.cpp```
 
 > 💡 **进阶内容**：关于算子原型定义的详细说明，包括输入/输出/属性定义、AI处理器配置、多硬件平台差异化注册等，请参考[《AI Core算子开发进阶指南 - 算子原型定义》](./aicore_develop_advanced_guide.md#算子原型定义)。
 
@@ -150,7 +150,7 @@ static ge::graphStatus TilingParse(gert::TilingParseContext* context)
     // auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     // // 1.2获取可用核数
     // compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
-    // // 1,3获取UB大小
+    // // 1.3获取UB大小
     // uint64_t ubSizePlatForm;
     // ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     // compileInfo->ubSize = static_cast<int64_t>(ubSizePlatForm);
@@ -333,7 +333,7 @@ private:
     GlobalTensor<T> inputGMX_;
     // 输入Y的GM地址
     GlobalTensor<T> inputGMY_;
-    // 输入Z的GM地址
+    // 输出Z的GM地址
     GlobalTensor<T> outputGMZ_;
     
     // 总数据长度
@@ -620,7 +620,7 @@ TEST_F(${OpName}TilingTest, test_case_xxx)
         },
         &compileInfo,
         64,     // tiling阶段获取的核数
-        262144, // tiling阶段湖区的ub大小，但实际获取的值比指定值少256字节
+        262144, // tiling阶段获取的ub大小，但实际获取的值比指定值少256字节
         4096    // 指定tiling阶段中tiling data的最大值
     );
     // 2. 设定预期结果
