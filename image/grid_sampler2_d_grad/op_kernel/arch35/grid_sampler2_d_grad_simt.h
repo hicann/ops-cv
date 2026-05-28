@@ -190,9 +190,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
     GetCubicCoefficientsGrad(x_coeffs_grad, tx);
     GetCubicCoefficientsGrad(y_coeffs_grad, ty);
 
-    int32_t ix_nw = static_cast<int32_t>(ix_nw_f);
-    int32_t iy_nw = static_cast<int32_t>(iy_nw_f);
-
     float gix = static_cast<float>(0);
     float giy = static_cast<float>(0);
 
@@ -208,8 +205,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
 
         for (int32_t i = 0; i < 4; i++) {
             for (int32_t j = 0; j < 4; j++) {
-                int32_t neighbor_x = ix_nw - 1 + i;
-                int32_t neighbor_y = iy_nw - 1 + j;
+                float neighbor_x = ix_nw_f - 1 + i;
+                float neighbor_y = iy_nw_f - 1 + j;
 
                 // Set grad_input: add_value_bounded (data pointer already at NC offset)
                 AddValueBounded<T>(dxPtrNC, neighbor_x, neighbor_y, xW, xH,

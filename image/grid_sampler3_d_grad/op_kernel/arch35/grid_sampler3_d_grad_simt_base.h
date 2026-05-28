@@ -39,6 +39,7 @@ namespace GridSampler3DGradSimtBase {
     constexpr int32_t BILINEAR = 0;
     constexpr int32_t NEAREST = 1;
     constexpr int32_t BICUBIC = 2;
+    constexpr int32_t ZEROS = 0;
     constexpr int32_t BORDER = 1;
     constexpr int32_t REFLECTION = 2;
     constexpr float DEFAULT_FAULT_VALUE = -100.0f;
@@ -235,7 +236,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCo
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t ComputeBicubicNeighborIndex(
     float coord, uint32_t size, uint32_t padding, uint32_t alignCorners)
 {
-    if (padding == 0) { // zeros
+    if (padding == ZEROS) { // zeros
         int32_t idx = GetFloorValue(coord);
         if (idx < 0 || idx >= static_cast<int32_t>(size)) {
             return -1; // out of bounds
@@ -263,34 +264,33 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t Compute
 // Get value from input with boundary handling (for grad_grid computation)
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetValueBounded(
-    __gm__ T* data, int32_t x, int32_t y, uint32_t W, uint32_t H,
+    __gm__ T* data, float x, float y, uint32_t W, uint32_t H,
     uint32_t sW, uint32_t sH, uint32_t padding, uint32_t alignCorners)
 {
-    if (padding == 0) { // zeros
-        if (x < 0 || x >= static_cast<int32_t>(W) || y < 0 || y >= static_cast<int32_t>(H)) {
+    if (padding == ZEROS) { // zeros
+        if (x < 0 || x >= static_cast<float>(W) || y < 0 || y >= static_cast<float>(H)) {
             return 0.0f;
         }
     } else if (padding == BORDER) { // border
-        x = x < 0 ? 0 : (x >= static_cast<int32_t>(W) ? static_cast<int32_t>(W) - 1 : x);
-        y = y < 0 ? 0 : (y >= static_cast<int32_t>(H) ? static_cast<int32_t>(H) - 1 : y);
+        x = x < 0 ? 0 : (x >= static_cast<float>(W) ? static_cast<float>(W) - 1 : x);
+        y = y < 0 ? 0 : (y >= static_cast<float>(H) ? static_cast<float>(H) - 1 : y);
     } else { // reflection
-        float fx = static_cast<float>(x);
-        float fy = static_cast<float>(y);
         float gradReflX = 0, gradClipX = 0, gradReflY = 0, gradClipY = 0;
         if (alignCorners) {
-            fx = ReflectCoordinatesSetGrad(fx, 0, 2 * (W - 1), &gradReflX);
-            fy = ReflectCoordinatesSetGrad(fy, 0, 2 * (H - 1), &gradReflY);
+            x = ReflectCoordinatesSetGrad(x, 0, 2 * (W - 1), &gradReflX);
+            y = ReflectCoordinatesSetGrad(y, 0, 2 * (H - 1), &gradReflY);
         } else {
-            fx = ReflectCoordinatesSetGrad(fx, -1, 2 * W - 1, &gradReflX);
-            fy = ReflectCoordinatesSetGrad(fy, -1, 2 * H - 1, &gradReflY);
+            x = ReflectCoordinatesSetGrad(x, -1, 2 * W - 1, &gradReflX);
+            y = ReflectCoordinatesSetGrad(y, -1, 2 * H - 1, &gradReflY);
         }
-        fx = ClipCoorDinatesSetGrad(fx, W, &gradClipX);
-        fy = ClipCoorDinatesSetGrad(fy, H, &gradClipY);
-        x = static_cast<int32_t>(SafeDowngradeToIntRange(fx));
-        y = static_cast<int32_t>(SafeDowngradeToIntRange(fy));
+        x = ClipCoorDinatesSetGrad(x, W, &gradClipX);
+        y = ClipCoorDinatesSetGrad(y, H, &gradClipY);
     }
-    if (x >= 0 && x < static_cast<int32_t>(W) && y >= 0 && y < static_cast<int32_t>(H)) {
-        return static_cast<float>(data[y * sH + x * sW]);
+
+    int32_t ix = static_cast<int32_t>(SafeDowngradeToIntRange(x));
+    int32_t iy = static_cast<int32_t>(SafeDowngradeToIntRange(y));
+    if (ix >= 0 && ix < static_cast<int32_t>(W) && iy >= 0 && iy < static_cast<int32_t>(H)) {
+        return static_cast<float>(data[iy * sH + ix * sW]);
     }
     return 0.0f;
 }
@@ -298,34 +298,33 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetValueB
 // Add value to grad_input with boundary handling (for grad_input computation)
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void AddValueBounded(
-    __gm__ T* data, int32_t x, int32_t y, uint32_t W, uint32_t H,
+    __gm__ T* data, float x, float y, uint32_t W, uint32_t H,
     uint32_t sW, uint32_t sH, float delta, uint32_t padding, uint32_t alignCorners)
 {
-    if (padding == 0) { // zeros
-        if (x < 0 || x >= static_cast<int32_t>(W) || y < 0 || y >= static_cast<int32_t>(H)) {
+    if (padding == ZEROS) { // zeros
+        if (x < 0 || x >= static_cast<float>(W) || y < 0 || y >= static_cast<float>(H)) {
             return;
         }
     } else if (padding == BORDER) { // border
-        y = y < 0 ? 0 : (y >= static_cast<int32_t>(H) ? static_cast<int32_t>(H) - 1 : y);
-        x = x < 0 ? 0 : (x >= static_cast<int32_t>(W) ? static_cast<int32_t>(W) - 1 : x);
+        y = y < 0 ? 0 : (y >= static_cast<float>(H) ? static_cast<float>(H) - 1 : y);
+        x = x < 0 ? 0 : (x >= static_cast<float>(W) ? static_cast<float>(W) - 1 : x);
     } else { // reflection
-        float fy = static_cast<float>(y);
-        float fx = static_cast<float>(x);
         float gradReflX = 0, gradClipX = 0, gradReflY = 0, gradClipY = 0;
         if (alignCorners) {
-            fy = ReflectCoordinatesSetGrad(fy, 0, 2 * (H - 1), &gradReflY);
-            fx = ReflectCoordinatesSetGrad(fx, 0, 2 * (W - 1), &gradReflX);
+            y = ReflectCoordinatesSetGrad(y, 0, 2 * (H - 1), &gradReflY);
+            x = ReflectCoordinatesSetGrad(x, 0, 2 * (W - 1), &gradReflX);
         } else {
-            fy = ReflectCoordinatesSetGrad(fy, -1, 2 * H - 1, &gradReflY);
-            fx = ReflectCoordinatesSetGrad(fx, -1, 2 * W - 1, &gradReflX);
+            y = ReflectCoordinatesSetGrad(y, -1, 2 * H - 1, &gradReflY);
+            x = ReflectCoordinatesSetGrad(x, -1, 2 * W - 1, &gradReflX);
         }
-        fy = ClipCoorDinatesSetGrad(fy, H, &gradClipY);
-        fx = ClipCoorDinatesSetGrad(fx, W, &gradClipX);
-        y = static_cast<int32_t>(SafeDowngradeToIntRange(fy));
-        x = static_cast<int32_t>(SafeDowngradeToIntRange(fx));
+        y = ClipCoorDinatesSetGrad(y, H, &gradClipY);
+        x = ClipCoorDinatesSetGrad(x, W, &gradClipX);
     }
-    if (x >= 0 && x < static_cast<int32_t>(W) && y >= 0 && y < static_cast<int32_t>(H)) {
-        asc_atomic_add(data + y * sH + x * sW, static_cast<T>(delta));
+
+    int32_t iy = static_cast<int32_t>(SafeDowngradeToIntRange(y));
+    int32_t ix = static_cast<int32_t>(SafeDowngradeToIntRange(x));
+    if (ix >= 0 && ix < static_cast<int32_t>(W) && iy >= 0 && iy < static_cast<int32_t>(H)) {
+        asc_atomic_add(data + iy * sH + ix * sW, static_cast<T>(delta));
     }
 }
 

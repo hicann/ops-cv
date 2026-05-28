@@ -201,39 +201,36 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBicubicGradInput(
     __gm__ uint32_t* dxOutGmAddr, __gm__ T* dxOutValueGmAddr, __gm__ T* dxGmAddr,
-    int32_t neighbor_x, int32_t neighbor_y, uint32_t xW, uint32_t xH,
+    float neighbor_x, float neighbor_y, uint32_t xW, uint32_t xH,
     uint32_t padding, uint32_t alignCorners, uint32_t newInputIndex, uint32_t channelIndex,
     float delta, uint32_t gridSize, uint32_t blockNum, uint32_t batchNum, uint32_t blockId,
     int32_t i, int32_t j)
 {
-    int32_t clipped_x = neighbor_x;
-    int32_t clipped_y = neighbor_y;
     bool inBounds = true;
 
     if (padding == 0) {
-        if (neighbor_x < 0 || neighbor_x >= static_cast<int32_t>(xW) ||
-            neighbor_y < 0 || neighbor_y >= static_cast<int32_t>(xH)) {
+        if (neighbor_x < 0 || neighbor_x >= static_cast<float>(xW) ||
+            neighbor_y < 0 || neighbor_y >= static_cast<float>(xH)) {
             inBounds = false;
         }
     } else if (padding == 1) {
-        clipped_x = neighbor_x < 0 ? 0 : (neighbor_x >= static_cast<int32_t>(xW) ? static_cast<int32_t>(xW) - 1 : neighbor_x);
-        clipped_y = neighbor_y < 0 ? 0 : (neighbor_y >= static_cast<int32_t>(xH) ? static_cast<int32_t>(xH) - 1 : neighbor_y);
+        neighbor_x = neighbor_x < 0 ? 0 : (neighbor_x >= static_cast<float>(xW) ? static_cast<float>(xW) - 1 : neighbor_x);
+        neighbor_y = neighbor_y < 0 ? 0 : (neighbor_y >= static_cast<float>(xH) ? static_cast<float>(xH) - 1 : neighbor_y);
     } else {
-        float fx = static_cast<float>(neighbor_x);
-        float fy = static_cast<float>(neighbor_y);
         float gradReflX = 0, gradClipX = 0, gradReflY = 0, gradClipY = 0;
         if (alignCorners) {
-            fx = ReflectCoordinatesSetGrad(fx, 0, 2 * (xW - 1), &gradReflX);
-            fy = ReflectCoordinatesSetGrad(fy, 0, 2 * (xH - 1), &gradReflY);
+            neighbor_x = ReflectCoordinatesSetGrad(neighbor_x, 0, 2 * (xW - 1), &gradReflX);
+            neighbor_y = ReflectCoordinatesSetGrad(neighbor_y, 0, 2 * (xH - 1), &gradReflY);
         } else {
-            fx = ReflectCoordinatesSetGrad(fx, -1, 2 * xW - 1, &gradReflX);
-            fy = ReflectCoordinatesSetGrad(fy, -1, 2 * xH - 1, &gradReflY);
+            neighbor_x = ReflectCoordinatesSetGrad(neighbor_x, -1, 2 * xW - 1, &gradReflX);
+            neighbor_y = ReflectCoordinatesSetGrad(neighbor_y, -1, 2 * xH - 1, &gradReflY);
         }
-        fx = ClipCoorDinatesSetGrad(fx, xW, &gradClipX);
-        fy = ClipCoorDinatesSetGrad(fy, xH, &gradClipY);
-        clipped_x = static_cast<int32_t>(fx);
-        clipped_y = static_cast<int32_t>(fy);
+        neighbor_x = ClipCoorDinatesSetGrad(neighbor_x, xW, &gradClipX);
+        neighbor_y = ClipCoorDinatesSetGrad(neighbor_y, xH, &gradClipY);
     }
+
+    int32_t clipped_x = static_cast<int32_t>(SafeDowngradeToIntRange(neighbor_x));
+    int32_t clipped_y = static_cast<int32_t>(SafeDowngradeToIntRange(neighbor_y));
 
     if (inBounds && clipped_x >= 0 && clipped_x < static_cast<int32_t>(xW) &&
         clipped_y >= 0 && clipped_y < static_cast<int32_t>(xH)) {
@@ -271,9 +268,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
     GetCubicCoefficientsGrad(y_coeffs_grad, ty);
     GetCubicCoefficientsGrad(x_coeffs_grad, tx);
 
-    int32_t iy_nw = static_cast<int32_t>(iy_nw_f);
-    int32_t ix_nw = static_cast<int32_t>(ix_nw_f);
-
     float giy = static_cast<float>(0);
     float gix = static_cast<float>(0);
 
@@ -290,8 +284,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
 
         for (int32_t i = 0; i < 4; i++) {
             for (int32_t j = 0; j < 4; j++) {
-                int32_t neighbor_x = ix_nw - 1 + i;
-                int32_t neighbor_y = iy_nw - 1 + j;
+                float neighbor_x = ix_nw_f - 1 + i;
+                float neighbor_y = iy_nw_f - 1 + j;
 
                 float weight = x_coeffs[i] * y_coeffs[j];
                 float delta = gradOutValue * weight;
