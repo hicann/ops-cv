@@ -34,6 +34,98 @@
       $$
   
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
+
+      - 反归一化的计算公式：
+        - align_corners=true，表示特征值位于像素中心。
+
+         $$
+         x' = (grid\_x + 1) / 2 * (D_{in} - 1)
+         $$
+
+         $$
+         y' = (grid\_y +1) / 2 * (H_{in} - 1)
+         $$
+
+         $$
+         z' = (grid\_z +1) / 2 * (W_{in} - 1)
+         $$
+
+        - align_corners=false，表示特征值位于像素的角点。
+
+         $$
+         x' = ((grid\_x +1) * D_{in} - 1) / 2
+         $$
+
+         $$
+         y' = ((grid\_y +1) * H_{in} - 1) / 2
+         $$
+
+         $$
+         z' = ((grid\_z +1) * W_{in} - 1) / 2
+         $$
+
+      - 对于超出范围的坐标，会根据paddingMode进行不同处理：
+        - paddingMode=0，表示对越界位置用0填充。
+        - paddingMode=1，表示对越界位置用边界值填充。
+        - paddingMode=2，表示对越界位置用边界值的对称值填充。
+      - 对input采样时，会根据interpolationMode进行不同处理：
+        - interpolationMode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
+
+          $$
+          {output(N, C, D_{out}, H_{out}, W_{out})} = \sum_{i=0}^{2}\sum_{j=0}^{2}\sum_{k=0}^{2}{w(i, j, k)} * {f(x', y', z')}
+          $$
+
+          其中：
+          - $f(x', y', z')$是原图像在$(x', y', z')$的像素值。
+          - $w(i, j, k)$是双线性插值周边8个点的权重，计算公式为：
+
+            $$
+              w(i) = \begin{cases}
+              1 - |x'_i - x_i| & |x'_i - x_i| < 1 \\
+              0 & otherwise
+              \end{cases}
+            $$
+
+            $$
+              w(j) = \begin{cases}
+              1 - |y'_j - y_j| & |y'_j - y_j| < 1 \\
+              0 & otherwise
+              \end{cases}
+            $$
+
+            $$
+              w(k) = \begin{cases}
+              1 - |z'_k - z_k| & |z'_k - z_k| < 1 \\
+              0 & otherwise
+              \end{cases}
+            $$
+
+            $$
+            w(i, j, k)= w(i) * w(j) * w(k)
+            $$
+
+        - interpolationMode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
+
+          $$
+          output(N, C, D_{out}, H_{out}, W_{out}) = input(N, C, D_{in}, H_{in}, W_{in})
+          $$
+
+          其中：
+
+          $$
+          D_{out} = min(round(x'),  H - 1)\\
+          D_{out} = max(round(x'),  0)
+          $$
+
+          $$
+          H_{out} = min(round(y'),  H - 1)\\
+          H_{out} = max(round(y'),  0)
+          $$
+
+          $$
+          W_{out} = min(round(z'),  W - 1)\\
+          W_{out} = max(round(z'),  0)
+          $$
   
     - 2D场景：
 
@@ -47,17 +139,103 @@
   
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
 
-    - 对于超出范围的坐标，会根据padding_mode进行不同处理：
-  
-      - padding_mode="zeros"，表示对越界位置用0填充。
-      - padding_mode="border"，表示对越界位置用边界值填充。
-      - padding_mode="reflection"，表示对越界位置用边界值的对称值填充。
-  
-    - 对input采样时，会根据interpolation_mode进行不同处理：
-  
-      - interpolation_mode="bilinear"，表示取input中(x, y)或者(x, y, z)周围四个或八个坐标的加权平均值。
-      - interpolation_mode="nearest"，表示取input中距离(x, y)或者(x, y, z)最近的坐标值。
-      - interpolation_mode="bicubic"，表示取input中(x, y)周围十六个坐标的加权平均值。
+      - 反归一化的计算公式：
+        - align_corners=true，表示特征值位于像素中心。
+
+          $$
+          x' = (grid\_x + 1) / 2 * (H_{in} - 1)
+          $$
+
+          $$
+          y' = (grid\_y +1) / 2 * (W_{in} - 1)
+          $$
+
+        - align_corners=false，表示特征值位于像素的角点。
+
+          $$
+          x' = ((grid\_x +1) * H_{in} - 1) / 2
+          $$
+
+          $$
+          y' = ((grid\_y +1) * W_{in} - 1) / 2
+          $$
+
+      - 对于超出范围的坐标，会根据paddingMode进行不同处理：
+
+        - paddingMode=0，表示对越界位置用0填充。
+        - paddingMode=1，表示对越界位置用边界值填充。
+        - paddingMode=2，表示对越界位置用边界值的对称值填充。
+
+      - 对input采样时，会根据interpolationMode进行不同处理：
+
+        - interpolationMode=0，表示取(x, y)周围四个坐标的加权平均值。
+
+          $$
+          output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{2}\sum_{j=0}^{2}{w(i, j)} * {f    (x', y')}
+          $$
+
+          其中：
+          - $f(x', y')$是原图像在$(x', y')$的像素值。
+          - $w(i, j)$是双线性插值周边4个点的权重，计算公式为：
+
+            $$
+              w(i) = \begin{cases}
+              1 - |x'_i - x_i| & |x'_i - x_i| < 1 \\
+              0 & otherwise
+              \end{cases}
+            $$
+
+            $$
+              w(j) = \begin{cases}
+              1 - |y'_j - y_j| & |y'_j - y_j| < 1 \\
+              0 & otherwise
+              \end{cases}
+            $$
+
+            $$
+            w(i, j)= w(i) * w(j)
+            $$
+
+        - interpolationMode=1，表示取input中距离(x, y)最近的坐标值。
+
+          $$
+          output(N, C, H_{out}, W_{out}) = input(N, C, H_{in}, W_{in})
+          $$
+
+          其中：
+
+          $$
+          H_{out} = min(round(x'),  H - 1)\\
+          H_{out} = max(round(x'),  0)
+          $$
+
+          $$
+          W_{out} = min(round(y'),  W - 1)\\
+          W_{out} = max(round(y'),  0)
+          $$
+
+        - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。
+
+          $$
+          {output(N, C, H_{out}, W_{out})}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f    (x', y')}
+          $$
+
+          其中：
+          - i和j是$W(i, j)$的索引变量。
+          - $f(x', y')$是原图像在$(x', y')$的像素值。
+          - $W(i, j)$是双三次插值的权重，定义为：
+
+            $$
+            W(d) =\begin{cases}
+            (a+2)|d|^3-(a+3)|d|^2+1 & |d|\leq1 \\
+            a|d|^3-5a|d|^2+8a|d|-4a & 1<|d|<2 \\
+            0 & otherwise
+            \end{cases}
+            $$
+
+            其中：
+            - $a=-0.75$
+            - $d = |(x_i, y_j) - (x'_i, y'_j)|$
 
 ## 参数说明
 

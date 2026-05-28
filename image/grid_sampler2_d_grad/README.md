@@ -14,37 +14,228 @@
 ## 功能说明
 
 - 算子功能：[GridSampler](../grid_sample/README.md)中2D场景的反向传播，完成张量input与张量grid的梯度计算。
-- 计算公式：
-  - 计算流程：
+- 计算流程：
 
     1. 根据grid存储的(x, y)值，计算出映射到input上的坐标，这些坐标和align_corners、padding_mode有关。
-    2. 根据输入的interpolation_mode，选择使用bilinear、nearest、bicubic不同插值模式计算该坐标周围点分配到梯度的权重值。
+    2. 根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算该坐标周围点分配到梯度的权重值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
   
-  - 其中：
-      grad、input、grid、dx、dgrid的尺寸如下：
+- 计算公式：
 
-      $$
-      grad: (N, C, H_{out}, W_{out})\\
-      input: (N, C, H_{in}, W_{in})\\
-      grid: (N, H_{out}, W_{out}, 2)\\
-      dx: (N, C, H_{in}, W_{in})\\
-      dgrid: (N, H_{out}, W_{out}, 2)
-      $$
-  
-      其中grad、input、grid、dx、dgrid中的N均相同，grad、input和dx中的C相同，input和dx中的$H_{in}$、$W_{in}$相同，grad、grid和dgrid中的$H_{out}$、$W_{out}$相同，grid最后一维大小为2，表示input像素位置信息为(x, y)。x和y的取值范围归一化到[-1, 1]，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+  grad、input、grid、dx、dgrid的尺寸如下：
+  $$
+  grad: (N, C, H_{out}, W_{out})\\
+  input: (N, C, H_{in}, W_{in})\\
+  grid: (N, H_{out}, W_{out}, 2)\\
+  dx: (N, C, H_{in}, W_{in})\\
+  dgrid: (N, H_{out}, W_{out}, 2)
+  $$
 
-    - 对于超出范围的坐标，会根据padding_mode进行不同处理：
+  其中grad、input、grid、dx、dgrid中的N均相同，grad、input和dx中的C相同，input和dx中的$H_{in}$、$W_{in}$相同，grad、grid和dgrid中的$H_{out}$、$W_{out}$相同，grid最后一维大小为2，表示input像素位置信息为(x, y)。x和y的取值范围归一化到[-1, 1]，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
   
-      - padding_mode="zeros"，表示对越界位置用0填充。
-      - padding_mode="border"，表示对越界位置用边界值填充。
-      - padding_mode="reflection"，表示对越界位置用边界值的对称值填充。
-  
-    - 对input采样时，会根据interpolation_mode进行不同处理：
-  
-      - interpolation_mode="bilinear"，表示取input中(x, y)周围四个坐标的加权平均值。
-      - interpolation_mode="nearest"，表示取input中距离(x, y)最近的坐标值。
-      - interpolation_mode="bicubic"，表示取(x, y)周围十六个坐标的加权平均值。
+  1. 坐标反归一化：
+     grid中的(x, y)需要先反归一化到input像素坐标(ix, iy)，同时计算梯度乘子 `gix_mult`、`giy_mult`（用于后续dgrid计算）：
+     - align_corners = true：
+
+       $$
+       ix = \frac{(x+1)}{2} \cdot (W_{in} - 1), \quad gix\_mult = \frac{W_{in} - 1}{2} \\
+       iy = \frac{(y+1)}{2} \cdot (H_{in} - 1), \quad giy\_mult = \frac{H_{in} - 1}{2}
+       $$
+
+     - align_corners = false：
+
+       $$
+       ix = \frac{(x+1) \cdot W_{in} - 1}{2}, \quad gix\_mult = \frac{W_{in}}{2} \\
+       iy = \frac{(y+1) \cdot H_{in} - 1}{2}, \quad giy\_mult = \frac{H_{in}}{2}
+       $$
+
+  2. padding_mode对梯度乘子的影响：
+     - padding_mode="zeros"，`gix_mult`不变
+     - padding_mode="border"，$gix\_mult = gix\_mult × grad\_clip$（坐标在边界外时grad_clip=0，否则=1）
+     - padding_mode="reflection"，$gix\_mult = gix\_mult × grad\_refl × grad\_clip$（grad_refl是反射坐标变换函数对输入坐标的导数，表示反射后输出坐标随输入坐标变化的方向和速率。取值为-1，0，1。）
+
+  3. 各插值模式的梯度公式：
+     - Bilinear（双线性插值）
+
+       四个角点坐标和权重为：
+
+       | 角点 | 坐标$(i_p, j_p)$ | 权重$w_p$ |
+       |:------:|:------:|:----------:|
+       | nw (西北) | $(iy_{nw}, ix_{nw})$ | $(ix_{se} - ix) × (iy_{se} - iy)$ |
+       | ne (东北) | $(iy_{ne}, ix_{ne})$ | $(ix - ix_{sw}) × (iy_{sw} - iy)$ |
+       | sw (西南) | $(iy_{sw}, ix_{sw})$ | $(ix_{ne} - ix) × (iy - iy_{ne})$ |
+       | se (东南) | $(iy_{se}, ix_{se})$ | $(ix - ix_{nw}) × (iy - iy_{nw})$ |
+
+       其中：
+
+       $$
+       ix_{nw} = floor(ix) \\
+       iy_{nw} = floor(iy) \\
+       ix_{ne} = floor(ix) + 1 \\
+       iy_{ne} = floor(iy)\\
+       ix_{sw} = floor(ix) \\
+       iy_{sw} = floor(iy) + 1 \\
+       ix_{se} = floor(ix) + 1 \\
+       iy_{se} = floor(iy) + 1
+       $$
+
+       - dx（input 梯度）：将上游梯度按权重散射到input对应位置
+         
+         $$
+         dx(N, C, i_p, j_p) \mathrel{+}= w_p \cdot grad(N, C, H_{out}, W_{out})
+         $$
+
+         即对每个输出像素(h, w)，将其梯度乘以双线性权重，累加到input的四个相邻像素位置（越界位置不累加）。
+       - dgrid（grid 梯度）：对(ix, iy)的偏导
+         
+         $$
+         gix = \sum_{c} \left[ -V_{nw} \cdot (iy_{se} - iy) + V_{ne} \cdot   (iy_{sw} - iy) - V_{sw} \cdot (iy - iy_{ne}) + V_{se} \cdot (iy - iy_{nw}) \right] \cdot grad(N, C, H_{out}, W_{out})
+         $$
+
+         $$
+         giy = \sum_{c} \left[ -V_{nw} \cdot (ix_{se} - ix) - V_{ne} \cdot   (ix - ix_{sw}) + V_{sw} \cdot (ix_{ne} - ix) + V_{se} \cdot (ix - ix_{nw}) \right] \cdot grad(N, C, H_{out}, W_{out})
+         $$
+
+         其中 $V_p = input(N, C, i_p, j_p)$（仅当角点在边界内时参与计算）。
+       - 最终：
+
+         $$
+         dgrid(N, H_{out}, W_{out}, 0) = gix\_mult \cdot gix
+         $$
+
+         $$
+         dgrid(N, H_{out}, W_{out}, 1) = giy\_mult \cdot giy
+         $$
+
+      - Nearest（最邻近插值）
+        - dx：将上游梯度直接累加到最近邻位置
+
+          $$
+          dx(N, C, \text{round}(iy), \text{round}(ix)) \mathrel{+}= grad(N, C, H_{out}, W_{out})
+          $$
+
+        - dgrid：最邻近插值对坐标不可导，因此 **dgrid = 0**。
+
+      - Bicubic（双三次插值）
+        - dx：
+
+          $$
+          dx(N, C, iy', ix') \mathrel{+}= grad(N, C, H_{out}, W_{out}) \cdot x\_coeffs[i] \cdot y\_coeffs[j]
+          $$
+
+          其中：
+          
+          $(ix', iy') = (ix_{nw}-1+i, iy_{nw}-1+j)$，$i,j \in \{0,1,2,3\}$，越界位置根据padding_mode处理。
+          
+          $$
+          A = -0.75 \\
+          x_0 = x + 1.0 \\
+          x\_coeffs[0] = ((A * x_0 - 5* A) * x_0 + 8 * A) * x_0 - 4 * A
+          $$
+
+          $$
+          x_1 = x \\
+          x\_coeffs[1] = ((A + 2)* x_1 - (A + 3)) * x_1 * x_1 + 1
+          $$
+
+          $$
+          x_2 = 1 - x \\
+          x\_coeffs[2] = ((A + 2)* x_2 - (A + 3)) * x_2 * x_2 + 1
+          $$
+
+          $$
+          x_3 = 2 - x \\
+          x\_coeffs[3] = ((A * x_3 - 5* A) * x_3 + 8 * A) * x_3 - 4 * A
+          $$
+
+          $$
+          y_0 = y + 1.0 \\
+          y\_coeffs[0] = ((A * y_0 - 5* A) * y_0 + 8 * A) * y_0 - 4 * A
+          $$
+
+          $$
+          y_1 = y \\
+          y\_coeffs[1] = ((A + 2)* y_1 - (A + 3)) * y_1 * y_1 + 1
+          $$
+
+          $$
+          y_2 = 1 - y \\
+          y\_coeffs[2] = ((A + 2)* y_2 - (A + 3)) * y_2 * y_2 + 1
+          $$
+
+          $$
+          y_3 = 2 - y \\
+          y\_coeffs[3] = ((A * y_3 - 5* A) * y_3 + 8 * A) * y_3 - 4 * A
+          $$
+
+        - dgrid：
+
+          $$
+          gix = -\sum_{C}\sum_{i=0}^{3}\sum_{j=0}^{3} V_{ij} \cdot x\_coeffs\_grad[i] \cdot y\_coeffs[j] \cdot grad(N, C, H_{out}, W_{out})
+          $$
+
+          $$
+          giy = -\sum_{C}\sum_{i=0}^{3}\sum_{j=0}^{3} V_{ij} \cdot y\_coeffs\_grad[j] \cdot x\_coeffs[i] \cdot grad(N, C, H_{out}, W_{out})
+          $$
+
+          其中：
+
+          $V_{ij} = get\_value\_bounded(input(N, C, H_{in}, W_{in}), ix_{nw}-1+i, iy_{nw}-1  +j)$，`x_coeffs_grad` 和 `y_coeffs_grad` 是三次插值系数对tx/ty的导数：
+
+          $$
+          tx = ix - floor(ix) \\
+          ty = iy - floor(iy) \\
+          $$
+
+          $$
+          x\_coeffs\_grad[0] = (-3A \cdot x - 10A) \cdot x - 8A \\
+          \quad x = |-1 - tx|
+          $$
+
+          $$
+          x\_coeffs\_grad[1] = (-3(A+2) \cdot x - 2(A+3)) \cdot x \\
+          \quad x = | 0 - tx|
+          $$
+
+          $$
+          x\_coeffs\_grad[2] = (3(A+2) \cdot x - 2(A+3)) \cdot x \\
+          \quad x = |1 - tx|
+          $$
+
+          $$
+          x\_coeffs\_grad[3] = (3A \cdot x - 10A) \cdot x + 8A \\
+          \quad x = |2 - tx|
+          $$
+
+          $$
+          y\_coeffs\_grad[0] = (-3A \cdot y - 10A) \cdot y - 8A \\
+          \quad y = |-1 - ty|
+          $$
+
+          $$
+          y\_coeffs\_grad[1] = (-3(A+2) \cdot y - 2(A+3)) \cdot y \\
+          \quad y = | 0 - ty|
+          $$
+
+          $$
+          y\_coeffs\_grad[2] = (3(A+2) \cdot y - 2(A+3)) \cdot y \\
+          \quad y = |1 - ty|
+          $$
+
+          $$
+          y\_coeffs\_grad[3] = (3A \cdot y - 10A) \cdot y + 8A \\
+          \quad y = |2 - ty|
+          $$
+
+          最终：
+
+          $$
+          dgrid(N, H_{out}, W_{out}, 0) = gix\_mult \cdot gix
+          $$
+
+          $$
+          dgrid(N, H_{out}, W_{out}, 1) = giy\_mult \cdot giy
+          $$
 
 ## 参数说明
 

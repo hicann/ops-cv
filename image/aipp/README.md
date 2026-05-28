@@ -15,8 +15,8 @@
 
 - 算子功能：
 
-    AIPP（Artificial Intelligence Pre-Processing）人工智能预处理，用于在AI Core上完成数据预处理，包括改变图像尺寸、色域转换（转换图像格式）、减均值/乘系数（改变图像像素），数据预处理之后再进行真正的模型推理。**目前支持使能动态AIPP和静态AIPP功能**，全量的AIPP功能介绍请参考 [《ATC离线模型编译工具》](https://hiascend.com/document/redirect/CannCommunityAtc
-      )中“高级功能 > AIPP使能”章节。
+    AIPP（Artificial Intelligence Pre-Processing）人工智能预处理，用于在AI Core上完成数据预处理，包括改变图像尺寸、色域转换（转换图像格式）、减均值/乘系数（改变图像像素），数据预处理之后再进行真正的模型推理。**目前支持动态AIPP和静态AIPP功能**，全量的AIPP功能介绍请参考 [《ATC离线模型编译工具》](https://hiascend.com/document/redirect/CannCommunityAtc
+      )中“高级功能 > 开启AIPP”章节。
 
 - 计算流程：
     1. 根据传入的裁剪参数计算输入和输出的对应关系，对图片进行裁剪。
@@ -209,7 +209,7 @@
         <td rowspan="5">CROP参数设置</td>
         <td>crop</td>
         <td>可选属性</td>
-        <td>裁剪使能开关，true表示支持，false表示不支持。</td>
+        <td>裁剪开关，true表示支持，false表示不支持。</td>
         <td>BOOL</td>
         </tr>
         <tr>
@@ -246,13 +246,13 @@
         <tr>
         <td>rbuv_swap_switch</td>
         <td>可选属性</td>
-        <td>R通道与B通道交换开关/U通道与V通道交换开关，true表示使能通道交换，false表示不使能。</td>
+        <td>R通道与B通道交换开关/U通道与V通道交换开关，true表示开启通道交换，false表示不开启。</td>
         <td>BOOL</td>
         </tr>
         <tr>
         <td>ax_swap_switch</td>
         <td>可选属性</td>
-        <td>RGBA->ARGB交换开关，true表示使能交换，false表示不使能。</td>
+        <td>RGBA->ARGB交换开关，true表示开启交换，false表示不开启。</td>
         <td>BOOL</td>
         </tr>
         <tr>
@@ -300,7 +300,7 @@
         <td rowspan="3">padding参数设置</td>
         <td>padding</td>
         <td>可选属性</td>
-        <td>AIPP处理图片时padding使能开关，取值范围：true/false。</td>
+        <td>AIPP处理图片时padding开启开关，取值范围：true/false。</td>
         <td>BOOL</td>
         </tr>
         <tr>

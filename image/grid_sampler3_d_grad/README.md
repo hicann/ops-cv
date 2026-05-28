@@ -15,37 +15,158 @@
 
 - 算子功能：[GridSampler](../grid_sample/README.md)中3D场景的反向传播，完成张量input与张量grid的梯度计算。
 
+- 计算流程：
+  1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，这些坐标和align_corners、padding_mode有关。
+  2. 坐标根据输入的interpolation_mode，选择使用bilinear、nearest不同插值模式计算输出值。
+  3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
+  
 - 计算公式：
+  
+  grad、input、grid、dx、dgrid的尺寸如下：
+  
+  $$
+  grad: (N, C, D_{out}, H_{out}, W_{out})\\
+  input: (N, C, D_{in}, H_{in}, W_{in})\\
+  grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
+  dx: (N, C, D_{in}, H_{in}, W_{in})\\
+  dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
+  $$
 
-  - 计算流程：
-    1. 根据grid存储的(x, y, z)值，计算出映射到input上的坐标，这些坐标和align_corners、padding_mode有关。
-    2. 坐标根据输入的interpolation_mode，选择使用bilinear、nearest不同插值模式计算输出值。
-    3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
-  
-  - 其中：
+  其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
 
-      grad、input、grid、dx、dgrid的尺寸如下：
-  
-      $$
-      grad: (N, C, D_{out}, H_{out}, W_{out})\\
-      input: (N, C, D_{in}, H_{in}, W_{in})\\
-      grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
-      dx: (N, C, D_{in}, H_{in}, W_{in})\\
-      dgrid: (N, D_{out}, H_{out}, W_{out}, 3)
-      $$
-  
-      其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
+  1. 坐标反归一化：
+     grid中的(x, y, z)需要先反归一化到input像素坐标(ix, iy, iz)，同时计算梯度乘子 `gix_mult`、`giy_mult`、`giz_mult`（用于后续dgrid计算）：
+     - align_corners = true：
 
-    - 对于超出范围的坐标，会根据padding_mode进行不同处理：
-  
-      - padding_mode="zeros"，表示对越界位置用0填充。
-      - padding_mode="border"，表示对越界位置用边界值填充。
-      - padding_mode="reflection"，表示对越界位置用边界值的对称值填充。
-  
-    - 对input采样时，会根据interpolation_mode进行不同处理：
-  
-      - interpolation_mode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
-      - interpolation_mode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
+       $$
+       ix = \frac{(x+1)}{2} \cdot (W_{in} - 1), \quad gix\_mult = \frac{W_{in} - 1}{2} \\
+       iy = \frac{(y+1)}{2} \cdot (H_{in} - 1), \quad giy\_mult = \frac{H_{in} - 1}{2} \\
+       iz = \frac{(z+1)}{2} \cdot (D_{in} - 1), \quad giz\_mult = \frac{D_{in} - 1}{2}
+       $$
+
+     - align_corners = false：
+
+       $$
+       ix = \frac{(x+1) \cdot W_{in} - 1}{2}, \quad gix\_mult = \frac{W_{in}}{2} \\
+       iy = \frac{(y+1) \cdot H_{in} - 1}{2}, \quad giy\_mult = \frac{H_{in}}{2} \\
+       iz = \frac{(z+1) \cdot D_{in} - 1}{2}, \quad giz\_mult = \frac{D_{in}}{2}
+       $$
+
+  2. padding_mode对梯度乘子的影响：
+     - padding_mode="zeros"，`gix_mult`不变
+     - padding_mode="border"，$gix\_mult = gix\_mult × grad\_clip$（坐标在边界外时grad_clip=0，否则=1）
+     - padding_mode="reflection"，$gix\_mult = gix\_mult × grad\_refl × grad\_clip$（grad_refl是反射坐标变换函数对输入坐标的导数，表示反射后输出坐标随输入坐标变化的方向和速率。取值为-1，0，1。）
+
+  3. 各插值模式的梯度公式：
+     - Bilinear（三线性插值，Trilinear）
+
+       四个角点坐标和权重为：
+
+       | 角点 | 坐标$(i_p, j_p, k_p)$ | 权重$w_p$ |
+       |:------:|:------:|:----------:|
+       | tnw (顶-北-西) | $(⌊iz⌋, ⌊iy⌋, ⌊ix⌋)$ | $(ix_{bse} - ix) × (iy_{bse} - iy) × (iz_{bse} - iz)$ |
+       | tne (顶-北-东) | $(⌊iz⌋, ⌊iy⌋, ⌊ix⌋+1)$ | $(ix - ix_{bsw}) × (iy_{bsw} - iy) × (iz_{bsw} -  iz)$ |
+       | tsw (顶-南-西) | $(⌊iz⌋, ⌊iy⌋+1, ⌊ix⌋)$ | $(ix_{bne} - ix) × (iy - iy_{bne}) × (iz_{bne} -  iz)$ |
+       | tse (顶-南-东) | $(⌊iz⌋, ⌊iy⌋+1, ⌊ix⌋+1)$ | $(ix - ix_{bnw}) × (iy - iy_{bnw}) × (iz_{bnw} -  iz)$ |
+       | bnw (底-北-西) | $(⌊iz⌋+1, ⌊iy⌋, ⌊ix⌋)$ | $(ix_{tse} - ix) × (iy_{tse} - iy) × (iz -  iz_{tse})$|
+       | bne (底-北-东) | $(⌊iz⌋+1, ⌊iy⌋, ⌊ix⌋+1)$ | $(ix - ix_{tsw}) × (iy_{tsw} - iy) × (iz -  iz_{tsw})$ |
+       | bsw (底-南-西) | $(⌊iz⌋+1, ⌊iy⌋+1, ⌊ix⌋)$ | $(ix_{tne} - ix) × (iy - iy_{tne}) × (iz -  iz_{tne})$ |
+       | bse (底-南-东) | $(⌊iz⌋+1, ⌊iy⌋+1, ⌊ix⌋+1)$ | $(ix - ix_{tnw}) × (iy - iy_{tnw}) × (iz -  iz_{tnw})$ |
+ 
+       其中：
+
+       $$
+       ix_{tnw} = floor(ix) \\
+       iy_{tnw} = floor(iy) \\
+       iz_{tnw} = floor(iz) \\
+       $$
+
+       $$
+       ix_{tne} = ix_{tnw} + 1 \\
+       iy_{tne} = iy_{tnw} \\
+       iz_{tne} = iz_{tnw}\\
+       $$
+
+       $$
+       ix_{tsw} = ix_{tnw} \\
+       iy_{tsw} = iy_{tnw} + 1 \\
+       iz_{tsw} = iz_{tnw}\\
+       $$
+
+       $$
+       ix_{tse} = ix_{tnw} + 1 \\
+       iy_{tse} = iy_{tnw} + 1 \\
+       iz_{tse} = iz_{tnw} \\
+       $$
+
+       $$
+       ix_{bnw} = ix_{tnw}  \\
+       iy_{bnw} = iy_{tnw}  \\
+       iz_{bnw} = iz_{tnw} + 1 \\
+       $$
+
+       $$
+       ix_{bne} = ix_{tnw} + 1  \\
+       iy_{bne} = iy_{tnw}  \\
+       iz_{bne} = iz_{tnw} + 1 \\
+       $$
+
+       $$
+       ix_{bsw} = ix_{tnw}  \\
+       iy_{bsw} = iy_{tnw} + 1  \\
+       iz_{bsw} = iz_{tnw} + 1 \\
+       $$
+
+       $$
+       ix_{bse} = ix_{tnw} + 1 \\
+       iy_{bse} = iy_{tnw} + 1  \\
+       iz_{bse} = iz_{tnw} + 1 \\
+       $$
+
+       - dx（input 梯度）：将上游梯度按三线性权重散射到input对应位置
+         
+         $$
+         dx(N, C, i_p, j_p, k_p) \mathrel{+}= w_p \cdot grad(N, C, D_{out}, H_{out}, W_{out})
+         $$
+
+         即对每个输出像素(d, h, w)，将其梯度乘以三线性权重，累加到input的8个相邻体素位置（越界位置不累加）。
+       - dgrid（grid 梯度）：对(ix, iy, iz)的偏导
+         
+         $$
+         gix = \sum_{c} \left[ -V_{tnw} \cdot (iy_{bse}-iy)(iz_{bse}-iz) + V_{tne} \cdot (iy_{bsw}-iy)(iz_{bsw}-iz) - V_{tsw} \cdot (iy-iy_{bne})(iz_{bne}-iz) + V_{tse} \cdot (iy-iy_{bnw})(iz_{bnw}-iz) - V_{bnw} \cdot (iy_{tse}-iy)(iz-iz_{tse}) + V_{bne} \cdot (iy_{tsw}-iy)(iz-iz_{tsw}) - V_{bsw} \cdot (iy-iy_{tne})(iz-iz_{tne}) + V_{bse} \cdot (iy-iy_{tnw})(iz-iz_{tnw}) \right] \cdot grad(N, C, D_{out}, H_{out}, W_{out})
+         $$
+
+         $$
+         giy = \sum_{c} \left[ -V_{tnw} \cdot (ix_{bse}-ix)(iz_{bse}-iz) - V_{tne} \cdot (ix-ix_{bsw})(iz_{bsw}-iz) + V_{tsw} \cdot (ix_{bne}-ix)(iz_{bne}-iz) + V_{tse} \cdot (ix-ix_{bnw})(iz_{bnw}-iz) - V_{bnw} \cdot (ix_{tse}-ix)(iz-iz_{tse}) - V_{bne} \cdot (ix-ix_{tsw})(iz-iz_{tsw}) + V_{bsw} \cdot (ix_{tne}-ix)(iz-iz_{tne}) + V_{bse} \cdot (ix-ix_{tnw})(iz-iz_{tnw}) \right] \cdot grad(N, C, D_{out}, H_{out}, W_{out})
+         $$
+
+         $$
+         giz = \sum_{c} \left[ -V_{tnw} \cdot (ix_{bse}-ix)(iy_{bse}-iy) - V_{tne} \cdot (ix-ix_{bsw})(iy_{bsw}-iy) - V_{tsw} \cdot (ix_{bne}-ix)(iy-iy_{bne}) - V_{tse} \cdot (ix-ix_{bnw})(iy-iy_{bnw}) + V_{bnw} \cdot (ix_{tse}-ix)(iy_{tse}-iy) + V_{bne} \cdot (ix-ix_{tsw})(iy_{tsw}-iy) + V_{bsw} \cdot (ix_{tne}-ix)(iy-iy_{tne}) + V_{bse} \cdot (ix-ix_{tnw})(iy-iy_{tnw}) \right] \cdot grad(N, C, D_{out}, H_{out}, W_{out})
+         $$
+
+         其中 $V_p = input(N, C, i_p, j_p, k_p)$（仅当角点在边界内时参与计算）。
+       - 最终：
+
+         $$
+         dgrid(N, D_{out}, H_{out}, W_{out}, 0) = gix\_mult \cdot gix
+         $$
+
+         $$
+         dgrid(N, D_{out}, H_{out}, W_{out}, 1) = giy\_mult \cdot giy
+         $$
+
+         $$
+         dgrid(N, D_{out}, H_{out}, W_{out}, 2) = giy\_mult \cdot giz
+         $$
+
+      - Nearest（最邻近插值）
+        - dx：将上游梯度直接累加到最近邻位置
+
+          $$
+          dx(N, C, \text{round}(iz), \text{round}(iy), \text{round}(ix)) \mathrel{+}= grad(N, C, D_{out}, H_{out}, W_{out})
+          $$
+
+        - dgrid：最邻近插值对坐标不可导，因此 **dgrid = 0**。
 
 ## 参数说明
 

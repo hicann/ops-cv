@@ -17,35 +17,22 @@
 
 - 算子功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。
 - 计算公式：
-  - 核心算法逻辑：
-    1. 将目标图像的每一个点映射回原图，得到一个带小数点的坐标。
-    2. 根据这个浮点数坐标，计算距离最近的原始图像的点，后者的值直接复制给前者。
-  - 具体计算逻辑：
-    则计算缩放系数有以下公式：
 
-    $$
-    scale = self.dim / output_size
-    $$
+  $$
+  d_{src} = min(floor((d_{dst} + 0.5) / scalesD),  D - 1),scalesD = outputSize[0] / D
+  $$
 
-    因此，对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
+  $$
+  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1),scalesH = outputSize[1] / H
+  $$
 
-    $$
-    x' = \min(\lfloor (x+0.5) * scale \rfloor, self.dim(2) - 1)
-    $$
+  $$
+  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1),scalesW = outputSize[2] / W
+  $$
 
-    $$
-    y' = \min(\lfloor (y+0.5) * scale \rfloor, self.dim(3) - 1)
-    $$
-
-    $$
-    z' = \min(\lfloor (z+0.5) * scale \rfloor, self.dim(4) - 1)
-    $$
-
-    则有以下公式：
-
-    $$
-    {V(p_{x,y,z})} = {V(q_{x',y',z'})}
-    $$
+  $$
+  out(N, C, d_{dst},h_{dst}, w_{dst}) = self(N, C, d_{src},h_{src}, w_{src})
+  $$
 
 ## 参数说明
 
@@ -82,7 +69,7 @@
     <tr>
       <td>scales</td>
       <td>可选属性</td>
-      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scale`。</li><li>默认值为[0.0, 0.0, 0.0]。</li></ul></td>
+      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scalesD`、`scalesH`、`scalesW`。</li><li>默认值为[0.0, 0.0, 0.0]。</li></ul></td>
       <td>LISTFLOAT</td>
       <td>-</td>
     </tr>

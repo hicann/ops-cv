@@ -18,8 +18,48 @@
 - 接口功能：[aclnnUpsampleNearest3d](../../upsample_nearest3d/docs/aclnnUpsampleNearest3d.md)的反向计算。
 - 计算公式：
 
+  对于输入gradOut(N, C, d, h, w)，输出gradInput上任意一点(N, C, D, H, W)，则有：
+
   $$
-  gradInput(N, C, D, H, W) += gradOut( N, C, ceil ( scalesD * D ), ceil ( scalesH * H  ),  ceil ( scalesW * W ))
+  gradInput(N, C, D, H, W) = \sum_{d = srcD}^{srcDUp - 1}\sum_{h = srcH}^{srcHUp - 1}\sum_{w = srcW}^{srcWUp - 1}gradOut(N, C, d, h, w)
+  $$
+
+  其中：
+
+  $$
+  scalesD = inputSize[2]/outputSize[0]
+  $$
+
+  $$
+  scalesH = inputSize[3]/outputSize[1]
+  $$
+
+  $$
+  scalesW = inputSize[4]/outputSize[2]
+  $$
+  
+  $$
+  srcD = Min(scalesD * D, outputSize[0])
+  $$
+
+  $$
+  srcDUp = Min(scalesD * (D + 1), outputSize[0])
+  $$
+
+  $$
+  srcH = Min(scalesH * H, outputSize[1])
+  $$
+
+  $$
+  srcHUp = Min(scalesH * (H + 1), outputSize[1])
+  $$
+
+  $$
+  srcW = Min(scalesW * W, outputSize[2])
+  $$
+
+  $$
+  srcHUp = Min(scalesW * (W + 1), outputSize[2])
   $$
 
 ## 函数原型

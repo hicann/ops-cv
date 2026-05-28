@@ -52,4 +52,4 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 
 - add_example样例算子执行调用问题修复。([Issue16](https://gitcode.com/cann/ops-cv/issues/16))
 - 修复编译不存在算子时提示编译成功问题。([Issue25](https://gitcode.com/cann/ops-cv/issues/25))
-- 使用constexpr修饰if使能编译优化。([Issue32](https://gitcode.com/cann/ops-cv/issues/32))
+- 使用constexpr修饰if开启编译优化。([Issue32](https://gitcode.com/cann/ops-cv/issues/32))

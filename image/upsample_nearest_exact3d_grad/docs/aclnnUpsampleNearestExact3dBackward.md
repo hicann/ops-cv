@@ -17,21 +17,49 @@
 
 - 接口功能：[aclnnUpsampleNearestExact3d](../../upsample_nearest_exact3d/docs/aclnnUpsampleNearestExact3d.md)的反向计算。
 - 计算公式：
-  
+
+  对于输入gradOut(N, C, d, h, w)，输出gradInput上任意一点(N, C, D, H, W)，则有：
+
   $$
-  scalesD = outputSize[0] / inputSize[2]
+  gradInput(N, C, D, H, W) = \sum_{d = srcD}^{srcDUp - 1}\sum_{h = srcH}^{srcHUp - 1}\sum_{w = srcW}^{srcWUp - 1}gradOut(N, C, d, h, w)
+  $$
+
+  其中：
+
+  $$
+  scalesD = inputSize[2]/outputSize[0]
   $$
 
   $$
-  scalesH = outputSize[1] / inputSize[3]
+  scalesH = inputSize[3]/outputSize[1]
   $$
 
   $$
-  scalesW = outputSize[2] / inputSize[4]
+  scalesW = inputSize[4]/outputSize[2]
   $$
   
   $$
-  gradInput(N, C, floor ( scalesD * ( D + 0.5 )), floor ( scalesH * ( H + 0.5 )),  floor ( scalesW * ( W+ 0.5 ))) += gradOutput( N, C, D, H ,W)
+  srcD = Min(scalesD * D - 0.5, outputSize[0])
+  $$
+
+  $$
+  srcDUp = Min(scalesD * (D + 1) -0.5, outputSize[0])
+  $$
+
+  $$
+  srcH = Min(scalesH * H - 0.5, outputSize[1])
+  $$
+
+  $$
+  srcHUp = Min(scalesH * (H + 1) -0.5, outputSize[1])
+  $$
+
+  $$
+  srcW = Min(scalesW * W - 0.5, outputSize[2])
+  $$
+
+  $$
+  srcHUp = Min(scalesW * (W + 1) -0.5, outputSize[2])
   $$
 
 ## 函数原型
@@ -88,7 +116,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
     <tr>
       <td>gradOut（aclTensor*）</td>
       <td>输入</td>
-      <td>表示反向计算的梯度Tensor，对应公式中的`gradOutput`。</td>
+      <td>表示反向计算的梯度Tensor，对应公式中的`gradOut`。</td>
       <td><ul><li>不支持空Tensor。</li><li>`gradOut`的所有维度取值均小于等于(2^31-1)。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCDHW、NDHWC</td>

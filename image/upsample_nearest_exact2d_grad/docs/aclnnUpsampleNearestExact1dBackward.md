@@ -18,8 +18,24 @@
 - 接口功能：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上。
 - 计算公式：
   
+  对于输入gradOut(N, C, l)，输出gradInput上任意一点(N, C, L)，则有：
+
   $$
-  gradInput(N, C, floor ( scales * ( L + 0.5 ))) +=  gradOutput( N, C, L)
+  gradInput(N, C, L) = \sum_{h = srcL}^{srcLUp - 1}gradOut(N, C, l)
+  $$
+
+  其中：
+
+  $$
+  scalesL = inputSize[2]/outputSize[0]
+  $$
+
+  $$
+  srcL = Min(scalesL * L - 0.5, outputSize[0])
+  $$
+
+  $$
+  srcLUp = Min(scalesL * (L + 1) - 0.5, outputSize[0])
   $$
 
 ## 函数原型

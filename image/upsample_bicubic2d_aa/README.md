@@ -39,6 +39,7 @@
   $$
   
   其中：
+  - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
   - 如果$scaleH >= 1$，则$kH = 1/scaleH$，否则$kH = 4$
   - 如果$scaleW >= 1$，则$kW = 1/scaleW$，否则$kW = 4$

@@ -19,8 +19,24 @@
 
 - 计算公式：
 
+  对于输入gradOut(N, C, l)，输出gradInput上任意一点(N, C, L)，则有：
+
   $$
-  out(N, C, L) += gradOut( N, C, ceil ( scales * L ))
+  gradInput(N, C, L) = \sum_{h = srcL}^{srcLUp - 1}gradOut(N, C, l)
+  $$
+
+  其中：
+
+  $$
+  scalesL = inputSize[2]/outputSize[0]
+  $$
+
+  $$
+  srcL = Min(scalesL * L, outputSize[0])
+  $$
+
+  $$
+  srcLUp = Min(scalesL * (L + 1), outputSize[0])
   $$
 
 ## 函数原型

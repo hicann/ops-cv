@@ -18,8 +18,36 @@
 - 接口功能：[aclnnUpsampleNearestExact2d](../../upsample_nearest/docs/aclnnUpsampleNearestExact2d.md)的反向传播。
 - 计算公式：
   
+  对于输入gradOut(N, C, h, w)，输出gradInput上任意一点(N, C, H, W)，则有：
+
   $$
-  gradInput(N, C, floor ( scalesH * ( H + 0.5 )),  floor ( scalesW * ( W+ 0.5 ))) += gradOutput( N, C, H ,W)
+  gradInput(N, C, H, W) = \sum_{h = srcH}^{srcHUp - 1}\sum_{w = srcW}^{srcWUp - 1}gradOut(N, C, h, w)
+  $$
+
+  其中：
+
+  $$
+  scalesH = inputSize[2]/outputSize[0]
+  $$
+
+  $$
+  scalesW = inputSize[3]/outputSize[1]
+  $$
+
+  $$
+  srcH = Min(scalesH * H - 0.5, outputSize[0])
+  $$
+
+  $$
+  srcHUp = Min(scalesH * (H + 1) - 0.5, outputSize[0])
+  $$
+
+  $$
+  srcW = Min(scalesW * W - 0.5, outputSize[1])
+  $$
+
+  $$
+  srcHUp = Min(scalesW * (W + 1) - 0.5, outputSize[1])
   $$
   
 ## 函数原型

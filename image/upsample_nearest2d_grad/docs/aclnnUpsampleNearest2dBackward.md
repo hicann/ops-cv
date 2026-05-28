@@ -19,8 +19,36 @@
 
 - 计算公式：
 
+  对于输入gradOut(N, C, h, w)，输出gradInput上任意一点(N, C, H, W)，则有：
+
   $$
-  gradInput(N, C, H, W) += gradOutput( N, C, ceil ( scalesH * H ),  ceil ( scalesW * W ))
+  gradInput(N, C, H, W) = \sum_{h = srcH}^{srcHUp - 1}\sum_{w = srcW}^{srcWUp - 1}gradOut(N, C, h, w)
+  $$
+
+  其中：
+
+  $$
+  scalesH = inputSize[2]/outputSize[0]
+  $$
+
+  $$
+  scalesW = inputSize[3]/outputSize[1]
+  $$
+
+  $$
+  srcH = Min(scalesH * H, outputSize[0])
+  $$
+
+  $$
+  srcHUp = Min(scalesH * (H + 1), outputSize[0])
+  $$
+
+  $$
+  srcW = Min(scalesW * W, outputSize[1])
+  $$
+
+  $$
+  srcHUp = Min(scalesW * (W + 1), outputSize[1])
   $$
 
 ## 函数原型

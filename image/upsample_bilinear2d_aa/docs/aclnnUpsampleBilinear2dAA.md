@@ -40,6 +40,8 @@
   $$
   
   其中：
+  
+  - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - $kW$、$kH$分别表示W方向和H方向影响插值点大小的点的数量
   - 如果$scaleH >= 1$，则$kH = floor(scaleH) * 2 + 1$，否则$kH = 3$
   - 如果$scaleW >= 1$，则$kW = floor(scaleW) * 2 + 1$，否则$kW = 3$
