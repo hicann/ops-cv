@@ -63,4 +63,4 @@ const int64_t NUM_64 = 64;
 const float FLOAT_2 = 2.0f;
 
 }  // namespace GridSample
-#endif  //  GRID_SAMPLER_2D_COMMON
+#endif  //  GRID_SAMPLE_COMMON

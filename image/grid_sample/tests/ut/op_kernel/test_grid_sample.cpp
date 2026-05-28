@@ -914,11 +914,11 @@ TEST_F(grid_sample_test, test_case_fp16_test18)
 
 TEST_F(grid_sample_test, test_case_bicubic_fp16_fullLoad)
 {
-    int64_t N = 8;
+    int64_t N = 1;
     int64_t x_h = 24;
     int64_t x_w = 24;
     int64_t C = 32;
-    int64_t grid_h = 900;
+    int64_t grid_h = 16;
     int64_t grid_w = 4;
     int64_t dim = 2;
     size_t inputByteSize = N * x_h * x_w * C * sizeof(half);
@@ -928,9 +928,9 @@ TEST_F(grid_sample_test, test_case_bicubic_fp16_fullLoad)
         int64_t coreNum = 48;
     }compileInfo;
     gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{8, 32, 24, 24}, {8, 32, 24, 24}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 900, 4, 2}, {8, 900, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{8, 32, 900, 4}, {8, 32, 900, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                                {{{{1, 24, 24, 32}, {1, 24, 24, 32}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                {{{1, 16, 4, 2}, {1, 16, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                                {{{{1, 32, 16, 4}, {1, 32, 16, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
                                                 gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
