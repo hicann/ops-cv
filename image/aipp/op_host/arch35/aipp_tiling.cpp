@@ -241,13 +241,21 @@ ge::graphStatus AippTiling::SetImagesValue()
     }
 
     if (aippCfg.find(AIPP_SRC_IMAGE_SIZE_H) != aippCfg.end()) {
-        OP_CHECK_IF(!StringToNum(aippCfg.at(AIPP_SRC_IMAGE_SIZE_H), tilingData.inputSizeH),
-            OP_LOGE(context_->GetNodeName(), "aipp src_image_size_h failed to parse."), return ge::GRAPH_FAILED);
+        if (!StringToNum(aippCfg.at(AIPP_SRC_IMAGE_SIZE_H), tilingData.inputSizeH)) {
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                AIPP_SRC_IMAGE_SIZE_H.c_str(), aippCfg.at(AIPP_SRC_IMAGE_SIZE_H).c_str(),
+                "The parameter value must be a number.");
+            return ge::GRAPH_FAILED;
+        }
     }
 
     if (aippCfg.find(AIPP_SRC_IMAGE_SIZE_W) != aippCfg.end()) {
-        OP_CHECK_IF(!StringToNum(aippCfg.at(AIPP_SRC_IMAGE_SIZE_W), tilingData.inputSizeW),
-            OP_LOGE(context_->GetNodeName(), "aipp src_image_size_w failed to parse."), return ge::GRAPH_FAILED);
+        if (!StringToNum(aippCfg.at(AIPP_SRC_IMAGE_SIZE_W), tilingData.inputSizeW)) {
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                AIPP_SRC_IMAGE_SIZE_W.c_str(), aippCfg.at(AIPP_SRC_IMAGE_SIZE_W).c_str(),
+                "The parameter value must be a number.");
+            return ge::GRAPH_FAILED;
+        }
     }
 
     return ge::GRAPH_SUCCESS;
@@ -324,7 +332,6 @@ ge::graphStatus AippTiling::CheckInputImage()
                 IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT) == ge::GRAPH_FAILED) {
             return ge::GRAPH_FAILED;
         }
-
     } else if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_RGB888_U8)) {
         if (CheckInputImageHWC(tilingData.inputSizeH, tilingData.inputSizeW,
                 IMAGE_FORMAT_RGB888_U8_SIZE_LIMIT) == ge::GRAPH_FAILED) {
@@ -451,10 +458,12 @@ ge::graphStatus AippTiling::SetPaddingValue()
         return ge::GRAPH_FAILED);
 
     if (aippCfg.find(AIPP_PADDING_VALUE) != aippCfg.end()) {
-        OP_CHECK_IF(!StringToNum(aippCfg.at(AIPP_PADDING_VALUE), tilingData.paddingParam.padValue),
-            OP_LOGE(context_->GetNodeName(), "AIPP_PADDING_VALUE failed to parse."),
-            return ge::GRAPH_FAILED);
-        
+        if (!StringToNum(aippCfg.at(AIPP_PADDING_VALUE), tilingData.paddingParam.padValue)) {
+            OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(context_->GetNodeType(), configStr.c_str(),
+                AIPP_PADDING_VALUE.c_str(), aippCfg.at(AIPP_PADDING_VALUE).c_str(),
+                "The parameter value must be a number.");
+            return ge::GRAPH_FAILED;
+        }
         auto outputImages = context_->GetOutputDesc(OUTPUT_FEATURES_IDX);
         OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
         OP_CHECK_IF(ValidPaddingValue(tilingData.paddingParam.padValue, outputImages->GetDataType()) !=
