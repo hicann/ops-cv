@@ -33,6 +33,9 @@ if(UNIX)
 endif()
 set(OPS_CV_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${RULE_LAUNCH})
+set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${RULE_LAUNCH})
+
 # 外部传参
 option(ENABLE_ASAN "Enable asan" OFF)
 option(ENABLE_VALGRIND "Enable valgrind" OFF)

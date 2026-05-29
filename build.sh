@@ -24,7 +24,7 @@ SUPPORTED_LONG_OPTS=(
   "pkg" "asan" "valgrind" "make_clean" "static" "simulator"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
   "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "dump_cce"
-  "bisheng_flags=" "kernel_template_input="
+  "bisheng_flags=" "kernel_template_input=" "rule_launch"
 )
 
 in_array() {
@@ -746,6 +746,7 @@ checkopts() {
   OP_KERNEL_AICPU=FALSE
   ENABLE_CREATE_LIB=FALSE
   ENABLE_RUN_EXAMPLE=FALSE
+  ENABLE_RULE_LAUNCH=FALSE
   BUILD_LIBS=()
   UT_TARGETS=()
 
@@ -911,6 +912,7 @@ checkopts() {
           BUILD_TYPE="Debug"
           ;;
         simulator) ENABLE_SIMULATOR=TRUE ;;
+        rule_launch) ENABLE_RULE_LAUNCH=TRUE ;;
         run_example)
           checkopts_run_example "$@"
           ;;
@@ -1154,6 +1156,9 @@ assemble_cmake_args() {
     fi
     echo "COMPUTE_UNIT: ${COMPUTE_UNIT}"
     CMAKE_ARGS="$CMAKE_ARGS -DASCEND_COMPUTE_UNIT=$COMPUTE_UNIT"
+  fi
+  if [[ "$ENABLE_RULE_LAUNCH" == "TRUE" ]]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DRULE_LAUNCH=hitestwrapper"
   fi
   CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
   CMAKE_ARGS="$CMAKE_ARGS -DASCEND_INSTALL_PATH=${ASCEND_INSTALL_PATH}"
