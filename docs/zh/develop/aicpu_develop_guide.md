@@ -117,7 +117,7 @@ Kernel一共需要两个交付件：```${op_name}_aicpu.cpp``` ```${op_name}_aic
 算子类声明
 
 Kernel实现的第一步，需在头文件```op_kernel_aicpu/${op_name}_aicpu.h```进行算子类的声明，算子类需继承CpuKernel基类。
-如需查看详细实现，请参考[add_example_aicpu.h](../../../examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu.h)。
+如需查看详细实现，请参考[add_example_aicpu_aicpu.h](../../../examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu_aicpu.h)。
 
 ```CPP
 // 1、算子类声明
@@ -141,7 +141,7 @@ Compute函数实现与AI CPU算子注册
 
 获取输入/输出Tensor信息并进行合法性校验，然后实现核心计算逻辑（如加法操作），并将计算结果设置到输出Tensor中。
 
-如需查看详细实现，请参考[add_example_aicpu.cpp](../../../examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu.cpp)。
+如需查看详细实现，请参考[add_example_aicpu_aicpu.cpp](../../../examples/add_example_aicpu/op_kernel_aicpu/add_example_aicpu_aicpu.cpp)。
 
 ```C++
 // 2、Compute函数实现
@@ -255,7 +255,7 @@ export ASCEND_CUSTOM_OPP_PATH=${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv
 
 - **UT验证**
 
-  算子开发过程中，可通过UT验证（如Kernel）方式进行快速验证，如需查看详细实现，请参考[Kernel UT](../../../examples/add_example_aicpu/tests/ut/op_kernel_aicpu/test_add_example.cpp)。
+  算子开发过程中，可通过UT验证（如Kernel）方式进行快速验证，如需查看详细实现，请参考[Kernel UT](../../../examples/add_example_aicpu/tests/ut/op_kernel_aicpu/test_add_example_aicpu.cpp)。
 
 - **aclnn调用验证**
 
