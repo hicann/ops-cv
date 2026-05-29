@@ -47,6 +47,7 @@ function(gen_ophost_symbol)
             tiling_api
             -Wl,-Bsymbolic
             unified_dlog
+            mmpa
     )
 
   target_link_directories(${OPHOST_NAME} PRIVATE ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64)

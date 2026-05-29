@@ -230,7 +230,7 @@ function(opbuild_aicpu_ini)
       set(prefix_env "OPS_DIRECT_ACCESS_PREFIX=${OPBUILD_ACCESS_PREFIX}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} -E env ENABLE_SOURCE_PACKAGE=${OPBUILD_ENABLE_SOURCE}
-                    ${proj_env} ${prefix_env} ${ASCEND_CANN_PACKAGE_PATH}/toolkit/tools/opbuild/op_build
+                    ${proj_env} ${prefix_env} ${OP_BUILD_TOOL}
                     ${OPBUILD_OUT_DIR}/libaicpu_ops.so ${OPBUILD_OUT_DIR}  --aicpu
                     RESULT_VARIABLE EXEC_RESULT
                     OUTPUT_VARIABLE EXEC_INFO

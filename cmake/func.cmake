@@ -849,8 +849,6 @@ function(add_onnx_plugin_modules)
     target_include_directories(${ONNX_PLUGIN_NAME}_obj
       PRIVATE
       ${OP_PROTO_INCLUDE}
-      ${PROTOBUF_SRC_DIR}/src
-      ${PROTOBUF_INCLUDE_DIRS}
       ${CMAKE_BINARY_DIR}/bin
       ${CMAKE_BINARY_DIR}/proto
       ${ONNX_PLUGIN_COMMON_INCLUDE}
@@ -876,6 +874,7 @@ function(add_onnx_plugin_modules)
               $<BUILD_INTERFACE:dlog_headers>
               $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>
               $<$<TARGET_EXISTS:opbase_infer_objs>:$<TARGET_OBJECTS:opbase_infer_objs>>
+              ascend_protobuf_static
               json
       )
   endif()
