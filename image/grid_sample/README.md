@@ -259,7 +259,7 @@
       <td>x</td>
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
-      <td>FLOAT16、FLOAT32</td>
+      <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>ND</td>
     </tr>
     <tr>
