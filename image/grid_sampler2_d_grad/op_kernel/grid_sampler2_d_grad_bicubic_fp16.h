@@ -505,18 +505,20 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
     }
     int32_t newCalCount = ((calCount * FLOAT_BYTES - 1 + ALGIN_256_BYTES) / ALGIN_256_BYTES * ALGIN_256_BYTES) / 4;
 
-    CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MAX_FP16 - 1), CMPMODE::LE, newCalCount);
-    PipeBarrier<PIPE_V>();
-    Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
-    PipeBarrier<PIPE_V>();
-    CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MIN_FP16), CMPMODE::GE, newCalCount);
-    PipeBarrier<PIPE_V>();
-    Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
-    PipeBarrier<PIPE_V>();
-    Compare(mask1Tensor, dataTensor, dataTensor, CMPMODE::EQ, newCalCount);
-    PipeBarrier<PIPE_V>();
-    Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
-    PipeBarrier<PIPE_V>();
+    if (padding == 0 || padding == 1) {
+        CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MAX_FP16 - 1), CMPMODE::LE, newCalCount);
+        PipeBarrier<PIPE_V>();
+        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        PipeBarrier<PIPE_V>();
+        CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MIN_FP16), CMPMODE::GE, newCalCount);
+        PipeBarrier<PIPE_V>();
+        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        PipeBarrier<PIPE_V>();
+        Compare(mask1Tensor, dataTensor, dataTensor, CMPMODE::EQ, newCalCount);
+        PipeBarrier<PIPE_V>();
+        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        PipeBarrier<PIPE_V>();
+    }
 }
 
 template <typename T, typename Dtype, typename GridSamplerGradTilingData>
@@ -836,71 +838,69 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
                 }
                 PipeBarrier<PIPE_ALL>();
 
-                int32_t dxIdx = (iyClipped * width + ixClipped) * channel;
-                int32_t srcIdx = (iyClipped * width + ixClipped) * channel;
+                if (ixClipped <= outW || ixClipped >= 0 || iyClipped <= outH || iyClipped >= 0) {
+                    int32_t dxIdx = (iyClipped * width + ixClipped) * channel;
+                    int32_t srcIdx = (iyClipped * width + ixClipped) * channel;
 
-                T coeffTxVal = coeffTxArr[jx].GetValue(i);
-                T coeffTyVal = coeffTyArr[jy].GetValue(i);
-                T weightScalarFp16 = coeffTyVal * coeffTxVal;
+                    T coeffTxVal = coeffTxArr[jx].GetValue(i);
+                    T coeffTyVal = coeffTyArr[jy].GetValue(i);
+                    T weightScalarFp16 = coeffTyVal * coeffTxVal;
 
-                // ComputeBicubicXGrad: AtomicAdd grad_output * weight to dx
-                // Reuse xGradLocalTensor allocated outside the loop
-                {
-                    int64_t offset = ncBaseOffset + dxIdx;
-                    event_t eventID1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
-                    SetFlag<HardEvent::S_V>(eventID1);
-                    WaitFlag<HardEvent::S_V>(eventID1);
-                    Muls(xGradLocalTensor, gOutLocalTensor, weightScalarFp16, channel);
-                    event_t eventID = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
-                    SetFlag<HardEvent::V_MTE3>(eventID);
-                    WaitFlag<HardEvent::V_MTE3>(eventID);
-                    DataCopyParams cp{1, 0, 0, 0};
-                    cp.blockLen = channel * sizeof(T);
-                    SetAtomicAdd<T>();
-                    DataCopyPad(inputGmT[offset], xGradLocalTensor, cp);
-                    SetAtomicNone();
-                    PipeBarrier<PIPE_MTE3>();
-                }
-                PipeBarrier<PIPE_ALL>();
+                    // ComputeBicubicXGrad: AtomicAdd grad_output * weight to dx
+                    {
+                        int64_t offset = ncBaseOffset + dxIdx;
+                        event_t eventID1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
+                        SetFlag<HardEvent::S_V>(eventID1);
+                        WaitFlag<HardEvent::S_V>(eventID1);
+                        Muls(xGradLocalTensor, gOutLocalTensor, weightScalarFp16, channel);
+                        event_t eventID = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
+                        SetFlag<HardEvent::V_MTE3>(eventID);
+                        WaitFlag<HardEvent::V_MTE3>(eventID);
+                        DataCopyParams cp{1, 0, 0, 0};
+                        cp.blockLen = channel * sizeof(T);
+                        SetAtomicAdd<T>();
+                        DataCopyPad(inputGmT[offset], xGradLocalTensor, cp);
+                        SetAtomicNone();
+                        PipeBarrier<PIPE_MTE3>();
+                    }
+                    PipeBarrier<PIPE_ALL>();
 
-                // ComputeBicubicGridGrad: accumulate gix and giy
-                // Use TBuf to avoid queue overflow in inner loop
-                {
-                    T dCoeffTyVal = dCoeffTyArr[jy].GetValue(i);
-                    T dCoeffTxVal = dCoeffTxArr[jx].GetValue(i);
+                    // ComputeBicubicGridGrad: accumulate gix and giy
+                    {
+                        T dCoeffTyVal = dCoeffTyArr[jy].GetValue(i);
+                        T dCoeffTxVal = dCoeffTxArr[jx].GetValue(i);
 
-                    // d_weight_d_ix = coeffTy[jy] * dCoeffTx[jx]  (derivative w.r.t. ix, not grid_x)
-                    // d_weight_d_iy = dCoeffTy[jy] * coeffTx[jx]  (derivative w.r.t. iy, not grid_y)
-                    // xGradIn/yGradIn is applied at the final output step (chain rule)
-                    T dWeightDIyFp16 = dCoeffTyVal * coeffTxVal;
-                    T dWeightDIxFp16 = coeffTyVal * dCoeffTxVal;
+                        // xGradIn/yGradIn is applied at the final output step (chain rule)
+                        T dWeightDIyFp16 = dCoeffTyVal * coeffTxVal;
+                        T dWeightDIxFp16 = coeffTyVal * dCoeffTxVal;
 
-                    int64_t xGmOffsetLocal = n * inputStrideN + srcIdx;
-                    DataCopyParams cp2 = {1, 0, 0, 0};
-                    DataCopyPadParams pp2 = {true, 0, 0, 0};
-                    cp2.blockLen = channel * sizeof(Dtype);
-                    pp2.rightPadding = alignCalCount - channel;
-                    pp2.paddingValue = GetScalarBitcodeValue((Dtype)0);
-                    LocalTensor<Dtype> inputXLocalTempTensor = dataInQueue[1].AllocTensor<Dtype>();
-                    DataCopyPad(inputXLocalTempTensor, inputGm[1][xGmOffsetLocal], cp2, pp2);
-                    event_t eventID2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
-                    SetFlag<HardEvent::MTE2_V>(eventID2);
-                    WaitFlag<HardEvent::MTE2_V>(eventID2);
-                    Cast(inputXLocalTensor, inputXLocalTempTensor, mode, alignChannel);
-                    dataInQueue[1].FreeTensor(inputXLocalTempTensor);
+                        int64_t xGmOffsetLocal = n * inputStrideN + srcIdx;
+                        DataCopyParams cp2 = {1, 0, 0, 0};
+                        DataCopyPadParams pp2 = {true, 0, 0, 0};
+                        cp2.blockLen = channel * sizeof(Dtype);
+                        pp2.rightPadding = alignCalCount - channel;
+                        pp2.paddingValue = GetScalarBitcodeValue((Dtype)0);
+                        LocalTensor<Dtype> inputXLocalTempTensor = dataInQueue[1].AllocTensor<Dtype>();
+                        DataCopyPad(inputXLocalTempTensor, inputGm[1][xGmOffsetLocal], cp2, pp2);
+                        event_t eventID2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
+                        SetFlag<HardEvent::MTE2_V>(eventID2);
+                        WaitFlag<HardEvent::MTE2_V>(eventID2);
+                        Cast(inputXLocalTensor, inputXLocalTempTensor, mode, alignChannel);
+                        dataInQueue[1].FreeTensor(inputXLocalTempTensor);
 
-                    Muls(gixLocalTensor, inputXLocalTensor, dWeightDIxFp16, channel);
-                    PipeBarrier<PIPE_V>();
-                    Mul(gixLocalTensor, gOutLocalTensor, gixLocalTensor, channel);
-                    PipeBarrier<PIPE_V>();
-                    Muls(giyLocalTensor, inputXLocalTensor, dWeightDIyFp16, channel);
-                    PipeBarrier<PIPE_V>();
-                    Mul(giyLocalTensor, gOutLocalTensor, giyLocalTensor, channel);
-                    PipeBarrier<PIPE_V>();
-                    Add(sumY, giyLocalTensor, sumY, channel);
-                    PipeBarrier<PIPE_V>();
-                    Add(sumX, gixLocalTensor, sumX, channel);
-                    PipeBarrier<PIPE_V>();
+                        Muls(gixLocalTensor, inputXLocalTensor, dWeightDIxFp16, channel);
+                        PipeBarrier<PIPE_V>();
+                        Mul(gixLocalTensor, gOutLocalTensor, gixLocalTensor, channel);
+                        PipeBarrier<PIPE_V>();
+                        Muls(giyLocalTensor, inputXLocalTensor, dWeightDIyFp16, channel);
+                        PipeBarrier<PIPE_V>();
+                        Mul(giyLocalTensor, gOutLocalTensor, giyLocalTensor, channel);
+                        PipeBarrier<PIPE_V>();
+                        Add(sumY, giyLocalTensor, sumY, channel);
+                        PipeBarrier<PIPE_V>();
+                        Add(sumX, gixLocalTensor, sumX, channel);
+                        PipeBarrier<PIPE_V>();
+                    }
                 }
             }
         }
