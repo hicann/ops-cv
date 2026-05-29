@@ -64,7 +64,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       opp_registry
       graph
       platform
-      gtest
+      GTest::gtest
       graph_base
   )
 

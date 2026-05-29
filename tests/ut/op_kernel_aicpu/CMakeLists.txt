@@ -40,7 +40,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
         -Wl,--no-as-needed
         ${AICPU_OP_KERNEL_MODULE_NAME}_cases
         -Wl,--as-needed
-        gtest
+        GTest::gtest
         c_sec
         Eigen3::Eigen
     )

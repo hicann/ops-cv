@@ -11,12 +11,6 @@
 
 include_guard(GLOBAL)
 add_cann_third_party(gtest)
-if(TARGET GTest::gtest AND NOT TARGET gtest)
-  add_library(gtest ALIAS GTest::gtest)
-endif()
-if(TARGET GTest::gtest_main AND NOT TARGET gtest_main)
-  add_library(gtest_main ALIAS GTest::gtest_main)
-endif()
 
 if(UT_TEST_ALL OR OP_HOST_UT)
   set(OP_TILING_MODULE_NAME
@@ -42,7 +36,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       ${OP_TILING_MODULE_NAME}_common_obj PRIVATE
       $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
       $<BUILD_INTERFACE:dlog_headers>
-      json gtest c_sec
+      json GTest::gtest c_sec
       )
 
     # add optiling ut cases object: cv_op_tiling_ut_cases_obj
@@ -56,7 +50,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
                                                  ${ASCEND_DIR}/pkg_inc
                                                  ${ASCEND_DIR}/pkg_inc/base
       )
-    target_link_libraries(${OP_TILING_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest json)
+    target_link_libraries(${OP_TILING_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> GTest::gtest json)
 
     # add op tiling ut cases static lib: libcv_op_tiling_ut_cases.a
     add_library(${OP_TILING_MODULE_NAME}_cases STATIC)
@@ -78,7 +72,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       ${ASCEND_DIR}/pkg_inc
     )
     target_link_libraries(
-      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> gtest c_sec
+      ${OP_INFERSHAPE_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> GTest::gtest c_sec
       )
 
     # add opinfershape ut cases object: cv_op_infershape_ut_cases_obj
@@ -95,7 +89,7 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       ${OP_INFERSHAPE_MODULE_NAME}_cases_obj PRIVATE
       $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
       $<BUILD_INTERFACE:dlog_headers>
-      gtest
+      GTest::gtest
       )
 
     # add op infershape ut cases static lib: libcv_op_infershape_ut_cases.a
@@ -133,7 +127,7 @@ if(UT_TEST_ALL OR OP_API_UT)
     target_link_libraries(${OP_API_MODULE_NAME}_cases_obj PRIVATE
       $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
       $<BUILD_INTERFACE:dlog_headers>
-      gtest
+      GTest::gtest
       )
   endfunction()
 endif()
@@ -164,7 +158,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_common_obj PRIVATE
         $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
         $<BUILD_INTERFACE:dlog_headers>
-        gtest
+        GTest::gtest
         c_sec
     )
 
@@ -185,7 +179,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     # 链接静态库时使用 whole-archive，保证 RegistCpuKernel 被拉入
     target_link_libraries(${AICPU_OP_KERNEL_MODULE_NAME}_cases PRIVATE
         $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
-        gtest
+        GTest::gtest
         c_sec
         -ldl
         -Wl,--whole-archive
@@ -239,7 +233,7 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
                                                   ${ASCEND_DIR}/include/base/context_builder ${ASCEND_DIR}/pkg_inc
       )
     target_link_libraries(
-      ${OP_KERNEL_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> json gtest c_sec
+      ${OP_KERNEL_MODULE_NAME}_common_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> json GTest::gtest c_sec
       )
 
     foreach(socVersion ${fastOpTestSocVersions})
@@ -458,7 +452,7 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
           ${ASCEND_DIR}/${CMAKE_SYSTEM_PROCESSOR}-linux/asc/include/basic_api/)
       target_link_libraries(
         ${opName}_${socVersion}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17> tikicpulib::${socVersion}
-                                                  gtest
+                                                  GTest::gtest
         )
 
       # add object: cv_op_kernel_ut_${oriSocVersion}_cases_obj
@@ -523,7 +517,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
             $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
             $<BUILD_INTERFACE:dlog_headers>
             -ldl
-            gtest
+            GTest::gtest
             c_sec
             Eigen3::Eigen
             )
@@ -543,7 +537,7 @@ if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
             $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
             -ldl
             $<TARGET_OBJECTS:${opName}_cases_obj>
-            gtest
+            GTest::gtest
             c_sec
             Eigen3::Eigen
             )

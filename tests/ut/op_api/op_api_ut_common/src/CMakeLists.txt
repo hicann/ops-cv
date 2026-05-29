@@ -32,5 +32,5 @@ target_link_libraries(op_api_ut_common PRIVATE
         dl
         pthread
         json
-        gtest
+        GTest::gtest
         )

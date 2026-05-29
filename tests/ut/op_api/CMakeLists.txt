@@ -59,7 +59,7 @@ if(UT_TEST_ALL OR OP_API_UT)
           -Wl,--no-as-needed
           -Wl,--whole-archive
           graph
-          gtest
+          GTest::gtest
           -Wl,--no-whole-archive
           )
 
