@@ -65,7 +65,7 @@ class ResizeNearestNeighborV2 : public OpDef {
         .DynamicShapeSupportFlag(true)
         .ExtendCfgInfo("opFile.value", "resize_nearest_neighbor_v2_apt");
     this->AICore().AddConfig("ascend950", aicoreConfig);
-    this->AICore().AddConfig("mc62cm12a", aicoreConfig);
+    this->AICore().AddConfig("mc62", aicoreConfig);
   }
 };
 

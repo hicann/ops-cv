@@ -141,7 +141,7 @@ public:
             .DynamicShapeSupportFlag(true)
             .NeedCheckSupportFlag(false)
             .ExtendCfgInfo("opFile.value", "grid_sample_apt");;
-        this->AICore().AddConfig("mc62cm12a", aicore95_config);
+        this->AICore().AddConfig("mc62", aicore95_config);
         this->AICore().AddConfig("ascend950", aicore95_config);
 
         OpAICoreConfig config_310p = Get310PCoreConfig();
