@@ -115,6 +115,10 @@ image@ops-cv:
         - ops/ops-cv/image/upsample_nearest_exact3d/
         - ops/ops-cv/image/upsample_nearest_exact3d_grad/
         - ops/ops-cv/image/upsample_trilinear3d_backward/
+        - ops/ops-cv/image/resize_bilinear_v2/CMakeLists.txt
+        - ops/ops-cv/image/resize_bilinear_v2/op_host/resize_bilinear_v2_def.cpp
+        - ops/ops-cv/image/resize_nearest_neighbor_v2/CMakeLists.txt
+        - ops/ops-cv/image/resize_nearest_neighbor_v2/op_host/resize_nearest_neighbor_v2_def.cpp
       opensource_style: null
       kernel_style: null
     unrelease:
