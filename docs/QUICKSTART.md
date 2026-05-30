@@ -245,12 +245,13 @@ int main() {
     // 修改前：shape = {32, 4, 4, 4}, 数值全为1
     // 修改后：将输入shape改为 {8, 8, 8, 8}，并填充不同的测试数据
     std::vector<int64_t> selfXShape = {8, 8, 8, 8};
-    std::vector<float> selfXHostData(4096); // 4096 = 8 * 8 * 8 *8
+    auto selfXNumElements = GetShapeSize(selfXShape);
+    std::vector<float> selfXHostData(selfXNumElements);
     // 可使用循环填充更有区分度的数据，例如递增序列
-    for (int i = 0; i < 4096; ++i) {
+    for (int64_t i = 0; i < selfXNumElements; ++i) {
         selfXHostData[i] = static_cast<float>(i % 10); // 填充0-9的循环值
     }
-    // === ② 参考selfX，同理修改selfY、selfZ的输入 ===
+    // === ② 参考selfX，同理修改selfY和out，并确保hostData长度与shape元素数一致 ===
     
     // ... 后续执行代码 ...
 }
