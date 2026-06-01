@@ -198,11 +198,7 @@ main() {
   if [ "$key_mode_default" != "" ]; then
     key_mode=${key_mode_default}
   else
-    if [ "$ascendc_op_conf" != "" ]; then
-      key_mode=0
-    else
-      key_mode="None"
-    fi
+    key_mode=0
   fi
 
   if [ "$key_mode" != "None" ]; then

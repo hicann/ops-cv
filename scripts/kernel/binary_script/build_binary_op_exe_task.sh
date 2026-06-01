@@ -47,7 +47,7 @@ main() {
 
       start_timestamp=$(date '+%Y-%m-%d %H:%M:%S')
       echo "[$start_timestamp] Build started: ${cmd_task}" > "$log_file"
-      timeout 7200 ${cmd_task} >> "$log_file" 2>&1
+      timeout --foreground 2h ${cmd_task} >> "$log_file" 2>&1
       compile_rc=$?
       set -e
 
