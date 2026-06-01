@@ -406,7 +406,7 @@ void UpsampleBicubic2dAAGradTiling::getWorkSpace(uint32_t needCoreNum)
     uint32_t radioMatrixWorkspaceSize = slide_size * singleCoreK_w;
     uint32_t radioMatrixWorkspaceSize_h = slide_size * singleCoreK_h;
     if (workspaces != nullptr) {
-        workspaces[0] = intermediate_matrix_size * dataTypeSize + (radioMatrixWorkspaceSize * needCoreNum) * BYTE + WORK_SPACE_SIZE;
+        workspaces[0] = intermediate_matrix_size * dataTypeSize + (static_cast<int64_t>(radioMatrixWorkspaceSize) * needCoreNum) * BYTE + WORK_SPACE_SIZE;
     }
     tilingData.set_radio_matrix_size(radioMatrixWorkspaceSize);
     tilingData.set_radio_matrix_size_h(radioMatrixWorkspaceSize_h);

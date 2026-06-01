@@ -65,21 +65,21 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::InitWorkspaceTensors(GM_ADD
     GM_ADDR usrWorkspace_ = usrWorkspace;
 
     interGm.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(usrWorkspace_), tilingData->batch * tilingData->inputH * tilingData->outputW);
-    usrWorkspace_ += (tilingData->batch * tilingData->inputH * tilingData->outputW + GetNumPerBlock() - 1) /
+        reinterpret_cast<__gm__ T *>(usrWorkspace_), static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->outputW);
+    usrWorkspace_ += (static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->outputW + GetNumPerBlock() - 1) /
                      GetNumPerBlock() * BLOCK_SIZE;
 
     coeffW.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(usrWorkspace_ + block_id * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ T *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNW * NUM_FRACTAL);
     coeffWFloat.SetGlobalBuffer(
-        reinterpret_cast<__gm__ float *>(usrWorkspace_ + block_id * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ float *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNW * NUM_FRACTAL);
     coeffH.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(usrWorkspace_ + block_id * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ T *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNH * NUM_FRACTAL);
     coeffHFloat.SetGlobalBuffer(
-        reinterpret_cast<__gm__ float *>(usrWorkspace_ + block_id * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ float *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNH * NUM_FRACTAL);
 }
 
@@ -87,9 +87,9 @@ template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::InitGlobalTensors(GM_ADDR grad_output, GM_ADDR grad_input)
 {
     inGm.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(grad_output), tilingData->batch * tilingData->inputH * tilingData->inputW);
+        reinterpret_cast<__gm__ T *>(grad_output), static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->inputW);
     outGm.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(grad_input), tilingData->batch * tilingData->outputH * tilingData->outputW);
+        reinterpret_cast<__gm__ T *>(grad_input), static_cast<int64_t>(tilingData->batch) * tilingData->outputH * tilingData->outputW);
 }
 
 template <typename T>
@@ -321,11 +321,11 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessW()
             MMW.SetTail(realInnerBatchW * tilingData->inputH,
                 base[1] - base[0] + 1,
                 ((tilingData->inputW + NUM_FRACTAL - 1) / NUM_FRACTAL - 1) == i ? tilingData->tailW : NUM_FRACTAL);
-            MMW.SetTensorA(inGm[offsetInnerBatchW * tilingData->inputH * tilingData->inputW + i * NUM_FRACTAL]);
+            MMW.SetTensorA(inGm[static_cast<int64_t>(offsetInnerBatchW) * tilingData->inputH * tilingData->inputW + i * NUM_FRACTAL]);
             MMW.SetTensorB(coeffW);
             SetFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
             WaitFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
-            MMW.IterateAll(interGm[offsetInnerBatchW * tilingData->inputH * tilingData->outputW + base[0]], true);
+            MMW.IterateAll(interGm[static_cast<int64_t>(offsetInnerBatchW) * tilingData->inputH * tilingData->outputW + base[0]], true);
         }
     }
 }
@@ -355,9 +355,9 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessH()
                     tilingData->outputW,
                     ((tilingData->inputH + NUM_FRACTAL - 1) / NUM_FRACTAL - 1) == i ? tilingData->tailH : NUM_FRACTAL);
                 MMH.SetTensorA(coeffH);
-                MMH.SetTensorB(interGm[i * NUM_FRACTAL * tilingData->outputW +
+                MMH.SetTensorB(interGm[static_cast<int64_t>(i) * NUM_FRACTAL * tilingData->outputW +
                                        (offsetInnerBatchH + j) * tilingData->inputH * tilingData->outputW]);
-                MMH.IterateAll(outGm[(offsetInnerBatchH + j) * tilingData->outputH * tilingData->outputW +
+                MMH.IterateAll(outGm[static_cast<int64_t>(offsetInnerBatchH + j) * tilingData->outputH * tilingData->outputW +
                                      base[0] * tilingData->outputW],
                     true);
             }
