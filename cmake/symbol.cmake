@@ -408,7 +408,7 @@ function(gen_aicpu_kernel_symbol enable_built_in)
 endfunction()
 
 # Collects AICPU_HOST_OBJ_TARGETS (registered by add_aicpu_host_kernel_modules in func.cmake)
-# and links all host OBJECT files into one SHARED library libcv_constant_folding_ops.so.
+# and links all host OBJECT files into one SHARED library libopconstant_folding_cv.so.
 # Reference: same pattern as gen_aicpu_kernel_symbol (device side).
 function(gen_aicpu_const_symbol)
   if(NOT AICPU_HOST_OBJ_TARGETS)
@@ -416,14 +416,14 @@ function(gen_aicpu_const_symbol)
     return()
   endif()
 
-  set(CONST_SO_OUTPUT ${CMAKE_BINARY_DIR}/libcv_constant_folding_ops.so)
+  set(CONST_SO_OUTPUT ${CMAKE_BINARY_DIR}/libopconstant_folding_cv.so)
 
   set(ALL_OBJECTS "")
   foreach(tgt IN LISTS AICPU_HOST_OBJ_TARGETS)
     list(APPEND ALL_OBJECTS $<TARGET_OBJECTS:${tgt}>)
   endforeach()
 
-  message(STATUS "Linking libcv_constant_folding_ops.so with host compiler")
+  message(STATUS "Linking libopconstant_folding_cv.so with host compiler")
   message(STATUS "AICPU host all objects: ${ALL_OBJECTS}")
   message(STATUS "AICPU host so output: ${CONST_SO_OUTPUT}")
 
@@ -454,11 +454,11 @@ function(gen_aicpu_const_symbol)
 
       -o ${CONST_SO_OUTPUT}
     DEPENDS ${AICPU_HOST_OBJ_TARGETS}
-    COMMENT "Linking libcv_constant_folding_ops.so using host compiler okay."
+    COMMENT "Linking libopconstant_folding_cv.so using host compiler okay."
     COMMAND_EXPAND_LISTS
   )
 
-  add_custom_target(cv_constant_folding_ops_builtin ALL DEPENDS ${CONST_SO_OUTPUT})
+  add_custom_target(opconstant_folding_cv_builtin ALL DEPENDS ${CONST_SO_OUTPUT})
   install(
     FILES ${CONST_SO_OUTPUT}
     DESTINATION ${AICPU_HOST_KERNEL_IMPL}

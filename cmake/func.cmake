@@ -253,7 +253,7 @@ function(add_aicpu_cust_kernel_modules target_name)
 endfunction()
 
 # Compiles aicpu source as OBJECT for host side.
-# Collects into AICPU_HOST_OBJ_TARGETS; linking into libcv_constant_folding_ops.so
+# Collects into AICPU_HOST_OBJ_TARGETS; linking into libopconstant_folding_cv.so
 # is done in symbol.cmake gen_aicpu_const_symbol().
 function(add_aicpu_host_kernel_modules host_target_name)
   message(STATUS "add aicpu host kernel modules for ${host_target_name}")
