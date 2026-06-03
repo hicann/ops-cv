@@ -163,6 +163,31 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     return unsqueezedInput;
 }
 
+static bool CheckLinear1dScales(
+    const aclTensor *x, const aclTensor *y, const aclIntArray *size, const double scale, const bool alignCorners)
+{
+    float scales_w = 0.0;
+    auto inputShape = x->GetViewShape();
+    auto outputShape = y->GetViewShape();
+    int64_t input_size = inputShape.GetDim(DIM_TWO);
+    int64_t output_size = (*size)[DIM_ZERO];
+
+    if (scale > 0) {
+        output_size = outputShape.GetDim(DIM_TWO);
+    }
+
+    if (alignCorners) {
+        if (output_size > 1) {
+            scales_w = static_cast<float>(input_size - 1) / (output_size - 1);
+        } else {
+            scales_w = static_cast<float>(0);
+        }
+    } else {
+        scales_w = (scale > 0) ? static_cast<float>(1.0 / scale) : (static_cast<float>(input_size) / output_size);
+    }
+    return (scales_w <= MAX_SUPPORT_SHRINK_SCALE && scales_w >= MAX_SUPPORT_ZOOM_SCALE_REV);
+}
+
 static bool CheckLinear1dSize(const aclTensor *x, const aclTensor *y)
 {
     auto inputShape = x->GetViewShape();
@@ -253,7 +278,8 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
     } else {
         const aclTensor *ResizeDOut;
         auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-        if ((curArch == NpuArch::DAV_2201)) {
+        if ((curArch == NpuArch::DAV_2201) &&
+            CheckLinear1dScales(self, out, outputSize, scale, alignCorners)) {
             auto selfRefContiguous = l0op::Contiguous(self, uniqueExecutor.get());
             CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
             // 调用UpsampleLinear1d算子kernel
