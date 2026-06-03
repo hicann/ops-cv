@@ -57,7 +57,7 @@ __aicore__ inline void GridSampler2dBilinearSimt<T, T_IDX>::Init(
 
 template <typename T, typename T_IDX>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline T GetInputPointValue(
-    __gm__ T* inputImgGmAddr, int32_t inputHeight, int32_t inputWidth, T_IDX channelIndex,
+    __gm__ T* inputImgGmAddr, T_IDX inputHeight, T_IDX inputWidth, T_IDX channelIndex,
     T_IDX inputDataBatchOffset, T_IDX inH, T_IDX inW, T_IDX inC)
 {
     if (inputHeight >= 0 && inputWidth >= 0 && inputHeight < inH && inputWidth < inW) {
@@ -77,27 +77,30 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBiline
     float heightFloorDelta = pointHeight - heightFloor;
     float widthFloorDelta = pointWidth - widthFloor;
 
+    T_IDX heightIdx = (T_IDX) heightFloor;
+    T_IDX widthIdx = (T_IDX) widthFloor;
+
     // pointLeftUp
     float inputValue = static_cast<float>(GetInputPointValue<T, T_IDX>(
-        (__gm__ T*)inputImgGmAddr, heightFloor, widthFloor, channelIndex, inputDataBatchOffset, inH, inW, inC));
+        (__gm__ T*)inputImgGmAddr, heightIdx, widthIdx, channelIndex, inputDataBatchOffset, inH, inW, inC));
     float inputWeight = (1.0f - heightFloorDelta) * (1.0f - widthFloorDelta);
     float bilinearValue = (inputValue * inputWeight);
 
     // pointRightUp
     inputValue = static_cast<float>(GetInputPointValue<T, T_IDX>(
-        (__gm__ T*)inputImgGmAddr, heightFloor, (widthFloor + 1), channelIndex, inputDataBatchOffset, inH, inW, inC));
+        (__gm__ T*)inputImgGmAddr, heightIdx, widthIdx + 1, channelIndex, inputDataBatchOffset, inH, inW, inC));
     inputWeight = (1.0f - heightFloorDelta) * widthFloorDelta;
     bilinearValue += (inputValue * inputWeight);
 
     // pointLeftBottom
     inputValue = static_cast<float>(GetInputPointValue<T, T_IDX>(
-        (__gm__ T*)inputImgGmAddr, (heightFloor + 1), widthFloor, channelIndex, inputDataBatchOffset, inH, inW, inC));
+        (__gm__ T*)inputImgGmAddr, heightIdx + 1, widthIdx, channelIndex, inputDataBatchOffset, inH, inW, inC));
     inputWeight = heightFloorDelta * (1.0f - widthFloorDelta);
     bilinearValue += (inputValue * inputWeight);
 
     // pointRightBottom
     inputValue = static_cast<float>(GetInputPointValue<T, T_IDX>(
-        (__gm__ T*)inputImgGmAddr, (heightFloor + 1), (widthFloor + 1), channelIndex, inputDataBatchOffset, inH, inW,
+        (__gm__ T*)inputImgGmAddr, heightIdx + 1, widthIdx + 1, channelIndex, inputDataBatchOffset, inH, inW,
         inC));
     inputWeight = heightFloorDelta * widthFloorDelta;
     bilinearValue += (inputValue * inputWeight);
@@ -108,8 +111,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBiline
 // LAUNCH_BOUND
 template <typename T, typename T_IDX>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__ void ComputeGridSampler2d(
-    __gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int32_t blockNum, int32_t intN, int32_t inC,
-    int32_t inH, int32_t inW, int32_t outH, int32_t outW, int32_t paddingMode, int32_t alignCorners, 
+    __gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int32_t blockNum, T_IDX intN, T_IDX inC,
+    T_IDX inH, T_IDX inW, T_IDX outH, T_IDX outW, int32_t paddingMode, int32_t alignCorners, 
     T_IDX outImgSize, T_IDX shiftB_, T_IDX mB_, T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_,
     uint32_t blockId_)
 {
@@ -141,8 +144,8 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__ void ComputeGridSampler2d
             gridWeightValue = ((gridWeightValue + 1) * inW - 1) / 2;
         }
         
-        gridWeightValue = Clip(gridWeightValue, inW, paddingMode, alignCorners);
-        gridHeigthValue = Clip(gridHeigthValue, inH, paddingMode, alignCorners);
+        gridWeightValue = Clip<T_IDX>(gridWeightValue, inW, paddingMode, alignCorners);
+        gridHeigthValue = Clip<T_IDX>(gridHeigthValue, inH, paddingMode, alignCorners);
 
         T bilinearValue = ComputeBilinear<T, T_IDX>(
             (__gm__ T*)(inputImgGmAddr), gridHeigthValue, gridWeightValue, channelIndex, newInputIndex, inH, inW, inC);
