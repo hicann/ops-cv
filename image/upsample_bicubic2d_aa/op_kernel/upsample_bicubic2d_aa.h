@@ -408,8 +408,8 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateHeightExtension(
         batchEnd = inputShapes[0] * inputShapes[1];
     }
 
-    int64_t weightOffsetSize = inputShapes[2] * outputShapes[3];
-    int64_t outputOffsetSize = outputShapes[2] * outputShapes[3];
+    int64_t weightOffsetSize = static_cast<int64_t>(inputShapes[2]) * outputShapes[3];
+    int64_t outputOffsetSize = static_cast<int64_t>(outputShapes[2]) * outputShapes[3];
     int64_t xMinOffset = xMin * outputShapes[3];
     int64_t tensorCIndexOffset = tensorCIndex * outputShapes[3];
     matmulH.SetTensorA(intermediateTensorGm[workSpaceRadioOffset], true);

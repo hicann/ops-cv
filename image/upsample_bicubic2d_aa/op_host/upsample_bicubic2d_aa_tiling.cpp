@@ -286,8 +286,9 @@ void UpsampleBicubic2dAATiling::GetTCubeTilingW()
     mmTilingW.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTilingW.SetShape(inputShapes[0] * inputShapes[1] * inputShape[2], sliceSize, singleCoreKW);
-    mmTilingW.SetOrgShape(inputShapes[0] * inputShapes[1] * inputShape[2], outputShapes[3], inputShapes[3]);
+    int64_t totalM = static_cast<int64_t>(inputShapes[0]) * inputShapes[1] * inputShape[2];
+    mmTilingW.SetShape(totalM, sliceSize, singleCoreKW);
+    mmTilingW.SetOrgShape(totalM, outputShapes[3], inputShapes[3]);
 
     if (mmTilingW.GetTiling(tilingData.matmulTilingW) == -1) {
         return;
@@ -322,7 +323,8 @@ void UpsampleBicubic2dAATiling::GetWorkSpace(uint32_t needCoreNum)
     uint32_t radioMatrixWorkspaceSize = std::max(radioMatrixWSize, radioMatrixHSize);
     intermediateMatrixSize = (intermediateMatrixSize + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     if (workspaces != nullptr) {
-        workspaces[0] = intermediateMatrixSize + radioMatrixWorkspaceSize * needCoreNum * BUFFER_LEN + WORK_SPACE_SIZE;
+        workspaces[0] = intermediateMatrixSize + static_cast<uint64_t>(radioMatrixWorkspaceSize) *
+            needCoreNum * BUFFER_LEN + WORK_SPACE_SIZE;
     }
 
     tilingData.set_radioMatrixWSize(radioMatrixWSize);
@@ -409,7 +411,7 @@ uint32_t UpsampleBicubic2dAATiling::GetNeedCoreNumWidth(uint32_t coreNumPlatform
     int64_t eachCoreSliceNum = sliceCount / coreNumPlatform;
     int64_t remainder = sliceCount % coreNumPlatform;
 
-    int64_t inputH = inputShapes[0] * inputShapes[1] * inputShapes[2];
+    int64_t inputH = static_cast<int64_t>(inputShapes[0]) * inputShapes[1] * inputShapes[2];
 
     int64_t minAvergingRows = sliceSize * 2 / dataTypeSize;
     int64_t groupCore = 0;
@@ -459,7 +461,7 @@ uint32_t UpsampleBicubic2dAATiling::GetNeedCoreNumHeight(uint32_t coreNumPlatfor
     int64_t eachCoreSliceNum = sliceCount / coreNumPlatform;
     int64_t remainder = sliceCount % coreNumPlatform;
 
-    int64_t inputBatch = inputShapes[0] * inputShapes[1];
+    int64_t inputBatch = static_cast<int64_t>(inputShapes[0]) * inputShapes[1];
 
     int64_t groupCoreNum = 0;
     if (remainder > 0) {

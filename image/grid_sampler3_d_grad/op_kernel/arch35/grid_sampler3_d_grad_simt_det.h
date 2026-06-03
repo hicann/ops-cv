@@ -60,7 +60,7 @@ __aicore__ inline void GridSampler3DGradSimtDet<T>::Init(
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void deterministicCompute(
     __gm__ uint32_t* dxOutGmAddr, __gm__ T* dxOutValueGmAddr, __gm__ T* dxGmAddr, uint32_t dxGmIndex, float dxOutValue,
-    uint32_t gridSize, uint32_t blockNum, uint32_t batchNum, uint32_t blockId, uint32_t pointIndex)
+    uint32_t blockNum, uint32_t batchNum, uint32_t blockId, uint32_t pointIndex)
 {
     uint32_t threadNum = blockDim.x; // VF_MAX_THREAD_NUM
     uint32_t thread_idx = threadIdx.x;
@@ -98,7 +98,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
     float tne, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
     float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
 {
-    uint32_t gridSize = gridD * gridH * gridW;
     // tnw
     uint32_t tnwDxIndex = static_cast<uint32_t>(-100);
     float tnwGradOutValue = static_cast<float>(0.0);
@@ -108,7 +107,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
     float tnwDxValue = tnw * tnwGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, tnwDxIndex, tnwDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(0));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(0));
     if (tnwDxIndex != -100) {
         float tnw_val = static_cast<float>(xGmAddr[tnwDxIndex]);
         *gix -= tnw_val * (iy_t1 - iy) * (iz_t1 - iz) * tnwGradOutValue;
@@ -125,7 +124,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
     float tneDxValue = tne * tneGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, tneDxIndex, tneDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(1));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(1));
     if (tneDxIndex != -100) {
         float tne_val = static_cast<float>(xGmAddr[tneDxIndex]);
         *gix += tne_val * (iy_t1 - iy) * (iz_t1 - iz) * tneGradOutValue;
@@ -143,7 +142,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
     float tse, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
     float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
 {
-    uint32_t gridSize = gridD * gridH * gridW;
     // tsw
     uint32_t tswDxIndex = static_cast<uint32_t>(-100);
     float tswGradOutValue = static_cast<float>(0.0);
@@ -153,7 +151,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
     float tswDxValue = tsw * tswGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, tswDxIndex, tswDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(2));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(2));
     if (tswDxIndex != -100) {
         float tsw_val = static_cast<float>(xGmAddr[tswDxIndex]);
         *gix -= tsw_val * (iy - iy_tnw) * (iz_t1 - iz) * tswGradOutValue;
@@ -170,7 +168,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
     float tseDxValue = tse * tseGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, tseDxIndex, tseDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(3));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(3));
     if (tseDxIndex != -100) {
         float tse_val = static_cast<float>(xGmAddr[tseDxIndex]);
         *gix += tse_val * (iy - iy_tnw) * (iz_t1 - iz) * tseGradOutValue;
@@ -188,7 +186,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
     float bne, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
     float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
 {
-    uint32_t gridSize = gridD * gridH * gridW;
     // bnw
     uint32_t bnwDxIndex = static_cast<uint32_t>(-100);
     float bnwGradOutValue = static_cast<float>(0.0);
@@ -198,7 +195,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
     float bnwDxValue = bnw * bnwGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, bnwDxIndex, bnwDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(4));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(4));
     if (bnwDxIndex != -100) {
         float bnw_val = static_cast<float>(xGmAddr[bnwDxIndex]);
         *gix -= bnw_val * (iy_t1 - iy) * (iz - iz_tnw) * bnwGradOutValue;
@@ -215,7 +212,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
     float bneDxValue = bne * bneGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, bneDxIndex, bneDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(5));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(5));
     if (bneDxIndex != -100) {
         float bne_val = static_cast<float>(xGmAddr[bneDxIndex]);
         *gix += bne_val * (iy_t1 - iy) * (iz - iz_tnw) * bneGradOutValue;
@@ -233,7 +230,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
     float bse, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
     float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
 {
-    uint32_t gridSize = gridD * gridH * gridW;
     // bsw
     uint32_t bswDxIndex = static_cast<uint32_t>(-100);
     float bswGradOutValue = static_cast<float>(0.0);
@@ -243,7 +239,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
     float bswDxValue = bsw * bswGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, bswDxIndex, bswDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(6));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(6));
     if (bswDxIndex != -100) {
         float bsw_val = static_cast<float>(xGmAddr[bswDxIndex]);
         *gix -= bsw_val * (iy - iy_tnw) * (iz - iz_tnw) * bswGradOutValue;
@@ -260,7 +256,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
     float bseDxValue = bse * bseGradOutValue;
     deterministicCompute(
         (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, bseDxIndex, bseDxValue,
-        gridSize, blockNum, batchNum, blockId, static_cast<uint32_t>(7));
+        blockNum, batchNum, blockId, static_cast<uint32_t>(7));
     if (bseDxIndex != -100) {
         float bse_val = static_cast<float>(xGmAddr[bseDxIndex]);
         *gix += bse_val * (iy - iy_tnw) * (iz - iz_tnw) * bseGradOutValue;
@@ -336,7 +332,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
     uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t pNumPerCore,
     uint32_t blockNum, uint32_t blockId)
 {
-    uint32_t gridSize = gridD * gridH * gridW;
 
     int32_t ix_nearest = rintf(ix);
     int32_t iy_nearest = rintf(iy);
@@ -350,7 +345,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
             widthCol, channelIndex, offsetBaseAddr, xD, xH, xW, channel, newInputIndex, &gradOutValue, &dxIndex);
         deterministicCompute(
             (__gm__ uint32_t*)dxOutGmAddr, (__gm__ T*)dxOutValueGmAddr, (__gm__ T*)dxGmAddr, dxIndex, gradOutValue,
-            gridSize, blockNum, batchNum, blockId, 0);
+            blockNum, batchNum, blockId, 0);
 
         dgridGmAddr[offsetBaseAddr] = static_cast<T>(0);
         dgridGmAddr[offsetBaseAddr + 1] = static_cast<T>(0);

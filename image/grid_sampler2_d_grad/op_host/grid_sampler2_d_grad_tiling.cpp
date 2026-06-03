@@ -203,7 +203,7 @@ template <typename TilingData, int32_t dataTypeLen>
 void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
 {
     if (regBase) {
-        uint32_t mulNCHW = static_cast<uint32_t>(batch * gridH * gridW * GRID_LAST_NUM);
+        uint64_t mulNCHW = static_cast<uint64_t>(batch) * gridH * gridW * GRID_LAST_NUM;
         uint32_t tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM);
         usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
         pNumPerCore = 0;

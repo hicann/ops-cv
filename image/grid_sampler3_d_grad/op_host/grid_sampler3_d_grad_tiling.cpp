@@ -165,7 +165,7 @@ template <typename TilingData>
 void GridSampler3DGradTiling<TilingData>::GetUsedCore()
 {
     if (regBase) {
-        uint32_t mulNCDHW = static_cast<uint32_t>(batch * gridD * gridH * gridW * GRID_LAST_NUM);
+        uint64_t mulNCDHW = static_cast<uint64_t>(batch * gridD * gridH * gridW * GRID_LAST_NUM);
         uint32_t tmpCoreNum = Ceil(mulNCDHW, VF_MAX_THREAD_NUM);
         usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
         pNumPerCore = 0;

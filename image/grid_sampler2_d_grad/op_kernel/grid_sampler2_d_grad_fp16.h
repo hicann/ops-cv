@@ -175,12 +175,10 @@ private:
     uint32_t batchOffset = 0;
     uint32_t baseOffset = 0;
     uint32_t alignBufferNum = 0;
-    uint32_t xStrideC = 0;
     uint32_t dxStrideN = 0;
     uint32_t dxStrideC = 0;
     int32_t dxStrideH = 0;
     uint32_t dxStrideW = 0;
-    uint32_t gradStrideC = 0;
     uint32_t gradStrideH = 0;
     uint32_t gradStrideW = 0;
     uint32_t maskSize = 0;
@@ -246,13 +244,11 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     dataCount = gridH * gridW;
     maskSize = CeilAlign(CeilDiv(ubFactorElement, 8), BLOCK_BYTES);
     maskNum = maskSize / sizeof(uint8_t);
-    xStrideC = width * height;
     dxStrideN = channel * width * height;
     dxStrideC = width * height;
     dxStrideH = width;
     dxStrideW = 1;
 
-    gradStrideC = gridH * gridW;
     inputStrideH = width;
     inputStrideW = 1;
     inputStrideN = channel * width * height;
@@ -803,11 +799,9 @@ __aicore__ inline void GridSampler2DGradFP16<T, Dtype, GridSamplerGradTilingData
     const int32_t computeCount, const int64_t curGridPointIndex)
 {
     int64_t gridPointIndex = 0;
-    int32_t gradStrideN = channel * outH * outW;
-    int32_t gradStrideC = outH * outW;
+    int64_t gradStrideN = channel * outH * outW;
     int32_t gradStrideH = outW;
     int32_t gradStrideW = 1;
-    int32_t xStrideC = width * height;
     int64_t w = 0;
     int64_t h = 0;
     int64_t n = 0;

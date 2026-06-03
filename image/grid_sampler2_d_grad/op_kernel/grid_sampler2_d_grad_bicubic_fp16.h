@@ -839,8 +839,8 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
                 PipeBarrier<PIPE_ALL>();
 
                 if (ixClipped <= outW || ixClipped >= 0 || iyClipped <= outH || iyClipped >= 0) {
-                    int32_t dxIdx = (iyClipped * width + ixClipped) * channel;
-                    int32_t srcIdx = (iyClipped * width + ixClipped) * channel;
+                    int64_t dxIdx = (static_cast<int64_t>(iyClipped) * width + ixClipped) * channel;
+                    int64_t srcIdx = (static_cast<int64_t>(iyClipped) * width + ixClipped) * channel;
 
                     T coeffTxVal = coeffTxArr[jx].GetValue(i);
                     T coeffTyVal = coeffTyArr[jy].GetValue(i);
