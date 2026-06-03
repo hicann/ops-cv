@@ -421,7 +421,7 @@ usage() {
   echo "    --vendor_name Specify the custom operator package vendor name, like: --vendor_name=customize, default to customize-cv"
   echo "    --aicpu build aicpu task"
   echo "    --opgraph build op_graph_cv.so"
-  echo "    --onnxplugin build op_cv_onnx_plugin.so"
+  echo "    --onnxplugin build oponnx_plugin_cv.so"
   echo "    --opapi build opapi_cv.so"
   echo "    --ophost build ophost_cv.so"
   echo "    --opkernel build binary kernel"
@@ -594,7 +594,7 @@ set_create_libs() {
     return
   fi
   if [[ "$ENABLE_PACKAGE" == "TRUE" && "$ENABLE_CUSTOM" != "TRUE" ]]; then
-    BUILD_LIBS=("ophost_${REPOSITORY_NAME}" "opapi_${REPOSITORY_NAME}" "opgraph_${REPOSITORY_NAME}" "op_${REPOSITORY_NAME}_onnx_plugin")
+    BUILD_LIBS=("ophost_${REPOSITORY_NAME}" "opapi_${REPOSITORY_NAME}" "opgraph_${REPOSITORY_NAME}" "oponnx_plugin_${REPOSITORY_NAME}")
     ENABLE_CREATE_LIB=TRUE
   else
     if [[ "$OP_HOST" == "TRUE" ]]; then
@@ -610,7 +610,7 @@ set_create_libs() {
       ENABLE_CREATE_LIB=TRUE
     fi
     if [[ "$ONNX_PLUGIN" == "TRUE" ]]; then
-      BUILD_LIBS+=("op_${REPOSITORY_NAME}_onnx_plugin")
+      BUILD_LIBS+=("oponnx_plugin_${REPOSITORY_NAME}")
       ENABLE_CREATE_LIB=TRUE
     fi
     if [[ "$OP_KERNEL" == "TRUE" ]]; then
