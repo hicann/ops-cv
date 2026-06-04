@@ -95,25 +95,25 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
     #if TILING_KEY_VAR == 1000
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
-        GridSampler2dBilinearSimt<DTYPE_X, uint32_t> gridSampler2dKernel;
+        GridSampler2dBilinearSimt<DTYPE_X, uint32_t, int32_t> gridSampler2dKernel;
         gridSampler2dKernel.Init(x, grid, y, workspace, tilingData);
         gridSampler2dKernel.Process();
     #elif TILING_KEY_VAR == 1100
                 GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
-        GridSampler2dBilinearSimt<DTYPE_X, uint64_t> gridSampler2dKernel;
+        GridSampler2dBilinearSimt<DTYPE_X, uint64_t, int64_t> gridSampler2dKernel;
         gridSampler2dKernel.Init(x, grid, y, workspace, tilingData);
         gridSampler2dKernel.Process();
     #elif TILING_KEY_VAR == 2000
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
-        GridSampler3dBilinearSimt<DTYPE_X, uint32_t> gridSampler3dKernel;
+        GridSampler3dBilinearSimt<DTYPE_X, uint32_t, int32_t> gridSampler3dKernel;
         gridSampler3dKernel.Init(x, grid, y, workspace, tilingData);
         gridSampler3dKernel.Process();
     #elif TILING_KEY_VAR == 2100
         GET_TILING_DATA_WITH_STRUCT(GridSampleTilingData, tiling_data_in, tiling);
         const GridSampleTilingData* __restrict tilingData = &tiling_data_in;
-        GridSampler3dBilinearSimt<DTYPE_X, uint64_t> gridSampler3dKernel;
+        GridSampler3dBilinearSimt<DTYPE_X, uint64_t, int64_t> gridSampler3dKernel;
         gridSampler3dKernel.Init(x, grid, y, workspace, tilingData);
         gridSampler3dKernel.Process();
     #elif TILING_KEY_VAR == 1000220

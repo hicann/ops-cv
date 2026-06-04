@@ -33,8 +33,8 @@ const uint32_t ALIGNCORNER_TRUE = 1;
 const uint32_t VF_MAX_THREAD_NUM = 1024;
 const uint32_t VF_MAX_THREAD_NUM_3D = 512;
 
-
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coord, int32_t size)
+template <typename U_IDX>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoordinates(float coord, U_IDX size)
 {
     coord = coord < 0 ? 0 : coord;
     coord = coord > (size - 1) ? (float)size - 1 : coord;
@@ -44,7 +44,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoord
     return coord;
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow, int32_t twiceHigh)
+template <typename U_IDX>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow, U_IDX twiceHigh)
 {
     if (twiceLow == twiceHigh) {
         return 0;
@@ -53,7 +54,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCo
     float span = static_cast<float>(twiceHigh - twiceLow) / 2;
     coord = fabsf(coord - min);
     float extra = fmodf(coord, span);
-    int32_t flips = static_cast<int32_t>(floorf(coord / span));
+    U_IDX flips = static_cast<U_IDX>(floorf(coord / span));
     if (flips % REFLECT_RATIO_95 == 0) {
         return extra + min;
     } else {
@@ -70,8 +71,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float safeDowng
     return coord;
 }
 
+template <typename U_IDX>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline float Clip(
-    float coord, int32_t size, int32_t paddingMode, int32_t alignCorners)
+    float coord, U_IDX size, int32_t paddingMode, int32_t alignCorners)
 {
     if (paddingMode == PADDING_MODE_BORDER_95) {
         coord = ClipCoordinates(coord, size);
