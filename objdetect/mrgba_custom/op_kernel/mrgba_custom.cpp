@@ -14,7 +14,11 @@
  * \brief
  */
 #include "kernel_operator.h"
-#include "vector_scheduler.h"
+#ifdef __CCE_KT_TEST__
+#include "../../background_replace/op_kernel/vector_scheduler.h"
+#else
+#include "../background_replace/vector_scheduler.h"
+#endif
 
 using namespace AscendC;
 
