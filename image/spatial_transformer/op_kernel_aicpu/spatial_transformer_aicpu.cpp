@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <string>
 #include <securec.h>
 
 #include "cpu_kernel.h"
@@ -60,9 +61,29 @@ constexpr uint32_t kOutputNum = 1;
     }                                                                  \
     break;                                                             \
   }
-}
+} // anonymous in aicpu
 
 namespace aicpu {
+const char *GetFormatName(Format format) {
+  switch (format) {
+    case FORMAT_NCHW:
+      return "NCHW";
+    case FORMAT_NC1HWC0:
+      return "NC1HWC0";
+    case FORMAT_ND:
+      return "ND";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+std::string GetShapeString(const Tensor *tensor) {
+  if (tensor == nullptr || tensor->GetTensorShape() == nullptr) {
+    return "<null>";
+  }
+  return VectorToString(tensor->GetTensorShape()->GetDimSizes());
+}
+
 KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelContext &ctx) {
   input_tensor_ = ctx.Input(0);
   input_theta_ = ctx.Input(1);
@@ -72,26 +93,36 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  // only support NCHW and NHWC
-  date_format_ = input_tensor_->GetTensorShape()->GetFormat();
-  if (date_format_ == FORMAT_NCHW) {
-    input_n_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex0));
-    input_c_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex1));
-    input_h_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex2));
-    input_w_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex3));
-    output_h_ = static_cast<int32_t>(output_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex2));
-    output_w_ = static_cast<int32_t>(output_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex3));
-  } else if (date_format_ == FORMAT_NC1HWC0) {
-    input_n_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex0));
-    input_c1_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex1));
-    input_h_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex2));
-    input_w_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex3));
-    input_c0_ = static_cast<int32_t>(input_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex4));
-    input_c_ = input_c1_ * input_c0_;
-    output_h_ = static_cast<int32_t>(output_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex2));
-    output_w_ = static_cast<int32_t>(output_tensor_->GetTensorShape()->GetDimSize(kDimSizeIndex3));
+  auto input_shape = input_tensor_->GetTensorShape();
+  auto output_shape = output_tensor_->GetTensorShape();
+
+  date_format_ = input_shape->GetFormat();
+  Format output_format = output_shape->GetFormat();
+  if (output_format != date_format_) {
+    KERNEL_LOG_ERROR(
+        "[%s] input x format[%s] and output y format[%s] must be the same.",
+        kSpatialTransformer, GetFormatName(date_format_),
+        GetFormatName(output_format));
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  else {
+
+  if (date_format_ == FORMAT_NCHW) {
+    input_n_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex0));
+    input_c_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex1));
+    input_h_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex2));
+    input_w_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex3));
+    output_h_ = static_cast<int32_t>(output_shape->GetDimSize(kDimSizeIndex2));
+    output_w_ = static_cast<int32_t>(output_shape->GetDimSize(kDimSizeIndex3));
+  } else if (date_format_ == FORMAT_NC1HWC0) {
+    input_n_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex0));
+    input_c1_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex1));
+    input_h_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex2));
+    input_w_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex3));
+    input_c0_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex4));
+    input_c_ = input_c1_ * input_c0_;
+    output_h_ = static_cast<int32_t>(output_shape->GetDimSize(kDimSizeIndex2));
+    output_w_ = static_cast<int32_t>(output_shape->GetDimSize(kDimSizeIndex3));
+  } else {
     KERNEL_LOG_ERROR("Can't support data format[%d].", static_cast<int>(date_format_));
     return KERNEL_STATUS_PARAM_INVALID;
   }
@@ -275,7 +306,9 @@ KernelStatus SpatialTransformerCpuKernel::DoCompute4D() {
 
   // init ouput_grid and input_grid, [M, 3] * [3, 2] = [M, 2]
   float* input_grid = (float *)malloc(sizeof(float) * output_h_ * output_w_ * 2);
-  KERNEL_CHECK_NULLPTR(input_grid, KERNEL_STATUS_INNER_ERROR, "Can't malloc input_grid.");
+  KERNEL_CHECK_NULLPTR(input_grid, KERNEL_STATUS_INNER_ERROR,
+      "[%s] failed to allocate input_grid for output size H[%d] W[%d].",
+      kSpatialTransformer, output_h_, output_w_);
 
   // init var
   std::vector<float> theta(kIndex6);
@@ -317,11 +350,14 @@ KernelStatus SpatialTransformerCpuKernel::DoCompute5D() {
 
   // init ouput_grid and input_grid, [M, 3] * [3, 2] = [M, 2]
   float* input_grid = (float *)malloc(sizeof(float) * output_w_ * output_h_ * 2);
-  KERNEL_CHECK_NULLPTR(input_grid, KERNEL_STATUS_INNER_ERROR, "Can't malloc input_grid");
+  KERNEL_CHECK_NULLPTR(input_grid, KERNEL_STATUS_INNER_ERROR,
+      "[%s] failed to allocate input_grid for output size H[%d] W[%d].",
+      kSpatialTransformer, output_h_, output_w_);
 
   float *res = (float *)malloc(sizeof(float) * input_c0_);
   if (res == nullptr) {
-    KERNEL_LOG_ERROR("Can't malloc res.");
+    KERNEL_LOG_ERROR("[%s] failed to allocate interpolation buffer for C0[%d].",
+        kSpatialTransformer, input_c0_);
     free(input_grid);
     return KERNEL_STATUS_INNER_ERROR;
   }
@@ -372,7 +408,9 @@ KernelStatus SpatialTransformerCpuKernel::DoCompute5D_C1() {
 
   // init ouput_grid and input_grid, [M, 3] * [3, 2] = [M, 2]
   float* input_grid = (float *)malloc(sizeof(float) * output_h_ * output_w_ * 2);
-  KERNEL_CHECK_NULLPTR(input_grid, KERNEL_STATUS_INNER_ERROR, "Can't malloc input_grid");
+  KERNEL_CHECK_NULLPTR(input_grid, KERNEL_STATUS_INNER_ERROR,
+      "[%s] failed to allocate input_grid for output size H[%d] W[%d].",
+      kSpatialTransformer, output_h_, output_w_);
 
   // init var
   std::vector<float> theta(kIndex6);
@@ -423,7 +461,8 @@ uint32_t SpatialTransformerCpuKernel::DoCompute(CpuKernelContext &ctx) {
     STN_INNER_COMPUTE_CASE(DT_UINT64, uint64_t, ctx)
     STN_INNER_COMPUTE_CASE(DT_DOUBLE, double, ctx)
   default:
-    KERNEL_LOG_ERROR("SpatialTransformer kernel data type [%s] not support.", DTypeStr(input_data_type_).c_str());
+    KERNEL_LOG_ERROR("[%s] input theta dtype [%s] is not supported.",
+        kSpatialTransformer, DTypeStr(input_theta_type_).c_str());
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 
@@ -451,7 +490,8 @@ uint32_t SpatialTransformerCpuKernel::Compute(CpuKernelContext &ctx) {
     STN_COMPUTE_CASE(DT_UINT64, uint64_t, ctx)
     STN_COMPUTE_CASE(DT_DOUBLE, double, ctx)
   default:
-    KERNEL_LOG_ERROR("SpatialTransformer kernel data type [%s] not support.", DTypeStr(input_data_type_).c_str());
+    KERNEL_LOG_ERROR("[%s] input x dtype [%s] is not supported.",
+        kSpatialTransformer, DTypeStr(input_data_type_).c_str());
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 

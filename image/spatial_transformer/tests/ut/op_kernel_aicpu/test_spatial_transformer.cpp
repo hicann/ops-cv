@@ -165,3 +165,27 @@ TEST_F(TEST_SPATIAL_TRANSFORMER_UT, 5D_C1_SUCC) {
   bool compare = CompareResult(output, output_exp, output_size);
   EXPECT_EQ(compare, true);
 }
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, OUTPUT_FORMAT_MISMATCH_FAIL) {
+  vector<int64_t> x_shape = {1, 1, 2, 3};
+  vector<int64_t> theta_shape = {2};
+  vector<int64_t> y_shape = {1, 1, 2, 3, 16};
+  vector<DataType> data_types = {DT_INT8, DT_FLOAT16, DT_INT8};
+
+  int8_t input_x[6] = {-39, -47, -37, 4, -70, -47};
+  Eigen::half input_theta[2] = {Eigen::half(-1), Eigen::half(-2)};
+  int8_t output[96] = {0};
+
+  vector<int64_t> use_default_theta = {1, 0, 1, 0, 1, 1};
+  vector<float> default_theta = {1.0f, 0.0f, 1.5f, 0.0f};
+  auto node_def = CpuKernelUtils::CpuKernelUtils::CreateNodeDef();
+  NodeDefBuilder(node_def.get(), "SpatialTransformer", "SpatialTransformer")
+      .Input({"x", data_types[0], x_shape, input_x, FORMAT_NCHW})
+      .Input({"theta", data_types[1], theta_shape, input_theta})
+      .Output({"y", data_types[2], y_shape, output, FORMAT_NC1HWC0})
+      .Attr("stn_ori_channel", 1)
+      .Attr("use_default_theta", use_default_theta)
+      .Attr("default_theta", default_theta);
+
+  RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}

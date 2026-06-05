@@ -125,6 +125,19 @@ TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_SHAPE_EXCEPTION) {
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
 
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_LAST_DIM_EXCEPTION) {
+    float input[8] = {1.0f};
+    float delta[1] = {0.5f};
+    float output[8] = {0.0f};
+
+    vector<vector<int64_t>> shapes = {{2, 2, 2}, {1}, {2, 2, 2}};
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<void *> datas = {input, delta, output};
+
+    CREATE_NODEDEF(shapes, data_types, datas);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+
 TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_DTYPE_EXCEPTION) {
     int32_t input[22] = {1};
     float delta[1] = {0.5f};

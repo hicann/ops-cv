@@ -193,6 +193,15 @@ inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx)
 
 inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext &ctx)
 {
+    auto inputShape = ctx.Input(0)->GetTensorShape();
+    auto inputDims = inputShape->GetDimSizes();
+    if (inputDims.back() != 3) {
+        KERNEL_LOG_ERROR(
+            "The last dimension of input images and output y shape [%s] must be 3.",
+            VectorToString(inputDims).c_str());
+        return KERNEL_STATUS_PARAM_INVALID;
+    }
+
     if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
         KERNEL_LOG_ERROR(
             "The data type of the input [%s] need be the same as the output [%s].",
