@@ -730,7 +730,7 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::SetScales()
         const float* scales_data = reinterpret_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scales_data);
         OP_CHECK_IF(scales_num != SCALES_NUM,
-            OP_LOGE_WITH_INVALID_ATTR_SIZE(
+            OP_LOGE_FOR_INVALID_LISTSIZE(
                 context_->GetNodeName(), "scales", std::to_string(scales_num).c_str(),
                 std::to_string(SCALES_NUM).c_str()),
             return ge::GRAPH_FAILED);

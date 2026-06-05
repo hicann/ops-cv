@@ -570,7 +570,7 @@ ge::graphStatus ResizeBicubicV2Tiling::Compute()
     int64_t scalesNum = scales->GetSize();
     const float* scalesData = static_cast<const float*>(scales->GetData());
     OP_CHECK_IF(scalesNum != DIM_2,
-        OP_LOGE_WITH_INVALID_ATTR_SIZE(
+        OP_LOGE_FOR_INVALID_LISTSIZE(
             context_->GetNodeName(), "scales", std::to_string(scalesNum).c_str(), std::to_string(DIM_2).c_str()),
         return ge::GRAPH_FAILED);
 

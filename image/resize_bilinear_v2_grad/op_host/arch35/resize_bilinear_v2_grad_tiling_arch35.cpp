@@ -131,7 +131,7 @@ ge::graphStatus ResizeBilinearV2GradTilingAscendC::GetAttrInfo()
         auto scales = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_SCALES_IDX);
         int64_t scalesNum = scales->GetSize();
         OP_CHECK_IF(
-            scalesNum != SCALES_NUM, OP_LOGE_WITH_INVALID_ATTR_SIZE(
+            scalesNum != SCALES_NUM, OP_LOGE_FOR_INVALID_LISTSIZE(
                 nodeName_.c_str(), "scales", std::to_string(scalesNum).c_str(),
                 std::to_string(SCALES_NUM).c_str()),
             return ge::GRAPH_FAILED);

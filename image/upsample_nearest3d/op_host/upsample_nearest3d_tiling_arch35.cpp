@@ -411,7 +411,7 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckAttrs()
     OP_LOGI(context_, "scaleD %f, scaleH %f, scaleW %f", scaleD, scaleH, scaleW);
     int64_t outSizeNum = outputSize->GetSize();
     OP_CHECK_IF(outSizeNum > 0 && (outSizeNum != CONST_3),
-        OP_LOGE_WITH_INVALID_ATTR_SIZE(
+        OP_LOGE_FOR_INVALID_LISTSIZE(
             context_->GetNodeName(), "output_size", std::to_string(outSizeNum).c_str(), "0 or 3"),
         return ge::GRAPH_FAILED);
     const int64_t *outData = reinterpret_cast<const int64_t *>(outputSize->GetData());

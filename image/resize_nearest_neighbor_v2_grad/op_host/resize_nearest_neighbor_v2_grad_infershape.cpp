@@ -71,8 +71,8 @@ static bool GetSizeFor2D(const gert::InferShapeContext* context, const gert::Ten
             break;
         }
         default:
-            OP_LOGE_WITH_INVALID_INPUT_DTYPE(
-                context->GetNodeName(), "size", Ops::Base::ToString(size_dtype).c_str(), "[int32, int64]");
+            OP_LOGE_FOR_INVALID_DTYPE(
+                context->GetNodeName(), "size", Ops::Base::ToString(size_dtype).c_str(), "int32 or int64");
             return false;
     }
     return true;

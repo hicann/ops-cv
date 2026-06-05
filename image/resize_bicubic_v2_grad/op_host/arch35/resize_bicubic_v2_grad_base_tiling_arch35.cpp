@@ -252,7 +252,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetAttrInfo()
         auto scales = attrs->GetAttrPointer<gert::ContinuousVector>(NUM_1);
         OP_CHECK_IF(
             scales->GetSize() != NUM_2,
-            OP_LOGE_WITH_INVALID_ATTR_SIZE(
+            OP_LOGE_FOR_INVALID_LISTSIZE(
                 context_->GetNodeName(), "scales", std::to_string(scales->GetSize()).c_str(),
                 std::to_string(NUM_2).c_str()),
             return ge::GRAPH_FAILED);
