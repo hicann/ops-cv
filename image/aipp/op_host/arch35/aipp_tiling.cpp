@@ -208,18 +208,20 @@ ge::graphStatus AippTiling::CheckAippCfg()
         OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
-    if (aippCfg.find(AIPP_INPUT_FORMAT) == aippCfg.end()) {
-        std::string reasonMsg = "The AIPP operator configuration file does not contain configuration item " +
-            AIPP_INPUT_FORMAT;
-        OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
-        return ge::GRAPH_FAILED;
-    }
     string aippMode = aippCfg.at(AIPP_MODE);
     if (aippMode != AIPP_MODE_STATIC && aippMode != AIPP_MODE_DYNAMIC) {
         std::string expectValue = AIPP_MODE_STATIC + " or " + AIPP_MODE_DYNAMIC;
         OP_LOGE_FOR_INVALID_CONFIG(context_->GetNodeType(), configStr.c_str(),
             AIPP_MODE.c_str(), aippMode.c_str(), expectValue.c_str());
         return ge::GRAPH_FAILED;
+    }
+    if (aippMode == AIPP_MODE_STATIC) {
+        if (aippCfg.find(AIPP_INPUT_FORMAT) == aippCfg.end()) {
+            std::string reasonMsg = "The AIPP operator configuration file does not contain configuration item " +
+                AIPP_INPUT_FORMAT;
+            OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
