@@ -119,7 +119,7 @@
 - **上板性能采集**：适用于在真实NPU硬件上运行算子，快速获取算子整体性能指标（如Kernel耗时、Block数、流水占比等），帮助判断算子是否存在性能问题。
 - **流水图仿真**：适用于无NPU硬件开发者，或需要深入分析算子内部指令级流水瓶颈，优化指令排布的场景，提供比上板更详细的指令级流水分析。
 
-### 方式一 上板性能采集
+### 方式一上板性能采集
 
    * **前提条件**
 
@@ -151,7 +151,7 @@
 
       算子各项流水详细指标可关注`OPPROF_*`下`ArithmeticUtilization`文件，包含了当前各项流水的占比，具体介绍参见[msProf](https://www.hiascend.com/document/redirect/CannCommunityToolMsprof)中“性能数据文件 > msprof op > ArithmeticUtilization（cube及vector类型指令耗时和占比）”章节。
 
-### 方式二 仿真流水图采集
+### 方式二仿真流水图采集
   
    * **前提条件**
 
