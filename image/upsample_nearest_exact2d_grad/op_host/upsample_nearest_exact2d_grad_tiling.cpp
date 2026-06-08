@@ -345,8 +345,8 @@ void UpsampleNearestExact2dGradTiling::getWorkSpace(uint32_t needCoreNum)
     uint64_t intermediate_matrix_size =
         output_shapes[0] * output_shapes[1] * input_shape.GetDim(2) * output_shapes[3] * dataTypeSize;
 
-    uint32_t radioMatrixWorkspaceSize = slide_size * singleCoreK_w;
-    uint32_t radioMatrixWorkspaceSize_h = slide_size * singleCoreK_h;
+    uint64_t radioMatrixWorkspaceSize = slide_size * singleCoreK_w;
+    uint64_t radioMatrixWorkspaceSize_h = slide_size * singleCoreK_h;
 
     workspaces[0] = (intermediate_matrix_size + radioMatrixWorkspaceSize * needCoreNum) * BYTE + WORK_SPACE_SIZE;
     tilingData.set_radio_matrix_size(radioMatrixWorkspaceSize);

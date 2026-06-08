@@ -95,10 +95,10 @@ private:
     uint8_t dim = 0;
     float realScaleH = 0.0f;
     float realScaleW = 0.0f;
-    uint32_t tailColStartList[MAX_CORE_CONT] = {0};
-    uint32_t tailColEndList[MAX_CORE_CONT] = {0};
-    uint32_t tailRowStartList[MAX_CORE_CONT] = {0};
-    uint32_t tailRowEndList[MAX_CORE_CONT] = {0};
+    int64_t tailColStartList[MAX_CORE_CONT] = {0};
+    int64_t tailColEndList[MAX_CORE_CONT] = {0};
+    int64_t tailRowStartList[MAX_CORE_CONT] = {0};
+    int64_t tailRowEndList[MAX_CORE_CONT] = {0};
 
     int64_t outputShapes[4] = {0};
     int64_t inputShapes[4] = {0};

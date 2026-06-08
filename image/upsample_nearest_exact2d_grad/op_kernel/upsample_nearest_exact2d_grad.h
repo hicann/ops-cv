@@ -157,8 +157,8 @@ private:
     int64_t cubeSize = 0;
     int64_t middleSize = 0;
 
-    uint32_t input_shapes[4] = {0, 0, 0, 0};
-    uint32_t output_shapes[4] = {0, 0, 0, 0};
+    int64_t input_shapes[4] = {0, 0, 0, 0};
+    int64_t output_shapes[4] = {0, 0, 0, 0};
 
     uint32_t need_core_num_w;
     uint32_t need_core_num_h;

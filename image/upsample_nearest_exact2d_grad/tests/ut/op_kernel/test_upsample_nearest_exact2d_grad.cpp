@@ -66,17 +66,17 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
         reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
 
     tilingDatafromBin->dataType = 2;
-    tilingDatafromBin->scale_w = 4;
-    tilingDatafromBin->scale_h = 4;
-    tilingDatafromBin->slide_size = 16;
-    tilingDatafromBin->invscale_w = 1.0;
-    tilingDatafromBin->invscale_h = 1.0;
-    tilingDatafromBin->support_w = 2;
-    tilingDatafromBin->support_h = 2;
-    tilingDatafromBin->max_interp_size_w = 5;
-    tilingDatafromBin->max_interp_size_h = 5;
-    tilingDatafromBin->radio_matrix_size = 2208;
-    tilingDatafromBin->radio_matrix_size_h = 2208;
+    tilingDatafromBin->scale_w = 4.0;
+    tilingDatafromBin->scale_h = 4.0;
+    tilingDatafromBin->slide_size = 64;
+    tilingDatafromBin->invscale_w = 0.25;
+    tilingDatafromBin->invscale_h = 0.25;
+    tilingDatafromBin->support_w = 0;
+    tilingDatafromBin->support_h = 0;
+    tilingDatafromBin->max_interp_size_w = 0;
+    tilingDatafromBin->max_interp_size_h = 0;
+    tilingDatafromBin->radio_matrix_size = 1024;
+    tilingDatafromBin->radio_matrix_size_h = 1024;
     tilingDatafromBin->need_core_num_w = 1;
     tilingDatafromBin->need_core_num_h = 1;
     tilingDatafromBin->intermediate_matrix_size = 256;
@@ -92,14 +92,13 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->tailSlideStartList_w[0] = 0;
     tilingDatafromBin->tailSlideEndList_w[0] = 4;
     tilingDatafromBin->tailRowStartList_w[0] = 0;
-    // tilingDatafromBin->tailRowEndList_w[0] = 4;
     tilingDatafromBin->tailRowEndList_w[0] = 16;
     tilingDatafromBin->tailSlideStartList_h[0] = 0;
     tilingDatafromBin->tailSlideEndList_h[0] = 4;
     tilingDatafromBin->tailRowStartList_h[0] = 0;
-    tilingDatafromBin->tailRowEndList_h[0] = 0;
+    tilingDatafromBin->tailRowEndList_h[0] = 1;
     tilingDatafromBin->tailBatchStartListH[0] = 0;
-    tilingDatafromBin->tailBatchEndListH[0] = 0;
+    tilingDatafromBin->tailBatchEndListH[0] = 1;
 
     tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
     tilingDatafromBin->matmulTiling_w.M = 16;
@@ -107,11 +106,11 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_w.Ka = 16;
     tilingDatafromBin->matmulTiling_w.Kb = 16;
     tilingDatafromBin->matmulTiling_w.singleCoreM = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreN = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreK = 170;
+    tilingDatafromBin->matmulTiling_w.singleCoreN = 64;
+    tilingDatafromBin->matmulTiling_w.singleCoreK = 16;
     tilingDatafromBin->matmulTiling_w.baseM = 16;
-    tilingDatafromBin->matmulTiling_w.baseN = 16;
-    tilingDatafromBin->matmulTiling_w.baseK = 176;
+    tilingDatafromBin->matmulTiling_w.baseN = 64;
+    tilingDatafromBin->matmulTiling_w.baseK = 16;
     tilingDatafromBin->matmulTiling_w.depthA1 = 1;
     tilingDatafromBin->matmulTiling_w.depthB1 = 1;
     tilingDatafromBin->matmulTiling_w.stepM = 1;
@@ -122,8 +121,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_w.transLength = 0;
     tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_w.shareMode = 0;
-    tilingDatafromBin->matmulTiling_w.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_w.shareL0CSize = 1024;
+    tilingDatafromBin->matmulTiling_w.shareL1Size = 5120;
+    tilingDatafromBin->matmulTiling_w.shareL0CSize = 4096;
     tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_w.batchM = 1;
     tilingDatafromBin->matmulTiling_w.batchN = 1;
@@ -135,12 +134,12 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_h.N = 4;
     tilingDatafromBin->matmulTiling_h.Ka = 16;
     tilingDatafromBin->matmulTiling_h.Kb = 16;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 64;
     tilingDatafromBin->matmulTiling_h.singleCoreN = 4;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 170;
-    tilingDatafromBin->matmulTiling_h.baseM = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 16;
+    tilingDatafromBin->matmulTiling_h.baseM = 64;
     tilingDatafromBin->matmulTiling_h.baseN = 16;
-    tilingDatafromBin->matmulTiling_h.baseK = 176;
+    tilingDatafromBin->matmulTiling_h.baseK = 16;
     tilingDatafromBin->matmulTiling_h.depthA1 = 1;
     tilingDatafromBin->matmulTiling_h.depthB1 = 1;
     tilingDatafromBin->matmulTiling_h.stepM = 1;
@@ -151,8 +150,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_h.transLength = 0;
     tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 1024;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 5120;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 4096;
     tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_h.batchM = 1;
     tilingDatafromBin->matmulTiling_h.batchN = 1;
@@ -160,7 +159,7 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
-
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_nearest_exact2d_grad, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact2d_grad_data/float32_output_nearest_exact2d_grad.bin";
     WriteFile(fileName, y, inputByteSize);
@@ -201,17 +200,17 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
         reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
 
     tilingDatafromBin->dataType = 1;
-    tilingDatafromBin->scale_w = 4;
-    tilingDatafromBin->scale_h = 4;
-    tilingDatafromBin->slide_size = 16;
-    tilingDatafromBin->invscale_w = 1.0;
-    tilingDatafromBin->invscale_h = 1.0;
-    tilingDatafromBin->support_w = 2;
-    tilingDatafromBin->support_h = 2;
-    tilingDatafromBin->max_interp_size_w = 5;
-    tilingDatafromBin->max_interp_size_h = 5;
-    tilingDatafromBin->radio_matrix_size = 2208;
-    tilingDatafromBin->radio_matrix_size_h = 2208;
+        tilingDatafromBin->scale_w = 4.0;
+    tilingDatafromBin->scale_h = 4.0;
+    tilingDatafromBin->slide_size = 64;
+    tilingDatafromBin->invscale_w = 0.25;
+    tilingDatafromBin->invscale_h = 0.25;
+    tilingDatafromBin->support_w = 0;
+    tilingDatafromBin->support_h = 0;
+    tilingDatafromBin->max_interp_size_w = 0;
+    tilingDatafromBin->max_interp_size_h = 0;
+    tilingDatafromBin->radio_matrix_size = 1024;
+    tilingDatafromBin->radio_matrix_size_h = 1024;
     tilingDatafromBin->need_core_num_w = 1;
     tilingDatafromBin->need_core_num_h = 1;
     tilingDatafromBin->intermediate_matrix_size = 256;
@@ -227,14 +226,13 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     tilingDatafromBin->tailSlideStartList_w[0] = 0;
     tilingDatafromBin->tailSlideEndList_w[0] = 4;
     tilingDatafromBin->tailRowStartList_w[0] = 0;
-    // tilingDatafromBin->tailRowEndList_w[0] = 4;
     tilingDatafromBin->tailRowEndList_w[0] = 16;
     tilingDatafromBin->tailSlideStartList_h[0] = 0;
     tilingDatafromBin->tailSlideEndList_h[0] = 4;
     tilingDatafromBin->tailRowStartList_h[0] = 0;
-    tilingDatafromBin->tailRowEndList_h[0] = 0;
+    tilingDatafromBin->tailRowEndList_h[0] = 1;
     tilingDatafromBin->tailBatchStartListH[0] = 0;
-    tilingDatafromBin->tailBatchEndListH[0] = 0;
+    tilingDatafromBin->tailBatchEndListH[0] = 1;
 
     tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
     tilingDatafromBin->matmulTiling_w.M = 16;
@@ -242,11 +240,11 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     tilingDatafromBin->matmulTiling_w.Ka = 16;
     tilingDatafromBin->matmulTiling_w.Kb = 16;
     tilingDatafromBin->matmulTiling_w.singleCoreM = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreN = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreK = 170;
+    tilingDatafromBin->matmulTiling_w.singleCoreN = 64;
+    tilingDatafromBin->matmulTiling_w.singleCoreK = 16;
     tilingDatafromBin->matmulTiling_w.baseM = 16;
-    tilingDatafromBin->matmulTiling_w.baseN = 16;
-    tilingDatafromBin->matmulTiling_w.baseK = 176;
+    tilingDatafromBin->matmulTiling_w.baseN = 64;
+    tilingDatafromBin->matmulTiling_w.baseK = 16;
     tilingDatafromBin->matmulTiling_w.depthA1 = 1;
     tilingDatafromBin->matmulTiling_w.depthB1 = 1;
     tilingDatafromBin->matmulTiling_w.stepM = 1;
@@ -257,8 +255,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     tilingDatafromBin->matmulTiling_w.transLength = 0;
     tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_w.shareMode = 0;
-    tilingDatafromBin->matmulTiling_w.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_w.shareL0CSize = 1024;
+    tilingDatafromBin->matmulTiling_w.shareL1Size = 5120;
+    tilingDatafromBin->matmulTiling_w.shareL0CSize = 4096;
     tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_w.batchM = 1;
     tilingDatafromBin->matmulTiling_w.batchN = 1;
@@ -270,12 +268,12 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     tilingDatafromBin->matmulTiling_h.N = 4;
     tilingDatafromBin->matmulTiling_h.Ka = 16;
     tilingDatafromBin->matmulTiling_h.Kb = 16;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 64;
     tilingDatafromBin->matmulTiling_h.singleCoreN = 4;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 170;
-    tilingDatafromBin->matmulTiling_h.baseM = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 16;
+    tilingDatafromBin->matmulTiling_h.baseM = 64;
     tilingDatafromBin->matmulTiling_h.baseN = 16;
-    tilingDatafromBin->matmulTiling_h.baseK = 176;
+    tilingDatafromBin->matmulTiling_h.baseK = 16;
     tilingDatafromBin->matmulTiling_h.depthA1 = 1;
     tilingDatafromBin->matmulTiling_h.depthB1 = 1;
     tilingDatafromBin->matmulTiling_h.stepM = 1;
@@ -286,8 +284,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     tilingDatafromBin->matmulTiling_h.transLength = 0;
     tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 1024;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 5120;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 4096;
     tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_h.batchM = 1;
     tilingDatafromBin->matmulTiling_h.batchN = 1;
@@ -295,7 +293,7 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
-
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_nearest_exact2d_grad, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact2d_grad_data/float16_output_nearest_exact2d_grad.bin";
     WriteFile(fileName, y, inputByteSize);
@@ -336,17 +334,17 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
         reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
 
     tilingDatafromBin->dataType = 3;
-    tilingDatafromBin->scale_w = 4;
-    tilingDatafromBin->scale_h = 4;
-    tilingDatafromBin->slide_size = 16;
-    tilingDatafromBin->invscale_w = 1.0;
-    tilingDatafromBin->invscale_h = 1.0;
-    tilingDatafromBin->support_w = 2;
-    tilingDatafromBin->support_h = 2;
-    tilingDatafromBin->max_interp_size_w = 5;
-    tilingDatafromBin->max_interp_size_h = 5;
-    tilingDatafromBin->radio_matrix_size = 2208;
-    tilingDatafromBin->radio_matrix_size_h = 2208;
+        tilingDatafromBin->scale_w = 4.0;
+    tilingDatafromBin->scale_h = 4.0;
+    tilingDatafromBin->slide_size = 64;
+    tilingDatafromBin->invscale_w = 0.25;
+    tilingDatafromBin->invscale_h = 0.25;
+    tilingDatafromBin->support_w = 0;
+    tilingDatafromBin->support_h = 0;
+    tilingDatafromBin->max_interp_size_w = 0;
+    tilingDatafromBin->max_interp_size_h = 0;
+    tilingDatafromBin->radio_matrix_size = 1024;
+    tilingDatafromBin->radio_matrix_size_h = 1024;
     tilingDatafromBin->need_core_num_w = 1;
     tilingDatafromBin->need_core_num_h = 1;
     tilingDatafromBin->intermediate_matrix_size = 256;
@@ -362,14 +360,13 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     tilingDatafromBin->tailSlideStartList_w[0] = 0;
     tilingDatafromBin->tailSlideEndList_w[0] = 4;
     tilingDatafromBin->tailRowStartList_w[0] = 0;
-    // tilingDatafromBin->tailRowEndList_w[0] = 4;
     tilingDatafromBin->tailRowEndList_w[0] = 16;
     tilingDatafromBin->tailSlideStartList_h[0] = 0;
     tilingDatafromBin->tailSlideEndList_h[0] = 4;
     tilingDatafromBin->tailRowStartList_h[0] = 0;
-    tilingDatafromBin->tailRowEndList_h[0] = 0;
+    tilingDatafromBin->tailRowEndList_h[0] = 1;
     tilingDatafromBin->tailBatchStartListH[0] = 0;
-    tilingDatafromBin->tailBatchEndListH[0] = 0;
+    tilingDatafromBin->tailBatchEndListH[0] = 1;
 
     tilingDatafromBin->matmulTiling_w.usedCoreNum = 1;
     tilingDatafromBin->matmulTiling_w.M = 16;
@@ -377,11 +374,11 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     tilingDatafromBin->matmulTiling_w.Ka = 16;
     tilingDatafromBin->matmulTiling_w.Kb = 16;
     tilingDatafromBin->matmulTiling_w.singleCoreM = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreN = 16;
-    tilingDatafromBin->matmulTiling_w.singleCoreK = 170;
+    tilingDatafromBin->matmulTiling_w.singleCoreN = 64;
+    tilingDatafromBin->matmulTiling_w.singleCoreK = 16;
     tilingDatafromBin->matmulTiling_w.baseM = 16;
-    tilingDatafromBin->matmulTiling_w.baseN = 16;
-    tilingDatafromBin->matmulTiling_w.baseK = 176;
+    tilingDatafromBin->matmulTiling_w.baseN = 64;
+    tilingDatafromBin->matmulTiling_w.baseK = 16;
     tilingDatafromBin->matmulTiling_w.depthA1 = 1;
     tilingDatafromBin->matmulTiling_w.depthB1 = 1;
     tilingDatafromBin->matmulTiling_w.stepM = 1;
@@ -392,8 +389,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     tilingDatafromBin->matmulTiling_w.transLength = 0;
     tilingDatafromBin->matmulTiling_w.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_w.shareMode = 0;
-    tilingDatafromBin->matmulTiling_w.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_w.shareL0CSize = 1024;
+    tilingDatafromBin->matmulTiling_w.shareL1Size = 5120;
+    tilingDatafromBin->matmulTiling_w.shareL0CSize = 4096;
     tilingDatafromBin->matmulTiling_w.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_w.batchM = 1;
     tilingDatafromBin->matmulTiling_w.batchN = 1;
@@ -405,12 +402,12 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     tilingDatafromBin->matmulTiling_h.N = 4;
     tilingDatafromBin->matmulTiling_h.Ka = 16;
     tilingDatafromBin->matmulTiling_h.Kb = 16;
-    tilingDatafromBin->matmulTiling_h.singleCoreM = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreM = 64;
     tilingDatafromBin->matmulTiling_h.singleCoreN = 4;
-    tilingDatafromBin->matmulTiling_h.singleCoreK = 170;
-    tilingDatafromBin->matmulTiling_h.baseM = 16;
+    tilingDatafromBin->matmulTiling_h.singleCoreK = 16;
+    tilingDatafromBin->matmulTiling_h.baseM = 64;
     tilingDatafromBin->matmulTiling_h.baseN = 16;
-    tilingDatafromBin->matmulTiling_h.baseK = 176;
+    tilingDatafromBin->matmulTiling_h.baseK = 16;
     tilingDatafromBin->matmulTiling_h.depthA1 = 1;
     tilingDatafromBin->matmulTiling_h.depthB1 = 1;
     tilingDatafromBin->matmulTiling_h.stepM = 1;
@@ -421,8 +418,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     tilingDatafromBin->matmulTiling_h.transLength = 0;
     tilingDatafromBin->matmulTiling_h.iterateOrder = 0;
     tilingDatafromBin->matmulTiling_h.shareMode = 0;
-    tilingDatafromBin->matmulTiling_h.shareL1Size = 22528;
-    tilingDatafromBin->matmulTiling_h.shareL0CSize = 1024;
+    tilingDatafromBin->matmulTiling_h.shareL1Size = 5120;
+    tilingDatafromBin->matmulTiling_h.shareL0CSize = 4096;
     tilingDatafromBin->matmulTiling_h.shareUbSize = 0;
     tilingDatafromBin->matmulTiling_h.batchM = 1;
     tilingDatafromBin->matmulTiling_h.batchN = 1;
@@ -430,7 +427,7 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     tilingDatafromBin->matmulTiling_h.singleBatchN = 1;
 
     ICPU_SET_TILING_KEY(1);
-
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(upsample_nearest_exact2d_grad, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact2d_grad_data/bfloat16_output_nearest_exact2d_grad.bin";
     WriteFile(fileName, y, inputByteSize);

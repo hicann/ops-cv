@@ -29,7 +29,7 @@ public:
     constexpr static int64_t BEST_PERFORMANCE_SIZE_3 = 1536;
     constexpr static int64_t BEST_PERFORMANCE_SIZE_4 = 2048;
 
-    constexpr static float BEST_PERFORMANCE_SCALE_1 = 100.0f;
+    constexpr static float BEST_PERFORMANCE_SCALE_1 = 80.0f;
     constexpr static float BEST_PERFORMANCE_SCALE_2 = 24.0f;
     constexpr static float BEST_PERFORMANCE_SCALE_3 = 10.0f;
     constexpr static float BEST_PERFORMANCE_SCALE_4 = 6.0f;

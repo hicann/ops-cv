@@ -77,8 +77,7 @@ private:
         int64_t index, int64_t length, int8_t direction, LocalTensor<float> srcIndexTensor);
     __aicore__ inline void CalculateGatherOffsetW();
     __aicore__ inline void ComputeView1DSmallW();
-    __aicore__ inline void DoComputeView1DSmallW(
-        int64_t row, int64_t batches, int64_t repeat, int64_t batchesEachRepeat);
+    __aicore__ inline void DoComputeView1DSmallW(int64_t row, int64_t batches, int64_t repeat, int64_t batchesEachRepeat);
     __aicore__ inline void DoComputeGatherOffset(int64_t batchesEachRepeat, int64_t numPerRep, int64_t repeatTimes);
 
 private:
@@ -131,7 +130,7 @@ private:
     int64_t srcDataCount = 0;
     int64_t srcDataLength = 0;
     uint32_t srcBlockLen = 0;
-    uint32_t srcStride = 0;
+    int64_t srcStride = 0;
 
     int64_t indexH = 0;
     int64_t srcIndexH = 0;
@@ -295,8 +294,8 @@ __aicore__ inline void UpsampleNearest3dND<T>::DoComputeView1DSmallW(
     outQueue.EnQue(dstLocal);
     inQueue.FreeTensor(srcLocal);
     int64_t outOffset = blockIdx * tailAvergingRow * ow + row * batches * ow;
-    uint32_t srcStride = (numPerRep - batchesEachRepeat * ow) / (BYTE_BLOCK / sizeof(T));
-    DataCopyExtParams copyOutParams{static_cast<uint16_t>(repeat), static_cast<uint32_t>(batchesEachRepeat * ow * sizeof(T)), srcStride, 0, 0};
+    uint32_t srcStrides = (numPerRep - batchesEachRepeat * ow) / (BYTE_BLOCK / sizeof(T));
+    DataCopyExtParams copyOutParams{static_cast<uint16_t>(repeat), static_cast<uint32_t>(batchesEachRepeat * ow * sizeof(T)), srcStrides, 0, 0};
     CopyOut(outOffset, copyOutParams);
 }
 
@@ -316,17 +315,13 @@ __aicore__ inline void UpsampleNearest3dND<T>::GatherData(int64_t slideIndex, in
             srcStartW = static_cast<int64_t>(srcIndexTensorW.GetValue(j));
             j++;
         }
-        int64_t inputOffsetsInBatch =
-            srcIndexD * inputShapes[H_INDEX] * inputShapes[W_INDEX] + srcIndexH * inputShapes[W_INDEX] + srcStartW;
-        int64_t outputOffsetInBatch =
-            indexD * outputShapes[H_INDEX] * outputShapes[W_INDEX] + indexH * outputShapes[W_INDEX] + startW;
+        int64_t inputOffsetsInBatch = srcIndexD * inputShapes[H_INDEX] * inputShapes[W_INDEX] + srcIndexH * inputShapes[W_INDEX] + srcStartW;
+        int64_t outputOffsetInBatch = indexD * outputShapes[H_INDEX] * outputShapes[W_INDEX] + indexH * outputShapes[W_INDEX] + startW;
         for (int64_t batchIndex = rowStart; batchIndex < rowEnd; batchIndex += batchNum) {
-            int64_t inputOffset =
-                batchIndex * inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] + inputOffsetsInBatch;
-            int64_t outputOffset = batchIndex * outputShapes[D_INDEX] * outputShapes[H_INDEX] * outputShapes[W_INDEX] +
-                                   outputOffsetInBatch;
+            int64_t inputOffset = batchIndex * inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] + inputOffsetsInBatch;
+            int64_t outputOffset = batchIndex * outputShapes[D_INDEX] * outputShapes[H_INDEX] * outputShapes[W_INDEX] + outputOffsetInBatch;
             uint16_t blockCount = Min(batchNum, rowEnd - batchIndex);
-            DataCopyExtParams copyInParams{blockCount, srcBlockLen, srcStride, 0, 0};
+            DataCopyExtParams copyInParams{blockCount, srcBlockLen, static_cast<uint32_t>(srcStride), 0, 0};
             CopyIn(inputOffset, copyInParams);
             ComputeAndCopyOut(dataCount, srcDataLength, blockCount, outputOffset);
         }
@@ -403,6 +398,10 @@ __aicore__ inline void UpsampleNearest3dND<T>::GetRangeW(int64_t slideIndex)
 
         srcBlockLen = srcDataCount * sizeof(T);
         srcStride = (inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] - srcDataCount) * sizeof(T);
+        if (srcStride > UINT32_MAX) { //若每块数据之间的间隔超过了srcStride参数的类型的最大值，则每次只处理一块数据
+            batchNum = 1;
+            srcStride = 0;
+        }
     }
 }
 

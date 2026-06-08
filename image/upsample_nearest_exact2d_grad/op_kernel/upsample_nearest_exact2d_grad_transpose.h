@@ -31,8 +31,8 @@ struct IdxInfo {
     int64_t srcEndW;
     int64_t batch;
     uint16_t batchNum;
-    uint16_t srcGap;
-    uint16_t dstGap;
+    int64_t srcGap;
+    int64_t dstGap;
 };
 
 constexpr int32_t BUFFERS_NUM = 1;
@@ -183,8 +183,8 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
         int64_t srcEndW = Ceil((wIdx + 1) * scaleW);
         srcEndW = Min(srcEndW, iw);
         int64_t batch = startBatches;
-        uint16_t srcGap = (ih * iw - 1) * blockLen;
-        uint16_t dstGap = (oh * ow - 1) * blockLen;
+        int64_t srcGap = (ih * iw - 1) * blockLen;
+        int64_t dstGap = (oh * ow - 1) * blockLen;
         while (batch < endBatches) {
             uint16_t batchNum = slideSize / C0;
             batchNum = Min(static_cast<int64_t>(batchNum), endBatches - batch);
@@ -213,7 +213,7 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
                 }
             } else {
                 int64_t outOffset = (batch * oh * ow + hIdx * ow + wIdx) * C0;
-                DataCopy(outTensorsGM[outOffset], dstLocal, {batchNum, blockLen, 0, dstGap});
+                DataCopy(outTensorsGM[outOffset], dstLocal, {batchNum, blockLen, 0, static_cast<uint16_t>(dstGap)});
             }
             event_t eventID2 = static_cast<event_t>(pipe->FetchEventID(HardEvent::MTE3_V));
             SetFlag<HardEvent::MTE3_V>(eventID2);
@@ -249,8 +249,8 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
             continue;
         }
         int64_t batch = startBatches;
-        uint16_t srcGap = (ih * iw - srcWLen) * blockLen;
-        uint16_t dstGap = (oh * ow - 1) * blockLen;
+        int64_t srcGap = (ih * iw - srcWLen) * blockLen;
+        int64_t dstGap = (oh * ow - 1) * blockLen;
         while (batch < endBatches) {
             uint16_t batchNum = slideSize / C0 / srcWLen;
             batchNum = Min(static_cast<int64_t>(batchNum), endBatches - batch);
@@ -301,7 +301,9 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
                 }
             } else {
                 int64_t inOffset = (idxInfo.batch * ih * iw + h * iw + w) * C0;
-                DataCopy(srcLocal, inTensorsGM[inOffset], {idxInfo.batchNum, blockLen, idxInfo.srcGap, 0});
+                DataCopy(
+                    srcLocal, inTensorsGM[inOffset], 
+                    {idxInfo.batchNum, blockLen, static_cast<uint16_t>(idxInfo.srcGap), 0});
             }
             PipeBarrier<PIPE_MTE2>();
             if constexpr (std::is_same<T, float>::value) {
@@ -348,7 +350,8 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
             int64_t inOffset = (idxInfo.batch * ih * iw + h * iw + idxInfo.srcStartW) * C0;
             DataCopy(
                 srcLocal, inTensorsGM[inOffset],
-                {idxInfo.batchNum, static_cast<uint16_t>(blockLen * srcWLen), idxInfo.srcGap, 0});
+                {idxInfo.batchNum, static_cast<uint16_t>(blockLen * srcWLen),
+                 static_cast<uint16_t>(idxInfo.srcGap), 0});
         }
         PipeBarrier<PIPE_MTE2>();
         if constexpr (std::is_same<T, float>::value) {
@@ -392,7 +395,8 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
                 int64_t outOffset = baseOutOffset + m * resizeW * C0;
                 DataCopy(
                     outTensorsGM[outOffset], dstLocal[m * C0],
-                    {idxInfo.batchNum, blockLen, static_cast<uint16_t>((srcWLen - 1) * blockLen), idxInfo.dstGap});
+                    {idxInfo.batchNum, blockLen, static_cast<uint16_t>((srcWLen - 1) * blockLen),
+                     static_cast<uint16_t>(idxInfo.dstGap)});
             }
         }
     } else {
@@ -412,7 +416,8 @@ __aicore__ inline void UpSampleNearestExact2dGradTranspose<T, BigToSmall, WAlign
                 int64_t outOffset = (idxInfo.batch * oh * ow + idxInfo.hIdx * ow + idxInfo.wIdx + m) * C0;
                 DataCopy(
                     outTensorsGM[outOffset], dstLocal[(srcIndexLocal.GetValue(m) - idxInfo.srcStartW) * C0],
-                    {idxInfo.batchNum, blockLen, static_cast<uint16_t>((srcWLen - 1) * blockLen), idxInfo.dstGap});
+                    {idxInfo.batchNum, blockLen, static_cast<uint16_t>((srcWLen - 1) * blockLen),
+                     static_cast<uint16_t>(idxInfo.dstGap)});
             }
         }
     }
