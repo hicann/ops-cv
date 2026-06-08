@@ -332,6 +332,8 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
 
     const aclTensor *out3d = nullptr;
     out3d = View4dAs3d(resizeNearestOut, uniqueExecutor.get());
+    CHECK_RET(out3d != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
     auto viewCopyResult = l0op::ViewCopy(out3d, out, uniqueExecutor.get());
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
