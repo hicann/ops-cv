@@ -555,6 +555,11 @@ static uint64_t GetWorkSpaceSize(
 
 static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
 {
+    auto templateStatus = Ops::Cv::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context);
+    if (templateStatus == ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_SUCCESS;
+    }
+
     int batchIdx = OUTPUT_DEPTH_IDX;
     int channelIdx = OUTPUT_HEIGHT_IDX;
     int weightIdx = SCALE_W_IDX;

@@ -37,6 +37,8 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
 static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
+static const std::initializer_list<op::DataType> A5_DTYPE_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 static constexpr size_t EXPECT_SIZE = 3;
 static constexpr float MAX_SUPPORT_SCALE = 50.0;
 
@@ -53,6 +55,8 @@ static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2002 || curArch == NpuArch::DAV_3002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, ASCEND310P_DTYPE_SUPPORT_LIST, return false);
+    } else if (curArch == NpuArch::DAV_3510) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, A5_DTYPE_SUPPORT_LIST, return false);
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     }
@@ -167,35 +171,26 @@ static float AsComputeScale(bool alignCorners, int64_t inputSize, int64_t output
     }
 }
 
-static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
+static bool CheckTensorShapeUplimit(const aclTensor* tensor, const char* name)
 {
-    if (IsRegBase()) {
-        return true;
-    }
-    int64_t inN = self->GetViewShape().GetDim(DIM_ZERO);
-    int64_t inC = self->GetViewShape().GetDim(DIM_ONE);
-    int64_t inD = self->GetViewShape().GetDim(DIM_TWO);
-    int64_t inH = self->GetViewShape().GetDim(DIM_THREE);
-    int64_t inW = self->GetViewShape().GetDim(DIM_FOUR);
-    int64_t outN = out->GetViewShape().GetDim(DIM_ZERO);
-    int64_t outC = out->GetViewShape().GetDim(DIM_ONE);
-    int64_t outD = out->GetViewShape().GetDim(DIM_TWO);
-    int64_t outH = out->GetViewShape().GetDim(DIM_THREE);
-    int64_t outW = out->GetViewShape().GetDim(DIM_THREE);
-
+    int64_t dim0 = tensor->GetViewShape().GetDim(DIM_ZERO);
+    int64_t dim1 = tensor->GetViewShape().GetDim(DIM_ONE);
+    int64_t dim2 = tensor->GetViewShape().GetDim(DIM_TWO);
+    int64_t dim3 = tensor->GetViewShape().GetDim(DIM_THREE);
+    int64_t dim4 = tensor->GetViewShape().GetDim(DIM_FOUR);
     OP_CHECK(
-        inN <= INT32_MAX && inC <= INT32_MAX && inD <= INT32_MAX && inH <= INT32_MAX && inW <= INT32_MAX,
+        dim0 <= INT32_MAX && dim1 <= INT32_MAX && dim2 <= INT32_MAX && dim3 <= INT32_MAX && dim4 <= INT32_MAX,
         OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "Self sizes should not be greater than %d, bug got self(%ld, %ld, %ld, %ld, %ld)",
-            INT32_MAX, inN, inC, inD, inH, inW),
-        return false);
-    OP_CHECK(
-        outN <= INT32_MAX && outC <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "Out sizes should not be greater than %d, bug got out(%ld, %ld, %ld, %ld, %ld)",
-            INT32_MAX, outN, outC, outD, outH, outW),
+            ACLNN_ERR_PARAM_INVALID,
+            "%s sizes should not be greater than %d, but got %s(%ld, %ld, %ld, %ld, %ld)",
+            name, INT32_MAX, name, dim0, dim1, dim2, dim3, dim4),
         return false);
     return true;
+}
+
+static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
+{
+    return CheckTensorShapeUplimit(self, "Self") && CheckTensorShapeUplimit(out, "Out");
 }
 
 static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
