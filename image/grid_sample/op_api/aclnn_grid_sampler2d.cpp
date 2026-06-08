@@ -81,7 +81,6 @@ static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(out, input->GetDataType(), return false);
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-
     // 检查input的数据类型是否在gridsampler2d算子的支持列表内
     if (curArch == NpuArch::DAV_2002 && input->GetDataType() == op::DataType::DT_BF16) {
         OP_LOGD("input dtype does not support bf16 on this chip.");
@@ -89,7 +88,6 @@ static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const
     } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST, return false);
     }
-    
     return true;
 }
 

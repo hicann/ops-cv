@@ -53,9 +53,9 @@ ge::graphStatus GridSampleArch35Tiling::DoOpTiling()
     inputSize = inN * inC * inH * inW;
     gridSize = inN * outH * outW;
     if (dimension == 0) {
-        gridSize = gridSize * 2;
+        gridSize = gridSize * DIM_2;
     } else {
-        gridSize = gridSize * outD * 3;
+        gridSize = gridSize * outD * DIM_3;
         inputSize = inputSize * inD;
     }
 
