@@ -1,0 +1,151 @@
+{
+  "op_type": "CIoU",
+  "op_list": [
+    {
+      "bin_filename": "CIoU_4707a5efb9e57f6cb8c6b1e5d7e76a03",
+      "inputs": [
+        {
+          "name": "bboxes",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "gtboxes",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "overlap",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "atan_sub",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "trans",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "is_cross",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "mode",
+          "dtype": "str",
+          "value": null
+        },
+        {
+          "name": "atan_sub_flag",
+          "dtype": "bool",
+          "value": null
+        }
+      ]
+    },
+    {
+      "bin_filename": "CIoU_f2db64d71aba80e57d3efe770f0f80a3",
+      "inputs": [
+        {
+          "name": "bboxes",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "gtboxes",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "overlap",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "atan_sub",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "trans",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "is_cross",
+          "dtype": "bool",
+          "value": null
+        },
+        {
+          "name": "mode",
+          "dtype": "str",
+          "value": null
+        },
+        {
+          "name": "atan_sub_flag",
+          "dtype": "bool",
+          "value": null
+        }
+      ]
+    }
+  ]
+}
