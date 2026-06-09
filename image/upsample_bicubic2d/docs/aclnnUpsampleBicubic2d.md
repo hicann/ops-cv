@@ -412,15 +412,19 @@ int main()
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("Init failed. ERROR: %d\n", ret); return ret);
 
     // 2. 构造输入与输出，需要根据API的接口自定义构造
-    std::vector<int64_t> selfShape = {1, 1, 3, 3};
-    std::vector<int64_t> outShape = {1, 1, 5, 5};
+    constexpr int64_t INPUT_H = 3;
+    constexpr int64_t INPUT_W = 3;
+    constexpr int64_t OUTPUT_H = 5;
+    constexpr int64_t OUTPUT_W = 5;
+    std::vector<int64_t> selfShape = {1, 1, INPUT_H, INPUT_W};
+    std::vector<int64_t> outShape = {1, 1, OUTPUT_H, OUTPUT_W};
     void *selfDeviceAddr = nullptr;
     void *outDeviceAddr = nullptr;
     aclTensor *self = nullptr;
     aclTensor *out = nullptr;
     std::vector<float> selfHostData = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::vector<float> outHostData(25, 0);
-    std::vector<int64_t> outputSizeData = {5, 5};
+    std::vector<float> outHostData(OUTPUT_H * OUTPUT_W, 0);
+    std::vector<int64_t> outputSizeData = {OUTPUT_H, OUTPUT_W};
     bool alignCorners = false;
     double scalesH = 0.0;
     double scalesW = 0.0;
