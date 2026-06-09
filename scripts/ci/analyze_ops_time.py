@@ -30,6 +30,10 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 MAIN_FUNC_RE = re.compile(r'--main_func=([^&\s]+)')
 EXE_TIME_RE = re.compile(r'exe_time:\s*(\d+)\s*s')
 
+if not os.path.exists(workdir):
+    logging.info(f"Workdir not exist: {workdir}")
+    exit(0)
+
 # 遍历build_logs
 log_dirs = []
 for child in Path(workdir).iterdir():
