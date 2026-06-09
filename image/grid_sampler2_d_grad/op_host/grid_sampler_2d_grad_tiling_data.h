@@ -70,6 +70,7 @@ struct InputParamsInfo {
     int padding = 0;
     int alignCorners = 0;
     bool regBase = false;
+    bool regBaseSIMD = false;
 };
 } // namespace optiling
 #endif // __GRID_SAMPLER_2D_GRAD_TILINGDATA_H__

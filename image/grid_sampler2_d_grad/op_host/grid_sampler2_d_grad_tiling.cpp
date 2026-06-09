@@ -21,17 +21,9 @@
 
 namespace optiling {
 
-constexpr uint32_t BYTE_BLOCK = 32;
-constexpr uint32_t FP32_BLOCK_NUM = 8;
-constexpr uint32_t FP16_BLOCK_NUM = 16;
 constexpr size_t INTERPOLATION_MODE_INDEX = 0;
 constexpr size_t PADDING_MODE_INDEX = 1;
 constexpr size_t ALIGN_CORNERS_INDEX = 2;
-constexpr int32_t GRAD_INPUT_INDEX = 0;
-constexpr int32_t X_INPUT_INDEX = 1;
-constexpr int32_t GRID_INPUT_INDEX = 2;
-constexpr int32_t DTYPE_SIZE_32 = 4;
-constexpr int32_t DTYPE_SIZE_16 = 2;
 constexpr size_t CHECK_DIM_NUM = 4;
 constexpr int BILINEAR = 0;
 constexpr int NEAREST = 1;
@@ -42,7 +34,17 @@ constexpr int REFLECTION = 2;
 constexpr int TILINGKEY_2 = 2;
 constexpr int BILINEAR_DIVIDE_UB_NUM = 57;
 constexpr int NEAREST_DIVIDE_UB_NUM = 27;
+constexpr int BICUBIC_DIVIDE_UB_NUM = 62;
 constexpr int CAST_DIVIDE_UB_NUM = 3;
+constexpr int32_t GRAD_INPUT_INDEX = 0;
+constexpr int32_t X_INPUT_INDEX = 1;
+constexpr int32_t GRID_INPUT_INDEX = 2;
+constexpr int32_t DTYPE_SIZE_32 = 4;
+constexpr int32_t DTYPE_SIZE_16 = 2;
+constexpr uint8_t SCHEDULE_MODE = 1;
+constexpr uint32_t BYTE_BLOCK = 32;
+constexpr uint32_t FP32_BLOCK_NUM = 8;
+constexpr uint32_t FP16_BLOCK_NUM = 16;
 constexpr uint32_t FP32_GROUP_SIZE_LT_256 = 32;
 constexpr uint32_t FP32_GROUP_SIZE_GT_256_LT_512 = 16;
 constexpr uint32_t FP32_GROUP_SIZE_GT_512_LT_1024 = 8;
@@ -61,13 +63,16 @@ constexpr uint32_t REGBASE_BFLOAT16_BICUBIC_TILING_KEY = 15;
 constexpr uint32_t REGBASE_FLOAT_BICUBIC_DET_TILING_KEY = 16;
 constexpr uint32_t REGBASE_FLOAT16_BICUBIC_DET_TILING_KEY = 17;
 constexpr uint32_t REGBASE_BFLOAT16_BICUBIC_DET_TILING_KEY = 18;
-constexpr int BICUBIC_DIVIDE_UB_NUM = 62;
+constexpr uint32_t SIMD_FLOAT_BILINEAR_TILING_KEY = 19;
+constexpr uint32_t SIMD_FLOAT_NEAREST_TILING_KEY = 20;
+constexpr uint32_t SIMD_FLOAT_BICUBIC_TILING_KEY = 21;
 constexpr uint32_t CHANNEL_256 = 256;
 constexpr uint32_t CHANNEL_512 = 512;
 constexpr uint32_t CHANNEL_1024 = 1024;
 constexpr uint32_t BUFFER_NUM = 2;
 constexpr uint32_t CONST_SEVENTEEN = 17;
 constexpr uint32_t CONST_TWO = 2;
+constexpr uint32_t DET_UB_NUM = 16;
 constexpr uint32_t DIM_INDEX0 = 0;
 constexpr uint32_t DIM_INDEX1 = 1;
 constexpr uint32_t DIM_INDEX2 = 2;
@@ -75,11 +80,12 @@ constexpr uint32_t DIM_INDEX3 = 3;
 constexpr uint32_t RESERVED_UB = 2U * 1024U;
 constexpr uint32_t RESERVED_UB_CAST = 20U * 1024U;
 constexpr uint32_t ALIGN_256_BYTES = 256;
-constexpr uint8_t SCHEDULE_MODE = 1;
 constexpr uint32_t GRID_LAST_NUM = 2;
 constexpr uint32_t VF_MAX_THREAD_NUM = 1024;
 constexpr uint32_t VF_MAX_THREAD_NUM_DET = 256;
 constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
+constexpr uint32_t REGBASE_MAX_CHANNEL_NUM = 32;
+constexpr uint32_t REGBASE_BIG_CHANNEL_NUM = 128;
 constexpr uint32_t WORKSPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint32_t DETERMINISTIC_BATCH_NORM = 1;
 const string INTERPOLATION_BILINEAR = "bilinear";
@@ -116,6 +122,7 @@ public:
         this->elementsPerBlock = BYTE_BLOCK / dataTypeSize;
         this->isDeterministic = deterministic;
         this->regBase = param.regBase;
+        this->regBaseSIMD = param.regBaseSIMD;
         return;
     }
 
@@ -197,18 +204,19 @@ private:
     uint32_t isDeterministic = 0;
     uint32_t tailBNum = 0;
     bool regBase = false;
+    bool regBaseSIMD = false;
 };
 
 template <typename TilingData, int32_t dataTypeLen>
 void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
 {
-    if (regBase) {
+    if (regBase && !regBaseSIMD) {
         uint64_t mulNCHW = static_cast<uint64_t>(batch) * gridH * gridW * GRID_LAST_NUM;
         uint32_t tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM);
         usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
         pNumPerCore = 0;
         tailPNum = 0;
-        if (isDeterministic == 1){
+        if (isDeterministic == 1) {
             tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM_DET);
             usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
             if (batch > coreNum) {
@@ -220,8 +228,7 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
             pNumPerCore = 1;
         }
         return;
-    }
-    if (isDeterministic == 0) {
+    } else if (isDeterministic == 0) {
         uint64_t mulBHW = static_cast<uint64_t>(batch) * static_cast<uint64_t>(gridH) * static_cast<uint64_t>(gridW);
         if (mulBHW <= this->coreNum) {
             this->usedCoreNum = mulBHW;
@@ -299,7 +306,7 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::SplitUb()
     }
     uint32_t tilingDataSize = CeilAlign(sizeof(TilingData), BYTE_BLOCK);
     uint32_t canUseUbSize = FloorAlign(ubSize - tilingDataSize, BYTE_BLOCK);
-    if (regBase) {
+    if (regBase && !regBaseSIMD) {
         extraUbSize = 0U;
     }
     if (canUseUbSize <= extraUbSize) {
@@ -391,6 +398,8 @@ static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputPara
         OP_LOGD(tilingContext->GetNodeName(), "input dim is not 4, please check input");
         return ge::GRAPH_FAILED;
     }
+    auto input = tilingContext->GetInputTensor(DIM_INDEX0);
+    auto format = input->GetFormat().GetStorageFormat();
     auto compileInfo = reinterpret_cast<const Tiling4GridSampler2DGradCompileInfo*>(tilingContext->GetCompileInfo());
     params.regBase = compileInfo->regBase;
     uint32_t outH = gradShape->GetStorageShape().GetDim(DIM_INDEX1);
@@ -401,7 +410,7 @@ static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputPara
     params.width = xShape->GetStorageShape().GetDim(DIM_INDEX2);
     params.gridH = gridShape->GetStorageShape().GetDim(DIM_INDEX1);
     params.gridW = gridShape->GetStorageShape().GetDim(DIM_INDEX2);
-    if (params.regBase) {
+    if (params.regBase && format != ge::FORMAT_NHWC) {
         outH = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
         outW = gradShape->GetStorageShape().GetDim(DIM_INDEX3);
         params.channel = xShape->GetStorageShape().GetDim(DIM_INDEX1);
@@ -415,7 +424,7 @@ static ge::graphStatus GetNCHWInfo(gert::TilingContext* tilingContext, InputPara
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params)
+static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
 {
     if (GetNCHWInfo(tilingContext, params) != ge::GRAPH_SUCCESS) {
         OP_LOGW(tilingContext->GetNodeName(), "Failed to Parse input params NCHW, please check inputs");
@@ -435,6 +444,12 @@ static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputP
     params.interpolation = INTER_MODE_MAP[interpolationMode];
     params.padding = PADDING_MODE_MAP[paddingMode];
     params.alignCorners = ALIGN_MODE_MAP[alignCorners];
+    uint32_t deterministic = tilingContext->GetDeterministic();
+    if (params.regBase && (params.channel >= REGBASE_MAX_CHANNEL_NUM && params.padding == BORDER ||
+        params.channel >= REGBASE_BIG_CHANNEL_NUM && params.padding == REFLECTION) && dtype == ge::DT_FLOAT &&
+        deterministic == 0) {
+        params.regBaseSIMD = true;
+    }
 
     if (params.padding < ZEROS || params.padding > REFLECTION) {
         OP_LOGW(tilingContext->GetNodeName(), "paddingMode %d is not supported", params.padding);
@@ -444,7 +459,7 @@ static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputP
 }
 
 static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParamsInfo& params, size_t sysWorkspaceSize) {
-    if (params.regBase) {
+    if (params.regBase && !params.regBaseSIMD) {
         uint32_t isDeterministic = tilingContext->GetDeterministic();
         if (isDeterministic == 1) {
             if (params.interpolation == BICUBIC) {
@@ -455,7 +470,7 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
                 params.tilingKey += 6;
             }
             uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
-            return WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * 2 * 16 * params.batch * batchNumPerCore;
+            return WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * CONST_TWO * DET_UB_NUM * params.batch * batchNumPerCore;
         } else {
             return 0;
         }
@@ -467,20 +482,22 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
 static ge::graphStatus GetBicubicTiling(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
 {
     OP_LOGI(tilingContext->GetNodeName(), "strat to set bicubic TilingKey.");
-    if (dtype == ge::DT_FLOAT && params.interpolation == 2) {
-        if (params.regBase) {
+    if (dtype == ge::DT_FLOAT && params.interpolation == BICUBIC) {
+        if (params.regBaseSIMD) {
+            params.tilingKey = SIMD_FLOAT_BICUBIC_TILING_KEY; // mode21: float, bicubic, regBaseSIMD
+        } else if (params.regBase) {
             params.tilingKey = REGBASE_FLOAT_BICUBIC_TILING_KEY; // mode13: float, bicubic, regBase
         } else {
             params.tilingKey = FLOAT_BICUBIC_TILING_KEY; // mode7: float, bicubic
         }
-    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 2) {
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == BICUBIC) {
         if (params.regBase) {
             params.tilingKey = REGBASE_FLOAT16_BICUBIC_TILING_KEY; // mode14: float16, bicubic, regBase
         } else {
             params.tilingKey = FLOAT16_BICUBIC_TILING_KEY; // mode8: float16, bicubic
         }
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_BF16 && params.interpolation == 2) {
+    } else if (dtype == ge::DT_BF16 && params.interpolation == BICUBIC) {
         if (params.regBase) {
             params.tilingKey = REGBASE_BFLOAT16_BICUBIC_TILING_KEY; // mode15: bfloat16, bicubic, regBase
         } else {
@@ -494,7 +511,7 @@ static ge::graphStatus GetBicubicTiling(gert::TilingContext* tilingContext, Inpu
 static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
 {
     OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
-    if (CheckInputInfo(tilingContext, params) != ge::GRAPH_SUCCESS) {
+    if (CheckInputInfo(tilingContext, params, dtype) != ge::GRAPH_SUCCESS) {
         OP_LOGW(tilingContext->GetNodeName(), "Check inputs info failed, please check inputs");
         return ge::GRAPH_FAILED;
     }
@@ -502,20 +519,26 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     size_t xWorkspaceSize = params.batch * params.channel * params.height * params.width * sizeof(float);
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
 
-    if (dtype == ge::DT_FLOAT && params.interpolation == 0) {
+    if (dtype == ge::DT_FLOAT && params.interpolation == BILINEAR) {
         params.tilingKey = FLOAT_BILINEAR_TILING_KEY; // mode1: float, bilinear
-    } else if (dtype == ge::DT_FLOAT && params.interpolation == 1) {
+        if (params.regBaseSIMD) {
+            params.tilingKey = SIMD_FLOAT_BILINEAR_TILING_KEY; // mode19: float, bilinear, regBaseSIMD
+        }
+    } else if (dtype == ge::DT_FLOAT && params.interpolation == NEAREST) {
         params.tilingKey = FLOAT_NEAREST_TILING_KEY; // mode2: float, nearest
-    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 0) {
+        if (params.regBaseSIMD) {
+            params.tilingKey = SIMD_FLOAT_NEAREST_TILING_KEY; // mode20: float, nearest, regBaseSIMD
+        }
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == BILINEAR) {
         params.tilingKey = FLOAT16_BILINEAR_TILING_KEY; // mode1: float16, bilinear
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 1) {
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == NEAREST) {
         params.tilingKey = FLOAT16_NEAREST_TILING_KEY; // mode2: float16, nearest
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_BF16 && params.interpolation == 0) {
+    } else if (dtype == ge::DT_BF16 && params.interpolation == BILINEAR) {
         params.tilingKey = BFLOAT16_BILINEAR_TILING_KEY; // mode1: bfloat16, bilinear
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_BF16 && params.interpolation == 1) {
+    } else if (dtype == ge::DT_BF16 && params.interpolation == NEAREST) {
         params.tilingKey = BFLOAT16_NEAREST_TILING_KEY; // mode2: bfloat16, nearest
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
     }

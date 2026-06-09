@@ -62,8 +62,16 @@ constexpr uint32_t ALIGN_CORNERS_TRUE = 1;
 constexpr uint32_t VF_MAX_THREAD_NUM = 256;
 constexpr uint32_t GRID_LAST_NUM = 3;
 constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
+constexpr uint32_t REGBASE_MAX_CHANNEL_NUM = 128;
 constexpr uint32_t DETERMINISTIC_BATCH_NUM = 1;
 constexpr uint32_t DETERMINISTIC_COMPUTE_NUM = 16;
+constexpr uint32_t FLOAT32_TILING_KEY = 1;
+constexpr uint32_t FLOAT16_TILING_KEY = 2;
+constexpr uint32_t BFLOAT16_TILING_KEY = 3;
+constexpr uint32_t DET_FLOAT32_TILING_KEY = 4;
+constexpr uint32_t DET_FLOAT16_TILING_KEY = 5;
+constexpr uint32_t DET_BFLOAT16_TILING_KEY = 6;
+constexpr uint32_t SIMD_FLOAT32_TILING_KEY = 7;
 
 template <typename TilingData>
 class GridSampler3DGradTiling {
@@ -87,6 +95,7 @@ public:
         this->ubSize = FloorAlign(inputUbSize, BYTE_BLOCK);
         this->isDeterministic = deterministic;
         this->regBase = param.regBase;
+        this->regBaseSIMD = param.regBaseSIMD;
         return;
     }
 
@@ -159,13 +168,14 @@ private:
     uint32_t isDeterministic = 0;
     uint32_t tailBNum = 0;
     bool regBase = false;
+    bool regBaseSIMD = false;
 };
 
 template <typename TilingData>
 void GridSampler3DGradTiling<TilingData>::GetUsedCore()
 {
-    if (regBase) {
-        uint64_t mulNCDHW = static_cast<uint64_t>(batch * gridD * gridH * gridW * GRID_LAST_NUM);
+    if (regBase && !regBaseSIMD) {
+        uint64_t mulNCDHW = static_cast<uint64_t>(batch) * gridD * gridH * gridW * GRID_LAST_NUM;
         uint32_t tmpCoreNum = Ceil(mulNCDHW, VF_MAX_THREAD_NUM);
         usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
         pNumPerCore = 0;
@@ -180,8 +190,7 @@ void GridSampler3DGradTiling<TilingData>::GetUsedCore()
             pNumPerCore = DETERMINISTIC_BATCH_NUM;
         }
         return;
-    }
-    if (isDeterministic == 0) {
+    } else if (isDeterministic == 0) {
         uint64_t mulNDHW = static_cast<uint64_t>(batch * gridD * gridH * gridW);
         if (mulNDHW <= coreNum) {
             usedCoreNum = mulNDHW;
@@ -291,13 +300,20 @@ static ge::graphStatus CheckShapes(
         return ge::GRAPH_FAILED;
     }
 
+    auto input = tilingContext->GetInputTensor(DIM_INDEX0);
+    auto format = input->GetFormat().GetStorageFormat();
+
     uint32_t outD = gradShape->GetStorageShape().GetDim(DIM_INDEX1);
     uint32_t outH = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
     uint32_t outW = gradShape->GetStorageShape().GetDim(DIM_INDEX3);
-    if (params.regBase) {
+    if (params.regBase && format == ge::FORMAT_NCDHW) {
         outD = gradShape->GetStorageShape().GetDim(DIM_INDEX2);
         outH = gradShape->GetStorageShape().GetDim(DIM_INDEX3);
         outW = gradShape->GetStorageShape().GetDim(DIM_INDEX4);
+    }
+    uint32_t deterministic = tilingContext->GetDeterministic();
+    if (params.regBase && params.channel >= REGBASE_MAX_CHANNEL_NUM && deterministic == 0) {
+        params.regBaseSIMD = true;
     }
 
     if (outD != params.gridD || outH != params.gridH || outW != params.gridW) {
@@ -314,10 +330,13 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     const gert::StorageShape* xShape = tilingContext->GetInputShape(X_INPUT_INDEX);
     const gert::StorageShape* gridShape = tilingContext->GetInputShape(GRID_INPUT_INDEX);
 
+    auto input = tilingContext->GetInputTensor(DIM_INDEX0);
+    auto format = input->GetFormat().GetStorageFormat();
+
     auto compileInfo = reinterpret_cast<const Tiling4GridSampler3DGradCompileInfo*>(tilingContext->GetCompileInfo());
     params.regBase = compileInfo->regBase;
     params.batch = xShape->GetStorageShape().GetDim(DIM_INDEX0);
-    if (params.regBase) {
+    if (params.regBase && format == ge::FORMAT_NCDHW) {
         params.channel = xShape->GetStorageShape().GetDim(DIM_INDEX1);
         params.xD = xShape->GetStorageShape().GetDim(DIM_INDEX2);
         params.xH = xShape->GetStorageShape().GetDim(DIM_INDEX3);
@@ -368,7 +387,7 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
 
     size_t* currentWorkspace = tilingContext->GetWorkspaceSizes(1);
     size_t sysWorkspaceSize = WORKSPACE_SIZE;
-    if (params.regBase) {
+    if (params.regBase && !params.regBaseSIMD) {
         uint32_t deterministic = tilingContext->GetDeterministic();
         if (deterministic == 1) {
             uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
@@ -416,19 +435,21 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
     GetGridSampler3DGradTiling<GridSampler3DGradTilingData>(&tilingData, params, coreNum, availableUb, deterministic);
 
     if (inputDatatype == ge::DT_FLOAT) {
-        tilingContext->SetTilingKey(1);
+        tilingContext->SetTilingKey(FLOAT32_TILING_KEY);
         if (deterministic == 1 && compileInfo->regBase) {
-            tilingContext->SetTilingKey(4);
+            tilingContext->SetTilingKey(DET_FLOAT32_TILING_KEY);
+        } else if (params.regBaseSIMD) {
+            tilingContext->SetTilingKey(SIMD_FLOAT32_TILING_KEY);
         }
     } else if (inputDatatype == ge::DT_FLOAT16) {
-        tilingContext->SetTilingKey(2);
+        tilingContext->SetTilingKey(FLOAT16_TILING_KEY);
         if (deterministic == 1) {
-            tilingContext->SetTilingKey(5);
+            tilingContext->SetTilingKey(DET_FLOAT16_TILING_KEY);
         }
     } else if (inputDatatype == ge::DT_BF16) {
-        tilingContext->SetTilingKey(3);
+        tilingContext->SetTilingKey(BFLOAT16_TILING_KEY);
         if (deterministic == 1) {
-            tilingContext->SetTilingKey(6);
+            tilingContext->SetTilingKey(DET_BFLOAT16_TILING_KEY);
         }
     }
 

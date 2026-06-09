@@ -9,7 +9,7 @@
  */
 
 #include "aclnn_grid_sampler2d_backward.h"
-
+#include "acl/acl_rt.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_kernels/contiguous.h"
 #include "grid_sampler2d_grad.h"
@@ -46,6 +46,11 @@ static const int64_t SPATIAL_DIM_NUM = 4;
 static const int64_t GRAD_RESULT_SIZE = 2;
 static const int64_t MAX_CHANNEL_SIZE = 2048;
 static const int64_t OUTPUTMASK_MAX_SIZE = 2;
+static const int64_t REGBASE_MAX_CHANNEL_NUM = 32;
+static const int64_t REGBASE_BIG_CHANNEL_NUM = 128;
+static const int64_t BILINEAR = 0;
+static const int64_t BORDER = 1;
+static const int64_t REFLECTION = 2;
 
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910B = {
@@ -178,11 +183,24 @@ static bool CheckShape(const aclTensor *gradOutput, const aclTensor *input, cons
     return true;
 }
 
-static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t interpolationMode)
+static bool CheckDtypeAndChannelCanTranspose(const aclTensor *input, int64_t paddingMode)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    return input->GetDataType() != op::DataType::DT_DOUBLE && (curArch != NpuArch::DAV_1001) &&
-           input->GetViewShape().GetDim(SECOND_DIM) <= MAX_CHANNEL_SIZE && (curArch != NpuArch::DAV_3510);
+    const auto& inputShape = input->GetViewShape();
+    auto channel = input->GetStorageFormat() == op::Format::FORMAT_NHWC ? inputShape.GetDim(FOURTH_DIM) :
+                                                                           inputShape.GetDim(SECOND_DIM);
+    int64_t deterministicValue = 0;
+    aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
+    if (retRts != ACL_ERROR_NONE) {
+        deterministicValue = 0;
+        OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
+    }
+    bool regbaseTranspose = (curArch == NpuArch::DAV_3510) && input->GetDataType() == op::DataType::DT_FLOAT &&
+        deterministicValue == 0 && (channel >= REGBASE_MAX_CHANNEL_NUM && paddingMode == BORDER ||
+        channel >= REGBASE_BIG_CHANNEL_NUM && paddingMode == REFLECTION);
+    bool transposeArch = curArch != NpuArch::DAV_1001 && curArch != NpuArch::DAV_3510;
+    return (input->GetDataType() != op::DataType::DT_DOUBLE && transposeArch || regbaseTranspose) &&
+        channel <= MAX_CHANNEL_SIZE;
 }
 
 static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclTensor *input, const aclTensor *grid,
@@ -250,7 +268,7 @@ aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(const aclTensor *gradOutp
     auto inputContiguous = l0op::Contiguous(input, uniqueExecutor.get());
     CHECK_RET(inputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     int64_t dimSize = static_cast<int64_t>(inputContiguous->GetViewShape().GetDimNum());
-    bool transposeFlag = CheckDtypeAndChannelCanTranspose(input, interpolationMode);
+    bool transposeFlag = CheckDtypeAndChannelCanTranspose(input, paddingMode);
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     bool castFlag = input->GetDataType() == op::DataType::DT_FLOAT16 &&
                     curArch == NpuArch::DAV_1001;

@@ -48,6 +48,7 @@ struct InputParamsInfo {
     uint32_t padding = 0;
     uint32_t alignCorners = 0;
     bool regBase = false;
+    bool regBaseSIMD = false;
 };
 
 constexpr uint16_t MAX_CORE_CONT = 50;

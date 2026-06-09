@@ -46,11 +46,11 @@ __aicore__ inline void GridSampler3DGradSimtDet<T>::Init(
     tiling_ = tilingData;
     uint64_t tmpOutSize = static_cast<uint64_t>(VF_MAX_THREAD_NUM * 8 * tiling_->blockNum * tiling_->batch);
     // init inputTensor
-    inputGm[GRAD_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[GRAD_INPUT_INDEX]));
-    inputGm[X_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[X_INPUT_INDEX]));
-    inputGm[GRID_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[GRID_INPUT_INDEX]));
-    inputGm[DX_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DX_INPUT_INDEX]));
-    inputGm[DGRID_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DGRID_INPUT_INDEX]));
+    inputGm[GRAD_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[GRAD_INPUT_INDEX_SIMT]));
+    inputGm[X_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[X_INPUT_INDEX_SIMT]));
+    inputGm[GRID_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[GRID_INPUT_INDEX_SIMT]));
+    inputGm[DX_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DX_INPUT_INDEX_SIMT]));
+    inputGm[DGRID_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DGRID_INPUT_INDEX_SIMT]));
     tmpOutGm[TMP_OUT_INDEX].SetGlobalBuffer(
         reinterpret_cast<__gm__ uint32_t*>(inputTensors[WORKSPACE_INDEX]), tmpOutSize);
     tmpOutValueGm[TMP_OUT_INDEX].SetGlobalBuffer(
@@ -332,10 +332,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
     uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t pNumPerCore,
     uint32_t blockNum, uint32_t blockId)
 {
-
-    int32_t ix_nearest = rintf(ix);
-    int32_t iy_nearest = rintf(iy);
     int32_t iz_nearest = rintf(iz);
+    int32_t iy_nearest = rintf(iy);
+    int32_t ix_nearest = rintf(ix);
 
     for (uint32_t channelIndex = 0; channelIndex < channel; channelIndex++) {
         float gradOutValue = static_cast<float>(0.0);
@@ -422,9 +421,9 @@ __aicore__ inline void GridSampler3DGradSimtDet<T>::Process()
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<uint32_t>(tiling_->gridH * tiling_->gridW));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<uint32_t>(tiling_->gridW));
     asc_vf_call<ComputeGridSampler3DGrad<T>>(
-        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX].GetPhyAddr()),
-        (__gm__ T*)(inputGm[X_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[GRID_INPUT_INDEX].GetPhyAddr()),
-        (__gm__ T*)(inputGm[DX_INPUT_INDEX].GetPhyAddr()), (__gm__ T*)(inputGm[DGRID_INPUT_INDEX].GetPhyAddr()),
+        dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ T*)(inputGm[GRAD_INPUT_INDEX_SIMT].GetPhyAddr()),
+        (__gm__ T*)(inputGm[X_INPUT_INDEX_SIMT].GetPhyAddr()), (__gm__ T*)(inputGm[GRID_INPUT_INDEX_SIMT].GetPhyAddr()),
+        (__gm__ T*)(inputGm[DX_INPUT_INDEX_SIMT].GetPhyAddr()), (__gm__ T*)(inputGm[DGRID_INPUT_INDEX_SIMT].GetPhyAddr()),
         (__gm__ uint32_t*)(tmpOutGm[TMP_OUT_INDEX].GetPhyAddr()),
         (__gm__ T*)(tmpOutValueGm[TMP_OUT_INDEX].GetPhyAddr()), tiling_->blockNum, tiling_->batch, tiling_->channel,
         tiling_->xD, tiling_->xH, tiling_->xW, tiling_->gridD, tiling_->gridH, tiling_->gridW, tiling_->interpolation,

@@ -47,6 +47,7 @@ static const int64_t GRAD_RESULT_SIZE = 2;
 static const int64_t DIM_LIMIT = 5;
 static const int64_t AICORE_CHANNEL_LIMIT = 2048;
 static const int64_t OUTPUTMASK_MAX_SIZE = 2;
+static const int64_t REGBASE_MAX_CHANNEL_NUM = 128;
 
 // 根据API定义，需要列出所能支持的所有dtype
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
@@ -196,8 +197,17 @@ static bool CheckTranspose(const aclTensor* input)
     auto channel = input->GetStorageFormat() == op::Format::FORMAT_NDHWC ? inputShape.GetDim(FIFTH_DIM) :
                                                                            inputShape.GetDim(SECOND_DIM);
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    int64_t deterministicValue = 0;
+    aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
+    if (retRts != ACL_ERROR_NONE) {
+        deterministicValue = 0;
+        OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
+    }
     if ((input->GetStorageFormat() == op::Format::FORMAT_NCDHW || input->GetStorageFormat() == op::Format::FORMAT_ND) &&
-        (channel <= AICORE_CHANNEL_LIMIT) && (curArch != NpuArch::DAV_1001) && (curArch != NpuArch::DAV_3510)) {
+        (channel <= AICORE_CHANNEL_LIMIT) && (curArch != NpuArch::DAV_1001)) {
+        if (curArch == NpuArch::DAV_3510 && channel < REGBASE_MAX_CHANNEL_NUM && deterministicValue == 0) {
+            return false;
+        }
         OP_CHECK_DTYPE_NOT_SUPPORT(input, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;

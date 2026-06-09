@@ -20,6 +20,8 @@
 #include "grid_sampler2_d_grad_bicubic.h"
 #include "grid_sampler2_d_grad_bicubic_fp16.h"
 #else
+#include "grid_sampler2_d_grad.h"
+#include "grid_sampler2_d_grad_bicubic.h"
 #include "arch35/grid_sampler2_d_grad_simt.h"
 #include "arch35/grid_sampler2_d_grad_simt_det.h"
 using namespace GridSampler2DSimtA5;
@@ -62,7 +64,7 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
     TPipe pipe;
     GET_TILING_DATA(tilingData, tiling);
     GM_ADDR gmTensor[6] = {grad, x, grid, dx, dgrid, workspace};
-    #if __CCE_AICORE__ == 220
+#if __CCE_AICORE__ == 220
     if (TILING_KEY_IS(1)) {
         GridSampler2DGrad<float, GridSampler2DGradTilingData> op;
         op.Init(tilingData, gmTensor);
@@ -193,6 +195,9 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
     TILING_KEY_IS(16);
     TILING_KEY_IS(17);
     TILING_KEY_IS(18);
+    TILING_KEY_IS(19);
+    TILING_KEY_IS(20);
+    TILING_KEY_IS(21);
     #if TILING_KEY_VAR == 1 || TILING_KEY_VAR == 2 
         GridSampler2DGradSimt<float> op;
         op.Init(&tilingData, gmTensor);
@@ -246,6 +251,27 @@ extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
         // bicubic, bfloat16, deterministic
         GridSampler2DGradSimtDet<bfloat16_t> op;
         op.Init(&tilingData, gmTensor);
+        op.Process();
+    #elif TILING_KEY_VAR == 19
+        // bilinear, float32, simd
+        GridSampler2DGrad<float, GridSampler2DGradTilingData> op;
+        op.Init(tilingData, gmTensor);
+        op.InitBuffer(&pipe);
+        op.InitBilinearLocalTensor();
+        op.Process();
+    #elif TILING_KEY_VAR == 20
+        // nearest, float32, simd
+        GridSampler2DGrad<float, GridSampler2DGradTilingData> op;
+        op.Init(tilingData, gmTensor);
+        op.InitBuffer(&pipe);
+        op.InitNearestLocalTensor();
+        op.Process();
+    #elif TILING_KEY_VAR == 21
+        // bicubic, float32, simd
+        GridSampler2DGradBicubic<float, GridSampler2DGradTilingData> op;
+        op.Init(tilingData, gmTensor);
+        op.InitBuffer(&pipe);
+        op.InitBicubicLocalTensor();
         op.Process();
     #endif
 #endif

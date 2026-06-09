@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file grid_sampler3_d_grad_simt.h
+ * \file grid_sampler3_d_grad_simt_base.h
  * \brief
  */
 #ifndef GRID_SAMPLER3D_GRAD_SIMT_BASE_H_
@@ -22,15 +22,11 @@
 using namespace AscendC;
 
 namespace GridSampler3DGradSimtBase {
-    constexpr int32_t INT_MAX = 2147483647;
-    constexpr int32_t INT_MIN = -2147483648;
-    constexpr int32_t INPUT_NUM = 3;
-    constexpr int32_t OUTPUT_NUM = 2;
-    constexpr int32_t GRAD_INPUT_INDEX = 0;
-    constexpr int32_t X_INPUT_INDEX = 1;
-    constexpr int32_t GRID_INPUT_INDEX = 2;
-    constexpr int32_t DX_INPUT_INDEX = 3;
-    constexpr int32_t DGRID_INPUT_INDEX = 4;
+    constexpr int32_t GRAD_INPUT_INDEX_SIMT = 0;
+    constexpr int32_t X_INPUT_INDEX_SIMT = 1;
+    constexpr int32_t GRID_INPUT_INDEX_SIMT = 2;
+    constexpr int32_t DX_INPUT_INDEX_SIMT = 3;
+    constexpr int32_t DGRID_INPUT_INDEX_SIMT = 4;
     constexpr int32_t WORKSPACE_INDEX = 5;
     constexpr int32_t TMP_OUT_INDEX = 0;
     constexpr int32_t GM_PARAMS_SIZE = 6;
@@ -42,20 +38,25 @@ namespace GridSampler3DGradSimtBase {
     constexpr int32_t ZEROS = 0;
     constexpr int32_t BORDER = 1;
     constexpr int32_t REFLECTION = 2;
-    constexpr float DEFAULT_FAULT_VALUE = -100.0f;
+    constexpr int32_t CONST_TWO = 2;
+    constexpr int32_t INDEX_ZERO = 0;
+    constexpr int32_t INDEX_ONE = 1;
+    constexpr int32_t INDEX_TWO = 2;
+    constexpr int32_t INDEX_THREE = 3;
     constexpr uint32_t VF_MAX_THREAD_NUM = 256;
+    constexpr float DEFAULT_FAULT_VALUE = -100.0f;
 
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormalizeSetGrad(
     float coord, uint32_t size, uint32_t alignCorners, float* gradInValue)
 {
     if (alignCorners == 1) {
         // unnormalize coord from [-1, 1] to [0, size - 1]
-        coord = (coord + 1) / 2 * (size - 1);
-        *gradInValue = static_cast<float>(size - 1) / 2;
+        coord = (coord + 1) / CONST_TWO * (size - 1);
+        *gradInValue = static_cast<float>(size - 1) / CONST_TWO;
     } else {
         // unnormalize coord from [-1, 1] to [-0.5, size - 0.5]
-        coord = ((coord + 1) * size - 1) / 2;
-        *gradInValue = static_cast<float>(size) / 2;
+        coord = ((coord + 1) * size - 1) / CONST_TWO;
+        *gradInValue = static_cast<float>(size) / CONST_TWO;
     }
     return coord;
 }
@@ -199,10 +200,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CubicConv
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicUpsampleCoefficients(
     float coeffs[4], float t)
 {
-    coeffs[0] = CubicConvolution2(t + 1.0f);
-    coeffs[1] = CubicConvolution1(t);
-    coeffs[2] = CubicConvolution1(1.0f - t);
-    coeffs[3] = CubicConvolution2(2.0f - t);
+    coeffs[INDEX_ZERO] = CubicConvolution2(t + 1.0f);
+    coeffs[INDEX_ONE] = CubicConvolution1(t);
+    coeffs[INDEX_TWO] = CubicConvolution1(1.0f - t);
+    coeffs[INDEX_THREE] = CubicConvolution2(2.0f - t);
 }
 
 // Compute derivatives of cubic coefficients w.r.t. t (used for grad_grid)
@@ -216,19 +217,19 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCo
 
     // d(CubicConv2(t+1))/dt = CubicConv2Grad(t+1)
     x = t + 1.0f;
-    coeffs[0] = (3.0f * A * x - 10.0f * A) * x + 8.0f * A;
+    coeffs[INDEX_ZERO] = (3.0f * A * x - 10.0f * A) * x + 8.0f * A;
 
     // d(CubicConv1(t))/dt = CubicConv1Grad(t)
     x = t;
-    coeffs[1] = (3.0f * (A + 2.0f) * x - 2.0f * (A + 3.0f)) * x;
+    coeffs[INDEX_ONE] = (3.0f * (A + 2.0f) * x - 2.0f * (A + 3.0f)) * x;
 
     // d(CubicConv1(1-t))/dt = -CubicConv1Grad(1-t) (chain rule: d(1-t)/dt = -1)
     x = 1.0f - t;
-    coeffs[2] = -((3.0f * (A + 2.0f) * x - 2.0f * (A + 3.0f)) * x);
+    coeffs[INDEX_TWO] = -((3.0f * (A + 2.0f) * x - 2.0f * (A + 3.0f)) * x);
 
     // d(CubicConv2(2-t))/dt = -CubicConv2Grad(2-t) (chain rule: d(2-t)/dt = -1)
     x = 2.0f - t;
-    coeffs[3] = -((3.0f * A * x - 10.0f * A) * x + 8.0f * A);
+    coeffs[INDEX_THREE] = -((3.0f * A * x - 10.0f * A) * x + 8.0f * A);
 }
 
 // Apply padding (clip/reflect) to a single neighbor coordinate and return the clipped integer index
@@ -252,9 +253,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t Compute
         float gradReflValue = 0;
         float gradClipValue = 0;
         if (alignCorners) {
-            coord = ReflectCoordinatesSetGrad(coord, 0, 2 * (size - 1), &gradReflValue);
+            coord = ReflectCoordinatesSetGrad(coord, 0, CONST_TWO * (size - 1), &gradReflValue);
         } else {
-            coord = ReflectCoordinatesSetGrad(coord, -1, 2 * size - 1, &gradReflValue);
+            coord = ReflectCoordinatesSetGrad(coord, -1, CONST_TWO * size - 1, &gradReflValue);
         }
         coord = ClipCoorDinatesSetGrad(coord, size, &gradClipValue);
         return static_cast<int32_t>(coord);
