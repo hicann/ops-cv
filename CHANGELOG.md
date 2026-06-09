@@ -15,7 +15,7 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 
 [CANN 8.5.0-beta 1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/)
 
-```Cpp
+```text
 版本目录说明如下：
 ├── aarch64                 # CPU为ARM类型
 │   ├── ops                  # ops算子包目录，用于归档算子子包
@@ -46,10 +46,10 @@ ops-cv 算子首个 Beta 版本 v8.5.0-beta.1 现已发布。
 - 【算子实现】three_interpolate_backward算子新增确定性计算特性。([#39](https://gitcode.com/cann/ops-cv/pull/39))
 - 【资料优化】增加QUICK_START，离线编译模式，aicore/aicpu/graph模式下开发指南完善。([#40](https://gitcode.com/cann/ops-cv/pull/40)、[#156](https://gitcode.com/cann/ops-cv/pull/156))
 - 【资料优化】优化贡献指南中新算子贡献流程。([#57](https://gitcode.com/cann/ops-cv/pull/57))
-- 【性能优化】增加asc_opc算子并行编译能力，优化编译效率；增加ccache，优化编译时长。([80](https://gitcode.com/cann/ops-cv/pull/80))
+- 【性能优化】增加asc_opc算子并行编译能力，优化编译效率；增加ccache，优化编译时长。([#80](https://gitcode.com/cann/ops-cv/pull/80))
 
 ### 🐛 问题修复
 
-- add_example样例算子执行调用问题修复。([Issue16](https://gitcode.com/cann/ops-cv/issues/16))
-- 修复编译不存在算子时提示编译成功问题。([Issue25](https://gitcode.com/cann/ops-cv/issues/25))
-- 使用constexpr修饰if开启编译优化。([Issue32](https://gitcode.com/cann/ops-cv/issues/32))
+- add_example样例算子执行调用问题修复。([#16](https://gitcode.com/cann/ops-cv/issues/16))
+- 修复编译不存在算子时提示编译成功问题。([#25](https://gitcode.com/cann/ops-cv/issues/25))
+- 使用constexpr修饰if开启编译优化。([#32](https://gitcode.com/cann/ops-cv/issues/32))
