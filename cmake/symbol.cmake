@@ -333,6 +333,23 @@ function(gen_cust_proto_symbol)
     endif()
   endif()
 
+  set(NEED_MERGE_PROTO OFF)
+  if(TARGET ${OP_GRAPH_NAME}_proto_headers)
+    get_target_property(_proto_headers ${OP_GRAPH_NAME}_proto_headers INTERFACE_SOURCES)
+    if(_proto_headers)
+      set(NEED_MERGE_PROTO ON)
+    endif()
+  endif()
+
+  if(NEED_MERGE_PROTO AND NOT NEED_LINK_ES)
+    merge_graph_headers(TARGET merge_ops_proto_${PKG_NAME}_cust OUT_DIR ${ASCEND_GRAPH_CONF_DST})
+  endif()
+
+  if(NEED_MERGE_PROTO)
+    target_sources(cust_proto PRIVATE ${ASCEND_GRAPH_CONF_DST}/ops_proto_cv.cpp)
+    add_dependencies(cust_proto merge_ops_proto_${PKG_NAME}_cust)
+  endif()
+
   target_sources(
     cust_proto
     PUBLIC $<$<TARGET_EXISTS:${OPHOST_NAME}_infer_obj>:$<TARGET_OBJECTS:${OPHOST_NAME}_infer_obj>>
