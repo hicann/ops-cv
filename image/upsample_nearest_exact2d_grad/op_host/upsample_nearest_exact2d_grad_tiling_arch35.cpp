@@ -241,7 +241,7 @@ ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::CheckInputShapeAndAttr(
         outSizeNum > 0 && (outSizeNum != INPUT_DIMS),
         OP_LOGE(tilingContext, "The num of gradInputSize is %ld, invalid, must be 4", outSizeNum),
         return ge::GRAPH_FAILED);
-    const int64_t* outData = reinterpret_cast<const int64_t*>(gradInputSize->GetData());
+    const int64_t* outData = static_cast<const int64_t*>(gradInputSize->GetData());
     int64_t outH = baseTiling.outH;
     int64_t outW = baseTiling.outW;
     if (outSizeNum == INPUT_DIMS) {

@@ -7,14 +7,13 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
 /*!
  * \file upsample_nearest_exact2d_grad_tiling_data.h
  * \brief upsample_nearest_exact2d_grad_tiling_data.h
  */
 
-#ifndef _UPSAMPLE_NEAREST_EXACT2D_GRAD_REGBASE_TILING_DATA_H_
-#define _UPSAMPLE_NEAREST_EXACT2D_GRAD_REGBASE_TILING_DATA_H_
+#ifndef UPSAMPLE_NEAREST_EXACT2D_GRAD_REGBASE_TILING_DATA_H
+#define UPSAMPLE_NEAREST_EXACT2D_GRAD_REGBASE_TILING_DATA_H
 
 struct UpsampleNearestExact2dGradRegBaseTilingData {
     int64_t blkProcessNum;

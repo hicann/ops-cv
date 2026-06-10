@@ -414,7 +414,7 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckAttrs()
         OP_LOGE_FOR_INVALID_LISTSIZE(
             context_->GetNodeName(), "output_size", std::to_string(outSizeNum).c_str(), "0 or 3"),
         return ge::GRAPH_FAILED);
-    const int64_t *outData = reinterpret_cast<const int64_t *>(outputSize->GetData());
+    const int64_t *outData = static_cast<const int64_t *>(outputSize->GetData());
     int64_t outD = baseTiling_.outD;
     int64_t outH = baseTiling_.outH;
     int64_t outW = baseTiling_.outW;
@@ -652,12 +652,10 @@ void UpsampleNearest3dRegbaseTiling::PrintSimdTilingData()
         simDTilingData_->eachCoreSlideNum, simDTilingData_->remainder, simDTilingData_->tailStartSlideNum,
         simDTilingData_->groupCoreNum, simDTilingData_->inputRow, simDTilingData_->tailAvergingRow,
         simDTilingData_->realCoreNum, simDTilingData_->isView1DAndSmallW);
-
 }
 
 ge::graphStatus UpsampleNearest3dRegbaseTiling::DoTiling()
 {
-
     OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams is failed"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes is failed"),
