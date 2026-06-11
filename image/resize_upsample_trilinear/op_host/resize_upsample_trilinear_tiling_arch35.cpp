@@ -275,7 +275,7 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ComputeThreadBlockConfig()
         }
         blockCount_ = 1;
     }
-    threadsPerBlock_ = ((threadsPerBlock_ + 31) / 32) * 32;
+    threadsPerBlock_ = ((threadsPerBlock_ + MIN_THREADS_PER_BLOCK - 1) / MIN_THREADS_PER_BLOCK) * MIN_THREADS_PER_BLOCK;
     return ge::GRAPH_SUCCESS;
 }
 
