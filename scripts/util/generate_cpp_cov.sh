@@ -19,22 +19,50 @@ mk_dir() {
   logging "Created ${create_dir}"
 }
 
+version_ge() {
+  local v1="$1"
+  local v2="$2"
+
+  local v1_major v1_minor v2_major v2_minor
+  v1_major=$(echo "$v1" | cut -d. -f1)
+  v1_minor=$(echo "$v1" | cut -d. -f2)
+  v2_major=$(echo "$v2" | cut -d. -f1)
+  v2_minor=$(echo "$v2" | cut -d. -f2)
+
+  if [[ $v1_major -gt $v2_major ]]; then
+    return 0
+  elif [[ $v1_major -eq $v2_major && $v1_minor -ge $v2_minor ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # 获取 lcov 版本号
 get_lcov_version() {
-  lcov --version 2>/dev/null | grep -oP 'LCOV version \K[0-9]+\.[0-9]+' | head -1
+  lcov --version 2>/dev/null | grep -oP 'version \K[0-9]+\.[0-9]+' | head -1
 }
 
 # 根据 lcov 版本构建 --ignore-errors 参数
 build_ignore_errors_opt() {
-  local version="$1"
-  # lcov 2.0+ supports: mismatch, gcov, source, empty,negative etc.
-  # lcov 1.x supports: gcov, inconsistent, etc.
-  
-  if [[ "${version}" =~ ^2\. ]]; then
+  local version
+  version=$(get_lcov_version)
+
+  if [[ -n "$version" ]] && version_ge "$version" "2.0"; then
     echo "--ignore-errors mismatch,gcov,source,empty,negative"
   else
-    # lcov 1.14 and earlier
     echo "--ignore-errors gcov"
+  fi
+}
+
+build_ignore_errors_remove_opt() {
+  local version
+  version=$(get_lcov_version)
+
+  if [[ -n "$version" ]] && version_ge "$version" "2.0"; then
+    echo "--ignore-errors empty,mismatch,unused,negative,source,inconsistent"
+  else
+    echo "--ignore-errors inconsistent"
   fi
 }
 
@@ -70,8 +98,7 @@ generate_coverage() {
   fi
 
   # 根据 lcov 版本选择合适的忽略错误选项
-  local _lcov_version=$(get_lcov_version)
-  local _ignore_opt=$(build_ignore_errors_opt "${_lcov_version}")
+  local _ignore_opt=$(build_ignore_errors_opt)
 
   # 生成基础覆盖率文件
   lcov --capture \
@@ -95,15 +122,14 @@ filter_coverage() {
     exit 1
   fi
 
-  # 根据 lcov 版本选择合适的忽略错误选项
-  local _lcov_version=$(get_lcov_version)
-  local _ignore_opt=""
-  if [[ "${_lcov_version}" =~ ^2\. ]]; then
-    _ignore_opt="--ignore-errors unused,inconsistent,empty"
-  else
-    # lcov 1.14 and earlier
-    _ignore_opt="--ignore-errors inconsistent"
+  which lcov >/dev/null 2>&1
+  if [[ $? -ne 0 ]]; then
+    logging "lcov is required to generate coverage data, please install"
+    exit 1
   fi
+
+  # 根据 lcov 版本选择合适的忽略错误选项
+  local _ignore_opt=$(build_ignore_errors_remove_opt)
 
   # 构建移除列表
   echo "ASCEND_PARENT_PATH: ${ASCEND_PARENT_PATH}"
@@ -150,7 +176,6 @@ filter_coverage() {
     lcov --extract "${_filtered_file}" ${extract_patterns} -o "${_filtered_file}.tmp" ${_ignore_opt}
     mv "${_filtered_file}.tmp" "${_filtered_file}"
   fi
-
 }
 
 # generate html report
@@ -171,11 +196,15 @@ generate_html() {
   # 根据 lcov 版本选择合适的忽略错误选项
   local _lcov_version=$(get_lcov_version)
   local _ignore_opt=""
-  if [[ "${_lcov_version}" =~ ^2\. ]]; then
+  if [[ -n "${_lcov_version}" ]] && version_ge "${_lcov_version}" "2.0"; then
     _ignore_opt="--ignore-errors empty"
   fi
 
-  genhtml "${_filtered_file}" -o "${_out_path}" ${_ignore_opt}
+  if [[ ! -s "${_filtered_file}" ]]; then
+    logging "empty coverage data"
+  else
+    genhtml "${_filtered_file}" -o "${_out_path}" ${_ignore_opt}
+  fi
 }
 
 if [[ $# -lt 3 ]]; then
@@ -202,6 +231,10 @@ if [[ -z "${ASCEND_PARENT_PATH}" ]]; then
   exit 1
 fi
 
-generate_coverage "${_src}" "${_cov_file}"
-filter_coverage "${_cov_file}" "${_cov_file}_filtered" "${_ut_type}" "${_op_names}"
-generate_html "${_cov_file}_filtered" "${_out}"
+if [ -d "${_src}" ] && [ -n "$(find "${_src}" -name "*.gcda" -print -quit 2>/dev/null)" ]; then
+  generate_coverage "${_src}" "${_cov_file}"
+  filter_coverage "${_cov_file}" "${_cov_file}_filtered" "${_ut_type}" "${_op_names}"
+  generate_html "${_cov_file}_filtered" "${_out}"
+else
+  logging "No coverage data found"
+fi
