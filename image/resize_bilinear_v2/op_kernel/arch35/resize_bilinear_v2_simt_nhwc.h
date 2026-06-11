@@ -117,6 +117,12 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
             origHeight_ = static_cast<float>(H * scaleH_);
             origWidth_ = static_cast<float>(W * scaleW_);
         }
+        if (origHeight_ < 0.0f) {
+            origHeight_ = 0.0;
+        }
+        if (origWidth_ < 0.0f) {
+            origWidth_ = 0.0;
+        }
 
         // 计算原图坐标点附近四点的横坐标以及权重值
         leftX = (origWidth_ > 0.0f) ? floorf(origWidth_) : 0.0f;
