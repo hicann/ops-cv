@@ -22,7 +22,6 @@
 
 namespace UpsampleLinear1d {
 using namespace AscendC;
-
 constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
 
 template <typename T>
@@ -280,7 +279,6 @@ __aicore__ inline void UpsampleLinear1dND<T>::Process()
         }
         WDirectionExpansion(slideStart_w, slideEnd_w, false);
         WDirectionExpansion(tailSlideStart_w, tailSlideEnd_w, true);
-        
     }
     if ASCEND_IS_AIC {
         if (!isAicAvilable) {

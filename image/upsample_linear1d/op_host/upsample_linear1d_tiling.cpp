@@ -72,6 +72,9 @@ constexpr int64_t max_interp_size = 2;
 constexpr int64_t max_interp_size_10 = 10;
 constexpr uint8_t SCHEDULE_MODE = 1;
 constexpr int64_t UB_FREE = 1024;
+constexpr uint32_t TILING_KEY_ONE = 1;
+constexpr uint32_t TILING_KEY_TWO = 2;
+constexpr uint64_t NUM_HALF = 2;
 
 class UpsampleLinear1dTiling {
 public:
@@ -210,9 +213,9 @@ ge::graphStatus UpsampleLinear1dTiling::RunBigKernelTiling()
     }
     uint64_t ubSize = compileInfo->totalUbSize;
     if (dataTypeSize == DATA_TYPE_FP32_SIZE) {
-        tilingContext->SetTilingKey(2);
+        tilingContext->SetTilingKey(TILING_KEY_TWO);
     } else {
-        tilingContext->SetTilingKey(1);
+        tilingContext->SetTilingKey(TILING_KEY_ONE);
     }
     tilingData.set_align_corners(*align_corners);
     getShapes();
@@ -367,7 +370,7 @@ void UpsampleLinear1dTiling::getWorkspaceBlock(const uint64_t mPerTime, uint64_t
     uint64_t loopTailTail_1 = 0;
     // matmulBlockTail = (loopTailTimes_0 + loopTailTimes_1) * mPerTime + loopTailTail_0 + loopTailTail_1
     if (matmulBlockTail > mPerTime) {
-        int64_t mm_tail_0 = (matmulBlockTail / 2) > 0 ? (matmulBlockTail / 2) : matmulBlockTail;
+        int64_t mm_tail_0 = (matmulBlockTail / NUM_HALF) > 0 ? (matmulBlockTail / NUM_HALF) : matmulBlockTail;
         int64_t mm_tail_1 = matmulBlockTail - mm_tail_0;
         loopTailTimes_0 = mPerTime == 0 ? 0 : mm_tail_0 / mPerTime;
         loopTailTimes_1 = mPerTime == 0 ? 0 : mm_tail_1 / mPerTime;
@@ -377,7 +380,7 @@ void UpsampleLinear1dTiling::getWorkspaceBlock(const uint64_t mPerTime, uint64_t
         // 如果 matmulBlockTail == loopTailTail, 那么只需要0核一次就处理完了
         loopTailTimes_0 = 0;
         loopTailTimes_1 = 0;
-        loopTailTail_0 = (matmulBlockTail / 2) > 0 ? (matmulBlockTail / 2) : matmulBlockTail;
+        loopTailTail_0 = (matmulBlockTail / NUM_HALF) > 0 ? (matmulBlockTail / NUM_HALF) : matmulBlockTail;
         loopTailTail_1 = matmulBlockTail - loopTailTail_0;
     }
     tilingData.set_loopTailTimes0(loopTailTimes_0);
@@ -399,7 +402,7 @@ void UpsampleLinear1dTiling::getWorkspaceRemainder(uint64_t mPerTime, uint64_t m
         remainderMatmulLoopTimes = matmulBlockPerTime > 0 ? tailAvergingRowsW / matmulBlockPerTime : 0;
         remainderMatmulBlockTail = tailAvergingRowsW - remainderMatmulLoopTimes * matmulBlockPerTime;
     }
-    int64_t remainderMMTailHalf = remainderMatmulBlockTail / 2;
+    int64_t remainderMMTailHalf = remainderMatmulBlockTail / NUM_HALF;
     int64_t remainderMMTail_0 = remainderMMTailHalf > 0 ? remainderMMTailHalf : remainderMatmulBlockTail;
     int64_t remainderMMTail_1 = remainderMatmulBlockTail - remainderMMTail_0;
     uint64_t remainderLoopTailTimes0 = mPerTime > 0 ? (remainderMMTail_0 / mPerTime) : 0;
