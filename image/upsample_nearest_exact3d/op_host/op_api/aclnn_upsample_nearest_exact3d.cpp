@@ -235,8 +235,8 @@ aclnnStatus aclnnUpsampleNearestExact3dGetWorkspaceSize(const aclTensor *self, c
 
     const aclFloatArray *scales;
     if (IsRegBase()){
-        const float scalesList[] = {float(scalesD), float(scalesH), float(scalesW)};
-        scales = uniqueExecutor->AllocFloatArray(scalesList, DIM_THREE);
+        vector<float> scalesList = {float(scalesD), float(scalesH), float(scalesW)};
+        scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
     } else {
         vector<float> scalesList{};
         // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
