@@ -79,7 +79,7 @@ graph TD
 | **核函数** | Kernel Function | 在AI Core上执行的函数 | `op_kernel/{op}.cpp` | [核函数定义](#核函数定义) |
 | **IR定义** | IR Definition | 图模式算子原型定义 | `op_graph/{op}_proto.h` | [图模式适配](#图模式适配) |
 | **aclnn** | ACL Neural Network | 单算子调用接口 | `op_api/aclnn_{op}.cpp` | [aclnn适配](#aclnn适配) |
-| **代际隔离** | Generation Isolation | 不同芯片架构的代码隔离 | `arch32/` `arch35/` | [代际隔离](#代际隔离) |
+| **代际隔离** | Generation Isolation | 不同芯片架构的代码隔离 | `arch32/`、`arch35/` | [代际隔离](#代际隔离) |
 
 ---
 
@@ -615,7 +615,7 @@ flowchart TD
 
 | 模式 | 说明 | 建议值 |
 |------|------|--------|
-| **耦合模式** | Vector、Cube单元集成在一起，不区分类型 | `GetCoreNumAiv()` 或 `GetCoreNumAic()` |
+| **耦合模式** | Vector、Cube单元集成在一起，不区分类型 | `GetCoreNumAiv()`或`GetCoreNumAic()` |
 | **分离模式-Vector算子** | 仅Vector计算 | Vector核数，如40 |
 | **分离模式-Cube算子** | 仅Cube计算 | Cube核数，如20 |
 | **分离模式-融合算子** | Vector/Cube融合，按组合启动 | 组合数（不超过物理组合核数） |
@@ -1135,7 +1135,7 @@ struct TensorType {
 
 ### 自动生成配置
 
-在 `${op_name}/CMakeLists.txt` 中配置：
+在`${op_name}/CMakeLists.txt`中配置：
 
 ```cmake
 ACLNNTYPE aclnn
@@ -1235,7 +1235,7 @@ graph TB
 
 ### Kernel入口配置
 
-在 `${op_name}_def.cpp` 中配置：
+在`${op_name}_def.cpp`中配置：
 
 ```cpp
 // 默认配置（第一代芯片）

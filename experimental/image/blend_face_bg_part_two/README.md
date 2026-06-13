@@ -16,7 +16,7 @@
   fused_img = (acc_face / (acc_mask + epsilon)) * max_mask + bg_img * (1 - max_mask)
   ```
 
-  其中 `epsilon` 为数值稳定项，默认值为 `1e-12`。
+  其中`epsilon`为数值稳定项，默认值为`1e-12`。
 
 ## 参数说明
 
@@ -84,9 +84,9 @@
 
 ## 约束说明
 
-- `acc_face`、`acc_mask`、`max_mask`、`bg_img` 和 `fused_img` 的shape需保持一致。
-- `acc_face`、`acc_mask`、`max_mask` 和 `fused_img` 目前只支持FLOAT32。
-- `bg_img` 支持FLOAT32和UINT8。
+- `acc_face`、`acc_mask`、`max_mask`、`bg_img`和`fused_img`的shape需保持一致。
+- `acc_face`、`acc_mask`、`max_mask`和`fused_img`目前只支持FLOAT32。
+- `bg_img`支持FLOAT32和UINT8。
 - 当前仅支持ND格式。
 
 ## 调用说明

@@ -15,7 +15,7 @@
 
 ## 功能说明
 
-- 接口功能：对每个类别的检测框，先按置信度分数降序排序，依次选取分数最高的框作为选中框，并抑制与选中框IoU超过 `iouThreshold` 的候选框，同时移除分数不超过 `scoreThreshold` 的输出框。
+- 接口功能：对每个类别的检测框，先按置信度分数降序排序，依次选取分数最高的框作为选中框，并抑制与选中框IoU超过`iouThreshold`的候选框，同时移除分数不超过`scoreThreshold`的输出框。
 
 - 计算公式：
   - IoU计算公式：对于两个边界框A和B，IoU定义为交集面积与并集面积之比：
@@ -30,8 +30,8 @@
 
     即当交集面积超过右式阈值时，候选框被抑制。
 
-    - **iouThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，控制NMS抑制强度。值越大，保留的框越多。
-    - **scoreThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，最终输出时过滤低分框，分数 ≤ `scoreThreshold` 的框填充 `-1` 表示无效。
+    - **iouThreshold**（`aclFloatArray*`）：取值范围`[0, 1]`，控制NMS抑制强度。值越大，保留的框越多。
+    - **scoreThreshold**（`aclFloatArray*`）：取值范围`[0, 1]`，最终输出时过滤低分框，分数≤`scoreThreshold`的框填充`-1`表示无效。
 
 ## 函数原型
 

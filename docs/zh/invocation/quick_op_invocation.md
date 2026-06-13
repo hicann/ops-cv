@@ -420,7 +420,7 @@ resultData[3] is: 4.000000
    bash run.sh
    ```
 
-    默认在当前执行路径 `/build/bin`下生成可执行文件${test_aclnn_op_name}，运行结果以test_aclnn_add_example为例：
+    默认在当前执行路径`/build/bin`下生成可执行文件${test_aclnn_op_name}，运行结果以test_aclnn_add_example为例：
 
    ```bash
    mean result[2046] is 2.000000
@@ -570,7 +570,7 @@ resultData[3] is: 4.000000
     bash run.sh
     ```
 
-    默认在当前执行路径 `/build/bin`下生成可执行文件${test_geir_op_name}，运行结果如下：
+    默认在当前执行路径`/build/bin`下生成可执行文件${test_geir_op_name}，运行结果如下：
 
     ```bash
     INFO - [XIR]: Finalize ir graph session success

@@ -15,7 +15,7 @@
 
 ## 功能说明
 
-- 接口功能：对输入特征图按ROI（感兴趣区域）进行池化，在每个ROI内按空间划分为 `pooled_h × pooled_w` 个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。
+- 接口功能：对输入特征图按ROI（感兴趣区域）进行池化，在每个ROI内按空间划分为`pooled_h × pooled_w`个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。
 
 - 计算公式：
 
@@ -325,7 +325,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。实际调用时需先通过opgen生成 `aclnnop/aclnn_roi_pooling_with_arg_max.h`，若生成的头文件或接口签名不同，请以生成接口为准。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。实际调用时需先通过opgen生成`aclnnop/aclnn_roi_pooling_with_arg_max.h`，若生成的头文件或接口签名不同，请以生成接口为准。
 
 ```Cpp
 #include <iostream>

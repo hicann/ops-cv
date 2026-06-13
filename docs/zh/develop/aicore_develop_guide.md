@@ -91,7 +91,7 @@ endif()
 
 ## 算子定义
 
-算子定义需要完成两个交付件：`README.md` 和 ```${op_name}_def.cpp```
+算子定义需要完成两个交付件：`README.md`和```${op_name}_def.cpp```。
 
 **交付件1：README.md**
 
@@ -115,7 +115,7 @@ endif()
 
 ### 代码实现
 
-Tiling一共需要三个交付件：```${op_name}_tiling.cpp``` ```${op_name}_tiling_key.h``` ```${op_name}_tiling_data.h```
+Tiling一共需要三个交付件：```${op_name}_tiling.cpp```、```${op_name}_tiling_key.h```、```${op_name}_tiling_data.h```。
 
 > 说明：
 >
@@ -255,7 +255,7 @@ graph LR
 
 ### 代码实现
 
-Kernel一共需要两个交付件：```${op_name}.cpp``` ```${op_name}.h```
+Kernel一共需要两个交付件：```${op_name}.cpp```、```${op_name}.h```。
 > 说明：
 >
 > 1. `${op_name}.cpp`为kernel的入口函数只能放在`${op_name}/op_kernel`目录下；
@@ -375,7 +375,7 @@ __aicore__ inline void AddExample<T>::Process()
 
 ## 图模式适配
 
-图模式一共需要三个交付件：```${op_name}_graph_infer.cpp``` ```${op_name}_infershape.cpp``` ```${op_name}_proto.h```
+图模式一共需要三个交付件：```${op_name}_graph_infer.cpp```、```${op_name}_infershape.cpp```、```${op_name}_proto.h```。
 详细说明见图模式适配指南[graph_develop_guide.md](./graph_develop_guide.md)。
 
 ## aclnn适配

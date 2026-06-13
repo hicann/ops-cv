@@ -37,7 +37,8 @@
   其中grad、input、grid、dx、dgrid中的N是一致的，grad、input和dx中的C是一致的，input和dx中的$D_{in}$、$H_{in}$、$W_{in}$是一致的，grad、grid和dgrid中的$D_{out}$、$H_{out}$、$W_{out}$一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
 
   1. 坐标反归一化：
-     grid中的(x, y, z)需要先反归一化到input像素坐标(ix, iy, iz)，同时计算梯度乘子 `gix_mult`、`giy_mult`、`giz_mult`（用于后续dgrid计算）：
+  
+     grid中的(x, y, z)需要先反归一化到input像素坐标(ix, iy, iz)，同时计算梯度乘子`gix_mult`、`giy_mult`、`giz_mult`（用于后续dgrid计算）：
      - alignCorners = true：
 
        $$

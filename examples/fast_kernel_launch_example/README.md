@@ -35,11 +35,10 @@
     python3 -m build --wheel -n
     ```
 
-    构建完成后，产物在当前目录的`dist`文件夹下，产物名`ascend_ops-1.0.0-${python_version}-abi3-${arch}.whl`，
-    `${python_version}`表示当前环境中的python版本(python3.8.3为cp38)，`${arch}`表示CPU架构。
+    构建完成后，产物在当前目录的`dist`文件夹下，产物名`ascend_ops-1.0.0-${python_version}-abi3-${arch}.whl`，`${python_version}`表示当前环境中的python版本(python3.8.3为cp38)，`${arch}`表示CPU架构。
 
 4. 安装Wheel包 | Install Package：
-    
+
     ```sh
     python3 -m pip install dist/*.whl --force-reinstall --no-deps
     ```

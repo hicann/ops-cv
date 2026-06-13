@@ -82,7 +82,7 @@ endif()
 
 ## 算子定义
 
-算子定义需要完成两个交付件：`README.md` 和 ```${op_name}.json```
+算子定义需要完成两个交付件：`README.md`和```${op_name}.json```。
 
 **交付件1：README.md**
 
@@ -110,7 +110,7 @@ graph LR
 
 ### 代码实现
 
-Kernel一共需要两个交付件：```${op_name}_aicpu.cpp``` ```${op_name}_aicpu.h```
+Kernel一共需要两个交付件：```${op_name}_aicpu.cpp```、```${op_name}_aicpu.h```。
 
 **交付件1：${op_name}_aicpu.h**
 
