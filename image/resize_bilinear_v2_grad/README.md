@@ -31,25 +31,25 @@
   
   对应的梯度累加公式如下：
 
-  左上点$Q_{11}$:
+  左上点$Q_{11}$：
   
   $$
   y(N, C, x_1, y_1) += grads(N, C, h', w') \cdot (1 - d_h) \cdot (1 - d_w)
   $$
 
-  右上点$Q_{12}$:
+  右上点$Q_{12}$：
   
   $$
   y(N, C, x_1, y_2) += grads(N, C, h', w') \cdot (1 - d_h) \cdot d_w
   $$
 
-  左下点$Q_{21}$:
+  左下点$Q_{21}$：
   
   $$
   y(N, C, x_2, y_1) += grads(N, C, h', w') \cdot d_h \cdot (1 - d_w)
   $$
 
-  右下点$Q_{22}$:
+  右下点$Q_{22}$：
   
   $$
   y(N, C, x_2, y_2) += grads(N, C, h', w') \cdot d_h \cdot d_w

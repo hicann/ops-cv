@@ -4,7 +4,7 @@
 
 本文档演示如何使用Ascend C和[PyTorch Extension](https://docs.pytorch.org/tutorials/extension.html)能力开发自定义NPU算子。
 
-**核心优势:**
+**核心优势：**
 
 - **单交付件：** 一个文件完成算子开发和PyTorch框架适配。
 
@@ -22,14 +22,14 @@
 
 1. 进入`examples/fast_kernel_launch_example`目录。
 
-2. 安装依赖 | Install Dependencies:
-    
+2. 安装依赖 | Install Dependencies：
+
     ```sh
     python3 -m pip install -r requirements.txt
     ```
 
-3. 构建Wheel包 | Build the Wheel:
-    
+3. 构建Wheel包 | Build the Wheel：
+
     ```sh
     # -n: non-isolated build (uses existing environment)
     python3 -m build --wheel -n
@@ -38,7 +38,7 @@
     构建完成后，产物在当前目录的`dist`文件夹下，产物名`ascend_ops-1.0.0-${python_version}-abi3-${arch}.whl`，
     `${python_version}`表示当前环境中的python版本(python3.8.3为cp38)，`${arch}`表示CPU架构。
 
-4. 安装Wheel包 | Install Package:
+4. 安装Wheel包 | Install Package：
     
     ```sh
     python3 -m pip install dist/*.whl --force-reinstall --no-deps
@@ -89,10 +89,10 @@ print("Verification successful!")
 
     这里`dav-2201`为ascend910b芯片对应的编译参数，获取方法参考[NpuArch说明和使用指导](https://gitcode.com/cann/ops-math/wiki/NpuArch%E8%AF%B4%E6%98%8E%E5%92%8C%E4%BD%BF%E7%94%A8%E6%8C%87%E5%AF%BC.md)。
 
-3. 在soc目录下新建一个`add.cpp`(建议使用算子名为文件名)。这个文件包含了开发一个AI Core算子所需要的全部模块。
+3. 在soc目录下新建一个`add.cpp`（建议使用算子名为文件名）。这个文件包含了开发一个AI Core算子所需要的全部模块。
     - 算子Schema注册
     - 算子Meta Function实现 & 注册
-    - 算子Kernel实现 (Ascend C)
+    - 算子Kernel实现（Ascend C）
     - 算子NPU调用实现 & 注册
 
     ```cpp
@@ -160,7 +160,7 @@ print("Verification successful!")
      */
     torch::Tensor add_npu(const torch::Tensor &x, const torch::Tensor &y)
     {
-        // OptionalDeviceGuard 确保后续操作在正确的设备上下文执行
+        // OptionalDeviceGuard确保后续操作在正确的设备上下文执行
         // 它会记录当前设备状态，执行完作用域代码后自动恢复
         const c10::OptionalDeviceGuard guard(x.device());
         auto z = add_meta(x, y);

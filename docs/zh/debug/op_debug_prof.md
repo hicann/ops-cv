@@ -8,13 +8,13 @@
 
 * **plog获取**
 
-   程序执行结束后，默认可在"$HOME/ascend/log"下查看，host日志文件存储路径如下：
+   程序执行结束后，默认可在“$HOME/ascend/log”下查看，host日志文件存储路径如下：
 
    ```sh
    $HOME/ascend/log/debug/plog/plog-pid_*.log
    ```
 
-   开启环境变量ASCEND_SLOG_PRINT_TO_STDOUT可以将log日志直接打屏显示(1:开启打屏，0：关闭打屏)，配置示例如下：
+   开启环境变量ASCEND_SLOG_PRINT_TO_STDOUT可以将log日志直接打屏显示（1：开启打屏，0：关闭打屏），配置示例如下：
 
    ```sh
    export ASCEND_SLOG_PRINT_TO_STDOUT=1
@@ -23,7 +23,7 @@
    日志相关介绍参见[《日志参考》](https://hiascend.com/document/redirect/CannCommunitylogref)，环境变量介绍参见[《环境变量参考》](https://hiascend.com/document/redirect/CannCommunityEnvRef)。
 
 * **aclnn异常错误信息获取**
-   
+
    通过aclGetRecentErrMsg接口（参见[《acl API（C）》](https://hiascend.com/document/redirect/CannCommunityCppApi)）获取aclnn接口调用过程中的异常信息，使用方法如下：
 
    ```sh
@@ -161,17 +161,17 @@
 
       执行仿真命令，生成仿真数据
 
-      ```
+      ```bash
       cannsim record ./test_aclnn_add_example -s Ascend950 --gen-report
       ```
 
       仿真结果在本项目`examples/add_example/examples/build/bin/cannsim_*`目录，流水相关文件为：
 
-      ```
+      ```bash
       trace_core0.json
        ```
 
-      在Chrome浏览器中输入“chrome://tracing”地址，并将生成的指令流水图文件（trace_core0.json）拖到空白处打开，具体参数介绍参考CANN Simulator中[“仿真结果解析”](./cann_sim.md#仿真结果解析)章节。
+      在Chrome浏览器中输入“chrome://tracing”地址，并将生成的指令流水图文件（trace_core0.json）拖到空白处打开，具体参数介绍参考CANN Simulator中[“仿真结果解析说明”](./cann_sim.md#仿真结果解析说明)章节。
 
    * **针对Atlas A2/A3系列产品，可使用[msProf](https://www.hiascend.com/document/redirect/CannCommunityToolMsprof)工具，执行仿真命令，生成仿真数据**
 

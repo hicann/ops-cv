@@ -57,22 +57,22 @@
   - 对input采样时，会根据interpolationMode进行不同处理：
 
     - interpolationMode=0，表示取(x, y)周围四个坐标的加权平均值。
-      
+
       $$
       output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{2}\sum_{j=0}^{2}{w(i, j)} * {f(x', y')}
       $$
-      
+
       其中：
       - $f(x', y')$是原图像在$(x', y')$的像素值。
       - $w(i, j)$是双线性插值周边4个点的权重，计算公式为：
-      
+
         $$
           w(i) = \begin{cases}
           1 - |x'_i - x_i| & |x'_i - x_i| < 1 \\
           0 & otherwise
           \end{cases}
         $$
-      
+
         $$
           w(j) = \begin{cases}
           1 - |y'_j - y_j| & |y'_j - y_j| < 1 \\
@@ -368,7 +368,7 @@ aclnnStatus aclnnGridSampler2D(
 ## 约束说明
 
 - 参数`input`、`grid`、`out`的数据格式只支持(N, C, H, W)，当输入其他数据格式时，默认按照(N, C, H, W)格式处理。
-- 输入`input`的（H轴的大小 * W轴的大小） < INT32的最大值。
+- 输入`input`的（H轴的大小 * W轴的大小）< INT32的最大值。
 - 当grid的输入值*图片（长或宽）大于24位的二进制数（16777216）时，采样点可能存在误差，精度可能产生偏差。
 - 如果grid含有大量超过[-1, 1]范围的数据，使用zeros或者border的填充策略时，计算结果中的值会大量重复。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：

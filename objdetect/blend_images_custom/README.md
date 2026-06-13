@@ -73,7 +73,7 @@
 
 ## 约束说明
 
-* 确定性计算：aclnnBlendImagesCustom默认确定性实现。
+无
 
 ## 调用说明
 

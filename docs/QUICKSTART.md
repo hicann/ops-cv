@@ -97,7 +97,7 @@ bash build.sh --run_example add_example eager cust --vendor_name=custom
 
 预期输出：打印算子`AddExample`的加法计算结果，表明算子已成功部署并正确执行。
 
-```
+```bash
 add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 2.000000
 add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 2.000000
 add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 2.000000
@@ -158,7 +158,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
 4. **成功标志**：输出结果变成乘法结果。
 
-    ```
+    ```bash
     add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 1.000000
     add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 1.000000
     add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 1.000000
@@ -238,7 +238,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
 ```c++
 int main() {
-    // ... 初始化代码 ...
+    // ... 初始化代码...
     
     // === ① 修改selfX的输入 ===
     // 修改前：shape = {32, 4, 4, 4}, 数值全为1
@@ -252,7 +252,7 @@ int main() {
     }
     // === ② 参考selfX，同理修改selfY和out，并确保hostData长度与shape元素数一致 ===
     
-    // ... 后续执行代码 ...
+    // ... 后续执行代码...
 }
 ```
 

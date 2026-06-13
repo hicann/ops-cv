@@ -23,7 +23,7 @@
 
     2. 根据传入的图片格式和转换参数，对图片进行色域转换，计算公式如下：
 
-        - YUV 转 RGB：
+        - YUV转RGB：
 
             ```text
             | R |   | matrix_r0c0 matrix_r0c1 matrix_r0c2 | | Y - input_bias_0 |
@@ -31,7 +31,7 @@
             | B |   | matrix_r2c0 matrix_r2c1 matrix_r2c2 | | V - input_bias_2 |
             ```
 
-        - RGB 转 YUV：
+        - RGB转YUV：
 
             ```text
             | Y |   | matrix_r0c0 matrix_r0c1 matrix_r0c2 | | R |        | output_bias_0 |
@@ -96,7 +96,7 @@
 
 ## 约束说明
 
-- aipp_config_path配置文件说明：支持动态AIPP和静态AIPP配置，其中静态AIPP可配置图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置(DTC)；动态AIPP可配置输入处理标识(related_input_rank)参数和输入图像最大尺寸(max_src_image_size)参数。
+- aipp_config_path配置文件说明：支持动态AIPP和静态AIPP配置，其中静态AIPP可配置图片裁剪参数配置（Crop）、色域转换参数配置（CSC）、输出类型转换参数配置（DTC）；动态AIPP可配置输入处理标识（related_input_rank）参数和输入图像最大尺寸（max_src_image_size）参数。
 
 - aipp_config_path文件配置示例如下，具体参数说明参见下表。
 
@@ -237,7 +237,7 @@
         <td>INT32</td>
         </tr>
         <tr>
-        <td rowspan="6">CSC 参数设置</td>
+        <td rowspan="6">CSC参数设置</td>
         <td>csc_switch</td>
         <td>可选属性</td>
         <td>色域转换开关，静态AIPP配置，true表示开启色域转换，false表示关闭。</td>

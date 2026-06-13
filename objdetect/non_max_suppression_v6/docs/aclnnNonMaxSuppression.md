@@ -15,24 +15,23 @@
 
 ## 功能说明
 
-- 接口功能：对每个类别的检测框，先按置信度分数降序排序，依次选取分数最高的框作为选中框，并抑制与选中框 IoU 超过 `iouThreshold` 的候选框，同时移除分数不超过 `scoreThreshold` 的输出框。
+- 接口功能：对每个类别的检测框，先按置信度分数降序排序，依次选取分数最高的框作为选中框，并抑制与选中框IoU超过 `iouThreshold` 的候选框，同时移除分数不超过 `scoreThreshold` 的输出框。
 
 - 计算公式：
-  - IoU 计算公式：对于两个边界框 A 和 B，IoU 定义为交集面积与并集面积之比：
+  - IoU计算公式：对于两个边界框A和B，IoU定义为交集面积与并集面积之比：
 
     $$\text{IoU} = \frac{\text{Area}(A \cap B)}{\text{Area}(A \cup B)} = \frac{\text{Area}(A \cap B)}{\text{Area}(A) + \text{Area}(B) - \text{Area}(A \cap B)}$$
 
   - 阈值比较规则
 
-    IoU 抑制采用**严格大于**比较，等价于以下代数变换：
+    IoU抑制采用**严格大于**比较，等价于以下代数变换：
 
     $$\text{IoU} > \text{iouThreshold} \quad \Leftrightarrow \quad \text{Area}(A \cap B) > \bigl(\text{Area}(A) + \text{Area}(B)\bigr) \times \frac{\text{iouThreshold}}{1 + \text{iouThreshold}}$$
 
     即当交集面积超过右式阈值时，候选框被抑制。
 
-    - **iouThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，控制 NMS 抑制强度。值越大，保留的框越多。
+    - **iouThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，控制NMS抑制强度。值越大，保留的框越多。
     - **scoreThreshold**（`aclFloatArray*`）：取值范围 `[0, 1]`，最终输出时过滤低分框，分数 ≤ `scoreThreshold` 的框填充 `-1` 表示无效。
-
 
 ## 函数原型
 
@@ -210,7 +209,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td>boxes、scores和maxOutputBoxesPerClass的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
-      <td>boxes、scores和 selectedIndices 的数据格式不在支持的范围内。</td>
+      <td>boxes、scores和selectedIndices的数据格式不在支持的范围内。</td>
     </tr>
     <tr>
       <td>boxes、scores需为3维。</td>

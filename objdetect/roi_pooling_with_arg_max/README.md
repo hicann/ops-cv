@@ -13,13 +13,13 @@
 
 ## 功能说明
 
-- 算子功能：对输入特征图按 ROI（感兴趣区域）进行池化，在每个 ROI 内按空间划分为 `pooled_h × pooled_w` 个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。
+- 算子功能：对输入特征图按ROI（感兴趣区域）进行池化，在每个ROI内按空间划分为 `pooled_h × pooled_w` 个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。
 
 - 计算公式：
 
-  输入特征图 $x$ 的 shape 为 $(N, C, H, W)$，ROI 张量 $\text{rois}$ 的 shape 为 $(\text{num\_rois}, 5)$，每行表示 $(b_n, x_1, y_1, x_2, y_2)$。标量参数为 $s_h$、$s_w$（spatial_scale）以及 $\text{pooled\_h}$、$\text{pooled\_w}$。下标 $n$ 表示 ROI 索引，$c$ 表示通道，$(\text{ph}, \text{pw})$ 表示池化格点。
+  输入特征图 $x$ 的shape为 $(N, C, H, W)$，ROI张量 $\text{rois}$ 的shape为 $(\text{num\_rois}, 5)$，每行表示 $(b_n, x_1, y_1, x_2, y_2)$。标量参数为 $s_h$、$s_w$（spatial_scale）以及 $\text{pooled\_h}$、$\text{pooled\_w}$。下标 $n$ 表示ROI索引，$c$ 表示通道，$(\text{ph}, \text{pw})$ 表示池化格点。
 
-  - **ROI 映射到特征图**：将 ROI 坐标乘以 spatial_scale 得到特征图上的浮点区间：
+  - **ROI映射到特征图**：将ROI坐标乘以spatial_scale得到特征图上的浮点区间：
 
     $$
     \tilde{x}_1 = x_1 s_w,\quad \tilde{y}_1 = y_1 s_h,\quad \tilde{x}_2 = (x_2+1)s_w,\quad \tilde{y}_2 = (y_2+1)s_h
@@ -29,9 +29,9 @@
     W_{\text{roi}} = \tilde{x}_2 - \tilde{x}_1,\qquad H_{\text{roi}} = \tilde{y}_2 - \tilde{y}_1
     $$
 
-    若 $W_{\text{roi}} \le 0$ 或 $H_{\text{roi}} \le 0$，该 ROI 的 $y$ 全为 0，$\text{argmax}$ 全为 -1。
+    若 $W_{\text{roi}} \le 0$ 或 $H_{\text{roi}} \le 0$，该ROI的 $y$ 全为0，$\text{argmax}$ 全为 -1。
 
-  - **Bin 步长与区间**：每个池化格 (ph, pw) 对应 ROI 内一个 bin，步长与浮点区间为：
+  - **Bin步长与区间**：每个池化格(ph, pw)对应ROI内一个bin，步长与浮点区间为：
 
     $$
     \Delta w = \frac{W_{\text{roi}}}{\text{pooled\_w}},\qquad \Delta h = \frac{H_{\text{roi}}}{\text{pooled\_h}}
@@ -55,23 +55,23 @@
     h_1 = \text{clip}(\lfloor\tilde{h}_1\rfloor,\, 0,\, H),\quad h_2 = \text{clip}(\lceil\tilde{h}_2\rceil,\, 0,\, H)
     $$
 
-    其中 $\text{clip}(a,l,u) = \min(\max(a,l), u)$。若 $w_2 \le w_1$ 或 $h_2 \le h_1$，该 bin 为空：$y=0$，$\text{argmax}=-1$。
+    其中 $\text{clip}(a,l,u) = \min(\max(a,l), u)$。若 $w_2 \le w_1$ 或 $h_2 \le h_1$，该bin为空：$y=0$，$\text{argmax}=-1$。
 
-  - **池化输出与 Argmax**：记 $b = \text{rois}[n,0]$，bin 区域 $R = \{(h,w) : h_1 \le h < h_2,\, w_1 \le w < w_2\}$，则
+  - **池化输出与Argmax**：记 $b = \text{rois}[n,0]$，bin区域 $R = \{(h,w) : h_1 \le h < h_2,\, w_1 \le w < w_2\}$，则
 
     $$
     y[n,c,\text{ph},\text{pw}] = \max_{(h,w) \in R} x[b,c,h,w]
     $$
 
-    （空 $R$ 时为 0。）
+    （空 $R$ 时为0）
 
     $$
     \text{argmax}[n,c,\text{ph},\text{pw}] = h^* W + w^*
     $$
 
-    $(h^*, w^*)$ 为 bin 内最大值位置（多解取第一个）；空 $R$ 为 -1。
+    $(h^*, w^*)$ 为bin内最大值位置（多解取第一个）；空 $R$ 为 -1。
 
-  - **输出 Shape**：
+  - **输出Shape**：
 
     | 输出 | Shape | 数据类型 |
     |------|--------|----------|
@@ -170,10 +170,10 @@
 
 ## 约束说明
 
-* x、rois、y、argmax 的数据类型或格式在支持的范围之内。
-* x 的 shape 是 4 维（NCHW）。
-* rois 的 shape 第二维是 5。
-* pooled_h、pooled_w、spatial_scale_h、spatial_scale_w 大于 0。
+* x、rois、y、argmax的数据类型或格式在支持的范围之内。
+* x的shape是4维（NCHW）。
+* rois的shape第二维是5。
+* pooled_h、pooled_w、spatial_scale_h、spatial_scale_w大于0。
 * x、argmax、rois的shape[0]相等。
 * rois.shape[0]、x.shape[0]小于等于1024。
 * x.shape[1]等于pool_channel。

@@ -121,7 +121,7 @@
         ./test_aclnn_grid_sample3_d
         ```
 
-        \${static_lib_path}表示静态库统一放置路径；\${ASCEND_INSTALL_PATH}已通过环境变量配置，表示CANN toolkit包安装路径； 最终可执行文件名请替换为**实际算子可执行文件名**。
+        \${static_lib_path}表示静态库统一放置路径；\${ASCEND_INSTALL_PATH}已通过环境变量配置，表示CANN toolkit包安装路径；最终可执行文件名请替换为**实际算子可执行文件名**。
 
         其中lcann_cv_static、lcann_legacy_static表示算子依赖的静态库文件，从静态库统一放置路径\${static_lib_path}中获取；
         lgraph、lmetadef等表示算子依赖的底层库文件，可在CANN toolkit包获取。

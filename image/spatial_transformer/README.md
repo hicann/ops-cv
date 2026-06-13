@@ -13,7 +13,7 @@
 
 ## 功能说明
 
-算子功能：Spatial Transformer Network (STN) 算子用于对输入张量进行仿射变换。该算子通过变换矩阵 theta 对输入图像 x 进行空间变换，输出变换后的图像 y。
+算子功能：Spatial Transformer Network (STN) 算子用于对输入张量进行仿射变换。该算子通过变换矩阵theta对输入图像x进行空间变换，输出变换后的图像y。
 
 ## 参数说明
 
@@ -60,28 +60,28 @@
     <tr>
       <td>output_size</td>
       <td>属性</td>
-      <td>指定输出的高度和宽度，包含 2 个整数。默认为 [-1, -1]，表示使用输入尺寸。</td>
+      <td>指定输出的高度和宽度，包含2个整数。默认为 [-1, -1]，表示使用输入尺寸。</td>
       <td>ListInt</td>
       <td>-</td>
     </tr>
     <tr>
       <td>default_theta</td>
       <td>属性</td>
-      <td>默认的仿射变换参数，当 use_default_theta 为 true 时使用。默认为空列表。</td>
+      <td>默认的仿射变换参数，当use_default_theta为true时使用。默认为空列表。</td>
       <td>ListFloat</td>
       <td>-</td>
     </tr>
     <tr>
       <td>align_corners</td>
       <td>属性</td>
-      <td>如果为 true，则输入和输出张量的 4 个角像素中心对齐，保留角像素的值。默认为 false。</td>
+      <td>如果为true，则输入和输出张量的4个角像素中心对齐，保留角像素的值。默认为false。</td>
       <td>Bool</td>
       <td>-</td>
     </tr>
     <tr>
       <td>use_default_theta</td>
       <td>属性</td>
-      <td>指定哪些 theta 参数从 default_theta 使用。1 表示使用默认值，0 表示使用输入 theta。默认为空列表。</td>
+      <td>指定哪些theta参数从default_theta使用。1表示使用默认值，0表示使用输入theta。默认为空列表。</td>
       <td>ListInt</td>
       <td>-</td>
     </tr>
@@ -89,11 +89,11 @@
 
 ## 约束说明
 
-- 输入张量 x 的格式必须为 NCHW 或 NC1HWC0。
-- 输出张量 y 的格式必须与输入张量 x 的格式一致。
-- 变换矩阵 theta 的形状必须为 [batch, 2, 3] 或 [2, 3]。
-- 当 use_default_theta 为空列表时，使用输入 theta 进行变换。
-- 当 use_default_theta 不为空时，对应位置为 1 的参数使用 default_theta 中的值，为 0 的参数使用输入 theta 中的值。
+- 输入张量x的格式必须为NCHW或NC1HWC0。
+- 输出张量y的格式必须与输入张量x的格式一致。
+- 变换矩阵theta的形状必须为 [batch, 2, 3] 或 [2, 3]。
+- 当use_default_theta为空列表时，使用输入theta进行变换。
+- 当use_default_theta不为空时，对应位置为1的参数使用default_theta中的值，为0的参数使用输入theta中的值。
 
 ## 调用说明
 

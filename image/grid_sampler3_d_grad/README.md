@@ -55,7 +55,7 @@
   2. padding_mode对梯度乘子的影响：
      - padding_mode="zeros"，`gix_mult`不变
      - padding_mode="border"，$gix\_mult = gix\_mult × grad\_clip$（坐标在边界外时grad_clip=0，否则=1）
-     - padding_mode="reflection"，$gix\_mult = gix\_mult × grad\_refl × grad\_clip$（grad_refl是反射坐标变换函数对输入坐标的导数，表示反射后输出坐标随输入坐标变化的方向和速率。取值为-1，0，1。）
+     - padding_mode="reflection"，$gix\_mult = gix\_mult × grad\_refl × grad\_clip$（grad_refl是反射坐标变换函数对输入坐标的导数，表示反射后输出坐标随输入坐标变化的方向和速率。取值为-1，0，1）。
 
   3. 各插值模式的梯度公式：
      - Bilinear（三线性插值，Trilinear）
@@ -64,14 +64,14 @@
 
        | 角点 | 坐标$(i_p, j_p, k_p)$ | 权重$w_p$ |
        |:------:|:------:|:----------:|
-       | tnw (顶-北-西) | $(⌊iz⌋, ⌊iy⌋, ⌊ix⌋)$ | $(ix_{bse} - ix) × (iy_{bse} - iy) × (iz_{bse} - iz)$ |
-       | tne (顶-北-东) | $(⌊iz⌋, ⌊iy⌋, ⌊ix⌋+1)$ | $(ix - ix_{bsw}) × (iy_{bsw} - iy) × (iz_{bsw} -  iz)$ |
-       | tsw (顶-南-西) | $(⌊iz⌋, ⌊iy⌋+1, ⌊ix⌋)$ | $(ix_{bne} - ix) × (iy - iy_{bne}) × (iz_{bne} -  iz)$ |
-       | tse (顶-南-东) | $(⌊iz⌋, ⌊iy⌋+1, ⌊ix⌋+1)$ | $(ix - ix_{bnw}) × (iy - iy_{bnw}) × (iz_{bnw} -  iz)$ |
-       | bnw (底-北-西) | $(⌊iz⌋+1, ⌊iy⌋, ⌊ix⌋)$ | $(ix_{tse} - ix) × (iy_{tse} - iy) × (iz -  iz_{tse})$|
-       | bne (底-北-东) | $(⌊iz⌋+1, ⌊iy⌋, ⌊ix⌋+1)$ | $(ix - ix_{tsw}) × (iy_{tsw} - iy) × (iz -  iz_{tsw})$ |
-       | bsw (底-南-西) | $(⌊iz⌋+1, ⌊iy⌋+1, ⌊ix⌋)$ | $(ix_{tne} - ix) × (iy - iy_{tne}) × (iz -  iz_{tne})$ |
-       | bse (底-南-东) | $(⌊iz⌋+1, ⌊iy⌋+1, ⌊ix⌋+1)$ | $(ix - ix_{tnw}) × (iy - iy_{tnw}) × (iz -  iz_{tnw})$ |
+       | tnw（顶-北-西） | $(⌊iz⌋, ⌊iy⌋, ⌊ix⌋)$ | $(ix_{bse} - ix) × (iy_{bse} - iy) × (iz_{bse} - iz)$ |
+       | tne（顶-北-东） | $(⌊iz⌋, ⌊iy⌋, ⌊ix⌋+1)$ | $(ix - ix_{bsw}) × (iy_{bsw} - iy) × (iz_{bsw} -  iz)$ |
+       | tsw（顶-南-西） | $(⌊iz⌋, ⌊iy⌋+1, ⌊ix⌋)$ | $(ix_{bne} - ix) × (iy - iy_{bne}) × (iz_{bne} -  iz)$ |
+       | tse（顶-南-东） | $(⌊iz⌋, ⌊iy⌋+1, ⌊ix⌋+1)$ | $(ix - ix_{bnw}) × (iy - iy_{bnw}) × (iz_{bnw} -  iz)$ |
+       | bnw（底-北-西） | $(⌊iz⌋+1, ⌊iy⌋, ⌊ix⌋)$ | $(ix_{tse} - ix) × (iy_{tse} - iy) × (iz -  iz_{tse})$|
+       | bne（底-北-东） | $(⌊iz⌋+1, ⌊iy⌋, ⌊ix⌋+1)$ | $(ix - ix_{tsw}) × (iy_{tsw} - iy) × (iz -  iz_{tsw})$ |
+       | bsw（底-南-西） | $(⌊iz⌋+1, ⌊iy⌋+1, ⌊ix⌋)$ | $(ix_{tne} - ix) × (iy - iy_{tne}) × (iz -  iz_{tne})$ |
+       | bse（底-南-东） | $(⌊iz⌋+1, ⌊iy⌋+1, ⌊ix⌋+1)$ | $(ix - ix_{tnw}) × (iy - iy_{tnw}) × (iz -  iz_{tnw})$ |
  
        其中：
 
@@ -123,15 +123,15 @@
        iz_{bse} = iz_{tnw} + 1 \\
        $$
 
-       - dx（input 梯度）：将上游梯度按三线性权重散射到input对应位置
+       - dx（input梯度）：将上游梯度按三线性权重散射到input对应位置
          
          $$
          dx(N, C, i_p, j_p, k_p) \mathrel{+}= w_p \cdot grad(N, C, D_{out}, H_{out}, W_{out})
          $$
 
          即对每个输出像素(d, h, w)，将其梯度乘以三线性权重，累加到input的8个相邻体素位置（越界位置不累加）。
-       - dgrid（grid 梯度）：对(ix, iy, iz)的偏导
-         
+       - dgrid（grid梯度）：对(ix, iy, iz)的偏导
+
          $$
          gix = \sum_{c} \left[ -V_{tnw} \cdot (iy_{bse}-iy)(iz_{bse}-iz) + V_{tne} \cdot (iy_{bsw}-iy)(iz_{bsw}-iz) - V_{tsw} \cdot (iy-iy_{bne})(iz_{bne}-iz) + V_{tse} \cdot (iy-iy_{bnw})(iz_{bnw}-iz) - V_{bnw} \cdot (iy_{tse}-iy)(iz-iz_{tse}) + V_{bne} \cdot (iy_{tsw}-iy)(iz-iz_{tsw}) - V_{bsw} \cdot (iy-iy_{tne})(iz-iz_{tne}) + V_{bse} \cdot (iy-iy_{tnw})(iz-iz_{tnw}) \right] \cdot grad(N, C, D_{out}, H_{out}, W_{out})
          $$
@@ -159,14 +159,14 @@
          dgrid(N, D_{out}, H_{out}, W_{out}, 2) = giy\_mult \cdot giz
          $$
 
-      - Nearest（最邻近插值）
-        - dx：将上游梯度直接累加到最近邻位置
+       - Nearest（最邻近插值）
+         - dx：将上游梯度直接累加到最近邻位置
 
           $$
           dx(N, C, \text{round}(iz), \text{round}(iy), \text{round}(ix)) \mathrel{+}= grad(N, C, D_{out}, H_{out}, W_{out})
           $$
 
-        - dgrid：最邻近插值对坐标不可导，因此 **dgrid = 0**。
+         - dgrid：最邻近插值对坐标不可导，因此 **dgrid = 0**。
 
 ## 参数说明
 

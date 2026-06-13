@@ -20,7 +20,7 @@
   
   考虑一个形状为 $(N,C,*)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$*$表示任意空间维度。
 
-  此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel\_size),L)$ 的 3-D output张量的列（即最后一维）。
+  此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel\_size),L)$ 的3-D output张量的列（即最后一维）。
 
   其中：
   - $C×\prod(kernel\_size)$ 是每个块内的值的数量（一个块有$\prod(kernel\_size)$ 个空间位置，每个空间位置都包含一个$C$ 通道向量），而$L$是这些块的总数：
@@ -246,7 +246,7 @@ aclnnStatus aclnnIm2colBackward(
     <tr>
       <td>workspace</td>
       <td>输入</td>
-      <td>在 Device 侧申请的 workspace 内存地址。</td>
+      <td>在Device侧申请的workspace内存地址。</td>
     </tr>
     <tr>
       <td>workspaceSize</td>
@@ -256,12 +256,12 @@ aclnnStatus aclnnIm2colBackward(
     <tr>
       <td>executor</td>
       <td>输入</td>
-      <td>op 执行器，包含了算子计算流程。</td>
+      <td>op执行器，包含了算子计算流程。</td>
     </tr>
     <tr>
       <td>stream</td>
       <td>输入</td>
-      <td>指定执行任务的 Stream。</td>
+      <td>指定执行任务的Stream。</td>
     </tr>
   </tbody>
   </table>

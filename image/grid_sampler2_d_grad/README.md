@@ -52,7 +52,7 @@
   2. padding_mode对梯度乘子的影响：
      - padding_mode="zeros"，`gix_mult`不变
      - padding_mode="border"，$gix\_mult = gix\_mult × grad\_clip$（坐标在边界外时grad_clip=0，否则=1）
-     - padding_mode="reflection"，$gix\_mult = gix\_mult × grad\_refl × grad\_clip$（grad_refl是反射坐标变换函数对输入坐标的导数，表示反射后输出坐标随输入坐标变化的方向和速率。取值为-1，0，1。）
+     - padding_mode="reflection"，$gix\_mult = gix\_mult × grad\_refl × grad\_clip$（grad_refl是反射坐标变换函数对输入坐标的导数，表示反射后输出坐标随输入坐标变化的方向和速率。取值为-1，0，1）。
 
   3. 各插值模式的梯度公式：
      - Bilinear（双线性插值）
@@ -61,10 +61,10 @@
 
        | 角点 | 坐标$(i_p, j_p)$ | 权重$w_p$ |
        |:------:|:------:|:----------:|
-       | nw (西北) | $(iy_{nw}, ix_{nw})$ | $(ix_{se} - ix) × (iy_{se} - iy)$ |
-       | ne (东北) | $(iy_{ne}, ix_{ne})$ | $(ix - ix_{sw}) × (iy_{sw} - iy)$ |
-       | sw (西南) | $(iy_{sw}, ix_{sw})$ | $(ix_{ne} - ix) × (iy - iy_{ne})$ |
-       | se (东南) | $(iy_{se}, ix_{se})$ | $(ix - ix_{nw}) × (iy - iy_{nw})$ |
+       | nw（西北） | $(iy_{nw}, ix_{nw})$ | $(ix_{se} - ix) × (iy_{se} - iy)$ |
+       | ne（东北） | $(iy_{ne}, ix_{ne})$ | $(ix - ix_{sw}) × (iy_{sw} - iy)$ |
+       | sw（西南） | $(iy_{sw}, ix_{sw})$ | $(ix_{ne} - ix) × (iy - iy_{ne})$ |
+       | se（东南） | $(iy_{se}, ix_{se})$ | $(ix - ix_{nw}) × (iy - iy_{nw})$ |
 
        其中：
 
@@ -79,15 +79,15 @@
        iy_{se} = floor(iy) + 1
        $$
 
-       - dx（input 梯度）：将上游梯度按权重散射到input对应位置
-         
+       - dx（input梯度）：将上游梯度按权重散射到input对应位置
+
          $$
          dx(N, C, i_p, j_p) \mathrel{+}= w_p \cdot grad(N, C, H_{out}, W_{out})
          $$
 
          即对每个输出像素(h, w)，将其梯度乘以双线性权重，累加到input的四个相邻像素位置（越界位置不累加）。
-       - dgrid（grid 梯度）：对(ix, iy)的偏导
-         
+       - dgrid（grid梯度）：对(ix, iy)的偏导
+
          $$
          gix = \sum_{c} \left[ -V_{nw} \cdot (iy_{se} - iy) + V_{ne} \cdot   (iy_{sw} - iy) - V_{sw} \cdot (iy - iy_{ne}) + V_{se} \cdot (iy - iy_{nw}) \right] \cdot grad(N, C, H_{out}, W_{out})
          $$
@@ -107,26 +107,26 @@
          dgrid(N, H_{out}, W_{out}, 1) = giy\_mult \cdot giy
          $$
 
-      - Nearest（最邻近插值）
-        - dx：将上游梯度直接累加到最近邻位置
+     - Nearest（最邻近插值）
+       - dx：将上游梯度直接累加到最近邻位置
 
           $$
           dx(N, C, \text{round}(iy), \text{round}(ix)) \mathrel{+}= grad(N, C, H_{out}, W_{out})
           $$
 
-        - dgrid：最邻近插值对坐标不可导，因此 **dgrid = 0**。
+       - dgrid：最邻近插值对坐标不可导，因此 **dgrid = 0**。
 
-      - Bicubic（双三次插值）
-        - dx：
+     - Bicubic（双三次插值）
+       - dx：
 
           $$
           dx(N, C, iy', ix') \mathrel{+}= grad(N, C, H_{out}, W_{out}) \cdot x\_coeffs[i] \cdot y\_coeffs[j]
           $$
 
           其中：
-          
+
           $(ix', iy') = (ix_{nw}-1+i, iy_{nw}-1+j)$，$i,j \in \{0,1,2,3\}$，越界位置根据padding_mode处理。
-          
+
           $$
           A = -0.75 \\
           x_0 = x + 1.0 \\
@@ -168,7 +168,7 @@
           y\_coeffs[3] = ((A * y_3 - 5* A) * y_3 + 8 * A) * y_3 - 4 * A
           $$
 
-        - dgrid：
+       - dgrid：
 
           $$
           gix = -\sum_{C}\sum_{i=0}^{3}\sum_{j=0}^{3} V_{ij} \cdot x\_coeffs\_grad[i] \cdot y\_coeffs[j] \cdot grad(N, C, H_{out}, W_{out})

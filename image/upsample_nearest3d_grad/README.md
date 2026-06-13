@@ -95,7 +95,7 @@
     <tr>
       <td>output_size</td>
       <td>可选属性</td>
-      <td><ul><li>表示输入`grad_output`在D、H和W维度上的空间大小。size为3，且各元素均大于零。 包含3个元素：[depth, height, width]。只能指定'scales'和'output_size'中的一个。必须满足：grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]；grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]；grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2]。</li><li>默认为空。</li></ul></td>
+      <td><ul><li>表示输入`grad_output`在D、H和W维度上的空间大小。size为3，且各元素均大于零。包含3个元素：[depth, height, width]。只能指定'scales'和'output_size'中的一个。必须满足：grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]；grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]；grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2]。</li><li>默认为空。</li></ul></td>
       <td>LISTINT</td>
       <td>-</td>
     </tr>

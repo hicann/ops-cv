@@ -228,7 +228,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
 
   - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：
   
-    参数`gradOut`、`out`的数据类型不支持BFLOAT16.
+    参数`gradOut`、`out`的数据类型不支持BFLOAT16。
 
 - **返回值**
 

@@ -22,44 +22,44 @@
 
     1. 计算缩放比例$height\_scale$和$width\_scale$：
 
-      $$
-      height\_scale = \begin{cases} (y_2 - y_1) \times (image\_height - 1) / (crop\_height - 1), & crop\_height > 1 \\ 0, & crop\_height = 1 \end{cases}
-      $$
+       $$
+       height\_scale = \begin{cases} (y_2 - y_1) \times (image\_height - 1) / (crop\_height - 1), & crop\_height > 1 \\ 0, & crop\_height = 1 \end{cases}
+       $$
 
-      $$
-      width\_scale = \begin{cases} (x_2 - x_1) \times (image\_width - 1) / (crop\_width - 1), & crop\_width > 1 \\ 0, & crop\_width = 1 \end{cases}
-      $$
+       $$
+       width\_scale = \begin{cases} (x_2 - x_1) \times (image\_width - 1) / (crop\_width - 1), & crop\_width > 1 \\ 0, & crop\_width = 1 \end{cases}
+       $$
  
     2. 将输出坐标$(p_y, p_x)$映射到输入图像坐标$(in\_y, in\_x)$：
 
-      $$
-      in\_y = \begin{cases} y_1 \times (image\_height - 1) + p_y \times height\_scale, & crop\_height > 1 \\ 0.5 \times (y_1 + y_2) \times (image\_height - 1), &     crop\_height = 1 \end{cases}
-      $$
+       $$
+       in\_y = \begin{cases} y_1 \times (image\_height - 1) + p_y \times height\_scale, & crop\_height > 1 \\ 0.5 \times (y_1 + y_2) \times (image\_height - 1), &     crop\_height = 1 \end{cases}
+       $$
     
-      $$
-      in\_x = \begin{cases} x_1 \times (image\_width - 1) + p_x \times width\_scale, & crop\_width > 1 \\ 0.5 \times (x_1 + x_2) \times (image\_width - 1), & crop\_width =     1 \end{cases}
-      $$
+       $$
+       in\_x = \begin{cases} x_1 \times (image\_width - 1) + p_x \times width\_scale, & crop\_width > 1 \\ 0.5 \times (x_1 + x_2) \times (image\_width - 1), & crop\_width =     1 \end{cases}
+       $$
     
-      若$in\_y < 0$或$in\_y > image\_height - 1$或$in\_x < 0$ 或 $in\_x > image\_width - 1$，则：
+       若$in\_y < 0$或$in\_y > image\_height - 1$或$in\_x < 0$ 或 $in\_x > image\_width - 1$，则：
     
-      $$
-      y(i, p_y, p_x, d) = extrapolation\_value
-      $$
+       $$
+       y(i, p_y, p_x, d) = extrapolation\_value
+       $$
+
+       否则，进行双线性插值。令$top = \lfloor in\_y \rfloor$，$bottom = \lceil in\_y \rceil$，$left = \lfloor in\_x \rfloor$，$right = \lceil in\_x \rceil$，$y\_ratio = in\_y - top$，$x\_ratio = in\_x - left$，则：
     
-      否则，进行双线性插值。令$top = \lfloor in\_y \rfloor$，$bottom = \lceil in\_y \rceil$，$left = \lfloor in\_x \rfloor$，$right = \lceil in\_x \rceil$，$y\_ratio = in\_y - top$，$x\_ratio = in\_x - left$，则：
-    
-      $$
-      \begin{aligned}
-      y(i, p_y, p_x, d) =\; & (1 - y\_ratio)(1 - x\_ratio) \cdot x(b, top, left, d) \\
-      +\; & (1 - y\_ratio) \cdot x\_ratio \cdot x(b, top, right, d) \\
-      +\; & y\_ratio \cdot (1 - x\_ratio) \cdot x(b, bottom, left, d) \\
-      +\; & y\_ratio \cdot x\_ratio \cdot x(b, bottom, right, d)
-      \end{aligned}
-      $$
+       $$
+       \begin{aligned}
+       y(i, p_y, p_x, d) =\; & (1 - y\_ratio)(1 - x\_ratio) \cdot x(b, top, left, d) \\
+       +\; & (1 - y\_ratio) \cdot x\_ratio \cdot x(b, top, right, d) \\
+       +\; & y\_ratio \cdot (1 - x\_ratio) \cdot x(b, bottom, left, d) \\
+       +\; & y\_ratio \cdot x\_ratio \cdot x(b, bottom, right, d)
+       \end{aligned}
+       $$
 
   - method = nearest时：
 
-    $height\_scale$、$width\_scale$、$in\_y$、$in\_x$ 的计算方式与 bilinear 方法相同。
+    $height\_scale$、$width\_scale$、$in\_y$、$in\_x$ 的计算方式与bilinear方法相同。
 
     若$in\_y$或$in\_x$越界（条件同bilinear），则：
 
@@ -79,44 +79,44 @@
 
     1. 首先将归一化框坐标映射为输入图像上的像素坐标，计算裁剪窗口。令$y_{1o} = \lfloor y_1 \times image\_height \rfloor$，$x_{1o} = \lfloor x_1 \times image\_width \rfloor$，$y_{2o} = \lfloor y_2 \times image\_height \rfloor$，$x_{2o} = \lfloor x_2 \times image\_width \rfloor$，则裁剪窗口的高$h$和宽$w$为：
 
-      $$
-      h = \max(y_{2o} - y_{1o} + 1,\; 1), \quad w = \max(x_{2o} - x_{1o} + 1,\; 1)
-      $$
+       $$
+       h = \max(y_{2o} - y_{1o} + 1,\; 1), \quad w = \max(x_{2o} - x_{1o} + 1,\; 1)
+       $$
 
     2. 对于输出位置$(p_y, p_x)$，计算其在裁剪窗口中的浮点索引$r_y$和$r_x$：
 
-      $$
-      r_y = (p_y + 0.5) \times h / crop\_height - 0.5
-      $$
+       $$
+       r_y = (p_y + 0.5) \times h / crop\_height - 0.5
+       $$
 
-      $$
-      r_x = (p_x + 0.5) \times w / crop\_width - 0.5
-      $$
+       $$
+       r_x = (p_x + 0.5) \times w / crop\_width - 0.5
+       $$
 
     3. 计算插值下标和权重。令$clamp(v, lo, hi) = \max(\min(v, hi), lo)$，则：
 
-      $$
-      lower\_y = clamp(\lfloor r_y \rfloor, 0, h - 1), \quad upper\_y = clamp(\lceil r_y \rceil, 0, h - 1)
-      $$
+       $$
+       lower\_y = clamp(\lfloor r_y \rfloor, 0, h - 1), \quad upper\_y = clamp(\lceil r_y \rceil, 0, h - 1)
+       $$
 
-      $$
-      lower\_x = clamp(\lfloor r_x \rfloor, 0, w - 1), \quad upper\_x = clamp(\lceil r_x \rceil, 0, w - 1)
-      $$
+       $$
+       lower\_x = clamp(\lfloor r_x \rfloor, 0, w - 1), \quad upper\_x = clamp(\lceil r_x \rceil, 0, w - 1)
+       $$
 
-      $$
-      y\_ratio = r_y - lower\_y, \quad x\_ratio = r_x - lower\_x
-      $$
+       $$
+       y\_ratio = r_y - lower\_y, \quad x\_ratio = r_x - lower\_x
+       $$
 
     4. 双线性插值：
 
-      $$
-      \begin{aligned}
-      y(i, p_y, p_x, d) =\; & (1 - y\_ratio)(1 - x\_ratio) \cdot x(b, y_{1o} + lower\_y, x_{1o} + lower\_x, d) \\
-      +\; & (1 - y\_ratio) \cdot x\_ratio \cdot x(b, y_{1o} + lower\_y, x_{1o} + upper\_x, d) \\
-      +\; & y\_ratio \cdot (1 - x\_ratio) \cdot x(b, y_{1o} + upper\_y, x_{1o} + lower\_x, d) \\
-      +\; & y\_ratio \cdot x\_ratio \cdot x(b, y_{1o} + upper\_y, x_{1o} + upper\_x, d)
-      \end{aligned}
-      $$
+       $$
+       \begin{aligned}
+       y(i, p_y, p_x, d) =\; & (1 - y\_ratio)(1 - x\_ratio) \cdot x(b, y_{1o} + lower\_y, x_{1o} + lower\_x, d) \\
+       +\; & (1 - y\_ratio) \cdot x\_ratio \cdot x(b, y_{1o} + lower\_y, x_{1o} + upper\_x, d) \\
+       +\; & y\_ratio \cdot (1 - x\_ratio) \cdot x(b, y_{1o} + upper\_y, x_{1o} + lower\_x, d) \\
+       +\; & y\_ratio \cdot x\_ratio \cdot x(b, y_{1o} + upper\_y, x_{1o} + upper\_x, d)
+       \end{aligned}
+       $$
 
 ## 参数说明
 

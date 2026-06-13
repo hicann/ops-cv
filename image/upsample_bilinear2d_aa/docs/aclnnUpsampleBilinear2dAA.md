@@ -17,7 +17,7 @@
 
 - 接口功能：对由多个输入通道组成的输入信号应用2D双线性抗锯齿采样。
 
-- 计算公式：对于一个二维插值点$(N, C, H, W)$, 插值$I(N, C, H, W)$可以表示为：
+- 计算公式：对于一个二维插值点$(N, C, H, W)$，插值$I(N, C, H, W)$可以表示为：
   
   $$
   {I(N, C, H, W)} = \sum_{i=0}^{kW}\sum_{j=0}^{kH}{w(i) * w(j)} * {f(h_i, w_j)}/\sum_{i=0}^{kW}w(i)/\sum_{j=0}^{kH}w(j)
@@ -195,7 +195,7 @@ aclnnStatus aclnnUpsampleBilinear2dAA(
   </tbody>
   </table>
 
-* **返回值**：
+- **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   

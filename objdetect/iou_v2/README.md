@@ -21,7 +21,7 @@
 
   $$
   IOU = \frac {Area_3} {Area_1 + Area_2 - Area_3} \\
-  IOF = \frac {Area_3} {Area_2} 
+  IOF = \frac {Area_3} {Area_2}
   $$
 
   其中，Area_1为bBox的面积，Area_2为gtBox的面积，Area_3为两者重叠部分面积，x和y的定义见参数说明。
@@ -102,11 +102,11 @@
     </tr>
   </tbody></table>
 
-- Kirin X90/Kirin 9030 处理器系列产品: 不支持BFLOAT16。
+- Kirin X90/Kirin 9030 处理器系列产品：不支持BFLOAT16。
 
 ## 约束说明
 
-* 输入shape限制：输入shape为(N, 4)的二维张量，第二维的四个值(X1, Y1, X2, Y2)需满足X1 < X2, Y1 < Y2
+- 输入shape限制：输入shape为(N, 4)的二维张量，第二维的四个值(X1, Y1, X2, Y2)需满足X1 < X2, Y1 < Y2
 
 ## 调用说明
 

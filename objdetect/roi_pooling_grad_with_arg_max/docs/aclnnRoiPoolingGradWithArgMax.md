@@ -223,7 +223,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
       <td>pooledH、pooledW大于0。</td>
     </tr>
     <tr>
-      <td>rois[:, 1] 小于 rois[:, 2] 且 rois[:, 3] 小于 rois[:, 4]。</td>
+      <td>rois[:, 1] 小于rois[:, 2] 且rois[:, 3] 小于rois[:, 4]。</td>
     </tr>
     <tr>
       <td>rois.shape[0]、gradOutput.shape[0]小于等于1024。</td>
@@ -288,7 +288,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 - gradOutput、argmax的shape[2]等于pooledH和shape[3]等于pooledW。
 - rois的值大于等于0。
 - pooledH、pooledW大于0。
-- rois[:, 1] 小于 rois[:, 2] 且  rois[:, 3] 小于 rois[:, 4]。
+- rois[:, 1] 小于rois[:, 2] 且rois[:, 3] 小于rois[:, 4]。
 - rois.shape[0]、gradOutput.shape[0]小于等于1024。
 - 确定性计算：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品、Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：aclnnRoiPoolingGradWithArgMax默认确定性实现。

@@ -29,33 +29,33 @@
   其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
 
   - 反归一化的计算公式：
-   - alignCorners=true，表示特征值位于像素中心。
+    - alignCorners=true，表示特征值位于像素中心。
 
-     $$
-     x' = (grid\_x + 1) / 2 * (D_{in} - 1)
-     $$
+      $$
+      x' = (grid\_x + 1) / 2 * (D_{in} - 1)
+      $$
 
-     $$
-     y' = (grid\_y +1) / 2 * (H_{in} - 1)
-     $$
+      $$
+      y' = (grid\_y +1) / 2 * (H_{in} - 1)
+      $$
 
-     $$
-     z' = (grid\_z +1) / 2 * (W_{in} - 1)
-     $$
+      $$
+      z' = (grid\_z +1) / 2 * (W_{in} - 1)
+      $$
 
-   - alignCorners=false，表示特征值位于像素的角点。
+    - alignCorners=false，表示特征值位于像素的角点。
 
-     $$
-     x' = ((grid\_x +1) * D_{in} - 1) / 2
-     $$
+      $$
+      x' = ((grid\_x +1) * D_{in} - 1) / 2
+      $$
 
-     $$
-     y' = ((grid\_y +1) * H_{in} - 1) / 2
-     $$
+      $$
+      y' = ((grid\_y +1) * H_{in} - 1) / 2
+      $$
 
-     $$
-     z' = ((grid\_z +1) * W_{in} - 1) / 2
-     $$
+      $$
+      z' = ((grid\_z +1) * W_{in} - 1) / 2
+      $$
 
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
     - paddingMode=0，表示对越界位置用0填充。

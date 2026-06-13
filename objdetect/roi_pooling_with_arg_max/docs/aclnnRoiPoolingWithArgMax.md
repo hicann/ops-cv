@@ -15,13 +15,13 @@
 
 ## 功能说明
 
-- 接口功能：对输入特征图按 ROI（感兴趣区域）进行池化，在每个 ROI 内按空间划分为 `pooled_h × pooled_w` 个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。
+- 接口功能：对输入特征图按ROI（感兴趣区域）进行池化，在每个ROI内按空间划分为 `pooled_h × pooled_w` 个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。
 
 - 计算公式：
 
-  输入特征图 $x$ 的 shape 为 $(N, C, H, W)$，ROI 张量 $\text{rois}$ 的 shape 为 $(\text{num\_rois}, 5)$，每行表示 $(b_n, x_1, y_1, x_2, y_2)$。标量参数为 $s_h$、$s_w$（spatial_scale）以及 $\text{pooled\_h}$、$\text{pooled\_w}$。下标 $n$ 表示 ROI 索引，$c$ 表示通道，$(\text{ph}, \text{pw})$ 表示池化格点。
+  输入特征图 $x$ 的shape为 $(N, C, H, W)$，ROI张量 $\text{rois}$ 的shape为 $(\text{num\_rois}, 5)$，每行表示 $(b_n, x_1, y_1, x_2, y_2)$。标量参数为 $s_h$、$s_w$（spatial_scale）以及 $\text{pooled\_h}$、$\text{pooled\_w}$。下标 $n$ 表示ROI索引，$c$ 表示通道，$(\text{ph}, \text{pw})$ 表示池化格点。
 
-  - **ROI 映射到特征图**：将 ROI 坐标乘以 spatial_scale 得到特征图上的浮点区间：
+  - **ROI映射到特征图**：将ROI坐标乘以spatial_scale得到特征图上的浮点区间：
 
     $$
     \tilde{x}_1 = x_1 s_w,\quad \tilde{y}_1 = y_1 s_h,\quad \tilde{x}_2 = (x_2+1)s_w,\quad \tilde{y}_2 = (y_2+1)s_h
@@ -31,9 +31,9 @@
     W_{\text{roi}} = \tilde{x}_2 - \tilde{x}_1,\qquad H_{\text{roi}} = \tilde{y}_2 - \tilde{y}_1
     $$
 
-    若 $W_{\text{roi}} \le 0$ 或 $H_{\text{roi}} \le 0$，该 ROI 的 $y$ 全为 0，$\text{argmax}$ 全为 -1。
+    若 $W_{\text{roi}} \le 0$ 或 $H_{\text{roi}} \le 0$，该ROI的 $y$ 全为0，$\text{argmax}$ 全为 -1。
 
-  - **Bin 步长与区间**：每个池化格 (ph, pw) 对应 ROI 内一个 bin，步长与浮点区间为：
+  - **Bin步长与区间**：每个池化格(ph, pw)对应ROI内一个bin，步长与浮点区间为：
 
     $$
     \Delta w = \frac{W_{\text{roi}}}{\text{pooled\_w}},\qquad \Delta h = \frac{H_{\text{roi}}}{\text{pooled\_h}}
@@ -57,23 +57,23 @@
     h_1 = \text{clip}(\lfloor\tilde{h}_1\rfloor,\, 0,\, H),\quad h_2 = \text{clip}(\lceil\tilde{h}_2\rceil,\, 0,\, H)
     $$
 
-    其中 $\text{clip}(a,l,u) = \min(\max(a,l), u)$。若 $w_2 \le w_1$ 或 $h_2 \le h_1$，该 bin 为空：$y=0$，$\text{argmax}=-1$。
+    其中 $\text{clip}(a,l,u) = \min(\max(a,l), u)$。若 $w_2 \le w_1$ 或 $h_2 \le h_1$，该bin为空：$y=0$，$\text{argmax}=-1$。
 
-  - **池化输出与 Argmax**：记 $b = \text{rois}[n,0]$，bin 区域 $R = \{(h,w) : h_1 \le h < h_2,\, w_1 \le w < w_2\}$，则
+  - **池化输出与Argmax**：记 $b = \text{rois}[n,0]$，bin区域 $R = \{(h,w) : h_1 \le h < h_2,\, w_1 \le w < w_2\}$，则
 
     $$
     y[n,c,\text{ph},\text{pw}] = \max_{(h,w) \in R} x[b,c,h,w]
     $$
 
-    （空 $R$ 时为 0。）
+    （空$R$时为0）
 
     $$
     \text{argmax}[n,c,\text{ph},\text{pw}] = h^* W + w^*
     $$
 
-    $(h^*, w^*)$ 为 bin 内最大值位置（多解取第一个）；空 $R$ 为 -1。
+    $(h^*, w^*)$ 为bin内最大值位置（多解取第一个）；空 $R$ 为 -1。
 
-  - **输出 Shape**：
+  - **输出Shape**：
 
     | 输出 | Shape | 数据类型 |
     |------|--------|----------|
@@ -82,7 +82,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiPoolingWithArgMaxGetWorkspaceSize”接口获取计算所需 workspace 大小以及包含了算子计算流程的执行器，再调用“aclnnRoiPoolingWithArgMax”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnRoiPoolingWithArgMaxGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnRoiPoolingWithArgMax”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(
@@ -135,8 +135,8 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>x（aclTensor*）</td>
       <td>输入</td>
-      <td>输入特征图，格式为 NCHW，(N, C, H, W)。</td>
-      <td><ul><li>不支持空 Tensor。</li><li>输入维度必须为 4 维。</li><li>N需要为16的倍数。</li><li>N小于等于1024。</li></ul></td>
+      <td>输入特征图，格式为NCHW，(N, C, H, W)。</td>
+      <td><ul><li>不支持空Tensor。</li><li>输入维度必须为4维。</li><li>N需要为16的倍数。</li><li>N小于等于1024。</li></ul></td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
       <td>4</td>
@@ -145,8 +145,8 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>rois（aclTensor*）</td>
       <td>输入</td>
-      <td>ROI 框，每行 5 个元素：batch_idx, x1, y1, x2, y2。</td>
-      <td><ul><li>shape 为（num_rois，5），不支持空 Tensor。</li><li>第0维小于等于1024。</li><li>x1, y1, x2, y2大于等于0.0。</li></ul></td>
+      <td>ROI框，每行5个元素：batch_idx, x1, y1, x2, y2。</td>
+      <td><ul><li>shape为（num_rois，5），不支持空Tensor。</li><li>第0维小于等于1024。</li><li>x1, y1, x2, y2大于等于0.0。</li></ul></td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
       <td>2</td>
@@ -156,7 +156,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
       <td>pooled_h（int64_t）</td>
       <td>输入</td>
       <td>池化输出高度。</td>
-      <td>必须大于 0。</td>
+      <td>必须大于0。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -166,7 +166,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
       <td>pooled_w（int64_t）</td>
       <td>输入</td>
       <td>池化输出宽度。</td>
-      <td>必须大于 0。</td>
+      <td>必须大于0。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -175,8 +175,8 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>spatial_scale_h（float）</td>
       <td>输入</td>
-      <td>ROI 坐标映射到特征图时在高度方向的缩放比例。</td>
-      <td>必须大于 0。</td>
+      <td>ROI坐标映射到特征图时在高度方向的缩放比例。</td>
+      <td>必须大于0。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -185,8 +185,8 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>spatial_scale_w（float）</td>
       <td>输入</td>
-      <td>ROI 坐标映射到特征图时在宽度方向的缩放比例。</td>
-      <td>必须大于 0。</td>
+      <td>ROI坐标映射到特征图时在宽度方向的缩放比例。</td>
+      <td>必须大于0。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -195,8 +195,8 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>y（aclTensor*）</td>
       <td>输出</td>
-      <td>池化结果，shape 为（num_rois，C，pooled_h，pooled_w）。</td>
-      <td><ul><li>不支持空 Tensor。</li><li>数据类型与 x 一致。</li></ul></td>
+      <td>池化结果，shape为（num_rois，C，pooled_h，pooled_w）。</td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与x一致。</li></ul></td>
       <td>FLOAT32、FLOAT16</td>
       <td>ND</td>
       <td>4</td>
@@ -206,7 +206,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
       <td>argmax（aclTensor*）</td>
       <td>输出</td>
       <td>每个池化格点最大值在通道内的线性偏移索引。</td>
-      <td><ul><li>不支持空 Tensor。</li><li>shape 与 y 一致。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>shape与y一致。</li></ul></td>
       <td>INT32</td>
       <td>ND</td>
       <td>4</td>
@@ -215,7 +215,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
-      <td>返回需要在 Device 侧申请的 workspace 大小。</td>
+      <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -225,7 +225,7 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
-      <td>返回 op 执行器，包含了算子计算流程。</td>
+      <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -264,13 +264,13 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
       <td rowspan="5">161002</td>
     </tr>
     <tr>
-      <td>x、rois、y、argmax 的数据类型或格式不在支持范围内。</td>
+      <td>x、rois、y、argmax的数据类型或格式不在支持范围内。</td>
     </tr>
-    <tr><td>x 的 shape 不是 4 维（NCHW）。</td>
+    <tr><td>x的shape不是4维（NCHW）。</td>
     </tr>
-    <tr><td>rois 的 shape 第二维不是 5。</td>
+    <tr><td>rois的shape第二维不是5。</td>
     </tr>
-    <tr><td>pooled_h、pooled_w、spatial_scale_h、spatial_scale_w 不大于 0。</td>
+    <tr><td>pooled_h、pooled_w、spatial_scale_h、spatial_scale_w不大于0。</td>
     </tr>
   </tbody></table>
 
@@ -293,22 +293,22 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
     <tr>
       <td>workspace</td>
       <td>输入</td>
-      <td>在 Device 侧申请的 workspace 内存地址。</td>
+      <td>在Device侧申请的workspace内存地址。</td>
     </tr>
     <tr>
       <td>workspaceSize</td>
       <td>输入</td>
-      <td>在 Device 侧申请的 workspace 大小，由第一段接口 aclnnRoiPoolingWithArgMaxGetWorkspaceSize 获取。</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnRoiPoolingWithArgMaxGetWorkspaceSize获取。</td>
     </tr>
     <tr>
       <td>executor</td>
       <td>输入</td>
-      <td>op 执行器，包含了算子计算流程。</td>
+      <td>op执行器，包含了算子计算流程。</td>
     </tr>
     <tr>
       <td>stream</td>
       <td>输入</td>
-      <td>指定执行任务的 Stream。</td>
+      <td>指定执行任务的Stream。</td>
     </tr>
   </tbody>
   </table>
@@ -320,12 +320,12 @@ aclnnStatus aclnnRoiPoolingWithArgMax(
 ## 约束说明
 
 - 确定性计算：
-  - aclnnRoiPoolingWithArgMax 默认确定性实现。
+  - aclnnRoiPoolingWithArgMax默认确定性实现。
 - x、argmax、rois的shape[0]相等
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。实际调用时需先通过 opgen 生成 `aclnnop/aclnn_roi_pooling_with_arg_max.h`，若生成的头文件或接口签名不同，请以生成接口为准。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。实际调用时需先通过opgen生成 `aclnnop/aclnn_roi_pooling_with_arg_max.h`，若生成的头文件或接口签名不同，请以生成接口为准。
 
 ```Cpp
 #include <iostream>

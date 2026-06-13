@@ -13,19 +13,19 @@
 
 ## 功能说明
 
-- 算子功能：该算子根据张量 offsets 对输入张量 images 进行偏移变换，生成warp_images张量。
+- 算子功能：该算子根据张量offsets对输入张量images进行偏移变换，生成warp_images张量。
 
 ## 参数说明
 
 | 参数名                 | 输入/输出/属性 | 描述                                                                         | 数据类型                | 数据格式 |
 |---------------------|----------|----------------------------------------------------------------------------|---------------------|------|
-| images              | 输入       | 四维 Tensor，其 shape 为(batch, image_height, image_width, 3)。                  | UINT8、FLOAT16、FLOAT | ND   |
-| offsets             | 输入       | 四维 Tensor，其 shape 为(batch, 4, new_height, new_width)。                      | FLOAT、INT32         | ND   |
-| warp_images         | 输出       | 五维 Tensor，其 shape 为(batch, 4, new_height, new_width, 3)，数据类型与输入 images 相同。 | UINT8、FLOAT16、FLOAT             | ND   |
+| images              | 输入       | 四维Tensor，其shape为(batch, image_height, image_width, 3)。                  | UINT8、FLOAT16、FLOAT | ND   |
+| offsets             | 输入       | 四维Tensor，其shape为(batch, 4, new_height, new_width)。                      | FLOAT、INT32         | ND   |
+| warp_images         | 输出       | 五维Tensor，其shape为(batch, 4, new_height, new_width, 3)，数据类型与输入images相同。 | UINT8、FLOAT16、FLOAT             | ND   |
 
 ## 约束说明
 
-- 当 offsets 的数据类型为 INT32 时，images 必须为 FLOAT16。
+- 当offsets的数据类型为INT32时，images必须为FLOAT16。
 
 ## 调用说明
 
