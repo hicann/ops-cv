@@ -43,7 +43,7 @@ namespace GridSampler3DGradSimtBase {
     constexpr int32_t INDEX_ONE = 1;
     constexpr int32_t INDEX_TWO = 2;
     constexpr int32_t INDEX_THREE = 3;
-    constexpr int32_t COEFFS_LEN = 4;
+    constexpr int32_t COEFFS_LENS = 4;
     constexpr uint32_t VF_MAX_THREAD_NUM = 256;
     constexpr float DEFAULT_FAULT_VALUE = -100.0f;
 
@@ -201,7 +201,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CubicConv
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicUpsampleCoefficients(
     float coeffs[4], float t, size_t coeffsLen)
 {
-    if (coeffsLen == COEFFS_LEN) {
+    if (coeffsLen == COEFFS_LENS) {
         coeffs[INDEX_ZERO] = CubicConvolution2(t + 1.0f);
         coeffs[INDEX_ONE] = CubicConvolution1(t);
         coeffs[INDEX_TWO] = CubicConvolution1(1.0f - t);
@@ -217,7 +217,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCo
 {
     float A = -0.75f;
     float x;
-    if (coeffsLen == COEFFS_LEN) {
+    if (coeffsLen == COEFFS_LENS) {
         // d(CubicConv2(t+1))/dt = CubicConv2Grad(t+1)
         x = t + 1.0f;
         coeffs[INDEX_ZERO] = (3.0f * A * x - 10.0f * A) * x + 8.0f * A;
