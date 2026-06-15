@@ -181,14 +181,14 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
     // Compute forward cubic coefficients (for grad_input)
     float x_coeffs[4];
     float y_coeffs[4];
-    GetCubicUpsampleCoefficients(x_coeffs, tx);
-    GetCubicUpsampleCoefficients(y_coeffs, ty);
+    GetCubicUpsampleCoefficients(x_coeffs, tx, sizeof(x_coeffs));
+    GetCubicUpsampleCoefficients(y_coeffs, ty, sizeof(y_coeffs));
 
     // Compute gradient cubic coefficients (for grad_grid)
     float x_coeffs_grad[4];
     float y_coeffs_grad[4];
-    GetCubicCoefficientsGrad(x_coeffs_grad, tx);
-    GetCubicCoefficientsGrad(y_coeffs_grad, ty);
+    GetCubicCoefficientsGrad(x_coeffs_grad, tx, sizeof(x_coeffs_grad));
+    GetCubicCoefficientsGrad(y_coeffs_grad, ty, sizeof(y_coeffs_grad));
 
     int32_t ix_nw = static_cast<int32_t>(ix_nw_f);
     int32_t iy_nw = static_cast<int32_t>(iy_nw_f);

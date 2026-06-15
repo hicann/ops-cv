@@ -68,6 +68,7 @@ constexpr uint32_t CHANNEL_1024 = 1024;
 constexpr uint32_t BUFFER_NUM = 2;
 constexpr uint32_t CONST_SEVENTEEN = 17;
 constexpr uint32_t CONST_TWO = 2;
+constexpr uint32_t DET_UB_NUM = 16;
 constexpr uint32_t DIM_INDEX0 = 0;
 constexpr uint32_t DIM_INDEX1 = 1;
 constexpr uint32_t DIM_INDEX2 = 2;
@@ -452,7 +453,7 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
                 params.tilingKey += 6;
             }
             uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
-            return WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * 2 * 16 * params.batch * batchNumPerCore;
+            return WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * CONST_TWO * DET_UB_NUM * params.batch * batchNumPerCore;
         } else {
             return 0;
         }
@@ -464,20 +465,20 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
 static ge::graphStatus GetBicubicTiling(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
 {
     OP_LOGI(tilingContext->GetNodeName(), "strat to set bicubic TilingKey.");
-    if (dtype == ge::DT_FLOAT && params.interpolation == 2) {
+    if (dtype == ge::DT_FLOAT && params.interpolation == BICUBIC) {
         if (params.regBase) {
             params.tilingKey = REGBASE_FLOAT_BICUBIC_TILING_KEY; // mode13: float, bicubic, regBase
         } else {
             params.tilingKey = FLOAT_BICUBIC_TILING_KEY; // mode7: float, bicubic
         }
-    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 2) {
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == BICUBIC) {
         if (params.regBase) {
             params.tilingKey = REGBASE_FLOAT16_BICUBIC_TILING_KEY; // mode14: float16, bicubic, regBase
         } else {
             params.tilingKey = FLOAT16_BICUBIC_TILING_KEY; // mode8: float16, bicubic
         }
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_BF16 && params.interpolation == 2) {
+    } else if (dtype == ge::DT_BF16 && params.interpolation == BICUBIC) {
         if (params.regBase) {
             params.tilingKey = REGBASE_BFLOAT16_BICUBIC_TILING_KEY; // mode15: bfloat16, bicubic, regBase
         } else {
@@ -499,20 +500,20 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     size_t xWorkspaceSize = params.batch * params.channel * params.height * params.width * sizeof(float);
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
 
-    if (dtype == ge::DT_FLOAT && params.interpolation == 0) {
+    if (dtype == ge::DT_FLOAT && params.interpolation == BILINEAR) {
         params.tilingKey = FLOAT_BILINEAR_TILING_KEY; // mode1: float, bilinear
-    } else if (dtype == ge::DT_FLOAT && params.interpolation == 1) {
+    } else if (dtype == ge::DT_FLOAT && params.interpolation == NEAREST) {
         params.tilingKey = FLOAT_NEAREST_TILING_KEY; // mode2: float, nearest
-    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 0) {
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == BILINEAR) {
         params.tilingKey = FLOAT16_BILINEAR_TILING_KEY; // mode1: float16, bilinear
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == 1) {
+    } else if (dtype == ge::DT_FLOAT16 && params.interpolation == NEAREST) {
         params.tilingKey = FLOAT16_NEAREST_TILING_KEY; // mode2: float16, nearest
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_BF16 && params.interpolation == 0) {
+    } else if (dtype == ge::DT_BF16 && params.interpolation == BILINEAR) {
         params.tilingKey = BFLOAT16_BILINEAR_TILING_KEY; // mode1: bfloat16, bilinear
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
-    } else if (dtype == ge::DT_BF16 && params.interpolation == 1) {
+    } else if (dtype == ge::DT_BF16 && params.interpolation == NEAREST) {
         params.tilingKey = BFLOAT16_NEAREST_TILING_KEY; // mode2: bfloat16, nearest
         tilingContext->SetScheduleMode(SCHEDULE_MODE);
     }

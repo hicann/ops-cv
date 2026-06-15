@@ -64,6 +64,12 @@ constexpr uint32_t GRID_LAST_NUM = 3;
 constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
 constexpr uint32_t DETERMINISTIC_BATCH_NUM = 1;
 constexpr uint32_t DETERMINISTIC_COMPUTE_NUM = 16;
+constexpr uint32_t FLOAT32_TILING_KEY = 1;
+constexpr uint32_t FLOAT16_TILING_KEY = 2;
+constexpr uint32_t BFLOAT16_TILING_KEY = 3;
+constexpr uint32_t DET_FLOAT32_TILING_KEY = 4;
+constexpr uint32_t DET_FLOAT16_TILING_KEY = 5;
+constexpr uint32_t DET_BFLOAT16_TILING_KEY = 6;
 
 template <typename TilingData>
 class GridSampler3DGradTiling {
@@ -416,19 +422,19 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
     GetGridSampler3DGradTiling<GridSampler3DGradTilingData>(&tilingData, params, coreNum, availableUb, deterministic);
 
     if (inputDatatype == ge::DT_FLOAT) {
-        tilingContext->SetTilingKey(1);
+        tilingContext->SetTilingKey(FLOAT32_TILING_KEY);
         if (deterministic == 1 && compileInfo->regBase) {
-            tilingContext->SetTilingKey(4);
+            tilingContext->SetTilingKey(DET_FLOAT32_TILING_KEY);
         }
     } else if (inputDatatype == ge::DT_FLOAT16) {
-        tilingContext->SetTilingKey(2);
+        tilingContext->SetTilingKey(FLOAT16_TILING_KEY);
         if (deterministic == 1) {
-            tilingContext->SetTilingKey(5);
+            tilingContext->SetTilingKey(DET_FLOAT16_TILING_KEY);
         }
     } else if (inputDatatype == ge::DT_BF16) {
-        tilingContext->SetTilingKey(3);
+        tilingContext->SetTilingKey(BFLOAT16_TILING_KEY);
         if (deterministic == 1) {
-            tilingContext->SetTilingKey(6);
+            tilingContext->SetTilingKey(DET_BFLOAT16_TILING_KEY);
         }
     }
 
