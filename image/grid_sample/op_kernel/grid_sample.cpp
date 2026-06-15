@@ -49,7 +49,7 @@ extern "C" __global__ __aicore__ void grid_sample(GM_ADDR x, GM_ADDR grid, GM_AD
     GET_TILING_DATA(tilingData, tiling);
 
 #if __CCE_AICORE__ == 200
-    if (TILING_KEY_IS(1001220) || TILING_KEY_IS(1001220) || TILING_KEY_IS(1100220) || TILING_KEY_IS(1101220) ||
+    if (TILING_KEY_IS(1000220) || TILING_KEY_IS(1001220) || TILING_KEY_IS(1100220) || TILING_KEY_IS(1101220) ||
         TILING_KEY_IS(1200220) || TILING_KEY_IS(1201220) || TILING_KEY_IS(2200220) || TILING_KEY_IS(2201220)) {
         // 2D Bilinear fp32 slide window
         GridSample::GridSampler2DSlideWindow310P<float> op;
