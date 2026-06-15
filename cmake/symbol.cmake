@@ -150,12 +150,46 @@ function(gen_cust_optiling_symbol)
     )
 endfunction()
 
+function(merge_cust_graph_headers)
+  set(oneValueArgs TARGET OUT_DIR)
+  cmake_parse_arguments(MGPROTO "" "${oneValueArgs}" "" ${ARGN})
+  get_target_property(proto_headers ${OP_GRAPH_NAME}_proto_headers INTERFACE_SOURCES)
+  if(NOT proto_headers)
+    return()
+  endif()
+
+  set(MGPROTO_HEADER ${MGPROTO_OUT_DIR}/ops_proto_cv.h)
+  set(MGPROTO_SOURCE ${MGPROTO_OUT_DIR}/ops_proto_cv.cpp)
+
+  if(NOT TARGET merge_ops_proto)
+    merge_graph_headers(TARGET ${MGPROTO_TARGET}_headers OUT_DIR ${MGPROTO_OUT_DIR})
+  endif()
+  add_custom_command(
+    OUTPUT ${MGPROTO_SOURCE}
+    COMMAND ${CMAKE_COMMAND} -E copy
+      ${MGPROTO_HEADER}
+      ${MGPROTO_SOURCE}
+    DEPENDS ${MGPROTO_HEADER}
+    )
+  add_custom_target(${MGPROTO_TARGET} ALL DEPENDS ${MGPROTO_SOURCE})
+  if(TARGET merge_ops_proto)
+    add_dependencies(${MGPROTO_TARGET} merge_ops_proto)
+  elseif(TARGET ${MGPROTO_TARGET}_headers)
+    add_dependencies(${MGPROTO_TARGET} ${MGPROTO_TARGET}_headers)
+  endif()
+endfunction()
+
 function(gen_cust_proto_symbol)
   # op_proto
   if(NOT TARGET ${OPHOST_NAME}_infer_obj)
     return()
   endif()
   npu_op_library(cust_proto GRAPH)
+  merge_cust_graph_headers(TARGET cust_merge_ops_proto OUT_DIR ${ASCEND_GRAPH_CONF_DST})
+  if(TARGET cust_merge_ops_proto)
+    add_dependencies(cust_proto cust_merge_ops_proto)
+    target_sources(cust_proto PRIVATE ${ASCEND_GRAPH_CONF_DST}/ops_proto_cv.cpp)
+  endif()
   target_sources(
     cust_proto
     PUBLIC $<$<TARGET_EXISTS:${OPHOST_NAME}_infer_obj>:$<TARGET_OBJECTS:${OPHOST_NAME}_infer_obj>>
