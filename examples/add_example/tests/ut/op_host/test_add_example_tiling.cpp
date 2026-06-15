@@ -49,6 +49,7 @@ TEST_F(AddExampleTiling, add_example_0)
             /* attrs */
         },
         &compileInfo,
+        "Ascend910b",
         64,     // number of cores obtained in the tiling phase
         262144, // the ubsize obtained in the tiling phase, but the actual obtained value is 256 bytes less than the
                 // specified value
