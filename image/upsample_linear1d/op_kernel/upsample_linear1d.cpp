@@ -21,7 +21,6 @@ using namespace UpsampleLinear1d;
 extern "C" __global__ __aicore__ void upsample_linear1d(
     GM_ADDR input, GM_ADDR size, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
 {
-   
     GET_TILING_DATA(tilingData, tiling);
     GM_ADDR userWS = GetUserWorkspace(workspace);
     if (userWS == nullptr) {
