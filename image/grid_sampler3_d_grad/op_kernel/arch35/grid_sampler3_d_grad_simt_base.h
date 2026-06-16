@@ -117,13 +117,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float SafeDowng
     return coord;
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t GetFloorValue(float x)
-{
-    float negativeValue = static_cast<float>(0.0);
-    float floorFactor = static_cast<float>(-1);
-    return (x >= negativeValue ? static_cast<int32_t>(x) : static_cast<int32_t>(floorFactor + x));
-}
-
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetGradOutPointValueAndDxIndex(
     __gm__ T* gradOutGmAddr, int32_t inputXDepth, int32_t inputXHeight, int32_t inputXWidth, uint32_t gridD,
@@ -242,7 +235,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t Compute
     float coord, uint32_t size, uint32_t padding, uint32_t alignCorners)
 {
     if (padding == ZEROS) { // zeros
-        int32_t idx = GetFloorValue(coord);
+        int32_t idx = static_cast<int32_t>(floorf(coord));
         if (idx < 0 || idx >= static_cast<int32_t>(size)) {
             return -1; // out of bounds
         }

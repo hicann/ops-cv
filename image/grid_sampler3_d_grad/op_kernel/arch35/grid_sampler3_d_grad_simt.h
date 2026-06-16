@@ -191,9 +191,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBil
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,
     uint32_t channel, float* ixGradMultValue, float* iyGradMultValue, float* izGradMultValue)
 {
-    int32_t ix_tnw = GetFloorValue(ix);
-    int32_t iy_tnw = GetFloorValue(iy);
-    int32_t iz_tnw = GetFloorValue(iz);
+    int32_t ix_tnw = static_cast<int32_t>(floorf(ix));
+    int32_t iy_tnw = static_cast<int32_t>(floorf(iy));
+    int32_t iz_tnw = static_cast<int32_t>(floorf(iz));
 
     int32_t ix_t1 = ix_tnw + 1;
     int32_t iy_t1 = iy_tnw + 1;
@@ -237,9 +237,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
     uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW,
     uint32_t channel)
 {
-    int32_t ix_nearest = rintf(ix);
-    int32_t iy_nearest = rintf(iy);
-    int32_t iz_nearest = rintf(iz);
+    int32_t ix_nearest = static_cast<int32_t>(rintf(ix));
+    int32_t iy_nearest = static_cast<int32_t>(rintf(iy));
+    int32_t iz_nearest = static_cast<int32_t>(rintf(iz));
 
     for (uint32_t channelIndex = 0; channelIndex < channel; channelIndex++) {
         float gradOutValue = static_cast<float>(0.0);

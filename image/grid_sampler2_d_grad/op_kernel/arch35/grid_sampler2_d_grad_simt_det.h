@@ -154,8 +154,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBil
 float iy, float ix, uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, 
 uint32_t xH, uint32_t xW, uint32_t channel, float* ixGradMultValue, float* iyGradMultValue, uint32_t pNumPerCore, uint32_t blockNum, uint32_t blockId)
 {
-    int32_t ix_tnw = GetFloorValue(ix);
-    int32_t iy_tnw = GetFloorValue(iy);
+    int32_t ix_tnw = static_cast<int32_t>(floorf(ix));
+    int32_t iy_tnw = static_cast<int32_t>(floorf(iy));
 
     // get surfaces to each neighbor:
     float tnw = (ix_tnw + 1 - ix) * (iy_tnw + 1 - iy);
