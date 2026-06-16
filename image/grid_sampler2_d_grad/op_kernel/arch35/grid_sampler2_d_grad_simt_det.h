@@ -154,8 +154,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBil
 float iy, float ix, uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr, 
 uint32_t xH, uint32_t xW, uint32_t channel, float* ixGradMultValue, float* iyGradMultValue, uint32_t pNumPerCore, uint32_t blockNum, uint32_t blockId)
 {
-    int32_t ix_tnw = GetFloorValue(ix);
-    int32_t iy_tnw = GetFloorValue(iy);
+    int32_t ix_tnw = static_cast<int32_t>(floorf(ix));
+    int32_t iy_tnw = static_cast<int32_t>(floorf(iy));
 
     // get surfaces to each neighbor:
     float tnw = (ix_tnw + 1 - ix) * (iy_tnw + 1 - iy);
@@ -184,8 +184,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNea
     uint32_t channel, uint32_t pNumPerCore, uint32_t blockNum, uint32_t blockId)
 {
     uint32_t gridSize = gridH * gridW;
-    int32_t ix_nearest = rintf(ix);
-    int32_t iy_nearest = rintf(iy);
+    int32_t ix_nearest = static_cast<int32_t>(rintf(ix));
+    int32_t iy_nearest = static_cast<int32_t>(rintf(iy));
 
     for (uint32_t channelIndex = 0; channelIndex < channel; channelIndex++) {
         float gradOutValue = static_cast<float>(0.0);
@@ -259,14 +259,14 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
     // Compute forward cubic coefficients (for grad_input)
     float y_coeffs[4];
     float x_coeffs[4];
-    GetCubicUpsampleCoefficients(y_coeffs, ty, sizeof(y_coeffs));
-    GetCubicUpsampleCoefficients(x_coeffs, tx, sizeof(x_coeffs));
+    GetCubicUpsampleCoefficients(y_coeffs, ty, sizeof(y_coeffs) / sizeof(float));
+    GetCubicUpsampleCoefficients(x_coeffs, tx, sizeof(x_coeffs) / sizeof(float));
 
     // Compute gradient cubic coefficients (for grad_grid)
     float y_coeffs_grad[4];
     float x_coeffs_grad[4];
-    GetCubicCoefficientsGrad(y_coeffs_grad, ty, sizeof(y_coeffs_grad));
-    GetCubicCoefficientsGrad(x_coeffs_grad, tx, sizeof(x_coeffs_grad));
+    GetCubicCoefficientsGrad(y_coeffs_grad, ty, sizeof(y_coeffs_grad) / sizeof(float));
+    GetCubicCoefficientsGrad(x_coeffs_grad, tx, sizeof(x_coeffs_grad) / sizeof(float));
 
     float giy = static_cast<float>(0);
     float gix = static_cast<float>(0);
