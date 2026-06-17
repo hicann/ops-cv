@@ -365,7 +365,7 @@ function(prepare_compile_from_config)
   set(_ASCENDC_ENV_VAR)
   list(APPEND _ASCENDC_ENV_VAR export HI_PYTHON=${ASCEND_PYTHON_EXECUTABLE} &&)
   # whether need judging CMAKE_C_COMPILER_LAUNCHER
-  if(${CMAKE_CXX_COMPILER_LAUNCHER} MATCHES "ccache$")
+  if("${CMAKE_CXX_COMPILER_LAUNCHER}" MATCHES "ccache$")
     list(APPEND _ASCENDC_ENV_VAR export ASCENDC_CCACHE_EXECUTABLE=${CMAKE_CXX_COMPILER_LAUNCHER} &&)
   endif()
 

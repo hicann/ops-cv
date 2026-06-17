@@ -102,10 +102,14 @@ else ()
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "cmake build type")
 endif()
 
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-  set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
-  set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+option(ENABLE_CCACHE "Enable ccache" ON)
+message(STATUS "Enable ccache ${ENABLE_CCACHE}")
+if(ENABLE_CCACHE)
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+  endif()
 endif()
 
 # Cmake Compile配置
