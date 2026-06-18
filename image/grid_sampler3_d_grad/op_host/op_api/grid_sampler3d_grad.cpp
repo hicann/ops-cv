@@ -75,8 +75,8 @@ const std::tuple<aclTensor*, aclTensor*> GridSampler3DGrad(
     bool checkDtypeSupport = CheckType(gradOutput->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
                              CheckType(input->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
                              CheckType(grid->GetDataType(), AICORE_DTYPE_SUPPORT_LIST);
-    if ((curArch == NpuArch::DAV_2201) && checkDtypeSupport && channel <= AICORE_CHANNEL_LIMIT ||
-        (curArch == NpuArch::DAV_3510) && checkDtypeSupport) {
+    if ((curArch == NpuArch::DAV_2201 || curArch == NpuArch::DAV_3510) && channel <= AICORE_CHANNEL_LIMIT &&
+        checkDtypeSupport) {
         // aicore kernel
         OP_LOGD("GridSampler3DGrad AiCore Kernel.");
         auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
