@@ -190,7 +190,7 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckDtype()
 ge::graphStatus NMSWithMaskRegbaseTiling::SetTilingData()
 {
     OP_LOGD(tilingContext_, "Entering NMSWithMaskRegbaseTiling::SetTilingData");
-    auto compileInfo = reinterpret_cast<const NMSWithMaskCompileInfo*>(tilingContext_->GetCompileInfo());
+    auto compileInfo = static_cast<const NMSWithMaskCompileInfo*>(tilingContext_->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, compileInfo);
     auto vectorCoreNum = compileInfo->coreNum;
     tilingData_ = tilingContext_->GetTilingData<NMSWithMaskTilingData>();
@@ -234,7 +234,7 @@ ge::graphStatus NMSWithMaskRegbaseTiling::SetTilingData()
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, rawTilingData);
     size_t tilingDataSize = sizeof(NMSWithMaskTilingData);
     errno_t ret = memcpy_s(
-        rawTilingData->GetData(), rawTilingData->GetCapacity(), reinterpret_cast<void*>(tilingData_), tilingDataSize);
+        rawTilingData->GetData(), rawTilingData->GetCapacity(), static_cast<void*>(tilingData_), tilingDataSize);
     OP_CHECK_IF(ret != EOK, OP_LOGE(tilingContext_, "Save tiling data to buffer failed!"), return ge::GRAPH_FAILED);
     rawTilingData->SetDataSize(tilingDataSize);
     tilingContext_->SetBlockDim(usedCoreNum_);
@@ -282,7 +282,7 @@ static ge::graphStatus Tiling4NMSWithMask(gert::TilingContext* context)
 {
     OP_LOGD(context, "Entering Tiling4NMSWithMask");
     OP_CHECK_IF(context == nullptr, OP_LOGE(context, "tiling context is nullptr"), return ge::GRAPH_FAILED);
-    auto compileInfo = reinterpret_cast<const NMSWithMaskCompileInfo*>(context->GetCompileInfo());
+    auto compileInfo = static_cast<const NMSWithMaskCompileInfo*>(context->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
     OP_LOGD(context, "Entering Tiling4NMSWithMaskRegbase");
     NMSWithMaskRegbaseTiling opTiling(context);

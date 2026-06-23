@@ -13,7 +13,6 @@
  * \brief nms_with_mask op_host
  */
 
-#include <cstdint>
 #include "register/op_def_registry.h"
 namespace ops {
 class NMSWithMask : public OpDef {
