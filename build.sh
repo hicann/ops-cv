@@ -147,7 +147,7 @@ usage() {
         echo "Package Build Options:"
         echo $dotted_line
         echo "    --pkg                  Build run package with kernel bin"
-        echo "    --static               Build static library package (cannot be used with --jit)"
+        echo "    --static               Build static library package"
         echo "    --jit                  Build run package without kernel bin"
         echo "    --soc=soc_version      Compile for specified Ascend SoC"
         echo "    --vendor_name=name     Specify custom operator package vendor name"
@@ -549,10 +549,6 @@ check_param() {
       exit 1
     fi
 
-    if $(echo ${USE_CMD} | grep -wq "jit"); then
-      ENABLE_BINARY=FALSE
-    fi
-
     if [ -n "$BISHENG_FLAGS" ]; then
       if [[ "$ENABLE_MSSANITIZER" == "TRUE" || "$ENABLE_OOM" == "TRUE" || "$ENABLE_DUMP_CCE" == "TRUE" ]]; then
         echo "[ERROR] --bisheng_flags= cannot be used with --mssanitizer, --oom, --dump_cce"
@@ -568,13 +564,13 @@ check_param() {
     fi
   fi
 
-  if $(echo ${USE_CMD} | grep -wq "static") && $(echo ${USE_CMD} | grep -wq "jit"); then
-    echo "[ERROR] --static cannot be used with --jit"
+  if $(echo ${USE_CMD} | grep -wq "static") && [[ "$ENABLE_PACKAGE" != "TRUE" ]]; then
+    echo "[ERROR] --static can only be used with --pkg"
     exit 1
   fi
 
-  if $(echo ${USE_CMD} | grep -wq "static") && [[ "$ENABLE_PACKAGE" != "TRUE" ]]; then
-    echo "[ERROR] --static can only be used with --pkg"
+  if [[ "$ENABLE_STATIC" == "TRUE" && "$ENABLE_JIT" == "TRUE" && "$ENABLE_CUSTOM" == "TRUE" ]]; then
+    echo "[ERROR] --static with --jit cannot be used with --ops, --vendor_name, or --experimental"
     exit 1
   fi
 
@@ -983,6 +979,10 @@ checkopts() {
     esac
   done
 
+  if [[ "$ENABLE_JIT" == "TRUE" ]]; then
+    ENABLE_BINARY=FALSE
+  fi
+
   check_param
   set_create_libs
   parse_changed_files
@@ -1246,10 +1246,14 @@ build_static_lib() {
     UNITS+=("ascend910b")
   fi
   cmake --build . --target opapi_cv_static -- ${VERBOSE} -j $THREAD_NUM
+  local jit_command=""
+  if [[ "$ENABLE_JIT" == "TRUE" ]]; then
+    jit_command="-j"
+  fi
   for unit in "${UNITS[@]}"; do
     rm -fr "${BUILD_PATH}/bin_tmp/${unit}"
-    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" GenStaticOpResourceIni -s ${unit} -b "${BUILD_PATH}"
-    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" StaticCompile -s ${unit} -b "${BUILD_PATH}" -n=0 -a=${ARCH_INFO}
+    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" GenStaticOpResourceIni -s ${unit} -b "${BUILD_PATH}" ${jit_command}
+    python3 "${BASE_PATH}/scripts/util/build_opp_kernel_static.py" StaticCompile -s ${unit} -b "${BUILD_PATH}" -n=0 -a=${ARCH_INFO} ${jit_command}
   done
   cd "${BUILD_PATH}" && cmake ${CMAKE_ARGS} ..
   cmake --build . --target cann_cv_static -- ${VERBOSE} -j $THREAD_NUM

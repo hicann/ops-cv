@@ -182,7 +182,7 @@ def compile_static_library(args):
     if cpu_aarch not in [Const.x86, Const.arm]:
         raise Exception(f"Input cpu_aarch<{cpu_aarch}> Error, Please input parase.")
 
-    ops_compile_files = GenOpResourceIni(args.soc_version, args.build_dir).analyze_ops_files()
+    ops_compile_files = GenOpResourceIni(args.soc_version, args.build_dir, args.jit).analyze_ops_files()
     csl = CompileOpStaticLib(ops_compile_files,
                              os.path.join(args.build_dir, f"bin_tmp/{args.soc_version}"), index_num, cpu_aarch)
     ret = csl.exec_compile()
@@ -197,6 +197,8 @@ def parser_compile_static_library(subparsers):
                                     help="Operator Name, eg: ascend910b, ascend310p")
     compile_lib_parser.add_argument('-b', '--build_dir', type=str, required=True, dest="build_dir",
                                     help="Input build dir for this project")
+    compile_lib_parser.add_argument('-j', '--jit', action='store_true', dest="jit",
+                                    help="Compile static libraries(.a) with cann package")
     compile_lib_parser.add_argument('-n', '--index_num', type=int, required=True, dest="index_num",
                                     help="Please input distributed compilation idx")
     compile_lib_parser.add_argument('-a', '--cpu_aarch', type=str, required=True, dest="cpu_aarch",
@@ -224,17 +226,25 @@ class OpResource:
 
 
 class GenOpResourceIni:
-    def __init__(self, soc_version: str, build_dir: str):
+    def __init__(self, soc_version: str, build_dir: str, build_with_package: bool):
         self._soc_version = soc_version
         self._build_dir = Path(build_dir)
-        self._binary_path = self._build_dir / "binary" / self._soc_version / "bin"
-        self._tuning_basic_path = self._build_dir / "tbe/config" / self._soc_version
-        ops_info = self._binary_path / "config" / self._soc_version
+        self._build_with_package = build_with_package
+        opp_path = os.environ.get('ASCEND_OPP_PATH')
+        if build_with_package and opp_path:
+            opp_path = Path(opp_path)
+            self._binary_path = opp_path / "built-in/op_impl/ai_core/tbe/kernel"
+            self._tuning_basic_path = opp_path / "built-in/data/op"
+            ops_info = self._binary_path / "config" / self._soc_version / "ops_cv"
+        else:
+            self._binary_path = self._build_dir / "binary" / self._soc_version / "bin"
+            self._tuning_basic_path = self._build_dir / "tbe/config" / self._soc_version
+            ops_info = self._binary_path / "config" / self._soc_version
         self._ops_info = list(ops_info.glob(f"*.json"))
         self._op_resource_path = self._build_dir / "bin_tmp" / self._soc_version / "aclnnop_resource"
         self._op_res: Dict[str, OpResource] = defaultdict(OpResource)
         self._l0op_list = []
-        if not self._tuning_basic_path.exists():
+        if not self._tuning_basic_path.exists() and not build_with_package:
             raise Exception(f"tuning path not exists, path: {self._tuning_basic_path}")
 
     TILING_REG_DECL_FMT = """
@@ -422,7 +432,11 @@ const OP_BINARY_RES& {op_type}KernelResource() {{
                 continue
             with open(json_path, "r") as op_json_fd:
                 op_json_content = json.load(op_json_fd)
-            bin_json_file = self._binary_path / op_json_content["binList"][0]["binInfo"]["jsonFilePath"]
+            json_file_path = op_json_content["binList"][0]["binInfo"]["jsonFilePath"]
+            if self._build_with_package:
+                json_file_path = json_file_path.replace(f"{self._soc_version}/",
+                                                        f"{self._soc_version}/ops_cv/", 1)
+            bin_json_file = self._binary_path / json_file_path
             ops_path = os.path.dirname(bin_json_file)
             ops = op_json_content["binList"][0]["simplifiedKey"][0].split("/")[0]
             self._op_res[ops].binary_config_files.append(json_path)
@@ -584,7 +598,7 @@ def generate_op_resource_h_file(args):
     soc_version: str = args.soc_version
     build_dir = args.build_dir
 
-    gen_ini = GenOpResourceIni(soc_version, build_dir)
+    gen_ini = GenOpResourceIni(soc_version, build_dir, args.jit)
     gen_ini.gen_ops_ini_files()
     return
 
@@ -596,6 +610,8 @@ def parser_generate_op_resource_h_file(subparsers):
                                          help="Operator Name, eg: ascend910b, ascend310p")
     gen_resource_ini_parser.add_argument('-b', '--build_dir', type=str, required=True, dest="build_dir",
                                          help="Input build dir for this project")
+    gen_resource_ini_parser.add_argument('-j', '--jit', action='store_true', dest="jit",
+                                         help="Generate xxx_op_resource.h with cann package")
 
     gen_resource_ini_parser.set_defaults(func=generate_op_resource_h_file)
 
