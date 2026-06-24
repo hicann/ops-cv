@@ -115,7 +115,12 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_03)
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_04)
 {
     gert::StorageShape inputXShape = {{1, 3, 16}, {1, 3, 16}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{1, 3, 64}, {1, 3, 64}};
     int size_value[1] = {64};
 
@@ -136,7 +141,12 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_04)
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_05)
 {
     gert::StorageShape inputXShape = {{2, 5, 1}, {2, 5, 1}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{2, 5, 12}, {2, 5, 12}};
     int size_value[1] = {12};
 
@@ -157,7 +167,12 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_05)
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_06)
 {
     gert::StorageShape inputXShape = {{1, 3, 64}, {1, 3, 64}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{1, 3, 1}, {1, 3, 1}};
     int size_value[1] = {1};
 
@@ -178,7 +193,12 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_06)
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_07)
 {
     gert::StorageShape inputXShape = {{1, 3, 32}, {1, 3, 32}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{1, 3, 50}, {1, 3, 50}};
     int size_value[1] = {50};
 
