@@ -37,8 +37,8 @@ extern "C" {
  * @return aclnnStatus: 返回状态码。
  */
 __attribute__((visibility("default"))) aclnnStatus aclnnUpsampleBicubic2dAAGradGetWorkspaceSize(
-    const aclTensor *gradOutput, const aclIntArray *outputSize, const aclIntArray *inputSize, bool alignCorners,
-    double scalesH, double scalesW, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor);
+    const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize, bool alignCorners,
+    double scalesH, double scalesW, aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor);
 
 /**
  * @brief aclnnUpsampleBicubic2dAAGrad的第二段接口，用于执行计算。
@@ -52,8 +52,9 @@ __attribute__((visibility("default"))) aclnnStatus aclnnUpsampleBicubic2dAAGradG
  * @param [in] stream: 指定执行任务的AscendCL Stream流。
  * @return aclnnStatus: 返回状态码。
  */
-__attribute__((visibility("default"))) aclnnStatus aclnnUpsampleBicubic2dAAGrad(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream);
+__attribute__((visibility("default"))) aclnnStatus aclnnUpsampleBicubic2dAAGrad(void* workspace, uint64_t workspaceSize,
+                                                                                aclOpExecutor* executor,
+                                                                                aclrtStream stream);
 
 #ifdef __cplusplus
 }

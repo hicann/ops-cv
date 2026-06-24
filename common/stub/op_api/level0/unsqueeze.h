@@ -11,14 +11,14 @@
 #ifndef COMMON_INC_EXTERNAL_LEVEL0_UNSQUEEZE_H
 #define COMMON_INC_EXTERNAL_LEVEL0_UNSQUEEZE_H
 
-# include "opdev/op_def.h"
+#include "opdev/op_def.h"
 
 namespace l0op {
 
-const aclTensor *UnsqueezeNd(const aclTensor *x, const aclIntArray* dim, aclOpExecutor *executor);
+const aclTensor* UnsqueezeNd(const aclTensor* x, const aclIntArray* dim, aclOpExecutor* executor);
 
-const aclTensor *UnsqueezeNd(const aclTensor *x, int64_t dim, aclOpExecutor *executor);
+const aclTensor* UnsqueezeNd(const aclTensor* x, int64_t dim, aclOpExecutor* executor);
 
-} // l0op
+} // namespace l0op
 
-#endif  // COMMON_INC_EXTERNAL_LEVEL0_UNSQUEEZE_H
+#endif // COMMON_INC_EXTERNAL_LEVEL0_UNSQUEEZE_H

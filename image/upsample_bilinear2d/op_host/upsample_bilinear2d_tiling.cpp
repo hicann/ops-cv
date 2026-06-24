@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -63,14 +63,14 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinear2dTiling {
 public:
-    explicit UpsampleBilinear2dTiling(gert::TilingContext *context) : tilingContext(context){};
+    explicit UpsampleBilinear2dTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus RunBigKernelTiling();
 
 private:
     void setScale();
     void get_scale_from_out();
-    inline float compute_scale_value(
-        const int64_t inputSize, const int64_t outputSize, const bool alignCorners, const float scale) const;
+    inline float compute_scale_value(const int64_t inputSize, const int64_t outputSize, const bool alignCorners,
+                                     const float scale) const;
     bool getWorkSpace(const uint32_t needCoreNum);
     void getShapes();
     void setSlideSize(const uint32_t coreNumPlatFormInfo);
@@ -84,8 +84,7 @@ private:
     void FillTilingData();
     void getTCubeTiling_w();
     void getTCubeTiling_h();
-    inline bool CheckScales(
-        const gert::TilingContext *context, const float scales_w, const float scales_h) const;
+    inline bool CheckScales(const gert::TilingContext* context, const float scales_w, const float scales_h) const;
     inline int64_t getSingleCoreK(const int64_t slideSize, const float scale, const bool alignCorners) const;
     template <typename T1, typename T2>
     inline T1 CeilA2B(T1 m, T2 n) const;
@@ -97,12 +96,12 @@ private:
     int64_t slide_size_w{16};
     int64_t slide_size_h{16};
     UpsampleBilinear2dTilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize{4};
     gert::Shape input_shape;
     gert::Shape output_shape;
-    const bool *align_corners{nullptr};
+    const bool* align_corners{nullptr};
     float scale_h = 0.0f;
     float scale_w = 0.0f;
     float realScale_h{0.0f};
@@ -111,11 +110,8 @@ private:
     int64_t output_shapes[4] = {0};
     int64_t input_shapes[4] = {0};
 
-    int64_t slide_size_list[5] = {BEST_PERFORMANCE_SIZE_16,
-        BEST_PERFORMANCE_SIZE_32,
-        BEST_PERFORMANCE_SIZE_48,
-        BEST_PERFORMANCE_SIZE_64,
-        BEST_PERFORMANCE_SIZE_128};
+    int64_t slide_size_list[5] = {BEST_PERFORMANCE_SIZE_16, BEST_PERFORMANCE_SIZE_32, BEST_PERFORMANCE_SIZE_48,
+                                  BEST_PERFORMANCE_SIZE_64, BEST_PERFORMANCE_SIZE_128};
 
     TCubeTiling matmulTiling_w;
     TCubeTiling matmulTiling_h;
@@ -134,16 +130,16 @@ void UpsampleBilinear2dTiling::setScale()
 
 void UpsampleBilinear2dTiling::get_scale_from_out()
 {
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
-    const gert::ContinuousVector *scalesAttr = attrs->GetAttrPointer<gert::ContinuousVector>(SCALES_ATTR);
-    const float *scalesArray = reinterpret_cast<const float *>(scalesAttr->GetData());
+    const gert::ContinuousVector* scalesAttr = attrs->GetAttrPointer<gert::ContinuousVector>(SCALES_ATTR);
+    const float* scalesArray = reinterpret_cast<const float*>(scalesAttr->GetData());
     scale_h = scalesArray[DIM_ZERO];
     scale_w = scalesArray[DIM_ONE];
 }
 
-inline float UpsampleBilinear2dTiling::compute_scale_value(
-    const int64_t inputSize, const int64_t outputSize, const bool alignCorners, const float scale) const
+inline float UpsampleBilinear2dTiling::compute_scale_value(const int64_t inputSize, const int64_t outputSize,
+                                                           const bool alignCorners, const float scale) const
 {
     if (outputSize == inputSize) {
         return static_cast<float>(1);
@@ -159,16 +155,14 @@ inline float UpsampleBilinear2dTiling::compute_scale_value(
     }
 }
 
-inline bool UpsampleBilinear2dTiling::CheckScales(
-    const gert::TilingContext *context, const float scales_w, const float scales_h) const
+inline bool UpsampleBilinear2dTiling::CheckScales(const gert::TilingContext* context, const float scales_w,
+                                                  const float scales_h) const
 {
     // 2D限制50倍
     OP_CHECK_IF((scales_h > MAX_SUPPORT_SHRINK_SCALE || scales_w > MAX_SUPPORT_SHRINK_SCALE),
-        OP_LOGE(context->GetNodeName(),
-            "Scales should not exceed 50, but got scale (scales_w: %f, scales_h: %f) ",
-            scales_w,
-            scales_h),
-        return false);
+                OP_LOGE(context->GetNodeName(),
+                        "Scales should not exceed 50, but got scale (scales_w: %f, scales_h: %f) ", scales_w, scales_h),
+                return false);
     return true;
 }
 
@@ -211,7 +205,7 @@ ge::graphStatus UpsampleBilinear2dTiling::RunBigKernelTiling()
     input_shape = srcShape->GetOriginShape();
     output_shape = dstShape->GetOriginShape();
 
-    auto compileTilingInfo = reinterpret_cast<const UpsampleBilinear2dCompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileTilingInfo = reinterpret_cast<const UpsampleBilinear2dCompileInfo*>(tilingContext->GetCompileInfo());
     if (compileTilingInfo == nullptr) {
         return ge::GRAPH_FAILED;
     }
@@ -275,10 +269,9 @@ void UpsampleBilinear2dTiling::getTCubeTiling_w()
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
     mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX],
-        output_shapes[W_INDEX],
-        input_shapes[W_INDEX]);
-    mmTiling_w.SetShape(
-        input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX], slide_size_w, singleCoreK_w);
+                           output_shapes[W_INDEX], input_shapes[W_INDEX]);
+    mmTiling_w.SetShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX], slide_size_w,
+                        singleCoreK_w);
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
         return;
     }
@@ -302,13 +295,13 @@ void UpsampleBilinear2dTiling::getTCubeTiling_h()
 // 先只算w方向
 bool UpsampleBilinear2dTiling::getWorkSpace(const uint32_t needCoreNum)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces == nullptr) {
         return false;
     }
     // 中间tensor
-    uint64_t intermediate_matrix_size =
-        output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] * dataTypeSize;
+    uint64_t intermediate_matrix_size = output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] *
+                                        dataTypeSize;
     intermediate_matrix_size = (intermediate_matrix_size + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
     int64_t singleCoreK = singleCoreK_w > singleCoreK_h ? singleCoreK_w : singleCoreK_h;
@@ -343,8 +336,8 @@ void UpsampleBilinear2dTiling::setSlideSize(const uint32_t coreNumPlatFormInfo)
     tilingData.set_slide_size_h(slide_size_h);
 }
 
-inline int64_t UpsampleBilinear2dTiling::getSlideSizeByScale(
-    const uint32_t coreNumPlatFormInfo, uint8_t direction, float realScale)
+inline int64_t UpsampleBilinear2dTiling::getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, uint8_t direction,
+                                                             float realScale)
 {
     int64_t slideSize = 16;
 
@@ -404,8 +397,8 @@ inline int32_t UpsampleBilinear2dTiling::Ceil(T1 x) const
     return floor_x + 1;
 }
 
-inline int64_t UpsampleBilinear2dTiling::getSingleCoreK(
-    const int64_t slideSize, const float scale, const bool alignCorners) const
+inline int64_t UpsampleBilinear2dTiling::getSingleCoreK(const int64_t slideSize, const float scale,
+                                                        const bool alignCorners) const
 {
     float relIdx = 0;
     float calSize = std::max(0.0f, static_cast<float>(slideSize - 1));
@@ -446,8 +439,8 @@ uint64_t UpsampleBilinear2dTiling::GetDataTypeVal() const
     }
 }
 
-uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumW(
-    const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size)
+uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumW(const uint32_t coreNumPlatform, uint8_t isCalculate,
+                                                   int64_t slide_size)
 {
     int64_t outputSizeW = output_shapes[3];
     int64_t slideNumW = CeilA2B(outputSizeW, slide_size);
@@ -496,8 +489,8 @@ uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumW(
     return needCoreNum;
 }
 
-uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumH(
-    const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size)
+uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumH(const uint32_t coreNumPlatform, uint8_t isCalculate,
+                                                   int64_t slide_size)
 {
     int64_t outputSize = output_shapes[2];
     int64_t slideNum = CeilA2B(outputSize, slide_size);
@@ -545,19 +538,19 @@ uint32_t UpsampleBilinear2dTiling::GetNeedCoreNumH(
 void UpsampleBilinear2dTiling::FillTilingData()
 {
     tilingData.set_dataType(GetDataTypeVal());
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
-static ge::graphStatus tiling4UpsampleBilinear2dTiling(gert::TilingContext *context)
+static ge::graphStatus tiling4UpsampleBilinear2dTiling(gert::TilingContext* context)
 {
     UpsampleBilinear2dTiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 
-static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
+static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleBilinear2dCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
@@ -566,13 +559,13 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
-        OP_LOGE(
-            context->GetNodeName(), "UpsampleBilinear2d GetHardwareInfo Failed, vectorCoreNum:%u", compileInfo->coreNum),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "UpsampleBilinear2d GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->coreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
 IMPL_OP_OPTILING(UpsampleBilinear2d)
     .Tiling(tiling4UpsampleBilinear2dTiling)
     .TilingParse<UpsampleBilinear2dCompileInfo>(tilingPrepareTiling);
-}  // namespace optiling
+} // namespace optiling

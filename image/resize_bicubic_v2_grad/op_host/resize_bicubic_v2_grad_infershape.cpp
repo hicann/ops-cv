@@ -38,20 +38,17 @@ ge::graphStatus ResizeBicubicV2GradInferShape(gert::InferShapeContext* context)
     auto gradsDesc = context->GetInputDesc(IN_GRADS);
     OP_CHECK_NULL_WITH_CONTEXT(context, gradsDesc);
     auto gradsFormat = gradsDesc->GetFormat().GetStorageFormat();
-    OP_CHECK_IF(
-        (gradsFormat != FORMAT_NCHW) && (gradsFormat != FORMAT_NHWC),
-        OP_LOGE(nodeName, "grads format only support nchw,nhwc"), return GRAPH_FAILED);
+    OP_CHECK_IF((gradsFormat != FORMAT_NCHW) && (gradsFormat != FORMAT_NHWC),
+                OP_LOGE(nodeName, "grads format only support nchw,nhwc"), return GRAPH_FAILED);
     const size_t hIdx = gradsFormat == FORMAT_NCHW ? 2 : 1;
 
     if (Ops::Base::IsUnknownRank(*imageShape)) {
         Ops::Base::SetUnknownShape(IN_GRADS_DIMS, *yShape);
     } else {
-        OP_CHECK_IF(
-            imageShape->GetDimNum() != IN_GRADS_DIMS, OP_LOGE(nodeName, "original_image shape only support 4D"),
-            return GRAPH_FAILED);
-        OP_CHECK_IF(
-            (imageShape->GetDim(hIdx) == 0) || (imageShape->GetDim(hIdx + 1) == 0),
-            OP_LOGE(nodeName, "original_image size should be greater than 0"), return GRAPH_FAILED);
+        OP_CHECK_IF(imageShape->GetDimNum() != IN_GRADS_DIMS, OP_LOGE(nodeName, "original_image shape only support 4D"),
+                    return GRAPH_FAILED);
+        OP_CHECK_IF((imageShape->GetDim(hIdx) == 0) || (imageShape->GetDim(hIdx + 1) == 0),
+                    OP_LOGE(nodeName, "original_image size should be greater than 0"), return GRAPH_FAILED);
         *yShape = *imageShape;
     }
 
@@ -64,9 +61,9 @@ graphStatus ResizeBicubicV2GradInferDtype(gert::InferDataTypeContext* context)
     OP_LOGI(context->GetNodeName(), "Begin to do ResizeBicubicV2GradInferDtype");
 
     auto gradsDtype = context->GetInputDataType(IN_GRADS);
-    OP_CHECK_IF(
-        (gradsDtype != ge::DT_FLOAT) && (gradsDtype != ge::DT_FLOAT16) && (gradsDtype != ge::DT_BF16),
-        OP_LOGE(context->GetNodeName(), "grads dtype only support float, float16 and bfloat16"), return GRAPH_FAILED);
+    OP_CHECK_IF((gradsDtype != ge::DT_FLOAT) && (gradsDtype != ge::DT_FLOAT16) && (gradsDtype != ge::DT_BF16),
+                OP_LOGE(context->GetNodeName(), "grads dtype only support float, float16 and bfloat16"),
+                return GRAPH_FAILED);
 
     context->SetOutputDataType(OUT_Y, gradsDtype);
 

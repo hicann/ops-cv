@@ -22,34 +22,30 @@
 using namespace ge;
 using namespace std;
 
-class TilingForRoiPoolingWithArgMax : public testing::Test
-{
+class TilingForRoiPoolingWithArgMax : public testing::Test {
 protected:
-  static void SetUpTestCase()
-  {
-    std::cout << "RoiPoolingWithArgMaxTiling SetUp" << std::endl;
-  }
+    static void SetUpTestCase() { std::cout << "RoiPoolingWithArgMaxTiling SetUp" << std::endl; }
 
-  static void TearDownTestCase()
-  {
-    std::cout << "RoiPoolingWithArgMaxTiling TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "RoiPoolingWithArgMaxTiling TearDown" << std::endl; }
 };
 
 TEST_F(TilingForRoiPoolingWithArgMax, roi_pooling_with_arg_max_tiling_case0)
 {
     optiling::RoiPoolingWithArgMaxCompileInfo compileInfo{};
-    gert::TilingContextPara tilingContextPara("RoiPoolingWithArgMax",
-                                                {{{{2, 16, 25, 42}, {2, 16, 25, 42}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 5}, {2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 16, 3, 3}, {2, 16, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 16, 3, 3}, {2, 16, 3, 3}}, ge::DT_INT32, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
-                                                    gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
-                                                    gert::TilingContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
-                                                    gert::TilingContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
-                                                    gert::TilingContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(16)),},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "RoiPoolingWithArgMax",
+        {{{{2, 16, 25, 42}, {2, 16, 25, 42}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 5}, {2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 16, 3, 3}, {2, 16, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 16, 3, 3}, {2, 16, 3, 3}}, ge::DT_INT32, ge::FORMAT_ND}},
+        {
+            gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::TilingContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+            gert::TilingContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+            gert::TilingContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(16)),
+        },
+        &compileInfo);
     TilingInfo tilingInfo;
     bool tilingOk = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_TRUE(tilingOk);

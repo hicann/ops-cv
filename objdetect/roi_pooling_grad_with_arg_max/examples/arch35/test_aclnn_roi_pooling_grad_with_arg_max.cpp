@@ -15,7 +15,6 @@
 #include <iostream>
 using namespace std;
 
-
 #define CHECK_RET(cond, return_expr) \
     do {                             \
         if (!(cond)) {               \
@@ -41,9 +40,8 @@ void PrintOutResult(std::vector<int64_t>& shape, void** deviceAddr)
 {
     auto size = GetShapeSize(shape);
     std::vector<float> resultData(size, 0);
-    auto ret = aclrtMemcpy(
-        resultData.data(), resultData.size() * sizeof(resultData[0]), *deviceAddr, size * sizeof(resultData[0]),
-        ACL_MEMCPY_DEVICE_TO_HOST);
+    auto ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), *deviceAddr,
+                           size * sizeof(resultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return);
     for (int64_t i = 0; i < size; i++) {
         LOG_PRINT("mean result[%ld] is: %f\n", i, resultData[i]);
@@ -63,9 +61,8 @@ int Init(int32_t deviceId, aclrtStream* stream)
 }
 
 template <typename T>
-int CreateAclTensor(
-    const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr, aclDataType dataType,
-    aclTensor** tensor)
+int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
+                    aclDataType dataType, aclTensor** tensor)
 {
     auto size = GetShapeSize(shape) * sizeof(T);
     // 2. 申请device侧内存
@@ -82,9 +79,8 @@ int CreateAclTensor(
     }
 
     // 调用aclCreateTensor接口创建aclTensor
-    *tensor = aclCreateTensor(
-        shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(),
-        *deviceAddr);
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
+                              shape.data(), shape.size(), *deviceAddr);
     return 0;
 }
 
@@ -101,14 +97,16 @@ int main()
     void* gradOutputDeviceAddr = nullptr;
     std::vector<int64_t> gradOutputShape = {1, 32, 2, 2};
     std::vector<float> gradOutputHostData(128, 1.0); // 2048：创建包含32*4*4*4=2048个元素的向量
-    ret = CreateAclTensor(gradOutputHostData, gradOutputShape, &gradOutputDeviceAddr, aclDataType::ACL_FLOAT, &gradOutput);
+    ret = CreateAclTensor(gradOutputHostData, gradOutputShape, &gradOutputDeviceAddr, aclDataType::ACL_FLOAT,
+                          &gradOutput);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     aclTensor* gradInputRef = nullptr;
     void* gradInputRefDeviceAddr = nullptr;
     std::vector<int64_t> gradInputRefShape = {4, 32, 3, 3};
     std::vector<float> gradInputRefHostData(1152, 1.0);
-    ret = CreateAclTensor(gradInputRefHostData, gradInputRefShape, &gradInputRefDeviceAddr, aclDataType::ACL_FLOAT, &gradInputRef);
+    ret = CreateAclTensor(gradInputRefHostData, gradInputRefShape, &gradInputRefDeviceAddr, aclDataType::ACL_FLOAT,
+                          &gradInputRef);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     aclTensor* rois = nullptr;
@@ -134,8 +132,10 @@ int main()
     aclOpExecutor* executor;
 
     // 4. 调用aclnnAddExample第一段接口
-    ret = aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(gradOutput, gradInputRef, rois, argmax, pooledH, pooledW, spatialScale, &workspaceSize, &executor);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
+    ret = aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(gradOutput, gradInputRef, rois, argmax, pooledH, pooledW,
+                                                        spatialScale, &workspaceSize, &executor);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize failed. ERROR: %d\n", ret);
+              return ret);
 
     // 根据第一段接口计算出的workspaceSize申请device内存
     void* workspaceAddr = nullptr;

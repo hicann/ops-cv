@@ -21,15 +21,17 @@ extern "C" {
  * @brief aclnnUpsampleNearest1dBackward的第一段接口，根据具体的计算流程，计算workspace大小。
  * @domain aclnn_ops_train
  */
-ACLNN_API aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scales,
-    aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor);
+ACLNN_API aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(const aclTensor* gradOut,
+                                                                     const aclIntArray* outputSize,
+                                                                     const aclIntArray* inputSize, double scales,
+                                                                     aclTensor* out, uint64_t* workspaceSize,
+                                                                     aclOpExecutor** executor);
 
 /**
  * @brief aclnnUpsampleNearest1dBackward的第二段接口，用于执行计算。
  */
-ACLNN_API aclnnStatus
-aclnnUpsampleNearest1dBackward(void* workspace, uint64_t workspace_size, aclOpExecutor* executor, aclrtStream stream);
+ACLNN_API aclnnStatus aclnnUpsampleNearest1dBackward(void* workspace, uint64_t workspace_size, aclOpExecutor* executor,
+                                                     aclrtStream stream);
 
 #ifdef __cplusplus
 }

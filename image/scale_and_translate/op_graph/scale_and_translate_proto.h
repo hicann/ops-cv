@@ -41,11 +41,11 @@ namespace ge {
  *
  * @par Third-party framework compatibility
  * Compatible with TensorFlow ScaleAndTranslate operator.
-*/
+ */
 
 REG_OP(ScaleAndTranslate)
-    .INPUT(images, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16,
-                               DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(images,
+           TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
     .INPUT(size, TensorType({DT_INT32}))
     .INPUT(scale, TensorType({DT_FLOAT}))
     .INPUT(translation, TensorType({DT_FLOAT}))
@@ -53,6 +53,6 @@ REG_OP(ScaleAndTranslate)
     .ATTR(kernel_type, String, "lanczos3")
     .ATTR(antialias, Bool, true)
     .OP_END_FACTORY_REG(ScaleAndTranslate)
-}
+} // namespace ge
 
 #endif

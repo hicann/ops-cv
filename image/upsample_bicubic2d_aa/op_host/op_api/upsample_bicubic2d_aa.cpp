@@ -28,19 +28,20 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(UpsampleBicubic2dAA);
 
-const aclTensor *UpsampleBicubic2dAA(const aclTensor *x, const aclIntArray *size, const bool alignCorners,
-    const aclTensor *y, const float scalesH, const float scalesW, aclOpExecutor *executor)
+const aclTensor* UpsampleBicubic2dAA(const aclTensor* x, const aclIntArray* size, const bool alignCorners,
+                                     const aclTensor* y, const float scalesH, const float scalesW,
+                                     aclOpExecutor* executor)
 {
     L0_DFX(UpsampleBicubic2dAA, x, size, alignCorners, scalesH, scalesH);
-    
-    aclTensor *out = executor->AllocTensor(y->GetViewShape(), x->GetDataType(), y->GetViewFormat());
+
+    aclTensor* out = executor->AllocTensor(y->GetViewShape(), x->GetDataType(), y->GetViewFormat());
     CHECK_RET(out != nullptr, nullptr);
-  
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleBicubic2dAA, OP_INPUT(x), OP_OUTPUT(out), OP_ATTR(size, alignCorners, scalesH, scalesW));
+
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBicubic2dAA, OP_INPUT(x), OP_OUTPUT(out),
+                                           OP_ATTR(size, alignCorners, scalesH, scalesW));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBicubic2dAAAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBicubic2dAAAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

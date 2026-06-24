@@ -29,8 +29,8 @@ ACLNN_API aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
 /**
  * @brief aclnnUpsampleNearestExact3dBackward的第二段接口，用于执行计算。
  */
-ACLNN_API aclnnStatus aclnnUpsampleNearestExact3dBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream);
+ACLNN_API aclnnStatus aclnnUpsampleNearestExact3dBackward(void* workspace, uint64_t workspaceSize,
+                                                          aclOpExecutor* executor, aclrtStream stream);
 
 #ifdef __cplusplus
 }

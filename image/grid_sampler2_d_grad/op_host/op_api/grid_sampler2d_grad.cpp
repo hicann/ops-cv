@@ -36,7 +36,7 @@ static const string PADDING_ZEROS = "zeros";
 static const string PADDING_BORDER = "border";
 static const string PADDING_REFLECTION = "reflection";
 
-inline const string &GetInterpolationModeStr(int64_t interpolationMode)
+inline const string& GetInterpolationModeStr(int64_t interpolationMode)
 {
     if (interpolationMode == 0) {
         return INTERPOLATION_BILINEAR;
@@ -46,7 +46,7 @@ inline const string &GetInterpolationModeStr(int64_t interpolationMode)
     return INTERPOLATION_BICUBIC;
 }
 
-inline const string &GetPaddingModeStr(int64_t paddingMode)
+inline const string& GetPaddingModeStr(int64_t paddingMode)
 {
     if (paddingMode == 0) {
         return PADDING_ZEROS;
@@ -57,8 +57,10 @@ inline const string &GetPaddingModeStr(int64_t paddingMode)
     return PADDING_REFLECTION;
 }
 
-const std::tuple<aclTensor *, aclTensor *> GridSampler2DGrad(const aclTensor *gradOutput, const aclTensor *input,
-    const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode, bool alignCorners, aclOpExecutor *executor)
+const std::tuple<aclTensor*, aclTensor*> GridSampler2DGrad(const aclTensor* gradOutput, const aclTensor* input,
+                                                           const aclTensor* grid, int64_t interpolationMode,
+                                                           int64_t paddingMode, bool alignCorners,
+                                                           aclOpExecutor* executor)
 {
     L0_DFX(GridSampler2DGrad, gradOutput, input, grid, interpolationMode, paddingMode, alignCorners);
 
@@ -77,26 +79,27 @@ const std::tuple<aclTensor *, aclTensor *> GridSampler2DGrad(const aclTensor *gr
     }
 
     static internal::AicpuTaskSpace space("GridSampler2DGrad", ge::DEPEND_IN_SHAPE, false);
-    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(GridSampler2DGrad,
-        OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners"}),
-        OP_INPUT(gradOutput, input, grid),
-        OP_OUTPUT(inputGrad, gridGrad),
+    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(
+        GridSampler2DGrad, OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners"}),
+        OP_INPUT(gradOutput, input, grid), OP_OUTPUT(inputGrad, gridGrad),
         OP_ATTR(GetInterpolationModeStr(interpolationMode), GetPaddingModeStr(paddingMode), alignCorners));
     if (ret != ACLNN_SUCCESS) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "GridSampler2DGrad AiCpu ADD_TO_LAUNCHER_LIST_AICPU failed.");
-        return std::tuple<aclTensor *, aclTensor *>(nullptr, nullptr);
+        return std::tuple<aclTensor*, aclTensor*>(nullptr, nullptr);
     }
 
     if (dataType == op::DataType::DT_BF16) {
-        inputGrad = const_cast<aclTensor *>(l0op::Cast(inputGrad, op::DataType::DT_BF16, executor));
-        gridGrad = const_cast<aclTensor *>(l0op::Cast(gridGrad, op::DataType::DT_BF16, executor));
+        inputGrad = const_cast<aclTensor*>(l0op::Cast(inputGrad, op::DataType::DT_BF16, executor));
+        gridGrad = const_cast<aclTensor*>(l0op::Cast(gridGrad, op::DataType::DT_BF16, executor));
     }
 
     return std::tie(inputGrad, gridGrad);
 }
 
-const std::tuple<aclTensor *, aclTensor *> GridSamplerGrad(const aclTensor *gradOutput, const aclTensor *input,
-    const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode, bool alignCorners, aclOpExecutor *executor)
+const std::tuple<aclTensor*, aclTensor*> GridSamplerGrad(const aclTensor* gradOutput, const aclTensor* input,
+                                                         const aclTensor* grid, int64_t interpolationMode,
+                                                         int64_t paddingMode, bool alignCorners,
+                                                         aclOpExecutor* executor)
 {
     L0_DFX(GridSamplerGrad, gradOutput, input, grid, interpolationMode, paddingMode, alignCorners);
     auto inputGrad = executor->AllocTensor(input->GetViewShape(), input->GetDataType(), input->GetStorageFormat());
@@ -105,14 +108,13 @@ const std::tuple<aclTensor *, aclTensor *> GridSamplerGrad(const aclTensor *grad
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc gridGrad or inputGrad tensor failed.");
         return std::tie(inputGrad, gridGrad);
     }
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(GridSampler2DGrad,
-        OP_INPUT(gradOutput, input, grid),
-        OP_OUTPUT(inputGrad, gridGrad),
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        GridSampler2DGrad, OP_INPUT(gradOutput, input, grid), OP_OUTPUT(inputGrad, gridGrad),
         OP_ATTR(GetInterpolationModeStr(interpolationMode), GetPaddingModeStr(paddingMode), alignCorners));
     if (ret != ACL_SUCCESS) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "GridSamplerGrad AiCore ADD_TO_LAUNCHER_LIST_AICORE failed.");
-        return std::tuple<aclTensor *, aclTensor *>(nullptr, nullptr);
+        return std::tuple<aclTensor*, aclTensor*>(nullptr, nullptr);
     }
     return std::tie(inputGrad, gridGrad);
 }
-}  // namespace l0op
+} // namespace l0op

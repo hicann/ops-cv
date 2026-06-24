@@ -18,8 +18,8 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleNearestExact3dNcdhw(
-    const aclTensor *self, const aclIntArray *outputSize, const aclFloatArray *scales, aclOpExecutor *executor);
+const aclTensor* UpsampleNearestExact3dNcdhw(const aclTensor* self, const aclIntArray* outputSize,
+                                             const aclFloatArray* scales, aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_EXACT3D_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_EXACT3D_H_

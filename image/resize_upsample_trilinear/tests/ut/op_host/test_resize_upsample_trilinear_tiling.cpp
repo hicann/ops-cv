@@ -20,15 +20,9 @@ using namespace ge;
 
 class ResizeUpsampleTrilinearTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeUpsampleTrilinearTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeUpsampleTrilinearTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeUpsampleTrilinearTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeUpsampleTrilinearTiling TearDown" << std::endl; }
 };
 
 struct ResizeUpsampleTrilinearCompileInfo {
@@ -42,19 +36,51 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_001)
     gert::StorageShape out_shape = {{1, 1, 12, 256, 256}, {1, 1, 12, 256, 256}};
     ResizeUpsampleTrilinearCompileInfo compileInfo = {48, 220};
     std::vector<int64_t> output_size = {12, 256, 256};
-    gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
-                                                {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "ResizeUpsampleTrilinear", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo);
     uint64_t expectTilingKey = 3000;
 
     string expectTilingData =
-        "4539628425446424576 207209802411 0 160 256 256 12 128 128 4 1 0 0 0 0 0 0 0 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 0 68719476736 68719476752 137438953504 206158430240 206158430256 274877907008 343597383744 343597383760 412316860512 481036337248 481036337264 549755814016 618475290752 618475290768 687194767520 755914244256 755914244272 824633721024 893353197760 893353197776 962072674528 1030792151264 1030792151280 64424509455 133143986191 133143986207 201863462959 270582939695 270582939711 339302416463 408021893199 408021893215 476741369967 545460846703 545460846719 614180323471 682899800207 682899800223 751619276975 820338753711 820338753727 889058230479 957777707215 957777707231 1026497183983 1095216660719 1095216660735 0 68719476736 68719476752 137438953504 206158430240 206158430256 274877907008 343597383744 343597383760 412316860512 481036337248 481036337264 549755814016 618475290752 618475290768 687194767520 755914244256 755914244272 824633721024 893353197760 893353197776 962072674528 1030792151264 1030792151280 64424509455 133143986191 133143986207 201863462959 270582939695 270582939711 339302416463 408021893199 408021893215 476741369967 545460846703 545460846719 614180323471 682899800207 682899800223 751619276975 820338753711 820338753727 889058230479 957777707215 957777707231 1026497183983 1095216660719 1095216660735 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2199023255553 549755814144 2199023255680 42949672976 68719477248 4294967312 4294967297 1 0 145135534866432 32768 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 1099511627777 2199023255808 1099511628288 42949673216 1099511627904 8589934608 8589934593 1 0 140737488355328 131072 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 51539607553 17179934720 51539607556 34359803904 1099511627792 4294967304 4294967312 8 4294967296 565148976676864 16384 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
+        "4539628425446424576 207209802411 0 160 256 256 12 128 128 4 1 0 0 0 0 0 0 0 734439407616 342 1468878815403 "
+        "734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 "
+        "1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 734439407616 342 1468878815403 "
+        "1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 "
+        "2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 "
+        "730144440831 2194728288597 1464583848106 730144440831 2194728288597 1464583848106 730144440831 2194728288597 "
+        "0 68719476736 68719476752 137438953504 206158430240 206158430256 274877907008 343597383744 343597383760 "
+        "412316860512 481036337248 481036337264 549755814016 618475290752 618475290768 687194767520 755914244256 "
+        "755914244272 824633721024 893353197760 893353197776 962072674528 1030792151264 1030792151280 64424509455 "
+        "133143986191 133143986207 201863462959 270582939695 270582939711 339302416463 408021893199 408021893215 "
+        "476741369967 545460846703 545460846719 614180323471 682899800207 682899800223 751619276975 820338753711 "
+        "820338753727 889058230479 957777707215 957777707231 1026497183983 1095216660719 1095216660735 0 68719476736 "
+        "68719476752 137438953504 206158430240 206158430256 274877907008 343597383744 343597383760 412316860512 "
+        "481036337248 481036337264 549755814016 618475290752 618475290768 687194767520 755914244256 755914244272 "
+        "824633721024 893353197760 893353197776 962072674528 1030792151264 1030792151280 64424509455 133143986191 "
+        "133143986207 201863462959 270582939695 270582939711 339302416463 408021893199 408021893215 476741369967 "
+        "545460846703 545460846719 614180323471 682899800207 682899800223 751619276975 820338753711 820338753727 "
+        "889058230479 957777707215 957777707231 1026497183983 1095216660719 1095216660735 8589934592 3 12884901890 "
+        "8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 "
+        "8589934592 3 12884901890 8589934592 3 12884901890 8589934592 3 12884901890 12884901890 8589934596 17179869187 "
+        "12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 "
+        "12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 12884901890 8589934596 17179869187 "
+        "12884901890 8589934596 17179869187 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 47244640267 47244640267 "
+        "47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 "
+        "47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 47244640267 "
+        "47244640267 47244640267 47244640267 47244640267 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2199023255553 549755814144 2199023255680 42949672976 68719477248 4294967312 "
+        "4294967297 1 0 145135534866432 32768 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 "
+        "1099511627777 2199023255808 1099511628288 42949673216 1099511627904 8589934608 8589934593 1 0 140737488355328 "
+        "131072 4294967297 4294967297 4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 51539607553 17179934720 51539607556 "
+        "34359803904 1099511627792 4294967304 4294967312 8 4294967296 565148976676864 16384 4294967297 4294967297 "
+        "4294967297 0 8589934594 1 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {35158016};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -72,8 +98,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_002)
     gert::TilingContextPara tilingContextPara(
         "ResizeUpsampleTrilinear", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
@@ -130,8 +156,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_003)
     gert::TilingContextPara tilingContextPara(
         "ResizeUpsampleTrilinear", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
@@ -227,7 +253,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_003)
 //             .Build();
 //     ASSERT_TRUE(kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->Init());
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
-//     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
+//     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec",
+//     aicore_spec);
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes(
 //         "AICoreintrinsicDtypeMap", intrinsics);
@@ -264,7 +291,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_003)
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
-//     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap", intrinsics);
+//     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap",
+//     intrinsics);
 
 //     // workspaces nullptr return failed
 //     EXPECT_EQ(tiling_func(tiling_context), ge::GRAPH_FAILED);
@@ -282,8 +310,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_005)
     gert::TilingContextPara tilingContextPara(
         "ResizeUpsampleTrilinear", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
@@ -292,7 +320,14 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_005)
     uint64_t expectTilingKey = 3000;
 
     string expectTilingData =
-        "4575657222468184747 86964699136 20 288 90 2 1 60 2 1 16384 0 9 0 180 1 1024 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "4575657222468184747 86964699136 20 288 90 2 1 60 2 1 16384 0 9 0 180 1 1024 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {45373952};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -350,7 +385,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_005)
 //     ASSERT_TRUE(kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->Init());
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("version", socversions);
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
-//     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
+//     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec",
+//     aicore_spec);
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes(
 //         "AICoreintrinsicDtypeMap", intrinsics);
@@ -387,8 +423,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_005)
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
-//     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap", intrinsics);
-//     tiling_context->GetPlatformInfo()->SetPlatformRes("version", socversions);
+//     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap",
+//     intrinsics); tiling_context->GetPlatformInfo()->SetPlatformRes("version", socversions);
 
 //     EXPECT_EQ(tiling_func(tiling_context), ge::GRAPH_SUCCESS);
 //     auto tiling_key = tiling_context->GetTilingKey();
@@ -448,7 +484,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_005)
 //     ASSERT_TRUE(kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->Init());
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("version", socversions);
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
-//     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
+//     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec",
+//     aicore_spec);
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
 //     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes(
 //         "AICoreintrinsicDtypeMap", intrinsics);
@@ -485,8 +522,8 @@ TEST_F(ResizeUpsampleTrilinearTiling, upsample_trilinear3d_tiling_005)
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
 //     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
-//     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap", intrinsics);
-//     tiling_context->GetPlatformInfo()->SetPlatformRes("version", socversions);
+//     holder.GetContext<gert::TilingContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap",
+//     intrinsics); tiling_context->GetPlatformInfo()->SetPlatformRes("version", socversions);
 
 //     EXPECT_EQ(tiling_func(tiling_context), ge::GRAPH_SUCCESS);
 // }

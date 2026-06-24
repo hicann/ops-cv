@@ -29,16 +29,18 @@ class UpsampleBilinear2dAABackwardND {
 public:
     TPipe pipe;
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
         matmulH;
 
     __aicore__ inline UpsampleBilinear2dAABackwardND(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBilinear2dAABackwardTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                UpsampleBilinear2dAABackwardTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -71,17 +73,17 @@ private:
     {
         return m > n ? m : n;
     };
-    __aicore__ inline void ParseTilingData(UpsampleBilinear2dAABackwardTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(UpsampleBilinear2dAABackwardTilingData* tilingData);
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
     __aicore__ inline void calculateIntermediateTensorW(int64_t index, int64_t length);
     __aicore__ inline void calculateIntermediateTensorH(int64_t index, int64_t length);
     __aicore__ inline void calculateRadioTensorW(int64_t index, int64_t length, int64_t minIndex);
     __aicore__ inline void calculateRadioTensorH(int64_t index, int64_t length, int64_t minIndex);
-    __aicore__ inline void calculateWidthExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
-    __aicore__ inline void calculateHeightExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
+    __aicore__ inline void calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                   int64_t length);
+    __aicore__ inline void calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                    int64_t length);
 
     __aicore__ inline void copyRadioTensorToGm(int8_t direction);
     __aicore__ inline LocalTensor<T> initRadioTensor(int8_t direction);
@@ -104,8 +106,8 @@ private:
     TBuf<QuePosition::VECCALC> floorQueueW;
     TBuf<QuePosition::VECCALC> floorQueueH;
 
-    const TCubeTiling *__restrict matmulTilingW;
-    const TCubeTiling *__restrict matmulTilingH;
+    const TCubeTiling* __restrict matmulTilingW;
+    const TCubeTiling* __restrict matmulTilingH;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -162,8 +164,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBilinear2dAABackwardTilingData *tilingData)
+__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                               UpsampleBilinear2dAABackwardTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -191,9 +193,9 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::Init(
         pipe.InitBuffer(radioQueueH, BUFFER_NUM, (radioMatrixSizeH * sizeof(float) + 31) / 32 * 32);
     }
 
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)inTensorPtr);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)outTensorPtr);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)inTensorPtr);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)outTensorPtr);
 }
 
 template <typename T>
@@ -400,8 +402,8 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateIntermediateT
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateRadioTensorW(
-    int64_t xIndex, int64_t length, int64_t minIndex)
+__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateRadioTensorW(int64_t xIndex, int64_t length,
+                                                                                int64_t minIndex)
 {
     LocalTensor<float> radioTensor = radioQueueW.AllocTensor<float>();
     // 计算横向系数矩阵
@@ -442,8 +444,8 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateRadioTensorW(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateRadioTensorH(
-    int64_t xIndex, int64_t length, int64_t minIndex)
+__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateRadioTensorH(int64_t xIndex, int64_t length,
+                                                                                int64_t minIndex)
 {
     LocalTensor<float> radioTensor = radioQueueH.AllocTensor<float>();
     // 计算纵向系数矩阵
@@ -513,8 +515,8 @@ __aicore__ inline LocalTensor<T> UpsampleBilinear2dAABackwardND<T>::initRadioTen
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::releaseRadioTensor(
-    int8_t direction, LocalTensor<T> radioTensor)
+__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::releaseRadioTensor(int8_t direction,
+                                                                             LocalTensor<T> radioTensor)
 {
     if (direction == 0) {
         return radioQueueW.FreeTensor(radioTensor);
@@ -524,8 +526,9 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::releaseRadioTensor(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateWidthExtension(int64_t tensorCIndex,
+                                                                                  int64_t rowStart, int64_t rowEnd,
+                                                                                  int64_t length)
 {
     int64_t singleCoreM = matmulTilingW->singleCoreM;
     int64_t singleCoreN = length;
@@ -556,8 +559,9 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateWidthExtensio
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateHeightExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateHeightExtension(int64_t tensorCIndex,
+                                                                                   int64_t rowStart, int64_t rowEnd,
+                                                                                   int64_t length)
 {
     int64_t singleCoreM = length;
     int64_t singleCoreN = matmulTilingH->singleCoreN;
@@ -592,7 +596,7 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::calculateHeightExtensi
 
 template <typename T>
 __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::ParseTilingData(
-    UpsampleBilinear2dAABackwardTilingData *tilingData)
+    UpsampleBilinear2dAABackwardTilingData* tilingData)
 {
     slideSize = tilingData->slideSize;
     scaleW = tilingData->scaleW;
@@ -637,6 +641,6 @@ __aicore__ inline void UpsampleBilinear2dAABackwardND<T>::ParseTilingData(
     matmulTilingW = &tilingData->matmulTilingW;
     matmulTilingH = &tilingData->matmulTilingH;
 }
-}  // namespace UpsampleBilinear2dAABackward
+} // namespace UpsampleBilinear2dAABackward
 
-#endif  // UPSAMPLE_BILINEAR2D_AA_BACKWARD
+#endif // UPSAMPLE_BILINEAR2D_AA_BACKWARD

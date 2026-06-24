@@ -16,10 +16,10 @@ using namespace ge;
 using ge::Operator;
 
 namespace {
-  const int INPUT_NUM = 2;
-  const int OUTPUT_NUM = 1;
-  const int PADS_SIZE = 8;
-}
+const int INPUT_NUM = 2;
+const int OUTPUT_NUM = 1;
+const int PADS_SIZE = 8;
+} // namespace
 
 namespace domi {
 using NodeProto = ge::onnx::NodeProto;
@@ -38,9 +38,8 @@ static Status ParseParamsUpsample(const Message* op_src, ge::Operator& op_dest)
         }
     }
     if (mode_value != "nearest" && mode_value != "linear") {
-        OP_LOGE(
-            GetOpName(op_dest).c_str(), "Mode attr of Upsample only supports nearest and linear, current is %s .",
-            mode_value.c_str());
+        OP_LOGE(GetOpName(op_dest).c_str(), "Mode attr of Upsample only supports nearest and linear, current is %s .",
+                mode_value.c_str());
         return FAILED;
     }
 
@@ -95,16 +94,12 @@ static Status ParseOpToGraphUpsample(const ge::Operator& op, Graph& graph)
 
 // register Upsample op info to GE
 REGISTER_CUSTOM_OP("PartitionedCall")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::8::Upsample"),
-                 ge::AscendString("ai.onnx::9::Upsample"),
-                 ge::AscendString("ai.onnx::11::Upsample"),
-                 ge::AscendString("ai.onnx::12::Upsample"),
-                 ge::AscendString("ai.onnx::13::Upsample"),
-                 ge::AscendString("ai.onnx::14::Upsample"),
-                 ge::AscendString("ai.onnx::15::Upsample"),
-                 ge::AscendString("ai.onnx::16::Upsample")})
-  .ParseParamsFn(ParseParamsUpsample)
-  .ParseOpToGraphFn(ParseOpToGraphUpsample)
-  .ImplyType(ImplyType::TVM);
-}  // namespace domi
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("ai.onnx::8::Upsample"), ge::AscendString("ai.onnx::9::Upsample"),
+                   ge::AscendString("ai.onnx::11::Upsample"), ge::AscendString("ai.onnx::12::Upsample"),
+                   ge::AscendString("ai.onnx::13::Upsample"), ge::AscendString("ai.onnx::14::Upsample"),
+                   ge::AscendString("ai.onnx::15::Upsample"), ge::AscendString("ai.onnx::16::Upsample")})
+    .ParseParamsFn(ParseParamsUpsample)
+    .ParseOpToGraphFn(ParseOpToGraphUpsample)
+    .ImplyType(ImplyType::TVM);
+} // namespace domi

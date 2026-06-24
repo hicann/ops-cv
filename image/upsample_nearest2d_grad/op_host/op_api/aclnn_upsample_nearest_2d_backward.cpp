@@ -45,8 +45,8 @@ struct Nearest2dGradData {
 };
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT,
+                                                                                       op::DataType::DT_FLOAT16};
 
 static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
@@ -58,8 +58,8 @@ static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 
-static bool CheckNotNull(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* gradInput)
+static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                         const aclTensor* gradInput)
 {
     OP_CHECK_NULL(gradOut, return false);
     OP_CHECK_NULL(outputSize, return false);
@@ -89,21 +89,19 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
         fullOutSize[DIM_THREE] = channels;
     }
 
-    OP_CHECK(
-        inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, but got input (H: %ld,"
-            " W: %ld) output (H: %ld, W: %ld)", inputH, inputW, outH, outW),
-        return false);
+    OP_CHECK(inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, but got input (H: %ld,"
+                     " W: %ld) output (H: %ld, W: %ld)",
+                     inputH, inputW, outH, outW),
+             return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
         if (gradOutShape.GetDim(i) != fullOutSize[i]) {
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "Expected grad_output to have the same shape as output;"
-                " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, fullOutSize[i], i, gradOutShape.GetDim(i));
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Expected grad_output to have the same shape as output;"
+                    " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
+                    i, fullOutSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
@@ -140,15 +138,14 @@ static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, 
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
         return false);
 
-    OP_CHECK(
-        inputSizeNum == DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
-        return false);
+    OP_CHECK(inputSizeNum == DIM_LIMIT,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             return false);
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* gradInput)
+static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               const aclTensor* gradInput)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, gradInput), ACLNN_ERR_PARAM_NULLPTR);
@@ -168,8 +165,8 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-static bool isAiCoreSupport(
-    const aclTensor* gradOutContiguous, const aclIntArray* inputSize, double scalesH, double scalesW)
+static bool isAiCoreSupport(const aclTensor* gradOutContiguous, const aclIntArray* inputSize, double scalesH,
+                            double scalesW)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch != NpuArch::DAV_2201) {
@@ -232,9 +229,9 @@ static const aclTensor* GoUpsampleNearestGrad(Nearest2dGradData nearest2dGradDat
             CHECK_RET(gradOutTranspose != nullptr, nullptr);
         }
 
-        auto nearestExactOut = l0op::UpsampleNearestExact2dGrad(
-            gradOutTranspose, nearest2dGradData.outputSize, inputSizeNCHW, nearest2dGradData.gradInput, realScalesH,
-            realScalesW, false, executor);
+        auto nearestExactOut = l0op::UpsampleNearestExact2dGrad(gradOutTranspose, nearest2dGradData.outputSize,
+                                                                inputSizeNCHW, nearest2dGradData.gradInput, realScalesH,
+                                                                realScalesW, false, executor);
         CHECK_RET(nearestExactOut != nullptr, nullptr);
         // 转回初始精度
         if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
@@ -304,12 +301,12 @@ static const aclTensor* GoResizeNearestGrad(Nearest2dGradData nearest2dGradData,
     // 调用ResizeNearestNeighborV2Grad算子kernel, inputSize对应[N, C, H, W]或者[N, H, W, C]
     bool alignCorners = false;
     bool halfPixelCenters = false;
-    auto resizeNearestGradOut = l0op::ResizeNearestNeighborV2Grad5Hd(
-        gradOutTransdata, nearest2dGradData.inputSize, alignCorners, halfPixelCenters, executor);
+    auto resizeNearestGradOut = l0op::ResizeNearestNeighborV2Grad5Hd(gradOutTransdata, nearest2dGradData.inputSize,
+                                                                     alignCorners, halfPixelCenters, executor);
     CHECK_RET(resizeNearestGradOut != nullptr, nullptr);
 
-    auto resizeNearestGradOutTransdata =
-        l0op::TransData(resizeNearestGradOut, nearest2dGradData.gradInput->GetStorageFormat(), 0, executor);
+    auto resizeNearestGradOutTransdata = l0op::TransData(resizeNearestGradOut,
+                                                         nearest2dGradData.gradInput->GetStorageFormat(), 0, executor);
     CHECK_RET(resizeNearestGradOutTransdata != nullptr, nullptr);
 
     // FLOAT16转FLOAT计算后转回FLOAT
@@ -320,12 +317,13 @@ static const aclTensor* GoResizeNearestGrad(Nearest2dGradData nearest2dGradData,
     return resizeNearestGradOutTransdata;
 }
 
-aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesH,
-    double scalesW, aclTensor* gradInput, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                           const aclIntArray* inputSize, double scalesH, double scalesW,
+                                                           aclTensor* gradInput, uint64_t* workspaceSize,
+                                                           aclOpExecutor** executor)
 {
-    L2_DFX_PHASE_1(
-        aclnnUpsampleNearest2dBackward, DFX_IN(gradOut, outputSize, inputSize, scalesH, scalesW), DFX_OUT(gradInput));
+    L2_DFX_PHASE_1(aclnnUpsampleNearest2dBackward, DFX_IN(gradOut, outputSize, inputSize, scalesH, scalesW),
+                   DFX_OUT(gradInput));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -356,8 +354,8 @@ aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
         const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        auto resizeNearestGradOut = l0op::ResizeNearestNeighborV2Grad(
-            gradOutContiguous, inputSize, alignCorners, halfPixelCenters, scales, uniqueExecutor.get());
+        auto resizeNearestGradOut = l0op::ResizeNearestNeighborV2Grad(gradOutContiguous, inputSize, alignCorners,
+                                                                      halfPixelCenters, scales, uniqueExecutor.get());
         CHECK_RET(resizeNearestGradOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         auto viewCopyResult = l0op::ViewCopy(resizeNearestGradOut, gradInput, uniqueExecutor.get());
@@ -390,8 +388,8 @@ aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearest2dBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearest2dBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                           aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearest2dBackward);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

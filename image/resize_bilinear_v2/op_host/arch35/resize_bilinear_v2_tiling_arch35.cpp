@@ -144,24 +144,20 @@ private:
     ResizeBilinearV2TilingData tilingData_;
 };
 
-inline int64_t ResizeBilinearV2AscendCTilingImpl::Min(int64_t x, int64_t y)
-{
-    return (x < y) ? x : y;
-}
+inline int64_t ResizeBilinearV2AscendCTilingImpl::Min(int64_t x, int64_t y) { return (x < y) ? x : y; }
 
 ge::graphStatus ResizeBilinearV2AscendCTilingImpl::CheckFormatMatchDims()
 {
-    OP_CHECK_IF(
-        alignCorners_ && halfPixelCenters_,
-        OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(
-            context_->GetNodeName(), "align_corners and half_pixel_centers", "true and true",
-            "The values of attributes align_corners and half_pixel_centers cannot be true at the same time"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(alignCorners_ && halfPixelCenters_,
+                OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(
+                    context_->GetNodeName(), "align_corners and half_pixel_centers", "true and true",
+                    "The values of attributes align_corners and half_pixel_centers cannot be true at the same time"),
+                return ge::GRAPH_FAILED);
 
     if (xShape_.GetDimNum() != DIM_LEN_4D || yShape_.GetDimNum() != DIM_LEN_4D) {
         std::string dimMsg = std::to_string(xShape_.GetDimNum()) + " and " + std::to_string(yShape_.GetDimNum());
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(),
-            "The shape of input x and output y must be 4D");
+                                                  "The shape of input x and output y must be 4D");
         return ge::GRAPH_FAILED;
     }
 
@@ -169,8 +165,8 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::CheckFormatMatchDims()
     const int64_t outSize = yShape_.GetShapeSize();
     if (inputSize == 0 || outSize == 0) {
         std::string shapesizeMsg = std::to_string(inputSize) + " and " + std::to_string(outSize);
-        OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(
-            context_->GetNodeName(), "x and y", shapesizeMsg.c_str(), "Input x and output y do not support empty tensors");
+        OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(context_->GetNodeName(), "x and y", shapesizeMsg.c_str(),
+                                                   "Input x and output y do not support empty tensors");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -220,9 +216,8 @@ void ResizeBilinearV2AscendCTilingImpl::SetDimsByFormat()
     ubCFactor_ = cFactor_;
     ubHWFactor_ = hwFactor_;
 
-    OP_LOGI(
-        context_->GetNodeName(), "lenN_:%ld , lenC_: %ld, srcH:%ld, srcW:%ld, dstH:%ld, dstW:%ld", lenN_, lenC_,
-        lenSrcH_, lenSrcW_, lenDesH_, lenDesW_);
+    OP_LOGI(context_->GetNodeName(), "lenN_:%ld , lenC_: %ld, srcH:%ld, srcW:%ld, dstH:%ld, dstW:%ld", lenN_, lenC_,
+            lenSrcH_, lenSrcW_, lenDesH_, lenDesW_);
 
     isAlign_ = false;
     if ((lenC_ * dtypeSizeX_) % ONE_BLOCK_SIZE == 0) {
@@ -608,8 +603,8 @@ void ResizeBilinearV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKey()
     } else if (IsMatchCParallel()) {
         tilingKey_ = TILING_KEY_C_PARALLEL;
     } else if (format_ == ge::FORMAT_NCHW) {
-        int64_t hwSizeThreshold =
-            useIdx32 ? coreNum_ * SIMT_DEFAULT_THREAD_NUM : coreNum_ * SIMT_DEFAULT_THREAD_NUM_IDX64;
+        int64_t hwSizeThreshold = useIdx32 ? coreNum_ * SIMT_DEFAULT_THREAD_NUM :
+                                             coreNum_ * SIMT_DEFAULT_THREAD_NUM_IDX64;
         bool needHWSplit = xShape_.GetShapeSize() != 1 && (lenSrcW_ != lenDesW_ || lenSrcH_ != lenDesH_) &&
                            lenDesH_ * lenDesW_ >= hwSizeThreshold;
         if (useIdx32) {
@@ -702,20 +697,20 @@ void ResizeBilinearV2AscendCTilingImpl::FillTilingData()
 
 void ResizeBilinearV2AscendCTilingImpl::PrintTilingData()
 {
-    OP_LOGI(
-        context_->GetNodeName(),
-        "tilingData is tilingKey:%ld, realCoreNum:%ld, ubSize: %ld, alignCorners:%ld, halfPixelCenters:%ld,"
-        "lenN:%ld, lenC:%ld, lenSrcH:%ld, lenSrcW:%ld, lenDesH:%ld, lenDesW:%ld, "
-        "nFactor:%ld, hFactor:%ld, wFactor:%ld, cFactor:%ld, hwFactor:%ld, ubNFactor:%ld, ubHFactor:%ld, "
-        "ubWFactor:%ld, ubCFactor:%ld, "
-        "splitBlockFactor:%ld, splitBlockTailFactor: %ld, scaleW: %f, scaleH: %f",
-        tilingData_.get_tilingKey(), tilingData_.get_realCoreNum(), tilingData_.get_ubSize(),
-        tilingData_.get_alignCorners(), tilingData_.get_halfPixelCenters(), tilingData_.get_lenN(),
-        tilingData_.get_lenC(), tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(), tilingData_.get_lenDesH(),
-        tilingData_.get_lenDesW(), tilingData_.get_nFactor(), tilingData_.get_hFactor(), tilingData_.get_wFactor(),
-        tilingData_.get_cFactor(), tilingData_.get_hwFactor(), tilingData_.get_ubNFactor(), tilingData_.get_ubHFactor(),
-        tilingData_.get_ubWFactor(), tilingData_.get_ubCFactor(), tilingData_.get_splitBlockFactor(),
-        tilingData_.get_splitBlockTailFactor(), tilingData_.get_scaleW(), tilingData_.get_scaleH());
+    OP_LOGI(context_->GetNodeName(),
+            "tilingData is tilingKey:%ld, realCoreNum:%ld, ubSize: %ld, alignCorners:%ld, halfPixelCenters:%ld,"
+            "lenN:%ld, lenC:%ld, lenSrcH:%ld, lenSrcW:%ld, lenDesH:%ld, lenDesW:%ld, "
+            "nFactor:%ld, hFactor:%ld, wFactor:%ld, cFactor:%ld, hwFactor:%ld, ubNFactor:%ld, ubHFactor:%ld, "
+            "ubWFactor:%ld, ubCFactor:%ld, "
+            "splitBlockFactor:%ld, splitBlockTailFactor: %ld, scaleW: %f, scaleH: %f",
+            tilingData_.get_tilingKey(), tilingData_.get_realCoreNum(), tilingData_.get_ubSize(),
+            tilingData_.get_alignCorners(), tilingData_.get_halfPixelCenters(), tilingData_.get_lenN(),
+            tilingData_.get_lenC(), tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(), tilingData_.get_lenDesH(),
+            tilingData_.get_lenDesW(), tilingData_.get_nFactor(), tilingData_.get_hFactor(), tilingData_.get_wFactor(),
+            tilingData_.get_cFactor(), tilingData_.get_hwFactor(), tilingData_.get_ubNFactor(),
+            tilingData_.get_ubHFactor(), tilingData_.get_ubWFactor(), tilingData_.get_ubCFactor(),
+            tilingData_.get_splitBlockFactor(), tilingData_.get_splitBlockTailFactor(), tilingData_.get_scaleW(),
+            tilingData_.get_scaleH());
 }
 
 ge::graphStatus ResizeBilinearV2AscendCTilingImpl::SetScales()
@@ -730,13 +725,11 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::SetScales()
         const float* scales_data = reinterpret_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scales_data);
         OP_CHECK_IF(scales_num != SCALES_NUM,
-            OP_LOGE_FOR_INVALID_LISTSIZE(
-                context_->GetNodeName(), "scales", std::to_string(scales_num).c_str(),
-                std::to_string(SCALES_NUM).c_str()),
-            return ge::GRAPH_FAILED);
-        OP_LOGI(
-            context_->GetNodeName(), "ResizeBilinearV2AscendCTilingImpl init: num[%ld]scales(%f %f)", scales_num,
-            scales_data[0], scales_data[1]);
+                    OP_LOGE_FOR_INVALID_LISTSIZE(context_->GetNodeName(), "scales", std::to_string(scales_num).c_str(),
+                                                 std::to_string(SCALES_NUM).c_str()),
+                    return ge::GRAPH_FAILED);
+        OP_LOGI(context_->GetNodeName(), "ResizeBilinearV2AscendCTilingImpl init: num[%ld]scales(%f %f)", scales_num,
+                scales_data[0], scales_data[1]);
         scaleH_ = scales_data[IDX_DST_H];
         scaleW_ = scales_data[IDX_DST_W];
         if (scaleH_ > 0 || scaleW_ > 0) {
@@ -761,8 +754,8 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::CheckDtypeAndFormat()
     dtypeSizeY_ = GetSizeByDataType(dtypeY_);
     if (dtypeSizeX_ <= 0 || dtypeSizeY_ <= 0) {
         std::string dtypeMsg = Ops::Base::ToString(dtypeX_) + " and " + Ops::Base::ToString(dtypeY_);
-        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
-            context_->GetNodeName(), "x and y", dtypeMsg.c_str(), "The dtype sizes of input x and output y must be greater than zero");
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "x and y", dtypeMsg.c_str(),
+                                               "The dtype sizes of input x and output y must be greater than zero");
         return ge::GRAPH_FAILED;
     }
 
@@ -770,8 +763,8 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::CheckDtypeAndFormat()
     auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outputYDesc->GetStorageFormat()));
     if (format_ != outFormat) {
         std::string formatMsg = Ops::Base::ToString(format_) + " and " + Ops::Base::ToString(outFormat);
-        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
-            context_->GetNodeName(), "x and y", formatMsg.c_str(), "The formats of input x and output y must be the same");
+        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(context_->GetNodeName(), "x and y", formatMsg.c_str(),
+                                                "The formats of input x and output y must be the same");
         return ge::GRAPH_FAILED;
     }
     OP_CHECK_IF(
@@ -799,12 +792,11 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::Init(const ResizeBilinearV2Co
     OP_LOGD(context_->GetNodeName(), "Enter ResizeBilinearV2AscendCTilingImpl init.");
     coreNum_ = compileInfo->core_num;
     ubSize_ = compileInfo->ubSize;
-    OP_CHECK_IF(
-        coreNum_ <= 0 || ubSize_ <= 0, OP_LOGE(context_->GetNodeName(), "coreNum or ubSize is small than zero"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(coreNum_ <= 0 || ubSize_ <= 0, OP_LOGE(context_->GetNodeName(), "coreNum or ubSize is small than zero"),
+                return ge::GRAPH_FAILED);
     ubBlockNum_ = Ops::Base::CeilDiv(ubSize_, ONE_BLOCK_SIZE) - RSV_BLOCK_NUM;
-    OP_LOGI(
-        context_->GetNodeName(), "coreNum_ is %ld, ubSize_ is %ld, ubBlockNum_ is %ld", coreNum_, ubSize_, ubBlockNum_);
+    OP_LOGI(context_->GetNodeName(), "coreNum_ is %ld, ubSize_ is %ld, ubBlockNum_ is %ld", coreNum_, ubSize_,
+            ubBlockNum_);
     // Get attrs: alignCorners, halfPixelCenters
     auto attrs = context_->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context_, attrs);
@@ -882,13 +874,13 @@ static ge::graphStatus TilingPrepare4ResizeBilinearV2(gert::TilingParseContext* 
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->core_num = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        (compileInfo->core_num <= 0), OP_LOGE(context->GetNodeName(), "core num invalid."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->core_num <= 0), OP_LOGE(context->GetNodeName(), "core num invalid."),
+                return ge::GRAPH_FAILED);
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
     compileInfo->ubSize = static_cast<int64_t>(ubSize);
-    OP_CHECK_IF(
-        (compileInfo->ubSize <= 0), OP_LOGE(context->GetNodeName(), "ub size invalid."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->ubSize <= 0), OP_LOGE(context->GetNodeName(), "ub size invalid."),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }

@@ -34,13 +34,13 @@ struct OutInfo {
 };
 
 template <typename T>
-static bool GetSizeValueFor2D(const gert::InferShapeContext* context, const gert::Tensor* size_tensor, OutInfo& out_size)
+static bool GetSizeValueFor2D(const gert::InferShapeContext* context, const gert::Tensor* size_tensor,
+                              OutInfo& out_size)
 {
     const T* size_value = size_tensor->GetData<T>();
     const size_t size_num = size_tensor->GetShapeSize();
-    OP_CHECK_IF(
-        size_num != SIZE_NUM_2D, OP_LOGE(context->GetNodeName(), "The size number must be 2, but is %d", size_num),
-        return false);
+    OP_CHECK_IF(size_num != SIZE_NUM_2D,
+                OP_LOGE(context->GetNodeName(), "The size number must be 2, but is %d", size_num), return false);
 
     out_size.output_h = static_cast<int64_t>(size_value[0]);
     out_size.output_w = static_cast<int64_t>(size_value[1]);
@@ -59,38 +59,33 @@ static bool GetSizeFor2D(const gert::InferShapeContext* context, const gert::Ten
     ge::DataType size_dtype = size_tensor->GetDataType();
     switch (size_dtype) {
         case ge::DT_INT32: {
-            OP_CHECK_IF(
-                !GetSizeValueFor2D<int32_t>(context, size_tensor, out_size),
-                OP_LOGE(context->GetNodeName(), "Get size const for int32 failed!"), return false);
+            OP_CHECK_IF(!GetSizeValueFor2D<int32_t>(context, size_tensor, out_size),
+                        OP_LOGE(context->GetNodeName(), "Get size const for int32 failed!"), return false);
             break;
         }
         case ge::DT_INT64: {
-            OP_CHECK_IF(
-                !GetSizeValueFor2D<int64_t>(context, size_tensor, out_size),
-                OP_LOGE(context->GetNodeName(), "Get size const for int64 failed!"), return false);
+            OP_CHECK_IF(!GetSizeValueFor2D<int64_t>(context, size_tensor, out_size),
+                        OP_LOGE(context->GetNodeName(), "Get size const for int64 failed!"), return false);
             break;
         }
         default:
-            OP_LOGE_FOR_INVALID_DTYPE(
-                context->GetNodeName(), "size", Ops::Base::ToString(size_dtype).c_str(), "int32 or int64");
+            OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "size", Ops::Base::ToString(size_dtype).c_str(),
+                                      "int32 or int64");
             return false;
     }
     return true;
 }
 
-static bool ResizeInfershapeFor2D(
-    const gert::InferShapeContext* context, const gert::Shape* x_shape, const ge::Format input_format,
-    const OutInfo& out_info, gert::Shape* y_shape)
+static bool ResizeInfershapeFor2D(const gert::InferShapeContext* context, const gert::Shape* x_shape,
+                                  const ge::Format input_format, const OutInfo& out_info, gert::Shape* y_shape)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do ResizeInfershape");
     OP_LOGD(context->GetNodeName(), "input x shape = %s", Ops::Base::ToString(*x_shape).c_str());
     OP_LOGD(context->GetNodeName(), "input x format = %s", Ops::Base::ToString(input_format).c_str());
-    OP_CHECK_IF(
-        input_format != FORMAT_NHWC && input_format != FORMAT_NCHW,
-        OP_LOGE(
-            context->GetNodeName(), "input format only support [NHWC,NCHW], but is %s",
-            Ops::Base::ToString(input_format).c_str()),
-        return false);
+    OP_CHECK_IF(input_format != FORMAT_NHWC && input_format != FORMAT_NCHW,
+                OP_LOGE(context->GetNodeName(), "input format only support [NHWC,NCHW], but is %s",
+                        Ops::Base::ToString(input_format).c_str()),
+                return false);
 
     // -2 infer shape
     if (Ops::Base::IsUnknownRank(*x_shape)) {
@@ -99,12 +94,10 @@ static bool ResizeInfershapeFor2D(
     } else {
         constexpr size_t output_len = OUTPUT_DIM_NUM;
         const size_t input_dim_size = x_shape->GetDimNum();
-        OP_CHECK_IF(
-            input_dim_size != output_len,
-            OP_LOGE(
-                context->GetNodeName(), "input shape only support 4D, but is %s",
-                Ops::Base::ToString(*x_shape).c_str()),
-            return false);
+        OP_CHECK_IF(input_dim_size != output_len,
+                    OP_LOGE(context->GetNodeName(), "input shape only support 4D, but is %s",
+                            Ops::Base::ToString(*x_shape).c_str()),
+                    return false);
 
         *y_shape = *x_shape;
     }
@@ -120,32 +113,33 @@ static bool ResizeInfershapeFor2D(
     return true;
 }
 
-static ge::graphStatus InferShape4Resize2DWithConstSize(gert::InferShapeContext* context) {
-  OP_LOGD(context->GetNodeName(), "begin to do InferShape4Resize2DWithConstSize");
-  const gert::Shape* x_shape = context->GetInputShape(IN_X);
-  OP_CHECK_NULL_WITH_CONTEXT(context, x_shape);
-  gert::Shape* y_shape = context->GetOutputShape(OUT_Y);
-  OP_CHECK_NULL_WITH_CONTEXT(context, y_shape);
-  const gert::Tensor* size_tensor = context->GetInputTensor(IN_SIZE);
-  OP_CHECK_NULL_WITH_CONTEXT(context, size_tensor);
+static ge::graphStatus InferShape4Resize2DWithConstSize(gert::InferShapeContext* context)
+{
+    OP_LOGD(context->GetNodeName(), "begin to do InferShape4Resize2DWithConstSize");
+    const gert::Shape* x_shape = context->GetInputShape(IN_X);
+    OP_CHECK_NULL_WITH_CONTEXT(context, x_shape);
+    gert::Shape* y_shape = context->GetOutputShape(OUT_Y);
+    OP_CHECK_NULL_WITH_CONTEXT(context, y_shape);
+    const gert::Tensor* size_tensor = context->GetInputTensor(IN_SIZE);
+    OP_CHECK_NULL_WITH_CONTEXT(context, size_tensor);
 
-  OutInfo out_size;
-  OP_LOGD(context->GetNodeName(), "begin to get size from input %ld.", IN_SIZE);
-  OP_CHECK_IF(!GetSizeFor2D(context, size_tensor, out_size),
-           OP_LOGE(context->GetNodeName(), "Get size const failed!"),
-           return ge::GRAPH_FAILED);
+    OutInfo out_size;
+    OP_LOGD(context->GetNodeName(), "begin to get size from input %ld.", IN_SIZE);
+    OP_CHECK_IF(!GetSizeFor2D(context, size_tensor, out_size),
+                OP_LOGE(context->GetNodeName(), "Get size const failed!"), return ge::GRAPH_FAILED);
 
-  auto x_rutime_desc = context->GetInputDesc(IN_X);
-  OP_CHECK_NULL_WITH_CONTEXT(context, x_rutime_desc);
-  ge::Format input_format = x_rutime_desc->GetOriginFormat();
-  OP_CHECK_IF(!ResizeInfershapeFor2D(context, x_shape, input_format, out_size, y_shape),
-           OP_LOGE(context->GetNodeName(), "Do ResizeInfershape failed!"),
-           return ge::GRAPH_FAILED);
+    auto x_rutime_desc = context->GetInputDesc(IN_X);
+    OP_CHECK_NULL_WITH_CONTEXT(context, x_rutime_desc);
+    ge::Format input_format = x_rutime_desc->GetOriginFormat();
+    OP_CHECK_IF(!ResizeInfershapeFor2D(context, x_shape, input_format, out_size, y_shape),
+                OP_LOGE(context->GetNodeName(), "Do ResizeInfershape failed!"), return ge::GRAPH_FAILED);
 
-  OP_LOGD(context->GetNodeName(), "Do InferShape4Resize2DWithConstSize success");
+    OP_LOGD(context->GetNodeName(), "Do InferShape4Resize2DWithConstSize success");
 
-  return ge::GRAPH_SUCCESS;
+    return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_INFERSHAPE(ResizeNearestNeighborV2Grad).InferShape(InferShape4Resize2DWithConstSize).InputsDataDependency({IN_SIZE});
-}  // namespace ops
+IMPL_OP_INFERSHAPE(ResizeNearestNeighborV2Grad)
+    .InferShape(InferShape4Resize2DWithConstSize)
+    .InputsDataDependency({IN_SIZE});
+} // namespace ops

@@ -50,8 +50,8 @@ static constexpr size_t DIM_CHANNEL_NHWC = 3;
 static constexpr size_t SCALES_SIZE = 2;
 static constexpr double EPSILON = 1e-5;
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA = {op::DataType::DT_FLOAT16,
+                                                                            op::DataType::DT_FLOAT};
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_DATA_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
@@ -68,9 +68,8 @@ static bool CheckShape(const aclTensor* self, const aclFloatArray* scales, const
     uint64_t size = 0;
     auto ret = aclGetFloatArraySize(scales, &size);
     if (ret != 0 || size != NCHW_DIM_NUM) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "aclGetFloatArraySize error, ret=%lu, size=%lu, NCHW_DIM_NUM=%zu.",
-            static_cast<uint64_t>(ret), size, NCHW_DIM_NUM);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "aclGetFloatArraySize error, ret=%lu, size=%lu, NCHW_DIM_NUM=%zu.",
+                static_cast<uint64_t>(ret), size, NCHW_DIM_NUM);
         return false;
     }
 
@@ -102,19 +101,19 @@ static bool CheckInputElement(const aclTensor* self, const aclFloatArray* scales
     }
 
     if (extendFlag) {
-        int64_t dstDimHeightMax = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(dimHeight)) * (static_cast<double>((*scales)[dimHeight]) + EPSILON));
-        int64_t dstDimHeightMin = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(dimHeight)) * (static_cast<double>((*scales)[dimHeight]) - EPSILON));
+        int64_t dstDimHeightMax = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(dimHeight)) *
+                                                       (static_cast<double>((*scales)[dimHeight]) + EPSILON));
+        int64_t dstDimHeightMin = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(dimHeight)) *
+                                                       (static_cast<double>((*scales)[dimHeight]) - EPSILON));
         if ((outShape.GetDim(dimHeight) < dstDimHeightMin) || (outShape.GetDim(dimHeight) > dstDimHeightMax)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of height is not matched.");
             return false;
         }
 
-        int64_t dstDimWidthMax = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(dimWidth)) * (static_cast<double>((*scales)[dimWidth]) + EPSILON));
-        int64_t dstDimWidthMin = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(dimWidth)) * (static_cast<double>((*scales)[dimWidth]) - EPSILON));
+        int64_t dstDimWidthMax = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(dimWidth)) *
+                                                      (static_cast<double>((*scales)[dimWidth]) + EPSILON));
+        int64_t dstDimWidthMin = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(dimWidth)) *
+                                                      (static_cast<double>((*scales)[dimWidth]) - EPSILON));
         if ((outShape.GetDim(dimWidth) < dstDimWidthMin) || (outShape.GetDim(dimWidth) > dstDimWidthMax)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of width is not matched.");
             return false;
@@ -181,8 +180,8 @@ static bool CheckFormat(const aclTensor* self, const aclTensor* out, bool extend
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* self, const aclFloatArray* scales, const char* mode, const aclTensor* out, bool extendFlag)
+static aclnnStatus CheckParams(const aclTensor* self, const aclFloatArray* scales, const char* mode,
+                               const aclTensor* out, bool extendFlag)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, scales, mode, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -216,24 +215,23 @@ static const aclTensor* CreateSizesRegBase(const aclTensor* self, const aclFloat
         return nullptr;
     }
     if (self->GetViewShape().GetDimNum() != size) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "dim num of self should equal with size of scales, self DimNum=%zu, size=%lu",
-            self->GetViewShape().GetDimNum(), size);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "dim num of self should equal with size of scales, self DimNum=%zu, size=%lu",
+                self->GetViewShape().GetDimNum(), size);
         return nullptr;
     }
     auto selfShape = self->GetViewShape();
     std::vector<int64_t> sizesList(SCALES_SIZE);
     auto xFormat = self->GetStorageFormat();
     if (xFormat == op::Format::FORMAT_NCHW) {
-        sizesList[0] = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(DIM_HEIGHT_NCHW)) * static_cast<double>((*scales)[DIM_HEIGHT_NCHW]));
-        sizesList[1] = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(DIM_WIDTH_NCHW)) * static_cast<double>((*scales)[DIM_WIDTH_NCHW]));
+        sizesList[0] = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(DIM_HEIGHT_NCHW)) *
+                                            static_cast<double>((*scales)[DIM_HEIGHT_NCHW]));
+        sizesList[1] = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(DIM_WIDTH_NCHW)) *
+                                            static_cast<double>((*scales)[DIM_WIDTH_NCHW]));
     } else {
-        sizesList[0] = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(DIM_HEIGHT_NHWC)) * static_cast<double>((*scales)[DIM_HEIGHT_NHWC]));
-        sizesList[1] = static_cast<int64_t>(
-            static_cast<double>(selfShape.GetDim(DIM_WIDTH_NHWC)) * static_cast<double>((*scales)[DIM_WIDTH_NHWC]));
+        sizesList[0] = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(DIM_HEIGHT_NHWC)) *
+                                            static_cast<double>((*scales)[DIM_HEIGHT_NHWC]));
+        sizesList[1] = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(DIM_WIDTH_NHWC)) *
+                                            static_cast<double>((*scales)[DIM_WIDTH_NHWC]));
     }
     const aclIntArray* arr = executor->AllocIntArray(sizesList.data(), sizesList.size());
     auto sizes = executor->ConvertToTensor(arr, op::ToOpDataType(ACL_INT32));
@@ -243,18 +241,15 @@ static const aclTensor* CreateSizesRegBase(const aclTensor* self, const aclFloat
 static bool GetExtendPathFlag()
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if (IsRegBase(curArch) ||
-        curArch == NpuArch::DAV_2201 ||
-        curArch == NpuArch::DAV_1001 ||
+    if (IsRegBase(curArch) || curArch == NpuArch::DAV_2201 || curArch == NpuArch::DAV_1001 ||
         curArch == NpuArch::DAV_2002) {
         return true;
     }
     return false;
 }
 
-aclnnStatus aclnnResizeGetWorkspaceSize(
-    const aclTensor* self, const aclFloatArray* scales, const char* mode, aclTensor* out, uint64_t* workspaceSize,
-    aclOpExecutor** executor)
+aclnnStatus aclnnResizeGetWorkspaceSize(const aclTensor* self, const aclFloatArray* scales, const char* mode,
+                                        aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
@@ -280,10 +275,11 @@ aclnnStatus aclnnResizeGetWorkspaceSize(
         // 不必转到5HD，直接执行L0算子 带scales参数
         const aclTensor* resizeRet = nullptr;
         if (strncmp(mode, "nearest", strlen("nearest")) == 0) {
-            resizeRet =
-                l0op::ResizeNearestNeighborV2(selfContiguous, sizes, nullptr, false, false, outContiguous, uniqueExecutor.get());
+            resizeRet = l0op::ResizeNearestNeighborV2(selfContiguous, sizes, nullptr, false, false, outContiguous,
+                                                      uniqueExecutor.get());
         } else {
-            resizeRet = l0op::ResizeBilinearV2With4d(selfContiguous, sizes, false, nullptr, outContiguous, uniqueExecutor.get());
+            resizeRet = l0op::ResizeBilinearV2With4d(selfContiguous, sizes, false, nullptr, outContiguous,
+                                                     uniqueExecutor.get());
         }
         CHECK_RET(resizeRet != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -302,8 +298,8 @@ aclnnStatus aclnnResizeGetWorkspaceSize(
         // 执行L0算子
         const aclTensor* resizeRet = nullptr;
         if (strncmp(mode, "nearest", strlen("nearest")) == 0) {
-            resizeRet =
-                l0op::ResizeNearestNeighborV2(selfData, sizes, nullptr, false, false, outData, uniqueExecutor.get());
+            resizeRet = l0op::ResizeNearestNeighborV2(selfData, sizes, nullptr, false, false, outData,
+                                                      uniqueExecutor.get());
         } else if (strncmp(mode, "bilinear", strlen("bilinear")) == 0) {
             resizeRet = l0op::ResizeBilinearV2(selfData, sizes, false, outData, uniqueExecutor.get());
         }

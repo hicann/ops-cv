@@ -20,14 +20,10 @@ using namespace ge;
 using namespace optiling;
 
 class ResizeLinearGradTilingTest : public testing::Test {
- protected:
-  static void SetUpTestCase() {
-    std::cout << "ResizeLinearGradTilingTest SetUp" << std::endl;
-  }
+protected:
+    static void SetUpTestCase() { std::cout << "ResizeLinearGradTilingTest SetUp" << std::endl; }
 
-  static void TearDownTestCase() {
-    std::cout << "ResizeLinearGradTilingTest TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "ResizeLinearGradTilingTest TearDown" << std::endl; }
 };
 
 TEST_F(ResizeLinearGradTilingTest, resize_linear_grad_tiling_01)

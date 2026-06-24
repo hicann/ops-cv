@@ -38,9 +38,10 @@ extern "C" {
  * @param [out] executor: 返回op执行器，包含算子计算流程。
  * @return aclnnStatus: 返回状态码。
  */
-ACLNN_API aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor* self, const aclTensor* boxes, int64_t pooledHeight, 
-            int64_t pooledWidth, float spatialScale, int64_t samplingRatio, bool aligned, aclTensor* out, 
-            uint64_t* workspaceSize, aclOpExecutor** executor);
+ACLNN_API aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor* self, const aclTensor* boxes,
+                                                      int64_t pooledHeight, int64_t pooledWidth, float spatialScale,
+                                                      int64_t samplingRatio, bool aligned, aclTensor* out,
+                                                      uint64_t* workspaceSize, aclOpExecutor** executor);
 
 /**
  * @brief aclnnRoiAlignV2的第二段接口，用于执行计算。
@@ -51,10 +52,10 @@ ACLNN_API aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor* self, con
  * @return aclnnStatus: 返回状态码
  */
 ACLNN_API aclnnStatus aclnnRoiAlignV2(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
-                                    aclrtStream stream);
+                                      aclrtStream stream);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // OP_API_INC_LEVEL2_ACLNN_ROI_ALIGN_BACKWARD_H_
+#endif // OP_API_INC_LEVEL2_ACLNN_ROI_ALIGN_BACKWARD_H_

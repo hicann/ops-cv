@@ -28,7 +28,7 @@
 
 struct NMSWithMaskTilingData {
     int64_t totalLength;
-    float  iou_threshold;
-    float  scores_threshold;
+    float iou_threshold;
+    float scores_threshold;
 };
 #endif

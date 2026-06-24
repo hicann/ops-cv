@@ -1,13 +1,12 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
-*/
-
+ */
 
 /*!
  * \file mrgba_custom.cpp
@@ -24,13 +23,11 @@ using namespace AscendC;
 
 constexpr int32_t BUFFER_NUM = 1;
 constexpr size_t CHANNEL_RATIO = 3;
-constexpr float RATIO = 0.003921568627451;// this value is 1/255 for normalize
+constexpr float RATIO = 0.003921568627451; // this value is 1/255 for normalize
 
 class KernelMrgba {
 public:
-    __aicore__ inline KernelMrgba()
-    {
-    }
+    __aicore__ inline KernelMrgba() {}
 
     __aicore__ inline void Init(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR dst, size_t bufferNum, size_t bufferBytes,
                                 size_t gmIdx, size_t gmDataLen)
@@ -46,9 +43,9 @@ public:
         pipe.InitBuffer(bufAlphaF16C3, CHANNEL_RATIO * bufferBytes * sizeof(half));
         pipe.InitBuffer(bufRgbF16C3, CHANNEL_RATIO * bufferBytes * sizeof(half));
 
-        rgbGm.SetGlobalBuffer((__gm__ uint8_t *)rgb + CHANNEL_RATIO * gmIdx, CHANNEL_RATIO * gmDataLen);
-        alphaGm.SetGlobalBuffer((__gm__ uint8_t *)alpha + gmIdx, gmDataLen);
-        dstGm.SetGlobalBuffer((__gm__ uint8_t *)dst + CHANNEL_RATIO * gmIdx, CHANNEL_RATIO * gmDataLen);
+        rgbGm.SetGlobalBuffer((__gm__ uint8_t*)rgb + CHANNEL_RATIO * gmIdx, CHANNEL_RATIO * gmDataLen);
+        alphaGm.SetGlobalBuffer((__gm__ uint8_t*)alpha + gmIdx, gmDataLen);
+        dstGm.SetGlobalBuffer((__gm__ uint8_t*)dst + CHANNEL_RATIO * gmIdx, CHANNEL_RATIO * gmDataLen);
     }
 
     __aicore__ inline void CalcForAlign32(uint32_t idx, size_t len)
@@ -103,16 +100,16 @@ public:
 
 protected:
     TPipe pipe;
-    TQue <QuePosition::VECIN, BUFFER_NUM> inQueueRgb;
-    TQue <QuePosition::VECIN, BUFFER_NUM> inQueueAlpha;
-    TQue <QuePosition::VECOUT, BUFFER_NUM> outQueueDst;
-    TBuf <TPosition::VECCALC> bufAlphaF16C1;
-    TBuf <TPosition::VECCALC> bufAlphaF16C3;
-    TBuf <TPosition::VECCALC> bufRgbF16C3;
+    TQue<QuePosition::VECIN, BUFFER_NUM> inQueueRgb;
+    TQue<QuePosition::VECIN, BUFFER_NUM> inQueueAlpha;
+    TQue<QuePosition::VECOUT, BUFFER_NUM> outQueueDst;
+    TBuf<TPosition::VECCALC> bufAlphaF16C1;
+    TBuf<TPosition::VECCALC> bufAlphaF16C3;
+    TBuf<TPosition::VECCALC> bufRgbF16C3;
 
-    GlobalTensor <uint8_t> rgbGm;
-    GlobalTensor <uint8_t> alphaGm;
-    GlobalTensor <uint8_t> dstGm;
+    GlobalTensor<uint8_t> rgbGm;
+    GlobalTensor<uint8_t> alphaGm;
+    GlobalTensor<uint8_t> dstGm;
 };
 
 template <typename T>

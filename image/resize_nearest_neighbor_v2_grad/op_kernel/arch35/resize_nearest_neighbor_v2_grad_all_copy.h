@@ -20,14 +20,11 @@
 #include "op_kernel/platform_util.h"
 #include "resize_nearest_neighbor_v2_grad_simt_base.h"
 
-
-namespace ResizeNearestNeighborV2Grad
-{
+namespace ResizeNearestNeighborV2Grad {
 using namespace AscendC;
 
 template <typename T_GRADS, typename T_OUT>
-class ResizeNearestNeighborV2GradAllCopy
-{
+class ResizeNearestNeighborV2GradAllCopy {
 public:
     __aicore__ inline ResizeNearestNeighborV2GradAllCopy(){};
 
@@ -43,7 +40,7 @@ protected:
     const ResizeNearestNeighborV2GradTilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> dataQue_;
-    TPipe *pipe_;
+    TPipe* pipe_;
     GlobalTensor<uint8_t> gradsGm_;
     GlobalTensor<uint8_t> yGm_;
     int64_t totalLength_;
@@ -55,8 +52,8 @@ __aicore__ inline void ResizeNearestNeighborV2GradAllCopy<T_GRADS, T_OUT>::Init(
     GM_ADDR grads, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeNearestNeighborV2GradTilingData* data)
 {
     pipe_ = pipe;
-    gradsGm_.SetGlobalBuffer((__gm__ uint8_t *)grads);
-    yGm_.SetGlobalBuffer((__gm__ uint8_t *)y);
+    gradsGm_.SetGlobalBuffer((__gm__ uint8_t*)grads);
+    yGm_.SetGlobalBuffer((__gm__ uint8_t*)y);
 
     int64_t ubBlockSize = Ops::Base::GetUbBlockSize();
     tilingData_ = data;
@@ -119,7 +116,7 @@ __aicore__ inline void ResizeNearestNeighborV2GradAllCopy<T_GRADS, T_OUT>::Proce
     }
 
     for (int64_t loop = 0; loop < totalLength_; loop += tilingData_->ubCFactor) {
-        int64_t length = (tilingData_->ubCFactor > totalLength_ - loop)? totalLength_ - loop: tilingData_->ubCFactor;
+        int64_t length = (tilingData_->ubCFactor > totalLength_ - loop) ? totalLength_ - loop : tilingData_->ubCFactor;
         int64_t offset = totalOffset_ + loop;
 
         CopyIn(offset, length);
@@ -128,6 +125,6 @@ __aicore__ inline void ResizeNearestNeighborV2GradAllCopy<T_GRADS, T_OUT>::Proce
     return;
 }
 
-}  // namespace ResizeNearestNeighborV2Grad
+} // namespace ResizeNearestNeighborV2Grad
 
-#endif  // ResizeNearestNeighborV2Grad_ALL_COPY_H
+#endif // ResizeNearestNeighborV2Grad_ALL_COPY_H

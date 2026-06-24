@@ -16,23 +16,22 @@
 #define OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_
 
 #include "graph/operator_reg.h"
-namespace ge
-{
-    /**
-    * @brief Give transparency to the image.
-    *
-    * @par Inputs:
-    * @li rgb: A tensor of the type DT_UINT8.
-    * @li alpha:A tensor of the type DT_UINT8.
-    *
-    * @par Outputs:
-    * @li dst: A tensor of the type DT_UINT8.
-    */
-    REG_OP(BackgroundReplace)
-        .INPUT(bkg, TensorType({ DT_UINT8, DT_FLOAT16 }))
-        .INPUT(src, TensorType({ DT_UINT8, DT_FLOAT16 }))
-        .INPUT(mask, TensorType({ DT_FLOAT16, DT_FLOAT16 }))
-        .OUTPUT(out, TensorType({ DT_UINT8, DT_FLOAT16 }))
-        .OP_END_FACTORY_REG(BackgroundReplace)
+namespace ge {
+/**
+ * @brief Give transparency to the image.
+ *
+ * @par Inputs:
+ * @li rgb: A tensor of the type DT_UINT8.
+ * @li alpha:A tensor of the type DT_UINT8.
+ *
+ * @par Outputs:
+ * @li dst: A tensor of the type DT_UINT8.
+ */
+REG_OP(BackgroundReplace)
+    .INPUT(bkg, TensorType({DT_UINT8, DT_FLOAT16}))
+    .INPUT(src, TensorType({DT_UINT8, DT_FLOAT16}))
+    .INPUT(mask, TensorType({DT_FLOAT16, DT_FLOAT16}))
+    .OUTPUT(out, TensorType({DT_UINT8, DT_FLOAT16}))
+    .OP_END_FACTORY_REG(BackgroundReplace)
 } // namespace ge
 #endif // OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_

@@ -34,8 +34,8 @@ using namespace UpsampleNearest3d;
 
 // 算子kernel实现，需要根据具体API的接口定义修改
 template <typename T>
-__global__ __aicore__ void upsample_nearest3d_kernel(
-    __gm__ uint8_t* x, __gm__ uint8_t* y, const UpsampleNearest3dTilingData tilingData)
+__global__ __aicore__ void upsample_nearest3d_kernel(__gm__ uint8_t* x, __gm__ uint8_t* y,
+                                                     const UpsampleNearest3dTilingData tilingData)
 {
     if constexpr (std::is_same_v<T, c10::Half>) {
         UpsampleNearest3dKernelImpl<UPSAMPLE_NEAREST3D_TPL_FP16, UPSAMPLE_NEAREST3D_TPL_FP16>(x, y, false, &tilingData);
@@ -68,8 +68,8 @@ void upsample_nearest3d_api(aclrtStream stream, const at::Tensor& x, const int64
 }
 
 template <>
-void upsample_nearest3d_api<double>(
-    aclrtStream stream, const at::Tensor& x, const int64_t* output_size, const at::Tensor& y)
+void upsample_nearest3d_api<double>(aclrtStream stream, const at::Tensor& x, const int64_t* output_size,
+                                    const at::Tensor& y)
 {
     throw std::runtime_error("double is not supported on aicore!");
 }
@@ -85,9 +85,8 @@ torch::Tensor upsample_nearest3d_npu(const torch::Tensor& x, at::IntArrayRef out
     int64_t output_sizes[] = {output_size[0], output_size[1], output_size[2]};
     auto stream = c10_npu::getCurrentNPUStream().stream(false);
     auto acl_call = [=]() -> int {
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::kHalf, at::kBFloat16, x.scalar_type(), "upsample_nearest3d_npu", [&] {
-            upsample_nearest3d_api<scalar_t>(stream, x, output_sizes, y);
-        });
+        AT_DISPATCH_FLOATING_TYPES_AND2(at::kHalf, at::kBFloat16, x.scalar_type(), "upsample_nearest3d_npu",
+                                        [&] { upsample_nearest3d_api<scalar_t>(stream, x, output_sizes, y); });
         return 0;
     };
     at_npu::native::OpCommand::RunOpApiV2("UpsampleNearest3d", acl_call);
@@ -103,21 +102,12 @@ torch::Tensor upsample_nearest3d_meta(const torch::Tensor& x, at::IntArrayRef ou
         shape, torch::TensorOptions().dtype(x.dtype()).device(torch::kMeta).memory_format(x.suggest_memory_format()));
 }
 
-TORCH_LIBRARY_FRAGMENT(EXTENSION_MODULE_NAME, m)
-{
-    m.def("upsample_nearest3d(Tensor x, int[] size) -> Tensor");
-}
+TORCH_LIBRARY_FRAGMENT(EXTENSION_MODULE_NAME, m) { m.def("upsample_nearest3d(Tensor x, int[] size) -> Tensor"); }
 
 // PyTorch提供的宏，用于在后端注册算子，需要根据具体API的接口定义修改
-TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, PrivateUse1, m)
-{
-    m.impl("upsample_nearest3d", upsample_nearest3d_npu);
-}
+TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, PrivateUse1, m) { m.impl("upsample_nearest3d", upsample_nearest3d_npu); }
 
-TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, Meta, m)
-{
-    m.impl("upsample_nearest3d", TORCH_FN(upsample_nearest3d_meta));
-}
+TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, Meta, m) { m.impl("upsample_nearest3d", TORCH_FN(upsample_nearest3d_meta)); }
 
 } // namespace UpsampleNearest3dFastKernel
 } // namespace ascend_ops

@@ -18,10 +18,11 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ResizeBilinearV2Grad5Hd(const aclTensor *gradOut, const aclTensor *image, bool alignCorners,
-    bool halfPixelCenters, aclOpExecutor *executor);
+const aclTensor* ResizeBilinearV2Grad5Hd(const aclTensor* gradOut, const aclTensor* image, bool alignCorners,
+                                         bool halfPixelCenters, aclOpExecutor* executor);
 
-const aclTensor *ResizeBilinearV2Grad(const aclTensor *grads, const aclTensor *originalImage, const bool alignCorners,
-    const bool halfPixelCenters, const aclFloatArray *scales, aclOpExecutor *executor);
-}  // namespace l0op
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_2D_BACKWARD_OP_H_
+const aclTensor* ResizeBilinearV2Grad(const aclTensor* grads, const aclTensor* originalImage, const bool alignCorners,
+                                      const bool halfPixelCenters, const aclFloatArray* scales,
+                                      aclOpExecutor* executor);
+} // namespace l0op
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR_2D_BACKWARD_OP_H_

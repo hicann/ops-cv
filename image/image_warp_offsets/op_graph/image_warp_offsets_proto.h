@@ -34,6 +34,6 @@ REG_OP(IMGWarpOffsets)
     .INPUT(offsets, TensorType({DT_FLOAT, DT_INT32}))
     .OUTPUT(warp_images, TensorType({DT_UINT8, DT_FLOAT16, DT_FLOAT}))
     .OP_END_FACTORY_REG(IMGWarpOffsets)
-}
+} // namespace ge
 
 #endif

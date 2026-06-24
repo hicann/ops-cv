@@ -17,7 +17,7 @@
 #include "barycentric_from_imgcoord_kernel.h"
 
 extern "C" __global__ __aicore__ void rasterizer(GM_ADDR v, GM_ADDR f, GM_ADDR d, GM_ADDR findices, GM_ADDR barycentric,
-    GM_ADDR workspace, GM_ADDR tiling)
+                                                 GM_ADDR workspace, GM_ADDR tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIV_1_0);
     GET_TILING_DATA(tilingData, tiling);

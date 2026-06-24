@@ -30,8 +30,8 @@ extern "C" {
 
 namespace {
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_BF16};
 
 static const int64_t DIM_LIMIT = 5;
 static const double MAX_SUPPORT_SCALE = 50;
@@ -42,8 +42,8 @@ static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 static const int64_t EXPECT_SIZE = 3;
 
-static bool CheckNotNull(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* gradInput)
+static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                         const aclTensor* gradInput)
 {
     OP_CHECK_NULL(gradOut, return false);
     OP_CHECK_NULL(outputSize, return false);
@@ -80,16 +80,14 @@ static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, 
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 3, but got size %zu", outputSizeNum),
         return false);
 
-    OP_CHECK(
-        inputSizeNum == DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 5, but got size %zu", inputSizeNum),
-        return false);
+    OP_CHECK(inputSizeNum == DIM_LIMIT,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 5, but got size %zu", inputSizeNum),
+             return false);
     return true;
 }
 
-static bool CheckInputElement(
-    const aclTensor* gradOut, const aclTensor* gradInput, const aclIntArray* outputSize, const aclIntArray* inputSize,
-    double scalesD, double scalesH, double scalesW)
+static bool CheckInputElement(const aclTensor* gradOut, const aclTensor* gradInput, const aclIntArray* outputSize,
+                              const aclIntArray* inputSize, double scalesD, double scalesH, double scalesW)
 {
     int64_t outD = (*outputSize)[DIM_ZERO];
     int64_t outH = (*outputSize)[DIM_ONE];
@@ -106,22 +104,19 @@ static bool CheckInputElement(
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
 
-    OP_CHECK(
-        inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, but got input (H: %ld,"
-            " W: %ld) output (H: %ld, W: %ld)",
-            inputH, inputW, outH, outW),
-        return false);
+    OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, but got input (H: %ld,"
+                     " W: %ld) output (H: %ld, W: %ld)",
+                     inputH, inputW, outH, outW),
+             return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
         if (gradOutShape.GetDim(i) != expectOutputSize[i]) {
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "Expected grad_output to have the same shape as output;"
-                " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, expectOutputSize[i], i, gradOutShape.GetDim(i));
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Expected grad_output to have the same shape as output;"
+                    " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
+                    i, expectOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
@@ -135,13 +130,11 @@ static bool CheckInputElement(
     double realScalesD = ComputeNearestExact3dGradScales(inputD, outD, scalesD);
     double realScalesH = ComputeNearestExact3dGradScales(inputH, outH, scalesH);
     double realScalesW = ComputeNearestExact3dGradScales(inputW, outW, scalesW);
-    OP_CHECK(
-        realScalesD <= MAX_SUPPORT_SCALE && realScalesH <= MAX_SUPPORT_SCALE && realScalesW <= MAX_SUPPORT_SCALE,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "scalesD, scalesH and scalesW are too large, scalesD [%f], scalesH [%f], scalesW [%f].", realScalesD,
-            realScalesH, realScalesW),
-        return false);
+    OP_CHECK(realScalesD <= MAX_SUPPORT_SCALE && realScalesH <= MAX_SUPPORT_SCALE && realScalesW <= MAX_SUPPORT_SCALE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "scalesD, scalesH and scalesW are too large, scalesD [%f], scalesH [%f], scalesW [%f].",
+                     realScalesD, realScalesH, realScalesW),
+             return false);
     return true;
 }
 
@@ -161,23 +154,23 @@ static bool CheckUplimit(const aclTensor* gradOut)
     int64_t inputH = gradOut->GetViewShape().GetDim(DIM_THREE);
     int64_t inputW = gradOut->GetViewShape().GetDim(DIM_FOUR);
 
-    OP_CHECK(gradOutN <= INT32_MAX && gradOutC <= INT32_MAX && gradOutD <= INT32_MAX && gradOutH <= INT32_MAX && gradOutW <= INT32_MAX,
+    OP_CHECK(gradOutN <= INT32_MAX && gradOutC <= INT32_MAX && gradOutD <= INT32_MAX && gradOutH <= INT32_MAX &&
+                 gradOutW <= INT32_MAX,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
+                     gradOutN, gradOutC, gradOutD, gradOutH, gradOutW),
+             return false);
+    OP_CHECK(
+        inputN <= INT32_MAX && inputC <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld, %ld)",
-            INT32_MAX, gradOutN, gradOutC, gradOutD, gradOutH, gradOutW),
-        return false);
-    OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "GradInput sizes should not be greater than %d, but got gradInput(%ld, %ld, %ld, %ld, %ld)",
-            INT32_MAX, inputN, inputC, inputD, inputH , inputW),
+                "GradInput sizes should not be greater than %d, but got gradInput(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
+                inputN, inputC, inputD, inputH, inputW),
         return false);
     return true;
 }
 
-
-static aclnnStatus CheckParams(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesD,
-    double scalesH, double scalesW, const aclTensor* gradInput)
+static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               double scalesD, double scalesH, double scalesW, const aclTensor* gradInput)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, gradInput), ACLNN_ERR_PARAM_NULLPTR);
@@ -189,9 +182,8 @@ static aclnnStatus CheckParams(
     CHECK_RET(CheckShape(gradOut, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 检查输入元素是否合法
-    CHECK_RET(
-        CheckInputElement(gradOut, gradInput, outputSize, inputSize, scalesD, scalesH, scalesW),
-        ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckInputElement(gradOut, gradInput, outputSize, inputSize, scalesD, scalesH, scalesW),
+              ACLNN_ERR_PARAM_INVALID);
 
     // 5. 校验上边界
     CHECK_RET(CheckUplimit(gradOut), ACLNN_ERR_PARAM_INVALID);
@@ -200,15 +192,15 @@ static aclnnStatus CheckParams(
 }
 } // namespace
 
-aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesD,
-    double scalesH, double scalesW, aclTensor* gradInput, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                                const aclIntArray* inputSize, double scalesD,
+                                                                double scalesH, double scalesW, aclTensor* gradInput,
+                                                                uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
-    L2_DFX_PHASE_1(
-        aclnnUpsampleNearestExact3dBackward, DFX_IN(gradOut, outputSize, inputSize, scalesD, scalesH, scalesW),
-        DFX_OUT(gradInput));
+    L2_DFX_PHASE_1(aclnnUpsampleNearestExact3dBackward,
+                   DFX_IN(gradOut, outputSize, inputSize, scalesD, scalesH, scalesW), DFX_OUT(gradInput));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -253,8 +245,8 @@ aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
     }
 
     // 调用UpsampleNearestExact3dGradNcdhw算子kernel, inputSize对应[N, C, D, H, W]
-    auto result =
-        l0op::UpsampleNearestExact3dGradNcdhw(gradOutTranspose, outputSize, inputSize, scales, uniqueExecutor.get());
+    auto result = l0op::UpsampleNearestExact3dGradNcdhw(gradOutTranspose, outputSize, inputSize, scales,
+                                                        uniqueExecutor.get());
     CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto resultTranspose = result;
@@ -275,8 +267,8 @@ aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearestExact3dBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearestExact3dBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                                aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearestExact3dBackward);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

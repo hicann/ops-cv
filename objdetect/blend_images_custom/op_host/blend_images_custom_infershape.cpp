@@ -20,14 +20,15 @@ static const size_t OUT_INDEX = 0;
 
 using namespace ge;
 namespace ge {
-static ge::graphStatus InferShape4BlendImagesCustom(gert::InferShapeContext *context) {
-  // infer shape
-  OP_LOGD(context->GetNodeName(), "Begin to do InferShape4BlendImagesCustom.");
-  const gert::Shape *frame_shape = context->GetInputShape(FRAME_INDEX);
-  gert::Shape *out_shape = context->GetOutputShape(OUT_INDEX);
-  *out_shape = *frame_shape;
-  OP_LOGD(context->GetNodeName(), "End to do InferShape4BlendImagesCustom.");
-  return ge::GRAPH_SUCCESS;
+static ge::graphStatus InferShape4BlendImagesCustom(gert::InferShapeContext* context)
+{
+    // infer shape
+    OP_LOGD(context->GetNodeName(), "Begin to do InferShape4BlendImagesCustom.");
+    const gert::Shape* frame_shape = context->GetInputShape(FRAME_INDEX);
+    gert::Shape* out_shape = context->GetOutputShape(OUT_INDEX);
+    *out_shape = *frame_shape;
+    OP_LOGD(context->GetNodeName(), "End to do InferShape4BlendImagesCustom.");
+    return ge::GRAPH_SUCCESS;
 }
 
 IMPL_OP_INFERSHAPE(BlendImagesCustom).InferShape(InferShape4BlendImagesCustom);

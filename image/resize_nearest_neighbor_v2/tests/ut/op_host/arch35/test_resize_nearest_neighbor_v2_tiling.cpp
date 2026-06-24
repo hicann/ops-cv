@@ -21,21 +21,22 @@ using namespace ge;
 using namespace optiling;
 
 class ResizeNearestNeighborV2TilingTest : public testing::Test {
- protected:
-  static void SetUpTestCase() {
-    std::cout << "ResizeNearestNeighborV2TilingTest SetUp" << std::endl;
-  }
+protected:
+    static void SetUpTestCase() { std::cout << "ResizeNearestNeighborV2TilingTest SetUp" << std::endl; }
 
-  static void TearDownTestCase() {
-    std::cout << "ResizeNearestNeighborV2TilingTest TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "ResizeNearestNeighborV2TilingTest TearDown" << std::endl; }
 };
 
 // Original test 01: NCHW GATHER_ALL_HW
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_01)
 {
     gert::StorageShape inputXShape = {{1, 64, 3, 32}, {1, 64, 3, 32}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 64, 6, 64}, {1, 64, 6, 64}};
     int size_value[2] = {6, 64};
 
@@ -50,7 +51,8 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_01)
          gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0}))},
         &compileInfo);
     uint64_t expectTilingKey = 4105;
-    string expectTilingData = "64 1536 0 0 1 64 3 32 6 64 0 0 1 0 64 6144 24576 2048 4096 1 1 1 1 0 0 0 0 0 0 67 0 0 102912 25728 0 4539628425446424576 ";
+    string expectTilingData = "64 1536 0 0 1 64 3 32 6 64 0 0 1 0 64 6144 24576 2048 4096 1 1 1 1 0 0 0 0 0 0 67 0 0 "
+                              "102912 25728 0 4539628425446424576 ";
     std::vector<size_t> expectWorkspaces = {16777216};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
@@ -60,7 +62,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_01)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_02)
 {
     gert::StorageShape inputXShape = {{1, 64, 64, 144}, {1, 64, 64, 144}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 64, 128, 288}, {1, 64, 128, 288}};
     int size_value[2] = {128, 288};
 
@@ -75,7 +82,8 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_02)
          gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0}))},
         &compileInfo);
     uint64_t expectTilingKey = 4106;
-    string expectTilingData = "64 73728 0 0 1 64 64 144 128 288 0 0 1 0 64 589824 2359296 9216 18432 1 0 0 64 0 0 0 0 0 0 64 0 2 73728 19584 0 4539628425446424576 ";
+    string expectTilingData = "64 73728 0 0 1 64 64 144 128 288 0 0 1 0 64 589824 2359296 9216 18432 1 0 0 64 0 0 0 0 "
+                              "0 0 64 0 2 73728 19584 0 4539628425446424576 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -85,7 +93,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_02)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_03)
 {
     gert::StorageShape inputXShape = {{64, 4, 32, 48}, {64, 4, 32, 48}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{64, 4, 64, 48}, {64, 4, 64, 48}};
     int size_value[2] = {4, 64};
 
@@ -108,7 +121,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_03)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_04)
 {
     gert::StorageShape inputXShape = {{2, 8, 32, 64}, {2, 8, 32, 64}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{2, 16, 64, 64}, {2, 16, 64, 64}};
     int size_value[2] = {16, 64};
 
@@ -131,7 +149,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_04)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_05)
 {
     gert::StorageShape inputXShape = {{1, 8, 32, 64}, {1, 8, 32, 64}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 16, 75, 64}, {1, 16, 75, 64}};
     int size_value[2] = {16, 75};
 
@@ -154,7 +177,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_05)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_06)
 {
     gert::StorageShape inputXShape = {{1, 4, 8, 128}, {1, 4, 8, 128}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 12, 20, 128}, {1, 12, 20, 128}};
     int size_value[2] = {12, 20};
 
@@ -177,7 +205,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_06)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_07)
 {
     gert::StorageShape inputXShape = {{1, 2, 2, 128}, {1, 2, 2, 128}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 4, 5, 128}, {1, 4, 5, 128}};
     int size_value[2] = {4, 5};
 
@@ -200,7 +233,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_07)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_08)
 {
     gert::StorageShape inputXShape = {{1, 16, 32, 32}, {1, 16, 32, 32}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 16, 32, 32}, {1, 16, 32, 32}};
     int size_value[2] = {32, 32};
 
@@ -222,7 +260,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_08)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_09)
 {
     gert::StorageShape inputXShape = {{1, 16, 64, 64}, {1, 16, 64, 64}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 16, 32, 32}, {1, 16, 32, 32}};
     int size_value[2] = {32, 32};
 
@@ -244,7 +287,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_09)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_10)
 {
     gert::StorageShape inputXShape = {{1, 4, 32, 32}, {1, 4, 32, 32}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 4, 16, 16}, {1, 4, 16, 16}};
     int size_value[2] = {16, 16};
 
@@ -267,7 +315,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_10)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_11)
 {
     gert::StorageShape inputXShape = {{1, 8, 32, 63}, {1, 8, 32, 63}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 16, 75, 63}, {1, 16, 75, 63}};
     int size_value[2] = {16, 75};
 
@@ -290,7 +343,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_11)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_12)
 {
     gert::StorageShape inputXShape = {{1, 64, 64, 64}, {1, 64, 64, 64}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 64, 32, 32}, {1, 64, 32, 32}};
     int size_value[2] = {32, 32};
 
@@ -313,7 +371,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_12)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_13)
 {
     gert::StorageShape inputXShape = {{1, 64, 40, 60}, {1, 64, 40, 60}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 64, 80, 120}, {1, 64, 80, 120}};
     int size_value[2] = {80, 120};
 
@@ -335,7 +398,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_13)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_14)
 {
     gert::StorageShape inputXShape = {{1, 16, 64, 64}, {1, 16, 64, 64}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 8, 32, 64}, {1, 8, 32, 64}};
     int size_value[2] = {8, 32};
 
@@ -358,7 +426,12 @@ TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_14)
 TEST_F(ResizeNearestNeighborV2TilingTest, resize_nearest_neighbor_v2_tiling_15)
 {
     gert::StorageShape inputXShape = {{30, 100, 64, 128}, {30, 100, 64, 128}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{30, 200, 128, 128}, {30, 200, 128, 128}};
     int size_value[2] = {200, 128};
 

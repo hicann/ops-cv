@@ -39,9 +39,9 @@ extern "C" {
  * @param [out] executor: 返回op执行器，包含算子计算流程。
  * @return aclnnStatus: 返回状态码。
  */
-ACLNN_API aclnnStatus aclnnCIoUGetWorkspaceSize(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross, const char* mode, aclTensor* overlap,
-    aclTensor* atanSub, uint64_t* workspaceSize, aclOpExecutor** executor);
+ACLNN_API aclnnStatus aclnnCIoUGetWorkspaceSize(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans,
+                                                bool isCross, const char* mode, aclTensor* overlap, aclTensor* atanSub,
+                                                uint64_t* workspaceSize, aclOpExecutor** executor);
 
 /**
  * @brief aclnnCIoU的第二段接口，用于执行计算。

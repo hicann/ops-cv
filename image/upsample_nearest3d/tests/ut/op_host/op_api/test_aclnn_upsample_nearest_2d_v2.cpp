@@ -18,15 +18,9 @@ using namespace op;
 
 class l2_upsamplenearest2dv2_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsamplenearest2dv2_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsamplenearest2dv2_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsamplenearest2dv2_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsamplenearest2dv2_test TearDown" << std::endl; }
 };
 
 TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_invalid_dtype_int32)
@@ -41,8 +35,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_invalid_dtype_in
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -61,8 +55,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_invalid_dtype_in
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -81,8 +75,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_invalid_dtype_no
     auto output_size_desc = IntArrayDesc(output_size);
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -101,8 +95,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_input_nullptr)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(nullptr, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(nullptr, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -121,8 +115,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_output_nullptr)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(nullptr));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(nullptr));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -141,8 +135,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_invalid_shape)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -161,8 +155,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_invalid_format)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -179,8 +173,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_empty_tensor)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -199,8 +193,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float16_01)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -219,8 +213,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float16_02)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -239,8 +233,8 @@ TEST_F(l2_upsamplenearest2dv2_test, ascend910B2_l2_upsamplenearest2dv2_test_bflo
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -259,8 +253,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float_01)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -279,8 +273,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float_02)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -299,8 +293,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_01)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -319,7 +313,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_01)
 //     float scalesW = -99.0;
 
 //     auto ut =
-//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+//         OUTPUT(output_desc));
 
 //     uint64_t workspaceSize = 0;
 //     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -339,7 +334,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_double_01)
 //     float scalesW = -99.0;
 
 //     auto ut =
-//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+//         OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+//         OUTPUT(output_desc));
 
 //     uint64_t workspaceSize = 0;
 //     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -358,8 +354,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_float_transpose)
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -378,8 +374,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_output_size_is_3
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -398,8 +394,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_output_size_has_
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -418,8 +414,8 @@ TEST_F(l2_upsamplenearest2dv2_test, l2_upsamplenearest2dv2_test_input_dim_one_is
     float scalesH = -99.0;
     float scalesW = -99.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -438,8 +434,8 @@ TEST_F(l2_upsamplenearest2dv2_test, ascend910B4_case_float_scale_01)
     float scalesH = 2.0;
     float scalesW = 2.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -458,8 +454,8 @@ TEST_F(l2_upsamplenearest2dv2_test, ascend910B4_case_float_scale_02)
     float scalesH = 0.5;
     float scalesW = 0.5;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -478,8 +474,8 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend910_93_case_float_NHWC)
     float scalesH = 0.5;
     float scalesW = 0.5;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -498,8 +494,8 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_scale_01)
     float scalesH = 2.0;
     float scalesW = 2.0;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -518,8 +514,8 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_scale_02)
     float scalesH = 0.5;
     float scalesW = 0.5;
 
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -539,8 +535,8 @@ TEST_F(l2_upsamplenearest2dv2_test, Ascend950DT_9591_case_float_NHWC)
     float scalesW = 0.5;
 
     SetPlatformSocVersion(SocVersion::ASCEND950);
-    auto ut =
-        OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest2dV2, INPUT(self_desc, output_size_desc, scalesH, scalesW),
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);

@@ -64,16 +64,16 @@ struct UpsampleBilinear2dTilingData {
         arrA[i] = arrB[i];                 \
     }
 
-#define CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer) \
-    __ubuf__ tilingStruct *tilingDataPointer =                              \
-        reinterpret_cast<__ubuf__ tilingStruct *>((__ubuf__ uint8_t *)(tilingPointer));
+#define CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer)              \
+    __ubuf__ tilingStruct* tilingDataPointer = reinterpret_cast<__ubuf__ tilingStruct*>( \
+        (__ubuf__ uint8_t*)(tilingPointer));
 
 #define INIT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer) \
     CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer);
 
 #define GET_TILING_DATA(tilingData, tilingPointer)                                       \
-    UpsampleBilinear2dTilingData tilingData;                                               \
-    INIT_TILING_DATA(UpsampleBilinear2dTilingData, tilingDataPointer, tilingPointer);      \
+    UpsampleBilinear2dTilingData tilingData;                                             \
+    INIT_TILING_DATA(UpsampleBilinear2dTilingData, tilingDataPointer, tilingPointer);    \
     (tilingData).align_corners = tilingDataPointer->align_corners;                       \
     (tilingData).slide_size_w = tilingDataPointer->slide_size_w;                         \
     (tilingData).slide_size_h = tilingDataPointer->slide_size_h;                         \
@@ -102,4 +102,4 @@ struct UpsampleBilinear2dTilingData {
     COPY_ARR((tilingData).input_shapes, tilingDataPointer->input_shapes, 4);             \
     COPY_ARR((tilingData).output_shapes, tilingDataPointer->output_shapes, 4);
 
-#endif  // UPSAMPLE_BILINEAR2D_INPLACE_TILING_DEF_H
+#endif // UPSAMPLE_BILINEAR2D_INPLACE_TILING_DEF_H

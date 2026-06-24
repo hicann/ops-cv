@@ -15,58 +15,50 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-static const std::vector<ge::DataType> valueDataTypeX = {
-    ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_BF16, 
-    ge::DT_BF16
-};
+static const std::vector<ge::DataType> valueDataTypeX = {ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT,
+                                                         ge::DT_FLOAT,   ge::DT_BF16,    ge::DT_BF16};
 
-static const std::vector<ge::DataType> sizeDataType = {
-    ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, 
-    ge::DT_INT32
-};
+static const std::vector<ge::DataType> sizeDataType = {ge::DT_INT32, ge::DT_INT32, ge::DT_INT32,
+                                                       ge::DT_INT32, ge::DT_INT32, ge::DT_INT32};
 
-static const std::vector<ge::Format> resizeBicubicV2Format = {
-    ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NCHW,
-    ge::FORMAT_NHWC
-};
+static const std::vector<ge::Format> resizeBicubicV2Format = {ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NCHW,
+                                                              ge::FORMAT_NHWC, ge::FORMAT_NCHW, ge::FORMAT_NHWC};
 
-static const std::vector<ge::Format> sizeFormat = {
-    ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-    ge::FORMAT_ND
-};
+static const std::vector<ge::Format> sizeFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                                                   ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
 class ResizeBicubicV2 : public OpDef {
- public:
-  explicit ResizeBicubicV2(const char* name) : OpDef(name)
-  {
-    this->Input("x")
-        .ParamType(REQUIRED)
-        .DataType(valueDataTypeX)
-        .Format(resizeBicubicV2Format)
-        .UnknownShapeFormat(resizeBicubicV2Format);
-    this->Input("size")
-        .ParamType(REQUIRED)
-        .ValueDepend(OPTIONAL)
-        .DataType(sizeDataType)
-        .Format(sizeFormat)
-        .UnknownShapeFormat(sizeFormat);
-    this->Output("y")
-        .ParamType(REQUIRED)
-        .DataType(valueDataTypeX)
-        .Format(resizeBicubicV2Format)
-        .UnknownShapeFormat(resizeBicubicV2Format);
+public:
+    explicit ResizeBicubicV2(const char* name) : OpDef(name)
+    {
+        this->Input("x")
+            .ParamType(REQUIRED)
+            .DataType(valueDataTypeX)
+            .Format(resizeBicubicV2Format)
+            .UnknownShapeFormat(resizeBicubicV2Format);
+        this->Input("size")
+            .ParamType(REQUIRED)
+            .ValueDepend(OPTIONAL)
+            .DataType(sizeDataType)
+            .Format(sizeFormat)
+            .UnknownShapeFormat(sizeFormat);
+        this->Output("y")
+            .ParamType(REQUIRED)
+            .DataType(valueDataTypeX)
+            .Format(resizeBicubicV2Format)
+            .UnknownShapeFormat(resizeBicubicV2Format);
 
-    this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
-    this->Attr("scales").AttrType(OPTIONAL).ListFloat({0.0f, 0.0f});
+        this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
+        this->Attr("scales").AttrType(OPTIONAL).ListFloat({0.0f, 0.0f});
 
-    OpAICoreConfig aicoreConfig;
-    aicoreConfig.DynamicCompileStaticFlag(true)
-        .DynamicRankSupportFlag(true)
-        .DynamicShapeSupportFlag(true)
-        .ExtendCfgInfo("opFile.value", "resize_bicubic_v2_apt");
-    this->AICore().AddConfig("ascend950", aicoreConfig);
-  }
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "resize_bicubic_v2_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
+    }
 };
 
 OP_ADD(ResizeBicubicV2);
-}
+} // namespace ops

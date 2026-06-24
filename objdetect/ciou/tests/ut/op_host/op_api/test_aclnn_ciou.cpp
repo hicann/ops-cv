@@ -22,15 +22,9 @@ using namespace std;
 
 class l2_ciou_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "l2_ciou_test SetUp" << endl;
-    }
+    static void SetUpTestCase() { cout << "l2_ciou_test SetUp" << endl; }
 
-    static void TearDownTestCase()
-    {
-        cout << "l2_ciou_test TearDown" << endl;
-    }
+    static void TearDownTestCase() { cout << "l2_ciou_test TearDown" << endl; }
 };
 
 TEST_F(l2_ciou_test, ascend910_95_success_case_0)

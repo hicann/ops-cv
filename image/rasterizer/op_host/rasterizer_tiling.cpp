@@ -40,7 +40,7 @@ static constexpr uint32_t MAX_SHAPE_VALUE = 4096;
 static constexpr uint32_t MIN_SHAPE_VALUE = 0;
 
 static ge::graphStatus CheckParam(gert::TilingContext* context, const gert::StorageShape* vShape,
-    const gert::StorageShape* fShape)
+                                  const gert::StorageShape* fShape)
 {
     const gert::StorageShape* findicesShape = context->GetOutputShape(IDX_0);
     const gert::StorageShape* baryShape = context->GetOutputShape(IDX_1);
@@ -61,44 +61,37 @@ static ge::graphStatus CheckParam(gert::TilingContext* context, const gert::Stor
     auto barycentricDimNum = baryShape->GetStorageShape().GetDimNum();
 
     OP_CHECK_IF(vDimNum != DIM_NUM2 || fDimNum != DIM_NUM2 || findicesDimNum != DIM_NUM2,
-        OP_LOGE(context, "v/f/findices dim num is not 2, please check"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "v/f/findices dim num is not 2, please check"), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(barycentricDimNum != DIM_NUM3 ,
-        OP_LOGE(context, "barycentric dim num is not 3, please check"),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(fShape->GetStorageShape().GetDim(IDX_1) != DIM_VAL3
-        || baryShape->GetStorageShape().GetDim(IDX_2) != DIM_VAL3,
-        OP_LOGE(context, "dim1 of f and dim2 of barycentric should be 3, please check"),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(vShape->GetStorageShape().GetDim(IDX_1) != DIM_VAL4,
-        OP_LOGE(context, "dim1 of v should be 4, please check"),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(*height > MAX_SHAPE_VALUE || *width > MAX_SHAPE_VALUE
-        || *height == MIN_SHAPE_VALUE || *width == MIN_SHAPE_VALUE,
-        OP_LOGE(context, "height/width should be no greater than 4096 and greater than 0, please check"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(barycentricDimNum != DIM_NUM3, OP_LOGE(context, "barycentric dim num is not 3, please check"),
+                return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(
-        findicesShape->GetStorageShape().GetDim(IDX_0) != baryShape->GetStorageShape().GetDim(IDX_0)
-        || findicesShape->GetStorageShape().GetDim(IDX_1) != baryShape->GetStorageShape().GetDim(IDX_1)
-        || findicesShape->GetStorageShape().GetDim(IDX_0) != *height
-        || findicesShape->GetStorageShape().GetDim(IDX_1) != *width,
+        fShape->GetStorageShape().GetDim(IDX_1) != DIM_VAL3 || baryShape->GetStorageShape().GetDim(IDX_2) != DIM_VAL3,
+        OP_LOGE(context, "dim1 of f and dim2 of barycentric should be 3, please check"), return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(vShape->GetStorageShape().GetDim(IDX_1) != DIM_VAL4,
+                OP_LOGE(context, "dim1 of v should be 4, please check"), return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(*height > MAX_SHAPE_VALUE || *width > MAX_SHAPE_VALUE || *height == MIN_SHAPE_VALUE ||
+                    *width == MIN_SHAPE_VALUE,
+                OP_LOGE(context, "height/width should be no greater than 4096 and greater than 0, please check"),
+                return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(
+        findicesShape->GetStorageShape().GetDim(IDX_0) != baryShape->GetStorageShape().GetDim(IDX_0) ||
+            findicesShape->GetStorageShape().GetDim(IDX_1) != baryShape->GetStorageShape().GetDim(IDX_1) ||
+            findicesShape->GetStorageShape().GetDim(IDX_0) != *height ||
+            findicesShape->GetStorageShape().GetDim(IDX_1) != *width,
         OP_LOGE(context, "dim0 and dim1 of findices/barycentric should be equal to height and width, please check"),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF(*useDepthPrior != 0,
-        OP_LOGE(context, "useDepthPrior should be 0, please check"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(*useDepthPrior != 0, OP_LOGE(context, "useDepthPrior should be 0, please check"),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
 
-
-void FillTilingData(gert::TilingContext* context, const gert::StorageShape* vShape,
-    const gert::StorageShape* fShape)
+void FillTilingData(gert::TilingContext* context, const gert::StorageShape* vShape, const gert::StorageShape* fShape)
 {
     uint32_t numFaces = fShape->GetStorageShape().GetDim(IDX_0);
     uint32_t numVertices = vShape->GetStorageShape().GetDim(IDX_0);
@@ -125,16 +118,15 @@ void FillTilingData(gert::TilingContext* context, const gert::StorageShape* vSha
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     auto aivCoreNum = ascendcPlatform.GetCoreNumAiv();
 
-    size_t *workSpaceSize = context->GetWorkspaceSizes(1);
-    workSpaceSize[0] = static_cast<size_t>(*height) * static_cast<size_t>(*width)
-                        * (sizeof(int32_t) + sizeof(float)) * aivCoreNum
-                        + DIM_VAL3 * MAX_PROC_ELENUM * sizeof(uint32_t)
-                        + BUFFER_NUM * RSV * sizeof(uint32_t) + WORK_SPACE_SIZE;
+    size_t* workSpaceSize = context->GetWorkspaceSizes(1);
+    workSpaceSize[0] = static_cast<size_t>(*height) * static_cast<size_t>(*width) * (sizeof(int32_t) + sizeof(float)) *
+                           aivCoreNum +
+                       DIM_VAL3 * MAX_PROC_ELENUM * sizeof(uint32_t) + BUFFER_NUM * RSV * sizeof(uint32_t) +
+                       WORK_SPACE_SIZE;
 
     context->SetTilingKey(1);
     context->SetBlockDim(aivCoreNum);
 }
-
 
 static ge::graphStatus RasterizerTilingFunc(gert::TilingContext* context)
 {
@@ -143,8 +135,8 @@ static ge::graphStatus RasterizerTilingFunc(gert::TilingContext* context)
     const gert::StorageShape* vShape = context->GetInputShape(IDX_0);
     const gert::StorageShape* fShape = context->GetInputShape(IDX_1);
 
-    OP_CHECK_IF(CheckParam(context, vShape, fShape) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CheckInputShapes is failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckParam(context, vShape, fShape) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "CheckInputShapes is failed"), return ge::GRAPH_FAILED);
 
     FillTilingData(context, vShape, fShape);
 

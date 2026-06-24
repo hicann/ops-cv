@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 /*!
  * \file grid_sample_tiling_arch35.h
  * \brief grid_sample_tiling_arch35 info
@@ -34,8 +34,7 @@ namespace optiling {
 
 class GridSampleArch35Tiling : public GridSampleTiling {
 public:
-    explicit GridSampleArch35Tiling(gert::TilingContext *context) : GridSampleTiling(context)
-    {}
+    explicit GridSampleArch35Tiling(gert::TilingContext* context) : GridSampleTiling(context) {}
 
 protected:
     bool IsCapable() override;
@@ -54,5 +53,5 @@ private:
     int64_t gridSize;
 };
 
-}
+} // namespace optiling
 #endif

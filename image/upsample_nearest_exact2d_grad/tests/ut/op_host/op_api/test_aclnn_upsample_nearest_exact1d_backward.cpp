@@ -12,18 +12,11 @@
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
 
-class l2_upsample_nearest_exact1d_backward_test : public testing::Test
-{
+class l2_upsample_nearest_exact1d_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsample_nearest_exact1d_backward_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsample_nearest_exact1d_backward_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsample_nearest_exact1d_backward_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsample_nearest_exact1d_backward_test TearDown" << std::endl; }
 };
 
 // out nullptr
@@ -34,9 +27,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(nullptr));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(nullptr));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -50,9 +42,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto output_size_desc = IntArrayDesc(vector<int64_t>{5});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, nullptr, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, nullptr, scales),
+                        OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -67,9 +58,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     // EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -84,9 +74,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     // EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -101,9 +90,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -118,9 +106,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -135,9 +122,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -152,9 +138,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -169,9 +154,8 @@ TEST_F(l2_upsample_nearest_exact1d_backward_test, l2_upsample_nearest_exact1d_ba
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3});
     const double_t scales = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearestExact1dBackward, INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(out_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearestExact1dBackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, scales), OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);

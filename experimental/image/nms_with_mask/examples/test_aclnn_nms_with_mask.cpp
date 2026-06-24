@@ -48,9 +48,8 @@ void PrintOutResult(std::vector<int64_t>& shape, void** deviceAddr)
 {
     auto size = GetShapeSize(shape);
     std::vector<uint8_t> resultData(size, 0);
-    auto ret = aclrtMemcpy(
-        resultData.data(), resultData.size() * sizeof(resultData[0]), *deviceAddr, size * sizeof(resultData[0]),
-        ACL_MEMCPY_DEVICE_TO_HOST);
+    auto ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), *deviceAddr,
+                           size * sizeof(resultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return);
     for (int64_t i = 0; i < size; i++) {
         LOG_PRINT("result[%ld] is: %d\n", i, resultData[i]);
@@ -70,9 +69,8 @@ int Init(int32_t deviceId, aclrtStream* stream)
 }
 
 template <typename T>
-int CreateAclTensor(
-    const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr, aclDataType dataType,
-    aclTensor** tensor)
+int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
+                    aclDataType dataType, aclTensor** tensor)
 {
     auto size = GetShapeSize(shape) * sizeof(T);
     // 2. 申请device侧内存
@@ -89,9 +87,8 @@ int CreateAclTensor(
     }
 
     // 调用aclCreateTensor接口创建aclTensor
-    *tensor = aclCreateTensor(
-        shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(),
-        *deviceAddr);
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
+                              shape.data(), shape.size(), *deviceAddr);
     return 0;
 }
 
@@ -109,47 +106,110 @@ int main()
     std::vector<int64_t> selfXShape = {21, 4};
     std::vector<float> selfXHostData = {
         // 第 0 组
-        10.0f, 10.0f, 20.0f, 20.0f,
+        10.0f,
+        10.0f,
+        20.0f,
+        20.0f,
         // 第 1 组
-        12.0f, 12.0f, 18.0f, 18.0f,
+        12.0f,
+        12.0f,
+        18.0f,
+        18.0f,
         // 第 2 组
-        15.0f, 15.0f, 19.0f, 19.0f,
+        15.0f,
+        15.0f,
+        19.0f,
+        19.0f,
         // 第 3 组
-        14.0f, 14.0f, 18.0f, 18.0f,
+        14.0f,
+        14.0f,
+        18.0f,
+        18.0f,
         // 第 4 组
-        18.0f, 18.0f, 25.0f, 25.0f,
+        18.0f,
+        18.0f,
+        25.0f,
+        25.0f,
         // 第 5 组
-        25.0f, 10.0f, 35.0f, 20.0f,
+        25.0f,
+        10.0f,
+        35.0f,
+        20.0f,
         // 第 6 组
-        10.0f, 25.0f, 20.0f, 35.0f,
+        10.0f,
+        25.0f,
+        20.0f,
+        35.0f,
         // 第 7 组
-        20.0f, 20.0f, 23.0f, 23.0f,
+        20.0f,
+        20.0f,
+        23.0f,
+        23.0f,
         // 第 8 组
-        21.0f, 21.0f, 24.0f, 24.0f,
+        21.0f,
+        21.0f,
+        24.0f,
+        24.0f,
         // 第 9 组
-        30.0f, 30.0f, 40.0f, 40.0f,
+        30.0f,
+        30.0f,
+        40.0f,
+        40.0f,
         // 第 10 组
-        45.0f, 10.0f, 55.0f, 20.0f,
+        45.0f,
+        10.0f,
+        55.0f,
+        20.0f,
         // 第 11 组
-        10.0f, 40.0f, 20.0f, 50.0f,
+        10.0f,
+        40.0f,
+        20.0f,
+        50.0f,
         // 第 12 组
-        60.0f, 30.0f, 70.0f, 40.0f,
+        60.0f,
+        30.0f,
+        70.0f,
+        40.0f,
         // 第 13 组
-        30.0f, 50.0f, 40.0f, 60.0f,
+        30.0f,
+        50.0f,
+        40.0f,
+        60.0f,
         // 第 14 组
-        75.0f, 10.0f, 85.0f, 20.0f,
+        75.0f,
+        10.0f,
+        85.0f,
+        20.0f,
         // 第 15 组
-        10.0f, 65.0f, 20.0f, 75.0f,
+        10.0f,
+        65.0f,
+        20.0f,
+        75.0f,
         // 第 16 组
-        50.0f, 60.0f, 60.0f, 70.0f,
+        50.0f,
+        60.0f,
+        60.0f,
+        70.0f,
         // 第 17 组
-        80.0f, 40.0f, 90.0f, 50.0f,
+        80.0f,
+        40.0f,
+        90.0f,
+        50.0f,
         // 第 18 组
-        30.0f, 75.0f, 40.0f, 85.0f,
+        30.0f,
+        75.0f,
+        40.0f,
+        85.0f,
         // 第 19 组
-        95.0f, 20.0f, 105.0f, 30.0f,
+        95.0f,
+        20.0f,
+        105.0f,
+        30.0f,
 
-        1.0f, 1.0f, 2.0f, 2.0f,
+        1.0f,
+        1.0f,
+        2.0f,
+        2.0f,
     };
     ret = CreateAclTensor(selfXHostData, selfXShape, &selfXDeviceAddr, aclDataType::ACL_FLOAT, &selfX);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
@@ -157,13 +217,8 @@ int main()
     aclTensor* selfY = nullptr;
     void* selfYDeviceAddr = nullptr;
     std::vector<int64_t> selfYShape = {21};
-    std::vector<float> selfYHostData={
-        0.99f, 0.98f, 0.97f, 0.96f, 0.95f,
-        0.94f, 0.93f, 0.92f, 0.91f, 0.90f,
-        0.89f, 0.88f, 0.87f, 0.86f, 0.85f,
-        0.84f, 0.83f, 0.82f, 0.81f, 0.80f,
-        0.80f
-    };
+    std::vector<float> selfYHostData = {0.99f, 0.98f, 0.97f, 0.96f, 0.95f, 0.94f, 0.93f, 0.92f, 0.91f, 0.90f, 0.89f,
+                                        0.88f, 0.87f, 0.86f, 0.85f, 0.84f, 0.83f, 0.82f, 0.81f, 0.80f, 0.80f};
     ret = CreateAclTensor(selfYHostData, selfYShape, &selfYDeviceAddr, aclDataType::ACL_FLOAT, &selfY);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
@@ -180,9 +235,10 @@ int main()
 
     double iou_threshold = 0.1;
     double socres_threshold = 0.1;
-    
+
     // 4. 调用aclnnNMSWithMask第一段接口
-    ret = aclnnNMSWithMaskGetWorkspaceSize(selfX, selfY, iou_threshold, socres_threshold, out, &workspaceSize, &executor);
+    ret = aclnnNMSWithMaskGetWorkspaceSize(selfX, selfY, iou_threshold, socres_threshold, out, &workspaceSize,
+                                           &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnNMSWithMaskGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
 
     // 根据第一段接口计算出的workspaceSize申请device内存

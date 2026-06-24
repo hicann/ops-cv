@@ -13,14 +13,14 @@
  * \brief
  */
 
-#include "../../../op_kernel/add_example.cpp"  
+#include "../../../op_kernel/add_example.cpp"
 #include "add_example_tiling.h"
 #include <array>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <cstdint>
-#include <cstdlib>  
+#include <cstdlib>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
 #include "data_utils.h"
@@ -36,10 +36,8 @@ protected:
         system(cmd.c_str());
         system("chmod -R 755 ./add_example_data/");
     }
-    static void TearDownTestCase()
-    {
-        cout << "AddExampleTest TearDown\n" << endl;
-    }
+    static void TearDownTestCase() { cout << "AddExampleTest TearDown\n" << endl; }
+
 private:
     const static std::string rootPath;
     const static std::string dataPath;
@@ -77,14 +75,8 @@ TEST_F(AddExampleTest, test_case_0)
     ICPU_SET_TILING_KEY(0);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
 
-    ICPU_RUN_KF(add_example<0>,
-        numBlocks,
-        x,
-        y,
-        z,
-        workspace,
-        (uint8_t *)(tilingDatafromBin));
-    
+    ICPU_RUN_KF(add_example<0>, numBlocks, x, y, z, workspace, (uint8_t*)(tilingDatafromBin));
+
     fileName = "./add_example_data/float32_output_add_example.bin";
     WriteFile(fileName, z, zByteSize);
 

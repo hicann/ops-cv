@@ -19,7 +19,7 @@ namespace ops {
 
 class UpsampleBilinear2dGrad : public OpDef {
 public:
-    explicit UpsampleBilinear2dGrad(const char *name) : OpDef(name)
+    explicit UpsampleBilinear2dGrad(const char* name) : OpDef(name)
     {
         this->Input("grad_output")
             .ParamType(REQUIRED)
@@ -42,4 +42,4 @@ public:
 };
 
 OP_ADD(UpsampleBilinear2dGrad);
-}  // namespace ops
+} // namespace ops

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -27,25 +27,20 @@ using namespace std;
 
 class l2_grid_sampler2d_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "grid_sampler2d_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "grid_sampler2d_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "grid_sampler2d_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "grid_sampler2d_test TearDown" << std::endl; }
 };
 
 // 普通场景（含精度）
 TEST_F(l2_grid_sampler2d_test, case_1)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -78,11 +73,12 @@ TEST_F(l2_grid_sampler2d_test, case_2)
 // grid nullptr
 TEST_F(l2_grid_sampler2d_test, case_3)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = nullptr;
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
     bool alignCorners = false;
@@ -97,11 +93,12 @@ TEST_F(l2_grid_sampler2d_test, case_3)
 // out nullptr
 TEST_F(l2_grid_sampler2d_test, case_4)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = nullptr;
@@ -118,11 +115,11 @@ TEST_F(l2_grid_sampler2d_test, case_4)
 TEST_F(l2_grid_sampler2d_test, case_5)
 {
     aclDataType dtype = aclDataType::ACL_BF16;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -139,11 +136,11 @@ TEST_F(l2_grid_sampler2d_test, case_5)
 TEST_F(l2_grid_sampler2d_test, case_6)
 {
     aclDataType dtype = aclDataType::ACL_FLOAT16;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -185,11 +182,11 @@ TEST_F(l2_grid_sampler2d_test, case_6)
 TEST_F(l2_grid_sampler2d_test, case_8)
 {
     aclDataType dtype = aclDataType::ACL_UINT8;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -206,11 +203,11 @@ TEST_F(l2_grid_sampler2d_test, case_8)
 TEST_F(l2_grid_sampler2d_test, case_9)
 {
     aclDataType dtype = aclDataType::ACL_INT8;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -227,11 +224,11 @@ TEST_F(l2_grid_sampler2d_test, case_9)
 TEST_F(l2_grid_sampler2d_test, case_10)
 {
     aclDataType dtype = aclDataType::ACL_INT16;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -248,11 +245,11 @@ TEST_F(l2_grid_sampler2d_test, case_10)
 TEST_F(l2_grid_sampler2d_test, case_11)
 {
     aclDataType dtype = aclDataType::ACL_INT32;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -269,11 +266,11 @@ TEST_F(l2_grid_sampler2d_test, case_11)
 TEST_F(l2_grid_sampler2d_test, case_12)
 {
     aclDataType dtype = aclDataType::ACL_INT64;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -290,11 +287,11 @@ TEST_F(l2_grid_sampler2d_test, case_12)
 TEST_F(l2_grid_sampler2d_test, case_13)
 {
     aclDataType dtype = aclDataType::ACL_BOOL;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -311,11 +308,11 @@ TEST_F(l2_grid_sampler2d_test, case_13)
 TEST_F(l2_grid_sampler2d_test, case_14)
 {
     aclDataType dtype = aclDataType::ACL_COMPLEX64;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -332,11 +329,11 @@ TEST_F(l2_grid_sampler2d_test, case_14)
 TEST_F(l2_grid_sampler2d_test, case_15)
 {
     aclDataType dtype = aclDataType::ACL_COMPLEX128;
-    auto input =
-        TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                           10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                           20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                           30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, dtype, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                    8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                    16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                    24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                    32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, dtype, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, dtype, ACL_FORMAT_ND);
@@ -351,12 +348,12 @@ TEST_F(l2_grid_sampler2d_test, case_15)
 // nchw nhwc
 TEST_F(l2_grid_sampler2d_test, case_16)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                          7,  8,  9,  10, 11, 12, 13,
+                                                                                          14, 15, 16, 17, 18, 19, 20,
+                                                                                          21, 22, 23, 24, 25, 26, 27,
+                                                                                          28, 29, 30, 31, 32, 33, 34,
+                                                                                          35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_NHWC)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -374,12 +371,12 @@ TEST_F(l2_grid_sampler2d_test, case_16)
 // hwcn nchw
 TEST_F(l2_grid_sampler2d_test, case_17)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_HWCN).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_HWCN).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                          7,  8,  9,  10, 11, 12, 13,
+                                                                                          14, 15, 16, 17, 18, 19, 20,
+                                                                                          21, 22, 23, 24, 25, 26, 27,
+                                                                                          28, 29, 30, 31, 32, 33, 34,
+                                                                                          35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_NCHW)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -444,11 +441,12 @@ TEST_F(l2_grid_sampler2d_test, case_20)
 // mode is not illegal
 TEST_F(l2_grid_sampler2d_test, case_21)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -464,11 +462,12 @@ TEST_F(l2_grid_sampler2d_test, case_21)
 // padding mode is not illegal
 TEST_F(l2_grid_sampler2d_test, case_22)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -484,12 +483,12 @@ TEST_F(l2_grid_sampler2d_test, case_22)
 // format not same
 TEST_F(l2_grid_sampler2d_test, case_23)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_DOUBLE, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_DOUBLE, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                         7,  8,  9,  10, 11, 12, 13,
+                                                                                         14, 15, 16, 17, 18, 19, 20,
+                                                                                         21, 22, 23, 24, 25, 26, 27,
+                                                                                         28, 29, 30, 31, 32, 33, 34,
+                                                                                         35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -565,12 +564,12 @@ TEST_F(l2_grid_sampler2d_test, case_27)
 // nhwc nhwc
 TEST_F(l2_grid_sampler2d_test, ascend910B2_case_28)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_NCHW).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                          7,  8,  9,  10, 11, 12, 13,
+                                                                                          14, 15, 16, 17, 18, 19, 20,
+                                                                                          21, 22, 23, 24, 25, 26, 27,
+                                                                                          28, 29, 30, 31, 32, 33, 34,
+                                                                                          35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_NHWC)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -625,11 +624,12 @@ TEST_F(l2_grid_sampler2d_test, ascend910B2_case_32)
 // grid nullptr
 TEST_F(l2_grid_sampler2d_test, ascend910B2_case_33)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = nullptr;
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
     bool alignCorners = false;
@@ -643,11 +643,12 @@ TEST_F(l2_grid_sampler2d_test, ascend910B2_case_33)
 
 TEST_F(l2_grid_sampler2d_test, ascend310P_case_34)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                               10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                               20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                               30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                        7,  8,  9,  10, 11, 12, 13,
+                                                                                        14, 15, 16, 17, 18, 19, 20,
+                                                                                        21, 22, 23, 24, 25, 26, 27,
+                                                                                        28, 29, 30, 31, 32, 33, 34,
+                                                                                        35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -661,11 +662,11 @@ TEST_F(l2_grid_sampler2d_test, ascend310P_case_34)
 
 TEST_F(l2_grid_sampler2d_test, ascend310B_case_35)
 {
-    auto input =
-        TensorDesc({1, 32, 1, 1}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                  8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                  16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                  24, 25, 26, 27, 28, 29, 30, 31});
+    auto input = TensorDesc({1, 32, 1, 1}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                           7,  8,  9,  10, 11, 12, 13,
+                                                                                           14, 15, 16, 17, 18, 19, 20,
+                                                                                           21, 22, 23, 24, 25, 26, 27,
+                                                                                           28, 29, 30, 31});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT16, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 32, 3, 3}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -680,12 +681,12 @@ TEST_F(l2_grid_sampler2d_test, ascend310B_case_35)
 // ascend310P float16
 TEST_F(l2_grid_sampler2d_test, ascend310P_case_36)
 {
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                          7,  8,  9,  10, 11, 12, 13,
+                                                                                          14, 15, 16, 17, 18, 19, 20,
+                                                                                          21, 22, 23, 24, 25, 26, 27,
+                                                                                          28, 29, 30, 31, 32, 33, 34,
+                                                                                          35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT16, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -700,12 +701,12 @@ TEST_F(l2_grid_sampler2d_test, ascend310P_case_36)
 TEST_F(l2_grid_sampler2d_test, ascend310P_case_37)
 {
     SetPlatformSocVersion(SocVersion::ASCEND310P);
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,
+                                                                                          7,  8,  9,  10, 11, 12, 13,
+                                                                                          14, 15, 16, 17, 18, 19, 20,
+                                                                                          21, 22, 23, 24, 25, 26, 27,
+                                                                                          28, 29, 30, 31, 32, 33, 34,
+                                                                                          35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT16, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -722,11 +723,11 @@ TEST_F(l2_grid_sampler2d_test, ascend310P_case_37)
 TEST_F(l2_grid_sampler2d_test, ascend310P_case_38)
 {
     SetPlatformSocVersion(SocVersion::ASCEND310P);
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                              10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                              20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                                              30, 31, 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                       8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                       16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                       24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                       32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_ND);
@@ -742,12 +743,11 @@ TEST_F(l2_grid_sampler2d_test, ascend310P_case_38)
 TEST_F(l2_grid_sampler2d_test, ascend950_case_39)
 {
     SetPlatformSocVersion(SocVersion::ASCEND950);
-    auto input =
-        TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
-                                                                                 8,  9,  10, 11, 12, 13, 14, 15,
-                                                                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                                                                 24, 25, 26, 27, 28, 29, 30, 31,
-                                                                                 32, 33, 34, 35, 36, 37, 38, 39});
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_BF16, ACL_FORMAT_ND).Value(vector<float>{0,  1,  2,  3,  4,  5,  6,  7,
+                                                                                       8,  9,  10, 11, 12, 13, 14, 15,
+                                                                                       16, 17, 18, 19, 20, 21, 22, 23,
+                                                                                       24, 25, 26, 27, 28, 29, 30, 31,
+                                                                                       32, 33, 34, 35, 36, 37, 38, 39});
     auto grid = TensorDesc({1, 3, 3, 2}, ACL_BF16, ACL_FORMAT_ND)
                     .Value(vector<float>{-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1});
     auto out = TensorDesc({1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_ND);

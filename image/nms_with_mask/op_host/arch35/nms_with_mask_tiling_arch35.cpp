@@ -44,22 +44,19 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckInputShape()
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, inputShape);
     const gert::Shape& shapeStorageScores = Ops::Cv::OpTiling::EnsureNotScalar(inputShape->GetStorageShape());
     // check input boxesScores
-    OP_CHECK_IF(
-        shapeStorageScores.GetDimNum() != DIM_NUM_TWO,
-        OP_LOGE(
-            tilingContext_, "Input box_scores' shape only supports 2-D, got dim num:%lu.",
-            shapeStorageScores.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(shapeStorageScores.GetDimNum() != DIM_NUM_TWO,
+                OP_LOGE(tilingContext_, "Input box_scores' shape only supports 2-D, got dim num:%lu.",
+                        shapeStorageScores.GetDimNum()),
+                return ge::GRAPH_FAILED);
     boxesNum_ = shapeStorageScores.GetDim(INDEX_ZERO);
     OP_CHECK_IF(
         boxesNum_ <= 0 || boxesNum_ >= MAX_BLOCK_NUM,
         OP_LOGE(tilingContext_, "Input boxes num must be greater than 0 and less than 39936, got :%lld.", boxesNum_),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        shapeStorageScores.GetDim(INDEX_ONE) != ELEMENT_NUM,
-        OP_LOGE(
-            tilingContext_, "Input box_scores' second dim must be 5, got :%lu.", shapeStorageScores.GetDim(INDEX_ONE)),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(shapeStorageScores.GetDim(INDEX_ONE) != ELEMENT_NUM,
+                OP_LOGE(tilingContext_, "Input box_scores' second dim must be 5, got :%lu.",
+                        shapeStorageScores.GetDim(INDEX_ONE)),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -69,56 +66,46 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckOutputShape()
     auto selectedBoxesOutput = tilingContext_->GetOutputShape(INDEX_ZERO);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedBoxesOutput);
     const gert::Shape& selectedBoxesShape = Ops::Cv::OpTiling::EnsureNotScalar(selectedBoxesOutput->GetStorageShape());
-    OP_CHECK_IF(
-        selectedBoxesShape.GetDimNum() != DIM_NUM_TWO,
-        OP_LOGE(
-            tilingContext_, "Output selected_boxes' shape only supports 2-D, got dim num:%lu.",
-            selectedBoxesShape.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(selectedBoxesShape.GetDimNum() != DIM_NUM_TWO,
+                OP_LOGE(tilingContext_, "Output selected_boxes' shape only supports 2-D, got dim num:%lu.",
+                        selectedBoxesShape.GetDimNum()),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         selectedBoxesShape.GetDim(INDEX_ZERO) != boxesNum_,
-        OP_LOGE(
-            tilingContext_, "Output selected_boxes' first dim must be  equal to  box_scores' first dim, got :%lu.",
-            selectedBoxesShape.GetDim(INDEX_ZERO)),
+        OP_LOGE(tilingContext_, "Output selected_boxes' first dim must be  equal to  box_scores' first dim, got :%lu.",
+                selectedBoxesShape.GetDim(INDEX_ZERO)),
         return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        selectedBoxesShape.GetDim(INDEX_ONE) != ELEMENT_NUM,
-        OP_LOGE(
-            tilingContext_, "Output selected_boxes' second dim must be 5, got :%lu.", selectedBoxesShape.GetDim(INDEX_ONE)),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(selectedBoxesShape.GetDim(INDEX_ONE) != ELEMENT_NUM,
+                OP_LOGE(tilingContext_, "Output selected_boxes' second dim must be 5, got :%lu.",
+                        selectedBoxesShape.GetDim(INDEX_ONE)),
+                return ge::GRAPH_FAILED);
 
     // check output selectedIndices
     auto selectedIdxOutput = tilingContext_->GetOutputShape(INDEX_ONE);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedIdxOutput);
     const gert::Shape& selectedIdxShape = Ops::Cv::OpTiling::EnsureNotScalar(selectedIdxOutput->GetStorageShape());
-    OP_CHECK_IF(
-        selectedIdxShape.GetDimNum() != DIM_NUM_ONE,
-        OP_LOGE(
-            tilingContext_, "Output selected_idx' shape only supports 1-D, got dim num:%lu.",
-            selectedIdxShape.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(selectedIdxShape.GetDimNum() != DIM_NUM_ONE,
+                OP_LOGE(tilingContext_, "Output selected_idx' shape only supports 1-D, got dim num:%lu.",
+                        selectedIdxShape.GetDimNum()),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         selectedIdxShape.GetDim(INDEX_ZERO) != boxesNum_,
-        OP_LOGE(
-            tilingContext_, "Output selected_idx' first dim must be equal to box_scores' first dim, got :%lu.",
-            selectedIdxShape.GetDim(INDEX_ZERO)),
+        OP_LOGE(tilingContext_, "Output selected_idx' first dim must be equal to box_scores' first dim, got :%lu.",
+                selectedIdxShape.GetDim(INDEX_ZERO)),
         return ge::GRAPH_FAILED);
 
     // check output selectedMask
     auto selectedMaskOutput = tilingContext_->GetOutputShape(INDEX_TWO);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedMaskOutput);
     const gert::Shape& selectedMaskShape = Ops::Cv::OpTiling::EnsureNotScalar(selectedMaskOutput->GetStorageShape());
-    OP_CHECK_IF(
-        selectedMaskShape.GetDimNum() != DIM_NUM_ONE,
-        OP_LOGE(
-            tilingContext_, "Output selected_mask' shape only supports 1-D, got dim num:%lu.",
-            selectedMaskShape.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(selectedMaskShape.GetDimNum() != DIM_NUM_ONE,
+                OP_LOGE(tilingContext_, "Output selected_mask' shape only supports 1-D, got dim num:%lu.",
+                        selectedMaskShape.GetDimNum()),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         selectedMaskShape.GetDim(INDEX_ZERO) != boxesNum_,
-        OP_LOGE(
-            tilingContext_, "Output selected_mask' first dim must be equal to box_scores' first dim, got :%lu.",
-            selectedMaskShape.GetDim(INDEX_ZERO)),
+        OP_LOGE(tilingContext_, "Output selected_mask' first dim must be equal to box_scores' first dim, got :%lu.",
+                selectedMaskShape.GetDim(INDEX_ZERO)),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
@@ -128,16 +115,14 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckShape()
     OP_LOGD(tilingContext_, "Entering NMSWithMaskRegbaseTiling::CheckShape");
     // check input shape
     OP_LOGD(tilingContext_, "Entering NMSWithMaskRegbaseTiling::CheckInputShape");
-    OP_CHECK_IF(
-        CheckInputShape() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckInputShape failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckInputShape() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckInputShape failed."),
+                return ge::GRAPH_FAILED);
     OP_LOGD(tilingContext_, "CheckInputShape success");
 
     // check output shape
     OP_LOGD(tilingContext_, "Entering NMSWithMaskRegbaseTiling::CheckOutputShape");
-    OP_CHECK_IF(
-        CheckOutputShape() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckOutputShape failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckOutputShape() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckOutputShape failed."),
+                return ge::GRAPH_FAILED);
     OP_LOGD(tilingContext_, "CheckOutputShape success");
 
     return ge::GRAPH_SUCCESS;
@@ -151,39 +136,33 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckDtype()
     this->inputDtype_ = inputDesc->GetDataType();
     OP_CHECK_IF(
         this->inputDtype_ != ge::DT_BF16 && this->inputDtype_ != ge::DT_FLOAT16 && this->inputDtype_ != ge::DT_FLOAT,
-        OP_LOGE(
-            tilingContext_,
-            "Input box_scores dtype not supported, only support [DT_FLOAT, DT_FLOAT16, DT_BF16], got %s",
-            ge::TypeUtils::DataTypeToSerialString(this->inputDtype_).c_str()),
+        OP_LOGE(tilingContext_,
+                "Input box_scores dtype not supported, only support [DT_FLOAT, DT_FLOAT16, DT_BF16], got %s",
+                ge::TypeUtils::DataTypeToSerialString(this->inputDtype_).c_str()),
         return ge::GRAPH_FAILED);
     auto selectedBoxesDesc = tilingContext_->GetOutputDesc(INDEX_ZERO);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedBoxesDesc);
     auto selectedBoxesDtype = selectedBoxesDesc->GetDataType();
     OP_CHECK_IF(
         selectedBoxesDtype != this->inputDtype_,
-        OP_LOGE(
-            tilingContext_, "Input box_scores' dtype[%s] and output selected_boxes' dtype[%s] should be the same.",
-            ge::TypeUtils::DataTypeToSerialString(this->inputDtype_).c_str(),
-            ge::TypeUtils::DataTypeToSerialString(selectedBoxesDtype).c_str()),
+        OP_LOGE(tilingContext_, "Input box_scores' dtype[%s] and output selected_boxes' dtype[%s] should be the same.",
+                ge::TypeUtils::DataTypeToSerialString(this->inputDtype_).c_str(),
+                ge::TypeUtils::DataTypeToSerialString(selectedBoxesDtype).c_str()),
         return ge::GRAPH_FAILED);
     auto selectedIdxDesc = tilingContext_->GetOutputDesc(INDEX_ONE);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedIdxDesc);
     auto selectedIdxDtype = selectedIdxDesc->GetDataType();
-    OP_CHECK_IF(
-        selectedIdxDtype != ge::DT_INT32,
-        OP_LOGE(
-            tilingContext_, "Output selected_idx dtype not supported, only support DT_INT32, got %s",
-            ge::TypeUtils::DataTypeToSerialString(selectedIdxDtype).c_str()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(selectedIdxDtype != ge::DT_INT32,
+                OP_LOGE(tilingContext_, "Output selected_idx dtype not supported, only support DT_INT32, got %s",
+                        ge::TypeUtils::DataTypeToSerialString(selectedIdxDtype).c_str()),
+                return ge::GRAPH_FAILED);
     auto selectedMaskDesc = tilingContext_->GetOutputDesc(INDEX_TWO);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedMaskDesc);
     auto selectedMaskDtype = selectedMaskDesc->GetDataType();
-    OP_CHECK_IF(
-        selectedMaskDtype != ge::DT_UINT8,
-        OP_LOGE(
-            tilingContext_, "Output selected_mask dtype not supported, only support [DT_UINT8], got %s",
-            ge::TypeUtils::DataTypeToSerialString(selectedMaskDtype).c_str()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(selectedMaskDtype != ge::DT_UINT8,
+                OP_LOGE(tilingContext_, "Output selected_mask dtype not supported, only support [DT_UINT8], got %s",
+                        ge::TypeUtils::DataTypeToSerialString(selectedMaskDtype).c_str()),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -226,15 +205,15 @@ ge::graphStatus NMSWithMaskRegbaseTiling::SetTilingData()
     size_t* workspaceSize = tilingContext_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, workspaceSize);
     workspaceSize[0] = sysWorkspaceSize;
-    uint32_t workspacePerBlock =
-        static_cast<uint32_t>(groupSize_) * static_cast<uint32_t>(groupSize_) / static_cast<uint32_t>(BIT_PER_BYTE);
+    uint32_t workspacePerBlock = static_cast<uint32_t>(groupSize_) * static_cast<uint32_t>(groupSize_) /
+                                 static_cast<uint32_t>(BIT_PER_BYTE);
     workspaceSize[0] += blockNum_ * workspacePerBlock;
     OP_LOGD(tilingContext_, "current tiling key is:%lu", TILING_KEY_FOR_MULTICORE);
     auto rawTilingData = tilingContext_->GetRawTilingData();
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, rawTilingData);
     size_t tilingDataSize = sizeof(NMSWithMaskTilingData);
-    errno_t ret = memcpy_s(
-        rawTilingData->GetData(), rawTilingData->GetCapacity(), static_cast<void*>(tilingData_), tilingDataSize);
+    errno_t ret = memcpy_s(rawTilingData->GetData(), rawTilingData->GetCapacity(), static_cast<void*>(tilingData_),
+                           tilingDataSize);
     OP_CHECK_IF(ret != EOK, OP_LOGE(tilingContext_, "Save tiling data to buffer failed!"), return ge::GRAPH_FAILED);
     rawTilingData->SetDataSize(tilingDataSize);
     tilingContext_->SetBlockDim(usedCoreNum_);
@@ -246,12 +225,12 @@ ge::graphStatus NMSWithMaskRegbaseTiling::SetTilingData()
 ge::graphStatus NMSWithMaskRegbaseTiling::RunTiling()
 {
     OP_LOGD(tilingContext_, "Entering NMSWithMaskRegbaseTiling::RunTiling");
-    OP_CHECK_IF(
-        CheckShape() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckShape failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckShape() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckShape failed."),
+                return ge::GRAPH_FAILED);
     OP_LOGD(tilingContext_, "CheckShape success");
 
-    OP_CHECK_IF(
-        CheckDtype() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckDtype failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckDtype() == ge::GRAPH_FAILED, OP_LOGE(tilingContext_, "CheckDtype failed."),
+                return ge::GRAPH_FAILED);
     OP_LOGD(tilingContext_, "CheckDtype success");
 
     return SetTilingData();
@@ -270,11 +249,10 @@ static ge::graphStatus TilingPrepare4NMSWithMask(gert::TilingParseContext* conte
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
     compileInfo->ubSize = static_cast<int64_t>(ubSize);
     compileInfo->maxBoxesNum = MAX_BLOCK_NUM;
-    OP_CHECK_IF(
-        (compileInfo->coreNum <= 0 || compileInfo->ubSize <= 0),
-        OP_LOGE(
-            context, "NMSWithMask GetHardwareInfo Failed, vectorCoreNum:%d, ubSize:%lu.", compileInfo->coreNum, ubSize),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->coreNum <= 0 || compileInfo->ubSize <= 0),
+                OP_LOGE(context, "NMSWithMask GetHardwareInfo Failed, vectorCoreNum:%d, ubSize:%lu.",
+                        compileInfo->coreNum, ubSize),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

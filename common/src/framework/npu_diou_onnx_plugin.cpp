@@ -43,16 +43,12 @@ static Status ParseParamsNpuDiou(const Message* op_src, ge::Operator& op_dest)
 
 // register npu_diou op info to GE
 REGISTER_CUSTOM_OP("DIoU")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("npu::1::NPUDiou"), 
-                 ge::AscendString("ai.onnx::11::NPUDiou"),
-                 ge::AscendString("ai.onnx::12::NPUDiou"),
-                 ge::AscendString("ai.onnx::13::NPUDiou"),
-                 ge::AscendString("ai.onnx::14::NPUDiou"),
-                 ge::AscendString("ai.onnx::15::NPUDiou"),
-                 ge::AscendString("ai.onnx::16::NPUDiou"),
-                 ge::AscendString("ai.onnx::17::NPUDiou"),
-                 ge::AscendString("ai.onnx::18::NPUDiou")})
-  .ParseParamsFn(ParseParamsNpuDiou)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("npu::1::NPUDiou"), ge::AscendString("ai.onnx::11::NPUDiou"),
+                   ge::AscendString("ai.onnx::12::NPUDiou"), ge::AscendString("ai.onnx::13::NPUDiou"),
+                   ge::AscendString("ai.onnx::14::NPUDiou"), ge::AscendString("ai.onnx::15::NPUDiou"),
+                   ge::AscendString("ai.onnx::16::NPUDiou"), ge::AscendString("ai.onnx::17::NPUDiou"),
+                   ge::AscendString("ai.onnx::18::NPUDiou")})
+    .ParseParamsFn(ParseParamsNpuDiou)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -28,8 +28,8 @@ class Bilinear2dAABackwardDataCopy {
 public:
     __aicore__ inline Bilinear2dAABackwardDataCopy(){};
 
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, TPipe *pipe,
-        const UpsampleBilinear2dAABackwardRegBaseTilingData *__restrict tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, TPipe* pipe,
+                                const UpsampleBilinear2dAABackwardRegBaseTilingData* __restrict tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -38,7 +38,7 @@ private:
     __aicore__ inline void CopyOut(int64_t yOffsetInGM, int64_t length);
 
 private:
-    const UpsampleBilinear2dAABackwardRegBaseTilingData *tilingData_;
+    const UpsampleBilinear2dAABackwardRegBaseTilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> dataQue_;
 
@@ -48,21 +48,21 @@ private:
     int32_t tailBlockNum_ = 0;
     int32_t blockIdx_ = 0;
     int32_t realCoreNum_ = 0;
-    TPipe *pipe_;
+    TPipe* pipe_;
     GlobalTensor<uint8_t> xGM_;
     GlobalTensor<uint8_t> yGM_;
-    DataCopyPadExtParams<uint8_t> padParams_{ false, 0, 0, 0 };
-    DataCopyExtParams gm2ubParams_{ 1, 1, 0, 0, 0 };
+    DataCopyPadExtParams<uint8_t> padParams_{false, 0, 0, 0};
+    DataCopyExtParams gm2ubParams_{1, 1, 0, 0, 0};
 };
 
 template <typename T1>
-__aicore__ inline void Bilinear2dAABackwardDataCopy<T1>::Init(GM_ADDR x, GM_ADDR y, TPipe *pipe,
-    const UpsampleBilinear2dAABackwardRegBaseTilingData *__restrict tilingData)
+__aicore__ inline void Bilinear2dAABackwardDataCopy<T1>::Init(
+    GM_ADDR x, GM_ADDR y, TPipe* pipe, const UpsampleBilinear2dAABackwardRegBaseTilingData* __restrict tilingData)
 {
     pipe_ = pipe;
     tilingData_ = tilingData;
-    xGM_.SetGlobalBuffer((__gm__ uint8_t *)x);
-    yGM_.SetGlobalBuffer((__gm__ uint8_t *)y);
+    xGM_.SetGlobalBuffer((__gm__ uint8_t*)x);
+    yGM_.SetGlobalBuffer((__gm__ uint8_t*)y);
     ubFactor_ = tilingData_->ubFactor;
     totalLength_ = tilingData_->blkProcessNum;
     tailBlockNum_ = tilingData_->tailBlockNum;
@@ -88,10 +88,7 @@ __aicore__ inline void Bilinear2dAABackwardDataCopy<T1>::CopyOut(int64_t yOffset
     DataCopyPad(yGM_[yOffsetInGM * sizeof(T1)], yTensor, gm2ubParams_);
     dataQue_.FreeTensor(yTensor);
 }
-__aicore__ inline int64_t Min(int64_t a, int64_t b)
-{
-    return (a < b) ? a : b;
-}
+__aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
 template <typename T1>
 __aicore__ inline void Bilinear2dAABackwardDataCopy<T1>::Process()

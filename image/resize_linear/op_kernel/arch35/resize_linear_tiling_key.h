@@ -27,19 +27,14 @@
 #define RESIZE_LINEAR_TPL_HALF_0 0
 #define RESIZE_LINEAR_TPL_HALF_1 1
 
-#define RESIZE_LINEAR_TPL_KEY_DECL()                                                                               \
-    ASCENDC_TPL_UINT_DECL(schId,                                                                                   \
-        ASCENDC_TPL_8_BW,                                                                                          \
-        ASCENDC_TPL_UI_LIST,                                                                                       \
-        RESIZE_LINEAR_TPL_SCH_MODE_0,                                                                              \
-        RESIZE_LINEAR_TPL_SCH_MODE_1,                                                                              \
-        RESIZE_LINEAR_TPL_SCH_MODE_2,                                                                              \
-        RESIZE_LINEAR_TPL_SCH_MODE_3,                                                                              \
-        RESIZE_LINEAR_TPL_SCH_MODE_4),                                                                             \
-        ASCENDC_TPL_UINT_DECL(                                                                                     \
-            isInt32, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, RESIZE_LINEAR_TPL_INT32_0, RESIZE_LINEAR_TPL_INT32_1), \
-        ASCENDC_TPL_UINT_DECL(                                                                                     \
-            isHalfPixel, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, RESIZE_LINEAR_TPL_HALF_0, RESIZE_LINEAR_TPL_HALF_1)
+#define RESIZE_LINEAR_TPL_KEY_DECL()                                                                                \
+    ASCENDC_TPL_UINT_DECL(schId, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, RESIZE_LINEAR_TPL_SCH_MODE_0,               \
+                          RESIZE_LINEAR_TPL_SCH_MODE_1, RESIZE_LINEAR_TPL_SCH_MODE_2, RESIZE_LINEAR_TPL_SCH_MODE_3, \
+                          RESIZE_LINEAR_TPL_SCH_MODE_4),                                                            \
+        ASCENDC_TPL_UINT_DECL(isInt32, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, RESIZE_LINEAR_TPL_INT32_0,            \
+                              RESIZE_LINEAR_TPL_INT32_1),                                                           \
+        ASCENDC_TPL_UINT_DECL(isHalfPixel, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, RESIZE_LINEAR_TPL_HALF_0,         \
+                              RESIZE_LINEAR_TPL_HALF_1)
 
 #define RESIZE_LINEAR_TPL_KEY_SEL()                                                        \
     ASCENDC_TPL_UINT_SEL(schId, ASCENDC_TPL_UI_RANGE, 1, 0, RESIZE_LINEAR_TPL_SCH_MODE_4), \

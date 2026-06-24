@@ -51,15 +51,12 @@ static Status ParseParamsBatchMultiClassNMS(const Message* op_src, ge::Operator&
 // register BatchMultiClassNMS op info to GE
 REGISTER_CUSTOM_OP("BatchMultiClassNonMaxSuppression")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("ai.onnx::8::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::9::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::10::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::11::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::12::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::13::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::14::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::15::BatchMultiClassNMS"),
-                   ge::AscendString("ai.onnx::16::BatchMultiClassNMS")})
+    .OriginOpType(
+        {ge::AscendString("ai.onnx::8::BatchMultiClassNMS"), ge::AscendString("ai.onnx::9::BatchMultiClassNMS"),
+         ge::AscendString("ai.onnx::10::BatchMultiClassNMS"), ge::AscendString("ai.onnx::11::BatchMultiClassNMS"),
+         ge::AscendString("ai.onnx::12::BatchMultiClassNMS"), ge::AscendString("ai.onnx::13::BatchMultiClassNMS"),
+         ge::AscendString("ai.onnx::14::BatchMultiClassNMS"), ge::AscendString("ai.onnx::15::BatchMultiClassNMS"),
+         ge::AscendString("ai.onnx::16::BatchMultiClassNMS")})
     .ParseParamsFn(ParseParamsBatchMultiClassNMS)
     .ImplyType(ImplyType::TVM);
-}  // namespace domi
+} // namespace domi

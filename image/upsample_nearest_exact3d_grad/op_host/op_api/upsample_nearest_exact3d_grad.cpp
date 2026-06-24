@@ -33,9 +33,9 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 
-const aclTensor* UpsampleNearestExact3dGradNcdhw(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclFloatArray* scales,
-    aclOpExecutor* executor)
+const aclTensor* UpsampleNearestExact3dGradNcdhw(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                 const aclIntArray* inputSize, const aclFloatArray* scales,
+                                                 aclOpExecutor* executor)
 {
     L0_DFX(UpsampleNearestExact3dGradNcdhw, gradOut, outputSize, inputSize, scales);
 
@@ -59,13 +59,13 @@ const aclTensor* UpsampleNearestExact3dGradNcdhw(
     if (!isRegBase && (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType)) {
         gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
     }
-    const aclTensor* gradInput = executor->AllocTensor(
-        gradInputStorageShape, gradInputOriginalShape, gradOut->GetDataType(), gradOut->GetStorageFormat(),
-        gradOut->GetOriginalFormat());
+    const aclTensor* gradInput = executor->AllocTensor(gradInputStorageShape, gradInputOriginalShape,
+                                                       gradOut->GetDataType(), gradOut->GetStorageFormat(),
+                                                       gradOut->GetOriginalFormat());
     CHECK_RET(gradInput != nullptr, nullptr);
 
-    ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleNearestExact3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, scales));
+    ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearestExact3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput),
+                                OP_ATTR(inputSize, outputSize, scales));
     if (!isRegBase && op::DataType::DT_BF16 == dataType) {
         gradInput = l0op::Cast(gradInput, op::DataType::DT_BF16, executor);
     } else if (!isRegBase && op::DataType::DT_FLOAT16 == dataType) {

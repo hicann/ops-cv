@@ -87,8 +87,9 @@ static Status ParseOpToGraphNpuGiou(const ge::Operator& op, ge::Graph& graph)
     auto tensor_perm = Vec2Tensor(perm, {2}, ge::DT_INT32);
     auto const_perm = ge::op::Const((ori_name + "_Const_0").c_str()).set_attr_value(tensor_perm);
 
-    auto transpose_op =
-        ge::op::Transpose((ori_name + "_Transpose").c_str()).set_input_x(giou_op).set_input_perm(const_perm);
+    auto transpose_op = ge::op::Transpose((ori_name + "_Transpose").c_str())
+                            .set_input_x(giou_op)
+                            .set_input_perm(const_perm);
 
     std::vector<ge::Operator> inputs{data0, data1};
     std::vector<std::pair<ge::Operator, std::vector<size_t>>> outputs;
@@ -99,17 +100,13 @@ static Status ParseOpToGraphNpuGiou(const ge::Operator& op, ge::Graph& graph)
 
 // register npu_giou op info to GE
 REGISTER_CUSTOM_OP("PartitionedCall")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("npu::1::NPUGiou"), 
-                 ge::AscendString("ai.onnx::11::NPUGiou"),
-                 ge::AscendString("ai.onnx::12::NPUGiou"),
-                 ge::AscendString("ai.onnx::13::NPUGiou"),
-                 ge::AscendString("ai.onnx::14::NPUGiou"),
-                 ge::AscendString("ai.onnx::15::NPUGiou"),
-                 ge::AscendString("ai.onnx::16::NPUGiou"),
-                 ge::AscendString("ai.onnx::17::NPUGiou"),
-                 ge::AscendString("ai.onnx::18::NPUGiou")})
-  .ParseParamsFn(ParseParamsNpuGiou)
-  .ParseOpToGraphFn(ParseOpToGraphNpuGiou)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("npu::1::NPUGiou"), ge::AscendString("ai.onnx::11::NPUGiou"),
+                   ge::AscendString("ai.onnx::12::NPUGiou"), ge::AscendString("ai.onnx::13::NPUGiou"),
+                   ge::AscendString("ai.onnx::14::NPUGiou"), ge::AscendString("ai.onnx::15::NPUGiou"),
+                   ge::AscendString("ai.onnx::16::NPUGiou"), ge::AscendString("ai.onnx::17::NPUGiou"),
+                   ge::AscendString("ai.onnx::18::NPUGiou")})
+    .ParseParamsFn(ParseParamsNpuGiou)
+    .ParseOpToGraphFn(ParseOpToGraphNpuGiou)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

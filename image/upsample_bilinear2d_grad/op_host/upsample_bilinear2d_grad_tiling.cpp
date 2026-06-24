@@ -54,14 +54,14 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinear2dGradTiling {
 public:
-    explicit UpsampleBilinear2dGradTiling(gert::TilingContext *context) : tilingContext(context){};
+    explicit UpsampleBilinear2dGradTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init() const;
     ge::graphStatus RunBigKernelTiling();
 
 private:
     void setScale();
-    inline float compute_scale_value(const int64_t in_size, const int64_t out_size,
-                                     const bool align_corner, const float *scale);
+    inline float compute_scale_value(const int64_t in_size, const int64_t out_size, const bool align_corner,
+                                     const float* scale);
     void getWorkSpace(uint32_t needCoreNum);
     void getOutputShape();
     void getSlideSize();
@@ -86,18 +86,18 @@ private:
 private:
     int64_t slide_size = 16;
     UpsampleBilinear2dGradTilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize = 0;
     gert::Shape input_shape;
     uint8_t dim = 0;
-    const bool *align_corners = nullptr;
-    const float *scale_h = nullptr;
-    const float *scale_w = nullptr;
+    const bool* align_corners = nullptr;
+    const float* scale_h = nullptr;
+    const float* scale_w = nullptr;
     float realScale_h = 0.0f;
     float realScale_w = 0.0f;
-    const gert::ContinuousVector *output_size = nullptr;
-    const gert::ContinuousVector *input_size = nullptr;
+    const gert::ContinuousVector* output_size = nullptr;
+    const gert::ContinuousVector* input_size = nullptr;
     int64_t slideStartList_w[MAX_CORE_CONT] = {0};
     int64_t slideEndList_w[MAX_CORE_CONT] = {0};
     int64_t tailRowStartList_w[MAX_CORE_CONT] = {0};
@@ -132,19 +132,16 @@ inline bool FloatEqual(const float a, const float b)
     }
 };
 
-ge::graphStatus UpsampleBilinear2dGradTiling::Init() const
-{
-    return ge::GRAPH_SUCCESS;
-}
+ge::graphStatus UpsampleBilinear2dGradTiling::Init() const { return ge::GRAPH_SUCCESS; }
 
 void UpsampleBilinear2dGradTiling::setScale()
 {
     if (dim == H_INDEX) {
-        const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
-        realScale_h =
-            compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[H_INDEX], *align_corners, scale_h);
-        realScale_w =
-            compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[W_INDEX], *align_corners, scale_w);
+        const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[H_INDEX], *align_corners,
+                                          scale_h);
+        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[W_INDEX], *align_corners,
+                                          scale_w);
         if (*align_corners) {
             tilingData.set_align_corners(C_INDEX);
         } else {
@@ -155,8 +152,8 @@ void UpsampleBilinear2dGradTiling::setScale()
     }
 }
 
-inline float UpsampleBilinear2dGradTiling::compute_scale_value(
-    const int64_t in_size, const int64_t out_size, const bool align_corner, const float *scale)
+inline float UpsampleBilinear2dGradTiling::compute_scale_value(const int64_t in_size, const int64_t out_size,
+                                                               const bool align_corner, const float* scale)
 {
     if (align_corner) {
         if (in_size > 1) {
@@ -211,26 +208,28 @@ ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
         return ge::GRAPH_FAILED;
     }
 
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     if (attrs == nullptr) {
         return ge::GRAPH_FAILED;
     }
 
     input_size = attrs->GetAttrPointer<gert::ContinuousVector>(0);
     OP_CHECK_IF(input_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "input_size == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(1);
     OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
 
     align_corners = attrs->GetAttrPointer<bool>(H_INDEX);
     OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
 
     scale_h = attrs->GetAttrPointer<float>(W_INDEX);
-    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"),
+                return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(RESERVED_VALUE);
-    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"),
+                return ge::GRAPH_FAILED);
     auto tmp = tilingContext->GetInputDesc(0);
     if (tmp == nullptr) {
         return ge::GRAPH_FAILED;
@@ -252,7 +251,7 @@ ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
 
     input_shape = srcShape->GetOriginShape();
 
-    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dGradCompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dGradCompileInfo*>(tilingContext->GetCompileInfo());
     const uint32_t coreNumPlatForm = compileInfo->coreNum;
 
     tilingContext->SetTilingKey(GetTilingKeyVal());
@@ -312,17 +311,17 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNumH(const uint32_t coreNumPla
             if (groupIndex < remainder) {
                 // 算出第几个分组
                 tailSlideStartList_h[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
-                tailSlideEndList_h[coreIndex] =
-                    std::min(tailSlideStartList_h[coreIndex] + slide_size, static_cast<int64_t>(outputSize));
+                tailSlideEndList_h[coreIndex] = std::min(tailSlideStartList_h[coreIndex] + slide_size,
+                                                         static_cast<int64_t>(outputSize));
 
                 int64_t coreIndexInGroup = groupCoreNum != 0 ? coreIndex % groupCoreNum : 1;
 
                 tailRowStartList_h[coreIndex] = coreIndexInGroup * tailAvergingRows;
-                tailRowEndList_h[coreIndex] =
-                    std::min(tailRowStartList_h[coreIndex] + tailAvergingRows, static_cast<int64_t>(input_w));
+                tailRowEndList_h[coreIndex] = std::min(tailRowStartList_h[coreIndex] + tailAvergingRows,
+                                                       static_cast<int64_t>(input_w));
                 tailBatchStartList_h[coreIndex] = coreIndexInGroup * tailAvergingBatch;
-                tailBatchEndList_h[coreIndex] =
-                    std::min(tailBatchStartList_h[coreIndex] + tailAvergingBatch, static_cast<int64_t>(inputBatch));
+                tailBatchEndList_h[coreIndex] = std::min(tailBatchStartList_h[coreIndex] + tailAvergingBatch,
+                                                         static_cast<int64_t>(inputBatch));
                 needCoreNum_h++;
             }
         }
@@ -361,10 +360,9 @@ void UpsampleBilinear2dGradTiling::getTCubeTiling_w()
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
     mmTiling_w.SetOrgShape(input_shape.GetDim(N_INDEX) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX),
-        output_shapes[W_INDEX],
-        input_shape.GetDim(W_INDEX));
-    mmTiling_w.SetShape(
-        input_shape.GetDim(0) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX), slide_size, singleCoreK_w);
+                           output_shapes[W_INDEX], input_shape.GetDim(W_INDEX));
+    mmTiling_w.SetShape(input_shape.GetDim(0) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX), slide_size,
+                        singleCoreK_w);
 
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
         return;
@@ -374,7 +372,7 @@ void UpsampleBilinear2dGradTiling::getTCubeTiling_w()
 // 先只算w方向
 void UpsampleBilinear2dGradTiling::getWorkSpace(uint32_t needCoreNum)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     // 中间tensor
     uint64_t intermediate_matrix_size = output_shapes[0] * output_shapes[1] * input_shape.GetDim(2) * output_shapes[3];
 
@@ -389,7 +387,7 @@ void UpsampleBilinear2dGradTiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBilinear2dGradTiling::getOutputShape()
 {
-    const int64_t *output_size_arr = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* output_size_arr = reinterpret_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
@@ -520,12 +518,12 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNumW(const uint32_t coreNumPla
         if (groupIndex < remainder) {
             // 算出第几个分组
             tailSlideStartList_w[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
-            tailSlideEndList_w[coreIndex] =
-                std::min(tailSlideStartList_w[coreIndex] + slide_size, static_cast<int64_t>(outputSize));
+            tailSlideEndList_w[coreIndex] = std::min(tailSlideStartList_w[coreIndex] + slide_size,
+                                                     static_cast<int64_t>(outputSize));
             int64_t coreIndexInGroup = groupCoreNum != 0 ? coreIndex % groupCoreNum : 1;
             tailRowStartList_w[coreIndex] = coreIndexInGroup * tailAvergingRows;
-            tailRowEndList_w[coreIndex] =
-                std::min(tailRowStartList_w[coreIndex] + tailAvergingRows, static_cast<int64_t>(input_h));
+            tailRowEndList_w[coreIndex] = std::min(tailRowStartList_w[coreIndex] + tailAvergingRows,
+                                                   static_cast<int64_t>(input_h));
 
             needCore++;
         }
@@ -556,19 +554,19 @@ void UpsampleBilinear2dGradTiling::FillTilingData()
     tilingData.set_tailBatchStartList_h(tailBatchStartList_h);
     tilingData.set_tailBatchEndList_h(tailBatchEndList_h);
 
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
-static ge::graphStatus tiling4UpsampleBilinear2dGradTiling(gert::TilingContext *context)
+static ge::graphStatus tiling4UpsampleBilinear2dGradTiling(gert::TilingContext* context)
 {
     UpsampleBilinear2dGradTiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 
-static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
+static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleBilinear2dGradCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
@@ -577,14 +575,13 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
-        OP_LOGE(context->GetNodeName(),
-            "UpsampleBilinear2dGrad GetHardwareInfo Failed, vectorCoreNum:%u",
-            compileInfo->coreNum),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "UpsampleBilinear2dGrad GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->coreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
 IMPL_OP_OPTILING(UpsampleBilinear2dGrad)
     .Tiling(tiling4UpsampleBilinear2dGradTiling)
     .TilingParse<UpsampleBilinear2dGradCompileInfo>(tilingPrepareTiling);
-}  // namespace optiling
+} // namespace optiling

@@ -20,15 +20,9 @@ using namespace std;
 
 class l2_im2col_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "im2col_backward_test SetUp" << endl;
-    }
+    static void SetUpTestCase() { cout << "im2col_backward_test SetUp" << endl; }
 
-    static void TearDownTestCase()
-    {
-        cout << "im2col_backward_test TearDown" << endl;
-    }
+    static void TearDownTestCase() { cout << "im2col_backward_test TearDown" << endl; }
 };
 
 TEST_F(l2_im2col_backward_test, case_null_tensor)
@@ -46,8 +40,8 @@ TEST_F(l2_im2col_backward_test, case_null_tensor)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -72,8 +66,8 @@ TEST_F(l2_im2col_backward_test, case_FLOAT)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -98,8 +92,8 @@ TEST_F(l2_im2col_backward_test, case_NOT_CONTIGUOUS)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -124,8 +118,8 @@ TEST_F(l2_im2col_backward_test, case_range_value)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -150,8 +144,8 @@ TEST_F(l2_im2col_backward_test, case_FLOAT16)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -173,8 +167,8 @@ TEST_F(l2_im2col_backward_test, ascend910B2_case_BF16)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -199,8 +193,8 @@ TEST_F(l2_im2col_backward_test, case_FLOAT16_FLOAT)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -222,8 +216,8 @@ TEST_F(l2_im2col_backward_test, ascend910B2_case_BF16_FLOAT)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -248,8 +242,8 @@ TEST_F(l2_im2col_backward_test, case_dim2_Float)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -274,8 +268,8 @@ TEST_F(l2_im2col_backward_test, case_NCHW)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -300,8 +294,8 @@ TEST_F(l2_im2col_backward_test, case_NHWC)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -326,8 +320,8 @@ TEST_F(l2_im2col_backward_test, case_HWCN)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -352,8 +346,8 @@ TEST_F(l2_im2col_backward_test, case_error_output_shape)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -370,37 +364,37 @@ TEST_F(l2_im2col_backward_test, case_error_array_size)
     auto incorrect_array_dec = IntArrayDesc(incorrect_size);
 
     auto ut1 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, incorrect_array_dec, array_dec, array_dec, array_dec, array_dec),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, incorrect_array_dec, array_dec, array_dec, array_dec, array_dec),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut1.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 
     auto ut2 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, array_dec, incorrect_array_dec, array_dec, array_dec, array_dec),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, array_dec, incorrect_array_dec, array_dec, array_dec, array_dec),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut2.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 
     auto ut3 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, array_dec, array_dec, incorrect_array_dec, array_dec, array_dec),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, array_dec, array_dec, incorrect_array_dec, array_dec, array_dec),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut3.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 
     auto ut4 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, array_dec, array_dec, array_dec, incorrect_array_dec, array_dec),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, array_dec, array_dec, array_dec, incorrect_array_dec, array_dec),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut4.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 
     auto ut5 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, array_dec, array_dec, array_dec, array_dec, incorrect_array_dec),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, array_dec, array_dec, array_dec, array_dec, incorrect_array_dec),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut5.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -421,8 +415,8 @@ TEST_F(l2_im2col_backward_test, case_LARGE_SHAPE)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -445,45 +439,45 @@ TEST_F(l2_im2col_backward_test, case_NULLPTR)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(nullptr, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(nullptr, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
     auto ut1 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, nullptr, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, nullptr, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut1.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
     auto ut2 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, nullptr, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, input_desc, nullptr, dilation_desc, padding_desc, stride_desc),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut2.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
     auto ut3 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, nullptr, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, input_desc, kernel_desc, nullptr, padding_desc, stride_desc),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut3.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
     auto ut4 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, nullptr, stride_desc),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, nullptr, stride_desc),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut4.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
     auto ut5 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, nullptr),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, nullptr),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut5.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
     auto ut6 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(nullptr));
+                         INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                         OUTPUT(nullptr));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut6.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -505,8 +499,8 @@ TEST_F(l2_im2col_backward_test, case_DTYPE)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -534,21 +528,21 @@ TEST_F(l2_im2col_backward_test, case_error_array_value)
     auto stride_desc = IntArrayDesc(stride);
     auto error_stride_desc = IntArrayDesc(error_stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, error_kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, error_kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
     auto ut1 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, error_dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, input_desc, kernel_desc, error_dilation_desc, padding_desc, stride_desc),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut1.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
     auto ut2 = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, error_stride_desc),
-        OUTPUT(out_desc));
+                         INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, error_stride_desc),
+                         OUTPUT(out_desc));
     // SAMPLE: only test GetWorkspaceSize
     aclRet = ut2.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -569,8 +563,8 @@ TEST_F(l2_im2col_backward_test, case_padding_negative)
     auto padding_desc = IntArrayDesc(padding);
     auto stride_desc = IntArrayDesc(stride);
     auto ut = OP_API_UT(aclnnIm2colBackward,
-        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
-        OUTPUT(out_desc));
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);

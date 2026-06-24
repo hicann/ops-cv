@@ -30,14 +30,15 @@ public:
     explicit SpatialTransformer(const char* name) : OpDef(name)
     {
         ApplyCvAicpuDefaultCfg(*this);
-        this->Input("x")
-            .DataType(
-                {ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8, ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_UINT32, ge::DT_UINT64, ge::DT_INT64});
-        this->Input("theta")
-            .ParamType(OPTIONAL)
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8, ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_UINT32, ge::DT_UINT64, ge::DT_INT64});
-        this->Output("y")
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8, ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_UINT32, ge::DT_UINT64, ge::DT_INT64});
+        this->Input("x").DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8,
+                                   ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_UINT32, ge::DT_UINT64,
+                                   ge::DT_INT64});
+        this->Input("theta").ParamType(OPTIONAL).DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8,
+                                                           ge::DT_INT8, ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32,
+                                                           ge::DT_UINT32, ge::DT_UINT64, ge::DT_INT64});
+        this->Output("y").DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8,
+                                    ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_UINT32, ge::DT_UINT64,
+                                    ge::DT_INT64});
         this->Attr("output_size").AttrType(OPTIONAL).ListInt({-1, -1});
         this->Attr("default_theta").AttrType(OPTIONAL).ListFloat();
         this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);

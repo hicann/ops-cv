@@ -99,7 +99,7 @@ class PlatformInfo {
 public:
     PlatformInfo() {};
 
-    PlatformInfo(int32_t deviceId) : deviceId_(deviceId){};
+    PlatformInfo(int32_t deviceId) : deviceId_(deviceId) {};
 
     SocVersion GetSocVersion() const;
 
@@ -121,22 +121,22 @@ public:
 
     NpuArch GetCurNpuArch() const;
 
-    fe::PlatFormInfos *GetPlatformInfos() const;
+    fe::PlatFormInfos* GetPlatformInfos() const;
 
 private:
-    PlatformInfo &operator=(const PlatformInfo &other) = delete;
+    PlatformInfo& operator=(const PlatformInfo& other) = delete;
 
-    PlatformInfo &operator=(const PlatformInfo &&other) = delete;
+    PlatformInfo& operator=(const PlatformInfo&& other) = delete;
 
-    PlatformInfo(const PlatformInfo &other) = delete;
+    PlatformInfo(const PlatformInfo& other) = delete;
 
-    PlatformInfo(const PlatformInfo &&other) = delete;
+    PlatformInfo(const PlatformInfo&& other) = delete;
 
-    void SetPlatformImpl(PlatformInfoImpl *impl);
+    void SetPlatformImpl(PlatformInfoImpl* impl);
 
     bool valid_ = false;
     int32_t deviceId_{-1};
-    PlatformInfoImpl *impl_ = nullptr;
+    PlatformInfoImpl* impl_ = nullptr;
 
     ~PlatformInfo();
 };

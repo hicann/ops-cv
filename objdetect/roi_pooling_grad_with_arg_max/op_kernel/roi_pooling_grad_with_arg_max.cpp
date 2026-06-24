@@ -20,7 +20,8 @@ using namespace AscendC;
 using namespace RoiPoolingGradWithArgMaxOps;
 
 template <uint64_t dType>
-__global__ __aicore__ void roi_pooling_grad_with_arg_max(GM_ADDR grad, GM_ADDR x, GM_ADDR rois, GM_ADDR roi_actual_num, GM_ADDR argmax, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void roi_pooling_grad_with_arg_max(GM_ADDR grad, GM_ADDR x, GM_ADDR rois, GM_ADDR roi_actual_num,
+                                                         GM_ADDR argmax, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
 {
     GM_ADDR userWS = GetUserWorkspace(workspace);
     if (userWS == nullptr) {
@@ -37,13 +38,10 @@ __global__ __aicore__ void roi_pooling_grad_with_arg_max(GM_ADDR grad, GM_ADDR x
         RoiPoolingGradWithArgMaxSimt<float, float> roiPoolingGradWithArgMaxKernel;
         roiPoolingGradWithArgMaxKernel.Init(grad, x, rois, argmax, y, userWS, tilingData);
         roiPoolingGradWithArgMaxKernel.Process();
-    } 
-    else if constexpr (dType == ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP16) {
+    } else if constexpr (dType == ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP16) {
         const RoiPoolingGradWithArgMaxRegBaseTilingData* __restrict tilingData = &tilingDataIn;
         RoiPoolingGradWithArgMaxSimt<float, half> roiPoolingGradWithArgMaxKernel;
         roiPoolingGradWithArgMaxKernel.Init(grad, x, rois, argmax, y, userWS, tilingData);
         roiPoolingGradWithArgMaxKernel.Process();
     }
 }
-
-

@@ -20,14 +20,10 @@ using namespace ge;
 using namespace optiling;
 
 class ResizeBicubicV2GradTilingTest : public testing::Test {
- protected:
-  static void SetUpTestCase() {
-    std::cout << "ResizeBicubicV2GradTilingTest SetUp" << std::endl;
-  }
+protected:
+    static void SetUpTestCase() { std::cout << "ResizeBicubicV2GradTilingTest SetUp" << std::endl; }
 
-  static void TearDownTestCase() {
-    std::cout << "ResizeBicubicV2GradTilingTest TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "ResizeBicubicV2GradTilingTest TearDown" << std::endl; }
 };
 
 TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_01)

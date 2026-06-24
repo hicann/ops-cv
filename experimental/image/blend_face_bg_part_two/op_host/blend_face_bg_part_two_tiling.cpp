@@ -57,7 +57,7 @@ static ge::graphStatus SetWorkspace(gert::TilingContext* context)
 }
 
 static ge::graphStatus GetTotalElems(gert::TilingContext* context, const gert::StorageShape* accFaceShape,
-                                      uint32_t& totalElems)
+                                     uint32_t& totalElems)
 {
     OP_CHECK_NULL_WITH_CONTEXT(context, accFaceShape);
 
@@ -66,9 +66,8 @@ static ge::graphStatus GetTotalElems(gert::TilingContext* context, const gert::S
     for (size_t i = 0; i < dimNum; i++) {
         totalElems64 *= static_cast<uint64_t>(accFaceShape->GetStorageShape().GetDim(i));
     }
-    OP_CHECK_IF(totalElems64 > UINT32_MAX,
-        OP_LOGE(context, "[BlendFaceBgPartTwo] totalElems exceeds UINT32_MAX"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(totalElems64 > UINT32_MAX, OP_LOGE(context, "[BlendFaceBgPartTwo] totalElems exceeds UINT32_MAX"),
+                return ge::GRAPH_FAILED);
     totalElems = static_cast<uint32_t>(totalElems64);
     return ge::GRAPH_SUCCESS;
 }
@@ -90,23 +89,22 @@ static ge::graphStatus CalcTileSize(gert::TilingContext* context, uint64_t ubSiz
 {
     uint64_t availableUb = ubSize > UB_RESERVE_BYTES ? ubSize - UB_RESERVE_BYTES : 0;
     uint64_t maxElems = availableUb / UB_BYTES_PER_ELEM;
-    OP_CHECK_IF(maxElems < MIN_TILE_SIZE,
-        OP_LOGE(context, "[BlendFaceBgPartTwo] UB is too small for minimum tile"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(maxElems < MIN_TILE_SIZE, OP_LOGE(context, "[BlendFaceBgPartTwo] UB is too small for minimum tile"),
+                return ge::GRAPH_FAILED);
 
     uint32_t rawTileSize = maxElems > MAX_TILE_SIZE ? MAX_TILE_SIZE : static_cast<uint32_t>(maxElems);
     tileSize = (rawTileSize / MIN_TILE_SIZE) * MIN_TILE_SIZE;
     return ge::GRAPH_SUCCESS;
 }
 
-static void SetTilingData(BlendFaceBgPartTwoTilingData* tiling, uint32_t totalElems, uint32_t baseElems,
-                          uint32_t pivot, uint32_t tileSize, float epsilon)
+static void SetTilingData(BlendFaceBgPartTwoTilingData* tiling, uint32_t totalElems, uint32_t baseElems, uint32_t pivot,
+                          uint32_t tileSize, float epsilon)
 {
     tiling->totalElems = totalElems;
-    tiling->baseElems  = baseElems;
-    tiling->pivot      = pivot;
-    tiling->tileSize   = tileSize;
-    tiling->epsilon    = epsilon;
+    tiling->baseElems = baseElems;
+    tiling->pivot = pivot;
+    tiling->tileSize = tileSize;
+    tiling->epsilon = epsilon;
 }
 
 static ge::graphStatus SetEmptyTiling(gert::TilingContext* context, BlendFaceBgPartTwoTilingData* tiling)
@@ -123,8 +121,7 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
 
     uint32_t totalElems = 0;
     OP_CHECK_IF(GetTotalElems(context, context->GetInputShape(0), totalElems) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "[BlendFaceBgPartTwo] GetTotalElems failed"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "[BlendFaceBgPartTwo] GetTotalElems failed"), return ge::GRAPH_FAILED);
 
     if (totalElems == 0) {
         return SetEmptyTiling(context, tiling);
@@ -133,17 +130,15 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
     uint64_t ubSize;
     uint32_t coreNum;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "[BlendFaceBgPartTwo] GetPlatformInfo failed"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "[BlendFaceBgPartTwo] GetPlatformInfo failed"), return ge::GRAPH_FAILED);
     uint32_t tileSize = 0;
     OP_CHECK_IF(CalcTileSize(context, ubSize, tileSize) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "[BlendFaceBgPartTwo] CalcTileSize failed"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "[BlendFaceBgPartTwo] CalcTileSize failed"), return ge::GRAPH_FAILED);
 
     uint32_t usedCoreNum = (totalElems < coreNum) ? totalElems : coreNum;
     context->SetBlockDim(usedCoreNum);
-    SetTilingData(tiling, totalElems, totalElems / usedCoreNum,
-                  totalElems % usedCoreNum, tileSize, GetEpsilon(context));
+    SetTilingData(tiling, totalElems, totalElems / usedCoreNum, totalElems % usedCoreNum, tileSize,
+                  GetEpsilon(context));
     return SetWorkspace(context);
 }
 

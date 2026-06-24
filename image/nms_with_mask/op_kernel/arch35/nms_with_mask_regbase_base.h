@@ -37,12 +37,12 @@ static constexpr int32_t INDEX_Y1 = 1;
 static constexpr int32_t INDEX_X2 = 2;
 static constexpr int32_t INDEX_Y2 = 3;
 static constexpr int32_t PACK_BYTES = 16;
-static constexpr int32_t VL_SIZE = 256; 
-static constexpr int32_t VL_SIZE_FLOAT = 64; 
+static constexpr int32_t VL_SIZE = 256;
+static constexpr int32_t VL_SIZE_FLOAT = 64;
 static constexpr MultiCopyConfig copyConfig = {false, 0, 0, false};
 
-static constexpr MicroAPI::CastTrait castTraitB16ToB32 = {
-    MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN, MicroAPI::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
+static constexpr MicroAPI::CastTrait castTraitB16ToB32 = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN,
+                                                          MicroAPI::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
 
 template <typename T, bool isBroadcast>
 __aicore__ inline void CopyInReg(MicroAPI::RegTensor<float>& vregIn, __ubuf__ T* inAddr, MicroAPI::MaskReg& mask)
@@ -65,8 +65,8 @@ __aicore__ inline void CopyInReg(MicroAPI::RegTensor<float>& vregIn, __ubuf__ T*
 }
 
 template <typename T, bool isBroadcast>
-__aicore__ inline void CopyInReg(
-    MicroAPI::RegTensor<float>& vregIn, MicroAPI::RegTensor<T>& vregInB16, __ubuf__ T* inAddr, MicroAPI::MaskReg& mask)
+__aicore__ inline void CopyInReg(MicroAPI::RegTensor<float>& vregIn, MicroAPI::RegTensor<T>& vregInB16,
+                                 __ubuf__ T* inAddr, MicroAPI::MaskReg& mask)
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         if constexpr (isBroadcast) {
@@ -97,13 +97,9 @@ __aicore__ inline void CopyInRegToFP32(MicroAPI::RegTensor<float>& vregIn, __ubu
 template <typename T>
 class NMSWithMaskRegbaseMultiProcess {
 public:
-    __aicore__ inline NMSWithMaskRegbaseMultiProcess(TPipe* pipeIn)
-    {
-        pipe_ = pipeIn;
-    }
-    __aicore__ inline void Init(
-        GM_ADDR boxScores, GM_ADDR selectedBoxes, GM_ADDR selectedIdx, GM_ADDR selectedMask, GM_ADDR workspace,
-        const NMSWithMaskTilingData& tilingData);
+    __aicore__ inline NMSWithMaskRegbaseMultiProcess(TPipe* pipeIn) { pipe_ = pipeIn; }
+    __aicore__ inline void Init(GM_ADDR boxScores, GM_ADDR selectedBoxes, GM_ADDR selectedIdx, GM_ADDR selectedMask,
+                                GM_ADDR workspace, const NMSWithMaskTilingData& tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -113,27 +109,27 @@ private:
     __aicore__ inline void CopyIn(int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount);
     __aicore__ inline void ComputeMask(int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount);
     __aicore__ inline void ComputeRefArea(__ubuf__ T* refLocalAddr, __ubuf__ float* refAreaAddr, int32_t refCount);
-    __aicore__ inline void CalcIntersection(
-        MicroAPI::MaskReg& pregIou, MicroAPI::RegTensor<float>& sumArea, MicroAPI::RegTensor<float>& vregZeros,
-        MicroAPI::RegTensor<float>& refX1, MicroAPI::RegTensor<float>& refY1, MicroAPI::RegTensor<float>& refX2,
-        MicroAPI::RegTensor<float>& refY2, MicroAPI::RegTensor<float>& dstX1, MicroAPI::RegTensor<float>& dstY1,
-        MicroAPI::RegTensor<float>& dstX2, MicroAPI::RegTensor<float>& dstY2, MicroAPI::MaskReg& preg);
+    __aicore__ inline void CalcIntersection(MicroAPI::MaskReg& pregIou, MicroAPI::RegTensor<float>& sumArea,
+                                            MicroAPI::RegTensor<float>& vregZeros, MicroAPI::RegTensor<float>& refX1,
+                                            MicroAPI::RegTensor<float>& refY1, MicroAPI::RegTensor<float>& refX2,
+                                            MicroAPI::RegTensor<float>& refY2, MicroAPI::RegTensor<float>& dstX1,
+                                            MicroAPI::RegTensor<float>& dstY1, MicroAPI::RegTensor<float>& dstX2,
+                                            MicroAPI::RegTensor<float>& dstY2, MicroAPI::MaskReg& preg);
     template <bool dstIsOddBlock>
-    __aicore__ inline void ComputeMaskVf(
-        __ubuf__ T* refLocalAddr, __ubuf__ T* dstLocalAddr, __ubuf__ float* refAreaAddr, __ubuf__ int32_t* maskUbAddr,
-        int32_t refCount, int32_t dstCount);
+    __aicore__ inline void ComputeMaskVf(__ubuf__ T* refLocalAddr, __ubuf__ T* dstLocalAddr,
+                                         __ubuf__ float* refAreaAddr, __ubuf__ int32_t* maskUbAddr, int32_t refCount,
+                                         int32_t dstCount);
     __aicore__ inline void CopyOut(int64_t dstGroupIdx, int32_t dstCount);
     __aicore__ inline void CopyOutMask(int64_t refGroupIdx, int64_t dstGroupIdx, int64_t blockIdx, int32_t refCount);
     template <bool isDiagonal>
-    __aicore__ inline void CopyInMask(
-        int64_t blockIdx, int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount);
+    __aicore__ inline void CopyInMask(int64_t blockIdx, int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount,
+                                      int32_t dstCount);
     template <bool isDiagonal>
     __aicore__ inline void ComputeNMS(int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount);
-    __aicore__ inline void ComputeNMSForDiagonal(
-        __ubuf__ uint8_t* dstMaskAddr, __ubuf__ int32_t* maskUbAddr, int32_t dstCount);
-    __aicore__ inline void ComputeNMSForNormal(
-        __ubuf__ uint8_t* refMaskAddr, __ubuf__ uint8_t* dstMaskAddr, __ubuf__ int32_t* maskUbAddr, int32_t refCount,
-        int32_t dstCount);
+    __aicore__ inline void ComputeNMSForDiagonal(__ubuf__ uint8_t* dstMaskAddr, __ubuf__ int32_t* maskUbAddr,
+                                                 int32_t dstCount);
+    __aicore__ inline void ComputeNMSForNormal(__ubuf__ uint8_t* refMaskAddr, __ubuf__ uint8_t* dstMaskAddr,
+                                               __ubuf__ int32_t* maskUbAddr, int32_t refCount, int32_t dstCount);
 
     __aicore__ inline void ParseTilingData(const NMSWithMaskTilingData& tilingData)
     {

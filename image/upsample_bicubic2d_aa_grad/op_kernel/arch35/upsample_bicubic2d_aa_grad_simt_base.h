@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -29,17 +29,18 @@ namespace UpsampleBicubic2dAAGrad {
 using namespace AscendC;
 
 template <typename T2, typename T3>
-static __simt_callee__ __aicore__ inline void CalculateBoundariesAndWeights(const T2 coord, const float scale, 
-    const float invScale, const float support, const T3 lenDst, T3 &minCoord, 
-    T3 &maxCoord, float &totalWeight)
+static __simt_callee__ __aicore__ inline void CalculateBoundariesAndWeights(const T2 coord, const float scale,
+                                                                            const float invScale, const float support,
+                                                                            const T3 lenDst, T3& minCoord, T3& maxCoord,
+                                                                            float& totalWeight)
 {
     const float inputCenter = (scale > 0.0f) ? ((static_cast<float>(coord) + 0.5f) * scale) : 0.5f;
-    
+
     minCoord = static_cast<T3>(floorf(inputCenter - support + 0.5f));
     maxCoord = static_cast<T3>(floorf(inputCenter + support + 0.5f));
     minCoord = max(minCoord, static_cast<T3>(0));
     maxCoord = min(maxCoord, lenDst);
-    
+
     totalWeight = 0.0f;
     for (T3 i = minCoord; i < maxCoord; ++i) {
         totalWeight += CubicFilterAA((static_cast<float>(i) - inputCenter + 0.5f) * invScale);
@@ -47,46 +48,47 @@ static __simt_callee__ __aicore__ inline void CalculateBoundariesAndWeights(cons
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
-    T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
-    T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
-    float supportH, float supportW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
+    __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
+    T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH,
+    float invScaleW, float supportH, float supportW)
 {
-    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
-        idx += static_cast<T3>(blockDim.x)) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T3>(blockDim.x)) {
         const T3 xGmIdx = blkStartOffset + idx;
         const float inputValue = static_cast<float>(inputGm[xGmIdx]);
-        
+
         // 计算W, H, NC索引
         const T2 tmpRes = Simt::UintDiv(static_cast<T2>(xGmIdx), mW, shiftW);
         const T2 W = xGmIdx - tmpRes * lenSrcW;
         const T2 NC = Simt::UintDiv(tmpRes, mH, shiftH);
         const T2 H = tmpRes - NC * lenSrcH;
         const T3 baseOutputIdx = NC * lenDstH * lenDstW;
-        
+
         T3 minH, maxH;
         float totalWeightH;
         CalculateBoundariesAndWeights(H, scaleH, invScaleH, supportH, lenDstH, minH, maxH, totalWeightH);
-        
+
         T3 minW, maxW;
         float totalWeightW;
         CalculateBoundariesAndWeights(W, scaleW, invScaleW, supportW, lenDstW, minW, maxW, totalWeightW);
-        
+
         if (totalWeightH == 0.0f || totalWeightW == 0.0f) {
             continue;
         }
-        
+
         const float inputCenterH = (scaleH > 0.0f) ? ((static_cast<float>(H) + 0.5f) * scaleH) : 0.5f;
         const float inputCenterW = (scaleW > 0.0f) ? ((static_cast<float>(W) + 0.5f) * scaleW) : 0.5f;
         for (T3 h = minH; h < maxH; ++h) {
-            const float weightH = CubicFilterAA((static_cast<float>(h) - inputCenterH + 0.5f) * invScaleH) / totalWeightH;
+            const float weightH = CubicFilterAA((static_cast<float>(h) - inputCenterH + 0.5f) * invScaleH) /
+                                  totalWeightH;
             if (weightH == 0.0f) {
                 continue;
             }
             const T3 clampedHOffset = max(static_cast<T3>(0), min(lenDstH, h)) * lenDstW + baseOutputIdx;
-            
+
             for (T3 w = minW; w < maxW; ++w) {
-                const float weightW = CubicFilterAA((static_cast<float>(w) - inputCenterW + 0.5f) * invScaleW) / totalWeightW;
+                const float weightW = CubicFilterAA((static_cast<float>(w) - inputCenterW + 0.5f) * invScaleW) /
+                                      totalWeightW;
                 if (weightW == 0.0f) {
                     continue;
                 }
@@ -100,24 +102,26 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32)__aicore__ void calleeInt32(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
-    T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
-    T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
-    float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__
+    void calleeInt32(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
+                     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH,
+                     float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
-    SimtCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, 
-        mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+    SimtCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW,
+                                   lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH,
+                                   supportW);
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64)__aicore__ void calleeInt64(__gm__ T1 *inputGm, __gm__ T1 *outputGm, 
-    T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
-    T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
-    float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__
+    void calleeInt64(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
+                     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH,
+                     float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
-    SimtCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH,
-        mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+    SimtCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW,
+                                   lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH,
+                                   supportW);
 }
 
-}// namespace UpsampleBicubic2dAAGrad
+} // namespace UpsampleBicubic2dAAGrad
 #endif // UPSAMPLE_BICUBIC2D_AA_GRAD_SIMT_BASE_H

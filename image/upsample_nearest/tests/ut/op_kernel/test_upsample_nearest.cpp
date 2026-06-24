@@ -25,24 +25,16 @@
 
 extern "C" __global__ __aicore__ void upsample_nearest(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
-class upsample_nearest_test : public testing::Test
-{
+class upsample_nearest_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "upsample_nearest_test SetUp\n" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_nearest_test TearDown\n" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "upsample_nearest_test SetUp\n" << std::endl; }
+    static void TearDownTestCase() { std::cout << "upsample_nearest_test TearDown\n" << std::endl; }
 };
 
 TEST_F(upsample_nearest_test, test_case_float_1)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'float32'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -100,9 +92,8 @@ TEST_F(upsample_nearest_test, test_case_float_1)
 
 TEST_F(upsample_nearest_test, test_case_float_2)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'float32'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -160,9 +151,8 @@ TEST_F(upsample_nearest_test, test_case_float_2)
 
 TEST_F(upsample_nearest_test, test_case_float_3)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 1, 128, 1)' '(1, 64)' 'float32'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -220,9 +210,8 @@ TEST_F(upsample_nearest_test, test_case_float_3)
 
 TEST_F(upsample_nearest_test, test_case_float_4)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 1, 1, 1)' '(1, 1)' 'float32'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -280,9 +269,8 @@ TEST_F(upsample_nearest_test, test_case_float_4)
 
 TEST_F(upsample_nearest_test, test_case_float16_1)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'float16'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -340,9 +328,8 @@ TEST_F(upsample_nearest_test, test_case_float16_1)
 
 TEST_F(upsample_nearest_test, test_case_float16_2)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'float16'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -400,9 +387,8 @@ TEST_F(upsample_nearest_test, test_case_float16_2)
 
 TEST_F(upsample_nearest_test, test_case_float16_3)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
     system("chmod -R 755 ./upsample_nearest_data/");
     system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 1, 1, 1)' '(1, 1)' 'float16'");
     AscendC::SetKernelMode(KernelMode::AIV_MODE);

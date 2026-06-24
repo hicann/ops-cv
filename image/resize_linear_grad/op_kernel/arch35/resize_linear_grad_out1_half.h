@@ -31,23 +31,24 @@ public:
     __aicore__ inline ResizeLinearGradOut1Half(){};
 
     __aicore__ inline void Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
-        const ResizeLinearGradTilingData *tilingData);
+                                const ResizeLinearGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     uint32_t blockIdx_;
     GlobalTensor<T1> inputGm_;
     GlobalTensor<T1> outputGm_;
-    const ResizeLinearGradTilingData *tilingData_;
+    const ResizeLinearGradTilingData* tilingData_;
 };
 
 template <typename T1, typename T2>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeMode4(T2 blkStartOffset,
-    T2 blkProcessNum, T2 srcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+                                                                                       T2 blkProcessNum, T2 srcL,
+                                                                                       float scaleL, __gm__ T1* inputGm,
+                                                                                       __gm__ T1* outputGm)
 {
     T2 srcL1 = srcL - 1;
-    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
-        idx += static_cast<T2>(blockDim.x)) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         float srcIdsF = scaleL * 0.5f - 0.5f;
         T2 floorIds = floorf(srcIdsF);
@@ -58,27 +59,27 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 
 template <typename T1, typename T2>
 __simt_vf__ LAUNCH_BOUND(512) __aicore__ void calleeInt64O1Half(T2 blkStartOffset, T2 blkProcessNum, T2 srcL,
-    float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+                                                                float scaleL, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtComputeMode4<T1, T2>(blkStartOffset, blkProcessNum, srcL, scaleL, inputGm, outputGm);
 }
 
 template <typename T1, typename T2>
 __simt_vf__ LAUNCH_BOUND(1024) __aicore__ void calleeInt32O1Half(T2 blkStartOffset, T2 blkProcessNum, T2 srcL,
-    float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+                                                                 float scaleL, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtComputeMode4<T1, T2>(blkStartOffset, blkProcessNum, srcL, scaleL, inputGm, outputGm);
 }
 
 template <typename T1, typename T2>
 __aicore__ inline void ResizeLinearGradOut1Half<T1, T2>::Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
-    const ResizeLinearGradTilingData *tilingData)
+                                                              const ResizeLinearGradTilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    inputGm_.SetGlobalBuffer((__gm__ T1 *)grads);
-    outputGm_.SetGlobalBuffer((__gm__ T1 *)y);
+    inputGm_.SetGlobalBuffer((__gm__ T1*)grads);
+    outputGm_.SetGlobalBuffer((__gm__ T1*)y);
 }
 
 template <typename T1, typename T2>
@@ -106,10 +107,12 @@ __aicore__ inline void ResizeLinearGradOut1Half<T1, T2>::Process()
         T2 srcL = (T2)(tilingData_->lenSrcLOrUb);
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
             asc_vf_call<calleeInt64O1Half<T1, T2>>(dim3(512), blkStartOffset, blkProcessNum, srcL, scaleL,
-                (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+                                                   (__gm__ T1*)(inputGm_.GetPhyAddr()),
+                                                   (__gm__ T1*)(outputGm_.GetPhyAddr()));
         } else {
             asc_vf_call<calleeInt32O1Half<T1, T2>>(dim3(1024), blkStartOffset, blkProcessNum, srcL, scaleL,
-                (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+                                                   (__gm__ T1*)(inputGm_.GetPhyAddr()),
+                                                   (__gm__ T1*)(outputGm_.GetPhyAddr()));
         }
     }
 }

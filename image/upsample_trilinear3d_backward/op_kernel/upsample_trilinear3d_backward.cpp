@@ -15,8 +15,8 @@
 
 using namespace UpsampleTrilinear3dBackward;
 
-extern "C" __global__ __aicore__ void upsample_trilinear3d_backward(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void upsample_trilinear3d_backward(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                                    GM_ADDR tiling)
 {
     GET_TILING_DATA(tiling_data, tiling);
     const UpsampleTrilinear3dBackwardTilingData* __restrict tilingData = &tiling_data;
@@ -24,11 +24,10 @@ extern "C" __global__ __aicore__ void upsample_trilinear3d_backward(
     const TCubeTiling* __restrict matmulTilingH = &(tilingData->matmulTilingH);
     const TCubeTiling* __restrict matmulTilingD = &(tilingData->matmulTilingD);
     GM_ADDR userWs = GetUserWorkspace(workspace);
-#define INIT_AND_PROCESS                                                                                  \
-    REGIST_MATMUL_OBJ(                                                                                    \
-        &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH, op.matmulD, \
-        matmulTilingD);                                                                                   \
-    op.Init(input, output, userWs, &tiling_data);                                                         \
+#define INIT_AND_PROCESS                                                                                    \
+    REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH, \
+                      op.matmulD, matmulTilingD);                                                           \
+    op.Init(input, output, userWs, &tiling_data);                                                           \
     op.Process()
 
     if (TILING_KEY_IS(1)) {

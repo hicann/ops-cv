@@ -22,15 +22,9 @@ using namespace std;
 
 class l2_grid_sampler3d_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "grid_sampler3d_backward_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "grid_sampler3d_backward_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "grid_sampler3d_backward_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "grid_sampler3d_backward_test TearDown" << std::endl; }
 };
 
 // gradOutput nullptr
@@ -41,9 +35,8 @@ TEST_F(l2_grid_sampler3d_backward_test, gradOutput_nullptr)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(nullptr, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward, INPUT(nullptr, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -57,9 +50,9 @@ TEST_F(l2_grid_sampler3d_backward_test, input_nullptr)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, nullptr, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, nullptr, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -73,9 +66,9 @@ TEST_F(l2_grid_sampler3d_backward_test, grid_nullptr)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, nullptr, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, nullptr, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -89,9 +82,9 @@ TEST_F(l2_grid_sampler3d_backward_test, inputGrad_nullptr)
     auto gridDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(nullptr, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(nullptr, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -105,9 +98,9 @@ TEST_F(l2_grid_sampler3d_backward_test, gridGrad_nullptr)
     auto gridDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, nullptr));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, nullptr));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -122,9 +115,9 @@ TEST_F(l2_grid_sampler3d_backward_test, dtype_float16)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT16, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT16, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
@@ -139,9 +132,9 @@ TEST_F(l2_grid_sampler3d_backward_test, dtype_float32)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
@@ -173,9 +166,9 @@ TEST_F(l2_grid_sampler3d_backward_test, dtype_bf16)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_BF16, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_BF16, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -190,9 +183,9 @@ TEST_F(l2_grid_sampler3d_backward_test, ascend910B2_case_transpose)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -207,9 +200,9 @@ TEST_F(l2_grid_sampler3d_backward_test, ascend910B2_case_no_transpose)
     auto inputGradDesc = TensorDesc({1, 1, 3, 3, 1}, ACL_FLOAT16, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT16, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -224,9 +217,9 @@ TEST_F(l2_grid_sampler3d_backward_test, output_mask_false_false)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{false, false});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -241,9 +234,9 @@ TEST_F(l2_grid_sampler3d_backward_test, shape_n_input1_grid2)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -258,9 +251,9 @@ TEST_F(l2_grid_sampler3d_backward_test, shape_c_input1_output2)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -275,9 +268,9 @@ TEST_F(l2_grid_sampler3d_backward_test, shape_h_grid2_output3)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -292,9 +285,9 @@ TEST_F(l2_grid_sampler3d_backward_test, shape_w_grid2_output4)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -309,9 +302,9 @@ TEST_F(l2_grid_sampler3d_backward_test, mode_3)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 3, 0, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 3, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -326,9 +319,9 @@ TEST_F(l2_grid_sampler3d_backward_test, padding_mode_3)
     auto inputGradDesc = TensorDesc({1, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto gridGradDesc = TensorDesc({1, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
-    auto ut = OP_API_UT(
-        aclnnGridSampler3DBackward, INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 3, false, outputMaskDesc),
-        OUTPUT(inputGradDesc, gridGradDesc));
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 3, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
     uint64_t workspaceSize = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);

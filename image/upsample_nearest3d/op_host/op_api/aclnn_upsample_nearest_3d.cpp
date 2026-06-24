@@ -31,15 +31,15 @@ extern "C" {
 #endif
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE,
-    op::DataType::DT_BF16, op::DataType::DT_UINT8};
-static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_BF16,
+    op::DataType::DT_UINT8};
+static const std::initializer_list<op::DataType> ASCEND310P_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT,
+                                                                                  op::DataType::DT_FLOAT16};
 
-static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(out, return false);
@@ -47,7 +47,7 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2002) {
@@ -61,12 +61,13 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, UPSAMPLE_DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, UPSAMPLE_DIM_LIMIT, return false);
-    OP_CHECK(outputSizeNum == UPSAMPLE_EXPECT_SIZE,
+    OP_CHECK(
+        outputSizeNum == UPSAMPLE_EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 3, but got size %zu", outputSizeNum),
         return false);
 
@@ -90,7 +91,7 @@ static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize, con
     return true;
 }
 
-static bool CheckInputElement(const aclTensor *input, const aclIntArray *outputSize)
+static bool CheckInputElement(const aclTensor* input, const aclIntArray* outputSize)
 {
     auto selfShape = input->GetViewShape();
     int64_t outC = selfShape.GetDim(DIM_ONE);
@@ -108,23 +109,20 @@ static bool CheckInputElement(const aclTensor *input, const aclIntArray *outputS
     }
 
     OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, but got input (D: %ld,"
-            " H: %ld, W: %ld) output (D: %ld, H: %ld, W: %ld)",
-            inputD, inputH, inputW, outD, outH, outW),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, but got input (D: %ld,"
+                     " H: %ld, W: %ld) output (D: %ld, H: %ld, W: %ld)",
+                     inputD, inputH, inputW, outD, outH, outW),
+             return false);
 
-    OP_CHECK(
-        outC > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "Non-empty 5D data tensor expected but got a tensor with sizes %s.",
-            op::ToString(input->GetViewShape()).GetString()),
-        return false);
+    OP_CHECK(outC > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Non-empty 5D data tensor expected but got a tensor with sizes %s.",
+                     op::ToString(input->GetViewShape()).GetString()),
+             return false);
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, outputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -141,8 +139,9 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *upsampleNearest3dCompute(const aclTensor *selfContiguous, const aclIntArray *outputSize,
-    const aclFloatArray *scales, const aclFloatArray *castScales, aclOpExecutor *executor)
+static const aclTensor* upsampleNearest3dCompute(const aclTensor* selfContiguous, const aclIntArray* outputSize,
+                                                 const aclFloatArray* scales, const aclFloatArray* castScales,
+                                                 aclOpExecutor* executor)
 {
     if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
         const int64_t permuteNCDHWList[] = {DIM_ZERO, DIM_FOUR, DIM_ONE, DIM_TWO, DIM_THREE};
@@ -152,8 +151,8 @@ static const aclTensor *upsampleNearest3dCompute(const aclTensor *selfContiguous
         auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCDHWArray, executor);
         CHECK_RET(selfTranspose != nullptr, nullptr);
 
-        auto selfUpsampleNearest =
-            l0op::UpsampleNearest3dNcdhw(selfTranspose, outputSize, scales, castScales, executor);
+        auto selfUpsampleNearest = l0op::UpsampleNearest3dNcdhw(selfTranspose, outputSize, scales, castScales,
+                                                                executor);
         CHECK_RET(selfUpsampleNearest != nullptr, nullptr);
 
         const int64_t permuteNDHWCList[] = {DIM_ZERO, DIM_TWO, DIM_THREE, DIM_FOUR, DIM_ONE};
@@ -166,8 +165,9 @@ static const aclTensor *upsampleNearest3dCompute(const aclTensor *selfContiguous
     return l0op::UpsampleNearest3dNcdhw(selfContiguous, outputSize, scales, castScales, executor);
 }
 
-aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize, double scalesD,
-    double scalesH, double scalesW, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor* self, const aclIntArray* outputSize, double scalesD,
+                                                   double scalesH, double scalesW, aclTensor* out,
+                                                   uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
@@ -192,7 +192,7 @@ aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor *self, const 
 
     // 调用upsampleNearest3dCompute计算
     const float scalesList[] = {float(scalesD), float(scalesH), float(scalesW)};
-    const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, UPSAMPLE_EXPECT_SIZE);
+    const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, UPSAMPLE_EXPECT_SIZE);
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     vector<float> scalesCastList{};
@@ -201,7 +201,7 @@ aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor *self, const 
         scalesCastList.push_back(static_cast<float>(1.0 / scalesH));
         scalesCastList.push_back(static_cast<float>(1.0 / scalesW));
     }
-    const aclFloatArray *castScales = uniqueExecutor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
+    const aclFloatArray* castScales = uniqueExecutor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
     CHECK_RET(castScales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto result = upsampleNearest3dCompute(selfContiguous, outputSize, scales, castScales, uniqueExecutor.get());
@@ -217,7 +217,7 @@ aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(const aclTensor *self, const 
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearest3d(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearest3d(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearest3d);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

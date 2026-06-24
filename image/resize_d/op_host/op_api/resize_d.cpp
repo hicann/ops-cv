@@ -45,7 +45,7 @@ static const int64_t DIM_THREE = 3;
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
-inline const string &GetCoordinateTransformationModeStr(const bool alignCorners)
+inline const string& GetCoordinateTransformationModeStr(const bool alignCorners)
 {
     if (alignCorners) {
         return ALIGN_CORNERS;
@@ -53,31 +53,21 @@ inline const string &GetCoordinateTransformationModeStr(const bool alignCorners)
     return HALF_PIXEL;
 }
 
-const aclTensor *ResizeD(const aclTensor *x, const aclIntArray *size, const bool alignCorners, const aclTensor *y,
-    const aclFloatArray *scales, const std::string &mode, aclOpExecutor *executor)
+const aclTensor* ResizeD(const aclTensor* x, const aclIntArray* size, const bool alignCorners, const aclTensor* y,
+                         const aclFloatArray* scales, const std::string& mode, aclOpExecutor* executor)
 {
     L0_DFX(ResizeD, x, size, alignCorners, scales, mode);
 
     const int64_t roi[0] = {};
-    aclIntArray *roiArray = executor->AllocIntArray(roi, 0);
+    aclIntArray* roiArray = executor->AllocIntArray(roi, 0);
     CHECK_RET(roiArray != nullptr, nullptr);
 
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeD,
-        OP_INPUT(x),
-        OP_OUTPUT(y),
-        OP_ATTR(size,
-            scales,
-            roiArray,
-            GetCoordinateTransformationModeStr(alignCorners),
-            CUBIC_COEFF_A,
-            EXCLUDE_OUTSIDE,
-            EXTRAPOLATION_VALUE,
-            mode,
-            ROUND_PREFER_FLOOR,
-            DATA_FORMAT));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        ResizeD, OP_INPUT(x), OP_OUTPUT(y),
+        OP_ATTR(size, scales, roiArray, GetCoordinateTransformationModeStr(alignCorners), CUBIC_COEFF_A,
+                EXCLUDE_OUTSIDE, EXTRAPOLATION_VALUE, mode, ROUND_PREFER_FLOOR, DATA_FORMAT));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeDAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeDAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
     return y;
 }
-}  // namespace l0op
+} // namespace l0op

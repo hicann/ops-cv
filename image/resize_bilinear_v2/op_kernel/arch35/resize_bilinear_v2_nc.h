@@ -44,20 +44,20 @@ class ResizeBilinearV2Nc : public ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2Nc(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2TilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void DivideNhwc();
     __aicore__ inline void ComputeSrcIdx(int64_t& dstIdx, float& srcIdx, float scale);
-    __aicore__ inline void ComputeDeltaArgus(
-        int64_t idxHw, int64_t& srcUpper, int64_t& srcDown, int64_t& srcLeft, int64_t& srcRight);
+    __aicore__ inline void ComputeDeltaArgus(int64_t idxHw, int64_t& srcUpper, int64_t& srcDown, int64_t& srcLeft,
+                                             int64_t& srcRight);
     __aicore__ inline void ComputeDstValueWith4SrcDot(LocalTensor<Tout>& dstUb, uint32_t totalLen);
-    __aicore__ inline void DataCopyPadUb2Gm(
-        TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<Tout>& dstGm, int64_t gmOffset, int32_t length);
-    __aicore__ inline void DataCopyPadGm2Ub(
-        TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<Tin>& srcGm, int64_t gmOffset, int32_t length);
+    __aicore__ inline void DataCopyPadUb2Gm(TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<Tout>& dstGm,
+                                            int64_t gmOffset, int32_t length);
+    __aicore__ inline void DataCopyPadGm2Ub(TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<Tin>& srcGm,
+                                            int64_t gmOffset, int32_t length);
     __aicore__ inline void ComputLengthOffset(OffsetDefSt& stOffset);
 
 private:
@@ -108,8 +108,8 @@ private:
 };
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* tilingData)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                                           const ResizeBilinearV2TilingData* tilingData)
 {
     this->BaseInit(x, size, y, pipe);
     blockIdx_ = GetBlockIdx();
@@ -158,8 +158,9 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::Process()
 }
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadGm2Ub(
-    TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<Tin>& srcGm, int64_t gmOffset, int32_t length)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadGm2Ub(TQue<QuePosition::VECIN, BUFF_NUM>& inQueue,
+                                                                       GlobalTensor<Tin>& srcGm, int64_t gmOffset,
+                                                                       int32_t length)
 {
     LocalTensor<Tin> xUb = inQueue.AllocTensor<Tin>();
     DataCopyExtParams copyParams;
@@ -172,8 +173,9 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadGm2Ub(
 }
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadUb2Gm(
-    TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<Tout>& dstGm, int64_t gmOffset, int32_t length)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadUb2Gm(TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue,
+                                                                       GlobalTensor<Tout>& dstGm, int64_t gmOffset,
+                                                                       int32_t length)
 {
     LocalTensor<Tout> ubTensorOut = outQueue.DeQue<Tout>();
     DataCopyExtParams copyParams;
@@ -186,8 +188,8 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DataCopyPadUb2Gm(
 }
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot(
-    LocalTensor<Tout>& dstUb, uint32_t totalLen)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot(LocalTensor<Tout>& dstUb,
+                                                                                 uint32_t totalLen)
 {
     LocalTensor<Tin> srcUbLu = inQueue0.DeQue<Tin>();
     LocalTensor<Tin> srcUbRu = inQueue1.DeQue<Tin>();
@@ -263,11 +265,11 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
                 MicroAPI::Cast<Tout, float, castTrait1>(regTmpT2, regSumF32, pregFp32);
                 MicroAPI::Pack((RegTensor<uint16_t>&)regOutputT2, (RegTensor<uint32_t>&)regTmpT2);
                 MicroAPI::MaskPack(pregFp16, pregFp32);
-                MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    dstUbPtr, regOutputT2, oneRepeat_, pregFp16);
+                MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regOutputT2, oneRepeat_,
+                                                                                  pregFp16);
             } else {
-                MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    dstUbPtr, regSumF32, oneRepeat_, pregFp32);
+                MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regSumF32, oneRepeat_,
+                                                                                  pregFp32);
             }
         }
     }
@@ -329,20 +331,20 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DivideNhwc()
             base_src_offset = idx_n * lenSrcHw_ * lenC_;
             base_dst_offset = idx_n * lenDstHw_ * lenC_ + (lenDstW_ * dst_h + dst_w) * lenC_;
             for (int64_t idx_c = 0; idx_c < point_offset_st.cLength; idx_c = idx_c + ubCFactor_) {
-                process_length =
-                    (idx_c + ubCFactor_) <= point_offset_st.cLength ? ubCFactor_ : point_offset_st.cLength - idx_c;
+                process_length = (idx_c + ubCFactor_) <= point_offset_st.cLength ? ubCFactor_ :
+                                                                                   point_offset_st.cLength - idx_c;
                 // Step1: copy data from input gm to ub
-                src_offset =
-                    base_src_offset + (lenSrcW_ * src_upper + src_left) * lenC_ + idx_c + point_offset_st.cStart;
+                src_offset = base_src_offset + (lenSrcW_ * src_upper + src_left) * lenC_ + idx_c +
+                             point_offset_st.cStart;
                 DataCopyPadGm2Ub(inQueue0, xGm_, src_offset, process_length);
-                src_offset =
-                    base_src_offset + (lenSrcW_ * src_upper + src_right) * lenC_ + idx_c + point_offset_st.cStart;
+                src_offset = base_src_offset + (lenSrcW_ * src_upper + src_right) * lenC_ + idx_c +
+                             point_offset_st.cStart;
                 DataCopyPadGm2Ub(inQueue1, xGm_, src_offset, process_length);
-                src_offset =
-                    base_src_offset + (lenSrcW_ * src_down + src_left) * lenC_ + idx_c + point_offset_st.cStart;
+                src_offset = base_src_offset + (lenSrcW_ * src_down + src_left) * lenC_ + idx_c +
+                             point_offset_st.cStart;
                 DataCopyPadGm2Ub(inQueue2, xGm_, src_offset, process_length);
-                src_offset =
-                    base_src_offset + (lenSrcW_ * src_down + src_right) * lenC_ + idx_c + point_offset_st.cStart;
+                src_offset = base_src_offset + (lenSrcW_ * src_down + src_right) * lenC_ + idx_c +
+                             point_offset_st.cStart;
                 DataCopyPadGm2Ub(inQueue3, xGm_, src_offset, process_length);
                 // Step2: compute value throw MicroAPI
                 LocalTensor<Tout> ubTensorOut = outQueue.AllocTensor<Tout>();
@@ -368,8 +370,9 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeSrcIdx(int64_t& dst
 }
 
 template <typename Tin, typename Tout>
-__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDeltaArgus(
-    int64_t idxHw, int64_t& srcUpper, int64_t& srcDown, int64_t& srcLeft, int64_t& srcRight)
+__aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDeltaArgus(int64_t idxHw, int64_t& srcUpper,
+                                                                        int64_t& srcDown, int64_t& srcLeft,
+                                                                        int64_t& srcRight)
 {
     int64_t dst_h = idxHw / lenDstW_;
     float hFp = 0.0f;

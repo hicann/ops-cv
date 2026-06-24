@@ -103,7 +103,7 @@ private:
     }
 
 public:
-    explicit GridSample(const char *name) : OpDef(name)
+    explicit GridSample(const char* name) : OpDef(name)
     {
         this->Input("x")
             .ParamType(REQUIRED)
@@ -140,7 +140,8 @@ public:
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
             .NeedCheckSupportFlag(false)
-            .ExtendCfgInfo("opFile.value", "grid_sample_apt");;
+            .ExtendCfgInfo("opFile.value", "grid_sample_apt");
+        ;
         this->AICore().AddConfig("mc62", aicore95_config);
         this->AICore().AddConfig("ascend950", aicore95_config);
 
@@ -157,4 +158,4 @@ public:
 };
 
 OP_ADD(GridSample);
-}  // namespace ops
+} // namespace ops

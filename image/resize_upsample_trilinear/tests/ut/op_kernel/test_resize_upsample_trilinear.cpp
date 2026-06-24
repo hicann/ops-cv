@@ -23,42 +23,36 @@
 using namespace std;
 using namespace optiling;
 
-extern "C" __global__ __aicore__ void resize_upsample_trilinear(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void resize_upsample_trilinear(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                                GM_ADDR tiling);
 
 class ResizeUpsampleTrilinearTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "ResizeUpsampleTrilinearTest SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "ResizeUpsampleTrilinearTest TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "ResizeUpsampleTrilinearTest SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "ResizeUpsampleTrilinearTest TearDown\n" << endl; }
 };
 
 TEST_F(ResizeUpsampleTrilinearTest, test_case_float32)
 {
-    system(
-        "cp -rf "
-        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
-        "resize_upsample_trilinear_data ./");
+    system("cp -rf "
+           "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
+           "resize_upsample_trilinear_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_data/");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     struct ResizeUpsampleTrilinearCompileInfo {
         uint32_t totalCoreNum = 48;
     } compileInfo;
-    gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
-                                                {{{{1, 2, 2, 4, 4}, {1, 2, 2, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{1, 2, 8, 8, 16}, {1, 2, 8, 8, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 16})),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "ResizeUpsampleTrilinear", {{{{1, 2, 2, 4, 4}, {1, 2, 2, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 2, 8, 8, 16}, {1, 2, 8, 8, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 16})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -74,7 +68,6 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float32)
 
     std::string fileName = "./resize_upsample_trilinear_data/float32_input_trilinear.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
-
 
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
@@ -95,25 +88,25 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float32)
 
 TEST_F(ResizeUpsampleTrilinearTest, test_case_float16)
 {
-    system(
-        "cp -rf "
-        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
-        "resize_upsample_trilinear_data ./");
+    system("cp -rf "
+           "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
+           "resize_upsample_trilinear_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_data/");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     struct ResizeUpsampleTrilinearCompileInfo {
         uint32_t totalCoreNum = 48;
     } compileInfo;
-    gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
-                                                {{{{1, 2, 2, 4, 4}, {1, 2, 2, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{1, 2, 8, 8, 16}, {1, 2, 8, 8, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 16})),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "ResizeUpsampleTrilinear", {{{{1, 2, 2, 4, 4}, {1, 2, 2, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{1, 2, 8, 8, 16}, {1, 2, 8, 8, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 16})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -122,7 +115,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float16)
 
     size_t inputByteSize = 2 * 2 * 4 * 4 * sizeof(half);
     size_t outputByteSize = 2 * 8 * 8 * 16 * sizeof(half);
-    uint32_t numBlocks =  tilingInfo.blockNum;
+    uint32_t numBlocks = tilingInfo.blockNum;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
@@ -150,25 +143,25 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_float16)
 
 TEST_F(ResizeUpsampleTrilinearTest, test_case_bfloat16)
 {
-    system(
-        "cp -rf "
-        "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
-        "resize_upsample_trilinear_data ./");
+    system("cp -rf "
+           "../../../../image/resize_upsample_trilinear/tests/ut/op_kernel/"
+           "resize_upsample_trilinear_data ./");
     system("chmod -R 755 ./resize_upsample_trilinear_data/");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     struct ResizeUpsampleTrilinearCompileInfo {
         uint16_t totalCoreNum = 20;
     } compileInfo;
-    gert::TilingContextPara tilingContextPara("ResizeUpsampleTrilinear",
-                                                {{{{1, 2, 2, 4, 4}, {1, 2, 2, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {{{{1, 2, 8, 8, 16}, {1, 2, 8, 8, 16}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 16})),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "ResizeUpsampleTrilinear", {{{{1, 2, 2, 4, 4}, {1, 2, 2, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {{{{1, 2, 8, 8, 16}, {1, 2, 8, 8, 16}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 16})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -177,7 +170,7 @@ TEST_F(ResizeUpsampleTrilinearTest, test_case_bfloat16)
 
     size_t inputByteSize = 2 * 2 * 4 * 4 * sizeof(half);
     size_t outputByteSize = 2 * 8 * 8 * 16 * sizeof(half);
-    uint32_t numBlocks =  tilingInfo.blockNum;
+    uint32_t numBlocks = tilingInfo.blockNum;
 
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
     uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);

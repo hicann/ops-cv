@@ -26,8 +26,8 @@ class ResizeBicubicV2GradAllCopy {
 public:
     __aicore__ inline ResizeBicubicV2GradAllCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR y, TPipe *pipe, const ResizeBicubicV2GradAllCopyTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR y, TPipe* pipe,
+                                const ResizeBicubicV2GradAllCopyTilingData* tilingData);
 
     __aicore__ inline void Process();
 
@@ -35,8 +35,8 @@ protected:
     __aicore__ inline void CopyIn(int64_t offset, int64_t length);
     __aicore__ inline void CopyOut(int64_t offset, int64_t length);
 
-    TPipe *pipe_;
-    const ResizeBicubicV2GradAllCopyTilingData *tilingData_;
+    TPipe* pipe_;
+    const ResizeBicubicV2GradAllCopyTilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, DB_BUFFER_NUM> dataQue_;
 
@@ -48,14 +48,14 @@ protected:
 };
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBicubicV2GradAllCopy<T_DATA>::Init(
-    GM_ADDR grads, GM_ADDR y, TPipe *pipe, const ResizeBicubicV2GradAllCopyTilingData *tilingData)
+__aicore__ inline void ResizeBicubicV2GradAllCopy<T_DATA>::Init(GM_ADDR grads, GM_ADDR y, TPipe* pipe,
+                                                                const ResizeBicubicV2GradAllCopyTilingData* tilingData)
 {
     pipe_ = pipe;
     tilingData_ = tilingData;
 
-    gradsGM_.SetGlobalBuffer((__gm__ T_DATA *)grads);
-    yGM_.SetGlobalBuffer((__gm__ T_DATA *)y);
+    gradsGM_.SetGlobalBuffer((__gm__ T_DATA*)grads);
+    yGM_.SetGlobalBuffer((__gm__ T_DATA*)y);
 
     int64_t ubBlockSize = Ops::Base::GetUbBlockSize();
     int64_t bufferSize = Ops::Base::CeilAlign<int64_t>(tilingData_->ubFactor * sizeof(T_DATA), ubBlockSize);
@@ -127,6 +127,6 @@ __aicore__ inline void ResizeBicubicV2GradAllCopy<T_DATA>::Process()
     return;
 }
 
-}  // namespace ResizeBicubicV2Grad
+} // namespace ResizeBicubicV2Grad
 
-#endif  // RESIZE_BICUBIC_V2_GRAD_ALL_COPY_H
+#endif // RESIZE_BICUBIC_V2_GRAD_ALL_COPY_H

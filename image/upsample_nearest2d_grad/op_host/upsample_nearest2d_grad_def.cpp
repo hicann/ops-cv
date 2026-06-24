@@ -17,8 +17,7 @@
 
 namespace ops {
 
-class UpsampleNearest2dGrad : public OpDef
-{
+class UpsampleNearest2dGrad : public OpDef {
 public:
     explicit UpsampleNearest2dGrad(const char* name) : OpDef(name)
     {

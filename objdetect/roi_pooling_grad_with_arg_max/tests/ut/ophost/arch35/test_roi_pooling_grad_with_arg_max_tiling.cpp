@@ -21,17 +21,11 @@
 
 class RoiPoolingGradWithArgMaxTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RoiPoolingGradWithArgMaxTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RoiPoolingGradWithArgMaxTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RoiPoolingGradWithArgMaxTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RoiPoolingGradWithArgMaxTiling TearDown" << std::endl; }
 };
-    
+
 struct RoiPoolingGradWithArgMaxCompileInfo {
     uint32_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
@@ -53,19 +47,24 @@ TEST_F(RoiPoolingGradWithArgMaxTiling, roi_pooling_grad_with_arg_max_tiling_test
     gert::StorageShape roiActualNumShape = {{rois_n, 5}, {rois_n, 5}};
     gert::StorageShape argMaxShape = {{rois_n, c, poolh, poolw}, {rois_n, c, poolh, poolw}};
     RoiPoolingGradWithArgMaxCompileInfo compileInfo = {40, 196608};
-    gert::TilingContextPara tilingContextPara("RoiPoolingGradWithArgMax",
-                                                {{gradShape, ge::DT_FLOAT, ge::FORMAT_ND}, 
-                                                {xShape, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {roisShape, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {roiActualNumShape, ge::DT_INT32, ge::FORMAT_ND},
-                                                {argMaxShape, ge::DT_INT32, ge::FORMAT_ND},},
-                                                {{xShape, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                {gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolh)),
-                                                gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolw)),
-                                                gert::TilingContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
-                                                gert::TilingContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
-                                                gert::TilingContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(c))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "RoiPoolingGradWithArgMax",
+        {
+            {gradShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {xShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {roisShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {roiActualNumShape, ge::DT_INT32, ge::FORMAT_ND},
+            {argMaxShape, ge::DT_INT32, ge::FORMAT_ND},
+        },
+        {
+            {xShape, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolh)),
+         gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolw)),
+         gert::TilingContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::TilingContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::TilingContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(c))},
+        &compileInfo);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "58 5 3 512 288 2 2 3 3 32 64 ";
     std::vector<size_t> expectWorkspaces = {4294968447};

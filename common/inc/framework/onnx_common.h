@@ -42,8 +42,8 @@ inline std::string GetOpName(const T& op)
 }
 
 template <typename T>
-inline ge::Tensor Vec2Tensor(
-    vector<T>& vals, const vector<int64_t>& dims, ge::DataType dtype, ge::Format format = ge::FORMAT_ND)
+inline ge::Tensor Vec2Tensor(vector<T>& vals, const vector<int64_t>& dims, ge::DataType dtype,
+                             ge::Format format = ge::FORMAT_ND)
 {
     ge::Shape shape(dims);
     ge::TensorDesc desc(shape, format, dtype);
@@ -84,6 +84,6 @@ inline Status ChangeFormatFromOnnx(ge::Operator& op, const int idx, ge::Format f
     }
     return SUCCESS;
 }
-}  // namespace domi
+} // namespace domi
 
-#endif  //  CV_COMMON_ONNX_COMMON_H
+#endif //  CV_COMMON_ONNX_COMMON_H

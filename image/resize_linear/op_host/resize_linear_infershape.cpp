@@ -46,7 +46,8 @@ ge::graphStatus ResizeLinearInferShape(gert::InferShapeContext* context)
         const int32_t* sizeValue = sizeTensor->GetData<int32_t>();
         auto sizeNum = sizeTensor->GetShapeSize();
         OP_CHECK_IF(sizeNum != IN_SIZE_NUM,
-            OP_LOGE(nodeName, "the element number of size should be 1, but is %ld", sizeNum), return GRAPH_FAILED);
+                    OP_LOGE(nodeName, "the element number of size should be 1, but is %ld", sizeNum),
+                    return GRAPH_FAILED);
         outL = sizeValue[0];
         OP_CHECK_IF(outL <= 0, OP_LOGE(nodeName, "output size should be greater than 0"), return GRAPH_FAILED);
     }
@@ -54,11 +55,10 @@ ge::graphStatus ResizeLinearInferShape(gert::InferShapeContext* context)
     if (Ops::Base::IsUnknownRank(*xShape)) {
         Ops::Base::SetUnknownShape(IN_X_DIMS, *yShape);
     } else {
-        OP_CHECK_IF(
-            xShape->GetDimNum() != IN_X_DIMS, OP_LOGE(nodeName, "x shape only support 3D"), return GRAPH_FAILED);
-        OP_CHECK_IF(
-            (xShape->GetDim(IDX_L) == 0) || (xShape->GetDim(IDX_L - 1) == 0),
-            OP_LOGE(nodeName, "input size should be greater than 0"), return GRAPH_FAILED);
+        OP_CHECK_IF(xShape->GetDimNum() != IN_X_DIMS, OP_LOGE(nodeName, "x shape only support 3D"),
+                    return GRAPH_FAILED);
+        OP_CHECK_IF((xShape->GetDim(IDX_L) == 0) || (xShape->GetDim(IDX_L - 1) == 0),
+                    OP_LOGE(nodeName, "input size should be greater than 0"), return GRAPH_FAILED);
         *yShape = *xShape;
     }
 
@@ -73,9 +73,9 @@ graphStatus ResizeLinearInferDtype(gert::InferDataTypeContext* context)
     OP_LOGI(context->GetNodeName(), "Begin to do ResizeLinearInferDtype");
 
     auto xDtype = context->GetInputDataType(IN_X);
-    OP_CHECK_IF(
-        (xDtype != ge::DT_FLOAT) && (xDtype != ge::DT_FLOAT16) && (xDtype != ge::DT_BF16),
-        OP_LOGE(context->GetNodeName(), "x dtype only support float, float16 and bfloat16"), return GRAPH_FAILED);
+    OP_CHECK_IF((xDtype != ge::DT_FLOAT) && (xDtype != ge::DT_FLOAT16) && (xDtype != ge::DT_BF16),
+                OP_LOGE(context->GetNodeName(), "x dtype only support float, float16 and bfloat16"),
+                return GRAPH_FAILED);
 
     context->SetOutputDataType(OUT_Y, xDtype);
 

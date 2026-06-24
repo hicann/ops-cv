@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 #include <iostream>
@@ -50,9 +50,8 @@ int Init(int32_t deviceId, aclrtStream* stream)
 }
 
 template <typename T>
-int CreateAclTensor(
-    const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr, aclDataType dataType,
-    aclTensor** tensor)
+int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
+                    aclDataType dataType, aclTensor** tensor)
 {
     auto size = GetShapeSize(shape) * sizeof(T);
     // 调用aclrtMalloc申请device侧内存
@@ -69,9 +68,8 @@ int CreateAclTensor(
     }
 
     // 调用aclCreateTensor接口创建aclTensor
-    *tensor = aclCreateTensor(
-        shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(),
-        *deviceAddr);
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
+                              shape.data(), shape.size(), *deviceAddr);
     return 0;
 }
 
@@ -117,8 +115,8 @@ int main()
     outputMask = aclCreateBoolArray(&(maskValue[0]), kNum2);
 
     // 创建gradOutput aclTensor
-    ret = CreateAclTensor(
-        gradOutputHostData, gradOutputShape, &gradOutputDeviceAddr, aclDataType::ACL_FLOAT, &gradOutput);
+    ret = CreateAclTensor(gradOutputHostData, gradOutputShape, &gradOutputDeviceAddr, aclDataType::ACL_FLOAT,
+                          &gradOutput);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
     // 创建input aclTensor
     ret = CreateAclTensor(inputHostData, inputShape, &inputDeviceAddr, aclDataType::ACL_FLOAT, &input);
@@ -137,9 +135,9 @@ int main()
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
     // 调用aclnnGridSampler2DBackward第一段接口
-    ret = aclnnGridSampler2DBackwardGetWorkspaceSize(
-        gradOutput, input, grid, interpolationMode, paddingMode, alignCorners, outputMask, inputGrad, gridGrad,
-        &workspaceSize, &executor);
+    ret = aclnnGridSampler2DBackwardGetWorkspaceSize(gradOutput, input, grid, interpolationMode, paddingMode,
+                                                     alignCorners, outputMask, inputGrad, gridGrad, &workspaceSize,
+                                                     &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler2DBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
@@ -159,9 +157,8 @@ int main()
     // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
     auto inputGradSize = GetShapeSize(inputGradShape);
     std::vector<float> inputGradResultData(inputGradSize, 0);
-    ret = aclrtMemcpy(
-        inputGradResultData.data(), inputGradResultData.size() * sizeof(inputGradResultData[0]), inputGradDeviceAddr,
-        inputGradSize * sizeof(inputGradResultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
+    ret = aclrtMemcpy(inputGradResultData.data(), inputGradResultData.size() * sizeof(inputGradResultData[0]),
+                      inputGradDeviceAddr, inputGradSize * sizeof(inputGradResultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy inputGradResultData from device to host failed. ERROR: %d\n", ret);
               return ret);
     for (int64_t i = 0; i < inputGradSize; i++) {
@@ -170,9 +167,8 @@ int main()
 
     auto gridGradSize = GetShapeSize(gridGradShape);
     std::vector<float> gridGradResultData(gridGradSize, 0);
-    ret = aclrtMemcpy(
-        gridGradResultData.data(), gridGradResultData.size() * sizeof(gridGradResultData[0]), gridGradDeviceAddr,
-        gridGradSize * sizeof(gridGradResultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
+    ret = aclrtMemcpy(gridGradResultData.data(), gridGradResultData.size() * sizeof(gridGradResultData[0]),
+                      gridGradDeviceAddr, gridGradSize * sizeof(gridGradResultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy gridGradResultData from device to host failed. ERROR: %d\n", ret);
               return ret);
     for (int64_t i = 0; i < gridGradSize; i++) {

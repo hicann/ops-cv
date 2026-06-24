@@ -24,97 +24,100 @@
 
 namespace aicpu {
 class SpatialTransformerCpuKernel : public CpuKernel {
- public:
-  ~SpatialTransformerCpuKernel() = default;
-  uint32_t Compute(CpuKernelContext &ctx) override;
- private:
-  /**
-   * @brief Init params and check valid
-   * @param ctx cpu kernel context
-   * @return status if success
-   */
-  KernelStatus GetInputAndCheckValid(const CpuKernelContext &ctx);
+public:
+    ~SpatialTransformerCpuKernel() = default;
+    uint32_t Compute(CpuKernelContext& ctx) override;
 
-  /**
-   * @brief compute for all types
-   * @param ctx cpu kernel context
-   * @return status if success
-   */
-  template <typename T> uint32_t DoCompute(CpuKernelContext &ctx);
+private:
+    /**
+     * @brief Init params and check valid
+     * @param ctx cpu kernel context
+     * @return status if success
+     */
+    KernelStatus GetInputAndCheckValid(const CpuKernelContext& ctx);
 
-  /**
-   * @brief compute for NCHW format
-   * @param ctx cpu kernel context
-   * @return status if success
-   */
-  template <typename T, typename T1> KernelStatus DoCompute4D();
+    /**
+     * @brief compute for all types
+     * @param ctx cpu kernel context
+     * @return status if success
+     */
+    template <typename T>
+    uint32_t DoCompute(CpuKernelContext& ctx);
 
-  /**
-   * @brief compute for NC1HWC0 format
-   * @param ctx cpu kernel context
-   * @return status if success
-   */
-  template <typename T, typename T1> KernelStatus DoCompute5D();
+    /**
+     * @brief compute for NCHW format
+     * @param ctx cpu kernel context
+     * @return status if success
+     */
+    template <typename T, typename T1>
+    KernelStatus DoCompute4D();
 
-  /**
-   * @brief compute for NC1HWC0 format
-   * @param ctx cpu kernel context
-   * @return status if success
-   */
-  template <typename T, typename T1> KernelStatus DoCompute5D_C1();
+    /**
+     * @brief compute for NC1HWC0 format
+     * @param ctx cpu kernel context
+     * @return status if success
+     */
+    template <typename T, typename T1>
+    KernelStatus DoCompute5D();
 
-  /**
-   * @brief init theta from input_theta and default_theta
-   */
-  template <typename T1>
-  void InitTheta(const T1* input_theta, uint32_t& input_theta_idx, std::vector<float>& theta);
+    /**
+     * @brief compute for NC1HWC0 format
+     * @param ctx cpu kernel context
+     * @return status if success
+     */
+    template <typename T, typename T1>
+    KernelStatus DoCompute5D_C1();
 
-  /**
-   * @brief compute input grid from output grid using theta
-   */
-  void ComputeGrid(const std::vector<float>& theta, float* input_grid);
+    /**
+     * @brief init theta from input_theta and default_theta
+     */
+    template <typename T1>
+    void InitTheta(const T1* input_theta, uint32_t& input_theta_idx, std::vector<float>& theta);
 
-  /**
-   * @brief scalar bilinear interpolation for a single pixel
-   */
-  template <typename T>
-  float BilinearInterpolateScalar(const T* data, int32_t base_idx,
-      float x, float y, int32_t row_stride, int32_t col_stride);
+    /**
+     * @brief compute input grid from output grid using theta
+     */
+    void ComputeGrid(const std::vector<float>& theta, float* input_grid);
 
-  /**
-   * @brief vector bilinear interpolation for NC1HWC0 format
-   */
-  template <typename T>
-  void BilinearInterpolateVector(const T* data, int32_t base_idx,
-      float x, float y, float* res);
+    /**
+     * @brief scalar bilinear interpolation for a single pixel
+     */
+    template <typename T>
+    float BilinearInterpolateScalar(const T* data, int32_t base_idx, float x, float y, int32_t row_stride,
+                                    int32_t col_stride);
 
-  template <typename T>
-  void BilinearInterpolFillData(const T* data, int32_t base_idx,
-      float x, float y, float* res);
+    /**
+     * @brief vector bilinear interpolation for NC1HWC0 format
+     */
+    template <typename T>
+    void BilinearInterpolateVector(const T* data, int32_t base_idx, float x, float y, float* res);
 
-  /**
-   * @brief get attributes from context
-   */
-  KernelStatus GetAttrs(const CpuKernelContext &ctx);
+    template <typename T>
+    void BilinearInterpolFillData(const T* data, int32_t base_idx, float x, float y, float* res);
 
-  Tensor* input_tensor_ = nullptr;
-  Tensor* input_theta_ = nullptr;
-  Tensor* output_tensor_ = nullptr;
-  int32_t input_n_ = 0;
-  int32_t input_c_ = 0;
-  int32_t input_c1_ = 0;
-  int32_t input_c0_ = 0;
-  int32_t input_h_ = 0;
-  int32_t input_w_ = 0;
-  int32_t output_h_ = 0;
-  int32_t output_w_ = 0;
-  int32_t stn_ori_channel_ = 0;
-  std::vector<float> theta_;
-  std::vector<int64_t> theta_valid_;
-  Format date_format_ = FORMAT_ND;
-  DataType input_data_type_ = DT_FLOAT;
-  DataType input_theta_type_ = DT_FLOAT;
-  DataType output_data_type_ = DT_FLOAT;
+    /**
+     * @brief get attributes from context
+     */
+    KernelStatus GetAttrs(const CpuKernelContext& ctx);
+
+    Tensor* input_tensor_ = nullptr;
+    Tensor* input_theta_ = nullptr;
+    Tensor* output_tensor_ = nullptr;
+    int32_t input_n_ = 0;
+    int32_t input_c_ = 0;
+    int32_t input_c1_ = 0;
+    int32_t input_c0_ = 0;
+    int32_t input_h_ = 0;
+    int32_t input_w_ = 0;
+    int32_t output_h_ = 0;
+    int32_t output_w_ = 0;
+    int32_t stn_ori_channel_ = 0;
+    std::vector<float> theta_;
+    std::vector<int64_t> theta_valid_;
+    Format date_format_ = FORMAT_ND;
+    DataType input_data_type_ = DT_FLOAT;
+    DataType input_theta_type_ = DT_FLOAT;
+    DataType output_data_type_ = DT_FLOAT;
 };
-}  // namespace aicpu
+} // namespace aicpu
 #endif

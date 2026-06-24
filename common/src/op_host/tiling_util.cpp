@@ -23,8 +23,7 @@ static const gert::Shape g_vec_1_shape = {1};
 
 static bool IsRegbaseSocVersion(NpuArch npuArch)
 {
-    const static std::set<NpuArch> regbaseArch = {
-        NpuArch::DAV_3510};
+    const static std::set<NpuArch> regbaseArch = {NpuArch::DAV_3510};
 
     return regbaseArch.find(npuArch) != regbaseArch.end();
 }
@@ -43,11 +42,12 @@ bool IsRegbaseSocVersion(const gert::TilingContext* context)
     return IsRegbaseSocVersion(arch);
 }
 
-const gert::Shape &EnsureNotScalar(const gert::Shape &inShape) {
-  if (inShape.IsScalar()) {
-    return g_vec_1_shape;
-  }
-  return inShape;
+const gert::Shape& EnsureNotScalar(const gert::Shape& inShape)
+{
+    if (inShape.IsScalar()) {
+        return g_vec_1_shape;
+    }
+    return inShape;
 }
 } // namespace OpTiling
 } // namespace Cv

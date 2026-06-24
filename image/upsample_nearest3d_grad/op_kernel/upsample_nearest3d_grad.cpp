@@ -30,11 +30,10 @@ extern "C" __global__ __aicore__ void upsample_nearest3d_grad(GM_ADDR x, GM_ADDR
         return;
     }
 
-#define INIT_AND_PROCESS                                                                                              \
-    REGIST_MATMUL_OBJ(                                                                                                \
-        &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling, op.matmulD, \
-        matmulTilingDTiling);                                                                                         \
-    op.Init(x, y, false, userWS, &tilingData);                                                                        \
+#define INIT_AND_PROCESS                                                                           \
+    REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, \
+                      matmulTilingHTiling, op.matmulD, matmulTilingDTiling);                       \
+    op.Init(x, y, false, userWS, &tilingData);                                                     \
     op.Process()
 
     if (TILING_KEY_IS(1)) {

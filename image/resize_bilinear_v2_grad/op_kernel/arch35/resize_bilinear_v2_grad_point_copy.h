@@ -58,8 +58,8 @@ class ResizeBilinearV2GradPointCopy : public ResizeBilinearV2GradBase {
 public:
     __aicore__ inline ResizeBilinearV2GradPointCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data);
+    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2GradTilingData* data);
     __aicore__ inline void Process();
 
 protected:
@@ -76,8 +76,9 @@ protected:
 };
 
 template <typename T_GRADS, typename T_OUT>
-__aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::Init(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data)
+__aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::Init(GM_ADDR grads, GM_ADDR originalImage,
+                                                                           GM_ADDR y, TPipe* pipe,
+                                                                           const ResizeBilinearV2GradTilingData* data)
 {
     this->BaseInit(grads, y, pipe);
     blockIdx_ = GetBlockIdx();
@@ -155,8 +156,8 @@ __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::CopyInGrad
     padParams.rightPadding = 0;
     padParams.paddingValue = 0;
 
-    DataCopyPad<uint8_t, PaddingMode::Compact>(
-        gradTensor, gradsGM_[gradOffsetInGM * sizeof(T_GRADS)], gm2ubParams, padParams);
+    DataCopyPad<uint8_t, PaddingMode::Compact>(gradTensor, gradsGM_[gradOffsetInGM * sizeof(T_GRADS)], gm2ubParams,
+                                               padParams);
 
     ResetLoopModePara(DataCopyMVType::OUT_TO_UB);
 
@@ -253,8 +254,8 @@ __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::Process()
                     offsetData_.cOffset = offsetData_.cOffset4Block + cLoop;
                     offsetData_.cLength = this->Min(tilingData_->ubCFactor, offsetData_.cLength4Block - cLoop);
                     cLengthAlign32 = Ops::Base::CeilAlign<int64_t>(offsetData_.cLength, ubBlockSize_ / sizeof(T_GRADS));
-                    offsetData_.wcLenAlign = Ops::Base::CeilAlign<int64_t>(
-                        offsetData_.wLength * cLengthAlign32, ubBlockSize_ / sizeof(T_GRADS));
+                    offsetData_.wcLenAlign = Ops::Base::CeilAlign<int64_t>(offsetData_.wLength * cLengthAlign32,
+                                                                           ubBlockSize_ / sizeof(T_GRADS));
                     CopyInGrad();
                     CopyOutY();
                 }

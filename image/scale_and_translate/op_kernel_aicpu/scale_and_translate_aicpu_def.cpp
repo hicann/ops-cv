@@ -22,9 +22,8 @@ public:
     explicit ScaleAndTranslate(const char* name) : OpDef(name)
     {
         ApplyCvAicpuDefaultCfg(*this);
-        this->Input("images").DataType(
-            {ge::DT_INT8, ge::DT_UINT8, ge::DT_INT16, ge::DT_UINT16,
-             ge::DT_INT32, ge::DT_INT64, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_DOUBLE});
+        this->Input("images").DataType({ge::DT_INT8, ge::DT_UINT8, ge::DT_INT16, ge::DT_UINT16, ge::DT_INT32,
+                                        ge::DT_INT64, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_DOUBLE});
         this->Input("size").DataType({ge::DT_INT32});
         this->Input("scale").DataType({ge::DT_FLOAT});
         this->Input("translation").DataType({ge::DT_FLOAT});

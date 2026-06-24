@@ -15,7 +15,7 @@
 #ifndef GRID_SAMPLE_COMMON
 #define GRID_SAMPLE_COMMON
 
-#if ASC_DEVKIT_MAJOR >=9
+#if ASC_DEVKIT_MAJOR >= 9
 #include "kernel_vec_intf.h"
 #else
 #include "kernel_operator.h"
@@ -62,5 +62,5 @@ const int64_t NUM_64 = 64;
 
 const float FLOAT_2 = 2.0f;
 
-}  // namespace GridSample
-#endif  //  GRID_SAMPLE_COMMON
+} // namespace GridSample
+#endif //  GRID_SAMPLE_COMMON

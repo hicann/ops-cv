@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /* !
  * \file col2im_tiling_key.h
  * \brief col2im tiling key declare
@@ -23,17 +22,10 @@
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
-ASCENDC_TPL_ARGS_DECL(
-    Col2im,
-    ASCENDC_TPL_DTYPE_DECL(
-        dType, COL2IM_TPL_FP32, COL2IM_TPL_FP16, COL2IM_TPL_BF16) );
+ASCENDC_TPL_ARGS_DECL(Col2im, ASCENDC_TPL_DTYPE_DECL(dType, COL2IM_TPL_FP32, COL2IM_TPL_FP16, COL2IM_TPL_BF16));
 
-ASCENDC_TPL_SEL(
-    ASCENDC_TPL_ARGS_SEL(
-        ASCENDC_TPL_DTYPE_SEL(dType, COL2IM_TPL_FP32) ),
-    ASCENDC_TPL_ARGS_SEL(
-        ASCENDC_TPL_DTYPE_SEL(dType, COL2IM_TPL_FP16) ),
-    ASCENDC_TPL_ARGS_SEL(
-        ASCENDC_TPL_DTYPE_SEL(dType, COL2IM_TPL_BF16) ));
+ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_DTYPE_SEL(dType, COL2IM_TPL_FP32)),
+                ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_DTYPE_SEL(dType, COL2IM_TPL_FP16)),
+                ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_DTYPE_SEL(dType, COL2IM_TPL_BF16)));
 
 #endif

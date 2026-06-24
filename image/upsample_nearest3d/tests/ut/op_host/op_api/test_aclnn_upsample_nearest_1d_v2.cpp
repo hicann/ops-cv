@@ -18,15 +18,9 @@ using namespace op;
 
 class l2_upsamplenearest1dv2_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsamplenearest1dv2_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsamplenearest1dv2_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsamplenearest1dv2_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsamplenearest1dv2_test TearDown" << std::endl; }
 };
 
 // input nullptr

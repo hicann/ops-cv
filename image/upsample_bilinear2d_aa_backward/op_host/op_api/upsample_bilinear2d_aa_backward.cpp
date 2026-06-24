@@ -23,23 +23,21 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(UpsampleBilinear2dAABackward);
 
-const aclTensor *UpsampleBilinear2dAABackward(const aclTensor *gradOutput, const aclIntArray *outputSize,
-    const aclIntArray *inputSize, aclTensor *output, bool alignCorners, float scales_h, float scales_w,
-    aclOpExecutor *executor)
+const aclTensor* UpsampleBilinear2dAABackward(const aclTensor* gradOutput, const aclIntArray* outputSize,
+                                              const aclIntArray* inputSize, aclTensor* output, bool alignCorners,
+                                              float scales_h, float scales_w, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleBilinear2dAABackward, gradOutput, outputSize, inputSize, output, alignCorners, scales_h, scales_w);
 
     auto out = executor->AllocTensor(output->GetViewShape(), gradOutput->GetDataType(), output->GetStorageFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2dAABackward,
-        OP_INPUT(gradOutput),
-        OP_OUTPUT(out),
-        OP_ATTR(outputSize, inputSize, alignCorners, scales_h, scales_w));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2dAABackward, OP_INPUT(gradOutput), OP_OUTPUT(out),
+                                           OP_ATTR(outputSize, inputSize, alignCorners, scales_h, scales_w));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAABackwardAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAABackwardAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
 
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

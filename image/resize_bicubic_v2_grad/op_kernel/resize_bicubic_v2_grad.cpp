@@ -24,15 +24,15 @@
 
 using namespace AscendC;
 
-extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
+                                                             GM_ADDR workspace, GM_ADDR tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIV_1_0);
     TPipe pipe;
 
     if (TILING_KEY_IS(TILING_KEY_ALL_COPY)) {
         GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradAllCopyTilingData, tilingDataIn, tiling);
-        const ResizeBicubicV2GradAllCopyTilingData *__restrict__ tilingData = &tilingDataIn;
+        const ResizeBicubicV2GradAllCopyTilingData* __restrict__ tilingData = &tilingDataIn;
         ResizeBicubicV2Grad::ResizeBicubicV2GradAllCopy<DTYPE_Y> op;
         op.Init(grads, y, &pipe, tilingData);
         op.Process();
@@ -41,7 +41,7 @@ extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT)) {
         GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradSimtTilingData, tilingDataIn, tiling);
-        const ResizeBicubicV2GradSimtTilingData *__restrict__ tilingData = &tilingDataIn;
+        const ResizeBicubicV2GradSimtTilingData* __restrict__ tilingData = &tilingDataIn;
         if (tilingData->format == 0) {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimt<DTYPE_Y, uint32_t, int32_t, FORMAT_NCHW, true> op;
@@ -68,7 +68,7 @@ extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_IDX64)) {
         GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradSimtTilingData, tilingDataIn, tiling);
-        const ResizeBicubicV2GradSimtTilingData *__restrict__ tilingData = &tilingDataIn;
+        const ResizeBicubicV2GradSimtTilingData* __restrict__ tilingData = &tilingDataIn;
         if (tilingData->format == 0) {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimt<DTYPE_Y, uint64_t, int64_t, FORMAT_NCHW, true> op;
@@ -95,7 +95,7 @@ extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_DETERMINE)) {
         GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradSimtDetermineTilingData, tilingDataIn, tiling);
-        const ResizeBicubicV2GradSimtDetermineTilingData *__restrict__ tilingData = &tilingDataIn;
+        const ResizeBicubicV2GradSimtDetermineTilingData* __restrict__ tilingData = &tilingDataIn;
         if (tilingData->format == 0) {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NCHW, true> op;
@@ -124,7 +124,7 @@ extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_DETERMINE_IDX64)) {
         GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradSimtDetermineTilingData, tilingDataIn, tiling);
-        const ResizeBicubicV2GradSimtDetermineTilingData *__restrict__ tilingData = &tilingDataIn;
+        const ResizeBicubicV2GradSimtDetermineTilingData* __restrict__ tilingData = &tilingDataIn;
         if (tilingData->format == 0) {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NCHW, true> op;

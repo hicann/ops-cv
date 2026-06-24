@@ -28,8 +28,8 @@ class NearestExact2dGradDataCopy {
 public:
     __aicore__ inline NearestExact2dGradDataCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR y, TPipe* pipeIn, const UpsampleNearestExact2dGradRegBaseTilingData* __restrict tiling);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, TPipe* pipeIn,
+                                const UpsampleNearestExact2dGradRegBaseTilingData* __restrict tiling);
     __aicore__ inline void Process();
 
 private:
@@ -88,10 +88,7 @@ __aicore__ inline void NearestExact2dGradDataCopy<T1>::CopyOut(int64_t yOffsetIn
     DataCopyPad(yGM[yOffsetInGM * sizeof(T1)], yTensor, gm2ubParams);
     dataQue.FreeTensor(yTensor);
 }
-__aicore__ inline int64_t Min(int64_t a, int64_t b)
-{
-    return (a < b) ? a : b;
-}
+__aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
 template <typename T1>
 __aicore__ inline void NearestExact2dGradDataCopy<T1>::Process()

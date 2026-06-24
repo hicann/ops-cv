@@ -32,59 +32,52 @@ using namespace std;
 using namespace AscendC;
 using namespace ResizeLinearGrad;
 
-class resize_linear_grad_test : public testing::Test
-{
+class resize_linear_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "resize_linear_grad SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "resize_linear_grad TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "resize_linear_grad SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "resize_linear_grad TearDown\n" << endl; }
 };
 
 TEST_F(resize_linear_grad_test, test_tensor_move_fp32)
 {
     // Direct class invocation (bypass ASCENDC_TPL template macros)
     // This mirrors apt.cpp's schId=1 implementation: pure data copy
-    
+
     size_t gradsByteSize = 1 * 2 * 10 * 10 * sizeof(float);
     size_t originalImageByteSize = 1 * 2 * 10 * 10 * sizeof(float);
     size_t yByteSize = gradsByteSize;
     size_t tilingDataSize = sizeof(ResizeLinearGradTilingData);
-    
-    uint8_t *grads = (uint8_t *)GmAlloc(gradsByteSize);
-    uint8_t *originalImage = (uint8_t *)GmAlloc(originalImageByteSize);
-    uint8_t *y = (uint8_t *)GmAlloc(yByteSize);
-    
-    uint8_t *tiling = (uint8_t *)GmAlloc(tilingDataSize);
-    
+
+    uint8_t* grads = (uint8_t*)GmAlloc(gradsByteSize);
+    uint8_t* originalImage = (uint8_t*)GmAlloc(originalImageByteSize);
+    uint8_t* y = (uint8_t*)GmAlloc(yByteSize);
+
+    uint8_t* tiling = (uint8_t*)GmAlloc(tilingDataSize);
+
     // Initialize input data to fixed value for reliability
     memset(grads, 0, gradsByteSize);
-    
+
     // Manually construct TilingData
     ResizeLinearGradTilingData* tilingData = reinterpret_cast<ResizeLinearGradTilingData*>(tiling);
     tilingData->realCoreNum = 1;
     tilingData->initCoreNum = 0;
-    tilingData->blkProcessNum = 200;  // N * C * H * W = 1 * 2 * 10 * 10
+    tilingData->blkProcessNum = 200; // N * C * H * W = 1 * 2 * 10 * 10
     tilingData->ubLoopSizeB = 1;
     tilingData->ubLoopSizeT = 1;
     tilingData->ubFactor = 200;
     tilingData->ubFactorTailB = 200;
     tilingData->ubFactorTailT = 200;
-    tilingData->lenSrcLOrUb = 200 * sizeof(float);  // ubSize (for TensorMove)
+    tilingData->lenSrcLOrUb = 200 * sizeof(float); // ubSize (for TensorMove)
     tilingData->lenDesL = 200;
     tilingData->scaleL = 1.0f;
     tilingData->inverseScaleL = 1.0f;
-    
+
     // Directly instantiate ResizeLinearGradTensorMove class (bypass template function)
     TPipe pipe;
     ResizeLinearGradTensorMove<float> op(pipe);
     op.Init(grads, originalImage, y, tilingData);
     op.Process();
-    
+
     GmFree(grads);
     GmFree(originalImage);
     GmFree(y);

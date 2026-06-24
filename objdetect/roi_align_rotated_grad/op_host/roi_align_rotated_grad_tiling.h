@@ -23,30 +23,28 @@
 #define ROI_ALIGN_ROTATED_GRAD_TILING_H
 #include "register/tilingdata_base.h"
 
-namespace optiling
-{
-  struct RoiAlignRotatedGradCompileInfo
-  {
+namespace optiling {
+struct RoiAlignRotatedGradCompileInfo {
     uint32_t totalCoreNum = 0;
     uint64_t ubSizePlatForm = 0;
-  };
-  BEGIN_TILING_DATA_DEF(RoiAlignRotatedGradTilingData)
-  TILING_DATA_FIELD_DEF(uint32_t, coreRoisNums);
-  TILING_DATA_FIELD_DEF(uint32_t, coreRoisTail);
-  TILING_DATA_FIELD_DEF(uint32_t, boxSize);
-  TILING_DATA_FIELD_DEF(int32_t, pooledHeight);
-  TILING_DATA_FIELD_DEF(int32_t, pooledWidth);
-  TILING_DATA_FIELD_DEF(uint32_t, batchSize);
-  TILING_DATA_FIELD_DEF(uint32_t, channelNum);
-  TILING_DATA_FIELD_DEF(uint32_t, width);
-  TILING_DATA_FIELD_DEF(uint32_t, height);
-  TILING_DATA_FIELD_DEF(bool, aligned);
-  TILING_DATA_FIELD_DEF(bool, clockwise);
-  TILING_DATA_FIELD_DEF(int32_t, samplingRatio);
-  TILING_DATA_FIELD_DEF(float, spatialScale);
-  TILING_DATA_FIELD_DEF(uint32_t, coreNum);
-  END_TILING_DATA_DEF;
+};
+BEGIN_TILING_DATA_DEF(RoiAlignRotatedGradTilingData)
+TILING_DATA_FIELD_DEF(uint32_t, coreRoisNums);
+TILING_DATA_FIELD_DEF(uint32_t, coreRoisTail);
+TILING_DATA_FIELD_DEF(uint32_t, boxSize);
+TILING_DATA_FIELD_DEF(int32_t, pooledHeight);
+TILING_DATA_FIELD_DEF(int32_t, pooledWidth);
+TILING_DATA_FIELD_DEF(uint32_t, batchSize);
+TILING_DATA_FIELD_DEF(uint32_t, channelNum);
+TILING_DATA_FIELD_DEF(uint32_t, width);
+TILING_DATA_FIELD_DEF(uint32_t, height);
+TILING_DATA_FIELD_DEF(bool, aligned);
+TILING_DATA_FIELD_DEF(bool, clockwise);
+TILING_DATA_FIELD_DEF(int32_t, samplingRatio);
+TILING_DATA_FIELD_DEF(float, spatialScale);
+TILING_DATA_FIELD_DEF(uint32_t, coreNum);
+END_TILING_DATA_DEF;
 
-  REGISTER_TILING_DATA_CLASS(RoiAlignRotatedGrad, RoiAlignRotatedGradTilingData)
+REGISTER_TILING_DATA_CLASS(RoiAlignRotatedGrad, RoiAlignRotatedGradTilingData)
 } // namespace optiling
 #endif // ROI_ALIGN_ROTATED_GRAD_TILING_H

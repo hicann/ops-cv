@@ -40,16 +40,12 @@ static Status ParseParamsNMSWithMask(const Message* op_src, ge::Operator& op_des
 
 // register StrideAdd op info to GE
 REGISTER_CUSTOM_OP("NMSWithMask")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("npu::1::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::11::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::12::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::13::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::14::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::15::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::16::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::17::NPUNmsWithMask"),
-                 ge::AscendString("ai.onnx::18::NPUNmsWithMask")})
-  .ParseParamsFn(ParseParamsNMSWithMask)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("npu::1::NPUNmsWithMask"), ge::AscendString("ai.onnx::11::NPUNmsWithMask"),
+                   ge::AscendString("ai.onnx::12::NPUNmsWithMask"), ge::AscendString("ai.onnx::13::NPUNmsWithMask"),
+                   ge::AscendString("ai.onnx::14::NPUNmsWithMask"), ge::AscendString("ai.onnx::15::NPUNmsWithMask"),
+                   ge::AscendString("ai.onnx::16::NPUNmsWithMask"), ge::AscendString("ai.onnx::17::NPUNmsWithMask"),
+                   ge::AscendString("ai.onnx::18::NPUNmsWithMask")})
+    .ParseParamsFn(ParseParamsNMSWithMask)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

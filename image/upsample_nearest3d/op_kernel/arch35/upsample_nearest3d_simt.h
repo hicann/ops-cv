@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -30,22 +30,22 @@ class Nearest3dSimt {
 public:
     __aicore__ inline Nearest3dSimt(){};
 
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, const UpsampleNearest3dRegBaseTilingData *__restrict tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, const UpsampleNearest3dRegBaseTilingData* __restrict tilingData);
     __aicore__ inline void Process();
 
 private:
-    const UpsampleNearest3dRegBaseTilingData *tilingData_;
+    const UpsampleNearest3dRegBaseTilingData* tilingData_;
     int32_t blockIdx_ = 0;
     GlobalTensor<T1> inputGm_;
     GlobalTensor<T1> outputGm_;
 };
 
 template <typename T1, typename T2, bool isExtra, uint64_t schId>
-__aicore__ inline void Nearest3dSimt<T1, T2, isExtra, schId>::Init(GM_ADDR x, GM_ADDR y,
-    const UpsampleNearest3dRegBaseTilingData *__restrict tilingData)
+__aicore__ inline void Nearest3dSimt<T1, T2, isExtra, schId>::Init(
+    GM_ADDR x, GM_ADDR y, const UpsampleNearest3dRegBaseTilingData* __restrict tilingData)
 {
-    inputGm_.SetGlobalBuffer((__gm__ T1 *)x);
-    outputGm_.SetGlobalBuffer((__gm__ T1 *)y);
+    inputGm_.SetGlobalBuffer((__gm__ T1*)x);
+    outputGm_.SetGlobalBuffer((__gm__ T1*)y);
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 }
@@ -79,15 +79,15 @@ __aicore__ inline void Nearest3dSimt<T1, T2, isExtra, schId>::Process()
     T2 lenSrcH = static_cast<T2>(tilingData_->inH);
     T2 lenSrcD = static_cast<T2>(tilingData_->inD);
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        asc_vf_call<calleeInt64<T1, T2, isExtra, schId>>(dim3(THREAD_NUM_B64),
-            (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum,
-            lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW,
-            tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW);
+        asc_vf_call<calleeInt64<T1, T2, isExtra, schId>>(
+            dim3(THREAD_NUM_B64), (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()),
+            blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW,
+            lenDstD, lenDstH, lenDstW, tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW);
     } else {
-        asc_vf_call<calleeInt32<T1, T2, isExtra, schId>>(dim3(THREAD_NUM_B32),
-            (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum,
-            lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW,
-            tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW);
+        asc_vf_call<calleeInt32<T1, T2, isExtra, schId>>(
+            dim3(THREAD_NUM_B32), (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()),
+            blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW,
+            lenDstD, lenDstH, lenDstW, tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW);
     }
 }
 } // namespace UpsampleNearest3d

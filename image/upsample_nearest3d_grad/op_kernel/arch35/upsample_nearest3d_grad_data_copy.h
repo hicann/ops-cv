@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -28,8 +28,8 @@ class Nearest3dGradDataCopy {
 public:
     __aicore__ inline Nearest3dGradDataCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR y, TPipe* pipeIn, const UpsampleNearest3dGradRegBaseTilingData* __restrict tiling);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, TPipe* pipeIn,
+                                const UpsampleNearest3dGradRegBaseTilingData* __restrict tiling);
     __aicore__ inline void Process();
 
 private:
@@ -56,8 +56,8 @@ private:
 };
 
 template <typename T1>
-__aicore__ inline void Nearest3dGradDataCopy<T1>::Init(
-    GM_ADDR x, GM_ADDR y, TPipe* pipeIn, const UpsampleNearest3dGradRegBaseTilingData* __restrict tiling)
+__aicore__ inline void Nearest3dGradDataCopy<T1>::Init(GM_ADDR x, GM_ADDR y, TPipe* pipeIn,
+                                                       const UpsampleNearest3dGradRegBaseTilingData* __restrict tiling)
 {
     pipe = pipeIn;
     tilingData = tiling;
@@ -88,10 +88,7 @@ __aicore__ inline void Nearest3dGradDataCopy<T1>::CopyOut(int64_t yOffsetInGM, i
     DataCopyPad(yGM[yOffsetInGM * sizeof(T1)], yTensor, gm2ubParams);
     dataQue.FreeTensor(yTensor);
 }
-__aicore__ inline int64_t Min(int64_t a, int64_t b)
-{
-    return (a < b) ? a : b;
-}
+__aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
 template <typename T1>
 __aicore__ inline void Nearest3dGradDataCopy<T1>::Process()

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -28,24 +28,16 @@ using namespace std;
 
 extern "C" __global__ __aicore__ void upsample_nearest2d_grad(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
-class upsample_nearest2d_grad_test : public testing::Test
-{
+class upsample_nearest2d_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "upsample_nearest2d_grad_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "upsample_nearest2d_grad_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "upsample_nearest2d_grad_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "upsample_nearest2d_grad_test TearDown\n" << endl; }
 };
 
 TEST_F(upsample_nearest2d_grad_test, test_case_float32)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest2d_grad/tests/ut/op_kernel/upsample_nearest2d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest2d_grad/tests/ut/op_kernel/upsample_nearest2d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest2d_grad_data/");
     system("cd ./upsample_nearest2d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float32'");
 
@@ -64,8 +56,8 @@ TEST_F(upsample_nearest2d_grad_test, test_case_float32)
     std::string fileName = "./upsample_nearest2d_grad_data/float32_input_upsample_nearest2d_grad.bin";
     ReadFile(fileName, outputByteSize, x, outputByteSize);
 
-    UpsampleNearestExact2dGradTilingData* tilingDatafromBin =
-        reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
+    UpsampleNearestExact2dGradTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(
+        tiling);
 
     tilingDatafromBin->dataType = 2;
     tilingDatafromBin->scale_w = 4;

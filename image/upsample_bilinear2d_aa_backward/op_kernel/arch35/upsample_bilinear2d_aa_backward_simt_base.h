@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -53,7 +53,8 @@ static __simt_callee__ __aicore__ inline float WeightCalculate(float x)
 }
 
 template <typename T2, typename T3>
-static __simt_callee__ __aicore__ inline float GetWeights(T2 index, T3 min, T3 max, float center, float invScale) {
+static __simt_callee__ __aicore__ inline float GetWeights(T2 index, T3 min, T3 max, float center, float invScale)
+{
     float totalWeights = 0.0f;
     for (T3 j = min; j < max; j++) {
         const float distance = (static_cast<float>(j) - center + 0.5f) * invScale;
@@ -75,8 +76,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
     T3 lenSrcHw = lenSrcH * lenSrcW;
-    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
-         idx += static_cast<T3>(blockDim.x)) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         float inputValue = static_cast<float>(inputGm[yGmIdx]);
         T2 tmpRes = Simt::UintDiv(static_cast<T2>(yGmIdx), mW, shiftW);
@@ -130,8 +130,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
     T3 lenSrcHw = lenSrcH * lenSrcW;
-    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
-         idx += static_cast<T3>(blockDim.x)) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 tmpRes = Simt::UintDiv(static_cast<T2>(yGmIdx), mW, shiftW);
         T2 W = yGmIdx - tmpRes * lenDstW;
@@ -174,36 +173,38 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2, typename T3, uint64_t isDetermine>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__ void calleeInt32(
-    __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
-    T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, T3 maxInterpSizeH, T3 maxInterpSizeW,
-    float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__
+    void calleeInt32(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
+                     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW,
+                     T3 maxInterpSizeH, T3 maxInterpSizeW, float scaleH, float scaleW, float invScaleH, float invScaleW,
+                     float supportH, float supportW)
 {
     if constexpr (isDetermine == 0) {
-        SimtCompute<T1, T2, T3>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW, 
-            lenSrcH, lenSrcW, lenDstH, lenDstW, maxInterpSizeH, maxInterpSizeW, scaleH, scaleW, invScaleH, invScaleW, 
-            supportH, supportW);
+        SimtCompute<T1, T2, T3>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW,
+                                lenSrcH, lenSrcW, lenDstH, lenDstW, maxInterpSizeH, maxInterpSizeW, scaleH, scaleW,
+                                invScaleH, invScaleW, supportH, supportW);
     } else {
-        SimtComputeDetermine<T1, T2, T3>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, 
-            mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, maxInterpSizeH, maxInterpSizeW, scaleH, scaleW, 
-            invScaleH, invScaleW, supportH, supportW);
+        SimtComputeDetermine<T1, T2, T3>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW,
+                                         shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, maxInterpSizeH, maxInterpSizeW,
+                                         scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
     }
 }
 
 template <typename T1, typename T2, typename T3, uint64_t isDetermine>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__ void calleeInt64(
-    __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
-    T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, T3 maxInterpSizeH, T3 maxInterpSizeW,
-    float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__
+    void calleeInt64(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
+                     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW,
+                     T3 maxInterpSizeH, T3 maxInterpSizeW, float scaleH, float scaleW, float invScaleH, float invScaleW,
+                     float supportH, float supportW)
 {
     if constexpr (isDetermine == 0) {
-        SimtCompute<T1, T2, T3>(
-            inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW, lenSrcH, lenSrcW, lenDstH,
-            lenDstW, maxInterpSizeH, maxInterpSizeW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+        SimtCompute<T1, T2, T3>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW,
+                                lenSrcH, lenSrcW, lenDstH, lenDstW, maxInterpSizeH, maxInterpSizeW, scaleH, scaleW,
+                                invScaleH, invScaleW, supportH, supportW);
     } else {
-        SimtComputeDetermine<T1, T2, T3>(
-            inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW, lenSrcH, lenSrcW, lenDstH,
-            lenDstW, maxInterpSizeH, maxInterpSizeW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+        SimtComputeDetermine<T1, T2, T3>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW,
+                                         shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, maxInterpSizeH, maxInterpSizeW,
+                                         scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
     }
 }
 } // namespace UpsampleBilinear2dAABackward

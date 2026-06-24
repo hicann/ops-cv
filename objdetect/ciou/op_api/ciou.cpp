@@ -20,9 +20,8 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(CIoU);
 
-const std::tuple<aclTensor*, aclTensor*> CIoU(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross, const char* mode, bool atanSubFlag,
-    aclOpExecutor* executor)
+const std::tuple<aclTensor*, aclTensor*> CIoU(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans,
+                                              bool isCross, const char* mode, bool atanSubFlag, aclOpExecutor* executor)
 {
     L0_DFX(CIoU, bBoxes, gtBoxes, trans, isCross, mode, atanSubFlag);
     op::Shape outShape;
@@ -33,8 +32,8 @@ const std::tuple<aclTensor*, aclTensor*> CIoU(
     }
     auto overlap = executor->AllocTensor(outShape, bBoxes->GetDataType(), op::Format::FORMAT_ND);
     auto atan_sub = executor->AllocTensor(outShape, bBoxes->GetDataType(), op::Format::FORMAT_ND);
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        CIoU, OP_INPUT(bBoxes, gtBoxes), OP_OUTPUT(overlap, atan_sub), OP_ATTR(trans, isCross, mode, atanSubFlag));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(CIoU, OP_INPUT(bBoxes, gtBoxes), OP_OUTPUT(overlap, atan_sub),
+                                           OP_ATTR(trans, isCross, mode, atanSubFlag));
     if (ret != ACL_SUCCESS) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "CIoU ADD_TO_LAUNCHER_LIST_AICORE failed.");
         return std::tuple<aclTensor*, aclTensor*>(nullptr, nullptr);

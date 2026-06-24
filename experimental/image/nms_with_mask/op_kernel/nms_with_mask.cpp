@@ -25,8 +25,7 @@
 
 #include "nms_with_mask.h"
 
-enum class NMSWithMaskTilingKey : uint32_t
-{
+enum class NMSWithMaskTilingKey : uint32_t {
     TILING_KEY_EXAMPLE_FLOAT = 0,
     TILING_KEY_EXAMPLE_INT32 = 1,
 };
@@ -38,7 +37,7 @@ __global__ __aicore__ void nms_with_mask(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADD
     GET_TILING_DATA_WITH_STRUCT(NMSWithMaskTilingData, tilingData, tiling);
     if constexpr (schMode == static_cast<uint32_t>(NMSWithMaskTilingKey::TILING_KEY_EXAMPLE_FLOAT)) {
         NsNMSWithMask::NMSWithMask<float> op; // 算子kernel实例获取
-        op.Init(x, y, z, &tilingData);      // 算子kernel实例初始化
-        op.Process();                       // 算子kernel实例执行
+        op.Init(x, y, z, &tilingData);        // 算子kernel实例初始化
+        op.Process();                         // 算子kernel实例执行
     }
 }

@@ -19,14 +19,10 @@
 #include "infershape_case_executor.h"
 
 class ResizeBilinearV2GradInfershape : public testing::Test {
- protected:
-  static void SetUpTestCase() {
-    std::cout << "ResizeBilinearV2GradInfershape SetUp" << std::endl;
-  }
+protected:
+    static void SetUpTestCase() { std::cout << "ResizeBilinearV2GradInfershape SetUp" << std::endl; }
 
-  static void TearDownTestCase() {
-    std::cout << "ResizeBilinearV2GradInfershape TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "ResizeBilinearV2GradInfershape TearDown" << std::endl; }
 };
 
 TEST_F(ResizeBilinearV2GradInfershape, resize_bilinear_v2_grad_infer_test_1)

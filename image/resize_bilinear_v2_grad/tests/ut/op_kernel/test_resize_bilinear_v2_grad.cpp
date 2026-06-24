@@ -34,17 +34,10 @@ using namespace std;
 using namespace AscendC;
 using namespace ResizeBilinearV2Grad;
 
-class resize_bilinear_v2_grad_test : public testing::Test
-{
+class resize_bilinear_v2_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "resize_bilinear_v2_grad SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "resize_bilinear_v2_grad TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "resize_bilinear_v2_grad SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "resize_bilinear_v2_grad TearDown\n" << endl; }
 };
 
 TEST_F(resize_bilinear_v2_grad_test, test_resize_bilinear_v2_grad_950_all_copy_fp16)
@@ -53,21 +46,21 @@ TEST_F(resize_bilinear_v2_grad_test, test_resize_bilinear_v2_grad_950_all_copy_f
     // Input: grads (1, 1, 2, 2) NCHW, FP16
     // Input: originalImage (not used in ALL_COPY branch)
     // Output: y (1, 1, 2, 2) identical
-    
+
     size_t gradsByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t originalImageByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t yByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t tilingDataSize = sizeof(ResizeBilinearV2GradTilingData);
-    
-    uint8_t *grads = (uint8_t *)GmAlloc(gradsByteSize);
-    uint8_t *originalImage = (uint8_t *)GmAlloc(originalImageByteSize);
-    uint8_t *y = (uint8_t *)GmAlloc(yByteSize);
-    
-    uint8_t *tiling = (uint8_t *)GmAlloc(tilingDataSize);
-    
+
+    uint8_t* grads = (uint8_t*)GmAlloc(gradsByteSize);
+    uint8_t* originalImage = (uint8_t*)GmAlloc(originalImageByteSize);
+    uint8_t* y = (uint8_t*)GmAlloc(yByteSize);
+
+    uint8_t* tiling = (uint8_t*)GmAlloc(tilingDataSize);
+
     // Initialize input data to fixed value for reliability
     memset(grads, 0, gradsByteSize);
-    
+
     // Manually construct TilingData
     ResizeBilinearV2GradTilingData* tilingData = reinterpret_cast<ResizeBilinearV2GradTilingData*>(tiling);
     tilingData->tilingKey = 30000;
@@ -100,13 +93,13 @@ TEST_F(resize_bilinear_v2_grad_test, test_resize_bilinear_v2_grad_950_all_copy_f
     tilingData->scaleW = 1.0f;
     tilingData->inverseScaleH = 1.0f;
     tilingData->inverseScaleW = 1.0f;
-    
+
     // Directly instantiate ResizeBilinearV2GradAllCopy class (no Simt dependency)
     TPipe pipe;
     ResizeBilinearV2GradAllCopy<half, half> op;
     op.Init(grads, originalImage, y, &pipe, tilingData);
     op.Process();
-    
+
     GmFree(grads);
     GmFree(originalImage);
     GmFree(y);

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,7 +25,7 @@
         printf(message, ##__VA_ARGS__); \
     } while (0)
 
-int64_t GetShapeSize(const std::vector<int64_t> &shape)
+int64_t GetShapeSize(const std::vector<int64_t>& shape)
 {
     int64_t shapeSize = 1;
     for (auto i : shape) {
@@ -34,7 +34,7 @@ int64_t GetShapeSize(const std::vector<int64_t> &shape)
     return shapeSize;
 }
 
-int Init(int32_t deviceId, aclrtStream *stream)
+int Init(int32_t deviceId, aclrtStream* stream)
 {
     // 固定写法，资源初始化
     auto ret = aclInit(nullptr);
@@ -47,8 +47,8 @@ int Init(int32_t deviceId, aclrtStream *stream)
 }
 
 template <typename T>
-int CreateAclTensor(const std::vector<T> &hostData, const std::vector<int64_t> &shape, void **deviceAddr,
-    aclDataType dataType, aclTensor **tensor)
+int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
+                    aclDataType dataType, aclTensor** tensor)
 {
     auto size = GetShapeSize(shape) * sizeof(T);
     // 调用aclrtMalloc申请device侧内存
@@ -65,15 +65,8 @@ int CreateAclTensor(const std::vector<T> &hostData, const std::vector<int64_t> &
     }
 
     // 调用aclCreateTensor接口创建aclTensor
-    *tensor = aclCreateTensor(shape.data(),
-        shape.size(),
-        dataType,
-        strides.data(),
-        0,
-        aclFormat::ACL_FORMAT_ND,
-        shape.data(),
-        shape.size(),
-        *deviceAddr);
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
+                              shape.data(), shape.size(), *deviceAddr);
     return 0;
 }
 
@@ -95,24 +88,24 @@ int main()
     int64_t width = 10;
     float occlusionTruncation = 0.0f;
     int64_t useDepthPrior = 0;
-    std::vector<float> vData = {6.0f, 4.0f, 1.0f, 6.9f, 7.0928106f, 0.3491799f, 3.0046327f, 6.6574745f,
-                                7.308903f, 7.6934705f, 0.1315008f, 3.9899914f};
+    std::vector<float> vData = {6.0f,       4.0f,       1.0f,      6.9f,       7.0928106f, 0.3491799f,
+                                3.0046327f, 6.6574745f, 7.308903f, 7.6934705f, 0.1315008f, 3.9899914f};
     std::vector<int32_t> fData = {2, 1, 0};
     std::vector<float> dData(100, 0.0f);
     std::vector<int32_t> findicesData(100, 0);
     std::vector<float> baryData(10 * 10 * 3, 0.0f);
 
-    void *vDeviceAddr = nullptr;
-    void *fDeviceAddr = nullptr;
-    void *dDeviceAddr = nullptr;
-    void *findicesDeviceAddr = nullptr;
-    void *baryDeviceAddr = nullptr;
+    void* vDeviceAddr = nullptr;
+    void* fDeviceAddr = nullptr;
+    void* dDeviceAddr = nullptr;
+    void* findicesDeviceAddr = nullptr;
+    void* baryDeviceAddr = nullptr;
 
-    aclTensor *v = nullptr;
-    aclTensor *f = nullptr;
-    aclTensor *d = nullptr;
-    aclTensor *findices = nullptr;
-    aclTensor *barycentric = nullptr;
+    aclTensor* v = nullptr;
+    aclTensor* f = nullptr;
+    aclTensor* d = nullptr;
+    aclTensor* findices = nullptr;
+    aclTensor* barycentric = nullptr;
 
     ret = CreateAclTensor(vData, vShape, &vDeviceAddr, aclDataType::ACL_FLOAT, &v);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
@@ -131,14 +124,13 @@ int main()
 
     // 3. 调用CANN算子库API，需要修改为具体的API名称
     uint64_t workspaceSize = 0;
-    aclOpExecutor *executor;
+    aclOpExecutor* executor;
     // 调用aclnnRasterizer第一段接口
     ret = aclnnRasterizerGetWorkspaceSize(v, f, d, width, height, occlusionTruncation, useDepthPrior, findices,
-                                            barycentric, &workspaceSize, &executor);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnRasterizerGetWorkspaceSize failed. ERROR: %d\n", ret);
-              return ret);
+                                          barycentric, &workspaceSize, &executor);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnRasterizerGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
-    void *workspaceAddr = nullptr;
+    void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
@@ -154,20 +146,14 @@ int main()
     // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
     auto findicesSize = GetShapeSize(findicesShape);
     std::vector<int32_t> findicesOutData(findicesSize, 0);
-    ret = aclrtMemcpy(findicesOutData.data(),
-        findicesSize * sizeof(findicesOutData[0]),
-        findicesDeviceAddr,
-        findicesSize * sizeof(findicesOutData[0]),
-        ACL_MEMCPY_DEVICE_TO_HOST);
+    ret = aclrtMemcpy(findicesOutData.data(), findicesSize * sizeof(findicesOutData[0]), findicesDeviceAddr,
+                      findicesSize * sizeof(findicesOutData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return ret);
 
     auto barycentricSize = GetShapeSize(baryShape);
     std::vector<float> baryOutData(barycentricSize, 0);
-    ret = aclrtMemcpy(baryOutData.data(),
-        barycentricSize * sizeof(baryOutData[0]),
-        baryDeviceAddr,
-        barycentricSize * sizeof(baryOutData[0]),
-        ACL_MEMCPY_DEVICE_TO_HOST);
+    ret = aclrtMemcpy(baryOutData.data(), barycentricSize * sizeof(baryOutData[0]), baryDeviceAddr,
+                      barycentricSize * sizeof(baryOutData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return ret);
 
     for (int64_t i = 0; i < findicesSize; i++) {
@@ -183,7 +169,7 @@ int main()
     aclDestroyTensor(d);
     aclDestroyTensor(findices);
     aclDestroyTensor(barycentric);
-    
+
     // 7. 释放device资源，需要根据具体API的接口定义修改
     if (workspaceSize > 0) {
         aclrtFree(workspaceAddr);

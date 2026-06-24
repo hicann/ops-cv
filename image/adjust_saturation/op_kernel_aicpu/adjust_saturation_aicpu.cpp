@@ -26,9 +26,9 @@
 namespace {
 const std::uint32_t kAdjustSaturationInputNum{2u};
 const std::uint32_t kAdjustSaturationOutputNum{1u};
-const char *kAdjustSaturation{"AdjustSaturation"};
+const char* kAdjustSaturation{"AdjustSaturation"};
 const std::int64_t kAdjustSaturationParallelNum{64 * 1024};
-}  // namespace
+} // namespace
 
 namespace aicpu {
 namespace detail {
@@ -139,22 +139,20 @@ inline Rgb<T> ScalarAdjustSaturation(Rgb<T> image, std::float_t saturationFactor
 template <>
 inline Rgb<Eigen::half> ScalarAdjustSaturation(Rgb<Eigen::half> image, std::float_t saturationFactor)
 {
-    auto hsv{RgbToHsv(Rgb<std::float_t>{static_cast<std::float_t>(image.r),
-                                         static_cast<std::float_t>(image.g),
-                                         static_cast<std::float_t>(image.b)})};
+    auto hsv{RgbToHsv(Rgb<std::float_t>{static_cast<std::float_t>(image.r), static_cast<std::float_t>(image.g),
+                                        static_cast<std::float_t>(image.b)})};
     hsv.s *= static_cast<std::float_t>(saturationFactor);
     if (hsv.s > static_cast<std::float_t>(1.0)) {
         hsv.s = static_cast<std::float_t>(1.0);
     }
     auto out{Hsv2Rgb(hsv)};
-    return Rgb<Eigen::half>{static_cast<Eigen::half>(out.r),
-                            static_cast<Eigen::half>(out.g),
+    return Rgb<Eigen::half>{static_cast<Eigen::half>(out.r), static_cast<Eigen::half>(out.g),
                             static_cast<Eigen::half>(out.b)};
 }
 
-inline std::uint32_t ParallelForAdjustSaturation(
-    const CpuKernelContext &ctx, std::int64_t total, std::int64_t perUnitSize,
-    const std::function<void(std::int64_t, std::int64_t)> &work)
+inline std::uint32_t ParallelForAdjustSaturation(const CpuKernelContext& ctx, std::int64_t total,
+                                                 std::int64_t perUnitSize,
+                                                 const std::function<void(std::int64_t, std::int64_t)>& work)
 {
     if (total > kAdjustSaturationParallelNum) {
         return aicpu::CpuKernelUtils::ParallelFor(ctx, total, perUnitSize, work);
@@ -164,25 +162,22 @@ inline std::uint32_t ParallelForAdjustSaturation(
 }
 
 template <typename T>
-inline std::uint32_t ComputeAdjustSaturationKernel(const CpuKernelContext &ctx)
+inline std::uint32_t ComputeAdjustSaturationKernel(const CpuKernelContext& ctx)
 {
-    auto input{static_cast<Rgb<T> *>(ctx.Input(0)->GetData())};
-    auto saturationFactor{static_cast<std::float_t *>(ctx.Input(1)->GetData())};
-    auto output{static_cast<Rgb<T> *>(ctx.Output(0)->GetData())};
-    auto adjustFunc = [&](Rgb<T> image) {
-        return ScalarAdjustSaturation(image, saturationFactor[0]);
-    };
+    auto input{static_cast<Rgb<T>*>(ctx.Input(0)->GetData())};
+    auto saturationFactor{static_cast<std::float_t*>(ctx.Input(1)->GetData())};
+    auto output{static_cast<Rgb<T>*>(ctx.Output(0)->GetData())};
+    auto adjustFunc = [&](Rgb<T> image) { return ScalarAdjustSaturation(image, saturationFactor[0]); };
     std::int64_t total{ctx.Input(0)->NumElements() / 3};
     auto cores{aicpu::CpuKernelUtils::GetCPUNum(ctx)};
     std::int64_t perUnitSize{total / std::min(std::max(1L, cores - 2L), total)};
-    return ParallelForAdjustSaturation(
-        ctx, total, perUnitSize, [&](std::int64_t begin, std::int64_t end) {
-            std::transform(input + begin, input + end, output + begin, adjustFunc);
-        });
+    return ParallelForAdjustSaturation(ctx, total, perUnitSize, [&](std::int64_t begin, std::int64_t end) {
+        std::transform(input + begin, input + end, output + begin, adjustFunc);
+    });
 }
 
 template <typename T>
-inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx)
+inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext& ctx)
 {
     std::uint32_t result{ComputeAdjustSaturationKernel<T>(ctx)};
     if (result != KERNEL_STATUS_OK) {
@@ -191,54 +186,45 @@ inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx)
     return result;
 }
 
-inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext &ctx)
+inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext& ctx)
 {
     auto inputShape = ctx.Input(0)->GetTensorShape();
     auto inputDims = inputShape->GetDimSizes();
     if (inputDims.back() != 3) {
-        KERNEL_LOG_ERROR(
-            "The last dimension of input images and output y shape [%s] must be 3.",
-            VectorToString(inputDims).c_str());
+        KERNEL_LOG_ERROR("The last dimension of input images and output y shape [%s] must be 3.",
+                         VectorToString(inputDims).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
 
     if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-        KERNEL_LOG_ERROR(
-            "The data type of the input [%s] need be the same as the output [%s].",
-            DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
-            DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+        KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
+                         DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-        KERNEL_LOG_ERROR(
-            "The data size of the input [%llu] need be the same as the output [%llu].",
-            ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+        KERNEL_LOG_ERROR("The data size of the input [%llu] need be the same as the output [%llu].",
+                         ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(1)->GetDataType() != aicpu::DataType::DT_FLOAT) {
-        KERNEL_LOG_ERROR("The data type of the input [%s] need be [%s].",
-                         DTypeStr(ctx.Input(1)->GetDataType()).c_str(),
+        KERNEL_LOG_ERROR("The data type of the input [%s] need be [%s].", DTypeStr(ctx.Input(1)->GetDataType()).c_str(),
                          DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(1)->GetDataSize() != 4) {
-        KERNEL_LOG_ERROR("The data size of the input [%llu] need be [%llu].",
-                         ctx.Input(1)->GetDataSize(), 4);
+        KERNEL_LOG_ERROR("The data size of the input [%llu] need be [%llu].", ctx.Input(1)->GetDataSize(), 4);
         return KERNEL_STATUS_PARAM_INVALID;
     }
     return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAdjustSaturation(CpuKernelContext &ctx,
-                                           std::uint32_t inputsNum,
-                                           std::uint32_t outputsNum)
+inline std::uint32_t CheckAdjustSaturation(CpuKernelContext& ctx, std::uint32_t inputsNum, std::uint32_t outputsNum)
 {
-    return NormalCheck(ctx, kAdjustSaturationInputNum, kAdjustSaturationOutputNum)
-               ? KERNEL_STATUS_PARAM_INVALID
-               : ExtraCheckAdjustSaturation(ctx);
+    return NormalCheck(ctx, kAdjustSaturationInputNum, kAdjustSaturationOutputNum) ? KERNEL_STATUS_PARAM_INVALID :
+                                                                                     ExtraCheckAdjustSaturation(ctx);
 }
 
-inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx)
+inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext& ctx)
 {
     DataType inputType{ctx.Input(0)->GetDataType()};
     switch (inputType) {
@@ -247,20 +233,18 @@ inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx)
         case DT_FLOAT:
             return ComputeAdjustSaturation<std::float_t>(ctx);
         default:
-            KERNEL_LOG_ERROR("Unsupported input data type [%s].",
-                             DTypeStr(inputType).c_str());
+            KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(inputType).c_str());
             return KERNEL_STATUS_PARAM_INVALID;
     }
 }
-}  // namespace detail
+} // namespace detail
 
-std::uint32_t AdjustSaturationCpuKernel::Compute(CpuKernelContext &ctx)
+std::uint32_t AdjustSaturationCpuKernel::Compute(CpuKernelContext& ctx)
 {
-    return detail::CheckAdjustSaturation(ctx, kAdjustSaturationInputNum,
-                                         kAdjustSaturationOutputNum)
-               ? KERNEL_STATUS_PARAM_INVALID
-               : detail::ComputeAdjustSaturation(ctx);
+    return detail::CheckAdjustSaturation(ctx, kAdjustSaturationInputNum, kAdjustSaturationOutputNum) ?
+               KERNEL_STATUS_PARAM_INVALID :
+               detail::ComputeAdjustSaturation(ctx);
 }
 
 REGISTER_CPU_KERNEL(kAdjustSaturation, AdjustSaturationCpuKernel);
-}  // namespace aicpu
+} // namespace aicpu

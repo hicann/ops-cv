@@ -34,21 +34,21 @@ extern "C" {
 #endif
 
 namespace {
-    const int64_t AICPU_SHAPE = 2L;
-    const int64_t AICPU_OFFSET_NHWC = 1L;
+const int64_t AICPU_SHAPE = 2L;
+const int64_t AICPU_OFFSET_NHWC = 1L;
 
-    const double MAX_SUPPORT_SCALE = 50;
+const double MAX_SUPPORT_SCALE = 50;
 
-    const int64_t DIM_ZERO = 0;
-    const int64_t DIM_ONE = 1;
-    const int64_t DIM_TWO = 2;
-    const int64_t DIM_THREE = 3;
-    const float MAX_SUPPORT_SHRINK_SCALE = 50.0f;
-    const float MAX_SUPPORT_ZOOM_SCALE_REV = 0.02f;
-    constexpr double UNSUPPORT_SCALES_TWO = 2.0;
-    constexpr double UNSUPPORT_SCALES_ZERO = 0.0;
-    const int64_t FOURDIMS = 4;
-}
+const int64_t DIM_ZERO = 0;
+const int64_t DIM_ONE = 1;
+const int64_t DIM_TWO = 2;
+const int64_t DIM_THREE = 3;
+const float MAX_SUPPORT_SHRINK_SCALE = 50.0f;
+const float MAX_SUPPORT_ZOOM_SCALE_REV = 0.02f;
+constexpr double UNSUPPORT_SCALES_TWO = 2.0;
+constexpr double UNSUPPORT_SCALES_ZERO = 0.0;
+const int64_t FOURDIMS = 4;
+} // namespace
 constexpr uint32_t ZERO = 0;
 constexpr uint32_t ONE = 1;
 constexpr uint32_t TWO = 2;
@@ -63,41 +63,38 @@ static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_FOR_A
 
 static const int64_t DIMLIMIT = 4;
 
-static bool CheckNotNull(const aclTensor *self, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclTensor* out)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(out, return false);
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self)
+static bool CheckDtypeValid(const aclTensor* self)
 {
     OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_ALL, return false);
     return true;
 }
 
-static bool CheckDtypeEqual(const aclTensor *selfRef, const aclTensor *out)
+static bool CheckDtypeEqual(const aclTensor* selfRef, const aclTensor* out)
 {
     OP_CHECK_DTYPE_NOT_MATCH(selfRef, out->GetDataType(), return false);
     return true;
 }
 
-static bool CheckFormat(const aclTensor *self, const aclTensor *out)
+static bool CheckFormat(const aclTensor* self, const aclTensor* out)
 {
     // 需要根据算子实际情况添加校验
     const op::Format selfFormat = self->GetStorageFormat();
     if (selfFormat != out->GetStorageFormat()) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Format of input and output should be equal, self [%s], out [%s].",
-            op::ToString(selfFormat).GetString(),
-            op::ToString(out->GetStorageFormat()).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format of input and output should be equal, self [%s], out [%s].",
+                op::ToString(selfFormat).GetString(), op::ToString(out->GetStorageFormat()).GetString());
         return false;
     }
     // 如果输入格式不支持
     if (selfFormat != op::Format::FORMAT_NCHW && selfFormat != op::Format::FORMAT_NHWC) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Do not support this format(%s) of input and output.",
-            op::ToString(selfFormat).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Do not support this format(%s) of input and output.",
+                op::ToString(selfFormat).GetString());
         return false;
     }
     // 如果输入格式是不为4D，记录日志，直接报错
@@ -106,15 +103,15 @@ static bool CheckFormat(const aclTensor *self, const aclTensor *out)
 
     const op::DataType selfType = self->GetDataType();
     if ((selfFormat == op::Format::FORMAT_NCHW) && (selfType == op::DataType::DT_DOUBLE)) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "When dtype is %s, only support NHWC format", op::ToString(selfType).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "When dtype is %s, only support NHWC format",
+                op::ToString(selfType).GetString());
         return false;
     }
     return true;
 }
 
-static bool CheckScalesAndShapeValid(
-    const aclTensor *self, const aclTensor *out, const double scaleH, const double scaleW)
+static bool CheckScalesAndShapeValid(const aclTensor* self, const aclTensor* out, const double scaleH,
+                                     const double scaleW)
 {
     auto inputShape = self->GetViewShape();
     auto outputShape = out->GetViewShape();
@@ -130,25 +127,21 @@ static bool CheckScalesAndShapeValid(
 static bool CheckScalesValid(const double weight, const double high)
 {
     if ((weight < 0) || (high < 0)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "w scales and h scales cannot be negative , w_scales [%f], h_scales [%f].",
-            weight,
-            high);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "w scales and h scales cannot be negative , w_scales [%f], h_scales [%f].",
+                weight, high);
         return false;
     }
     return true;
 }
 
-static bool CheckOutputSize(const aclTensor *out, const aclIntArray *outputSize)
+static bool CheckOutputSize(const aclTensor* out, const aclIntArray* outputSize)
 {
     if (outputSize == nullptr) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "outputSize must not be null.");
         return false;
     }
     if (outputSize->Size() != TWO) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "outputSize size must be 2, but got %zu.",
-            outputSize->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "outputSize size must be 2, but got %zu.", outputSize->Size());
         return false;
     }
     auto outShape = out->GetViewShape();
@@ -157,29 +150,25 @@ static bool CheckOutputSize(const aclTensor *out, const aclIntArray *outputSize)
         if (outputSize->GetData()[ZERO] != outShape.GetDim(TWO) ||
             outputSize->GetData()[ONE] != outShape.GetDim(THREE)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Expected output size (H: %ld, W: %ld), but got output tensor size (H: %ld, W: %ld).",
-                outputSize->GetData()[ZERO],
-                outputSize->GetData()[ONE],
-                outShape.GetDim(TWO),
-                outShape.GetDim(THREE));
+                    "Expected output size (H: %ld, W: %ld), but got output tensor size (H: %ld, W: %ld).",
+                    outputSize->GetData()[ZERO], outputSize->GetData()[ONE], outShape.GetDim(TWO),
+                    outShape.GetDim(THREE));
             return false;
         }
     } else if (outFormat == op::Format::FORMAT_NHWC) {
         if (outputSize->GetData()[ZERO] != outShape.GetDim(ONE) || outputSize->GetData()[ONE] != outShape.GetDim(TWO)) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Expected output size (H: %ld, W: %ld), but got output tensor size (H: %ld, W: %ld).",
-                outputSize->GetData()[ZERO],
-                outputSize->GetData()[ONE],
-                outShape.GetDim(ONE),
-                outShape.GetDim(TWO));
+                    "Expected output size (H: %ld, W: %ld), but got output tensor size (H: %ld, W: %ld).",
+                    outputSize->GetData()[ZERO], outputSize->GetData()[ONE], outShape.GetDim(ONE),
+                    outShape.GetDim(TWO));
             return false;
         }
     }
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *selfRef, const aclTensor *out, const double scalesW,
-    const double scalesH, const aclIntArray *outputSize)
+static aclnnStatus CheckParams(const aclTensor* selfRef, const aclTensor* out, const double scalesW,
+                               const double scalesH, const aclIntArray* outputSize)
 {
     // 错误码等DFX方案细化后刷新，错误日志在check接口内打印
     // 1. 检查参数是否为空指针
@@ -226,8 +215,8 @@ static double GetBilinearScales(int64_t input_size, int64_t output_size, double 
     return real_scale;
 }
 
-static bool CheckBilinear2dScales(const aclTensor *x, const aclTensor *y, const double scaleH,
-    const double scaleW, const bool alignCorners)
+static bool CheckBilinear2dScales(const aclTensor* x, const aclTensor* y, const double scaleH, const double scaleW,
+                                  const bool alignCorners)
 {
     auto dataType = x->GetDataType();
     auto inputShape = x->GetViewShape();
@@ -265,8 +254,9 @@ static bool CheckBilinear2dScales(const aclTensor *x, const aclTensor *y, const 
     return scales_h <= MAX_SUPPORT_SHRINK_SCALE && scales_w <= MAX_SUPPORT_SHRINK_SCALE;
 }
 
-static const aclTensor *GoResizeBilinearV2AICORE(const aclTensor *selfRefContiguous, const aclIntArray *outputSize,
-    const bool alignCorners, const aclTensor *outContiguous, const aclTensor *out, aclOpExecutor *executor)
+static const aclTensor* GoResizeBilinearV2AICORE(const aclTensor* selfRefContiguous, const aclIntArray* outputSize,
+                                                 const bool alignCorners, const aclTensor* outContiguous,
+                                                 const aclTensor* out, aclOpExecutor* executor)
 {
     auto dstFormat = out->GetStorageFormat();
     auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
@@ -285,8 +275,8 @@ static const aclTensor *GoResizeBilinearV2AICORE(const aclTensor *selfRefContigu
     CHECK_RET(outTransdata != nullptr, nullptr);
 
     // 调用UpsampleBilinear算子kernel
-    const aclTensor *upsampleBilinearout =
-        l0op::ResizeBilinearV2(selfTransdata, castSize, alignCorners, outTransdata, executor);
+    const aclTensor* upsampleBilinearout = l0op::ResizeBilinearV2(selfTransdata, castSize, alignCorners, outTransdata,
+                                                                  executor);
     CHECK_RET(upsampleBilinearout != nullptr, nullptr);
 
     auto upsampleBilinearoutTransdata = l0op::TransData(upsampleBilinearout, dstFormat, 0, executor);
@@ -298,32 +288,33 @@ static const aclTensor *GoResizeBilinearV2AICORE(const aclTensor *selfRefContigu
     }
 
     // 固定写法，将计算结果转换成输出out的数据类型
-    const aclTensor *castOut = l0op::Cast(upsampleBilinearoutTransdata, selfRefContiguous->GetDataType(), executor);
+    const aclTensor* castOut = l0op::Cast(upsampleBilinearoutTransdata, selfRefContiguous->GetDataType(), executor);
 
     return castOut;
 }
 
-static const aclTensor *GoResizeBilinearV2AiCoreWith4d(const aclTensor *selfRefContiguous,
-    const aclIntArray *outputSize, const bool alignCorners, const aclFloatArray *scales, const aclTensor *outContiguous,
-    aclOpExecutor *executor)
+static const aclTensor* GoResizeBilinearV2AiCoreWith4d(const aclTensor* selfRefContiguous,
+                                                       const aclIntArray* outputSize, const bool alignCorners,
+                                                       const aclFloatArray* scales, const aclTensor* outContiguous,
+                                                       aclOpExecutor* executor)
 {
     auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
     auto castSize = l0op::Cast(size, op::DataType::DT_INT32, executor);
 
     // 调用UpsampleBilinear算子kernel
-    const aclTensor *upsampleBilinearout =
-        l0op::ResizeBilinearV2With4d(selfRefContiguous, castSize, alignCorners, scales, outContiguous, executor);
+    const aclTensor* upsampleBilinearout = l0op::ResizeBilinearV2With4d(selfRefContiguous, castSize, alignCorners,
+                                                                        scales, outContiguous, executor);
     CHECK_RET(upsampleBilinearout != nullptr, nullptr);
 
     // 固定写法，将计算结果转换成输出out的数据类型
-    const aclTensor *castOut = l0op::Cast(upsampleBilinearout, selfRefContiguous->GetDataType(), executor);
+    const aclTensor* castOut = l0op::Cast(upsampleBilinearout, selfRefContiguous->GetDataType(), executor);
 
     return castOut;
 }
 
-static const aclTensor *GoUpsampleBilinear2DAICORE(const aclTensor *selfRefContiguous, const aclIntArray *outputSize,
-    const bool alignCorners, const double scalesH, const double scalesW, const aclTensor *outContiguous,
-    aclOpExecutor *executor)
+static const aclTensor* GoUpsampleBilinear2DAICORE(const aclTensor* selfRefContiguous, const aclIntArray* outputSize,
+                                                   const bool alignCorners, const double scalesH, const double scalesW,
+                                                   const aclTensor* outContiguous, aclOpExecutor* executor)
 {
     auto dataType = selfRefContiguous->GetDataType();
     auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
@@ -344,13 +335,13 @@ static const aclTensor *GoUpsampleBilinear2DAICORE(const aclTensor *selfRefConti
     const int64_t permuteHWNCList[] = {0, 1, 3, 2};
     auto permuteHWNCArray = executor->AllocIntArray(permuteHWNCList, FOURDIMS);
 
-    const aclTensor *upsampleBilinearout;
+    const aclTensor* upsampleBilinearout;
     if (input_w == 1 && input_h != 1) {
         auto selfTranspose = l0op::Transpose(selfRefContiguous, permuteHWNCArray, executor);
         CHECK_RET(selfTranspose != nullptr, nullptr);
 
         const int64_t new_out_reshape[4] = {batch, channels, output_h, output_w};
-        aclIntArray *out_shape_array = executor->AllocIntArray(new_out_reshape, FOURDIMS);
+        aclIntArray* out_shape_array = executor->AllocIntArray(new_out_reshape, FOURDIMS);
         auto outReshape = l0op::Reshape(outContiguous, out_shape_array, executor);
         CHECK_RET(outReshape != nullptr, nullptr);
 
@@ -361,23 +352,23 @@ static const aclTensor *GoUpsampleBilinear2DAICORE(const aclTensor *selfRefConti
             selfTranspose = l0op::Cast(selfTranspose, op::DataType::DT_FLOAT, executor);
             outTranspose = l0op::Cast(outTranspose, op::DataType::DT_FLOAT, executor);
         }
-        auto outRes = l0op::UpsampleBilinear2dNcdhw(
-            selfTranspose, castSize, alignCorners, scalesW, scalesH, outTranspose, executor);
+        auto outRes = l0op::UpsampleBilinear2dNcdhw(selfTranspose, castSize, alignCorners, scalesW, scalesH,
+                                                    outTranspose, executor);
 
         const int64_t out_reshape2[4] = {batch, channels, output_w, output_h};
-        aclIntArray *out_shape2 = executor->AllocIntArray(out_reshape2, FOURDIMS);
+        aclIntArray* out_shape2 = executor->AllocIntArray(out_reshape2, FOURDIMS);
         upsampleBilinearout = l0op::Reshape(outRes, out_shape2, executor);
     } else {
         if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
             selfRefContiguous = l0op::Cast(selfRefContiguous, op::DataType::DT_FLOAT, executor);
             outContiguous = l0op::Cast(outContiguous, op::DataType::DT_FLOAT, executor);
         }
-        upsampleBilinearout = l0op::UpsampleBilinear2dNcdhw(
-            selfRefContiguous, castSize, alignCorners, scalesH, scalesW, outContiguous, executor);
+        upsampleBilinearout = l0op::UpsampleBilinear2dNcdhw(selfRefContiguous, castSize, alignCorners, scalesH, scalesW,
+                                                            outContiguous, executor);
     }
     CHECK_RET(upsampleBilinearout != nullptr, nullptr);
 
-    const aclTensor *castOut;
+    const aclTensor* castOut;
     if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
         castOut = l0op::Cast(upsampleBilinearout, dataType, executor);
     } else {
@@ -390,9 +381,9 @@ static const aclTensor *GoUpsampleBilinear2DAICORE(const aclTensor *selfRefConti
     return castOut;
 }
 
-aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize,
-    const bool alignCorners, const double scalesH, const double scalesW, aclTensor *out, uint64_t *workspaceSize,
-    aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor* self, const aclIntArray* outputSize,
+                                                    const bool alignCorners, const double scalesH, const double scalesW,
+                                                    aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnUpsampleBilinear2d, DFX_IN(self, outputSize, alignCorners, scalesH, scalesW), DFX_OUT(out));
     // 固定写法，创建OpExecutor
@@ -418,38 +409,37 @@ aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor *self, const
     // 固定写法，将输入out转换成连续的tensor
     auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-    const aclTensor *castOut;
+    const aclTensor* castOut;
     const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
-    const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, DIM_TWO);
+    const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, DIM_TWO);
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if ((curArch == NpuArch::DAV_2201) &&
-        CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE) &&
+    if ((curArch == NpuArch::DAV_2201) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE) &&
         CheckBilinear2dScales(self, out, scalesH, scalesW, alignCorners) &&
         CheckScalesAndShapeValid(self, out, scalesH, scalesW)) {
-        castOut = GoUpsampleBilinear2DAICORE(
-            selfRefContiguous, outputSize, alignCorners, scalesH, scalesW, outContiguous, uniqueExecutor.get());
+        castOut = GoUpsampleBilinear2DAICORE(selfRefContiguous, outputSize, alignCorners, scalesH, scalesW,
+                                             outContiguous, uniqueExecutor.get());
     } else if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_FOR_AICORE)) {
         if (IsRegBase(curArch)) {
-            castOut = GoResizeBilinearV2AiCoreWith4d(
-                selfRefContiguous, outputSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
+            castOut = GoResizeBilinearV2AiCoreWith4d(selfRefContiguous, outputSize, alignCorners, scales, outContiguous,
+                                                     uniqueExecutor.get());
         } else {
-            castOut = GoResizeBilinearV2AICORE(
-                selfRefContiguous, outputSize, alignCorners, outContiguous, out, uniqueExecutor.get());
+            castOut = GoResizeBilinearV2AICORE(selfRefContiguous, outputSize, alignCorners, outContiguous, out,
+                                               uniqueExecutor.get());
         }
     } else {
         auto outShape = op::ToShapeVector(outContiguous->GetViewShape());
-        aclIntArray *newOutputSize = uniqueExecutor.get()->AllocIntArray(outShape.data(), outShape.size());
+        aclIntArray* newOutputSize = uniqueExecutor.get()->AllocIntArray(outShape.data(), outShape.size());
         auto size = uniqueExecutor.get()->ConvertToTensor(newOutputSize, op::ToOpDataType(ACL_INT32));
-        const aclTensor *newSize = uniqueExecutor.get()->CreateView(size, op::Shape({AICPU_SHAPE}), AICPU_OFFSET_NHWC);
-        const aclTensor *upsampleBilinearout = nullptr;
+        const aclTensor* newSize = uniqueExecutor.get()->CreateView(size, op::Shape({AICPU_SHAPE}), AICPU_OFFSET_NHWC);
+        const aclTensor* upsampleBilinearout = nullptr;
         if (IsRegBase(curArch)) {
-            upsampleBilinearout = l0op::ResizeBilinearV2With4d(
-                selfRefContiguous, newSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
+            upsampleBilinearout = l0op::ResizeBilinearV2With4d(selfRefContiguous, newSize, alignCorners, scales,
+                                                               outContiguous, uniqueExecutor.get());
         } else {
-            upsampleBilinearout =
-                l0op::ResizeBilinearV2(selfRefContiguous, newSize, alignCorners, outContiguous, uniqueExecutor.get());
+            upsampleBilinearout = l0op::ResizeBilinearV2(selfRefContiguous, newSize, alignCorners, outContiguous,
+                                                         uniqueExecutor.get());
         }
         CHECK_RET(upsampleBilinearout != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -464,12 +454,12 @@ aclnnStatus aclnnUpsampleBilinear2dGetWorkspaceSize(const aclTensor *self, const
 
     // 固定写法，获取计算过程中需要使用的workspace大小
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();
-    uniqueExecutor.ReleaseTo(executor);  // 需要把 uniqueExecutor持有executor转移给executor
+    uniqueExecutor.ReleaseTo(executor); // 需要把 uniqueExecutor持有executor转移给executor
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleBilinear2d(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleBilinear2d(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                    aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleBilinear2d);
     // 固定写法，调用框架能力，完成计算

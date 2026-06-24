@@ -20,18 +20,12 @@ constexpr int64_t BIT_PER_BYTE = 8;
 
 class NMSWithMaskTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "NMSWithMaskTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "NMSWithMaskTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "NMSWithMaskTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "NMSWithMaskTiling TearDown" << std::endl; }
 };
 
-void CalculateTilingData(NMSWithMaskTilingData &tilingData, int64_t boxesNum, int64_t vectorCoreNum, int64_t groupSize) 
+void CalculateTilingData(NMSWithMaskTilingData& tilingData, int64_t boxesNum, int64_t vectorCoreNum, int64_t groupSize)
 {
     tilingData.boxesNum = boxesNum;
     tilingData.groupSize = groupSize;
@@ -51,22 +45,17 @@ TEST_F(NMSWithMaskTiling, nms_with_mask_tiling_test_float32_case1)
     gert::StorageShape selected_boxes = {{boxesNum, m_dim}, {boxesNum, m_dim}};
     gert::StorageShape selected_idx = {{boxesNum}, {boxesNum}};
     gert::StorageShape selected_mask = {{boxesNum}, {boxesNum}};
-    
+
     optiling::NMSWithMaskCompileInfo compileInfo = {100, 48, 196608};
     NMSWithMaskTilingData tilingData;
     CalculateTilingData(tilingData, boxesNum, compileInfo.coreNum, 256);
 
     gert::TilingContextPara tilingContextPara(
-        "NMSWithMask",
-        {{box_scores, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {
-            {selected_boxes, ge::DT_FLOAT, ge::FORMAT_ND},
-            {selected_idx, ge::DT_INT32, ge::FORMAT_ND},
-            {selected_mask, ge::DT_UINT8, ge::FORMAT_ND}
-        },
-        {gert::TilingContextPara::OpAttr("iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
-        &compileInfo
-    );
+        "NMSWithMask", {{box_scores, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{selected_boxes, ge::DT_FLOAT, ge::FORMAT_ND},
+         {selected_idx, ge::DT_INT32, ge::FORMAT_ND},
+         {selected_mask, ge::DT_UINT8, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5))}, &compileInfo);
 
     uint64_t expectedTilingKey = TILING_KEY_FOR_MULTICORE;
     string expectTilingData = "16 1 256 1 1 1 1 1056964608 ";

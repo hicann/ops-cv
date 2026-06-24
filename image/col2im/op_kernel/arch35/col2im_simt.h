@@ -28,11 +28,9 @@ const uint32_t VF_MAX_THREAD_NUM = 1024;
 template <typename ACC_T, typename D_T>
 class Col2imSimt {
 public:
-    __aicore__ inline Col2imSimt()
-    {}
-    __aicore__ inline void Init(
-        GM_ADDR gradIn, GM_ADDR gradOut, GM_ADDR workspace,
-        const Col2imRegBaseTilingData* __restrict tilingData);
+    __aicore__ inline Col2imSimt() {}
+    __aicore__ inline void Init(GM_ADDR gradIn, GM_ADDR gradOut, GM_ADDR workspace,
+                                const Col2imRegBaseTilingData* __restrict tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -43,8 +41,8 @@ private:
 };
 
 template <typename ACC_T, typename D_T>
-__aicore__ inline void Col2imSimt<ACC_T, D_T>::Init(
-    GM_ADDR gradIn, GM_ADDR gradOut, GM_ADDR workspace, const Col2imRegBaseTilingData* __restrict tilingData)
+__aicore__ inline void Col2imSimt<ACC_T, D_T>::Init(GM_ADDR gradIn, GM_ADDR gradOut, GM_ADDR workspace,
+                                                    const Col2imRegBaseTilingData* __restrict tilingData)
 {
     inputXGm_.SetGlobalBuffer((__gm__ D_T*)(gradOut));
     yGm_.SetGlobalBuffer((__gm__ D_T*)(gradIn));
@@ -54,14 +52,14 @@ __aicore__ inline void Col2imSimt<ACC_T, D_T>::Init(
 
 template <typename ACC_T, typename D_T>
 __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void Col2imSimtCompute(
-    __gm__ D_T* inputXGmAddr, __gm__ D_T* yGmAddr, const uint32_t cnt, const uint32_t gradInH, const uint32_t gradInW, 
-    const uint32_t kernelSizeH, const uint32_t kernelSizeW, const uint32_t padHeight, const uint32_t padWidth, 
-    const uint32_t strideHeight, const uint32_t strideWidth, const uint32_t dilationHeight, const uint32_t dilationWidth, 
-    const uint32_t heightGradOut, const uint32_t widthGradOut, uint32_t shiftGW_, uint32_t mGW_, uint32_t shiftGWH_, 
-    uint32_t mGWH_, uint32_t shiftSW_, uint32_t mSW_, uint32_t shiftSH_, uint32_t mSH_, uint32_t shiftDH_, 
-    uint32_t mDH_, uint32_t shiftDW_, uint32_t mDW_)
+    __gm__ D_T* inputXGmAddr, __gm__ D_T* yGmAddr, const uint32_t cnt, const uint32_t gradInH, const uint32_t gradInW,
+    const uint32_t kernelSizeH, const uint32_t kernelSizeW, const uint32_t padHeight, const uint32_t padWidth,
+    const uint32_t strideHeight, const uint32_t strideWidth, const uint32_t dilationHeight,
+    const uint32_t dilationWidth, const uint32_t heightGradOut, const uint32_t widthGradOut, uint32_t shiftGW_,
+    uint32_t mGW_, uint32_t shiftGWH_, uint32_t mGWH_, uint32_t shiftSW_, uint32_t mSW_, uint32_t shiftSH_,
+    uint32_t mSH_, uint32_t shiftDH_, uint32_t mDH_, uint32_t shiftDW_, uint32_t mDW_)
 {
-    for(uint32_t idx = threadIdx.x + blockIdx.x * blockDim.x; idx < cnt; idx += gridDim.x * blockDim.x) {
+    for (uint32_t idx = threadIdx.x + blockIdx.x * blockDim.x; idx < cnt; idx += gridDim.x * blockDim.x) {
         ACC_T valv = static_cast<ACC_T>(0);
         const uint32_t wIm = idx % gradInW + padWidth;
         const uint32_t hIm = Simt::UintDiv(idx, mGW_, shiftGW_) % gradInH + padHeight;
@@ -91,15 +89,13 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) inline void Col2imSimtCompute(
             for (uint32_t wGradOut = wGradOutStart; wGradOut < wGradOutEnd; wGradOut += 1) {
                 uint32_t hK = (hIm - hGradOut * strideHeight);
                 uint32_t wK = (wIm - wGradOut * strideWidth);
-                if (hK - Simt::UintDiv(hK, mDH_, shiftDH_) * dilationHeight == 0 && 
-                        wK - Simt::UintDiv(wK, mDW_, shiftDW_) * dilationWidth == 0) {
+                if (hK - Simt::UintDiv(hK, mDH_, shiftDH_) * dilationHeight == 0 &&
+                    wK - Simt::UintDiv(wK, mDW_, shiftDW_) * dilationWidth == 0) {
                     hK = Simt::UintDiv(hK, mDH_, shiftDH_);
                     wK = Simt::UintDiv(wK, mDW_, shiftDW_);
-                    uint32_t gradOutIdx =
-                        (((cIm * kernelSizeH + hK) * kernelSizeW + wK) * heightGradOut +
-                        hGradOut) *
-                            widthGradOut +
-                        wGradOut;
+                    uint32_t gradOutIdx = (((cIm * kernelSizeH + hK) * kernelSizeW + wK) * heightGradOut + hGradOut) *
+                                              widthGradOut +
+                                          wGradOut;
                     valv += inputXGmAddr[gradOutIdx];
                 }
             }
@@ -127,14 +123,14 @@ __aicore__ inline void Col2imSimt<ACC_T, D_T>::Process()
     GetUintDivMagicAndShift(mDW_, shiftDW_, dilationWidth);
     asc_vf_call<Col2imSimtCompute<ACC_T, D_T>>(
         dim3{VF_MAX_THREAD_NUM, 1, 1}, (__gm__ D_T*)(inputXGm_.GetPhyAddr()), (__gm__ D_T*)(yGm_.GetPhyAddr()),
-        static_cast<uint32_t>(tiling_->totalLength), static_cast<uint32_t>(tiling_->outputSizeH), 
-        static_cast<uint32_t>(tiling_->outputSizeW), static_cast<uint32_t>(tiling_->kernelSizeH), 
-        static_cast<uint32_t>(tiling_->kernelSizeW), static_cast<uint32_t>(tiling_->paddingH), 
-        static_cast<uint32_t>(tiling_->paddingW), static_cast<uint32_t>(tiling_->strideH), 
-        static_cast<uint32_t>(tiling_->strideW), static_cast<uint32_t>(tiling_->dilationH), 
-        static_cast<uint32_t>(tiling_->dilationW), static_cast<uint32_t>(tiling_->colH), 
-        static_cast<uint32_t>(tiling_->colW), shiftGW_, mGW_, shiftGWH_, mGWH_, 
-        shiftSW_, mSW_, shiftSH_, mSH_, shiftDH_, mDH_, shiftDW_, mDW_);
+        static_cast<uint32_t>(tiling_->totalLength), static_cast<uint32_t>(tiling_->outputSizeH),
+        static_cast<uint32_t>(tiling_->outputSizeW), static_cast<uint32_t>(tiling_->kernelSizeH),
+        static_cast<uint32_t>(tiling_->kernelSizeW), static_cast<uint32_t>(tiling_->paddingH),
+        static_cast<uint32_t>(tiling_->paddingW), static_cast<uint32_t>(tiling_->strideH),
+        static_cast<uint32_t>(tiling_->strideW), static_cast<uint32_t>(tiling_->dilationH),
+        static_cast<uint32_t>(tiling_->dilationW), static_cast<uint32_t>(tiling_->colH),
+        static_cast<uint32_t>(tiling_->colW), shiftGW_, mGW_, shiftGWH_, mGWH_, shiftSW_, mSW_, shiftSH_, mSH_,
+        shiftDH_, mDH_, shiftDW_, mDW_);
 }
-}
+} // namespace Col2imOps
 #endif

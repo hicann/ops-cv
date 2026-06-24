@@ -24,15 +24,9 @@ using namespace ge;
 
 class ResizeBilinearV2Tiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeBilinearV2Tiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeBilinearV2Tiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeBilinearV2Tiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeBilinearV2Tiling TearDown" << std::endl; }
 };
 
 TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case01)
@@ -55,8 +49,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case01)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30001;
-    string expectTilingData =
-        "30001 64 245760 0 0 2 256 12 12 18 18 2 18 18 256 324 2 18 18 256 2592 0 4551638025887197867 324 ";
+    string expectTilingData = "30001 64 245760 0 0 2 256 12 12 18 18 2 18 18 256 324 2 18 18 256 2592 0 "
+                              "4551638025887197867 324 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -81,9 +75,9 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case02)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30001;
-    string expectTilingData =
-        "30001 64 245760 1 0 2 256 128 128 192 192 2 192 192 256 36864 2 192 192 256 294912 0 4551512269244741707 "
-        "36864 ";
+    string expectTilingData = "30001 64 245760 1 0 2 256 128 128 192 192 2 192 192 256 36864 2 192 192 256 294912 0 "
+                              "4551512269244741707 "
+                              "36864 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -108,8 +102,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case03)
         },
         &compileInfo);
     uint64_t expectTilingKey = 40001;
-    string expectTilingData =
-        "40001 64 245760 0 0 2 256 128 128 64 64 1 2 64 256 4096 1 1 64 256 0 0 4611686019501129728 4096 ";
+    string expectTilingData = "40001 64 245760 0 0 2 256 128 128 64 64 1 2 64 256 4096 1 1 64 256 0 0 "
+                              "4611686019501129728 4096 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -134,9 +128,9 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case04)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30000;
-    string expectTilingData =
-        "30000 64 245760 1 0 2 256 128 128 192 192 2 192 192 256 36864 2 192 192 256 294912 0 4551512269244741707 "
-        "36864 ";
+    string expectTilingData = "30000 64 245760 1 0 2 256 128 128 192 192 2 192 192 256 36864 2 192 192 256 294912 0 "
+                              "4551512269244741707 "
+                              "36864 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -161,8 +155,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case05)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30000;
-    string expectTilingData =
-        "30000 64 245760 0 1 128 256 14 16 5 8 128 5 8 256 40 128 5 8 256 20480 0 4515609228859845291 40 ";
+    string expectTilingData = "30000 64 245760 0 1 128 256 14 16 5 8 128 5 8 256 40 128 5 8 256 20480 0 "
+                              "4515609228859845291 40 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -187,8 +181,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case06)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30004;
-    string expectTilingData =
-        "30004 64 245760 0 0 10 10 10 10 64 1024 10 64 1024 10 65536 10 64 1024 10 1024 0 4539628425446424576 65536 ";
+    string expectTilingData = "30004 64 245760 0 0 10 10 10 10 64 1024 10 64 1024 10 65536 10 64 1024 10 1024 0 "
+                              "4539628425446424576 65536 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -213,8 +207,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case07)
         },
         &compileInfo);
     uint64_t expectTilingKey = 40001;
-    string expectTilingData =
-        "40001 60 245760 0 1 1 128 36 15 12 5 1 1 1 128 60 239 1 1 128 0 0 4629700418014806016 60 ";
+    string
+        expectTilingData = "40001 60 245760 0 1 1 128 36 15 12 5 1 1 1 128 60 239 1 1 128 0 0 4629700418014806016 60 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -239,8 +233,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case08)
         },
         &compileInfo);
     uint64_t expectTilingKey = 40001;
-    string expectTilingData =
-        "40001 60 245760 0 0 1 128 36 15 12 5 1 1 1 128 60 239 1 1 128 0 0 4629700418014806016 60 ";
+    string
+        expectTilingData = "40001 60 245760 0 0 1 128 36 15 12 5 1 1 1 128 60 239 1 1 128 0 0 4629700418014806016 60 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -265,8 +259,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case09)
         },
         &compileInfo);
     uint64_t expectTilingKey = 40001;
-    string expectTilingData =
-        "40001 60 245760 0 1 1 128 36 15 12 5 1 1 1 128 60 239 1 1 128 0 0 4656722015785320448 60 ";
+    string
+        expectTilingData = "40001 60 245760 0 1 1 128 36 15 12 5 1 1 1 128 60 239 1 1 128 0 0 4656722015785320448 60 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -287,14 +281,13 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case10)
             gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
             gert::TilingContextPara::OpAttr("dtype", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
-            gert::TilingContextPara::OpAttr(
-                "scales",
-                Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.31269457412229545, 0.27077088627767687})),
+            gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>(
+                                                          {0.31269457412229545, 0.27077088627767687})),
         },
         &compileInfo);
     uint64_t expectTilingKey = 10000;
-    string expectTilingData =
-        "10000 63 245760 0 1 190 128 22 79 13 43 190 13 43 128 9 95 13 43 128 0 0 4633267427011747001 559 ";
+    string expectTilingData = "10000 63 245760 0 1 190 128 22 79 13 43 190 13 43 128 9 95 13 43 128 0 0 "
+                              "4633267427011747001 559 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -391,9 +384,9 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case14)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30005;
-    string expectTilingData =
-        "30005 64 245760 0 0 12768 10 128 256 128 1024 12768 128 1024 10 131072 12768 128 1024 10 2048 0 "
-        "4539628425446424576 131072 ";
+    string expectTilingData = "30005 64 245760 0 0 12768 10 128 256 128 1024 12768 128 1024 10 131072 12768 128 1024 "
+                              "10 2048 0 "
+                              "4539628425446424576 131072 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -418,9 +411,9 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case15)
         },
         &compileInfo);
     uint64_t expectTilingKey = 30002;
-    string expectTilingData =
-        "30002 64 245760 1 0 12768 256 128 128 192 192 12768 192 192 256 36864 12768 192 192 256 1882718208 0 "
-        "4551512269244741707 36864 ";
+    string expectTilingData = "30002 64 245760 1 0 12768 256 128 128 192 192 12768 192 192 256 36864 12768 192 192 256 "
+                              "1882718208 0 "
+                              "4551512269244741707 36864 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -444,8 +437,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case16)
         },
         &compileInfo);
     uint64_t expectTilingKey = 40000;
-    string expectTilingData =
-        "40000 64 245760 0 0 3 5 11 21 11 21 3 11 21 5 231 3 11 21 61376 54 9 4575657222473777152 231 ";
+    string expectTilingData = "40000 64 245760 0 0 3 5 11 21 11 21 3 11 21 5 231 3 11 21 61376 54 9 "
+                              "4575657222473777152 231 ";
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -466,9 +459,8 @@ TEST_F(ResizeBilinearV2Tiling, resize_bilinear_v2_regbase_tiling_case17)
             gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("dtype", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
-            gert::TilingContextPara::OpAttr(
-                "scales",
-                Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.31269457412229545, 0.27077088627767687})),
+            gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>(
+                                                          {0.31269457412229545, 0.27077088627767687})),
         },
         &compileInfo);
     uint64_t expectTilingKey = 10000;

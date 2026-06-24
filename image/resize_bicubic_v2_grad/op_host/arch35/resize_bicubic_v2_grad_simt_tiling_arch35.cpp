@@ -20,10 +20,7 @@ constexpr uint64_t TILING_KEY_SIMT = 10000;
 constexpr uint64_t TILING_KEY_SIMT_IDX64 = 10001;
 constexpr uint64_t TILING_PRIORITY_SIMT = 3000;
 
-bool ResizeBicubicV2GradSimtTiling::IsCapable()
-{
-    return true;
-}
+bool ResizeBicubicV2GradSimtTiling::IsCapable() { return true; }
 
 void ResizeBicubicV2GradSimtTiling::SetTilingData()
 {
@@ -63,13 +60,13 @@ ge::graphStatus ResizeBicubicV2GradSimtTiling::DoOpTiling()
 {
     this->SetScales();
 
-    calcInfo_.initYUseCoreNum =
-        calcInfo_.yShapeSize < compileInfo_.coreNum ? calcInfo_.yShapeSize : compileInfo_.coreNum;
+    calcInfo_.initYUseCoreNum = calcInfo_.yShapeSize < compileInfo_.coreNum ? calcInfo_.yShapeSize :
+                                                                              compileInfo_.coreNum;
     calcInfo_.initYCoreFactor = Ops::Base::FloorDiv(calcInfo_.yShapeSize, calcInfo_.initYUseCoreNum);
     calcInfo_.initYCoreTailFactor = calcInfo_.yShapeSize - calcInfo_.initYCoreFactor * calcInfo_.initYUseCoreNum;
 
-    calcInfo_.useCoreNum =
-        calcInfo_.gradsShapeSize < compileInfo_.coreNum ? calcInfo_.gradsShapeSize : compileInfo_.coreNum;
+    calcInfo_.useCoreNum = calcInfo_.gradsShapeSize < compileInfo_.coreNum ? calcInfo_.gradsShapeSize :
+                                                                             compileInfo_.coreNum;
     calcInfo_.coreFactor = Ops::Base::FloorDiv(calcInfo_.gradsShapeSize, calcInfo_.useCoreNum);
     calcInfo_.coreTailFactor = calcInfo_.gradsShapeSize - calcInfo_.coreFactor * calcInfo_.useCoreNum;
 
@@ -96,12 +93,10 @@ ge::graphStatus ResizeBicubicV2GradSimtTiling::PostTiling()
         context_->SetBlockDim(calcInfo_.initYUseCoreNum);
     }
 
-    OP_CHECK_IF(
-        tilingData_.GetDataSize() > context_->GetRawTilingData()->GetCapacity(),
-        OP_LOGE(
-            context_->GetNodeName(), "actual simt tiling data size %zu > context tiling data size %zu",
-            tilingData_.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tilingData_.GetDataSize() > context_->GetRawTilingData()->GetCapacity(),
+                OP_LOGE(context_->GetNodeName(), "actual simt tiling data size %zu > context tiling data size %zu",
+                        tilingData_.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
+                return ge::GRAPH_FAILED);
     tilingData_.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
 

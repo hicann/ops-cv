@@ -21,20 +21,21 @@ using namespace ge;
 using namespace optiling;
 
 class ResizeLinearTilingTest : public testing::Test {
- protected:
-  static void SetUpTestCase() {
-    std::cout << "ResizeLinearTilingTest SetUp" << std::endl;
-  }
+protected:
+    static void SetUpTestCase() { std::cout << "ResizeLinearTilingTest SetUp" << std::endl; }
 
-  static void TearDownTestCase() {
-    std::cout << "ResizeLinearTilingTest TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "ResizeLinearTilingTest TearDown" << std::endl; }
 };
 
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_01)
 {
     gert::StorageShape inputXShape = {{1, 3, 32}, {1, 3, 32}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{1, 3, 32}, {1, 3, 32}};
     int size_value[1] = {32};
 
@@ -57,7 +58,12 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_01)
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_02)
 {
     gert::StorageShape inputXShape = {{1, 3, 32}, {1, 3, 32}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{1, 3, 32}, {1, 3, 32}};
     int size_value[1] = {32};
 
@@ -80,7 +86,12 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_02)
 TEST_F(ResizeLinearTilingTest, resize_linear_tiling_03)
 {
     gert::StorageShape inputXShape = {{1024, 2048, 4096}, {1024, 2048, 4096}};
-    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape inputSizeShape = {{
+                                             1,
+                                         },
+                                         {
+                                             1,
+                                         }};
     gert::StorageShape outputShape = {{1024, 2048, 4096}, {1024, 2048, 4096}};
     int size_value[1] = {4096};
 

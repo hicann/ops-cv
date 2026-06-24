@@ -39,8 +39,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::DataCopyInAndOut(
-    int64_t nLoopOnce, int64_t inputOffset, int64_t outputOffset)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::DataCopyInAndOut(int64_t nLoopOnce, int64_t inputOffset,
+                                                                          int64_t outputOffset)
 {
     LocalTensor<T> inputUb = this->xQue_.template AllocTensor<T>();
     this->copyParams_.blockCount = nLoopOnce;
@@ -90,8 +90,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeSmallC(int64_t n
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeHwOnce(
-    int64_t no, int64_t nLoopOnce, int64_t hwLoop, int64_t mode)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeHwOnce(int64_t no, int64_t nLoopOnce, int64_t hwLoop,
+                                                                       int64_t mode)
 {
     for (int64_t howo = 0; howo < hwLoop; howo++) {
         int64_t ho = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) / this->tilingData_->lenDesW;
@@ -111,8 +111,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeHwOnce(
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeSmallCHw(
-    int64_t nLoopTimes, int64_t nLoopTail, int64_t hwOnceLoop)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeSmallCHw(int64_t nLoopTimes, int64_t nLoopTail,
+                                                                         int64_t hwOnceLoop)
 {
     int64_t mode = this->tilingData_->condition;
     for (int64_t no = 0; no < nLoopTimes; no++) {
@@ -122,8 +122,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ComputeSmallCHw(
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ProcessPreCore(
-    int64_t nLoopTimes, int64_t nLoopTail, int64_t hwTail)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail,
+                                                                        int64_t hwTail)
 {
     switch (this->tilingData_->switchParams) {
         case 0:
@@ -140,12 +140,11 @@ template <typename T>
 __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_S_C<T>::Process()
 {
     if (this->blockIdx_ == this->tilingData_->realCoreNum - 1) {
-        ProcessPreCore(
-            this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast, this->tilingData_->wcLoopTailLast);
+        ProcessPreCore(this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast,
+                       this->tilingData_->wcLoopTailLast);
     } else {
-        ProcessPreCore(
-            this->tilingData_->nLoopTimesBefore, this->tilingData_->splitBlockTailFactor,
-            this->tilingData_->wcLoopTailBefore);
+        ProcessPreCore(this->tilingData_->nLoopTimesBefore, this->tilingData_->splitBlockTailFactor,
+                       this->tilingData_->wcLoopTailBefore);
     }
 }
 } // namespace ResizeNearestNeighborV2

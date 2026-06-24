@@ -27,8 +27,8 @@ class ResizeBilinearV2GradAllCopy : public ResizeBilinearV2GradBase {
 public:
     __aicore__ inline ResizeBilinearV2GradAllCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data);
+    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2GradTilingData* data);
 
     __aicore__ inline void Process();
 
@@ -45,8 +45,9 @@ protected:
 };
 
 template <typename T_GRADS, typename T_OUT>
-__aicore__ inline void ResizeBilinearV2GradAllCopy<T_GRADS, T_OUT>::Init(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* data)
+__aicore__ inline void ResizeBilinearV2GradAllCopy<T_GRADS, T_OUT>::Init(GM_ADDR grads, GM_ADDR originalImage,
+                                                                         GM_ADDR y, TPipe* pipe,
+                                                                         const ResizeBilinearV2GradTilingData* data)
 {
     this->BaseInit(grads, y, pipe);
     int64_t ubBlockSize = Ops::Base::GetUbBlockSize();

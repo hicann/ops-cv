@@ -49,26 +49,20 @@ static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
 {
     // 检查interpolationMode 、paddingMode 、 schedulerMode 是否在支持范围内
     if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "interpolationMode %ld should be in range [%ld, %ld].",
-            interpolationMode,
-            INTERPOLATION_MODE_MIN_VALUE,
-            INTERPOLATION_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
+                INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
         return false;
     }
 
     if (paddingMode < PADDING_MODE_MIN_VALUE || paddingMode > PADDING_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "paddingMode %ld should be in range [%ld, %ld].",
-            paddingMode,
-            PADDING_MODE_MIN_VALUE,
-            PADDING_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
+                PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
         return false;
     }
     return true;
 }
 
-inline const string &GetInterpolationModeStr(int64_t interpolationModeVal)
+inline const string& GetInterpolationModeStr(int64_t interpolationModeVal)
 {
     if (interpolationModeVal == 0) {
         return INTERPOLATION_BILINEAR;
@@ -79,7 +73,7 @@ inline const string &GetInterpolationModeStr(int64_t interpolationModeVal)
     return INTERPOLATION_BICUBIC;
 }
 
-inline const string &GetPaddingModeStr(int64_t paddingModeVal)
+inline const string& GetPaddingModeStr(int64_t paddingModeVal)
 {
     if (paddingModeVal == 0) {
         return PADDING_ZEROS;
@@ -90,8 +84,8 @@ inline const string &GetPaddingModeStr(int64_t paddingModeVal)
     return PADDING_REFLECTION;
 }
 
-const aclTensor *GridSampler2D(const aclTensor *x, const aclTensor *grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, aclOpExecutor *executor)
+const aclTensor* GridSampler2D(const aclTensor* x, const aclTensor* grid, int64_t interpolationMode,
+                               int64_t paddingMode, bool alignCorners, aclOpExecutor* executor)
 {
     L0_DFX(GridSampler2D, x, grid, interpolationMode, paddingMode, alignCorners);
     op::Shape outShape;
@@ -109,9 +103,8 @@ const aclTensor *GridSampler2D(const aclTensor *x, const aclTensor *grid, int64_
 
     static internal::AicpuTaskSpace space("GridSampler2D", ge::DEPEND_IN_SHAPE, false);
     if (CheckAttrValid(interpolationMode, paddingMode)) {
-        auto ret = ADD_TO_LAUNCHER_LIST_AICPU(GridSampler2D,
-            OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners"}),
-            OP_INPUT(x, grid),
+        auto ret = ADD_TO_LAUNCHER_LIST_AICPU(
+            GridSampler2D, OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners"}), OP_INPUT(x, grid),
             OP_OUTPUT(y),
             OP_ATTR(GetInterpolationModeStr(interpolationMode), GetPaddingModeStr(paddingMode), alignCorners));
         CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
@@ -120,4 +113,4 @@ const aclTensor *GridSampler2D(const aclTensor *x, const aclTensor *grid, int64_
     }
     return y;
 }
-}  // namespace l0op
+} // namespace l0op

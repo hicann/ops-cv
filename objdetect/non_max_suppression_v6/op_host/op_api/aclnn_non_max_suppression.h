@@ -31,4 +31,4 @@ ACLNN_API aclnnStatus aclnnNonMaxSuppression(void* workspace, uint64_t workspace
 }
 #endif
 
-#endif  // OP_API_INC_NON_MAX_SUPPRESSION_H_
+#endif // OP_API_INC_NON_MAX_SUPPRESSION_H_

@@ -29,34 +29,33 @@ constexpr int8_t H_DIRECTION = 1;
 constexpr int8_t W_DIRECTION = 2;
 
 template <typename T>
-class UpsampleTrilinear3dBackwardND
-{
+class UpsampleTrilinear3dBackwardND {
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 public:
     TPipe pipe;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
 
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
 
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulD;
 
     __aicore__ inline UpsampleTrilinear3dBackwardND(){};
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR y, GM_ADDR workspace, UpsampleTrilinear3dBackwardTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace,
+                                UpsampleTrilinear3dBackwardTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -66,12 +65,12 @@ private:
     __aicore__ inline void CalculateRadioTensor(int8_t direction, int64_t index, int64_t length);
     __aicore__ inline float AreaPixelComputeSourceIndex(float scale, int32_t dstIndex);
     __aicore__ inline void CopyRadioTensorToGm();
-    __aicore__ inline void CalculateWidthExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
-    __aicore__ inline void CalculateHeightExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
-    __aicore__ inline void CalculateDepthExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
+    __aicore__ inline void CalculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                   int64_t length);
+    __aicore__ inline void CalculateHeightExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                    int64_t length);
+    __aicore__ inline void CalculateDepthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                   int64_t length);
 
 private:
     TQue<QuePosition::VECOUT, BUFFER_NUM> radioQueue;
@@ -124,8 +123,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::Init(
-    GM_ADDR x, GM_ADDR y, GM_ADDR workspace, UpsampleTrilinear3dBackwardTilingData* tilingData)
+__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace,
+                                                              UpsampleTrilinear3dBackwardTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
     ParseTilingData(tilingData);
@@ -203,8 +202,8 @@ __aicore__ inline void UpsampleTrilinear3dBackwardND<T>::DirectionExpansion(int8
 }
 
 template <typename T>
-__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateRadioTensor(
-    int8_t direction, int64_t xIndex, int64_t length)
+__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateRadioTensor(int8_t direction, int64_t xIndex,
+                                                                              int64_t length)
 {
     // 计算权重矩阵
     LocalTensor<float> radioTensor = radioQueue.AllocTensor<float>();
@@ -275,8 +274,8 @@ __aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CopyRadioTensorToGm()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                                 int64_t rowEnd, int64_t length)
 {
     int64_t xIndex = xMin + rowStart * outputShapes[2];
     int64_t tensorCIndexWithOffset = tensorCIndex + rowStart * inputShapes[2];
@@ -300,8 +299,9 @@ __aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateWidthExtension
 }
 
 template <typename T>
-__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateHeightExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateHeightExtension(int64_t tensorCIndex,
+                                                                                  int64_t rowStart, int64_t rowEnd,
+                                                                                  int64_t length)
 {
     int64_t singleCoreM = length;
     int64_t singleCoreN = matmulTilingH->singleCoreN;
@@ -329,16 +329,16 @@ __aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateHeightExtensio
         if (!needResizeD) {
             matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset + outOffset], false);
         } else {
-            matmulH.IterateAll(
-                intermediateTensorGm[intermediateMatrixSizeW + tensorCIndexWithOffset + outOffset], false);
+            matmulH.IterateAll(intermediateTensorGm[intermediateMatrixSizeW + tensorCIndexWithOffset + outOffset],
+                               false);
         }
         matmulH.End();
     }
 }
 
 template <typename T>
-__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateDepthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateDepthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                                 int64_t rowEnd, int64_t length)
 {
     int64_t singleCoreM = length;
     int64_t singleCoreN = matmulTilingD->singleCoreN;
@@ -348,8 +348,8 @@ __aicore__ inline void UpsampleTrilinear3dBackwardND<T>::CalculateDepthExtension
     int64_t start = rowStart;
     int64_t end = rowEnd;
 
-    matmulD.SetOrgShape(
-        singleCoreM, inputShapes[1] * inputShapes[2], singleCoreK, outputShapes[0], inputShapes[1] * inputShapes[2]);
+    matmulD.SetOrgShape(singleCoreM, inputShapes[1] * inputShapes[2], singleCoreK, outputShapes[0],
+                        inputShapes[1] * inputShapes[2]);
     matmulD.SetSingleShape(singleCoreM, singleCoreN, singleCoreK);
     if (tensorCIndex + slideSize > inputShapes[0]) {
         matmulD.SetTail(inputShapes[0] - tensorCIndex, singleCoreN, singleCoreK);

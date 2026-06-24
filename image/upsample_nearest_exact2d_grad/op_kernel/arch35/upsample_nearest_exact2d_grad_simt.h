@@ -30,7 +30,8 @@ class NearestExact2dGradSimt {
 public:
     __aicore__ inline NearestExact2dGradSimt(){};
 
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, const UpsampleNearestExact2dGradRegBaseTilingData* __restrict tiling);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y,
+                                const UpsampleNearestExact2dGradRegBaseTilingData* __restrict tiling);
     __aicore__ inline void Process();
 
 private:

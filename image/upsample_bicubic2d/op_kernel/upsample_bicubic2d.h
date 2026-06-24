@@ -40,18 +40,20 @@ class UpsampleBicubic2dND {
 public:
     TPipe pipe;
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
 
     __aicore__ inline UpsampleBicubic2dND(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                const UpsampleBicubic2dTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -164,10 +166,7 @@ private:
         return res;
     }
 
-    __aicore__ inline bool out_of_range(int64_t m, int64_t width)
-    {
-        return m >= (width - MIN_SIZE);
-    };
+    __aicore__ inline bool out_of_range(int64_t m, int64_t width) { return m >= (width - MIN_SIZE); };
 
     __aicore__ inline bool on_board(int64_t m, int64_t width)
     {
@@ -200,7 +199,7 @@ private:
         }
     };
 
-    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dTilingData* tilingData);
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
 
@@ -230,8 +229,8 @@ private:
     TBuf<QuePosition::VECCALC> xVQueue_h;
     TQue<QuePosition::VECOUT, BUFFER_NUM> ratioQueue_h;
 
-    const TCubeTiling *__restrict matmulTiling_w;
-    const TCubeTiling *__restrict matmulTiling_h;
+    const TCubeTiling* __restrict matmulTiling_w;
+    const TCubeTiling* __restrict matmulTiling_h;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -292,8 +291,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                    const UpsampleBicubic2dTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -322,9 +321,9 @@ __aicore__ inline void UpsampleBicubic2dND<T>::Init(
         pipe.InitBuffer(ratioQueue_h, BUFFER_NUM, ratio_matrix_size_h * sizeof(float));
     }
 
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)inTensorsPtr);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)outTensorsPtr);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)inTensorsPtr);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)outTensorsPtr);
 }
 
 template <typename T>
@@ -435,8 +434,8 @@ __aicore__ inline int64_t UpsampleBicubic2dND<T>::getHeightTensorSize()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND<T>::calculateIntermediateTensor(
-    int64_t index, int64_t length, int8_t direction)
+__aicore__ inline void UpsampleBicubic2dND<T>::calculateIntermediateTensor(int64_t index, int64_t length,
+                                                                           int8_t direction)
 {
     length = Max(length, EACH_SLICE_HANDLE_NUM);
     float scale = scale_w;
@@ -563,8 +562,8 @@ __aicore__ inline void UpsampleBicubic2dND<T>::copyRatioTensorToGm(int8_t direct
     } else {
         int8_t size = 32 / sizeof(T);
         LocalTensor<T> ratioTensor = initRatioTensor(direction);
-        DataCopy(
-            intermediateTensorGm[workSpaceRatioOffset], ratioTensor, (ratioTensor.GetSize() + size - 1) / size * size);
+        DataCopy(intermediateTensorGm[workSpaceRatioOffset], ratioTensor,
+                 (ratioTensor.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
@@ -594,8 +593,8 @@ __aicore__ inline void UpsampleBicubic2dND<T>::releaseRatioTensor(int8_t directi
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND<T>::calculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleBicubic2dND<T>::calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                       int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
@@ -627,8 +626,8 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateWidthExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND<T>::calculateHeightExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleBicubic2dND<T>::calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                        int64_t rowEnd)
 {
     int64_t singleCoreN = matmulTiling_h->singleCoreN;
     int64_t singleCoreM = matmulTiling_h->singleCoreM;
@@ -669,7 +668,7 @@ __aicore__ inline void UpsampleBicubic2dND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(const UpsampleBicubic2dTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(const UpsampleBicubic2dTilingData* tilingData)
 {
     slide_size = tilingData->slide_size;
     scale_w = tilingData->scale_w;
@@ -712,6 +711,6 @@ __aicore__ inline void UpsampleBicubic2dND<T>::ParseTilingData(const UpsampleBic
     matmulTiling_h = &tilingData->matmulTiling_h;
     matmulTiling_w = &tilingData->matmulTiling_w;
 }
-}  // namespace UpsampleBicubic2d
+} // namespace UpsampleBicubic2d
 
-#endif  // UPSAMPLE_BICUBIC2D
+#endif // UPSAMPLE_BICUBIC2D

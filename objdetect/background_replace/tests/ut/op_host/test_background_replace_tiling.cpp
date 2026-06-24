@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
-*/
+ */
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -17,15 +17,9 @@
 
 class BackgroundReplaceTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "BackgroundReplaceTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "BackgroundReplaceTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "BackgroundReplaceTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "BackgroundReplaceTiling TearDown" << std::endl; }
 };
 
 struct BackgroundReplaceCompileInfo {
@@ -45,12 +39,13 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_float16_case1)
     gert::StorageShape outShape = {{h, w, c}, {h, w, c}};
     BackgroundReplaceCompileInfo compileInfo = {40, 196608};
     gert::TilingContextPara tilingContextPara("BackgroundReplace",
-                                                {{bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND}, 
-                                                {srcShape, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {maskShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{outShape, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                {},
-                                                &compileInfo);
+                                              {{bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {srcShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {maskShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                              {
+                                                  {outShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
     uint64_t expectTilingKey = 1;
     string expectTilingData = "400 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
@@ -69,12 +64,13 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_uint8_case2)
     gert::StorageShape outShape = {{h, w, c}, {h, w, c}};
     BackgroundReplaceCompileInfo compileInfo = {40, 196608};
     gert::TilingContextPara tilingContextPara("BackgroundReplace",
-                                                {{bkgShape, ge::DT_UINT8, ge::FORMAT_ND}, 
-                                                {srcShape, ge::DT_UINT8, ge::FORMAT_ND},
-                                                {maskShape, ge::DT_UINT8, ge::FORMAT_ND}},
-                                                {{outShape, ge::DT_UINT8, ge::FORMAT_ND},},
-                                                {},
-                                                &compileInfo);
+                                              {{bkgShape, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {srcShape, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {maskShape, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {
+                                                  {outShape, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
     uint64_t expectTilingKey = 2;
     string expectTilingData = "400 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
@@ -95,12 +91,13 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_uint8_noequal_cas
     gert::StorageShape outShape = {{h, w, c}, {h, w, c}};
     BackgroundReplaceCompileInfo compileInfo = {40, 196608};
     gert::TilingContextPara tilingContextPara("BackgroundReplace",
-                                                {{bkgShape, ge::DT_UINT8, ge::FORMAT_ND}, 
-                                                {srcShape, ge::DT_UINT8, ge::FORMAT_ND},
-                                                {maskShape, ge::DT_UINT8, ge::FORMAT_ND}},
-                                                {{outShape, ge::DT_UINT8, ge::FORMAT_ND},},
-                                                {},
-                                                &compileInfo);
+                                              {{bkgShape, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {srcShape, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {maskShape, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {
+                                                  {outShape, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
     uint64_t expectTilingKey = 4;
     string expectTilingData = "900 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
@@ -121,12 +118,13 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_fp16_noequal_case
     gert::StorageShape outShape = {{h, w, c}, {h, w, c}};
     BackgroundReplaceCompileInfo compileInfo = {40, 196608};
     gert::TilingContextPara tilingContextPara("BackgroundReplace",
-                                                {{bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND}, 
-                                                {srcShape, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {maskShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{outShape, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                {},
-                                                &compileInfo);
+                                              {{bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {srcShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {maskShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                              {
+                                                  {outShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
     uint64_t expectTilingKey = 3;
     string expectTilingData = "900 ";
     std::vector<size_t> expectWorkspaces = {4294967295};

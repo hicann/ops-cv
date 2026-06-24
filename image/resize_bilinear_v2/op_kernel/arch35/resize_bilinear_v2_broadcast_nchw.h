@@ -28,8 +28,8 @@ class ResizeBilinearV2BroadcastNCHW : public ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2BroadcastNCHW(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2TilingData* data);
     __aicore__ inline void Process();
 
 protected:
@@ -78,8 +78,8 @@ protected:
 };
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
+__aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                                                   const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -174,8 +174,8 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTenso
             for (uint16_t inLoop = 0; inLoop < (uint16_t)repeatTimes; inLoop++) {
                 preg = MicroAPI::UpdateMask<U>(oneLineLen);
                 MicroAPI::Duplicate(regData, val, preg);
-                MicroAPI::DataCopy<U, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    yLineAddr, regData, (int32_t)oneRepeat, preg);
+                MicroAPI::DataCopy<U, MicroAPI::PostLiteral::POST_MODE_UPDATE>(yLineAddr, regData, (int32_t)oneRepeat,
+                                                                               preg);
             }
 
             xAddr++;

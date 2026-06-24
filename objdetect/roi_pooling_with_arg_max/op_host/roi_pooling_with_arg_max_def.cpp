@@ -17,7 +17,7 @@
 namespace ops {
 class RoiPoolingWithArgMax : public OpDef {
 public:
-    explicit RoiPoolingWithArgMax(const char *name) : OpDef(name)
+    explicit RoiPoolingWithArgMax(const char* name) : OpDef(name)
     {
         this->Input("x")
             .ParamType(REQUIRED)
@@ -63,6 +63,6 @@ public:
         this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };
- 
+
 OP_ADD(RoiPoolingWithArgMax);
-}  // namespace ops
+} // namespace ops

@@ -24,20 +24,20 @@ template <typename T>
 class ResizeNearestNeighborV2Gather : public ResizeNearestNeighborV2Base {
 public:
     __aicore__ inline ResizeNearestNeighborV2Gather(){};
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, const ResizeNearestNeighborV2TilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
+                                const ResizeNearestNeighborV2TilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void ProcessPerBlock(int64_t ncLoopNum);
     __aicore__ inline void CopyInWithPad(int64_t inOffset);
     __aicore__ inline void Compute(int64_t hIdx, int64_t wIdx, int64_t hNum, int64_t wNum);
-    __aicore__ inline void Compute32(
-        __ubuf__ T *dstAddr, __ubuf__ T *srcAddr, const LocalTensor<int32_t> &hIdexUb, float startIdx, uint32_t num);
-    __aicore__ inline void ComputeMain(
-        __ubuf__ T *dstAddr, __ubuf__ T *srcAddr, const LocalTensor<int32_t> &hIdexUb, float startIdx, uint32_t num);
-    __aicore__ inline void ComputeTail(
-        __ubuf__ T *dstAddr, __ubuf__ T *srcAddr, const LocalTensor<int32_t> &hIdexUb, float startIdx);
+    __aicore__ inline void Compute32(__ubuf__ T* dstAddr, __ubuf__ T* srcAddr, const LocalTensor<int32_t>& hIdexUb,
+                                     float startIdx, uint32_t num);
+    __aicore__ inline void ComputeMain(__ubuf__ T* dstAddr, __ubuf__ T* srcAddr, const LocalTensor<int32_t>& hIdexUb,
+                                       float startIdx, uint32_t num);
+    __aicore__ inline void ComputeTail(__ubuf__ T* dstAddr, __ubuf__ T* srcAddr, const LocalTensor<int32_t>& hIdexUb,
+                                       float startIdx);
     __aicore__ inline void CopyOutWithPad(int64_t outOffset, int64_t hNum, int64_t wNum);
     __aicore__ inline int64_t ComputeSrcOffset(int64_t hIdx, int64_t wIdx, int64_t hNum, int64_t wNum);
     __aicore__ inline int64_t ComputeBlockOffset(int64_t ncIdx, int64_t hwSize);
@@ -46,14 +46,12 @@ private:
     constexpr static int32_t bufferNum = 2;
     constexpr static int64_t NUM_FOUR = 4;
     constexpr static int32_t blockSize = 32;
-    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING,
-        AscendC::RoundMode::CAST_ROUND};
-    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING,
-        AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND};
+    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
 
 private:
     TPipe pipe;
@@ -67,7 +65,7 @@ private:
     int64_t blockInOffset_ = 0;
     int64_t blockOutOffset_ = 0;
 
-    uint32_t vlSize_ = VECTOR_REG_WIDTH / sizeof(T);  // vl size: 256 / dtypeSize
+    uint32_t vlSize_ = VECTOR_REG_WIDTH / sizeof(T); // vl size: 256 / dtypeSize
     uint32_t elementBlock_ = blockSize / sizeof(T);
     uint32_t elementBlock32_ = blockSize / sizeof(float);
     uint32_t repeatElm_ = vlSize_ / 2;
@@ -79,16 +77,16 @@ private:
     int32_t startIndexH_ = 0;
 
     // tiling params
-    const ResizeNearestNeighborV2TilingData *tiling_;
+    const ResizeNearestNeighborV2TilingData* tiling_;
 };
 
 template <typename T>
-__aicore__ inline void ResizeNearestNeighborV2Gather<T>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, const ResizeNearestNeighborV2TilingData *tilingData)
+__aicore__ inline void ResizeNearestNeighborV2Gather<T>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
+                                                              const ResizeNearestNeighborV2TilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
-    xGm.SetGlobalBuffer((__gm__ T *)x);
-    yGm.SetGlobalBuffer((__gm__ T *)y);
+    xGm.SetGlobalBuffer((__gm__ T*)x);
+    yGm.SetGlobalBuffer((__gm__ T*)y);
     tiling_ = tilingData;
 
     // 接收tilingdata信息
@@ -115,7 +113,7 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Init(
 
     pipe.InitBuffer(inQueueX, bufferNum, srcSize * sizeof(T));
     pipe.InitBuffer(outQueueY, bufferNum, dstSize * sizeof(T));
-    pipe.InitBuffer(coordinateQueueH, coordinateHSize * sizeof(float));  // 坐标为float类型
+    pipe.InitBuffer(coordinateQueueH, coordinateHSize * sizeof(float)); // 坐标为float类型
 }
 
 /*
@@ -146,8 +144,8 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Process()
 }
 
 template <typename T>
-__aicore__ inline int64_t ResizeNearestNeighborV2Gather<T>::CalcSrcIndex(
-    int64_t dstIndex, float scale, int64_t srcIdxMax)
+__aicore__ inline int64_t ResizeNearestNeighborV2Gather<T>::CalcSrcIndex(int64_t dstIndex, float scale,
+                                                                         int64_t srcIdxMax)
 {
     int64_t srcIndex = 0;
     if (tiling_->halfPixelCenters == 1) {
@@ -255,8 +253,9 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ProcessPerBlock(int64_t
 }
 
 template <typename T>
-__aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(
-    __ubuf__ T *dstAddr, __ubuf__ T *srcAddr, const LocalTensor<int32_t> &hIdexUb, float startIdx, uint32_t num)
+__aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(__ubuf__ T* dstAddr, __ubuf__ T* srcAddr,
+                                                                     const LocalTensor<int32_t>& hIdexUb,
+                                                                     float startIdx, uint32_t num)
 {
     __VEC_SCOPE__
     {
@@ -271,8 +270,8 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(
         AscendC::MicroAPI::RegTensor<T> vDstReg;
         AscendC::MicroAPI::UnalignReg u0;
 
-        AscendC::MicroAPI::MaskReg preg32 =
-            AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
+        AscendC::MicroAPI::MaskReg
+            preg32 = AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
         uint32_t sregLast = num;
         AscendC::MicroAPI::MaskReg preg16 = AscendC::MicroAPI::UpdateMask<uint16_t>(sregLast);
         float sregLow = startIdx;
@@ -292,7 +291,7 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(
         Adds(idxInitLower, idxInitLower, startIndexW_, preg32);
         Adds(idxInitHeigher, idxInitHeigher, startIndexW_, preg32);
 
-        __ubuf__ T *dstUbT = dstAddr;
+        __ubuf__ T* dstUbT = dstAddr;
         for (uint16_t j = 0; j < static_cast<uint16_t>(hNum_); ++j) {
             Adds(idxLowerI, idxInitLower, static_cast<int32_t>(srcWAlign_) * hIdexUb.GetValue(j), preg32);
             MicroAPI::Pack<uint16_t, int32_t, AscendC::MicroAPI::HighLowPart::LOWEST>(idxLower, idxLowerI);
@@ -308,8 +307,9 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(
 }
 
 template <typename T>
-__aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(
-    __ubuf__ T *dstAddr, __ubuf__ T *srcAddr, const LocalTensor<int32_t> &hIdexUb, float startIdx)
+__aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(__ubuf__ T* dstAddr, __ubuf__ T* srcAddr,
+                                                                     const LocalTensor<int32_t>& hIdexUb,
+                                                                     float startIdx)
 {
     __VEC_SCOPE__
     {
@@ -320,8 +320,8 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(
         AscendC::MicroAPI::UnalignReg u0;
         AscendC::MicroAPI::RegTensor<T> vDstReg;
 
-        AscendC::MicroAPI::MaskReg mask0 =
-            AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
+        AscendC::MicroAPI::MaskReg
+            mask0 = AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
         uint32_t sregTail = wTail_;
         float sregLow = startIdx;
         AscendC::MicroAPI::MaskReg mask1 = AscendC::MicroAPI::UpdateMask<uint16_t>(sregTail);
@@ -335,7 +335,7 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(
         }
         Adds(idxInit, idxInit, startIndexW_, mask0);
 
-        __ubuf__ T *dstUbT = dstAddr;
+        __ubuf__ T* dstUbT = dstAddr;
         for (uint16_t i = 0; i < static_cast<uint16_t>(hNum_); ++i) {
             Adds(idxLowerI, idxInit, srcWAlign_ * hIdexUb.GetValue(i), mask0);
             MicroAPI::Pack<uint16_t, int32_t, AscendC::MicroAPI::HighLowPart::LOWEST>(idxLower, idxLowerI);
@@ -348,8 +348,9 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(
 }
 
 template <typename T>
-__aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute32(
-    __ubuf__ T *dstAddr, __ubuf__ T *srcAddr, const LocalTensor<int32_t> &hIdexUb, float startIdx, uint32_t num)
+__aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute32(__ubuf__ T* dstAddr, __ubuf__ T* srcAddr,
+                                                                   const LocalTensor<int32_t>& hIdexUb, float startIdx,
+                                                                   uint32_t num)
 {
     __VEC_SCOPE__
     {
@@ -360,8 +361,8 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute32(
         AscendC::MicroAPI::UnalignReg u0;
 
         uint32_t sregTail = num;
-        AscendC::MicroAPI::MaskReg mask0 =
-            AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
+        AscendC::MicroAPI::MaskReg
+            mask0 = AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
         AscendC::MicroAPI::MaskReg mask1 = AscendC::MicroAPI::UpdateMask<uint32_t>(sregTail);
 
         float sregLow = startIdx;
@@ -374,10 +375,10 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute32(
         }
         Adds(idxInit, idxInit, startIndexW_, mask0);
 
-        __ubuf__ T *dstUbT = dstAddr;
+        __ubuf__ T* dstUbT = dstAddr;
         for (uint16_t i = 0; i < static_cast<uint16_t>(hNum_); ++i) {
             Adds(idxInt32, idxInit, static_cast<int32_t>(srcWAlign_) * hIdexUb.GetValue(i), mask0);
-            DataCopyGather(vDstReg, srcAddr, (AscendC::MicroAPI::RegTensor<uint32_t> &)idxInt32, mask1);
+            DataCopyGather(vDstReg, srcAddr, (AscendC::MicroAPI::RegTensor<uint32_t>&)idxInt32, mask1);
             dstUbT = dstAddr + i * wNum_;
             DataCopyUnAlign(dstUbT, vDstReg, u0, num);
             AscendC::MicroAPI::DataCopyUnAlignPost(dstUbT, u0, 0);
@@ -427,41 +428,27 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute(int64_t hIdx, i
     if constexpr (IsSameType<T, float>::value) {
         // process main loop, 64 elements once
         for (uint32_t i = 0; i < loopW; ++i) {
-            Compute32((__ubuf__ T *)yLocal[i * vlSize_].GetPhyAddr(),
-                (__ubuf__ T *)xLocal.GetPhyAddr(),
-                hIdexUb,
-                static_cast<float>(i * vlSize_) + startW,
-                vlSize_);
+            Compute32((__ubuf__ T*)yLocal[i * vlSize_].GetPhyAddr(), (__ubuf__ T*)xLocal.GetPhyAddr(), hIdexUb,
+                      static_cast<float>(i * vlSize_) + startW, vlSize_);
         }
         // process tail
         if (wTail_ > 0) {
-            Compute32((__ubuf__ T *)yLocal[loopW * vlSize_].GetPhyAddr(),
-                (__ubuf__ T *)xLocal.GetPhyAddr(),
-                hIdexUb,
-                static_cast<float>(loopW * vlSize_) + startW,
-                wTail_);
+            Compute32((__ubuf__ T*)yLocal[loopW * vlSize_].GetPhyAddr(), (__ubuf__ T*)xLocal.GetPhyAddr(), hIdexUb,
+                      static_cast<float>(loopW * vlSize_) + startW, wTail_);
         }
     } else {
         // process main loop, 128 elements once
         for (uint32_t i = 0; i < loopW; ++i) {
-            ComputeMain((__ubuf__ T *)yLocal[i * vlSize_].GetPhyAddr(),
-                (__ubuf__ T *)xLocal.GetPhyAddr(),
-                hIdexUb,
-                static_cast<float>(i * vlSize_) + startW,
-                vlSize_);
+            ComputeMain((__ubuf__ T*)yLocal[i * vlSize_].GetPhyAddr(), (__ubuf__ T*)xLocal.GetPhyAddr(), hIdexUb,
+                        static_cast<float>(i * vlSize_) + startW, vlSize_);
         }
         // process tail data
         if (wTail_ > repeatElm_) {
-            ComputeMain((__ubuf__ T *)yLocal[loopW * vlSize_].GetPhyAddr(),
-                (__ubuf__ T *)xLocal.GetPhyAddr(),
-                hIdexUb,
-                static_cast<float>(loopW * vlSize_) + startW,
-                wTail_);
+            ComputeMain((__ubuf__ T*)yLocal[loopW * vlSize_].GetPhyAddr(), (__ubuf__ T*)xLocal.GetPhyAddr(), hIdexUb,
+                        static_cast<float>(loopW * vlSize_) + startW, wTail_);
         } else if (wTail_ > 0) {
-            ComputeTail((__ubuf__ T *)yLocal[loopW * vlSize_].GetPhyAddr(),
-                (__ubuf__ T *)xLocal.GetPhyAddr(),
-                hIdexUb,
-                static_cast<float>(loopW * vlSize_) + startW);
+            ComputeTail((__ubuf__ T*)yLocal[loopW * vlSize_].GetPhyAddr(), (__ubuf__ T*)xLocal.GetPhyAddr(), hIdexUb,
+                        static_cast<float>(loopW * vlSize_) + startW);
         }
     }
 
@@ -482,7 +469,7 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::CopyOutWithPad(int64_t 
         copyParams.blockLen = wNum * sizeof(T);
         copyParams.dstStride = (dstWSize_ - wNum) * sizeof(T);
     }
-    DataCopyPad(yGm[blockOutOffset_ + outOffset], outLocal, copyParams);  // 一次搬出
+    DataCopyPad(yGm[blockOutOffset_ + outOffset], outLocal, copyParams); // 一次搬出
 
     outQueueY.FreeTensor(outLocal);
 }
@@ -506,6 +493,6 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::CopyInWithPad(int64_t i
     inQueueX.EnQue(xLocal);
 }
 
-}  // namespace ResizeNearestNeighborV2
+} // namespace ResizeNearestNeighborV2
 
-#endif  // RESIZE_NEAREAST_NEIGHBOR_V2_GATHER_H
+#endif // RESIZE_NEAREAST_NEIGHBOR_V2_GATHER_H

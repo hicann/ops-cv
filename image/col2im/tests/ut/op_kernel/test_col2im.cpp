@@ -33,21 +33,13 @@
 using namespace std;
 
 template <uint64_t dType>
-__global__ __aicore__ void col2im(GM_ADDR gradOut, GM_ADDR outputSize, GM_ADDR gradIn, GM_ADDR workspace, GM_ADDR tiling);
+__global__ __aicore__ void col2im(GM_ADDR gradOut, GM_ADDR outputSize, GM_ADDR gradIn, GM_ADDR workspace,
+                                  GM_ADDR tiling);
 
-class col2im_test : public testing::Test
-{
+class col2im_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "col2im SetUp\n"
-             << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "col2im_test TearDown\n"
-             << endl;
-    }
+    static void SetUpTestCase() { cout << "col2im SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "col2im_test TearDown\n" << endl; }
 };
 
 TEST_F(col2im_test, test_col2im_950_fp16)
@@ -57,12 +49,12 @@ TEST_F(col2im_test, test_col2im_950_fp16)
     size_t gradInByteSize = 1 * sizeof(float);
     size_t tilingDataSize = sizeof(Col2imRegBaseTilingData);
 
-    uint8_t *gradOut = (uint8_t *)AscendC::GmAlloc(gradOutByteSize);
-    uint8_t *outputSize = (uint8_t *)AscendC::GmAlloc(outputSizeByteSize);
-    uint8_t *gradIn = (uint8_t *)AscendC::GmAlloc(gradInByteSize);
+    uint8_t* gradOut = (uint8_t*)AscendC::GmAlloc(gradOutByteSize);
+    uint8_t* outputSize = (uint8_t*)AscendC::GmAlloc(outputSizeByteSize);
+    uint8_t* gradIn = (uint8_t*)AscendC::GmAlloc(gradInByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     Col2imRegBaseTilingData* tilingData = reinterpret_cast<Col2imRegBaseTilingData*>(tiling);

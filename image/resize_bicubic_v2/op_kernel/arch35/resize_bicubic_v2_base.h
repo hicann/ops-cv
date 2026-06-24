@@ -36,34 +36,28 @@ class ResizeBicubicV2Base {
 public:
     __aicore__ inline ResizeBicubicV2Base(){};
 
-    __aicore__ inline void BaseInit(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe)
+    __aicore__ inline void BaseInit(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe)
     {
         this->pipe_ = pipe;
 
-        this->xGM_.SetGlobalBuffer((__gm__ uint8_t *)x);
-        this->yGM_.SetGlobalBuffer((__gm__ uint8_t *)y);
+        this->xGM_.SetGlobalBuffer((__gm__ uint8_t*)x);
+        this->yGM_.SetGlobalBuffer((__gm__ uint8_t*)y);
     };
 
 protected:
     /*
      * Floor operation
      */
-    __aicore__ inline int64_t Floor(float x)
-    {
-        return static_cast<int64_t>(x);
-    }
+    __aicore__ inline int64_t Floor(float x) { return static_cast<int64_t>(x); }
 
-    __aicore__ inline int64_t Min(int64_t a, int64_t b)
-    {
-        return (a < b) ? a : b;
-    }
+    __aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
 protected:
-    TPipe *pipe_;
+    TPipe* pipe_;
 
     GlobalTensor<uint8_t> xGM_;
     GlobalTensor<uint8_t> yGM_;
 };
 
-}  // namespace ResizeBicubicV2
-#endif  // RESIZE_BICUBIC_V2_BASE_H
+} // namespace ResizeBicubicV2
+#endif // RESIZE_BICUBIC_V2_BASE_H

@@ -31,13 +31,14 @@ struct RoiPoolingGradWithArgMaxRegBaseTilingData {
     int64_t poolChannel;
     int64_t useCoreNum;
 
-    std::string toString() const {
-        return  "yTotalCoreNum = " + std::to_string(yTotalCoreNum) + ", yDataPerCore = " + std::to_string(yDataPerCore) 
-                + ", yDataTailCore = " + std::to_string(yDataTailCore) + ", totalLength = " + std::to_string(totalLength) 
-                + ", yTotalLength = " + std::to_string(yTotalLength) + ", pooledH = " + std::to_string(pooledH) 
-                + ", pooledW = " + std::to_string(pooledW) + ", height = " + std::to_string(height) 
-                + ", width = " + std::to_string(width) + ", poolChannel = " + std::to_string(poolChannel) 
-                + ", useCoreNum = " + std::to_string(useCoreNum);
+    std::string toString() const
+    {
+        return "yTotalCoreNum = " + std::to_string(yTotalCoreNum) + ", yDataPerCore = " + std::to_string(yDataPerCore) +
+               ", yDataTailCore = " + std::to_string(yDataTailCore) + ", totalLength = " + std::to_string(totalLength) +
+               ", yTotalLength = " + std::to_string(yTotalLength) + ", pooledH = " + std::to_string(pooledH) +
+               ", pooledW = " + std::to_string(pooledW) + ", height = " + std::to_string(height) +
+               ", width = " + std::to_string(width) + ", poolChannel = " + std::to_string(poolChannel) +
+               ", useCoreNum = " + std::to_string(useCoreNum);
     }
 };
 #endif

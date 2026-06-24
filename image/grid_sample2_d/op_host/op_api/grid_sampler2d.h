@@ -18,8 +18,8 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *GridSampler2D(const aclTensor *input, const aclTensor *grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, aclOpExecutor *executor);
+const aclTensor* GridSampler2D(const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
+                               int64_t paddingMode, bool alignCorners, aclOpExecutor* executor);
 }
 
-#endif  // OP_API_INC_LEVEL0_GRID_SAMPLER2D_H_
+#endif // OP_API_INC_LEVEL0_GRID_SAMPLER2D_H_

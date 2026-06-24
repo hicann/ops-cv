@@ -31,8 +31,8 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 
-const aclTensor *UpsampleNearestExact2d(const aclTensor *self, const aclIntArray *outputSize, float scalesH,
-    float scalesW, bool exactMode, aclOpExecutor *executor)
+const aclTensor* UpsampleNearestExact2d(const aclTensor* self, const aclIntArray* outputSize, float scalesH,
+                                        float scalesW, bool exactMode, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleNearestExact2d, self, outputSize, scalesH, scalesW);
 
@@ -60,12 +60,12 @@ const aclTensor *UpsampleNearestExact2d(const aclTensor *self, const aclIntArray
         }
     }
 
-    const aclTensor *out = executor->AllocTensor(
-        selfStorageShape, selfOriginalShape, self->GetDataType(), self->GetStorageFormat(), self->GetOriginalFormat());
+    const aclTensor* out = executor->AllocTensor(selfStorageShape, selfOriginalShape, self->GetDataType(),
+                                                 self->GetStorageFormat(), self->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleNearest, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scalesH, scalesW, exactMode));
+    ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearest, OP_INPUT(self), OP_OUTPUT(out),
+                                OP_ATTR(outputSize, scalesH, scalesW, exactMode));
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -20,39 +20,29 @@
 
 using namespace std;
 
-extern "C" __global__ __aicore__ void iou_v2(
-    GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void iou_v2(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, GM_ADDR workspace,
+                                             GM_ADDR tiling);
 
-class iou_v2_test : public testing::Test
-{
+class iou_v2_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "iou_v2 SetUp\n"
-             << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "iou_v2_test TearDown\n"
-             << endl;
-    }
+    static void SetUpTestCase() { cout << "iou_v2 SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "iou_v2_test TearDown\n" << endl; }
 };
 
 // [4, 8], aligned=true, iou, float32
 TEST_F(iou_v2_test, test_aligned_iou_fp32)
 {
-
     size_t bboxesByteSize = 4 * 8 * sizeof(float);
     size_t gtboxesByteSize = 4 * 8 * sizeof(float);
     size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+    uint8_t* bboxes = (uint8_t*)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t* gtboxes = (uint8_t*)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t* overlap = (uint8_t*)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
@@ -77,18 +67,17 @@ TEST_F(iou_v2_test, test_aligned_iou_fp32)
 
 TEST_F(iou_v2_test, test_aligned_iou_fp16)
 {
-
     size_t bboxesByteSize = 4 * 8 * sizeof(float);
     size_t gtboxesByteSize = 4 * 8 * sizeof(float);
     size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+    uint8_t* bboxes = (uint8_t*)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t* gtboxes = (uint8_t*)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t* overlap = (uint8_t*)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
@@ -113,18 +102,17 @@ TEST_F(iou_v2_test, test_aligned_iou_fp16)
 
 TEST_F(iou_v2_test, test_aligned_iou_bf16)
 {
-
     size_t bboxesByteSize = 4 * 8 * sizeof(float);
     size_t gtboxesByteSize = 4 * 8 * sizeof(float);
     size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+    uint8_t* bboxes = (uint8_t*)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t* gtboxes = (uint8_t*)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t* overlap = (uint8_t*)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
@@ -257,18 +245,17 @@ TEST_F(iou_v2_test, test_aligned_iou_bf16)
 
 TEST_F(iou_v2_test, test_aligned_iof_iou_fp32)
 {
-
     size_t bboxesByteSize = 4 * 8 * sizeof(float);
     size_t gtboxesByteSize = 4 * 8 * sizeof(float);
     size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+    uint8_t* bboxes = (uint8_t*)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t* gtboxes = (uint8_t*)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t* overlap = (uint8_t*)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
@@ -293,18 +280,17 @@ TEST_F(iou_v2_test, test_aligned_iof_iou_fp32)
 
 TEST_F(iou_v2_test, test_aligned_iof_iou_fp16)
 {
-
     size_t bboxesByteSize = 4 * 8 * sizeof(float);
     size_t gtboxesByteSize = 4 * 8 * sizeof(float);
     size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+    uint8_t* bboxes = (uint8_t*)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t* gtboxes = (uint8_t*)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t* overlap = (uint8_t*)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);
@@ -329,18 +315,17 @@ TEST_F(iou_v2_test, test_aligned_iof_iou_fp16)
 
 TEST_F(iou_v2_test, test_aligned_iof_iou_bf16)
 {
-
     size_t bboxesByteSize = 4 * 8 * sizeof(float);
     size_t gtboxesByteSize = 4 * 8 * sizeof(float);
     size_t overlapByteSize = 8 * 1 * sizeof(float);
     size_t tilingDataSize = sizeof(IouV2TilingData);
 
-    uint8_t *bboxes = (uint8_t *)AscendC::GmAlloc(bboxesByteSize);
-    uint8_t *gtboxes = (uint8_t *)AscendC::GmAlloc(gtboxesByteSize);
-    uint8_t *overlap = (uint8_t *)AscendC::GmAlloc(overlapByteSize);
+    uint8_t* bboxes = (uint8_t*)AscendC::GmAlloc(bboxesByteSize);
+    uint8_t* gtboxes = (uint8_t*)AscendC::GmAlloc(gtboxesByteSize);
+    uint8_t* overlap = (uint8_t*)AscendC::GmAlloc(overlapByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(1024 * 16 * 1024);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tilingDataSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
     uint32_t numBlocks = 1;
 
     IouV2TilingData* tilingData = reinterpret_cast<IouV2TilingData*>(tiling);

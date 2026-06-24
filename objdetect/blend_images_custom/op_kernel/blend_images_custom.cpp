@@ -32,8 +32,8 @@ template <typename T>
 class KernelBlendImages {
 public:
     __aicore__ inline KernelBlendImages() {}
-    __aicore__ inline void Init(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR frame, GM_ADDR out, size_t bufferNum, size_t bufferBytes,
-                                size_t gmIdx, size_t gmDataLen)
+    __aicore__ inline void Init(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR frame, GM_ADDR out, size_t bufferNum,
+                                size_t bufferBytes, size_t gmIdx, size_t gmDataLen)
     {
         if (bufferBytes <= 0) {
             return;
@@ -62,7 +62,7 @@ public:
         size_t alphaLen = len;
         size_t rgbLen = LENGTH_RATIO * len;
         if (len <= 0) {
-            return ;
+            return;
         }
         // copyIn
         auto rgbLocal = inQueueRgb.AllocTensor<T>();
@@ -127,7 +127,8 @@ private:
 };
 
 template <typename T>
-__aicore__ void run_op(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR frame, GM_ADDR out, GM_ADDR tiling, float ubVarNum) {
+__aicore__ void run_op(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR frame, GM_ADDR out, GM_ADDR tiling, float ubVarNum)
+{
     GET_TILING_DATA(tilingData, tiling);
     VectorScheduler sch(tilingData.totalAlphaLength, GetBlockNum(), BUFFER_NUM, ubVarNum, sizeof(T));
     KernelBlendImages<T> op;
@@ -137,14 +138,15 @@ __aicore__ void run_op(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR frame, GM_ADDR out, G
 }
 
 extern "C" __global__ __aicore__ void blend_images_custom(GM_ADDR rgb, GM_ADDR alpha, GM_ADDR frame, GM_ADDR out,
-                                                         GM_ADDR workspace, GM_ADDR tiling) {
+                                                          GM_ADDR workspace, GM_ADDR tiling)
+{
     run_op<uint8_t>(rgb, alpha, frame, out, tiling, UB_VAR_NUM);
 }
 
 #ifndef __CCE_KT_TEST__
 // call of kernel function
-void blend_images_custom_do(uint32_t numBlocks, void *l2ctrl, void *stream, uint8_t *rgb, uint8_t *alpha, uint8_t *frame,
-                            uint8_t *out, uint8_t *workspace, uint8_t *tiling)
+void blend_images_custom_do(uint32_t numBlocks, void* l2ctrl, void* stream, uint8_t* rgb, uint8_t* alpha,
+                            uint8_t* frame, uint8_t* out, uint8_t* workspace, uint8_t* tiling)
 {
     blend_images_custom<<<numBlocks, l2ctrl, stream>>>(rgb, alpha, frame, out, workspace, tiling);
 }

@@ -25,8 +25,8 @@ using namespace GridSampler3DGradSimtNS;
 using namespace GridSampler3DGradSimtDetNS;
 #endif
 
-extern "C" __global__ __aicore__ void grid_sampler3_d_grad(
-    GM_ADDR grad, GM_ADDR x, GM_ADDR grid, GM_ADDR dx, GM_ADDR dgrid, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void grid_sampler3_d_grad(GM_ADDR grad, GM_ADDR x, GM_ADDR grid, GM_ADDR dx,
+                                                           GM_ADDR dgrid, GM_ADDR workspace, GM_ADDR tiling)
 {
 #if __CCE_AICORE__ != 220
     if ASCEND_IS_AIC {

@@ -18,8 +18,8 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleBilinear2dAA(const aclTensor *input, const aclIntArray *outputSize, const aclTensor *output,
-    bool alignCorners, float scales_h, float scales_w, aclOpExecutor *executor);
+const aclTensor* UpsampleBilinear2dAA(const aclTensor* input, const aclIntArray* outputSize, const aclTensor* output,
+                                      bool alignCorners, float scales_h, float scales_w, aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR2D_AA_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR2D_AA_H_

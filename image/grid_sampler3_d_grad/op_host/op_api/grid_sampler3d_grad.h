@@ -14,9 +14,10 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const std::tuple<aclTensor*, aclTensor*> GridSampler3DGrad(
-    const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, aclOpExecutor* executor);
+const std::tuple<aclTensor*, aclTensor*> GridSampler3DGrad(const aclTensor* gradOutput, const aclTensor* input,
+                                                           const aclTensor* grid, int64_t interpolationMode,
+                                                           int64_t paddingMode, bool alignCorners,
+                                                           aclOpExecutor* executor);
 }
 
 #endif // OP_API_INC_LEVEL0_GRID_SAMPLER3D_GRAD_H_

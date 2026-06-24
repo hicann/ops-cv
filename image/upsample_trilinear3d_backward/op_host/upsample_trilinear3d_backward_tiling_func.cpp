@@ -50,10 +50,9 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 static constexpr int RESERVED_WORKSPACE_SIZE = 32 * 1024 * 1024;
 
-class UpsampleTrilinear3dBackwardTiling
-{
+class UpsampleTrilinear3dBackwardTiling {
 public:
-    explicit UpsampleTrilinear3dBackwardTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleTrilinear3dBackwardTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init() const;
     ge::graphStatus RunBigKernelTiling();
 
@@ -125,10 +124,7 @@ private:
     UpsampleTrilinear3dBackwardTilingData tilingData;
 };
 
-ge::graphStatus UpsampleTrilinear3dBackwardTiling::Init() const
-{
-    return ge::GRAPH_SUCCESS;
-}
+ge::graphStatus UpsampleTrilinear3dBackwardTiling::Init() const { return ge::GRAPH_SUCCESS; }
 
 ge::graphStatus UpsampleTrilinear3dBackwardTiling::RunBigKernelTiling()
 {
@@ -175,13 +171,11 @@ bool UpsampleTrilinear3dBackwardTiling::CheckScales() const
     float scalesD = ComputeScales(scaleD, inputShapes[D_INDEX], outputShapes[D_INDEX]);
     float scalesH = ComputeScales(scaleH, inputShapes[H_INDEX], outputShapes[H_INDEX]);
     float scalesW = ComputeScales(scaleW, inputShapes[W_INDEX], outputShapes[W_INDEX]);
-    OP_CHECK_IF(
-        scalesD < MIN_SUPPORT_SCALE || scalesH < MIN_SUPPORT_SCALE || scalesW < MIN_SUPPORT_SCALE,
-        OP_LOGE(
-            tilingContext->GetNodeName(),
-            "scalesD, scalesH and scalesW are too small, scalesD [%f], scalesH [%f], scalesW [%f].", scalesD, scalesH,
-            scalesW),
-        return false);
+    OP_CHECK_IF(scalesD < MIN_SUPPORT_SCALE || scalesH < MIN_SUPPORT_SCALE || scalesW < MIN_SUPPORT_SCALE,
+                OP_LOGE(tilingContext->GetNodeName(),
+                        "scalesD, scalesH and scalesW are too small, scalesD [%f], scalesH [%f], scalesW [%f].",
+                        scalesD, scalesH, scalesW),
+                return false);
     return true;
 }
 
@@ -221,8 +215,8 @@ void UpsampleTrilinear3dBackwardTiling::GetScales()
     tilingData.set_needResizeW(needResizeW);
 }
 
-inline float UpsampleTrilinear3dBackwardTiling::ComputeScales(
-    const float scale, const int64_t inputSize, const int64_t outputSize) const
+inline float UpsampleTrilinear3dBackwardTiling::ComputeScales(const float scale, const int64_t inputSize,
+                                                              const int64_t outputSize) const
 {
     if (scale > ZERO_FLOAT) {
         return scale;
@@ -231,8 +225,8 @@ inline float UpsampleTrilinear3dBackwardTiling::ComputeScales(
     }
 }
 
-inline float UpsampleTrilinear3dBackwardTiling::AreaPixelComputeScale(
-    const int64_t inputSize, const int64_t outputSize, const float scale) const
+inline float UpsampleTrilinear3dBackwardTiling::AreaPixelComputeScale(const int64_t inputSize, const int64_t outputSize,
+                                                                      const float scale) const
 {
     if (outputSize == inputSize) {
         return ONE_FLOAT;
@@ -272,8 +266,8 @@ int64_t UpsampleTrilinear3dBackwardTiling::GetNeedCoreNum(const int64_t coreNumP
     return needCoreNum;
 }
 
-int64_t UpsampleTrilinear3dBackwardTiling::GetNeedCoreNumByDirection(
-    const int64_t coreNumPlatform, const uint8_t direction)
+int64_t UpsampleTrilinear3dBackwardTiling::GetNeedCoreNumByDirection(const int64_t coreNumPlatform,
+                                                                     const uint8_t direction)
 {
     int64_t slideNum = CeilA2B(inputShapes[direction], SLIDE_SIZE);
     int64_t eachCoreSlideNum = coreNumPlatform > 0 ? slideNum / coreNumPlatform : 0;
@@ -343,8 +337,8 @@ void UpsampleTrilinear3dBackwardTiling::GetTCubeTilingW()
     mmTilingW.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTilingW.SetOrgShape(
-        batches * outputShapes[D_INDEX] * outputShapes[H_INDEX], inputShapes[W_INDEX], outputShapes[W_INDEX]);
+    mmTilingW.SetOrgShape(batches * outputShapes[D_INDEX] * outputShapes[H_INDEX], inputShapes[W_INDEX],
+                          outputShapes[W_INDEX]);
     mmTilingW.SetShape(batches * outputShapes[D_INDEX] * outputShapes[H_INDEX], SLIDE_SIZE, singleCoreKW);
     if (mmTilingW.GetTiling(tilingData.matmulTilingW) == -1) {
         return;
@@ -389,8 +383,8 @@ void UpsampleTrilinear3dBackwardTiling::FillTilingData()
     tilingData.set_inputRows(inputRows);
     tilingData.set_needCoreNums(needCoreNums);
     tilingData.set_dataType(GetDataTypeVal());
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
@@ -428,8 +422,8 @@ inline bool UpsampleTrilinear3dBackwardTiling::FloatEqual(const float a, const f
 };
 
 template <typename T>
-inline auto UpsampleTrilinear3dBackwardTiling::GetOptionalAttr(
-    const gert::RuntimeAttrs* attrs, const int32_t idx, const T& defaultValue) const -> T
+inline auto UpsampleTrilinear3dBackwardTiling::GetOptionalAttr(const gert::RuntimeAttrs* attrs, const int32_t idx,
+                                                               const T& defaultValue) const -> T
 {
     const T* attrPtr = attrs->GetAttrPointer<T>(idx);
     T outValue = (nullptr == attrPtr) ? defaultValue : (*attrPtr);

@@ -21,7 +21,6 @@
 #include "../upsample_nearest3d/arch35/upsample_nearest3d_tiling_key.h"
 #include "../upsample_nearest3d/arch35/upsample_nearest3d_tiling_data.h"
 
-
 using namespace AscendC;
 using namespace UpsampleNearest3d;
 
@@ -30,7 +29,7 @@ __global__ __aicore__ void upsample_nearest_exact3d(GM_ADDR x, GM_ADDR y, GM_ADD
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     GM_ADDR usrWorkspace = AscendC::GetUserWorkspace(workspace);
-    if(usrWorkspace == nullptr) {
+    if (usrWorkspace == nullptr) {
         return;
     }
     TPipe pipe;
@@ -49,7 +48,7 @@ __global__ __aicore__ void upsample_nearest_exact3d(GM_ADDR x, GM_ADDR y, GM_ADD
             op.Process();
             return;
         } else {
-            if constexpr(isUint32 == SCH_MODE_1) {
+            if constexpr (isUint32 == SCH_MODE_1) {
                 Nearest3dSimt<DTYPE_X, uint32_t, true, schId> op;
                 op.Init(x, y, &tilingData);
                 op.Process();

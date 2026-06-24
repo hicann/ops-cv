@@ -25,7 +25,7 @@ using namespace aicpu;
 
 class TEST_ADJUST_SATURATION_UT : public testing::Test {
 protected:
-    std::float_t *float_null_{nullptr};
+    std::float_t* float_null_{nullptr};
     std::float_t float_0_[0];
     std::float_t float_12_[12]{1.0f};
     std::float_t float_16_[16]{0.0f};
@@ -34,8 +34,7 @@ protected:
     bool bool_22_[22]{true};
 };
 
-inline void RunKernelAdjustSaturation(std::shared_ptr<aicpu::NodeDef> node_def,
-                                      aicpu::DeviceType device_type,
+inline void RunKernelAdjustSaturation(std::shared_ptr<aicpu::NodeDef> node_def, aicpu::DeviceType device_type,
                                       uint32_t expect)
 {
     std::string node_def_str;
@@ -46,30 +45,27 @@ inline void RunKernelAdjustSaturation(std::shared_ptr<aicpu::NodeDef> node_def,
     EXPECT_EQ(ret, expect);
 }
 
-#define CREATE_NODEDEF(shapes, data_types, datas)                              \
-    auto node_def = CpuKernelUtils::CreateNodeDef();                           \
-    NodeDefBuilder(node_def.get(), "AdjustSaturation", "AdjustSaturation")     \
-        .Input({"images", (data_types)[0], (shapes)[0], (datas)[0]})           \
-        .Input({"delta", (data_types)[1], (shapes)[1], (datas)[1]})            \
+#define CREATE_NODEDEF(shapes, data_types, datas)                          \
+    auto node_def = CpuKernelUtils::CreateNodeDef();                       \
+    NodeDefBuilder(node_def.get(), "AdjustSaturation", "AdjustSaturation") \
+        .Input({"images", (data_types)[0], (shapes)[0], (datas)[0]})       \
+        .Input({"delta", (data_types)[1], (shapes)[1], (datas)[1]})        \
         .Output({"y", (data_types)[2], (shapes)[2], (datas)[2]});
 
 // ===== float32 functional test =====
-TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT) {
+TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT)
+{
     // Input: shape [2, 2, 3], 12 elements. delta = 0.5
-    float input_f32[] = {0.813376963f, 0.429118544f, 0.673147976f,
-                         0.230282947f, 0.358550310f, 0.223925725f,
-                         0.102745622f, 0.619133949f, 0.832032800f,
-                         0.495856494f, 0.687193096f, 0.674335837f};
-    float output_f32_exp[] = {0.813376963f, 0.621247768f, 0.743262470f,
-                              0.294416636f, 0.358550310f, 0.291238010f,
-                              0.467389226f, 0.725583375f, 0.832032800f,
-                              0.591524780f, 0.687193096f, 0.680764437f};
+    float input_f32[] = {0.813376963f, 0.429118544f, 0.673147976f, 0.230282947f, 0.358550310f, 0.223925725f,
+                         0.102745622f, 0.619133949f, 0.832032800f, 0.495856494f, 0.687193096f, 0.674335837f};
+    float output_f32_exp[] = {0.813376963f, 0.621247768f, 0.743262470f, 0.294416636f, 0.358550310f, 0.291238010f,
+                              0.467389226f, 0.725583375f, 0.832032800f, 0.591524780f, 0.687193096f, 0.680764437f};
     float delta[1] = {0.5f};
     float output_f32[12] = {0};
 
     vector<vector<int64_t>> shapes = {{2, 2, 3}, {1}, {2, 2, 3}};
     vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
-    vector<void *> datas = {input_f32, delta, output_f32};
+    vector<void*> datas = {input_f32, delta, output_f32};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
@@ -79,7 +75,8 @@ TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT) {
 }
 
 // ===== float16 functional test =====
-TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT16) {
+TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT16)
+{
     // Input: shape [1, 2, 3], 6 elements. delta = 0.5
     Eigen::half input_f16[6];
     input_f16[0] = Eigen::half(0.929688f);
@@ -102,7 +99,7 @@ TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT16) {
 
     vector<vector<int64_t>> shapes = {{1, 2, 3}, {1}, {1, 2, 3}};
     vector<DataType> data_types = {DT_FLOAT16, DT_FLOAT, DT_FLOAT16};
-    vector<void *> datas = {input_f16, delta, output_f16};
+    vector<void*> datas = {input_f16, delta, output_f16};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
@@ -112,58 +109,63 @@ TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT16) {
 }
 
 // ===== Exception test cases =====
-TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_SHAPE_EXCEPTION) {
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_SHAPE_EXCEPTION)
+{
     float input[12] = {1.0f};
     float delta[1] = {0.5f};
     float output[16] = {0.0f};
 
     vector<vector<int64_t>> shapes = {{2, 6}, {1}, {2, 8}};
     vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
-    vector<void *> datas = {input, delta, output};
+    vector<void*> datas = {input, delta, output};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_LAST_DIM_EXCEPTION) {
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_LAST_DIM_EXCEPTION)
+{
     float input[8] = {1.0f};
     float delta[1] = {0.5f};
     float output[8] = {0.0f};
 
     vector<vector<int64_t>> shapes = {{2, 2, 2}, {1}, {2, 2, 2}};
     vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
-    vector<void *> datas = {input, delta, output};
+    vector<void*> datas = {input, delta, output};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_DTYPE_EXCEPTION) {
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_DTYPE_EXCEPTION)
+{
     int32_t input[22] = {1};
     float delta[1] = {0.5f};
     int64_t output[22] = {0L};
 
     vector<vector<int64_t>> shapes = {{2, 11}, {1}, {2, 11}};
     vector<DataType> data_types = {DT_INT32, DT_FLOAT, DT_INT64};
-    vector<void *> datas = {input, delta, output};
+    vector<void*> datas = {input, delta, output};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_NULL_EXCEPTION) {
-    float *null_ptr = nullptr;
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_NULL_EXCEPTION)
+{
+    float* null_ptr = nullptr;
     float delta[1] = {0.5f};
 
     vector<vector<int64_t>> shapes = {{2, 11}, {1}, {2, 11}};
     vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
-    vector<void *> datas = {null_ptr, delta, null_ptr};
+    vector<void*> datas = {null_ptr, delta, null_ptr};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_ADJUST_SATURATION_UT, NO_OUTPUT_EXCEPTION) {
+TEST_F(TEST_ADJUST_SATURATION_UT, NO_OUTPUT_EXCEPTION)
+{
     float input[12] = {1.0f};
     float delta[1] = {0.5f};
 
@@ -171,18 +173,18 @@ TEST_F(TEST_ADJUST_SATURATION_UT, NO_OUTPUT_EXCEPTION) {
     NodeDefBuilder(node_def.get(), "AdjustSaturation", "AdjustSaturation")
         .Input({"images", DT_FLOAT, {2, 6}, input})
         .Input({"delta", DT_FLOAT, {1}, delta});
-    RunKernelAdjustSaturation(node_def, aicpu::DeviceType::HOST,
-                              aicpu::KERNEL_STATUS_PARAM_INVALID);
+    RunKernelAdjustSaturation(node_def, aicpu::DeviceType::HOST, aicpu::KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_BOOL_UNSUPPORT) {
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_BOOL_UNSUPPORT)
+{
     bool input[22] = {true};
     float delta[1] = {0.5f};
     bool output[22] = {true};
 
     vector<vector<int64_t>> shapes = {{2, 11}, {1}, {2, 11}};
     vector<DataType> data_types = {DT_BOOL, DT_FLOAT, DT_BOOL};
-    vector<void *> datas = {input, delta, output};
+    vector<void*> datas = {input, delta, output};
 
     CREATE_NODEDEF(shapes, data_types, datas);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);

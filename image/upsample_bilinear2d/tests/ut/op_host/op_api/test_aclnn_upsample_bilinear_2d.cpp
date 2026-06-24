@@ -15,15 +15,9 @@
 
 class l2_upsamplebilinear2d_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsamplebilinear2d_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsamplebilinear2d_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsamplebilinear2d_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsamplebilinear2d_test TearDown" << std::endl; }
 };
 
 // 空tensor
@@ -40,8 +34,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_001)
     auto output_desc = TensorDesc(inp_dims, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -62,8 +56,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_002)
     auto output_desc = TensorDesc(out, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -108,8 +102,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_nullptr_self)
     auto output_desc = TensorDesc(inp_dims, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -152,8 +146,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_dtype)
     auto output_desc = TensorDesc(inp_dims, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -174,8 +168,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim001)
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
-        OUTPUT(outputDesc));
+                        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH), // host api输入
+                        OUTPUT(outputDesc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -196,8 +190,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim002)
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
-        OUTPUT(outputDesc));
+                        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH), // host api输入
+                        OUTPUT(outputDesc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -218,8 +212,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim003)
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
-        OUTPUT(outputDesc));
+                        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH), // host api输入
+                        OUTPUT(outputDesc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -240,8 +234,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ncdim004)
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
-        OUTPUT(outputDesc));
+                        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH), // host api输入
+                        OUTPUT(outputDesc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -262,8 +256,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ScalesValid001)
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH),  // host api输入
-        OUTPUT(outputDesc));
+                        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesH, scalesH), // host api输入
+                        OUTPUT(outputDesc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -285,8 +279,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_ScalesValid002)
     auto outputDesc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesW, scalesH),  // host api输入
-        OUTPUT(outputDesc));
+                        INPUT(selfDesc, outputSizeDesc, alignCorners, scalesW, scalesH), // host api输入
+                        OUTPUT(outputDesc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -353,8 +347,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1001)
     auto output_desc = TensorDesc(out, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -374,8 +368,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1002)
     auto output_desc = TensorDesc(out, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -395,8 +389,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1003)
     auto output_desc = TensorDesc(out, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -416,8 +410,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1004)
     auto output_desc = TensorDesc(out, ACL_FLOAT, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -437,8 +431,8 @@ TEST_F(l2_upsamplebilinear2d_test, l2_upsamplebilinear2d_test_1005)
     auto output_desc = TensorDesc(out, ACL_BF16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -458,8 +452,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1006)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -479,8 +473,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1007)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -500,8 +494,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1008)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_h), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -522,8 +516,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1009)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -544,8 +538,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1010)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -566,8 +560,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1011)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_ND);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -588,8 +582,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1012)
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -610,8 +604,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend910B2_l2_upsamplebilinear2d_test_1013)
     auto output_desc = TensorDesc(out, ACL_BF16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -632,8 +626,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_0
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -654,8 +648,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_0
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NCHW);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -676,8 +670,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_0
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -698,8 +692,8 @@ TEST_F(l2_upsamplebilinear2d_test, Ascend950PR_9599_l2_upsamplebilinear2d_test_0
     auto output_desc = TensorDesc(out, ACL_FLOAT16, ACL_FORMAT_NHWC);
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),  // host api输入
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), // host api输入
+                        OUTPUT(output_desc));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);

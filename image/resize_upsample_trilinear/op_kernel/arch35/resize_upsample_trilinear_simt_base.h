@@ -25,8 +25,8 @@ using namespace AscendC;
 const int32_t THREAD_NUM_B32 = 512;
 const int32_t THREAD_NUM_B64 = 512;
 
-static __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcSourceCoord(
-    int outIdx, float scale, bool alignCorners)
+static __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcSourceCoord(int outIdx, float scale,
+                                                                                              bool alignCorners)
 {
     if (alignCorners) {
         return static_cast<float>(outIdx) * scale;
@@ -34,8 +34,7 @@ static __simt_callee__ __aicore__ __attribute__((always_inline)) inline float Ca
     return fmaxf((static_cast<float>(outIdx) + 0.5f) * scale - 0.5f, 0.0f);
 }
 
-static __simt_callee__ __aicore__ __attribute__((always_inline)) inline int ClampIndex(
-    int idx, int maxVal)
+static __simt_callee__ __aicore__ __attribute__((always_inline)) inline int ClampIndex(int idx, int maxVal)
 {
     return (idx < 0) ? 0 : (idx > maxVal) ? maxVal : idx;
 }
@@ -99,8 +98,10 @@ struct CombinedCoeffs {
     float lambda1_mu1;
 };
 
-static __simt_callee__ __aicore__ __attribute__((always_inline)) inline CombinedCoeffs CalcCombinedCoeffs(
-    float lambda0, float lambda1, float mu0, float mu1)
+static __simt_callee__ __aicore__ __attribute__((always_inline)) inline CombinedCoeffs CalcCombinedCoeffs(float lambda0,
+                                                                                                          float lambda1,
+                                                                                                          float mu0,
+                                                                                                          float mu1)
 {
     CombinedCoeffs c;
     c.lambda0_mu0 = lambda0 * mu0;
@@ -201,16 +202,16 @@ static __simt_callee__ __aicore__ __attribute__((always_inline)) inline SimtThre
     s.src_d = CalcSourceCoord(s.od, p.scale_d, p.alignCorners);
     s.src_h = CalcSourceCoord(s.oh, p.scale_h, p.alignCorners);
     s.depthCoeffs = CalcDepthInterp<T2>(s.src_d, p.maxD, s.input_base, p.stride_d_input);
-    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1, p.stride_h_input);
-    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1,
-                                           s.heightCoeffs.mu0, s.heightCoeffs.mu1);
+    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1,
+                                          p.stride_h_input);
+    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1, s.heightCoeffs.mu0,
+                                          s.heightCoeffs.mu1);
     return s;
 }
 
 template <typename T1, typename T2>
 static __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeTrilinearValue(
-    __gm__ T1* input, const HeightInterpCoeffs<T2>& hc, int z0, int z1,
-    float nu0, float nu1, const CombinedCoeffs& cc)
+    __gm__ T1* input, const HeightInterpCoeffs<T2>& hc, int z0, int z1, float nu0, float nu1, const CombinedCoeffs& cc)
 {
     T1 raw_v000 = asc_ldcg(&input[hc.addr_d0_h0 + z0]);
     T1 raw_v001 = asc_ldcg(&input[hc.addr_d0_h0 + z1]);
@@ -223,26 +224,34 @@ static __simt_callee__ __aicore__ __attribute__((always_inline)) inline float Co
 
     float v000, v001, v010, v011, v100, v101, v110, v111;
     if constexpr (std::is_same<T1, half>::value || std::is_same<T1, bfloat16_t>::value) {
-        v000 = static_cast<float>(raw_v000); v001 = static_cast<float>(raw_v001);
-        v010 = static_cast<float>(raw_v010); v011 = static_cast<float>(raw_v011);
-        v100 = static_cast<float>(raw_v100); v101 = static_cast<float>(raw_v101);
-        v110 = static_cast<float>(raw_v110); v111 = static_cast<float>(raw_v111);
+        v000 = static_cast<float>(raw_v000);
+        v001 = static_cast<float>(raw_v001);
+        v010 = static_cast<float>(raw_v010);
+        v011 = static_cast<float>(raw_v011);
+        v100 = static_cast<float>(raw_v100);
+        v101 = static_cast<float>(raw_v101);
+        v110 = static_cast<float>(raw_v110);
+        v111 = static_cast<float>(raw_v111);
     } else {
-        v000 = raw_v000; v001 = raw_v001;
-        v010 = raw_v010; v011 = raw_v011;
-        v100 = raw_v100; v101 = raw_v101;
-        v110 = raw_v110; v111 = raw_v111;
+        v000 = raw_v000;
+        v001 = raw_v001;
+        v010 = raw_v010;
+        v011 = raw_v011;
+        v100 = raw_v100;
+        v101 = raw_v101;
+        v110 = raw_v110;
+        v111 = raw_v111;
     }
 
-    return v000 * cc.lambda0_mu0 * nu0 + v001 * cc.lambda0_mu0 * nu1
-         + v010 * cc.lambda0_mu1 * nu0 + v011 * cc.lambda0_mu1 * nu1
-         + v100 * cc.lambda1_mu0 * nu0 + v101 * cc.lambda1_mu0 * nu1
-         + v110 * cc.lambda1_mu1 * nu0 + v111 * cc.lambda1_mu1 * nu1;
+    return v000 * cc.lambda0_mu0 * nu0 + v001 * cc.lambda0_mu0 * nu1 + v010 * cc.lambda0_mu1 * nu0 +
+           v011 * cc.lambda0_mu1 * nu1 + v100 * cc.lambda1_mu0 * nu0 + v101 * cc.lambda1_mu0 * nu1 +
+           v110 * cc.lambda1_mu1 * nu0 + v111 * cc.lambda1_mu1 * nu1;
 }
 
 template <typename T1, typename T2>
-static __simt_callee__ __aicore__ __attribute__((always_inline)) inline void StoreOutputValue(
-    __gm__ T1* output, T2 output_addr, float result)
+static __simt_callee__ __aicore__ __attribute__((always_inline)) inline void StoreOutputValue(__gm__ T1* output,
+                                                                                              T2 output_addr,
+                                                                                              float result)
 {
     if constexpr (std::is_same<T1, half>::value || std::is_same<T1, bfloat16_t>::value) {
         T1 output_val = static_cast<T1>(result);
@@ -261,9 +270,10 @@ static __simt_callee__ __aicore__ __attribute__((always_inline)) inline void Upd
     s.src_d = CalcSourceCoord(0, p.scale_d, p.alignCorners);
     s.src_h = CalcSourceCoord(0, p.scale_h, p.alignCorners);
     s.depthCoeffs = CalcDepthInterp<T2>(s.src_d, p.maxD, s.input_base, p.stride_d_input);
-    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1, p.stride_h_input);
-    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1,
-                                           s.heightCoeffs.mu0, s.heightCoeffs.mu1);
+    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1,
+                                          p.stride_h_input);
+    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1, s.heightCoeffs.mu0,
+                                          s.heightCoeffs.mu1);
 }
 
 template <typename T2>
@@ -272,9 +282,10 @@ static __simt_callee__ __aicore__ __attribute__((always_inline)) inline void Upd
 {
     s.src_d = CalcSourceCoord(s.od, p.scale_d, p.alignCorners);
     s.depthCoeffs = CalcDepthInterp<T2>(s.src_d, p.maxD, s.input_base, p.stride_d_input);
-    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1, p.stride_h_input);
-    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1,
-                                           s.heightCoeffs.mu0, s.heightCoeffs.mu1);
+    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1,
+                                          p.stride_h_input);
+    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1, s.heightCoeffs.mu0,
+                                          s.heightCoeffs.mu1);
     s.output_base = s.bc * p.stride_bc_output + static_cast<T2>(s.od) * p.stride_d_output;
 }
 
@@ -283,9 +294,10 @@ static __simt_callee__ __aicore__ __attribute__((always_inline)) inline void Upd
     SimtThreadState<T2>& s, const SimtComputeParams<T2>& p)
 {
     s.src_h = CalcSourceCoord(s.oh, p.scale_h, p.alignCorners);
-    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1, p.stride_h_input);
-    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1,
-                                           s.heightCoeffs.mu0, s.heightCoeffs.mu1);
+    s.heightCoeffs = CalcHeightInterp<T2>(s.src_h, p.maxH, s.depthCoeffs.addr_d0, s.depthCoeffs.addr_d1,
+                                          p.stride_h_input);
+    s.combinedCoeffs = CalcCombinedCoeffs(s.depthCoeffs.lambda0, s.depthCoeffs.lambda1, s.heightCoeffs.mu0,
+                                          s.heightCoeffs.mu1);
     s.output_base = s.bc * p.stride_bc_output + static_cast<T2>(s.od) * p.stride_d_output +
                     static_cast<T2>(s.oh) * p.stride_h_output;
 }
@@ -367,17 +379,17 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__ void calleeInt32(
-    __gm__ T1* output, __gm__ T1* input, T2 blkStartOffset, T2 blkProcessNum,
-    const ResizeUpsampleTrilinearArch35TilingData* __restrict tilingData)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__
+    void calleeInt32(__gm__ T1* output, __gm__ T1* input, T2 blkStartOffset, T2 blkProcessNum,
+                     const ResizeUpsampleTrilinearArch35TilingData* __restrict tilingData)
 {
     SimtCompute<T1, T2>(output, input, blkStartOffset, blkProcessNum, tilingData);
 }
 
 template <typename T1, typename T2>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__ void calleeInt64(
-    __gm__ T1* output, __gm__ T1* input, T2 blkStartOffset, T2 blkProcessNum,
-    const ResizeUpsampleTrilinearArch35TilingData* __restrict tilingData)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__
+    void calleeInt64(__gm__ T1* output, __gm__ T1* input, T2 blkStartOffset, T2 blkProcessNum,
+                     const ResizeUpsampleTrilinearArch35TilingData* __restrict tilingData)
 {
     SimtCompute<T1, T2>(output, input, blkStartOffset, blkProcessNum, tilingData);
 }

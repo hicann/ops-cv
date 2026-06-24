@@ -27,8 +27,7 @@ static aclnnStatus CheckSocValid()
 {
     SocVersion socVersion = GetCurrentPlatformInfo().GetSocVersion();
     if (!IsRegBase()) {
-        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "support for %s is not implemented",
-                op::ToString(socVersion).GetString());
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "support for %s is not implemented", op::ToString(socVersion).GetString());
         return ACLNN_ERR_RUNTIME_ERROR;
     }
     return ACLNN_SUCCESS;
@@ -37,12 +36,12 @@ static aclnnStatus CheckSocValid()
 extern "C" {
 #endif
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT,
+                                                                       op::DataType::DT_FLOAT16};
 static constexpr size_t NCHW_DIMS = 4;
 static constexpr size_t ROIS_DIM1 = 5;
 
-static bool CheckNotNull(const aclTensor *x, const aclTensor *rois, const aclTensor *y, const aclTensor *argmax)
+static bool CheckNotNull(const aclTensor* x, const aclTensor* rois, const aclTensor* y, const aclTensor* argmax)
 {
     OP_CHECK_NULL(x, return false);
     OP_CHECK_NULL(rois, return false);
@@ -51,7 +50,7 @@ static bool CheckNotNull(const aclTensor *x, const aclTensor *rois, const aclTen
     return true;
 }
 
-static bool CheckDtype(const aclTensor *x, const aclTensor *rois, const aclTensor *y, const aclTensor *argmax)
+static bool CheckDtype(const aclTensor* x, const aclTensor* rois, const aclTensor* y, const aclTensor* argmax)
 {
     OP_CHECK_DTYPE_NOT_SUPPORT(x, DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(rois, DTYPE_SUPPORT_LIST, return false);
@@ -65,21 +64,21 @@ static bool CheckDtype(const aclTensor *x, const aclTensor *rois, const aclTenso
     return true;
 }
 
-static bool CheckFormatValid(const aclTensor *x, const aclTensor *rois, const aclTensor *y, const aclTensor *argmax)
+static bool CheckFormatValid(const aclTensor* x, const aclTensor* rois, const aclTensor* y, const aclTensor* argmax)
 {
     bool formatValid = x->GetStorageFormat() == op::Format::FORMAT_ND &&
                        rois->GetStorageFormat() == op::Format::FORMAT_ND &&
                        y->GetStorageFormat() == op::Format::FORMAT_ND &&
                        argmax->GetStorageFormat() == op::Format::FORMAT_ND;
     if (!formatValid) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "x's format should be ND, rois's format should be ND, y's format should be ND, argmax's format should be ND.");
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "x's format should be ND, rois's format should be ND, y's format should be "
+                                         "ND, argmax's format should be ND.");
     }
     return formatValid;
 }
 
-static bool CheckShape(const aclTensor *x, const aclTensor *rois, int64_t pooled_h, int64_t pooled_w,
-    const aclTensor *y, const aclTensor *argmax)
+static bool CheckShape(const aclTensor* x, const aclTensor* rois, int64_t pooled_h, int64_t pooled_w,
+                       const aclTensor* y, const aclTensor* argmax)
 {
     OP_CHECK_WRONG_DIMENSION(x, NCHW_DIMS, return false);
     OP_CHECK_WRONG_DIMENSION(rois, 2, return false);
@@ -93,13 +92,14 @@ static bool CheckShape(const aclTensor *x, const aclTensor *rois, int64_t pooled
     int64_t channels = static_cast<int64_t>(x->GetViewShape().GetDim(1));
     if (y->GetViewShape().GetDim(0) != numRois || y->GetViewShape().GetDim(1) != channels ||
         y->GetViewShape().GetDim(2) != pooled_h || y->GetViewShape().GetDim(3) != pooled_w) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "y shape must be [%ld, %ld, %ld, %ld].", numRois, channels, pooled_h, pooled_w);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "y shape must be [%ld, %ld, %ld, %ld].", numRois, channels, pooled_h,
+                pooled_w);
         return false;
     }
     if (argmax->GetViewShape().GetDim(0) != numRois || argmax->GetViewShape().GetDim(1) != channels ||
         argmax->GetViewShape().GetDim(2) != pooled_h || argmax->GetViewShape().GetDim(3) != pooled_w) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "argmax shape must be [%ld, %ld, %ld, %ld].",
-            numRois, channels, pooled_h, pooled_w);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "argmax shape must be [%ld, %ld, %ld, %ld].", numRois, channels, pooled_h,
+                pooled_w);
         return false;
     }
     return true;
@@ -118,8 +118,9 @@ static bool CheckAttr(int64_t pooled_h, int64_t pooled_w, float spatial_scale_h,
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *x, const aclTensor *rois, int64_t pooled_h, int64_t pooled_w,
-    float spatial_scale_h, float spatial_scale_w, const aclTensor *y, const aclTensor *argmax)
+static aclnnStatus CheckParams(const aclTensor* x, const aclTensor* rois, int64_t pooled_h, int64_t pooled_w,
+                               float spatial_scale_h, float spatial_scale_w, const aclTensor* y,
+                               const aclTensor* argmax)
 {
     CHECK_RET(CheckNotNull(x, rois, y, argmax), ACLNN_ERR_PARAM_NULLPTR);
     CHECK_RET(CheckDtype(x, rois, y, argmax), ACLNN_ERR_PARAM_INVALID);
@@ -129,17 +130,18 @@ static aclnnStatus CheckParams(const aclTensor *x, const aclTensor *rois, int64_
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(const aclTensor *x, const aclTensor *rois,
-    int64_t pooled_h, int64_t pooled_w, float spatial_scale_h, float spatial_scale_w, aclTensor *y, aclTensor *argmax,
-    uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(const aclTensor* x, const aclTensor* rois, int64_t pooled_h,
+                                                      int64_t pooled_w, float spatial_scale_h, float spatial_scale_w,
+                                                      aclTensor* y, aclTensor* argmax, uint64_t* workspaceSize,
+                                                      aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
     auto ret = CheckSocValid();
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
-    L2_DFX_PHASE_1(aclnnRoiPoolingWithArgMax,
-        DFX_IN(x, rois, pooled_h, pooled_w, spatial_scale_h, spatial_scale_w), DFX_OUT(y, argmax));
+    L2_DFX_PHASE_1(aclnnRoiPoolingWithArgMax, DFX_IN(x, rois, pooled_h, pooled_w, spatial_scale_h, spatial_scale_w),
+                   DFX_OUT(y, argmax));
 
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -162,16 +164,16 @@ aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(const aclTensor *x, const 
     int64_t poolChannel = static_cast<int64_t>(x->GetViewShape().GetDim(1));
 
     int64_t roiNumArr[] = {numRois};
-    aclIntArray *roiNumArray = uniqueExecutor.get()->AllocIntArray(roiNumArr, 1);
+    aclIntArray* roiNumArray = uniqueExecutor.get()->AllocIntArray(roiNumArr, 1);
     CHECK_RET(roiNumArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto roiActualNumTensor = uniqueExecutor.get()->ConvertToTensor(roiNumArray, op::DataType::DT_INT32);
     CHECK_RET(roiActualNumTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    const aclTensor *outY = nullptr;
-    const aclTensor *outArgmax = nullptr;
-    auto outFirst = l0op::RoiPoolingWithArgMax(xContiguous, roisContiguous, roiActualNumTensor,
-        pooled_h, pooled_w, spatial_scale_h, spatial_scale_w, poolChannel,
-        uniqueExecutor.get(), &outY, &outArgmax);
+    const aclTensor* outY = nullptr;
+    const aclTensor* outArgmax = nullptr;
+    auto outFirst = l0op::RoiPoolingWithArgMax(xContiguous, roisContiguous, roiActualNumTensor, pooled_h, pooled_w,
+                                               spatial_scale_h, spatial_scale_w, poolChannel, uniqueExecutor.get(),
+                                               &outY, &outArgmax);
     CHECK_RET(outFirst != nullptr, ACLNN_ERR_INNER_NULLPTR);
     CHECK_RET(outY != nullptr && outArgmax != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -185,8 +187,8 @@ aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(const aclTensor *x, const 
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnRoiPoolingWithArgMax(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnRoiPoolingWithArgMax(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                      aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnRoiPoolingWithArgMax);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

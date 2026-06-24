@@ -35,41 +35,38 @@ class KernelBlendFaceBgPartTwo {
 public:
     __aicore__ inline KernelBlendFaceBgPartTwo() {}
 
-    __aicore__ inline void Init(GM_ADDR acc_face, GM_ADDR acc_mask, GM_ADDR max_mask,
-                                GM_ADDR bg_img, GM_ADDR fused_img,
-                                const BlendFaceBgPartTwoTilingData* tilingData,
-                                TPipe* pipePtr)
+    __aicore__ inline void Init(GM_ADDR acc_face, GM_ADDR acc_mask, GM_ADDR max_mask, GM_ADDR bg_img, GM_ADDR fused_img,
+                                const BlendFaceBgPartTwoTilingData* tilingData, TPipe* pipePtr)
     {
         this->pipe = pipePtr;
         this->tileSize = tilingData->tileSize;
-        this->epsilon  = tilingData->epsilon;
+        this->epsilon = tilingData->epsilon;
 
         uint32_t baseElems = tilingData->baseElems;
-        uint32_t pivot     = tilingData->pivot;
+        uint32_t pivot = tilingData->pivot;
 
         uint32_t blockId = GetBlockIdx();
         this->myElems = baseElems + (blockId < pivot ? 1U : 0U);
-        uint64_t myStart = static_cast<uint64_t>(blockId) * baseElems +
-                           (blockId < pivot ? blockId : pivot);
+        uint64_t myStart = static_cast<uint64_t>(blockId) * baseElems + (blockId < pivot ? blockId : pivot);
 
         this->innerLoops = (this->myElems + this->tileSize - 1) / this->tileSize;
 
         accFaceGm.SetGlobalBuffer((__gm__ T*)acc_face + myStart, this->myElems);
         accMaskGm.SetGlobalBuffer((__gm__ T*)acc_mask + myStart, this->myElems);
         maxMaskGm.SetGlobalBuffer((__gm__ T*)max_mask + myStart, this->myElems);
-        bgImgGm.SetGlobalBuffer  ((__gm__ BgT*)bg_img + myStart, this->myElems);
+        bgImgGm.SetGlobalBuffer((__gm__ BgT*)bg_img + myStart, this->myElems);
         fusedImgGm.SetGlobalBuffer((__gm__ T*)fused_img + myStart, this->myElems);
 
         pipe->InitBuffer(inQueueAccFace, BUFFER_NUM, this->tileSize * sizeof(T));
         pipe->InitBuffer(inQueueAccMask, BUFFER_NUM, this->tileSize * sizeof(T));
         pipe->InitBuffer(inQueueMaxMask, BUFFER_NUM, this->tileSize * sizeof(T));
-        pipe->InitBuffer(inQueueBgImg,   BUFFER_NUM, this->tileSize * sizeof(BgT));
+        pipe->InitBuffer(inQueueBgImg, BUFFER_NUM, this->tileSize * sizeof(BgT));
         pipe->InitBuffer(outQueueFusedImg, BUFFER_NUM, this->tileSize * sizeof(T));
 
         pipe->InitBuffer(fusionFaceBuf, this->tileSize * sizeof(T));
-        pipe->InitBuffer(invMaxBuf,     this->tileSize * sizeof(T));
-        pipe->InitBuffer(bgPartBuf,     this->tileSize * sizeof(T));
-        pipe->InitBuffer(facePartBuf,   this->tileSize * sizeof(T));
+        pipe->InitBuffer(invMaxBuf, this->tileSize * sizeof(T));
+        pipe->InitBuffer(bgPartBuf, this->tileSize * sizeof(T));
+        pipe->InitBuffer(facePartBuf, this->tileSize * sizeof(T));
         if constexpr (sizeof(BgT) != sizeof(T)) {
             pipe->InitBuffer(bgImgHalfBuf, this->tileSize * sizeof(half));
             pipe->InitBuffer(bgImgCastBuf, this->tileSize * sizeof(T));
@@ -106,7 +103,7 @@ private:
         DataCopyPad(accFaceLocal, accFaceGm[offset], copyParams, padParams);
         DataCopyPad(accMaskLocal, accMaskGm[offset], copyParams, padParams);
         DataCopyPad(maxMaskLocal, maxMaskGm[offset], copyParams, padParams);
-        DataCopyPad(bgImgLocal,   bgImgGm[offset],   bgCopyParams, bgPadParams);
+        DataCopyPad(bgImgLocal, bgImgGm[offset], bgCopyParams, bgPadParams);
 
         inQueueAccFace.EnQue(accFaceLocal);
         inQueueAccMask.EnQue(accMaskLocal);
@@ -122,9 +119,9 @@ private:
         LocalTensor<BgT> bgImgLocal = inQueueBgImg.template DeQue<BgT>();
 
         LocalTensor<T> fusionFaceLocal = fusionFaceBuf.template Get<T>();
-        LocalTensor<T> invMaxLocal     = invMaxBuf.template Get<T>();
-        LocalTensor<T> bgPartLocal     = bgPartBuf.template Get<T>();
-        LocalTensor<T> facePartLocal   = facePartBuf.template Get<T>();
+        LocalTensor<T> invMaxLocal = invMaxBuf.template Get<T>();
+        LocalTensor<T> bgPartLocal = bgPartBuf.template Get<T>();
+        LocalTensor<T> facePartLocal = facePartBuf.template Get<T>();
         LocalTensor<T> bgImgCalcLocal;
 
         LocalTensor<T> fusedImgLocal = outQueueFusedImg.template AllocTensor<T>();
@@ -209,10 +206,10 @@ private:
     GlobalTensor<BgT> bgImgGm;
     GlobalTensor<T> fusedImgGm;
 
-    uint32_t myElems    = 0;
+    uint32_t myElems = 0;
     uint32_t innerLoops = 0;
-    uint32_t tileSize   = 0;
-    float    epsilon    = 0.0f;
+    uint32_t tileSize = 0;
+    float epsilon = 0.0f;
 };
 
 } // namespace NsBlendFaceBgPartTwo

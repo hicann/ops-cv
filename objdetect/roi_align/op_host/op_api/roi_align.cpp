@@ -25,8 +25,9 @@ static const size_t DIM_3 = 3;
 
 OP_TYPE_REGISTER(ROIAlign);
 
-const aclTensor *ROIAlign(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    float spatialScale, int outputHeight, int outputWidth, int samplingRatio, const char *mode, aclOpExecutor *executor)
+const aclTensor* ROIAlign(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                          float spatialScale, int outputHeight, int outputWidth, int samplingRatio, const char* mode,
+                          aclOpExecutor* executor)
 {
     L0_DFX(ROIAlign, self, rois, batchIndices, spatialScale, outputHeight, outputWidth, samplingRatio, mode);
 
@@ -42,7 +43,7 @@ const aclTensor *ROIAlign(const aclTensor *self, const aclTensor *rois, const ac
     outOriginalShape.SetDim(DIM_3, outputWidth);
 
     auto out = executor->AllocTensor(outStorageShape, outOriginalShape, self->GetDataType(), self->GetStorageFormat(),
-        self->GetOriginalFormat());
+                                     self->GetOriginalFormat());
     if (out == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc out tensor failed");
         return nullptr;
@@ -50,14 +51,14 @@ const aclTensor *ROIAlign(const aclTensor *self, const aclTensor *rois, const ac
 
     // 调用device的RoiAlign算子
     ADD_TO_LAUNCHER_LIST_AICORE(ROIAlign, OP_INPUT(self, rois, batchIndices), OP_OUTPUT(out),
-        OP_ATTR(spatialScale, outputHeight, outputWidth, samplingRatio, 0, mode));
+                                OP_ATTR(spatialScale, outputHeight, outputWidth, samplingRatio, 0, mode));
 
     return out;
 }
 
-const aclTensor *ROIAlignV2(const aclTensor *self, const aclTensor *boxes, float spatialScale,
-    int64_t outputHeight, int64_t outputWidth, int64_t samplingRatio, const char *mode, int64_t roiEndMode, 
-    aclOpExecutor *executor)
+const aclTensor* ROIAlignV2(const aclTensor* self, const aclTensor* boxes, float spatialScale, int64_t outputHeight,
+                            int64_t outputWidth, int64_t samplingRatio, const char* mode, int64_t roiEndMode,
+                            aclOpExecutor* executor)
 {
     L0_DFX(ROIAlignV2, self, boxes, spatialScale, outputHeight, outputWidth, samplingRatio, mode, roiEndMode);
 
@@ -73,17 +74,18 @@ const aclTensor *ROIAlignV2(const aclTensor *self, const aclTensor *boxes, float
     outOriginalShape.SetDim(DIM_3, outputWidth);
 
     auto out = executor->AllocTensor(outStorageShape, outOriginalShape, self->GetDataType(), self->GetStorageFormat(),
-        self->GetOriginalFormat());
+                                     self->GetOriginalFormat());
     if (out == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc out tensor failed");
         return nullptr;
     }
 
     // 调用device的RoiAlign算子
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ROIAlign, OP_INPUT(self, boxes), OP_OUTPUT(out),
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        ROIAlign, OP_INPUT(self, boxes), OP_OUTPUT(out),
         OP_ATTR(spatialScale, outputHeight, outputWidth, samplingRatio, roiEndMode, mode));
-    OP_CHECK(ret ==  ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ROIAlignV2 ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+    OP_CHECK(ret == ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ROIAlignV2 ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
 
     return out;
 }

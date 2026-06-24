@@ -18,8 +18,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ResizeNearestNeighborV2(const aclTensor *x, const aclTensor *size, const aclFloatArray *scales,
-    bool alignCorners, bool halfPixelCenters, const aclTensor *y, aclOpExecutor *executor);
+const aclTensor* ResizeNearestNeighborV2(const aclTensor* x, const aclTensor* size, const aclFloatArray* scales,
+                                         bool alignCorners, bool halfPixelCenters, const aclTensor* y,
+                                         aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_OP_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_OP_H_

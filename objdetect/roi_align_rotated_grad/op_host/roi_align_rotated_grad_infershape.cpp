@@ -18,61 +18,59 @@
 using namespace ge;
 using namespace std;
 
-namespace
-{
-    const uint32_t INPUT_X_GRAD = 0;
-    const uint32_t INPUT_ROIS = 1;
+namespace {
+const uint32_t INPUT_X_GRAD = 0;
+const uint32_t INPUT_ROIS = 1;
 
-    const uint32_t INPUT_Y_GRAD_SHAPE = 0;
-    const uint32_t INPUT_POOLED_H = 1;
-    const uint32_t INPUT_POOLED_W = 2;
-    const uint32_t INPUT_SPATIAL_SCALE = 3;
-    const uint32_t INPUT_SAMPLING_RATIO = 4;
-    const uint32_t INPUT_ALIGNED = 5;
-    const uint32_t INPUT_CLOCKWISE = 6;
+const uint32_t INPUT_Y_GRAD_SHAPE = 0;
+const uint32_t INPUT_POOLED_H = 1;
+const uint32_t INPUT_POOLED_W = 2;
+const uint32_t INPUT_SPATIAL_SCALE = 3;
+const uint32_t INPUT_SAMPLING_RATIO = 4;
+const uint32_t INPUT_ALIGNED = 5;
+const uint32_t INPUT_CLOCKWISE = 6;
 
-    const uint32_t BOX_SIZE_DIM = 1;
-    const uint32_t BATCH_SIZE_DIM = 0;
-    const uint32_t HEIGHT_DIM = 1;
-    const uint32_t WIDTH_DIM = 2;
-    const uint32_t CHANNEL_DIM = 3;
+const uint32_t BOX_SIZE_DIM = 1;
+const uint32_t BATCH_SIZE_DIM = 0;
+const uint32_t HEIGHT_DIM = 1;
+const uint32_t WIDTH_DIM = 2;
+const uint32_t CHANNEL_DIM = 3;
 
-    const uint32_t OUTPUT_Y_GRAD = 0;
+const uint32_t OUTPUT_Y_GRAD = 0;
 } // namespace
 
-namespace ge
+namespace ge {
+static ge::graphStatus InferShapeForRoiAlignRotatedGrad(gert::InferShapeContext* context)
 {
-    static ge::graphStatus InferShapeForRoiAlignRotatedGrad(gert::InferShapeContext *context)
-    {
-        auto attrs = context->GetAttrs();
-        if (attrs == nullptr)
-        {
-            return ge::GRAPH_FAILED;
-        }
-
-        auto inputShape = attrs->GetListInt(INPUT_Y_GRAD_SHAPE)->GetData();
-        uint32_t batchSize = inputShape[BATCH_SIZE_DIM];
-        uint32_t channels = inputShape[CHANNEL_DIM];
-        uint32_t height = inputShape[HEIGHT_DIM];
-        uint32_t width = inputShape[WIDTH_DIM];
-
-        gert::Shape *gradInputShape = context->GetOutputShape(OUTPUT_Y_GRAD);
-        if (gradInputShape == nullptr)
-        {
-            return ge::GRAPH_FAILED;
-        }
-        gradInputShape->AppendDim(batchSize);
-        gradInputShape->AppendDim(height);
-        gradInputShape->AppendDim(width);
-        gradInputShape->AppendDim(channels);
-        return GRAPH_SUCCESS;
-    }
-    static ge::graphStatus InferDataTypeForRoiAlignRotatedGrad(gert::InferDataTypeContext *context)
-    {
-        auto gradOutputDtype = context->GetInputDataType(INPUT_X_GRAD);
-        context->SetOutputDataType(OUTPUT_Y_GRAD, gradOutputDtype);
-        return GRAPH_SUCCESS;
+    auto attrs = context->GetAttrs();
+    if (attrs == nullptr) {
+        return ge::GRAPH_FAILED;
     }
 
-    IMPL_OP_INFERSHAPE(RoiAlignRotatedGrad).InferShape(InferShapeForRoiAlignRotatedGrad).InferDataType(InferDataTypeForRoiAlignRotatedGrad);
+    auto inputShape = attrs->GetListInt(INPUT_Y_GRAD_SHAPE)->GetData();
+    uint32_t batchSize = inputShape[BATCH_SIZE_DIM];
+    uint32_t channels = inputShape[CHANNEL_DIM];
+    uint32_t height = inputShape[HEIGHT_DIM];
+    uint32_t width = inputShape[WIDTH_DIM];
+
+    gert::Shape* gradInputShape = context->GetOutputShape(OUTPUT_Y_GRAD);
+    if (gradInputShape == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
+    gradInputShape->AppendDim(batchSize);
+    gradInputShape->AppendDim(height);
+    gradInputShape->AppendDim(width);
+    gradInputShape->AppendDim(channels);
+    return GRAPH_SUCCESS;
 }
+static ge::graphStatus InferDataTypeForRoiAlignRotatedGrad(gert::InferDataTypeContext* context)
+{
+    auto gradOutputDtype = context->GetInputDataType(INPUT_X_GRAD);
+    context->SetOutputDataType(OUTPUT_Y_GRAD, gradOutputDtype);
+    return GRAPH_SUCCESS;
+}
+
+IMPL_OP_INFERSHAPE(RoiAlignRotatedGrad)
+    .InferShape(InferShapeForRoiAlignRotatedGrad)
+    .InferDataType(InferDataTypeForRoiAlignRotatedGrad);
+} // namespace ge

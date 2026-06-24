@@ -31,31 +31,30 @@ constexpr int8_t W_DIRECTION = 2;
 constexpr int8_t RESERVED_LENGTH = 5;
 
 template <typename T>
-class UpsampleNearest3dGradND
-{
+class UpsampleNearest3dGradND {
 public:
     TPipe pipe;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulD;
 
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
 
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
 
     __aicore__ inline UpsampleNearest3dGradND(){};
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR y, bool isExact, GM_ADDR workspace, UpsampleNearest3dGradTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, bool isExact, GM_ADDR workspace,
+                                UpsampleNearest3dGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -102,12 +101,12 @@ private:
     __aicore__ inline void CalculateIntermediateTensor(int8_t direction, int64_t index, int64_t length, float scale);
     __aicore__ inline void CalculateRadioTensor(int8_t direction, int64_t index, int64_t length, int64_t startIdx);
     __aicore__ inline void CopyRadioTensorToGm();
-    __aicore__ inline void CalculateWidthExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
-    __aicore__ inline void CalculateHeightExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
-    __aicore__ inline void CalculateDepthExtension(
-        int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length);
+    __aicore__ inline void CalculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                   int64_t length);
+    __aicore__ inline void CalculateHeightExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                    int64_t length);
+    __aicore__ inline void CalculateDepthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd,
+                                                   int64_t length);
 
 private:
     TBuf<QuePosition::VECCALC> srcIndexQueue;
@@ -169,8 +168,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dGradND<T>::Init(
-    GM_ADDR x, GM_ADDR y, bool isExact, GM_ADDR workspace, UpsampleNearest3dGradTilingData* tilingData)
+__aicore__ inline void UpsampleNearest3dGradND<T>::Init(GM_ADDR x, GM_ADDR y, bool isExact, GM_ADDR workspace,
+                                                        UpsampleNearest3dGradTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
     isExactFlag = isExact;
@@ -189,8 +188,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::Init(
     if (GetBlockIdx() == 0) {
         int64_t needCoreNum = Max(needCoreNums[0], needCoreNums[1]);
         needCoreNum = Max(needCoreNum, needCoreNums[2]);
-        int64_t intermediateTensorSize =
-            intermediateMatrixSizeW + intermediateMatrixSizeH + radioMatrixSize * needCoreNum;
+        int64_t intermediateTensorSize = intermediateMatrixSizeW + intermediateMatrixSizeH +
+                                         radioMatrixSize * needCoreNum;
         ClearGM(intermediateTensorGm, intermediateTensorSize);
         ClearGM(outTensorsGM, batches * gradInputShapes[0] * gradInputShapes[1] * gradInputShapes[2]);
     }
@@ -287,8 +286,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::DirectionExpansion(int8_t dir
 }
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateIntermediateTensor(
-    int8_t direction, int64_t index, int64_t length, float scale)
+__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateIntermediateTensor(int8_t direction, int64_t index,
+                                                                               int64_t length, float scale)
 {
     int64_t inputSize = gradInputShapes[direction];
     int64_t outputSize = gradOutputShapes[direction];
@@ -323,8 +322,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateIntermediateTensor(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateRadioTensor(
-    int8_t direction, int64_t xIndex, int64_t length, int64_t startIdx)
+__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateRadioTensor(int8_t direction, int64_t xIndex,
+                                                                        int64_t length, int64_t startIdx)
 {
     // 计算权重矩阵
     xMin = static_cast<int64_t>(srcIndexTensor.GetValue(xIndex));
@@ -375,8 +374,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CopyRadioTensorToGm()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                           int64_t rowEnd, int64_t length)
 {
     int64_t xIndex = xMin + rowStart * gradOutputShapes[2];
     int64_t tensorCIndexWithOffset = tensorCIndex + rowStart * gradInputShapes[2];
@@ -400,8 +399,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateWidthExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateHeightExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateHeightExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                            int64_t rowEnd, int64_t length)
 {
     int64_t singleCoreM = length;
     int64_t singleCoreN = matmulTilingH->singleCoreN;
@@ -436,16 +435,16 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateHeightExtension(
         if (!needResizeD) {
             matmulH.IterateAll(outTensorsGM[tensorCIndexWithOffset + outOffset], true);
         } else {
-            matmulH.IterateAll(
-                intermediateTensorGm[intermediateMatrixSizeW + tensorCIndexWithOffset + outOffset], true);
+            matmulH.IterateAll(intermediateTensorGm[intermediateMatrixSizeW + tensorCIndexWithOffset + outOffset],
+                               true);
         }
         matmulH.End();
     }
 }
 
 template <typename T>
-__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateDepthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd, int64_t length)
+__aicore__ inline void UpsampleNearest3dGradND<T>::CalculateDepthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                           int64_t rowEnd, int64_t length)
 {
     int64_t singleCoreM = length;
     int64_t singleCoreN = matmulTilingD->singleCoreN;
@@ -462,9 +461,8 @@ __aicore__ inline void UpsampleNearest3dGradND<T>::CalculateDepthExtension(
         tensorCIndexWithOffset += rowStart;
     }
 
-    matmulD.SetOrgShape(
-        singleCoreM, gradInputShapes[1] * gradInputShapes[2], singleCoreK, gradOutputShapes[0],
-        gradInputShapes[1] * gradInputShapes[2]);
+    matmulD.SetOrgShape(singleCoreM, gradInputShapes[1] * gradInputShapes[2], singleCoreK, gradOutputShapes[0],
+                        gradInputShapes[1] * gradInputShapes[2]);
     matmulD.SetSingleShape(singleCoreM, singleCoreN, singleCoreK);
     if (tensorCIndex + slideSize > gradInputShapes[0]) {
         matmulD.SetTail(gradInputShapes[0] - tensorCIndex, singleCoreN, singleCoreK);

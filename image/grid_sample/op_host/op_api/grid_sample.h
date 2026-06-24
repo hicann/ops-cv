@@ -18,10 +18,10 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *GridSample(const aclTensor *x, const aclTensor *grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, bool channelLast, int64_t schedulerMode, aclOpExecutor *executor);
-const aclTensor *GridSample3D(const aclTensor *x, const aclTensor *grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, bool channelLast, aclOpExecutor *executor);
-}  // namespace l0op
+const aclTensor* GridSample(const aclTensor* x, const aclTensor* grid, int64_t interpolationMode, int64_t paddingMode,
+                            bool alignCorners, bool channelLast, int64_t schedulerMode, aclOpExecutor* executor);
+const aclTensor* GridSample3D(const aclTensor* x, const aclTensor* grid, int64_t interpolationMode, int64_t paddingMode,
+                              bool alignCorners, bool channelLast, aclOpExecutor* executor);
+} // namespace l0op
 
-#endif  // OP_API_INC_LEVEL0_GRID_SAMPLE_H_
+#endif // OP_API_INC_LEVEL0_GRID_SAMPLE_H_

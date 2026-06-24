@@ -22,14 +22,12 @@ namespace GridSample {
 
 using namespace AscendC;
 
-
 template <typename T, typename T_IDX, typename U_IDX>
 class GridSampler3dBilinearSimt {
 public:
-    __aicore__ inline GridSampler3dBilinearSimt()
-    {}
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR grid, GM_ADDR y, GM_ADDR workspace, const GridSampleTilingData* __restrict tilingData);
+    __aicore__ inline GridSampler3dBilinearSimt() {}
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR grid, GM_ADDR y, GM_ADDR workspace,
+                                const GridSampleTilingData* __restrict tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -58,9 +56,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T GetInputPoint
 {
     if (inputDepth >= 0 && inputHeight >= 0 && inputWidth >= 0 && inputDepth < inD && inputHeight < inH &&
         inputWidth < inW) {
-        return inputImgGmAddr
-            [inputDataBatchOffset + inputDepth * inH * inW + inputHeight * inW + inputWidth +
-             channelIndex * inH * inW * inD];
+        return inputImgGmAddr[inputDataBatchOffset + inputDepth * inH * inW + inputHeight * inW + inputWidth +
+                              channelIndex * inH * inW * inD];
     }
     return static_cast<T>(0.0);
 }
@@ -79,58 +76,58 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBiline
     float widthFloorDelta = pointWidth - widthFloor;
 
     // pointFrontLeftUp
-    float inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, depthFloor, heightFloor, widthFloor, channelIndex, inputDataBatchOffset, inD, inH,
-        inW, inC));
+    float inputValue = static_cast<float>(
+        GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, depthFloor, heightFloor, widthFloor,
+                                            channelIndex, inputDataBatchOffset, inD, inH, inW, inC));
     float inputWeight = (1.0f - widthFloorDelta) * (1.0f - heightFloorDelta) * (1.0f - depthFloorDelta);
     float bilinearValue = (inputValue * inputWeight);
 
     // pointFrontRightUp
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, depthFloor, heightFloor, (widthFloor + 1), channelIndex, inputDataBatchOffset, inD,
-        inH, inW, inC));
+    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, depthFloor,
+                                                                        heightFloor, (widthFloor + 1), channelIndex,
+                                                                        inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = widthFloorDelta * (1.0f - heightFloorDelta) * (1.0f - depthFloorDelta);
     bilinearValue += (inputValue * inputWeight);
 
     // pointFrontLeftBottom
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, depthFloor, (heightFloor + 1), widthFloor, channelIndex, inputDataBatchOffset, inD,
-        inH, inW, inC));
+    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, depthFloor,
+                                                                        (heightFloor + 1), widthFloor, channelIndex,
+                                                                        inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = (1.0f - widthFloorDelta) * heightFloorDelta * (1.0f - depthFloorDelta);
     bilinearValue += (inputValue * inputWeight);
 
     // pointFrontRightBottom
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, depthFloor, (heightFloor + 1), (widthFloor + 1), channelIndex, inputDataBatchOffset,
-        inD, inH, inW, inC));
+    inputValue = static_cast<float>(
+        GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, depthFloor, (heightFloor + 1), (widthFloor + 1),
+                                            channelIndex, inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = widthFloorDelta * heightFloorDelta * (1.0f - depthFloorDelta);
     bilinearValue += (inputValue * inputWeight);
 
     // pointBackLeftUp
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, (depthFloor + 1), heightFloor, widthFloor, channelIndex, inputDataBatchOffset, inD,
-        inH, inW, inC));
+    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, (depthFloor + 1),
+                                                                        heightFloor, widthFloor, channelIndex,
+                                                                        inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = (1.0f - widthFloorDelta) * (1.0f - heightFloorDelta) * depthFloorDelta;
     bilinearValue += (inputValue * inputWeight);
 
     // pointBackRightUp
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, (depthFloor + 1), heightFloor, (widthFloor + 1), channelIndex, inputDataBatchOffset,
-        inD, inH, inW, inC));
+    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, (depthFloor + 1),
+                                                                        heightFloor, (widthFloor + 1), channelIndex,
+                                                                        inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = widthFloorDelta * (1.0f - heightFloorDelta) * depthFloorDelta;
     bilinearValue += (inputValue * inputWeight);
 
     // pointBackLeftBottom
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, (depthFloor + 1), (heightFloor + 1), widthFloor, channelIndex, inputDataBatchOffset,
-        inD, inH, inW, inC));
+    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, (depthFloor + 1),
+                                                                        (heightFloor + 1), widthFloor, channelIndex,
+                                                                        inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = (1.0f - widthFloorDelta) * heightFloorDelta * depthFloorDelta;
     bilinearValue += (inputValue * inputWeight);
 
     // pointBackRightBottom
-    inputValue = static_cast<float>(GetInputPointValue<T, T_IDX, U_IDX>(
-        (__gm__ T*)inputImgGmAddr, (depthFloor + 1), (heightFloor + 1), (widthFloor + 1), channelIndex,
-        inputDataBatchOffset, inD, inH, inW, inC));
+    inputValue = static_cast<float>(
+        GetInputPointValue<T, T_IDX, U_IDX>((__gm__ T*)inputImgGmAddr, (depthFloor + 1), (heightFloor + 1),
+                                            (widthFloor + 1), channelIndex, inputDataBatchOffset, inD, inH, inW, inC));
     inputWeight = widthFloorDelta * heightFloorDelta * depthFloorDelta;
     bilinearValue += (inputValue * inputWeight);
 
@@ -139,11 +136,12 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeBiline
 
 // LAUNCH_BOUND
 template <typename T, typename T_IDX, typename U_IDX>
-__simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSampler3d(
-    __gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int32_t blockNum, T_IDX intN, T_IDX inC,
-    T_IDX inD, T_IDX inH, T_IDX inW, T_IDX outD, T_IDX outH, T_IDX outW, int32_t paddingMode,
-    int32_t alignCorners, T_IDX outImgSize, T_IDX shiftB_, T_IDX mB_, T_IDX shiftD_, T_IDX mD_,
-    T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_, T_IDX blockId_)
+__simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__
+    void ComputeGridSampler3d(__gm__ T* inputImgGmAddr, __gm__ T* gridGmAddr, __gm__ T* yGmAddr, int32_t blockNum,
+                              T_IDX intN, T_IDX inC, T_IDX inD, T_IDX inH, T_IDX inW, T_IDX outD, T_IDX outH,
+                              T_IDX outW, int32_t paddingMode, int32_t alignCorners, T_IDX outImgSize, T_IDX shiftB_,
+                              T_IDX mB_, T_IDX shiftD_, T_IDX mD_, T_IDX shiftH_, T_IDX mH_, T_IDX shiftW_, T_IDX mW_,
+                              T_IDX blockId_)
 {
     for (T_IDX index = blockId_ * VF_MAX_THREAD_NUM_3D + threadIdx.x; index < outImgSize * intN;
          index += (blockNum * VF_MAX_THREAD_NUM_3D)) {
@@ -163,8 +161,8 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSample
         widthCol = remain - heightCol * outW;
 
         T_IDX newInputIndex = batchNum * inD * inH * inW * inC;
-        T_IDX offsetBaseAddr =
-            batchNum * outD * outH * outW * 3 + depthCol * outH * outW * 3 + heightCol * outW * 3 + widthCol * 3;
+        T_IDX offsetBaseAddr = batchNum * outD * outH * outW * 3 + depthCol * outH * outW * 3 + heightCol * outW * 3 +
+                               widthCol * 3;
 
         // offset height info
         float gridDepthValue = static_cast<float>(gridGmAddr[offsetBaseAddr + 2]);
@@ -184,9 +182,9 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM_3D) __aicore__ void ComputeGridSample
         gridWeightValue = Clip<T_IDX>(gridWeightValue, inW, paddingMode, alignCorners);
         gridHeigthValue = Clip<T_IDX>(gridHeigthValue, inH, paddingMode, alignCorners);
 
-        T bilinearValue = ComputeBilinear<T, T_IDX, U_IDX>(
-            (__gm__ T*)(inputImgGmAddr), gridDepthValue, gridHeigthValue, gridWeightValue, channelIndex, newInputIndex,
-            inD, inH, inW, inC, index);
+        T bilinearValue = ComputeBilinear<T, T_IDX, U_IDX>((__gm__ T*)(inputImgGmAddr), gridDepthValue, gridHeigthValue,
+                                                           gridWeightValue, channelIndex, newInputIndex, inD, inH, inW,
+                                                           inC, index);
 
         // data layout (n, h, k_h, w, k_w, c)
         yGmAddr[index] = bilinearValue;
@@ -203,11 +201,10 @@ __aicore__ inline void GridSampler3dBilinearSimt<T, T_IDX, U_IDX>::Process()
     GetUintDivMagicAndShift(mH_, shiftH_, static_cast<T_IDX>(tiling_->outW * tiling_->outH));
     GetUintDivMagicAndShift(mW_, shiftW_, static_cast<T_IDX>(tiling_->outW));
     asc_vf_call<ComputeGridSampler3d<T, T_IDX, U_IDX>>(
-        dim3{VF_MAX_THREAD_NUM_3D, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()),
-        (__gm__ T*)(gridGm_.GetPhyAddr()), (__gm__ T*)(yGm_.GetPhyAddr()), tiling_->needCoreNum, tiling_->inN,
-        tiling_->inC, tiling_->inD, tiling_->inH, tiling_->inW, tiling_->outD, tiling_->outH, tiling_->outW,
-        tiling_->paddingMode, tiling_->alignCorners, outImgSize, shiftB_, mB_, shiftD_, mD_, shiftH_, mH_, shiftW_, mW_,
-        blockId_);
+        dim3{VF_MAX_THREAD_NUM_3D, 1, 1}, (__gm__ T*)(inputImgGm_.GetPhyAddr()), (__gm__ T*)(gridGm_.GetPhyAddr()),
+        (__gm__ T*)(yGm_.GetPhyAddr()), tiling_->needCoreNum, tiling_->inN, tiling_->inC, tiling_->inD, tiling_->inH,
+        tiling_->inW, tiling_->outD, tiling_->outH, tiling_->outW, tiling_->paddingMode, tiling_->alignCorners,
+        outImgSize, shiftB_, mB_, shiftD_, mD_, shiftH_, mH_, shiftW_, mW_, blockId_);
 }
 
 } // namespace GridSample

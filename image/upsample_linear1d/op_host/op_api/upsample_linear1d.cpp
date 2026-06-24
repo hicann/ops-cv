@@ -36,8 +36,8 @@ static const int64_t DIM_ONE = 1;
 static const int64_t DIM_TWO = 2;
 static const int64_t DIM_THREE = 3;
 
-const aclTensor *UpsampleLinear1dNcdhw(const aclTensor *x, const aclTensor *outputSize, const bool alignCorners,
-    const aclTensor *y, const double scale, aclOpExecutor *executor)
+const aclTensor* UpsampleLinear1dNcdhw(const aclTensor* x, const aclTensor* outputSize, const bool alignCorners,
+                                       const aclTensor* y, const double scale, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleLinear1dNcdhw, x, outputSize, alignCorners, scale);
 
@@ -45,11 +45,11 @@ const aclTensor *UpsampleLinear1dNcdhw(const aclTensor *x, const aclTensor *outp
     if (scale > 0) {
         realScale = static_cast<float>(1.0 / scale);
     }
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleLinear1d, OP_INPUT(x, outputSize), OP_OUTPUT(y), OP_ATTR(alignCorners, realScale));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleLinear1d, OP_INPUT(x, outputSize), OP_OUTPUT(y),
+                                           OP_ATTR(alignCorners, realScale));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleLinear1dAICORE ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleLinear1dAICORE ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return y;
 }
-}  // namespace l0op
+} // namespace l0op

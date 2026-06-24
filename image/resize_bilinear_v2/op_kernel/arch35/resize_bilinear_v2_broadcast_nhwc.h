@@ -27,8 +27,8 @@ class ResizeBilinearV2BroadcastNHWC : public ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2BroadcastNHWC(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2TilingData* data);
 
     __aicore__ inline void Process();
 
@@ -62,15 +62,15 @@ protected:
 };
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBilinearV2BroadcastNHWC<T_DATA>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
+__aicore__ inline void ResizeBilinearV2BroadcastNHWC<T_DATA>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                                                   const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
     tilingData_ = data;
 
-    int64_t bufferSizeX =
-        tilingData_->ubNFactor * Ops::Base::CeilAlign<int64_t>(tilingData_->ubCFactor * sizeof(T_DATA), ONE_BLOCK_BYTE);
+    int64_t bufferSizeX = tilingData_->ubNFactor *
+                          Ops::Base::CeilAlign<int64_t>(tilingData_->ubCFactor * sizeof(T_DATA), ONE_BLOCK_BYTE);
     this->pipe_->InitBuffer(xQue_, 2, bufferSizeX);
 
     int64_t bufferSizeY = tilingData_->ubNFactor * tilingData_->ubHWFactor *
@@ -145,8 +145,8 @@ __aicore__ inline void ResizeBilinearV2BroadcastNHWC<T_DATA>::Compute(LocalTenso
 }
 
 template <typename T_DATA>
-inline __aicore__ void ResizeBilinearV2BroadcastNHWC<T_DATA>::CopyLine(
-    LocalTensor<T_DATA> yTensor, LocalTensor<T_DATA> xTensor)
+inline __aicore__ void ResizeBilinearV2BroadcastNHWC<T_DATA>::CopyLine(LocalTensor<T_DATA> yTensor,
+                                                                       LocalTensor<T_DATA> xTensor)
 {
     auto dst = yTensor.template ReinterpretCast<int16_t>();
     auto src = xTensor.template ReinterpretCast<int16_t>();

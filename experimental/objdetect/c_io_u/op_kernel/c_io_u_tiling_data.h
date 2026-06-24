@@ -24,17 +24,17 @@
 #include <cstdint>
 
 struct CIoUTilingData {
-    uint32_t totalN;        // total N (cols of (4,N))
-    uint32_t basePerCore;   // base cols per core (multiple of alignElem)
-    uint32_t pivot;         // first 'pivot' cores get +alignElem extra cols
-    uint32_t tileN;         // cols per UB tile
-    uint32_t usedCoreNum;   // actual launched cores
-    uint32_t alignElem;     // 32 / sizeof(dtype) cache-line element count
-    uint32_t tailN;         // unaligned tail (< alignElem); handled by last core
-    int32_t  trans;         // 0 = xyxy, 1 = cxcywh
-    int32_t  modeId;        // 0 = "iou", 1 = "iof"
-    int32_t  atanSubFlag;   // 0 = output zeros, 1 = compute atan_sub
-    float    eps;           // small denominator constant
+    uint32_t totalN;      // total N (cols of (4,N))
+    uint32_t basePerCore; // base cols per core (multiple of alignElem)
+    uint32_t pivot;       // first 'pivot' cores get +alignElem extra cols
+    uint32_t tileN;       // cols per UB tile
+    uint32_t usedCoreNum; // actual launched cores
+    uint32_t alignElem;   // 32 / sizeof(dtype) cache-line element count
+    uint32_t tailN;       // unaligned tail (< alignElem); handled by last core
+    int32_t trans;        // 0 = xyxy, 1 = cxcywh
+    int32_t modeId;       // 0 = "iou", 1 = "iof"
+    int32_t atanSubFlag;  // 0 = output zeros, 1 = compute atan_sub
+    float eps;            // small denominator constant
 };
 
 #endif // __C_IO_U_TILING_DATA_H__

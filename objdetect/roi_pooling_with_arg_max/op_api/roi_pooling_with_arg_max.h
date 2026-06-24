@@ -14,9 +14,10 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *RoiPoolingWithArgMax(const aclTensor *x, const aclTensor *rois, const aclTensor *roi_actual_num,
-    int64_t pooled_h, int64_t pooled_w, float spatial_scale_h, float spatial_scale_w, int64_t pool_channel,
-    aclOpExecutor *executor, const aclTensor **out_y, const aclTensor **out_argmax);
+const aclTensor* RoiPoolingWithArgMax(const aclTensor* x, const aclTensor* rois, const aclTensor* roi_actual_num,
+                                      int64_t pooled_h, int64_t pooled_w, float spatial_scale_h, float spatial_scale_w,
+                                      int64_t pool_channel, aclOpExecutor* executor, const aclTensor** out_y,
+                                      const aclTensor** out_argmax);
 }
 
 #endif

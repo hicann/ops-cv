@@ -101,29 +101,23 @@ static Status ParseParamsGridSampleV2(const Message* op_src, ge::Operator& op_de
 }
 
 REGISTER_CUSTOM_OP("GridSample")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::11::GridSampleV2"),
-                 ge::AscendString("ai.onnx::16::GridSampleV2"),
-                 ge::AscendString("ai.onnx::17::GridSampleV2"),
-                 ge::AscendString("ai.onnx::18::GridSampleV2")})
-  .ParseParamsFn(ParseParamsGridSampleV2)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("ai.onnx::11::GridSampleV2"), ge::AscendString("ai.onnx::16::GridSampleV2"),
+                   ge::AscendString("ai.onnx::17::GridSampleV2"), ge::AscendString("ai.onnx::18::GridSampleV2")})
+    .ParseParamsFn(ParseParamsGridSampleV2)
+    .ImplyType(ImplyType::TVM);
 
 REGISTER_CUSTOM_OP("GridSampler2D")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::11::GridSample"),
-                 ge::AscendString("ai.onnx::16::GridSample"),
-                 ge::AscendString("ai.onnx::17::GridSample"),
-                 ge::AscendString("ai.onnx::18::GridSample")})
-  .ParseParamsFn(ParseParamsGridSample)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("ai.onnx::11::GridSample"), ge::AscendString("ai.onnx::16::GridSample"),
+                   ge::AscendString("ai.onnx::17::GridSample"), ge::AscendString("ai.onnx::18::GridSample")})
+    .ParseParamsFn(ParseParamsGridSample)
+    .ImplyType(ImplyType::TVM);
 
 REGISTER_CUSTOM_OP("GridSampler3D")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::11::GridSample3D"),
-		             ge::AscendString("ai.onnx::16::GridSample3D"),
-		             ge::AscendString("ai.onnx::17::GridSample3D"),
-		             ge::AscendString("ai.onnx::18::GridSample3D")})
-  .ParseParamsFn(ParseParamsGridSample)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("ai.onnx::11::GridSample3D"), ge::AscendString("ai.onnx::16::GridSample3D"),
+                   ge::AscendString("ai.onnx::17::GridSample3D"), ge::AscendString("ai.onnx::18::GridSample3D")})
+    .ParseParamsFn(ParseParamsGridSample)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

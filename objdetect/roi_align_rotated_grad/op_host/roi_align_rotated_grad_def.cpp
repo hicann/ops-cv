@@ -17,42 +17,40 @@
 using namespace ge;
 using namespace std;
 
-namespace ops
-{
-    class RoiAlignRotatedGrad : public OpDef
+namespace ops {
+class RoiAlignRotatedGrad : public OpDef {
+public:
+    explicit RoiAlignRotatedGrad(const char* name) : OpDef(name)
     {
-    public:
-        explicit RoiAlignRotatedGrad(const char *name) : OpDef(name)
-        {
-            this->Input("x_grad")
-                .ParamType(REQUIRED)
-                .DataType({ge::DT_FLOAT})
-                .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND})
-                .AutoContiguous();
-            this->Input("rois")
-                .ParamType(REQUIRED)
-                .DataType({ge::DT_FLOAT})
-                .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND})
-                .AutoContiguous();
-            this->Attr("y_grad_shape").AttrType(REQUIRED).ListInt();
-            this->Attr("pooled_h").AttrType(REQUIRED).Int();
-            this->Attr("pooled_w").AttrType(REQUIRED).Int();
-            this->Attr("spatial_scale").AttrType(REQUIRED).Float();
-            this->Attr("sampling_ratio").AttrType(REQUIRED).Int();
-            this->Attr("aligned").AttrType(REQUIRED).Bool();
-            this->Attr("clockwise").AttrType(REQUIRED).Bool();
-            this->Output("y_grad")
-                .ParamType(REQUIRED)
-                .DataType({ge::DT_FLOAT})
-                .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND});
-            this->AICore().AddConfig("ascend910b");
-            this->AICore().AddConfig("ascend910_93");
-            this->AICore().AddConfig("ascend310p");
-        }
-    };
+        this->Input("x_grad")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND})
+            .AutoContiguous();
+        this->Input("rois")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND})
+            .AutoContiguous();
+        this->Attr("y_grad_shape").AttrType(REQUIRED).ListInt();
+        this->Attr("pooled_h").AttrType(REQUIRED).Int();
+        this->Attr("pooled_w").AttrType(REQUIRED).Int();
+        this->Attr("spatial_scale").AttrType(REQUIRED).Float();
+        this->Attr("sampling_ratio").AttrType(REQUIRED).Int();
+        this->Attr("aligned").AttrType(REQUIRED).Bool();
+        this->Attr("clockwise").AttrType(REQUIRED).Bool();
+        this->Output("y_grad")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND});
+        this->AICore().AddConfig("ascend910b");
+        this->AICore().AddConfig("ascend910_93");
+        this->AICore().AddConfig("ascend310p");
+    }
+};
 
-    OP_ADD(RoiAlignRotatedGrad);
-}
+OP_ADD(RoiAlignRotatedGrad);
+} // namespace ops

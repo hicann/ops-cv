@@ -29,8 +29,8 @@ namespace l0op {
 
 OP_TYPE_REGISTER(ResizeBicubicV2);
 
-static const aclTensor *ResizeBicubicV2AICORE(const aclTensor *x, const aclTensor *size, const bool alignCorners,
-    const aclFloatArray *scales, aclTensor *y, aclOpExecutor *executor)
+static const aclTensor* ResizeBicubicV2AICORE(const aclTensor* x, const aclTensor* size, const bool alignCorners,
+                                              const aclFloatArray* scales, aclTensor* y, aclOpExecutor* executor)
 {
     L0_DFX(ResizeBicubicV2AICORE, x, size, alignCorners, scales, y);
 
@@ -39,8 +39,8 @@ static const aclTensor *ResizeBicubicV2AICORE(const aclTensor *x, const aclTenso
     return y;
 }
 
-const aclTensor *ResizeBicubicV2(const aclTensor *self, const aclIntArray *outputSize, const bool alignCorners,
-    const aclFloatArray *scales, const aclTensor *out, aclOpExecutor *executor)
+const aclTensor* ResizeBicubicV2(const aclTensor* self, const aclIntArray* outputSize, const bool alignCorners,
+                                 const aclFloatArray* scales, const aclTensor* out, aclOpExecutor* executor)
 {
     auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT32));
     if (size == nullptr) {
@@ -57,4 +57,4 @@ const aclTensor *ResizeBicubicV2(const aclTensor *self, const aclIntArray *outpu
     return ResizeBicubicV2AICORE(self, size, alignCorners, scales, y, executor);
 }
 
-}  // namespace l0op
+} // namespace l0op

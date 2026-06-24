@@ -15,7 +15,7 @@
 #ifndef GIRD_SAMPLER_3D_COMMON
 #define GIRD_SAMPLER_3D_COMMON
 
-#if ASC_DEVKIT_MAJOR >=9
+#if ASC_DEVKIT_MAJOR >= 9
 #include "kernel_vec_intf.h"
 #else
 #include "kernel_operator.h"
@@ -35,11 +35,11 @@ struct InputTensorStruct {
     LocalTensor<int32_t> iYIntUb;
     LocalTensor<int32_t> iZIntUb;
 
-    __aicore__ inline InputTensorStruct()
-    {}
+    __aicore__ inline InputTensorStruct() {}
 
     __aicore__ inline InputTensorStruct(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb,
-        LocalTensor<int32_t> iXIntUb, LocalTensor<int32_t> iYIntUb, LocalTensor<int32_t> iZIntUb)
+                                        LocalTensor<int32_t> iXIntUb, LocalTensor<int32_t> iYIntUb,
+                                        LocalTensor<int32_t> iZIntUb)
         : iXFpUb(iXFpUb), iYFpUb(iYFpUb), iZFpUb(iZFpUb), iXIntUb(iXIntUb), iYIntUb(iYIntUb), iZIntUb(iZIntUb)
     {}
 };
@@ -49,8 +49,7 @@ struct ProcessParam {
     int32_t hwIdx = 0;
     int32_t calDHWElems = 0;
 
-    __aicore__ inline ProcessParam()
-    {}
+    __aicore__ inline ProcessParam() {}
 };
 
 struct PointParam {
@@ -102,7 +101,8 @@ struct IndexBuffer {
 };
 
 __aicore__ inline void initBufTensor(TBuf<QuePosition::VECCALC> bufferMaskXBuf_,
-    TBuf<QuePosition::VECCALC> bufferMaskYBuf_, TBuf<QuePosition::VECCALC> bufferMaskZBuf_)
+                                     TBuf<QuePosition::VECCALC> bufferMaskYBuf_,
+                                     TBuf<QuePosition::VECCALC> bufferMaskZBuf_)
 {
     uint32_t gatherMask1 = 0b01001001001001001001001001001001;
     uint32_t gatherMask2 = 0b10010010010010010010010010010010;
@@ -132,7 +132,8 @@ __aicore__ inline void initBufTensor(TBuf<QuePosition::VECCALC> bufferMaskXBuf_,
     bufZPattern.SetValue(NUM_5, gatherMask2);
 }
 
-__aicore__ inline void ParseTilingData(const GridSampleTilingData* __restrict__ tilingData, GridSampleCommonParam &commonParam)
+__aicore__ inline void ParseTilingData(const GridSampleTilingData* __restrict__ tilingData,
+                                       GridSampleCommonParam& commonParam)
 {
     commonParam.coreNum_ = tilingData->coreNumVar;
     commonParam.inputN_ = tilingData->inN;
@@ -170,7 +171,7 @@ __aicore__ inline void CoordinatesFrameRange(LocalTensor<int32_t> iIntUb, int32_
 }
 
 __aicore__ inline void CoordinatesGetMaskWithRange(InputTensorStruct inputTensorStruct, LocalTensor<uint8_t> maskXUb,
-    LocalTensor<uint8_t> maskUb, GridSampleCommonParam commonParam)
+                                                   LocalTensor<uint8_t> maskUb, GridSampleCommonParam commonParam)
 {
     LocalTensor<uint8_t> maskYUb = maskUb;
     LocalTensor<uint8_t> maskZUb = maskUb[MASK_UB_SIZE];
@@ -179,18 +180,18 @@ __aicore__ inline void CoordinatesGetMaskWithRange(InputTensorStruct inputTensor
     LocalTensor<uint8_t> maskTmpZUb = maskUb[MASK_UB_SIZE * NUM_4];
 
     CompareScalar(maskTmpXUb, inputTensorStruct.iXFpUb, 0.0f, CMPMODE::GE, CAL_D_H_W_BLOCK);
-    CompareScalar(
-        maskXUb, inputTensorStruct.iXFpUb, static_cast<float>(commonParam.inputW_ - 1), CMPMODE::LE, CAL_D_H_W_BLOCK);
+    CompareScalar(maskXUb, inputTensorStruct.iXFpUb, static_cast<float>(commonParam.inputW_ - 1), CMPMODE::LE,
+                  CAL_D_H_W_BLOCK);
     CompareScalar(maskTmpYUb, inputTensorStruct.iYFpUb, 0.0f, CMPMODE::GE, CAL_D_H_W_BLOCK);
-    CompareScalar(
-        maskYUb, inputTensorStruct.iYFpUb, static_cast<float>(commonParam.inputH_ - 1), CMPMODE::LE, CAL_D_H_W_BLOCK);
+    CompareScalar(maskYUb, inputTensorStruct.iYFpUb, static_cast<float>(commonParam.inputH_ - 1), CMPMODE::LE,
+                  CAL_D_H_W_BLOCK);
     CompareScalar(maskTmpZUb, inputTensorStruct.iZFpUb, 0.0f, CMPMODE::GE, CAL_D_H_W_BLOCK);
-    CompareScalar(
-        maskZUb, inputTensorStruct.iZFpUb, static_cast<float>(commonParam.inputD_ - 1), CMPMODE::LE, CAL_D_H_W_BLOCK);
+    CompareScalar(maskZUb, inputTensorStruct.iZFpUb, static_cast<float>(commonParam.inputD_ - 1), CMPMODE::LE,
+                  CAL_D_H_W_BLOCK);
 
     PipeBarrier<PIPE_V>();
 
-    int32_t maskNum = (MASK_UB_SIZE + 1) / 2;  // 除2数据量按照uint16类型折半
+    int32_t maskNum = (MASK_UB_SIZE + 1) / 2; // 除2数据量按照uint16类型折半
     auto maskTmpXUbTmp = maskTmpXUb.ReinterpretCast<uint16_t>();
     auto maskXUbTmp = maskXUb.ReinterpretCast<uint16_t>();
     auto maskTmpYUbTmp = maskTmpYUb.ReinterpretCast<uint16_t>();
@@ -208,7 +209,8 @@ __aicore__ inline void CoordinatesGetMaskWithRange(InputTensorStruct inputTensor
 }
 
 __aicore__ inline void CoordinatesSelectScalar(LocalTensor<float> iFpUb, LocalTensor<float> oFpUb,
-    LocalTensor<uint8_t> maskUb, const float scalarVal, const uint32_t calNum)
+                                               LocalTensor<uint8_t> maskUb, const float scalarVal,
+                                               const uint32_t calNum)
 {
     BinaryRepeatParams binaryRepParams;
     binaryRepParams.src0BlkStride = B32_BLOCK_STRIDE;
@@ -222,8 +224,8 @@ __aicore__ inline void CoordinatesSelectScalar(LocalTensor<float> iFpUb, LocalTe
     PipeBarrier<PIPE_V>();
 }
 
-__aicore__ inline void CoordinatesSelectTensor(
-    LocalTensor<float> src0, LocalTensor<float> src1, LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb)
+__aicore__ inline void CoordinatesSelectTensor(LocalTensor<float> src0, LocalTensor<float> src1,
+                                               LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb)
 {
     BinaryRepeatParams repParams;
     repParams.src0BlkStride = B32_BLOCK_STRIDE;
@@ -278,8 +280,8 @@ __aicore__ inline void OutTransposeFp32(int32_t channelAlign, LocalTensor<float>
 
             for (int32_t i = 0; i < NUM_8; i++) {
                 dstList[i * NUM_2] = (uint64_t)(outValueUb[i * TRANSE_REP_STRIDE + j * NUM_16].GetPhyAddr());
-                dstList[i * NUM_2 + NUM_1] =
-                    (uint64_t)(outValueUb[i * TRANSE_REP_STRIDE + NUM_8 + j * NUM_16].GetPhyAddr());
+                dstList[i * NUM_2 + NUM_1] = (uint64_t)(outValueUb[i * TRANSE_REP_STRIDE + NUM_8 + j * NUM_16]
+                                                            .GetPhyAddr());
             }
 
             SetFlag<HardEvent::S_V>(eventSV);
@@ -292,7 +294,8 @@ __aicore__ inline void OutTransposeFp32(int32_t channelAlign, LocalTensor<float>
 }
 
 __aicore__ inline void ClipCoordinates(InputTensorStruct inputTensorStruct, LocalTensor<int32_t> coorUb,
-    LocalTensor<uint8_t> wMaskUb, IndexBuffer &indexBuffer, GridSampleCommonParam commonParam)
+                                       LocalTensor<uint8_t> wMaskUb, IndexBuffer& indexBuffer,
+                                       GridSampleCommonParam commonParam)
 {
     LocalTensor<int32_t> tmpYIntUb = indexBuffer.intTmpBuf_.Get<int32_t>(CAL_D_H_W_BLOCK);
     LocalTensor<int32_t> tmpZIntUb = indexBuffer.coorTmpBuf_.Get<int32_t>(CAL_D_H_W_BLOCK);
@@ -318,7 +321,7 @@ __aicore__ inline void ClipCoordinates(InputTensorStruct inputTensorStruct, Loca
     LocalTensor<uint8_t> maskTmpYUb = maskUb[MASK_UB_SIZE * NUM_3];
     LocalTensor<uint8_t> maskTmpZUb = maskUb[MASK_UB_SIZE * NUM_4];
     CoordinatesGetMaskWithRange(inputTensorStruct, maskXUb, maskUb, commonParam);
-    int32_t maskNum = (MASK_UB_SIZE + 1) / 2;  // 除2数据量按照uint16类型折半
+    int32_t maskNum = (MASK_UB_SIZE + 1) / 2; // 除2数据量按照uint16类型折半
     auto maskXUbTmp = maskXUb.ReinterpretCast<uint16_t>();
     auto maskYUbTmp = maskYUb.ReinterpretCast<uint16_t>();
     auto maskZUbTmp = maskZUb.ReinterpretCast<uint16_t>();
@@ -345,7 +348,7 @@ __aicore__ inline void ClipCoordinates(InputTensorStruct inputTensorStruct, Loca
 }
 
 __aicore__ inline void BorderClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb,
-    IndexBuffer &indexBuffer, GridSampleCommonParam commonParam)
+                                  IndexBuffer& indexBuffer, GridSampleCommonParam commonParam)
 {
     Mins(iXFpUb, iXFpUb, (float)(commonParam.inputW_ - 1), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
@@ -387,7 +390,8 @@ __aicore__ inline void BorderClip(LocalTensor<float> iXFpUb, LocalTensor<float> 
 }
 
 __aicore__ inline void ReflectClipFilterValue(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
-    LocalTensor<float> iZFpUb, IndexBuffer &indexBuffer, GridSampleCommonParam commonParam)
+                                              LocalTensor<float> iZFpUb, IndexBuffer& indexBuffer,
+                                              GridSampleCommonParam commonParam)
 {
     LocalTensor<float> tmpUb = indexBuffer.inputXYZFPBuf_.Get<float>();
     LocalTensor<uint8_t> maskUb = indexBuffer.maskBuf_.Get<uint8_t>(MASK_UB_SIZE * NUM_3);
@@ -429,8 +433,8 @@ __aicore__ inline void ReflectClipFilterValue(LocalTensor<float> iXFpUb, LocalTe
     PipeBarrier<PIPE_V>();
 }
 
-__aicore__ inline void ReflectCoordinatesGeneralSelect(
-    LocalTensor<float> coorSubUb, float minS, float spanS, IndexBuffer &indexBuffer)
+__aicore__ inline void ReflectCoordinatesGeneralSelect(LocalTensor<float> coorSubUb, float minS, float spanS,
+                                                       IndexBuffer& indexBuffer)
 {
     LocalTensor<float> fmodFpUb = indexBuffer.modBuf_.Get<float>(CAL_D_H_W_BLOCK);
     LocalTensor<uint8_t> maskUb = indexBuffer.maskBuf_.Get<uint8_t>(MASK_UB_SIZE * NUM_3);
@@ -474,8 +478,8 @@ __aicore__ inline void ReflectCoordinatesGeneralSelect(
     CoordinatesSelectTensor(out1, out2, coorSubUb, maskUb);
 }
 
-__aicore__ inline void ReflectCoordinatesGeneral(
-    LocalTensor<float> coorSubUb, const int64_t twiceLow, const int64_t twiceHigh, IndexBuffer &indexBuffer)
+__aicore__ inline void ReflectCoordinatesGeneral(LocalTensor<float> coorSubUb, const int64_t twiceLow,
+                                                 const int64_t twiceHigh, IndexBuffer& indexBuffer)
 {
     if (twiceLow == twiceHigh) {
         Duplicate(coorSubUb, (float)0.0, CAL_D_H_W_BLOCK);
@@ -519,7 +523,7 @@ __aicore__ inline void ReflectCoordinatesGeneral(
 }
 
 __aicore__ inline void ReflectClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb,
-    IndexBuffer &indexBuffer, GridSampleCommonParam commonParam)
+                                   IndexBuffer& indexBuffer, GridSampleCommonParam commonParam)
 {
     LocalTensor<float> coorSubUb = indexBuffer.coorTmpBuf_.Get<float>(CAL_D_H_W_BLOCK);
 
@@ -545,5 +549,5 @@ __aicore__ inline void ReflectClip(LocalTensor<float> iXFpUb, LocalTensor<float>
     ReflectClipFilterValue(iXFpUb, iYFpUb, iZFpUb, indexBuffer, commonParam);
 }
 
-}  // namespace GridSample
-#endif  //  GIRD_SAMPLER_3D_COMMON
+} // namespace GridSample
+#endif //  GIRD_SAMPLER_3D_COMMON

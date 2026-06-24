@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -35,7 +35,7 @@ constexpr uint32_t WORKSPACE_SIZE_1D_LIMIT = 160 * 1024 * 1024;
 constexpr float HALF_NUM = 0.5;
 
 constexpr uint32_t BYTE = 8;
-constexpr uint32_t BYTE_REPEAT = 256;  // The amount of data that can be processed by a repeat.
+constexpr uint32_t BYTE_REPEAT = 256; // The amount of data that can be processed by a repeat.
 constexpr uint32_t BYTE_BASIC_BLOCK = 1024;
 
 constexpr int8_t SHAPE_SIZE = 4;
@@ -78,19 +78,20 @@ constexpr uint64_t NUM_HALF = 2;
 
 class UpsampleLinear1dTiling {
 public:
-    explicit UpsampleLinear1dTiling(gert::TilingContext *context) : tilingContext(context){};
+    explicit UpsampleLinear1dTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus RunBigKernelTiling();
 
 private:
     void setScale();
     void get_scale_from_out();
-    inline float compute_scale_value(
-        const int64_t input_size, const int64_t output_size, const bool align_corner, const float scale) const;
+    inline float compute_scale_value(const int64_t input_size, const int64_t output_size, const bool align_corner,
+                                     const float scale) const;
     bool getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize, const uint32_t coreNumPlatFormInfo);
     void getWorkspaceBlock(const uint64_t mPerTime, uint64_t& matmulBlockPerTime);
     uint64_t getWorkspaceBlockPart1(const uint64_t mPerTime, uint64_t& matmulBlockPerTime);
     void getWorkspaceRemainder(uint64_t mPerTime, uint64_t matmulBlockPerTime);
-    bool getWorkLoopInfo(const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, const uint64_t slide_size, const uint32_t needCoreNum, const uint32_t coreNumPlatFormInfo);
+    bool getWorkLoopInfo(const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign,
+                         const uint64_t slide_size, const uint32_t needCoreNum, const uint32_t coreNumPlatFormInfo);
     void getShapes();
     void setSlideSize(const uint32_t coreNumPlatFormInfo);
     inline int64_t calculateSlideSize(const uint32_t coreNumPlatFormInfo);
@@ -100,8 +101,7 @@ private:
     uint32_t GetNeedCoreNumW(const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size);
     void FillTilingData();
     void getTCubeTiling_w();
-    inline bool CheckScales(
-        const gert::TilingContext *context, const float scales_w) const;
+    inline bool CheckScales(const gert::TilingContext* context, const float scales_w) const;
     inline int64_t getSingleCoreK(const int64_t slideSize, const float scale, const bool alignCorners) const;
     template <typename T1, typename T2>
     inline T1 CeilA2B(T1 a, T2 b) const;
@@ -112,12 +112,12 @@ private:
 private:
     int64_t slide_size_w{16};
     UpsampleLinear1dTilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize{4};
     gert::Shape input_shape;
     gert::Shape output_shape;
-    const bool *align_corners{nullptr};
+    const bool* align_corners{nullptr};
     float scale_w = 0.0f;
     float realScale_w{0.0f};
 
@@ -125,10 +125,8 @@ private:
     int64_t output_shapes[3] = {0};
     int64_t input_shapes[3] = {0};
 
-    int64_t slide_size_list[4] = {BEST_PERFORMANCE_SIZE_16,
-        BEST_PERFORMANCE_SIZE_32,
-        BEST_PERFORMANCE_SIZE_64,
-        BEST_PERFORMANCE_SIZE_128};
+    int64_t slide_size_list[4] = {BEST_PERFORMANCE_SIZE_16, BEST_PERFORMANCE_SIZE_32, BEST_PERFORMANCE_SIZE_64,
+                                  BEST_PERFORMANCE_SIZE_128};
 
     TCubeTiling matmulTiling_w;
     int64_t singleCoreK_w = 0;
@@ -142,14 +140,14 @@ void UpsampleLinear1dTiling::setScale()
 
 void UpsampleLinear1dTiling::get_scale_from_out()
 {
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
-    const float *scales = attrs->GetAttrPointer<float>(SCALES_ATTR);
+    const float* scales = attrs->GetAttrPointer<float>(SCALES_ATTR);
     scale_w = *scales;
 }
 
-inline float UpsampleLinear1dTiling::compute_scale_value(
-    const int64_t input_size, const int64_t output_size, const bool align_corner, const float scale) const
+inline float UpsampleLinear1dTiling::compute_scale_value(const int64_t input_size, const int64_t output_size,
+                                                         const bool align_corner, const float scale) const
 {
     if (output_size == input_size) {
         return static_cast<float>(1);
@@ -175,8 +173,7 @@ inline bool FloatEqual(const float a, const float b)
     }
 };
 
-inline bool UpsampleLinear1dTiling::CheckScales(
-    const gert::TilingContext *context, const float scales_w) const
+inline bool UpsampleLinear1dTiling::CheckScales(const gert::TilingContext* context, const float scales_w) const
 {
     return true;
 }
@@ -185,7 +182,7 @@ ge::graphStatus UpsampleLinear1dTiling::RunBigKernelTiling()
 {
     auto srcTensor = tilingContext->GetInputTensor(0);
     auto temp = tilingContext->GetInputDesc(0);
-    auto compileInfo = reinterpret_cast<const UpsampleLinear1dCompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleLinear1dCompileInfo*>(tilingContext->GetCompileInfo());
     if (srcTensor == nullptr || temp == nullptr || compileInfo == nullptr) {
         return ge::GRAPH_FAILED;
     }
@@ -261,13 +258,14 @@ void UpsampleLinear1dTiling::getTCubeTiling_w()
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_w;
-    mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT, false);
-    mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT, false);
+    mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT,
+                        false);
+    mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT,
+                        false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT);
-    mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX],
-        output_shapes[W_INDEX],
-        input_shapes[W_INDEX]);
-    if(dataTypeSize == DATA_TYPE_FP32_SIZE) {
+    mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX], output_shapes[W_INDEX],
+                           input_shapes[W_INDEX]);
+    if (dataTypeSize == DATA_TYPE_FP32_SIZE) {
         mmTiling_w.SetShape(input_shapes[N_INDEX] * input_shapes[C_INDEX], slide_size_w, singleCoreK_w);
     } else {
         uint64_t matmulBlockPerTime = tilingData.get_matmulBlockPerTime();
@@ -279,7 +277,8 @@ void UpsampleLinear1dTiling::getTCubeTiling_w()
 }
 
 // 先只算w方向
-bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize, const uint32_t coreNumPlatFormInfo)
+bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int64_t ubSize,
+                                          const uint32_t coreNumPlatFormInfo)
 {
     // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
     uint64_t blockSizeNum = (32 / dataTypeSize);
@@ -287,24 +286,26 @@ bool UpsampleLinear1dTiling::getWorkSpace(const uint32_t needCoreNum, const int6
     uint64_t slide_size = slide_size_w;
     uint64_t singleCoreKAlign = (singleCoreK + blockSizeNum - 1) / blockSizeNum * blockSizeNum;
     uint64_t radio_matrix_num_w = slide_size_w * singleCoreK;
-    radio_matrix_num_w = (radio_matrix_num_w + BEST_PERFORMANCE_SIZE_128 - 1) / BEST_PERFORMANCE_SIZE_128 * BEST_PERFORMANCE_SIZE_128;
+    radio_matrix_num_w = (radio_matrix_num_w + BEST_PERFORMANCE_SIZE_128 - 1) / BEST_PERFORMANCE_SIZE_128 *
+                         BEST_PERFORMANCE_SIZE_128;
     uint64_t radioMatrixWorkspaceSize = radio_matrix_num_w * 4;
     tilingData.set_blockSizeNum(blockSizeNum);
     tilingData.set_radio_matrix_size_w(radio_matrix_num_w);
     if (dataTypeSize == DATA_TYPE_FP32_SIZE) {
-        size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+        size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
         if (workspaces == nullptr) {
             return false;
         }
         workspaces[0] = radioMatrixWorkspaceSize * needCoreNum + WORK_SPACE_SIZE;
         return true;
     } else {
-        bool res = getWorkLoopInfo(ubSize, radioMatrixWorkspaceSize, singleCoreKAlign, slide_size, needCoreNum, coreNumPlatFormInfo);
+        bool res = getWorkLoopInfo(ubSize, radioMatrixWorkspaceSize, singleCoreKAlign, slide_size, needCoreNum,
+                                   coreNumPlatFormInfo);
         return res;
     }
 }
 
-uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(const uint64_t mPerTime, uint64_t& matmulBlockPerTime) 
+uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(const uint64_t mPerTime, uint64_t& matmulBlockPerTime)
 {
     // 搬入搬出循环次数
     uint64_t loopTimes_0 = 1;
@@ -359,7 +360,8 @@ uint64_t UpsampleLinear1dTiling::getWorkspaceBlockPart1(const uint64_t mPerTime,
     return matmulBlockTail;
 }
 
-void UpsampleLinear1dTiling::getWorkspaceBlock(const uint64_t mPerTime, uint64_t& matmulBlockPerTime) {
+void UpsampleLinear1dTiling::getWorkspaceBlock(const uint64_t mPerTime, uint64_t& matmulBlockPerTime)
+{
     // matmul循环次数
     uint64_t matmulBlockTail = getWorkspaceBlockPart1(mPerTime, matmulBlockPerTime);
     // 尾块搬入搬出循环次数
@@ -389,9 +391,10 @@ void UpsampleLinear1dTiling::getWorkspaceBlock(const uint64_t mPerTime, uint64_t
     tilingData.set_loopTailTail1(loopTailTail_1);
 }
 
-void UpsampleLinear1dTiling::getWorkspaceRemainder(uint64_t mPerTime, uint64_t matmulBlockPerTime) 
+void UpsampleLinear1dTiling::getWorkspaceRemainder(uint64_t mPerTime, uint64_t matmulBlockPerTime)
 {
-    uint64_t tailAvergingRowsW = std::min(static_cast<uint64_t>(tilingData.get_tailAvergingRowsW()), static_cast<uint64_t>(inputH));
+    uint64_t tailAvergingRowsW = std::min(static_cast<uint64_t>(tilingData.get_tailAvergingRowsW()),
+                                          static_cast<uint64_t>(inputH));
     uint64_t remainderMatmulLoopTimes = 1;
     uint64_t remainderMatmulBlockTail = 0;
     // tailAvergingRowsW = remainderMatmulLoopTimes * matmulBlockPerTime + remainderMatmulBlockTail
@@ -409,7 +412,7 @@ void UpsampleLinear1dTiling::getWorkspaceRemainder(uint64_t mPerTime, uint64_t m
     uint64_t remainderLoopTailTimes1 = mPerTime > 0 ? (remainderMMTail_1 / mPerTime) : 0;
     uint64_t remainderLoopTailTail0 = remainderMMTail_0 - remainderLoopTailTimes0 * mPerTime;
     uint64_t remainderLoopTailTail1 = remainderMMTail_1 - remainderLoopTailTimes1 * mPerTime;
-    
+
     tilingData.set_remainderMatmulLoopTimes(remainderMatmulLoopTimes);
     tilingData.set_remainderMatmulBlockTail(remainderMatmulBlockTail);
     tilingData.set_remainderMatmulBlockTail0(remainderMMTail_0);
@@ -419,26 +422,28 @@ void UpsampleLinear1dTiling::getWorkspaceRemainder(uint64_t mPerTime, uint64_t m
     tilingData.set_remainderLoopTailTail1(remainderLoopTailTail1);
 }
 
-bool UpsampleLinear1dTiling::getWorkLoopInfo(
-    const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize, const uint64_t singleCoreKAlign, 
-    const uint64_t slide_size, const uint32_t needCoreNum, const uint32_t coreNumPlatFormInfo) 
+bool UpsampleLinear1dTiling::getWorkLoopInfo(const int64_t ubSize, const uint64_t radioMatrixWorkspaceSize,
+                                             const uint64_t singleCoreKAlign, const uint64_t slide_size,
+                                             const uint32_t needCoreNum, const uint32_t coreNumPlatFormInfo)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces == nullptr) {
         return false;
     }
     uint64_t blockSizeNum = (32 / dataTypeSize);
-    
+
     uint64_t ubEnable = static_cast<uint64_t>(ubSize) - UB_FREE - radioMatrixWorkspaceSize;
     // 单aic核可以使用的内存大小
     uint64_t workspaceEnablePerCore = coreNumPlatFormInfo > 0 ? (WORKSPACE_SIZE_1D_LIMIT / coreNumPlatFormInfo) : 0;
     // ub下可以使用的最大内存大小
     uint64_t mPerTime = ubEnable / (DATA_TYPE_FP32_SIZE * singleCoreKAlign + DATA_TYPE_FP32_SIZE * slide_size);
     mPerTime = mPerTime / blockSizeNum * blockSizeNum;
-   
+
     mPerTime = mPerTime >= inputH ? inputH : mPerTime;
-    // workspaceEnablePerCore = radioMatrixWorkspaceSize + sizeof(float) * matmulBlockPerTime * (singleCoreKAlign + slide_size)
-    uint64_t matmulBlockPerTime = (workspaceEnablePerCore - radioMatrixWorkspaceSize) / (4 * (singleCoreKAlign + slide_size));
+    // workspaceEnablePerCore = radioMatrixWorkspaceSize + sizeof(float) * matmulBlockPerTime * (singleCoreKAlign +
+    // slide_size)
+    uint64_t matmulBlockPerTime = (workspaceEnablePerCore - radioMatrixWorkspaceSize) /
+                                  (4 * (singleCoreKAlign + slide_size));
     matmulBlockPerTime = matmulBlockPerTime / blockSizeNum * blockSizeNum;
     getWorkspaceBlock(mPerTime, matmulBlockPerTime);
     getWorkspaceRemainder(mPerTime, matmulBlockPerTime);
@@ -448,7 +453,7 @@ bool UpsampleLinear1dTiling::getWorkLoopInfo(
     tilingData.set_inputUbSize(inputUbSize);
     tilingData.set_outputUbSize(outputUbSize);
     tilingData.set_mPerTime(mPerTime);
-   
+
     uint64_t mmInputNum = matmulBlockPerTime * singleCoreKAlign;
     uint64_t mmOutputNum = matmulBlockPerTime * slide_size;
     uint64_t radio_matrix_size_w = tilingData.get_radio_matrix_size_w();
@@ -480,8 +485,7 @@ void UpsampleLinear1dTiling::setSlideSize(const uint32_t coreNumPlatFormInfo)
     tilingData.set_slide_size_w(slide_size_w);
 }
 
-inline int64_t UpsampleLinear1dTiling::getSlideSizeByScale(
-    const uint32_t coreNumPlatFormInfo, float real_scale)
+inline int64_t UpsampleLinear1dTiling::getSlideSizeByScale(const uint32_t coreNumPlatFormInfo, float real_scale)
 {
     int64_t slide_size = 16;
 
@@ -535,8 +539,8 @@ inline int32_t UpsampleLinear1dTiling::Ceil(T1 x) const
     return floor_x + 1;
 }
 
-inline int64_t UpsampleLinear1dTiling::getSingleCoreK(
-    const int64_t slideSize, const float scale, const bool alignCorners) const
+inline int64_t UpsampleLinear1dTiling::getSingleCoreK(const int64_t slideSize, const float scale,
+                                                      const bool alignCorners) const
 {
     float rel_idx = 0;
     float calNum = std::max(0.0f, static_cast<float>(slideSize - 1));
@@ -563,8 +567,8 @@ uint8_t UpsampleLinear1dTiling::GetDataTypeSize() const
     }
 }
 
-uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
-    const uint32_t coreNumPlatform, uint8_t isCalculate, int64_t slide_size)
+uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(const uint32_t coreNumPlatform, uint8_t isCalculate,
+                                                 int64_t slide_size)
 {
     int64_t outputSize = output_shapes[W_INDEX];
     int64_t slideNum = CeilA2B(outputSize, slide_size);
@@ -582,7 +586,7 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
         tailAvergingRows = std::max(CeilA2B(inputH, groupCoreNum), minAvergingRows);
         groupCoreNum = std::min(groupCoreNum, CeilA2B(inputH, tailAvergingRows));
     }
-    
+
     int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
     int64_t needCoreNum = 0;
 
@@ -614,18 +618,18 @@ uint32_t UpsampleLinear1dTiling::GetNeedCoreNumW(
 
 void UpsampleLinear1dTiling::FillTilingData()
 {
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
-static ge::graphStatus tiling4UpsampleLinear1dTiling(gert::TilingContext *context)
+static ge::graphStatus tiling4UpsampleLinear1dTiling(gert::TilingContext* context)
 {
     UpsampleLinear1dTiling tilingObject(context);
     return tilingObject.RunBigKernelTiling();
 }
 
-static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
+static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleLinear1dCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
@@ -635,13 +639,13 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, compileInfo->totalUbSize);
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
-        OP_LOGE(
-            context->GetNodeName(), "UpsampleLinear1d GetHardwareInfo Failed, vectorCoreNum:%u", compileInfo->coreNum),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "UpsampleLinear1d GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->coreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
 IMPL_OP_OPTILING(UpsampleLinear1d)
     .Tiling(tiling4UpsampleLinear1dTiling)
     .TilingParse<UpsampleLinear1dCompileInfo>(tilingPrepareTiling);
-}  // namespace optiling
+} // namespace optiling

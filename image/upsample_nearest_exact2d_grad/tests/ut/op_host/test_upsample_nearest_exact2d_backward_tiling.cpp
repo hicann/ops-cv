@@ -17,18 +17,11 @@
 using namespace std;
 using namespace ge;
 
-class UpsampleNearestExact2dGradTiling : public testing::Test
-{
+class UpsampleNearestExact2dGradTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UpsampleNearestExact2dGradTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UpsampleNearestExact2dGradTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UpsampleNearestExact2dGradTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UpsampleNearestExact2dGradTiling TearDown" << std::endl; }
 };
 
 TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_tiling_001)
@@ -44,8 +37,8 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 128})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 128})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1))},
         &compileInfo, socVersion, 20, 192 * 1024, 10240);
@@ -83,8 +76,8 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             {{{1, 1, 1, 32}, {1, 1, 1, 32}}, ge::DT_FLOAT16, ge::FORMAT_ND},
         },
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 64})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 32})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 32})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2))},
         &compileInfo, socVersion, 20, 192 * 1024, 10240);
@@ -124,8 +117,8 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             {{{1, 1, 1, 32}, {1, 1, 1, 32}}, ge::DT_BF16, ge::FORMAT_ND},
         },
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 64})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 32})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 32})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2))},
         &compileInfo, socVersion, 20, 192 * 1024, 10240);
@@ -165,8 +158,8 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             {{{1, 1, 1, 4, 16}, {1, 1, 1, 4, 16}}, ge::DT_FLOAT, ge::FORMAT_NC1HWC0},
         },
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 4})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 4})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 4})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1))},
         &compileInfo, socVersion, 40, 192 * 1024, 10240);
@@ -196,14 +189,13 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             {{{1, 2, 3, 4}, {1, 2, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({3, 4})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 3, 4})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 3, 4})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1))},
         &compileInfo, socVersion, 48);
     uint64_t expectTilingKey = 0;
-    string expectTilingData =
-        "24 1 2 3 4 3 4 32760 4575657222473777152 ";
+    string expectTilingData = "24 1 2 3 4 3 4 32760 4575657222473777152 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -221,14 +213,13 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
             {{{1, 1, 1, 32}, {1, 1, 1, 32}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 64})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 32})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 32})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2))},
         &compileInfo, socVersion, 48);
     uint64_t expectTilingKey = 259;
-    string expectTilingData =
-        "1 1 1 2 64 1 32 0 4611686019501129728 ";
+    string expectTilingData = "1 1 1 2 64 1 32 0 4611686019501129728 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -245,15 +236,15 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
         {
             {{{1, 2, 300, 200}, {1, 2, 300, 200}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({100, 200})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 300, 200})),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({100, 200})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 300, 200})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0))},
         &compileInfo, socVersion, 48);
     uint64_t expectTilingKey = 258;
-    string expectTilingData =
-        "2500 1 2 100 200 300 200 0 4575657222459796139 ";
+    string expectTilingData = "2500 1 2 100 200 300 200 0 4575657222459796139 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -270,15 +261,15 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
         {
             {{{1, 1, 300, 400}, {1, 1, 300, 400}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({100, 200})),
-         gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 300, 400})),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({100, 200})),
+         gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 300, 400})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0))},
         &compileInfo, socVersion, 48);
     uint64_t expectTilingKey = 257;
-    string expectTilingData =
-        "2500 1 1 100 200 300 400 0 4539628425440832171 ";
+    string expectTilingData = "2500 1 1 100 200 300 400 0 4539628425440832171 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

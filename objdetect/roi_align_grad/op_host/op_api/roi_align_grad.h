@@ -14,9 +14,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ROIAlignGrad(const aclTensor *gradOutput, const aclTensor *boxes,const aclIntArray *inputShape, 
-    int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio, int64_t roiEndMode, 
-    aclOpExecutor *executor);
-} // l0op
+const aclTensor* ROIAlignGrad(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                              int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                              int64_t roiEndMode, aclOpExecutor* executor);
+} // namespace l0op
 
 #endif // OP_API_INC_LEVEL0_ROI_ALIGN_GRAD_H_

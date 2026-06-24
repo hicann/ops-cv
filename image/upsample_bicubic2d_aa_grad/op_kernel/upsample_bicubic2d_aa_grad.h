@@ -31,19 +31,23 @@ class UpSampleBicubic2dAAGradND {
 public:
     TPipe pipe;
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>>
         matmulH;
     __aicore__ inline UpSampleBicubic2dAAGradND(){};
     __aicore__ inline void calculateIntermediateTensorX(LocalTensor<float> centerTensor, LocalTensor<float> xMinTensor,
-        LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor, int64_t slideStart_w, int64_t slideEnd_w);
+                                                        LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor,
+                                                        int64_t slideStart_w, int64_t slideEnd_w);
     __aicore__ inline void calculateIntermediateTensorY(LocalTensor<float> centerTensor, LocalTensor<float> xMinTensor,
-        LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor, int64_t slideStart_h, int64_t slideEnd_h);
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubicAAGradTilingData *tilingData);
+                                                        LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor,
+                                                        int64_t slideStart_h, int64_t slideEnd_h);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                UpsampleBicubicAAGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -101,19 +105,21 @@ private:
     __aicore__ inline void getQueueSize();
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
-    __aicore__ inline void computeIndexValueH(
-        LocalTensor<float> xMinTensor_h, LocalTensor<float> xSizeTensor_h, int64_t index, int64_t length);
-    __aicore__ inline void computeIndexValueW(
-        LocalTensor<float> xMinTensor, LocalTensor<float> xSizeTensor, int64_t index, int64_t length);
-    __aicore__ inline void ParseTilingData(UpsampleBicubicAAGradTilingData *tilingData);
-    __aicore__ inline void SingleTensorProcess(int64_t dataCount, LocalTensor<float> &float32Tensor);
+    __aicore__ inline void computeIndexValueH(LocalTensor<float> xMinTensor_h, LocalTensor<float> xSizeTensor_h,
+                                              int64_t index, int64_t length);
+    __aicore__ inline void computeIndexValueW(LocalTensor<float> xMinTensor, LocalTensor<float> xSizeTensor,
+                                              int64_t index, int64_t length);
+    __aicore__ inline void ParseTilingData(UpsampleBicubicAAGradTilingData* tilingData);
+    __aicore__ inline void SingleTensorProcess(int64_t dataCount, LocalTensor<float>& float32Tensor);
     __aicore__ inline void CopyIn(int64_t index, int64_t dataCount);
-    __aicore__ inline void ComputeAndCopyOut(int64_t index, int64_t dataCount, LocalTensor<float> &float32Tensor);
-    __aicore__ inline __gm__ T *GetTensorAddr(int64_t index, GM_ADDR tensorPtr);
+    __aicore__ inline void ComputeAndCopyOut(int64_t index, int64_t dataCount, LocalTensor<float>& float32Tensor);
+    __aicore__ inline __gm__ T* GetTensorAddr(int64_t index, GM_ADDR tensorPtr);
     __aicore__ inline void calculateRadioTensor(LocalTensor<float> centerTensor, LocalTensor<float> xMinTensor,
-        LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor, int64_t index, int64_t length);
+                                                LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor,
+                                                int64_t index, int64_t length);
     __aicore__ inline void calculateRadioTensorH(LocalTensor<float> centerTensor, LocalTensor<float> xMinTensor,
-        LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor, int64_t index, int64_t length);
+                                                 LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor,
+                                                 int64_t index, int64_t length);
     __aicore__ inline void calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void copyRadioTensorToGm();
     __aicore__ inline void calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
@@ -130,8 +136,8 @@ private:
     TQue<QuePosition::VECOUT, NO_BUFFER_NUM> radioQueue;
     TQue<QuePosition::VECOUT, NO_BUFFER_NUM> radioCastQueue;
 
-    const TCubeTiling *__restrict matmulTiling_w;
-    const TCubeTiling *__restrict matmulTiling_h;
+    const TCubeTiling* __restrict matmulTiling_w;
+    const TCubeTiling* __restrict matmulTiling_h;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -188,7 +194,7 @@ private:
     uint32_t maxDataCount = {0};
 
     uint64_t inputsTensorUbSize = 0;
-    int64_t *tensorDataCountList = nullptr;
+    int64_t* tensorDataCountList = nullptr;
     uint32_t tensorStart_w = {0};
     uint32_t tensorEnd_w = {0};
     int64_t tensorStartOffset_w = {0};
@@ -222,10 +228,10 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::getQueueSize()
     zeroScaleW = input_shapes[3] > 0 ? static_cast<float>(output_shapes[3]) / input_shapes[3] : 1;
     zeroScaleH = input_shapes[2] > 0 ? static_cast<float>(output_shapes[2]) / input_shapes[2] : 1;
 
-    queueSizeW = scale_w > 0 ? static_cast<int64_t>(2 * (slide_size + support_w) / scale_w) + 1
-                                    : static_cast<int64_t>(2 * (slide_size + support_w) / zeroScaleW) + 1;
-    queueSizeH = scale_h > 0 ? static_cast<int64_t>(2 * (slide_size + support_h) / scale_h) + 1
-                                    : static_cast<int64_t>(2 * (slide_size + support_h) / zeroScaleH) + 1;
+    queueSizeW = scale_w > 0 ? static_cast<int64_t>(2 * (slide_size + support_w) / scale_w) + 1 :
+                               static_cast<int64_t>(2 * (slide_size + support_w) / zeroScaleW) + 1;
+    queueSizeH = scale_h > 0 ? static_cast<int64_t>(2 * (slide_size + support_h) / scale_h) + 1 :
+                               static_cast<int64_t>(2 * (slide_size + support_h) / zeroScaleH) + 1;
     queueSizeW++;
     queueSizeH++;
 
@@ -256,8 +262,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::WDirectionExpansion()
             for (int64_t index = tailSlideStart_w; index < tailSlideEnd_w; index += slide_size) {
                 int64_t length = Min(slide_size, tailSlideEnd_w - index);
                 slidelen = length;
-                calculateIntermediateTensorX(
-                    centerTensor, xMinTensor, xSizeTensor, weightTensor, index, tailSlideEnd_w);
+                calculateIntermediateTensorX(centerTensor, xMinTensor, xSizeTensor, weightTensor, index,
+                                             tailSlideEnd_w);
                 calculateRadioTensor(centerTensor, xMinTensor, xSizeTensor, weightTensor, index, length);
                 copyRadioTensorToGm();
                 calculateWidthExtension(index, tailRowStart_w, tailRowEnd_w);
@@ -286,8 +292,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::HDirectionExpansion()
             for (int64_t index = slideStart_h; index < slideEnd_h; index += slide_size) {
                 int64_t length = Min(slide_size, slideEnd_h + 1 - index);
                 slidelen_h = length;
-                calculateIntermediateTensorY(
-                    centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, slideEnd_h);
+                calculateIntermediateTensorY(centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index,
+                                             slideEnd_h);
                 calculateRadioTensorH(centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, length);
                 copyRadioTensorToGm();
                 calculateHeightExtension(index, 0, 0);
@@ -298,8 +304,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::HDirectionExpansion()
             for (int64_t index = tailSlideStart_h; index < tailSlideEnd_h; index += slide_size) {
                 int64_t length = Min(slide_size, tailSlideEnd_h + 1 - index);
                 slidelen_h = length;
-                calculateIntermediateTensorY(
-                    centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, tailSlideEnd_h);
+                calculateIntermediateTensorY(centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index,
+                                             tailSlideEnd_h);
                 calculateRadioTensorH(centerTensor_h, xMinTensor_h, xSizeTensor_h, weightTensor_h, index, length);
                 copyRadioTensorToGm();
                 calculateHeightExtension(index, tailRowStart_h, tailRowEnd_h);
@@ -315,8 +321,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::HDirectionExpansion()
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubicAAGradTilingData *tilingData)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                          UpsampleBicubicAAGradTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -339,9 +345,9 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::Init(
     pipe.InitBuffer(weightQueue, (interpsize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(radioCastQueue, NO_BUFFER_NUM, (radioSize * sizeof(T) + 31) / 32 * 32);
 
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)inTensorsPtr);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)outTensorsPtr);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)inTensorsPtr);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)outTensorsPtr);
 };
 
 template <typename T>
@@ -366,12 +372,12 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::Process()
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensorX(LocalTensor<float> centerTensor,
-    LocalTensor<float> xMinTensor, LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor,
-    int64_t slideStart_w, int64_t slideEnd_w)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensorX(
+    LocalTensor<float> centerTensor, LocalTensor<float> xMinTensor, LocalTensor<float> xSizeTensor,
+    LocalTensor<float> weightTensor, int64_t slideStart_w, int64_t slideEnd_w)
 {
-    instart_w = scale_w > 0 ? static_cast<int64_t>((float)(slideStart_w - support_w) / scale_w) - 1
-                            : static_cast<int64_t>((float)(slideStart_w - support_w) / zeroScaleW) - 1;
+    instart_w = scale_w > 0 ? static_cast<int64_t>((float)(slideStart_w - support_w) / scale_w) - 1 :
+                              static_cast<int64_t>((float)(slideStart_w - support_w) / zeroScaleW) - 1;
 
     if (instart_w < 0) {
         instart_w = 0;
@@ -409,12 +415,12 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensorY(LocalTensor<float> centerTensor_h,
-    LocalTensor<float> xMinTensor_h, LocalTensor<float> xSizeTensor_h, LocalTensor<float> weightTensor_h,
-    int64_t slideStart_h, int64_t slideEnd_h)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensorY(
+    LocalTensor<float> centerTensor_h, LocalTensor<float> xMinTensor_h, LocalTensor<float> xSizeTensor_h,
+    LocalTensor<float> weightTensor_h, int64_t slideStart_h, int64_t slideEnd_h)
 {
-    instart_h = scale_h > 0 ? static_cast<int64_t>((float)(slideStart_h - support_h) / scale_h) - 1
-                            : static_cast<int64_t>((float)(slideStart_h - support_h) / zeroScaleH) - 1;
+    instart_h = scale_h > 0 ? static_cast<int64_t>((float)(slideStart_h - support_h) / scale_h) - 1 :
+                              static_cast<int64_t>((float)(slideStart_h - support_h) / zeroScaleH) - 1;
     int64_t length = queueSizeH;
     if (instart_h < 0) {
         instart_h = 0;
@@ -458,8 +464,9 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateIntermediateTensor
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueH(
-    LocalTensor<float> xMinTensor_h, LocalTensor<float> xSizeTensor_h, int64_t index, int64_t length)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueH(LocalTensor<float> xMinTensor_h,
+                                                                        LocalTensor<float> xSizeTensor_h, int64_t index,
+                                                                        int64_t length)
 {
     instartIndex = 0;
     inendIndex = 0;
@@ -480,8 +487,10 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueH(
 
 template <typename T>
 __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateRadioTensorH(LocalTensor<float> centerTensor_h,
-    LocalTensor<float> xMinTensor_h, LocalTensor<float> xSizeTensor_h, LocalTensor<float> weightTensor_h, int64_t index,
-    int64_t length)
+                                                                           LocalTensor<float> xMinTensor_h,
+                                                                           LocalTensor<float> xSizeTensor_h,
+                                                                           LocalTensor<float> weightTensor_h,
+                                                                           int64_t index, int64_t length)
 {
     LocalTensor<float> radioTensor_h = radioQueue.AllocTensor<float>();
     // 初始化为0
@@ -530,8 +539,9 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateRadioTensorH(Local
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueW(
-    LocalTensor<float> xMinTensor, LocalTensor<float> xSizeTensor, int64_t index, int64_t length)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueW(LocalTensor<float> xMinTensor,
+                                                                        LocalTensor<float> xSizeTensor, int64_t index,
+                                                                        int64_t length)
 {
     instartIndex = 0;
     inendIndex = 0;
@@ -553,8 +563,10 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::computeIndexValueW(
 
 template <typename T>
 __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateRadioTensor(LocalTensor<float> centerTensor,
-    LocalTensor<float> xMinTensor, LocalTensor<float> xSizeTensor, LocalTensor<float> weightTensor, int64_t index,
-    int64_t length)
+                                                                          LocalTensor<float> xMinTensor,
+                                                                          LocalTensor<float> xSizeTensor,
+                                                                          LocalTensor<float> weightTensor,
+                                                                          int64_t index, int64_t length)
 {
     LocalTensor<float> radioTensor = radioQueue.AllocTensor<float>();
     // 初始化为0
@@ -622,8 +634,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::copyRadioTensorToGm()
 
     if (dataType == 2) {
         LocalTensor<T> radioBuf = radioQueue.DeQue<T>();
-        DataCopy(
-            intermediateTensorGm[workSpaceRadioOffset], radioBuf, (radioBuf.GetSize() + size - 1) / size * size);
+        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioBuf, (radioBuf.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
@@ -631,9 +642,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::copyRadioTensorToGm()
         radioQueue.FreeTensor(radioBuf);
     } else {
         LocalTensor<T> radioCastTensor = radioCastQueue.DeQue<T>();
-        DataCopy(intermediateTensorGm[workSpaceRadioOffset],
-            radioCastTensor,
-            (radioCastTensor.GetSize() + size - 1) / size * size);
+        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioCastTensor,
+                 (radioCastTensor.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
@@ -642,8 +652,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::copyRadioTensorToGm()
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                             int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
@@ -680,8 +690,8 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateWidthExtension(
     matmulW.End();
 }
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateHeightExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                              int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTiling_h->singleCoreM;
     int64_t singleCoreN = matmulTiling_h->singleCoreN;
@@ -722,7 +732,7 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBicubic2dAAGradND<T>::ParseTilingData(UpsampleBicubicAAGradTilingData *tilingData)
+__aicore__ inline void UpSampleBicubic2dAAGradND<T>::ParseTilingData(UpsampleBicubicAAGradTilingData* tilingData)
 {
     slide_size = tilingData->slide_size;
     scale_w = tilingData->scale_w;
@@ -762,11 +772,11 @@ __aicore__ inline void UpSampleBicubic2dAAGradND<T>::ParseTilingData(UpsampleBic
     slideEnd_h = tilingData->slideEndList_h[blockIdx];
     tailSlideEnd_h = tilingData->tailSlideEndList_h[blockIdx];
     tailRowEnd_h = tilingData->tailRowEndList_h[blockIdx];
-    
+
     matmulTiling_h = &tilingData->matmulTiling_h;
     matmulTiling_w = &tilingData->matmulTiling_w;
     dataType = tilingData->dataType;
 }
 
-}  // namespace UpSampleBicubic2dAAGrad
+} // namespace UpSampleBicubic2dAAGrad
 #endif

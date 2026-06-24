@@ -15,54 +15,46 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-static const std::vector<ge::DataType> valueDataTypeX = {
-    ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16
-};
+static const std::vector<ge::DataType> valueDataTypeX = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
 
-static const std::vector<ge::DataType> sizeDataType = {
-    ge::DT_INT32, ge::DT_INT32, ge::DT_INT32
-};
+static const std::vector<ge::DataType> sizeDataType = {ge::DT_INT32, ge::DT_INT32, ge::DT_INT32};
 
-static const std::vector<ge::Format> resizeLinearFormat = {
-    ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND
-};
+static const std::vector<ge::Format> resizeLinearFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
-static const std::vector<ge::Format> sizeFormat = {
-    ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND
-};
+static const std::vector<ge::Format> sizeFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
 class ResizeLinear : public OpDef {
- public:
-  explicit ResizeLinear(const char* name) : OpDef(name)
-  {
-    this->Input("x")
-        .ParamType(REQUIRED)
-        .DataType(valueDataTypeX)
-        .Format(resizeLinearFormat)
-        .UnknownShapeFormat(resizeLinearFormat);
-    this->Input("size")
-        .ParamType(REQUIRED)
-        .ValueDepend(OPTIONAL)
-        .DataType(sizeDataType)
-        .Format(sizeFormat)
-        .UnknownShapeFormat(sizeFormat);
-    this->Output("y")
-        .ParamType(REQUIRED)
-        .DataType(valueDataTypeX)
-        .Format(resizeLinearFormat)
-        .UnknownShapeFormat(resizeLinearFormat);
+public:
+    explicit ResizeLinear(const char* name) : OpDef(name)
+    {
+        this->Input("x")
+            .ParamType(REQUIRED)
+            .DataType(valueDataTypeX)
+            .Format(resizeLinearFormat)
+            .UnknownShapeFormat(resizeLinearFormat);
+        this->Input("size")
+            .ParamType(REQUIRED)
+            .ValueDepend(OPTIONAL)
+            .DataType(sizeDataType)
+            .Format(sizeFormat)
+            .UnknownShapeFormat(sizeFormat);
+        this->Output("y")
+            .ParamType(REQUIRED)
+            .DataType(valueDataTypeX)
+            .Format(resizeLinearFormat)
+            .UnknownShapeFormat(resizeLinearFormat);
 
-    this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
-    this->Attr("scale").AttrType(OPTIONAL).Float(0.0f);
+        this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
+        this->Attr("scale").AttrType(OPTIONAL).Float(0.0f);
 
-    OpAICoreConfig aicoreConfig;
-    aicoreConfig.DynamicCompileStaticFlag(true)
-        .DynamicRankSupportFlag(true)
-        .DynamicShapeSupportFlag(true)
-        .ExtendCfgInfo("opFile.value", "resize_linear_apt");
-    this->AICore().AddConfig("ascend950", aicoreConfig);
-  }
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "resize_linear_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
+    }
 };
 
 OP_ADD(ResizeLinear);
-}
+} // namespace ops

@@ -22,18 +22,10 @@ static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge
 
 class UpsampleBicubic2dAAGrad : public OpDef {
 public:
-    explicit UpsampleBicubic2dAAGrad(const char *name) : OpDef(name)
+    explicit UpsampleBicubic2dAAGrad(const char* name) : OpDef(name)
     {
-        this->Input("grad_output")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
-        this->Output("grad_input")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
+        this->Input("grad_output").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
+        this->Output("grad_input").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
         this->Attr("output_size").AttrType(REQUIRED).ListInt();
         this->Attr("input_size").AttrType(REQUIRED).ListInt();
         this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
@@ -61,4 +53,4 @@ public:
 };
 
 OP_ADD(UpsampleBicubic2dAAGrad);
-}  // namespace ops
+} // namespace ops

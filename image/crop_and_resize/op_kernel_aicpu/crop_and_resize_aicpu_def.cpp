@@ -30,8 +30,8 @@ public:
     explicit CropAndResize(const char* name) : OpDef(name)
     {
         ApplyCvAicpuDefaultCfg(*this);
-        this->Input("x").DataType(
-            {ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8, ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_INT64});
+        this->Input("x").DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_DOUBLE, ge::DT_UINT8, ge::DT_INT8,
+                                   ge::DT_UINT16, ge::DT_INT16, ge::DT_INT32, ge::DT_INT64});
         this->Input("boxes").DataType({ge::DT_FLOAT});
         this->Input("box_index").DataType({ge::DT_INT32});
         this->Input("crop_size").DataType({ge::DT_INT32});

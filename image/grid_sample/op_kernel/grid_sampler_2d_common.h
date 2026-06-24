@@ -15,8 +15,7 @@
 #ifndef GRID_SAMPLER_2D_COMMON
 #define GRID_SAMPLER_2D_COMMON
 
-
-#if ASC_DEVKIT_MAJOR >=9
+#if ASC_DEVKIT_MAJOR >= 9
 #include "kernel_vec_intf.h"
 #else
 #include "kernel_operator.h"
@@ -31,15 +30,14 @@ using namespace AscendC;
 struct InputTensorStruct2D {
     LocalTensor<float> iXFpUb;
     LocalTensor<float> iYFpUb;
-    
+
     LocalTensor<int32_t> iXIntUb;
     LocalTensor<int32_t> iYIntUb;
 
-    __aicore__ inline InputTensorStruct2D()
-    {}
+    __aicore__ inline InputTensorStruct2D() {}
 
     __aicore__ inline InputTensorStruct2D(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
-        LocalTensor<int32_t> iXIntUb, LocalTensor<int32_t> iYIntUb)
+                                          LocalTensor<int32_t> iXIntUb, LocalTensor<int32_t> iYIntUb)
         : iXFpUb(iXFpUb), iYFpUb(iYFpUb), iXIntUb(iXIntUb), iYIntUb(iYIntUb)
     {}
 };
@@ -49,8 +47,7 @@ struct ProcessParam2D {
     int32_t hwIdx = 0;
     int32_t calHWElems = 0;
 
-    __aicore__ inline ProcessParam2D()
-    {}
+    __aicore__ inline ProcessParam2D() {}
 };
 
 struct PointParam2D {
@@ -62,5 +59,5 @@ struct PointParam2D {
     int32_t calCElems = 0;
     int32_t channelAlign = 0;
 };
-}  // namespace GridSample
-#endif  //  GRID_SAMPLER_2D_COMMON
+} // namespace GridSample
+#endif //  GRID_SAMPLER_2D_COMMON

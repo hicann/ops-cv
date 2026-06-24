@@ -30,10 +30,8 @@ template <typename T, typename DataType>
 class AippYuvGray : public AippBase<T, DataType> {
 public:
     __aicore__ inline AippYuvGray(){};
-    __aicore__ inline void Init(const AippTilingData& tilingData,
-        const tagAippDynamicParaHeader& tilingParamHeader,
-        const __gm__ uint8_t* gmParams,
-        uint8_t dynamicTilingKey);
+    __aicore__ inline void Init(const AippTilingData& tilingData, const tagAippDynamicParaHeader& tilingParamHeader,
+                                const __gm__ uint8_t* gmParams, uint8_t dynamicTilingKey);
     __aicore__ inline void Process(GM_ADDR x, GM_ADDR y);
 
 private:
@@ -42,26 +40,24 @@ private:
 
 template <typename T, typename DataType>
 __aicore__ inline void AippYuvGray<T, DataType>::Init(const AippTilingData& tilingData,
-    const tagAippDynamicParaHeader& tilingParamHeader,
-    const __gm__ uint8_t* gmParams,
-    uint8_t dynamicTilingKey)
+                                                      const tagAippDynamicParaHeader& tilingParamHeader,
+                                                      const __gm__ uint8_t* gmParams, uint8_t dynamicTilingKey)
 {
     this->BaseInit(tilingData, tilingParamHeader, gmParams, dynamicTilingKey);
 }
 
 template <typename T, typename DataType>
-__simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
-    __gm__ uint8_t* yuvGM, __gm__ T* outputGM, AippTilingData tD,
-    const __gm__ uint8_t* gmParams,
-    uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
+__simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
+    void SimtComputeYuvGray(__gm__ uint8_t* yuvGM, __gm__ T* outputGM, AippTilingData tD,
+                            const __gm__ uint8_t* gmParams, uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize,
+                            uint8_t dynamicTilingKey)
 {
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
     float padValue = tD.paddingParam.padValue;
     bool isYuv400 = (tD.imageFormat == IMAGE_FORMAT_YUV400_U8);
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize;
-         idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         RgbPack<DataType> dstGrayIdx;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
@@ -80,12 +76,12 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
             DataType srcIdx;
             if (isYuv400) {
                 srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW +
-                    (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
-                    tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
+                         (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
+                         tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
             } else {
                 srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW * DIGIT_3 / DIGIT_2 +
-                    (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
-                    tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
+                         (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
+                         tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
             }
             RgbPack<uint8_t> result;
             ApplyCscMatrix(result, yuvGM[srcIdx], 0, 0, tD.cscParam);
@@ -99,12 +95,12 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuvGray(
 template <typename T, typename DataType>
 __aicore__ inline void AippYuvGray<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
-    uint64_t batchSize = static_cast<uint64_t>(this->tilingData_.batchNum) *
-        this->tilingData_.outputSizeH * this->tilingData_.outputSizeW;
+    uint64_t batchSize = static_cast<uint64_t>(this->tilingData_.batchNum) * this->tilingData_.outputSizeH *
+                         this->tilingData_.outputSizeW;
 
-    asc_vf_call<Aipp_Kernel::SimtComputeYuvGray<T, DataType>>(dim3(this->blockDimX_),
-        (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->gmParams_,
-         this->blockIdx_, this->blockNum_, batchSize, this->dynamicTilingKey_);
+    asc_vf_call<Aipp_Kernel::SimtComputeYuvGray<T, DataType>>(dim3(this->blockDimX_), (__gm__ uint8_t*)x, (__gm__ T*)y,
+                                                              this->tilingData_, this->gmParams_, this->blockIdx_,
+                                                              this->blockNum_, batchSize, this->dynamicTilingKey_);
 }
 
 } // namespace Aipp_Kernel

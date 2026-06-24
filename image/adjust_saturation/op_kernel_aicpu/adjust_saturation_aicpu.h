@@ -15,7 +15,7 @@
 
 namespace aicpu {
 class AdjustSaturationCpuKernel final : public CpuKernel {
-    std::uint32_t Compute(CpuKernelContext &ctx) override;
+    std::uint32_t Compute(CpuKernelContext& ctx) override;
 };
-}  // namespace aicpu
+} // namespace aicpu
 #endif

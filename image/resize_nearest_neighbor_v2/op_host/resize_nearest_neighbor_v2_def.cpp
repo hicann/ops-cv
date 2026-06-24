@@ -15,59 +15,53 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-static const std::vector<ge::DataType> valueDataType = {
-    ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16,ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16
-};
+static const std::vector<ge::DataType> valueDataType = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16,
+                                                        ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
 
-static const std::vector<ge::DataType> sizeDataType = {
-    ge::DT_INT32, ge::DT_INT32, ge::DT_INT32,
-    ge::DT_INT32, ge::DT_INT32, ge::DT_INT32
-};
+static const std::vector<ge::DataType> sizeDataType = {ge::DT_INT32, ge::DT_INT32, ge::DT_INT32,
+                                                       ge::DT_INT32, ge::DT_INT32, ge::DT_INT32};
 
 static const std::vector<ge::Format> resizeNearestNeighborV2Format = {
-    ge::FORMAT_NCHW, ge::FORMAT_NCHW, ge::FORMAT_NCHW,
-    ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC,
+    ge::FORMAT_NCHW, ge::FORMAT_NCHW, ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NHWC, ge::FORMAT_NHWC,
 };
 
-static const std::vector<ge::Format> sizeFormat = {
-    ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-    ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND
-};
+static const std::vector<ge::Format> sizeFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                                                   ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
 class ResizeNearestNeighborV2 : public OpDef {
- public:
-  explicit ResizeNearestNeighborV2(const char* name) : OpDef(name)
-  {
-    this->Input("x")
-        .ParamType(REQUIRED)
-        .DataType(valueDataType)
-        .Format(resizeNearestNeighborV2Format)
-        .UnknownShapeFormat(resizeNearestNeighborV2Format);
-    this->Input("size")
-        .ParamType(REQUIRED)
-        .ValueDepend(OPTIONAL)
-        .DataType(sizeDataType)
-        .Format(sizeFormat)
-        .UnknownShapeFormat(sizeFormat);
-    this->Output("y")
-        .ParamType(REQUIRED)
-        .DataType(valueDataType)
-        .Format(resizeNearestNeighborV2Format)
-        .UnknownShapeFormat(resizeNearestNeighborV2Format);
+public:
+    explicit ResizeNearestNeighborV2(const char* name) : OpDef(name)
+    {
+        this->Input("x")
+            .ParamType(REQUIRED)
+            .DataType(valueDataType)
+            .Format(resizeNearestNeighborV2Format)
+            .UnknownShapeFormat(resizeNearestNeighborV2Format);
+        this->Input("size")
+            .ParamType(REQUIRED)
+            .ValueDepend(OPTIONAL)
+            .DataType(sizeDataType)
+            .Format(sizeFormat)
+            .UnknownShapeFormat(sizeFormat);
+        this->Output("y")
+            .ParamType(REQUIRED)
+            .DataType(valueDataType)
+            .Format(resizeNearestNeighborV2Format)
+            .UnknownShapeFormat(resizeNearestNeighborV2Format);
 
-    this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
-    this->Attr("half_pixel_centers").AttrType(OPTIONAL).Bool(false);
-    this->Attr("scales").AttrType(OPTIONAL).ListFloat({0.0f, 0.0f});
+        this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
+        this->Attr("half_pixel_centers").AttrType(OPTIONAL).Bool(false);
+        this->Attr("scales").AttrType(OPTIONAL).ListFloat({0.0f, 0.0f});
 
-    OpAICoreConfig aicoreConfig;
-    aicoreConfig.DynamicCompileStaticFlag(true)
-        .DynamicRankSupportFlag(true)
-        .DynamicShapeSupportFlag(true)
-        .ExtendCfgInfo("opFile.value", "resize_nearest_neighbor_v2_apt");
-    this->AICore().AddConfig("ascend950", aicoreConfig);
-    this->AICore().AddConfig("mc62", aicoreConfig);
-  }
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "resize_nearest_neighbor_v2_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("mc62", aicoreConfig);
+    }
 };
 
 OP_ADD(ResizeNearestNeighborV2);
-}
+} // namespace ops

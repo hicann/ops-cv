@@ -86,15 +86,11 @@ static Status ParseParamsRoiExtractor(const Message* op_src, ge::Operator& op_de
 // register op info to GE
 REGISTER_CUSTOM_OP("RoiExtractor")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("ai.onnx::8::RoiExtractor"),
-                   ge::AscendString("ai.onnx::9::RoiExtractor"),
-                   ge::AscendString("ai.onnx::10::RoiExtractor"),
-                   ge::AscendString("ai.onnx::11::RoiExtractor"),
-                   ge::AscendString("ai.onnx::12::RoiExtractor"),
-                   ge::AscendString("ai.onnx::13::RoiExtractor"),
-                   ge::AscendString("ai.onnx::14::RoiExtractor"),
-                   ge::AscendString("ai.onnx::15::RoiExtractor"),
+    .OriginOpType({ge::AscendString("ai.onnx::8::RoiExtractor"), ge::AscendString("ai.onnx::9::RoiExtractor"),
+                   ge::AscendString("ai.onnx::10::RoiExtractor"), ge::AscendString("ai.onnx::11::RoiExtractor"),
+                   ge::AscendString("ai.onnx::12::RoiExtractor"), ge::AscendString("ai.onnx::13::RoiExtractor"),
+                   ge::AscendString("ai.onnx::14::RoiExtractor"), ge::AscendString("ai.onnx::15::RoiExtractor"),
                    ge::AscendString("ai.onnx::16::RoiExtractor")})
     .ParseParamsFn(ParseParamsRoiExtractor)
     .ImplyType(ImplyType::TVM);
-}  // namespace domi
+} // namespace domi

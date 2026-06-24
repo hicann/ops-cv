@@ -120,21 +120,20 @@ ge::graphStatus ResizeBicubicV2Tiling::GetInputSize()
     gert::Shape sizeShape = size->GetStorageShape();
     int32_t sizeElms = sizeShape.GetShapeSize();
     OP_CHECK_IF(sizeElms != DIM_2,
-        OP_LOGE_FOR_INVALID_SHAPESIZE(
-            context_->GetNodeName(), "size", std::to_string(sizeElms).c_str(), std::to_string(DIM_2).c_str()),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_SHAPESIZE(context_->GetNodeName(), "size", std::to_string(sizeElms).c_str(),
+                                              std::to_string(DIM_2).c_str()),
+                return ge::GRAPH_FAILED);
     const gert::Tensor* sizeTensor = context_->GetInputTensor(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, sizeTensor);
     OP_CHECK_IF(sizeTensor->GetDataType() != ge::DT_INT32,
-        OP_LOGE_FOR_INVALID_DTYPE(
-            context_->GetNodeName(), "size", Ops::Base::ToString(sizeTensor->GetDataType()).c_str(),
-            "int32"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeName(), "size",
+                                          Ops::Base::ToString(sizeTensor->GetDataType()).c_str(), "int32"),
+                return ge::GRAPH_FAILED);
     std::vector<int64_t> sizeList;
     sizeList.resize(DIM_2);
     auto* tensorData = sizeTensor->GetData<int32_t>();
-    OP_CHECK_IF(
-        tensorData == nullptr, OP_LOGE(context_->GetNodeName(), "GetData failed, tensorData is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tensorData == nullptr, OP_LOGE(context_->GetNodeName(), "GetData failed, tensorData is nullptr"),
+                return ge::GRAPH_FAILED);
 
     for (int32_t i = 0; i < DIM_2; i++) {
         sizeList[i] = static_cast<int64_t>(*(tensorData + i));
@@ -142,9 +141,11 @@ ge::graphStatus ResizeBicubicV2Tiling::GetInputSize()
     if ((sizeList[0] != lenDesH_) || (sizeList[1] != lenDesW_)) {
         std::string sizeTensorDatas = "(" + std::to_string(sizeList[0]) + ", " + std::to_string(sizeList[1]) + ")";
         std::string reasonMsg = "The value of input size must be (H, W) - (" + std::to_string(lenDesH_) + ", " +
-                                std::to_string(lenDesW_) + "), where H and W are inferred from the 4D shape "
+                                std::to_string(lenDesW_) +
+                                "), where H and W are inferred from the 4D shape "
                                 "of output y based on its format: axes 2/3 for NCHW, or axes 1/2 for NHWC";
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "size", sizeTensorDatas.c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "size", sizeTensorDatas.c_str(),
+                                              reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
 
@@ -162,11 +163,9 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDtype()
     xDtypeSize_ = GetSizeByDataType(xDtype_);
     yDtypeSize_ = GetSizeByDataType(yDtype_);
     if (xDtypeSize_ <= 0 || yDtypeSize_ <= 0) {
-        std::string dtypeMsg =
-            Ops::Base::ToString(xDtype_) + " and " + Ops::Base::ToString(yDtype_);
-        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
-            context_->GetNodeName(), "x and y", dtypeMsg.c_str(),
-            "The dtype sizes of input x and output y must be greater than zero");
+        std::string dtypeMsg = Ops::Base::ToString(xDtype_) + " and " + Ops::Base::ToString(yDtype_);
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "x and y", dtypeMsg.c_str(),
+                                               "The dtype sizes of input x and output y must be greater than zero");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -182,8 +181,8 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckShapeDimValid()
     gert::Shape yShape = y->GetStorageShape();
     if (imagesShape.GetDimNum() != DIM_4 || yShape.GetDimNum() != DIM_4) {
         std::string dimMsg = std::to_string(imagesShape.GetDimNum()) + " and " + std::to_string(yShape.GetDimNum());
-        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
-            context_->GetNodeName(), "x and y", dimMsg.c_str(), "The shapes of input x and output y must be 4D");
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(),
+                                                  "The shapes of input x and output y must be 4D");
         return ge::GRAPH_FAILED;
     }
 
@@ -201,15 +200,15 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckFormatValid()
     ge::Format outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outputDesc->GetStorageFormat()));
     if (dataFormat != outFormat) {
         std::string formatMsg = Ops::Base::ToString(dataFormat) + " and " + Ops::Base::ToString(outFormat);
-        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
-            context_->GetNodeName(), "x and y", formatMsg.c_str(), "The formats of input x and output y must be the same");
+        OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(context_->GetNodeName(), "x and y", formatMsg.c_str(),
+                                                "The formats of input x and output y must be the same");
         return ge::GRAPH_FAILED;
     }
 
     OP_CHECK_IF(((dataFormat != ge::FORMAT_NCHW) && (dataFormat != ge::FORMAT_NHWC) && (dataFormat != ge::FORMAT_ND)),
-        OP_LOGE_FOR_INVALID_FORMAT(
-            context_->GetNodeName(), "x", Ops::Base::ToString(dataFormat).c_str(), "NCHW, NHWC and ND"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_FORMAT(context_->GetNodeName(), "x", Ops::Base::ToString(dataFormat).c_str(),
+                                           "NCHW, NHWC and ND"),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -263,8 +262,8 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDimsValid()
         std::string reasonMsg = "The C-dimension and N-dimension of input x must be greater than 0, "
                                 "where C is inferred from the 4D shape of input x based on its format "
                                 "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(
-            context_->GetNodeName(), "x", Ops::Base::ToString(imagesShape).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "x", Ops::Base::ToString(imagesShape).c_str(),
+                                              reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
 
@@ -282,34 +281,28 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckDimsValid()
 
 ge::graphStatus ResizeBicubicV2Tiling::CheckParams()
 {
-    OP_CHECK_IF(
-        (CheckShapeDimValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckShapeDimValid failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckShapeDimValid() != ge::GRAPH_SUCCESS),
+                OP_LOGE(context_->GetNodeName(), "CheckShapeDimValid failed."), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        (CheckFormatValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckFormatValid failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckFormatValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckFormatValid failed."),
+                return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        (ExtractDimsFromShape() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "ExtractDimsFromShape failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((ExtractDimsFromShape() != ge::GRAPH_SUCCESS),
+                OP_LOGE(context_->GetNodeName(), "ExtractDimsFromShape failed."), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        (CheckDimsValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckDimsValid failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckDimsValid() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckDimsValid failed."),
+                return ge::GRAPH_FAILED);
 
     isNchw_ = DIM_1;
     if ((dataFormat == ge::FORMAT_NHWC) && (lenDesH_ != lenSrcH_ && lenDesW_ != lenSrcW_)) {
         isNchw_ = DIM_0;
     }
 
-    OP_CHECK_IF(
-        GetInputSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "get input size failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetInputSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "get input size failed"),
+                return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        CheckDtype() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "check dtype failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckDtype() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "check dtype failed"),
+                return ge::GRAPH_FAILED);
 
     SetDimsByFormat();
     return ge::GRAPH_SUCCESS;
@@ -334,9 +327,8 @@ int64_t ResizeBicubicV2Tiling::FindBest2DTiling(int64_t lenM, int64_t lenN)
 
         int64_t mFactor = Ops::Base::CeilDiv(lenM, m);
         int64_t nFactor = Ops::Base::CeilDiv(lenN, n);
-        OP_CHECK_IF(
-            (nFactor == 0 || mFactor == 0), OP_LOGE("FindBest2DTiling", "nFactor or mFactor is zero"),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF((nFactor == 0 || mFactor == 0), OP_LOGE("FindBest2DTiling", "nFactor or mFactor is zero"),
+                    return ge::GRAPH_FAILED);
         int64_t delta = mFactor * nFactor;
         if (m * n == coreNum_) {
             if (lenM % m == 0 && lenN % n == 0) {
@@ -396,10 +388,7 @@ void ResizeBicubicV2Tiling::SetDimsByFormat()
     ubCFactor_ = cFactor_;
 }
 
-bool ResizeBicubicV2Tiling::IsMatchAllCopy()
-{
-    return lenDesH_ == lenSrcH_ && lenDesW_ == lenSrcW_;
-}
+bool ResizeBicubicV2Tiling::IsMatchAllCopy() { return lenDesH_ == lenSrcH_ && lenDesW_ == lenSrcW_; }
 
 bool ResizeBicubicV2Tiling::IsMatchPointCopy(bool isIntScaleH, bool isIntScaleW, bool oddScales)
 {
@@ -506,9 +495,8 @@ void ResizeBicubicV2Tiling::ComputeKey()
         int32_t intScaleH = static_cast<int32_t>(scaleH_);
         int32_t intScaleW = static_cast<int32_t>(scaleW_);
         oddScales = (intScaleH % EVEN_FACTOR == 1) && (intScaleW % EVEN_FACTOR == 1);
-        OP_LOGI(
-            context_->GetNodeName(), "oddScales is %d, intScaleL is %d, intScaleW is %d", oddScales, intScaleH,
-            intScaleW);
+        OP_LOGI(context_->GetNodeName(), "oddScales is %d, intScaleL is %d, intScaleW is %d", oddScales, intScaleH,
+                intScaleW);
     }
     if (IsMatchAllCopy()) {
         ubCFactor_ = ubBlockNum_ / DB_BUFF_NUM * ONE_BLOCK_SIZE / xDtypeSize_;
@@ -543,9 +531,8 @@ float ResizeBicubicV2Tiling::ComputeScale(float scale, int64_t lenSrc, int64_t l
 
 ge::graphStatus ResizeBicubicV2Tiling::Compute()
 {
-    OP_CHECK_IF(
-        CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "input params is check failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "input params is check failed"),
+                return ge::GRAPH_FAILED);
 
     // Get attrs: alignCorners
     auto attrs = context_->GetAttrs();
@@ -570,9 +557,9 @@ ge::graphStatus ResizeBicubicV2Tiling::Compute()
     int64_t scalesNum = scales->GetSize();
     const float* scalesData = static_cast<const float*>(scales->GetData());
     OP_CHECK_IF(scalesNum != DIM_2,
-        OP_LOGE_FOR_INVALID_LISTSIZE(
-            context_->GetNodeName(), "scales", std::to_string(scalesNum).c_str(), std::to_string(DIM_2).c_str()),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_LISTSIZE(context_->GetNodeName(), "scales", std::to_string(scalesNum).c_str(),
+                                             std::to_string(DIM_2).c_str()),
+                return ge::GRAPH_FAILED);
 
     scaleH_ = scalesData[DIM_0];
     scaleW_ = scalesData[DIM_1];
@@ -610,20 +597,19 @@ void ResizeBicubicV2Tiling::GetPlatformData(const ResizeBicubicV2CompileInfo* co
 
 void ResizeBicubicV2Tiling::PrintTilingData()
 {
-    OP_LOGI(
-        context_->GetNodeName(),
-        "ResizeBicubicV2 tilingData realCoreNum is %ld, blkProcessNum is %ld, "
-        "splitBlockTailFactor is %ld, lenSrcH is %ld, lenSrcW is %ld, "
-        "lenDesH is %ld, lenDesW is %ld, lenC is %ld, lenN is %ld, "
-        "scaleH is %f, scaleW is %f, nFactor is %ld,  hFactor is %ld, "
-        "wFactor is %ld, cFactor is %ld, ubNFactor is %ld, "
-        "ubHFactor is %ld, ubWFactor is %ld,  ubCFactor is %ld",
-        tilingData_.get_realCoreNum(), tilingData_.get_blkProcessNum(), tilingData_.get_splitBlockTailFactor(),
-        tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(), tilingData_.get_lenDesH(), tilingData_.get_lenDesW(),
-        tilingData_.get_lenC(), tilingData_.get_lenN(), tilingData_.get_scaleH(), tilingData_.get_scaleW(),
-        tilingData_.get_nFactor(), tilingData_.get_hFactor(), tilingData_.get_wFactor(), tilingData_.get_cFactor(),
-        tilingData_.get_ubNFactor(), tilingData_.get_ubHFactor(), tilingData_.get_ubWFactor(),
-        tilingData_.get_ubCFactor());
+    OP_LOGI(context_->GetNodeName(),
+            "ResizeBicubicV2 tilingData realCoreNum is %ld, blkProcessNum is %ld, "
+            "splitBlockTailFactor is %ld, lenSrcH is %ld, lenSrcW is %ld, "
+            "lenDesH is %ld, lenDesW is %ld, lenC is %ld, lenN is %ld, "
+            "scaleH is %f, scaleW is %f, nFactor is %ld,  hFactor is %ld, "
+            "wFactor is %ld, cFactor is %ld, ubNFactor is %ld, "
+            "ubHFactor is %ld, ubWFactor is %ld,  ubCFactor is %ld",
+            tilingData_.get_realCoreNum(), tilingData_.get_blkProcessNum(), tilingData_.get_splitBlockTailFactor(),
+            tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(), tilingData_.get_lenDesH(), tilingData_.get_lenDesW(),
+            tilingData_.get_lenC(), tilingData_.get_lenN(), tilingData_.get_scaleH(), tilingData_.get_scaleW(),
+            tilingData_.get_nFactor(), tilingData_.get_hFactor(), tilingData_.get_wFactor(), tilingData_.get_cFactor(),
+            tilingData_.get_ubNFactor(), tilingData_.get_ubHFactor(), tilingData_.get_ubWFactor(),
+            tilingData_.get_ubCFactor());
     return;
 }
 
@@ -653,9 +639,8 @@ ge::graphStatus ResizeBicubicV2Tiling::SetTilingData()
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
 
     context_->SetBlockDim(realCoreNum_);
-    OP_LOGI(
-        context_->GetNodeName(), "schId is %ld, isInt32 is %ld, isHalfPiex is %ld, isNchw is %ld", schId_, isInt32_,
-        isHalfPiex_, isNchw_);
+    OP_LOGI(context_->GetNodeName(), "schId is %ld, isInt32 is %ld, isHalfPiex is %ld, isNchw is %ld", schId_, isInt32_,
+            isHalfPiex_, isNchw_);
     const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, isInt32_, isHalfPiex_, isNchw_);
     context_->SetTilingKey(tilingKey);
 
@@ -693,15 +678,14 @@ static ge::graphStatus TilingPrepare4ResizeBicubicV2(gert::TilingParseContext* c
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        (compileInfo->totalCoreNum <= 0), OP_LOGE(context->GetNodeName(), "coreNum is error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->totalCoreNum <= 0), OP_LOGE(context->GetNodeName(), "coreNum is error"),
+                return ge::GRAPH_FAILED);
 
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
-    OP_CHECK_IF(
-        (compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than zero"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than zero"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

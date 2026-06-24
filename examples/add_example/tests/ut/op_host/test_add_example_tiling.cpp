@@ -19,15 +19,9 @@ using namespace ge;
 
 class AddExampleTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AddExampleTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AddExampleTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AddExampleTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AddExampleTiling TearDown" << std::endl; }
 };
 
 std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend910B"}};
@@ -48,8 +42,7 @@ TEST_F(AddExampleTiling, add_example_0)
         {
             /* attrs */
         },
-        &compileInfo,
-        "Ascend910b",
+        &compileInfo, "Ascend910b",
         64,     // number of cores obtained in the tiling phase
         262144, // the ubsize obtained in the tiling phase, but the actual obtained value is 256 bytes less than the
                 // specified value

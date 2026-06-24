@@ -30,12 +30,12 @@ using namespace op;
 extern "C" {
 #endif
 
-static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = { DataType::DT_FLOAT, DataType::DT_FLOAT16 };
+static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = {DataType::DT_FLOAT, DataType::DT_FLOAT16};
 
-static const std::initializer_list<DataType> INT_DTYPE_SUPPORT_LIST = { DataType::DT_INT32 };
+static const std::initializer_list<DataType> INT_DTYPE_SUPPORT_LIST = {DataType::DT_INT32};
 
-static bool CheckNotNull(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                         const aclTensor* out)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(rois, return false);
@@ -44,8 +44,8 @@ static bool CheckNotNull(const aclTensor *self, const aclTensor *rois, const acl
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                            const aclTensor* out)
 {
     OP_CHECK_DTYPE_NOT_SUPPORT(self, FLOAT_DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(batchIndices, INT_DTYPE_SUPPORT_LIST, return false);
@@ -56,33 +56,35 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *rois, const 
     return true;
 }
 
-static bool CheckFormatValid(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    const aclTensor *out)
+static bool CheckFormatValid(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                             const aclTensor* out)
 {
-    if (self->GetStorageFormat() != op::Format::FORMAT_NCHW || rois->GetStorageFormat() != op::Format::FORMAT_ND
-        || batchIndices->GetStorageFormat() != op::Format::FORMAT_ND || out->GetStorageFormat() != op::Format::FORMAT_NCHW) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format error. self and out only support NCHW, rois and batchIndices only support ND.");
+    if (self->GetStorageFormat() != op::Format::FORMAT_NCHW || rois->GetStorageFormat() != op::Format::FORMAT_ND ||
+        batchIndices->GetStorageFormat() != op::Format::FORMAT_ND ||
+        out->GetStorageFormat() != op::Format::FORMAT_NCHW) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Format error. self and out only support NCHW, rois and batchIndices only support ND.");
         return false;
     }
 
-    return  true;
+    return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    const aclTensor *out, int outputHeight, int outputWidth)
+static bool CheckShape(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                       const aclTensor* out, int outputHeight, int outputWidth)
 {
     OP_CHECK_WRONG_DIMENSION(self, 4, return false);
     OP_CHECK_WRONG_DIMENSION(rois, 2, return false);
     OP_CHECK_WRONG_DIMENSION(batchIndices, 1, return false);
     OP_CHECK_WRONG_DIMENSION(out, 4, return false);
 
-    auto const &selfShape = self->GetViewShape();
-    auto const &roisShape = rois->GetViewShape();
-    auto const &batchIndicesShape = batchIndices->GetViewShape();
-    auto const &outShape = out->GetViewShape();
+    auto const& selfShape = self->GetViewShape();
+    auto const& roisShape = rois->GetViewShape();
+    auto const& batchIndicesShape = batchIndices->GetViewShape();
+    auto const& outShape = out->GetViewShape();
     if (roisShape.GetDim(0) != batchIndicesShape.GetDim(0)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "rois shape dim0 [%ld] and batchIndices shape dim0 [%ld] should be equal",
-            roisShape.GetDim(0), batchIndicesShape.GetDim(0));
+                roisShape.GetDim(0), batchIndicesShape.GetDim(0));
         return false;
     }
     if (roisShape.GetDim(1) != 4) { // 4: rois dim 1
@@ -91,29 +93,29 @@ static bool CheckShape(const aclTensor *self, const aclTensor *rois, const aclTe
     }
     if (outShape.GetDim(0) != roisShape.GetDim(0)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim0 [%ld] and rois shape dim0 [%ld] should be equal",
-            outShape.GetDim(0), roisShape.GetDim(0));
+                outShape.GetDim(0), roisShape.GetDim(0));
         return false;
     }
     if (outShape.GetDim(1) != selfShape.GetDim(1)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim1 [%ld] and self shape dim1 [%ld] should be equal",
-            outShape.GetDim(1), selfShape.GetDim(1));
+                outShape.GetDim(1), selfShape.GetDim(1));
         return false;
     }
     if (outShape.GetDim(2) != outputHeight) { // 2: dim2
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim2 [%ld] and outputHeight [%d] should be equal",
-            outShape.GetDim(2), outputHeight); // 2: dim2
+                outShape.GetDim(2), outputHeight); // 2: dim2
         return false;
     }
     if (outShape.GetDim(3) != outputWidth) { // 3: dim3
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim3 [%ld] and outputWidth [%d] should be equal",
-            outShape.GetDim(3), outputWidth); // 3: dim3
+                outShape.GetDim(3), outputWidth); // 3: dim3
         return false;
     }
 
     return true;
 }
 
-static bool CheckAttr(const char *mode, int samplingRatio, float spatialScale)
+static bool CheckAttr(const char* mode, int samplingRatio, float spatialScale)
 {
     if (mode == nullptr) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode is null, please check input arguments");
@@ -134,8 +136,9 @@ static bool CheckAttr(const char *mode, int samplingRatio, float spatialScale)
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    const aclTensor *out, const char *mode, int outputHeight, int outputWidth, int samplingRatio, float spatialScale)
+static aclnnStatus CheckParams(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                               const aclTensor* out, const char* mode, int outputHeight, int outputWidth,
+                               int samplingRatio, float spatialScale)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, rois, batchIndices, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -155,22 +158,24 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclTensor *rois, con
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *GetOutTensorWithValueZero(aclTensor *out, aclOpExecutor *executor)
+static const aclTensor* GetOutTensorWithValueZero(aclTensor* out, aclOpExecutor* executor)
 {
-    aclScalar *scalar = executor->AllocScalar(0);
+    aclScalar* scalar = executor->AllocScalar(0);
     auto valueTensor = executor->ConvertToTensor(scalar, out->GetDataType());
     auto outputDims = op::ToShapeVector(out->GetViewShape());
-    aclIntArray *dimArray = executor->AllocIntArray(outputDims.data(), outputDims.size());
+    aclIntArray* dimArray = executor->AllocIntArray(outputDims.data(), outputDims.size());
     auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
     return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
 }
 
-aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices,
-    const char *mode, int outputHeight, int outputWidth, int samplingRatio, float spatialScale, aclTensor *out,
-    uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                                          const char* mode, int outputHeight, int outputWidth, int samplingRatio,
+                                          float spatialScale, aclTensor* out, uint64_t* workspaceSize,
+                                          aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnRoiAlign,
-        DFX_IN(self, rois, batchIndices, mode, outputHeight, outputWidth, samplingRatio, spatialScale), DFX_OUT(out));
+                   DFX_IN(self, rois, batchIndices, mode, outputHeight, outputWidth, samplingRatio, spatialScale),
+                   DFX_OUT(out));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -210,7 +215,7 @@ aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor *self, const aclTensor
     CHECK_RET(selfTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 将batchIndices补充成2维[num_rois, 1]
-    int64_t batchIndicesNewShape[2] = { batchIndices->GetViewShape().GetDim(0), 1 };      // 2: dim num
+    int64_t batchIndicesNewShape[2] = {batchIndices->GetViewShape().GetDim(0), 1};        // 2: dim num
     auto batchIndicesSize = uniqueExecutor.get()->AllocIntArray(batchIndicesNewShape, 2); // 2: dim num
     auto batchIndicesReshape = l0op::Reshape(batchIndicesContiguous, batchIndicesSize, uniqueExecutor.get());
     CHECK_RET(batchIndicesReshape != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -220,7 +225,7 @@ aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor *self, const aclTensor
     CHECK_RET(batchIndicesCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 将batchIndices与rois拼接成新rois，shape为[num_rois, 5]
-    op::FVector<const aclTensor *> tensorListTemp;
+    op::FVector<const aclTensor*> tensorListTemp;
     tensorListTemp.emplace_back(batchIndicesCast);
     tensorListTemp.emplace_back(roisContiguous);
     auto tensorList = uniqueExecutor.get()->AllocTensorList(tensorListTemp.data(), tensorListTemp.size());
@@ -229,7 +234,7 @@ aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor *self, const aclTensor
 
     // 进行计算
     auto roiAlignOut = l0op::ROIAlign(selfTransData, roisConcat, batchIndicesContiguous, spatialScale, outputHeight,
-        outputWidth, samplingRatio, mode, uniqueExecutor.get());
+                                      outputWidth, samplingRatio, mode, uniqueExecutor.get());
     CHECK_RET(roiAlignOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 将roiAlignOut的私有格式数据转为NCHW
@@ -246,7 +251,7 @@ aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor *self, const aclTensor
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnRoiAlign(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, const aclrtStream stream)
+aclnnStatus aclnnRoiAlign(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, const aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnRoiAlign);
 

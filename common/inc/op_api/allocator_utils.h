@@ -19,17 +19,13 @@
 
 namespace aicpu {
 class CpuKernelAllocatorUtils {
- public:
-  static uint32_t ParamCheck(const std::vector<int64_t> &dims, const void *data_ptr,
-                             Tensor *&output_result_tensor);
-  static uint32_t UpdateOutputDataTensor(const std::vector<int64_t> &dims,
-                                         DataType type, const void *data_ptr,
-                                         int64_t input_data_size,
-                                         Tensor *&output_result_tensor);
-  static uint32_t CheckOutputDataPtr(const uint64_t data_ptr);
-  static uint32_t DeleteOutputDataPtr(const uint64_t data_ptr);
-  static int64_t GetInputDataSize(const std::vector<int64_t> &dims,
-                                  DataType type);
+public:
+    static uint32_t ParamCheck(const std::vector<int64_t>& dims, const void* data_ptr, Tensor*& output_result_tensor);
+    static uint32_t UpdateOutputDataTensor(const std::vector<int64_t>& dims, DataType type, const void* data_ptr,
+                                           int64_t input_data_size, Tensor*& output_result_tensor);
+    static uint32_t CheckOutputDataPtr(const uint64_t data_ptr);
+    static uint32_t DeleteOutputDataPtr(const uint64_t data_ptr);
+    static int64_t GetInputDataSize(const std::vector<int64_t>& dims, DataType type);
 };
-}  // namespace aicpu
-#endif  // AICPU_UTILS_ALLOCATOR_UTILS_H_
+} // namespace aicpu
+#endif // AICPU_UTILS_ALLOCATOR_UTILS_H_

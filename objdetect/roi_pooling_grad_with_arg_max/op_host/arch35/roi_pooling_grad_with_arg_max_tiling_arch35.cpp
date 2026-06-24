@@ -40,13 +40,13 @@ constexpr uint32_t FP32_TYPESIZE = 4;
 
 void RoiPoolingGradWithArgMaxTiling::SetTilingData()
 {
-    yTotalCoreNum_ = static_cast<int64_t>(Ops::Base::CeilDiv(yTotalLength_, Ops::Base::CeilDiv(yTotalLength_, totalCoreNum_)));
+    yTotalCoreNum_ = static_cast<int64_t>(
+        Ops::Base::CeilDiv(yTotalLength_, Ops::Base::CeilDiv(yTotalLength_, totalCoreNum_)));
     yDataPerCore_ = Ops::Base::CeilDiv(yTotalLength_, totalCoreNum_);
     yDataTailCore_ = yTotalLength_ - (yTotalCoreNum_ - 1) * yDataPerCore_;
     useCoreNum_ = std::max(
-                static_cast<int64_t>(Ops::Base::CeilDiv(totalLength_, Ops::Base::CeilDiv(totalLength_, totalCoreNum_))),
-                yTotalCoreNum_
-                );
+        static_cast<int64_t>(Ops::Base::CeilDiv(totalLength_, Ops::Base::CeilDiv(totalLength_, totalCoreNum_))),
+        yTotalCoreNum_);
     context_->SetBlockDim(useCoreNum_);
     tilingData_->totalLength = totalLength_;
     tilingData_->yTotalCoreNum = yTotalCoreNum_;
@@ -81,30 +81,24 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::SetAttrParams()
     const auto poolChannelPtr = attrs->GetAttrPointer<int64_t>(ATTR_4);
     OP_CHECK_NULL_WITH_CONTEXT(context_, poolChannelPtr);
     poolChannel_ = static_cast<int64_t>(*poolChannelPtr);
-    OP_CHECK_IF(
-        poolChannel_ <= NUM_ZERO,
-        OP_LOGE(context_, "poolChannel must be greater than 0, but this is %ld.", poolChannel_),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(poolChannel_ <= NUM_ZERO,
+                OP_LOGE(context_, "poolChannel must be greater than 0, but this is %ld.", poolChannel_),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
 
 ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetPlatformInfo()
 {
-    fe::PlatFormInfos *platformInfoPtr = context_->GetPlatformInfo();
+    fe::PlatFormInfos* platformInfoPtr = context_->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     totalCoreNum_ = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        totalCoreNum_ <= NUM_ZERO,
-        OP_LOGE(context_, "Failed to core num."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(totalCoreNum_ <= NUM_ZERO, OP_LOGE(context_, "Failed to core num."), return ge::GRAPH_FAILED);
     uint64_t ubSize;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(
-        ubSize <= NUM_ZERO,
-        OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(ubSize <= NUM_ZERO, OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
+                return ge::GRAPH_FAILED);
     auto localMemorySize = context_->SetLocalMemorySize(ubSize - DCACHE_SIZE);
     OP_LOGD(context_, "ubSize = %lu, localMemorySize = %d.", ubSize, localMemorySize);
 
@@ -115,16 +109,11 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::InitTilingData()
 {
     if (tilingData_ == nullptr) {
         tilingData_ = context_->GetTilingData<RoiPoolingGradWithArgMaxRegBaseTilingData>();
-        OP_CHECK_IF(
-            tilingData_ == nullptr,
-            OP_LOGE(context_, "get tilingdata ptr failed"),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(tilingData_ == nullptr, OP_LOGE(context_, "get tilingdata ptr failed"), return ge::GRAPH_FAILED);
     }
-    OP_CHECK_IF(
-        (memset_s(
-             tilingData_, sizeof(RoiPoolingGradWithArgMaxRegBaseTilingData), 0, sizeof(RoiPoolingGradWithArgMaxRegBaseTilingData)) !=
-         EOK),
-        OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((memset_s(tilingData_, sizeof(RoiPoolingGradWithArgMaxRegBaseTilingData), 0,
+                          sizeof(RoiPoolingGradWithArgMaxRegBaseTilingData)) != EOK),
+                OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -147,26 +136,21 @@ bool RoiPoolingGradWithArgMaxTiling::GetDataTypeKey(ge::DataType dataType)
 
 void RoiPoolingGradWithArgMaxTiling::SetTilingKey()
 {
-    OP_LOGI(
-        context_, "dtype is %lu", dataTypeTilingKey_);
+    OP_LOGI(context_, "dtype is %lu", dataTypeTilingKey_);
     tilingKey_ = GET_TPL_TILING_KEY(dataTypeTilingKey_);
 }
 
-uint64_t RoiPoolingGradWithArgMaxTiling::GetTilingKey()
-{
-    return tilingKey_;
-}
+uint64_t RoiPoolingGradWithArgMaxTiling::GetTilingKey() { return tilingKey_; }
 
 ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetInputTensorInfo()
 {
     auto gradOut = context_->GetDynamicInputTensor(INPUT_GRADOUT_IDX, 0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradOut);
-    auto &gradOutShape = gradOut->GetOriginShape();
+    auto& gradOutShape = gradOut->GetOriginShape();
     auto gradOutDimNum = gradOutShape.GetDimNum();
-    OP_CHECK_IF(
-        gradOutDimNum != DIM_NUM_4D,
-        OP_LOGE(context_, "The dim num of gradOut shoule be 4, but this is %ld.", gradOutDimNum),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(gradOutDimNum != DIM_NUM_4D,
+                OP_LOGE(context_, "The dim num of gradOut shoule be 4, but this is %ld.", gradOutDimNum),
+                return ge::GRAPH_FAILED);
 
     // 获取所需处理的输入数据量totalLength、输出数据量yTotalLength以及height、width
     totalLength_ = 1;
@@ -174,19 +158,16 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetInputTensorInfo()
     totalLength_ *= gradOutShape[C_DIM];
     totalLength_ *= gradOutShape[H_DIM];
     totalLength_ *= gradOutShape[W_DIM];
-    OP_CHECK_IF(
-        totalLength_ > INT32_MAX || totalLength_ <= NUM_ZERO,
-        OP_LOGE(context_, "gradOut.size must be less or equal than 2^31-1."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(totalLength_ > INT32_MAX || totalLength_ <= NUM_ZERO,
+                OP_LOGE(context_, "gradOut.size must be less or equal than 2^31-1."), return ge::GRAPH_FAILED);
 
     auto inputX = context_->GetDynamicInputTensor(INPUT_X_IDX, 0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputX);
-    auto &inputXShape = inputX->GetOriginShape();
+    auto& inputXShape = inputX->GetOriginShape();
     auto inputXDimNum = inputXShape.GetDimNum();
-    OP_CHECK_IF(
-        inputXDimNum != DIM_NUM_4D,
-        OP_LOGE(context_, "The dim num of inputX shoule be 4, but this is %ld.", inputXDimNum),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputXDimNum != DIM_NUM_4D,
+                OP_LOGE(context_, "The dim num of inputX shoule be 4, but this is %ld.", inputXDimNum),
+                return ge::GRAPH_FAILED);
     height_ = inputXShape[H_DIM];
     width_ = inputXShape[W_DIM];
     usrWorkspaceSize_ *= inputXShape[N_DIM];
@@ -194,19 +175,16 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetInputTensorInfo()
     usrWorkspaceSize_ *= inputXShape[H_DIM];
     usrWorkspaceSize_ *= inputXShape[W_DIM];
     yTotalLength_ = usrWorkspaceSize_;
-    OP_CHECK_IF(
-        yTotalLength_ > INT32_MAX || yTotalLength_ <= NUM_ZERO,
-        OP_LOGE(context_, "inputX.size must be less or equal than 2^31-1."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(yTotalLength_ > INT32_MAX || yTotalLength_ <= NUM_ZERO,
+                OP_LOGE(context_, "inputX.size must be less or equal than 2^31-1."), return ge::GRAPH_FAILED);
     usrWorkspaceSize_ *= FP32_TYPESIZE;
 
     auto gradOutDesc = context_->GetInputDesc(INPUT_GRADOUT_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradOutDesc);
     gardInDType_ = gradOutDesc->GetDataType();
-    OP_CHECK_IF(
-        GetDataTypeKey(gardInDType_) == false,
-        OP_LOGE(context_, "The dtype of input gradOut must be in [float32, float16]."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetDataTypeKey(gardInDType_) == false,
+                OP_LOGE(context_, "The dtype of input gradOut must be in [float32, float16]."),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -215,15 +193,14 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::DoTiling()
 {
     OP_LOGD(context_, "Enter RoiPoolingGradWithArgMaxRegBaseTilingData DoTiling");
 
-    OP_CHECK_IF(
-        SetAttrParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "SetAttrParams failed."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        GetInputTensorInfo() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "GetInputTensorInfo failed."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        GetPlatformInfo() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "GetPlatformInfo failed."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        InitTilingData() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "InitTilingData failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(SetAttrParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "SetAttrParams failed."),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetInputTensorInfo() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "GetInputTensorInfo failed."),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetPlatformInfo() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "GetPlatformInfo failed."),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(InitTilingData() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "InitTilingData failed."),
+                return ge::GRAPH_FAILED);
     SetTilingData();
 
     SetTilingKey();
@@ -234,15 +211,16 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::DoTiling()
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
     size_t* currentWorkspace = context_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, currentWorkspace);
-    currentWorkspace[0] =
-        usrWorkspaceSize_ +
-        ascendcPlatform.GetLibApiWorkSpaceSize(); // 设置总的workspace的数值大小，总的workspace空间由框架来申请并管理。
+    currentWorkspace
+        [0] = usrWorkspaceSize_ +
+              ascendcPlatform
+                  .GetLibApiWorkSpaceSize(); // 设置总的workspace的数值大小，总的workspace空间由框架来申请并管理。
 
     OP_LOGD(context_, "End dotiling");
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus TilingForRoiPoolingGradWithArgMax(gert::TilingContext *context)
+static ge::graphStatus TilingForRoiPoolingGradWithArgMax(gert::TilingContext* context)
 {
     OP_LOGD(context, "TilingForRoiPoolingGradWithArgMax running begin.");
 
@@ -260,4 +238,4 @@ ge::graphStatus TilingPrepareForRoiPoolingGradWithArgMax(gert::TilingParseContex
 IMPL_OP_OPTILING(RoiPoolingGradWithArgMax)
     .Tiling(TilingForRoiPoolingGradWithArgMax)
     .TilingParse<RoiPoolingGradWithArgMaxCompileInfo>(TilingPrepareForRoiPoolingGradWithArgMax);
-}  // namespace optiling
+} // namespace optiling

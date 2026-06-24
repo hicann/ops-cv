@@ -65,9 +65,9 @@ constexpr uint32_t FP32_SIGN_INDEX = 31U;
 
 class AippDynamicParam {
 public:
-    __aicore__ inline AippDynamicParam(tagAippDynamicParaHeader* header,
-        const __gm__ uint8_t* gmParams)
-        : header_(header), gmParams_(gmParams) {}
+    __aicore__ inline AippDynamicParam(tagAippDynamicParaHeader* header, const __gm__ uint8_t* gmParams)
+        : header_(header), gmParams_(gmParams)
+    {}
 
     __aicore__ inline tagAippDynamicParaHeader& Header() { return *header_; }
     __aicore__ inline const tagAippDynamicParaHeader& Header() const { return *header_; }
@@ -87,16 +87,13 @@ union TypeUnion {
     uint32_t uVal;
 };
 
-#define FP16_EXTRAC_SIGN(x)            (((x) >> 15U) & 1U)
-#define FP16_EXTRAC_EXP(x)             (((x) >> 10U) & FP16_MAX_EXP)
-#define FP16_EXTRAC_MAN(x)             ((((x) >> 0U) & 0x3FFU) |          \
-                                       ((((((x) >> 10U) & 0x1FU) > 0U) ? 1U : 0U) * 0x400U))
-#define FP32_CONSTRUCTOR(s, e, m)        (((s) << FP32_SIGN_INDEX) |      \
-                                          ((e) << FP32_MAN_LEN) |         \
-                                          ((m) & FP32_MAX))
+#define FP16_EXTRAC_SIGN(x) (((x) >> 15U) & 1U)
+#define FP16_EXTRAC_EXP(x) (((x) >> 10U) & FP16_MAX_EXP)
+#define FP16_EXTRAC_MAN(x) ((((x) >> 0U) & 0x3FFU) | ((((((x) >> 10U) & 0x1FU) > 0U) ? 1U : 0U) * 0x400U))
+#define FP32_CONSTRUCTOR(s, e, m) (((s) << FP32_SIGN_INDEX) | ((e) << FP32_MAN_LEN) | ((m) & FP32_MAX))
 
-__simt_callee__ __attribute__((always_inline)) inline void ExtractFP16(
-    const uint16_t val, uint16_t *const s, int16_t *const e, uint16_t *const m)
+__simt_callee__ __attribute__((always_inline)) inline void ExtractFP16(const uint16_t val, uint16_t* const s,
+                                                                       int16_t* const e, uint16_t* const m)
 {
     // 1.Extract
     *s = FP16_EXTRAC_SIGN(val);
@@ -140,24 +137,24 @@ __simt_callee__ __attribute__((always_inline)) inline float Fp16ToFloat(const ui
 }
 
 template <class ByteCountT>
-__inline__ __attribute__((always_inline)) __aicore__ void InitHeaderParamData(
-    const __gm__ uint8_t *p_tilingdata, uint8_t *tilingdata, ByteCountT all_bytes)
+__inline__ __attribute__((always_inline)) __aicore__ void InitHeaderParamData(const __gm__ uint8_t* p_tilingdata,
+                                                                              uint8_t* tilingdata, ByteCountT all_bytes)
 {
     const uint64_t copy_bytes = static_cast<uint64_t>(all_bytes);
 #if defined(ASCENDC_CPU_DEBUG)
-    const __gm__ uint32_t *src = (const __gm__ uint32_t *)p_tilingdata;
-    uint32_t *dst = (uint32_t *)tilingdata;
+    const __gm__ uint32_t* src = (const __gm__ uint32_t*)p_tilingdata;
+    uint32_t* dst = (uint32_t*)tilingdata;
     for (uint64_t i = 0; i < (copy_bytes + 3) / 4; i++) {
         *(dst + i) = *(src + i);
     }
 #elif defined(__DAV_C220_CUBE__) || defined(__DAV_C310_CUBE__) || defined(__DAV_310R6_CUBE__) || \
-      defined(__GET_CODE_CHANNEL__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201))
-    copy_data_align64(tilingdata, (__gm__ uint8_t *)p_tilingdata, copy_bytes);
+    defined(__GET_CODE_CHANNEL__) || (defined(__NPU_ARCH__) && (__NPU_ARCH__ == 9201))
+    copy_data_align64(tilingdata, (__gm__ uint8_t*)p_tilingdata, copy_bytes);
 #else
-    __ubuf__ uint8_t *tilingdata_in_ub = (__ubuf__ uint8_t *)get_imm(0);
+    __ubuf__ uint8_t* tilingdata_in_ub = (__ubuf__ uint8_t*)get_imm(0);
     uint32_t len_burst = (copy_bytes + 31) / 32;
-    copy_gm_to_ubuf_align_v2(tilingdata_in_ub, (__gm__ uint8_t *)p_tilingdata,
-        0, 1, len_burst * 32, 0, 0, false, 0, 0, 0);
+    copy_gm_to_ubuf_align_v2(tilingdata_in_ub, (__gm__ uint8_t*)p_tilingdata, 0, 1, len_burst * 32, 0, 0, false, 0, 0,
+                             0);
     set_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_S, EVENT_ID0);
     copy_data_align64(tilingdata, tilingdata_in_ub, copy_bytes);
@@ -165,8 +162,9 @@ __inline__ __attribute__((always_inline)) __aicore__ void InitHeaderParamData(
     pipe_barrier(PIPE_ALL);
 }
 
-__inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippHeader(
-    const __gm__ uint8_t *p_tilingdata, tagAippDynamicParaHeader *tilingdata, bool dynamic_flag)
+__inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippHeader(const __gm__ uint8_t* p_tilingdata,
+                                                                                tagAippDynamicParaHeader* tilingdata,
+                                                                                bool dynamic_flag)
 {
     if (!dynamic_flag) {
         return;
@@ -175,9 +173,9 @@ __inline__ __attribute__((always_inline)) __aicore__ void InitDynamicAippHeader(
     InitHeaderParamData(p_tilingdata, reinterpret_cast<uint8_t*>(tilingdata), header_size);
 }
 
-#define GET_PARAM_DATA_WITH_STRUCT_TBUF(tiling_data, tiling_arg, dynamic_flag)                            \
-    tagAippDynamicParaHeader tiling_data##_header;                                          \
-    InitDynamicAippHeader(tiling_arg, &tiling_data##_header, dynamic_flag);                               \
+#define GET_PARAM_DATA_WITH_STRUCT_TBUF(tiling_data, tiling_arg, dynamic_flag) \
+    tagAippDynamicParaHeader tiling_data##_header;                             \
+    InitDynamicAippHeader(tiling_arg, &tiling_data##_header, dynamic_flag);    \
     AippDynamicParam tiling_data(&tiling_data##_header, tiling_arg)
 
 __aicore__ __attribute__((always_inline)) inline void SwapMatrixVal(int16_t& val1, int16_t& val2)
@@ -191,10 +189,8 @@ template <typename T, typename DataType>
 class AippBase {
 public:
     __aicore__ inline AippBase(){};
-    __aicore__ inline void BaseInit(const AippTilingData& tilingData,
-        const tagAippDynamicParaHeader& tilingParamHeader,
-        const __gm__ uint8_t* gmParams,
-        uint8_t dynamicTilingKey);
+    __aicore__ inline void BaseInit(const AippTilingData& tilingData, const tagAippDynamicParaHeader& tilingParamHeader,
+                                    const __gm__ uint8_t* gmParams, uint8_t dynamicTilingKey);
 
 public:
     AippTilingData tilingData_ = {};
@@ -209,9 +205,8 @@ public:
 
 template <typename T, typename DataType>
 __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& tilingData,
-    const tagAippDynamicParaHeader& tilingParamHeader,
-    const __gm__ uint8_t* gmParams,
-    uint8_t dynamicTilingKey)
+                                                       const tagAippDynamicParaHeader& tilingParamHeader,
+                                                       const __gm__ uint8_t* gmParams, uint8_t dynamicTilingKey)
 {
     tilingData_ = tilingData;
     tilingParamHeader_ = tilingParamHeader;
@@ -331,13 +326,15 @@ __aicore__ __attribute__((always_inline)) inline void resetRealPara(AippTilingDa
 }
 
 __aicore__ __attribute__((always_inline)) inline void UpdateRealPara(AippTilingData& tD,
-    const tagAippDynamicParaHeader& tP, uint8_t dynamicTilingKey)
+                                                                     const tagAippDynamicParaHeader& tP,
+                                                                     uint8_t dynamicTilingKey)
 {
     tD.imageFormat = tP.inputFormat;
     tD.channelNum = tP.inputFormat == IMAGE_FORMAT_YUV420SP_U8 ? CHANNEL_COUNT_3 :
                     tP.inputFormat == IMAGE_FORMAT_XRGB8888_U8 ? CHANNEL_COUNT_4 :
                     tP.inputFormat == IMAGE_FORMAT_RGB888_U8   ? CHANNEL_COUNT_3 :
-                    tP.inputFormat == IMAGE_FORMAT_YUV400_U8   ? 1 : 0;
+                    tP.inputFormat == IMAGE_FORMAT_YUV400_U8   ? 1 :
+                                                                 0;
     tD.cscParam.cscSwitch = static_cast<int16_t>(tP.cscSwitch);
     tD.cscParam.rbuvSwapSwitch = static_cast<int16_t>(tP.rbuvSwapSwitch);
     tD.cscParam.axSwapSwitch = static_cast<int16_t>(tP.axSwapSwitch);
@@ -357,13 +354,13 @@ __aicore__ __attribute__((always_inline)) inline void UpdateRealPara(AippTilingD
 }
 
 template <typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline void UpdateDynamicBatchPara(
-    const CoordPack<DataType>& coord, AippTilingData& tD,
-    const __gm__ uint8_t* gmParams)
+__simt_callee__ __attribute__((always_inline)) inline void UpdateDynamicBatchPara(const CoordPack<DataType>& coord,
+                                                                                  AippTilingData& tD,
+                                                                                  const __gm__ uint8_t* gmParams)
 {
     constexpr uint64_t header_size = sizeof(tagAippDynamicParaHeader);
-    const __gm__ kAippDynamicBatchPara* gmBatchArr =
-        reinterpret_cast<const __gm__ kAippDynamicBatchPara*>(gmParams + header_size);
+    const __gm__ kAippDynamicBatchPara* gmBatchArr = reinterpret_cast<const __gm__ kAippDynamicBatchPara*>(gmParams +
+                                                                                                           header_size);
     const __gm__ kAippDynamicBatchPara& para = gmBatchArr[coord.nIdx];
     tD.cropParam.cropSwitch = static_cast<int16_t>(para.cropSwitch);
     tD.paddingParam.paddingSwitch = static_cast<int32_t>(para.paddingSwitch);
@@ -390,8 +387,8 @@ __simt_callee__ __attribute__((always_inline)) inline void UpdateDynamicBatchPar
 }
 
 template <typename T>
-__simt_callee__ __attribute__((always_inline)) inline void DataConversion(
-    T& dst, uint8_t src, const DtcParam& dtcParam, int32_t channelIndex)
+__simt_callee__ __attribute__((always_inline)) inline void DataConversion(T& dst, uint8_t src, const DtcParam& dtcParam,
+                                                                          int32_t channelIndex)
 {
     if constexpr (sizeof(T) == DIGIT_2) {
         if (channelIndex == 0) {
@@ -423,12 +420,13 @@ __simt_callee__ __attribute__((always_inline)) inline void AssignPadValue(T& dst
 }
 
 template <typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline void RgbComputeDstIdx(
-    RgbPack<DataType> &dstIdx, const CoordPack<DataType>& coord, const AippTilingData& tD)
+__simt_callee__ __attribute__((always_inline)) inline void RgbComputeDstIdx(RgbPack<DataType>& dstIdx,
+                                                                            const CoordPack<DataType>& coord,
+                                                                            const AippTilingData& tD)
 {
     if (tD.outputFormat == NCHW_FORMAT_INDEX) {
-        dstIdx.r = coord.nIdx * tD.outputSizeH * tD.outputSizeW * CHANNEL_THREE +
-                   coord.hIdx * tD.outputSizeW  + coord.wIdx;
+        dstIdx.r = coord.nIdx * tD.outputSizeH * tD.outputSizeW * CHANNEL_THREE + coord.hIdx * tD.outputSizeW +
+                   coord.wIdx;
         dstIdx.g = dstIdx.r + tD.outputSizeH * tD.outputSizeW;
         dstIdx.b = dstIdx.g + tD.outputSizeH * tD.outputSizeW;
     } else {
@@ -440,20 +438,22 @@ __simt_callee__ __attribute__((always_inline)) inline void RgbComputeDstIdx(
 }
 
 template <typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(
-    RgbPack<DataType> &srcIdx, const CoordPack<DataType>& coord, const AippTilingData& tD,
-    const DataType offset = 0)
+__simt_callee__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(RgbPack<DataType>& srcIdx,
+                                                                            const CoordPack<DataType>& coord,
+                                                                            const AippTilingData& tD,
+                                                                            const DataType offset = 0)
 {
     srcIdx.r = coord.nIdx * tD.inputSizeH * tD.inputSizeW * tD.channelNum +
-        (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW * tD.channelNum +
-        (tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize) * tD.channelNum + offset;
+               (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW *
+                   tD.channelNum +
+               (tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize) * tD.channelNum + offset;
     srcIdx.g = srcIdx.r + 1;
     srcIdx.b = srcIdx.g + 1;
 }
 
 template <typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPadding(
-    DataType hIdx, DataType wIdx, const AippTilingData& tD)
+__simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPadding(DataType hIdx, DataType wIdx,
+                                                                            const AippTilingData& tD)
 {
     if (tD.paddingParam.paddingSwitch == 0) {
         return false;
@@ -462,13 +462,14 @@ __simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPadding(
     int32_t topPaddingSize = tD.paddingParam.topPaddingSize;
     uint32_t cropSizeH = tD.cropParam.cropSizeH;
     uint32_t cropSizeW = tD.cropParam.cropSizeW;
-    return (hIdx < topPaddingSize) || (hIdx >= topPaddingSize + cropSizeH) ||
-           (wIdx < leftPaddingSize) || (wIdx >= leftPaddingSize + cropSizeW);
+    return (hIdx < topPaddingSize) || (hIdx >= topPaddingSize + cropSizeH) || (wIdx < leftPaddingSize) ||
+           (wIdx >= leftPaddingSize + cropSizeW);
 }
 
-__simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(
-    uint32_t pixelH, uint32_t pixelW, const AippTilingData& tD,
-    bool allEvenPadding, bool blockAllInPadding)
+__simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYuv(uint32_t pixelH, uint32_t pixelW,
+                                                                                  const AippTilingData& tD,
+                                                                                  bool allEvenPadding,
+                                                                                  bool blockAllInPadding)
 {
     if (tD.paddingParam.paddingSwitch == 0) {
         return false;
@@ -482,30 +483,34 @@ __simt_callee__ __attribute__((always_inline)) inline bool IsPixelInPaddingForYu
            (pixelW >= (uint32_t)tD.paddingParam.leftPaddingSize + tD.cropParam.cropSizeW);
 }
 
-__simt_callee__ __attribute__((always_inline)) inline void ApplyCscMatrix(
-    RgbPack<uint8_t>& dst, uint8_t ch0, uint8_t ch1, uint8_t ch2, const CscParam& cscParam)
+__simt_callee__ __attribute__((always_inline)) inline void ApplyCscMatrix(RgbPack<uint8_t>& dst, uint8_t ch0,
+                                                                          uint8_t ch1, uint8_t ch2,
+                                                                          const CscParam& cscParam)
 {
     auto t0 = static_cast<int16_t>(ch0) - cscParam.inBias0;
     auto t1 = static_cast<int16_t>(ch1) - cscParam.inBias1;
     auto t2 = static_cast<int16_t>(ch2) - cscParam.inBias2;
-    auto r = static_cast<int16_t>(roundf(static_cast<float>(
-        cscParam.cscMatrix00 * t0 * 2 + cscParam.cscMatrix01 * t1 * 2 +
-        cscParam.cscMatrix02 * t2 * 2 + 1) / CSC_MATRIX_SCALE));
-    auto g = static_cast<int16_t>(roundf(static_cast<float>(
-        cscParam.cscMatrix10 * t0 * 2 + cscParam.cscMatrix11 * t1 * 2 +
-        cscParam.cscMatrix12 * t2 * 2 + 1) / CSC_MATRIX_SCALE));
-    auto b = static_cast<int16_t>(roundf(static_cast<float>(
-        cscParam.cscMatrix20 * t0 * 2 + cscParam.cscMatrix21 * t1 * 2 +
-        cscParam.cscMatrix22 * t2 * 2 + 1) / CSC_MATRIX_SCALE));
+    auto r = static_cast<int16_t>(
+        roundf(static_cast<float>(cscParam.cscMatrix00 * t0 * 2 + cscParam.cscMatrix01 * t1 * 2 +
+                                  cscParam.cscMatrix02 * t2 * 2 + 1) /
+               CSC_MATRIX_SCALE));
+    auto g = static_cast<int16_t>(
+        roundf(static_cast<float>(cscParam.cscMatrix10 * t0 * 2 + cscParam.cscMatrix11 * t1 * 2 +
+                                  cscParam.cscMatrix12 * t2 * 2 + 1) /
+               CSC_MATRIX_SCALE));
+    auto b = static_cast<int16_t>(
+        roundf(static_cast<float>(cscParam.cscMatrix20 * t0 * 2 + cscParam.cscMatrix21 * t1 * 2 +
+                                  cscParam.cscMatrix22 * t2 * 2 + 1) /
+               CSC_MATRIX_SCALE));
     dst.r = static_cast<uint8_t>(CLIP3(r + cscParam.outBias0, 0, MAX_UINT8));
     dst.g = static_cast<uint8_t>(CLIP3(g + cscParam.outBias1, 0, MAX_UINT8));
     dst.b = static_cast<uint8_t>(CLIP3(b + cscParam.outBias2, 0, MAX_UINT8));
 }
 
 template <typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline void ComputeCoordFromIndex(
-    DataType idx, uint32_t outputSizeH, uint32_t outputSizeW,
-    CoordPack<DataType>& coord)
+__simt_callee__ __attribute__((always_inline)) inline void ComputeCoordFromIndex(DataType idx, uint32_t outputSizeH,
+                                                                                 uint32_t outputSizeW,
+                                                                                 CoordPack<DataType>& coord)
 {
     coord.nIdx = idx / (outputSizeH * outputSizeW);
     DataType newIdx = idx - coord.nIdx * outputSizeH * outputSizeW;

@@ -29,35 +29,34 @@ public:
     ~ScaleAndTranslateCpuKernel() override = default;
 
 protected:
-    uint32_t Compute(CpuKernelContext &ctx) override;
+    uint32_t Compute(CpuKernelContext& ctx) override;
 
 private:
-    static uint32_t ScaleAndTranslateCheck(CpuKernelContext &ctx);
+    static uint32_t ScaleAndTranslateCheck(CpuKernelContext& ctx);
 
     template <typename T>
-    static uint32_t ScaleAndTranslateCompute(CpuKernelContext &ctx);
+    static uint32_t ScaleAndTranslateCompute(CpuKernelContext& ctx);
 };
 
 struct Spans {
     // The maximum span size of any output pixel.
     int span_size;
     // int32 tensor of size [output_dim].
-    Eigen::Tensor<int32_t, 1> *starts;
+    Eigen::Tensor<int32_t, 1>* starts;
     // float tensor of size [output_dim, span_size].
-    Eigen::Tensor<float, 1> *weights;
+    Eigen::Tensor<float, 1>* weights;
 };
 
 template <typename T>
 struct GatherSpans {
-    uint32_t operator()(aicpu::CpuKernelContext &context, int row_span_size,
+    uint32_t operator()(aicpu::CpuKernelContext& context, int row_span_size,
                         Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> row_starts,
-                        Eigen::TensorMap<Eigen::Tensor<float, 1>> row_weights,
-                        int col_span_size,
+                        Eigen::TensorMap<Eigen::Tensor<float, 1>> row_weights, int col_span_size,
                         Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> col_starts,
                         Eigen::TensorMap<Eigen::Tensor<float, 1>> col_weights,
                         typename TTypes<T, 4>::Tensor input_images,
                         Eigen::TensorMap<Eigen::Tensor<float, 4>> intermediate_buffer,
                         typename TTypes<float, 4>::Tensor output_images);
 };
-}  // namespace aicpu
-#endif  // AICPU_KERNELS_NORMALIZED_SCALE_AND_TRANSLATE_H_
+} // namespace aicpu
+#endif // AICPU_KERNELS_NORMALIZED_SCALE_AND_TRANSLATE_H_

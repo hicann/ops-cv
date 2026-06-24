@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -41,8 +41,8 @@ extern "C" {
 #endif
 namespace {
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_FLOAT};
 
 static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
@@ -60,14 +60,14 @@ static const int64_t FOURDIMS = 4;
 static const std::string MODE = "cubic";
 
 struct BicubicV2Data {
-    const aclTensor *self = nullptr;
-    const aclTensor *out = nullptr;
-    const aclIntArray *outputSize = nullptr;
-    const aclFloatArray *scales = nullptr;
+    const aclTensor* self = nullptr;
+    const aclTensor* out = nullptr;
+    const aclIntArray* outputSize = nullptr;
+    const aclFloatArray* scales = nullptr;
     bool alignCorners = false;
 };
 
-static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(self, return false);
@@ -75,7 +75,7 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
@@ -87,28 +87,25 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckFormatValid(const aclTensor *self, const aclTensor *out)
+static bool CheckFormatValid(const aclTensor* self, const aclTensor* out)
 {
     OP_CHECK(self->GetStorageFormat() == out->GetStorageFormat(),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The self and out must have same format"),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The self and out must have same format"), return false);
 
-    OP_CHECK(
-        (out->GetStorageFormat() == op::Format::FORMAT_NCHW || out->GetStorageFormat() == op::Format::FORMAT_NHWC ||
-            out->GetStorageFormat() == op::Format::FORMAT_ND),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The format must be NCHW、NHWC or ND"),
-        return false);
+    OP_CHECK((out->GetStorageFormat() == op::Format::FORMAT_NCHW ||
+              out->GetStorageFormat() == op::Format::FORMAT_NHWC || out->GetStorageFormat() == op::Format::FORMAT_ND),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The format must be NCHW、NHWC or ND"), return false);
     return true;
 }
 
-static bool CheckShapeValid(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckShapeValid(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK(outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected outputSize's size is 2, but got size %zu", outputSizeNum),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected outputSize's size is 2, but got size %zu", outputSizeNum),
+             return false);
     auto selfShape = self->GetViewShape();
     int64_t n = selfShape.GetDim(NCHW_DIM_ZERO);
     int64_t c = selfShape.GetDim(NCHW_DIM_ONE);
@@ -124,38 +121,38 @@ static bool CheckShapeValid(const aclTensor *self, const aclIntArray *outputSize
         fullOutputSize = {n, outputH, outputW, c};
     }
     OP_CHECK(c > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Non-empty 4D data tensor expected but got a tensor with sizes %s.", op::ToString(selfShape).GetString()),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Non-empty 4D data tensor expected but got a tensor with sizes %s.",
+                     op::ToString(selfShape).GetString()),
+             return false);
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
-            inputH, inputW, outputH, outputW),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
+                     inputH, inputW, outputH, outputW),
+             return false);
     auto outShape = out->GetViewShape();
     for (size_t i = 0; i < DIM_LIMIT; ++i) {
         OP_CHECK(outShape.GetDim(i) == fullOutputSize[i],
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "The dim %zu of out should be %ld, but got %ld", i, fullOutputSize[i], outShape.GetDim(i)),
-            return false);
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim %zu of out should be %ld, but got %ld", i, fullOutputSize[i],
+                         outShape.GetDim(i)),
+                 return false);
     }
     // 校验上边界
     if (!IsRegBase()) {
         OP_CHECK(n <= INT32_MAX && c <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)",
-                INT32_MAX, n, c, inputH, inputW),
-            return false);
-        OP_CHECK(outputH <= INT32_MAX && outputW <= INT32_MAX,
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
-                INT32_MAX, outputH, outputW),
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)", INT32_MAX, n,
+                         c, inputH, inputW),
+                 return false);
+        OP_CHECK(
+            outputH <= INT32_MAX && outputW <= INT32_MAX,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
+                    INT32_MAX, outputH, outputW),
             return false);
     }
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, outputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -185,8 +182,8 @@ static bool CheckDstSize(const int64_t inputSize, const int64_t outputSize, cons
     return (outputSize == dstDim) || (outputSize >= dstDimMin && outputSize <= dstDimMax);
 }
 
-static bool CheckScales(const aclTensor *self, const aclIntArray *outputSize,
-    const double scalesH, const double scalesW)
+static bool CheckScales(const aclTensor* self, const aclIntArray* outputSize, const double scalesH,
+                        const double scalesW)
 {
     auto selfShape = self->GetViewShape();
     int64_t inputH = 0;
@@ -202,19 +199,19 @@ static bool CheckScales(const aclTensor *self, const aclIntArray *outputSize,
     }
 
     OP_CHECK(CheckDstSize(inputH, outputH, scalesH),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Scale conflicts with outputSize. scale_h * input_h should be equal to outputSize_h"),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Scale conflicts with outputSize. scale_h * input_h should be equal to outputSize_h"),
+             return false);
 
     OP_CHECK(CheckDstSize(inputW, outputW, scalesW),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Scale conflicts with outputSize. scale_w * input_w should be equal to outputSize_w"),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Scale conflicts with outputSize. scale_w * input_w should be equal to outputSize_w"),
+             return false);
     return true;
 }
 
-static bool CheckMaxScaleSupport(const aclTensor *self, const aclIntArray *outputSize, const double scalesH,
-    const double scalesW, const bool alignCorners)
+static bool CheckMaxScaleSupport(const aclTensor* self, const aclIntArray* outputSize, const double scalesH,
+                                 const double scalesW, const bool alignCorners)
 {
     auto selfShape = self->GetViewShape();
     int64_t inputH = selfShape.GetDim(NCHW_DIM_TWO);
@@ -225,15 +222,15 @@ static bool CheckMaxScaleSupport(const aclTensor *self, const aclIntArray *outpu
     float scale_h = 0.0;
     float scale_w = 0.0;
     if (align_corner) {
-        scale_h =
-            outputH > 1 ? static_cast<float>(inputH - 1) / static_cast<float>(outputH - 1) : static_cast<float>(0.0);
-        scale_w =
-            outputW > 1 ? static_cast<float>(inputW - 1) / static_cast<float>(outputW - 1) : static_cast<float>(0.0);
+        scale_h = outputH > 1 ? static_cast<float>(inputH - 1) / static_cast<float>(outputH - 1) :
+                                static_cast<float>(0.0);
+        scale_w = outputW > 1 ? static_cast<float>(inputW - 1) / static_cast<float>(outputW - 1) :
+                                static_cast<float>(0.0);
     } else {
-        scale_h =
-            scalesH > 0 ? static_cast<float>(1.0 / scalesH) : static_cast<float>(inputH) / static_cast<float>(outputH);
-        scale_w =
-            scalesW > 0 ? static_cast<float>(1.0 / scalesW) : static_cast<float>(inputW) / static_cast<float>(outputW);
+        scale_h = scalesH > 0 ? static_cast<float>(1.0 / scalesH) :
+                                static_cast<float>(inputH) / static_cast<float>(outputH);
+        scale_w = scalesW > 0 ? static_cast<float>(1.0 / scalesW) :
+                                static_cast<float>(inputW) / static_cast<float>(outputW);
     }
     if (scale_h > MAX_SUPPORT_SCALE || scale_w > MAX_SUPPORT_SCALE) {
         return false;
@@ -244,7 +241,7 @@ static bool CheckMaxScaleSupport(const aclTensor *self, const aclIntArray *outpu
     return true;
 }
 
-static bool CheckIsBicubic2dPlatform(const aclTensor *self)
+static bool CheckIsBicubic2dPlatform(const aclTensor* self)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2201) {
@@ -255,22 +252,22 @@ static bool CheckIsBicubic2dPlatform(const aclTensor *self)
     return true;
 }
 
-static bool CheckIsBicubic2dPlatform310p(const aclTensor *self)
+static bool CheckIsBicubic2dPlatform310p(const aclTensor* self)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if (curArch == NpuArch::DAV_2002 ||
-        curArch == NpuArch::DAV_3002) {
+    if (curArch == NpuArch::DAV_2002 || curArch == NpuArch::DAV_3002) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;
     }
     return true;
 }
-}  // namespace
+} // namespace
 
-aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(const aclTensor *self, const aclIntArray *outputSize,
-    const bool alignCorners, const double scalesH, const double scalesW, aclTensor *out, uint64_t *workspaceSize,
-    aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(const aclTensor* self, const aclIntArray* outputSize,
+                                                          const bool alignCorners, const double scalesH,
+                                                          const double scalesW, aclTensor* out, uint64_t* workspaceSize,
+                                                          aclOpExecutor** executor)
 {
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
@@ -293,11 +290,11 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(const aclTensor *self,
     auto outContiguous = l0op::Contiguous(out, uniqueExecutor.get());
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
-    const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, NCHW_DIM_TWO);
+    const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, NCHW_DIM_TWO);
     CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto resizeOut =
-        l0op::ResizeBicubicV2(selfContiguous, outputSize, alignCorners, scales, outContiguous, uniqueExecutor.get());
+    auto resizeOut = l0op::ResizeBicubicV2(selfContiguous, outputSize, alignCorners, scales, outContiguous,
+                                           uniqueExecutor.get());
     CHECK_RET(resizeOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
@@ -310,15 +307,15 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(const aclTensor *self,
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize,
-    const bool alignCorners, const double scalesH, const double scalesW, aclTensor *out, uint64_t *workspaceSize,
-    aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor* self, const aclIntArray* outputSize,
+                                                   const bool alignCorners, const double scalesH, const double scalesW,
+                                                   aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
     L2_DFX_PHASE_1(aclnnUpsampleBicubic2d, DFX_IN(self, outputSize, alignCorners, scalesH, scalesW), DFX_OUT(out));
     if (IsRegBase()) {
-        return aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(
-            self, outputSize, alignCorners, scalesH, scalesW, out, workspaceSize, &(*executor));
+        return aclnnUpsampleBicubic2dGetWorkspaceSizeRegBase(self, outputSize, alignCorners, scalesH, scalesW, out,
+                                                             workspaceSize, &(*executor));
     }
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
@@ -355,8 +352,8 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const 
         const float realScales_w = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
 
         // 调用Bicubic2d算子kernel
-        const aclTensor *Bicubic2dOut = l0op::UpsampleBicubic2d(
-            selfContiguous, outputSize, alignCorners, realScales_h, realScales_w, out, uniqueExecutor.get());
+        const aclTensor* Bicubic2dOut = l0op::UpsampleBicubic2d(selfContiguous, outputSize, alignCorners, realScales_h,
+                                                                realScales_w, out, uniqueExecutor.get());
         CHECK_RET(Bicubic2dOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         if (dtype == op::DataType::DT_BF16) {
@@ -379,7 +376,7 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const 
         int64_t outW = (*outputSize)[NCHW_DIM_ONE];
 
         const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
-        const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, NCHW_DIM_TWO);
+        const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, NCHW_DIM_TWO);
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // 将输入self进行transpose，shape：NCHW-->HWNC
@@ -398,7 +395,7 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const 
 
         // out reshape
         const int64_t new_reshape[4] = {batch, channels, outH, outW};
-        aclIntArray *shapeArray = uniqueExecutor.get()->AllocIntArray(new_reshape, FOURDIMS);
+        aclIntArray* shapeArray = uniqueExecutor.get()->AllocIntArray(new_reshape, FOURDIMS);
         auto OutReshape = l0op::Reshape(out, shapeArray, uniqueExecutor.get());
         CHECK_RET(OutReshape != nullptr, ACLNN_ERR_INNER_NULLPTR);
         // out Transpose
@@ -411,28 +408,23 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const 
         }
         CHECK_RET(outTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        const aclTensor *resizeOut = nullptr;
+        const aclTensor* resizeOut = nullptr;
         if (CheckIsBicubic2dPlatform310p(self)) {
             // 调用Bicubic2d算子kernel
             // 先用double算好1/scale再转float，可以减少精度损失
             const float realScales_h = scalesH > 0 ? static_cast<float>(1.0 / scalesH) : 0;
             const float realScales_w = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : 0;
-            resizeOut = l0op::UpsampleBicubic2d(selfTranspose,
-                outputSize,
-                alignCorners,
-                realScales_h,
-                realScales_w,
-                outTranspose,
-                uniqueExecutor.get());
+            resizeOut = l0op::UpsampleBicubic2d(selfTranspose, outputSize, alignCorners, realScales_h, realScales_w,
+                                                outTranspose, uniqueExecutor.get());
         } else {
             // 调用ResizeD算子kernel
-            resizeOut = l0op::ResizeD(
-                selfTranspose, outputSize, alignCorners, outTranspose, scales, MODE, uniqueExecutor.get());
+            resizeOut = l0op::ResizeD(selfTranspose, outputSize, alignCorners, outTranspose, scales, MODE,
+                                      uniqueExecutor.get());
         }
         CHECK_RET(resizeOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
         // resizeDOut reshape
         const int64_t new_reshape_reverse[4] = {outH, outW, batch, channels};
-        aclIntArray *shapeArrayReverse = uniqueExecutor.get()->AllocIntArray(new_reshape_reverse, FOURDIMS);
+        aclIntArray* shapeArrayReverse = uniqueExecutor.get()->AllocIntArray(new_reshape_reverse, FOURDIMS);
         auto resizeDOutReshape = l0op::Reshape(resizeOut, shapeArrayReverse, uniqueExecutor.get());
         CHECK_RET(resizeDOutReshape != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -457,8 +449,7 @@ aclnnStatus aclnnUpsampleBicubic2dGetWorkspaceSize(const aclTensor *self, const 
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleBicubic2d(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleBicubic2d(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleBicubic2d);
     // 固定写法，调用框架能力，完成计算

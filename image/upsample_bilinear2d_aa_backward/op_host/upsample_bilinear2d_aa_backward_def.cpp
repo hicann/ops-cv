@@ -17,7 +17,7 @@
 namespace ops {
 class UpsampleBilinear2dAABackward : public OpDef {
 public:
-    explicit UpsampleBilinear2dAABackward(const char *name) : OpDef(name)
+    explicit UpsampleBilinear2dAABackward(const char* name) : OpDef(name)
     {
         this->Input("grad_output")
             .ParamType(REQUIRED)
@@ -38,7 +38,7 @@ public:
         this->Attr("scales_w").AttrType(OPTIONAL).Float();
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
-        
+
         OpAICoreConfig regbaseConfig;
         regbaseConfig.Input("grad_output")
             .ParamType(REQUIRED)
@@ -59,4 +59,4 @@ public:
 };
 
 OP_ADD(UpsampleBilinear2dAABackward);
-}  // namespace ops
+} // namespace ops

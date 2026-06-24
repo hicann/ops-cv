@@ -17,40 +17,33 @@
 
 using namespace op;
 
-namespace l0op
-{
-  OP_TYPE_REGISTER(IouV2);
+namespace l0op {
+OP_TYPE_REGISTER(IouV2);
 
-  const aclTensor *IouV2(const aclTensor *bBoxes, const aclTensor *gtBoxes, const char *mode,
-                         float eps, bool aligned, aclOpExecutor *executor)
-  {
+const aclTensor* IouV2(const aclTensor* bBoxes, const aclTensor* gtBoxes, const char* mode, float eps, bool aligned,
+                       aclOpExecutor* executor)
+{
     L0_DFX(IouV2, bBoxes, gtBoxes, mode, eps, aligned);
 
     // 根据算子语义，推导算子输出shape
     op::Shape outShape;
-    if (aligned)
-    {
-      outShape = {bBoxes->GetViewShape().GetDim(1), 1};
-    }
-    else
-    {
-      outShape = {gtBoxes->GetViewShape().GetDim(0), bBoxes->GetViewShape().GetDim(0)};
+    if (aligned) {
+        outShape = {bBoxes->GetViewShape().GetDim(1), 1};
+    } else {
+        outShape = {gtBoxes->GetViewShape().GetDim(0), bBoxes->GetViewShape().GetDim(0)};
     }
 
     auto out = executor->AllocTensor(outShape, bBoxes->GetDataType(), op::Format::FORMAT_ND);
-    if (out == nullptr)
-    {
-      OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "IouV2 alloc out tensor failed");
-      return nullptr;
+    if (out == nullptr) {
+        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "IouV2 alloc out tensor failed");
+        return nullptr;
     }
 
     // 调用device的IouV2算子
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(IouV2,
-                                           OP_INPUT(bBoxes, gtBoxes),
-                                           OP_OUTPUT(out),
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(IouV2, OP_INPUT(bBoxes, gtBoxes), OP_OUTPUT(out),
                                            OP_ATTR(mode, eps, aligned));
     OP_LOGI("IouV2 ret:%d, out:%p\n", ret, out);
 
     return out;
-  }
+}
 } // namespace l0op

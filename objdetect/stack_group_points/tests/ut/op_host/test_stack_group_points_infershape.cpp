@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -15,29 +15,39 @@
 #include "base/registry/op_impl_space_registry_v2.h"
 #include "../../../op_graph/stack_group_points_proto.h"
 
-class StackGroupPoints : public testing::Test
-{
+class StackGroupPoints : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "StackGroupPoints Proto Test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "StackGroupPoints Proto Test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "StackGroupPoints Proto Test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "StackGroupPoints Proto Test TearDown" << std::endl; }
 };
 
 TEST_F(StackGroupPoints, StackGroupPoints_infershape_case_0)
 {
     gert::InfershapeContextPara infershapeContextPara("StackGroupPoints",
                                                       {{{{32, 64}, {32, 64}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{4,}, {4,}}, ge::DT_INT32, ge::FORMAT_ND},
-                                                      {{{20, 3}, {20, 3}}, ge::DT_INT32, ge::FORMAT_ND},
-                                                      {{{4,}, {4,}}, ge::DT_INT32, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{20, 64, 3},};
+                                                       {{{
+                                                             4,
+                                                         },
+                                                         {
+                                                             4,
+                                                         }},
+                                                        ge::DT_INT32,
+                                                        ge::FORMAT_ND},
+                                                       {{{20, 3}, {20, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                       {{{
+                                                             4,
+                                                         },
+                                                         {
+                                                             4,
+                                                         }},
+                                                        ge::DT_INT32,
+                                                        ge::FORMAT_ND}},
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {20, 64, 3},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
-
 }

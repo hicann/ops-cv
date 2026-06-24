@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -31,23 +31,23 @@ public:
     __aicore__ inline ResizeLinearGradOut1(){};
 
     __aicore__ inline void Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
-        const ResizeLinearGradTilingData *tilingData);
+                                const ResizeLinearGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     uint32_t blockIdx_;
     GlobalTensor<T1> inputGm_;
     GlobalTensor<T1> outputGm_;
-    const ResizeLinearGradTilingData *tilingData_;
+    const ResizeLinearGradTilingData* tilingData_;
 };
 
-
 template <typename T1, typename T2>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeMode3(T2 blkStartOffset, T2 blkProcessNum,
-    T2 lenSrcLOrUb, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeMode3(T2 blkStartOffset,
+                                                                                       T2 blkProcessNum, T2 lenSrcLOrUb,
+                                                                                       __gm__ T1* inputGm,
+                                                                                       __gm__ T1* outputGm)
 {
-    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
-        idx += static_cast<T2>(blockDim.x)) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         outputGm[yGmIdx * lenSrcLOrUb] = inputGm[yGmIdx];
     }
@@ -55,27 +55,27 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 
 template <typename T1, typename T2>
 __simt_vf__ LAUNCH_BOUND(512) __aicore__
-    void calleeInt64(T2 blkStartOffset, T2 blkProcessNum, T2 lenSrcLOrUb, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+    void calleeInt64(T2 blkStartOffset, T2 blkProcessNum, T2 lenSrcLOrUb, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtComputeMode3<T1, T2>(blkStartOffset, blkProcessNum, lenSrcLOrUb, inputGm, outputGm);
 }
 
 template <typename T1, typename T2>
 __simt_vf__ LAUNCH_BOUND(1024) __aicore__
-    void calleeInt32(T2 blkStartOffset, T2 blkProcessNum, T2 lenSrcLOrUb, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+    void calleeInt32(T2 blkStartOffset, T2 blkProcessNum, T2 lenSrcLOrUb, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtComputeMode3<T1, T2>(blkStartOffset, blkProcessNum, lenSrcLOrUb, inputGm, outputGm);
 }
 
 template <typename T1, typename T2>
 __aicore__ inline void ResizeLinearGradOut1<T1, T2>::Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
-    const ResizeLinearGradTilingData *tilingData)
+                                                          const ResizeLinearGradTilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    inputGm_.SetGlobalBuffer((__gm__ T1 *)grads);
-    outputGm_.SetGlobalBuffer((__gm__ T1 *)y);
+    inputGm_.SetGlobalBuffer((__gm__ T1*)grads);
+    outputGm_.SetGlobalBuffer((__gm__ T1*)y);
 }
 
 template <typename T1, typename T2>
@@ -102,10 +102,10 @@ __aicore__ inline void ResizeLinearGradOut1<T1, T2>::Process()
         T2 lenSrcLOrUb = (T2)(tilingData_->lenSrcLOrUb);
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
             asc_vf_call<calleeInt64<T1, T2>>(dim3(512), blkStartOffset, blkProcessNum, lenSrcLOrUb,
-                (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+                                             (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()));
         } else {
             asc_vf_call<calleeInt32<T1, T2>>(dim3(1024), blkStartOffset, blkProcessNum, lenSrcLOrUb,
-                (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+                                             (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()));
         }
     }
 }

@@ -28,7 +28,7 @@ struct RoiPoolingGradWithArgMaxCompileInfo {};
 
 class RoiPoolingGradWithArgMaxTiling {
 public:
-    explicit RoiPoolingGradWithArgMaxTiling(gert::TilingContext *context) : context_(context){};
+    explicit RoiPoolingGradWithArgMaxTiling(gert::TilingContext* context) : context_(context) {};
     ge::graphStatus DoTiling();
     ge::graphStatus GetPlatformInfo();
     ge::graphStatus InitTilingData();
@@ -42,10 +42,10 @@ public:
 
 private:
     RoiPoolingGradWithArgMaxRegBaseTilingData* tilingData_{nullptr};
-    gert::TilingContext *context_ = nullptr;
+    gert::TilingContext* context_ = nullptr;
 
     uint64_t dataTypeTilingKey_ = 0;
-    uint64_t tilingKey_{ 0 };
+    uint64_t tilingKey_{0};
     int64_t useCoreNum_ = 1;
     ge::DataType gardInDType_ = ge::DT_UNDEFINED;
 

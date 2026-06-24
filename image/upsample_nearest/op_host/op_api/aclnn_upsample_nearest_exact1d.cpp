@@ -43,7 +43,7 @@ static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t EXPECT_SIZE = 1;
 
-static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *executor)
+static const aclTensor* View3dAs4d(const aclTensor* input, aclOpExecutor* executor)
 {
     // NCL or ND -> contigious -> unsqueeze(2) -> reformat -> NCHW
     // contigious
@@ -52,7 +52,7 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
 
     // unsqeeze( 2 )
     const int64_t appendDim[] = {DIM_TWO};
-    aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, DIM_ONE);
+    aclIntArray* dimUnsqueeze = executor->AllocIntArray(appendDim, DIM_ONE);
     CHECK_RET(dimUnsqueeze != nullptr, nullptr);
     auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
     CHECK_RET(unsqueezedInput != nullptr, nullptr);
@@ -64,12 +64,12 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
-static const aclTensor *View4dAs3d(const aclTensor *input, op::Format format, aclOpExecutor *executor)
+static const aclTensor* View4dAs3d(const aclTensor* input, op::Format format, aclOpExecutor* executor)
 {
     // NCHW -> squeeze -> reformat -> NCL or ND
     // squeeze out into 3D
     const int64_t removeDim[] = {DIM_TWO};
-    aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, DIM_ONE);
+    aclIntArray* dimSqueeze = executor->AllocIntArray(removeDim, DIM_ONE);
     CHECK_RET(dimSqueeze != nullptr, nullptr);
     auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
     CHECK_RET(squeezedInput != nullptr, nullptr);
@@ -81,7 +81,7 @@ static const aclTensor *View4dAs3d(const aclTensor *input, op::Format format, ac
     return reformatInput;
 }
 
-static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(out, return false);
@@ -89,7 +89,7 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 {
     // 检查self的数据类型是否在UpsampleNearestExact1d算子的支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_AICORE_SUPPORT_LIST, return false);
@@ -98,18 +98,19 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize)
+static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize)
 {
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
-    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+    OP_CHECK(
+        outputSizeNum == EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 1, but got size %zu", outputSizeNum),
         return false);
 
     return true;
 }
 
-static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSize)
+static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSize)
 {
     auto selfShape = self->GetViewShape();
     int64_t outN = selfShape.GetDim(DIM_ZERO);
@@ -118,20 +119,15 @@ static bool CheckInputElement(const aclTensor *self, const aclIntArray *outputSi
     int64_t outL = (*outputSize)[DIM_ZERO];
 
     OP_CHECK(outN > 0 && outC > 0 && inputL > 0 && outL > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (N: %lld,"
-            " C: %lld, L: %lld) output (N: %lld, C: %lld, L: %lld)",
-            outN,
-            outC,
-            inputL,
-            outN,
-            outC,
-            outL),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, bug got input (N: %lld,"
+                     " C: %lld, L: %lld) output (N: %lld, C: %lld, L: %lld)",
+                     outN, outC, inputL, outN, outC, outL),
+             return false);
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, outputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -148,8 +144,9 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *upsampleNearestExact1dCompute(
-    const aclTensor *selfContiguous, const aclIntArray *outputSize, float scales, const aclTensor* outContiguous, aclOpExecutor *executor)
+static const aclTensor* upsampleNearestExact1dCompute(const aclTensor* selfContiguous, const aclIntArray* outputSize,
+                                                      float scales, const aclTensor* outContiguous,
+                                                      aclOpExecutor* executor)
 {
     if (IsRegBase()) {
         // 仅支持NCL和ND格式的输入
@@ -162,7 +159,7 @@ static const aclTensor *upsampleNearestExact1dCompute(
             CHECK_RET(out4d != nullptr, nullptr);
 
             FVector<int64_t> outputSizeVector{1, outputSize->GetData()[0]};
-            aclIntArray *outputSizeArray = executor->AllocIntArray(outputSizeVector.data(), DIM_TWO);
+            aclIntArray* outputSizeArray = executor->AllocIntArray(outputSizeVector.data(), DIM_TWO);
             CHECK_RET(outputSizeArray != nullptr, nullptr);
 
             auto size = executor->ConvertToTensor(outputSizeArray, op::ToOpDataType(ACL_INT32));
@@ -182,8 +179,8 @@ static const aclTensor *upsampleNearestExact1dCompute(
             auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCLArray, executor);
             CHECK_RET(selfTranspose != nullptr, nullptr);
 
-            auto selfUpsampleNearestExact =
-                l0op::UpsampleNearestExact2d(selfTranspose, outputSize, scales, scales, true, executor);
+            auto selfUpsampleNearestExact = l0op::UpsampleNearestExact2d(selfTranspose, outputSize, scales, scales,
+                                                                         true, executor);
             CHECK_RET(selfUpsampleNearestExact != nullptr, nullptr);
 
             const int64_t permuteNLCList[] = {DIM_ZERO, DIM_TWO, DIM_ONE};
@@ -197,8 +194,9 @@ static const aclTensor *upsampleNearestExact1dCompute(
     }
 }
 
-aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize,
-    double scales, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor* self, const aclIntArray* outputSize,
+                                                        double scales, aclTensor* out, uint64_t* workspaceSize,
+                                                        aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
@@ -227,7 +225,8 @@ aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor *self, c
     float realScales = scales > 0 ? static_cast<float>(1.0 / scales) : 0;
 
     // 调用upsampleNearestExact1dCompute计算
-    auto result = upsampleNearestExact1dCompute(selfContiguous, outputSize, realScales, outContiguous, uniqueExecutor.get());
+    auto result = upsampleNearestExact1dCompute(selfContiguous, outputSize, realScales, outContiguous,
+                                                uniqueExecutor.get());
     CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
@@ -240,8 +239,8 @@ aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor *self, c
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearestExact1d(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearestExact1d(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                        aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearestExact1d);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

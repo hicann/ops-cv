@@ -30,8 +30,8 @@ static __simt_callee__ __aicore__ inline float CubicConvolution1(float x, float 
     return static_cast<float>(((a + 2) * x - (a + 3)) * x * x + 1);
 }
 
-static __simt_callee__ __aicore__ inline void GetCubicCoeff(float lep, float &cof0, float &cof1, float &cof2,
-    float &cof3)
+static __simt_callee__ __aicore__ inline void GetCubicCoeff(float lep, float& cof0, float& cof1, float& cof2,
+                                                            float& cof3)
 {
     float A = -0.75f;
     cof0 = CubicConvolution2((lep + 1.0f), A);
@@ -40,7 +40,8 @@ static __simt_callee__ __aicore__ inline void GetCubicCoeff(float lep, float &co
     cof3 = CubicConvolution2(2.0f - lep, A);
 }
 
-template <typename T_IDX2> static __simt_callee__ __aicore__ inline T_IDX2 GetSrc(T_IDX2 src, T_IDX2 maxLimt)
+template <typename T_IDX2>
+static __simt_callee__ __aicore__ inline T_IDX2 GetSrc(T_IDX2 src, T_IDX2 maxLimt)
 {
     if (src < 0) {
         src = 0;
@@ -64,9 +65,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOr
 }
 
 template <typename T1, typename T_IDX, typename T_IDX2>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNchwMode0(T_IDX origBaseIdx, T_IDX yGmIdx,
-    T_IDX lenSrcW, float origHeight, float origWidth, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, __gm__ T1 *inputGm,
-    __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNchwMode0(
+    T_IDX origBaseIdx, T_IDX yGmIdx, T_IDX lenSrcW, float origHeight, float origWidth, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1,
+    __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     T_IDX2 leftX = floorf(origWidth);
     T_IDX2 topY = floorf(origHeight);
@@ -119,9 +120,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNch
 }
 
 template <typename T1, typename T_IDX, typename T_IDX2>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNhwcMode0(T_IDX yGmIdx, float origWidth,
-    float origHeight, T_IDX origBaseIdx, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, T_IDX lenC, T_IDX lenSrcWc,
-    __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNhwcMode0(
+    T_IDX yGmIdx, float origWidth, float origHeight, T_IDX origBaseIdx, T_IDX2 lenSrcH1, T_IDX2 lenSrcW1, T_IDX lenC,
+    T_IDX lenSrcWc, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     T_IDX2 leftX = floorf(origWidth);
     T_IDX2 topY = floorf(origHeight);

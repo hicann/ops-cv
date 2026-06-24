@@ -34,8 +34,8 @@ extern "C" {
 #endif
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT,
+                                                                       op::DataType::DT_BF16};
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
@@ -58,7 +58,7 @@ static constexpr int64_t EXPECT_SIZE = 1;
 
 static const std::string LINEAR_MODE = "linear";
 
-static bool CheckNotNull(const aclTensor *self, const aclTensor *out, const aclIntArray *outputSize)
+static bool CheckNotNull(const aclTensor* self, const aclTensor* out, const aclIntArray* outputSize)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(out, return false);
@@ -66,7 +66,7 @@ static bool CheckNotNull(const aclTensor *self, const aclTensor *out, const aclI
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 {
     if (IsRegBase()) {
         OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST_REGBASE, return false);
@@ -79,7 +79,7 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclIntArray *outputSize, const double scale)
+static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclIntArray* outputSize, const double scale)
 {
     size_t outDimNum = out->GetViewShape().GetDimNum();
     size_t outputSizeNum = outputSize->Size();
@@ -87,35 +87,31 @@ static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclInt
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
 
     OP_CHECK(outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected outputSize equals to 1, but got size %zu", outputSizeNum),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected outputSize equals to 1, but got size %zu", outputSizeNum),
+             return false);
     int64_t outL = (*outputSize)[DIM_ZERO];
     int64_t batch = self->GetViewShape().GetDim(DIM_ZERO);
     int64_t channels = self->GetViewShape().GetDim(DIM_ONE);
     auto outShape = out->GetViewShape();
     FVector<int64_t> fullOutputSize = {batch, channels, outL};
     if (self->GetViewShape().GetDim(1) == 0 || self->GetViewShape().GetDim(DIM_TWO) == 0) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Non-empty 3D data tensor expected but got a tensor with sizes %s.",
-            op::ToString(self->GetViewShape()).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Non-empty 3D data tensor expected but got a tensor with sizes %s.",
+                op::ToString(self->GetViewShape()).GetString());
         return false;
     }
     OP_CHECK(outL > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0,"
-            "but got output (L: %ld)",
-            outL),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0,"
+                     "but got output (L: %ld)",
+                     outL),
+             return false);
 
     for (size_t i = 0; i < outDimNum; ++i) {
         if (outShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Expected out to have shape"
-                "size(%zu) = %ld but got out.size(%zu) = %ld",
-                i,
-                fullOutputSize[i],
-                i,
-                outShape.GetDim(i));
+                    "Expected out to have shape"
+                    "size(%zu) = %ld but got out.size(%zu) = %ld",
+                    i, fullOutputSize[i], i, outShape.GetDim(i));
             return false;
         }
     }
@@ -123,17 +119,16 @@ static bool CheckShape(const aclTensor *self, const aclTensor *out, const aclInt
     if (scale >= 0 && (!(IsRegBase()))) {
         const double odim = static_cast<double>(self->GetViewShape().GetDim(DIM_TWO)) * scale;
         if (static_cast<int64_t>(odim) != outL) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Scale conflicts with outputSize."
-                "scale * input[2] should be equal to outputSize[0]");
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Scale conflicts with outputSize."
+                                             "scale * input[2] should be equal to outputSize[0]");
             return false;
         }
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor *selfRef, const aclTensor *out, const aclIntArray *outputSize, const double scale)
+static aclnnStatus CheckParams(const aclTensor* selfRef, const aclTensor* out, const aclIntArray* outputSize,
+                               const double scale)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(selfRef, out, outputSize), ACLNN_ERR_PARAM_NULLPTR);
@@ -146,7 +141,7 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *executor)
+static const aclTensor* View3dAs4d(const aclTensor* input, aclOpExecutor* executor)
 {
     // NCL -> contigious -> unsqueeze(2)
     // contigious
@@ -155,7 +150,7 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
 
     // unsqeeze(2)
     const int64_t appendDim[] = {2};
-    aclIntArray *dimArray = executor->AllocIntArray(appendDim, 1);
+    aclIntArray* dimArray = executor->AllocIntArray(appendDim, 1);
     CHECK_RET(dimArray != nullptr, nullptr);
     auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimArray, executor);
     CHECK_RET(unsqueezedInput != nullptr, nullptr);
@@ -163,8 +158,8 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     return unsqueezedInput;
 }
 
-static bool CheckLinear1dScales(
-    const aclTensor *x, const aclTensor *y, const aclIntArray *size, const double scale, const bool alignCorners)
+static bool CheckLinear1dScales(const aclTensor* x, const aclTensor* y, const aclIntArray* size, const double scale,
+                                const bool alignCorners)
 {
     float scales_w = 0.0;
     auto inputShape = x->GetViewShape();
@@ -188,7 +183,7 @@ static bool CheckLinear1dScales(
     return (scales_w <= MAX_SUPPORT_SHRINK_SCALE && scales_w >= MAX_SUPPORT_ZOOM_SCALE_REV);
 }
 
-static bool CheckLinear1dSize(const aclTensor *x, const aclTensor *y)
+static bool CheckLinear1dSize(const aclTensor* x, const aclTensor* y)
 {
     auto inputShape = x->GetViewShape();
     auto outputShape = y->GetViewShape();
@@ -196,8 +191,8 @@ static bool CheckLinear1dSize(const aclTensor *x, const aclTensor *y)
     int64_t inputW = inputShape.GetDim(DIM_TWO);
     int64_t outputW = outputShape.GetDim(DIM_TWO);
 
-    int64_t inputSize= inputNC * inputW * DTYPE_FLOAT_SIZE;
-    int64_t outputSize= inputNC * outputW * DTYPE_FLOAT_SIZE;
+    int64_t inputSize = inputNC * inputW * DTYPE_FLOAT_SIZE;
+    int64_t outputSize = inputNC * outputW * DTYPE_FLOAT_SIZE;
     int64_t middlSize = UB_LIMIT;
     int64_t totalSize = inputSize + outputSize + middlSize;
     if (totalSize > WORKSPACE_LIMIT) {
@@ -206,8 +201,9 @@ static bool CheckLinear1dSize(const aclTensor *x, const aclTensor *y)
     return false;
 }
 
-static const aclTensor *GoUpsampleLinear1DAICORE(const aclTensor *selfRefContiguous, const aclIntArray *outputSize,
-    const bool alignCorners, const double scale, const aclTensor *out, aclOpExecutor *executor)
+static const aclTensor* GoUpsampleLinear1DAICORE(const aclTensor* selfRefContiguous, const aclIntArray* outputSize,
+                                                 const bool alignCorners, const double scale, const aclTensor* out,
+                                                 aclOpExecutor* executor)
 {
     auto dataType = selfRefContiguous->GetDataType();
     auto outputType = dataType;
@@ -223,10 +219,9 @@ static const aclTensor *GoUpsampleLinear1DAICORE(const aclTensor *selfRefContigu
     auto size1 = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT64));
     auto castSize = l0op::Cast(size1, op::DataType::DT_INT32, executor);
     CHECK_RET(castSize != nullptr, nullptr);
-    const aclTensor *y =
-        executor->AllocTensor(out->GetViewShape(), outputType, selfRefContiguous->GetViewFormat());
+    const aclTensor* y = executor->AllocTensor(out->GetViewShape(), outputType, selfRefContiguous->GetViewFormat());
     CHECK_RET(y != nullptr, nullptr);
-    const aclTensor *res = l0op::UpsampleLinear1dNcdhw(selfRefContiguous, castSize, alignCorners, y, scale, executor);
+    const aclTensor* res = l0op::UpsampleLinear1dNcdhw(selfRefContiguous, castSize, alignCorners, y, scale, executor);
 
     // 数据类型非fp32，需要将输出做一次cast
     if (dataType != op::DataType::DT_FLOAT && isBigInput) {
@@ -239,8 +234,9 @@ static const aclTensor *GoUpsampleLinear1DAICORE(const aclTensor *selfRefContigu
     return res;
 }
 
-aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize,
-    const bool alignCorners, const double scale, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor* self, const aclIntArray* outputSize,
+                                                  const bool alignCorners, const double scale, aclTensor* out,
+                                                  uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnUpsampleLinear1d, DFX_IN(self, outputSize, alignCorners, scale), DFX_OUT(out));
     // 固定写法，创建OpExecutor
@@ -260,12 +256,12 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
 
     int64_t outL = (*outputSize)[DIM_ZERO];
     if (IsRegBase()) {
-        const aclTensor *resizeOut = nullptr;
+        const aclTensor* resizeOut = nullptr;
         auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
         CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        resizeOut = l0op::ResizeLinear(
-            selfContiguous, outputSize, alignCorners, static_cast<float>(scale), out, uniqueExecutor.get());
+        resizeOut = l0op::ResizeLinear(selfContiguous, outputSize, alignCorners, static_cast<float>(scale), out,
+                                       uniqueExecutor.get());
         CHECK_RET(resizeOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
@@ -276,36 +272,35 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
         auto viewCopyResult = l0op::ViewCopy(self, out, uniqueExecutor.get());
         CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
     } else {
-        const aclTensor *ResizeDOut;
+        const aclTensor* ResizeDOut;
         auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-        if ((curArch == NpuArch::DAV_2201) &&
-            CheckLinear1dScales(self, out, outputSize, scale, alignCorners)) {
+        if ((curArch == NpuArch::DAV_2201) && CheckLinear1dScales(self, out, outputSize, scale, alignCorners)) {
             auto selfRefContiguous = l0op::Contiguous(self, uniqueExecutor.get());
             CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
             // 调用UpsampleLinear1d算子kernel
-            ResizeDOut =
-                GoUpsampleLinear1DAICORE(selfRefContiguous, outputSize, alignCorners, scale, out, uniqueExecutor.get());
+            ResizeDOut = GoUpsampleLinear1DAICORE(selfRefContiguous, outputSize, alignCorners, scale, out,
+                                                  uniqueExecutor.get());
         } else {
             // 固定写法，将输入self升维
             auto selfRefContiguous = View3dAs4d(self, uniqueExecutor.get());
             CHECK_RET(selfRefContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
             auto dataType = selfRefContiguous->GetDataType();
-        
+
             // scale转为aclFloatArray
             auto scalesRes = (scale < 0) ? 0 : scale;
             const float scalesList[] = {static_cast<float>(scalesRes)};
-            const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, 1);
+            const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, 1);
             CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
             if (op::DataType::DT_BF16 == dataType) {
                 selfRefContiguous = l0op::Cast(selfRefContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             }
-            const aclTensor *y = uniqueExecutor.get()->AllocTensor(
+            const aclTensor* y = uniqueExecutor.get()->AllocTensor(
                 out->GetViewShape(), selfRefContiguous->GetDataType(), out->GetViewFormat());
             CHECK_RET(y != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             // 调用ResizeD算子kernel
-            ResizeDOut = l0op::ResizeD(
-                selfRefContiguous, outputSize, alignCorners, y, scales, LINEAR_MODE, uniqueExecutor.get());
+            ResizeDOut = l0op::ResizeD(selfRefContiguous, outputSize, alignCorners, y, scales, LINEAR_MODE,
+                                       uniqueExecutor.get());
             if (op::DataType::DT_BF16 == dataType) {
                 ResizeDOut = l0op::Cast(ResizeDOut, op::DataType::DT_BF16, uniqueExecutor.get());
             }
@@ -318,11 +313,11 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(const aclTensor *self, const a
 
     // 固定写法，获取计算过程中需要使用的workspace大小
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();
-    uniqueExecutor.ReleaseTo(executor);  // 需要把 uniqueExecutor持有executor转移给executor
+    uniqueExecutor.ReleaseTo(executor); // 需要把 uniqueExecutor持有executor转移给executor
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleLinear1d(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleLinear1d(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleLinear1d);
     // 固定写法，调用框架能力，完成计算

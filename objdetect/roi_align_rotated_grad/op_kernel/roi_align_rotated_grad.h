@@ -29,13 +29,12 @@ constexpr uint32_t INDEX_THREE = 3;
 constexpr uint32_t INDEX_FOUR = 4;
 constexpr uint32_t INDEX_FIVE = 5;
 
-class KernelRoiAlignRotatedGrad
-{
+class KernelRoiAlignRotatedGrad {
 public:
     __aicore__ inline KernelRoiAlignRotatedGrad() {}
 
     __aicore__ inline void Init(GM_ADDR grad_output, GM_ADDR rois, GM_ADDR grad_input,
-                                const RoiAlignRotatedGradTilingData *__restrict tiling_data)
+                                const RoiAlignRotatedGradTilingData* __restrict tiling_data)
     {
         ASSERT(GetBlockNum() != 0 && "block dim can not be zero!");
 
@@ -58,13 +57,10 @@ public:
         alignChannelNum = alignChannelNum * dataSize;
 
         uint32_t coreId = GetBlockIdx();
-        if (coreId < coreRoisTail)
-        {
+        if (coreId < coreRoisTail) {
             coreRoisNums += 1;
             startOffset = coreRoisNums * coreId;
-        }
-        else
-        {
+        } else {
             startOffset = coreRoisNums * coreId + coreRoisTail;
         }
 
@@ -74,11 +70,14 @@ public:
         eventIdVToMte3 = static_cast<event_t>(pipe.AllocEventID<HardEvent::V_MTE3>());
         eventIdMte3ToMte2 = static_cast<event_t>(pipe.AllocEventID<HardEvent::MTE3_MTE2>());
 
-        copyParams = {2, static_cast<uint16_t>(channelNum * 2 / dataSize), 0, static_cast<uint16_t>((width - 2) * channelNum / dataSize)};
+        copyParams = {2, static_cast<uint16_t>(channelNum * 2 / dataSize), 0,
+                      static_cast<uint16_t>((width - 2) * channelNum / dataSize)};
 
-        roisGM.SetGlobalBuffer(reinterpret_cast<__gm__ float *>(rois), boxLength * boxSize);
-        gradOutputsGm.SetGlobalBuffer(reinterpret_cast<__gm__ float *>(grad_output), boxLength * channelNum * pooledHeight * pooledWidth);
-        gradInputGm.SetGlobalBuffer(reinterpret_cast<__gm__ float *>(grad_input), batchSize * channelNum * height * width);
+        roisGM.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(rois), boxLength * boxSize);
+        gradOutputsGm.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(grad_output),
+                                      boxLength * channelNum * pooledHeight * pooledWidth);
+        gradInputGm.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(grad_input),
+                                    batchSize * channelNum * height * width);
         InitBuffer();
     }
 
@@ -87,18 +86,15 @@ public:
         GetLocalTensor();
         uint32_t computeBatchSize = constComputeBatchSize;
         uint32_t computeBatchNum = (coreRoisNums + constComputeBatchSize - 1) / constComputeBatchSize;
-        for (uint32_t taskBatchIdx = 0; taskBatchIdx < computeBatchNum; taskBatchIdx++)
-        {
+        for (uint32_t taskBatchIdx = 0; taskBatchIdx < computeBatchNum; taskBatchIdx++) {
             uint32_t offset = startOffset + taskBatchIdx * constComputeBatchSize;
-            if (taskBatchIdx == computeBatchNum - 1)
-            {
+            if (taskBatchIdx == computeBatchNum - 1) {
                 computeBatchSize = coreRoisNums - taskBatchIdx * computeBatchSize;
             }
             uint32_t alignComputeBatchNum = (computeBatchSize + dataSize - 1) / dataSize;
             alignComputeBatchNum = alignComputeBatchNum * dataSize;
             CopyIn(offset, alignComputeBatchNum);
-            for (uint32_t taskIdx = 0; taskIdx < computeBatchSize; taskIdx++)
-            {
+            for (uint32_t taskIdx = 0; taskIdx < computeBatchSize; taskIdx++) {
                 Compute(taskIdx, offset + taskIdx);
             }
         }
@@ -197,8 +193,7 @@ private:
         SetFlag<HardEvent::MTE2_V>(eventIdMte2ToV);
         WaitFlag<HardEvent::MTE2_V>(eventIdMte2ToV);
 
-        if (clockwise)
-        {
+        if (clockwise) {
             Muls(angleLocal, angleLocal, (float)-1.0, computeBatchSize);
         }
 
@@ -208,13 +203,10 @@ private:
         Muls(hLocal, hLocal, (float)spatialScale, computeBatchSize);
         Muls(wLocal, wLocal, (float)spatialScale, computeBatchSize);
 
-        if (aligned)
-        {
+        if (aligned) {
             Adds(xLocal, xLocal, half_value, computeBatchSize);
             Adds(yLocal, yLocal, half_value, computeBatchSize);
-        }
-        else
-        {
+        } else {
             Maxs(hLocal, hLocal, (float)1.0, computeBatchSize);
             Maxs(wLocal, wLocal, (float)1.0, computeBatchSize);
         }
@@ -227,13 +219,10 @@ private:
         Duplicate(tmpLocal, (float)pooledWidth, computeBatchSize);
         Div(binSizeWLocal, wLocal, tmpLocal, computeBatchSize);
 
-        if (samplingRatio > 0)
-        {
+        if (samplingRatio > 0) {
             Duplicate(binGridHLocal, samplingRatio, computeBatchSize);
             Duplicate(binGridWLocal, samplingRatio, computeBatchSize);
-        }
-        else
-        {
+        } else {
             Cast(binGridHLocal, binSizeHLocal, AscendC::RoundMode::CAST_CEIL, computeBatchSize);
             Cast(binGridWLocal, binSizeWLocal, AscendC::RoundMode::CAST_CEIL, computeBatchSize);
         }
@@ -273,8 +262,7 @@ private:
 
         pCount = countLocal.GetValue(taskIdx);
 
-        for (index = 0; index < pooledHeight * pooledWidth; index++)
-        {
+        for (index = 0; index < pooledHeight * pooledWidth; index++) {
             pH = index / pooledWidth;
             pW = index - pH * pooledWidth;
             baseOffset = ((offset * pooledHeight + pH) * pooledWidth + pW) * channelNum;
@@ -287,17 +275,14 @@ private:
 
             SetFlag<HardEvent::MTE2_V>(eventIdMte2ToV);
             WaitFlag<HardEvent::MTE2_V>(eventIdMte2ToV);
-            if (alignChannelNum != channelNum)
-            {
+            if (alignChannelNum != channelNum) {
                 Mul(gradBinLocal, gradBinLocal, tmpChannelLocal, alignChannelNum);
             }
             Muls(gradBinLocal, gradBinLocal, (float)1.0 / (float)pCount, alignChannelNum);
 
-            for (iy = 0; iy < pBinGridH; iy++)
-            {
+            for (iy = 0; iy < pBinGridH; iy++) {
                 yy = pDeltaStartH + pH * pBinSizeH + (iy + half_plus_value) * pBinGridSizeH;
-                for (ix = 0; ix < pBinGridW; ix++)
-                {
+                for (ix = 0; ix < pBinGridW; ix++) {
                     xx = pDeltaStartW + pW * pBinSizeW + (ix + half_plus_value) * pBinGridSizeW;
 
                     x = yy * pSin + xx * pCos + pX;
@@ -305,14 +290,10 @@ private:
 
                     bilinearInterpolate();
 
-                    if (xl >= 0 && xh >= 0 && yl >= 0 && yh >= 0)
-                    {
-                        if (channelNum == alignChannelNum && xh > xl && yh > yl)
-                        {
+                    if (xl >= 0 && xh >= 0 && yl >= 0 && yh >= 0) {
+                        if (channelNum == alignChannelNum && xh > xl && yh > yl) {
                             CopyOutTogether();
-                        }
-                        else
-                        {
+                        } else {
                             CopyOut();
                         }
                     }
@@ -323,8 +304,7 @@ private:
 
     __aicore__ inline void bilinearInterpolate()
     {
-        if (y < -1 || y > height || x < -1 || x > width)
-        {
+        if (y < -1 || y > height || x < -1 || x > width) {
             xl = -1;
             return;
         }
@@ -336,23 +316,17 @@ private:
         yl = static_cast<int32_t>(y);
         xl = static_cast<int32_t>(x);
 
-        if (yl >= height - 1)
-        {
+        if (yl >= height - 1) {
             yl = yh = height - 1;
             y = float(yl);
-        }
-        else
-        {
+        } else {
             yh = yl + 1;
         }
 
-        if (xl >= width - 1)
-        {
+        if (xl >= width - 1) {
             xl = xh = width - 1;
             x = float(xl);
-        }
-        else
-        {
+        } else {
             xh = xl + 1;
         }
 

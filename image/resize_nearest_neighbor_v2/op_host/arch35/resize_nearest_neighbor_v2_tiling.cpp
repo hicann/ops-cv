@@ -19,12 +19,13 @@
 #include "log/log.h"
 
 namespace optiling {
-ge::graphStatus Tiling4ResizeNearestNeighborV2(gert::TilingContext* context) {
-  // get compile info ptr
-  const ResizeNearestNeighborV2CompileInfo* compileInfo =
-      static_cast<const ResizeNearestNeighborV2CompileInfo*>(context->GetCompileInfo());
-  OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
-  return Tiling4ResizeNearestNeighborV2ForAscendC(context, compileInfo);
+ge::graphStatus Tiling4ResizeNearestNeighborV2(gert::TilingContext* context)
+{
+    // get compile info ptr
+    const ResizeNearestNeighborV2CompileInfo* compileInfo = static_cast<const ResizeNearestNeighborV2CompileInfo*>(
+        context->GetCompileInfo());
+    OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
+    return Tiling4ResizeNearestNeighborV2ForAscendC(context, compileInfo);
 }
 
 static ge::graphStatus TilingPrepare4ResizeNearestNeighborV2(gert::TilingParseContext* context)
@@ -35,19 +36,18 @@ static ge::graphStatus TilingPrepare4ResizeNearestNeighborV2(gert::TilingParseCo
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->core_num = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        (compileInfo->core_num <= 0), OP_LOGE(context->GetNodeName(), "core num invalid."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->core_num <= 0), OP_LOGE(context->GetNodeName(), "core num invalid."),
+                return ge::GRAPH_FAILED);
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
     compileInfo->ubSize = static_cast<int64_t>(ubSize);
-    OP_CHECK_IF(
-        (compileInfo->ubSize <= 0), OP_LOGE(context->GetNodeName(), "ub size invalid."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->ubSize <= 0), OP_LOGE(context->GetNodeName(), "ub size invalid."),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
-
 
 // register tiling interface of the ResizeNearestNeighborV2 op.
 IMPL_OP_OPTILING(ResizeNearestNeighborV2)
     .Tiling(Tiling4ResizeNearestNeighborV2)
     .TilingParse<ResizeNearestNeighborV2CompileInfo>(TilingPrepare4ResizeNearestNeighborV2);
-}  // namespace optiling
+} // namespace optiling

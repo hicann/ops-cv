@@ -71,12 +71,10 @@ ge::graphStatus ResizeBicubicV2GradAllCopyTiling::PostTiling()
 {
     context_->SetBlockDim(calcInfo_.useCoreNum);
 
-    OP_CHECK_IF(
-        tilingData_.GetDataSize() > context_->GetRawTilingData()->GetCapacity(),
-        OP_LOGE(
-            context_->GetNodeName(), "actual all copy tiling data size %zu > context tiling data size %zu",
-            tilingData_.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tilingData_.GetDataSize() > context_->GetRawTilingData()->GetCapacity(),
+                OP_LOGE(context_->GetNodeName(), "actual all copy tiling data size %zu > context tiling data size %zu",
+                        tilingData_.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
+                return ge::GRAPH_FAILED);
     tilingData_.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
     return ge::GRAPH_SUCCESS;

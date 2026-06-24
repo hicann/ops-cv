@@ -19,15 +19,9 @@ using namespace ge;
 
 class UpsampleNearestTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UpsampleNearestTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UpsampleNearestTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UpsampleNearestTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UpsampleNearestTiling TearDown" << std::endl; }
 };
 
 TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_001)
@@ -68,8 +62,8 @@ TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_002)
         {
             {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_FLOAT16, ge::FORMAT_NCHW},
         },
-        {gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({128, 128})),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({128, 128})),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2)),
          gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},

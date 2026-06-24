@@ -42,14 +42,15 @@ static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_95 = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16,
-    op::DataType::DT_UINT8, op::DataType::DT_DOUBLE};
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_UINT8,
+    op::DataType::DT_DOUBLE};
 
-static const std::initializer_list<op::DataType> ASCEND310P_AICORE_DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+static const std::initializer_list<op::DataType> ASCEND310P_AICORE_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT,
+                                                                                         op::DataType::DT_FLOAT16};
 
-const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray *outputSize,
-    const aclFloatArray *scales, const aclFloatArray *castScales, aclOpExecutor *executor)
+const aclTensor* UpsampleNearest3dNcdhw(const aclTensor* self, const aclIntArray* outputSize,
+                                        const aclFloatArray* scales, const aclFloatArray* castScales,
+                                        aclOpExecutor* executor)
 {
     L0_DFX(UpsampleNearest3dNcdhw, self, outputSize, scales);
 
@@ -57,7 +58,7 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
     const int64_t sizeD = (*outputSize)[DIM_ZERO];
     const int64_t sizeH = (*outputSize)[DIM_ONE];
     const int64_t sizeW = (*outputSize)[DIM_TWO];
-    float scales_d = 0.0, scales_h = 0.0,  scales_w = 0.0;
+    float scales_d = 0.0, scales_h = 0.0, scales_w = 0.0;
     if (castScales->Size() == DIM_THREE) {
         scales_d = (*castScales)[DIM_ZERO];
         scales_h = (*castScales)[DIM_ONE];
@@ -79,34 +80,29 @@ const aclTensor *UpsampleNearest3dNcdhw(const aclTensor *self, const aclIntArray
     selfStorageShape.SetDim(DIM_THREE, sizeH);
     selfStorageShape.SetDim(DIM_FOUR, sizeW);
 
-    const aclTensor *out = executor->AllocTensor(
-        selfStorageShape, selfOriginalShape, self->GetDataType(), self->GetStorageFormat(), self->GetOriginalFormat());
+    const aclTensor* out = executor->AllocTensor(selfStorageShape, selfOriginalShape, self->GetDataType(),
+                                                 self->GetStorageFormat(), self->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
-    if ((curArch == NpuArch::DAV_2201) &&
-        CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
-        ADD_TO_LAUNCHER_LIST_AICORE(
-            UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
+    if ((curArch == NpuArch::DAV_2201) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
+        ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out),
+                                    OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;
     }
-    if ((IsRegBase(curArch)) &&
-        CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_95)) {
-        ADD_TO_LAUNCHER_LIST_AICORE(
-            UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
+    if ((IsRegBase(curArch)) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST_95)) {
+        ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out),
+                                    OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;
     }
     if ((curArch == NpuArch::DAV_2002) && CheckType(self->GetDataType(), ASCEND310P_AICORE_DTYPE_SUPPORT_LIST)) {
-        ADD_TO_LAUNCHER_LIST_AICORE(
-            UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
+        ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearest3d, OP_INPUT(self), OP_OUTPUT(out),
+                                    OP_ATTR(outputSize, scales_d, scales_h, scales_w));
         return out;
     }
 
     static internal::AicpuTaskSpace space("UpsampleNearest3d");
-    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(UpsampleNearest3d,
-        OP_ATTR_NAMES({"output_size", "scales"}),
-        OP_INPUT(self),
-        OP_OUTPUT(out),
-        OP_ATTR(outputSize, scales));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(UpsampleNearest3d, OP_ATTR_NAMES({"output_size", "scales"}), OP_INPUT(self),
+                                          OP_OUTPUT(out), OP_ATTR(outputSize, scales));
     CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

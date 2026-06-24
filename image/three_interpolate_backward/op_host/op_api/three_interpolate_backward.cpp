@@ -28,17 +28,15 @@ constexpr uint8_t C0 = 16;
 namespace l0op {
 OP_TYPE_REGISTER(ThreeInterpolateBackward);
 
-const aclTensor* ThreeInterpolateBackwardAicore(
-    const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m, aclTensor* grad_y,
-    aclOpExecutor* executor)
+const aclTensor* ThreeInterpolateBackwardAicore(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight,
+                                                int m, aclTensor* grad_y, aclOpExecutor* executor)
 {
     L0_DFX(ThreeInterpolateBackwardAicore, grad_x, idx, weight, m, grad_y);
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        ThreeInterpolateBackward, OP_INPUT(grad_x, idx, weight), OP_OUTPUT(grad_y), OP_ATTR(m));
-    OP_CHECK(
-        ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ThreeInterpolateBackwardAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ThreeInterpolateBackward, OP_INPUT(grad_x, idx, weight), OP_OUTPUT(grad_y),
+                                           OP_ATTR(m));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ThreeInterpolateBackwardAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return grad_y;
 }
 
@@ -59,8 +57,8 @@ void ThreeInterpolateBackwardInferShapeView(const Shape& grad_x_shape, int m, Sh
     grad_y_shape.AppendDim(CONST_1);                          // 1
 }
 
-const aclTensor* ThreeInterpolateBackward(
-    const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m, aclOpExecutor* executor)
+const aclTensor* ThreeInterpolateBackward(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m,
+                                          aclOpExecutor* executor)
 {
     Shape grad_y_storage_shape;
     auto dtype = grad_x->GetDataType();
@@ -71,8 +69,8 @@ const aclTensor* ThreeInterpolateBackward(
     auto grad_y_view_format = op::Format::FORMAT_ND;
     ThreeInterpolateBackwardInferShapeView(grad_x->GetViewShape(), m, grad_y_view_shape);
 
-    auto grad_y = executor->AllocTensor(
-        grad_y_storage_shape, grad_y_view_shape, dtype, grad_y_storage_format, grad_y_view_format);
+    auto grad_y = executor->AllocTensor(grad_y_storage_shape, grad_y_view_shape, dtype, grad_y_storage_format,
+                                        grad_y_view_format);
     CHECK_RET(grad_y != nullptr, nullptr);
 
     return ThreeInterpolateBackwardAicore(grad_x, idx, weight, m, grad_y, executor);

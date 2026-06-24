@@ -25,7 +25,7 @@
 using namespace op;
 
 namespace l0op {
-OP_TYPE_REGISTER(GridSample);  // AscendC
+OP_TYPE_REGISTER(GridSample); // AscendC
 static const size_t FIRST_DIM = 0;
 static const size_t SECOND_DIM = 1;
 static const size_t THIRD_DIM = 2;
@@ -54,33 +54,24 @@ static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode, int64
 {
     // 检查interpolationMode 、paddingMode 、 schedulerMode 是否在支持范围内
     if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "interpolationMode %ld should be in range [%ld, %ld].",
-            interpolationMode,
-            INTERPOLATION_MODE_MIN_VALUE,
-            INTERPOLATION_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
+                INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
         return false;
     }
     if (schedulerMode < SCHEDULER_MODE_MIN_VALUE || schedulerMode > SCHEDULER_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "schedulerMode %ld should be in range [%ld, %ld].",
-            schedulerMode,
-            SCHEDULER_MODE_MIN_VALUE,
-            SCHEDULER_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "schedulerMode %ld should be in range [%ld, %ld].", schedulerMode,
+                SCHEDULER_MODE_MIN_VALUE, SCHEDULER_MODE_MAX_VALUE);
         return false;
     }
     if (!(paddingMode >= PADDING_MODE_MIN_VALUE && paddingMode <= PADDING_MODE_MAX_VALUE)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "paddingMode %ld should be in range [%ld, %ld].",
-            paddingMode,
-            PADDING_MODE_MIN_VALUE,
-            PADDING_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
+                PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
         return false;
     }
     return true;
 }
 
-inline const string &GetInterpolationModeStr(int64_t interpolationMode)
+inline const string& GetInterpolationModeStr(int64_t interpolationMode)
 {
     if (interpolationMode == 0) {
         return INTERPOLATION_BILINEAR;
@@ -91,19 +82,18 @@ inline const string &GetInterpolationModeStr(int64_t interpolationMode)
     return INTERPOLATION_BICUBIC;
 }
 
-inline const string &GetPaddingModeStr(int64_t paddingMode)
+inline const string& GetPaddingModeStr(int64_t paddingMode)
 {
     return paddingMode == 0 ? PADDING_ZEROS : (paddingMode == 1 ? PADDING_BORDER : PADDING_REFLECTION);
 }
 
-const aclTensor *GridSample(const aclTensor *x, const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode,
-    bool alignCorners, bool channelLast, int64_t schedulerMode, aclOpExecutor *executor)
+const aclTensor* GridSample(const aclTensor* x, const aclTensor* grid, int64_t interpolationMode, int64_t paddingMode,
+                            bool alignCorners, bool channelLast, int64_t schedulerMode, aclOpExecutor* executor)
 {
     L0_DFX(GridSample, x, grid, interpolationMode, paddingMode, alignCorners, channelLast, schedulerMode);
     if (x == nullptr || x->GetViewShape().GetDimNum() != SPATIAL_DIM_NUM) {
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR,
-            "input tensor x is nullptr or its dimension is not equal to %ld.",
-            SPATIAL_DIM_NUM);
+        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "input tensor x is nullptr or its dimension is not equal to %ld.",
+                SPATIAL_DIM_NUM);
         return nullptr;
     }
     op::Shape yShape;
@@ -125,15 +115,12 @@ const aclTensor *GridSample(const aclTensor *x, const aclTensor *grid, int64_t i
 
     // 使用框架宏 ADD_TO_LAUNCHER_LIST_AICORE，将GridSample算子加入任务队列
     if (CheckAttrValid(interpolationMode, paddingMode, schedulerMode)) {
-        auto ret = ADD_TO_LAUNCHER_LIST_AICORE(GridSample,
+        auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+            GridSample,
             OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners", "channel_last", "scheduler_mode"}),
-            OP_INPUT(x, grid),
-            OP_OUTPUT(y),
-            OP_ATTR(GetInterpolationModeStr(interpolationMode),
-                GetPaddingModeStr(paddingMode),
-                alignCorners,
-                channelLast,
-                schedulerMode));
+            OP_INPUT(x, grid), OP_OUTPUT(y),
+            OP_ATTR(GetInterpolationModeStr(interpolationMode), GetPaddingModeStr(paddingMode), alignCorners,
+                    channelLast, schedulerMode));
         if (ret != ACLNN_SUCCESS) {
             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "Failed to launch GridSample kernel");
             return nullptr;
@@ -144,8 +131,8 @@ const aclTensor *GridSample(const aclTensor *x, const aclTensor *grid, int64_t i
     return y;
 }
 
-const aclTensor *GridSample3D(const aclTensor *x, const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode,
-    bool alignCorners, bool channelLast, aclOpExecutor *executor)
+const aclTensor* GridSample3D(const aclTensor* x, const aclTensor* grid, int64_t interpolationMode, int64_t paddingMode,
+                              bool alignCorners, bool channelLast, aclOpExecutor* executor)
 {
     L0_DFX(GridSample3D, x, grid, interpolationMode, paddingMode, alignCorners, channelLast);
     op::Shape yShape;
@@ -165,16 +152,14 @@ const aclTensor *GridSample3D(const aclTensor *x, const aclTensor *grid, int64_t
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc y tensor failed.");
         return nullptr;
     }
-    
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(GridSample,
-        OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners", "channel_last"}),
-        OP_INPUT(x, grid),
-        OP_OUTPUT(y),
-        OP_ATTR(
-            GetInterpolationModeStr(interpolationMode), GetPaddingModeStr(paddingMode), alignCorners, channelLast, 0));
+
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        GridSample, OP_ATTR_NAMES({"interpolation_mode", "padding_mode", "align_corners", "channel_last"}),
+        OP_INPUT(x, grid), OP_OUTPUT(y),
+        OP_ATTR(GetInterpolationModeStr(interpolationMode), GetPaddingModeStr(paddingMode), alignCorners, channelLast,
+                0));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "GridSample AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "GridSample AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
     return y;
 }
-}  // namespace l0op
+} // namespace l0op

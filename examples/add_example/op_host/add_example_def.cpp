@@ -26,8 +26,7 @@ namespace ops {
  * 支持的数据类型: FLOAT, INT32
  * 支持的格式: ND (n维格式)
  */
-class AddExample : public OpDef
-{
+class AddExample : public OpDef {
 public:
     /*!
      * \brief Add算子的构造函数
@@ -65,15 +64,16 @@ public:
 
         // AI Core编译配置
         OpAICoreConfig aicoreConfig;
-        aicoreConfig.DynamicCompileStaticFlag(true)    // 启用静态动态编译标志
-            .DynamicFormatFlag(false)                   // 禁用动态格式标志
-            .DynamicRankSupportFlag(true)               // 启用动态rank支持
-            .DynamicShapeSupportFlag(true)              // 启用动态shape支持
-            .NeedCheckSupportFlag(false)                 // 禁用检查支持标志
-            .PrecisionReduceFlag(true)                  // 启用精度降低标志
-            .ExtendCfgInfo("opFile.value", "add_example");    // 指定kernel入口文件名
+        aicoreConfig
+            .DynamicCompileStaticFlag(true)                // 启用静态动态编译标志
+            .DynamicFormatFlag(false)                      // 禁用动态格式标志
+            .DynamicRankSupportFlag(true)                  // 启用动态rank支持
+            .DynamicShapeSupportFlag(true)                 // 启用动态shape支持
+            .NeedCheckSupportFlag(false)                   // 禁用检查支持标志
+            .PrecisionReduceFlag(true)                     // 启用精度降低标志
+            .ExtendCfgInfo("opFile.value", "add_example"); // 指定kernel入口文件名
         // 为不同SOC版本添加AI Core配置
-        this->AICore().AddConfig("ascend910b", aicoreConfig);  // Ascend 910B芯片配置
+        this->AICore().AddConfig("ascend910b", aicoreConfig);   // Ascend 910B芯片配置
         this->AICore().AddConfig("ascend910_93", aicoreConfig); // Ascend 910A芯片配置
         this->AICore().AddConfig("ascend950", aicoreConfig);    // Ascend 950芯片配置
     }

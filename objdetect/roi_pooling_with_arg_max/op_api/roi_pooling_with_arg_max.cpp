@@ -27,15 +27,16 @@ static const size_t DIM_3 = 3;
 
 OP_TYPE_REGISTER(RoiPoolingWithArgMax);
 
-const aclTensor *RoiPoolingWithArgMax(const aclTensor *x, const aclTensor *rois, const aclTensor *roi_actual_num,
-    int64_t pooled_h, int64_t pooled_w, float spatial_scale_h, float spatial_scale_w, int64_t pool_channel,
-    aclOpExecutor *executor, const aclTensor **out_y, const aclTensor **out_argmax)
+const aclTensor* RoiPoolingWithArgMax(const aclTensor* x, const aclTensor* rois, const aclTensor* roi_actual_num,
+                                      int64_t pooled_h, int64_t pooled_w, float spatial_scale_h, float spatial_scale_w,
+                                      int64_t pool_channel, aclOpExecutor* executor, const aclTensor** out_y,
+                                      const aclTensor** out_argmax)
 {
     L0_DFX(RoiPoolingWithArgMax, x, rois, roi_actual_num, pooled_h, pooled_w, spatial_scale_h, spatial_scale_w,
-        pool_channel);
+           pool_channel);
 
-    const auto &xShape = x->GetViewShape();
-    const auto &roisShape = rois->GetViewShape();
+    const auto& xShape = x->GetViewShape();
+    const auto& roisShape = rois->GetViewShape();
     int64_t numRois = static_cast<int64_t>(roisShape.GetDim(DIM_0));
 
     op::Shape yStorageShape = x->GetStorageShape();
@@ -50,7 +51,7 @@ const aclTensor *RoiPoolingWithArgMax(const aclTensor *x, const aclTensor *rois,
     yOriginalShape.SetDim(DIM_3, pooled_w);
 
     auto y = executor->AllocTensor(yStorageShape, yOriginalShape, x->GetDataType(), x->GetStorageFormat(),
-        x->GetOriginalFormat());
+                                   x->GetOriginalFormat());
     if (y == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiPoolingWithArgMax alloc y tensor failed");
         return nullptr;
@@ -60,22 +61,23 @@ const aclTensor *RoiPoolingWithArgMax(const aclTensor *x, const aclTensor *rois,
     op::Shape argmaxOriginalShape = yOriginalShape;
 
     auto argmax = executor->AllocTensor(argmaxStorageShape, argmaxOriginalShape, op::DataType::DT_INT32,
-        op::Format::FORMAT_ND, op::Format::FORMAT_ND);
+                                        op::Format::FORMAT_ND, op::Format::FORMAT_ND);
     if (argmax == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiPoolingWithArgMax alloc argmax tensor failed");
         return nullptr;
     }
 
     INFER_SHAPE(RoiPoolingWithArgMax, OP_INPUT(x, rois, roi_actual_num), OP_OUTPUT(y, argmax),
-        OP_ATTR(pooled_h, pooled_w, spatial_scale_h, spatial_scale_w, pool_channel));
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(RoiPoolingWithArgMax, OP_INPUT(x, rois, roi_actual_num), OP_OUTPUT(y, argmax),
-        OP_ATTR(pooled_h, pooled_w, spatial_scale_h, spatial_scale_w, pool_channel));
+                OP_ATTR(pooled_h, pooled_w, spatial_scale_h, spatial_scale_w, pool_channel));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(RoiPoolingWithArgMax, OP_INPUT(x, rois, roi_actual_num),
+                                           OP_OUTPUT(y, argmax),
+                                           OP_ATTR(pooled_h, pooled_w, spatial_scale_h, spatial_scale_w, pool_channel));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiPoolingWithArgMax ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiPoolingWithArgMax ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
 
     *out_y = y;
     *out_argmax = argmax;
     return y;
 }
-}  // namespace l0op
+} // namespace l0op

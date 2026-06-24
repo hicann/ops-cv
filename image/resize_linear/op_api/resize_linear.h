@@ -18,7 +18,7 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ResizeLinear(const aclTensor *self, const aclIntArray *outputSize, const bool alignCorners,
-    const float scale, const aclTensor *out, aclOpExecutor *executor);
+const aclTensor* ResizeLinear(const aclTensor* self, const aclIntArray* outputSize, const bool alignCorners,
+                              const float scale, const aclTensor* out, aclOpExecutor* executor);
 }
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_RESIZE_LINEAR_OP_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_RESIZE_LINEAR_OP_H_

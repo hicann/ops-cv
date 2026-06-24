@@ -21,19 +21,13 @@
 
 using namespace optiling;
 
-extern "C" __global__ __aicore__ void grid_sampler2_d_grad(
-    GM_ADDR grad, GM_ADDR x, GM_ADDR grid, GM_ADDR dx, GM_ADDR dgrid, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void grid_sampler2_d_grad(GM_ADDR grad, GM_ADDR x, GM_ADDR grid, GM_ADDR dx,
+                                                           GM_ADDR dgrid, GM_ADDR workspace, GM_ADDR tiling);
 
 class grid_sampler_2d_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "grid_sampler_2d_grad SetUp\n" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "grid_sampler_2d_grad TearDown\n" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "grid_sampler_2d_grad SetUp\n" << std::endl; }
+    static void TearDownTestCase() { std::cout << "grid_sampler_2d_grad TearDown\n" << std::endl; }
 };
 
 TEST_F(grid_sampler_2d_grad_test, test_float_case)
@@ -51,16 +45,17 @@ TEST_F(grid_sampler_2d_grad_test, test_float_case)
     size_t dxByteSize = N * C * H * W * sizeof(float);
     size_t dgridByteSize = N * 2 * gH * gW * sizeof(float);
     Tiling4GridSampler2DGradCompileInfo compileInfo = {48, 196608};
-    gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -108,16 +103,17 @@ TEST_F(grid_sampler_2d_grad_test, test_float_case2)
     size_t dxByteSize = N * C * H * W * sizeof(float);
     size_t dgridByteSize = N * 2 * gH * gW * sizeof(float);
     Tiling4GridSampler2DGradCompileInfo compileInfo = {48, 196608};
-    gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -165,16 +161,17 @@ TEST_F(grid_sampler_2d_grad_test, test_float16_case1)
     size_t dxByteSize = N * C * H * W * sizeof(float);
     size_t dgridByteSize = N * 2 * gH * gW * sizeof(float);
     Tiling4GridSampler2DGradCompileInfo compileInfo = {1, 196608};
-    gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -222,16 +219,17 @@ TEST_F(grid_sampler_2d_grad_test, test_float16_case2)
     size_t dxByteSize = N * C * H * W * sizeof(float);
     size_t dgridByteSize = N * 2 * gH * gW * sizeof(float);
     Tiling4GridSampler2DGradCompileInfo compileInfo = {1, 196608};
-    gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -279,16 +277,17 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case1)
     size_t dxByteSize = N * C * H * W * sizeof(float);
     size_t dgridByteSize = N * 2 * gH * gW * sizeof(float);
     Tiling4GridSampler2DGradCompileInfo compileInfo = {1, 196608};
-    gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -336,16 +335,17 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case2)
     size_t dxByteSize = N * C * H * W * sizeof(float);
     size_t dgridByteSize = N * 2 * gH * gW * sizeof(float);
     Tiling4GridSampler2DGradCompileInfo compileInfo = {1, 196608};
-    gert::TilingContextPara tilingContextPara("GridSampler2DGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -398,10 +398,12 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case2)
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
 //                                                 {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-//                                                 gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-//                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-//                                                 &compileInfo);
+//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+//                                                 gert::TilingContextPara::OpAttr("padding_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+//                                                 gert::TilingContextPara::OpAttr("align_corners",
+//                                                 Ops::Cv::AnyValue::CreateFrom<bool>(true))}, &compileInfo);
 //     TilingInfo tilingInfo;
 //     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
 //     EXPECT_EQ(tilingRet, true);
@@ -455,10 +457,12 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case2)
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
 //                                                 {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-//                                                 gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-//                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-//                                                 &compileInfo);
+//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+//                                                 gert::TilingContextPara::OpAttr("padding_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+//                                                 gert::TilingContextPara::OpAttr("align_corners",
+//                                                 Ops::Cv::AnyValue::CreateFrom<bool>(true))}, &compileInfo);
 //     TilingInfo tilingInfo;
 //     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
 //     EXPECT_EQ(tilingRet, true);
@@ -512,10 +516,12 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case2)
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
 //                                                 {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-//                                                 gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-//                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-//                                                 &compileInfo);
+//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+//                                                 gert::TilingContextPara::OpAttr("padding_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+//                                                 gert::TilingContextPara::OpAttr("align_corners",
+//                                                 Ops::Cv::AnyValue::CreateFrom<bool>(true))}, &compileInfo);
 //     TilingInfo tilingInfo;
 //     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
 //     EXPECT_EQ(tilingRet, true);
@@ -569,10 +575,12 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case2)
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
 //                                                 {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-//                                                 gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-//                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-//                                                 &compileInfo);
+//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+//                                                 gert::TilingContextPara::OpAttr("padding_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+//                                                 gert::TilingContextPara::OpAttr("align_corners",
+//                                                 Ops::Cv::AnyValue::CreateFrom<bool>(true))}, &compileInfo);
 //     TilingInfo tilingInfo;
 //     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
 //     EXPECT_EQ(tilingRet, true);
@@ -626,10 +634,12 @@ TEST_F(grid_sampler_2d_grad_test, test_bfloat16_case2)
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
 //                                                 {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_BF16, ge::FORMAT_ND},
 //                                                 {{{8, 8, 8, 2}, {8, 8, 8, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-//                                                 gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-//                                                 gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
-//                                                 &compileInfo);
+//                                                 {gert::TilingContextPara::OpAttr("interpolation_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+//                                                 gert::TilingContextPara::OpAttr("padding_mode",
+//                                                 Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+//                                                 gert::TilingContextPara::OpAttr("align_corners",
+//                                                 Ops::Cv::AnyValue::CreateFrom<bool>(true))}, &compileInfo);
 //     TilingInfo tilingInfo;
 //     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
 //     EXPECT_EQ(tilingRet, true);

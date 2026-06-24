@@ -42,14 +42,14 @@ static constexpr size_t ARRAY_SIZE = 2;
 static constexpr size_t GRAD_DIM = 4;
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910 = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910 = {op::DataType::DT_FLOAT,
+                                                                           op::DataType::DT_FLOAT16};
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910B_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
-static inline bool CheckNotNull(const aclTensor *gradOutput, const aclIntArray *inputSize,
-    const aclIntArray *kernelSize, const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride,
-    const aclTensor *out)
+static inline bool CheckNotNull(const aclTensor* gradOutput, const aclIntArray* inputSize,
+                                const aclIntArray* kernelSize, const aclIntArray* dilation, const aclIntArray* padding,
+                                const aclIntArray* stride, const aclTensor* out)
 {
     OP_CHECK_NULL(gradOutput, return false);
     OP_CHECK_NULL(inputSize, return false);
@@ -61,12 +61,12 @@ static inline bool CheckNotNull(const aclTensor *gradOutput, const aclIntArray *
     return true;
 }
 
-static bool CheckDtype(const aclTensor *gradOutput, const aclTensor *out)
+static bool CheckDtype(const aclTensor* gradOutput, const aclTensor* out)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     bool isBf16Supported = (curArch == NpuArch::DAV_2201 || IsRegBase());
-    const std::initializer_list<DataType> DTYPE_SUPPORT_LIST =
-        isBf16Supported ? DTYPE_SUPPORT_LIST_910B_REGBASE : DTYPE_SUPPORT_LIST_910;
+    const std::initializer_list<DataType> DTYPE_SUPPORT_LIST = isBf16Supported ? DTYPE_SUPPORT_LIST_910B_REGBASE :
+                                                                                 DTYPE_SUPPORT_LIST_910;
 
     OP_CHECK_DTYPE_NOT_SUPPORT(gradOutput, DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(out, DTYPE_SUPPORT_LIST, return false);
@@ -74,68 +74,58 @@ static bool CheckDtype(const aclTensor *gradOutput, const aclTensor *out)
     return true;
 }
 
-static bool CheckShape(const aclTensor *gradOutput, const aclTensor *out)
+static bool CheckShape(const aclTensor* gradOutput, const aclTensor* out)
 {
     if (gradOutput->GetViewShape().GetDimNum() != NEED_SQUEEZE &&
         gradOutput->GetViewShape().GetDimNum() != NO_NEED_SQUEEZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Expected gradOutput dim [%zu] to be 2 or 3 but check failed.",
-            gradOutput->GetViewShape().GetDimNum());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOutput dim [%zu] to be 2 or 3 but check failed.",
+                gradOutput->GetViewShape().GetDimNum());
         return false;
     }
     if ((gradOutput->GetViewShape().GetDimNum() == NEED_SQUEEZE &&
-            out->GetViewShape().GetDimNum() != NO_NEED_SQUEEZE) ||
+         out->GetViewShape().GetDimNum() != NO_NEED_SQUEEZE) ||
         (gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE && out->GetViewShape().GetDimNum() != GRAD_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Expected out dim [%zu] to be 1 greater than gradOutput dim [%zu] "
-            "but check failed.",
-            out->GetViewShape().GetDimNum(),
-            gradOutput->GetViewShape().GetDimNum());
+                "Expected out dim [%zu] to be 1 greater than gradOutput dim [%zu] "
+                "but check failed.",
+                out->GetViewShape().GetDimNum(), gradOutput->GetViewShape().GetDimNum());
         return false;
     }
     return true;
 }
 
-static bool CheckArrayValue(
-    const aclIntArray *kernelSize, const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride)
+static bool CheckArrayValue(const aclIntArray* kernelSize, const aclIntArray* dilation, const aclIntArray* padding,
+                            const aclIntArray* stride)
 {
     OP_CHECK((*kernelSize)[0] > 0 && (*kernelSize)[1] > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Kernel size must be greater than zero, but got kernelSize=(%ld,%ld).",
-            (*kernelSize)[0],
-            (*kernelSize)[1]),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Kernel size must be greater than zero, but got kernelSize=(%ld,%ld).",
+                     (*kernelSize)[0], (*kernelSize)[1]),
+             return false);
     OP_CHECK((*stride)[0] > 0 && (*stride)[1] > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Stride must be greater than zero, but got stride=(%ld,%ld).",
-            (*stride)[0],
-            (*stride)[1]),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Stride must be greater than zero, but got stride=(%ld,%ld).",
+                     (*stride)[0], (*stride)[1]),
+             return false);
     OP_CHECK((*dilation)[0] > 0 && (*dilation)[1] > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Dilation must be greater than zero, but got dilation=(%ld,%ld).",
-            (*dilation)[0],
-            (*dilation)[1]),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Dilation must be greater than zero, but got dilation=(%ld,%ld).",
+                     (*dilation)[0], (*dilation)[1]),
+             return false);
     OP_CHECK((*padding)[0] >= 0 && (*padding)[1] >= 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Padding must not be negative, but got padding=(%ld,%ld).",
-            (*padding)[0],
-            (*padding)[1]),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Padding must not be negative, but got padding=(%ld,%ld).", (*padding)[0],
+                     (*padding)[1]),
+             return false);
     return true;
 }
 
-static bool CheckArray(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclIntArray *kernelSize,
-    const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride)
+static bool CheckArray(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclIntArray* kernelSize,
+                       const aclIntArray* dilation, const aclIntArray* padding, const aclIntArray* stride)
 {
     if (inputSize->Size() != ARRAY_SIZE) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected inputSize equals to 2, but got size %lu.", inputSize->Size());
         return false;
     }
     if (kernelSize->Size() != ARRAY_SIZE) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "It is expected kernelSize equals to 2, but got size %lu.", kernelSize->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected kernelSize equals to 2, but got size %lu.",
+                kernelSize->Size());
         return false;
     }
     if (dilation->Size() != ARRAY_SIZE) {
@@ -151,37 +141,34 @@ static bool CheckArray(const aclTensor *gradOutput, const aclIntArray *inputSize
         return false;
     }
     OP_CHECK(CheckArrayValue(kernelSize, dilation, padding, stride),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "CheckArrayValue faild."),
-        return false);
-    size_t inputPlane = gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE
-                            ? gradOutput->GetViewShape().GetDim(1)
-                            : gradOutput->GetViewShape().GetDim(0);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "CheckArrayValue faild."), return false);
+    size_t inputPlane = gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE ?
+                            gradOutput->GetViewShape().GetDim(1) :
+                            gradOutput->GetViewShape().GetDim(0);
     if (inputPlane % ((*kernelSize)[0] * (*kernelSize)[1]) != 0) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Expected size of gradOutput's dim -2 to be divisible by the product of kernelSize"
-            " but got gradOutput.shape[-2]=%zu and kernelSize=(%ld,%ld).",
-            inputPlane,
-            (*kernelSize)[0],
-            (*kernelSize)[1]);
+                "Expected size of gradOutput's dim -2 to be divisible by the product of kernelSize"
+                " but got gradOutput.shape[-2]=%zu and kernelSize=(%ld,%ld).",
+                inputPlane, (*kernelSize)[0], (*kernelSize)[1]);
         return false;
     }
-    size_t numL = gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE ? gradOutput->GetViewShape().GetDim(2)
-                                                                            : gradOutput->GetViewShape().GetDim(1);
+    size_t numL = gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE ? gradOutput->GetViewShape().GetDim(2) :
+                                                                              gradOutput->GetViewShape().GetDim(1);
     size_t numL0 = ((*inputSize)[0] + (*padding)[0] * 2 - (*dilation)[0] * ((*kernelSize)[0] - 1) - 1 + (*stride)[0]) /
                    (*stride)[0];
     size_t numL1 = ((*inputSize)[1] + (*padding)[1] * 2 - (*dilation)[1] * ((*kernelSize)[1] - 1) - 1 + (*stride)[1]) /
                    (*stride)[1];
     size_t numL0L1 = numL0 * numL1;
     if (numL != numL0L1) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "Expected gradOutput.shape[-1] should be %zu, but current is %zu.", numL0L1, numL);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOutput.shape[-1] should be %zu, but current is %zu.", numL0L1,
+                numL);
         return false;
     }
     return true;
 }
 
-static bool CheckOutShape(
-    const aclTensor *gradOutput, const aclIntArray *inputSize, const aclIntArray *kernelSize, const aclTensor *out)
+static bool CheckOutShape(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclIntArray* kernelSize,
+                          const aclTensor* out)
 {
     op::Shape im2colShape;
     if (gradOutput->GetViewShape().GetDimNum() == NEED_SQUEEZE) {
@@ -196,10 +183,8 @@ static bool CheckOutShape(
     im2colShape.AppendDim((*inputSize)[1]);
     auto outShape = out->GetViewShape();
     if (outShape != im2colShape) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Shape of out should be %s, but current is %s.",
-            op::ToString(im2colShape).GetString(),
-            op::ToString(outShape).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Shape of out should be %s, but current is %s.",
+                op::ToString(im2colShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
     return true;
@@ -208,15 +193,17 @@ static bool CheckOutShape(
 static void CheckFormat(const aclTensor* gradOutput, const aclTensor* out)
 {
     // 检查format，若是NZ格式，则添加警告
-    if (gradOutput->GetStorageFormat() == Format::FORMAT_FRACTAL_NZ || 
+    if (gradOutput->GetStorageFormat() == Format::FORMAT_FRACTAL_NZ ||
         out->GetStorageFormat() == Format::FORMAT_FRACTAL_NZ) {
-        OP_LOGW("Format of gradOutput gets [%s], Format of out gets [%s], these formats may lead to precision failure.", 
-        op::ToString(gradOutput->GetStorageFormat()).GetString(), op::ToString(out->GetStorageFormat()).GetString());
+        OP_LOGW("Format of gradOutput gets [%s], Format of out gets [%s], these formats may lead to precision failure.",
+                op::ToString(gradOutput->GetStorageFormat()).GetString(),
+                op::ToString(out->GetStorageFormat()).GetString());
     }
 }
 
-static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclIntArray *kernelSize,
-    const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclIntArray* kernelSize,
+                               const aclIntArray* dilation, const aclIntArray* padding, const aclIntArray* stride,
+                               const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOutput, inputSize, kernelSize, dilation, padding, stride, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -239,14 +226,15 @@ static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclIntArray *i
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor *gradOutput, const aclIntArray *inputSize,
-    const aclIntArray *kernelSize, const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride,
-    aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclIntArray* inputSize,
+                                                const aclIntArray* kernelSize, const aclIntArray* dilation,
+                                                const aclIntArray* padding, const aclIntArray* stride, aclTensor* out,
+                                                uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
-    L2_DFX_PHASE_1(
-        aclnnIm2colBackward, DFX_IN(gradOutput, inputSize, kernelSize, dilation, padding, stride), DFX_OUT(out));
+    L2_DFX_PHASE_1(aclnnIm2colBackward, DFX_IN(gradOutput, inputSize, kernelSize, dilation, padding, stride),
+                   DFX_OUT(out));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -268,46 +256,45 @@ aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor *gradOutput, con
 
     bool isNeedSqueeze = (gradOutput->GetViewShape().GetDimNum() == NEED_SQUEEZE);
 
-    auto gradOutputUnsqueeze =
-        isNeedSqueeze ? l0op::UnsqueezeNd(gradOutputContiguous, static_cast<int64_t>(0), uniqueExecutor.get())
-                    : gradOutputContiguous;
+    auto gradOutputUnsqueeze = isNeedSqueeze ? l0op::UnsqueezeNd(gradOutputContiguous, static_cast<int64_t>(0),
+                                                                 uniqueExecutor.get()) :
+                                               gradOutputContiguous;
     CHECK_RET(gradOutputUnsqueeze != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const int64_t newShape[] = {gradOutputUnsqueeze->GetViewShape().GetDim(0),
-        gradOutputUnsqueeze->GetViewShape().GetDim(1) / ((*kernelSize)[0] * (*kernelSize)[1]),
-        (*kernelSize)[0] * (*kernelSize)[1],
-        gradOutputUnsqueeze->GetViewShape().GetDim(2)};
+                                gradOutputUnsqueeze->GetViewShape().GetDim(1) / ((*kernelSize)[0] * (*kernelSize)[1]),
+                                (*kernelSize)[0] * (*kernelSize)[1], gradOutputUnsqueeze->GetViewShape().GetDim(2)};
 
-    auto gradOutputReshape = l0op::Reshape(
-        gradOutputUnsqueeze, uniqueExecutor.get()->AllocIntArray(newShape, GRAD_DIM), uniqueExecutor.get());
+    auto gradOutputReshape = l0op::Reshape(gradOutputUnsqueeze, uniqueExecutor.get()->AllocIntArray(newShape, GRAD_DIM),
+                                           uniqueExecutor.get());
     CHECK_RET(gradOutputReshape != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     const aclTensor* outCompute = nullptr;
     if (IsRegBase()) {
-        outCompute =
-            l0op::Col2im(gradOutputReshape, inputSize, kernelSize, dilation, padding, stride, uniqueExecutor.get());
+        outCompute = l0op::Col2im(gradOutputReshape, inputSize, kernelSize, dilation, padding, stride,
+                                  uniqueExecutor.get());
         CHECK_RET(outCompute != nullptr, ACLNN_ERR_INNER_NULLPTR);
     } else {
         auto gradOutputReFormat = l0op::ReFormat(gradOutputReshape, op::Format::FORMAT_NCHW);
         CHECK_RET(gradOutputReFormat != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        auto gradOutputTransData =
-            l0op::TransDataSpecial(gradOutputReFormat, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+        auto gradOutputTransData = l0op::TransDataSpecial(gradOutputReFormat, op::Format::FORMAT_NC1HWC0, 0,
+                                                          uniqueExecutor.get());
         CHECK_RET(gradOutputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-        auto col2imOut =
-            l0op::Col2im(gradOutputTransData, inputSize, kernelSize, dilation, padding, stride, uniqueExecutor.get());
+        auto col2imOut = l0op::Col2im(gradOutputTransData, inputSize, kernelSize, dilation, padding, stride,
+                                      uniqueExecutor.get());
         CHECK_RET(col2imOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         outCompute = l0op::TransDataSpecial(col2imOut, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
         CHECK_RET(outCompute != nullptr, ACLNN_ERR_INNER_NULLPTR);
     }
-    auto outSqueeze =
-        isNeedSqueeze ? l0op::SqueezeNd(outCompute, static_cast<int64_t>(0), uniqueExecutor.get()) : outCompute;
+    auto outSqueeze = isNeedSqueeze ? l0op::SqueezeNd(outCompute, static_cast<int64_t>(0), uniqueExecutor.get()) :
+                                      outCompute;
     CHECK_RET(outSqueeze != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto outView =
-        uniqueExecutor.get()->CreateView(outSqueeze, outSqueeze->GetViewShape(), outSqueeze->GetViewOffset());
+    auto outView = uniqueExecutor.get()->CreateView(outSqueeze, outSqueeze->GetViewShape(),
+                                                    outSqueeze->GetViewOffset());
     CHECK_RET(outView != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto outReFormat = l0op::ReFormat(outView, out->GetViewFormat());
@@ -324,7 +311,7 @@ aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor *gradOutput, con
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnIm2colBackward(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnIm2colBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnIm2colBackward);
     // 固定写法，调用框架能力，完成计算
@@ -334,4 +321,3 @@ aclnnStatus aclnnIm2colBackward(void *workspace, uint64_t workspaceSize, aclOpEx
 #ifdef __cplusplus
 }
 #endif
-

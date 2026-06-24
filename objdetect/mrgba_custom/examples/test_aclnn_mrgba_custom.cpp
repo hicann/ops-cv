@@ -14,27 +14,27 @@
 #include "aclnnop/aclnn_mrgba_custom.h"
 
 #define CHECK_RET(cond, return_expr) \
-  do {                               \
-    if (!(cond)) {                   \
-      return_expr;                  \
-    }                                \
-  } while (0)
+    do {                             \
+        if (!(cond)) {               \
+            return_expr;             \
+        }                            \
+    } while (0)
 
-#define LOG_PRINT(message, ...)      \
-  do {                               \
-    printf(message, ##__VA_ARGS__);  \
-  } while (0)
+#define LOG_PRINT(message, ...)         \
+    do {                                \
+        printf(message, ##__VA_ARGS__); \
+    } while (0)
 
-int64_t GetShapeSize(const std::vector<int64_t> &shape)
+int64_t GetShapeSize(const std::vector<int64_t>& shape)
 {
     int64_t shapeSize = 1;
-    for (auto i: shape) {
+    for (auto i : shape) {
         shapeSize *= i;
     }
     return shapeSize;
 }
 
-int Init(int32_t deviceId, aclrtStream *stream)
+int Init(int32_t deviceId, aclrtStream* stream)
 {
     // 固定写法，资源初始化
     auto ret = aclInit(nullptr);
@@ -46,9 +46,9 @@ int Init(int32_t deviceId, aclrtStream *stream)
     return 0;
 }
 
-template<typename T>
-int CreateAclTensor(const std::vector <T> &hostData, const std::vector <int64_t> &shape, void **deviceAddr,
-                    aclDataType dataType, aclTensor **tensor)
+template <typename T>
+int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
+                    aclDataType dataType, aclTensor** tensor)
 {
     auto size = GetShapeSize(shape) * sizeof(T);
     // 调用aclrtMalloc申请device侧内存
@@ -84,12 +84,12 @@ int main()
     std::vector<int64_t> rgbShape = {4, 3};
     std::vector<int64_t> alphaShape = {4, 1};
     std::vector<int64_t> dstShape = {4, 3};
-    void *rgbDeviceAddr = nullptr;
-    void *alphaDeviceAddr = nullptr;
-    void *dstDeviceAddr = nullptr;
-    aclTensor *rgb = nullptr;
-    aclTensor *alpha = nullptr;
-    aclTensor *dst = nullptr;
+    void* rgbDeviceAddr = nullptr;
+    void* alphaDeviceAddr = nullptr;
+    void* dstDeviceAddr = nullptr;
+    aclTensor* rgb = nullptr;
+    aclTensor* alpha = nullptr;
+    aclTensor* dst = nullptr;
     std::vector<uint8_t> rgbHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
     std::vector<uint8_t> alphaHostData = {255, 255, 255, 255};
     std::vector<uint8_t> dstHostData = {1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -105,12 +105,12 @@ int main()
 
     // 3. 调用CANN算子库API
     uint64_t workspaceSize = 0;
-    aclOpExecutor *executor;
+    aclOpExecutor* executor;
     // 调用aclnnMrgba第一段接口
     ret = aclnnMrgbaCustomGetWorkspaceSize(rgb, alpha, dst, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnMrgbaCustomGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
-    void *workspaceAddr = nullptr;
+    void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
@@ -125,8 +125,7 @@ int main()
     auto size = GetShapeSize(dstShape);
     std::vector<uint8_t> resultData(size, 0);
     ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), dstDeviceAddr,
-                      size * sizeof(uint8_t),
-                      ACL_MEMCPY_DEVICE_TO_HOST);
+                      size * sizeof(uint8_t), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return ret);
     for (int64_t i = 0; i < size; i++) {
         LOG_PRINT("result[%ld] is: %u\n", i, resultData[i]);
@@ -141,7 +140,7 @@ int main()
     aclrtFree(rgbDeviceAddr);
     aclrtFree(alphaDeviceAddr);
     aclrtFree(dstDeviceAddr);
-    if(workspaceSize > 0){
+    if (workspaceSize > 0) {
         aclrtFree(workspaceAddr);
     }
     aclrtDestroyStream(stream);

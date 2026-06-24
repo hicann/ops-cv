@@ -26,8 +26,8 @@ class ResizeBicubicV2PointCopy : public ResizeBicubicV2Base {
 public:
     __aicore__ inline ResizeBicubicV2PointCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBicubicV2TilingData *tilingData_);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBicubicV2TilingData* tilingData_);
     __aicore__ inline void Process();
 
 protected:
@@ -35,7 +35,7 @@ protected:
     __aicore__ inline void CopyOut();
     __aicore__ inline void CalcTile();
 
-    const ResizeBicubicV2TilingData *tilingData_;
+    const ResizeBicubicV2TilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, BUFFER_NUM> dataQue_;
     TQue<QuePosition::VECIN, 1> xQue_;
@@ -70,13 +70,13 @@ protected:
     int64_t cLength_;
     int64_t wcLenAlign_;
 
-    int64_t hPointStride_;  // 代表y点在x阵中的网格距离，如yxxyxxy，则设为3
+    int64_t hPointStride_; // 代表y点在x阵中的网格距离，如yxxyxxy，则设为3
     int64_t wPointStride_;
 };
 
 template <typename T_DATA, uint64_t halfPixel, uint64_t mode, typename T_IDX, typename T_IDX2>
 __aicore__ inline void ResizeBicubicV2PointCopy<T_DATA, halfPixel, mode, T_IDX, T_IDX2>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBicubicV2TilingData *data)
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBicubicV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -231,6 +231,6 @@ __aicore__ inline void ResizeBicubicV2PointCopy<T_DATA, halfPixel, mode, T_IDX, 
     }
 }
 
-}  // namespace ResizeBicubicV2
+} // namespace ResizeBicubicV2
 
-#endif  // RESIZE_BICUBIC_V2_POINT_COPY_H
+#endif // RESIZE_BICUBIC_V2_POINT_COPY_H

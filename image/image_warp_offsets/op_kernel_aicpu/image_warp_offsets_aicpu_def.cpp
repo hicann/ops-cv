@@ -26,7 +26,6 @@ public:
         this->Input("offsets").DataType({ge::DT_FLOAT, ge::DT_INT32});
         this->Output("warp_images").DataType({ge::DT_UINT8, ge::DT_FLOAT16, ge::DT_FLOAT});
         this->AICPU().ExtendCfgInfo(OP_INFO_OPS_FLAG.c_str(), OPEN_OPS_FLAG.c_str());
-
     }
 };
 

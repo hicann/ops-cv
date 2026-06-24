@@ -32,9 +32,9 @@ constexpr int64_t INDEX_3 = 3;
 constexpr int64_t INDEX_4 = 4;
 
 enum class ResizeTilingKey : int64_t {
-  TILING_N_2_N = 1,
-  TILING_ONE_2_N = 2,
-  TILING_N_2_ONE = 3,
+    TILING_N_2_N = 1,
+    TILING_ONE_2_N = 2,
+    TILING_N_2_ONE = 3,
 };
 
 struct ResizeClassRunParams {
@@ -63,7 +63,8 @@ struct ResizeClassTilingParamsRT {
 };
 
 bool CheckShapeValid(const gert::TilingContext* context, const gert::Shape& xShape, const gert::Shape& yShape,
-                     const ge::Format& xFormat) {
+                     const ge::Format& xFormat)
+{
     size_t dimLen = NCHW_LEN;
     if (xFormat == ge::FORMAT_NC1HWC0 || xFormat == ge::FORMAT_NCDHW || xFormat == ge::FORMAT_NDHWC) {
         dimLen = NC1HWC0_LEN;
@@ -71,15 +72,15 @@ bool CheckShapeValid(const gert::TilingContext* context, const gert::Shape& xSha
     if (xShape.GetDimNum() != dimLen) {
         std::string reasonMsg = "The shape of grads must match its format " + Ops::Base::ToString(xFormat) +
                                 ", which requires a 5D tensor in NC1HWC0 format or a 4D tensor in NCHW format";
-        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(
-            context->GetNodeName(), "grads", std::to_string(xShape.GetDimNum()).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "grads",
+                                                 std::to_string(xShape.GetDimNum()).c_str(), reasonMsg.c_str());
         return false;
     }
     if (yShape.GetDimNum() != dimLen) {
         std::string reasonMsg = "The shape of y must match parameter grads's format " + Ops::Base::ToString(xFormat) +
                                 ", which requires a 5D tensor in NC1HWC0 format or a 4D tensor in NCHW format";
-        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(
-            context->GetNodeName(), "y", std::to_string(yShape.GetDimNum()).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "y",
+                                                 std::to_string(yShape.GetDimNum()).c_str(), reasonMsg.c_str());
         return false;
     }
 
@@ -87,7 +88,8 @@ bool CheckShapeValid(const gert::TilingContext* context, const gert::Shape& xSha
 }
 
 void InitTilingData(ResizeClassTilingParamsRT* tiling_params, const gert::Shape& input_shape,
-                    const gert::Shape& output_shape) {
+                    const gert::Shape& output_shape)
+{
     tiling_params->tiling_key = DEFAULT_TILING_MODE;
     tiling_params->input_batch = input_shape.GetDim(INDEX_0);
     tiling_params->input_c1 = input_shape.GetDim(INDEX_1);
@@ -102,7 +104,8 @@ void InitTilingData(ResizeClassTilingParamsRT* tiling_params, const gert::Shape&
 }
 
 bool ResizeTilingWithInitData(gert::TilingContext* context, const size_t input_idx, const size_t output_idx,
-                              ResizeClassRunParams& run_info) {
+                              ResizeClassRunParams& run_info)
+{
     OP_LOGD(context->GetNodeName(), "begin do ResizeTilingWithInitData");
     auto xShapePtr = context->GetInputShape(input_idx);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShapePtr);
@@ -113,10 +116,8 @@ bool ResizeTilingWithInitData(gert::TilingContext* context, const size_t input_i
     auto xTensorPtr = context->GetInputDesc(input_idx);
     OP_CHECK_NULL_WITH_CONTEXT(context, xTensorPtr);
     auto xFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(xTensorPtr->GetStorageFormat()));
-    OP_CHECK_IF(
-        !CheckShapeValid(context, xShape, yShape, xFormat),
-        OP_LOGE(context->GetNodeName(), "Shape is Invalid."),
-        return false);
+    OP_CHECK_IF(!CheckShapeValid(context, xShape, yShape, xFormat),
+                OP_LOGE(context->GetNodeName(), "Shape is Invalid."), return false);
 
     // set ResizeClassRunParams with runtime info
     run_info.input_dtype = xTensorPtr->GetDataType();
@@ -136,24 +137,24 @@ bool ResizeTilingWithInitData(gert::TilingContext* context, const size_t input_i
     return true;
 }
 
-ge::graphStatus Tiling4ResizeNearestNeighborV2Grad(gert::TilingContext* context) {
-  // get ResizeClassRunParams with runtime info
-  static constexpr size_t inputGradsIdx = 0;
-  static constexpr size_t outputYIdx = 0;
-  ResizeClassRunParams runInfo;
-  OP_CHECK_IF(!ResizeTilingWithInitData(context, inputGradsIdx, outputYIdx, runInfo),
-                  OP_LOGE(context->GetNodeName(), "do ResizeTilingWithInitData failed!"),
-                  return ge::GRAPH_FAILED);
+ge::graphStatus Tiling4ResizeNearestNeighborV2Grad(gert::TilingContext* context)
+{
+    // get ResizeClassRunParams with runtime info
+    static constexpr size_t inputGradsIdx = 0;
+    static constexpr size_t outputYIdx = 0;
+    ResizeClassRunParams runInfo;
+    OP_CHECK_IF(!ResizeTilingWithInitData(context, inputGradsIdx, outputYIdx, runInfo),
+                OP_LOGE(context->GetNodeName(), "do ResizeTilingWithInitData failed!"), return ge::GRAPH_FAILED);
 
-  // get tiling data ptr
-  ResizeClassTilingParamsRT* tilingDataPtr = context->GetTilingData<ResizeClassTilingParamsRT>();
-  OP_CHECK_NULL_WITH_CONTEXT(context, tilingDataPtr);
+    // get tiling data ptr
+    ResizeClassTilingParamsRT* tilingDataPtr = context->GetTilingData<ResizeClassTilingParamsRT>();
+    OP_CHECK_NULL_WITH_CONTEXT(context, tilingDataPtr);
 
-  // get compile info ptr
-  const ResizeNearestNeighborV2GradCompileInfo* compileInfo =
-      static_cast<const ResizeNearestNeighborV2GradCompileInfo*>(context->GetCompileInfo());
-  OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
-  return ResizeNearestNeighborV2GradTilingForAscendC(context, compileInfo);
+    // get compile info ptr
+    const ResizeNearestNeighborV2GradCompileInfo*
+        compileInfo = static_cast<const ResizeNearestNeighborV2GradCompileInfo*>(context->GetCompileInfo());
+    OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
+    return ResizeNearestNeighborV2GradTilingForAscendC(context, compileInfo);
 }
 
 static ge::graphStatus TilingPrepare4ResizeNearestNeighborV2Grad(gert::TilingParseContext* context)
@@ -164,13 +165,13 @@ static ge::graphStatus TilingPrepare4ResizeNearestNeighborV2Grad(gert::TilingPar
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->core_num = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        (compileInfo->core_num <= 0), OP_LOGE(context->GetNodeName(), "core num invalid."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->core_num <= 0), OP_LOGE(context->GetNodeName(), "core num invalid."),
+                return ge::GRAPH_FAILED);
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
     compileInfo->ubSize = static_cast<int64_t>(ubSize);
-    OP_CHECK_IF(
-        (compileInfo->ubSize <= 0), OP_LOGE(context->GetNodeName(), "ub size invalid."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->ubSize <= 0), OP_LOGE(context->GetNodeName(), "ub size invalid."),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -179,4 +180,4 @@ IMPL_OP_OPTILING(ResizeNearestNeighborV2Grad)
     .Tiling(Tiling4ResizeNearestNeighborV2Grad)
     .TilingParse<ResizeNearestNeighborV2GradCompileInfo>(TilingPrepare4ResizeNearestNeighborV2Grad)
     .TilingInputsDataDependency({RESIZE_NEAREST_NEIGHBOR_V2_GRAD_INPUT_DEPENDENCY_IDX});
-}  // namespace optiling
+} // namespace optiling

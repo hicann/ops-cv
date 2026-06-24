@@ -39,8 +39,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeOnceBigC(
-    int64_t onceC, int64_t inputOffset, int64_t outputOffset)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeOnceBigC(int64_t onceC, int64_t inputOffset,
+                                                                           int64_t outputOffset)
 {
     LocalTensor<T> inputUb = this->xQue_.template AllocTensor<T>();
     this->copyParams_.blockCount = 1;
@@ -56,8 +56,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeOnceBigC(
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeC(
-    int64_t no, int64_t ho, int64_t wo, int64_t h, int64_t w)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeC(int64_t no, int64_t ho, int64_t wo, int64_t h,
+                                                                    int64_t w)
 {
     for (int64_t ci = 0; ci < this->tilingData_->wcLoopTimesBefore; ci++) {
         int64_t inputOffset = this->blockIdx_ * this->tilingData_->wcLoopTimesLast + no * this->tilingData_->hwcNum +
@@ -83,10 +83,10 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigC(int64_t l
             for (int64_t no = 0; no < this->tilingData_->lenN; no++) {
                 for (int64_t ho = 0; ho < this->tilingData_->lenDesH; ho++) {
                     for (int64_t wo = 0; wo < this->tilingData_->lenDesW; wo++) {
-                        int64_t h = this->Min(
-                            this->Floor(static_cast<float>((ho + this->bias_) * this->hScale_)), this->srcHSize_ - 1);
-                        int64_t w = this->Min(
-                            this->Floor(static_cast<float>((wo + this->bias_) * this->wScale_)), this->srcWSize_ - 1);
+                        int64_t h = this->Min(this->Floor(static_cast<float>((ho + this->bias_) * this->hScale_)),
+                                              this->srcHSize_ - 1);
+                        int64_t w = this->Min(this->Floor(static_cast<float>((wo + this->bias_) * this->wScale_)),
+                                              this->srcWSize_ - 1);
                         ComputeC(no, ho, wo, h, w);
                     }
                 }
@@ -111,8 +111,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigC(int64_t l
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeLoopBigCHw(
-    int64_t no, int64_t ho, int64_t wo, int64_t h, int64_t w)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeLoopBigCHw(int64_t no, int64_t ho, int64_t wo,
+                                                                             int64_t h, int64_t w)
 {
     for (int64_t ci = 0; ci < this->tilingData_->wcLoopTimesBefore; ci++) {
         int64_t inputOffset = no * this->tilingData_->hwcNum + h * this->tilingData_->wcNum + w * this->lenC_ +
@@ -135,10 +135,10 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigCHw(int64_t
         case 0: {
             for (int64_t no = 0; no < lenN; no++) {
                 for (int64_t howo = 0; howo < hwOnceLoop; howo++) {
-                    int64_t ho =
-                        (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) / this->tilingData_->lenDesW;
-                    int64_t wo =
-                        (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) % this->tilingData_->lenDesW;
+                    int64_t ho = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) /
+                                 this->tilingData_->lenDesW;
+                    int64_t wo = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) %
+                                 this->tilingData_->lenDesW;
                     int64_t h = this->Min(this->Floor(static_cast<float>(ho * this->hScale_)), this->srcHSize_ - 1);
                     int64_t w = this->Min(this->Floor(static_cast<float>(wo * this->wScale_)), this->srcWSize_ - 1);
                     ComputeLoopBigCHw(no, ho, wo, h, w);
@@ -149,10 +149,10 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigCHw(int64_t
         case 2: {
             for (int64_t no = 0; no < lenN; no++) {
                 for (int64_t howo = 0; howo < hwOnceLoop; howo++) {
-                    int64_t ho =
-                        (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) / this->tilingData_->lenDesW;
-                    int64_t wo =
-                        (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) % this->tilingData_->lenDesW;
+                    int64_t ho = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) /
+                                 this->tilingData_->lenDesW;
+                    int64_t wo = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) %
+                                 this->tilingData_->lenDesW;
                     int64_t h = this->Min(this->Round(float(ho) * this->hScale_), this->srcHSize_ - 1);
                     int64_t w = this->Min(this->Round(float(wo) * this->wScale_), this->srcWSize_ - 1);
                     ComputeLoopBigCHw(no, ho, wo, h, w);

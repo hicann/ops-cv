@@ -40,8 +40,8 @@ static const int64_t INPUT_SECOND_DIM_CONSTRAINT = 1024;
 
 static const std::initializer_list<op::DataType> TYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
 
-static bool CheckNotNull(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, const aclTensor* overlap, const aclTensor* atanSub)
+static bool CheckNotNull(const aclTensor* bBoxes, const aclTensor* gtBoxes, const aclTensor* overlap,
+                         const aclTensor* atanSub)
 {
     OP_CHECK_NULL(bBoxes, return false);
     OP_CHECK_NULL(gtBoxes, return false);
@@ -69,8 +69,8 @@ static bool CheckTupleNullptr(std::tuple<aclTensor*, aclTensor*> tensorTuple)
     return (std::get<0>(tensorTuple) != nullptr) && (std::get<1>(tensorTuple) != nullptr);
 }
 
-static bool CheckDtypeValid(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, const aclTensor* overlap, const aclTensor* atanSub)
+static bool CheckDtypeValid(const aclTensor* bBoxes, const aclTensor* gtBoxes, const aclTensor* overlap,
+                            const aclTensor* atanSub)
 {
     OP_CHECK_DTYPE_NOT_MATCH(bBoxes, gtBoxes->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(bBoxes, overlap->GetDataType(), return false);
@@ -81,10 +81,9 @@ static bool CheckDtypeValid(
     OP_CHECK_DTYPE_NOT_SUPPORT(overlap, TYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(atanSub, TYPE_SUPPORT_LIST, return false);
 
-    OP_CHECK(
-        bBoxes->GetStorageFormat() == Format::FORMAT_ND && gtBoxes->GetStorageFormat() == Format::FORMAT_ND &&
-            overlap->GetStorageFormat() == Format::FORMAT_ND && atanSub->GetStorageFormat() == Format::FORMAT_ND,
-        OP_LOGI("input and output format should be ND."), return false);
+    OP_CHECK(bBoxes->GetStorageFormat() == Format::FORMAT_ND && gtBoxes->GetStorageFormat() == Format::FORMAT_ND &&
+                 overlap->GetStorageFormat() == Format::FORMAT_ND && atanSub->GetStorageFormat() == Format::FORMAT_ND,
+             OP_LOGI("input and output format should be ND."), return false);
     return true;
 }
 
@@ -95,69 +94,61 @@ static bool CheckAttr(bool isCross, const char* mode)
         return false;
     }
     // 检查self和other能否做数据类型推导
-    OP_CHECK(
-        isCross == false,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "isCross should currently only support false, but get %d.", isCross),
-        return false);
-    OP_CHECK(
-        strcmp(mode, "iou") == 0 || strcmp(mode, "iof") == 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be iou or iof, but get %s.", mode), return false);
+    OP_CHECK(isCross == false,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "isCross should currently only support false, but get %d.", isCross),
+             return false);
+    OP_CHECK(strcmp(mode, "iou") == 0 || strcmp(mode, "iof") == 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be iou or iof, but get %s.", mode), return false);
     return true;
 }
 
-static bool CheckShape(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, bool isCross, const aclTensor* overlap, const aclTensor* atanSub)
+static bool CheckShape(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool isCross, const aclTensor* overlap,
+                       const aclTensor* atanSub)
 {
-    OP_CHECK(
-        bBoxes->GetViewShape().GetDimNum() == TENSOR_DIM_NUM && gtBoxes->GetViewShape().GetDimNum() == TENSOR_DIM_NUM &&
-            overlap->GetViewShape().GetDimNum() == TENSOR_DIM_NUM &&
-            atanSub->GetViewShape().GetDimNum() == TENSOR_DIM_NUM,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "inputs and outputs should be 2D."), return false);
+    OP_CHECK(bBoxes->GetViewShape().GetDimNum() == TENSOR_DIM_NUM &&
+                 gtBoxes->GetViewShape().GetDimNum() == TENSOR_DIM_NUM &&
+                 overlap->GetViewShape().GetDimNum() == TENSOR_DIM_NUM &&
+                 atanSub->GetViewShape().GetDimNum() == TENSOR_DIM_NUM,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "inputs and outputs should be 2D."), return false);
     OP_CHECK(
         bBoxes->GetViewShape().GetDim(0) == INPUT_FIRST_DIM && gtBoxes->GetViewShape().GetDim(0) == INPUT_FIRST_DIM,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "the first dim of inputs should be 4."), return false);
-    OP_CHECK(
-        bBoxes->GetViewShape().GetDim(1) % INPUT_SECOND_DIM_CONSTRAINT == 0 &&
-        gtBoxes->GetViewShape().GetDim(1) % INPUT_SECOND_DIM_CONSTRAINT == 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "the second dim of inputs should be a multiple of 1024."), return false);
+    OP_CHECK(bBoxes->GetViewShape().GetDim(1) % INPUT_SECOND_DIM_CONSTRAINT == 0 &&
+                 gtBoxes->GetViewShape().GetDim(1) % INPUT_SECOND_DIM_CONSTRAINT == 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "the second dim of inputs should be a multiple of 1024."), return false);
     if (isCross == false) {
         OP_CHECK(
             bBoxes->GetViewShape().GetDim(1) == gtBoxes->GetViewShape().GetDim(1) &&
                 bBoxes->GetViewShape().GetDim(1) == overlap->GetViewShape().GetDim(1) &&
                 bBoxes->GetViewShape().GetDim(1) == atanSub->GetViewShape().GetDim(1),
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "the second dim of bBoxes, gtBoxes, overlap and atanSub should be equal, when isCross is false."),
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "the second dim of bBoxes, gtBoxes, overlap and atanSub should be equal, when isCross is false."),
             return false);
-        OP_CHECK(
-            overlap->GetViewShape().GetDim(0) == 1 && atanSub->GetViewShape().GetDim(0) == 1,
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID, "the first dim of overlap and atanSub should be 1, when isCross is false."),
-            return false);
+        OP_CHECK(overlap->GetViewShape().GetDim(0) == 1 && atanSub->GetViewShape().GetDim(0) == 1,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "the first dim of overlap and atanSub should be 1, when isCross is false."),
+                 return false);
     } else {
         OP_CHECK(
             gtBoxes->GetViewShape().GetDim(1) == overlap->GetViewShape().GetDim(0) &&
                 bBoxes->GetViewShape().GetDim(1) == overlap->GetViewShape().GetDim(1),
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "the shape of overlap should be [M, N], where M and N are equal to the second dim of gtBoxes and "
-                "bBoxes respectively, when isCross is true."),
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "the shape of overlap should be [M, N], where M and N are equal to the second dim of gtBoxes and "
+                    "bBoxes respectively, when isCross is true."),
             return false);
         OP_CHECK(
             gtBoxes->GetViewShape().GetDim(1) == atanSub->GetViewShape().GetDim(0) &&
                 bBoxes->GetViewShape().GetDim(1) == atanSub->GetViewShape().GetDim(1),
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "the shape of atanSub should be [M, N], where M and N are equal to the second dim of gtBoxes and "
-                "bBoxes respectively, when isCross is true."),
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "the shape of atanSub should be [M, N], where M and N are equal to the second dim of gtBoxes and "
+                    "bBoxes respectively, when isCross is true."),
             return false);
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross, const char* mode, aclTensor* overlap,
-    aclTensor* atanSub)
+static aclnnStatus CheckParams(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross,
+                               const char* mode, aclTensor* overlap, aclTensor* atanSub)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(bBoxes, gtBoxes, overlap, atanSub), ACLNN_ERR_PARAM_NULLPTR);
@@ -174,9 +165,9 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnCIoUGetWorkspaceSize(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross, const char* mode, aclTensor* overlap,
-    aclTensor* atanSub, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnCIoUGetWorkspaceSize(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross,
+                                      const char* mode, aclTensor* overlap, aclTensor* atanSub, uint64_t* workspaceSize,
+                                      aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnCIoU, DFX_IN(bBoxes, gtBoxes, trans, isCross, mode), DFX_OUT(overlap, atanSub));
     // 固定写法，创建OpExecutor
@@ -205,8 +196,8 @@ aclnnStatus aclnnCIoUGetWorkspaceSize(
     CHECK_RET(gtBoxesContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 进行计算
-    std::tuple<aclTensor*, aclTensor*> CIoUOut =
-        l0op::CIoU(bBoxesContiguous, gtBoxesContiguous, trans, isCross, mode, true, uniqueExecutor.get());
+    std::tuple<aclTensor*, aclTensor*> CIoUOut = l0op::CIoU(bBoxesContiguous, gtBoxesContiguous, trans, isCross, mode,
+                                                            true, uniqueExecutor.get());
     CHECK_RET(CheckTupleNullptr(CIoUOut), ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，将计算结果拷贝到输出overlap上，overlap可能是非连续的tensor

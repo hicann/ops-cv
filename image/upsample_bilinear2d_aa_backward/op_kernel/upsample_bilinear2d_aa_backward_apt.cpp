@@ -21,8 +21,8 @@
 using namespace UpsampleBilinear2dAABackward;
 
 template <uint64_t schId, uint64_t isInt32, uint64_t isDetermine>
-__global__ __aicore__ void upsample_bilinear2d_aa_backward(
-    GM_ADDR grad_output, GM_ADDR grad_input, GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void upsample_bilinear2d_aa_backward(GM_ADDR grad_output, GM_ADDR grad_input, GM_ADDR workspace,
+                                                           GM_ADDR tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     REGISTER_TILING_DEFAULT(UpsampleBilinear2dAABackwardRegBaseTilingData);
@@ -34,7 +34,7 @@ __global__ __aicore__ void upsample_bilinear2d_aa_backward(
         op.Init(grad_output, grad_input, &pipe, &tilingData);
         op.Process();
     } else {
-        if constexpr(isInt32 == 1) {
+        if constexpr (isInt32 == 1) {
             Bilinear2dAABackwardSimt<DTYPE_GRAD_OUTPUT, uint32_t, int32_t, isDetermine> op;
             op.Init(grad_output, grad_input, &tilingData);
             op.Process();

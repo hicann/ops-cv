@@ -19,11 +19,12 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ResizeNearestNeighborV2Grad5Hd(const aclTensor *grads, const aclIntArray *inputSize, bool alignCorners,
-    bool halfPixelCenters, aclOpExecutor *executor);
+const aclTensor* ResizeNearestNeighborV2Grad5Hd(const aclTensor* grads, const aclIntArray* inputSize, bool alignCorners,
+                                                bool halfPixelCenters, aclOpExecutor* executor);
 
-const aclTensor *ResizeNearestNeighborV2Grad(const aclTensor *grads, const aclIntArray *inputSize, bool alignCorners,
-    bool halfPixelCenters, const aclFloatArray *scales, aclOpExecutor *executor);
-}  // namespace l0op
+const aclTensor* ResizeNearestNeighborV2Grad(const aclTensor* grads, const aclIntArray* inputSize, bool alignCorners,
+                                             bool halfPixelCenters, const aclFloatArray* scales,
+                                             aclOpExecutor* executor);
+} // namespace l0op
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_GRAD_OP_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_GRAD_OP_H_

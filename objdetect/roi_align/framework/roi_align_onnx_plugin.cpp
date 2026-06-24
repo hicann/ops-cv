@@ -122,13 +122,19 @@ static Status ParseOpToGraphRoiAlign(const ge::Operator& op, Graph& graph)
     auto cast_op = op::Cast((ori_name + "_cast").c_str()).set_input_x(unsqueeze_op).set_attr_dst_type(DT_FLOAT);
     auto cast1_op = op::Cast((ori_name + "_cast1").c_str()).set_input_x(data1).set_attr_dst_type(DT_FLOAT);
     auto concat_op = op::Concat((ori_name + "_concat").c_str())
-                         .create_dynamic_input_x(2).set_dynamic_input_x(0, cast_op)
-                         .set_dynamic_input_x(1, cast1_op).set_input_concat_dim(dim_const_op).set_attr_N(2);
+                         .create_dynamic_input_x(2)
+                         .set_dynamic_input_x(0, cast_op)
+                         .set_dynamic_input_x(1, cast1_op)
+                         .set_input_concat_dim(dim_const_op)
+                         .set_attr_N(2);
 
     auto roli_op = op::ROIAlign((ori_name + "_roialign").c_str())
-                       .set_input_features(data0).set_input_rois(concat_op)
-                       .set_attr_spatial_scale(spatial_scale).set_attr_pooled_height(pooled_height)
-                       .set_attr_pooled_width(pooled_width).set_attr_sample_num(sample_num)
+                       .set_input_features(data0)
+                       .set_input_rois(concat_op)
+                       .set_attr_spatial_scale(spatial_scale)
+                       .set_attr_pooled_height(pooled_height)
+                       .set_attr_pooled_width(pooled_width)
+                       .set_attr_sample_num(sample_num)
                        .set_attr_roi_end_mode(roi_end_mode);
     std::vector<ge::Operator> inputs = {data0, data1, data2};
     std::vector<std::pair<ge::Operator, std::vector<size_t>>> output_indexs;
@@ -139,25 +145,20 @@ static Status ParseOpToGraphRoiAlign(const ge::Operator& op, Graph& graph)
 
 // register ROIAlign op info to GE
 REGISTER_CUSTOM_OP("PartitionedCall")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::8::RoiAlign"),
-                 ge::AscendString("ai.onnx::9::RoiAlign"),
-                 ge::AscendString("ai.onnx::10::RoiAlign"),
-                 ge::AscendString("ai.onnx::11::RoiAlign"),
-                 ge::AscendString("ai.onnx::12::RoiAlign"),
-                 ge::AscendString("ai.onnx::13::RoiAlign"),
-                 ge::AscendString("ai.onnx::14::RoiAlign"),
-                 ge::AscendString("ai.onnx::15::RoiAlign")})
-  .ParseParamsFn(ParseParamsRoiAlign)
-  .ParseOpToGraphFn(ParseOpToGraphRoiAlign)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("ai.onnx::8::RoiAlign"), ge::AscendString("ai.onnx::9::RoiAlign"),
+                   ge::AscendString("ai.onnx::10::RoiAlign"), ge::AscendString("ai.onnx::11::RoiAlign"),
+                   ge::AscendString("ai.onnx::12::RoiAlign"), ge::AscendString("ai.onnx::13::RoiAlign"),
+                   ge::AscendString("ai.onnx::14::RoiAlign"), ge::AscendString("ai.onnx::15::RoiAlign")})
+    .ParseParamsFn(ParseParamsRoiAlign)
+    .ParseOpToGraphFn(ParseOpToGraphRoiAlign)
+    .ImplyType(ImplyType::TVM);
 
 REGISTER_CUSTOM_OP("PartitionedCall")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("ai.onnx::16::RoiAlign"),
-                   ge::AscendString("ai.onnx::17::RoiAlign"),
+    .OriginOpType({ge::AscendString("ai.onnx::16::RoiAlign"), ge::AscendString("ai.onnx::17::RoiAlign"),
                    ge::AscendString("ai.onnx::18::RoiAlign")})
     .ParseParamsFn(ParseParamsRoiAlignV16)
     .ParseOpToGraphFn(ParseOpToGraphRoiAlign)
     .ImplyType(ImplyType::TVM);
-}  // namespace domi
+} // namespace domi

@@ -28,36 +28,38 @@ template <typename T>
 class UpsampleLinear1dND {
 public:
     TPipe* pipe = nullptr;
-    matmul::MatmulImpl<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>, 
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>, MDL_CFG>
+    matmul::MatmulImpl<matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
+                       matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
+                       matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
+                       matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>, MDL_CFG>
         matmulW;
 
-    __aicore__ inline UpsampleLinear1dND(TPipe* pipeIn){
-        pipe = pipeIn;
-    };
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline UpsampleLinear1dND(TPipe* pipeIn) { pipe = pipeIn; };
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                const UpsampleLinear1dTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
-    __aicore__ inline void ParseTilingCommon(const UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline void ParseTilingCommon(const UpsampleLinear1dTilingData* tilingData);
     __aicore__ inline void ParseTilingAIV();
-    __aicore__ inline void ParseTilingAIC(const UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline void ParseTilingAIC(const UpsampleLinear1dTilingData* tilingData);
     __aicore__ inline void WDirectionExpansion(int64_t startNum, int64_t endNum, bool isRemainder);
-    __aicore__ inline void RowLoopFunc(int64_t index, int16_t length, int64_t mmLoopTimes, int64_t mmBlockTail, int64_t mmLoopTailTimes, int64_t mmLoopTailNum);
-    __aicore__ inline void RowLoopFuncRemainder(int64_t index, int16_t length, int64_t mmLoopTimes, int64_t mmBlockTail, int64_t mmLoopTailTimes, int64_t mmLoopTailNum);
+    __aicore__ inline void RowLoopFunc(int64_t index, int16_t length, int64_t mmLoopTimes, int64_t mmBlockTail,
+                                       int64_t mmLoopTailTimes, int64_t mmLoopTailNum);
+    __aicore__ inline void RowLoopFuncRemainder(int64_t index, int16_t length, int64_t mmLoopTimes, int64_t mmBlockTail,
+                                                int64_t mmLoopTailTimes, int64_t mmLoopTailNum);
     __aicore__ inline void calculateWidthExtension(int64_t rowNum);
     __aicore__ inline void copyRadioTensorToGm(int8_t direction);
-    __aicore__ inline void getSlideRange(const UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline void getSlideRange(const UpsampleLinear1dTilingData* tilingData);
     __aicore__ inline void PreLoad(int64_t inOffset, int64_t outOffset, int64_t numCol, uint16_t numRow);
     __aicore__ inline void AfterMatMul(int64_t inOffset, int64_t outOffset, int64_t numCol, uint16_t numRow);
-    __aicore__ inline void part1(uint64_t inputWorkStartOffset, int64_t rowOffset, int64_t m_i, int64_t loopT, int64_t tailNum);
-    __aicore__ inline void part3(uint64_t outputWorkStartOffset, int64_t rowOffset, int64_t m_i, int64_t index, int16_t length, int64_t loopT, int64_t tailNum);
+    __aicore__ inline void part1(uint64_t inputWorkStartOffset, int64_t rowOffset, int64_t m_i, int64_t loopT,
+                                 int64_t tailNum);
+    __aicore__ inline void part3(uint64_t outputWorkStartOffset, int64_t rowOffset, int64_t m_i, int64_t index,
+                                 int16_t length, int64_t loopT, int64_t tailNum);
     __aicore__ inline void doAicMM();
-    __aicore__ inline void calculateRadio(int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK, float scale_w, bool align_corners, int64_t wIn, int64_t slide_size_w);
+    __aicore__ inline void calculateRadio(int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK,
+                                          float scale_w, bool align_corners, int64_t wIn, int64_t slide_size_w);
     __aicore__ inline void aicLoop(int64_t start, int64_t end, int64_t loopNum, int64_t tailNum);
 
 private:
@@ -142,8 +144,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                   const UpsampleLinear1dTilingData* tilingData)
 {
     blockIdx = GetBlockIdx();
     subIdx = blockIdx % 2;
@@ -157,24 +159,26 @@ __aicore__ inline void UpsampleLinear1dND<T>::Init(
         pipe->InitBuffer(radioQueue, BUFFER_NUM, radio_matrix_size_w * sizeof(float));
     }
     intermediateTensorGm.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace));
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)input);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)output);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)input);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)output);
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::PreLoad(
-    int64_t inOffset, int64_t outOffset, int64_t numCol, uint16_t numRow) 
+__aicore__ inline void UpsampleLinear1dND<T>::PreLoad(int64_t inOffset, int64_t outOffset, int64_t numCol,
+                                                      uint16_t numRow)
 {
     if (numRow <= 0) {
-        return ;
+        return;
     }
     uint32_t numColAlign = (numCol + numPerBlock - 1) / numPerBlock * numPerBlock;
     uint32_t calCount = numRow * numColAlign;
 
     LocalTensor<float> inputLocalFp32 = inputBuf.Get<float>();
-    DataCopyExtParams copyInParams{static_cast<uint16_t>(numRow), static_cast<uint32_t>(numCol * sizeof(T)), static_cast<uint32_t>((inputW - numCol) * sizeof(T)), 0, 0};
-    DataCopyPadExtParams<T> padParams{true, static_cast<uint8_t>(0), static_cast<uint8_t>(numColAlign - numCol), static_cast<T>(0.0)};
-    
+    DataCopyExtParams copyInParams{static_cast<uint16_t>(numRow), static_cast<uint32_t>(numCol * sizeof(T)),
+                                   static_cast<uint32_t>((inputW - numCol) * sizeof(T)), 0, 0};
+    DataCopyPadExtParams<T> padParams{true, static_cast<uint8_t>(0), static_cast<uint8_t>(numColAlign - numCol),
+                                      static_cast<T>(0.0)};
+
     event_t event_v_mte2_0 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE2));
     LocalTensor<T> inputLocal = inputLocalFp32.ReinterpretCast<T>()[calCount];
     DataCopyPad(inputLocal, inTensorsGM[inOffset], copyInParams, padParams);
@@ -187,7 +191,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::PreLoad(
 
     Cast(inputLocalFp32, inputLocal, RoundMode::CAST_NONE, calCount);
     PipeBarrier<PIPE_V>();
-    
+
     event_t event_mte2_mte3_1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_MTE3));
     SetFlag<HardEvent::MTE2_MTE3>(event_mte2_mte3_1);
     WaitFlag<HardEvent::MTE2_MTE3>(event_mte2_mte3_1);
@@ -196,20 +200,21 @@ __aicore__ inline void UpsampleLinear1dND<T>::PreLoad(
     SetFlag<HardEvent::V_MTE3>(event_v_mte3_0);
     WaitFlag<HardEvent::V_MTE3>(event_v_mte3_0);
 
-    DataCopyExtParams copyOutParams{static_cast<uint16_t>(numRow), static_cast<uint32_t>(numCol * sizeof(float)), static_cast<uint32_t>(((numColAlign - numCol) * sizeof(float)) / 32), 0, 0};
+    DataCopyExtParams copyOutParams{static_cast<uint16_t>(numRow), static_cast<uint32_t>(numCol * sizeof(float)),
+                                    static_cast<uint32_t>(((numColAlign - numCol) * sizeof(float)) / 32), 0, 0};
     DataCopyPad(intermediateTensorGm[outOffset], inputLocalFp32, copyOutParams);
-    
+
     event_t event_mte3_mte2_1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
     SetFlag<HardEvent::MTE3_MTE2>(event_mte3_mte2_1);
     WaitFlag<HardEvent::MTE3_MTE2>(event_mte3_mte2_1);
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::AfterMatMul(
-    int64_t inOffset, int64_t outOffset, int64_t numCol, uint16_t numRow) 
+__aicore__ inline void UpsampleLinear1dND<T>::AfterMatMul(int64_t inOffset, int64_t outOffset, int64_t numCol,
+                                                          uint16_t numRow)
 {
     if (numRow <= 0) {
-        return ;
+        return;
     }
     uint32_t calCount = numRow * slide_size_w;
     event_t event_v_mte2_1 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE2));
@@ -226,7 +231,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::AfterMatMul(
         Cast(outputLocal, outputLocalFp32, RoundMode::CAST_NONE, calCount);
     } else if constexpr (std::is_same<T, bfloat16_t>::value) {
         Cast(outputLocal, outputLocalFp32, RoundMode::CAST_RINT, calCount);
-    } 
+    }
     PipeBarrier<PIPE_V>();
     event_t event_mte2_mte3_3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_MTE3));
     SetFlag<HardEvent::MTE2_MTE3>(event_mte2_mte3_3);
@@ -236,13 +241,9 @@ __aicore__ inline void UpsampleLinear1dND<T>::AfterMatMul(
     SetFlag<HardEvent::V_MTE3>(event_v_mte3_1);
     WaitFlag<HardEvent::V_MTE3>(event_v_mte3_1);
 
-    DataCopyExtParams copyOutParams{
-        static_cast<uint16_t>(numRow),
-        static_cast<uint32_t>(numCol * sizeof(T)),
-        static_cast<uint32_t>(((slide_size_w - numCol) * sizeof(T)) / 32),
-        static_cast<uint32_t>((outputW - numCol) * sizeof(T)),
-        0
-    };
+    DataCopyExtParams copyOutParams{static_cast<uint16_t>(numRow), static_cast<uint32_t>(numCol * sizeof(T)),
+                                    static_cast<uint32_t>(((slide_size_w - numCol) * sizeof(T)) / 32),
+                                    static_cast<uint32_t>((outputW - numCol) * sizeof(T)), 0};
     DataCopyPad(outTensorsGM[outOffset], outputLocal, copyOutParams);
     event_t event_mte3_mte2_3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
     SetFlag<HardEvent::MTE3_MTE2>(event_mte3_mte2_3);
@@ -250,13 +251,13 @@ __aicore__ inline void UpsampleLinear1dND<T>::AfterMatMul(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::calculateRadio(
-    int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK, 
-    float scale_w, bool align_corners, int64_t wIn, int64_t slide_size_w)
+__aicore__ inline void UpsampleLinear1dND<T>::calculateRadio(int64_t loopIndex, int64_t length, int64_t& xMin,
+                                                             int64_t& singleCoreK, float scale_w, bool align_corners,
+                                                             int64_t wIn, int64_t slide_size_w)
 {
     calculateSingleCoreK(loopIndex, length, xMin, singleCoreK, scale_w, align_corners, wIn);
-    if(subIdx == 1) {
-        return ;
+    if (subIdx == 1) {
+        return;
     }
     LocalTensor<float> radioTensor = radioQueue.AllocTensor<float>();
     Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
@@ -275,7 +276,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::Process()
         if (FloatEqual(scale_w, 1.0) || blockIdx >= need_core_num_w) {
             CrossCoreSetFlag<SYNC_MODE2, PIPE_MTE3>(VEC_FLAG_ID_0);
             CrossCoreWaitFlag<SYNC_MODE2, PIPE_FIX>(VEC_FLAG_ID_1);
-            return ;
+            return;
         }
         WDirectionExpansion(slideStart_w, slideEnd_w, false);
         WDirectionExpansion(tailSlideStart_w, tailSlideEnd_w, true);
@@ -284,7 +285,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::Process()
         if (!isAicAvilable) {
             CrossCoreWaitFlag<SYNC_MODE2, PIPE_MTE3>(VEC_FLAG_ID_0);
             CrossCoreSetFlag<SYNC_MODE2, PIPE_FIX>(VEC_FLAG_ID_1);
-            return ;
+            return;
         }
         doAicMM();
     }
@@ -292,13 +293,14 @@ __aicore__ inline void UpsampleLinear1dND<T>::Process()
 
 template <typename T>
 __aicore__ inline void UpsampleLinear1dND<T>::WDirectionExpansion(int64_t startNum, int64_t endNum, bool isRemainder)
-{   
+{
     if (startNum < endNum) {
         for (int64_t index = startNum; index < endNum; index += slide_size_w) {
             int16_t length = Min(slide_size_w, endNum - index);
             calculateRadio(index, length, xMin, singleCoreK, scale_w, align_corners, inputW, slide_size_w);
             if (isRemainder) {
-                RowLoopFuncRemainder(index, length, remainderMatmulLoopTimes, remainderMatmulBlockTail, remainderLoopTailTimes, remainderLoopTailTail);
+                RowLoopFuncRemainder(index, length, remainderMatmulLoopTimes, remainderMatmulBlockTail,
+                                     remainderLoopTailTimes, remainderLoopTailTail);
             } else {
                 RowLoopFunc(index, length, matmulLoopTimes, matmulBlockTail, loopTailTimes, loopTailTail);
             }
@@ -307,11 +309,12 @@ __aicore__ inline void UpsampleLinear1dND<T>::WDirectionExpansion(int64_t startN
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::part1(uint64_t inputWorkStartOffset, int64_t rowOffset, int64_t m_i, int64_t loopT, int64_t tailNum)
+__aicore__ inline void UpsampleLinear1dND<T>::part1(uint64_t inputWorkStartOffset, int64_t rowOffset, int64_t m_i,
+                                                    int64_t loopT, int64_t tailNum)
 {
     int64_t rowNum = 0;
     int64_t preOutOffset = inputWorkStartOffset;
-    for (int64_t ii = 0; ii < loopT; ii ++) {
+    for (int64_t ii = 0; ii < loopT; ii++) {
         int64_t rowStart = Min(rowOffset + ii * mPerTime, inputH);
         int64_t rowEnd = Min(rowStart + mPerTime, inputH);
         int64_t preInOffset = rowStart * inputW + xMin;
@@ -319,7 +322,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::part1(uint64_t inputWorkStartOffse
         rowNum = rowEnd - rowStart;
         PreLoad(preInOffset, preOutOffset, singleCoreK, rowNum);
     }
-    if(tailNum > 0) {
+    if (tailNum > 0) {
         int64_t rowStart = Min(rowOffset + loopT * mPerTime, inputH);
         int64_t rowEnd = Min(rowStart + tailNum, inputH);
         int64_t preInOffset = rowStart * inputW + xMin;
@@ -330,14 +333,12 @@ __aicore__ inline void UpsampleLinear1dND<T>::part1(uint64_t inputWorkStartOffse
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::part3(
-    uint64_t outputWorkStartOffset, int64_t rowOffset, int64_t m_i, 
-    int64_t index, int16_t length, int64_t loopT, 
-    int64_t tailNum)
+__aicore__ inline void UpsampleLinear1dND<T>::part3(uint64_t outputWorkStartOffset, int64_t rowOffset, int64_t m_i,
+                                                    int64_t index, int16_t length, int64_t loopT, int64_t tailNum)
 {
     int64_t afterInOffset = outputWorkStartOffset;
     int64_t rowNum = 0;
-    for (int64_t ii = 0; ii < loopT; ii ++) {
+    for (int64_t ii = 0; ii < loopT; ii++) {
         int64_t rowStart = Min(rowOffset + ii * mPerTime, inputH);
         int64_t rowEnd = Min(rowStart + mPerTime, inputH);
         int64_t afterOutOffset = rowStart * outputW + index;
@@ -345,7 +346,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::part3(
         rowNum = rowEnd - rowStart;
         AfterMatMul(afterInOffset, afterOutOffset, length, rowNum);
     }
-    if(tailNum > 0) {
+    if (tailNum > 0) {
         int64_t rowStart = Min(rowOffset + loopT * mPerTime, inputH);
         int64_t rowEnd = Min(rowStart + tailNum, inputH);
         int64_t afterOutOffset = rowStart * outputW + index;
@@ -356,15 +357,14 @@ __aicore__ inline void UpsampleLinear1dND<T>::part3(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::RowLoopFuncRemainder(
-    int64_t index, int16_t length, 
-    int64_t mmLoopTimes, int64_t mmBlockTail, int64_t mmLoopTailTimes, 
-    int64_t mmLoopTailNum)
+__aicore__ inline void UpsampleLinear1dND<T>::RowLoopFuncRemainder(int64_t index, int16_t length, int64_t mmLoopTimes,
+                                                                   int64_t mmBlockTail, int64_t mmLoopTailTimes,
+                                                                   int64_t mmLoopTailNum)
 {
     int64_t inputWorkStartOffset = inputWorkStartOffset_0 + subIdx * remainder_matmul_block_0_num * singleCoreK;
     int64_t outputWorkStartOffset = outputWorkStartOffset_0 + subIdx * remainder_matmul_block_0_num * slide_size_w;
     int64_t rowOffset = tailRowStart_w + subIdx * remainder_matmul_block_0_num;
-    for (int64_t m_i = 0; m_i < mmLoopTimes; m_i ++) {
+    for (int64_t m_i = 0; m_i < mmLoopTimes; m_i++) {
         rowOffset = tailRowStart_w + m_i * matmulBlockPerTime + subIdx * remainder_matmul_block_0_num;
         part1(inputWorkStartOffset, rowOffset, m_i, loopTimes, loopTail);
         CrossCoreSetFlag<SYNC_MODE2, PIPE_MTE3>(VEC_FLAG_ID_0);
@@ -384,15 +384,14 @@ __aicore__ inline void UpsampleLinear1dND<T>::RowLoopFuncRemainder(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::RowLoopFunc(
-    int64_t index, int16_t length, 
-    int64_t mmLoopTimes, int64_t mmBlockTail, int64_t mmLoopTailTimes, 
-    int64_t mmLoopTailNum)
+__aicore__ inline void UpsampleLinear1dND<T>::RowLoopFunc(int64_t index, int16_t length, int64_t mmLoopTimes,
+                                                          int64_t mmBlockTail, int64_t mmLoopTailTimes,
+                                                          int64_t mmLoopTailNum)
 {
     int64_t inputWorkStartOffset = inputWorkStartOffset_0 + subIdx * matmul_block_0_num * singleCoreK;
     int64_t outputWorkStartOffset = outputWorkStartOffset_0 + subIdx * matmul_block_0_num * slide_size_w;
     int64_t rowOffset = subIdx * matmul_block_0_num;
-    for (int64_t m_i = 0; m_i < mmLoopTimes; m_i ++) {
+    for (int64_t m_i = 0; m_i < mmLoopTimes; m_i++) {
         rowOffset = m_i * matmulBlockPerTime + subIdx * matmul_block_0_num;
         part1(inputWorkStartOffset, rowOffset, m_i, loopTimes, loopTail);
         CrossCoreSetFlag<SYNC_MODE2, PIPE_MTE3>(VEC_FLAG_ID_0);
@@ -440,7 +439,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::aicLoop(int64_t start, int64_t end
     for (int64_t index = start; index < end; index += slide_size_w) {
         int16_t length = Min(slide_size_w, end - index);
         calculateSingleCoreK(index, length, xMin, singleCoreK, scale_w, align_corners, inputW);
-        for (int64_t m_i = 0; m_i < loopNum; m_i ++) {
+        for (int64_t m_i = 0; m_i < loopNum; m_i++) {
             CrossCoreWaitFlag<SYNC_MODE2, PIPE_MTE3>(VEC_FLAG_ID_0);
             calculateWidthExtension(matmulBlockPerTime);
             CrossCoreSetFlag<SYNC_MODE2, PIPE_FIX>(VEC_FLAG_ID_1);
@@ -468,10 +467,10 @@ __aicore__ inline void UpsampleLinear1dND<T>::calculateWidthExtension(int64_t ro
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::ParseTilingAIC(const UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dND<T>::ParseTilingAIC(const UpsampleLinear1dTilingData* tilingData)
 {
     if ASCEND_IS_AIV {
-        return ;
+        return;
     }
     aicIdx = blockIdx;
     inputWorkStartOffsetAic = totalPerCore * blockIdx + radio_matrix_size_w;
@@ -487,7 +486,7 @@ template <typename T>
 __aicore__ inline void UpsampleLinear1dND<T>::ParseTilingAIV()
 {
     if ASCEND_IS_AIC {
-        return ;
+        return;
     }
     aicIdx = (blockIdx / 2);
     inputWorkStartOffset_0 = totalPerCore * aicIdx + radio_matrix_size_w;
@@ -497,7 +496,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::ParseTilingAIV()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::ParseTilingCommon(const UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dND<T>::ParseTilingCommon(const UpsampleLinear1dTilingData* tilingData)
 {
     align_corners = tilingData->align_corners;
     slide_size_w = tilingData->slide_size_w;
@@ -533,7 +532,7 @@ __aicore__ inline void UpsampleLinear1dND<T>::ParseTilingCommon(const UpsampleLi
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dND<T>::getSlideRange(const UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dND<T>::getSlideRange(const UpsampleLinear1dTilingData* tilingData)
 {
     slideStart_w = aicIdx * eachCoreSlideNumW * slide_size_w;
     slideEnd_w = Min((Min((aicIdx + 1) * eachCoreSlideNumW, slideNumW)) * slide_size_w, outputW);
@@ -548,12 +547,13 @@ __aicore__ inline void UpsampleLinear1dND<T>::getSlideRange(const UpsampleLinear
         remainderMatmulLoopTimes = tilingData->remainderMatmulLoopTimes;
         remainderMatmulBlockTail = tilingData->remainderMatmulBlockTail;
         remainder_matmul_tail_0 = tilingData->remainderMatmulBlockTail0;
-        remainderLoopTailTimes = subIdx == 0 ? tilingData->remainderLoopTailTimes0 : tilingData->remainderLoopTailTimes1;
+        remainderLoopTailTimes = subIdx == 0 ? tilingData->remainderLoopTailTimes0 :
+                                               tilingData->remainderLoopTailTimes1;
         remainderLoopTailTail_0 = tilingData->remainderLoopTailTail0;
         remainderLoopTailTail = subIdx == 0 ? remainderLoopTailTail_0 : tilingData->remainderLoopTailTail1;
         remainder_matmul_block_0_num = (remainder_num / 2) > 0 ? (remainder_num / 2) : remainder_num;
     }
 }
-}  // namespace UpsampleLinear1d
+} // namespace UpsampleLinear1d
 
-#endif  // UPSAMPLE_LINEAR1D
+#endif // UPSAMPLE_LINEAR1D

@@ -45,6 +45,6 @@ REG_OP(ResizeLinear)
     .ATTR(align_corners, Bool, false)
     .ATTR(scale, Float, 0.0f)
     .OP_END_FACTORY_REG(ResizeLinear)
-}  // namespace ge
+} // namespace ge
 
-#endif  // OPS_IMAGE_RESIZE_LINEAR_GRAPH_PLUGIN_RESIZE_LINEAR_PROTO_H_
+#endif // OPS_IMAGE_RESIZE_LINEAR_GRAPH_PLUGIN_RESIZE_LINEAR_PROTO_H_

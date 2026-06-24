@@ -20,39 +20,37 @@
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 
-namespace optiling
-{
-  struct RoiAlignRotatedCompileInfo
-  {
+namespace optiling {
+struct RoiAlignRotatedCompileInfo {
     uint32_t totalCoreNum = 0;
     uint64_t ubSizePlatForm = 0;
-  };
+};
 
-  BEGIN_TILING_DATA_DEF(RoiAlignRotatedTilingData)
-  TILING_DATA_FIELD_DEF(uint8_t, aligned);
-  TILING_DATA_FIELD_DEF(uint8_t, clockwise);
-  TILING_DATA_FIELD_DEF(uint32_t, numBlocks);
-  TILING_DATA_FIELD_DEF(uint32_t, rois_num_per_Lcore);
-  TILING_DATA_FIELD_DEF(uint32_t, rois_num_per_Score);
-  TILING_DATA_FIELD_DEF(uint32_t, Lcore_num);
-  TILING_DATA_FIELD_DEF(uint32_t, Score_num);
-  TILING_DATA_FIELD_DEF(uint32_t, input_buffer_size);
-  TILING_DATA_FIELD_DEF(uint32_t, tileNum);
-  TILING_DATA_FIELD_DEF(uint32_t, batch_size);
-  TILING_DATA_FIELD_DEF(uint32_t, channels);
-  TILING_DATA_FIELD_DEF(uint32_t, channels_aligned);
-  TILING_DATA_FIELD_DEF(uint32_t, input_h);
-  TILING_DATA_FIELD_DEF(uint32_t, input_w);
-  TILING_DATA_FIELD_DEF(uint32_t, rois_num_aligned);
-  TILING_DATA_FIELD_DEF(uint32_t, tail_num);
-  TILING_DATA_FIELD_DEF(float, spatial_scale);
-  TILING_DATA_FIELD_DEF(int32_t, sampling_ratio);
-  TILING_DATA_FIELD_DEF(int32_t, pooled_height);
-  TILING_DATA_FIELD_DEF(int32_t, pooled_width);
-  TILING_DATA_FIELD_DEF(uint64_t, ub_total_size);
+BEGIN_TILING_DATA_DEF(RoiAlignRotatedTilingData)
+TILING_DATA_FIELD_DEF(uint8_t, aligned);
+TILING_DATA_FIELD_DEF(uint8_t, clockwise);
+TILING_DATA_FIELD_DEF(uint32_t, numBlocks);
+TILING_DATA_FIELD_DEF(uint32_t, rois_num_per_Lcore);
+TILING_DATA_FIELD_DEF(uint32_t, rois_num_per_Score);
+TILING_DATA_FIELD_DEF(uint32_t, Lcore_num);
+TILING_DATA_FIELD_DEF(uint32_t, Score_num);
+TILING_DATA_FIELD_DEF(uint32_t, input_buffer_size);
+TILING_DATA_FIELD_DEF(uint32_t, tileNum);
+TILING_DATA_FIELD_DEF(uint32_t, batch_size);
+TILING_DATA_FIELD_DEF(uint32_t, channels);
+TILING_DATA_FIELD_DEF(uint32_t, channels_aligned);
+TILING_DATA_FIELD_DEF(uint32_t, input_h);
+TILING_DATA_FIELD_DEF(uint32_t, input_w);
+TILING_DATA_FIELD_DEF(uint32_t, rois_num_aligned);
+TILING_DATA_FIELD_DEF(uint32_t, tail_num);
+TILING_DATA_FIELD_DEF(float, spatial_scale);
+TILING_DATA_FIELD_DEF(int32_t, sampling_ratio);
+TILING_DATA_FIELD_DEF(int32_t, pooled_height);
+TILING_DATA_FIELD_DEF(int32_t, pooled_width);
+TILING_DATA_FIELD_DEF(uint64_t, ub_total_size);
 
-  END_TILING_DATA_DEF;
+END_TILING_DATA_DEF;
 
-  REGISTER_TILING_DATA_CLASS(RoiAlignRotated, RoiAlignRotatedTilingData)
-}
+REGISTER_TILING_DATA_CLASS(RoiAlignRotated, RoiAlignRotatedTilingData)
+} // namespace optiling
 #endif

@@ -25,127 +25,135 @@
 
 using namespace std;
 
-#define DO_TILING(tilingContextPara)                                                                                   \
-    auto contextFaker = gert::TilingContextFaker();                                                                    \
-    /* 1. input/output information */                                                                                  \
-    size_t inputNum = tilingContextPara.inputTensorDesc_.size();                                                       \
-    size_t outputNum = tilingContextPara.outputTensorDesc_.size();                                                     \
-    if (tilingContextPara.inputInstanceNum_.size() != 0 || tilingContextPara.outputInstanceNum_.size() != 0) {         \
-        contextFaker.IrInstanceNum(tilingContextPara.inputInstanceNum_, tilingContextPara.outputInstanceNum_);         \
-    } else {                                                                                                           \
-        contextFaker.NodeIoNum(inputNum, outputNum);                                                                   \
-    }                                                                                                                  \
-    std::vector<gert::Tensor *> inputTensors = {};                                                                     \
-    std::vector<gert::Tensor *> outputTensors = {};                                                                    \
-    std::vector<std::unique_ptr<gert::Tensor>> inputTensorsKeepAlive = {};                                             \
-    std::vector<std::unique_ptr<gert::Tensor>> outputTensorsKeepAlive = {};                                            \
-    for (size_t index = 0; index < inputNum; index++) {                                                                \
-        std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                      \
-            tilingContextPara.inputTensorDesc_[index].shape_,                                                          \
-            gert::StorageFormat(tilingContextPara.inputTensorDesc_[index].format_,                                     \
-             tilingContextPara.inputTensorDesc_[index].format_,                                                        \
-             gert::ExpandDimsType()),                                                                                  \
-            gert::TensorPlacement::kOnHost,                                                                            \
-            tilingContextPara.inputTensorDesc_[index].dtype_,                                                          \
-            tilingContextPara.inputTensorDesc_[index].isConst_ ?                                                       \
-            tilingContextPara.inputTensorDesc_[index].constValue_:                                                     \
-            nullptr);                                                                                                  \
-        inputTensors.push_back(curTensor.get());                                                                       \
-        inputTensorsKeepAlive.push_back(std::move(curTensor));                                                         \
-    }                                                                                                                  \
-    for (size_t index = 0; index < outputNum; index++) {                                                               \
-        std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                      \
-            tilingContextPara.outputTensorDesc_[index].shape_,                                                         \
-            gert::StorageFormat(tilingContextPara.outputTensorDesc_[index].format_,                                    \
-             tilingContextPara.outputTensorDesc_[index].format_,                                                       \
-             gert::ExpandDimsType()),                                                                                  \
-            gert::TensorPlacement::kOnHost,                                                                            \
-            tilingContextPara.outputTensorDesc_[index].dtype_,                                                         \
-            tilingContextPara.outputTensorDesc_[index].isConst_ ?                                                      \
-            tilingContextPara.outputTensorDesc_[index].constValue_:                                                    \
-            nullptr);                                                                                                  \
-        outputTensors.push_back(curTensor.get());                                                                      \
-        outputTensorsKeepAlive.push_back(std::move(curTensor));                                                        \
-    }                                                                                                                  \
-    contextFaker.InputTensors(inputTensors).OutputTensors(outputTensors);                                              \
-    for (auto& attrInfo : tilingContextPara.attrs_) {                                                                  \
-        switch (attrInfo.attr_.type_) {                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                              \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<bool*>(attrInfo.attr_.valuePtr_.get()));       \
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                               \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<int64_t*>(attrInfo.attr_.valuePtr_.get()));    \
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                             \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<float*>(attrInfo.attr_.valuePtr_.get()));      \
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_STRING: {                                                            \
-                contextFaker.Attr(attrInfo.attrName_, ge::AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));\
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_BOOL: {                                                         \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<bool>*>(attrInfo.attr_.valuePtr_.get()));\
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_INT: {                                                          \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<int64_t>*>(attrInfo.attr_.valuePtr_.get()));\
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_LIST_INT: {                                                     \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<std::vector<int64_t>>*>(attrInfo.attr_.valuePtr_.get()));\
-                break;}                                                                                                \
-            case Ops::Cv::AnyValue::ValueType::VT_LIST_FLOAT: {                                                        \
-                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<float>*>(attrInfo.attr_.valuePtr_.get()));\
-                break;}                                                                                                \
-            default:                                                                                                   \
-                std::cout << "[ERROR]" << __FILE__ << ":" << __LINE__ << "The ValueType " << attrInfo.attr_.type_ << "is not supported!" << std::endl;\
-        }                                                                                                              \
-    }                                                                                                                  \
-    /* 2. base information */                                                                                          \
-    fe::PlatFormInfos platformInfo;                                                                                    \
-    platformInfo.Init();                                                                                               \
-    auto tilingData = gert::TilingData::CreateCap(tilingContextPara.tilingDataSize_);                                  \
-    auto workspace = gert::ContinuousVector::Create<size_t>(4096);                                                     \
-    auto contextHolder = contextFaker.SetOpType(tilingContextPara.opName_.c_str())                                     \
-                                     .CompileInfo(tilingContextPara.compileInfo_)                                      \
-                                     .PlatformInfo(reinterpret_cast<char*>(&platformInfo))                             \
-                                     .TilingData(tilingData.get())                                                     \
-                                     .Workspace(reinterpret_cast<gert::ContinuousVector *>(workspace.get()))           \
-                                     .Build();                                                                         \
-    string compileInfoStringPrefix = R"({"hardware_info": {"BT_SIZE": 0, "load3d_constraints": "1", "Intrinsic_fix_pipe_l0c2out": false, "Intrinsic_data_move_l12ub": true, "Intrinsic_data_move_l0c2ub": true, "Intrinsic_data_move_out2l1_nd2nz": false, "UB_SIZE": )";\
-    string compileInfoStringMiddle = R"(, "L2_SIZE": 33554432, "L1_SIZE": 524288, "L0A_SIZE": 65536, "L0B_SIZE": 65536, "L0C_SIZE": 131072, "CORE_NUM": )";\
-    string compileInfoStringSuffix = R"(} })";\
-    string compileInfoString = compileInfoStringPrefix +                                                               \
-                               std::to_string(tilingContextPara.ubSize_) +                                             \
-                               compileInfoStringMiddle +                                                               \
-                               std::to_string(tilingContextPara.coreNum_) +                                            \
-                               compileInfoStringSuffix;                                                                \
-     map<string, string> socToArch = {                                                                                 \
-        {"Ascend310P", "2002"},                                                                                        \
-        {"Ascend910B", "2201"},                                                                                        \
-        {"Ascend910_93", "2201"},                                                                                      \
-        {"Ascend950", "3510"},                                                                                         \
-        {"Ascend910", "1001"}                                                                                          \
-    };                                                                                                                 \
-    map<string, string> socInfos;                                                                                      \
-    map<string, string> aicoreSpec;                                                                                    \
-    map<string, string> intrinsics;                                                                                    \
-    map<string, string> socversions = {                                                                                \
-        {"NpuArch", socToArch[tilingContextPara.socVersion_]},                                                         \
-        {"Short_SoC_version", tilingContextPara.socVersion_}                                                           \
-    };                                                                                                                 \
-    GetPlatFormInfos(compileInfoString.c_str(), socInfos, aicoreSpec, intrinsics);                                     \
-    auto tilingContext = contextHolder.GetContext();                                                                   \
-    tilingContext->GetPlatformInfo()->SetPlatformRes("SoCInfo", socInfos);                                             \
-    tilingContext->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicoreSpec);                                        \
-    tilingContext->GetPlatformInfo()->SetCoreNumByCoreType("AICore");                                                  \
-    tilingContext->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap", intrinsics);                           \
-    tilingContext->GetPlatformInfo()->SetPlatformRes("version", socversions);                                          \
-    /* 3. get tiling func */                                                                                           \
-    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();                         \
-    auto tilingFunc = spaceRegistry->GetOpImpl(tilingContextPara.opName_.c_str())->tiling;                             \
-    /* 4. check tiling func */                                                                                         \
+#define DO_TILING(tilingContextPara)                                                                                                                                                                                                         \
+    auto contextFaker = gert::TilingContextFaker();                                                                                                                                                                                          \
+    /* 1. input/output information */                                                                                                                                                                                                        \
+    size_t inputNum = tilingContextPara.inputTensorDesc_.size();                                                                                                                                                                             \
+    size_t outputNum = tilingContextPara.outputTensorDesc_.size();                                                                                                                                                                           \
+    if (tilingContextPara.inputInstanceNum_.size() != 0 || tilingContextPara.outputInstanceNum_.size() != 0) {                                                                                                                               \
+        contextFaker.IrInstanceNum(tilingContextPara.inputInstanceNum_, tilingContextPara.outputInstanceNum_);                                                                                                                               \
+    } else {                                                                                                                                                                                                                                 \
+        contextFaker.NodeIoNum(inputNum, outputNum);                                                                                                                                                                                         \
+    }                                                                                                                                                                                                                                        \
+    std::vector<gert::Tensor*> inputTensors = {};                                                                                                                                                                                            \
+    std::vector<gert::Tensor*> outputTensors = {};                                                                                                                                                                                           \
+    std::vector<std::unique_ptr<gert::Tensor>> inputTensorsKeepAlive = {};                                                                                                                                                                   \
+    std::vector<std::unique_ptr<gert::Tensor>> outputTensorsKeepAlive = {};                                                                                                                                                                  \
+    for (size_t index = 0; index < inputNum; index++) {                                                                                                                                                                                      \
+        std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                                                                                                                                            \
+            tilingContextPara.inputTensorDesc_[index].shape_,                                                                                                                                                                                \
+            gert::StorageFormat(tilingContextPara.inputTensorDesc_[index].format_,                                                                                                                                                           \
+                                tilingContextPara.inputTensorDesc_[index].format_, gert::ExpandDimsType()),                                                                                                                                  \
+            gert::TensorPlacement::kOnHost, tilingContextPara.inputTensorDesc_[index].dtype_,                                                                                                                                                \
+            tilingContextPara.inputTensorDesc_[index].isConst_ ?                                                                                                                                                                             \
+                tilingContextPara.inputTensorDesc_[index].constValue_ :                                                                                                                                                                      \
+                nullptr);                                                                                                                                                                                                                    \
+        inputTensors.push_back(curTensor.get());                                                                                                                                                                                             \
+        inputTensorsKeepAlive.push_back(std::move(curTensor));                                                                                                                                                                               \
+    }                                                                                                                                                                                                                                        \
+    for (size_t index = 0; index < outputNum; index++) {                                                                                                                                                                                     \
+        std::unique_ptr<gert::Tensor> curTensor = std::make_unique<gert::Tensor>(                                                                                                                                                            \
+            tilingContextPara.outputTensorDesc_[index].shape_,                                                                                                                                                                               \
+            gert::StorageFormat(tilingContextPara.outputTensorDesc_[index].format_,                                                                                                                                                          \
+                                tilingContextPara.outputTensorDesc_[index].format_, gert::ExpandDimsType()),                                                                                                                                 \
+            gert::TensorPlacement::kOnHost, tilingContextPara.outputTensorDesc_[index].dtype_,                                                                                                                                               \
+            tilingContextPara.outputTensorDesc_[index].isConst_ ?                                                                                                                                                                            \
+                tilingContextPara.outputTensorDesc_[index].constValue_ :                                                                                                                                                                     \
+                nullptr);                                                                                                                                                                                                                    \
+        outputTensors.push_back(curTensor.get());                                                                                                                                                                                            \
+        outputTensorsKeepAlive.push_back(std::move(curTensor));                                                                                                                                                                              \
+    }                                                                                                                                                                                                                                        \
+    contextFaker.InputTensors(inputTensors).OutputTensors(outputTensors);                                                                                                                                                                    \
+    for (auto& attrInfo : tilingContextPara.attrs_) {                                                                                                                                                                                        \
+        switch (attrInfo.attr_.type_) {                                                                                                                                                                                                      \
+            case Ops::Cv::AnyValue::ValueType::VT_BOOL: {                                                                                                                                                                                    \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<bool*>(attrInfo.attr_.valuePtr_.get()));                                                                                                                             \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_INT: {                                                                                                                                                                                     \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<int64_t*>(attrInfo.attr_.valuePtr_.get()));                                                                                                                          \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_FLOAT: {                                                                                                                                                                                   \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<float*>(attrInfo.attr_.valuePtr_.get()));                                                                                                                            \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_STRING: {                                                                                                                                                                                  \
+                contextFaker.Attr(                                                                                                                                                                                                           \
+                    attrInfo.attrName_,                                                                                                                                                                                                      \
+                    ge::AscendString(reinterpret_cast<std::string*>(attrInfo.attr_.valuePtr_.get())->c_str()));                                                                                                                              \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_BOOL: {                                                                                                                                                                               \
+                contextFaker.Attr(attrInfo.attrName_,                                                                                                                                                                                        \
+                                  *reinterpret_cast<std::vector<bool>*>(attrInfo.attr_.valuePtr_.get()));                                                                                                                                    \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_INT: {                                                                                                                                                                                \
+                contextFaker.Attr(attrInfo.attrName_,                                                                                                                                                                                        \
+                                  *reinterpret_cast<std::vector<int64_t>*>(attrInfo.attr_.valuePtr_.get()));                                                                                                                                 \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_LIST_INT: {                                                                                                                                                                           \
+                contextFaker.Attr(attrInfo.attrName_, *reinterpret_cast<std::vector<std::vector<int64_t>>*>(                                                                                                                                 \
+                                                          attrInfo.attr_.valuePtr_.get()));                                                                                                                                                  \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            case Ops::Cv::AnyValue::ValueType::VT_LIST_FLOAT: {                                                                                                                                                                              \
+                contextFaker.Attr(attrInfo.attrName_,                                                                                                                                                                                        \
+                                  *reinterpret_cast<std::vector<float>*>(attrInfo.attr_.valuePtr_.get()));                                                                                                                                   \
+                break;                                                                                                                                                                                                                       \
+            }                                                                                                                                                                                                                                \
+            default:                                                                                                                                                                                                                         \
+                std::cout << "[ERROR]" << __FILE__ << ":" << __LINE__ << "The ValueType " << attrInfo.attr_.type_                                                                                                                            \
+                          << "is not supported!" << std::endl;                                                                                                                                                                               \
+        }                                                                                                                                                                                                                                    \
+    }                                                                                                                                                                                                                                        \
+    /* 2. base information */                                                                                                                                                                                                                \
+    fe::PlatFormInfos platformInfo;                                                                                                                                                                                                          \
+    platformInfo.Init();                                                                                                                                                                                                                     \
+    auto tilingData = gert::TilingData::CreateCap(tilingContextPara.tilingDataSize_);                                                                                                                                                        \
+    auto workspace = gert::ContinuousVector::Create<size_t>(4096);                                                                                                                                                                           \
+    auto contextHolder = contextFaker.SetOpType(tilingContextPara.opName_.c_str())                                                                                                                                                           \
+                             .CompileInfo(tilingContextPara.compileInfo_)                                                                                                                                                                    \
+                             .PlatformInfo(reinterpret_cast<char*>(&platformInfo))                                                                                                                                                           \
+                             .TilingData(tilingData.get())                                                                                                                                                                                   \
+                             .Workspace(reinterpret_cast<gert::ContinuousVector*>(workspace.get()))                                                                                                                                          \
+                             .Build();                                                                                                                                                                                                       \
+    string compileInfoStringPrefix =                                                                                                                                                                                                         \
+        R"({"hardware_info": {"BT_SIZE": 0, "load3d_constraints": "1", "Intrinsic_fix_pipe_l0c2out": false, "Intrinsic_data_move_l12ub": true, "Intrinsic_data_move_l0c2ub": true, "Intrinsic_data_move_out2l1_nd2nz": false, "UB_SIZE": )"; \
+    string compileInfoStringMiddle =                                                                                                                                                                                                         \
+        R"(, "L2_SIZE": 33554432, "L1_SIZE": 524288, "L0A_SIZE": 65536, "L0B_SIZE": 65536, "L0C_SIZE": 131072, "CORE_NUM": )";                                                                                                               \
+    string compileInfoStringSuffix = R"(} })";                                                                                                                                                                                               \
+    string compileInfoString = compileInfoStringPrefix + std::to_string(tilingContextPara.ubSize_) +                                                                                                                                         \
+                               compileInfoStringMiddle + std::to_string(tilingContextPara.coreNum_) +                                                                                                                                        \
+                               compileInfoStringSuffix;                                                                                                                                                                                      \
+    map<string, string> socToArch = {{"Ascend310P", "2002"},                                                                                                                                                                                 \
+                                     {"Ascend910B", "2201"},                                                                                                                                                                                 \
+                                     {"Ascend910_93", "2201"},                                                                                                                                                                               \
+                                     {"Ascend950", "3510"},                                                                                                                                                                                  \
+                                     {"Ascend910", "1001"}};                                                                                                                                                                                 \
+    map<string, string> socInfos;                                                                                                                                                                                                            \
+    map<string, string> aicoreSpec;                                                                                                                                                                                                          \
+    map<string, string> intrinsics;                                                                                                                                                                                                          \
+    map<string, string> socversions = {{"NpuArch", socToArch[tilingContextPara.socVersion_]},                                                                                                                                                \
+                                       {"Short_SoC_version", tilingContextPara.socVersion_}};                                                                                                                                                \
+    GetPlatFormInfos(compileInfoString.c_str(), socInfos, aicoreSpec, intrinsics);                                                                                                                                                           \
+    auto tilingContext = contextHolder.GetContext();                                                                                                                                                                                         \
+    tilingContext->GetPlatformInfo()->SetPlatformRes("SoCInfo", socInfos);                                                                                                                                                                   \
+    tilingContext->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicoreSpec);                                                                                                                                                              \
+    tilingContext->GetPlatformInfo()->SetCoreNumByCoreType("AICore");                                                                                                                                                                        \
+    tilingContext->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap", intrinsics);                                                                                                                                                 \
+    tilingContext->GetPlatformInfo()->SetPlatformRes("version", socversions);                                                                                                                                                                \
+    /* 3. get tiling func */                                                                                                                                                                                                                 \
+    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();                                                                                                                                               \
+    auto tilingFunc = spaceRegistry->GetOpImpl(tilingContextPara.opName_.c_str())->tiling;                                                                                                                                                   \
+    /* 4. check tiling func */                                                                                                                                                                                                               \
     auto tilingRet = tilingFunc(tilingContext);
 
 template <typename T>
-static string to_string(void* buf, size_t size) {
+static string to_string(void* buf, size_t size)
+{
     string result;
     const T* data = reinterpret_cast<const T*>(buf);
     size_t len = size / sizeof(T);
@@ -158,15 +166,9 @@ static string to_string(void* buf, size_t size) {
 
 class AippTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AippTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AippTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AippTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AippTiling TearDown" << std::endl; }
 };
 
 struct AippCompileInfo {
@@ -175,7 +177,8 @@ struct AippCompileInfo {
 };
 
 static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& socInfos, map<string, string>& aicoreSpec,
-                             map<string, string>& intrinsics) {
+                             map<string, string>& intrinsics)
+{
     string default_hardward_info = R"({
         "hardware_info": {"BT_SIZE": 0, "load3d_constraints": "1", "Intrinsic_fix_pipe_l0c2out": false,
                           "Intrinsic_data_move_l12ub": true, "Intrinsic_data_move_l0c2ub": true,
@@ -194,9 +197,9 @@ static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& so
                                        {"core_type_list", "core_type_list"}};
     socInfos["core_type_list"] = "AICore";
 
-    for (auto &t : socInfoKeys) {
+    for (auto& t : socInfoKeys) {
         if (compileInfoJson.contains("hardware_info") && compileInfoJson["hardware_info"].contains(t.second)) {
-            auto &objJson = compileInfoJson["hardware_info"][t.second];
+            auto& objJson = compileInfoJson["hardware_info"][t.second];
             if (objJson.is_number_integer()) {
                 socInfos[t.first] = to_string(compileInfoJson["hardware_info"][t.second].get<uint32_t>());
             } else if (objJson.is_string()) {
@@ -212,7 +215,7 @@ static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& so
                                           {"bt_size", "BT_SIZE"},
                                           {"load3d_constraints", "load3d_constraints"}};
     aicoreSpec["cube_freq"] = "cube_freq";
-    for (auto &t : aicoreSpecKeys) {
+    for (auto& t : aicoreSpecKeys) {
         if (compileInfoJson.contains("hardware_info") && compileInfoJson["hardware_info"].contains(t.second)) {
             if (t.second == "load3d_constraints") {
                 aicoreSpec[t.first] = compileInfoJson["hardware_info"][t.second].get<string>();
@@ -222,9 +225,9 @@ static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& so
         }
     }
 
-    std::string intrinsicsKeys[] = {"Intrinsic_data_move_l12ub", "Intrinsic_data_move_l0c2ub",
+    std::string intrinsicsKeys[] = {"Intrinsic_data_move_l12ub",  "Intrinsic_data_move_l0c2ub",
                                     "Intrinsic_fix_pipe_l0c2out", "Intrinsic_data_move_out2l1_nd2nz",
-                                    "Intrinsic_matmul_ub_to_ub", "Intrinsic_conv_ub_to_ub",
+                                    "Intrinsic_matmul_ub_to_ub",  "Intrinsic_conv_ub_to_ub",
                                     "Intrinsic_data_move_l12bt"};
     for (string key : intrinsicsKeys) {
         if (compileInfoJson.contains("hardware_info") && compileInfoJson["hardware_info"].contains(key) &&
@@ -237,8 +240,7 @@ static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& so
     }
 }
 
-void CompareAippTilingData(const Aipp_Kernel::AippTilingData& actual,
-                           const Aipp_Kernel::AippTilingData& expected) 
+void CompareAippTilingData(const Aipp_Kernel::AippTilingData& actual, const Aipp_Kernel::AippTilingData& expected)
 {
     EXPECT_EQ(actual.imageFormat, expected.imageFormat);
     EXPECT_EQ(actual.outputFormat, expected.outputFormat);
@@ -300,10 +302,8 @@ void CompareAippTilingData(const Aipp_Kernel::AippTilingData& actual,
     EXPECT_FLOAT_EQ(actual.paddingParam.padValue, expected.paddingParam.padValue);
 }
 
-void AippExecuteTestCase(const gert::TilingContextPara& tilingContextPara,
-                         ge::graphStatus expectResult,
-                         uint64_t expectTilingKey,
-                         const Aipp_Kernel::AippTilingData& expectTiling,
+void AippExecuteTestCase(const gert::TilingContextPara& tilingContextPara, ge::graphStatus expectResult,
+                         uint64_t expectTilingKey, const Aipp_Kernel::AippTilingData& expectTiling,
                          const std::vector<size_t>& expectWorkspaces)
 {
     DO_TILING(tilingContextPara)
@@ -336,12 +336,12 @@ void AippExecuteTestCase(const gert::TilingContextPara& tilingContextPara,
 TEST_F(AippTiling, aipp_tiling_test_0)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{10, 256, 224, 3}, {10, 256, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{10, 256, 224, 3}, {10, 256, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
@@ -355,56 +355,43 @@ TEST_F(AippTiling, aipp_tiling_test_0)
         .outputSizeW = 224,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0,
-            .cscMatrix11 = 256,
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 256,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 256,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0,
-            .dtcPixelMeanChn1 = 0,
-            .dtcPixelMeanChn2 = 0,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0,
-            .dtcPixelMinChn1 = 0,
-            .dtcPixelMinChn2 = 0,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1,
-            .dtcPixelVarReciChn1 = 1,
-            .dtcPixelVarReciChn2 = 1,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0,
-            .leftPaddingSize = 0,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 256, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -412,12 +399,12 @@ TEST_F(AippTiling, aipp_tiling_test_0)
 TEST_F(AippTiling, aipp_tiling_test_1)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{100, 2560, 2240, 3}, {100, 2560, 2240, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{100, 2560, 2240, 3}, {100, 2560, 2240, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{100, 256, 224, 3}, {100, 256, 224, 3}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
         {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","crop":true,"crop_size_h":256,"crop_size_w":224,
+                                         Ops::Cv::AnyValue::CreateFrom<string>(
+                                             R"({"aipp_mode":"static","crop":true,"crop_size_h":256,"crop_size_w":224,
         "input_format":"RGB888_U8","load_start_pos_h":16,"load_start_pos_w":16,
         "min_chn_0":123.67500305175781,"min_chn_1":116.27999877929688,
         "min_chn_2":103.52999877929688,"src_image_size_h":2560,"src_image_size_w":2240,
@@ -439,56 +426,43 @@ TEST_F(AippTiling, aipp_tiling_test_1)
         .outputSizeW = 224,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 101,
-            .cscMatrix02 = -202,
-            .cscMatrix10 = 301,
-            .cscMatrix11 = -256,
-            .cscMatrix12 = 402,
-            .cscMatrix20 = 503,
-            .cscMatrix21 = 601,
-            .cscMatrix22 = 256,
-            .outBias0 = 110,
-            .outBias1 = 120,
-            .outBias2 = 83,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 1,
-            .cropStartPosH = 16,
-            .cropStartPosW = 16,
-            .cropSizeH = 256,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0,
-            .dtcPixelMeanChn1 = 0,
-            .dtcPixelMeanChn2 = 0,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 123.675f,
-            .dtcPixelMinChn1 = 116.28f,
-            .dtcPixelMinChn2 = 103.53f,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.017124753f,
-            .dtcPixelVarReciChn1 = 0.017507f,
-            .dtcPixelVarReciChn2 = 0.0174292f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0,
-            .leftPaddingSize = 0,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 101,
+                     .cscMatrix02 = -202,
+                     .cscMatrix10 = 301,
+                     .cscMatrix11 = -256,
+                     .cscMatrix12 = 402,
+                     .cscMatrix20 = 503,
+                     .cscMatrix21 = 601,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 110,
+                     .outBias1 = 120,
+                     .outBias2 = 83,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 1, .cropStartPosH = 16, .cropStartPosW = 16, .cropSizeH = 256, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 123.675f,
+                     .dtcPixelMinChn1 = 116.28f,
+                     .dtcPixelMinChn2 = 103.53f,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.017124753f,
+                     .dtcPixelVarReciChn1 = 0.017507f,
+                     .dtcPixelVarReciChn2 = 0.0174292f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -499,8 +473,8 @@ TEST_F(AippTiling, aipp_tiling_test_2)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_01.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_01.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -516,56 +490,43 @@ TEST_F(AippTiling, aipp_tiling_test_2)
         .outputSizeW = 224,
         .outputSizeH = 224,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0,
-            .cscMatrix11 = 256,
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 256,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 224,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 128,
-            .dtcPixelMeanChn1 = 128,
-            .dtcPixelMeanChn2 = 128,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0,
-            .dtcPixelMinChn1 = 0,
-            .dtcPixelMinChn2 = 0,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.00781f,
-            .dtcPixelVarReciChn1 = 0.00781f,
-            .dtcPixelVarReciChn2 = 0.00781f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0,
-            .leftPaddingSize = 0,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 224, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 128,
+                     .dtcPixelMeanChn1 = 128,
+                     .dtcPixelMeanChn2 = 128,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.00781f,
+                     .dtcPixelVarReciChn1 = 0.00781f,
+                     .dtcPixelVarReciChn2 = 0.00781f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -576,8 +537,8 @@ TEST_F(AippTiling, aipp_tiling_test_3)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_02.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_02.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 256, 3}, {1, 1080, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 256, 3}, {1, 1080, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 224, 256}, {1, 3, 224, 256}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -593,56 +554,43 @@ TEST_F(AippTiling, aipp_tiling_test_3)
         .outputSizeW = 256,
         .outputSizeH = 224,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 298,
-            .cscMatrix01 = 10,
-            .cscMatrix02 = 409,
-            .cscMatrix10 = 298,
-            .cscMatrix11 = -100,
-            .cscMatrix12 = -208,
-            .cscMatrix20 = 298,
-            .cscMatrix21 = 516,
-            .cscMatrix22 = 20,
-            .outBias0 = 110,
-            .outBias1 = 120,
-            .outBias2 = 83,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 1,
-            .cropStartPosH = 2,
-            .cropStartPosW = 16,
-            .cropSizeH = 256,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 10,
-            .dtcPixelMeanChn1 = 20,
-            .dtcPixelMeanChn2 = 30,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 123.675f,
-            .dtcPixelMinChn1 = 116.28f,
-            .dtcPixelMinChn2 = 103.53f,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.017124753f,
-            .dtcPixelVarReciChn1 = 0.017507004f,
-            .dtcPixelVarReciChn2 = 0.017429193f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0,
-            .leftPaddingSize = 0,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 298,
+                     .cscMatrix01 = 10,
+                     .cscMatrix02 = 409,
+                     .cscMatrix10 = 298,
+                     .cscMatrix11 = -100,
+                     .cscMatrix12 = -208,
+                     .cscMatrix20 = 298,
+                     .cscMatrix21 = 516,
+                     .cscMatrix22 = 20,
+                     .outBias0 = 110,
+                     .outBias1 = 120,
+                     .outBias2 = 83,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 1, .cropStartPosH = 2, .cropStartPosW = 16, .cropSizeH = 256, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 10,
+                     .dtcPixelMeanChn1 = 20,
+                     .dtcPixelMeanChn2 = 30,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 123.675f,
+                     .dtcPixelMinChn1 = 116.28f,
+                     .dtcPixelMinChn2 = 103.53f,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.017124753f,
+                     .dtcPixelVarReciChn1 = 0.017507004f,
+                     .dtcPixelVarReciChn2 = 0.017429193f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -653,8 +601,8 @@ TEST_F(AippTiling, aipp_tiling_test_4)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_03.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_03.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -670,56 +618,43 @@ TEST_F(AippTiling, aipp_tiling_test_4)
         .outputSizeW = 256,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1,
-            .rbuvSwapSwitch = 1,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 298,
-            .cscMatrix01 = 409,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 298,
-            .cscMatrix11 = -208,
-            .cscMatrix12 = -100,
-            .cscMatrix20 = 298,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 516,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 110,
-            .inBias1 = 120,
-            .inBias2 = 83
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 256,
-            .cropSizeW = 256
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 10,
-            .dtcPixelMeanChn1 = 20,
-            .dtcPixelMeanChn2 = 30,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 123.675f,
-            .dtcPixelMinChn1 = 116.28f,
-            .dtcPixelMinChn2 = 103.53f,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.017124753f,
-            .dtcPixelVarReciChn1 = 0.017507f,
-            .dtcPixelVarReciChn2 = 0.0174292f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0,
-            .leftPaddingSize = 0,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 1,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 298,
+                     .cscMatrix01 = 409,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 298,
+                     .cscMatrix11 = -208,
+                     .cscMatrix12 = -100,
+                     .cscMatrix20 = 298,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 516,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 110,
+                     .inBias1 = 120,
+                     .inBias2 = 83},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 256, .cropSizeW = 256},
+        .dtcParam = {.dtcPixelMeanChn0 = 10,
+                     .dtcPixelMeanChn1 = 20,
+                     .dtcPixelMeanChn2 = 30,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 123.675f,
+                     .dtcPixelMinChn1 = 116.28f,
+                     .dtcPixelMinChn2 = 103.53f,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.017124753f,
+                     .dtcPixelVarReciChn1 = 0.017507f,
+                     .dtcPixelVarReciChn2 = 0.0174292f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -727,16 +662,16 @@ TEST_F(AippTiling, aipp_tiling_test_4)
 TEST_F(AippTiling, aipp_tiling_test_5)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_UINT8, ge::FORMAT_NCHW}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_UINT8, ge::FORMAT_NCHW}},
         {{{{10, 3, 256, 224}, {10, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_ERROR_TILINGKEY;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -747,14 +682,14 @@ TEST_F(AippTiling, aipp_tiling_test_6)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_28.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_28.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 221, 3}, {1, 256, 221, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 256, 221, 3}, {1, 256, 221, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_ERROR_TILINGKEY;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -762,17 +697,16 @@ TEST_F(AippTiling, aipp_tiling_test_6)
 TEST_F(AippTiling, aipp_tiling_test_7)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 222, 3}, {1, 256, 222, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 256, 222, 3}, {1, 256, 222, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"YUV420SP_U8",
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(
+                                                                 R"({"aipp_mode":"static","input_format":"YUV420SP_U8",
         "crop":true,"load_start_pos_h":222,"load_start_pos_w":21})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_ERROR_TILINGKEY;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -780,16 +714,16 @@ TEST_F(AippTiling, aipp_tiling_test_7)
 TEST_F(AippTiling, aipp_tiling_test_8)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4097, 222, 3}, {1, 4097, 222, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4097, 222, 3}, {1, 4097, 222, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 256, 224}, {1, 3, 256, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -800,8 +734,8 @@ TEST_F(AippTiling, aipp_tiling_test_9)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_04.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_04.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 224, 224, 4}, {1, 224, 224, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 4}, {1, 224, 224, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -817,56 +751,43 @@ TEST_F(AippTiling, aipp_tiling_test_9)
         .outputSizeW = 224,
         .outputSizeH = 224,
         .srcChannelOffset = 1,
-        .cscParam = {
-            .cscSwitch = 1,
-            .rbuvSwapSwitch = 1,
-            .axSwapSwitch = 1,
-            .cscMatrix00 = -202,
-            .cscMatrix01 = 101,
-            .cscMatrix02 = 298,
-            .cscMatrix10 = 402,
-            .cscMatrix11 = -256,
-            .cscMatrix12 = 301,
-            .cscMatrix20 = 256,
-            .cscMatrix21 = 601,
-            .cscMatrix22 = 503,
-            .outBias0 = 110,
-            .outBias1 = 120,
-            .outBias2 = 83,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 224,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 128,
-            .dtcPixelMeanChn1 = 128,
-            .dtcPixelMeanChn2 = 128,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0,
-            .dtcPixelMinChn1 = 0,
-            .dtcPixelMinChn2 = 0,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.00781f,
-            .dtcPixelVarReciChn1 = 0.00781f,
-            .dtcPixelVarReciChn2 = 0.00781f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0,
-            .leftPaddingSize = 0,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 1,
+                     .axSwapSwitch = 1,
+                     .cscMatrix00 = -202,
+                     .cscMatrix01 = 101,
+                     .cscMatrix02 = 298,
+                     .cscMatrix10 = 402,
+                     .cscMatrix11 = -256,
+                     .cscMatrix12 = 301,
+                     .cscMatrix20 = 256,
+                     .cscMatrix21 = 601,
+                     .cscMatrix22 = 503,
+                     .outBias0 = 110,
+                     .outBias1 = 120,
+                     .outBias2 = 83,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 224, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 128,
+                     .dtcPixelMeanChn1 = 128,
+                     .dtcPixelMeanChn2 = 128,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.00781f,
+                     .dtcPixelVarReciChn1 = 0.00781f,
+                     .dtcPixelVarReciChn2 = 0.00781f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -877,14 +798,14 @@ TEST_F(AippTiling, aipp_tiling_test_10)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_05.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_05.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 256, 256}, {1, 3, 256, 256}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_ERROR_TILINGKEY;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -892,16 +813,16 @@ TEST_F(AippTiling, aipp_tiling_test_10)
 TEST_F(AippTiling, aipp_tiling_test_11)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_FLOAT, ge::FORMAT_NHWC}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_ERROR_TILINGKEY;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -912,8 +833,8 @@ TEST_F(AippTiling, aipp_tiling_padding_test_1)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_06.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_06.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 244, 244}, {1, 3, 244, 244}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -929,56 +850,43 @@ TEST_F(AippTiling, aipp_tiling_padding_test_1)
         .outputSizeW = 244,
         .outputSizeH = 244,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0,
-            .cscMatrix11 = 256,
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 256,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 224,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 128,
-            .dtcPixelMeanChn1 = 128,
-            .dtcPixelMeanChn2 = 128,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0,
-            .dtcPixelMinChn1 = 0,
-            .dtcPixelMinChn2 = 0,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.00781f,
-            .dtcPixelVarReciChn1 = 0.00781f,
-            .dtcPixelVarReciChn2 = 0.00781f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 1,
-            .leftPaddingSize = 10,
-            .rightPaddingSize = 10,
-            .topPaddingSize = 10,
-            .bottomPaddingSize = 10,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 224, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 128,
+                     .dtcPixelMeanChn1 = 128,
+                     .dtcPixelMeanChn2 = 128,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.00781f,
+                     .dtcPixelVarReciChn1 = 0.00781f,
+                     .dtcPixelVarReciChn2 = 0.00781f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 1,
+                         .leftPaddingSize = 10,
+                         .rightPaddingSize = 10,
+                         .topPaddingSize = 10,
+                         .bottomPaddingSize = 10,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -989,8 +897,8 @@ TEST_F(AippTiling, aipp_tiling_padding_test_2)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_07.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_07.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 224, 244}, {1, 3, 224, 244}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -1006,56 +914,43 @@ TEST_F(AippTiling, aipp_tiling_padding_test_2)
         .outputSizeW = 244,
         .outputSizeH = 224,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0,
-            .cscMatrix11 = 256,
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 256,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 224,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 128,
-            .dtcPixelMeanChn1 = 128,
-            .dtcPixelMeanChn2 = 128,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0,
-            .dtcPixelMinChn1 = 0,
-            .dtcPixelMinChn2 = 0,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.00781f,
-            .dtcPixelVarReciChn1 = 0.00781f,
-            .dtcPixelVarReciChn2 = 0.00781f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 1,
-            .leftPaddingSize = 20,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 224, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 128,
+                     .dtcPixelMeanChn1 = 128,
+                     .dtcPixelMeanChn2 = 128,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.00781f,
+                     .dtcPixelVarReciChn1 = 0.00781f,
+                     .dtcPixelVarReciChn2 = 0.00781f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 1,
+                         .leftPaddingSize = 20,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1066,8 +961,8 @@ TEST_F(AippTiling, aipp_tiling_padding_test_3)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_08.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_08.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 256, 256, 3}, {1, 256, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 256, 276}, {1, 3, 256, 276}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -1083,56 +978,43 @@ TEST_F(AippTiling, aipp_tiling_padding_test_3)
         .outputSizeW = 276,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 298,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 409,
-            .cscMatrix10 = 298,
-            .cscMatrix11 = -100,
-            .cscMatrix12 = -208,
-            .cscMatrix20 = 298,
-            .cscMatrix21 = 516,
-            .cscMatrix22 = 0,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 110,
-            .inBias1 = 120,
-            .inBias2 = 83
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 256,
-            .cropSizeW = 256
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 128,
-            .dtcPixelMeanChn1 = 128,
-            .dtcPixelMeanChn2 = 128,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 123.675f,
-            .dtcPixelMinChn1 = 116.28f,
-            .dtcPixelMinChn2 = 103.53f,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.017124753f,
-            .dtcPixelVarReciChn1 = 0.017507f,
-            .dtcPixelVarReciChn2 = 0.0174292f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 1,
-            .leftPaddingSize = 20,
-            .rightPaddingSize = 0,
-            .topPaddingSize = 0,
-            .bottomPaddingSize = 0,
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 298,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 409,
+                     .cscMatrix10 = 298,
+                     .cscMatrix11 = -100,
+                     .cscMatrix12 = -208,
+                     .cscMatrix20 = 298,
+                     .cscMatrix21 = 516,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 110,
+                     .inBias1 = 120,
+                     .inBias2 = 83},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 256, .cropSizeW = 256},
+        .dtcParam = {.dtcPixelMeanChn0 = 128,
+                     .dtcPixelMeanChn1 = 128,
+                     .dtcPixelMeanChn2 = 128,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 123.675f,
+                     .dtcPixelMinChn1 = 116.28f,
+                     .dtcPixelMinChn2 = 103.53f,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.017124753f,
+                     .dtcPixelVarReciChn1 = 0.017507f,
+                     .dtcPixelVarReciChn2 = 0.0174292f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 1,
+                         .leftPaddingSize = 20,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1143,8 +1025,8 @@ TEST_F(AippTiling, aipp_tiling_padding_test_4)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_09.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_09.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 256, 3}, {1, 1080, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 256, 3}, {1, 1080, 256, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 234, 244}, {1, 3, 234, 244}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -1160,56 +1042,43 @@ TEST_F(AippTiling, aipp_tiling_padding_test_4)
         .outputSizeW = 244,
         .outputSizeH = 234,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 298,
-            .cscMatrix01 = 10,
-            .cscMatrix02 = 409,
-            .cscMatrix10 = 298,
-            .cscMatrix11 = -100,
-            .cscMatrix12 = -208,
-            .cscMatrix20 = 298,
-            .cscMatrix21 = 516,
-            .cscMatrix22 = 20,
-            .outBias0 = 16,
-            .outBias1 = 128,
-            .outBias2 = 128,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 1,
-            .cropStartPosH = 2,
-            .cropStartPosW = 16,
-            .cropSizeH = 224,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 10,
-            .dtcPixelMeanChn1 = 20,
-            .dtcPixelMeanChn2 = 30,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 123.675f,
-            .dtcPixelMinChn1 = 116.28f,
-            .dtcPixelMinChn2 = 103.53f,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.017124753f,
-            .dtcPixelVarReciChn1 = 0.017507004f,
-            .dtcPixelVarReciChn2 = 0.017429193f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 1,
-            .leftPaddingSize = 10,
-            .rightPaddingSize = 10,
-            .topPaddingSize = 5,
-            .bottomPaddingSize = 5,
-            .padValue = 10.5f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 298,
+                     .cscMatrix01 = 10,
+                     .cscMatrix02 = 409,
+                     .cscMatrix10 = 298,
+                     .cscMatrix11 = -100,
+                     .cscMatrix12 = -208,
+                     .cscMatrix20 = 298,
+                     .cscMatrix21 = 516,
+                     .cscMatrix22 = 20,
+                     .outBias0 = 16,
+                     .outBias1 = 128,
+                     .outBias2 = 128,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 1, .cropStartPosH = 2, .cropStartPosW = 16, .cropSizeH = 224, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 10,
+                     .dtcPixelMeanChn1 = 20,
+                     .dtcPixelMeanChn2 = 30,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 123.675f,
+                     .dtcPixelMinChn1 = 116.28f,
+                     .dtcPixelMinChn2 = 103.53f,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.017124753f,
+                     .dtcPixelVarReciChn1 = 0.017507004f,
+                     .dtcPixelVarReciChn2 = 0.017429193f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 1,
+                         .leftPaddingSize = 10,
+                         .rightPaddingSize = 10,
+                         .topPaddingSize = 5,
+                         .bottomPaddingSize = 5,
+                         .padValue = 10.5f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1220,8 +1089,8 @@ TEST_F(AippTiling, aipp_tiling_padding_test_5)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_10.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_10.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 288, 288}, {1, 3, 288, 288}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
@@ -1237,56 +1106,43 @@ TEST_F(AippTiling, aipp_tiling_padding_test_5)
         .outputSizeW = 288,
         .outputSizeH = 288,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0,
-            .cscMatrix11 = 256,
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 256,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0,
-            .cropStartPosH = 0,
-            .cropStartPosW = 0,
-            .cropSizeH = 224,
-            .cropSizeW = 224
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 128,
-            .dtcPixelMeanChn1 = 128,
-            .dtcPixelMeanChn2 = 128,
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0,
-            .dtcPixelMinChn1 = 0,
-            .dtcPixelMinChn2 = 0,
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 0.00781f,
-            .dtcPixelVarReciChn1 = 0.00781f,
-            .dtcPixelVarReciChn2 = 0.00781f,
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 1,
-            .leftPaddingSize = 32,
-            .rightPaddingSize = 32,
-            .topPaddingSize = 32,
-            .bottomPaddingSize = 32,
-            .padValue = 255.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 224, .cropSizeW = 224},
+        .dtcParam = {.dtcPixelMeanChn0 = 128,
+                     .dtcPixelMeanChn1 = 128,
+                     .dtcPixelMeanChn2 = 128,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 0.00781f,
+                     .dtcPixelVarReciChn1 = 0.00781f,
+                     .dtcPixelVarReciChn2 = 0.00781f,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 1,
+                         .leftPaddingSize = 32,
+                         .rightPaddingSize = 32,
+                         .topPaddingSize = 32,
+                         .bottomPaddingSize = 32,
+                         .padValue = 255.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1294,16 +1150,16 @@ TEST_F(AippTiling, aipp_tiling_padding_test_5)
 TEST_F(AippTiling, aipp_tiling_padding_test_6)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 100, 100}, {1, 3, 100, 100}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
         {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8", "padding":"aaa"})"))},
+                                         Ops::Cv::AnyValue::CreateFrom<string>(
+                                             R"({"aipp_mode":"static","input_format":"RGB888_U8", "padding":"aaa"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1311,16 +1167,17 @@ TEST_F(AippTiling, aipp_tiling_padding_test_6)
 TEST_F(AippTiling, aipp_tiling_padding_test_7)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 100, 100}, {1, 3, 100, 100}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8","padding":"true","left_padding_size":"33"})"))},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(
+                R"({"aipp_mode":"static","input_format":"RGB888_U8","padding":"true","left_padding_size":"33"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1328,16 +1185,17 @@ TEST_F(AippTiling, aipp_tiling_padding_test_7)
 TEST_F(AippTiling, aipp_tiling_padding_test_8)
 {
     AippCompileInfo compileInfo = {56, 253952};
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 100, 100}, {1, 3, 100, 100}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
-        {gert::TilingContextPara::OpAttr("aipp_config_path",
-        Ops::Cv::AnyValue::CreateFrom<string>\
-        (R"({"aipp_mode":"static","input_format":"RGB888_U8","padding":"true","left_padding_size":"10","padding_value":"65506"})"))},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(
+                R"({"aipp_mode":"static","input_format":"RGB888_U8","padding":"true","left_padding_size":"10","padding_value":"65506"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1348,14 +1206,14 @@ TEST_F(AippTiling, aipp_tiling_padding_test_9)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_11.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_11.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1367,15 +1225,15 @@ TEST_F(AippTiling, aipp_tiling_csc_test_12)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_12.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_12.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_YUV_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 1,  // YUV420SP_U8
+        .imageFormat = 1, // YUV420SP_U8
         .outputFormat = 1,
         .batchNum = 1,
         .channelNum = 3,
@@ -1384,56 +1242,43 @@ TEST_F(AippTiling, aipp_tiling_csc_test_12)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0,
-            .rbuvSwapSwitch = 0,
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256,
-            .cscMatrix01 = 0,
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0,
-            .cscMatrix11 = 256,
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0,
-            .cscMatrix21 = 0,
-            .cscMatrix22 = 256,
-            .outBias0 = 0,
-            .outBias1 = 0,
-            .outBias2 = 0,
-            .inBias0 = 0,
-            .inBias1 = 0,
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1445,27 +1290,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_13)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_13.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_13.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_YUV_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 1, .outputFormat = 1, .batchNum = 1, .channelNum = 3,
-        .inputSizeW = 1920, .inputSizeH = 1080, .outputSizeW = 1920, .outputSizeH = 1080, .srcChannelOffset = 0,
-        .cscParam = {.cscSwitch = 0, .rbuvSwapSwitch = 1, .axSwapSwitch = 0,
-                     .cscMatrix00 = 256, .cscMatrix01 = 0, .cscMatrix02 = 0,
-                     .cscMatrix10 = 0, .cscMatrix11 = 0, .cscMatrix12 = 256,
-                     .cscMatrix20 = 0, .cscMatrix21 = 256, .cscMatrix22 = 0,
-                     .outBias0 = 0, .outBias1 = 0, .outBias2 = 0, .inBias0 = 0, .inBias1 = 0, .inBias2 = 0},
+        .imageFormat = 1,
+        .outputFormat = 1,
+        .batchNum = 1,
+        .channelNum = 3,
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
+        .srcChannelOffset = 0,
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 1,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 0,
+                     .cscMatrix12 = 256,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 256,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
         .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
-        .dtcParam = {.dtcPixelMeanChn0 = 0, .dtcPixelMeanChn1 = 0, .dtcPixelMeanChn2 = 0, .dtcPixelMeanChn3 = 0,
-                     .dtcPixelMinChn0 = 0, .dtcPixelMinChn1 = 0, .dtcPixelMinChn2 = 0, .dtcPixelMinChn3 = 0,
-                     .dtcPixelVarReciChn0 = 1, .dtcPixelVarReciChn1 = 1, .dtcPixelVarReciChn2 = 1, .dtcPixelVarReciChn3 = 1},
-        .paddingParam = {.paddingSwitch = 0, .leftPaddingSize = 0, .rightPaddingSize = 0, .topPaddingSize = 0, .bottomPaddingSize = 0, .padValue = 0.0f}
-    };
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1477,73 +1355,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_14)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_14.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_14.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 5, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 5,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 3,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256, 
-            .cscMatrix01 = 0, 
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 256, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 256,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1555,71 +1420,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_15)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_15.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_15.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 5, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 5,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 3,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 77, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 29,
-            .cscMatrix10 = 128, 
-            .cscMatrix11 = -107, 
-            .cscMatrix12 = -21,
-            .cscMatrix20 = -43, 
-            .cscMatrix21 = -85, 
-            .cscMatrix22 = 128,
-            .outBias0 = 0, 
-            .outBias1 = 128, 
-            .outBias2 = 128, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0},
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920},
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 77,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 29,
+                     .cscMatrix10 = 128,
+                     .cscMatrix11 = -107,
+                     .cscMatrix12 = -21,
+                     .cscMatrix20 = -43,
+                     .cscMatrix21 = -85,
+                     .cscMatrix22 = 128,
+                     .outBias0 = 0,
+                     .outBias1 = 128,
+                     .outBias2 = 128,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1631,73 +1485,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_16)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_16.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_16.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 5, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 5,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 3,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0, 
-            .rbuvSwapSwitch = 1, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 0, 
-            .cscMatrix01 = 0, 
-            .cscMatrix02 = 256,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 256, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 256, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 0,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 1,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 0,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 256,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 256,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1709,73 +1550,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_17)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_17.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_17.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 3}, {1, 1080, 1920, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 5, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 5,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 3,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256, 
-            .cscMatrix01 = 0, 
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 256, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 256,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1787,73 +1615,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_18)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_18.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_18.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 2,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 4,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 1,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 1,
-            .cscMatrix00 = 77, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 29,
-            .cscMatrix10 = -43, 
-            .cscMatrix11 = -85, 
-            .cscMatrix12 = 128,
-            .cscMatrix20 = 128, 
-            .cscMatrix21 = -107, 
-            .cscMatrix22 = -21,
-            .outBias0 = 0, 
-            .outBias1 = 128, 
-            .outBias2 = 128, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 1,
+                     .cscMatrix00 = 77,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 29,
+                     .cscMatrix10 = -43,
+                     .cscMatrix11 = -85,
+                     .cscMatrix12 = 128,
+                     .cscMatrix20 = 128,
+                     .cscMatrix21 = -107,
+                     .cscMatrix22 = -21,
+                     .outBias0 = 0,
+                     .outBias1 = 128,
+                     .outBias2 = 128,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1865,73 +1680,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_19)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_19.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_19.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 1080, 1920}, {1, 3, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_YUV;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 2,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 4,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 1,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 1,
-            .cscMatrix00 = 77, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 29,
-            .cscMatrix10 = 128, 
-            .cscMatrix11 = -107, 
-            .cscMatrix12 = -21,
-            .cscMatrix20 = -43, 
-            .cscMatrix21 = -85, 
-            .cscMatrix22 = 128,
-            .outBias0 = 0, 
-            .outBias1 = 128, 
-            .outBias2 = 128, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 1,
+                     .cscMatrix00 = 77,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 29,
+                     .cscMatrix10 = 128,
+                     .cscMatrix11 = -107,
+                     .cscMatrix12 = -21,
+                     .cscMatrix20 = -43,
+                     .cscMatrix21 = -85,
+                     .cscMatrix22 = 128,
+                     .outBias0 = 0,
+                     .outBias1 = 128,
+                     .outBias2 = 128,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -1943,73 +1745,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_20)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_20.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_20.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 1, 1080, 1920}, {1, 1, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 2,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 4,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 1,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 1,
-            .cscMatrix00 = 76, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 30,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 0, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 0,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 1,
+                     .cscMatrix00 = 76,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 30,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 0,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2021,73 +1810,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_21)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_21.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_21.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 1, 1080, 1920}, {1, 1, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 2,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 4,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 1,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 1, 
-            .axSwapSwitch = 1,
-            .cscMatrix00 = 30, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 76,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 0, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 0,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 1,
+                     .axSwapSwitch = 1,
+                     .cscMatrix00 = 30,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 76,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 0,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2099,73 +1875,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_22)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_22.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_22.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 1, 1080, 1920}, {1, 1, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 2,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 4,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 76, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 30,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 0, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 0,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 76,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 30,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 0,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2177,73 +1940,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_23)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_23.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_23.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 1, 1080, 1920}, {1, 1, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 2, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 2,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 4,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 1, 
-            .rbuvSwapSwitch = 1, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 30, 
-            .cscMatrix01 = 150, 
-            .cscMatrix02 = 76,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 0, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 0,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 1,
+                     .rbuvSwapSwitch = 1,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 30,
+                     .cscMatrix01 = 150,
+                     .cscMatrix02 = 76,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 0,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 0,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2255,73 +2005,60 @@ TEST_F(AippTiling, aipp_tiling_csc_test_24)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_24.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_24.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 1080, 1920, 1}, {1, 1080, 1920, 1}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 1}, {1, 1080, 1920, 1}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 1, 1080, 1920}, {1, 1, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_YUV_TO_GRAY;
     Aipp_Kernel::AippTilingData expectTiling = {
-        .imageFormat = 10, 
-        .outputFormat = 1, 
-        .batchNum = 1, 
+        .imageFormat = 10,
+        .outputFormat = 1,
+        .batchNum = 1,
         .channelNum = 1,
-        .inputSizeW = 1920, 
-        .inputSizeH = 1080, 
-        .outputSizeW = 1920, 
-        .outputSizeH = 1080, 
+        .inputSizeW = 1920,
+        .inputSizeH = 1080,
+        .outputSizeW = 1920,
+        .outputSizeH = 1080,
         .srcChannelOffset = 0,
-        .cscParam = {
-            .cscSwitch = 0, 
-            .rbuvSwapSwitch = 0, 
-            .axSwapSwitch = 0,
-            .cscMatrix00 = 256, 
-            .cscMatrix01 = 0, 
-            .cscMatrix02 = 0,
-            .cscMatrix10 = 0, 
-            .cscMatrix11 = 256, 
-            .cscMatrix12 = 0,
-            .cscMatrix20 = 0, 
-            .cscMatrix21 = 0, 
-            .cscMatrix22 = 256,
-            .outBias0 = 0, 
-            .outBias1 = 0, 
-            .outBias2 = 0, 
-            .inBias0 = 0, 
-            .inBias1 = 0, 
-            .inBias2 = 0
-        },
-        .cropParam = {
-            .cropSwitch = 0, 
-            .cropStartPosH = 0, 
-            .cropStartPosW = 0, 
-            .cropSizeH = 1080, 
-            .cropSizeW = 1920
-        },
-        .dtcParam = {
-            .dtcPixelMeanChn0 = 0, 
-            .dtcPixelMeanChn1 = 0, 
-            .dtcPixelMeanChn2 = 0, 
-            .dtcPixelMeanChn3 = 0,
-            .dtcPixelMinChn0 = 0, 
-            .dtcPixelMinChn1 = 0, 
-            .dtcPixelMinChn2 = 0, 
-            .dtcPixelMinChn3 = 0,
-            .dtcPixelVarReciChn0 = 1, 
-            .dtcPixelVarReciChn1 = 1, 
-            .dtcPixelVarReciChn2 = 1, 
-            .dtcPixelVarReciChn3 = 1
-        },
-        .paddingParam = {
-            .paddingSwitch = 0, 
-            .leftPaddingSize = 0, 
-            .rightPaddingSize = 0, 
-            .topPaddingSize = 0, 
-            .bottomPaddingSize = 0, 
-            .padValue = 0.0f
-        }
-    };
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 256,
+                     .cscMatrix01 = 0,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 0,
+                     .cscMatrix11 = 256,
+                     .cscMatrix12 = 0,
+                     .cscMatrix20 = 0,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 256,
+                     .outBias0 = 0,
+                     .outBias1 = 0,
+                     .outBias2 = 0,
+                     .inBias0 = 0,
+                     .inBias1 = 0,
+                     .inBias2 = 0},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 1080, .cropSizeW = 1920},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2333,14 +2070,14 @@ TEST_F(AippTiling, aipp_tiling_invaild_config_path_1)
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_11.cfg " + filePath;
     system(command.c_str());
     std::string filePathNew = "../aipp_ut_test_11.cfg";
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePathNew))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2352,14 +2089,14 @@ TEST_F(AippTiling, aipp_tiling_invaild_config_path_2)
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_11.cfg " + filePath;
     system(command.c_str());
     std::string filePathNew = std::filesystem::current_path() / "aipp_ut_test_NA.cfg";
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePathNew))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2370,14 +2107,14 @@ TEST_F(AippTiling, aipp_tiling_invaild_config_item_1)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_25.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_25.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2388,14 +2125,14 @@ TEST_F(AippTiling, aipp_tiling_invaild_config_item_2)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_26.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_26.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
@@ -2406,14 +2143,14 @@ TEST_F(AippTiling, aipp_tiling_invaild_aipp_mode)
     std::string filePath = std::filesystem::current_path() / "aipp_ut_test_27.cfg";
     std::string command = "cp ../../../../image/aipp/tests/ut/op_host/aipp_ut_test_27.cfg " + filePath;
     system(command.c_str());
-    gert::TilingContextPara tilingContextPara("Aipp",
-        {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 4096, 4096, 3}, {1, 4096, 4096, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 4096, 1144}, {1, 3, 4096, 1144}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
         {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(filePath))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
-    Aipp_Kernel::AippTilingData expectTiling = {};  // 不检查
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }

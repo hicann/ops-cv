@@ -18,9 +18,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor* UpsampleNearestExact3dGradNcdhw(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclFloatArray* scales,
-    aclOpExecutor* executor);
+const aclTensor* UpsampleNearestExact3dGradNcdhw(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                 const aclIntArray* inputSize, const aclFloatArray* scales,
+                                                 aclOpExecutor* executor);
 
 }
 

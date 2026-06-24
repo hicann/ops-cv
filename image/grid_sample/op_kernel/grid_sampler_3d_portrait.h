@@ -15,7 +15,7 @@
 #ifndef GIRD_SAMPLER_3D_PORTRAIT
 #define GIRD_SAMPLER_3D_PORTRAIT
 
-#if ASC_DEVKIT_MAJOR >=9
+#if ASC_DEVKIT_MAJOR >= 9
 #include "kernel_vec_intf.h"
 #else
 #include "kernel_operator.h"
@@ -28,48 +28,52 @@ template <typename T>
 class GridSampler3DPortrait {
 public:
     __aicore__ inline GridSampler3DPortrait(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace,
+                                const GridSampleTilingData* tilingData, TPipe pipeIn);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void InitLocalVars();
-    __aicore__ inline void ParseTilingData(const GridSampleTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const GridSampleTilingData* tilingData);
     __aicore__ inline void PerLoopCompute(int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems);
 
     __aicore__ inline void ComputeWeightMul(LocalTensor<float> weightXBasic, LocalTensor<float> weightTempUb);
-    __aicore__ inline void ClipCoordinates(
-        int32_t offsetX, int32_t offsetY, int32_t offsetZ, LocalTensor<int32_t> coorUb, LocalTensor<uint8_t> wMaskUb);
+    __aicore__ inline void ClipCoordinates(int32_t offsetX, int32_t offsetY, int32_t offsetZ,
+                                           LocalTensor<int32_t> coorUb, LocalTensor<uint8_t> wMaskUb);
     __aicore__ inline void CoordinatesFrameRange(LocalTensor<int32_t> iIntUb, int32_t upBound);
     __aicore__ inline void CoordinatesGetMaskWithRange(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
-        LocalTensor<float> iZFpUb, LocalTensor<uint8_t> wMaskUb, LocalTensor<uint8_t> maskTmpUb);
+                                                       LocalTensor<float> iZFpUb, LocalTensor<uint8_t> wMaskUb,
+                                                       LocalTensor<uint8_t> maskTmpUb);
     __aicore__ inline void CoordinatesSelectScalar(LocalTensor<float> iFpUb, LocalTensor<float> oFpUb,
-        LocalTensor<uint8_t> maskUb, const float scalarVal, const uint32_t calNum);
-    __aicore__ inline void CoordinatesSelectTensor(
-        LocalTensor<float> src0, LocalTensor<float> src1, LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb);
+                                                   LocalTensor<uint8_t> maskUb, const float scalarVal,
+                                                   const uint32_t calNum);
+    __aicore__ inline void CoordinatesSelectTensor(LocalTensor<float> src0, LocalTensor<float> src1,
+                                                   LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb);
     __aicore__ inline void ComputeMask(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb,
-        LocalTensor<uint8_t> maskUb, LocalTensor<float> tmpUb);
+                                       LocalTensor<uint8_t> maskUb, LocalTensor<float> tmpUb);
     __aicore__ inline void Clip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb);
     __aicore__ inline void BorderClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb);
     __aicore__ inline void ReflectClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb);
-    __aicore__ inline void ReflectCoordinatesBefore(
-        LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb, float negMinS, float spanS);
+    __aicore__ inline void ReflectCoordinatesBefore(LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb,
+                                                    float negMinS, float spanS);
     __aicore__ inline void ReflectCoordinatesGeneral(LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb,
-        LocalTensor<uint8_t> maskUb, const int64_t twiceLow, const int64_t twiceHigh);
+                                                     LocalTensor<uint8_t> maskUb, const int64_t twiceLow,
+                                                     const int64_t twiceHigh);
 
-    __aicore__ inline void GatherPtsFp32(
-        int32_t loopIdx, int64_t gmOutOffset, int32_t calDHWElems, LocalTensor<float> weightUb, bool isAutomicAdd);
-    __aicore__ inline void GatherPtsFp16(
-        int32_t loopIdx, int32_t cIdx, int32_t calDHWElems, LocalTensor<float> weightUb, bool isAutomicAdd);
+    __aicore__ inline void GatherPtsFp32(int32_t loopIdx, int64_t gmOutOffset, int32_t calDHWElems,
+                                         LocalTensor<float> weightUb, bool isAutomicAdd);
+    __aicore__ inline void GatherPtsFp16(int32_t loopIdx, int32_t cIdx, int32_t calDHWElems,
+                                         LocalTensor<float> weightUb, bool isAutomicAdd);
     __aicore__ inline void MvGatherRange(int32_t loopIdx, LocalTensor<int32_t> coorUb32I,
-        LocalTensor<int32_t> coorTempUb32I, int32_t calDHWElems, int32_t inputElems);
-    __aicore__ inline void PointBilinear(
-        int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems, LocalTensor<float> weightUb, bool isAutomicAdd);
+                                         LocalTensor<int32_t> coorTempUb32I, int32_t calDHWElems, int32_t inputElems);
+    __aicore__ inline void PointBilinear(int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems, LocalTensor<float> weightUb,
+                                         bool isAutomicAdd);
 
-    __aicore__ inline void GatherGridAndClip(
-        int64_t gridGmOffset, int32_t calDHWElems, LocalTensor<float> gridFp32Local);
+    __aicore__ inline void GatherGridAndClip(int64_t gridGmOffset, int32_t calDHWElems,
+                                             LocalTensor<float> gridFp32Local);
     __aicore__ inline void ComputeWeightAndBilinear(int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems,
-        LocalTensor<float> gridFp32Local, LocalTensor<float> inputX1FpLocal);
+                                                    LocalTensor<float> gridFp32Local,
+                                                    LocalTensor<float> inputX1FpLocal);
     __aicore__ inline void CopyOutFp16(int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems);
 
 private:
@@ -212,7 +216,7 @@ __aicore__ inline void GridSampler3DPortrait<T>::InitLocalVars()
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::ParseTilingData(const GridSampleTilingData *tilingData)
+__aicore__ inline void GridSampler3DPortrait<T>::ParseTilingData(const GridSampleTilingData* tilingData)
 {
     coreNum_ = tilingData->coreNumVar;
     inputN_ = tilingData->inN;
@@ -232,9 +236,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::ParseTilingData(const GridSampl
     InitLocalVars();
 
     gridDHW_ = outputD_ * outputH_ * outputW_;
-    preNUbLoop_ = (gridDHW_ + CAL_D_H_W_BLOCK - 1) / CAL_D_H_W_BLOCK;  // 每个N的grid需要循环
-    lastLoopHW_ = gridDHW_ - CAL_D_H_W_BLOCK * (preNUbLoop_ - 1);      // 最后一个尾块的grid
-    totalUbLoop_ = preNUbLoop_ * inputN_;                              // 总共的grid循环次数
+    preNUbLoop_ = (gridDHW_ + CAL_D_H_W_BLOCK - 1) / CAL_D_H_W_BLOCK; // 每个N的grid需要循环
+    lastLoopHW_ = gridDHW_ - CAL_D_H_W_BLOCK * (preNUbLoop_ - 1);     // 最后一个尾块的grid
+    totalUbLoop_ = preNUbLoop_ * inputN_;                             // 总共的grid循环次数
     // 每个核需要循环处理grid的次数 (总共的grid循环次数/核数并向上取整)
     preCoreLoop_ = (totalUbLoop_ + needCoreNum_ - 1) / needCoreNum_;
     // 实际需要的核数
@@ -255,8 +259,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::ParseTilingData(const GridSampl
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::Init(
-    GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace, const GridSampleTilingData *tilingData, TPipe pipeIn)
+__aicore__ inline void GridSampler3DPortrait<T>::Init(GM_ADDR input, GM_ADDR gird, GM_ADDR output, GM_ADDR workspace,
+                                                      const GridSampleTilingData* tilingData, TPipe pipeIn)
 {
     pipe = pipeIn;
     blockIDX = GetBlockIdx();
@@ -264,10 +268,10 @@ __aicore__ inline void GridSampler3DPortrait<T>::Init(
     // 初始化tiling
     ParseTilingData(tilingData);
 
-    gmInput_.SetGlobalBuffer((__gm__ T *)input);
-    gmGrid_.SetGlobalBuffer((__gm__ T *)gird);
-    gmWorkspace_.SetGlobalBuffer((__gm__ float *)workspace);
-    gmOutput_.SetGlobalBuffer((__gm__ T *)output);
+    gmInput_.SetGlobalBuffer((__gm__ T*)input);
+    gmGrid_.SetGlobalBuffer((__gm__ T*)gird);
+    gmWorkspace_.SetGlobalBuffer((__gm__ float*)workspace);
+    gmOutput_.SetGlobalBuffer((__gm__ T*)output);
 
     // buffer申请初始化，offset用于空间复用，另外算子中的Select方法还要预留8K缓存(必要)
     // 0 ~ 32byte 用于临界值取值
@@ -302,17 +306,17 @@ __aicore__ inline void GridSampler3DPortrait<T>::Init(
         }
     }
 
-    pipe.InitBuffer(maskBuf_, 640);        // 640B
-    pipe.InitBuffer(gridMaskBuf_, 96);     // 96B
-    pipe.InitBuffer(weightMaskBuf_, 128);  // 128B
+    pipe.InitBuffer(maskBuf_, 640);       // 640B
+    pipe.InitBuffer(gridMaskBuf_, 96);    // 96B
+    pipe.InitBuffer(weightMaskBuf_, 128); // 128B
 
     xLocal_ = xBuf_.AllocTensor<T>();
     gridMaskLocal_ = gridMaskBuf_.AllocTensor<uint32_t>();
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::ComputeWeightMul(
-    LocalTensor<float> weightXBasic, LocalTensor<float> weightTempUb)
+__aicore__ inline void GridSampler3DPortrait<T>::ComputeWeightMul(LocalTensor<float> weightXBasic,
+                                                                  LocalTensor<float> weightTempUb)
 {
     // weightXBasic是000或100
     auto weightx01 = weightXBasic[CAL_D_H_W_BLOCK];
@@ -336,8 +340,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::ComputeWeightMul(
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::ClipCoordinates(
-    int32_t offsetX, int32_t offsetY, int32_t offsetZ, LocalTensor<int32_t> coorUb, LocalTensor<uint8_t> wMaskUb)
+__aicore__ inline void GridSampler3DPortrait<T>::ClipCoordinates(int32_t offsetX, int32_t offsetY, int32_t offsetZ,
+                                                                 LocalTensor<int32_t> coorUb,
+                                                                 LocalTensor<uint8_t> wMaskUb)
 {
     LocalTensor<float> inputFpUb = inputFpBuf_.Get<float>();
     LocalTensor<int32_t> inputIntUb = inputIntBuf_.Get<int32_t>();
@@ -366,7 +371,7 @@ __aicore__ inline void GridSampler3DPortrait<T>::ClipCoordinates(
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 5);
     CoordinatesGetMaskWithRange(iXFpUb, iYFpUb, iZFpUb, wMaskUb, maskUb);
 
-    int32_t maskNum = (MASK_UB_SIZE + 1) / 2;  // 除2数据量按照uint16类型折半
+    int32_t maskNum = (MASK_UB_SIZE + 1) / 2; // 除2数据量按照uint16类型折半
     auto maskXUbTmp = wMaskUb.ReinterpretCast<uint16_t>();
     auto maskYUbTmp = maskUb.ReinterpretCast<uint16_t>();
     auto maskZUbTmp = maskUb[MASK_UB_SIZE].ReinterpretCast<uint16_t>();
@@ -391,8 +396,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::ClipCoordinates(
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::Clip(
-    LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb)
+__aicore__ inline void GridSampler3DPortrait<T>::Clip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
+                                                      LocalTensor<float> iZFpUb)
 {
     if (paddingMode_ == PADDING_MODE_BORDER) {
         BorderClip(iXFpUb, iYFpUb, iZFpUb);
@@ -412,7 +417,10 @@ __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesFrameRange(LocalTens
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesGetMaskWithRange(LocalTensor<float> iXFpUb,
-    LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb, LocalTensor<uint8_t> wMaskUb, LocalTensor<uint8_t> maskTmpUb)
+                                                                             LocalTensor<float> iYFpUb,
+                                                                             LocalTensor<float> iZFpUb,
+                                                                             LocalTensor<uint8_t> wMaskUb,
+                                                                             LocalTensor<uint8_t> maskTmpUb)
 {
     LocalTensor<uint8_t> maskXUb = wMaskUb;
     LocalTensor<uint8_t> maskYUb = maskTmpUb;
@@ -429,7 +437,7 @@ __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesGetMaskWithRange(Loc
 
     PipeBarrier<PIPE_V>();
 
-    int32_t maskNumVal = (MASK_UB_SIZE + 1) / 2;  // 除2数据量按照uint16类型折半
+    int32_t maskNumVal = (MASK_UB_SIZE + 1) / 2; // 除2数据量按照uint16类型折半
     auto maskTmpXUbTmpVal = maskTmpXUb.ReinterpretCast<uint16_t>();
     auto maskXUbTmpVal = maskXUb.ReinterpretCast<uint16_t>();
     auto maskTmpYUbTmpVal = maskTmpYUb.ReinterpretCast<uint16_t>();
@@ -447,7 +455,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesGetMaskWithRange(Loc
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesSelectScalar(LocalTensor<float> iFpUb,
-    LocalTensor<float> oFpUb, LocalTensor<uint8_t> maskUb, const float scalarVal, const uint32_t calNum)
+                                                                         LocalTensor<float> oFpUb,
+                                                                         LocalTensor<uint8_t> maskUb,
+                                                                         const float scalarVal, const uint32_t calNum)
 {
     BinaryRepeatParams repParams;
     repParams.src0BlkStride = B32_BLOCK_STRIDE;
@@ -462,8 +472,10 @@ __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesSelectScalar(LocalTe
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::CoordinatesSelectTensor(
-    LocalTensor<float> src0, LocalTensor<float> src1, LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb)
+__aicore__ inline void GridSampler3DPortrait<T>::CoordinatesSelectTensor(LocalTensor<float> src0,
+                                                                         LocalTensor<float> src1,
+                                                                         LocalTensor<float> coorUb,
+                                                                         LocalTensor<uint8_t> maskUb)
 {
     BinaryRepeatParams repParamsVal;
     repParamsVal.src0BlkStride = B32_BLOCK_STRIDE;
@@ -479,7 +491,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::CoordinatesSelectTensor(
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::ComputeMask(LocalTensor<float> iXFpUbVal, LocalTensor<float> iYFpUbVal,
-    LocalTensor<float> iZFpUbVal, LocalTensor<uint8_t> maskUbVal, LocalTensor<float> tmpUbVal)
+                                                             LocalTensor<float> iZFpUbVal,
+                                                             LocalTensor<uint8_t> maskUbVal,
+                                                             LocalTensor<float> tmpUbVal)
 {
     Muls(tmpUbVal, iXFpUbVal, (float)(0.0), CAL_D_H_W_BLOCK);
     PipeBarrier<PIPE_V>();
@@ -502,8 +516,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::ComputeMask(LocalTensor<float> 
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::BorderClip(
-    LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb)
+__aicore__ inline void GridSampler3DPortrait<T>::BorderClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
+                                                            LocalTensor<float> iZFpUb)
 {
     Mins(iXFpUb, iXFpUb, (float)(inputW_ - 1), CAL_D_H_W_BLOCK);
     Mins(iYFpUb, iYFpUb, (float)(inputH_ - 1), CAL_D_H_W_BLOCK);
@@ -520,8 +534,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::BorderClip(
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::ReflectClip(
-    LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb, LocalTensor<float> iZFpUb)
+__aicore__ inline void GridSampler3DPortrait<T>::ReflectClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb,
+                                                             LocalTensor<float> iZFpUb)
 {
     LocalTensor<uint8_t> maskUb = maskBuf_.Get<uint8_t>(MASK_UB_SIZE * 3);
 
@@ -555,8 +569,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::ReflectClip(
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesBefore(
-    LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb, float negMinS, float spanS)
+__aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesBefore(LocalTensor<float> iFpUb,
+                                                                          LocalTensor<float> coorSubUb, float negMinS,
+                                                                          float spanS)
 {
     LocalTensor<float> extraFpUbVal = xBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK, extraBufOffset_);
     LocalTensor<int32_t> tmpIntUbVal = intTmpBuf_.Get<int32_t>(CAL_D_H_W_BLOCK);
@@ -589,7 +604,10 @@ __aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesBefore(
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesGeneral(LocalTensor<float> iFpUb,
-    LocalTensor<float> coorSubUb, LocalTensor<uint8_t> maskUb, const int64_t twiceLow, const int64_t twiceHigh)
+                                                                           LocalTensor<float> coorSubUb,
+                                                                           LocalTensor<uint8_t> maskUb,
+                                                                           const int64_t twiceLow,
+                                                                           const int64_t twiceHigh)
 {
     LocalTensor<float> fmodFpUb = xBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK, modBufOffset_);
     LocalTensor<float> extraFpUb = xBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK, extraBufOffset_);
@@ -635,8 +653,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::ReflectCoordinatesGeneral(Local
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::GatherPtsFp32(
-    int32_t loopIdx, int64_t gmOutOffset, int32_t calDHWElems, LocalTensor<float> weightUb, bool isAutomicAdd)
+__aicore__ inline void GridSampler3DPortrait<T>::GatherPtsFp32(int32_t loopIdx, int64_t gmOutOffset,
+                                                               int32_t calDHWElems, LocalTensor<float> weightUb,
+                                                               bool isAutomicAdd)
 {
     event_t eventIdVToMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
     event_t eventIdMte3ToMte2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
@@ -658,12 +677,12 @@ __aicore__ inline void GridSampler3DPortrait<T>::GatherPtsFp32(
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::GatherPtsFp16(
-    int32_t loopIdx, int32_t cIdx, int32_t calDHWElems, LocalTensor<float> weightUb, bool isAutomicAdd)
+__aicore__ inline void GridSampler3DPortrait<T>::GatherPtsFp16(int32_t loopIdx, int32_t cIdx, int32_t calDHWElems,
+                                                               LocalTensor<float> weightUb, bool isAutomicAdd)
 {
     LocalTensor<float> outValueUb = outValueBuf_.Get<float>();
-    LocalTensor<float> outValueUbFp32 =
-        outTmpBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK, CAL_D_H_W_BLOCK * sizeof(half));
+    LocalTensor<float> outValueUbFp32 = outTmpBuf_.GetWithOffset<float>(CAL_D_H_W_BLOCK,
+                                                                        CAL_D_H_W_BLOCK * sizeof(half));
     LocalTensor<half> outValueTempUb = outTmpBuf_.Get<half>(CAL_D_H_W_BLOCK);
     LocalTensor<uint32_t> coorTempUb = coorTmpBuf_.Get<uint32_t>();
 
@@ -685,7 +704,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::GatherPtsFp16(
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::MvGatherRange(int32_t loopIdx, LocalTensor<int32_t> coorUb32I,
-    LocalTensor<int32_t> coorTempUb32I, int32_t calDHWElems, int32_t inputElems)
+                                                               LocalTensor<int32_t> coorTempUb32I, int32_t calDHWElems,
+                                                               int32_t inputElems)
 {
     // 挪到一块取值区间内，超出的临界值都取0
     if (loopIdx != 0) {
@@ -700,8 +720,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::MvGatherRange(int32_t loopIdx, 
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::PointBilinear(
-    int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems, LocalTensor<float> weightUb, bool isAutomicAdd)
+__aicore__ inline void GridSampler3DPortrait<T>::PointBilinear(int32_t nIdx, int32_t dhwIdx, int32_t calDHWElems,
+                                                               LocalTensor<float> weightUb, bool isAutomicAdd)
 {
     LocalTensor<int32_t> coorUb32I = coorBuf_.Get<int32_t>(CAL_D_H_W_BLOCK);
     auto coorUbF32 = coorUb32I.ReinterpretCast<float>();
@@ -770,7 +790,9 @@ __aicore__ inline void GridSampler3DPortrait<T>::CopyOutFp16(int32_t nIdx, int32
 
 template <typename T>
 __aicore__ inline void GridSampler3DPortrait<T>::ComputeWeightAndBilinear(int32_t nIdx, int32_t dhwIdx,
-    int32_t calDHWElems, LocalTensor<float> gridFp32Local, LocalTensor<float> inputX1FpLocal)
+                                                                          int32_t calDHWElems,
+                                                                          LocalTensor<float> gridFp32Local,
+                                                                          LocalTensor<float> inputX1FpLocal)
 {
     auto inputY1FpLocal = inputX1FpLocal[CAL_D_H_W_BLOCK];
     auto inputX2FpLocal = inputX1FpLocal[CAL_D_H_W_BLOCK * DIMS];
@@ -820,8 +842,8 @@ __aicore__ inline void GridSampler3DPortrait<T>::ComputeWeightAndBilinear(int32_
 }
 
 template <typename T>
-__aicore__ inline void GridSampler3DPortrait<T>::GatherGridAndClip(
-    int64_t gridGmOffset, int32_t calDHWElems, LocalTensor<float> gridFp32Local)
+__aicore__ inline void GridSampler3DPortrait<T>::GatherGridAndClip(int64_t gridGmOffset, int32_t calDHWElems,
+                                                                   LocalTensor<float> gridFp32Local)
 {
     event_t eventIdMte2ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
     int32_t calGridElems = calDHWElems * DIMS;
@@ -847,29 +869,14 @@ __aicore__ inline void GridSampler3DPortrait<T>::GatherGridAndClip(
     LocalTensor<float> inputYFpLocal = gridFp32Local[CAL_D_H_W_BLOCK];
     LocalTensor<float> inputZFpLocal = gridFp32Local[CAL_D_H_W_BLOCK * 2];
     PipeBarrier<PIPE_V>();
-    GatherMask(inputZFpLocal,
-        inputXYZUb,
-        gridMaskLocal_,
-        true,
-        mask,
-        {1, repeatTimes, static_cast<uint16_t>(DIMS), 0},
-        rsvdCnt);
+    GatherMask(inputZFpLocal, inputXYZUb, gridMaskLocal_, true, mask, {1, repeatTimes, static_cast<uint16_t>(DIMS), 0},
+               rsvdCnt);
     PipeBarrier<PIPE_V>();
-    GatherMask(inputYFpLocal,
-        inputXYZUb,
-        gridMaskLocal_[8],
-        true,
-        mask,
-        {1, repeatTimes, static_cast<uint16_t>(DIMS), 0},
-        rsvdCnt);
+    GatherMask(inputYFpLocal, inputXYZUb, gridMaskLocal_[8], true, mask,
+               {1, repeatTimes, static_cast<uint16_t>(DIMS), 0}, rsvdCnt);
     PipeBarrier<PIPE_V>();
-    GatherMask(inputXFpLocal,
-        inputXYZUb,
-        gridMaskLocal_[16],
-        true,
-        mask,
-        {1, repeatTimes, static_cast<uint16_t>(DIMS), 0},
-        rsvdCnt);
+    GatherMask(inputXFpLocal, inputXYZUb, gridMaskLocal_[16], true, mask,
+               {1, repeatTimes, static_cast<uint16_t>(DIMS), 0}, rsvdCnt);
     PipeBarrier<PIPE_V>();
     if (alignCorners_ == 1) {
         Muls(inputXFpLocal, inputXFpLocal, gridMulBeginX_, CAL_D_H_W_BLOCK);
@@ -976,5 +983,5 @@ __aicore__ inline void GridSampler3DPortrait<T>::Process()
     }
 }
 
-}  // namespace GridSample
+} // namespace GridSample
 #endif

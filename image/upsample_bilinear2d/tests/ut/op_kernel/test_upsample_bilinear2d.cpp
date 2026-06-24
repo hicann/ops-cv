@@ -22,19 +22,13 @@
 #include "tikicpulib.h"
 #include "data_utils.h"
 
-extern "C" __global__ __aicore__ void upsample_bilinear2d(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void upsample_bilinear2d(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
+                                                          GM_ADDR tiling);
 
 class upsample_bilinear2d_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "upsample_bilinear2d_test SetUp\n" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_bilinear2d_test TearDown\n" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "upsample_bilinear2d_test SetUp\n" << std::endl; }
+    static void TearDownTestCase() { std::cout << "upsample_bilinear2d_test TearDown\n" << std::endl; }
 };
 
 TEST_F(upsample_bilinear2d_test, test_case_float_1)
@@ -50,18 +44,18 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t numBlocks = 16;
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* outputsize = (uint8_t*)AscendC::GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
 
     std::string fileName = "./upsample_bilinear2d_data/1001_float32_input_upsample_bilinear2d.bin";
 
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
+    UpsampleBilinear2dTilingData* tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData*>(tiling);
     tilingDatafromBin->align_corners = false;
     tilingDatafromBin->slide_size_w = 128;
     tilingDatafromBin->slide_size_h = 128;
@@ -155,18 +149,17 @@ TEST_F(upsample_bilinear2d_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_bilinear2d_data/1001_float32_output_upsample_bilinear2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float32' '1001'");
 }
-
 
 TEST_F(upsample_bilinear2d_test, test_case_float_2)
 {
@@ -181,18 +174,18 @@ TEST_F(upsample_bilinear2d_test, test_case_float_2)
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t numBlocks = 20;
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* outputsize = (uint8_t*)AscendC::GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
 
     std::string fileName = "./upsample_bilinear2d_data/1002_float16_input_upsample_bilinear2d.bin";
 
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
+    UpsampleBilinear2dTilingData* tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData*>(tiling);
     tilingDatafromBin->align_corners = false;
     tilingDatafromBin->slide_size_w = 128;
     tilingDatafromBin->slide_size_h = 128;
@@ -286,14 +279,14 @@ TEST_F(upsample_bilinear2d_test, test_case_float_2)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_bilinear2d_data/1002_float16_output_upsample_bilinear2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float16' '1002'");
 }
@@ -311,18 +304,18 @@ TEST_F(upsample_bilinear2d_test, test_case_float_3)
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t numBlocks = 20;
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* outputsize = (uint8_t*)AscendC::GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
 
     std::string fileName = "./upsample_bilinear2d_data/1003_float16_input_upsample_bilinear2d.bin";
 
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleBilinear2dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData *>(tiling);
+    UpsampleBilinear2dTilingData* tilingDatafromBin = reinterpret_cast<UpsampleBilinear2dTilingData*>(tiling);
     tilingDatafromBin->align_corners = false;
     tilingDatafromBin->slide_size_w = 128;
     tilingDatafromBin->slide_size_h = 128;
@@ -416,14 +409,14 @@ TEST_F(upsample_bilinear2d_test, test_case_float_3)
 
     ICPU_SET_TILING_KEY(1);
 
-    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_bilinear2d, numBlocks, x, outputsize, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_bilinear2d_data/1003_float16_output_upsample_bilinear2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bilinear2d_data/ && python3 compare_data.py 'float16' '1003'");
 }

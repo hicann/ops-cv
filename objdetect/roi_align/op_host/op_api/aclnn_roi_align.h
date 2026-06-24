@@ -59,4 +59,4 @@ ACLNN_API aclnnStatus aclnnRoiAlign(void* workspace, uint64_t workspaceSize, acl
 }
 #endif
 
-#endif  // OP_API_INC_LEVEL2_ACLNN_ROI_ALIGN_H_
+#endif // OP_API_INC_LEVEL2_ACLNN_ROI_ALIGN_H_

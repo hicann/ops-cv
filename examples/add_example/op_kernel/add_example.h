@@ -27,8 +27,7 @@ using namespace AscendC;
 constexpr int32_t BUFFER_NUM = 2;
 
 template <typename T>
-class AddExample
-{
+class AddExample {
 public:
     __aicore__ inline AddExample(){};
 

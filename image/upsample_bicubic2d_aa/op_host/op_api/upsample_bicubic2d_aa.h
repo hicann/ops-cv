@@ -18,8 +18,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleBicubic2dAA(const aclTensor *x, const aclIntArray *outputSize, const bool alignCorners,
-    const aclTensor *y, const float scalesH, const float scalesW, aclOpExecutor *executor);
+const aclTensor* UpsampleBicubic2dAA(const aclTensor* x, const aclIntArray* outputSize, const bool alignCorners,
+                                     const aclTensor* y, const float scalesH, const float scalesW,
+                                     aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BICUBIC2D_AA_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BICUBIC2D_AA_H_

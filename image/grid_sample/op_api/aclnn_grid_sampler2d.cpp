@@ -49,10 +49,10 @@ static const int64_t AICORE_MAX_SIZE_310P = 20480;
 static const int64_t SUPPORT_CHANNEL_310P = 32;
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
 
-static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
     OP_CHECK_NULL(input, return false);
     OP_CHECK_NULL(grid, return false);
@@ -60,12 +60,12 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
     return true;
 }
 
-static bool CheckRegBaseSuppport(const aclTensor *input, int64_t interpolationMode)
+static bool CheckRegBaseSuppport(const aclTensor* input, int64_t interpolationMode)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_BF16) {
         OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s",
-            op::ToString(input->GetDataType()).GetString());
+                op::ToString(input->GetDataType()).GetString());
         return false;
     }
     bool isRegBaseArch = IsRegBase();
@@ -75,7 +75,7 @@ static bool CheckRegBaseSuppport(const aclTensor *input, int64_t interpolationMo
     return false;
 }
 
-static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
     // 检查input、grid、out的数据类型是否一致
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
@@ -96,25 +96,24 @@ static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
     // 检查interpolationMode 、paddingMode是否在支持范围内
     if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "interpolationMode %ld should be in support list {0(bilinear), 1(nearest), 2(bicubic)}.",
-            interpolationMode);
+                "interpolationMode %ld should be in support list {0(bilinear), 1(nearest), 2(bicubic)}.",
+                interpolationMode);
         return false;
     }
 
     if (paddingMode < PADDING_MODE_MIN_VALUE || paddingMode > PADDING_MODE_MAX_VALUE) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "paddingMode %ld should be in support list {0(zeros), 1(border), 2(reflection)}.",
-            paddingMode);
+                "paddingMode %ld should be in support list {0(zeros), 1(border), 2(reflection)}.", paddingMode);
         return false;
     }
     return true;
 }
 
-static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
-    const auto &inputShape = input->GetViewShape();
-    const auto &gridShape = grid->GetViewShape();
-    const auto &outShape = out->GetViewShape();
+    const auto& inputShape = input->GetViewShape();
+    const auto& gridShape = grid->GetViewShape();
+    const auto& outShape = out->GetViewShape();
 
     OP_CHECK_WRONG_DIMENSION(input, SPATIAL_DIM_NUM, return false);
     OP_CHECK_WRONG_DIMENSION(grid, SPATIAL_DIM_NUM, return false);
@@ -123,48 +122,42 @@ static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclT
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != outShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input, grid and out to have same batch size, but got input with shape [%s] \
+                "expect input, grid and out to have same batch size, but got input with shape [%s] \
             grid with shape [%s] and out with shape [%s]",
-            op::ToString(inputShape).GetString(),
-            op::ToString(gridShape).GetString(),
-            op::ToString(outShape).GetString());
+                op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
+                op::ToString(outShape).GetString());
         return false;
     }
     if (inputShape.GetDim(SECOND_DIM) != outShape.GetDim(SECOND_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input and out to have same channel size, but got input with shape [%s] \
+                "expect input and out to have same channel size, but got input with shape [%s] \
             and out with shape [%s]",
-            op::ToString(inputShape).GetString(),
-            op::ToString(outShape).GetString());
+                op::ToString(inputShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
     if (gridShape.GetDim(SECOND_DIM) != outShape.GetDim(THIRD_DIM) ||
         gridShape.GetDim(THIRD_DIM) != outShape.GetDim(FOURTH_DIM)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect grid and out to have same H and W size, but got grid with shape [%s] \
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect grid and out to have same H and W size, but got grid with shape [%s] \
             and out with shape [%s]",
-            op::ToString(gridShape).GetString(),
-            op::ToString(outShape).GetString());
+                op::ToString(gridShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
     if (inputShape.GetDim(THIRD_DIM) == 0 || inputShape.GetDim(FOURTH_DIM) == 0) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input to have non-empty spatial dimensions, but got input with shape [%s]",
-            op::ToString(inputShape).GetString());
+                "expect input to have non-empty spatial dimensions, but got input with shape [%s]",
+                op::ToString(inputShape).GetString());
         return false;
     }
     if (gridShape.GetDim(FOURTH_DIM) != SPATIAL_GRID_LAST_DIM_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect grid to have size %ld in last dimension, but got grid with shape [%s]",
-            SPATIAL_GRID_LAST_DIM_SIZE,
-            op::ToString(gridShape).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect grid to have size %ld in last dimension, but got grid with shape [%s]",
+                SPATIAL_GRID_LAST_DIM_SIZE, op::ToString(gridShape).GetString());
         return false;
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor *input, const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
+                               int64_t paddingMode, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(input, grid, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -190,7 +183,7 @@ static bool CheckAiCpuSupport(int64_t interpolationMode)
     return true;
 }
 
-static bool Check310PFullLoadSuppport(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
+static bool Check310PFullLoadSuppport(const aclTensor* input, int64_t interpolationMode, int64_t paddingMode)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch != NpuArch::DAV_2002) {
@@ -202,7 +195,7 @@ static bool Check310PFullLoadSuppport(const aclTensor *input, int64_t interpolat
         return false;
     }
 
-    const auto &inputShape = input->GetViewShape();
+    const auto& inputShape = input->GetViewShape();
     int64_t inputC = inputShape.GetDim(SECOND_DIM);
     int64_t inputH = inputShape.GetDim(THIRD_DIM);
     int64_t inputW = inputShape.GetDim(FOURTH_DIM);
@@ -215,67 +208,64 @@ static bool Check310PFullLoadSuppport(const aclTensor *input, int64_t interpolat
     return false;
 }
 
-static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMode, int64_t paddingMode)
+static bool CheckAiCoreSuppport(const aclTensor* input, int64_t interpolationMode, int64_t paddingMode)
 {
     // 950芯片非bilinear场景，走到老模板
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (IsRegBase(curArch) && interpolationMode != INTERPOLATION_MODE_BILINEAR_VALUE) {
-        if (input->GetDataType() == op::DataType::DT_FLOAT || input->GetDataType() == op::DataType::DT_FLOAT16 
-            || input->GetDataType() == op::DataType::DT_BF16) {
+        if (input->GetDataType() == op::DataType::DT_FLOAT || input->GetDataType() == op::DataType::DT_FLOAT16 ||
+            input->GetDataType() == op::DataType::DT_BF16) {
             return true;
         }
     }
 
-    const auto &inputShape = input->GetViewShape();
+    const auto& inputShape = input->GetViewShape();
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_BF16) {
         OP_LOGD("Only support float16, bfloat16 or float32 on AICore, but got data type is %s",
-            op::ToString(input->GetDataType()).GetString());
+                op::ToString(input->GetDataType()).GetString());
         return false;
     }
     if (curArch == NpuArch::DAV_2201) {
         return true;
     }
 
-    bool is2002ArchSlideWindowSuppport =
-        curArch == NpuArch::DAV_2002 &&
-        input->GetDataType() == op::DataType::DT_FLOAT && interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE &&
-        inputShape.GetDim(SECOND_DIM) == SUPPORT_CHANNEL_310P && paddingMode == PADDING_MODE_MIN_VALUE;
+    bool is2002ArchSlideWindowSuppport = curArch == NpuArch::DAV_2002 &&
+                                         input->GetDataType() == op::DataType::DT_FLOAT &&
+                                         interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE &&
+                                         inputShape.GetDim(SECOND_DIM) == SUPPORT_CHANNEL_310P &&
+                                         paddingMode == PADDING_MODE_MIN_VALUE;
 
-    bool is2002Arch =
-        (is2002ArchSlideWindowSuppport || Check310PFullLoadSuppport(input, interpolationMode, paddingMode));
+    bool is2002Arch = (is2002ArchSlideWindowSuppport ||
+                       Check310PFullLoadSuppport(input, interpolationMode, paddingMode));
 
-    bool is3002Arch =
-        (curArch == NpuArch::DAV_3002 &&
-            input->GetDataType() == op::DataType::DT_FLOAT16 &&
-            interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE &&
-            inputShape.GetDim(SECOND_DIM) == SUPPORT_CHANNEL_310P && paddingMode == PADDING_MODE_MIN_VALUE);
+    bool is3002Arch = (curArch == NpuArch::DAV_3002 && input->GetDataType() == op::DataType::DT_FLOAT16 &&
+                       interpolationMode == INTERPOLATION_MODE_BILINEAR_VALUE &&
+                       inputShape.GetDim(SECOND_DIM) == SUPPORT_CHANNEL_310P && paddingMode == PADDING_MODE_MIN_VALUE);
     if (is2002Arch || is3002Arch) {
         return true;
     }
     return false;
 }
 
-static aclnnStatus paramsNotSupport(
-    const aclTensor *input, int64_t interpolationMode, int64_t paddingMode, bool alignCorners)
+static aclnnStatus paramsNotSupport(const aclTensor* input, int64_t interpolationMode, int64_t paddingMode,
+                                    bool alignCorners)
 {
     std::string alignCornerStr = alignCorners ? "true" : "false";
     OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-        "The op info is not supported. Plsease check op info! DataType support list is %s, got data type is %s. \
+            "The op info is not supported. Plsease check op info! DataType support list is %s, got data type is %s. \
           interpolationMode support 0(bilinear) , 1(nearest) or 2(bicubic), got interpolationMode is %ld. \
           paddingMode support 0(zeros) , 1(border) or 2(reflection), got paddingMode is %ld. \
           alignCorners support false and true, got alignCorners is %s. \
           Notice that when data type is double, no support interpolation mode is bicubic.",
-        op::ToString(DTYPE_SUPPORT_LIST).GetString(),
-        op::ToString(input->GetDataType()).GetString(),
-        interpolationMode,
-        paddingMode,
-        alignCornerStr.c_str());
+            op::ToString(DTYPE_SUPPORT_LIST).GetString(), op::ToString(input->GetDataType()).GetString(),
+            interpolationMode, paddingMode, alignCornerStr.c_str());
     return ACLNN_ERR_PARAM_INVALID;
 }
 
-aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const aclTensor *grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
+                                               int64_t paddingMode, bool alignCorners, aclTensor* out,
+                                               uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnGridSampler2D, DFX_IN(input, grid, interpolationMode, paddingMode, alignCorners), DFX_OUT(out));
     // 固定写法，创建OpExecutor
@@ -302,7 +292,7 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
     auto gridContiguous = l0op::Contiguous(grid, uniqueExecutor.get());
     CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    const aclTensor *gridSampler2DOut = nullptr;
+    const aclTensor* gridSampler2DOut = nullptr;
     bool regBase = CheckRegBaseSuppport(input, interpolationMode);
     if (CheckAiCoreSuppport(input, interpolationMode, paddingMode)) {
         // 310p支持fp16/bf16数据类型, Cast为fp32进行计算
@@ -318,20 +308,10 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
         bool channelLast = true;
         auto valuePerm = uniqueExecutor.get()->AllocIntArray(perm, 4);
         inputContiguous = l0op::Transpose(inputContiguous, valuePerm, uniqueExecutor.get());
-        OP_LOGD("Lanuch GridSample in AICore. Attrs: [%ld], [%ld], [%d], [%d], [%ld]",
-            interpolationMode,
-            paddingMode,
-            alignCorners,
-            channelLast,
-            schedulerMode);
-        gridSampler2DOut = l0op::GridSample(inputContiguous,
-            gridContiguous,
-            interpolationMode,
-            paddingMode,
-            alignCorners,
-            channelLast,
-            schedulerMode,
-            uniqueExecutor.get());
+        OP_LOGD("Lanuch GridSample in AICore. Attrs: [%ld], [%ld], [%d], [%d], [%ld]", interpolationMode, paddingMode,
+                alignCorners, channelLast, schedulerMode);
+        gridSampler2DOut = l0op::GridSample(inputContiguous, gridContiguous, interpolationMode, paddingMode,
+                                            alignCorners, channelLast, schedulerMode, uniqueExecutor.get());
 
         // 310p支持fp16/bf16数据类型, 结果Cast回输入数据类型
         if (Check310PFullLoadSuppport(input, interpolationMode, paddingMode) && dtypeNeedCast) {
@@ -340,19 +320,13 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
             }
         }
     } else if (regBase) {
-        gridSampler2DOut = l0op::GridSample(inputContiguous,
-            gridContiguous,
-            interpolationMode,
-            paddingMode,
-            alignCorners,
-            false,
-            0,
-            uniqueExecutor.get());
+        gridSampler2DOut = l0op::GridSample(inputContiguous, gridContiguous, interpolationMode, paddingMode,
+                                            alignCorners, false, 0, uniqueExecutor.get());
     } else if (CheckAiCpuSupport(interpolationMode)) {
-        OP_LOGD(
-            "Lanuch GridSampler2D in AICPU. Attrs: [%ld], [%ld], [%d]", interpolationMode, paddingMode, alignCorners);
-        gridSampler2DOut = l0op::GridSampler2D(
-            inputContiguous, gridContiguous, interpolationMode, paddingMode, alignCorners, uniqueExecutor.get());
+        OP_LOGD("Lanuch GridSampler2D in AICPU. Attrs: [%ld], [%ld], [%d]", interpolationMode, paddingMode,
+                alignCorners);
+        gridSampler2DOut = l0op::GridSampler2D(inputContiguous, gridContiguous, interpolationMode, paddingMode,
+                                               alignCorners, uniqueExecutor.get());
     } else {
         return paramsNotSupport(input, interpolationMode, paddingMode, alignCorners);
     }
@@ -365,11 +339,11 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor *input, const acl
 
     // 固定写法，获取计算过程中需要使用的workspace大小
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();
-    uniqueExecutor.ReleaseTo(executor);  // 需要把 uniqueExecutor持有executor转移给executor
+    uniqueExecutor.ReleaseTo(executor); // 需要把 uniqueExecutor持有executor转移给executor
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnGridSampler2D(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnGridSampler2D(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnGridSampler2D);
     // 固定写法，调用框架能力，完成计算

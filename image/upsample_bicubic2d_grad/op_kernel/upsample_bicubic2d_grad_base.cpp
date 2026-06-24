@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -19,7 +19,7 @@ using namespace AscendC;
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::Init(GM_ADDR grad_output, GM_ADDR grad_input, GM_ADDR usrWorkspace,
-    const UpsampleBicubic2dGradTilingData *__restrict tiling_data)
+                                                          const UpsampleBicubic2dGradTilingData* __restrict tiling_data)
 {
     // block_id
     block_id = GetBlockIdx();
@@ -64,32 +64,37 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::InitWorkspaceTensors(GM_ADD
     // workspace
     GM_ADDR usrWorkspace_ = usrWorkspace;
 
-    interGm.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(usrWorkspace_), static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->outputW);
-    usrWorkspace_ += (static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->outputW + GetNumPerBlock() - 1) /
+    interGm.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(usrWorkspace_),
+                            static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->outputW);
+    usrWorkspace_ += (static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->outputW +
+                      GetNumPerBlock() - 1) /
                      GetNumPerBlock() * BLOCK_SIZE;
 
     coeffW.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ T*>(usrWorkspace_ +
+                                    static_cast<int64_t>(block_id) * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNW * NUM_FRACTAL);
     coeffWFloat.SetGlobalBuffer(
-        reinterpret_cast<__gm__ float *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ float*>(usrWorkspace_ +
+                                        static_cast<int64_t>(block_id) * tilingData->baseNW * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNW * NUM_FRACTAL);
     coeffH.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ T*>(usrWorkspace_ +
+                                    static_cast<int64_t>(block_id) * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNH * NUM_FRACTAL);
     coeffHFloat.SetGlobalBuffer(
-        reinterpret_cast<__gm__ float *>(usrWorkspace_ + static_cast<int64_t>(block_id) * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
+        reinterpret_cast<__gm__ float*>(usrWorkspace_ +
+                                        static_cast<int64_t>(block_id) * tilingData->baseNH * NUM_FRACTAL * sizeof(T)),
         tilingData->baseNH * NUM_FRACTAL);
 }
 
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::InitGlobalTensors(GM_ADDR grad_output, GM_ADDR grad_input)
 {
-    inGm.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(grad_output), static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->inputW);
-    outGm.SetGlobalBuffer(
-        reinterpret_cast<__gm__ T *>(grad_input), static_cast<int64_t>(tilingData->batch) * tilingData->outputH * tilingData->outputW);
+    inGm.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(grad_output),
+                         static_cast<int64_t>(tilingData->batch) * tilingData->inputH * tilingData->inputW);
+    outGm.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(grad_input),
+                          static_cast<int64_t>(tilingData->batch) * tilingData->outputH * tilingData->outputW);
 }
 
 template <typename T>
@@ -106,8 +111,8 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::InitLocalTensors()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradBase<T>::computeCoeff(
-    int64_t offset, float scale, int64_t scaleN, int64_t idx[16])
+__aicore__ inline void UpsampleBicubic2dGradBase<T>::computeCoeff(int64_t offset, float scale, int64_t scaleN,
+                                                                  int64_t idx[16])
 {
     LocalTensor<float> coeffUbBuff0 = coeffUbBuff;
     LocalTensor<float> coeffUbBuff1 = coeffUbBuff0[NUM_FRACTAL];
@@ -301,31 +306,31 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessW()
     if (block_w >= tilingData->CoreNumW) {
         return;
     }
-    int64_t offsetW =
-        block_w * tilingData->loopW + (block_w < tilingData->loopTailCoreW ? block_w : tilingData->loopTailCoreW);
+    int64_t offsetW = block_w * tilingData->loopW +
+                      (block_w < tilingData->loopTailCoreW ? block_w : tilingData->loopTailCoreW);
     int64_t realLoopW = tilingData->loopW + ((block_w < tilingData->loopTailCoreW) ? 1 : 0);
-    int64_t offsetInnerBatchW =
-        block_inner_w * tilingData->innerBatchW +
-        (block_inner_w < tilingData->innerBatchTailCoreW ? block_inner_w : tilingData->innerBatchTailCoreW);
+    int64_t offsetInnerBatchW = block_inner_w * tilingData->innerBatchW +
+                                (block_inner_w < tilingData->innerBatchTailCoreW ? block_inner_w :
+                                                                                   tilingData->innerBatchTailCoreW);
     int64_t realInnerBatchW = tilingData->innerBatchW + (block_inner_w < tilingData->innerBatchTailCoreW ? 1 : 0);
     if (realInnerBatchW != 0) {
-        MMW.SetOrgShape(realInnerBatchW * tilingData->inputH,
-            tilingData->baseNW,
-            tilingData->inputW,
-            NUM_FRACTAL,
-            tilingData->outputW);
+        MMW.SetOrgShape(realInnerBatchW * tilingData->inputH, tilingData->baseNW, tilingData->inputW, NUM_FRACTAL,
+                        tilingData->outputW);
         for (int i = offsetW; i < (offsetW + realLoopW); i++) {
             int64_t base[2], idx[16];
             computeCoeff(i * NUM_FRACTAL, tilingData->scalesW, tilingData->baseNW, idx);
             fillAndCastCoeffW(i * NUM_FRACTAL, base, idx);
-            MMW.SetTail(realInnerBatchW * tilingData->inputH,
-                base[1] - base[0] + 1,
+            MMW.SetTail(
+                realInnerBatchW * tilingData->inputH, base[1] - base[0] + 1,
                 ((tilingData->inputW + NUM_FRACTAL - 1) / NUM_FRACTAL - 1) == i ? tilingData->tailW : NUM_FRACTAL);
-            MMW.SetTensorA(inGm[static_cast<int64_t>(offsetInnerBatchW) * tilingData->inputH * tilingData->inputW + i * NUM_FRACTAL]);
+            MMW.SetTensorA(inGm[static_cast<int64_t>(offsetInnerBatchW) * tilingData->inputH * tilingData->inputW +
+                                i * NUM_FRACTAL]);
             MMW.SetTensorB(coeffW);
             SetFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
             WaitFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
-            MMW.IterateAll(interGm[static_cast<int64_t>(offsetInnerBatchW) * tilingData->inputH * tilingData->outputW + base[0]], true);
+            MMW.IterateAll(
+                interGm[static_cast<int64_t>(offsetInnerBatchW) * tilingData->inputH * tilingData->outputW + base[0]],
+                true);
         }
     }
 }
@@ -336,12 +341,12 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessH()
     if (block_h >= tilingData->CoreNumH) {
         return;
     }
-    int64_t offsetH =
-        block_h * tilingData->loopH + (block_h < tilingData->loopTailCoreH ? block_h : tilingData->loopTailCoreH);
+    int64_t offsetH = block_h * tilingData->loopH +
+                      (block_h < tilingData->loopTailCoreH ? block_h : tilingData->loopTailCoreH);
     int64_t realLoopH = tilingData->loopH + ((block_h < tilingData->loopTailCoreH) ? 1 : 0);
-    int64_t offsetInnerBatchH =
-        block_inner_h * tilingData->innerBatchH +
-        (block_inner_h < tilingData->innerBatchTailCoreH ? block_inner_h : tilingData->innerBatchTailCoreH);
+    int64_t offsetInnerBatchH = block_inner_h * tilingData->innerBatchH +
+                                (block_inner_h < tilingData->innerBatchTailCoreH ? block_inner_h :
+                                                                                   tilingData->innerBatchTailCoreH);
     int64_t realInnerBatchH = tilingData->innerBatchH + (block_inner_h < tilingData->innerBatchTailCoreH ? 1 : 0);
     if (realInnerBatchH > 0) {
         for (int i = offsetH; i < (offsetH + realLoopH); i++) {
@@ -351,14 +356,15 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessH()
             SetFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
             WaitFlag<HardEvent::MTE3_S>(eventIdMTE3ToS);
             for (int j = 0; j < realInnerBatchH; j++) {
-                MMH.SetTail(base[1] - base[0] + 1,
-                    tilingData->outputW,
+                MMH.SetTail(
+                    base[1] - base[0] + 1, tilingData->outputW,
                     ((tilingData->inputH + NUM_FRACTAL - 1) / NUM_FRACTAL - 1) == i ? tilingData->tailH : NUM_FRACTAL);
                 MMH.SetTensorA(coeffH);
                 MMH.SetTensorB(interGm[static_cast<int64_t>(i) * NUM_FRACTAL * tilingData->outputW +
                                        (offsetInnerBatchH + j) * tilingData->inputH * tilingData->outputW]);
-                MMH.IterateAll(outGm[static_cast<int64_t>(offsetInnerBatchH + j) * tilingData->outputH * tilingData->outputW +
-                                     base[0] * tilingData->outputW],
+                MMH.IterateAll(
+                    outGm[static_cast<int64_t>(offsetInnerBatchH + j) * tilingData->outputH * tilingData->outputW +
+                          base[0] * tilingData->outputW],
                     true);
             }
         }
@@ -366,11 +372,11 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ProcessH()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradBase<T>::ClearGM(
-    const GlobalTensor<T> &dstGlobal, int64_t loop, int64_t baseN, int64_t tailN, int64_t tailCoreNum)
+__aicore__ inline void UpsampleBicubic2dGradBase<T>::ClearGM(const GlobalTensor<T>& dstGlobal, int64_t loop,
+                                                             int64_t baseN, int64_t tailN, int64_t tailCoreNum)
 {
-    int64_t offset =
-        (loop * baseN + tailN) * block_id + (block_id < tailCoreNum ? block_id : tailCoreNum) * GetNumPerBlock();
+    int64_t offset = (loop * baseN + tailN) * block_id +
+                     (block_id < tailCoreNum ? block_id : tailCoreNum) * GetNumPerBlock();
     int64_t tail = tailN + (block_id < tailCoreNum ? GetNumPerBlock() : 0);
 
     SetMaskCount();
@@ -401,19 +407,13 @@ __aicore__ inline void UpsampleBicubic2dGradBase<T>::ClearGM(
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradBase<T>::Process()
 {
-    ClearGM(interGm,
-        tilingData->clearInterLoop,
-        tilingData->clearBaseN,
-        tilingData->clearInterTailN,
-        tilingData->clearInterTailCoreNum);
+    ClearGM(interGm, tilingData->clearInterLoop, tilingData->clearBaseN, tilingData->clearInterTailN,
+            tilingData->clearInterTailCoreNum);
     SyncAll();
     ProcessW();
     SyncAll();
-    ClearGM(outGm,
-        tilingData->clearOutLoop,
-        tilingData->clearBaseN,
-        tilingData->clearOutTailN,
-        tilingData->clearOutTailCoreNum);
+    ClearGM(outGm, tilingData->clearOutLoop, tilingData->clearBaseN, tilingData->clearOutTailN,
+            tilingData->clearOutTailCoreNum);
     SyncAll();
     ProcessH();
     PipeBarrier<PIPE_ALL>();

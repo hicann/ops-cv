@@ -57,9 +57,10 @@ inline const string& GetPaddingModeStr(int64_t paddingMode)
     return PADDING_REFLECTION;
 }
 
-const std::tuple<aclTensor*, aclTensor*> GridSampler3DGrad(
-    const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, aclOpExecutor* executor)
+const std::tuple<aclTensor*, aclTensor*> GridSampler3DGrad(const aclTensor* gradOutput, const aclTensor* input,
+                                                           const aclTensor* grid, int64_t interpolationMode,
+                                                           int64_t paddingMode, bool alignCorners,
+                                                           aclOpExecutor* executor)
 {
     L0_DFX(GridSampler3DGrad, gradOutput, input, grid, interpolationMode, paddingMode, alignCorners);
     auto inputGrad = executor->AllocTensor(input->GetViewShape(), input->GetDataType(), input->GetStorageFormat());

@@ -18,7 +18,7 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleBicubic2dGrad(const aclTensor *input, const bool align_corners, const float scales_h,
-    const float scales_w, const aclTensor *output, aclOpExecutor *executor);
+const aclTensor* UpsampleBicubic2dGrad(const aclTensor* input, const bool align_corners, const float scales_h,
+                                       const float scales_w, const aclTensor* output, aclOpExecutor* executor);
 }
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BICUBIC2D_GRAD_OP_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BICUBIC2D_GRAD_OP_H_

@@ -23,19 +23,13 @@
 #include "../../../op_host/upsample_linear1d_tiling.h"
 #include "data_utils.h"
 
-extern "C" __global__ __aicore__ void upsample_linear1d(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void upsample_linear1d(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
+                                                        GM_ADDR tiling);
 
 class upsample_linear1d_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "upsample_linear1d_test SetUp\n" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_linear1d_test TearDown\n" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "upsample_linear1d_test SetUp\n" << std::endl; }
+    static void TearDownTestCase() { std::cout << "upsample_linear1d_test TearDown\n" << std::endl; }
 };
 
 TEST_F(upsample_linear1d_test, test_case_float_1)
@@ -52,18 +46,18 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
     size_t workspaceSize = 32 * 1024 * 1024;
     uint32_t numBlocks = 16;
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *outputsize = (uint8_t *)AscendC::GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* outputsize = (uint8_t*)AscendC::GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
-    uint8_t *workspace = (uint8_t *)AscendC::GmAlloc(workspaceSize);
-    uint8_t *tiling = (uint8_t *)AscendC::GmAlloc(tiling_data_size);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
 
     std::string fileName = "./upsample_linear1d_data/float32_input_upsample_linear1d.bin";
 
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
-    UpsampleLinear1dTilingData *tilingDatafromBin = reinterpret_cast<UpsampleLinear1dTilingData *>(tiling);
+    UpsampleLinear1dTilingData* tilingDatafromBin = reinterpret_cast<UpsampleLinear1dTilingData*>(tiling);
     tilingDatafromBin->align_corners = false;
     tilingDatafromBin->slide_size_w = 128;
     tilingDatafromBin->scale_w = 0.25;
@@ -117,13 +111,13 @@ TEST_F(upsample_linear1d_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(2);
 
-    ICPU_RUN_KF(upsample_linear1d, numBlocks, x, outputsize, y, workspace, (uint8_t *)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_linear1d, numBlocks, x, outputsize, y, workspace, (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_linear1d_data/float32_output_upsample_linear1d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
     system("cd ./upsample_linear1d_data/ && python3 compare_data.py 'float32'");
 }

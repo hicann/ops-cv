@@ -64,15 +64,11 @@ static Status ParseOnnxParamsPSROIPoolingV2(const ge::Operator& op_src, ge::Oper
 
 REGISTER_CUSTOM_OP("PSROIPoolingV2")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("ai.onnx::8::PSROIPooling"),
-                   ge::AscendString("ai.onnx::9::PSROIPooling"),
-                   ge::AscendString("ai.onnx::10::PSROIPooling"),
-                   ge::AscendString("ai.onnx::11::PSROIPooling"),
-                   ge::AscendString("ai.onnx::12::PSROIPooling"),
-                   ge::AscendString("ai.onnx::13::PSROIPooling"),
-                   ge::AscendString("ai.onnx::14::PSROIPooling"),
-                   ge::AscendString("ai.onnx::15::PSROIPooling"),
+    .OriginOpType({ge::AscendString("ai.onnx::8::PSROIPooling"), ge::AscendString("ai.onnx::9::PSROIPooling"),
+                   ge::AscendString("ai.onnx::10::PSROIPooling"), ge::AscendString("ai.onnx::11::PSROIPooling"),
+                   ge::AscendString("ai.onnx::12::PSROIPooling"), ge::AscendString("ai.onnx::13::PSROIPooling"),
+                   ge::AscendString("ai.onnx::14::PSROIPooling"), ge::AscendString("ai.onnx::15::PSROIPooling"),
                    ge::AscendString("ai.onnx::16::PSROIPooling")})
     .ParseParamsByOperatorFn(ParseOnnxParamsPSROIPoolingV2)
     .ImplyType(ImplyType::TVM);
-}  // domi
+} // namespace domi

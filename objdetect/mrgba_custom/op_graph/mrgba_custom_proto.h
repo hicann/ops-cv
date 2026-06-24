@@ -16,22 +16,21 @@
 #define OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_
 
 #include "graph/operator_reg.h"
-namespace ge
-{
-    /**
-    * @brief Give transparency to the image.
-    *
-    * @par Inputs:
-    * @li rgb: A tensor of the type DT_UINT8.
-    * @li alpha:A tensor of the type DT_UINT8.
-    *
-    * @par Outputs:
-    * @li dst: A tensor of the type DT_UINT8.
-    */
-    REG_OP(MrgbaCustom)
-        .INPUT(rgb, TensorType({ DT_UINT8 }))
-        .INPUT(alpha, TensorType({ DT_UINT8 }))
-        .OUTPUT(dst, TensorType({ DT_UINT8 }))
-        .OP_END_FACTORY_REG(MrgbaCustom)
+namespace ge {
+/**
+ * @brief Give transparency to the image.
+ *
+ * @par Inputs:
+ * @li rgb: A tensor of the type DT_UINT8.
+ * @li alpha:A tensor of the type DT_UINT8.
+ *
+ * @par Outputs:
+ * @li dst: A tensor of the type DT_UINT8.
+ */
+REG_OP(MrgbaCustom)
+    .INPUT(rgb, TensorType({DT_UINT8}))
+    .INPUT(alpha, TensorType({DT_UINT8}))
+    .OUTPUT(dst, TensorType({DT_UINT8}))
+    .OP_END_FACTORY_REG(MrgbaCustom)
 } // namespace ge
 #endif // OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_

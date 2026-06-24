@@ -17,15 +17,9 @@
 
 class Col2imTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Col2imTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Col2imTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Col2imTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Col2imTiling TearDown" << std::endl; }
 };
 
 struct Col2imCompileInfo {
@@ -44,20 +38,25 @@ TEST_F(Col2imTiling, col2im_tiling_test_float32_case1)
     int h = 20;
     int w = 21;
 
-    gert::StorageShape gradOutShape = {{n, c, w_k*h_k, w_col*h_col}, {n, c, w_k*h_k, w_col*h_col}};
+    gert::StorageShape gradOutShape = {{n, c, w_k * h_k, w_col * h_col}, {n, c, w_k * h_k, w_col * h_col}};
     gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape gradInShape = {{n, c, h, w}, {n, c, h, w}};
     std::vector<int32_t> inputSizeValues = {h, w};
     Col2imCompileInfo compileInfo = {40, 196608};
-    gert::TilingContextPara tilingContextPara("Col2im",
-                                                {{gradOutShape, ge::DT_FLOAT, ge::FORMAT_ND}, 
-                                                {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, inputSizeValues.data()},},
-                                                {{gradInShape, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                {gert::TilingContextPara::OpAttr("kernel_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
-                                                       gert::TilingContextPara::OpAttr("dilation", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 7})),
-                                                       gert::TilingContextPara::OpAttr("padding", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
-                                                       gert::TilingContextPara::OpAttr("stride", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 7}))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "Col2im",
+        {
+            {gradOutShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, inputSizeValues.data()},
+        },
+        {
+            {gradInShape, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("kernel_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
+         gert::TilingContextPara::OpAttr("dilation", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 7})),
+         gert::TilingContextPara::OpAttr("padding", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
+         gert::TilingContextPara::OpAttr("stride", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 7}))},
+        &compileInfo);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "215040 20 21 1 5 2 7 1 5 1 7 22 1 ";
     std::vector<size_t> expectWorkspaces = {4294967295};

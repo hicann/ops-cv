@@ -29,11 +29,12 @@
 #include "roi_align_v2.h"
 
 template <uint32_t schMode>
-__global__ __aicore__ void roi_align_v2(GM_ADDR features, GM_ADDR rois, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void roi_align_v2(GM_ADDR features, GM_ADDR rois, GM_ADDR output, GM_ADDR workspace,
+                                        GM_ADDR tiling)
 {
     REGISTER_TILING_DEFAULT(RoiAlignV2TilingData);
     GET_TILING_DATA_WITH_STRUCT(RoiAlignV2TilingData, tilingData, tiling);
-    NsRoiAlignV2::RoiAlignV2<DTYPE_FEATURES> op; 
-    op.Init(features, rois, output, &tilingData);        
-    op.Process();                         
+    NsRoiAlignV2::RoiAlignV2<DTYPE_FEATURES> op;
+    op.Init(features, rois, output, &tilingData);
+    op.Process();
 }

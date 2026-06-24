@@ -13,18 +13,11 @@
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
 
-class l2_upsampleNearest1d_backward_test : public testing::Test
-{
+class l2_upsampleNearest1d_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsampleNearest1d_backward_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsampleNearest1d_backward_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsampleNearest1d_backward_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsampleNearest1d_backward_test TearDown" << std::endl; }
 };
 
 // 支持float32
@@ -40,9 +33,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
@@ -61,9 +53,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 2}, ACL_FLOAT16, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
@@ -82,9 +73,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 2}, ACL_DOUBLE, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
 }
@@ -102,9 +92,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_INT64, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -123,9 +112,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_00
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_INT16, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -144,9 +132,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_BOOL, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -165,9 +152,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_COMPLEX64, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -186,9 +172,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_COMPLEX128, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -207,9 +192,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({0, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
@@ -229,9 +213,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -250,9 +233,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -271,8 +253,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(nullptr, output_size_desc, input_size_desc, scales), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(nullptr, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_NULLPTR);
@@ -291,9 +273,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT16, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -312,9 +293,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -333,9 +313,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_01
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -354,9 +333,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -375,9 +353,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -396,9 +373,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -417,9 +393,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -437,9 +412,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
@@ -457,9 +431,8 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     auto input_size_desc = IntArrayDesc(input_size);
     auto output_desc = TensorDesc({1, 1, 5}, ACL_FLOAT, ACL_FORMAT_NCL);
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);

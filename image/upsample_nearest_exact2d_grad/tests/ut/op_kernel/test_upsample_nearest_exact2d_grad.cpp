@@ -22,28 +22,20 @@
 
 using namespace std;
 
-extern "C" __global__ __aicore__ void upsample_nearest_exact2d_grad(
-    GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void upsample_nearest_exact2d_grad(GM_ADDR x, GM_ADDR y, GM_ADDR workspace,
+                                                                    GM_ADDR tiling);
 
-class upsample_nearest_exact2d_grad_test : public testing::Test
-{
+class upsample_nearest_exact2d_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "upsample_nearest_exact2d_grad_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "upsample_nearest_exact2d_grad_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "upsample_nearest_exact2d_grad_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "upsample_nearest_exact2d_grad_test TearDown\n" << endl; }
 };
 
 TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
-        "upsample_nearest_exact2d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
+           "upsample_nearest_exact2d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest_exact2d_grad_data/");
     system("cd ./upsample_nearest_exact2d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float32'");
 
@@ -62,8 +54,8 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
     std::string fileName = "./upsample_nearest_exact2d_grad_data/float32_input_nearest_exact2d_grad.bin";
     ReadFile(fileName, outputByteSize, x, outputByteSize);
 
-    UpsampleNearestExact2dGradTilingData* tilingDatafromBin =
-        reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
+    UpsampleNearestExact2dGradTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(
+        tiling);
 
     tilingDatafromBin->dataType = 2;
     tilingDatafromBin->scale_w = 4.0;
@@ -174,10 +166,9 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float32)
 
 TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
-        "upsample_nearest_exact2d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
+           "upsample_nearest_exact2d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest_exact2d_grad_data/");
     system("cd ./upsample_nearest_exact2d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'float16'");
 
@@ -196,11 +187,11 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
     std::string fileName = "./upsample_nearest_exact2d_grad_data/float16_input_nearest_exact2d_grad.bin";
     ReadFile(fileName, outputByteSize, x, outputByteSize);
 
-    UpsampleNearestExact2dGradTilingData* tilingDatafromBin =
-        reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
+    UpsampleNearestExact2dGradTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(
+        tiling);
 
     tilingDatafromBin->dataType = 1;
-        tilingDatafromBin->scale_w = 4.0;
+    tilingDatafromBin->scale_w = 4.0;
     tilingDatafromBin->scale_h = 4.0;
     tilingDatafromBin->slide_size = 64;
     tilingDatafromBin->invscale_w = 0.25;
@@ -308,10 +299,9 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_float16)
 
 TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
-        "upsample_nearest_exact2d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest_exact2d_grad/tests/ut/op_kernel/"
+           "upsample_nearest_exact2d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest_exact2d_grad_data/");
     system("cd ./upsample_nearest_exact2d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4)' '(16, 16)' 'bfloat16'");
 
@@ -330,11 +320,11 @@ TEST_F(upsample_nearest_exact2d_grad_test, test_case_bfloat16)
     std::string fileName = "./upsample_nearest_exact2d_grad_data/bfloat16_input_nearest_exact2d_grad.bin";
     ReadFile(fileName, outputByteSize, x, outputByteSize);
 
-    UpsampleNearestExact2dGradTilingData* tilingDatafromBin =
-        reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(tiling);
+    UpsampleNearestExact2dGradTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestExact2dGradTilingData*>(
+        tiling);
 
     tilingDatafromBin->dataType = 3;
-        tilingDatafromBin->scale_w = 4.0;
+    tilingDatafromBin->scale_w = 4.0;
     tilingDatafromBin->scale_h = 4.0;
     tilingDatafromBin->slide_size = 64;
     tilingDatafromBin->invscale_w = 0.25;

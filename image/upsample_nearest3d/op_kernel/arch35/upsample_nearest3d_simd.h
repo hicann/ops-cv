@@ -38,11 +38,11 @@ constexpr int32_t NUM_PER_REP_FP16 = 128;
 template <typename T, bool isExact>
 class UpsampleNearest3dND {
 public:
-    TPipe *pPipe = nullptr;
+    TPipe* pPipe = nullptr;
 
     __aicore__ inline UpsampleNearest3dND(){};
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR y, TPipe *pipe, const UpsampleNearest3dRegBaseSimdTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, TPipe* pipe,
+                                const UpsampleNearest3dRegBaseSimdTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -68,14 +68,17 @@ private:
     __aicore__ inline void GatherData(int64_t slideIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void CopyIn(int64_t inputOffset, DataCopyExtParams copyParams);
     __aicore__ inline void CopyOut(int64_t outputOffset, DataCopyExtParams copyParams);
-    __aicore__ inline void ComputeAndCopyOut(uint32_t dataCount, uint32_t srcDataLength, uint32_t blockCount, int64_t outputOffset);
+    __aicore__ inline void ComputeAndCopyOut(uint32_t dataCount, uint32_t srcDataLength, uint32_t blockCount,
+                                             int64_t outputOffset);
     __aicore__ inline void GetRangeW(int64_t slideIndex);
     __aicore__ inline void GetRangeH(int64_t slideIndex);
     __aicore__ inline void GetRangeD(int64_t slideIndex);
-    __aicore__ inline void CalculateSrcIndexTensor(int64_t index, int64_t length, int8_t direction, LocalTensor<float> srcIndexTensor);
+    __aicore__ inline void CalculateSrcIndexTensor(int64_t index, int64_t length, int8_t direction,
+                                                   LocalTensor<float> srcIndexTensor);
     __aicore__ inline void CalculateGatherOffsetW();
     __aicore__ inline void ComputeView1DSmallW();
-    __aicore__ inline void DoComputeView1DSmallW(int64_t row, int64_t batches, int64_t repeat, int64_t batchesEachRepeat);
+    __aicore__ inline void DoComputeView1DSmallW(int64_t row, int64_t batches, int64_t repeat,
+                                                 int64_t batchesEachRepeat);
     __aicore__ inline void DoComputeGatherOffset(int64_t batchesEachRepeat, int64_t numPerRep, int64_t repeatTimes);
 
 private:
@@ -141,7 +144,8 @@ private:
 };
 
 template <typename T, bool isExact>
-__aicore__ inline void UpsampleNearest3dND<T, isExact>::Init(GM_ADDR x, GM_ADDR y, TPipe *pipe_, const UpsampleNearest3dRegBaseSimdTilingData* tilingData)
+__aicore__ inline void UpsampleNearest3dND<T, isExact>::Init(GM_ADDR x, GM_ADDR y, TPipe* pipe_,
+                                                             const UpsampleNearest3dRegBaseSimdTilingData* tilingData)
 {
     blockIdx = GetBlockIdx();
     pPipe = pipe_;
@@ -218,7 +222,7 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::ComputeView1DSmallW()
     int64_t batchesEachCompute = repeatTimes * batchesEachRepeat; // 每行计算可处理的batch数
     int64_t rowNum = tailAvergingRow;
     if (blockIdx == (realCoreNum - 1)) {
-        rowNum = inputRow - tailAvergingRow * (realCoreNum - 1);  //获取尾核的batch数
+        rowNum = inputRow - tailAvergingRow * (realCoreNum - 1); // 获取尾核的batch数
     }
     int64_t times = rowNum / batchesEachCompute;                  // 整行的计算次数
     int64_t tailComputeBatches = rowNum % batchesEachCompute;     // 尾行的batch数
@@ -237,7 +241,7 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::ComputeView1DSmallW()
     }
     // 尾行的尾repeat处理
     {
-        int64_t baseOffset = blockIdx * tailAvergingRow + times * batchesEachCompute  + tailRepeat * batchesEachRepeat;
+        int64_t baseOffset = blockIdx * tailAvergingRow + times * batchesEachCompute + tailRepeat * batchesEachRepeat;
         int64_t inOffset = baseOffset * iw;
         DataCopyExtParams copyInParams{1, static_cast<uint32_t>(tailBatches * iw * sizeof(T)), 0, 0, 0};
         CopyIn(inOffset, copyInParams);
@@ -247,13 +251,15 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::ComputeView1DSmallW()
         outQueue.EnQue(dstLocal);
         inQueue.FreeTensor(srcLocal);
         int64_t outOffset = baseOffset * ow;
-        DataCopyExtParams copyOutParams{static_cast<uint16_t>(1), static_cast<uint32_t>(tailBatches * ow * sizeof(T)), 0, 0, 0};
+        DataCopyExtParams copyOutParams{static_cast<uint16_t>(1), static_cast<uint32_t>(tailBatches * ow * sizeof(T)),
+                                        0, 0, 0};
         CopyOut(outOffset, copyOutParams);
     }
 }
 
 template <typename T, bool isExact>
-__aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeGatherOffset(int64_t batchesEachRepeat, int64_t numPerRep, int64_t repeatTimes)
+__aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeGatherOffset(int64_t batchesEachRepeat,
+                                                                              int64_t numPerRep, int64_t repeatTimes)
 {
     int64_t ow = outputShapes[W_INDEX];
     int64_t iw = inputShapes[W_INDEX];
@@ -267,7 +273,8 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeGatherOffset(in
         }
     }
     for (int64_t i = 1; i < repeatTimes; i++) {
-        Adds(srcOffsetTensor[i * numPerRep], srcOffsetTensor[(i - 1) * numPerRep],static_cast<int32_t>(batchesEachRepeat * iw), numPerRep);
+        Adds(srcOffsetTensor[i * numPerRep], srcOffsetTensor[(i - 1) * numPerRep],
+             static_cast<int32_t>(batchesEachRepeat * iw), numPerRep);
         PipeBarrier<PIPE_V>();
     }
     Muls(srcOffsetTensor, srcOffsetTensor, static_cast<int32_t>(sizeof(T)), slideSizeW);
@@ -276,7 +283,8 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeGatherOffset(in
 }
 
 template <typename T, bool isExact>
-__aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeView1DSmallW(int64_t row, int64_t batches, int64_t repeat, int64_t batchesEachRepeat)
+__aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeView1DSmallW(int64_t row, int64_t batches,
+                                                                              int64_t repeat, int64_t batchesEachRepeat)
 {
     int64_t ow = outputShapes[W_INDEX];
     int64_t iw = inputShapes[W_INDEX];
@@ -292,7 +300,8 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::DoComputeView1DSmallW(in
     inQueue.FreeTensor(srcLocal);
     int64_t outOffset = blockIdx * tailAvergingRow * ow + row * batches * ow;
     uint32_t srcStride = (numPerRep - batchesEachRepeat * ow) / (BYTE_BLOCK / sizeof(T));
-    DataCopyExtParams copyOutParams{static_cast<uint16_t>(repeat), static_cast<uint32_t>(batchesEachRepeat * ow * sizeof(T)), srcStride, 0, 0};
+    DataCopyExtParams copyOutParams{static_cast<uint16_t>(repeat),
+                                    static_cast<uint32_t>(batchesEachRepeat * ow * sizeof(T)), srcStride, 0, 0};
     CopyOut(outOffset, copyOutParams);
 }
 
@@ -312,13 +321,13 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::GatherData(int64_t slide
             srcStartW = static_cast<int64_t>(srcIndexTensorW.GetValue(j));
             j++;
         }
-        int64_t inputOffsetsInBatch =
-            srcIndexD * inputShapes[H_INDEX] * inputShapes[W_INDEX] + srcIndexH * inputShapes[W_INDEX] + srcStartW;
-        int64_t outputOffsetInBatch =
-            indexD * outputShapes[H_INDEX] * outputShapes[W_INDEX] + indexH * outputShapes[W_INDEX] + startW;
+        int64_t inputOffsetsInBatch = srcIndexD * inputShapes[H_INDEX] * inputShapes[W_INDEX] +
+                                      srcIndexH * inputShapes[W_INDEX] + srcStartW;
+        int64_t outputOffsetInBatch = indexD * outputShapes[H_INDEX] * outputShapes[W_INDEX] +
+                                      indexH * outputShapes[W_INDEX] + startW;
         for (int64_t batchIndex = rowStart; batchIndex < rowEnd; batchIndex += batchNum) {
-            int64_t inputOffset =
-                batchIndex * inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] + inputOffsetsInBatch;
+            int64_t inputOffset = batchIndex * inputShapes[D_INDEX] * inputShapes[H_INDEX] * inputShapes[W_INDEX] +
+                                  inputOffsetsInBatch;
             int64_t outputOffset = batchIndex * outputShapes[D_INDEX] * outputShapes[H_INDEX] * outputShapes[W_INDEX] +
                                    outputOffsetInBatch;
             uint16_t blockCount = Min(batchNum, rowEnd - batchIndex);
@@ -351,7 +360,8 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::CopyOut(int64_t outputOf
 }
 
 template <typename T, bool isExact>
-__aicore__ inline void UpsampleNearest3dND<T, isExact>::ComputeAndCopyOut(uint32_t dataCount, uint32_t srcDataLength, uint32_t blockCount, int64_t outputOffset)
+__aicore__ inline void UpsampleNearest3dND<T, isExact>::ComputeAndCopyOut(uint32_t dataCount, uint32_t srcDataLength,
+                                                                          uint32_t blockCount, int64_t outputOffset)
 {
     LocalTensor<T> srcLocal = inQueue.DeQue<T>();
 
@@ -499,7 +509,9 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::GetRangeD(int64_t slideI
 }
 
 template <typename T, bool isExact>
-__aicore__ inline void UpsampleNearest3dND<T, isExact>::CalculateSrcIndexTensor(int64_t index, int64_t length, int8_t direction, LocalTensor<float> srcIndexTensor)
+__aicore__ inline void UpsampleNearest3dND<T, isExact>::CalculateSrcIndexTensor(int64_t index, int64_t length,
+                                                                                int8_t direction,
+                                                                                LocalTensor<float> srcIndexTensor)
 {
     ArithProgression(srcIndexTensor, static_cast<float>(index), ONE_FLOAT, length);
     PipeBarrier<PIPE_V>();
@@ -528,7 +540,8 @@ __aicore__ inline void UpsampleNearest3dND<T, isExact>::CalculateGatherOffsetW()
 }
 
 template <typename T, bool isExact>
-__aicore__ inline void UpsampleNearest3dND<T, isExact>::ParseTilingData(const UpsampleNearest3dRegBaseSimdTilingData* tilingData)
+__aicore__ inline void UpsampleNearest3dND<T, isExact>::ParseTilingData(
+    const UpsampleNearest3dRegBaseSimdTilingData* tilingData)
 {
     batches = tilingData->lenN * tilingData->lenC;
     inputShapes[D_INDEX] = tilingData->inD;

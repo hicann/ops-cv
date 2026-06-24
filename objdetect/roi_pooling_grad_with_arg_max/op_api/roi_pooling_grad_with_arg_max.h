@@ -18,17 +18,10 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *RoiPoolingGradWithArgMax(const aclTensor *grad,
-    const aclTensor *x,
-    const aclTensor *rois,
-    const aclTensor *roiActualNumOptional,
-    const aclTensor *argmax,
-    int64_t pooledH,
-    int64_t pooledW,
-    double spatialScaleH,
-    double spatialScaleW,
-    int64_t poolChannel,
-    aclOpExecutor *executor);
+const aclTensor* RoiPoolingGradWithArgMax(const aclTensor* grad, const aclTensor* x, const aclTensor* rois,
+                                          const aclTensor* roiActualNumOptional, const aclTensor* argmax,
+                                          int64_t pooledH, int64_t pooledW, double spatialScaleH, double spatialScaleW,
+                                          int64_t poolChannel, aclOpExecutor* executor);
 }
 
 #endif

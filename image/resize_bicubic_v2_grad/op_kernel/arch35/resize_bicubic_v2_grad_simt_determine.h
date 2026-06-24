@@ -30,31 +30,31 @@ class ResizeBicubicV2GradSimtDetermine {
 public:
     __aicore__ inline ResizeBicubicV2GradSimtDetermine(){};
 
-    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR y, const ResizeBicubicV2GradSimtDetermineTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR y, const ResizeBicubicV2GradSimtDetermineTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     GlobalTensor<T_DATA> gradsGm_;
     GlobalTensor<T_DATA> yGm_;
     int32_t coreIdx_;
-    const ResizeBicubicV2GradSimtDetermineTilingData *tilingData_;
+    const ResizeBicubicV2GradSimtDetermineTilingData* tilingData_;
 };
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
 __aicore__ inline void ResizeBicubicV2GradSimtDetermine<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>::Init(
-    GM_ADDR grads, GM_ADDR y, const ResizeBicubicV2GradSimtDetermineTilingData *tilingData)
+    GM_ADDR grads, GM_ADDR y, const ResizeBicubicV2GradSimtDetermineTilingData* tilingData)
 {
     coreIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    gradsGm_.SetGlobalBuffer((__gm__ T_DATA *)grads);
-    yGm_.SetGlobalBuffer((__gm__ T_DATA *)y);
+    gradsGm_.SetGlobalBuffer((__gm__ T_DATA*)grads);
+    yGm_.SetGlobalBuffer((__gm__ T_DATA*)y);
 }
 
 template <typename T_IDX, int32_t FORMAT>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcOutputDimIdx(T_IDX yIdx,
-    T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW,
-    T_IDX shiftW, T_IDX &idxN, T_IDX &idxC, T_IDX &yIdxH, T_IDX &yIdxW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcOutputDimIdx(
+    T_IDX yIdx, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW,
+    T_IDX shiftW, T_IDX& idxN, T_IDX& idxC, T_IDX& yIdxH, T_IDX& yIdxW)
 {
     T_IDX tmpIdx = yIdx;
     T_IDX tmpRes = 0;
@@ -82,26 +82,30 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcOutput
 }
 
 template <typename T_IDX, typename T_IDX2, bool ALIGN_CORNERS>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcIdxStart(float scaleH, float scaleW,
-    float inverseScaleH, float inverseScaleW, T_IDX yIdxH, T_IDX yIdxW, T_IDX &gradsIdxHStart, float &yRealIdxHStart,
-    T_IDX &gradsIdxWStart, float &yRealIdxWStart)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcIdxStart(
+    float scaleH, float scaleW, float inverseScaleH, float inverseScaleW, T_IDX yIdxH, T_IDX yIdxW,
+    T_IDX& gradsIdxHStart, float& yRealIdxHStart, T_IDX& gradsIdxWStart, float& yRealIdxWStart)
 {
     float offset = 0.5f;
     if constexpr (ALIGN_CORNERS) {
         offset = 0.0f;
     }
 
-    gradsIdxHStart = static_cast<T_IDX>(max(static_cast<T_IDX2>(0),
-        static_cast<T_IDX2>(ceilf((static_cast<float>(yIdxH) - 2.0f + offset) * inverseScaleH - offset))));
+    gradsIdxHStart = static_cast<T_IDX>(
+        max(static_cast<T_IDX2>(0),
+            static_cast<T_IDX2>(ceilf((static_cast<float>(yIdxH) - 2.0f + offset) * inverseScaleH - offset))));
     yRealIdxHStart = (static_cast<float>(gradsIdxHStart) + offset) * scaleH - offset;
-    gradsIdxWStart = static_cast<T_IDX>(max(static_cast<T_IDX2>(0),
-        static_cast<T_IDX2>(ceilf((static_cast<float>(yIdxW) - 2.0f + offset) * inverseScaleW - offset))));
+    gradsIdxWStart = static_cast<T_IDX>(
+        max(static_cast<T_IDX2>(0),
+            static_cast<T_IDX2>(ceilf((static_cast<float>(yIdxW) - 2.0f + offset) * inverseScaleW - offset))));
     yRealIdxWStart = (static_cast<float>(gradsIdxWStart) + offset) * scaleW - offset;
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetInputValue(__gm__ T_DATA *grads, T_IDX lenC,
-    T_IDX lenDstH, T_IDX lenDstW, T_IDX idxN, T_IDX idxC, T_IDX gradsIdxH, T_IDX gradsIdxW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetInputValue(__gm__ T_DATA* grads, T_IDX lenC,
+                                                                                     T_IDX lenDstH, T_IDX lenDstW,
+                                                                                     T_IDX idxN, T_IDX idxC,
+                                                                                     T_IDX gradsIdxH, T_IDX gradsIdxW)
 {
     T_IDX gradsIdx = 0;
     if constexpr (FORMAT == FORMAT_NCHW) {
@@ -115,9 +119,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetInputV
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcInternalPoint(__gm__ T_DATA *grads,
-    T_IDX lenC, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX idxN, T_IDX idxC, T_IDX yIdxH,
-    T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart, float yRealIdxWStart)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcInternalPoint(
+    __gm__ T_DATA* grads, T_IDX lenC, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX idxN, T_IDX idxC,
+    T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart, float yRealIdxWStart)
 {
     float addValue = 0.0f;
 
@@ -133,8 +137,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcInter
             float yIdxDiffW = abs(yRealIdxW - static_cast<float>(yIdxW));
             float yCoeffW = CalcCubicCoefficient(yIdxDiffW);
 
-            float gradsValue =
-                GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC, gradsIdxH, gradsIdxW);
+            float gradsValue = GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC,
+                                                                    gradsIdxH, gradsIdxW);
 
             addValue += gradsValue * yCoeffH * yCoeffW;
 
@@ -149,9 +153,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcInter
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoundaryPoint(__gm__ T_DATA *grads,
-    T_IDX lenC, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX idxN, T_IDX idxC,
-    T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart, float yRealIdxWStart)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoundaryPoint(
+    __gm__ T_DATA* grads, T_IDX lenC, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW,
+    T_IDX idxN, T_IDX idxC, T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart,
+    float yRealIdxWStart)
 {
     float addValue = 0.0f;
 
@@ -172,8 +177,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoun
             float yCoeffsW[4];
             CalcCubicCoefficients(yCoeffsW, yIdxDiffW);
 
-            float gradsValue =
-                GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC, gradsIdxH, gradsIdxW);
+            float gradsValue = GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC,
+                                                                    gradsIdxH, gradsIdxW);
 
             for (T_IDX2 j = 0; j < 4; j++) {
                 T_IDX yTempIdxW = static_cast<T_IDX>(
@@ -194,9 +199,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcWBoun
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoundaryPoint(__gm__ T_DATA *grads,
-    T_IDX lenC, T_IDX lenSrcH, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX idxN, T_IDX idxC,
-    T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart, float yRealIdxWStart)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoundaryPoint(
+    __gm__ T_DATA* grads, T_IDX lenC, T_IDX lenSrcH, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW,
+    T_IDX idxN, T_IDX idxC, T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart,
+    float yRealIdxWStart)
 {
     float addValue = 0.0f;
 
@@ -217,8 +223,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoun
             float yIdxDiffW = abs(yRealIdxW - static_cast<float>(yIdxW));
             float yCoeffW = CalcCubicCoefficient(yIdxDiffW);
 
-            float gradsValue =
-                GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC, gradsIdxH, gradsIdxW);
+            float gradsValue = GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC,
+                                                                    gradsIdxH, gradsIdxW);
 
             for (T_IDX2 i = 0; i < 4; i++) {
                 T_IDX yTempIdxH = static_cast<T_IDX>(
@@ -239,9 +245,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcHBoun
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCornerPoint(__gm__ T_DATA *grads, T_IDX lenC,
-    T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX idxN, T_IDX idxC,
-    T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart, T_IDX gradsIdxWStart, float yRealIdxWStart)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCornerPoint(
+    __gm__ T_DATA* grads, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH,
+    float scaleW, T_IDX idxN, T_IDX idxC, T_IDX yIdxH, T_IDX yIdxW, T_IDX gradsIdxHStart, float yRealIdxHStart,
+    T_IDX gradsIdxWStart, float yRealIdxWStart)
 {
     float addValue = 0.0f;
 
@@ -267,15 +274,15 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCorne
             float yCoeffsW[4];
             CalcCubicCoefficients(yCoeffsW, yIdxDiffW);
 
-            float gradsValue =
-                GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC, gradsIdxH, gradsIdxW);
+            float gradsValue = GetInputValue<T_DATA, T_IDX, FORMAT>(grads, lenC, lenDstH, lenDstW, idxN, idxC,
+                                                                    gradsIdxH, gradsIdxW);
 
             for (T_IDX2 i = 0; i < 4; i++) {
                 T_IDX yTempIdxH = static_cast<T_IDX>(
                     max(static_cast<T_IDX2>(0), min(yFloorIdxH - 1 + i, static_cast<T_IDX2>(lenSrcH) - 1)));
                 for (T_IDX2 j = 0; j < 4; j++) {
-                    T_IDX yTempIdxW = static_cast<T_IDX>(max(static_cast<T_IDX2>(0),
-                        min(yFloorIdxW - 1 + j, static_cast<T_IDX2>(lenSrcW) - 1)));
+                    T_IDX yTempIdxW = static_cast<T_IDX>(
+                        max(static_cast<T_IDX2>(0), min(yFloorIdxW - 1 + j, static_cast<T_IDX2>(lenSrcW) - 1)));
                     if (yTempIdxH == yIdxH && yTempIdxW == yIdxW) {
                         addValue += gradsValue * yCoeffsH[i] * yCoeffsW[j];
                     }
@@ -293,39 +300,39 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCorne
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermineCompute(__gm__ T_DATA *grads,
-    __gm__ T_DATA *y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH,
-    float scaleW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC,
-    T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermineCompute(
+    __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
+    float scaleH, float scaleW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC,
+    T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor;
-        idx += static_cast<T_IDX>(blockDim.x)) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor; idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yIdx = coreOffset + idx;
         T_IDX idxN = 0, idxC = 0, yIdxH = 0, yIdxW = 0;
         CalcOutputDimIdx<T_IDX, FORMAT>(yIdx, lenC, lenSrcH, lenSrcW, mC, shiftC, mH, shiftH, mW, shiftW, idxN, idxC,
-            yIdxH, yIdxW);
+                                        yIdxH, yIdxW);
 
         T_IDX gradsIdxHStart = 0, gradsIdxWStart = 0;
         float yRealIdxHStart = 0.0f, yRealIdxWStart = 0.0f;
         CalcIdxStart<T_IDX, T_IDX2, ALIGN_CORNERS>(scaleH, scaleW, inverseScaleH, inverseScaleW, yIdxH, yIdxW,
-            gradsIdxHStart, yRealIdxHStart, gradsIdxWStart, yRealIdxWStart);
+                                                   gradsIdxHStart, yRealIdxHStart, gradsIdxWStart, yRealIdxWStart);
 
         float addValue = 0.0f;
         if ((yIdxH != 0 && yIdxH != lenSrcH - 1) && (yIdxW != 0 && yIdxW != lenSrcW - 1)) {
-            addValue = CalcInternalPoint<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS>(grads, lenC, lenDstH, lenDstW, scaleH,
-                scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart, yRealIdxHStart, gradsIdxWStart, yRealIdxWStart);
-        } else if ((yIdxH != 0 && yIdxH != lenSrcH - 1) && (yIdxW == 0 || yIdxW == lenSrcW - 1)) {
-            addValue = CalcWBoundaryPoint<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(grads, lenC, lenSrcW, lenDstH,
-                lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart, yRealIdxHStart, gradsIdxWStart,
-                yRealIdxWStart);
-        } else if ((yIdxH == 0 || yIdxH == lenSrcH - 1) && (yIdxW != 0 && yIdxW != lenSrcW - 1)) {
-            addValue = CalcHBoundaryPoint<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(grads, lenC, lenSrcH, lenDstH,
-                lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart, yRealIdxHStart, gradsIdxWStart,
-                yRealIdxWStart);
-        } else {
-            addValue = CalcCornerPoint<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(grads, lenC, lenSrcH, lenSrcW,
-                lenDstH, lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart, yRealIdxHStart,
+            addValue = CalcInternalPoint<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS>(
+                grads, lenC, lenDstH, lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart, yRealIdxHStart,
                 gradsIdxWStart, yRealIdxWStart);
+        } else if ((yIdxH != 0 && yIdxH != lenSrcH - 1) && (yIdxW == 0 || yIdxW == lenSrcW - 1)) {
+            addValue = CalcWBoundaryPoint<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(
+                grads, lenC, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart,
+                yRealIdxHStart, gradsIdxWStart, yRealIdxWStart);
+        } else if ((yIdxH == 0 || yIdxH == lenSrcH - 1) && (yIdxW != 0 && yIdxW != lenSrcW - 1)) {
+            addValue = CalcHBoundaryPoint<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(
+                grads, lenC, lenSrcH, lenDstH, lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW, gradsIdxHStart,
+                yRealIdxHStart, gradsIdxWStart, yRealIdxWStart);
+        } else {
+            addValue = CalcCornerPoint<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(
+                grads, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, idxN, idxC, yIdxH, yIdxW,
+                gradsIdxHStart, yRealIdxHStart, gradsIdxWStart, yRealIdxWStart);
         }
 
         y[yIdx] = static_cast<T_DATA>(addValue);
@@ -333,25 +340,27 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterm
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_vf__ LAUNCH_BOUND(SIMT_DETERMINE_THREAD_NUM_INT32)__aicore__
-    void calleeSimtDetermineInt32(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW,
-    T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, float inverseScaleH, float inverseScaleW,
-    T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_DETERMINE_THREAD_NUM_INT32) __aicore__
+    void calleeSimtDetermineInt32(__gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW,
+                                  T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, float inverseScaleH,
+                                  float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC,
+                                  T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    SimtDetermineCompute<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(grads, y, lenC, lenSrcH, lenSrcW, lenDstH,
-        lenDstW, scaleH, scaleW, inverseScaleH, inverseScaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW,
-        shiftW);
+    SimtDetermineCompute<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(
+        grads, y, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, inverseScaleH, inverseScaleW, coreFactor,
+        coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
-__simt_vf__ LAUNCH_BOUND(SIMT_DETERMINE_THREAD_NUM_INT64)__aicore__
-    void calleeSimtDetermineInt64(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW,
-    T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, float inverseScaleH, float inverseScaleW,
-    T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_DETERMINE_THREAD_NUM_INT64) __aicore__
+    void calleeSimtDetermineInt64(__gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW,
+                                  T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, float inverseScaleH,
+                                  float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC,
+                                  T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
-    SimtDetermineCompute<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(grads, y, lenC, lenSrcH, lenSrcW, lenDstH,
-        lenDstW, scaleH, scaleW, inverseScaleH, inverseScaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW,
-        shiftW);
+    SimtDetermineCompute<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>(
+        grads, y, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, inverseScaleH, inverseScaleW, coreFactor,
+        coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, typename T_IDX2, int32_t FORMAT, bool ALIGN_CORNERS>
@@ -386,13 +395,13 @@ __aicore__ inline void ResizeBicubicV2GradSimtDetermine<T_DATA, T_IDX, T_IDX2, F
     if (coreIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
             asc_vf_call<calleeSimtDetermineInt32<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
-                dim3(SIMT_DETERMINE_THREAD_NUM_INT32), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
-                (__gm__ T_DATA *)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
+                dim3(SIMT_DETERMINE_THREAD_NUM_INT32), (__gm__ T_DATA*)(gradsGm_.GetPhyAddr()),
+                (__gm__ T_DATA*)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
                 inverseScaleH, inverseScaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
         } else {
             asc_vf_call<calleeSimtDetermineInt64<T_DATA, T_IDX, T_IDX2, FORMAT, ALIGN_CORNERS>>(
-                dim3(SIMT_DETERMINE_THREAD_NUM_INT64), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
-                (__gm__ T_DATA *)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
+                dim3(SIMT_DETERMINE_THREAD_NUM_INT64), (__gm__ T_DATA*)(gradsGm_.GetPhyAddr()),
+                (__gm__ T_DATA*)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
                 inverseScaleH, inverseScaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
         }
     }

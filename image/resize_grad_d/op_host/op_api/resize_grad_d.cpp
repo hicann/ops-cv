@@ -29,7 +29,7 @@ static const float CUBIC_COEFF_A = -0.75f;
 static const float EXTRAPOLATION_VALUE = 0.0;
 static const int64_t EXCLUDE_OUTSIDE = 0;
 
-inline const string &GetCoordinateTransformationModeStr(const bool alignCorners)
+inline const string& GetCoordinateTransformationModeStr(const bool alignCorners)
 {
     if (alignCorners) {
         return ALIGN_CORNERS;
@@ -37,34 +37,25 @@ inline const string &GetCoordinateTransformationModeStr(const bool alignCorners)
     return HALF_PIXEL;
 }
 
-const aclTensor *ResizeGradD(const aclTensor *grads, const aclIntArray *inputSize, const aclFloatArray *scales,
-    const bool alignCorners, const aclTensor *y, const std::string &mode, aclOpExecutor *executor)
+const aclTensor* ResizeGradD(const aclTensor* grads, const aclIntArray* inputSize, const aclFloatArray* scales,
+                             const bool alignCorners, const aclTensor* y, const std::string& mode,
+                             aclOpExecutor* executor)
 {
     L0_DFX(ResizeGradD, grads, inputSize, scales, alignCorners, mode);
 
-    aclTensor *out = executor->AllocTensor(y->GetViewShape(), y->GetDataType(), y->GetViewFormat());
+    aclTensor* out = executor->AllocTensor(y->GetViewShape(), y->GetDataType(), y->GetViewFormat());
     CHECK_RET(out != nullptr, nullptr);
 
     const int64_t roi[0] = {};
-    aclIntArray *roiArray = executor->AllocIntArray(roi, 0);
+    aclIntArray* roiArray = executor->AllocIntArray(roi, 0);
     CHECK_RET(roiArray != nullptr, nullptr);
 
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeGradD,
-        OP_INPUT(grads),
-        OP_OUTPUT(out),
-        OP_ATTR(inputSize,
-            roiArray,
-            scales,
-            GetCoordinateTransformationModeStr(alignCorners),
-            CUBIC_COEFF_A,
-            EXCLUDE_OUTSIDE,
-            EXTRAPOLATION_VALUE,
-            mode,
-            ROUND_PREFER_FLOOR,
-            DATA_FORMAT));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        ResizeGradD, OP_INPUT(grads), OP_OUTPUT(out),
+        OP_ATTR(inputSize, roiArray, scales, GetCoordinateTransformationModeStr(alignCorners), CUBIC_COEFF_A,
+                EXCLUDE_OUTSIDE, EXTRAPOLATION_VALUE, mode, ROUND_PREFER_FLOOR, DATA_FORMAT));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeGradDAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeGradDAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

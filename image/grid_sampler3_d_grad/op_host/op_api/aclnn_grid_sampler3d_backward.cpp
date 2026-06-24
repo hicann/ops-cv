@@ -50,15 +50,14 @@ static const int64_t OUTPUTMASK_MAX_SIZE = 2;
 static const int64_t REGBASE_MAX_CHANNEL_NUM = 128;
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_BF16, op::DataType::DT_DOUBLE};
 
 static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
-static bool CheckDtypeValid(
-    const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, const aclTensor* inputGrad,
-    const aclTensor* gridGrad)
+static bool CheckDtypeValid(const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid,
+                            const aclTensor* inputGrad, const aclTensor* gridGrad)
 {
     // 检查输入输出数据类型是否一致
     OP_CHECK_DTYPE_NOT_MATCH(gradOutput, input->GetDataType(), return false);
@@ -75,16 +74,14 @@ static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
 {
     // 检查interpolationMode 、paddingMode是否在支持范围内
     if (paddingMode < PADDING_MODE_MIN_VALUE || paddingMode > PADDING_MODE_MAX_VALUE) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
-            PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
+                PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
         return false;
     }
 
     if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
-            INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
+                INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
         return false;
     }
     return true;
@@ -94,27 +91,25 @@ static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
 static bool CheckTupleNullptr(std::tuple<aclTensor*, aclTensor*> tensorTuple)
 {
     if (std::tuple_size<decltype(tensorTuple)>::value != GRAD_RESULT_SIZE) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "the length of tuple returned by GridSampler3DGrad is not %ld.", GRAD_RESULT_SIZE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "the length of tuple returned by GridSampler3DGrad is not %ld.",
+                GRAD_RESULT_SIZE);
         return false;
     }
     return (std::get<0>(tensorTuple) != nullptr) && (std::get<1>(tensorTuple) != nullptr);
 }
 
-static bool CheckOutputMask(const aclBoolArray *outputMask)
+static bool CheckOutputMask(const aclBoolArray* outputMask)
 {
     if (outputMask->Size() != OUTPUTMASK_MAX_SIZE) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "Expected aclnnGridSampler3DBackward outputMask len to be %ld, but got %zu.",
-            OUTPUTMASK_MAX_SIZE, outputMask->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected aclnnGridSampler3DBackward outputMask len to be %ld, but got %zu.",
+                OUTPUTMASK_MAX_SIZE, outputMask->Size());
         return false;
     }
     return true;
 }
 
-static bool CheckShape(
-    const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, const aclTensor* inputGrad,
-    const aclTensor* gridGrad)
+static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid,
+                       const aclTensor* inputGrad, const aclTensor* gridGrad)
 {
     const auto& gradOutputShape = gradOutput->GetViewShape();
     const auto& inputShape = input->GetViewShape();
@@ -133,35 +128,30 @@ static bool CheckShape(
 
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != gradOutputShape.GetDim(FIRST_DIM)) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "expect input grid and gradOutput to have same batch size, but got input with \
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect input grid and gradOutput to have same batch size, but got input with \
             shape [%s] grid with shape [%s] and gradOutput with shape [%s]",
-            op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
-            op::ToString(gradOutputShape).GetString());
+                op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
+                op::ToString(gradOutputShape).GetString());
         return false;
     }
     if (inputC != gradOutputC) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "expect input and gradOutput to have same channel size, but got input with shape \
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "expect input and gradOutput to have same channel size, but got input with shape \
             [%s] and gradOutput with shape [%s]",
-            op::ToString(inputShape).GetString(), op::ToString(gradOutputShape).GetString());
+                op::ToString(inputShape).GetString(), op::ToString(gradOutputShape).GetString());
         return false;
     }
     if (gridShape.GetDim(SECOND_DIM) != gradOutputD || gridShape.GetDim(THIRD_DIM) != gradOutputH ||
         gridShape.GetDim(FOURTH_DIM) != gradOutputW) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "expect grid and gradOutput to have same D, H and W size, but got grid with shape \
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "expect grid and gradOutput to have same D, H and W size, but got grid with shape \
             [%s] and gradOutput with shape [%s]",
-            op::ToString(gridShape).GetString(), op::ToString(gradOutputShape).GetString());
+                op::ToString(gridShape).GetString(), op::ToString(gradOutputShape).GetString());
         return false;
     }
     if (gridShape.GetDim(FIFTH_DIM) != VOLUMETRIC_GRID_LAST_DIM_SIZE) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "expect grid to have size %ld in last dimension, but got grid with shape [%s]",
-            VOLUMETRIC_GRID_LAST_DIM_SIZE, op::ToString(gridShape).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect grid to have size %ld in last dimension, but got grid with shape [%s]",
+                VOLUMETRIC_GRID_LAST_DIM_SIZE, op::ToString(gridShape).GetString());
         return false;
     }
     OP_CHECK_SHAPE_NOT_EQUAL(inputGrad, input, return false);
@@ -169,9 +159,9 @@ static bool CheckShape(
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
-    int64_t paddingMode, const aclTensor* inputGrad, const aclTensor* gridGrad, const aclBoolArray *outputMask)
+static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid,
+                               int64_t interpolationMode, int64_t paddingMode, const aclTensor* inputGrad,
+                               const aclTensor* gridGrad, const aclBoolArray* outputMask)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull2In1Out(gradOutput, input, grid, inputGrad, gridGrad), ACLNN_ERR_PARAM_NULLPTR);
@@ -184,7 +174,7 @@ static aclnnStatus CheckParams(
 
     // 4. 检查输入、输出的shape匹配关系
     CHECK_RET(CheckShape(gradOutput, input, grid, inputGrad, gridGrad), ACLNN_ERR_PARAM_INVALID);
-    
+
     // 5. 检查outputMask长度
     CHECK_RET(CheckOutputMask(outputMask), ACLNN_ERR_PARAM_INVALID);
 
@@ -215,17 +205,18 @@ static bool CheckTranspose(const aclTensor* input)
     return true;
 }
 
-aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
-    const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, const aclBoolArray* outputMask, aclTensor* inputGrad, aclTensor* gridGrad,
-    uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* input,
+                                                       const aclTensor* grid, int64_t interpolationMode,
+                                                       int64_t paddingMode, bool alignCorners,
+                                                       const aclBoolArray* outputMask, aclTensor* inputGrad,
+                                                       aclTensor* gridGrad, uint64_t* workspaceSize,
+                                                       aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
-    L2_DFX_PHASE_1(
-        aclnnGridSampler3DBackward,
-        DFX_IN(gradOutput, input, grid, interpolationMode, paddingMode, alignCorners, outputMask),
-        DFX_OUT(inputGrad, gridGrad));
+    L2_DFX_PHASE_1(aclnnGridSampler3DBackward,
+                   DFX_IN(gradOutput, input, grid, interpolationMode, paddingMode, alignCorners, outputMask),
+                   DFX_OUT(inputGrad, gridGrad));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -293,9 +284,9 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
         gradOutTensor->SetStorageFormat(op::Format::FORMAT_NDHWC);
         inputTensor->SetStorageFormat(op::Format::FORMAT_NDHWC);
 
-        gridSampler3DBackwardOut = l0op::GridSampler3DGrad(
-            gradOutTensor, inputTensor, gridContiguous, interpolationMode, paddingMode, alignCorners,
-            uniqueExecutor.get());
+        gridSampler3DBackwardOut = l0op::GridSampler3DGrad(gradOutTensor, inputTensor, gridContiguous,
+                                                           interpolationMode, paddingMode, alignCorners,
+                                                           uniqueExecutor.get());
     } else {
         // 输入为float16/bfloat16类型时，将其转为float32
         auto castDtype = inputContiguous->GetDataType();
@@ -309,9 +300,9 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
             gridContiguous = l0op::Cast(gridContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
         }
-        gridSampler3DBackwardOut = l0op::GridSampler3DGrad(
-            gradOutputContiguous, inputContiguous, gridContiguous, interpolationMode, paddingMode, alignCorners,
-            uniqueExecutor.get());
+        gridSampler3DBackwardOut = l0op::GridSampler3DGrad(gradOutputContiguous, inputContiguous, gridContiguous,
+                                                           interpolationMode, paddingMode, alignCorners,
+                                                           uniqueExecutor.get());
     }
     CHECK_RET(CheckTupleNullptr(gridSampler3DBackwardOut), ACLNN_ERR_INNER_NULLPTR);
 
@@ -363,8 +354,8 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnGridSampler3DBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnGridSampler3DBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                       aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnGridSampler3DBackward);
     // 固定写法，调用框架能力，完成计算

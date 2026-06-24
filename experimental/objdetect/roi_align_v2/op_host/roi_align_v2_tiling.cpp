@@ -56,7 +56,7 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
 
 static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 {
-    auto ascendcPlatform = platform_ascendc:: PlatformAscendC(context->GetPlatformInfo());
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     uint32_t sysWorkspaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, currentWorkspace);
@@ -65,18 +65,16 @@ static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 }
 
 static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
-{   
+{
     int64_t coreNum;
     uint64_t ubSize;
-    
-    OP_CHECK_IF(
-        GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetPlatformInfo error"),
-        return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
     RoiAlignV2TilingData* tiling = context->GetTilingData<RoiAlignV2TilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-    OP_CHECK_IF(
-        memset_s(tiling, sizeof(RoiAlignV2TilingData), 0, sizeof(RoiAlignV2TilingData)) != EOK,
-        OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(memset_s(tiling, sizeof(RoiAlignV2TilingData), 0, sizeof(RoiAlignV2TilingData)) != EOK,
+                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
     auto features_shape = context->GetInputShape(0)->GetStorageShape();
     auto rois_shape = context->GetInputShape(1)->GetStorageShape();
 
@@ -85,13 +83,13 @@ static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
     uint32_t height = features_shape.GetDim(2);
     uint32_t width = features_shape.GetDim(3);
     uint32_t numRois = rois_shape.GetDim(0);
-    uint32_t roiLength = rois_shape.GetDim(1);  
-    
+    uint32_t roiLength = rois_shape.GetDim(1);
+
     auto attrs = context->GetAttrs();
     int32_t pooledHeight = 0;
     int32_t pooledWidth = 0;
     float spatialScale = 0.0f;
-    int32_t samplingRatio = 0;  
+    int32_t samplingRatio = 0;
 
     if (attrs != nullptr) {
         const int64_t* pooledHeightAttr = attrs->GetInt(0);
@@ -105,7 +103,7 @@ static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
             pooledWidth = static_cast<int32_t>(*pooledWidthAttr);
         }
     }
-    if(pooledHeight <= 0 || pooledWidth <= 0) {
+    if (pooledHeight <= 0 || pooledWidth <= 0) {
         OP_LOGE(context, "Invalid pooled height or width");
         return ge::GRAPH_FAILED;
     }
@@ -124,7 +122,7 @@ static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
     // Core allocation: distribute ROIs across cores
     uint32_t nowCoreNum = (coreNum > numRois) ? numRois : coreNum;
     OP_CHECK_IF(nowCoreNum == 0, OP_LOGE(context, "nowCoreNum is 0, invalid core number for ROI align"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     uint32_t baseRoisPerCore = numRois / nowCoreNum;
     uint32_t tailRoiNum = numRois % nowCoreNum;
     uint32_t bigTotalRois = baseRoisPerCore + 1;
@@ -155,11 +153,10 @@ static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
 }
 
 static ge::graphStatus TilingParseForRoiAlignV2([[maybe_unused]] gert::TilingParseContext* context)
-{   
+{
     return ge::GRAPH_SUCCESS;
 }
 
 // tiling注册入口.
 IMPL_OP_OPTILING(RoiAlignV2).Tiling(RoiAlignV2TilingFunc).TilingParse<RoiAlignV2CompileInfo>(TilingParseForRoiAlignV2);
 } // namespace optiling
- 

@@ -29,30 +29,30 @@ template <typename T>
 class UpsampleLinear1dMixND {
 public:
     TPipe pipe;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>, 
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>, MDL_CFG_MIX>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, float>, MDL_CFG_MIX>
         matmulW;
 
     __aicore__ inline UpsampleLinear1dMixND(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                const UpsampleLinear1dTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
-    __aicore__ inline void ParseTilingData(const UpsampleLinear1dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleLinear1dTilingData* tilingData);
     __aicore__ inline void calculateWidthExtensionFloat(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void copyRadioTensorToGm(int8_t direction);
     __aicore__ inline void getSlideRange();
-    __aicore__ inline void calculateRadio(int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK, float scale_w, bool align_corners, int64_t wIn, int64_t slide_size_w);
+    __aicore__ inline void calculateRadio(int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK,
+                                          float scale_w, bool align_corners, int64_t wIn, int64_t slide_size_w);
 
 private:
     // 系数矩阵下标队列
     TQue<QuePosition::VECOUT, BUFFER_NUM> radioQueue;
 
-    const TCubeTiling *__restrict matmulTiling_w;
+    const TCubeTiling* __restrict matmulTiling_w;
     GlobalTensor<float> intermediateTensorGm;
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -67,11 +67,11 @@ private:
     int64_t slideNumW;
     int64_t eachCoreSlideNumW;
     int64_t tailStartSlideNumW;
-    
+
     int64_t groupCoreNumW;
     int64_t tailAvergingRowsW;
     int64_t remainderW;
-    int64_t slideEnd_w = 0;   
+    int64_t slideEnd_w = 0;
     int64_t slideStart_w = 0;
     int64_t tailSlideStart_w = 0;
     int64_t tailRowEnd_w = 0;
@@ -79,17 +79,17 @@ private:
     int64_t tailRowStart_w = 0;
     int64_t output_shapes[3] = {0, 0, 0};
     int64_t input_shapes[3] = {0, 0, 0};
-    
+
     int64_t workSpaceRadioOffset = 0;
     int64_t singleCoreK = 0;
-    
+
     int64_t xMin = 0;
     int64_t inputH = 0;
 };
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dMixND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dMixND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                      const UpsampleLinear1dTilingData* tilingData)
 {
     blockIdxMix = GetBlockIdx();
     ParseTilingData(tilingData);
@@ -98,15 +98,15 @@ __aicore__ inline void UpsampleLinear1dMixND<T>::Init(
         pipe.InitBuffer(radioQueue, BUFFER_NUM, radio_matrix_size_w * sizeof(float));
     }
     intermediateTensorGm.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace));
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)input);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)output);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)input);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)output);
 }
 
 template <typename T>
 __aicore__ inline void UpsampleLinear1dMixND<T>::Process()
 {
     if (FloatEqual(scale_w, 1.0) || blockIdxMix >= need_core_num_w) {
-        return ;
+        return;
     }
     if constexpr (std::is_same<T, float>::value) {
         if (slideStart_w < slideEnd_w) {
@@ -130,9 +130,9 @@ __aicore__ inline void UpsampleLinear1dMixND<T>::Process()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dMixND<T>::calculateRadio(
-    int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK, 
-    float scale_w, bool align_corners, int64_t wIn, int64_t slide_size_w)
+__aicore__ inline void UpsampleLinear1dMixND<T>::calculateRadio(int64_t loopIndex, int64_t length, int64_t& xMin,
+                                                                int64_t& singleCoreK, float scale_w, bool align_corners,
+                                                                int64_t wIn, int64_t slide_size_w)
 {
     calculateSingleCoreK(loopIndex, length, xMin, singleCoreK, scale_w, align_corners, wIn);
     LocalTensor<float> radioTensorMix = radioQueue.AllocTensor<float>();
@@ -140,17 +140,18 @@ __aicore__ inline void UpsampleLinear1dMixND<T>::calculateRadio(
     event_t eventIDVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIDVToS);
     WaitFlag<HardEvent::V_S>(eventIDVToS);
-    calculateRadioTensorW(loopIndex, length, radioTensorMix, xMin, singleCoreK, scale_w, align_corners, wIn, slide_size_w);
+    calculateRadioTensorW(loopIndex, length, radioTensorMix, xMin, singleCoreK, scale_w, align_corners, wIn,
+                          slide_size_w);
     radioQueue.EnQue(radioTensorMix);
     copyRadioTensorToGm(0);
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dMixND<T>::calculateWidthExtensionFloat(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleLinear1dMixND<T>::calculateWidthExtensionFloat(int64_t tensorCIndex, int64_t rowStart,
+                                                                              int64_t rowEnd)
 {
     if (singleCoreK <= 0) {
-        return ;
+        return;
     }
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
@@ -191,7 +192,7 @@ __aicore__ inline void UpsampleLinear1dMixND<T>::copyRadioTensorToGm(int8_t dire
 }
 
 template <typename T>
-__aicore__ inline void UpsampleLinear1dMixND<T>::ParseTilingData(const UpsampleLinear1dTilingData *tilingData)
+__aicore__ inline void UpsampleLinear1dMixND<T>::ParseTilingData(const UpsampleLinear1dTilingData* tilingData)
 {
     align_corners = tilingData->align_corners;
     slide_size_w = tilingData->slide_size_w;
@@ -229,6 +230,6 @@ __aicore__ inline void UpsampleLinear1dMixND<T>::getSlideRange()
     }
 }
 
-}  // namespace UpsampleLinear1d
+} // namespace UpsampleLinear1d
 
-#endif  // UPSAMPLE_LINEAR1D
+#endif // UPSAMPLE_LINEAR1D

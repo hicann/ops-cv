@@ -38,6 +38,6 @@ REG_OP(AdjustSaturation)
     .INPUT(scale, TensorType({DT_FLOAT}))
     .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OP_END_FACTORY_REG(AdjustSaturation)
-}
+} // namespace ge
 
 #endif

@@ -38,7 +38,7 @@ constexpr uint32_t CoreNum = 1;
 constexpr uint32_t WS_SYS_SIZE = 16U * 1024U * 1024U;
 constexpr int32_t DIMS_LIMIT_0 = 2;
 constexpr int32_t DIMS_LIMIT_1 = 1;
-constexpr int32_t LIMIT_INPUT_NUM = 2048 * 4;//2048个框
+constexpr int32_t LIMIT_INPUT_NUM = 2048 * 4; // 2048个框
 constexpr int32_t ATTRPOS0 = 0;
 constexpr int32_t ATTRPOS1 = 1;
 constexpr uint32_t INDEXZERO = 0;
@@ -76,19 +76,17 @@ ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalId
     auto outShapeZ = EnsureNotScalar(outZ->GetStorageShape());
 
     // shape校验
-    OP_CHECK_IF(
-        inputShapeX.GetDimNum() != DIMS_LIMIT_0 || inputShapeY.GetDimNum() != DIMS_LIMIT_1 ||
-            outShapeZ.GetDimNum() != DIMS_LIMIT_1,
-        OP_LOGE(
-            context, "NMSWithMask: inputx,inputy,outputz shape dim = %zu, %zu, %zu, should be equal 2,1,1",
-            inputShapeX.GetDimNum(), inputShapeY.GetDimNum(), outShapeZ.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputShapeX.GetDimNum() != DIMS_LIMIT_0 || inputShapeY.GetDimNum() != DIMS_LIMIT_1 ||
+                    outShapeZ.GetDimNum() != DIMS_LIMIT_1,
+                OP_LOGE(context, "NMSWithMask: inputx,inputy,outputz shape dim = %zu, %zu, %zu, should be equal 2,1,1",
+                        inputShapeX.GetDimNum(), inputShapeY.GetDimNum(), outShapeZ.GetDimNum()),
+                return ge::GRAPH_FAILED);
 
     // 获取shape dim值
     auto nDim = inputShapeX.GetDim(INDEXZERO);
     auto cDim = inputShapeX.GetDim(INDEXONE);
     totalIdx = nDim * cDim;
-    if(totalIdx > LIMIT_INPUT_NUM){
+    if (totalIdx > LIMIT_INPUT_NUM) {
         OP_LOGE(context, "invalid Input");
         return ge::GRAPH_FAILED;
     }
@@ -118,30 +116,26 @@ static ge::graphStatus NMSWithMaskTilingFunc(gert::TilingContext* context)
     // 1、获取平台运行信息
     uint64_t ubSize;
     int64_t coreNum;
-    OP_CHECK_IF(
-        GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetPlatformInfo error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
     // 2、获取shape、属性信息
     int64_t totalIdx;
     ge::DataType dataType;
 
-    OP_CHECK_IF(
-        GetShapeAttrsInfo(context, totalIdx, dataType) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetShapeAttrsInfo error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetShapeAttrsInfo(context, totalIdx, dataType) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetShapeAttrsInfo error"), return ge::GRAPH_FAILED);
     // 3、获取WorkspaceSize信息
-    OP_CHECK_IF(
-        GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
+                return ge::GRAPH_FAILED);
 
     // 4、设置tiling信息
     NMSWithMaskTilingData* tiling = context->GetTilingData<NMSWithMaskTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-    OP_CHECK_IF(
-        memset_s(tiling, sizeof(NMSWithMaskTilingData), 0, sizeof(NMSWithMaskTilingData)) != EOK,
-        OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(memset_s(tiling, sizeof(NMSWithMaskTilingData), 0, sizeof(NMSWithMaskTilingData)) != EOK,
+                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
     tiling->totalLength = totalIdx;
     tiling->iou_threshold = *context->GetAttrs()->GetAttrPointer<float>(ATTRPOS0);
-    tiling->scores_threshold = *context->GetAttrs()->GetAttrPointer<float>(ATTRPOS1); 
+    tiling->scores_threshold = *context->GetAttrs()->GetAttrPointer<float>(ATTRPOS1);
 
     context->SetBlockDim(CoreNum);
     uint64_t tilingKey = 0;
@@ -162,5 +156,7 @@ static ge::graphStatus TilingParseForNMSWithMask([[maybe_unused]] gert::TilingPa
 }
 
 // tiling注册入口.
-IMPL_OP_OPTILING(NMSWithMask).Tiling(NMSWithMaskTilingFunc).TilingParse<NMSWithMaskCompileInfo>(TilingParseForNMSWithMask);
+IMPL_OP_OPTILING(NMSWithMask)
+    .Tiling(NMSWithMaskTilingFunc)
+    .TilingParse<NMSWithMaskCompileInfo>(TilingParseForNMSWithMask);
 } // namespace optiling

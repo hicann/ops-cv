@@ -18,15 +18,9 @@ using namespace op;
 
 class l2_upsample_bicubic_2d_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsample_bicubic_2d_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsample_bicubic_2d_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsample_bicubic_2d_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsample_bicubic_2d_test TearDown" << std::endl; }
 };
 
 // self nullptr
@@ -38,9 +32,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_self_nullptr)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(nullptr, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(nullptr, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -55,8 +48,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_out_nullptr)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(nullptr));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(nullptr));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -71,8 +64,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_outputsize_nullp
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleBicubic2d, INPUT(self_desc, nullptr, align_corners, scales_h, scales_w), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, nullptr, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -88,9 +81,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_dtype_float16)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -106,9 +98,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_dtype_float32)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -124,9 +115,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_dtype_float32_31
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
     SetPlatformSocVersion(SocVersion::ASCEND310P);
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     SetPlatformSocVersion(SocVersion::ASCEND910B);
@@ -143,9 +133,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_dtype_float32_95
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
     SetPlatformSocVersion(SocVersion::ASCEND950);
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     SetPlatformSocVersion(SocVersion::ASCEND910B);
@@ -162,9 +151,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_dtype_int64)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -180,9 +168,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_ascend910B_upsample_bicubic_2d_test_dtype
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -216,9 +203,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_self_empty_n)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
@@ -234,9 +220,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_self_empty_c)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -252,9 +237,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_self_empty_h)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -270,9 +254,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_outputsize_value
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -288,9 +271,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_outputsize_size_
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -306,9 +288,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_shape_3d)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -324,9 +305,8 @@ TEST_F(l2_upsample_bicubic_2d_test, l2_upsample_bicubic_2d_test_dtype_different)
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBicubic2d,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2d, INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);

@@ -29,8 +29,8 @@
 #define AIPP_DYNAMIC_DEFAULT 100
 using namespace Aipp_Kernel;
 
-extern "C" __global__ __aicore__ void Aipp(
-    GM_ADDR images, GM_ADDR params, GM_ADDR features, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void Aipp(GM_ADDR images, GM_ADDR params, GM_ADDR features, GM_ADDR workspace,
+                                           GM_ADDR tiling)
 {
     if (workspace == nullptr) {
         return;

@@ -37,19 +37,19 @@ static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 static constexpr size_t DIM_FIVE = 5;
 
-static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = { DataType::DT_FLOAT };
+static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = {DataType::DT_FLOAT};
 
-static bool CheckNotNull(const aclTensor *gradOutput, const aclTensor *boxes, 
-    const aclIntArray *inputShape, const aclTensor *gradInput)
+static bool CheckNotNull(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                         const aclTensor* gradInput)
 {
     OP_CHECK_NULL(gradOutput, return false);
-    OP_CHECK_NULL(boxes, return false);  
+    OP_CHECK_NULL(boxes, return false);
     OP_CHECK_NULL(inputShape, return false);
     OP_CHECK_NULL(gradInput, return false);
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *gradOutput, const aclTensor *boxes, const aclTensor *gradInput)
+static bool CheckDtypeValid(const aclTensor* gradOutput, const aclTensor* boxes, const aclTensor* gradInput)
 {
     OP_CHECK_DTYPE_NOT_SUPPORT(gradOutput, FLOAT_DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_MATCH(gradOutput, boxes->GetDataType(), return false);
@@ -58,26 +58,26 @@ static bool CheckDtypeValid(const aclTensor *gradOutput, const aclTensor *boxes,
     return true;
 }
 
-static bool CheckFormatValid(const aclTensor *gradOutput, const aclTensor *boxes, const aclTensor *gradInput)
+static bool CheckFormatValid(const aclTensor* gradOutput, const aclTensor* boxes, const aclTensor* gradInput)
 {
     bool formatValid = gradOutput->GetStorageFormat() == op::Format::FORMAT_NCHW &&
-                    boxes->GetStorageFormat() == op::Format::FORMAT_ND &&
-                    gradInput->GetStorageFormat() == op::Format::FORMAT_NCHW;
+                       boxes->GetStorageFormat() == op::Format::FORMAT_ND &&
+                       gradInput->GetStorageFormat() == op::Format::FORMAT_NCHW;
     if (formatValid == false) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "gradOutput's format should be NCHW, boxes's format should be ND, gradInput's format should be NCHW");
+                "gradOutput's format should be NCHW, boxes's format should be ND, gradInput's format should be NCHW");
     }
     return formatValid;
 }
 
-static bool CheckInputShape(const aclTensor *gradOutput, const aclTensor *boxes, const aclIntArray *inputShape, 
-    int64_t pooledHeight, int64_t pooledWidth)
+static bool CheckInputShape(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                            int64_t pooledHeight, int64_t pooledWidth)
 {
     OP_CHECK_WRONG_DIMENSION(gradOutput, DIM_FOUR, return false);
     OP_CHECK_WRONG_DIMENSION(boxes, DIM_TWO, return false);
 
-    auto const &gradOutputShape = gradOutput->GetViewShape();
-    auto const &boxesShape = boxes->GetViewShape();
+    auto const& gradOutputShape = gradOutput->GetViewShape();
+    auto const& boxesShape = boxes->GetViewShape();
     if (boxesShape.GetDim(1) != DIM_FIVE) { // 5: boxes dim 1
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim1 [%ld] should be 5", boxesShape.GetDim(1));
         return false;
@@ -88,39 +88,39 @@ static bool CheckInputShape(const aclTensor *gradOutput, const aclTensor *boxes,
     }
     if (boxesShape.GetDim(DIM_ZERO) != gradOutputShape.GetDim(DIM_ZERO)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim0 [%ld] and gradOutput shape dim0 [%ld] should be equal",
-            boxesShape.GetDim(DIM_ZERO), gradOutputShape.GetDim(DIM_ZERO));
+                boxesShape.GetDim(DIM_ZERO), gradOutputShape.GetDim(DIM_ZERO));
         return false;
     }
     if (gradOutputShape.GetDim(DIM_TWO) != pooledHeight) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "gradOutput shape dim2 [%ld] and pooledHeight [%ld] should be equal",
-            gradOutputShape.GetDim(DIM_TWO), pooledHeight);
+                gradOutputShape.GetDim(DIM_TWO), pooledHeight);
         return false;
     }
     if (gradOutputShape.GetDim(DIM_THREE) != pooledWidth) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "gradOutput shape dim3 [%ld] and pooledWidth [%ld] should be equal",
-            gradOutputShape.GetDim(DIM_THREE), pooledWidth);
+                gradOutputShape.GetDim(DIM_THREE), pooledWidth);
         return false;
     }
 
     return true;
 }
 
-static bool CheckOutputShape(const aclTensor *gradOutput, const aclIntArray *inputShape, const aclTensor *gradInput)
+static bool CheckOutputShape(const aclTensor* gradOutput, const aclIntArray* inputShape, const aclTensor* gradInput)
 {
     OP_CHECK_WRONG_DIMENSION(gradInput, DIM_FOUR, return false);
 
-    auto const &gradOutputShape = gradOutput->GetViewShape();
-    auto const &gradInputShape = gradInput->GetViewShape();
-    
+    auto const& gradOutputShape = gradOutput->GetViewShape();
+    auto const& gradInputShape = gradInput->GetViewShape();
+
     if (gradInputShape.GetDim(DIM_ONE) != gradOutputShape.GetDim(DIM_ONE)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "gradInput shape dim1 [%ld] and gradOutput shape dim1 [%ld] should be equal",
-            gradInputShape.GetDim(DIM_ONE), gradOutputShape.GetDim(DIM_ONE));
+                gradInputShape.GetDim(DIM_ONE), gradOutputShape.GetDim(DIM_ONE));
         return false;
     }
     for (size_t i = 0; i < inputShape->Size(); ++i) {
         if (gradInputShape.GetDim(i) != (*inputShape)[i]) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "gradInput shape [%ld] and inputShape [%ld] should be equal",
-                gradInputShape.GetDim(i), (*inputShape)[i]);
+                    gradInputShape.GetDim(i), (*inputShape)[i]);
             return false;
         }
     }
@@ -141,8 +141,9 @@ static bool CheckAttr(int64_t samplingRatio, float spatialScale)
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclTensor *boxes, const aclIntArray *inputShape, 
-    int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio, const aclTensor *gradInput)
+static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                               int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                               const aclTensor* gradInput)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOutput, boxes, inputShape, gradInput), ACLNN_ERR_PARAM_NULLPTR);
@@ -165,28 +166,33 @@ static aclnnStatus CheckParams(const aclTensor *gradOutput, const aclTensor *box
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *GetOutTensorWithValueZero(aclTensor *gradInput, aclOpExecutor *executor)
+static const aclTensor* GetOutTensorWithValueZero(aclTensor* gradInput, aclOpExecutor* executor)
 {
-    aclScalar *scalar = executor->AllocScalar(0);
+    aclScalar* scalar = executor->AllocScalar(0);
     auto valueTensor = executor->ConvertToTensor(scalar, gradInput->GetDataType());
     auto gradInputDims = op::ToShapeVector(gradInput->GetViewShape());
-    aclIntArray *dimArray = executor->AllocIntArray(gradInputDims.data(), gradInputDims.size());
+    aclIntArray* dimArray = executor->AllocIntArray(gradInputDims.data(), gradInputDims.size());
     auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
     return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
 }
 
-aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor *gradOutput, const aclTensor *boxes, 
-    const aclIntArray *inputShape, int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio, 
-    bool aligned, aclTensor *gradInput, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* boxes,
+                                                    const aclIntArray* inputShape, int64_t pooledHeight,
+                                                    int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                                                    bool aligned, aclTensor* gradInput, uint64_t* workspaceSize,
+                                                    aclOpExecutor** executor)
 {
-    L2_DFX_PHASE_1(aclnnRoiAlignV2Backward,
-        DFX_IN(gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio, aligned), DFX_OUT(gradInput));
+    L2_DFX_PHASE_1(
+        aclnnRoiAlignV2Backward,
+        DFX_IN(gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio, aligned),
+        DFX_OUT(gradInput));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto ret = CheckParams(gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio, gradInput);
+    auto ret = CheckParams(gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio,
+                           gradInput);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     // roialigngrad算子的空tensor在kernel中支持
@@ -212,19 +218,22 @@ aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor *gradOutput,
     CHECK_RET(boxesContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 将gradOutput转为私有格式NC1HWC0
-    auto gradOutputTransData = l0op::TransDataSpecial(gradOutputContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+    auto gradOutputTransData = l0op::TransDataSpecial(gradOutputContiguous, op::Format::FORMAT_NC1HWC0, 0,
+                                                      uniqueExecutor.get());
     CHECK_RET(gradOutputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 基于aligned判断roiEndMode取值
     int64_t roiEndMode = aligned ? DIM_TWO : DIM_ZERO; // roiEndMode = 2 for torch aligned = true
 
     // 进行计算
-    auto roiAlignBackwardOut = l0op::ROIAlignGrad(gradOutputTransData, boxesContiguous, inputShape, pooledHeight, pooledWidth, 
-                                        spatialScale, samplingRatio, roiEndMode, uniqueExecutor.get());
+    auto roiAlignBackwardOut = l0op::ROIAlignGrad(gradOutputTransData, boxesContiguous, inputShape, pooledHeight,
+                                                  pooledWidth, spatialScale, samplingRatio, roiEndMode,
+                                                  uniqueExecutor.get());
     CHECK_RET(roiAlignBackwardOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 将roiAlignBackwardOut的私有格式数据转为NCHW
-    auto gradInputTransData = l0op::TransDataSpecial(roiAlignBackwardOut, gradInput->GetOriginalFormat(), 0, uniqueExecutor.get());
+    auto gradInputTransData = l0op::TransDataSpecial(roiAlignBackwardOut, gradInput->GetOriginalFormat(), 0,
+                                                     uniqueExecutor.get());
     CHECK_RET(gradInputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，将计算结果拷贝到输出gradInput上，gradInput可能是非连续的tensor
@@ -237,7 +246,8 @@ aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor *gradOutput,
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnRoiAlignV2Backward(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnRoiAlignV2Backward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                    aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnRoiAlignV2Backward);
 

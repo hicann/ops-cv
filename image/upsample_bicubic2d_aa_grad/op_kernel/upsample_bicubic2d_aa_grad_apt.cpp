@@ -39,7 +39,7 @@ __global__ __aicore__ void upsample_bicubic2d_aa_grad(GM_ADDR x, GM_ADDR y, GM_A
         op.Process();
         return;
     } else {
-        if constexpr(isInt32 == 1) {
+        if constexpr (isInt32 == 1) {
             Bicubic2dAAGradSimt<DTYPE_GRAD_OUTPUT, uint32_t, int32_t, schId, isDeterministic> op;
             op.Init(x, y, &tilingData);
             op.Process();

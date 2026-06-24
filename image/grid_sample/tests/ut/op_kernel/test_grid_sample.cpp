@@ -24,18 +24,12 @@
 using namespace std;
 using namespace optiling;
 
-extern "C" void grid_sample(uint8_t *x, uint8_t *grid, uint8_t *y, uint8_t *workspace, uint8_t *tiling);
+extern "C" void grid_sample(uint8_t* x, uint8_t* grid, uint8_t* y, uint8_t* workspace, uint8_t* tiling);
 
 class grid_sample_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "grid_sample_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "grid_sample_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "grid_sample_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "grid_sample_test TearDown\n" << endl; }
 };
 
 TEST_F(grid_sample_test, test_case_fp32_test01)
@@ -52,28 +46,29 @@ TEST_F(grid_sample_test, test_case_fp32_test01)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 2, 2, 1}, {2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 2, 2, 1}, {2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -107,24 +102,25 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -132,7 +128,7 @@ TEST_F(grid_sample_test, test_case_fp32_test02)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -160,24 +156,25 @@ TEST_F(grid_sample_test, test_case_fp32_test04)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 64, 16, 1}, {2, 64, 16, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 8, 11, 2}, {2, 8, 11, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 1, 8, 11}, {2, 1, 8, 11}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 64, 16, 1}, {2, 64, 16, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 8, 11, 2}, {2, 8, 11, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 1, 8, 11}, {2, 1, 8, 11}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -185,7 +182,7 @@ TEST_F(grid_sample_test, test_case_fp32_test04)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -214,24 +211,25 @@ TEST_F(grid_sample_test, test_case_fp32_test05)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -239,7 +237,7 @@ TEST_F(grid_sample_test, test_case_fp32_test05)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -268,24 +266,25 @@ TEST_F(grid_sample_test, test_case_fp32_test06)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -293,7 +292,7 @@ TEST_F(grid_sample_test, test_case_fp32_test06)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -322,24 +321,25 @@ TEST_F(grid_sample_test, test_case_fp16_test08)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -347,7 +347,7 @@ TEST_F(grid_sample_test, test_case_fp16_test08)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -376,24 +376,25 @@ TEST_F(grid_sample_test, test_case_fp16_test09)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 16, 16, 64}, {2, 16, 16, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 16, 16, 64}, {2, 16, 16, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -401,7 +402,7 @@ TEST_F(grid_sample_test, test_case_fp16_test09)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -429,24 +430,25 @@ TEST_F(grid_sample_test, test_case_fp16_test10)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -454,7 +456,7 @@ TEST_F(grid_sample_test, test_case_fp16_test10)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -482,24 +484,25 @@ TEST_F(grid_sample_test, test_case_fp32_test11)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 64, 16, 16}, {2, 64, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 8, 64, 2}, {2, 8, 64, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 64}, {2, 64, 8, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -507,7 +510,7 @@ TEST_F(grid_sample_test, test_case_fp32_test11)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -535,24 +538,25 @@ TEST_F(grid_sample_test, test_case_fp16_test12)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 16, 16, 64}, {2, 16, 16, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 8, 8, 2}, {2, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 8}, {2, 64, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 16, 16, 64}, {2, 16, 16, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 8, 8, 2}, {2, 8, 8, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 8}, {2, 64, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -560,7 +564,7 @@ TEST_F(grid_sample_test, test_case_fp16_test12)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -589,24 +593,25 @@ TEST_F(grid_sample_test, test_case_fp32_test13)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(float);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 16, 16, 64}, {2, 16, 16, 64}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 8, 8, 2}, {2, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 64, 8, 8}, {2, 64, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 16, 16, 64}, {2, 16, 16, 64}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 8, 8, 2}, {2, 8, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 64, 8, 8}, {2, 64, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -614,7 +619,7 @@ TEST_F(grid_sample_test, test_case_fp32_test13)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -628,7 +633,6 @@ TEST_F(grid_sample_test, test_case_fp32_test13)
     AscendC::GmFree(tiling);
     free(path_);
 }
-
 
 TEST_F(grid_sample_test, test_case_fp32_test14)
 {
@@ -644,28 +648,29 @@ TEST_F(grid_sample_test, test_case_fp32_test14)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 200, 200, 1}, {2, 200, 200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 200, 200, 1}, {2, 200, 200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -700,28 +705,29 @@ TEST_F(grid_sample_test, test_case_fp32_test15)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 200, 200, 1}, {2, 200, 200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 200, 200, 1}, {2, 200, 200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2}, {2, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2}, {2, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -756,28 +762,29 @@ TEST_F(grid_sample_test, test_case_fp32_test16)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 200, 200, 16}, {2, 200, 200, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 5, 2}, {2, 2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 16, 2, 5}, {2, 16, 2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 200, 200, 16}, {2, 200, 200, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 5, 2}, {2, 2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 16, 2, 5}, {2, 16, 2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -798,7 +805,6 @@ TEST_F(grid_sample_test, test_case_fp32_test16)
     free(path_);
 }
 
-
 TEST_F(grid_sample_test, test_case_fp32_test17)
 {
     int64_t N = 2;
@@ -813,28 +819,29 @@ TEST_F(grid_sample_test, test_case_fp32_test17)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 200, 200, 16}, {2, 200, 200, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 5, 2}, {2, 2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 16, 2, 5}, {2, 16, 2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 200, 200, 16}, {2, 200, 200, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 5, 2}, {2, 2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 16, 2, 5}, {2, 16, 2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -855,7 +862,6 @@ TEST_F(grid_sample_test, test_case_fp32_test17)
     free(path_);
 }
 
-
 TEST_F(grid_sample_test, test_case_fp16_test18)
 {
     int64_t N = 2;
@@ -870,28 +876,29 @@ TEST_F(grid_sample_test, test_case_fp16_test18)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 200, 200, 16}, {2, 200, 200, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 2, 5, 2}, {2, 2, 5, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 16, 2, 5}, {2, 16, 2, 5}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 200, 200, 16}, {2, 200, 200, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 2, 5, 2}, {2, 2, 5, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 16, 2, 5}, {2, 16, 2, 5}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -926,24 +933,25 @@ TEST_F(grid_sample_test, test_case_bicubic_fp16_fullLoad)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{1, 24, 24, 32}, {1, 24, 24, 32}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{1, 16, 4, 2}, {1, 16, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{1, 32, 16, 4}, {1, 32, 16, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{1, 24, 24, 32}, {1, 24, 24, 32}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{1, 16, 4, 2}, {1, 16, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{1, 32, 16, 4}, {1, 32, 16, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -951,7 +959,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp16_fullLoad)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -980,24 +988,25 @@ TEST_F(grid_sample_test, test_case_bicubic_fp32_fullLoad)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{1, 60, 60, 1}, {1, 60, 60, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{1, 32, 32, 2}, {1, 32, 32, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{1, 1, 32, 32}, {1, 1, 32, 32}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{1, 60, 60, 1}, {1, 60, 60, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 32, 32, 2}, {1, 32, 32, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 32, 32}, {1, 1, 32, 32}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bicubic")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1005,7 +1014,7 @@ TEST_F(grid_sample_test, test_case_bicubic_fp32_fullLoad)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1034,24 +1043,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_fullLoad_c1)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{8, 24, 24, 1}, {8, 24, 24, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 900, 4, 2}, {8, 900, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{8, 1, 900, 4}, {8, 1, 900, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{8, 24, 24, 1}, {8, 24, 24, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 900, 4, 2}, {8, 900, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{8, 1, 900, 4}, {8, 1, 900, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1059,7 +1069,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_fullLoad_c1)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1088,24 +1098,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c1)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{1, 608, 608, 1}, {1, 608, 608, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{1, 608, 608, 1}, {1, 608, 608, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1113,7 +1124,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c1)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1142,25 +1153,26 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_fullLoad_c32)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{8, 32, 24, 24}, {8, 32, 24, 24}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{8, 900, 4, 2}, {8, 900, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{8, 32, 900, 4}, {8, 32, 900, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{8, 32, 24, 24}, {8, 32, 24, 24}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{8, 900, 4, 2}, {8, 900, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{8, 32, 900, 4}, {8, 32, 900, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
 
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1169,7 +1181,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_fullLoad_c32)
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
     cout << "test_case_bilinear_fp16_fullLoad_c32 tilingInfo.tilingKey = " << tilingInfo.tilingKey << endl;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1198,25 +1210,26 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c32)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{1, 16, 16, 32}, {1, 16, 16, 32}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{1, 32, 16, 16}, {1, 32, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{1, 16, 16, 32}, {1, 16, 16, 32}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 32, 16, 16}, {1, 32, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
     cout << "test_case_bilinear_fp32_fullLoad_c32 tilingInfo.tilingKey = " << tilingInfo.tilingKey << endl;
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1224,7 +1237,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c32)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1238,7 +1251,6 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad_c32)
     AscendC::GmFree(tiling);
     free(path_);
 }
-
 
 TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad)
 {
@@ -1254,24 +1266,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{1, 6, 6, 2}, {1, 6, 6, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{1, 2, 16, 16}, {1, 2, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{1, 6, 6, 2}, {1, 6, 6, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 2, 16, 16}, {1, 2, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1279,7 +1292,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1293,8 +1306,6 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_fullLoad)
     AscendC::GmFree(tiling);
     free(path_);
 }
-
-
 
 TEST_F(grid_sample_test, test_case_bilinear_fp16_slice_window)
 {
@@ -1310,24 +1321,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_slice_window)
     size_t outputByteSize = N * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{1, 608, 608, 1}, {1, 608, 608, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{1, 608, 608, 1}, {1, 608, 608, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{1, 16, 16, 2}, {1, 16, 16, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1335,7 +1347,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_slice_window)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1366,24 +1378,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_test01)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1391,7 +1404,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp32_test01)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1422,24 +1435,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_test02)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1447,7 +1461,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_test02)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1479,24 +1493,25 @@ TEST_F(grid_sample_test, test_case_nearest_fp32_test03)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1504,7 +1519,7 @@ TEST_F(grid_sample_test, test_case_nearest_fp32_test03)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1536,24 +1551,25 @@ TEST_F(grid_sample_test, test_case_nearest_fp16_test04)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 2, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 2, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1561,7 +1577,7 @@ TEST_F(grid_sample_test, test_case_nearest_fp16_test04)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1592,24 +1608,25 @@ TEST_F(grid_sample_test, test_case_nearest_bf16_test05)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_BF16, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_BF16, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {{{{2, 1, 2, 2, 2}, {2, 1, 2, 2, 2}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1617,7 +1634,7 @@ TEST_F(grid_sample_test, test_case_nearest_bf16_test05)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1648,24 +1665,25 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_protrait_test08)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(half);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{22, 16, 64, 64, 4}, {22, 16, 64, 64, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{22, 16, 64, 64, 3}, {22, 16, 64, 64, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{22, 4, 16, 64, 64}, {22, 4, 16, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{22, 16, 64, 64, 4}, {22, 16, 64, 64, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{22, 16, 64, 64, 3}, {22, 16, 64, 64, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{22, 4, 16, 64, 64}, {22, 4, 16, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1674,7 +1692,7 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_protrait_test08)
     cout << "test_case_bilinear_fp16_protrait_test08 tilingInfo.tilingKey = " << tilingInfo.tilingKey << endl;
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1688,7 +1706,6 @@ TEST_F(grid_sample_test, test_case_bilinear_fp16_protrait_test08)
     AscendC::GmFree(tiling);
     free(path_);
 }
-
 
 TEST_F(grid_sample_test, test_case_nearest_fp32_test09)
 {
@@ -1707,24 +1724,25 @@ TEST_F(grid_sample_test, test_case_nearest_fp32_test09)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 2, 2, 2, 22}, {2, 2, 2, 2, 22}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 3, 3}, {2, 2, 2, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 22, 2, 2, 3}, {2, 22, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 2, 2, 2, 22}, {2, 2, 2, 2, 22}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 3, 3}, {2, 2, 2, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 22, 2, 2, 3}, {2, 22, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1732,7 +1750,7 @@ TEST_F(grid_sample_test, test_case_nearest_fp32_test09)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
@@ -1764,24 +1782,25 @@ TEST_F(grid_sample_test, test_case_nearest_fp16_test10)
     size_t outputByteSize = N * grid_d * grid_h * grid_w * C * sizeof(int32_t);
     struct GridSampleCompileInfo {
         int64_t coreNum = 48;
-    }compileInfo;
-    gert::TilingContextPara tilingContextPara("GridSample",
-                                                {{{{2, 22, 2, 2, 2}, {2, 2, 2, 2, 22}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 22, 2, 2, 2}, {2, 22, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
-                                                gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
-                                                gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
-                                                &compileInfo);
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "GridSample",
+        {{{{2, 22, 2, 2, 2}, {2, 2, 2, 2, 22}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 22, 2, 2, 2}, {2, 22, 2, 2, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("channel_last", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scheduler_mode", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *grid = (uint8_t *)AscendC::GmAlloc(gridByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* grid = (uint8_t*)AscendC::GmAlloc(gridByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
 
     uint32_t numBlocks = tilingInfo.blockNum;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
@@ -1789,7 +1808,7 @@ TEST_F(grid_sample_test, test_case_nearest_fp16_test10)
     std::memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
     ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);

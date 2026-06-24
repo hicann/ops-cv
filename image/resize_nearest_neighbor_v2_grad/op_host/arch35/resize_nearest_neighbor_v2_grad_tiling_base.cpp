@@ -26,8 +26,7 @@
 
 using namespace ge;
 
-namespace optiling
-{
+namespace optiling {
 constexpr int64_t INPUT_IDX_GRADS = 0;
 constexpr int64_t INPUT_IDX_SIZE = 1;
 constexpr int64_t OUTPUT_IDX_Y = 0;
@@ -56,17 +55,16 @@ constexpr int64_t RSV_BLOCK_NUM = 8;
 constexpr int64_t DB_BUFF_NUM = 2;
 constexpr int32_t SIMT_RESERVED_SIZE = 32 * 1024;
 constexpr int32_t SIMD_RESERVED_SIZE = 8 * 1024;
-constexpr int64_t SIMT_DETERMINE_SRC_HW_THRESHOLD = 4096; // SRC H*W shape >= 4096
+constexpr int64_t SIMT_DETERMINE_SRC_HW_THRESHOLD = 4096;     // SRC H*W shape >= 4096
 constexpr int64_t SIMT_NOT_DETERMINE_SRC_HW_THRESHOLD = 4096; // SRC H*W shape >= 4096
-constexpr int64_t SIMT_DETERMINE_DST_W_THRESHOLD = 2048; // Dst W shape >= 2048
-constexpr int64_t SIMT_NOT_DETERMINE_DST_W_THRESHOLD = 2048; // Dst W shape >= 2048
-constexpr int64_t SIMT_DETERMINE_DST_Y_W_RATIO = 12; // Dst W shape / Src W shape >= 12
-constexpr int64_t SIMT_NOT_DETERMINE_DST_Y_W_RATIO = 12; // Dst W shape / Src W shape >= 12
+constexpr int64_t SIMT_DETERMINE_DST_W_THRESHOLD = 2048;      // Dst W shape >= 2048
+constexpr int64_t SIMT_NOT_DETERMINE_DST_W_THRESHOLD = 2048;  // Dst W shape >= 2048
+constexpr int64_t SIMT_DETERMINE_DST_Y_W_RATIO = 12;          // Dst W shape / Src W shape >= 12
+constexpr int64_t SIMT_NOT_DETERMINE_DST_Y_W_RATIO = 12;      // Dst W shape / Src W shape >= 12
 
-class ResizeNearestNeighborV2GradTiling
-{
+class ResizeNearestNeighborV2GradTiling {
 public:
-    explicit ResizeNearestNeighborV2GradTiling(gert::TilingContext* context) : context_(context){};
+    explicit ResizeNearestNeighborV2GradTiling(gert::TilingContext* context) : context_(context) {};
     ge::graphStatus Init(const ResizeNearestNeighborV2GradCompileInfo* compileInfo);
     ge::graphStatus RunResizeNearestNeighborV2GradTiling();
 
@@ -140,20 +138,18 @@ private:
     int64_t splitBlockTailFactor_ = 0;
 };
 
-ge::graphStatus ResizeNearestNeighborV2GradTiling::GetPlatformInfo(const ResizeNearestNeighborV2GradCompileInfo* compileInfo)
+ge::graphStatus ResizeNearestNeighborV2GradTiling::GetPlatformInfo(
+    const ResizeNearestNeighborV2GradCompileInfo* compileInfo)
 {
     coreNum_ = static_cast<int64_t>(compileInfo->core_num);
-    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_->GetNodeName(), "get aiv core num failed."),
-                    return ge::GRAPH_FAILED);
+    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_->GetNodeName(), "get aiv core num failed."), return ge::GRAPH_FAILED);
 
     ubSize_ = static_cast<int64_t>(compileInfo->ubSize);
-    OP_CHECK_IF(ubSize_ <= 0, OP_LOGE(context_->GetNodeName(), "get ub size failed."),
-                    return ge::GRAPH_FAILED);
+    OP_CHECK_IF(ubSize_ <= 0, OP_LOGE(context_->GetNodeName(), "get ub size failed."), return ge::GRAPH_FAILED);
 
     blockSize_ = Ops::Base::GetUbBlockSize(context_);
-    OP_CHECK_IF(blockSize_ <= 0,
-                    OP_LOGE(context_->GetNodeName(), "get ub block size failed."),
-                    return ge::GRAPH_FAILED);
+    OP_CHECK_IF(blockSize_ <= 0, OP_LOGE(context_->GetNodeName(), "get ub block size failed."),
+                return ge::GRAPH_FAILED);
     ubBlockNum_ = Ops::Base::CeilDiv(ubSize_, blockSize_) - RSV_BLOCK_NUM;
     isDetermine_ = context_->GetDeterministic() == 1 ? 1 : 0;
     OP_LOGI(context_->GetNodeName(), "coreNum is %ld, ubSize is %ld, ubBlockNum is %ld, isDetermine is %ld", coreNum_,
@@ -179,7 +175,8 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInOutShape()
     OP_LOGI(context_->GetNodeName(), "gradsShapeSize is %ld, yShapeSize is %ld", gradsShapeSize, yShapeSize);
     if (gradsShapeSize <= 0 || yShapeSize <= 0) {
         std::string shapesizeMsg = std::to_string(gradsShapeSize) + " and " + std::to_string(yShapeSize);
-        OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(context_->GetNodeName(), "grads and y", shapesizeMsg.c_str(),
+        OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(
+            context_->GetNodeName(), "grads and y", shapesizeMsg.c_str(),
             "The shape sizes of input grads and output y must be greater than zero");
         return ge::GRAPH_FAILED;
     }
@@ -187,7 +184,7 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInOutShape()
     if (gradsDims != DIM_4 || yDims != DIM_4) {
         std::string dimMsg = std::to_string(gradsDims) + " and " + std::to_string(yDims);
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "grads and y", dimMsg.c_str(),
-            "The shapes of input grads and output y must be 4D");
+                                                  "The shapes of input grads and output y must be 4D");
         return ge::GRAPH_FAILED;
     }
 
@@ -208,30 +205,31 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInOutDtypeFormat()
     if (gradsDtype != yDtype) {
         std::string dtypeMsg = Ops::Base::ToString(gradsDtype) + " and " + Ops::Base::ToString(yDtype);
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads and y", dtypeMsg.c_str(),
-            "The dtypes of grads and y must be the same");
+                                               "The dtypes of grads and y must be the same");
         return ge::GRAPH_FAILED;
     }
     OP_CHECK_IF(gradsDtype != ge::DT_FLOAT && gradsDtype != ge::DT_FLOAT16 && gradsDtype != ge::DT_BF16,
-        OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeName(), "grads",
-            Ops::Base::ToString(gradsDtype).c_str(), "FLOAT, FLOAT16 or BFLOAT16"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeName(), "grads", Ops::Base::ToString(gradsDtype).c_str(),
+                                          "FLOAT, FLOAT16 or BFLOAT16"),
+                return ge::GRAPH_FAILED);
 
     gradsDtypeSize_ = GetSizeByDataType(gradsDtype);
     yDtypeSize_ = GetSizeByDataType(yDtype);
     if (gradsDtypeSize_ <= 0 || yDtypeSize_ <= 0) {
         std::string dtypeMsg = Ops::Base::ToString(gradsDtype) + " and " + Ops::Base::ToString(yDtype);
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads and y", dtypeMsg.c_str(),
-            "The dtype sizes of input grads and output y must be greater than zero");
+                                               "The dtype sizes of input grads and output y must be greater than zero");
         return ge::GRAPH_FAILED;
     }
     if (gradsFormat != yFormat) {
         std::string formatMsg = Ops::Base::ToString(gradsFormat) + " and " + Ops::Base::ToString(yFormat);
         OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(context_->GetNodeName(), "grads and y", formatMsg.c_str(),
-            "The formats of input grads and output y must be the same");
+                                                "The formats of input grads and output y must be the same");
         return ge::GRAPH_FAILED;
     }
     if (gradsFormat != ge::FORMAT_NHWC && gradsFormat != ge::FORMAT_NCHW) {
-        OP_LOGE_FOR_INVALID_FORMAT(context_->GetNodeName(), "grads", Ops::Base::ToString(gradsFormat).c_str(), "NHWC or NCHW");
+        OP_LOGE_FOR_INVALID_FORMAT(context_->GetNodeName(), "grads", Ops::Base::ToString(gradsFormat).c_str(),
+                                   "NHWC or NCHW");
         return ge::GRAPH_FAILED;
     }
     format_ = gradsFormat;
@@ -245,21 +243,20 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInputSizeParams()
     gert::Shape sizeShape = size->GetStorageShape();
     int32_t sizeElms = sizeShape.GetShapeSize();
     OP_CHECK_IF(sizeElms != LEN_INPUT_SIZE,
-        OP_LOGE_FOR_INVALID_SHAPESIZE(context_->GetNodeName(), "size",
-            std::to_string(sizeElms).c_str(), std::to_string(LEN_INPUT_SIZE).c_str()),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_SHAPESIZE(context_->GetNodeName(), "size", std::to_string(sizeElms).c_str(),
+                                              std::to_string(LEN_INPUT_SIZE).c_str()),
+                return ge::GRAPH_FAILED);
     const gert::Tensor* sizeTensor = context_->GetInputTensor(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, sizeTensor);
     OP_CHECK_IF(sizeTensor->GetDataType() != ge::DT_INT32,
-        OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeName(), "size",
-            Ops::Base::ToString(sizeTensor->GetDataType()).c_str(), "int32"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_DTYPE(context_->GetNodeName(), "size",
+                                          Ops::Base::ToString(sizeTensor->GetDataType()).c_str(), "int32"),
+                return ge::GRAPH_FAILED);
 
     std::vector<int64_t> sizeList(LEN_INPUT_SIZE);
     auto* tensorData = sizeTensor->GetData<int32_t>();
-    OP_CHECK_IF(tensorData == nullptr,
-        OP_LOGE(context_->GetNodeName(), "GetData failed, tensorData is nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tensorData == nullptr, OP_LOGE(context_->GetNodeName(), "GetData failed, tensorData is nullptr"),
+                return ge::GRAPH_FAILED);
 
     for (int32_t i = 0; i < LEN_INPUT_SIZE; i++) {
         sizeList[i] = static_cast<int64_t>(*(tensorData + i));
@@ -283,18 +280,18 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckAttrsParams()
         halfPixelCenters_ = *(attrs->GetAttrPointer<bool>(ATTR_HALF_PIXEL_CENTERS_IDX)) ? 1 : 0;
     }
     OP_CHECK_IF(alignCorners_ && halfPixelCenters_,
-        OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(
-            context_->GetNodeName(), "align_corners and half_pixel_centers", "true and true",
-            "The values of attributes align_corners and half_pixel_centers cannot be true at the same time"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(
+                    context_->GetNodeName(), "align_corners and half_pixel_centers", "true and true",
+                    "The values of attributes align_corners and half_pixel_centers cannot be true at the same time"),
+                return ge::GRAPH_FAILED);
 
     if (attrs->GetAttrNum() > ATTR_SCALES_IDX) {
         auto scales = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_SCALES_IDX);
         int64_t scalesNum = scales->GetSize();
         OP_CHECK_IF(scalesNum != SCALES_NUM,
-            OP_LOGE_FOR_INVALID_LISTSIZE(context_->GetNodeName(), "scales",
-                std::to_string(scalesNum).c_str(), std::to_string(SCALES_NUM).c_str()),
-            return ge::GRAPH_FAILED);
+                    OP_LOGE_FOR_INVALID_LISTSIZE(context_->GetNodeName(), "scales", std::to_string(scalesNum).c_str(),
+                                                 std::to_string(SCALES_NUM).c_str()),
+                    return ge::GRAPH_FAILED);
         const float* scalesData = static_cast<const float*>(scales->GetData());
         OP_CHECK_NULL_WITH_CONTEXT(context_, scalesData);
         originalScaleH_ = scalesData[SCALE_H];
@@ -311,7 +308,8 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::SetDims()
     OP_LOGD(context_->GetNodeName(), "Start ResizeNearestNeighborV2Grad SetDims.");
     if (gradsShape_.GetDim(IDX_DIM_N) != yShape_.GetDim(IDX_DIM_N)) {
         std::string shapeMsg = Ops::Base::ToString(gradsShape_) + " and " + Ops::Base::ToString(yShape_);
-        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
             "The N-dimension of input grads and output y must be the same, where N is the 0th axis of them");
         return ge::GRAPH_FAILED;
     }
@@ -320,7 +318,8 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::SetDims()
         if (gradsShape_.GetDim(IDX_NCHW_C) != yShape_.GetDim(IDX_NCHW_C)) {
             std::string shapeMsg = Ops::Base::ToString(gradsShape_) + " and " + Ops::Base::ToString(yShape_);
             OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
-                "The C-dimension of input grads and output y must be the same, where C is the 1st axis when their formats are NCHW");
+                                                   "The C-dimension of input grads and output y must be the same, "
+                                                   "where C is the 1st axis when their formats are NCHW");
             return ge::GRAPH_FAILED;
         }
         lenC_ = gradsShape_.GetDim(IDX_NCHW_C);
@@ -332,7 +331,8 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::SetDims()
         if (gradsShape_.GetDim(IDX_NHWC_C) != yShape_.GetDim(IDX_NHWC_C)) {
             std::string shapeMsg = Ops::Base::ToString(gradsShape_) + " and " + Ops::Base::ToString(yShape_);
             OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
-                "The C-dimension of input grads and output y must be the same, where C is the last axis when their formats are NHWC");
+                                                   "The C-dimension of input grads and output y must be the same, "
+                                                   "where C is the last axis when their formats are NHWC");
             return ge::GRAPH_FAILED;
         }
         lenC_ = gradsShape_.GetDim(IDX_NHWC_C);
@@ -343,8 +343,10 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::SetDims()
     }
     if (origHeight_ != lenSrcH_ || origWidth_ != lenSrcW_) {
         std::string reasonMsg = "The H-dimension and W-dimension of output y must be equal to the value (" +
-                                std::to_string(origHeight_) + ", " + std::to_string(origWidth_) + ") of input parameter size";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "y", Ops::Base::ToString(yShape_).c_str(), reasonMsg.c_str());
+                                std::to_string(origHeight_) + ", " + std::to_string(origWidth_) +
+                                ") of input parameter size";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "y", Ops::Base::ToString(yShape_).c_str(),
+                                              reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
     OP_LOGI(context_->GetNodeName(), "lenN_:%ld , lenC_: %ld, srcH:%ld, srcW:%ld, dstH:%ld, dstW:%ld", lenN_, lenC_,
@@ -359,21 +361,21 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::SetScales(bool isDetermine)
 
     if (alignCorners_) {
         if (isDetermine) {
-            scaleH_ = (lenSrcH_ > 1 && lenDstH_ > 1)
-                          ? static_cast<float>(lenSrcH_ - 1) / static_cast<float>((lenDstH_ - 1))
-                          : static_cast<float>(lenSrcH_) / static_cast<float>(lenDstH_);
-            scaleW_ = (lenSrcW_ > 1 && lenDstW_ > 1)
-                          ? static_cast<float>(lenSrcW_ - 1) / static_cast<float>((lenDstW_ - 1))
-                          : static_cast<float>(lenSrcW_) / static_cast<float>(lenDstW_);
+            scaleH_ = (lenSrcH_ > 1 && lenDstH_ > 1) ?
+                          static_cast<float>(lenSrcH_ - 1) / static_cast<float>((lenDstH_ - 1)) :
+                          static_cast<float>(lenSrcH_) / static_cast<float>(lenDstH_);
+            scaleW_ = (lenSrcW_ > 1 && lenDstW_ > 1) ?
+                          static_cast<float>(lenSrcW_ - 1) / static_cast<float>((lenDstW_ - 1)) :
+                          static_cast<float>(lenSrcW_) / static_cast<float>(lenDstW_);
         } else {
             scaleH_ = (lenDstH_ > 1) ? static_cast<float>(lenSrcH_ - 1) / static_cast<float>((lenDstH_ - 1)) : 0.0f;
             scaleW_ = (lenDstW_ > 1) ? static_cast<float>(lenSrcW_ - 1) / static_cast<float>((lenDstW_ - 1)) : 0.0f;
         }
     } else {
-        scaleH_ = (originalScaleH_ > 0.0f) ? 1.0f / originalScaleH_
-                                           : static_cast<float>(lenSrcH_) / static_cast<float>(lenDstH_);
-        scaleW_ = (originalScaleW_ > 0.0f) ? 1.0f / originalScaleW_
-                                           : static_cast<float>(lenSrcW_) / static_cast<float>(lenDstW_);
+        scaleH_ = (originalScaleH_ > 0.0f) ? 1.0f / originalScaleH_ :
+                                             static_cast<float>(lenSrcH_) / static_cast<float>(lenDstH_);
+        scaleW_ = (originalScaleW_ > 0.0f) ? 1.0f / originalScaleW_ :
+                                             static_cast<float>(lenSrcW_) / static_cast<float>(lenDstW_);
     }
     if (isDetermine) {
         inverseScaleH_ = 1.0f / scaleH_;
@@ -384,7 +386,7 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::SetScales(bool isDetermine)
 }
 
 /**
-* if hw shape is smaller than core number, use NCHW split the AIVs and threads; if HW shape is larger, use HW split.
+ * if hw shape is smaller than core number, use NCHW split the AIVs and threads; if HW shape is larger, use HW split.
  */
 bool ResizeNearestNeighborV2GradTiling::IsSimtDetermineHW()
 {
@@ -396,7 +398,7 @@ bool ResizeNearestNeighborV2GradTiling::IsSimtDetermineHW()
         return false;
     }
 
-    if (1.0f / scaleW_ < SIMT_DETERMINE_DST_Y_W_RATIO) {//scale
+    if (1.0f / scaleW_ < SIMT_DETERMINE_DST_Y_W_RATIO) { // scale
         return false;
     }
 
@@ -409,11 +411,11 @@ bool ResizeNearestNeighborV2GradTiling::IsSimtDetermineHW()
 }
 bool ResizeNearestNeighborV2GradTiling::IsSimtNotDetermineHW()
 {
-    if (lenDstW_ <  SIMT_NOT_DETERMINE_DST_W_THRESHOLD) {
+    if (lenDstW_ < SIMT_NOT_DETERMINE_DST_W_THRESHOLD) {
         return false;
     }
 
-    if (1.0f / scaleW_ < SIMT_NOT_DETERMINE_DST_Y_W_RATIO) {//scalew
+    if (1.0f / scaleW_ < SIMT_NOT_DETERMINE_DST_Y_W_RATIO) { // scalew
         return false;
     }
 
@@ -432,10 +434,7 @@ void ResizeNearestNeighborV2GradTiling::SetIndexType()
 }
 
 // Using parameters to choose determine, determine compare to torch
-bool ResizeNearestNeighborV2GradTiling::IsMatchSimtDetermine()
-{
-    return !alignCorners_;
-}
+bool ResizeNearestNeighborV2GradTiling::IsMatchSimtDetermine() { return !alignCorners_; }
 
 void ResizeNearestNeighborV2GradTiling::SetTilingKey()
 {
@@ -445,7 +444,8 @@ void ResizeNearestNeighborV2GradTiling::SetTilingKey()
         return;
     }
 
-    if (((lenSrcH_ == lenDstH_ && lenSrcH_==1)||(lenSrcW_ == lenDstW_ && lenSrcW_== 1)) && IsMatchSimtDetermine()) {
+    if (((lenSrcH_ == lenDstH_ && lenSrcH_ == 1) || (lenSrcW_ == lenDstW_ && lenSrcW_ == 1)) &&
+        IsMatchSimtDetermine()) {
         schId_ = static_cast<uint64_t>(TPL_SCH_ID_DETERMINE_1D);
         return;
     }
@@ -548,8 +548,8 @@ void ResizeNearestNeighborV2GradTiling::FillTilingData()
     tilingData_.set_ubSize(ubSize_);
     tilingData_.set_lenN(lenN_);
     tilingData_.set_lenC(lenC_);
-    //schId_ = TPL_SCH_ID_DETERMINE_1D W=1
-    if(lenSrcW_ == lenDstW_ && lenSrcW_== 1 && IsMatchSimtDetermine()){
+    // schId_ = TPL_SCH_ID_DETERMINE_1D W=1
+    if (lenSrcW_ == lenDstW_ && lenSrcW_ == 1 && IsMatchSimtDetermine()) {
         tilingData_.set_lenSrcH(lenSrcW_);
         tilingData_.set_lenSrcW(lenSrcH_);
         tilingData_.set_lenDstH(lenDstW_);
@@ -558,7 +558,7 @@ void ResizeNearestNeighborV2GradTiling::FillTilingData()
         tilingData_.set_scaleW(scaleH_);
         tilingData_.set_inverseScaleH(inverseScaleW_);
         tilingData_.set_inverseScaleW(inverseScaleH_);
-    }else{
+    } else {
         tilingData_.set_lenSrcH(lenSrcH_);
         tilingData_.set_lenSrcW(lenSrcW_);
         tilingData_.set_lenDstH(lenDstH_);
@@ -582,44 +582,36 @@ void ResizeNearestNeighborV2GradTiling::FillTilingData()
 
 void ResizeNearestNeighborV2GradTiling::PrintTilingData()
 {
-    OP_LOGI(
-        context_->GetNodeName(),
-        "lenN:%ld, lenC:%ld, lenSrcH:%ld, lenSrcW:%ld, lenDstH:%ld, lenDstW:%ld, ubCFactor:%ld, \
+    OP_LOGI(context_->GetNodeName(),
+            "lenN:%ld, lenC:%ld, lenSrcH:%ld, lenSrcW:%ld, lenDstH:%ld, lenDstW:%ld, ubCFactor:%ld, \
         scaleH:%f, scaleW:%f, inverseScaleH:%f, inverseScaleW:%f, initYRealCoreNum:%ld, initYSplitBlockFactor:%ld, \
         initYSplitBlockTailFactor:%ld, realCoreNum:%ld, splitBlockFactor:%ld,splitBlockTailFactor:%ld",
-        tilingData_.get_lenN(), tilingData_.get_lenC(), tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(),
-        tilingData_.get_lenDstH(), tilingData_.get_lenDstW(), tilingData_.get_ubCFactor(), tilingData_.get_scaleH(),
-        tilingData_.get_scaleW(), tilingData_.get_inverseScaleH(), tilingData_.get_inverseScaleW(),
-        tilingData_.get_initYRealCoreNum(), tilingData_.get_initYSplitBlockFactor(),
-        tilingData_.get_initYSplitBlockTailFactor(), tilingData_.get_realCoreNum(), tilingData_.get_splitBlockFactor(),
-        tilingData_.get_splitBlockTailFactor());
+            tilingData_.get_lenN(), tilingData_.get_lenC(), tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(),
+            tilingData_.get_lenDstH(), tilingData_.get_lenDstW(), tilingData_.get_ubCFactor(), tilingData_.get_scaleH(),
+            tilingData_.get_scaleW(), tilingData_.get_inverseScaleH(), tilingData_.get_inverseScaleW(),
+            tilingData_.get_initYRealCoreNum(), tilingData_.get_initYSplitBlockFactor(),
+            tilingData_.get_initYSplitBlockTailFactor(), tilingData_.get_realCoreNum(),
+            tilingData_.get_splitBlockFactor(), tilingData_.get_splitBlockTailFactor());
 }
 
 ge::graphStatus ResizeNearestNeighborV2GradTiling::Init(const ResizeNearestNeighborV2GradCompileInfo* compileInfo)
 {
     OP_LOGD(context_->GetNodeName(), "Enter ResizeNearestNeighborV2GradTiling init.");
     OP_CHECK_IF((GetPlatformInfo(compileInfo) != ge::GRAPH_SUCCESS),
-                    OP_LOGE(context_->GetNodeName(), "GetPlatformInfo failed."),
-                    return ge::GRAPH_FAILED);
-    OP_CHECK_IF((CheckInOutShape() != ge::GRAPH_SUCCESS),
-                    OP_LOGE(context_->GetNodeName(), "CheckInOutShape failed."),
-                    return ge::GRAPH_FAILED);
+                OP_LOGE(context_->GetNodeName(), "GetPlatformInfo failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckInOutShape() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckInOutShape failed."),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF((CheckInOutDtypeFormat() != ge::GRAPH_SUCCESS),
-                    OP_LOGE(context_->GetNodeName(), "CheckInOutDtypeFormat failed."),
-                    return ge::GRAPH_FAILED);
+                OP_LOGE(context_->GetNodeName(), "CheckInOutDtypeFormat failed."), return ge::GRAPH_FAILED);
     OP_CHECK_IF((CheckInputSizeParams() != ge::GRAPH_SUCCESS),
-                    OP_LOGE(context_->GetNodeName(), "CheckInputSizeParams failed."),
-                    return ge::GRAPH_FAILED);
-    OP_CHECK_IF((CheckAttrsParams() != ge::GRAPH_SUCCESS),
-                    OP_LOGE(context_->GetNodeName(), "CheckAttrsParams failed."),
-                    return ge::GRAPH_FAILED);
+                OP_LOGE(context_->GetNodeName(), "CheckInputSizeParams failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckAttrsParams() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckAttrsParams failed."),
+                return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(SetDims() != ge::GRAPH_SUCCESS,
-                    OP_LOGE(context_->GetNodeName(), "Failed to SetDims!"),
-                    return ge::GRAPH_FAILED);
+    OP_CHECK_IF(SetDims() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "Failed to SetDims!"),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(SetScales(IsMatchSimtDetermine()) != ge::GRAPH_SUCCESS,
-                    OP_LOGE(context_->GetNodeName(), "Failed to SetScales!"),
-                    return ge::GRAPH_FAILED);
+                OP_LOGE(context_->GetNodeName(), "Failed to SetScales!"), return ge::GRAPH_FAILED);
 
     OP_LOGD(context_->GetNodeName(), "Exit ResizeNearestNeighborV2GradTiling init.");
     return ge::GRAPH_SUCCESS;
@@ -637,11 +629,12 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::RunResizeNearestNeighborV2Gra
         context_->SetBlockDim(initYRealCoreNum_);
     }
 
-    const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, static_cast<uint64_t>(format_), 
-        static_cast<uint64_t>(alignCorners_), static_cast<uint64_t>(halfPixelCenters_), idxType_);
+    const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, static_cast<uint64_t>(format_),
+                                                  static_cast<uint64_t>(alignCorners_),
+                                                  static_cast<uint64_t>(halfPixelCenters_), idxType_);
     OP_LOGI(context_->GetNodeName(),
-            "schId is %ld, format is %ld, alignCorners is %ld, halfPixelCenters is %ld, idxType is %ld", 
-            static_cast<int64_t>(schId_), static_cast<int64_t>(format_), static_cast<int64_t>(alignCorners_), 
+            "schId is %ld, format is %ld, alignCorners is %ld, halfPixelCenters is %ld, idxType is %ld",
+            static_cast<int64_t>(schId_), static_cast<int64_t>(format_), static_cast<int64_t>(alignCorners_),
             static_cast<int64_t>(halfPixelCenters_), static_cast<int64_t>(idxType_));
 
     context_->SetTilingKey(tilingKey);
@@ -662,17 +655,15 @@ ge::graphStatus ResizeNearestNeighborV2GradTilingForAscendC(gert::TilingContext*
     ResizeNearestNeighborV2GradTiling tilingObject(context);
 
     if (tilingObject.Init(compileInfo) != ge::GRAPH_SUCCESS) {
-        OP_LOGE(context->GetNodeName(),
-                                        "ResizeNearestNeighborV2GradTilingForAscendC init failed.");
+        OP_LOGE(context->GetNodeName(), "ResizeNearestNeighborV2GradTilingForAscendC init failed.");
         return ge::GRAPH_FAILED;
     }
 
     if (tilingObject.RunResizeNearestNeighborV2GradTiling() != ge::GRAPH_SUCCESS) {
-        OP_LOGE(context->GetNodeName(),
-                                        "ResizeNearestNeighborV2GradTilingForAscendC do tiling failed.");
+        OP_LOGE(context->GetNodeName(), "ResizeNearestNeighborV2GradTilingForAscendC do tiling failed.");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
 }
 
-}  // namespace optiling
+} // namespace optiling

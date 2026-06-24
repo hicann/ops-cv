@@ -33,31 +33,23 @@ public:
     explicit RoiAlignV2(const char* name) : OpDef(name)
     {
         // 输入参数说明
-        this->Input("features")                                      
-            .ParamType(REQUIRED)                                
-            .DataType({ge::DT_FLOAT})             
-            .Format({ge::FORMAT_ND})             
-            .UnknownShapeFormat({ge::FORMAT_ND}) 
-            .AutoContiguous();                                 
-        this->Input("rois")                                       
-            .ParamType(REQUIRED)                              
-            .DataType({ge::DT_FLOAT})             
-            .Format({ge::FORMAT_ND})             
-            .UnknownShapeFormat({ge::FORMAT_ND}) 
-            .AutoContiguous();                                 
+        this->Input("features")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND})
+            .AutoContiguous();
+        this->Input("rois")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND})
+            .AutoContiguous();
         /* ...此处补充其他输入输出参数说明 */
-        this->Attr("pooled_height")
-            .AttrType(OPTIONAL)
-            .Int();
-        this->Attr("pooled_width")
-            .AttrType(OPTIONAL)
-            .Int();
-        this->Attr("spatial_scale")
-            .AttrType(OPTIONAL)
-            .Float();
-        this->Attr("sampling_ratio")
-            .AttrType(OPTIONAL)
-            .Int();
+        this->Attr("pooled_height").AttrType(OPTIONAL).Int();
+        this->Attr("pooled_width").AttrType(OPTIONAL).Int();
+        this->Attr("spatial_scale").AttrType(OPTIONAL).Float();
+        this->Attr("sampling_ratio").AttrType(OPTIONAL).Int();
 
         // 输出参数说明
         this->Output("output")
@@ -69,5 +61,5 @@ public:
         this->AICore().AddConfig("ascend910b");
     }
 };
-OP_ADD(RoiAlignV2); 
+OP_ADD(RoiAlignV2);
 } // namespace ops

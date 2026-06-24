@@ -37,11 +37,11 @@ constexpr int64_t Y_IDX = 0;
 
 namespace ops {
 
-static bool checkInputShape(gert::InferShapeContext *context, const gert::Shape* gradShape,
-                            const gert::Shape* xShape, const gert::Shape* roisShape,
-                            const gert::Shape* argmaxShape) {
+static bool checkInputShape(gert::InferShapeContext* context, const gert::Shape* gradShape, const gert::Shape* xShape,
+                            const gert::Shape* roisShape, const gert::Shape* argmaxShape)
+{
     if (roisShape->GetDimNum() != DIMS_TWO) {
-        OP_LOGD(context->GetNodeName(), "roisShape (%s) dim number is not two", 
+        OP_LOGD(context->GetNodeName(), "roisShape (%s) dim number is not two",
                 Ops::Base::ToString(*roisShape).c_str());
         return false;
     }
@@ -50,18 +50,17 @@ static bool checkInputShape(gert::InferShapeContext *context, const gert::Shape*
         return false;
     }
     if (gradShape->GetDimNum() != DIMS_FOUR) {
-        OP_LOGD(context->GetNodeName(), "grad_shape (%s) dim number is not four", 
+        OP_LOGD(context->GetNodeName(), "grad_shape (%s) dim number is not four",
                 Ops::Base::ToString(*gradShape).c_str());
         return false;
     }
     if (argmaxShape->GetDimNum() != DIMS_FOUR) {
-        OP_LOGD(context->GetNodeName(), "argmax_shape (%s) dim number is not four", 
+        OP_LOGD(context->GetNodeName(), "argmax_shape (%s) dim number is not four",
                 Ops::Base::ToString(*argmaxShape).c_str());
         return false;
     }
     if (xShape->GetDimNum() != DIMS_FOUR) {
-        OP_LOGD(context->GetNodeName(), "xShape (%s) dim number is not four", 
-                Ops::Base::ToString(*xShape).c_str());
+        OP_LOGD(context->GetNodeName(), "xShape (%s) dim number is not four", Ops::Base::ToString(*xShape).c_str());
         return false;
     }
     if (xShape->GetDim(DIMS_ZERO) > BATCH_SIZE_MAX_LIMIT) {
@@ -90,8 +89,8 @@ static ge::graphStatus InferShape4RoiPoolingGradWithArgMax(gert::InferShapeConte
     auto yShape = context->GetOutputShape(Y_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
 
-    if (Ops::Base::IsUnknownRank(*gradShape) || Ops::Base::IsUnknownRank(*xShape) || 
-            Ops::Base::IsUnknownRank(*roisShape) || Ops::Base::IsUnknownRank(*argmaxShape)) {
+    if (Ops::Base::IsUnknownRank(*gradShape) || Ops::Base::IsUnknownRank(*xShape) ||
+        Ops::Base::IsUnknownRank(*roisShape) || Ops::Base::IsUnknownRank(*argmaxShape)) {
         OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as UnknownRank.");
         OP_LOGI(context->GetNodeName(), "Do InferShape4RoiPoolingGradWithArgMax rt2.0 success.");
         Ops::Base::SetUnknownRank(*yShape);
@@ -99,15 +98,13 @@ static ge::graphStatus InferShape4RoiPoolingGradWithArgMax(gert::InferShapeConte
     }
 
     OP_CHECK_IF((!checkInputShape(context, gradShape, xShape, roisShape, argmaxShape)),
-                OP_LOGE(
-                    context->GetNodeName(), "Input shape check failed."),
-                return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "Input shape check failed."), return ge::GRAPH_FAILED);
 
     auto xShapeSize = xShape->GetDimNum();
     OP_CHECK_IF((xShapeSize != DIMS_FOUR),
-            OP_LOGE(
-                context->GetNodeName(), "x's dim length should be 4, but got %s.", Ops::Base::ToString(*xShape).c_str()),
-            return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "x's dim length should be 4, but got %s.",
+                        Ops::Base::ToString(*xShape).c_str()),
+                return ge::GRAPH_FAILED);
     yShape->SetDimNum(xShapeSize);
 
     yShape->SetDim(DIMS_ZERO, xShape->GetDim(DIMS_ZERO));
@@ -120,8 +117,7 @@ static ge::graphStatus InferShape4RoiPoolingGradWithArgMax(gert::InferShapeConte
     return GRAPH_SUCCESS;
 }
 
-
-graphStatus InferDtype4RoiPoolingGradWithArgMax(gert::InferDataTypeContext *context)
+graphStatus InferDtype4RoiPoolingGradWithArgMax(gert::InferDataTypeContext* context)
 {
     OP_LOGI(context->GetNodeName(), "begin to do InferDtype4RoiPoolingGradWithArgMax.");
     const auto xDTypeInfer = context->GetInputDataType(X_IDX);
@@ -130,5 +126,7 @@ graphStatus InferDtype4RoiPoolingGradWithArgMax(gert::InferDataTypeContext *cont
     return GRAPH_SUCCESS;
 }
 
-IMPL_OP_INFERSHAPE(RoiPoolingGradWithArgMax).InferShape(InferShape4RoiPoolingGradWithArgMax).InferDataType(InferDtype4RoiPoolingGradWithArgMax);
+IMPL_OP_INFERSHAPE(RoiPoolingGradWithArgMax)
+    .InferShape(InferShape4RoiPoolingGradWithArgMax)
+    .InferDataType(InferDtype4RoiPoolingGradWithArgMax);
 } // namespace ops

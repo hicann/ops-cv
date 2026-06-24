@@ -13,7 +13,7 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor* ThreeInterpolateBackward(
-    const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m, aclOpExecutor* executor);
+const aclTensor* ThreeInterpolateBackward(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m,
+                                          aclOpExecutor* executor);
 }
 #endif // PTA_NPU_OP_API_INC_LEVEL0_OP_THREE_INTERPOLATE_BACKWARD_OP_H_

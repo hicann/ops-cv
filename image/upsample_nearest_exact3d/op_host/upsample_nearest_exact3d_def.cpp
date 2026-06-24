@@ -22,19 +22,11 @@ static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge
 
 class UpsampleNearestExact3d : public OpDef {
 public:
-    explicit UpsampleNearestExact3d(const char *name) : OpDef(name)
+    explicit UpsampleNearestExact3d(const char* name) : OpDef(name)
     {
-        this->Input("x")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
+        this->Input("x").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
 
-        this->Output("y")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
+        this->Output("y").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
 
         this->Attr("output_size").AttrType(REQUIRED).ListInt();
         this->Attr("scale_d").AttrType(OPTIONAL).Float(0.0);
@@ -45,16 +37,8 @@ public:
         this->AICore().AddConfig("ascend910_93");
 
         OpAICoreConfig regbaseConfig;
-        regbaseConfig.Input("x")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
-        regbaseConfig.Output("y")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Input("x").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("y").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
         regbaseConfig.DynamicCompileStaticFlag(true)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
@@ -85,4 +69,4 @@ public:
 };
 
 OP_ADD(UpsampleNearestExact3d);
-}  // namespace ops
+} // namespace ops

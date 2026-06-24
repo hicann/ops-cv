@@ -17,41 +17,39 @@
 using namespace ge;
 using namespace std;
 
-namespace ops
-{
-    class RoiAlignRotated : public OpDef
+namespace ops {
+class RoiAlignRotated : public OpDef {
+public:
+    explicit RoiAlignRotated(const char* name) : OpDef(name)
     {
-    public:
-        explicit RoiAlignRotated(const char *name) : OpDef(name)
-        {
-            this->Input("x")
-                .ParamType(REQUIRED)
-                .DataType({ge::DT_FLOAT})
-                .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND});
-            this->Input("rois")
-                .ParamType(REQUIRED)
-                .DataType({ge::DT_FLOAT})
-                .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND});
-            this->Output("y")
-                .ParamType(REQUIRED)
-                .DataType({ge::DT_FLOAT})
-                .Format({ge::FORMAT_ND})
-                .UnknownShapeFormat({ge::FORMAT_ND});
-            this->Attr("pooled_h").AttrType(REQUIRED).Int();
-            this->Attr("pooled_w").AttrType(REQUIRED).Int();
-            this->Attr("spatial_scale").AttrType(REQUIRED).Float();
-            this->Attr("sampling_ratio").AttrType(OPTIONAL).Int(0);
-            this->Attr("aligned").AttrType(OPTIONAL).Bool(true);
-            this->Attr("clockwise").AttrType(OPTIONAL).Bool(false);
-            this->AICore().AddConfig("ascend910b");
-            this->AICore().AddConfig("ascend910_93");
-            this->AICore().AddConfig("ascend310p");
-            this->AICore().AddConfig("kirinx90");
-            this->AICore().AddConfig("kirin9030");
-        }
-    };
+        this->Input("x")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND});
+        this->Input("rois")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND});
+        this->Output("y")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT})
+            .Format({ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND});
+        this->Attr("pooled_h").AttrType(REQUIRED).Int();
+        this->Attr("pooled_w").AttrType(REQUIRED).Int();
+        this->Attr("spatial_scale").AttrType(REQUIRED).Float();
+        this->Attr("sampling_ratio").AttrType(OPTIONAL).Int(0);
+        this->Attr("aligned").AttrType(OPTIONAL).Bool(true);
+        this->Attr("clockwise").AttrType(OPTIONAL).Bool(false);
+        this->AICore().AddConfig("ascend910b");
+        this->AICore().AddConfig("ascend910_93");
+        this->AICore().AddConfig("ascend310p");
+        this->AICore().AddConfig("kirinx90");
+        this->AICore().AddConfig("kirin9030");
+    }
+};
 
-    OP_ADD(RoiAlignRotated);
-}
+OP_ADD(RoiAlignRotated);
+} // namespace ops

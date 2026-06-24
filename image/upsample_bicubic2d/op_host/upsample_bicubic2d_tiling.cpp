@@ -29,7 +29,7 @@ constexpr uint32_t SCALE_FIVE = 5;
 constexpr uint32_t SCALE_EIGHT = 8;
 constexpr uint32_t SCALE_TWENTY = 20;
 constexpr uint32_t BYTE = 8;
-constexpr uint32_t BYTE_REPEAT = 256;  // The amount of data that can be processed by a repeat.
+constexpr uint32_t BYTE_REPEAT = 256; // The amount of data that can be processed by a repeat.
 constexpr uint32_t BYTE_BASIC_BLOCK = 1024;
 
 constexpr int8_t DIM_SIZE = 2;
@@ -61,12 +61,12 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBicubic2dTiling {
 public:
-    explicit UpsampleBicubic2dTiling(gert::TilingContext *context) : tilingContext(context){};
+    explicit UpsampleBicubic2dTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus RunBigKernelTiling();
 
 private:
     void setScale();
-    inline float compute_scale_value(const int64_t input_size, const int64_t out_size, const float *scale);
+    inline float compute_scale_value(const int64_t input_size, const int64_t out_size, const float* scale);
     void getWorkSpace(uint32_t needCoreNum);
     void getShapes();
     void getSlideSize();
@@ -90,17 +90,17 @@ private:
 private:
     int64_t slide_size = BEST_PERFORMANCE_SIZE_1;
     UpsampleBicubic2dTilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize = BYTE_LENGTH_4;
     gert::Shape input_shape;
     uint8_t dim = 0;
-    const bool *align_corners = nullptr;
-    const float *scale_h = nullptr;
-    const float *scale_w = nullptr;
+    const bool* align_corners = nullptr;
+    const float* scale_h = nullptr;
+    const float* scale_w = nullptr;
     float realScale_h = 0.0;
     float realScale_w = 0.0;
-    const gert::ContinuousVector *output_size = nullptr;
+    const gert::ContinuousVector* output_size = nullptr;
     int32_t slideStartList_w[MAX_CORE_CONT] = {0};
     int32_t slideEndList_w[MAX_CORE_CONT] = {0};
     int32_t tailSlideStartList_w[MAX_CORE_CONT] = {0};
@@ -130,7 +130,7 @@ private:
 void UpsampleBicubic2dTiling::setScale()
 {
     if (dim == DIM_SIZE) {
-        const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
+        const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
 
         realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[N_INDEX], scale_h);
         realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[C_INDEX], scale_w);
@@ -146,8 +146,8 @@ void UpsampleBicubic2dTiling::setScale()
     }
 }
 
-inline float UpsampleBicubic2dTiling::compute_scale_value(
-    const int64_t input_size, const int64_t out_size, const float *scale)
+inline float UpsampleBicubic2dTiling::compute_scale_value(const int64_t input_size, const int64_t out_size,
+                                                          const float* scale)
 {
     if (out_size == input_size) {
         return static_cast<float>(1);
@@ -159,8 +159,8 @@ inline float UpsampleBicubic2dTiling::compute_scale_value(
             return static_cast<float>(0);
         }
     } else {
-        return (scale != nullptr && *scale > 0) ? *scale
-                                                : (static_cast<float>(input_size) / static_cast<float>(out_size));
+        return (scale != nullptr && *scale > 0) ? *scale :
+                                                  (static_cast<float>(input_size) / static_cast<float>(out_size));
     }
 }
 
@@ -176,23 +176,25 @@ inline bool FloatEqual(float x, float y)
 
 ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
 {
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"), return ge::GRAPH_FAILED);
 
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
     OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
     OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     scale_h = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
-    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"),
+                return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(SCALE_W_ATTR);
-    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"),
+                return ge::GRAPH_FAILED);
 
     auto tempInputDesc = tilingContext->GetInputDesc(0);
     OP_CHECK_IF(tempInputDesc == nullptr, OP_LOGE(tilingContext->GetNodeName(), "InputDesc == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
 
     ge::DataType srcDtype = ge::DT_UNDEFINED;
     srcDtype = tempInputDesc->GetDataType();
@@ -202,24 +204,24 @@ ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
         dataType = srcDtype;
         dataTypeSize = GetDataTypeSize();
     }
-    OP_CHECK_IF(
-        srcDtype != dataType, OP_LOGE(tilingContext->GetNodeName(), "srcDtype != dataType"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(srcDtype != dataType, OP_LOGE(tilingContext->GetNodeName(), "srcDtype != dataType"),
+                return ge::GRAPH_FAILED);
 
     auto src_shape = tilingContext->GetInputShape(0);
-    OP_CHECK_IF(
-        src_shape == nullptr, OP_LOGE(tilingContext->GetNodeName(), "src_shape == nullptr"), return ge::GRAPH_FAILED);
-    dim = src_shape->GetStorageShape().GetDimNum() - 2;  // 其实固定是2
+    OP_CHECK_IF(src_shape == nullptr, OP_LOGE(tilingContext->GetNodeName(), "src_shape == nullptr"),
+                return ge::GRAPH_FAILED);
+    dim = src_shape->GetStorageShape().GetDimNum() - 2; // 其实固定是2
 
     input_shape = src_shape->GetOriginShape();
 
     OP_CHECK_IF(CheckShapes() == false, OP_LOGE(tilingContext->GetNodeName(), "CheckShapes() == false"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
 
     tilingContext->SetTilingKey(1);
 
-    auto compileInfo = reinterpret_cast<const UpsampleBicubic2dCompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleBicubic2dCompileInfo*>(tilingContext->GetCompileInfo());
     OP_CHECK_IF(compileInfo == nullptr, OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     socVersionType = compileInfo->socVersionType;
     if (socVersionType == SOC_VERSION_310P) {
         slide_size = BEST_PERFORMANCE_SIZE_1;
@@ -242,7 +244,7 @@ ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
 
 void UpsampleBicubic2dTiling::KerneTiling310p(uint16_t totalCoreNum)
 {
-    const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
     realScale_h = compute_scale_value(input_shape.GetDim(0), output_size_array[0], scale_h);
     realScale_w = compute_scale_value(input_shape.GetDim(1), output_size_array[1], scale_w);
 
@@ -261,7 +263,7 @@ void UpsampleBicubic2dTiling::KerneTiling310p(uint16_t totalCoreNum)
     uint32_t needCoreNum = GetNeedCoreNumW(totalCoreNum);
     needCoreNum = needCoreNum < 1 ? 1 : needCoreNum;
     tilingContext->SetBlockDim(needCoreNum);
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces != nullptr) {
         workspaces[0] = WORK_SPACE_SIZE;
     }
@@ -271,7 +273,7 @@ uint32_t UpsampleBicubic2dTiling::GetNeedCoreNum()
 {
     uint32_t needCoreNumW = 0;
     uint32_t needCoreNumH = 0;
-    auto compileInfo = reinterpret_cast<const UpsampleBicubic2dCompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleBicubic2dCompileInfo*>(tilingContext->GetCompileInfo());
     if (compileInfo == nullptr) {
         return 0;
     }
@@ -300,7 +302,7 @@ bool UpsampleBicubic2dTiling::CheckShapes() const
         return false;
     }
 
-    const int64_t *outputSizeArray = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
     int64_t inputH = input_shape.GetDim(H_INDEX);
     int64_t inputW = input_shape.GetDim(W_INDEX);
     int64_t outH = outputSizeArray[0];
@@ -321,10 +323,10 @@ void UpsampleBicubic2dTiling::getTCubeTiling_w()
     mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX],
-        output_shapes[W_INDEX], input_shapes[W_INDEX]);
-    mmTiling_w.SetShape(
-        input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], slide_size, singleCoreK_w);
+    mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], output_shapes[W_INDEX],
+                           input_shapes[W_INDEX]);
+    mmTiling_w.SetShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], slide_size,
+                        singleCoreK_w);
 
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
         OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_w Error, please Check inputShapes.");
@@ -351,7 +353,7 @@ void UpsampleBicubic2dTiling::getTCubeTiling_h()
 // 先只算w方向
 void UpsampleBicubic2dTiling::getWorkSpace(uint32_t needCoreNum)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces != nullptr) {
         // 中间tensor
         uint64_t intermediate_matrix_size = output_shapes[N_INDEX] * output_shapes[C_INDEX] * input_shapes[H_INDEX] *
@@ -371,7 +373,7 @@ void UpsampleBicubic2dTiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBicubic2dTiling::getShapes()
 {
-    const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
@@ -454,9 +456,9 @@ uint32_t UpsampleBicubic2dTiling::GetNeedCoreNumW(uint32_t coreNumPlatform)
     int64_t remainder = coreNumPlatform > 0 ? slideNum % coreNumPlatform : 0;
 
     // H维度总数
-    int64_t input_h = socVersionType == SOC_VERSION_310P
-                          ? output_shapes[0]
-                          : input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX];
+    int64_t input_h = socVersionType == SOC_VERSION_310P ?
+                          output_shapes[0] :
+                          input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shapes[H_INDEX];
     int64_t groupCoreNum = coreNumPlatform;
     int64_t tailAvergingRows = slide_size;
 
@@ -483,12 +485,12 @@ uint32_t UpsampleBicubic2dTiling::GetNeedCoreNumW(uint32_t coreNumPlatform)
             if (groupIndex < remainder) {
                 // 算出第几个分组
                 tailSlideStartList_w[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
-                tailSlideEndList_w[coreIndex] =
-                    std::min(tailSlideStartList_w[coreIndex] + slide_size, static_cast<int64_t>(outputSize));
+                tailSlideEndList_w[coreIndex] = std::min(tailSlideStartList_w[coreIndex] + slide_size,
+                                                         static_cast<int64_t>(outputSize));
                 int64_t coreIndexInGroup = coreIndex % groupCoreNum;
                 tailRowStartList_w[coreIndex] = coreIndexInGroup * tailAvergingRows;
-                tailRowEndList_w[coreIndex] =
-                    std::min(tailRowStartList_w[coreIndex] + tailAvergingRows, static_cast<int64_t>(input_h));
+                tailRowEndList_w[coreIndex] = std::min(tailRowStartList_w[coreIndex] + tailAvergingRows,
+                                                       static_cast<int64_t>(input_h));
                 needCoreNum++;
             }
         }
@@ -536,12 +538,12 @@ uint32_t UpsampleBicubic2dTiling::GetNeedCoreNumH(uint32_t coreNumPlatform)
             if (groupIndex < remainder) {
                 // 算出第几个分组
                 tailSlideStartList_h[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
-                tailSlideEndList_h[coreIndex] =
-                    std::min(tailSlideStartList_h[coreIndex] + slide_size, static_cast<int64_t>(outputSize));
+                tailSlideEndList_h[coreIndex] = std::min(tailSlideStartList_h[coreIndex] + slide_size,
+                                                         static_cast<int64_t>(outputSize));
                 int64_t coreIndexInGroup = coreIndex % groupCoreNum;
                 tailRowStartList_h[coreIndex] = coreIndexInGroup * tailAvergingBatch;
-                tailRowEndList_h[coreIndex] =
-                    std::min(tailRowStartList_h[coreIndex] + tailAvergingBatch, static_cast<int64_t>(batch));
+                tailRowEndList_h[coreIndex] = std::min(tailRowStartList_h[coreIndex] + tailAvergingBatch,
+                                                       static_cast<int64_t>(batch));
                 needCoreNum++;
             }
         }
@@ -574,19 +576,19 @@ void UpsampleBicubic2dTiling::FillTilingData()
     tilingData.set_tailRowEndList_h(tailRowEndList_h);
 
     tilingData.set_align_corners(*align_corners);
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
-static ge::graphStatus tiling4UpsampleBicubic2dTiling(gert::TilingContext *context)
+static ge::graphStatus tiling4UpsampleBicubic2dTiling(gert::TilingContext* context)
 {
     UpsampleBicubic2dTiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 
-static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
+static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleBicubic2dCompileInfo>();
     if (compileInfo == nullptr) {
@@ -607,4 +609,4 @@ IMPL_OP_OPTILING(UpsampleBicubic2d)
     .Tiling(tiling4UpsampleBicubic2dTiling)
     .TilingParse<UpsampleBicubic2dCompileInfo>(tilingPrepareTiling);
 
-}  // namespace optiling
+} // namespace optiling

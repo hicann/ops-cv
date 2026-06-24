@@ -53,10 +53,9 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 constexpr int64_t WORK_SPACE_SIZE = 16 * 1024 * 1024;
 
-class UpsampleNearest3dGradTiling
-{
+class UpsampleNearest3dGradTiling {
 public:
-    explicit UpsampleNearest3dGradTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleNearest3dGradTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init() const;
     ge::graphStatus RunBigKernelTiling();
 
@@ -149,10 +148,7 @@ inline bool FloatEqual(float a, float b)
     }
 };
 
-ge::graphStatus UpsampleNearest3dGradTiling::Init() const
-{
-    return ge::GRAPH_SUCCESS;
-}
+ge::graphStatus UpsampleNearest3dGradTiling::Init() const { return ge::GRAPH_SUCCESS; }
 
 ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
 {
@@ -236,13 +232,11 @@ bool UpsampleNearest3dGradTiling::CheckScales() const
     float checkScalesD = ComputeScaleValue(gradInputShapes[D_INDEX], gradOutputShapes[D_INDEX], scaleD);
     float checkScalesH = ComputeScaleValue(gradInputShapes[H_INDEX], gradOutputShapes[H_INDEX], scaleH);
     float checkScalesW = ComputeScaleValue(gradInputShapes[W_INDEX], gradOutputShapes[W_INDEX], scaleW);
-    OP_CHECK_IF(
-        checkScalesD > BEST_PERFORMANCE_SCALE_1 || checkScalesH > BEST_PERFORMANCE_SCALE_1 ||
-            checkScalesW > BEST_PERFORMANCE_SCALE_1,
-        OP_LOGE(
-            tilingContext->GetNodeName(), "scales are too large, scalesD [%f], scalesH [%f], scalesW [%f].",
-            checkScalesD, checkScalesH, checkScalesW),
-        return false);
+    OP_CHECK_IF(checkScalesD > BEST_PERFORMANCE_SCALE_1 || checkScalesH > BEST_PERFORMANCE_SCALE_1 ||
+                    checkScalesW > BEST_PERFORMANCE_SCALE_1,
+                OP_LOGE(tilingContext->GetNodeName(), "scales are too large, scalesD [%f], scalesH [%f], scalesW [%f].",
+                        checkScalesD, checkScalesH, checkScalesW),
+                return false);
     return true;
 }
 
@@ -449,14 +443,14 @@ void UpsampleNearest3dGradTiling::GetWorkSpace(int64_t needCoreNum)
     // 中间矩阵预留GM空间
     int64_t intermediateMatrixSizeW = 0;
     if (needResizeW && (needResizeH || needResizeD)) {
-        intermediateMatrixSizeW =
-            batches * gradOutputShapes[D_INDEX] * gradOutputShapes[H_INDEX] * gradInputShapes[W_INDEX];
+        intermediateMatrixSizeW = batches * gradOutputShapes[D_INDEX] * gradOutputShapes[H_INDEX] *
+                                  gradInputShapes[W_INDEX];
         intermediateMatrixSizeW = CeilA2B(intermediateMatrixSizeW, size) * size;
     }
     int64_t intermediateMatrixSizeH = 0;
     if (needResizeH && needResizeD) {
-        intermediateMatrixSizeH =
-            batches * gradOutputShapes[D_INDEX] * gradInputShapes[H_INDEX] * gradInputShapes[W_INDEX];
+        intermediateMatrixSizeH = batches * gradOutputShapes[D_INDEX] * gradInputShapes[H_INDEX] *
+                                  gradInputShapes[W_INDEX];
         intermediateMatrixSizeH = CeilA2B(intermediateMatrixSizeH, size) * size;
     }
     tilingData.set_intermediateMatrixSizeW(intermediateMatrixSizeW);
@@ -479,9 +473,8 @@ void UpsampleNearest3dGradTiling::GetTCubeTilingW()
     mmTilingW.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTilingW.SetOrgShape(
-        batches * gradOutputShapes[D_INDEX] * gradOutputShapes[H_INDEX], gradInputShapes[W_INDEX],
-        gradOutputShapes[W_INDEX]);
+    mmTilingW.SetOrgShape(batches * gradOutputShapes[D_INDEX] * gradOutputShapes[H_INDEX], gradInputShapes[W_INDEX],
+                          gradOutputShapes[W_INDEX]);
     mmTilingW.SetShape(batches * gradOutputShapes[D_INDEX] * gradOutputShapes[H_INDEX], slideSize, singleCoreKW);
     if (mmTilingW.GetTiling(tilingData.matmulTilingW) == -1) {
         return;
@@ -509,8 +502,8 @@ void UpsampleNearest3dGradTiling::GetTCubeTilingD()
     mmTilingD.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingD.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingD.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTilingD.SetOrgShape(
-        gradInputShapes[D_INDEX], gradInputShapes[H_INDEX] * gradInputShapes[W_INDEX], gradOutputShapes[D_INDEX]);
+    mmTilingD.SetOrgShape(gradInputShapes[D_INDEX], gradInputShapes[H_INDEX] * gradInputShapes[W_INDEX],
+                          gradOutputShapes[D_INDEX]);
     mmTilingD.SetShape(slideSize, gradInputShapes[H_INDEX] * gradInputShapes[W_INDEX], singleCoreKD);
     if (mmTilingD.GetTiling(tilingData.matmulTilingD) == -1) {
         return;
@@ -527,8 +520,8 @@ void UpsampleNearest3dGradTiling::FillTilingData()
     tilingData.set_tailAvergingRows(tailAvergingRows);
     tilingData.set_needCoreNums(needCoreNums);
     tilingData.set_dataType(GetDataTypeVal());
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
@@ -614,10 +607,9 @@ static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext* context)
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 
-    OP_CHECK_IF(
-        compileInfo->coreNum <= 0,
-        OP_LOGE(context->GetNodeName(), "UpsampleNearest3dGrad GetHardwareInfo Failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(compileInfo->coreNum <= 0,
+                OP_LOGE(context->GetNodeName(), "UpsampleNearest3dGrad GetHardwareInfo Failed"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

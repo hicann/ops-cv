@@ -33,7 +33,7 @@ namespace optiling {
 struct GridSampleCompileInfo {
     int64_t coreNum = 0;
     uint64_t ubSizePlatForm = 0;
-    bool regBase {false};
+    bool regBase{false};
 };
 
 BEGIN_TILING_DATA_DEF(GridSampleTilingData)
@@ -86,7 +86,7 @@ static const int64_t CHANEL_LAST_FALSE = 0;
 const static int64_t SIZE_16 = 16;
 const static int64_t LENGTH_1024 = 1024;
 const static int64_t FULL_LOAD_TYPE = 2;
-const static int64_t X_MAX_HWC_FACTOR = 20480;  // 20k
+const static int64_t X_MAX_HWC_FACTOR = 20480; // 20k
 const static int64_t C1_X_COUNT = 4096;
 const static int64_t NUM_C32 = 32;
 const static int64_t MIN_HW_C32 = 8;
@@ -97,8 +97,7 @@ constexpr uint8_t BLOCK_NUM = 8;
 
 class GridSampleTiling : public Ops::Cv::OpTiling::TilingBaseClass {
 public:
-    explicit GridSampleTiling(gert::TilingContext *context) : Ops::Cv::OpTiling::TilingBaseClass(context)
-    {}
+    explicit GridSampleTiling(gert::TilingContext* context) : Ops::Cv::OpTiling::TilingBaseClass(context) {}
 
 protected:
     bool IsCapable() override;
@@ -139,12 +138,12 @@ protected:
     int64_t templateCNum{0};
     int64_t hwFactor{512};
     int64_t dimension{0};
-    bool regBase {false};
+    bool regBase{false};
     int64_t outputSize;
 
 private:
     GridSampleTilingData tilingData;
 };
 
-}  // namespace optiling
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_GRID_SAMPLE_H
+} // namespace optiling
+#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_GRID_SAMPLE_H

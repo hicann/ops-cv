@@ -17,13 +17,13 @@
 
 using namespace UpSampleBicubic2dAAGrad;
 
-extern "C" __global__ __aicore__ void upsample_bicubic2d_aa_grad(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void upsample_bicubic2d_aa_grad(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                                 GM_ADDR tiling)
 {
     GET_TILING_DATA(tilingData, tiling);
-    const UpsampleBicubicAAGradTilingData *__restrict tiling_data = &tilingData;
-    const TCubeTiling *__restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
-    const TCubeTiling *__restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
+    const UpsampleBicubicAAGradTilingData* __restrict tiling_data = &tilingData;
+    const TCubeTiling* __restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
+    const TCubeTiling* __restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
 
     GM_ADDR userWS = GetUserWorkspace(workspace);
     if (userWS == nullptr) {
@@ -32,21 +32,21 @@ extern "C" __global__ __aicore__ void upsample_bicubic2d_aa_grad(
 
     if (TILING_KEY_IS(1)) {
         UpSampleBicubic2dAAGradND<half> op;
-        REGIST_MATMUL_OBJ(
-            &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+        REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH,
+                          matmulTilingHTiling);
         op.Init(input, output, userWS, &tilingData);
         op.Process();
 
     } else if (TILING_KEY_IS(2)) {
         UpSampleBicubic2dAAGradND<float> op;
-        REGIST_MATMUL_OBJ(
-            &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+        REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH,
+                          matmulTilingHTiling);
         op.Init(input, output, userWS, &tilingData);
         op.Process();
     } else if (TILING_KEY_IS(3)) {
         UpSampleBicubic2dAAGradND<bfloat16_t> op;
-        REGIST_MATMUL_OBJ(
-            &op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, matmulTilingHTiling);
+        REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH,
+                          matmulTilingHTiling);
         op.Init(input, output, userWS, &tilingData);
         op.Process();
     }

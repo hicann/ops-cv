@@ -23,19 +23,19 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(Col2im);
 
-const aclTensor *Col2im(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclIntArray *kernelSize,
-    const aclIntArray *dilation, const aclIntArray *padding, const aclIntArray *stride, aclOpExecutor *executor)
+const aclTensor* Col2im(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclIntArray* kernelSize,
+                        const aclIntArray* dilation, const aclIntArray* padding, const aclIntArray* stride,
+                        aclOpExecutor* executor)
 {
     L0_DFX(Col2im, gradOutput, inputSize, kernelSize, dilation, padding, stride);
     auto dims = executor->ConvertToTensor(inputSize, op::DataType::DT_INT32);
-    auto out = executor->AllocTensor(
-        gradOutput->GetDataType(), gradOutput->GetStorageFormat(), gradOutput->GetOriginalFormat());
+    auto out = executor->AllocTensor(gradOutput->GetDataType(), gradOutput->GetStorageFormat(),
+                                     gradOutput->GetOriginalFormat());
     INFER_SHAPE(Col2im, OP_INPUT(gradOutput, dims), OP_OUTPUT(out), OP_ATTR(kernelSize, dilation, padding, stride));
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        Col2im, OP_INPUT(gradOutput, dims), OP_OUTPUT(out), OP_ATTR(kernelSize, dilation, padding, stride));
-    OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "Col2imAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(Col2im, OP_INPUT(gradOutput, dims), OP_OUTPUT(out),
+                                           OP_ATTR(kernelSize, dilation, padding, stride));
+    OP_CHECK(ret == ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "Col2imAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

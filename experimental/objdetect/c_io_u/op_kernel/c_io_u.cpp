@@ -21,9 +21,8 @@
 #include "c_io_u.h"
 
 template <uint32_t schMode>
-__global__ __aicore__ void c_io_u(GM_ADDR bboxes, GM_ADDR gtboxes,
-                                GM_ADDR overlap, GM_ADDR atan_sub,
-                                GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void c_io_u(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, GM_ADDR atan_sub, GM_ADDR workspace,
+                                  GM_ADDR tiling)
 {
     REGISTER_TILING_DEFAULT(CIoUTilingData);
     GET_TILING_DATA_WITH_STRUCT(CIoUTilingData, tilingData, tiling);

@@ -161,8 +161,7 @@ struct AippCompileInfo {
 
 class AippTiling : public Ops::Cv::OpTiling::TilingBaseClass {
 public:
-    explicit AippTiling(gert::TilingContext* context) : Ops::Cv::OpTiling::TilingBaseClass(context)
-    {}
+    explicit AippTiling(gert::TilingContext* context) : Ops::Cv::OpTiling::TilingBaseClass(context) {}
 
 protected:
     bool IsCapable() override;
@@ -208,8 +207,8 @@ private:
     void PrintTilingData() const;
 
     template <typename T>
-    ge::graphStatus ParseNumAndValidateRange(const std::map<std::string, T*>& valueMap,\
-        int64_t minValue, int64_t maxValue);
+    ge::graphStatus ParseNumAndValidateRange(const std::map<std::string, T*>& valueMap, int64_t minValue,
+                                             int64_t maxValue);
 
 private:
     map<string, string> aippCfg;

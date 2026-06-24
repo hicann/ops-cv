@@ -45,7 +45,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoord
 }
 
 template <typename U_IDX>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow, U_IDX twiceHigh)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float reflectCoordinates(float coord, int twiceLow,
+                                                                                          U_IDX twiceHigh)
 {
     if (twiceLow == twiceHigh) {
         return 0;
@@ -72,8 +73,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float safeDowng
 }
 
 template <typename U_IDX>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float Clip(
-    float coord, U_IDX size, int32_t paddingMode, int32_t alignCorners)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float Clip(float coord, U_IDX size,
+                                                                            int32_t paddingMode, int32_t alignCorners)
 {
     if (paddingMode == PADDING_MODE_BORDER_95) {
         coord = ClipCoordinates(coord, size);

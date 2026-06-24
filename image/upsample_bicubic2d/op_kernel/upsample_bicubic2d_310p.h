@@ -43,8 +43,8 @@ public:
     TPipe pipe;
 
     __aicore__ inline UpsampleBicubic2dND310p(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                const UpsampleBicubic2dTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -157,10 +157,7 @@ private:
         return res;
     }
 
-    __aicore__ inline bool out_of_range(int64_t x, int64_t width)
-    {
-        return x >= (width - MIN_SIZE);
-    };
+    __aicore__ inline bool out_of_range(int64_t x, int64_t width) { return x >= (width - MIN_SIZE); };
 
     __aicore__ inline bool on_board(int64_t x, int64_t width)
     {
@@ -193,7 +190,7 @@ private:
         }
     };
 
-    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dTilingData* tilingData);
 
     __aicore__ inline void CalculateIntermediateTensor(int64_t index, int64_t length, int8_t direction);
     __aicore__ inline void CalculateRatioTensor(int64_t index, int64_t length, int8_t direction);
@@ -267,34 +264,34 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBicubic2dTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                        const UpsampleBicubic2dTilingData* tilingData)
 {
     blockIdx = GetBlockIdx();
 
     ParseTilingData(tilingData);
 
-    pipe.InitBuffer(centerQueueW, maxDataCount * sizeof(float));           // 2k
-    pipe.InitBuffer(xIntQueueW, maxDataCount * sizeof(float));             // 2k
-    pipe.InitBuffer(xMinQueueW, maxDataCount * sizeof(float));             // 2k
-    pipe.InitBuffer(xVQueueW, maxDataCount * sizeof(float));               // 2k
-    pipe.InitBuffer(ratioQueueW, DEFAULT_SLICE_SIZE * 4 * sizeof(float));  // 256
+    pipe.InitBuffer(centerQueueW, maxDataCount * sizeof(float));          // 2k
+    pipe.InitBuffer(xIntQueueW, maxDataCount * sizeof(float));            // 2k
+    pipe.InitBuffer(xMinQueueW, maxDataCount * sizeof(float));            // 2k
+    pipe.InitBuffer(xVQueueW, maxDataCount * sizeof(float));              // 2k
+    pipe.InitBuffer(ratioQueueW, DEFAULT_SLICE_SIZE * 4 * sizeof(float)); // 256
 
-    pipe.InitBuffer(centerQueueH, maxDataCount * sizeof(float));           // 2k
-    pipe.InitBuffer(xIntQueueH, maxDataCount * sizeof(float));             // 2k
-    pipe.InitBuffer(xMinQueueH, maxDataCount * sizeof(float));             // 2k
-    pipe.InitBuffer(xVQueueH, maxDataCount * sizeof(float));               // 2k
-    pipe.InitBuffer(ratioQueueH, DEFAULT_SLICE_SIZE * 4 * sizeof(float));  // 256
+    pipe.InitBuffer(centerQueueH, maxDataCount * sizeof(float));          // 2k
+    pipe.InitBuffer(xIntQueueH, maxDataCount * sizeof(float));            // 2k
+    pipe.InitBuffer(xMinQueueH, maxDataCount * sizeof(float));            // 2k
+    pipe.InitBuffer(xVQueueH, maxDataCount * sizeof(float));              // 2k
+    pipe.InitBuffer(ratioQueueH, DEFAULT_SLICE_SIZE * 4 * sizeof(float)); // 256
 
-    pipe.InitBuffer(inputQueue, BUFFER_NUM, maxDataCount * sizeof(float));   // 4k
-    pipe.InitBuffer(outputQueue, BUFFER_NUM, maxDataCount * sizeof(float));  // 4k
-    pipe.InitBuffer(cacheTensorBuff, maxDataCount * sizeof(float));          // 2k
-    pipe.InitBuffer(castInputBuff, maxDataCount * sizeof(float));            // 2k
-    pipe.InitBuffer(castOutputBuff, maxDataCount * sizeof(float));           // 2k
-    pipe.InitBuffer(clearTensorBuff, DEFAULT_CLEAR_UB_SIZE * sizeof(T));     // 20k or 40k
+    pipe.InitBuffer(inputQueue, BUFFER_NUM, maxDataCount * sizeof(float));  // 4k
+    pipe.InitBuffer(outputQueue, BUFFER_NUM, maxDataCount * sizeof(float)); // 4k
+    pipe.InitBuffer(cacheTensorBuff, maxDataCount * sizeof(float));         // 2k
+    pipe.InitBuffer(castInputBuff, maxDataCount * sizeof(float));           // 2k
+    pipe.InitBuffer(castOutputBuff, maxDataCount * sizeof(float));          // 2k
+    pipe.InitBuffer(clearTensorBuff, DEFAULT_CLEAR_UB_SIZE * sizeof(T));    // 20k or 40k
 
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)input);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)output);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)input);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)output);
 }
 
 template <typename T>
@@ -417,8 +414,8 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::BicubicComputeTail()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateIntermediateTensor(
-    int64_t index, int64_t length, int8_t direction)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateIntermediateTensor(int64_t index, int64_t length,
+                                                                               int8_t direction)
 {
     length = Max(length, EACH_SLICEHANDLE_NUM);
     float scale = scaleW;
@@ -465,8 +462,8 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateIntermediateTensor(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateRatioTensor(
-    int64_t xIndex, int64_t length, int8_t direction)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateRatioTensor(int64_t xIndex, int64_t length,
+                                                                        int8_t direction)
 {
     LocalTensor<float> ratioTensor = ratioQueueW.Get<float>();
     LocalTensor<float> centerTensor = centerQueueW.Get<float>();
@@ -502,8 +499,8 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateRatioTensor(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateConvolution(
-    int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::CalculateConvolution(int64_t indexW, int64_t indexH, int64_t lengthW,
+                                                                        int64_t lengthH)
 {
     xMinTensorW = xMinQueueW.Get<float>();
     xMinTensorH = xMinQueueH.Get<float>();
@@ -545,8 +542,8 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CopyOut(int64_t indexOutput, 
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::CubicInterp2d(
-    int64_t indexW, int64_t indexH, int64_t offsetW, int64_t offsetH)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::CubicInterp2d(int64_t indexW, int64_t indexH, int64_t offsetW,
+                                                                 int64_t offsetH)
 {
     int64_t startX = static_cast<int64_t>(xMinTensorW.GetValue(indexW + offsetW - startIdxW));
     int64_t startY = static_cast<int64_t>(xMinTensorH.GetValue(indexH + offsetH - startIdxH));
@@ -609,7 +606,7 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::CubicInterp2d(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dND310p<T>::ParseTilingData(const UpsampleBicubic2dTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dND310p<T>::ParseTilingData(const UpsampleBicubic2dTilingData* tilingData)
 {
     slideSize = DEFAULT_SLICE_SIZE;
     scaleW = tilingData->scale_w;
@@ -637,6 +634,6 @@ __aicore__ inline void UpsampleBicubic2dND310p<T>::ParseTilingData(const Upsampl
 
     blockSize = 32 / sizeof(T);
 }
-}  // namespace UpsampleBicubic2d
+} // namespace UpsampleBicubic2d
 
-#endif  // UPSAMPLE_BICUBIC2D_310P
+#endif // UPSAMPLE_BICUBIC2D_310P

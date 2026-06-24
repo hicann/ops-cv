@@ -51,13 +51,13 @@ static const int64_t VOLUMETRIC_GRID_LAST_DIM_SIZE = 3;
 static const int64_t VOLUMETRIC_DIM_NUM = 5;
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT,
+                                                                       op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
 
-static const std::initializer_list<op::Format> FORMAT_SUPPORT_LIST = {
-    op::Format::FORMAT_NCDHW, op::Format::FORMAT_NDHWC, op::Format::FORMAT_ND};
+static const std::initializer_list<op::Format> FORMAT_SUPPORT_LIST = {op::Format::FORMAT_NCDHW,
+                                                                      op::Format::FORMAT_NDHWC, op::Format::FORMAT_ND};
 
-static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
     OP_CHECK_NULL(input, return false);
     OP_CHECK_NULL(grid, return false);
@@ -65,10 +65,12 @@ static bool CheckNotNull(const aclTensor *input, const aclTensor *grid, const ac
     return true;
 }
 
-static bool CheckRegBaseSuppport(const aclTensor *input, int64_t interpolationMode)
+static bool CheckRegBaseSuppport(const aclTensor* input, int64_t interpolationMode)
 {
-    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 && input->GetDataType() != op::DataType::DT_BF16) {
-        OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s", op::ToString(input->GetDataType()).GetString());
+    if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
+        input->GetDataType() != op::DataType::DT_BF16) {
+        OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s",
+                op::ToString(input->GetDataType()).GetString());
         return false;
     }
     bool isRegBaseArchFlag = IsRegBase();
@@ -78,7 +80,7 @@ static bool CheckRegBaseSuppport(const aclTensor *input, int64_t interpolationMo
     return false;
 }
 
-static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
     // 检查input、grid、out的数据类型是否一致
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
@@ -90,62 +92,54 @@ static bool CheckDtypeValid(const aclTensor *input, const aclTensor *grid, const
     return true;
 }
 
-static bool CheckFormat(const op::Format format, const std::initializer_list<op::Format> &valid_formats)
+static bool CheckFormat(const op::Format format, const std::initializer_list<op::Format>& valid_formats)
 {
     return std::find(valid_formats.begin(), valid_formats.end(), format) != valid_formats.end();
 }
 
 namespace {
-static bool CheckFormatValid(const aclTensor *input, const aclTensor *out)
+static bool CheckFormatValid(const aclTensor* input, const aclTensor* out)
 {
     const op::Format inputFormat = input->GetStorageFormat();
     if (!CheckFormat(inputFormat, FORMAT_SUPPORT_LIST)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input format only supports [NCDHW, NDHWC, ND] format, but format is [%s]",
-            op::ToString(inputFormat).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input format only supports [NCDHW, NDHWC, ND] format, but format is [%s]",
+                op::ToString(inputFormat).GetString());
         return false;
     }
 
     const op::Format outFormat = out->GetStorageFormat();
     if (!CheckFormat(outFormat, FORMAT_SUPPORT_LIST)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Out format only supports [NCDHW, NDHWC, ND] format, but format is [%s]",
-            op::ToString(outFormat).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Out format only supports [NCDHW, NDHWC, ND] format, but format is [%s]",
+                op::ToString(outFormat).GetString());
         return false;
     }
 
     return true;
 }
-}  // namespace
+} // namespace
 
 static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
 {
     // 检查interpolationMode 、paddingMode是否在支持范围内
     if (paddingMode < PADDING_MODE_MIN_VALUE || paddingMode > PADDING_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "paddingMode %ld should be in range [%ld, %ld].",
-            paddingMode,
-            PADDING_MODE_MIN_VALUE,
-            PADDING_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
+                PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
         return false;
     }
 
     if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "interpolationMode %ld should be in range [%ld, %ld].",
-            interpolationMode,
-            INTERPOLATION_MODE_MIN_VALUE,
-            INTERPOLATION_MODE_MAX_VALUE);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
+                INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
         return false;
     }
     return true;
 }
 
-static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclTensor *out)
+static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
-    const auto &inputShape = input->GetViewShape();
-    const auto &gridShape = grid->GetViewShape();
-    const auto &outShape = out->GetViewShape();
+    const auto& inputShape = input->GetViewShape();
+    const auto& gridShape = grid->GetViewShape();
+    const auto& outShape = out->GetViewShape();
 
     OP_CHECK_WRONG_DIMENSION(input, VOLUMETRIC_DIM_NUM, return false);
     OP_CHECK_WRONG_DIMENSION(grid, VOLUMETRIC_DIM_NUM, return false);
@@ -154,11 +148,10 @@ static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclT
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != outShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input grid and out to have same batch size, but got input with shape [%s] \
+                "expect input grid and out to have same batch size, but got input with shape [%s] \
             grid with shape [%s] and out with shape [%s]",
-            op::ToString(inputShape).GetString(),
-            op::ToString(gridShape).GetString(),
-            op::ToString(outShape).GetString());
+                op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
+                op::ToString(outShape).GetString());
         return false;
     }
 
@@ -166,10 +159,9 @@ static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclT
     const size_t channelIndex = inputFormat == op::Format::FORMAT_NDHWC ? FIFTH_DIM : SECOND_DIM;
     if (inputShape.GetDim(channelIndex) != outShape.GetDim(channelIndex)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input and out to have same channel size, but got input with shape [%s] \
+                "expect input and out to have same channel size, but got input with shape [%s] \
             and out with shape [%s]",
-            op::ToString(inputShape).GetString(),
-            op::ToString(outShape).GetString());
+                op::ToString(inputShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
 
@@ -179,32 +171,28 @@ static bool CheckShape(const aclTensor *input, const aclTensor *grid, const aclT
     if ((gridShape.GetDim(SECOND_DIM) != outShape.GetDim(deepIndex)) ||
         (gridShape.GetDim(THIRD_DIM) != outShape.GetDim(heightIndex)) ||
         (gridShape.GetDim(FOURTH_DIM) != outShape.GetDim(widthIndex))) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect grid and out to have same D H W size, but got grid with shape [%s] \
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect grid and out to have same D H W size, but got grid with shape [%s] \
             and out with shape [%s]",
-            op::ToString(gridShape).GetString(),
-            op::ToString(outShape).GetString());
+                op::ToString(gridShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
 
     if (inputShape.GetDim(FOURTH_DIM) == 0 || inputShape.GetDim(FIFTH_DIM) == 0) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect input to have non-empty spatial dimensions, but got input with shape [%s]",
-            op::ToString(inputShape).GetString());
+                "expect input to have non-empty spatial dimensions, but got input with shape [%s]",
+                op::ToString(inputShape).GetString());
         return false;
     }
     if (gridShape.GetDim(FIFTH_DIM) != VOLUMETRIC_GRID_LAST_DIM_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "expect grid to have size %ld in last dimension, but got grid with shape [%s]",
-            VOLUMETRIC_GRID_LAST_DIM_SIZE,
-            op::ToString(gridShape).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect grid to have size %ld in last dimension, but got grid with shape [%s]",
+                VOLUMETRIC_GRID_LAST_DIM_SIZE, op::ToString(gridShape).GetString());
         return false;
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor *input, const aclTensor *grid, int64_t interpMode, int64_t padMode, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* input, const aclTensor* grid, int64_t interpMode, int64_t padMode,
+                               const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(input, grid, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -225,12 +213,12 @@ static aclnnStatus CheckParams(
 }
 
 namespace {
-static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMode)
+static bool CheckAiCoreSuppport(const aclTensor* input, int64_t interpolationMode)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_BF16) {
         OP_LOGD("Only support float16, float32 or bfloat16 on AICore, but got data type is %s",
-            op::ToString(input->GetDataType()).GetString());
+                op::ToString(input->GetDataType()).GetString());
         return false;
     }
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
@@ -247,20 +235,20 @@ static bool CheckAiCoreSuppport(const aclTensor *input, int64_t interpolationMod
     return false;
 }
 
-static bool CheckAiCpuSuppport(const aclTensor *input)
+static bool CheckAiCpuSuppport(const aclTensor* input)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_DOUBLE) {
         OP_LOGD("Only support float16, float32 or double on AICpu, but got data type is %s",
-            op::ToString(input->GetDataType()).GetString());
+                op::ToString(input->GetDataType()).GetString());
         return false;
     }
     return true;
 }
-}  // namespace
+} // namespace
 
-static const aclTensor *CheckAndTranspose(
-    const aclTensor *target, const op::Format inputFormat, bool isInput, bool isSpecialcase, aclOpExecutor *executor)
+static const aclTensor* CheckAndTranspose(const aclTensor* target, const op::Format inputFormat, bool isInput,
+                                          bool isSpecialcase, aclOpExecutor* executor)
 {
     if (isInput) {
         if (inputFormat == op::Format::FORMAT_NCDHW || inputFormat == op::Format::FORMAT_ND) {
@@ -286,14 +274,14 @@ static const aclTensor *CheckAndTranspose(
     return target;
 }
 
-static bool CheckSpecialCase(const aclTensor *input, const aclTensor *grid)
+static bool CheckSpecialCase(const aclTensor* input, const aclTensor* grid)
 {
-    const auto &inputDType = input->GetDataType();
+    const auto& inputDType = input->GetDataType();
     if (inputDType != op::DataType::DT_FLOAT16 && inputDType != op::DataType::DT_FLOAT) {
         return false;
     }
-    const auto &inputShape = input->GetViewShape();
-    const auto &gridShape = grid->GetViewShape();
+    const auto& inputShape = input->GetViewShape();
+    const auto& gridShape = grid->GetViewShape();
     auto xshape_N = inputShape.GetDim(FIRST_DIM);
     int64_t xshape_C = 0;
     int64_t xshape_D = 0;
@@ -323,11 +311,12 @@ static bool CheckSpecialCase(const aclTensor *input, const aclTensor *grid)
     return xshape_C == INT_4 && (xshape_N == INT_22 || xshape_N == INT_88);
 }
 
-aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const aclTensor *grid, int64_t interpolationMode,
-    int64_t paddingMode, bool alignCorners, aclTensor *out, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor* input, const aclTensor* grid, int64_t interpolationMode,
+                                               int64_t paddingMode, bool alignCorners, aclTensor* out,
+                                               uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnGridSampler3D, DFX_IN(input, grid, interpolationMode, paddingMode, alignCorners), DFX_OUT(out));
-    auto uniqueExecutor = CREATE_EXECUTOR();  // 固定写法，创建OpExecutor
+    auto uniqueExecutor = CREATE_EXECUTOR(); // 固定写法，创建OpExecutor
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
     auto ret = CheckParams(input, grid, interpolationMode, paddingMode, out);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
@@ -347,41 +336,29 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
     const op::Format inputFormat = input->GetStorageFormat();
     bool isSpecialcase = interpolationMode == 0 && CheckSpecialCase(input, grid);
     bool regBase = CheckRegBaseSuppport(input, interpolationMode);
-    const aclTensor *gridSampler3DOut = nullptr;
+    const aclTensor* gridSampler3DOut = nullptr;
     if (supportAiCore) {
         inputTensor = CheckAndTranspose(inputTensor, inputFormat, true, isSpecialcase, uniqueExecutor.get());
         CHECK_RET(inputTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        gridSampler3DOut = l0op::GridSample3D(inputTensor,
-            gridTensor,
-            interpolationMode,
-            paddingMode,
-            alignCorners,
-            !isSpecialcase,
-            uniqueExecutor.get());
+        gridSampler3DOut = l0op::GridSample3D(inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners,
+                                              !isSpecialcase, uniqueExecutor.get());
     } else if (regBase) {
-        gridSampler3DOut = l0op::GridSample3D(inputTensor,
-            gridTensor,
-            interpolationMode,
-            paddingMode,
-            alignCorners,
-            false,
-            uniqueExecutor.get());
+        gridSampler3DOut = l0op::GridSample3D(inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners,
+                                              false, uniqueExecutor.get());
     } else if (supportAiCpu) {
-        gridSampler3DOut = l0op::GridSampler3D(
-            inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners, uniqueExecutor.get());
+        gridSampler3DOut = l0op::GridSampler3D(inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners,
+                                               uniqueExecutor.get());
     } else {
         std::string alignCornerStr = alignCorners ? "true" : "false";
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+        OP_LOGE(
+            ACLNN_ERR_PARAM_INVALID,
             "The op info is not supported. Plsease check op info! DataType support list is %s, got data type is %s. \
             interpolationMode support 0(bilinear) , 1(nearest) or 2(bicubic), got interpolationMode is %ld. \
             paddingMode support 0(zeros) , 1(border) or 2(reflection), got paddingMode is %ld. \
             alignCorners support false and true, got alignCorners is %s. \
             Notice that when data type is bfloat16, only support by ascend910B or ascend910_93.",
-            op::ToString(DTYPE_SUPPORT_LIST).GetString(),
-            op::ToString(input->GetDataType()).GetString(),
-            interpolationMode,
-            paddingMode,
-            alignCornerStr.c_str());
+            op::ToString(DTYPE_SUPPORT_LIST).GetString(), op::ToString(input->GetDataType()).GetString(),
+            interpolationMode, paddingMode, alignCornerStr.c_str());
         return ACLNN_ERR_PARAM_INVALID;
     }
     CHECK_RET(gridSampler3DOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -395,7 +372,7 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor *input, const acl
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnGridSampler3D(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnGridSampler3D(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnGridSampler3D);
     // 固定写法，调用框架能力，完成计算

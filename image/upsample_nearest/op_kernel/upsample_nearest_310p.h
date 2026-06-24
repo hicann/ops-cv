@@ -31,8 +31,7 @@ constexpr uint8_t W_DIRECTION = 1;
 constexpr uint32_t COPY_BLOCK = 32;
 
 template <typename T, int32_t MODE>
-class UpsampleNearestND310p
-{
+class UpsampleNearestND310p {
 public:
     TPipe pipe;
 
@@ -132,8 +131,8 @@ private:
 };
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND310p<T, MODE>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleNearestTilingData* tilingData)
+__aicore__ inline void UpsampleNearestND310p<T, MODE>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                            const UpsampleNearestTilingData* tilingData)
 {
     // 获取当前核的索引
     blockIdx = GetBlockIdx();
@@ -245,8 +244,8 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::ComputeNearest()
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcTensors(
-    int64_t nIdx, int64_t indexH, int64_t indexW, int64_t lengthH, int64_t lengthW)
+__aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcTensors(int64_t nIdx, int64_t indexH, int64_t indexW,
+                                                                   int64_t lengthH, int64_t lengthW)
 {
     LocalTensor<float> dstToSrcTensorH = dstToSrcQueueH.Get<float>();
     LocalTensor<float> dstToSrcTensorW = dstToSrcQueueW.Get<float>();
@@ -273,8 +272,8 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcTensors(
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcTensorsC(
-    int64_t indexInput, int64_t indexOutput, int64_t calcCount)
+__aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcTensorsC(int64_t indexInput, int64_t indexOutput,
+                                                                    int64_t calcCount)
 {
     int64_t copyLength = Ceil(float(calcCount) / blockSize) * blockSize;
     CopyIn(indexInput, copyLength);
@@ -295,8 +294,8 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcTensorsC(
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcIdxTensor(
-    int64_t dstStartIndex, int64_t length, uint8_t direction)
+__aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcIdxTensor(int64_t dstStartIndex, int64_t length,
+                                                                     uint8_t direction)
 {
     LocalTensor<float> centerTensor = centerQueueW.Get<float>();
     LocalTensor<float> dstToSrcTensor = dstToSrcQueueW.Get<float>();
@@ -311,8 +310,8 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::CalcIdxTensor(
         maxValue = static_cast<float>(inputH) - (float)1.0;
     }
 
-    ArithProgression<float>(
-        centerTensor, static_cast<float>(dstStartIndex), static_cast<float>(1), static_cast<int32_t>(length));
+    ArithProgression<float>(centerTensor, static_cast<float>(dstStartIndex), static_cast<float>(1),
+                            static_cast<int32_t>(length));
     PipeBarrier<PIPE_V>();
 
     if (exactMode) {
@@ -343,8 +342,8 @@ __aicore__ inline void UpsampleNearestND310p<T, MODE>::CopyIn(int64_t indexInput
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND310p<T, MODE>::CopyOut(
-    int64_t indexOutput, int64_t calcCount, int64_t copyLength)
+__aicore__ inline void UpsampleNearestND310p<T, MODE>::CopyOut(int64_t indexOutput, int64_t calcCount,
+                                                               int64_t copyLength)
 {
     LocalTensor<T> dstDataLocal = outputQueue.DeQue<T>();
 

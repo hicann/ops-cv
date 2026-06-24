@@ -56,12 +56,12 @@ namespace ge {
  * Compatible with TensorFlow SpatialTransformer operator.
  */
 REG_OP(SpatialTransformer)
-    .INPUT(x, TensorType({DT_FLOAT,DT_FLOAT16,DT_DOUBLE,DT_UINT8,DT_INT8,DT_UINT16,
-                          DT_INT16,DT_INT32,DT_UINT32,DT_UINT64,DT_INT64}))
-    .OPTIONAL_INPUT(theta, TensorType({DT_FLOAT,DT_FLOAT16,DT_DOUBLE,DT_UINT8,DT_INT8,
-                                       DT_UINT16,DT_INT16,DT_INT32,DT_UINT32,DT_UINT64,DT_INT64}))
-    .OUTPUT(y, TensorType({DT_FLOAT,DT_FLOAT16,DT_DOUBLE,DT_UINT8,DT_INT8,DT_UINT16,
-                           DT_INT16,DT_INT32,DT_UINT32,DT_UINT64,DT_INT64}))
+    .INPUT(x, TensorType({DT_FLOAT, DT_FLOAT16, DT_DOUBLE, DT_UINT8, DT_INT8, DT_UINT16, DT_INT16, DT_INT32, DT_UINT32,
+                          DT_UINT64, DT_INT64}))
+    .OPTIONAL_INPUT(theta, TensorType({DT_FLOAT, DT_FLOAT16, DT_DOUBLE, DT_UINT8, DT_INT8, DT_UINT16, DT_INT16,
+                                       DT_INT32, DT_UINT32, DT_UINT64, DT_INT64}))
+    .OUTPUT(y, TensorType({DT_FLOAT, DT_FLOAT16, DT_DOUBLE, DT_UINT8, DT_INT8, DT_UINT16, DT_INT16, DT_INT32, DT_UINT32,
+                           DT_UINT64, DT_INT64}))
     .ATTR(output_size, ListInt, {-1, -1})
     .ATTR(default_theta, ListFloat, {})
     .ATTR(align_corners, Bool, false)

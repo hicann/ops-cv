@@ -19,10 +19,8 @@
 #include "blend_face_bg_part_two.h"
 
 template <uint32_t schMode>
-__global__ __aicore__ void blend_face_bg_part_two(
-    GM_ADDR acc_face, GM_ADDR acc_mask, GM_ADDR max_mask,
-    GM_ADDR bg_img, GM_ADDR fused_img,
-    GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void blend_face_bg_part_two(GM_ADDR acc_face, GM_ADDR acc_mask, GM_ADDR max_mask, GM_ADDR bg_img,
+                                                  GM_ADDR fused_img, GM_ADDR workspace, GM_ADDR tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     REGISTER_TILING_DEFAULT(BlendFaceBgPartTwoTilingData);

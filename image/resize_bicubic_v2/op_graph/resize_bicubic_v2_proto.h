@@ -53,4 +53,3 @@ REG_OP(ResizeBicubicV2)
 } // namespace ge
 
 #endif // OPS_OP_PROTO_INC_RESIZE_BICUBIC_V2_H_
-

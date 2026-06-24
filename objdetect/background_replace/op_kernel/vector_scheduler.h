@@ -1,13 +1,12 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
-*/
-
+ */
 
 /*!
  * \file vector_scheduler.h
@@ -39,19 +38,13 @@ __aicore__ inline size_t DownAlignN(size_t n, size_t N)
     return n / N * N;
 }
 
-__aicore__ inline size_t UpAlign32(size_t n)
-{
-    return UpAlignN(n, ALIGN_SIZE_BYTES);
-}
+__aicore__ inline size_t UpAlign32(size_t n) { return UpAlignN(n, ALIGN_SIZE_BYTES); }
 
-__aicore__ inline size_t DownAlign32(size_t n)
-{
-    return DownAlignN(n, ALIGN_SIZE_BYTES);
-}
+__aicore__ inline size_t DownAlign32(size_t n) { return DownAlignN(n, ALIGN_SIZE_BYTES); }
 
 class VectorComputer {
 public:
-    __aicore__ inline VectorComputer() {};
+    __aicore__ inline VectorComputer(){};
 
     __aicore__ inline void CalcForAlign32(uint32_t idx, size_t len) {};
 };
@@ -82,12 +75,12 @@ public:
         if (blockIdx == this->numBlocks - 1) {
             this->dataLen += this->dataLenTailL1;
         }
-        this->bufferBytesPerVar = this->dataLen > this->dataLenPerLoop ? this->dataBytesPerLoop : UpAlign32(
-            this->dataLen * this->sizeofT);
+        this->bufferBytesPerVar = this->dataLen > this->dataLenPerLoop ? this->dataBytesPerLoop :
+                                                                         UpAlign32(this->dataLen * this->sizeofT);
     }
 
-    template<class Computer>
-    __aicore__ inline void run(Computer *computer, size_t len)
+    template <class Computer>
+    __aicore__ inline void run(Computer* computer, size_t len)
     {
         if (len <= 0) {
             return;

@@ -27,18 +27,11 @@
 using namespace std;
 using namespace ge;
 
-class TestThreeInterpolateBackwardTiling : public testing::Test
-{
+class TestThreeInterpolateBackwardTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "test ThreeInterpolateBackwardTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "test ThreeInterpolateBackwardTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "test ThreeInterpolateBackwardTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "test ThreeInterpolateBackwardTiling TearDown" << std::endl; }
 };
 
 namespace {
@@ -57,8 +50,8 @@ DataType StringToDtype(std::string dtype_string)
     return ge::DT_FLOAT16;
 }
 
-void add_input_desc_by_idx(
-    Operator& op, int64_t idx, std::vector<int64_t> input_shape, std::vector<std::string> data_dtypes, Format format)
+void add_input_desc_by_idx(Operator& op, int64_t idx, std::vector<int64_t> input_shape,
+                           std::vector<std::string> data_dtypes, Format format)
 {
     auto op_info = OpDescUtils::GetOpDescFromOperator(op);
     op_info->MutableInputDesc(idx)->SetShape(GeShape(input_shape));
@@ -68,8 +61,8 @@ void add_input_desc_by_idx(
     op_info->MutableInputDesc(idx)->SetDataType(StringToDtype(data_dtypes[idx]));
 }
 
-void add_output_desc_by_idx(
-    Operator& op, int64_t idx, std::vector<int64_t> input_shape, std::vector<std::string> data_dtypes, Format format)
+void add_output_desc_by_idx(Operator& op, int64_t idx, std::vector<int64_t> input_shape,
+                            std::vector<std::string> data_dtypes, Format format)
 {
     auto op_info = OpDescUtils::GetOpDescFromOperator(op);
     op_info->MutableOutputDesc(idx)->SetShape(GeShape(input_shape));
@@ -112,19 +105,19 @@ void run_parse_test(optiling::ThreeInterpolateBackwardCompileInfo& compile_info)
     auto tiling_parse_func = gert::OpImplRegistry::GetInstance().GetOpImpl(op_type.c_str())->tiling_parse;
 
     // tilingParseFunc simulate
-    auto kernel_holder =
-        gert::KernelRunContextFaker()
-            .KernelIONum(2, 1)
-            .Inputs({const_cast<char*>(compile_info_string.c_str()), reinterpret_cast<void*>(&platform_info)})
-            .Outputs({&compile_info})
-            .Build();
+    auto kernel_holder = gert::KernelRunContextFaker()
+                             .KernelIONum(2, 1)
+                             .Inputs({const_cast<char*>(compile_info_string.c_str()),
+                                      reinterpret_cast<void*>(&platform_info)})
+                             .Outputs({&compile_info})
+                             .Build();
 
     ASSERT_TRUE(kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->Init());
     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("SoCInfo", soc_infos);
     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicore_spec);
     kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetCoreNumByCoreType("AICore");
-    kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes(
-        "AICoreintrinsicDtypeMap", intrinsics);
+    kernel_holder.GetContext<gert::TilingParseContext>()->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap",
+                                                                                            intrinsics);
 
     ASSERT_EQ(tiling_parse_func(kernel_holder.GetContext<gert::KernelContext>()), ge::GRAPH_SUCCESS);
 }

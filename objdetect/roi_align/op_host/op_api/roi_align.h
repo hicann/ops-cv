@@ -15,13 +15,14 @@
 
 namespace l0op {
 // used in aclnnRoiAlign
-const aclTensor *ROIAlign(const aclTensor *self, const aclTensor *rois, const aclTensor *batchIndices, float spatialScale,
-    int outputHeight, int outputWidth, int samplingRatio, const char *mode, aclOpExecutor *executor);
-    
+const aclTensor* ROIAlign(const aclTensor* self, const aclTensor* rois, const aclTensor* batchIndices,
+                          float spatialScale, int outputHeight, int outputWidth, int samplingRatio, const char* mode,
+                          aclOpExecutor* executor);
+
 // used in aclnnRoiAlignV2
-const aclTensor *ROIAlignV2(const aclTensor *self, const aclTensor *boxes, float spatialScale,
-    int64_t outputHeight, int64_t outputWidth, int64_t samplingRatio, const char *mode, int64_t roiEndMode, 
-    aclOpExecutor *executor);
-} // l0op
+const aclTensor* ROIAlignV2(const aclTensor* self, const aclTensor* boxes, float spatialScale, int64_t outputHeight,
+                            int64_t outputWidth, int64_t samplingRatio, const char* mode, int64_t roiEndMode,
+                            aclOpExecutor* executor);
+} // namespace l0op
 
 #endif // OP_API_INC_LEVEL0_ROI_ALIGN_H_

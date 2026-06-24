@@ -31,8 +31,8 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 
-const aclTensor *UpsampleNearestExact3dNcdhw(
-    const aclTensor *self, const aclIntArray *outputSize, const aclFloatArray *scales, aclOpExecutor *executor)
+const aclTensor* UpsampleNearestExact3dNcdhw(const aclTensor* self, const aclIntArray* outputSize,
+                                             const aclFloatArray* scales, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleNearestExact3dNcdhw, self, outputSize, scales);
 
@@ -58,12 +58,12 @@ const aclTensor *UpsampleNearestExact3dNcdhw(
     selfOriginalShape.SetDim(DIM_THREE, sizeH);
     selfOriginalShape.SetDim(DIM_FOUR, sizeW);
 
-    const aclTensor *out = executor->AllocTensor(
-        selfStorageShape, selfOriginalShape, self->GetDataType(), self->GetStorageFormat(), self->GetOriginalFormat());
+    const aclTensor* out = executor->AllocTensor(selfStorageShape, selfOriginalShape, self->GetDataType(),
+                                                 self->GetStorageFormat(), self->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleNearestExact3d, OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales_d, scales_h, scales_w));
+    ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearestExact3d, OP_INPUT(self), OP_OUTPUT(out),
+                                OP_ATTR(outputSize, scales_d, scales_h, scales_w));
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

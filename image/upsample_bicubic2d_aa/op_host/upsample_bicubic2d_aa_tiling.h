@@ -70,6 +70,6 @@ END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleBicubic2dAA, UpsampleBicubic2dAATilingData)
 ge::graphStatus Tiling4UpsampleBicubic2dAARegbase(gert::TilingContext* context);
-}  // namespace optiling
+} // namespace optiling
 
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_AA_TILING_H
+#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_AA_TILING_H

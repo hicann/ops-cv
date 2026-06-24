@@ -70,6 +70,6 @@ REG_OP(GridSample)
     .ATTR(scheduler_mode, Int, 1)
     .OP_END_FACTORY_REG(GridSample)
 
-}  // namespace ge
+} // namespace ge
 
 #endif

@@ -34,7 +34,7 @@ __global__ __aicore__ void upsample_bilinear2d_aa(GM_ADDR x, GM_ADDR y, GM_ADDR 
         op.Process();
         return;
     } else {
-        if constexpr(isInt32 == 1) {
+        if constexpr (isInt32 == 1) {
             Bilinear2dAASimt<DTYPE_INPUT, uint32_t, int32_t> op;
             op.Init(x, y, &tilingData);
             op.Process();

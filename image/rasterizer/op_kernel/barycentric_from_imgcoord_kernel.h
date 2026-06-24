@@ -19,26 +19,25 @@ namespace BarycentricFromImgcoord {
 
 template <typename T>
 __aicore__ inline void BarycentricFromImgcoordAIV<T>::Init(GM_ADDR v, GM_ADDR f, GM_ADDR findices, GM_ADDR barycentric,
-    GM_ADDR workspace, RasterizerTilingData *tilingData)
+                                                           GM_ADDR workspace, RasterizerTilingData* tilingData)
 {
     ParseTilingData(tilingData);
     InitParam();
 
-    this->invGM.SetGlobalBuffer((__gm__ T *)v);
-    this->infGM.SetGlobalBuffer((__gm__ int32_t *)f);
-    this->findicesGM.SetGlobalBuffer((__gm__ int32_t *)findices);
-    this->barycentricGM.SetGlobalBuffer((__gm__ T *)barycentric);
+    this->invGM.SetGlobalBuffer((__gm__ T*)v);
+    this->infGM.SetGlobalBuffer((__gm__ int32_t*)f);
+    this->findicesGM.SetGlobalBuffer((__gm__ int32_t*)findices);
+    this->barycentricGM.SetGlobalBuffer((__gm__ T*)barycentric);
 
     uint64_t wkspOffset = 0;
-    this->zBufIdxGM.SetGlobalBuffer((__gm__ int32_t *)workspace);
+    this->zBufIdxGM.SetGlobalBuffer((__gm__ int32_t*)workspace);
     wkspOffset += static_cast<uint64_t>(this->vecCoreNum * this->totalPixNum + rsv) * sizeof(int32_t);
-    this->zBufDepthGM.SetGlobalBuffer((__gm__ float *)(workspace + wkspOffset));
+    this->zBufDepthGM.SetGlobalBuffer((__gm__ float*)(workspace + wkspOffset));
     wkspOffset += static_cast<uint64_t>(this->vecCoreNum * this->totalPixNum + rsv) * sizeof(float);
-    this->maskGM.SetGlobalBuffer((__gm__ uint32_t *)(workspace + wkspOffset)); // 1920 * 3 * 4 byte
+    this->maskGM.SetGlobalBuffer((__gm__ uint32_t*)(workspace + wkspOffset)); // 1920 * 3 * 4 byte
 
     InitUbuf();
 }
-
 
 template <typename T>
 __aicore__ inline void BarycentricFromImgcoordAIV<T>::InitParam()
@@ -58,7 +57,6 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::InitParam()
         this->startPixId = this->vecIdx * basePixNum + basePixTail;
     }
 }
-
 
 template <typename T>
 __aicore__ inline void BarycentricFromImgcoordAIV<T>::InitUbuf()
@@ -98,7 +96,6 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::InitUbuf()
     ReuseUbuf();
 }
 
-
 template <typename T>
 __aicore__ inline void BarycentricFromImgcoordAIV<T>::ReuseUbuf()
 {
@@ -133,9 +130,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::ReuseUbuf()
     offset += MAX_PROC_ELENUM + rsv;
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::ParseTilingData(RasterizerTilingData *tilingData)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::ParseTilingData(RasterizerTilingData* tilingData)
 {
     this->numFaces = tilingData->numFaces;
     this->numVertices = tilingData->numVertices;
@@ -144,7 +140,6 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::ParseTilingData(Rasterizer
     this->heightF32 = static_cast<float>(this->height);
     this->widthF32 = static_cast<float>(this->width);
 }
-
 
 template <typename T>
 __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenMaskDataInGM()
@@ -164,10 +159,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenMaskDataInGM()
         startMaskColId = this->vecIdx * baseMaskColNum + baseMaskColTail;
     }
 
-    for(uint32_t colId = 0; colId < calMaskColNum; colId++)
-    {
-        for(uint32_t rowId = 0; rowId < BARY_COORD_NUM; rowId++)
-        {
+    for (uint32_t colId = 0; colId < calMaskColNum; colId++) {
+        for (uint32_t rowId = 0; rowId < BARY_COORD_NUM; rowId++) {
             uint32_t maskValue = (rowId * (MAX_PROC_ELENUM + rsv) + colId + startMaskColId) * sizeof(float);
             uint32_t offset = colId * BARY_COORD_NUM + rowId;
             maskLocal.SetValue(offset, maskValue);
@@ -184,11 +177,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenMaskDataInGM()
     PipeBarrier<PIPE_ALL>();
 }
 
-
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::PreProcess(
-    uint32_t loopId, uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::PreProcess(uint32_t loopId, uint32_t curCalPixNum)
 {
     uint32_t preLoopNum = curCalPixNum / TRANS_COL_ELENUM;
     uint32_t preTailNum = curCalPixNum % TRANS_COL_ELENUM;
@@ -197,7 +187,7 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::PreProcess(
         preLoopNum++;
     }
 
-     uint32_t pingFlag = 1;
+    uint32_t pingFlag = 1;
 
     for (uint32_t preLoopId = 0; preLoopId < preLoopNum; preLoopId++) {
         uint32_t curPrePixNum = TRANS_COL_ELENUM;
@@ -227,13 +217,12 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::PreProcess(
     PipeBarrier<PIPE_ALL>();
 }
 
-
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyInDepth(
-    uint32_t loopId, uint32_t preLoopId, uint32_t curPrePixNum,  uint32_t pingFlag)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyInDepth(uint32_t loopId, uint32_t preLoopId,
+                                                                  uint32_t curPrePixNum, uint32_t pingFlag)
 {
-    LocalTensor<float> inLocal = this->inDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 40 * 96 + 64
+    LocalTensor<float>
+        inLocal = this->inDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 40 * 96 + 64
 
     uint64_t inDepthOffset = this->startPixId + loopId * MAX_PROC_ELENUM + preLoopId * TRANS_COL_ELENUM;
 
@@ -248,13 +237,13 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyInDepth(
     DataCopyPad(inLocal, this->zBufDepthGM[inDepthOffset], copyParams, padParams);
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::TransposeDepth(
-    uint32_t curPrePixNum,  uint32_t pingFlag)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::TransposeDepth(uint32_t curPrePixNum, uint32_t pingFlag)
 {
-    LocalTensor<float> srcLocal = this->inDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 64 * 96 + 64
-    LocalTensor<float> dstLocal = this->transDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 64 * 96 + 64
+    LocalTensor<float>
+        srcLocal = this->inDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 64 * 96 + 64
+    LocalTensor<float>
+        dstLocal = this->transDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 64 * 96 + 64
 
     uint64_t repeatsInRow = (this->vecCoreNum - 1) / NCHW_CONV_ADDR_LIST_SIZE + 1;
     uint64_t repeatsInCol = (curPrePixNum - 1) / ELENUM_BLOCK_FP32 + 1;
@@ -274,18 +263,19 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::TransposeDepth(
             srcLocalList[i] = (uint64_t)(srcLocal[j * ELENUM_BLOCK_FP32 + TRANS_COL_ELENUM * i].GetPhyAddr());
 
             dstLocalList[i] = (uint64_t)(dstLocal[j * ELENUM_REPEAT_FP32 * ELENUM_BLOCK_FP32 +
-                (i / 2) * ELENUM_REPEAT_FP32 + (i % 2) * ELENUM_BLOCK_FP32].GetPhyAddr());
+                                                  (i / 2) * ELENUM_REPEAT_FP32 + (i % 2) * ELENUM_BLOCK_FP32]
+                                             .GetPhyAddr());
         }
         TransDataTo5HD<float>(dstLocalList, srcLocalList, transDataParams);
     }
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::ReduceMinDepth(
-    uint32_t preLoopId, uint32_t curPrePixNum, uint32_t pingFlag)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::ReduceMinDepth(uint32_t preLoopId, uint32_t curPrePixNum,
+                                                                     uint32_t pingFlag)
 {
-    LocalTensor<float> srcLocal = this->transDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 64 * 96 + 64
+    LocalTensor<float>
+        srcLocal = this->transDepthLocal[pingFlag * (ELENUM_REPEAT_FP32 * TRANS_COL_ELENUM + rsv)]; // 64 * 96 + 64
 
     uint32_t dstLocalOffset = preLoopId * TRANS_COL_ELENUM;
     LocalTensor<float> dstLocal = this->reduceMinIdxLocal[dstLocalOffset]; // 2 * (1920 + 64)
@@ -296,19 +286,17 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::ReduceMinDepth(
     WholeReduceMin(dstLocal, srcLocal, mask, repeatNum, 1, 1, srcRepStride, ReduceOrder::ORDER_ONLY_INDEX);
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::GenFindicesAndPreVertData(
-    uint32_t loopId, uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::GenFindicesAndPreVertData(uint32_t loopId, uint32_t curCalPixNum)
 {
     LocalTensor<uint32_t> srcLocal = this->reduceMinIdxLocal.template ReinterpretCast<uint32_t>(); // 2 * (1920 + 64)
     LocalTensor<int32_t> flagLocal = this->barycentricFlagLocal; // save barycentric calculation message
-    LocalTensor<int32_t> findicesLocal = this->baryCentricxLocal.template ReinterpretCast<int32_t>(); // save findices result
+    LocalTensor<int32_t> findicesLocal = this->baryCentricxLocal
+                                             .template ReinterpretCast<int32_t>(); // save findices result
 
     uint64_t findicesStartOffset = static_cast<uint64_t>(this->startPixId) + loopId * MAX_PROC_ELENUM;
 
-    for(uint32_t pixId = 0; pixId < curCalPixNum; pixId++)
-    {
+    for (uint32_t pixId = 0; pixId < curCalPixNum; pixId++) {
         uint64_t minDepthVecIdx = static_cast<uint64_t>(srcLocal.GetValue(pixId));
         uint64_t findicesOffset = static_cast<uint64_t>(findicesStartOffset + pixId);
         uint64_t zbufIdxOffset = minDepthVecIdx * this->height * this->width + findicesOffset; // up precision
@@ -316,11 +304,11 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenFindicesAndPreVertData(
         PipeBarrier<PIPE_ALL>();
 
         // default value of findices space is MAXINT
-        if(findicesValue != std::numeric_limits<int32_t>::max()) {
+        if (findicesValue != std::numeric_limits<int32_t>::max()) {
             findicesLocal.SetValue(pixId, findicesValue);
             // valid index: (idx + 1) -1
             int32_t faceIdx = findicesValue - 1;
-            if(faceIdx < 0) {
+            if (faceIdx < 0) {
                 flagLocal.SetValue(pixId, static_cast<int32_t>(0));
             } else {
                 flagLocal.SetValue(pixId, static_cast<int32_t>(1));
@@ -343,10 +331,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenFindicesAndPreVertData(
     DataCopyPad(this->findicesGM[findicesStartOffset], findicesLocal, copyParams);
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::GetVertData(
-    int32_t faceIdx, uint32_t pixId)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::GetVertData(int32_t faceIdx, uint32_t pixId)
 {
     int32_t vert0 = this->infGM.GetValue(FACE_VERT_NUM * faceIdx);
     int32_t vert1 = this->infGM.GetValue(FACE_VERT_NUM * faceIdx + 1);
@@ -379,10 +365,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GetVertData(
     this->vert2wLocal.SetValue(pixId, vert2w);
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::CalculateBarycentric(
-    uint32_t loopId, uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::CalculateBarycentric(uint32_t loopId, uint32_t curCalPixNum)
 {
     GenScreenVertData(loopId, curCalPixNum);
 
@@ -391,10 +375,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::CalculateBarycentric(
     GenBarycentricCoord(curCalPixNum);
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::GenScreenVertData(
-    uint32_t loopId, uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::GenScreenVertData(uint32_t loopId, uint32_t curCalPixNum)
 {
     LocalTensor<int32_t> screenVertxIntLocal = this->screenVertxLocal.template ReinterpretCast<int32_t>();
     LocalTensor<float> tmpLocal = this->pixIdTmpLocal;
@@ -409,15 +391,15 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenScreenVertData(
     int32_t firstValue = static_cast<int32_t>(this->startPixId + loopId * MAX_PROC_ELENUM);
 
     ArithProgression(screenVertxIntLocal, firstValue, static_cast<int32_t>(1), count); // gen int32 pix id
-    Div(this->screenVert0xLocal, this->vert0xLocal, this->vert0wLocal, count); // vt0_ptr[0] / vt0_ptr[3]
-    Div(this->screenVert1xLocal, this->vert1xLocal, this->vert1wLocal, count); // vt1_ptr[0] / vt1_ptr[3]
-    Div(this->screenVert2xLocal, this->vert2xLocal, this->vert2wLocal, count); // vt2_ptr[0] / vt2_ptr[3]
-    Div(this->screenVert0yLocal, this->vert0yLocal, this->vert0wLocal, count); // vt0_ptr[1] / vt0_ptr[3]
-    Div(this->screenVert1yLocal, this->vert1yLocal, this->vert1wLocal, count); // vt1_ptr[1] / vt1_ptr[3]
-    Div(this->screenVert2yLocal, this->vert2yLocal, this->vert2wLocal, count); // vt2_ptr[1] / vt2_ptr[3]
+    Div(this->screenVert0xLocal, this->vert0xLocal, this->vert0wLocal, count);         // vt0_ptr[0] / vt0_ptr[3]
+    Div(this->screenVert1xLocal, this->vert1xLocal, this->vert1wLocal, count);         // vt1_ptr[0] / vt1_ptr[3]
+    Div(this->screenVert2xLocal, this->vert2xLocal, this->vert2wLocal, count);         // vt2_ptr[0] / vt2_ptr[3]
+    Div(this->screenVert0yLocal, this->vert0yLocal, this->vert0wLocal, count);         // vt0_ptr[1] / vt0_ptr[3]
+    Div(this->screenVert1yLocal, this->vert1yLocal, this->vert1wLocal, count);         // vt1_ptr[1] / vt1_ptr[3]
+    Div(this->screenVert2yLocal, this->vert2yLocal, this->vert2wLocal, count);         // vt2_ptr[1] / vt2_ptr[3]
     PipeBarrier<PIPE_ALL>();
 
-    Cast(tmpLocal, screenVertxIntLocal, RoundMode::CAST_NONE, count); // cast int pix to float
+    Cast(tmpLocal, screenVertxIntLocal, RoundMode::CAST_NONE, count);         // cast int pix to float
     Muls(this->screenVert0xLocal, this->screenVert0xLocal, xmulsCoef, count); // 0.5f * (width - 1)
     Muls(this->screenVert1xLocal, this->screenVert1xLocal, xmulsCoef, count); // 0.5f * (width - 1)
     Muls(this->screenVert2xLocal, this->screenVert2xLocal, xmulsCoef, count); // 0.5f * (width - 1)
@@ -426,7 +408,7 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenScreenVertData(
     Muls(this->screenVert2yLocal, this->screenVert2yLocal, ymulsCoef, count); // 0.5f * (height - 1)
     PipeBarrier<PIPE_V>();
 
-    Muls(this->screenVertxLocal, tmpLocal, pixMulsCoef, count); // pix / width in float
+    Muls(this->screenVertxLocal, tmpLocal, pixMulsCoef, count);               // pix / width in float
     Adds(this->screenVert0xLocal, this->screenVert0xLocal, xaddsCoef, count); // 0.5f * (width - 1) + 0.5f
     Adds(this->screenVert1xLocal, this->screenVert1xLocal, xaddsCoef, count); // 0.5f * (width - 1) + 0.5f
     Adds(this->screenVert2xLocal, this->screenVert2xLocal, xaddsCoef, count); // 0.5f * (width - 1) + 0.5f
@@ -446,10 +428,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenScreenVertData(
     PipeBarrier<PIPE_V>();
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::CalcSignedArea(
-    uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::CalcSignedArea(uint32_t curCalPixNum)
 {
     LocalTensor<float> betaTriLocal = this->vert0yLocal;
     LocalTensor<float> gammaTriLocal = this->vert1yLocal;
@@ -481,9 +461,9 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::CalcSignedArea(
     Mul(this->screenVert2yLocal, gammaTriLocal, areaLocal, count); // (p1 - a1) * (b0 - a0)
     PipeBarrier<PIPE_V>();
 
-    Sub(betaTriLocal, this->screenVertxLocal, this->screenVertyLocal, count); // apc
+    Sub(betaTriLocal, this->screenVertxLocal, this->screenVertyLocal, count);    // apc
     Sub(gammaTriLocal, this->screenVert2xLocal, this->screenVert2yLocal, count); // abp
-    Sub(areaLocal, this->screenVert1xLocal, this->screenVert1yLocal, count); // abc
+    Sub(areaLocal, this->screenVert1xLocal, this->screenVert1yLocal, count);     // abc
     PipeBarrier<PIPE_V>();
 
     // save where is zero area
@@ -491,10 +471,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::CalcSignedArea(
     PipeBarrier<PIPE_V>();
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::GenBarycentricCoord(
-    uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::GenBarycentricCoord(uint32_t curCalPixNum)
 {
     LocalTensor<float> betaTriLocal = this->vert0yLocal;
     LocalTensor<float> gammaTriLocal = this->vert1yLocal;
@@ -509,7 +487,7 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenBarycentricCoord(
     LocalTensor<float> wCoefLocal = this->pixIdTmpLocal;
     int32_t count = ((curCalPixNum - 1) / ELENUM_REPEAT_FP32 + 1) * ELENUM_REPEAT_FP32;
 
-    Div(betaLocal, betaTriLocal, areaLocal, count); // beta = beta_tri / area
+    Div(betaLocal, betaTriLocal, areaLocal, count);   // beta = beta_tri / area
     Div(gammaLocal, gammaTriLocal, areaLocal, count); // gamma = gamma_tri / area
     PipeBarrier<PIPE_V>();
     Add(alphaLocal, betaLocal, gammaLocal, count); // beta + gamma
@@ -549,10 +527,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::GenBarycentricCoord(
     PipeBarrier<PIPE_V>();
 }
 
-
 template <typename T>
-__aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyOutRslt(
-    uint32_t loopId, uint32_t curCalPixNum)
+__aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyOutRslt(uint32_t loopId, uint32_t curCalPixNum)
 {
     LocalTensor<uint32_t> maskLocal = this->inDepthLocal.template ReinterpretCast<uint32_t>();
     LocalTensor<float> srcLocal = this->baryCentricxLocal;
@@ -571,8 +547,8 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyOutRslt(
     WaitFlag<HardEvent::MTE2_V>(EVENT_ID0);
     WaitFlag<HardEvent::MTE2_V>(EVENT_ID1);
 
-    int32_t calCount = static_cast<int32_t>(((curCalPixNum
-        * BARY_COORD_NUM - 1) / ELENUM_REPEAT_FP32 + 1) * ELENUM_REPEAT_FP32);
+    int32_t calCount = static_cast<int32_t>(((curCalPixNum * BARY_COORD_NUM - 1) / ELENUM_REPEAT_FP32 + 1) *
+                                            ELENUM_REPEAT_FP32);
 
     Gather(dstLocal, srcLocal, maskLocal, (uint32_t)0, calCount);
     PipeBarrier<PIPE_ALL>();
@@ -590,7 +566,6 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::CopyOutRslt(
     WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
     WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID1);
 }
-
 
 template <typename T>
 __aicore__ inline void BarycentricFromImgcoordAIV<T>::Process()
@@ -622,6 +597,6 @@ __aicore__ inline void BarycentricFromImgcoordAIV<T>::Process()
     }
     PipeBarrier<PIPE_ALL>();
 }
-}  // namespace BarycentricFromImgcoord
+} // namespace BarycentricFromImgcoord
 
-#endif  // BARYCENTRIC_FROM_IMGCOORD_AIV_H
+#endif // BARYCENTRIC_FROM_IMGCOORD_AIV_H

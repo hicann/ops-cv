@@ -39,8 +39,8 @@ extern "C" {
 
 namespace {
 // According to the API definition, all supported dtypes need to be listed
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910 = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910 = {op::DataType::DT_FLOAT16,
+                                                                           op::DataType::DT_FLOAT};
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_910B = {
     op::DataType::DT_BF16, op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
@@ -59,8 +59,8 @@ static const float MAX_W = 130000;
 
 static const std::string CUBIC_MODE = "cubic";
 
-static bool CheckNotNull(
-    const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *gradInput)
+static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                         const aclTensor* gradInput)
 {
     OP_CHECK_NULL(inputSize, return false);
     OP_CHECK_NULL(gradInput, return false);
@@ -69,7 +69,7 @@ static bool CheckNotNull(
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *gradInput)
+static bool CheckDtypeValid(const aclTensor* gradOut, const aclTensor* gradInput)
 {
     // Check if the data type of gradOut is in the supported list of
     // the ResizeBicubicV2Grad operator
@@ -78,8 +78,8 @@ static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *gradInput
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_REGBASE, return false);
     } else {
         bool is910BSocVersion = (curArch == NpuArch::DAV_2201 || IsRegBase(curArch));
-        const std::initializer_list<op::DataType> dtypeSupportList =
-            is910BSocVersion ? DTYPE_SUPPORT_LIST_910B : DTYPE_SUPPORT_LIST_910;
+        const std::initializer_list<op::DataType> dtypeSupportList = is910BSocVersion ? DTYPE_SUPPORT_LIST_910B :
+                                                                                        DTYPE_SUPPORT_LIST_910;
 
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, dtypeSupportList, return false);
     }
@@ -89,8 +89,8 @@ static bool CheckDtypeValid(const aclTensor *gradOut, const aclTensor *gradInput
     return true;
 }
 
-static bool CheckShape(
-    const aclTensor *gradOut, const aclTensor *gradIn, const aclIntArray *outputSize, const aclIntArray *inputSize)
+static bool CheckShape(const aclTensor* gradOut, const aclTensor* gradIn, const aclIntArray* outputSize,
+                       const aclIntArray* inputSize)
 {
     // NCHW NHWC和ND格式判断
     auto srcOriginFormat = gradOut->GetOriginalFormat();
@@ -98,12 +98,10 @@ static bool CheckShape(
     if (IsRegBase()) {
         supportFormat = srcOriginFormat == op::Format::FORMAT_ND || srcOriginFormat == op::Format::FORMAT_NCHW ||
                         srcOriginFormat == op::Format::FORMAT_NHWC;
-        OP_CHECK(supportFormat,
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only support NCHW, NHWC or ND"),
-            return false);
+        OP_CHECK(supportFormat, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only support NCHW, NHWC or ND"),
+                 return false);
         OP_CHECK(gradOut->GetStorageFormat() == gradIn->GetStorageFormat(),
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The gradOut and gradInput must have same format"),
-            return false);
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The gradOut and gradInput must have same format"), return false);
     } else {
         supportFormat = srcOriginFormat == op::Format::FORMAT_ND || srcOriginFormat == op::Format::FORMAT_NCHW;
         OP_CHECK(supportFormat, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only support NCHW or ND"), return false);
@@ -113,16 +111,17 @@ static bool CheckShape(
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_LIMIT, return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
-        return false);
-    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             return false);
+    OP_CHECK(
+        outputSizeNum == EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
         return false);
 
     return true;
 }
 
-static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inputSize)
+static bool CheckIOSizesIsSame(const aclTensor* gradOut, const aclIntArray* inputSize)
 {
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
@@ -135,17 +134,17 @@ static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inpu
     return true;
 }
 
-static bool CheckInputElement(
-    const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *gradIn)
+static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                              const aclTensor* gradIn)
 {
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_FOUR, return false);
     OP_CHECK_WRONG_DIMENSION(gradIn, DIM_FOUR, return false);
     OP_CHECK(outputSize->Size() == DIM_TWO,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The outputSize must have two elements, but got %zu", outputSize->Size()),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The outputSize must have two elements, but got %zu", outputSize->Size()),
+             return false);
     OP_CHECK(inputSize->Size() == DIM_FOUR,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The inputSize must have four elements, but got %zu", inputSize->Size()),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The inputSize must have four elements, but got %zu", inputSize->Size()),
+             return false);
 
     int64_t outputH = (*outputSize)[DIM_ZERO];
     int64_t outputW = (*outputSize)[DIM_ONE];
@@ -172,38 +171,29 @@ static bool CheckInputElement(
     }
 
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
-            inputH,
-            inputW,
-            outputH,
-            outputW),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
+                     inputH, inputW, outputH, outputW),
+             return false);
 
     auto gradOutShape = gradOut->GetViewShape();
     auto gradInShape = gradIn->GetViewShape();
     for (size_t i = 0; i < DIM_FOUR; ++i) {
         OP_CHECK(gradOutShape.GetDim(i) == fullOutputSize[i],
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "The dim %zu of gradOut should be %ld, but got %ld",
-                i,
-                fullOutputSize[i],
-                gradOutShape.GetDim(i)),
-            return false);
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim %zu of gradOut should be %ld, but got %ld", i,
+                         fullOutputSize[i], gradOutShape.GetDim(i)),
+                 return false);
         OP_CHECK(gradInShape.GetDim(i) == fullInputSize[i],
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "The dim %zu of gradIn should be %ld, but got %ld",
-                i,
-                fullInputSize[i],
-                gradInShape.GetDim(i)),
-            return false);
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim %zu of gradIn should be %ld, but got %ld", i,
+                         fullInputSize[i], gradInShape.GetDim(i)),
+                 return false);
     }
 
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *gradInput)
+static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               const aclTensor* gradInput)
 {
     // check input args
     CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, gradInput), ACLNN_ERR_PARAM_NULLPTR);
@@ -220,9 +210,10 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-static bool CheckCanCalc(const aclIntArray *inputSize, float scalesHeight, float scalesWidth)
+static bool CheckCanCalc(const aclIntArray* inputSize, float scalesHeight, float scalesWidth)
 {
-    if (scalesWidth < MAX_SCALE && scalesWidth >= (1 / MAX_SCALE) && scalesHeight < MAX_SCALE && scalesHeight >= (1 / MAX_SCALE)) {
+    if (scalesWidth < MAX_SCALE && scalesWidth >= (1 / MAX_SCALE) && scalesHeight < MAX_SCALE &&
+        scalesHeight >= (1 / MAX_SCALE)) {
         return true;
     }
     int64_t N = (*inputSize)[DIM_ZERO];
@@ -240,23 +231,23 @@ static bool CheckCanCalc(const aclIntArray *inputSize, float scalesHeight, float
     if (scalesWidth >= MAX_SCALE && N * C * inputH > inputW * HALF_ONE) {
         return false;
     }
-    if (scalesHeight < 1 / MAX_SCALE && scalesWidth < 1 / MAX_SCALE && N * C * inputH > inputW * MAX_W_RADIO){
+    if (scalesHeight < 1 / MAX_SCALE && scalesWidth < 1 / MAX_SCALE && N * C * inputH > inputW * MAX_W_RADIO) {
         return false;
     }
     return true;
 }
 
-static const aclTensor *ContiguousCast(const aclTensor *input, op::DataType dstDtype, aclOpExecutor *executor)
+static const aclTensor* ContiguousCast(const aclTensor* input, op::DataType dstDtype, aclOpExecutor* executor)
 {
     auto inputContiguous = l0op::Contiguous(input, executor);
     auto outputContiguous = l0op::Cast(inputContiguous, dstDtype, executor);
     return outputContiguous;
 }
 
-static const aclTensor *adaptOutput(const aclTensor *ResizeGradDOut,
-    aclIntArray *permuteHWNCArray, aclOpExecutor *executor, const int64_t *newReverseShape, int64_t castFp32Condition)
+static const aclTensor* adaptOutput(const aclTensor* ResizeGradDOut, aclIntArray* permuteHWNCArray,
+                                    aclOpExecutor* executor, const int64_t* newReverseShape, int64_t castFp32Condition)
 {
-    const aclTensor *resizeGradDOutContiguous = nullptr;
+    const aclTensor* resizeGradDOutContiguous = nullptr;
     if (castFp32Condition == FP16_DETERMINSTIC_CAST) {
         resizeGradDOutContiguous = ContiguousCast(ResizeGradDOut, op::DataType::DT_FLOAT16, executor);
     } else if (castFp32Condition == BF16_CAST) {
@@ -266,7 +257,7 @@ static const aclTensor *adaptOutput(const aclTensor *ResizeGradDOut,
     }
     CHECK_RET(resizeGradDOutContiguous != nullptr, nullptr);
 
-    aclIntArray *shapeArrayReverse = executor->AllocIntArray(newReverseShape, 4);
+    aclIntArray* shapeArrayReverse = executor->AllocIntArray(newReverseShape, 4);
     resizeGradDOutContiguous = l0op::Reshape(resizeGradDOutContiguous, shapeArrayReverse, executor);
     CHECK_RET(resizeGradDOutContiguous != nullptr, nullptr);
 
@@ -276,17 +267,17 @@ static const aclTensor *adaptOutput(const aclTensor *ResizeGradDOut,
 
     return resizeGradDOutTranspose;
 }
-}
+} // namespace
 
-aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *gradOut, const aclIntArray *outputSize,
-    const aclIntArray *inputSize, const bool alignCorners, double scalesH, double scalesW, aclTensor *gradInput,
-    uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                           const aclIntArray* inputSize, const bool alignCorners,
+                                                           double scalesH, double scalesW, aclTensor* gradInput,
+                                                           uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
     L2_DFX_PHASE_1(aclnnUpsampleBicubic2dBackward,
-        DFX_IN(gradOut, outputSize, inputSize, alignCorners, scalesH, scalesW),
-        DFX_OUT(gradInput));
+                   DFX_IN(gradOut, outputSize, inputSize, alignCorners, scalesH, scalesW), DFX_OUT(gradInput));
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
     auto ret = CheckParams(gradOut, outputSize, inputSize, gradInput);
@@ -314,13 +305,13 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
     };
     const float scalesWidth = computeScale(scalesW, (*inputSize)[DIM_THREE], (*outputSize)[DIM_ONE], alignCorners);
     const float scalesHeight = computeScale(scalesH, (*inputSize)[DIM_TWO], (*outputSize)[DIM_ZERO], alignCorners);
-    const aclTensor *gradOutContiguous = nullptr;
-    const aclTensor *gradInputContiguous = nullptr;
+    const aclTensor* gradOutContiguous = nullptr;
+    const aclTensor* gradInputContiguous = nullptr;
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (IsRegBase(curArch)) {
         // constuct aclFloatArray
         const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
-        const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, EXPECT_SIZE);
+        const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, EXPECT_SIZE);
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         gradOutContiguous = l0op::Contiguous(gradOut, uniqueExecutor.get());
@@ -337,11 +328,11 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
             }
         }
 
-        auto originalImage = uniqueExecutor.get()->AllocTensor(
-            imageShape, gradOutContiguous->GetDataType(), gradOutContiguous->GetStorageFormat());
+        auto originalImage = uniqueExecutor.get()->AllocTensor(imageShape, gradOutContiguous->GetDataType(),
+                                                               gradOutContiguous->GetStorageFormat());
         CHECK_RET(originalImage != nullptr, ACLNN_ERR_INNER_NULLPTR);
-        const aclTensor *kernelOut = l0op::ResizeBicubicV2Grad(
-            gradOutContiguous, originalImage, alignCorners, scales, gradInputContiguous, uniqueExecutor.get());
+        const aclTensor* kernelOut = l0op::ResizeBicubicV2Grad(gradOutContiguous, originalImage, alignCorners, scales,
+                                                               gradInputContiguous, uniqueExecutor.get());
         CHECK_RET(kernelOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // view copy out
@@ -358,7 +349,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
             CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
         } else {
             // 将fp16/bf16类型cast成fp32处理，保证精度
-            const aclTensor *gradInputFp32 = l0op::Contiguous(gradInput, uniqueExecutor.get());
+            const aclTensor* gradInputFp32 = l0op::Contiguous(gradInput, uniqueExecutor.get());
             CHECK_RET(gradInputFp32 != nullptr, ACLNN_ERR_INNER_NULLPTR);
             auto dtype = gradOut->GetDataType();
             if (dtype == op::DataType::DT_BF16 || dtype == op::DataType::DT_FLOAT16) {
@@ -366,17 +357,17 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
                 gradInputFp32 = l0op::Cast(gradInputFp32, op::DataType::DT_FLOAT, uniqueExecutor.get());
             }
             CHECK_RET(gradOutContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
-            const aclTensor *upsampleBicubic2dGradOut = l0op::UpsampleBicubic2dGrad(
+            const aclTensor* upsampleBicubic2dGradOut = l0op::UpsampleBicubic2dGrad(
                 gradOutContiguous, alignCorners, scalesHeight, scalesWidth, gradInputFp32, uniqueExecutor.get());
             CHECK_RET(upsampleBicubic2dGradOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             // CAST回bf16
             if (dtype == op::DataType::DT_BF16) {
-                upsampleBicubic2dGradOut =
-                    l0op::Cast(upsampleBicubic2dGradOut, op::DataType::DT_BF16, uniqueExecutor.get());
+                upsampleBicubic2dGradOut = l0op::Cast(upsampleBicubic2dGradOut, op::DataType::DT_BF16,
+                                                      uniqueExecutor.get());
             } else if (dtype == op::DataType::DT_FLOAT16) {
-                upsampleBicubic2dGradOut =
-                    l0op::Cast(upsampleBicubic2dGradOut, op::DataType::DT_FLOAT16, uniqueExecutor.get());
+                upsampleBicubic2dGradOut = l0op::Cast(upsampleBicubic2dGradOut, op::DataType::DT_FLOAT16,
+                                                      uniqueExecutor.get());
             }
             CHECK_RET(upsampleBicubic2dGradOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -400,8 +391,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
         }
 
         // gradout transpose
-        bool fp16Cast =
-            (deterministicValue == 1) || (curArch == NpuArch::DAV_1001);
+        bool fp16Cast = (deterministicValue == 1) || (curArch == NpuArch::DAV_1001);
         if (fp16Cast && dtype == op::DataType::DT_FLOAT16) {
             castFp32Condition = FP16_DETERMINSTIC_CAST;
             gradOutContiguous = ContiguousCast(gradOut, op::DataType::DT_FLOAT, uniqueExecutor.get());
@@ -425,7 +415,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
 
         // constuct aclFloatArray
         const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
-        const aclFloatArray *scales = uniqueExecutor->AllocFloatArray(scalesList, EXPECT_SIZE);
+        const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList, EXPECT_SIZE);
         CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // gradinput transpose
@@ -436,20 +426,20 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
         }
         CHECK_RET(gradInputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
         const int64_t newShape[4] = {batch, channels, inputH, inputW};
-        aclIntArray *shapeArray = uniqueExecutor.get()->AllocIntArray(newShape, 4);
+        aclIntArray* shapeArray = uniqueExecutor.get()->AllocIntArray(newShape, 4);
         gradInputContiguous = l0op::Reshape(gradInputContiguous, shapeArray, uniqueExecutor.get());
         CHECK_RET(gradInputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
         auto gradInputTranspose = l0op::Transpose(gradInputContiguous, permuteHWNCArray, uniqueExecutor.get());
         CHECK_RET(gradInputTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         // call l0op resizeGradD
-        const aclTensor *ResizeGradDOut = l0op::ResizeGradD(
-            gradOutTranspose, inputSize, scales, alignCorners, gradInputTranspose, CUBIC_MODE, uniqueExecutor.get());
+        const aclTensor* ResizeGradDOut = l0op::ResizeGradD(gradOutTranspose, inputSize, scales, alignCorners,
+                                                            gradInputTranspose, CUBIC_MODE, uniqueExecutor.get());
         CHECK_RET(ResizeGradDOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         const int64_t newReverseShape[4] = {inputH, inputW, batch, channels};
-        auto adaptResult = adaptOutput(
-            ResizeGradDOut, permuteHWNCArray, uniqueExecutor.get(), newReverseShape, castFp32Condition);
+        auto adaptResult = adaptOutput(ResizeGradDOut, permuteHWNCArray, uniqueExecutor.get(), newReverseShape,
+                                       castFp32Condition);
 
         // view copy out
         auto viewCopyResult = l0op::ViewCopy(adaptResult, gradInput, uniqueExecutor.get());
@@ -461,8 +451,8 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor *grad
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleBicubic2dBackward(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleBicubic2dBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                           aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleBicubic2dBackward);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

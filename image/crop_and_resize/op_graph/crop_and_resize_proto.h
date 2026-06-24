@@ -56,8 +56,7 @@ NearestNeighbor . \n
 */
 
 REG_OP(CropAndResize)
-    .INPUT(x, TensorType({DT_UINT8, DT_UINT16, DT_INT8, \
-        DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(x, TensorType({DT_UINT8, DT_UINT16, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
     .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(box_index, TensorType({DT_INT32}))
     .INPUT(crop_size, TensorType({DT_INT32}))
@@ -65,6 +64,6 @@ REG_OP(CropAndResize)
     .ATTR(extrapolation_value, Float, 0)
     .ATTR(method, String, "bilinear")
     .OP_END_FACTORY_REG(CropAndResize)
-}
+} // namespace ge
 
 #endif

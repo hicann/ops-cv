@@ -28,8 +28,8 @@ namespace ops {
 static ge::graphStatus InferShape4GridSampler2DGrad(gert::InferShapeContext* context)
 {
     // infer shape
-    OP_CHECK_IF(
-        context == nullptr, OP_LOGE("GridSampler2DGrad", "InferShapeContext is nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(context == nullptr, OP_LOGE("GridSampler2DGrad", "InferShapeContext is nullptr"),
+                return ge::GRAPH_FAILED);
     OP_LOGD(context->GetNodeName(), "Begin to do InferShape4GridSampler2DGrad.");
 
     const gert::Shape* gradShape = context->GetInputShape(INPUT_GRAD_INDEX);
@@ -41,11 +41,10 @@ static ge::graphStatus InferShape4GridSampler2DGrad(gert::InferShapeContext* con
     const gert::Shape* gridShape = context->GetInputShape(INPUT_GRID_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context, gridShape);
 
-    OP_CHECK_IF(
-        (xShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT ||
-         gridShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT ||
-         gradShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT),
-        OP_LOGE(context->GetNodeName(), "shape is invalid, only support rank is 4."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((xShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT ||
+                 gridShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT ||
+                 gradShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT),
+                OP_LOGE(context->GetNodeName(), "shape is invalid, only support rank is 4."), return ge::GRAPH_FAILED);
 
     gert::Shape* outDxShape = context->GetOutputShape(OUTPUT_DX_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context, outDxShape);

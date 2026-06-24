@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -31,7 +31,8 @@ const uint64_t SCH_ID_2 = 2;
 const uint64_t SCH_ID_3 = 3;
 
 template <typename T2, bool isExtra>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeOrig(T2 idx, T2 limit, float scale, T2& orig)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeOrig(T2 idx, T2 limit, float scale,
+                                                                                  T2& orig)
 {
     if constexpr (isExtra) {
         orig = ceilf((static_cast<float>(idx) * scale - 0.5f));
@@ -106,8 +107,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW, T2 lenDstD, T2 lenDstH, T2 lenDstW,
     float scaleD, float scaleH, float scaleW)
 {
-    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
-         idx += static_cast<T2>(blockDim.x)) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         T2 W = 0, H = 0, D = 0, C = 0, N = 0;
         T2 tempRes = Simt::UintDiv(yGmIdx, mW, shiftW);
@@ -139,43 +139,40 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
         T2 lenSrcDhw = lenSrcD * lenSrcHw;
         T2 lenDstDhw = lenDstD * lenDstH * lenDstW;
         if constexpr (schId == SCH_ID_3) {
-            ComputeForSplitNcdhw<T1, T2>(
-                inputGm, outputGm, lenSrcW, lenSrcHw, lenSrcDhw, N, origD, origDUp, origH, origHUp, origW, origWUp,
-                yGmIdx);
+            ComputeForSplitNcdhw<T1, T2>(inputGm, outputGm, lenSrcW, lenSrcHw, lenSrcDhw, N, origD, origDUp, origH,
+                                         origHUp, origW, origWUp, yGmIdx);
         }
         if constexpr (schId == SCH_ID_1) {
-            ComputeForSplitDhw<T1, T2>(
-                inputGm, outputGm, lenN, lenSrcW, lenSrcHw, lenSrcDhw, lenDstDhw, origD, origDUp, origH, origHUp, origW,
-                origWUp, yGmIdx);
+            ComputeForSplitDhw<T1, T2>(inputGm, outputGm, lenN, lenSrcW, lenSrcHw, lenSrcDhw, lenDstDhw, origD, origDUp,
+                                       origH, origHUp, origW, origWUp, yGmIdx);
         }
         if constexpr (schId == SCH_ID_2) {
-            ComputeForSplitCdhw<T1, T2>(
-                inputGm, outputGm, lenN, lenC, lenSrcW, lenSrcHw, lenSrcDhw, lenDstDhw, C, origD, origDUp, origH,
-                origHUp, origW, origWUp, yGmIdx);
+            ComputeForSplitCdhw<T1, T2>(inputGm, outputGm, lenN, lenC, lenSrcW, lenSrcHw, lenSrcDhw, lenDstDhw, C,
+                                        origD, origDUp, origH, origHUp, origW, origWUp, yGmIdx);
         }
     }
 }
 
 template <typename T1, typename T2, bool isExtra, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__ void calleeInt32(
-    __gm__ T1* inputGm, __gm__ T1* outputGm, T2 blkStartOffset, T2 blkProcessNum, T2 lenN, T2 lenC, T2 mD, T2 shiftD,
-    T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW, T2 lenDstD, T2 lenDstH, T2 lenDstW,
-    float scaleD, float scaleH, float scaleW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__
+    void calleeInt32(__gm__ T1* inputGm, __gm__ T1* outputGm, T2 blkStartOffset, T2 blkProcessNum, T2 lenN, T2 lenC,
+                     T2 mD, T2 shiftD, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW,
+                     T2 lenDstD, T2 lenDstH, T2 lenDstW, float scaleD, float scaleH, float scaleW)
 {
-    SimtCompute<T1, T2, isExtra, schId>(
-        inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD,
-        lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW, scaleD, scaleH, scaleW);
+    SimtCompute<T1, T2, isExtra, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH,
+                                        shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW,
+                                        scaleD, scaleH, scaleW);
 }
 
 template <typename T1, typename T2, bool isExtra, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__ void calleeInt64(
-    __gm__ T1* inputGm, __gm__ T1* outputGm, T2 blkStartOffset, T2 blkProcessNum, T2 lenN, T2 lenC, T2 mD, T2 shiftD,
-    T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW, T2 lenDstD, T2 lenDstH, T2 lenDstW,
-    float scaleD, float scaleH, float scaleW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__
+    void calleeInt64(__gm__ T1* inputGm, __gm__ T1* outputGm, T2 blkStartOffset, T2 blkProcessNum, T2 lenN, T2 lenC,
+                     T2 mD, T2 shiftD, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T2 lenSrcD, T2 lenSrcH, T2 lenSrcW,
+                     T2 lenDstD, T2 lenDstH, T2 lenDstW, float scaleD, float scaleH, float scaleW)
 {
-    SimtCompute<T1, T2, isExtra, schId>(
-        inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD,
-        lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW, scaleD, scaleH, scaleW);
+    SimtCompute<T1, T2, isExtra, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mD, shiftD, mH,
+                                        shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD, lenDstH, lenDstW,
+                                        scaleD, scaleH, scaleW);
 }
 } // namespace UpsampleNearest3dGrad
 #endif // UPSAMPLE_NEAREST3D_GRAD_SIMT_BASE_H

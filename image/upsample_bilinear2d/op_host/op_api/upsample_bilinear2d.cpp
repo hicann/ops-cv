@@ -39,8 +39,9 @@ static const int64_t DIM_ONE = 1;
 static const int64_t DIM_TWO = 2;
 static const int64_t DIM_THREE = 3;
 
-const aclTensor *UpsampleBilinear2dNcdhw(const aclTensor *x, const aclTensor *size, const bool alignCorners,
-    const double scalesH, const double scalesW, const aclTensor *y, aclOpExecutor *executor)
+const aclTensor* UpsampleBilinear2dNcdhw(const aclTensor* x, const aclTensor* size, const bool alignCorners,
+                                         const double scalesH, const double scalesW, const aclTensor* y,
+                                         aclOpExecutor* executor)
 {
     L0_DFX(UpsampleBilinear2dNcdhw, x, size, alignCorners, scalesH, scalesW, y);
 
@@ -65,14 +66,14 @@ const aclTensor *UpsampleBilinear2dNcdhw(const aclTensor *x, const aclTensor *si
         scalesList.push_back(1.0);
     }
 
-    const aclFloatArray *realScales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
+    const aclFloatArray* realScales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
     CHECK_RET(realScales != nullptr, nullptr);
     // AICORE
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleBilinear2d, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(alignCorners, realScales));
-    OP_CHECK(
-        ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2d, OP_INPUT(x, size), OP_OUTPUT(y),
+                                           OP_ATTR(alignCorners, realScales));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return y;
 }
-}  // namespace l0op
+} // namespace l0op

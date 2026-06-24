@@ -17,7 +17,7 @@
 namespace ops {
 class Col2im : public OpDef {
 public:
-    explicit Col2im(const char *name) : OpDef(name)
+    explicit Col2im(const char* name) : OpDef(name)
     {
         this->Input("grad_out")
             .ParamType(REQUIRED)
@@ -37,18 +37,10 @@ public:
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
             .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
-        this->Attr("kernel_size")
-            .AttrType(REQUIRED)
-            .ListInt();
-        this->Attr("dilation")
-            .AttrType(REQUIRED)
-            .ListInt();
-        this->Attr("padding")
-            .AttrType(REQUIRED)
-            .ListInt();
-        this->Attr("stride")
-            .AttrType(REQUIRED)
-            .ListInt();
+        this->Attr("kernel_size").AttrType(REQUIRED).ListInt();
+        this->Attr("dilation").AttrType(REQUIRED).ListInt();
+        this->Attr("padding").AttrType(REQUIRED).ListInt();
+        this->Attr("stride").AttrType(REQUIRED).ListInt();
 
         OpAICoreConfig aicoreConfig;
         aicoreConfig.DynamicCompileStaticFlag(true)

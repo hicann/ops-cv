@@ -72,7 +72,7 @@ enum SamplingKernelType {
  * Converts a string into the corresponding kernel type.
  * Returns SAMPLING_KERNEL_TYPE_END if the string couldn't be converted.
  */
-SamplingKernelType SamplingKernelTypeFromString(const std::string &str);
+SamplingKernelType SamplingKernelTypeFromString(const std::string& str);
 
 // A function object for a Lanczos kernel.
 struct LanczosKernelFunc {
@@ -89,13 +89,9 @@ struct LanczosKernelFunc {
         if (x <= 1e-3) {
             return 1.0;
         }
-        return radius * std::sin(kPI * x) * std::sin(kPI * x / radius) /
-               (kPI * kPI * x * x);
+        return radius * std::sin(kPI * x) * std::sin(kPI * x / radius) / (kPI * kPI * x * x);
     }
-    float Radius() const
-    {
-        return radius;
-    }
+    float Radius() const { return radius; }
     const float radius;
 };
 
@@ -108,8 +104,7 @@ struct GaussianKernelFunc {
      * www.realitypixels.com/turk/computergraphics/ResamplingFilters.pdf
      * This implies a radius of 1.5,
      */
-    explicit GaussianKernelFunc(float _radius = 1.5f)
-        : radius(_radius), sigma(_radius / kRadiusMultiplier) {}
+    explicit GaussianKernelFunc(float _radius = 1.5f) : radius(_radius), sigma(_radius / kRadiusMultiplier) {}
     float operator()(float x) const
     {
         x = std::abs(x);
@@ -118,10 +113,7 @@ struct GaussianKernelFunc {
         }
         return static_cast<float>(std::exp(-x * x / (2.0 * sigma * sigma)));
     }
-    float Radius() const
-    {
-        return radius;
-    }
+    float Radius() const { return radius; }
     const float radius;
     // Gaussian standard deviation
     const float sigma;
@@ -135,10 +127,7 @@ struct BoxKernelFunc {
         constexpr float onePoint = 1.0f;
         return x < pointFive ? onePoint : IsValueEqual<float>(x, pointFive) ? pointFive : 0.0f;
     }
-    float Radius() const
-    {
-        return 1.f;
-    }
+    float Radius() const { return 1.f; }
 };
 
 struct TriangleKernelFunc {
@@ -148,10 +137,7 @@ struct TriangleKernelFunc {
         x = std::abs(x);
         return x < 1.0f ? 1.0f - x : 0.0f;
     }
-    float Radius() const
-    {
-        return 1.f;
-    }
+    float Radius() const { return 1.f; }
 };
 
 struct KeysCubicKernelFunc {
@@ -172,10 +158,7 @@ struct KeysCubicKernelFunc {
             return ((1.5f * i - 2.5f) * i) * i + 1.0f;
         }
     }
-    float Radius() const
-    {
-        return 2.f;
-    }
+    float Radius() const { return 2.f; }
 };
 
 struct MitchellCubicKernelFunc {
@@ -191,16 +174,12 @@ struct MitchellCubicKernelFunc {
         if (i >= 2.0f) {
             return 0.0f;
         } else if (i >= 1.0f) {
-            return (((-7.0f / 18.0f) * i + 2.0f) * i - 10.0f / 3.0f) * i +
-                   16.0f / 9.0f;
+            return (((-7.0f / 18.0f) * i + 2.0f) * i - 10.0f / 3.0f) * i + 16.0f / 9.0f;
         } else {
             return (((7.0f / 6.0f) * i - 2.0f) * i) * i + 8.0f / 9.0f;
         }
     }
-    float Radius() const
-    {
-        return 2.f;
-    }
+    float Radius() const { return 2.f; }
 };
 
 inline LanczosKernelFunc CreateLanczos1Kernel()
@@ -251,6 +230,6 @@ inline MitchellCubicKernelFunc CreateMitchellCubicKernel()
     return retfunc;
 }
 
-}  // namespace aicpu
+} // namespace aicpu
 
-#endif  // AICPU_UTILS_SAMPLING_KERNELS_H
+#endif // AICPU_UTILS_SAMPLING_KERNELS_H

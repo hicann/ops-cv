@@ -21,14 +21,8 @@ using namespace std;
 
 class l2_resize_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "Resize Test Setup" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "Resize Test TearDown" << endl;
-    }
+    static void SetUpTestCase() { cout << "Resize Test Setup" << endl; }
+    static void TearDownTestCase() { cout << "Resize Test TearDown" << endl; }
 };
 
 // float nearest

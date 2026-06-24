@@ -1,4 +1,4 @@
- /**
+/**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
@@ -26,8 +26,8 @@ template <typename T, typename Dtype, typename GridSamplerGradTilingData>
 class GridSampler2DGradBicubicFP16 {
 public:
     __aicore__ inline GridSampler2DGradBicubicFP16(){};
-    __aicore__ inline void Init(
-        const GridSamplerGradTilingData& __restrict tilingData, GM_ADDR inputTensors[INPUT_NUM + OUTPUT_NUM + 1]);
+    __aicore__ inline void Init(const GridSamplerGradTilingData& __restrict tilingData,
+                                GM_ADDR inputTensors[INPUT_NUM + OUTPUT_NUM + 1]);
     __aicore__ inline void InitBuffer(TPipe* inputPipe);
     __aicore__ inline void InitBicubicLocalTensor();
     __aicore__ inline void CopyIn(const int64_t offset, const int32_t calCount, const int32_t inputIndex);
@@ -36,22 +36,20 @@ public:
     __aicore__ inline void Process();
 
     // cubic convolution functions
-    __aicore__ inline void CubicConvolution1Grad(
-        LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void CubicConvolution2Grad(
-        LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void CubicConvolution1(
-        LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void CubicConvolution2(
-        LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void GetCubicUpsampleCoefficients(
-        LocalTensor<T> coeffTx0, LocalTensor<T> coeffTx1, LocalTensor<T> coeffTx2, LocalTensor<T> coeffTx3,
-        LocalTensor<T> coeffTy0, LocalTensor<T> coeffTy1, LocalTensor<T> coeffTy2, LocalTensor<T> coeffTy3,
-        LocalTensor<T> cubicTx, LocalTensor<T> cubicTy, const int32_t calCount);
+    __aicore__ inline void CubicConvolution1Grad(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
+    __aicore__ inline void CubicConvolution2Grad(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
+    __aicore__ inline void CubicConvolution1(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
+    __aicore__ inline void CubicConvolution2(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
+    __aicore__ inline void GetCubicUpsampleCoefficients(LocalTensor<T> coeffTx0, LocalTensor<T> coeffTx1,
+                                                        LocalTensor<T> coeffTx2, LocalTensor<T> coeffTx3,
+                                                        LocalTensor<T> coeffTy0, LocalTensor<T> coeffTy1,
+                                                        LocalTensor<T> coeffTy2, LocalTensor<T> coeffTy3,
+                                                        LocalTensor<T> cubicTx, LocalTensor<T> cubicTy,
+                                                        const int32_t calCount);
 
     // coordinate functions (same as bilinear)
-    __aicore__ inline void ComputeSourceIndexSetGrad(
-        LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size, const int32_t calCount);
+    __aicore__ inline void ComputeSourceIndexSetGrad(LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size,
+                                                     const int32_t calCount);
     __aicore__ inline void DupValue();
     __aicore__ inline T ReflectCoordinatesCommonFp16(T coord, int32_t size_val, bool align_corners_flag);
     template <typename T1, typename T2>
@@ -339,10 +337,10 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
     pipe->InitBuffer(computeIndexBuf7, ubFactorElement * sizeof(int32_t));
     pipe->InitBuffer(computeIndexBuf8, ubFactorElement * sizeof(int32_t));
     pipe->InitBuffer(computeIndexBuf9, ubFactorElement * sizeof(int32_t));
-    pipe->InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(T));  // reused as dCoeffTy0
-    pipe->InitBuffer(computeIndexBuf3, ubFactorElement * sizeof(T));  // reused as dCoeffTy1
-    pipe->InitBuffer(computeIndexBuf4, ubFactorElement * sizeof(T));  // reused as dCoeffTy2
-    pipe->InitBuffer(computeIndexBuf5, ubFactorElement * sizeof(T));  // reused as dCoeffTy3
+    pipe->InitBuffer(computeIndexBuf2, ubFactorElement * sizeof(T)); // reused as dCoeffTy0
+    pipe->InitBuffer(computeIndexBuf3, ubFactorElement * sizeof(T)); // reused as dCoeffTy1
+    pipe->InitBuffer(computeIndexBuf4, ubFactorElement * sizeof(T)); // reused as dCoeffTy2
+    pipe->InitBuffer(computeIndexBuf5, ubFactorElement * sizeof(T)); // reused as dCoeffTy3
 
     pipe->InitBuffer(clipLimitBuf, ubFactorElement * sizeof(T));
     pipe->InitBuffer(gixBuf, alignChannel * sizeof(T));
@@ -508,15 +506,18 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
     if (padding == 0 || padding == 1) {
         CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MAX_FP16 - 1), CMPMODE::LE, newCalCount);
         PipeBarrier<PIPE_V>();
-        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE,
+               newCalCount);
         PipeBarrier<PIPE_V>();
         CompareScalar(mask1Tensor, dataTensor, static_cast<T>(INT_MIN_FP16), CMPMODE::GE, newCalCount);
         PipeBarrier<PIPE_V>();
-        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE,
+               newCalCount);
         PipeBarrier<PIPE_V>();
         Compare(mask1Tensor, dataTensor, dataTensor, CMPMODE::EQ, newCalCount);
         PipeBarrier<PIPE_V>();
-        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE, newCalCount);
+        Select(dataTensor, mask1Tensor, dataTensor, static_cast<T>(-100.0), SELMODE::VSEL_TENSOR_SCALAR_MODE,
+               newCalCount);
         PipeBarrier<PIPE_V>();
     }
 }
@@ -526,10 +527,11 @@ __aicore__ inline T GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTiling
     T coord, int32_t size_val, bool align_corners_flag)
 {
     float twiceLow = align_corners_flag ? 0 : -1;
-    float twiceHigh = align_corners_flag ?
-        2 * (static_cast<int64_t>(size_val) - 1) : 2 * static_cast<int64_t>(size_val) - 1;
+    float twiceHigh = align_corners_flag ? 2 * (static_cast<int64_t>(size_val) - 1) :
+                                           2 * static_cast<int64_t>(size_val) - 1;
 
-    if (twiceLow == twiceHigh) return static_cast<T>(0);
+    if (twiceLow == twiceHigh)
+        return static_cast<T>(0);
 
     T min = twiceLow / 2;
     T span = static_cast<T>(twiceHigh - twiceLow) / 2;
@@ -617,9 +619,9 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
     Cast(inputCoordinate, inputCoordinateTemp, mode, (ubFactorElement * 2));
     DupValue();
     GatherMask(yTensor, inputCoordinate, yPattern, reduceMode, mask,
-        {1, repeatTimes, src0RepeatStride, src1RepeatStride}, rsvdCnt);
+               {1, repeatTimes, src0RepeatStride, src1RepeatStride}, rsvdCnt);
     GatherMask(xTensor, inputCoordinate, xPattern, reduceMode, mask,
-        {1, repeatTimes, src0RepeatStride, src1RepeatStride}, rsvdCnt);
+               {1, repeatTimes, src0RepeatStride, src1RepeatStride}, rsvdCnt);
 
     ComputeSourceIndexSetGrad(xTensor, xGradIn, fwidth, computeCount / 2);
     ComputeSourceIndexSetGrad(yTensor, yGradIn, fheight, computeCount / 2);
@@ -655,8 +657,8 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
     Sub(cubicTy, yTensor, iyNw, calCount);
     PipeBarrier<PIPE_V>();
 
-    GetCubicUpsampleCoefficients(coeffTx0, coeffTx1, coeffTx2, coeffTx3,
-        coeffTy0, coeffTy1, coeffTy2, coeffTy3, cubicTx, cubicTy, calCount);
+    GetCubicUpsampleCoefficients(coeffTx0, coeffTx1, coeffTx2, coeffTx3, coeffTy0, coeffTy1, coeffTy2, coeffTy3,
+                                 cubicTx, cubicTy, calCount);
 
     // 4 x-coordinate offsets
     LocalTensor<int32_t> xnwInt = ixNeIntBuf.Get<int32_t>(ubFactorElement);
@@ -825,15 +827,19 @@ __aicore__ inline void GridSampler2DGradBicubicFP16<T, Dtype, GridSamplerGradTil
                     // Reflect x coordinate using float coordinate
                     T ixFpReflected = ReflectCoordinatesCommonFp16(ixFpVal, width, alignCorners == 1);
                     // Clip to valid range
-                    ixFpReflected = ixFpReflected < static_cast<T>(0) ? static_cast<T>(0) :
-                                   (ixFpReflected >= static_cast<T>(width) ? static_cast<T>(width - 1) : ixFpReflected);
+                    ixFpReflected = ixFpReflected < static_cast<T>(0) ?
+                                        static_cast<T>(0) :
+                                        (ixFpReflected >= static_cast<T>(width) ? static_cast<T>(width - 1) :
+                                                                                  ixFpReflected);
                     ixClipped = static_cast<int32_t>(ixFpReflected);
 
                     // Reflect y coordinate using float coordinate
                     T iyFpReflected = ReflectCoordinatesCommonFp16(iyFpVal, height, alignCorners == 1);
                     // Clip to valid range
-                    iyFpReflected = iyFpReflected < static_cast<T>(0) ? static_cast<T>(0) :
-                                   (iyFpReflected >= static_cast<T>(height) ? static_cast<T>(height - 1) : iyFpReflected);
+                    iyFpReflected = iyFpReflected < static_cast<T>(0) ?
+                                        static_cast<T>(0) :
+                                        (iyFpReflected >= static_cast<T>(height) ? static_cast<T>(height - 1) :
+                                                                                   iyFpReflected);
                     iyClipped = static_cast<int32_t>(iyFpReflected);
                 }
                 PipeBarrier<PIPE_ALL>();

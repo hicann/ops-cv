@@ -26,8 +26,8 @@
 
 using namespace optiling;
 
-extern "C" __global__ __aicore__ void upsample_trilinear3d_backward(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void upsample_trilinear3d_backward(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                                    GM_ADDR tiling);
 
 class upsample_trilinear3d_backward_test : public testing::Test {
 protected:
@@ -38,44 +38,51 @@ protected:
         system(cmd.c_str());
         system("chmod -R 755 ./upsample_trilinear3d_backward_data/");
     }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_trilinear3d_backward_test TearDown\n" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "upsample_trilinear3d_backward_test TearDown\n" << std::endl; }
+
 private:
     const static std::string rootPath;
     const static std::string dataPath;
 };
 
 const std::string upsample_trilinear3d_backward_test::rootPath = "../../../../";
-const std::string upsample_trilinear3d_backward_test::dataPath = rootPath + "image/upsample_trilinear3d_backward/tests/ut/op_kernel/upsample_trilinear3d_backward_data";
+const std::string upsample_trilinear3d_backward_test::
+    dataPath = rootPath + "image/upsample_trilinear3d_backward/tests/ut/op_kernel/upsample_trilinear3d_backward_data";
 
 template <typename T1, typename T2>
-inline T1 CeilAlign(T1 a, T2 b) {
+inline T1 CeilAlign(T1 a, T2 b)
+{
     return (a + b - 1) / b * b;
 }
 
-TEST_F(upsample_trilinear3d_backward_test, test_case_float_1) {
+TEST_F(upsample_trilinear3d_backward_test, test_case_float_1)
+{
     UpsampleTrilinearBackwardCompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16, 16};
     std::vector<int64_t> input_size = {1, 1, 4, 4, 4};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleTrilinear3dBackward",
-                                              {{{{1, 1, 16, 16, 16}, {1, 1, 16, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                              {{{{1, 1, 4, 4, 4}, {1, 1, 4, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-                                              {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
-                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
-                                                {"scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
-                                                {"scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
-                                                {"scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
-                                              &compileInfo, socVersion, 24, 192*1024,8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleTrilinear3dBackward",
+        {
+            {{{1, 1, 16, 16, 16}, {1, 1, 16, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 4, 4, 4}, {1, 1, 4, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+         {"scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+         {"scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
+        &compileInfo, socVersion, 24, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    system("cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)'  'float32'");
+    system(
+        "cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)'  'float32'");
     size_t inputByteSize = 1 * 1 * 16 * 16 * 16 * sizeof(float);
     std::string fileName = "./upsample_trilinear3d_backward_data/float32_input_upsample_trilinear3d_backward.bin";
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(CeilAlign(inputByteSize, 32));
@@ -100,27 +107,34 @@ TEST_F(upsample_trilinear3d_backward_test, test_case_float_1) {
     system("cd ./upsample_trilinear3d_backward_data/ && python3 compare_data.py 'float32'");
 }
 
-TEST_F(upsample_trilinear3d_backward_test, test_case_float16_2) {
+TEST_F(upsample_trilinear3d_backward_test, test_case_float16_2)
+{
     UpsampleTrilinearBackwardCompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16, 16};
     std::vector<int64_t> input_size = {1, 1, 4, 4, 4};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleTrilinear3dBackward",
-                                              {{{{1, 1, 16, 16, 16}, {1, 1, 16, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                              {{{{1, 1, 4, 4, 4}, {1, 1, 4, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-                                              {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
-                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
-                                                {"scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
-                                                {"scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
-                                                {"scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
-                                              &compileInfo, socVersion, 24, 192*1024,8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleTrilinear3dBackward",
+        {
+            {{{1, 1, 16, 16, 16}, {1, 1, 16, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 4, 4, 4}, {1, 1, 4, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+         {"scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+         {"scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
+        &compileInfo, socVersion, 24, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    system("cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)'  'float16'");
+    system(
+        "cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)'  'float16'");
     size_t inputByteSize = 1 * 1 * 16 * 16 * 16 * sizeof(half);
     std::string fileName = "./upsample_trilinear3d_backward_data/float16_input_upsample_trilinear3d_backward.bin";
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(CeilAlign(inputByteSize, 32));
@@ -143,27 +157,34 @@ TEST_F(upsample_trilinear3d_backward_test, test_case_float16_2) {
     AscendC::GmFree((void*)tiling);
 }
 
-TEST_F(upsample_trilinear3d_backward_test, test_case_bfloat16_3) {
+TEST_F(upsample_trilinear3d_backward_test, test_case_bfloat16_3)
+{
     UpsampleTrilinearBackwardCompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16, 16};
     std::vector<int64_t> input_size = {1, 1, 4, 4, 4};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleTrilinear3dBackward",
-                                              {{{{1, 1, 16, 16, 16}, {1, 1, 16, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND},},
-                                              {{{{1, 1, 4, 4, 4}, {1, 1, 4, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND},},
-                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-                                              {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
-                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
-                                                {"scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
-                                                {"scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
-                                                {"scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
-                                              &compileInfo, socVersion, 24, 192*1024,8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleTrilinear3dBackward",
+        {
+            {{{1, 1, 16, 16, 16}, {1, 1, 16, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 4, 4, 4}, {1, 1, 4, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+         {"scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.25)},
+         {"scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.25)}},
+        &compileInfo, socVersion, 24, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    system("cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)'  'bfloat16'");
+    system(
+        "cd ./upsample_trilinear3d_backward_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)'  'bfloat16'");
     size_t inputByteSize = 1 * 1 * 16 * 16 * 16 * sizeof(half);
     std::string fileName = "./upsample_trilinear3d_backward_data/bfloat16_input_upsample_trilinear3d_backward.bin";
     uint8_t* x = (uint8_t*)AscendC::GmAlloc(CeilAlign(inputByteSize, 32));

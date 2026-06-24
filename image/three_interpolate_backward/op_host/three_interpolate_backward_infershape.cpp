@@ -22,15 +22,7 @@ namespace {
 const uint32_t INDEX_INPUT_GRAD_X = 0u;
 const uint32_t INDEX_OUTPUT_GRAD_Y = 0u;
 const int32_t UNKNOW_DIM = -1;
-enum DIM
-{
-    DIM_0,
-    DIM_1,
-    DIM_2,
-    DIM_3,
-    DIM_4,
-    DIM_5
-};
+enum DIM { DIM_0, DIM_1, DIM_2, DIM_3, DIM_4, DIM_5 };
 } // namespace
 
 namespace ops {
@@ -71,10 +63,9 @@ static graphStatus InferShape4ThreeInterpolateBackward(gert::InferShapeContext* 
     grad_y_shape->SetDim(DIM_3, 1);
     grad_y_shape->SetDim(DIM_4, c0);
 
-    OP_LOGI(
-        context, "Intershape N:%ld C1:%ld H:%ld W:%ld C0:%ld.", grad_y_shape->GetDim(DIM_0),
-        grad_y_shape->GetDim(DIM_1), grad_y_shape->GetDim(DIM_2), grad_y_shape->GetDim(DIM_3),
-        grad_y_shape->GetDim(DIM_4));
+    OP_LOGI(context, "Intershape N:%ld C1:%ld H:%ld W:%ld C0:%ld.", grad_y_shape->GetDim(DIM_0),
+            grad_y_shape->GetDim(DIM_1), grad_y_shape->GetDim(DIM_2), grad_y_shape->GetDim(DIM_3),
+            grad_y_shape->GetDim(DIM_4));
 
     return GRAPH_SUCCESS;
 }

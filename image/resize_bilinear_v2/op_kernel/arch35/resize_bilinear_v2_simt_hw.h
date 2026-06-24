@@ -56,8 +56,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ volatile T2* output, T_IDX blkStartOffset,
     T_IDX blkProcessNum)
 {
-    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
-         idx += static_cast<T_IDX>(blockDim.x)) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         T_IDX tmp = yGmIdx;
 
@@ -102,25 +101,23 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__ void calleeInt32(
-    float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH, T_IDX lenSrcW,
-    T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ volatile T2* output, T_IDX blkStartOffset,
-    T_IDX blkProcessNum)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
+    void calleeInt32(float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH,
+                     T_IDX lenSrcW, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input,
+                     __gm__ volatile T2* output, T_IDX blkStartOffset, T_IDX blkProcessNum)
 {
-    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(
-        scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW, mW, input, output,
-        blkStartOffset, blkProcessNum);
+    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH,
+                                                mH, shiftW, mW, input, output, blkStartOffset, blkProcessNum);
 }
 
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_MIDDLE) __aicore__ void calleeInt64(
-    float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH, T_IDX lenSrcW,
-    T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ volatile T2* output, T_IDX blkStartOffset,
-    T_IDX blkProcessNum)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_MIDDLE) __aicore__
+    void calleeInt64(float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH,
+                     T_IDX lenSrcW, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input,
+                     __gm__ volatile T2* output, T_IDX blkStartOffset, T_IDX blkProcessNum)
 {
-    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(
-        scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW, mW, input, output,
-        blkStartOffset, blkProcessNum);
+    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH,
+                                                mH, shiftW, mW, input, output, blkStartOffset, blkProcessNum);
 }
 
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
@@ -152,13 +149,13 @@ __aicore__ inline void ResizeBilinearV2SimtHW<T1, T2, halfPixel, mode, T_IDX>::P
     const int32_t realCoreNum = tiling_->realCoreNum;
     if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
         asc_vf_call<calleeInt64<T1, T2, halfPixel, mode, T_IDX>>(
-            dim3(THREAD_NUM_MIDDLE), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH,
-            shiftW, mW, (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ volatile T2*)(outputGm_.GetPhyAddr()),
-            blkStartOffset, blkProcessNum);
+            dim3(THREAD_NUM_MIDDLE), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW,
+            mW, (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ volatile T2*)(outputGm_.GetPhyAddr()), blkStartOffset,
+            blkProcessNum);
     } else {
         asc_vf_call<calleeInt32<T1, T2, halfPixel, mode, T_IDX>>(
-            dim3(THREAD_NUM), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW,
-            mW, (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ volatile T2*)(outputGm_.GetPhyAddr()), blkStartOffset,
+            dim3(THREAD_NUM), scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftH, mH, shiftW, mW,
+            (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ volatile T2*)(outputGm_.GetPhyAddr()), blkStartOffset,
             blkProcessNum);
     }
 }

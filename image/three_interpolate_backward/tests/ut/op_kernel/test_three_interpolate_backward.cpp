@@ -18,20 +18,13 @@
 
 using namespace std;
 
-extern "C" __global__ __aicore__ void three_interpolate_backward(
-    GM_ADDR grad_x, GM_ADDR idx, GM_ADDR weight, GM_ADDR grad_y, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void three_interpolate_backward(GM_ADDR grad_x, GM_ADDR idx, GM_ADDR weight,
+                                                                 GM_ADDR grad_y, GM_ADDR workspace, GM_ADDR tiling);
 
-class three_interpolate_backward_test : public testing::Test
-{
+class three_interpolate_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "three_interpolate_backward_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "three_interpolate_backward_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "three_interpolate_backward_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "three_interpolate_backward_test TearDown\n" << endl; }
 };
 
 namespace {
@@ -39,14 +32,12 @@ constexpr uint32_t C0 = 16;
 constexpr uint32_t N0 = 16;
 constexpr uint32_t TILING_ARGS_NUM = 64;
 
-void GetInputData(
-    uint8_t* input_grad_x, size_t grad_x_input_bytes, uint8_t* input_idx, size_t idx_input_bytes, uint8_t* input_weight,
-    size_t weight_input_bytes, string& path, string& shape_info)
+void GetInputData(uint8_t* input_grad_x, size_t grad_x_input_bytes, uint8_t* input_idx, size_t idx_input_bytes,
+                  uint8_t* input_weight, size_t weight_input_bytes, string& path, string& shape_info)
 {
-    system(
-        "cp -r "
-        "../../../../../../../ops/built-in/tests/ut/fast_op_test/three_interpolate_backward/script"
-        " ./ && chmod -R 777 ./script/");
+    system("cp -r "
+           "../../../../../../../ops/built-in/tests/ut/fast_op_test/three_interpolate_backward/script"
+           " ./ && chmod -R 777 ./script/");
 
     system("cd ./script/ && rm -rf ./*bin");
 
@@ -104,9 +95,8 @@ TEST_F(three_interpolate_backward_test, test_case_1_2_6_5_fp32)
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_bytes);
 
-    GetInputData(
-        input_grad_x, grad_x_input_bytes, input_idx, idx_input_bytes, input_weight, weight_input_bytes, path,
-        shape_info);
+    GetInputData(input_grad_x, grad_x_input_bytes, input_idx, idx_input_bytes, input_weight, weight_input_bytes, path,
+                 shape_info);
 
     auto tilingData = reinterpret_cast<ThreeInterpolateBackwardTilingData*>(tiling);
     tilingData->used_core_num = 5;
@@ -136,9 +126,8 @@ TEST_F(three_interpolate_backward_test, test_case_1_2_6_5_fp32)
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(0);
-    ICPU_RUN_KF(
-        three_interpolate_backward, tilingData->used_core_num, input_grad_x, input_idx, input_weight, output_grad_y,
-        workspace, (uint8_t*)(tilingData));
+    ICPU_RUN_KF(three_interpolate_backward, tilingData->used_core_num, input_grad_x, input_idx, input_weight,
+                output_grad_y, workspace, (uint8_t*)(tilingData));
 
     WriteOutputData(output_grad_y, grad_y_output_bytes, path);
 
@@ -186,9 +175,8 @@ TEST_F(three_interpolate_backward_test, test_case_20_21_60_51_fp32)
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_bytes);
 
-    GetInputData(
-        input_grad_x, grad_x_input_bytes, input_idx, idx_input_bytes, input_weight, weight_input_bytes, path,
-        shape_info);
+    GetInputData(input_grad_x, grad_x_input_bytes, input_idx, idx_input_bytes, input_weight, weight_input_bytes, path,
+                 shape_info);
 
     auto tilingData = reinterpret_cast<ThreeInterpolateBackwardTilingData*>(tiling);
     tilingData->used_core_num = 48;
@@ -218,9 +206,8 @@ TEST_F(three_interpolate_backward_test, test_case_20_21_60_51_fp32)
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(0);
-    ICPU_RUN_KF(
-        three_interpolate_backward, tilingData->used_core_num, input_grad_x, input_idx, input_weight, output_grad_y,
-        workspace, (uint8_t*)(tilingData));
+    ICPU_RUN_KF(three_interpolate_backward, tilingData->used_core_num, input_grad_x, input_idx, input_weight,
+                output_grad_y, workspace, (uint8_t*)(tilingData));
 
     WriteOutputData(output_grad_y, grad_y_output_bytes, path);
 
@@ -268,9 +255,8 @@ TEST_F(three_interpolate_backward_test, test_case_21_31_60_51_fp16)
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_bytes);
 
-    GetInputData(
-        input_grad_x, grad_x_input_bytes, input_idx, idx_input_bytes, input_weight, weight_input_bytes, path,
-        shape_info);
+    GetInputData(input_grad_x, grad_x_input_bytes, input_idx, idx_input_bytes, input_weight, weight_input_bytes, path,
+                 shape_info);
 
     auto tilingData = reinterpret_cast<ThreeInterpolateBackwardTilingData*>(tiling);
     tilingData->used_core_num = 21;
@@ -300,9 +286,8 @@ TEST_F(three_interpolate_backward_test, test_case_21_31_60_51_fp16)
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_SET_TILING_KEY(2);
-    ICPU_RUN_KF(
-        three_interpolate_backward, tilingData->used_core_num, input_grad_x, input_idx, input_weight, output_grad_y,
-        workspace, (uint8_t*)(tilingData));
+    ICPU_RUN_KF(three_interpolate_backward, tilingData->used_core_num, input_grad_x, input_idx, input_weight,
+                output_grad_y, workspace, (uint8_t*)(tilingData));
 
     WriteOutputData(output_grad_y, grad_y_output_bytes, path);
 

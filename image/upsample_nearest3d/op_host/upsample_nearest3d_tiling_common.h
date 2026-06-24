@@ -54,8 +54,8 @@ public:
     constexpr static int64_t SMALL_W = 64;
 
     template <typename T>
-    static void UpsampleNearest3dCommonTiling(
-        T x, float* scales, const int64_t* outputShape, UpsampleNearest3dTilingData& tilingData, uint32_t coreNum)
+    static void UpsampleNearest3dCommonTiling(T x, float* scales, const int64_t* outputShape,
+                                              UpsampleNearest3dTilingData& tilingData, uint32_t coreNum)
     {
         // getShape
         int64_t batches = 1;
@@ -121,9 +121,8 @@ public:
         }
     }
 
-    static void GetTensorSize(
-        int64_t* inputShapes, size_t inputShapeSize, const int64_t* outputShapes, size_t outputShapeSize,
-        UpsampleNearest3dTilingData& tilingData)
+    static void GetTensorSize(int64_t* inputShapes, size_t inputShapeSize, const int64_t* outputShapes,
+                              size_t outputShapeSize, UpsampleNearest3dTilingData& tilingData)
     {
         if (inputShapeSize < SHAPE_SIZE || outputShapeSize < SHAPE_SIZE) {
             return;

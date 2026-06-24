@@ -29,30 +29,28 @@ constexpr int32_t NO_BUFFER_NUM = 1;
 constexpr int32_t BUFFER_NUM = 2;
 
 template <typename T>
-class UpSampleNearestExact2dGradND
-{
+class UpSampleNearestExact2dGradND {
 public:
     TPipe pipe;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
     __aicore__ inline UpSampleNearestExact2dGradND(){};
-    __aicore__ inline void calculateIntermediateTensorX(
-        LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor,
-        int64_t slideStart_w, int64_t slideEnd_w);
-    __aicore__ inline void calculateIntermediateTensorY(
-        LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor,
-        int64_t slideStart_h, int64_t slideEnd_h);
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, bool isExact, GM_ADDR workspace,
-        UpsampleNearestExact2dGradTilingData* tilingData);
+    __aicore__ inline void calculateIntermediateTensorX(LocalTensor<float> centerTensor, LocalTensor<float> downTensor,
+                                                        LocalTensor<float> upTensor, int64_t slideStart_w,
+                                                        int64_t slideEnd_w);
+    __aicore__ inline void calculateIntermediateTensorY(LocalTensor<float> centerTensor, LocalTensor<float> downTensor,
+                                                        LocalTensor<float> upTensor, int64_t slideStart_h,
+                                                        int64_t slideEnd_h);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, bool isExact, GM_ADDR workspace,
+                                UpsampleNearestExact2dGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -94,12 +92,10 @@ private:
     __aicore__ inline void wDirectionExpansion();
     __aicore__ inline void hDirectionExpansion();
     __aicore__ inline void ParseTilingData(UpsampleNearestExact2dGradTilingData* tilingData);
-    __aicore__ inline void calculateRadioTensorW(
-        LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor, int64_t index,
-        int64_t length);
-    __aicore__ inline void calculateRadioTensorH(
-        LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor, int64_t index,
-        int64_t length);
+    __aicore__ inline void calculateRadioTensorW(LocalTensor<float> centerTensor, LocalTensor<float> downTensor,
+                                                 LocalTensor<float> upTensor, int64_t index, int64_t length);
+    __aicore__ inline void calculateRadioTensorH(LocalTensor<float> centerTensor, LocalTensor<float> downTensor,
+                                                 LocalTensor<float> upTensor, int64_t index, int64_t length);
     __aicore__ inline void calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void copyRadioTensorToGm();
     __aicore__ inline void calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
@@ -183,8 +179,9 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::Init(
-    GM_ADDR input, GM_ADDR output, bool isExact, GM_ADDR workspace, UpsampleNearestExact2dGradTilingData* tilingData)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::Init(GM_ADDR input, GM_ADDR output, bool isExact,
+                                                             GM_ADDR workspace,
+                                                             UpsampleNearestExact2dGradTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
     exactMode = isExact;
@@ -301,9 +298,11 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::Process()
     }
 }
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTensorX(
-    LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor, int64_t slideStart_w,
-    int64_t slideEnd_w)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTensorX(LocalTensor<float> centerTensor,
+                                                                                     LocalTensor<float> downTensor,
+                                                                                     LocalTensor<float> upTensor,
+                                                                                     int64_t slideStart_w,
+                                                                                     int64_t slideEnd_w)
 {
     instart_w = slideStart_w;
 
@@ -339,9 +338,11 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTen
 }
 
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTensorY(
-    LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor, int64_t slideStart_h,
-    int64_t slideEnd_h)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTensorY(LocalTensor<float> centerTensor,
+                                                                                     LocalTensor<float> downTensor,
+                                                                                     LocalTensor<float> upTensor,
+                                                                                     int64_t slideStart_h,
+                                                                                     int64_t slideEnd_h)
 {
     instart_h = slideStart_h;
     int64_t length = static_cast<int64_t>(centerTensor.GetSize());
@@ -375,9 +376,10 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateIntermediateTen
 }
 
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorW(
-    LocalTensor<float> centerTensor, LocalTensor<float> downTensor, LocalTensor<float> upTensor, int64_t index,
-    int64_t length)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorW(LocalTensor<float> centerTensor,
+                                                                              LocalTensor<float> downTensor,
+                                                                              LocalTensor<float> upTensor,
+                                                                              int64_t index, int64_t length)
 {
     instartIndex = downTensor.GetValue(0);
     inendIndex = upTensor.GetValue(length - 1);
@@ -412,9 +414,10 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorW(
 }
 
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorH(
-    LocalTensor<float> centerTensor_h, LocalTensor<float> downTensor, LocalTensor<float> upTensor, int64_t index,
-    int64_t length)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorH(LocalTensor<float> centerTensor_h,
+                                                                              LocalTensor<float> downTensor,
+                                                                              LocalTensor<float> upTensor,
+                                                                              int64_t index, int64_t length)
 {
     instartIndex = downTensor.GetValue(0);
     inendIndex = upTensor.GetValue(length - 1);
@@ -431,8 +434,8 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateRadioTensorH(
         int64_t downIndex = downTensor.GetValue(i) - instartIndex;
         int64_t upIndex = upTensor.GetValue(i) - instartIndex;
         for (int j = downIndex; j < upIndex; j++) {
-            int64_t radioIndex =
-                static_cast<int64_t>(i) * static_cast<int64_t>(singleCoreK_h) + static_cast<int64_t>(j);
+            int64_t radioIndex = static_cast<int64_t>(i) * static_cast<int64_t>(singleCoreK_h) +
+                                 static_cast<int64_t>(j);
             radioTensor_h.SetValue(radioIndex, (float)1.0);
         }
     }
@@ -458,8 +461,8 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::copyRadioTensorToGm()
 
     if (dataType == 2) {
         LocalTensor<T> radioTensor = radioQueue.DeQue<T>();
-        DataCopy(
-            intermediateTensorGm[workSpaceRadioOffset], radioTensor, (radioTensor.GetSize() + size - 1) / size * size);
+        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioTensor,
+                 (radioTensor.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
@@ -467,9 +470,8 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::copyRadioTensorToGm()
         radioQueue.FreeTensor(radioTensor);
     } else {
         LocalTensor<T> radioCastTensor = radioCastQueue.DeQue<T>();
-        DataCopy(
-            intermediateTensorGm[workSpaceRadioOffset], radioCastTensor,
-            (radioCastTensor.GetSize() + size - 1) / size * size);
+        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioCastTensor,
+                 (radioCastTensor.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
@@ -479,8 +481,8 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::copyRadioTensorToGm()
 }
 
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                                int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
@@ -519,8 +521,8 @@ __aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateWidthExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateHeightExtension(
-    int64_t tensorCIndex, int64_t batchStart, int64_t batchEnd)
+__aicore__ inline void UpSampleNearestExact2dGradND<T>::calculateHeightExtension(int64_t tensorCIndex,
+                                                                                 int64_t batchStart, int64_t batchEnd)
 {
     int64_t singleCoreM = matmulTiling_h->singleCoreM;
     int64_t singleCoreN = matmulTiling_h->singleCoreN;

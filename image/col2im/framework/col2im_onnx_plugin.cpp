@@ -66,17 +66,12 @@ static Status ParseOnnxParamsCol2im(const ge::Operator& op_src, ge::Operator& op
 
 REGISTER_CUSTOM_OP("Col2im")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("ai.onnx::8::Col2im"),
-                   ge::AscendString("ai.onnx::9::Col2im"),
-                   ge::AscendString("ai.onnx::10::Col2im"),
-                   ge::AscendString("ai.onnx::11::Col2im"),
-                   ge::AscendString("ai.onnx::12::Col2im"),
-                   ge::AscendString("ai.onnx::13::Col2im"),
-                   ge::AscendString("ai.onnx::14::Col2im"),
-                   ge::AscendString("ai.onnx::15::Col2im"),
-                   ge::AscendString("ai.onnx::16::Col2im"),
-                   ge::AscendString("ai.onnx::17::Col2im"),
+    .OriginOpType({ge::AscendString("ai.onnx::8::Col2im"), ge::AscendString("ai.onnx::9::Col2im"),
+                   ge::AscendString("ai.onnx::10::Col2im"), ge::AscendString("ai.onnx::11::Col2im"),
+                   ge::AscendString("ai.onnx::12::Col2im"), ge::AscendString("ai.onnx::13::Col2im"),
+                   ge::AscendString("ai.onnx::14::Col2im"), ge::AscendString("ai.onnx::15::Col2im"),
+                   ge::AscendString("ai.onnx::16::Col2im"), ge::AscendString("ai.onnx::17::Col2im"),
                    ge::AscendString("ai.onnx::18::Col2im")})
     .ParseParamsByOperatorFn(ParseOnnxParamsCol2im)
     .ImplyType(ImplyType::TVM);
-}  // domi
+} // namespace domi

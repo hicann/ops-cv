@@ -40,9 +40,8 @@ ge::graphStatus ResizeBicubicV2InferShape(gert::InferShapeContext* context)
     auto xDesc = context->GetInputDesc(IN_X);
     OP_CHECK_NULL_WITH_CONTEXT(context, xDesc);
     auto xFormat = xDesc->GetFormat().GetStorageFormat();
-    OP_CHECK_IF(
-        (xFormat != FORMAT_NCHW) && (xFormat != FORMAT_NHWC) && (xFormat != FORMAT_ND),
-        OP_LOGE(nodeName, "x format only support nchw or nhwc or nd"), return GRAPH_FAILED);
+    OP_CHECK_IF((xFormat != FORMAT_NCHW) && (xFormat != FORMAT_NHWC) && (xFormat != FORMAT_ND),
+                OP_LOGE(nodeName, "x format only support nchw or nhwc or nd"), return GRAPH_FAILED);
     const size_t hIdx = xFormat == FORMAT_NHWC ? 1 : 2;
 
     auto sizeTensor = context->GetInputTensor(IN_SIZE);
@@ -54,24 +53,22 @@ ge::graphStatus ResizeBicubicV2InferShape(gert::InferShapeContext* context)
     if (Ops::Cv::IsConstTensor(sizeTensor)) {
         const int32_t* sizeValue = sizeTensor->GetData<int32_t>();
         auto sizeNum = sizeTensor->GetShapeSize();
-        OP_CHECK_IF(
-            sizeNum != IN_SIZE_NUM, OP_LOGE(nodeName, "the element number of size should be 2, but is %ld", sizeNum),
-                return GRAPH_FAILED);
+        OP_CHECK_IF(sizeNum != IN_SIZE_NUM,
+                    OP_LOGE(nodeName, "the element number of size should be 2, but is %ld", sizeNum),
+                    return GRAPH_FAILED);
         outH = sizeValue[0];
         outW = sizeValue[1];
-        OP_CHECK_IF(
-            (outH <= 0) || (outW <= 0), OP_LOGE(nodeName, "output size should be greater than 0"),
-                return GRAPH_FAILED);
+        OP_CHECK_IF((outH <= 0) || (outW <= 0), OP_LOGE(nodeName, "output size should be greater than 0"),
+                    return GRAPH_FAILED);
     }
 
     if (Ops::Base::IsUnknownRank(*xShape)) {
         Ops::Base::SetUnknownShape(IN_X_DIMS, *yShape);
     } else {
-        OP_CHECK_IF(
-            xShape->GetDimNum() != IN_X_DIMS, OP_LOGE(nodeName, "x shape only support 4D"), return GRAPH_FAILED);
-        OP_CHECK_IF(
-            (xShape->GetDim(hIdx) == 0) || (xShape->GetDim(hIdx + 1) == 0),
-            OP_LOGE(nodeName, "input size should be greater than 0"), return GRAPH_FAILED);
+        OP_CHECK_IF(xShape->GetDimNum() != IN_X_DIMS, OP_LOGE(nodeName, "x shape only support 4D"),
+                    return GRAPH_FAILED);
+        OP_CHECK_IF((xShape->GetDim(hIdx) == 0) || (xShape->GetDim(hIdx + 1) == 0),
+                    OP_LOGE(nodeName, "input size should be greater than 0"), return GRAPH_FAILED);
         *yShape = *xShape;
     }
 
@@ -87,9 +84,9 @@ graphStatus ResizeBicubicV2InferDtype(gert::InferDataTypeContext* context)
     OP_LOGI(context->GetNodeName(), "Begin to do ResizeBicubicV2InferDtype");
 
     auto xDtype = context->GetInputDataType(IN_X);
-    OP_CHECK_IF(
-        (xDtype != ge::DT_FLOAT) && (xDtype != ge::DT_FLOAT16) && (xDtype != ge::DT_BF16),
-        OP_LOGE(context->GetNodeName(), "x dtype only support float, float16 and bfloat16"), return GRAPH_FAILED);
+    OP_CHECK_IF((xDtype != ge::DT_FLOAT) && (xDtype != ge::DT_FLOAT16) && (xDtype != ge::DT_BF16),
+                OP_LOGE(context->GetNodeName(), "x dtype only support float, float16 and bfloat16"),
+                return GRAPH_FAILED);
 
     context->SetOutputDataType(OUT_Y, xDtype);
 

@@ -20,15 +20,17 @@ extern "C" {
 /**
  * @brief GetWorkspaceSize: x, rois, pooled_h, pooled_w, spatial_scale_h, spatial_scale_w.
  */
-ACLNN_API aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(const aclTensor *x, const aclTensor *rois,
-    int64_t pooled_h, int64_t pooled_w, float spatial_scale_h, float spatial_scale_w, aclTensor *y, aclTensor *argmax,
-    uint64_t *workspaceSize, aclOpExecutor **executor);
+ACLNN_API aclnnStatus aclnnRoiPoolingWithArgMaxGetWorkspaceSize(const aclTensor* x, const aclTensor* rois,
+                                                                int64_t pooled_h, int64_t pooled_w,
+                                                                float spatial_scale_h, float spatial_scale_w,
+                                                                aclTensor* y, aclTensor* argmax,
+                                                                uint64_t* workspaceSize, aclOpExecutor** executor);
 
 /**
  * @brief aclnnRoiPoolingWithArgmax execute.
  */
-ACLNN_API aclnnStatus aclnnRoiPoolingWithArgMax(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream);
+ACLNN_API aclnnStatus aclnnRoiPoolingWithArgMax(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                                aclrtStream stream);
 
 #ifdef __cplusplus
 }

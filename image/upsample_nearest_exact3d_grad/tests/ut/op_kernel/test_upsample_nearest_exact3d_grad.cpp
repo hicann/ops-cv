@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 /*!
@@ -21,28 +21,20 @@
 #include "tikicpulib.h"
 #include "data_utils.h"
 
-extern "C" __global__ __aicore__ void upsample_nearest_exact3d_grad(
-    GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void upsample_nearest_exact3d_grad(GM_ADDR x, GM_ADDR y, GM_ADDR workspace,
+                                                                    GM_ADDR tiling);
 
-class upsample_nearest_exact3d_grad_test : public testing::Test
-{
+class upsample_nearest_exact3d_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "upsample_nearest_exact3d_grad_test SetUp\n" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_nearest_exact3d_grad_test TearDown\n" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "upsample_nearest_exact3d_grad_test SetUp\n" << std::endl; }
+    static void TearDownTestCase() { std::cout << "upsample_nearest_exact3d_grad_test TearDown\n" << std::endl; }
 };
 
 TEST_F(upsample_nearest_exact3d_grad_test, test_case_float_1)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest_exact3d_grad/tests/ut/op_kernel/"
-        "upsample_nearest_exact3d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest_exact3d_grad/tests/ut/op_kernel/"
+           "upsample_nearest_exact3d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest_exact3d_grad_data/");
     system(
         "cd ./upsample_nearest_exact3d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'float32'");
@@ -201,7 +193,8 @@ TEST_F(upsample_nearest_exact3d_grad_test, test_case_float_1)
 
     ICPU_SET_TILING_KEY(1);
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    ICPU_RUN_KF(upsample_nearest_exact3d_grad, numBlocks, gradOutput, gradInput, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest_exact3d_grad, numBlocks, gradOutput, gradInput, workspace,
+                (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact3d_grad_data/float32_output_upsample_nearest_exact3d_grad.bin";
     WriteFile(fileName, gradInput, gradInputByteSize);
 
@@ -214,13 +207,12 @@ TEST_F(upsample_nearest_exact3d_grad_test, test_case_float_1)
 
 TEST_F(upsample_nearest_exact3d_grad_test, test_case_float16_1)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest_exact3d_grad/tests/ut/op_kernel/"
-        "upsample_nearest_exact3d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest_exact3d_grad/tests/ut/op_kernel/"
+           "upsample_nearest_exact3d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest_exact3d_grad_data/");
-    system(
-        "cd ./upsample_nearest_exact3d_grad_data/ && python3 gen_data.py '(1, 1, 16, 16, 16)' '(16, 16, 16)' 'float16'");
+    system("cd ./upsample_nearest_exact3d_grad_data/ && python3 gen_data.py '(1, 1, 16, 16, 16)' '(16, 16, 16)' "
+           "'float16'");
 
     size_t gradInputByteSize = 16 * 16 * 16 * sizeof(half);
     size_t gradOutputByteSize = 16 * 16 * 16 * sizeof(half);
@@ -376,7 +368,8 @@ TEST_F(upsample_nearest_exact3d_grad_test, test_case_float16_1)
 
     ICPU_SET_TILING_KEY(1);
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    ICPU_RUN_KF(upsample_nearest_exact3d_grad, numBlocks, gradOutput, gradInput, workspace, (uint8_t*)(tilingDatafromBin));
+    ICPU_RUN_KF(upsample_nearest_exact3d_grad, numBlocks, gradOutput, gradInput, workspace,
+                (uint8_t*)(tilingDatafromBin));
     fileName = "./upsample_nearest_exact3d_grad_data/float16_output_upsample_nearest_exact3d_grad.bin";
     WriteFile(fileName, gradInput, gradInputByteSize);
 

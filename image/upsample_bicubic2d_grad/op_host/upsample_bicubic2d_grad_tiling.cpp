@@ -25,11 +25,11 @@
 
 namespace optiling {
 
-bool AddWorkspaces(gert::TilingContext *context, const size_t workspace)
+bool AddWorkspaces(gert::TilingContext* context, const size_t workspace)
 {
-    size_t *workspace_size = context->GetWorkspaceSizes(1);
-    OP_CHECK_IF(
-        workspace_size == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 workspace_size is nullptr!"), return false);
+    size_t* workspace_size = context->GetWorkspaceSizes(1);
+    OP_CHECK_IF(workspace_size == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 workspace_size is nullptr!"),
+                return false);
     *workspace_size = workspace;
     return true;
 }
@@ -44,9 +44,9 @@ inline bool FloatEqual(float a, float b)
     }
 }
 
-bool UpsampleBicubic2dGradTiling::GetPlatformInfo(const gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::GetPlatformInfo(const gert::TilingContext* context)
 {
-    auto compileInfoPtr = reinterpret_cast<const UpsampleBicubic2dGradCompileInfo *>(context->GetCompileInfo());
+    auto compileInfoPtr = reinterpret_cast<const UpsampleBicubic2dGradCompileInfo*>(context->GetCompileInfo());
     if (compileInfoPtr == nullptr) {
         return false;
     }
@@ -54,17 +54,17 @@ bool UpsampleBicubic2dGradTiling::GetPlatformInfo(const gert::TilingContext *con
     return true;
 }
 
-bool UpsampleBicubic2dGradTiling::GetCheckAttr(const gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::GetCheckAttr(const gert::TilingContext* context)
 {
     auto attrs = context->GetAttrs();
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 attrs is nullptr!"), return false);
 
-    const bool *align_corners = attrs->GetAttrPointer<bool>(0);
-    OP_CHECK_IF(
-        align_corners == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 align_corners is nullptr!"), return false);
-    const float *scales_h = attrs->GetAttrPointer<float>(1);
+    const bool* align_corners = attrs->GetAttrPointer<bool>(0);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 align_corners is nullptr!"),
+                return false);
+    const float* scales_h = attrs->GetAttrPointer<float>(1);
     OP_CHECK_IF(scales_h == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 scales_h is nullptr!"), return false);
-    const float *scales_w = attrs->GetAttrPointer<float>(2);
+    const float* scales_w = attrs->GetAttrPointer<float>(2);
     OP_CHECK_IF(scales_w == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 scales_w is nullptr!"), return false);
 
     _Params.alignCorners = *align_corners;
@@ -73,17 +73,17 @@ bool UpsampleBicubic2dGradTiling::GetCheckAttr(const gert::TilingContext *contex
     return true;
 }
 
-bool UpsampleBicubic2dGradTiling::CheckInOutShapes(const gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::CheckInOutShapes(const gert::TilingContext* context)
 {
     // input
     auto input_tensor = context->GetInputShape(0);
-    OP_CHECK_IF(
-        input_tensor == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 input_tensor is nullptr!"), return false);
+    OP_CHECK_IF(input_tensor == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 input_tensor is nullptr!"),
+                return false);
     auto input_shape = input_tensor->GetStorageShape();
-    OP_CHECK_IF(input_shape.GetDimNum() != 4,
-        OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dGrad get input shape dim is %lu not 4[NCHW], please check.",
-            input_shape.GetDimNum()),
+    OP_CHECK_IF(
+        input_shape.GetDimNum() != 4,
+        OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dGrad get input shape dim is %lu not 4[NCHW], please check.",
+                input_shape.GetDimNum()),
         return false);
     _Params.batch = input_shape.GetDim(0) * input_shape.GetDim(1);
     _Params.inputN = input_shape.GetDim(0);
@@ -92,25 +92,25 @@ bool UpsampleBicubic2dGradTiling::CheckInOutShapes(const gert::TilingContext *co
     _Params.inputW = input_shape.GetDim(NUM_THREE);
 
     auto output_tensor = context->GetOutputShape(0);
-    OP_CHECK_IF(
-        output_tensor == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 output_tensor is nullptr!"), return false);
+    OP_CHECK_IF(output_tensor == nullptr, OP_LOGE(context->GetNodeName(), "EZ9999 output_tensor is nullptr!"),
+                return false);
     auto output_shape = output_tensor->GetStorageShape();
-    OP_CHECK_IF(output_shape.GetDimNum() != 4,
-        OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dGrad get output shape dim is %lu not 4[NCHW], please check.",
-            output_shape.GetDimNum()),
+    OP_CHECK_IF(
+        output_shape.GetDimNum() != 4,
+        OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dGrad get output shape dim is %lu not 4[NCHW], please check.",
+                output_shape.GetDimNum()),
         return false);
-    OP_CHECK_IF(output_shape.GetDim(0) != input_shape.GetDim(0),
+    OP_CHECK_IF(
+        output_shape.GetDim(0) != input_shape.GetDim(0),
         OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dGrad get output shape dim[0] %ld not match input shape dim[0] %ld, please check.",
-            output_shape.GetDim(0),
-            input_shape.GetDim(0)),
+                "UpsampleBicubic2dGrad get output shape dim[0] %ld not match input shape dim[0] %ld, please check.",
+                output_shape.GetDim(0), input_shape.GetDim(0)),
         return false);
-    OP_CHECK_IF(output_shape.GetDim(1) != input_shape.GetDim(1),
+    OP_CHECK_IF(
+        output_shape.GetDim(1) != input_shape.GetDim(1),
         OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dGrad get output shape dim[1] %ld not match input shape dim[1] %ld, please check.",
-            output_shape.GetDim(1),
-            input_shape.GetDim(1)),
+                "UpsampleBicubic2dGrad get output shape dim[1] %ld not match input shape dim[1] %ld, please check.",
+                output_shape.GetDim(1), input_shape.GetDim(1)),
         return false);
     _Params.outputH = output_shape.GetDim(NUM_TWO);
     _Params.outputW = output_shape.GetDim(NUM_THREE);
@@ -118,8 +118,8 @@ bool UpsampleBicubic2dGradTiling::CheckInOutShapes(const gert::TilingContext *co
     return true;
 }
 
-void UpsampleBicubic2dGradTiling::InitPlatformInfo(
-    const UpsampleBicubic2dGradCompileInfo *compileInfoPtr, matmul_tiling::PlatformInfo &platformInfo) const
+void UpsampleBicubic2dGradTiling::InitPlatformInfo(const UpsampleBicubic2dGradCompileInfo* compileInfoPtr,
+                                                   matmul_tiling::PlatformInfo& platformInfo) const
 {
     platformInfo.socVersion = compileInfoPtr->socVersion;
     platformInfo.l1Size = compileInfoPtr->l1Size;
@@ -129,11 +129,11 @@ void UpsampleBicubic2dGradTiling::InitPlatformInfo(
     platformInfo.l0BSize = compileInfoPtr->l0BSize;
 }
 
-bool UpsampleBicubic2dGradTiling::GetMMTilingData(const gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::GetMMTilingData(const gert::TilingContext* context)
 {
     auto dataType = static_cast<matmul_tiling::DataType>(_Params.dataType);
     matmul_tiling::PlatformInfo platformInfo;
-    auto compileInfoPtr = reinterpret_cast<const UpsampleBicubic2dGradCompileInfo *>(context->GetCompileInfo());
+    auto compileInfoPtr = reinterpret_cast<const UpsampleBicubic2dGradCompileInfo*>(context->GetCompileInfo());
     if (compileInfoPtr == nullptr) {
         return false;
     }
@@ -212,7 +212,7 @@ bool UpsampleBicubic2dGradTiling::GetClearTilingData()
     return true;
 }
 
-bool UpsampleBicubic2dGradTiling::GetTilingData(const gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::GetTilingData(const gert::TilingContext* context)
 {
     uint64_t loop_H = (_Params.inputH + NUM_FRACTAL - 1) / NUM_FRACTAL;
     _Params.tailH = ((_Params.inputH - 1) % NUM_FRACTAL) + 1;
@@ -236,12 +236,12 @@ bool UpsampleBicubic2dGradTiling::GetTilingData(const gert::TilingContext *conte
 
     _Params.baseNH = NUM_FRACTAL * static_cast<uint64_t>(ceil(_Params.scalesH + THRESHOLD));
     _Params.baseNW = NUM_FRACTAL * static_cast<uint64_t>(ceil(_Params.scalesW + THRESHOLD));
-    OP_CHECK_IF(
-        !GetClearTilingData(), OP_LOGE(context->GetNodeName(), "get clear tiling data fail."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!GetClearTilingData(), OP_LOGE(context->GetNodeName(), "get clear tiling data fail."),
+                return ge::GRAPH_FAILED);
     return GetMMTilingData(context);
 }
 
-bool UpsampleBicubic2dGradTiling::SetTilingData(gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::SetTilingData(gert::TilingContext* context)
 {
     tilingData.set_dataType(static_cast<uint32_t>(_Params.dataType));
     tilingData.set_CoreNum(_Params.CoreNum);
@@ -286,16 +286,16 @@ bool UpsampleBicubic2dGradTiling::SetTilingData(gert::TilingContext *context)
     return true;
 }
 
-bool UpsampleBicubic2dGradTiling::SetLaunchInfo(gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::SetLaunchInfo(gert::TilingContext* context)
 {
     context->SetBlockDim(_Params.CoreNum / NUM_TWO);
     context->SetTilingKey(static_cast<int64_t>(UpsampleBicubic2dGradTilingKey::BASE_MODE));
 
-    int64_t workspaceSize =
-        ((_Params.baseNH > _Params.baseNW) ? _Params.baseNH : _Params.baseNW) * NUM_FRACTAL * _Params.CoreNum *
-            GetDtypeSize() +
-        (_Params.batch * _Params.inputH * _Params.outputW + GetNumPerBlock() - 1) / GetNumPerBlock() * BLOCK_SIZE +
-        _Params.CoreNum * BLOCK_SIZE * NUM_TWO + 16 * 1024 * 1024;
+    int64_t workspaceSize = ((_Params.baseNH > _Params.baseNW) ? _Params.baseNH : _Params.baseNW) * NUM_FRACTAL *
+                                _Params.CoreNum * GetDtypeSize() +
+                            (_Params.batch * _Params.inputH * _Params.outputW + GetNumPerBlock() - 1) /
+                                GetNumPerBlock() * BLOCK_SIZE +
+                            _Params.CoreNum * BLOCK_SIZE * NUM_TWO + 16 * 1024 * 1024;
     if (AddWorkspaces(context, workspaceSize)) {
         return true;
     } else {
@@ -303,11 +303,12 @@ bool UpsampleBicubic2dGradTiling::SetLaunchInfo(gert::TilingContext *context)
     }
 }
 
-bool UpsampleBicubic2dGradTiling::IsDeterministicCalc(const gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::IsDeterministicCalc(const gert::TilingContext* context)
 {
     _Params.deterministic = context->GetDeterministic();
-    if (_Params.scalesW >= MAX_SCALE || _Params.scalesW < (1 / MAX_SCALE) ||_Params.scalesH >= MAX_SCALE || _Params.scalesH < (1 / MAX_SCALE)) {
-      return true;
+    if (_Params.scalesW >= MAX_SCALE || _Params.scalesW < (1 / MAX_SCALE) || _Params.scalesH >= MAX_SCALE ||
+        _Params.scalesH < (1 / MAX_SCALE)) {
+        return true;
     }
     return _Params.deterministic;
 }
@@ -345,8 +346,7 @@ void UpsampleBicubic2dGradTiling::CalcNeedCoreNum()
     _Params.CoreNum = _Params.CoreNum > 1 ? _Params.CoreNum : 1;
 }
 
-class SplitTilingData
-{
+class SplitTilingData {
 public:
     int64_t coreNum = 0;
 
@@ -377,7 +377,8 @@ public:
 
 void UpsampleBicubic2dGradTiling::CalcNeedCoreNumW()
 {
-    SplitTilingData splitTilingData(_Params.CoreNum, _Params.outputW,_Params.inputH * _Params.batch, _Params.slideSize);
+    SplitTilingData splitTilingData(_Params.CoreNum, _Params.outputW, _Params.inputH * _Params.batch,
+                                    _Params.slideSize);
 
     _Params.perCoreSlideNumW = splitTilingData.perCoreSlideNum;
     _Params.perCoreTailSlideNumW = splitTilingData.perCoreTailSlideNum;
@@ -387,7 +388,7 @@ void UpsampleBicubic2dGradTiling::CalcNeedCoreNumW()
 
 void UpsampleBicubic2dGradTiling::CalcNeedCoreNumH()
 {
-    SplitTilingData splitTilingData(_Params.CoreNum, _Params.outputH,_Params.outputW, _Params.slideSize);
+    SplitTilingData splitTilingData(_Params.CoreNum, _Params.outputH, _Params.outputW, _Params.slideSize);
 
     _Params.perCoreSlideNumH = splitTilingData.perCoreSlideNum;
     _Params.perCoreTailSlideNumH = splitTilingData.perCoreTailSlideNum;
@@ -412,19 +413,19 @@ void UpsampleBicubic2dGradTiling::CalcSingleCoreK()
     }
 }
 
-void UpsampleBicubic2dGradTiling::CalcTCubeTiling(const gert::TilingContext *context)
+void UpsampleBicubic2dGradTiling::CalcTCubeTiling(const gert::TilingContext* context)
 {
     auto dataType = static_cast<matmul_tiling::DataType>(_Params.dataType);
     matmul_tiling::PlatformInfo platformInfo;
-    auto compileInfoPtr = reinterpret_cast<const UpsampleBicubic2dGradCompileInfo *>(context->GetCompileInfo());
+    auto compileInfoPtr = reinterpret_cast<const UpsampleBicubic2dGradCompileInfo*>(context->GetCompileInfo());
     if (compileInfoPtr == nullptr) {
         return;
     }
     InitPlatformInfo(compileInfoPtr, platformInfo);
     _Params.UBSize = platformInfo.ubSize;
-    _Params.radioMatrixSize =
-        ((_Params.singleCoreKH > _Params.singleCoreKW) ? _Params.singleCoreKH : _Params.singleCoreKW) *
-        _Params.slideSize;
+    _Params.radioMatrixSize = ((_Params.singleCoreKH > _Params.singleCoreKW) ? _Params.singleCoreKH :
+                                                                               _Params.singleCoreKW) *
+                              _Params.slideSize;
     // 中间tensor
     _Params.intermediateMatrixSize = _Params.inputN * _Params.inputC * _Params.inputH * _Params.outputW;
     matmul_tiling::MatmulApiTiling matmul_h(platformInfo);
@@ -450,7 +451,7 @@ void UpsampleBicubic2dGradTiling::CalcTCubeTiling(const gert::TilingContext *con
     }
 }
 
-bool UpsampleBicubic2dGradTiling::SetTilingDataDC(gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::SetTilingDataDC(gert::TilingContext* context)
 {
     tilingData.set_dataType(static_cast<uint32_t>(_Params.dataType));
     tilingData.set_CoreNum(_Params.CoreNum);
@@ -492,7 +493,7 @@ bool UpsampleBicubic2dGradTiling::SetTilingDataDC(gert::TilingContext *context)
     return true;
 }
 
-void UpsampleBicubic2dGradTiling::TilingPrintParam(const gert::TilingContext *context)
+void UpsampleBicubic2dGradTiling::TilingPrintParam(const gert::TilingContext* context)
 {
     auto nodeName = context->GetNodeName();
     OP_LOGD(nodeName, ">>>>>>>>>>>>>>> Start to print UpsampleBicubic2dGrad tiling data <<<<<<<<<<<<<<<<");
@@ -509,34 +510,34 @@ void UpsampleBicubic2dGradTiling::TilingPrintParam(const gert::TilingContext *co
     OP_LOGD(nodeName, ">>> needExpandW %d", _Params.needExpandW);
     OP_LOGD(nodeName, ">>> needExpandH %d", _Params.needExpandH);
 
-    OP_LOGD(nodeName, ">>> batch %ld",_Params.batch);
-    OP_LOGD(nodeName, ">>> inputN %ld",_Params.inputN);
-    OP_LOGD(nodeName, ">>> inputC %ld",_Params.inputC);
-    OP_LOGD(nodeName, ">>> inputH %ld",_Params.inputH);
-    OP_LOGD(nodeName, ">>> inputW %ld",_Params.inputW);
-    OP_LOGD(nodeName, ">>> outputH %ld",_Params.outputH);
-    OP_LOGD(nodeName, ">>> outputW %ld",_Params.outputW);
+    OP_LOGD(nodeName, ">>> batch %ld", _Params.batch);
+    OP_LOGD(nodeName, ">>> inputN %ld", _Params.inputN);
+    OP_LOGD(nodeName, ">>> inputC %ld", _Params.inputC);
+    OP_LOGD(nodeName, ">>> inputH %ld", _Params.inputH);
+    OP_LOGD(nodeName, ">>> inputW %ld", _Params.inputW);
+    OP_LOGD(nodeName, ">>> outputH %ld", _Params.outputH);
+    OP_LOGD(nodeName, ">>> outputW %ld", _Params.outputW);
 
-    OP_LOGD(nodeName, ">>> perCoreSlideNumW %ld",_Params.perCoreSlideNumW);
-    OP_LOGD(nodeName, ">>> perCoreTailSlideNumW %ld",_Params.perCoreTailSlideNumW);
-    OP_LOGD(nodeName, ">>> extraTailSlideCoreNumW %ld",_Params.extraTailSlideCoreNumW);
-    OP_LOGD(nodeName, ">>> perCoreSlideNumH %ld",_Params.perCoreSlideNumH);
-    OP_LOGD(nodeName, ">>> perCoreTailSlideNumH %ld",_Params.perCoreTailSlideNumH);
-    OP_LOGD(nodeName, ">>> extraTailSlideCoreNumH %ld",_Params.extraTailSlideCoreNumH);
+    OP_LOGD(nodeName, ">>> perCoreSlideNumW %ld", _Params.perCoreSlideNumW);
+    OP_LOGD(nodeName, ">>> perCoreTailSlideNumW %ld", _Params.perCoreTailSlideNumW);
+    OP_LOGD(nodeName, ">>> extraTailSlideCoreNumW %ld", _Params.extraTailSlideCoreNumW);
+    OP_LOGD(nodeName, ">>> perCoreSlideNumH %ld", _Params.perCoreSlideNumH);
+    OP_LOGD(nodeName, ">>> perCoreTailSlideNumH %ld", _Params.perCoreTailSlideNumH);
+    OP_LOGD(nodeName, ">>> extraTailSlideCoreNumH %ld", _Params.extraTailSlideCoreNumH);
 
-    OP_LOGD(nodeName, ">>> slideSize %ld",_Params.slideSize);
-    OP_LOGD(nodeName, ">>> radioMatrixSize %ld",_Params.radioMatrixSize);
-    OP_LOGD(nodeName, ">>> intermediateMatrixSize %ld",_Params.intermediateMatrixSize);
+    OP_LOGD(nodeName, ">>> slideSize %ld", _Params.slideSize);
+    OP_LOGD(nodeName, ">>> radioMatrixSize %ld", _Params.radioMatrixSize);
+    OP_LOGD(nodeName, ">>> intermediateMatrixSize %ld", _Params.intermediateMatrixSize);
 }
 
-bool UpsampleBicubic2dGradTiling::SetLaunchInfoDC(gert::TilingContext *context)
+bool UpsampleBicubic2dGradTiling::SetLaunchInfoDC(gert::TilingContext* context)
 {
     context->SetBlockDim(_Params.CoreNum);
     context->SetTilingKey(static_cast<int64_t>(UpsampleBicubic2dGradTilingKey::DETERMINISTIC_MODE));
 
-    uint64_t workspaceSize =
-        (_Params.intermediateMatrixSize + _Params.radioMatrixSize * _Params.CoreNum * NUM_TWO) * GetDtypeSize() +
-        16 * 1024 * 1024;
+    uint64_t workspaceSize = (_Params.intermediateMatrixSize + _Params.radioMatrixSize * _Params.CoreNum * NUM_TWO) *
+                                 GetDtypeSize() +
+                             16 * 1024 * 1024;
     if (AddWorkspaces(context, workspaceSize)) {
         return true;
     } else {
@@ -544,67 +545,62 @@ bool UpsampleBicubic2dGradTiling::SetLaunchInfoDC(gert::TilingContext *context)
     }
 }
 
-ge::graphStatus UpsampleBicubic2dGradTiling::runTiling(gert::TilingContext *context)
+ge::graphStatus UpsampleBicubic2dGradTiling::runTiling(gert::TilingContext* context)
 {
-    OP_CHECK_IF(
-        !GetPlatformInfo(context), OP_LOGE(context->GetNodeName(), "get platforminfo fail."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!GetPlatformInfo(context), OP_LOGE(context->GetNodeName(), "get platforminfo fail."),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(!GetCheckAttr(context), OP_LOGE(context->GetNodeName(), "check attr fail."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        !CheckInOutShapes(context), OP_LOGE(context->GetNodeName(), "check shape fail."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!CheckInOutShapes(context), OP_LOGE(context->GetNodeName(), "check shape fail."),
+                return ge::GRAPH_FAILED);
     auto tempGetInputDesc = context->GetInputDesc(0);
-    OP_CHECK_IF(
-        tempGetInputDesc == nullptr, OP_LOGE(context->GetNodeName(), "inputDesc is nullptr."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tempGetInputDesc == nullptr, OP_LOGE(context->GetNodeName(), "inputDesc is nullptr."),
+                return ge::GRAPH_FAILED);
     _Params.dataType = tempGetInputDesc->GetDataType();
     OP_CHECK_IF(_Params.dataType != ge::DataType::DT_FLOAT && _Params.dataType != ge::DataType::DT_FLOAT16 &&
                     _Params.dataType != ge::DataType::DT_BF16,
-        OP_LOGE(context->GetNodeName(), "check dtype fail."),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "check dtype fail."), return ge::GRAPH_FAILED);
 
     if (IsDeterministicCalc(context)) {
-        OP_CHECK_IF(!GetTilingDataDC(context),
-            OP_LOGE(context->GetNodeName(), "get tiling data fail."),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(!GetTilingDataDC(context), OP_LOGE(context->GetNodeName(), "get tiling data fail."),
+                    return ge::GRAPH_FAILED);
         // tilingdata
-        OP_CHECK_IF(!SetTilingDataDC(context),
-            OP_LOGE(context->GetNodeName(), "set tiling data fail."),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(!SetTilingDataDC(context), OP_LOGE(context->GetNodeName(), "set tiling data fail."),
+                    return ge::GRAPH_FAILED);
         // launchinfo: tilingkey, workspace, blockdim
-        OP_CHECK_IF(!SetLaunchInfoDC(context),
-            OP_LOGE(context->GetNodeName(), "set launchinfo fail."),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(!SetLaunchInfoDC(context), OP_LOGE(context->GetNodeName(), "set launchinfo fail."),
+                    return ge::GRAPH_FAILED);
     } else {
-        OP_CHECK_IF(
-            !GetTilingData(context), OP_LOGE(context->GetNodeName(), "get tiling data fail."), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(!GetTilingData(context), OP_LOGE(context->GetNodeName(), "get tiling data fail."),
+                    return ge::GRAPH_FAILED);
         // tilingdata
-        OP_CHECK_IF(
-            !SetTilingData(context), OP_LOGE(context->GetNodeName(), "set tiling data fail."), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(!SetTilingData(context), OP_LOGE(context->GetNodeName(), "set tiling data fail."),
+                    return ge::GRAPH_FAILED);
         // launchinfo: tilingkey, workspace, blockdim
-        OP_CHECK_IF(
-            !SetLaunchInfo(context), OP_LOGE(context->GetNodeName(), "set launchinfo fail."), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(!SetLaunchInfo(context), OP_LOGE(context->GetNodeName(), "set launchinfo fail."),
+                    return ge::GRAPH_FAILED);
     }
 
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus TilingForUpsampleBicubic2dGrad(gert::TilingContext *context)
+ge::graphStatus TilingForUpsampleBicubic2dGrad(gert::TilingContext* context)
 {
     UpsampleBicubic2dGradTiling tiling_handle;
     context->SetScheduleMode(SCHEDULE_MODE);
     return tiling_handle.runTiling(context);
 }
 
-ge::graphStatus TilingPrepareForUpsampleBicubic2dGrad(gert::TilingParseContext *context)
+ge::graphStatus TilingPrepareForUpsampleBicubic2dGrad(gert::TilingParseContext* context)
 {
-    fe::PlatFormInfos *platformInfoPtr = context->GetPlatformInfo();
+    fe::PlatFormInfos* platformInfoPtr = context->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);
     auto compileInfoPtr = context->GetCompiledInfo<UpsampleBicubic2dGradCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfoPtr);
 
     std::string val;
     platformInfoPtr->GetPlatformRes("AICoreintrinsicDtypeMap", "Intrinsic_fix_pipe_l0c2out", val);
-    OP_CHECK_IF(val.empty(),
-        OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dGrad support only ASCEND910B for now"),
-        return false);
+    OP_CHECK_IF(val.empty(), OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dGrad support only ASCEND910B for now"),
+                return false);
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     platformInfoPtr->GetPlatformRes("version", "SoC_version", compileInfoPtr->socVersionStr);
@@ -618,27 +614,23 @@ ge::graphStatus TilingPrepareForUpsampleBicubic2dGrad(gert::TilingParseContext *
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_C, compileInfoPtr->l0CSize);
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L2, compileInfoPtr->l2Size);
 
-    OP_CHECK_IF((compileInfoPtr->aicNum == 0 || compileInfoPtr->aivNum == 0 || compileInfoPtr->ubSize == 0 ||
-                    compileInfoPtr->l1Size == 0 || compileInfoPtr->l0CSize == 0 || compileInfoPtr->l0ASize == 0 ||
-                    compileInfoPtr->l0BSize == 0),
+    OP_CHECK_IF(
+        (compileInfoPtr->aicNum == 0 || compileInfoPtr->aivNum == 0 || compileInfoPtr->ubSize == 0 ||
+         compileInfoPtr->l1Size == 0 || compileInfoPtr->l0CSize == 0 || compileInfoPtr->l0ASize == 0 ||
+         compileInfoPtr->l0BSize == 0),
         OP_LOGE(context->GetNodeName(),
-            "platform info is invalid, aicNum=%u, aivNum=%u, ubSize=%lu, l1Size=%lu, l0CSize=%lu, l0ASize=%lu, "
-            "l0BSize=%lu",
-            compileInfoPtr->aicNum,
-            compileInfoPtr->aivNum,
-            compileInfoPtr->ubSize,
-            compileInfoPtr->l1Size,
-            compileInfoPtr->l0CSize,
-            compileInfoPtr->l0ASize,
-            compileInfoPtr->l0BSize),
+                "platform info is invalid, aicNum=%u, aivNum=%u, ubSize=%lu, l1Size=%lu, l0CSize=%lu, l0ASize=%lu, "
+                "l0BSize=%lu",
+                compileInfoPtr->aicNum, compileInfoPtr->aivNum, compileInfoPtr->ubSize, compileInfoPtr->l1Size,
+                compileInfoPtr->l0CSize, compileInfoPtr->l0ASize, compileInfoPtr->l0BSize),
         return ge::GRAPH_FAILED);
 
-    OP_LOGI(
-        context->GetNodeName(), "Parse compile info success, soc: %d", static_cast<int>(compileInfoPtr->socVersion));
+    OP_LOGI(context->GetNodeName(), "Parse compile info success, soc: %d",
+            static_cast<int>(compileInfoPtr->socVersion));
     return ge::GRAPH_SUCCESS;
 }
 
 IMPL_OP_OPTILING(UpsampleBicubic2dGrad)
     .Tiling(TilingForUpsampleBicubic2dGrad)
     .TilingParse<UpsampleBicubic2dGradCompileInfo>(TilingPrepareForUpsampleBicubic2dGrad);
-}  // namespace optiling
+} // namespace optiling

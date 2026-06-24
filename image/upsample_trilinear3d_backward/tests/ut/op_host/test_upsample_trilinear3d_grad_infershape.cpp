@@ -15,107 +15,115 @@
 #include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
-class UpsampleTrilinear3dGradTest : public testing::Test
-{
+class UpsampleTrilinear3dGradTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UpsampleTrilinear3dGradTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UpsampleTrilinear3dGradTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UpsampleTrilinear3dGradTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UpsampleTrilinear3dGradTest TearDown" << std::endl; }
 };
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test1_failed)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({10, 10, 10})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({10, 10, 10})),
+         gert::InfershapeContextPara::OpAttr("scales",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test2_failed)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 10, 10, 10})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 10, 10, 10})),
+         gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test3_failed)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({7, 7, 7})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({7, 7, 7})),
+         gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test4_failed)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0, 2.0, 2.0})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
+         gert::InfershapeContextPara::OpAttr(
+             "scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0, 2.0, 2.0})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test5_failed)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({1.5, 1.5, 1.5})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
+         gert::InfershapeContextPara::OpAttr("scales",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({1.5, 1.5, 1.5})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test6_success)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({10, 10, 10})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({10, 10, 10})),
+         gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 TEST_F(UpsampleTrilinear3dGradTest, UpsampleTrilinear3dGrad_infer_test7_success)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleTrilinear3dGrad",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0})),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleTrilinear3dGrad", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
+         gert::InfershapeContextPara::OpAttr("scales",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0})),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

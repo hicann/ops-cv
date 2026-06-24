@@ -24,8 +24,7 @@
 using namespace std;
 using namespace aicpu;
 
-const std::string ktestcaseFilePath =
-    "../../../../image/crop_and_resize/tests/ut/op_kernel_aicpu/";
+const std::string ktestcaseFilePath = "../../../../image/crop_and_resize/tests/ut/op_kernel_aicpu/";
 
 class TEST_CropAndResize_UTest : public testing::Test {};
 
@@ -39,646 +38,650 @@ float boxes[NUM_BOXES][4] = {0};
 float y[5][24][24][3] = {0};
 float expected_y[5][24][24][3] = {0};
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Success) {
-  // raw data
-  int32_t crop_size[2] = {24, 24};
-  int32_t box_index[5] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Success)
+{
+    // raw data
+    int32_t crop_size[2] = {24, 24};
+    int32_t box_index[5] = {0};
 
-  char path[256] = {};
-  if (!getcwd(path, 256)) {
-    cout << "Get path fail" << endl;
-  }
-  cout << "path is " << path << endl;
- 
-  std::ifstream in_image(ktestcaseFilePath + "data/image_data");
-  if (!in_image.is_open()) {
-    std::cout << "open image_data errorm, path is " << ktestcaseFilePath + "data/image_data" << std::endl;
-    exit(1);
-  }
+    char path[256] = {};
+    if (!getcwd(path, 256)) {
+        cout << "Get path fail" << endl;
+    }
+    cout << "path is " << path << endl;
 
-  for (int i = 0; i < BATCH_SIZE; i++) {
-    for (int j = 0; j < IMAGE_HEIGHT; j++) {
-      for (int t = 0; t < IMAGE_WIDTH; t++) {
-        for (int s = 0; s < CHANNELS; s++) {
-          float value;
-          in_image >> value;
-          inputs[i][j][t][s] = value;
+    std::ifstream in_image(ktestcaseFilePath + "data/image_data");
+    if (!in_image.is_open()) {
+        std::cout << "open image_data errorm, path is " << ktestcaseFilePath + "data/image_data" << std::endl;
+        exit(1);
+    }
+
+    for (int i = 0; i < BATCH_SIZE; i++) {
+        for (int j = 0; j < IMAGE_HEIGHT; j++) {
+            for (int t = 0; t < IMAGE_WIDTH; t++) {
+                for (int s = 0; s < CHANNELS; s++) {
+                    float value;
+                    in_image >> value;
+                    inputs[i][j][t][s] = value;
+                }
+            }
         }
-      }
     }
-  }
-  in_image.close();
+    in_image.close();
 
-  std::ifstream in_boxes(ktestcaseFilePath + "data/boxes_data");
-  if (!in_boxes.is_open()) {
-    std::cout << "open boxes_data error" << std::endl;
-    exit(1);
-  }
-  for (int i = 0; i < NUM_BOXES; i++) {
-    for (int j = 0; j < 4; j++) {
-      float value;
-      in_boxes >> value;
-      boxes[i][j] = value;
+    std::ifstream in_boxes(ktestcaseFilePath + "data/boxes_data");
+    if (!in_boxes.is_open()) {
+        std::cout << "open boxes_data error" << std::endl;
+        exit(1);
     }
-  }
-  in_boxes.close();
-
-  std::ifstream in_expected(ktestcaseFilePath + "data/expected_output_data");
-  if (!in_expected.is_open()) {
-    std::cout << "open expected_output_data error." << std::endl;
-    exit(1);
-  }
-
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < 24; j++) {
-      for (int t = 0; t < 24; t++) {
-        for (int s = 0; s < 3; s++) {
-          float value;
-          in_expected >> value;
-          expected_y[i][j][t][s] = value;
+    for (int i = 0; i < NUM_BOXES; i++) {
+        for (int j = 0; j < 4; j++) {
+            float value;
+            in_boxes >> value;
+            boxes[i][j] = value;
         }
-      }
     }
-  }
-  in_expected.close();
+    in_boxes.close();
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
+    std::ifstream in_expected(ktestcaseFilePath + "data/expected_output_data");
+    if (!in_expected.is_open()) {
+        std::cout << "open expected_output_data error." << std::endl;
+        exit(1);
+    }
 
-  // set attr
-  auto methodAttr = CpuKernelUtils::CreateAttrValue();
-  methodAttr->SetString("bilinear");
-  nodeDef->AddAttrs("method", methodAttr.get());
-
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(0);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
-
-  // image
-  // set input
-  auto inputTensor0 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor0, nullptr);
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
-  // boxes
-  auto inputTensor1 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor1, nullptr);
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
-  // box_index
-  auto inputTensor2 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor2, nullptr);
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
-  // crop_size
-  auto inputTensor3 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor3, nullptr);
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
-
-  // set output
-  auto outputTensor1 = nodeDef->AddOutputs();
-  EXPECT_NE(outputTensor1, nullptr);
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {5, 24, 24, 3};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
-
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_OK);
-  if (ret != 0U) {
-    exit(1);
-  }
-
-  float eps = 0.0001;
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < 24; j++) {
-      for (int t = 0; t < 24; t++) {
-        for (int s = 0; s < 3; s++) {
-          EXPECT_LT(std::abs(y[i][j][t][s] - expected_y[i][j][t][s]), eps);
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 24; j++) {
+            for (int t = 0; t < 24; t++) {
+                for (int s = 0; s < 3; s++) {
+                    float value;
+                    in_expected >> value;
+                    expected_y[i][j][t][s] = value;
+                }
+            }
         }
-      }
     }
-  }
+    in_expected.close();
+
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
+
+    // set attr
+    auto methodAttr = CpuKernelUtils::CreateAttrValue();
+    methodAttr->SetString("bilinear");
+    nodeDef->AddAttrs("method", methodAttr.get());
+
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+
+    // image
+    // set input
+    auto inputTensor0 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor0, nullptr);
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
+    // boxes
+    auto inputTensor1 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor1, nullptr);
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
+    // box_index
+    auto inputTensor2 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor2, nullptr);
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
+    // crop_size
+    auto inputTensor3 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor3, nullptr);
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
+
+    // set output
+    auto outputTensor1 = nodeDef->AddOutputs();
+    EXPECT_NE(outputTensor1, nullptr);
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {5, 24, 24, 3};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_OK);
+    if (ret != 0U) {
+        exit(1);
+    }
+
+    float eps = 0.0001;
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 24; j++) {
+            for (int t = 0; t < 24; t++) {
+                for (int s = 0; s < 3; s++) {
+                    EXPECT_LT(std::abs(y[i][j][t][s] - expected_y[i][j][t][s]), eps);
+                }
+            }
+        }
+    }
 }
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_V2_Success) {
-  // raw data
-  int32_t crop_size[2] = {24, 24};
-  int32_t box_index[5] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_V2_Success)
+{
+    // raw data
+    int32_t crop_size[2] = {24, 24};
+    int32_t box_index[5] = {0};
 
-  std::ifstream in_image(ktestcaseFilePath + "data/image_data");
-  if (!in_image.is_open()) {
-    std::cout << "open image_data error" << std::endl;
-    exit(1);
-  }
+    std::ifstream in_image(ktestcaseFilePath + "data/image_data");
+    if (!in_image.is_open()) {
+        std::cout << "open image_data error" << std::endl;
+        exit(1);
+    }
 
-  for (int i = 0; i < BATCH_SIZE; i++) {
-    for (int j = 0; j < IMAGE_HEIGHT; j++) {
-      for (int t = 0; t < IMAGE_WIDTH; t++) {
-        for (int s = 0; s < CHANNELS; s++) {
-          float value;
-          in_image >> value;
-          inputs[i][j][t][s] = value;
+    for (int i = 0; i < BATCH_SIZE; i++) {
+        for (int j = 0; j < IMAGE_HEIGHT; j++) {
+            for (int t = 0; t < IMAGE_WIDTH; t++) {
+                for (int s = 0; s < CHANNELS; s++) {
+                    float value;
+                    in_image >> value;
+                    inputs[i][j][t][s] = value;
+                }
+            }
         }
-      }
     }
-  }
-  in_image.close();
+    in_image.close();
 
-  std::ifstream in_boxes(ktestcaseFilePath + "data/boxes_data");
-  if (!in_boxes.is_open()) {
-    std::cout << "open boxes_data error" << std::endl;
-    exit(1);
-  }
-  for (int i = 0; i < NUM_BOXES; i++) {
-    for (int j = 0; j < 4; j++) {
-      float value;
-      in_boxes >> value;
-      boxes[i][j] = value;
+    std::ifstream in_boxes(ktestcaseFilePath + "data/boxes_data");
+    if (!in_boxes.is_open()) {
+        std::cout << "open boxes_data error" << std::endl;
+        exit(1);
     }
-  }
-  in_boxes.close();
-
-  std::ifstream in_expected(ktestcaseFilePath + "data/expected_output_data_v2");
-  if (!in_expected.is_open()) {
-    std::cout << "open expected_output_data error" << std::endl;
-    exit(1);
-  }
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < 24; j++) {
-      for (int t = 0; t < 24; t++) {
-        for (int s = 0; s < 3; s++) {
-          float value;
-          in_expected >> value;
-          expected_y[i][j][t][s] = value;
+    for (int i = 0; i < NUM_BOXES; i++) {
+        for (int j = 0; j < 4; j++) {
+            float value;
+            in_boxes >> value;
+            boxes[i][j] = value;
         }
-      }
     }
-  }
-  in_expected.close();
+    in_boxes.close();
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
-
-  // set attr
-  auto method = CpuKernelUtils::CreateAttrValue();
-  method->SetString("bilinear_v2");
-  nodeDef->AddAttrs("method", method.get());
-
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(0);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
-
-  // set input
-  // image
-  auto inputTensor0 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor0, nullptr);
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
-  // boxes
-  auto inputTensor1 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor1, nullptr);
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
-  // box_index
-  auto inputTensor2 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor2, nullptr);
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
-  // crop_size
-  auto inputTensor3 = nodeDef->AddInputs();
-  EXPECT_NE(inputTensor3, nullptr);
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
-
-  // set output
-  auto outputTensor1 = nodeDef->AddOutputs();
-  EXPECT_NE(outputTensor1, nullptr);
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {5, 24, 24, 3};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
-
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_OK);
-  if (ret != 0U) {
-    exit(1);
-  }
-
-  float eps = 0.0001;
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < 24; j++) {
-      for (int t = 0; t < 24; t++) {
-        for (int s = 0; s < 3; s++) {
-          EXPECT_LT(std::abs(y[i][j][t][s] - expected_y[i][j][t][s]), eps);
+    std::ifstream in_expected(ktestcaseFilePath + "data/expected_output_data_v2");
+    if (!in_expected.is_open()) {
+        std::cout << "open expected_output_data error" << std::endl;
+        exit(1);
+    }
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 24; j++) {
+            for (int t = 0; t < 24; t++) {
+                for (int s = 0; s < 3; s++) {
+                    float value;
+                    in_expected >> value;
+                    expected_y[i][j][t][s] = value;
+                }
+            }
         }
-      }
     }
-  }
+    in_expected.close();
+
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
+
+    // set attr
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("bilinear_v2");
+    nodeDef->AddAttrs("method", method.get());
+
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+
+    // set input
+    // image
+    auto inputTensor0 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor0, nullptr);
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
+    // boxes
+    auto inputTensor1 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor1, nullptr);
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
+    // box_index
+    auto inputTensor2 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor2, nullptr);
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
+    // crop_size
+    auto inputTensor3 = nodeDef->AddInputs();
+    EXPECT_NE(inputTensor3, nullptr);
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
+
+    // set output
+    auto outputTensor1 = nodeDef->AddOutputs();
+    EXPECT_NE(outputTensor1, nullptr);
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {5, 24, 24, 3};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_OK);
+    if (ret != 0U) {
+        exit(1);
+    }
+
+    float eps = 0.0001;
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 24; j++) {
+            for (int t = 0; t < 24; t++) {
+                for (int s = 0; s < 3; s++) {
+                    EXPECT_LT(std::abs(y[i][j][t][s] - expected_y[i][j][t][s]), eps);
+                }
+            }
+        }
+    }
 }
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_CropSizeInvalid) {
-  constexpr int BATCH_SIZE = 1;
-  constexpr int NUM_BOXES = 1;
-  constexpr int IMAGE_HEIGHT = 4;
-  constexpr int IMAGE_WIDTH = 4;
-  constexpr int CHANNELS = 3;
-  
-  float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {0};
-  float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
-  int32_t box_index[NUM_BOXES] = {0};
-  int32_t crop_size[2] = {0, 24};
-  float y[NUM_BOXES][24][24][CHANNELS] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_CropSizeInvalid)
+{
+    constexpr int BATCH_SIZE = 1;
+    constexpr int NUM_BOXES = 1;
+    constexpr int IMAGE_HEIGHT = 4;
+    constexpr int IMAGE_WIDTH = 4;
+    constexpr int CHANNELS = 3;
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
+    float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {0};
+    float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
+    int32_t box_index[NUM_BOXES] = {0};
+    int32_t crop_size[2] = {0, 24};
+    float y[NUM_BOXES][24][24][CHANNELS] = {0};
 
-  auto method = CpuKernelUtils::CreateAttrValue();
-  method->SetString("bilinear");
-  nodeDef->AddAttrs("method", method.get());
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
 
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(0);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("bilinear");
+    nodeDef->AddAttrs("method", method.get());
 
-  auto inputTensor0 = nodeDef->AddInputs();
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
 
-  auto inputTensor1 = nodeDef->AddInputs();
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
+    auto inputTensor0 = nodeDef->AddInputs();
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
 
-  auto inputTensor2 = nodeDef->AddInputs();
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
+    auto inputTensor1 = nodeDef->AddInputs();
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
 
-  auto inputTensor3 = nodeDef->AddInputs();
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
+    auto inputTensor2 = nodeDef->AddInputs();
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
 
-  auto outputTensor1 = nodeDef->AddOutputs();
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {NUM_BOXES, 24, 24, CHANNELS};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
+    auto inputTensor3 = nodeDef->AddInputs();
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
 
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_PARAM_INVALID);
+    auto outputTensor1 = nodeDef->AddOutputs();
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {NUM_BOXES, 24, 24, CHANNELS};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_BoxIndexInvalid) {
-  constexpr int BATCH_SIZE = 1;
-  constexpr int NUM_BOXES = 1;
-  constexpr int IMAGE_HEIGHT = 4;
-  constexpr int IMAGE_WIDTH = 4;
-  constexpr int CHANNELS = 3;
-  
-  float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {0};
-  float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
-  int32_t box_index[NUM_BOXES] = {5};
-  int32_t crop_size[2] = {2, 2};
-  float y[NUM_BOXES][2][2][CHANNELS] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_BoxIndexInvalid)
+{
+    constexpr int BATCH_SIZE = 1;
+    constexpr int NUM_BOXES = 1;
+    constexpr int IMAGE_HEIGHT = 4;
+    constexpr int IMAGE_WIDTH = 4;
+    constexpr int CHANNELS = 3;
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
+    float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {0};
+    float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
+    int32_t box_index[NUM_BOXES] = {5};
+    int32_t crop_size[2] = {2, 2};
+    float y[NUM_BOXES][2][2][CHANNELS] = {0};
 
-  auto method = CpuKernelUtils::CreateAttrValue();
-  method->SetString("bilinear");
-  nodeDef->AddAttrs("method", method.get());
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
 
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(0);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("bilinear");
+    nodeDef->AddAttrs("method", method.get());
 
-  auto inputTensor0 = nodeDef->AddInputs();
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
 
-  auto inputTensor1 = nodeDef->AddInputs();
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
+    auto inputTensor0 = nodeDef->AddInputs();
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
 
-  auto inputTensor2 = nodeDef->AddInputs();
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
+    auto inputTensor1 = nodeDef->AddInputs();
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
 
-  auto inputTensor3 = nodeDef->AddInputs();
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
+    auto inputTensor2 = nodeDef->AddInputs();
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
 
-  auto outputTensor1 = nodeDef->AddOutputs();
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
+    auto inputTensor3 = nodeDef->AddInputs();
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
 
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_PARAM_INVALID);
+    auto outputTensor1 = nodeDef->AddOutputs();
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_PARAM_INVALID);
 }
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Nearest_Success) {
-  constexpr int BATCH_SIZE = 1;
-  constexpr int NUM_BOXES = 1;
-  constexpr int IMAGE_HEIGHT = 4;
-  constexpr int IMAGE_WIDTH = 4;
-  constexpr int CHANNELS = 3;
-  
-  float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {
-    {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
-     {{13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}, {19.0f, 20.0f, 21.0f}, {22.0f, 23.0f, 24.0f}},
-     {{25.0f, 26.0f, 27.0f}, {28.0f, 29.0f, 30.0f}, {31.0f, 32.0f, 33.0f}, {34.0f, 35.0f, 36.0f}},
-     {{37.0f, 38.0f, 39.0f}, {40.0f, 41.0f, 42.0f}, {43.0f, 44.0f, 45.0f}, {46.0f, 47.0f, 48.0f}}}
-  };
-  float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
-  int32_t box_index[NUM_BOXES] = {0};
-  int32_t crop_size[2] = {2, 2};
-  float y[NUM_BOXES][2][2][CHANNELS] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_Nearest_Success)
+{
+    constexpr int BATCH_SIZE = 1;
+    constexpr int NUM_BOXES = 1;
+    constexpr int IMAGE_HEIGHT = 4;
+    constexpr int IMAGE_WIDTH = 4;
+    constexpr int CHANNELS = 3;
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
+    float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {
+        {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
+         {{13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}, {19.0f, 20.0f, 21.0f}, {22.0f, 23.0f, 24.0f}},
+         {{25.0f, 26.0f, 27.0f}, {28.0f, 29.0f, 30.0f}, {31.0f, 32.0f, 33.0f}, {34.0f, 35.0f, 36.0f}},
+         {{37.0f, 38.0f, 39.0f}, {40.0f, 41.0f, 42.0f}, {43.0f, 44.0f, 45.0f}, {46.0f, 47.0f, 48.0f}}}};
+    float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
+    int32_t box_index[NUM_BOXES] = {0};
+    int32_t crop_size[2] = {2, 2};
+    float y[NUM_BOXES][2][2][CHANNELS] = {0};
 
-  auto method = CpuKernelUtils::CreateAttrValue();
-  method->SetString("nearest");
-  nodeDef->AddAttrs("method", method.get());
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
 
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(0);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("nearest");
+    nodeDef->AddAttrs("method", method.get());
 
-  auto inputTensor0 = nodeDef->AddInputs();
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
 
-  auto inputTensor1 = nodeDef->AddInputs();
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
+    auto inputTensor0 = nodeDef->AddInputs();
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
 
-  auto inputTensor2 = nodeDef->AddInputs();
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
+    auto inputTensor1 = nodeDef->AddInputs();
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
 
-  auto inputTensor3 = nodeDef->AddInputs();
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
+    auto inputTensor2 = nodeDef->AddInputs();
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
 
-  auto outputTensor1 = nodeDef->AddOutputs();
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
+    auto inputTensor3 = nodeDef->AddInputs();
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
 
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_OK);
+    auto outputTensor1 = nodeDef->AddOutputs();
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_OK);
 }
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_ExtrapolationValue_Success) {
-  constexpr int BATCH_SIZE = 1;
-  constexpr int NUM_BOXES = 1;
-  constexpr int IMAGE_HEIGHT = 4;
-  constexpr int IMAGE_WIDTH = 4;
-  constexpr int CHANNELS = 3;
-  
-  float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {
-    {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
-     {{13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}, {19.0f, 20.0f, 21.0f}, {22.0f, 23.0f, 24.0f}},
-     {{25.0f, 26.0f, 27.0f}, {28.0f, 29.0f, 30.0f}, {31.0f, 32.0f, 33.0f}, {34.0f, 35.0f, 36.0f}},
-     {{37.0f, 38.0f, 39.0f}, {40.0f, 41.0f, 42.0f}, {43.0f, 44.0f, 45.0f}, {46.0f, 47.0f, 48.0f}}}
-  };
-  float boxes[NUM_BOXES][4] = {{-0.5f, -0.5f, 1.5f, 1.5f}};
-  int32_t box_index[NUM_BOXES] = {0};
-  int32_t crop_size[2] = {2, 2};
-  float y[NUM_BOXES][2][2][CHANNELS] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_ExtrapolationValue_Success)
+{
+    constexpr int BATCH_SIZE = 1;
+    constexpr int NUM_BOXES = 1;
+    constexpr int IMAGE_HEIGHT = 4;
+    constexpr int IMAGE_WIDTH = 4;
+    constexpr int CHANNELS = 3;
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
+    float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {
+        {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
+         {{13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}, {19.0f, 20.0f, 21.0f}, {22.0f, 23.0f, 24.0f}},
+         {{25.0f, 26.0f, 27.0f}, {28.0f, 29.0f, 30.0f}, {31.0f, 32.0f, 33.0f}, {34.0f, 35.0f, 36.0f}},
+         {{37.0f, 38.0f, 39.0f}, {40.0f, 41.0f, 42.0f}, {43.0f, 44.0f, 45.0f}, {46.0f, 47.0f, 48.0f}}}};
+    float boxes[NUM_BOXES][4] = {{-0.5f, -0.5f, 1.5f, 1.5f}};
+    int32_t box_index[NUM_BOXES] = {0};
+    int32_t crop_size[2] = {2, 2};
+    float y[NUM_BOXES][2][2][CHANNELS] = {0};
 
-  auto method = CpuKernelUtils::CreateAttrValue();
-  method->SetString("bilinear");
-  nodeDef->AddAttrs("method", method.get());
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
 
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(-1.0f);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("bilinear");
+    nodeDef->AddAttrs("method", method.get());
 
-  auto inputTensor0 = nodeDef->AddInputs();
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(-1.0f);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
 
-  auto inputTensor1 = nodeDef->AddInputs();
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
+    auto inputTensor0 = nodeDef->AddInputs();
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
 
-  auto inputTensor2 = nodeDef->AddInputs();
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
+    auto inputTensor1 = nodeDef->AddInputs();
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
 
-  auto inputTensor3 = nodeDef->AddInputs();
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
+    auto inputTensor2 = nodeDef->AddInputs();
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
 
-  auto outputTensor1 = nodeDef->AddOutputs();
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
+    auto inputTensor3 = nodeDef->AddInputs();
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
 
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_OK);
+    auto outputTensor1 = nodeDef->AddOutputs();
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_OK);
 }
 
-TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_BilinearV2_SmallBox) {
-  constexpr int BATCH_SIZE = 1;
-  constexpr int NUM_BOXES = 1;
-  constexpr int IMAGE_HEIGHT = 4;
-  constexpr int IMAGE_WIDTH = 4;
-  constexpr int CHANNELS = 3;
-  
-  float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {
-    {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
-     {{13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}, {19.0f, 20.0f, 21.0f}, {22.0f, 23.0f, 24.0f}},
-     {{25.0f, 26.0f, 27.0f}, {28.0f, 29.0f, 30.0f}, {31.0f, 32.0f, 33.0f}, {34.0f, 35.0f, 36.0f}},
-     {{37.0f, 38.0f, 39.0f}, {40.0f, 41.0f, 42.0f}, {43.0f, 44.0f, 45.0f}, {46.0f, 47.0f, 48.0f}}}
-  };
-  float boxes[NUM_BOXES][4] = {{0.25f, 0.25f, 0.5f, 0.5f}};
-  int32_t box_index[NUM_BOXES] = {0};
-  int32_t crop_size[2] = {2, 2};
-  float y[NUM_BOXES][2][2][CHANNELS] = {0};
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_BilinearV2_SmallBox)
+{
+    constexpr int BATCH_SIZE = 1;
+    constexpr int NUM_BOXES = 1;
+    constexpr int IMAGE_HEIGHT = 4;
+    constexpr int IMAGE_WIDTH = 4;
+    constexpr int CHANNELS = 3;
 
-  auto nodeDef = CpuKernelUtils::CreateNodeDef();
-  nodeDef->SetOpType("CropAndResize");
+    float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {
+        {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
+         {{13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}, {19.0f, 20.0f, 21.0f}, {22.0f, 23.0f, 24.0f}},
+         {{25.0f, 26.0f, 27.0f}, {28.0f, 29.0f, 30.0f}, {31.0f, 32.0f, 33.0f}, {34.0f, 35.0f, 36.0f}},
+         {{37.0f, 38.0f, 39.0f}, {40.0f, 41.0f, 42.0f}, {43.0f, 44.0f, 45.0f}, {46.0f, 47.0f, 48.0f}}}};
+    float boxes[NUM_BOXES][4] = {{0.25f, 0.25f, 0.5f, 0.5f}};
+    int32_t box_index[NUM_BOXES] = {0};
+    int32_t crop_size[2] = {2, 2};
+    float y[NUM_BOXES][2][2][CHANNELS] = {0};
 
-  auto method = CpuKernelUtils::CreateAttrValue();
-  method->SetString("bilinear_v2");
-  nodeDef->AddAttrs("method", method.get());
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
 
-  auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
-  extrapolation_value->SetFloat(0);
-  nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("bilinear_v2");
+    nodeDef->AddAttrs("method", method.get());
 
-  auto inputTensor0 = nodeDef->AddInputs();
-  auto aicpuShape0 = inputTensor0->GetTensorShape();
-  std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
-  aicpuShape0->SetDimSizes(shapes0);
-  inputTensor0->SetDataType(DT_FLOAT);
-  inputTensor0->SetData(inputs);
-  inputTensor0->SetDataSize(sizeof(inputs));
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
 
-  auto inputTensor1 = nodeDef->AddInputs();
-  auto aicpuShape1 = inputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
-  aicpuShape1->SetDimSizes(shapes1);
-  inputTensor1->SetDataType(DT_FLOAT);
-  inputTensor1->SetData(boxes);
-  inputTensor1->SetDataSize(sizeof(boxes));
+    auto inputTensor0 = nodeDef->AddInputs();
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    std::vector<int64_t> shapes0 = {BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS};
+    aicpuShape0->SetDimSizes(shapes0);
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
 
-  auto inputTensor2 = nodeDef->AddInputs();
-  auto aicpuShape2 = inputTensor2->GetTensorShape();
-  std::vector<int64_t> shapes2 = {NUM_BOXES};
-  aicpuShape2->SetDimSizes(shapes2);
-  inputTensor2->SetDataType(DT_INT32);
-  inputTensor2->SetData(box_index);
-  inputTensor2->SetDataSize(sizeof(box_index));
+    auto inputTensor1 = nodeDef->AddInputs();
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes1 = {NUM_BOXES, 4};
+    aicpuShape1->SetDimSizes(shapes1);
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
 
-  auto inputTensor3 = nodeDef->AddInputs();
-  auto aicpuShape3 = inputTensor3->GetTensorShape();
-  std::vector<int64_t> shapes3 = {2};
-  aicpuShape3->SetDimSizes(shapes3);
-  inputTensor3->SetDataType(DT_INT32);
-  inputTensor3->SetData(crop_size);
-  inputTensor3->SetDataSize(sizeof(crop_size));
+    auto inputTensor2 = nodeDef->AddInputs();
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    std::vector<int64_t> shapes2 = {NUM_BOXES};
+    aicpuShape2->SetDimSizes(shapes2);
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
 
-  auto outputTensor1 = nodeDef->AddOutputs();
-  auto aicpuShape4 = outputTensor1->GetTensorShape();
-  std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
-  aicpuShape4->SetDimSizes(shapes4);
-  outputTensor1->SetDataType(DT_FLOAT);
-  outputTensor1->SetData(y);
-  outputTensor1->SetDataSize(sizeof(y));
+    auto inputTensor3 = nodeDef->AddInputs();
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    std::vector<int64_t> shapes3 = {2};
+    aicpuShape3->SetDimSizes(shapes3);
+    inputTensor3->SetDataType(DT_INT32);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
 
-  CpuKernelContext ctx(DEVICE);
-  EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
-  uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
-  EXPECT_EQ(ret, KERNEL_STATUS_OK);
+    auto outputTensor1 = nodeDef->AddOutputs();
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    std::vector<int64_t> shapes4 = {NUM_BOXES, 2, 2, CHANNELS};
+    aicpuShape4->SetDimSizes(shapes4);
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
+    EXPECT_EQ(ret, KERNEL_STATUS_OK);
 }

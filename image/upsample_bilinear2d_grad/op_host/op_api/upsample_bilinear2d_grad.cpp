@@ -24,21 +24,19 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(UpsampleBilinear2dGrad);
 
-const aclTensor *UpsampleBilinear2dGrad(const aclTensor *gradOutput, const aclIntArray *outputSize,
-    const aclIntArray *inputSize, const aclTensor *output, const bool alignCorners, const float scales_h,
-    const float scales_w, aclOpExecutor *executor)
+const aclTensor* UpsampleBilinear2dGrad(const aclTensor* gradOutput, const aclIntArray* outputSize,
+                                        const aclIntArray* inputSize, const aclTensor* output, const bool alignCorners,
+                                        const float scales_h, const float scales_w, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleBilinear2dGrad, gradOutput, outputSize, inputSize, output, alignCorners, scales_h, scales_w);
 
-    const aclTensor *out =
-        executor->AllocTensor(output->GetViewShape(), gradOutput->GetDataType(), output->GetStorageFormat());
+    const aclTensor* out = executor->AllocTensor(output->GetViewShape(), gradOutput->GetDataType(),
+                                                 output->GetStorageFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2dGrad,
-        OP_INPUT(gradOutput),
-        OP_OUTPUT(out),
-        OP_ATTR(outputSize, inputSize, alignCorners, scales_h, scales_w));
+    ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2dGrad, OP_INPUT(gradOutput), OP_OUTPUT(out),
+                                OP_ATTR(outputSize, inputSize, alignCorners, scales_h, scales_w));
 
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

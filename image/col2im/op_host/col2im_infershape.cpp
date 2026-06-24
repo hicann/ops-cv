@@ -33,34 +33,34 @@ constexpr int64_t C_DIM = 1;
 constexpr int64_t H_DIM = 2;
 constexpr int64_t W_DIM = 3;
 struct OutputSizeInfo {
-  int64_t output_size_h = 0;
-  int64_t output_size_w = 0;
+    int64_t output_size_h = 0;
+    int64_t output_size_w = 0;
 };
 
-static bool GetOutputSizeValue(const gert::InferShapeContext *context, const gert::Tensor *output_size_tensor,
-                               OutputSizeInfo &output_size_info) {
-  const int32_t *output_size_value = output_size_tensor->GetData<int32_t>();
-  const size_t output_size_num = static_cast<size_t>(output_size_tensor->GetShapeSize());
-  OP_CHECK_IF(output_size_num != 2,
-           OP_LOGE(
-               context->GetNodeName(), "The length of output_size must be 2, but got %u.", output_size_num),
-           return false);
-  OP_LOGD(context->GetNodeName(), "get output size length %u", output_size_num);
-  output_size_info.output_size_h = static_cast<int64_t>(output_size_value[0]);
-  output_size_info.output_size_w = static_cast<int64_t>(output_size_value[1]);
+static bool GetOutputSizeValue(const gert::InferShapeContext* context, const gert::Tensor* output_size_tensor,
+                               OutputSizeInfo& output_size_info)
+{
+    const int32_t* output_size_value = output_size_tensor->GetData<int32_t>();
+    const size_t output_size_num = static_cast<size_t>(output_size_tensor->GetShapeSize());
+    OP_CHECK_IF(output_size_num != 2,
+                OP_LOGE(context->GetNodeName(), "The length of output_size must be 2, but got %u.", output_size_num),
+                return false);
+    OP_LOGD(context->GetNodeName(), "get output size length %u", output_size_num);
+    output_size_info.output_size_h = static_cast<int64_t>(output_size_value[0]);
+    output_size_info.output_size_w = static_cast<int64_t>(output_size_value[1]);
 
-  return true;
+    return true;
 }
 
-static bool GetOutputSize(const gert::InferShapeContext *context, const gert::Tensor *output_size_tensor,
-                          OutputSizeInfo &output_size_info) {
+static bool GetOutputSize(const gert::InferShapeContext* context, const gert::Tensor* output_size_tensor,
+                          OutputSizeInfo& output_size_info)
+{
     if (!Ops::Cv::IsConstTensor(output_size_tensor)) {
         OP_LOGE(context->GetNodeName(), "the input [output_size] is not const tensor.");
         return false;
     }
     OP_CHECK_IF(!GetOutputSizeValue(context, output_size_tensor, output_size_info),
-            OP_LOGE(context->GetNodeName(), "Get size const for int32 failed!"),
-            return false);
+                OP_LOGE(context->GetNodeName(), "Get size const for int32 failed!"), return false);
     return true;
 }
 
@@ -87,16 +87,15 @@ static ge::graphStatus InferShape4Col2im(gert::InferShapeContext* context)
 
     auto x_shape_size = x_shape->GetDimNum();
     OP_CHECK_IF((x_shape_size != 4),
-            OP_LOGE(
-                context->GetNodeName(), "x's dim length should be 4, but got %s.", Ops::Base::ToString(*x_shape).c_str()),
-            return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "x's dim length should be 4, but got %s.",
+                        Ops::Base::ToString(*x_shape).c_str()),
+                return ge::GRAPH_FAILED);
     y_shape->SetDimNum(x_shape_size);
 
     OutputSizeInfo output_size_info;
     OP_LOGD(context->GetNodeName(), "begin to get output size from input [output_size].");
     OP_CHECK_IF(!GetOutputSize(context, output_size_tensor, output_size_info),
-            OP_LOGE(context->GetNodeName(), "Get output_size const failed!"),
-            return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "Get output_size const failed!"), return ge::GRAPH_FAILED);
 
     y_shape->SetDim(N_DIM, x_shape->GetDim(N_DIM));
     y_shape->SetDim(C_DIM, x_shape->GetDim(C_DIM));
@@ -108,8 +107,7 @@ static ge::graphStatus InferShape4Col2im(gert::InferShapeContext* context)
     return GRAPH_SUCCESS;
 }
 
-
-graphStatus InferDtype4Col2im(gert::InferDataTypeContext *context)
+graphStatus InferDtype4Col2im(gert::InferDataTypeContext* context)
 {
     const auto dataColDTypeInfer = context->GetInputDataType(X_IDX);
     context->SetOutputDataType(Y_IDX, dataColDTypeInfer);

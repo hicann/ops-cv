@@ -36,16 +36,12 @@ static Status ParseParamsAffineGrid(const Message* op_src, ge::Operator& op_dest
 }
 
 REGISTER_CUSTOM_OP("AffineGrid")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::8::AffineGrid"),
-                 ge::AscendString("ai.onnx::9::AffineGrid"),
-                 ge::AscendString("ai.onnx::10::AffineGrid"),
-                 ge::AscendString("ai.onnx::11::AffineGrid"),
-                 ge::AscendString("ai.onnx::12::AffineGrid"),
-                 ge::AscendString("ai.onnx::13::AffineGrid"),
-                 ge::AscendString("ai.onnx::14::AffineGrid"),
-                 ge::AscendString("ai.onnx::15::AffineGrid"),
-                 ge::AscendString("ai.onnx::16::AffineGrid")})
-  .ParseParamsFn(ParseParamsAffineGrid)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("ai.onnx::8::AffineGrid"), ge::AscendString("ai.onnx::9::AffineGrid"),
+                   ge::AscendString("ai.onnx::10::AffineGrid"), ge::AscendString("ai.onnx::11::AffineGrid"),
+                   ge::AscendString("ai.onnx::12::AffineGrid"), ge::AscendString("ai.onnx::13::AffineGrid"),
+                   ge::AscendString("ai.onnx::14::AffineGrid"), ge::AscendString("ai.onnx::15::AffineGrid"),
+                   ge::AscendString("ai.onnx::16::AffineGrid")})
+    .ParseParamsFn(ParseParamsAffineGrid)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

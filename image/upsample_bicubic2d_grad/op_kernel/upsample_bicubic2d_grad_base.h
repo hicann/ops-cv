@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -34,18 +34,18 @@ public:
     TPipe pipe;
 
     matmul::Matmul<matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>>
+                   matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>>
         MMH;
 
     matmul::Matmul<matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>>
+                   matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<AscendC::TPosition::GM, CubeFormat::ND, T>>
         MMW;
     __aicore__ inline UpsampleBicubic2dGradBase() = default;
     __aicore__ inline void Process();
     __aicore__ inline void Init(GM_ADDR grad_output, GM_ADDR grad_input, GM_ADDR usrWorkspace,
-        const UpsampleBicubic2dGradTilingData *__restrict tiling_data);
+                                const UpsampleBicubic2dGradTilingData* __restrict tiling_data);
 
 protected:
     __aicore__ inline uint32_t GetNumPerBlock();
@@ -61,9 +61,9 @@ protected:
     __aicore__ inline void fillCoeffH(int32_t i, int64_t base[2], int64_t idx[16]);
     __aicore__ inline void ProcessW();
     __aicore__ inline void ProcessH();
-    __aicore__ inline void ClearGM(
-        const GlobalTensor<T> &dstGlobal, int64_t loop, int64_t baseN, int64_t tailN, int64_t tailCoreNum);
-    const UpsampleBicubic2dGradTilingData *__restrict tilingData;
+    __aicore__ inline void ClearGM(const GlobalTensor<T>& dstGlobal, int64_t loop, int64_t baseN, int64_t tailN,
+                                   int64_t tailCoreNum);
+    const UpsampleBicubic2dGradTilingData* __restrict tilingData;
 
     uint32_t block_id;
     uint32_t block_h;

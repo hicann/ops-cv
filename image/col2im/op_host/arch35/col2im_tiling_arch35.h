@@ -28,7 +28,7 @@ struct Col2imCompileInfo {};
 
 class Col2imTiling {
 public:
-    explicit Col2imTiling(gert::TilingContext *context) : context_(context){};
+    explicit Col2imTiling(gert::TilingContext* context) : context_(context) {};
     ge::graphStatus DoTiling();
     ge::graphStatus GetPlatformInfo();
     ge::graphStatus InitTilingData();
@@ -42,11 +42,11 @@ public:
 
 private:
     Col2imRegBaseTilingData* tilingData_{nullptr};
-    gert::TilingContext *context_ = nullptr;
+    gert::TilingContext* context_ = nullptr;
 
     int64_t usrWorkspaceSize_ = 1;
     uint64_t dataTypeTilingKey_ = 0;
-    uint64_t tilingKey_{ 0 };
+    uint64_t tilingKey_{0};
     int64_t useCoreNum_ = 1;
     ge::DataType gardInDType_ = ge::DT_UNDEFINED;
 

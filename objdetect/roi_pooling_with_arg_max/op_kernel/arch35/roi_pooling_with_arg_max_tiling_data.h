@@ -28,7 +28,8 @@ struct RoiPoolingWithArgMaxRegBaseTilingData {
     float spatialH;
     float spatialW;
 
-    std::string toString() const {
+    std::string toString() const
+    {
         return "channels = " + std::to_string(channels) + ", fmHeight = " + std::to_string(fmHeight) +
                ", fmWidth = " + std::to_string(fmWidth) + ", roiNumber = " + std::to_string(roiNumber) +
                ", poolH = " + std::to_string(poolH) + ", poolW = " + std::to_string(poolW) +

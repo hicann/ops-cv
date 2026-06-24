@@ -24,8 +24,8 @@
 using namespace AscendC;
 
 template <uint64_t schId, uint64_t format, uint64_t alignCorners, uint64_t halfPixelCenters, uint64_t idxInt32>
-__global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, GM_ADDR y,
-                                                                 GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
+                                                      GM_ADDR tiling)
 {
     if (workspace == nullptr) {
         return;
@@ -81,12 +81,12 @@ __global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, G
         return;
     }
     if constexpr (schId == TPL_SCH_MODE_GATHER_ALL_HW || schId == TPL_SCH_MODE_GATHER_CUT_H) {
-        if constexpr(sizeof(DTYPE_X) == sizeof(float)) {
-            ResizeNearestNeighborV2::ResizeGather<DTYPE_X, uint32_t ,schId, alignCorners> op;
+        if constexpr (sizeof(DTYPE_X) == sizeof(float)) {
+            ResizeNearestNeighborV2::ResizeGather<DTYPE_X, uint32_t, schId, alignCorners> op;
             op.Init(x, size, y, &tilingData);
             op.Process();
         } else {
-            ResizeNearestNeighborV2::ResizeGather<DTYPE_X, uint16_t ,schId, alignCorners> op;
+            ResizeNearestNeighborV2::ResizeGather<DTYPE_X, uint16_t, schId, alignCorners> op;
             op.Init(x, size, y, &tilingData);
             op.Process();
         }
@@ -94,13 +94,15 @@ __global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, G
     }
     if constexpr (idxInt32) {
         ResizeNearestNeighborV2::ResizeNearestNeighborV2Simt<DTYPE_X, uint32_t, format, schId, alignCorners,
-                                                             halfPixelCenters> op;
+                                                             halfPixelCenters>
+            op;
         op.Init(x, size, y, &tilingData);
         op.Process();
         return;
     } else {
         ResizeNearestNeighborV2::ResizeNearestNeighborV2Simt<DTYPE_X, uint64_t, format, schId, alignCorners,
-                                                             halfPixelCenters> op;
+                                                             halfPixelCenters>
+            op;
         op.Init(x, size, y, &tilingData);
         op.Process();
         return;

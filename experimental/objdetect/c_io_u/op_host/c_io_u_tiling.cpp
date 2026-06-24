@@ -63,8 +63,8 @@ static ge::graphStatus GetTotalN(gert::TilingContext* context, uint32_t& totalN)
 {
     const gert::StorageShape* xShape = context->GetInputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
-    OP_CHECK_IF(xShape->GetStorageShape().GetDimNum() < 2,
-                OP_LOGE(context, "CIoU: bboxes rank < 2"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(xShape->GetStorageShape().GetDimNum() < 2, OP_LOGE(context, "CIoU: bboxes rank < 2"),
+                return ge::GRAPH_FAILED);
     totalN = static_cast<uint32_t>(xShape->GetStorageShape().GetDim(1));
     return ge::GRAPH_SUCCESS;
 }
@@ -75,11 +75,15 @@ static CIoUAttrs ReadAttrs(gert::TilingContext* context)
     auto attrs = context->GetAttrs();
     if (attrs != nullptr) {
         const bool* p;
-        if ((p = attrs->GetAttrPointer<bool>(0)) != nullptr) ciouAttrs.trans = *p;
-        if ((p = attrs->GetAttrPointer<bool>(1)) != nullptr) ciouAttrs.isCross = *p;
+        if ((p = attrs->GetAttrPointer<bool>(0)) != nullptr)
+            ciouAttrs.trans = *p;
+        if ((p = attrs->GetAttrPointer<bool>(1)) != nullptr)
+            ciouAttrs.isCross = *p;
         const char* s = attrs->GetAttrPointer<char>(2);
-        if (s != nullptr) ciouAttrs.modeStr = s;
-        if ((p = attrs->GetAttrPointer<bool>(3)) != nullptr) ciouAttrs.atanSubFlag = *p;
+        if (s != nullptr)
+            ciouAttrs.modeStr = s;
+        if ((p = attrs->GetAttrPointer<bool>(3)) != nullptr)
+            ciouAttrs.atanSubFlag = *p;
     }
     return ciouAttrs;
 }
@@ -88,8 +92,7 @@ static ge::graphStatus GetModeId(gert::TilingContext* context, const CIoUAttrs& 
 {
     // is_cross == true (cross-pair MxN output) is NOT supported by this kernel.
     // aclnnCIoU likewise rejects isCross=true at host check.
-    OP_CHECK_IF(ciouAttrs.isCross, OP_LOGE(context, "CIoU: is_cross=true is not supported"),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(ciouAttrs.isCross, OP_LOGE(context, "CIoU: is_cross=true is not supported"), return ge::GRAPH_FAILED);
 
     modeId = 0;
     if (std::strcmp(ciouAttrs.modeStr, "iou") == 0) {
@@ -103,14 +106,14 @@ static ge::graphStatus GetModeId(gert::TilingContext* context, const CIoUAttrs& 
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus BuildPartition(gert::TilingContext* context, uint32_t totalN,
-                                       uint32_t& coreNum, CorePartition& partition)
+static ge::graphStatus BuildPartition(gert::TilingContext* context, uint32_t totalN, uint32_t& coreNum,
+                                      CorePartition& partition)
 {
     auto inDesc = context->GetInputDesc(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inDesc);
     const auto outDtype = inDesc->GetDataType();
     uint32_t typeSize = (outDtype == ge::DT_FLOAT) ? 4u : 2u;
-    partition.alignElem = 32u / typeSize;    // 8 for fp32, 16 for fp16
+    partition.alignElem = 32u / typeSize; // 8 for fp32, 16 for fp16
     uint32_t alignElem = partition.alignElem;
     uint32_t alignedChunks = (alignElem == 0) ? 0u : (totalN / alignElem);
     partition.tailN = (alignElem == 0) ? 0u : (totalN % alignElem);
@@ -119,7 +122,8 @@ static ge::graphStatus BuildPartition(gert::TilingContext* context, uint32_t tot
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     coreNum = ascendcPlatform.GetCoreNumAiv();
-    if (coreNum == 0) coreNum = 1;
+    if (coreNum == 0)
+        coreNum = 1;
 
     if (totalN == 0) {
         partition.tailN = 0;
@@ -129,9 +133,9 @@ static ge::graphStatus BuildPartition(gert::TilingContext* context, uint32_t tot
     } else {
         partition.usedCoreNum = (alignedChunks < coreNum) ? alignedChunks : coreNum;
         uint32_t chunksPerCore = alignedChunks / partition.usedCoreNum;
-        uint32_t chunkRem      = alignedChunks % partition.usedCoreNum;
+        uint32_t chunkRem = alignedChunks % partition.usedCoreNum;
         partition.basePerCore = chunksPerCore * alignElem;
-        partition.pivot       = chunkRem;
+        partition.pivot = chunkRem;
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -139,32 +143,32 @@ static ge::graphStatus BuildPartition(gert::TilingContext* context, uint32_t tot
 static void FillTilingData(CIoUTilingData* tiling, uint32_t totalN, const CIoUAttrs& ciouAttrs,
                            const CorePartition& partition, int32_t modeId)
 {
-    tiling->totalN      = totalN;
+    tiling->totalN = totalN;
     tiling->basePerCore = partition.basePerCore;
-    tiling->pivot       = partition.pivot;
-    tiling->tileN       = TILE_N;
+    tiling->pivot = partition.pivot;
+    tiling->tileN = TILE_N;
     tiling->usedCoreNum = partition.usedCoreNum;
-    tiling->alignElem   = partition.alignElem;
-    tiling->tailN       = partition.tailN;
-    tiling->trans       = ciouAttrs.trans ? 1 : 0;
-    tiling->modeId      = modeId;
+    tiling->alignElem = partition.alignElem;
+    tiling->tailN = partition.tailN;
+    tiling->trans = ciouAttrs.trans ? 1 : 0;
+    tiling->modeId = modeId;
     tiling->atanSubFlag = ciouAttrs.atanSubFlag ? 1 : 0;
-    tiling->eps         = 1e-7f;
+    tiling->eps = 1e-7f;
 }
 
 static ge::graphStatus CIoUTilingFunc(gert::TilingContext* context)
 {
     CIoUTilingData* tiling = nullptr;
     uint32_t totalN = 0;
-    OP_CHECK_IF(InitTilingData(context, tiling) != ge::GRAPH_SUCCESS,
-                OP_LOGE(context, "CIoU: InitTilingData failed"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(GetTotalN(context, totalN) != ge::GRAPH_SUCCESS,
-                OP_LOGE(context, "CIoU: GetTotalN failed"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(InitTilingData(context, tiling) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CIoU: InitTilingData failed"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetTotalN(context, totalN) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CIoU: GetTotalN failed"),
+                return ge::GRAPH_FAILED);
 
     const CIoUAttrs ciouAttrs = ReadAttrs(context);
     int32_t modeId = 0;
-    OP_CHECK_IF(GetModeId(context, ciouAttrs, modeId) != ge::GRAPH_SUCCESS,
-                OP_LOGE(context, "CIoU: GetModeId failed"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetModeId(context, ciouAttrs, modeId) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CIoU: GetModeId failed"),
+                return ge::GRAPH_FAILED);
 
     uint32_t coreNum = 1;
     CorePartition partition;

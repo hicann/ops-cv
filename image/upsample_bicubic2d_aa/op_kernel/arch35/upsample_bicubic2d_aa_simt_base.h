@@ -49,13 +49,12 @@ static __simt_callee__ __aicore__ inline float CubicFilterAA(float m)
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T1 *inputGm,
-    __gm__ T1 *outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW,
-    T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW,
-    float supportH, float supportW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
+    __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
+    T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH,
+    float invScaleW, float supportH, float supportW)
 {
-    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
-        idx += static_cast<T3>(blockDim.x)) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 W = 0;
         T2 H = 0;
@@ -128,23 +127,25 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32)__aicore__
-    void calleeInt32(__gm__ T1 *inputGm, __gm__ T1 *outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
-    T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW,
-    float invScaleH, float invScaleW, float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__
+    void calleeInt32(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
+                     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH,
+                     float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
     SimtCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW,
-        lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+                                   lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH,
+                                   supportW);
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64)__aicore__
-    void calleeInt64(__gm__ T1 *inputGm, __gm__ T1 *outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
-    T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW,
-    float invScaleH, float invScaleW, float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__
+    void calleeInt64(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC,
+                     T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH,
+                     float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
     SimtCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW, shiftW,
-        lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+                                   lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH,
+                                   supportW);
 }
 } // namespace UpsampleBicubic2dAA
 #endif // UPSAMPLE_BICUBIC2D_AA_SIMT_BASE_H

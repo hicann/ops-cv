@@ -12,17 +12,17 @@
 #include <map>
 
 namespace aicpu {
-SamplingKernelType SamplingKernelTypeFromString(const std::string &str)
+SamplingKernelType SamplingKernelTypeFromString(const std::string& str)
 {
     // Define map for different types of sampling kernels
-    static const std::map<std::string, SamplingKernelType> SamplingTypesInfo {
-        {"lanczos1",      LANCZOS1_KERNEL},
-        {"lanczos3",      LANCZOS3_KERNEL},
-        {"lanczos5",      LANCZOS5_KERNEL},
-        {"gaussian",      GAUSSIAN_KERNEL},
-        {"box",           BOX_KERNEL},
-        {"triangle",      TRIANGLE_KERNEL},
-        {"keyscubic",     KEYS_CUBIC_KERNEL},
+    static const std::map<std::string, SamplingKernelType> SamplingTypesInfo{
+        {"lanczos1", LANCZOS1_KERNEL},
+        {"lanczos3", LANCZOS3_KERNEL},
+        {"lanczos5", LANCZOS5_KERNEL},
+        {"gaussian", GAUSSIAN_KERNEL},
+        {"box", BOX_KERNEL},
+        {"triangle", TRIANGLE_KERNEL},
+        {"keyscubic", KEYS_CUBIC_KERNEL},
         {"mitchellcubic", MITCHELL_CUBIC_KERNEL},
     };
 
@@ -33,4 +33,4 @@ SamplingKernelType SamplingKernelTypeFromString(const std::string &str)
 
     return SAMPLING_KERNEL_TYPE_END;
 }
-}  // namespace aicpu
+} // namespace aicpu

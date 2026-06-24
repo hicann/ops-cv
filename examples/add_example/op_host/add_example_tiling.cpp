@@ -58,11 +58,12 @@ static const gert::Shape g_vec_1_shape = {1};
  * \param in_shape 要检查的输入shape
  * \return 如果输入是标量则返回{1}，否则返回原shape的引用
  */
-inline const gert::Shape &EnsureNotScalar(const gert::Shape &in_shape) {
-  if (in_shape.IsScalar()) {
-    return g_vec_1_shape;
-  }
-  return in_shape;
+inline const gert::Shape& EnsureNotScalar(const gert::Shape& in_shape)
+{
+    if (in_shape.IsScalar()) {
+        return g_vec_1_shape;
+    }
+    return in_shape;
 }
 
 /*!
@@ -128,13 +129,11 @@ static ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& 
     auto outShapeZ = EnsureNotScalar(outZ->GetStorageShape());
 
     // shape校验：确保所有张量都是4维
-    OP_CHECK_IF(
-        inputShapeX.GetDimNum() != DIMS_LIMIT || inputShapeY.GetDimNum() != DIMS_LIMIT ||
-            outShapeZ.GetDimNum() != DIMS_LIMIT,
-        OP_LOGE(
-            context, "AddExample: inputx,inputy,outputz shape dim = %zu, %zu, %zu, should be equal 4",
-            inputShapeX.GetDimNum(), inputShapeY.GetDimNum(), outShapeZ.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputShapeX.GetDimNum() != DIMS_LIMIT || inputShapeY.GetDimNum() != DIMS_LIMIT ||
+                    outShapeZ.GetDimNum() != DIMS_LIMIT,
+                OP_LOGE(context, "AddExample: inputx,inputy,outputz shape dim = %zu, %zu, %zu, should be equal 4",
+                        inputShapeX.GetDimNum(), inputShapeY.GetDimNum(), outShapeZ.GetDimNum()),
+                return ge::GRAPH_FAILED);
 
     // 获取shape的维度值
     totalIdx = inputShapeX.GetShapeSize();
@@ -192,34 +191,26 @@ static ge::graphStatus AddExampleTilingFunc(gert::TilingContext* context)
     // 1、获取平台运行信息
     uint64_t ubSize;
     int64_t coreNum;
-    OP_CHECK_IF(
-        GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetPlatformInfo error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
 
     // 2、获取shape、属性信息
     int64_t totalIdx;
     ge::DataType dataType;
-    OP_CHECK_IF(
-        GetShapeAttrsInfo(context, totalIdx, dataType) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetShapeAttrsInfo error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetShapeAttrsInfo(context, totalIdx, dataType) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetShapeAttrsInfo error"), return ge::GRAPH_FAILED);
 
     // 3、获取WorkspaceSize信息
-    OP_CHECK_IF(
-        GetWorkspaceSize(context) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetWorkspaceSize error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
+                return ge::GRAPH_FAILED);
 
     // 4、设置tiling信息
     AddExampleTilingData* tiling = context->GetTilingData<AddExampleTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
 
     // 初始化tiling数据为0
-    OP_CHECK_IF(
-        memset_s(tiling, sizeof(AddExampleTilingData), 0, sizeof(AddExampleTilingData)) != EOK,
-        OP_LOGE(context, "set tiling data error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(memset_s(tiling, sizeof(AddExampleTilingData), 0, sizeof(AddExampleTilingData)) != EOK,
+                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
 
     // 优先做核切分，尽量用更多的核并行计算
     // 计算每个AI Core处理的元素数量

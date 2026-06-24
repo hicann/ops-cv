@@ -18,7 +18,7 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *ResizeGrad(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclTensor *scales,
-    const aclTensor *sizes, aclOpExecutor *executor);
+const aclTensor* ResizeGrad(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclTensor* scales,
+                            const aclTensor* sizes, aclOpExecutor* executor);
 }
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_RESIZE_GRAD_OP_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_RESIZE_GRAD_OP_H_

@@ -93,9 +93,8 @@ __aicore__ inline bool FloatEqual(const float a, const float b)
     }
 };
 
-__aicore__ inline void calculateSingleCoreK(
-    int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK, 
-    float scale_w, bool align_corners, int64_t wIn)
+__aicore__ inline void calculateSingleCoreK(int64_t loopIndex, int64_t length, int64_t& xMin, int64_t& singleCoreK,
+                                            float scale_w, bool align_corners, int64_t wIn)
 {
     singleCoreK = 0;
     xMin = getCenterValue(loopIndex, scale_w, align_corners);
@@ -108,10 +107,9 @@ __aicore__ inline void calculateSingleCoreK(
     }
 }
 
-__aicore__ inline void calculateRadioTensorW(
-    int64_t loopIndex, int64_t length, LocalTensor<float> radioTensor,
-    int64_t xMin, int64_t singleCoreK, float scale_w, bool align_corners, 
-    int64_t wIn, int64_t slide_size_w)
+__aicore__ inline void calculateRadioTensorW(int64_t loopIndex, int64_t length, LocalTensor<float> radioTensor,
+                                             int64_t xMin, int64_t singleCoreK, float scale_w, bool align_corners,
+                                             int64_t wIn, int64_t slide_size_w)
 {
     for (int64_t i = 0; i < length; i++) {
         float i_rel_idx = getCenterValue(i + loopIndex, scale_w, align_corners);
@@ -134,4 +132,4 @@ __aicore__ inline void calculateRadioTensorW(
     }
 }
 
-#endif  // UPSAMPLE_LINEAR_COMMON_H
+#endif // UPSAMPLE_LINEAR_COMMON_H

@@ -20,15 +20,9 @@
 
 class NMSWithMaskInfershape : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "NMSWithMaskInfershape SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "NMSWithMaskInfershape SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "NMSWithMaskInfershape TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "NMSWithMaskInfershape TearDown" << std::endl; }
 };
 
 TEST_F(NMSWithMaskInfershape, nms_with_mask_infershape_test_unknown_rank)
@@ -36,8 +30,8 @@ TEST_F(NMSWithMaskInfershape, nms_with_mask_infershape_test_unknown_rank)
     gert::InfershapeContextPara infershapeContextPara("NMSWithMask",
                                                       {{{{-2, 5}, {-2, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
                                                       {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{ {}, {}}, ge::DT_INT32, ge::FORMAT_ND},
-                                                      {{ {}, {}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                       {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}},
                                                       {{"iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5f)}});
     std::vector<std::vector<int64_t>> expectOutputShape = {{-2, 5}, {-2}, {-2}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);

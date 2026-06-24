@@ -68,6 +68,6 @@ TILING_DATA_FIELD_DEF_STRUCT(TCubeTiling, matmulTiling_h);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleBicubic2d, UpsampleBicubic2dTilingData)
-}  // namespace optiling
+} // namespace optiling
 
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_TILING_H
+#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_TILING_H

@@ -52,8 +52,8 @@ static float ComputeNearest3dGradScales(int64_t input_size, int64_t output_size,
     }
 }
 
-static bool CheckNearest3dGradScales(
-    const aclTensor* gradOut, const aclIntArray* inputSize, const aclFloatArray* castScales)
+static bool CheckNearest3dGradScales(const aclTensor* gradOut, const aclIntArray* inputSize,
+                                     const aclFloatArray* castScales)
 {
     float scales_d = 0.0, scales_h = 0.0, scales_w = 0.0;
     if (castScales->Size() == DIM_THREE) {
@@ -71,21 +71,21 @@ static bool CheckNearest3dGradScales(
     return (scaleW <= MAX_SUPPORT_SCALE && scaleH <= MAX_SUPPORT_SCALE && scaleD <= MAX_SUPPORT_SCALE);
 }
 
-static const aclTensor* UpsampleNearest3dGradAICORE(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
-    const aclFloatArray* castScales, op::Shape gradInputStorageShape, op::Shape gradInputOriginalShape,
-    aclOpExecutor* executor)
+static const aclTensor* UpsampleNearest3dGradAICORE(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                    const aclIntArray* inputSize, const aclFloatArray* castScales,
+                                                    op::Shape gradInputStorageShape, op::Shape gradInputOriginalShape,
+                                                    aclOpExecutor* executor)
 {
     auto dataType = gradOut->GetDataType();
     if (op::DataType::DT_BF16 == dataType || op::DataType::DT_FLOAT16 == dataType) {
         gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
     }
-    const aclTensor* gradInput = executor->AllocTensor(
-        gradInputStorageShape, gradInputOriginalShape, gradOut->GetDataType(), gradOut->GetStorageFormat(),
-        gradOut->GetOriginalFormat());
+    const aclTensor* gradInput = executor->AllocTensor(gradInputStorageShape, gradInputOriginalShape,
+                                                       gradOut->GetDataType(), gradOut->GetStorageFormat(),
+                                                       gradOut->GetOriginalFormat());
     CHECK_RET(gradInput != nullptr, nullptr);
-    ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleNearest3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, castScales));
+    ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearest3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput),
+                                OP_ATTR(inputSize, outputSize, castScales));
     if (op::DataType::DT_BF16 == dataType) {
         gradInput = l0op::Cast(gradInput, op::DataType::DT_BF16, executor);
     } else if (op::DataType::DT_FLOAT16 == dataType) {
@@ -94,9 +94,9 @@ static const aclTensor* UpsampleNearest3dGradAICORE(
     return gradInput;
 }
 
-const aclTensor* UpsampleNearest3dGradNcdhw(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclFloatArray* scales,
-    const aclFloatArray* castScales, aclOpExecutor* executor)
+const aclTensor* UpsampleNearest3dGradNcdhw(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                            const aclIntArray* inputSize, const aclFloatArray* scales,
+                                            const aclFloatArray* castScales, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleNearest3dGradNcdhw, gradOut, outputSize, inputSize, scales);
 
@@ -118,33 +118,32 @@ const aclTensor* UpsampleNearest3dGradNcdhw(
     // npu实现
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (IsRegBase(curArch) && CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
-        const aclTensor* gradInput = executor->AllocTensor(
-            gradInputStorageShape, gradInputOriginalShape, gradOut->GetDataType(), gradOut->GetStorageFormat(),
-            gradOut->GetOriginalFormat());
+        const aclTensor* gradInput = executor->AllocTensor(gradInputStorageShape, gradInputOriginalShape,
+                                                           gradOut->GetDataType(), gradOut->GetStorageFormat(),
+                                                           gradOut->GetOriginalFormat());
         CHECK_RET(gradInput != nullptr, nullptr);
-        ADD_TO_LAUNCHER_LIST_AICORE(
-            UpsampleNearest3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, castScales));
+        ADD_TO_LAUNCHER_LIST_AICORE(UpsampleNearest3dGrad, OP_INPUT(gradOut), OP_OUTPUT(gradInput),
+                                    OP_ATTR(inputSize, outputSize, castScales));
         return gradInput;
     }
     if (CheckNearest3dGradScales(gradOut, inputSize, castScales) && (curArch == NpuArch::DAV_2201) &&
         CheckType(dataType, AICORE_DTYPE_SUPPORT_LIST)) {
-        return UpsampleNearest3dGradAICORE(
-            gradOut, outputSize, inputSize, castScales, gradInputStorageShape, gradInputOriginalShape,
-            executor);
+        return UpsampleNearest3dGradAICORE(gradOut, outputSize, inputSize, castScales, gradInputStorageShape,
+                                           gradInputOriginalShape, executor);
     }
 
     if (op::DataType::DT_BF16 == dataType) {
         gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
     }
-    const aclTensor* gradInput = executor->AllocTensor(
-        gradInputStorageShape, gradInputOriginalShape, gradOut->GetDataType(), gradOut->GetStorageFormat(),
-        gradOut->GetOriginalFormat());
+    const aclTensor* gradInput = executor->AllocTensor(gradInputStorageShape, gradInputOriginalShape,
+                                                       gradOut->GetDataType(), gradOut->GetStorageFormat(),
+                                                       gradOut->GetOriginalFormat());
     CHECK_RET(gradInput != nullptr, nullptr);
     // aicpu实现
     static internal::AicpuTaskSpace space("UpsampleNearest3dGrad");
-    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(
-        UpsampleNearest3dGrad, OP_ATTR_NAMES({"input_size", "output_size", "scales"}), OP_INPUT(gradOut),
-        OP_OUTPUT(gradInput), OP_ATTR(inputSize, outputSize, scales));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(UpsampleNearest3dGrad, OP_ATTR_NAMES({"input_size", "output_size", "scales"}),
+                                          OP_INPUT(gradOut), OP_OUTPUT(gradInput),
+                                          OP_ATTR(inputSize, outputSize, scales));
     CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
 
     if (op::DataType::DT_BF16 == dataType) {

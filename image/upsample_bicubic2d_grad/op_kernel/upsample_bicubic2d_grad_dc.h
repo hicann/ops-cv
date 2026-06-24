@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -39,27 +39,31 @@ template <typename T>
 class UpsampleBicubic2dGradDCND {
 public:
     TPipe pipe;
-    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
 
-    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
     __aicore__ inline UpsampleBicubic2dGradDCND(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubic2dGradTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                UpsampleBicubic2dGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void CalcWeights(float (&weights)[4], float tValue)
     {
-        float x1 = tValue;  // tValue 为当前中心点偏移值，x1为左侧点偏移值
+        float x1 = tValue; // tValue 为当前中心点偏移值，x1为左侧点偏移值
         weights[0] = CalcWeight1(x1 + 1);
         weights[1] = CalcWeight2(x1);
-        float x2 = 1 - tValue;  // tValue 为当前中心点偏移值，x2为右侧点偏移值
+        float x2 = 1 - tValue; // tValue 为当前中心点偏移值，x2为右侧点偏移值
         weights[NUMBER_TWO] = CalcWeight2(x2);
-        weights[NUMBER_THREE] = CalcWeight1(x2 + 1);  // x2为右侧点偏移值，计算第二个点偏移值
+        weights[NUMBER_THREE] = CalcWeight1(x2 + 1); // x2为右侧点偏移值，计算第二个点偏移值
     };
     // 计算weight,可将a替换为固定值
     __aicore__ inline float CalcWeight1(float x)
@@ -130,24 +134,26 @@ private:
     __aicore__ inline void InitLocalTensors();
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
-    __aicore__ inline void CalculateIntermediateTensor(
-        int64_t xMinStart, int64_t maxIdx, float scale, int64_t length);
+    __aicore__ inline void CalculateIntermediateTensor(int64_t xMinStart, int64_t maxIdx, float scale, int64_t length);
     __aicore__ inline int64_t CalculateInstartIdx(int64_t startIdx, float scale);
-    __aicore__ inline void ParseTilingData(UpsampleBicubic2dGradTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(UpsampleBicubic2dGradTilingData* tilingData);
     __aicore__ inline void CopyIn(int64_t index, int64_t dataCount);
-    __aicore__ inline __gm__ T *GetTensorAddr(int64_t index, GM_ADDR tensorPtr);
+    __aicore__ inline __gm__ T* GetTensorAddr(int64_t index, GM_ADDR tensorPtr);
     __aicore__ inline void CalculateRadioTensor(int64_t index, int64_t length, int64_t direction, int64_t slideKNum);
-    __aicore__ inline void calculateWidthExtension(int64_t xMin, int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
+    __aicore__ inline void calculateWidthExtension(int64_t xMin, int64_t tensorCIndex, int64_t rowStart,
+                                                   int64_t rowEnd);
     __aicore__ inline void CopyRadioTensorToGm(int64_t length, int64_t kStartIdx, int64_t slideKNum);
-    __aicore__ inline void CopyRadioTensorToGmY(int64_t length, int64_t singleCoreK, int64_t kStartIdx, int64_t slideKNum);
-    __aicore__ inline void calculateHeightExtension(int64_t xMin, int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
+    __aicore__ inline void CopyRadioTensorToGmY(int64_t length, int64_t singleCoreK, int64_t kStartIdx,
+                                                int64_t slideKNum);
+    __aicore__ inline void calculateHeightExtension(int64_t xMin, int64_t tensorCIndex, int64_t rowStart,
+                                                    int64_t rowEnd);
     __aicore__ inline void InitEventId();
 
 private:
     TBuf<QuePosition::VECCALC> ubBuf;
 
-    const TCubeTiling *__restrict matmulTilingW;
-    const TCubeTiling *__restrict matmulTilingH;
+    const TCubeTiling* __restrict matmulTilingW;
+    const TCubeTiling* __restrict matmulTilingH;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -217,16 +223,16 @@ private:
     bool needExpandW = false;
     bool needExpandH = false;
 
-    bool isZeroVecCore = false;  // 当前是否为aicore的第0个vector核
+    bool isZeroVecCore = false; // 当前是否为aicore的第0个vector核
 
     int64_t splitSingleCoreKMax = 0; // 单次切K的最大值
-    int64_t perDataBlockNum = 1; // 每个dataBlock内的T类型数据量
-    int64_t maxRadioBytes = 0; // 系数矩阵的最大内存
+    int64_t perDataBlockNum = 1;     // 每个dataBlock内的T类型数据量
+    int64_t maxRadioBytes = 0;       // 系数矩阵的最大内存
 };
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBicubic2dGradTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                          UpsampleBicubic2dGradTilingData* tilingData)
 {
     blockIdx = GetBlockIdx();
     aiCoreIdx = blockIdx / 2;
@@ -244,8 +250,8 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::InitScalars()
 {
     isZeroVecCore = blockIdx % 2 == 0;
 
-    realScaleW = (scaleW > 0 || inputShapes[3] > 0)? scaleW :1;
-    realScaleH = (scaleH > 0 || inputShapes[2] > 0)? scaleH :1;
+    realScaleW = (scaleW > 0 || inputShapes[3] > 0) ? scaleW : 1;
+    realScaleH = (scaleH > 0 || inputShapes[2] > 0) ? scaleH : 1;
 
     ubMaxBytes = ubMaxBytes - ONE_K_BYTES;
     perDataBlockNum = DATA_BLOCK_BYTES / sizeof(T);
@@ -254,9 +260,9 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::InitScalars()
 template <typename T>
 __aicore__ inline void UpsampleBicubic2dGradDCND<T>::InitGlobalTensors(GM_ADDR input, GM_ADDR output, GM_ADDR workspace)
 {
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)input);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)output);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)input);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)output);
 }
 
 template <typename T>
@@ -285,7 +291,7 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::InitLocalTensors()
     offset += imetermediateSize;
     xTensor = tmp[offset].ReinterpretCast<float>();
     offset += imetermediateSize;
-    radioTensor= tmp[offset].ReinterpretCast<float>();
+    radioTensor = tmp[offset].ReinterpretCast<float>();
     radioCopyOutTensor = radioTensor.template ReinterpretCast<T>();
 
     maxRadioBytes = imetermediateSize * slideSize;
@@ -317,32 +323,34 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::WDirectionExpansion()
     }
     if (slideStartW < slideEndW) {
         for (int64_t index = slideStartW; index < slideEndW; index += slideSize) {
-            if (isZeroVecCore == (++count % 2 == 0)) continue;
+            if (isZeroVecCore == (++count % 2 == 0))
+                continue;
             xMin = CalculateInstartIdx(index, realScaleW);
-            xMin = GetMin(xMin,inputShapes[3] -1);
+            xMin = GetMin(xMin, inputShapes[3] - 1);
             singleCoreKW = GetMin(singleCoreMaxKW, inputShapes[3] - xMin);
             int64_t slideLength = GetMin(slideSize, slideEndW - index);
-            for (int64_t kStart = 0;kStart< GetMax(singleCoreKW,1);kStart+=splitSingleCoreKMax) {
-                int64_t slideKNum = GetMin((singleCoreKW - kStart),splitSingleCoreKMax);
+            for (int64_t kStart = 0; kStart < GetMax(singleCoreKW, 1); kStart += splitSingleCoreKMax) {
+                int64_t slideKNum = GetMin((singleCoreKW - kStart), splitSingleCoreKMax);
                 CalculateIntermediateTensor(kStart + xMin, outputShapes[3] - 1, realScaleW, slideKNum);
                 CalculateRadioTensor(index, slideLength, 0, slideKNum);
-                CopyRadioTensorToGm(slideLength,kStart,slideKNum);
+                CopyRadioTensorToGm(slideLength, kStart, slideKNum);
             }
             calculateWidthExtension(xMin, index, 0, 0);
         }
     }
     if (tailRowStartW < tailRowEndW) {
         for (int64_t index = tailSlideStartW; index < tailSlideEndW; index += slideSize) {
-            if (isZeroVecCore == (++count % 2 == 0)) continue;
+            if (isZeroVecCore == (++count % 2 == 0))
+                continue;
             xMin = CalculateInstartIdx(index, realScaleW);
-            xMin = GetMin(xMin,inputShapes[3] -1);
+            xMin = GetMin(xMin, inputShapes[3] - 1);
             singleCoreKW = GetMin(singleCoreMaxKW, inputShapes[3] - xMin);
             int64_t slideLength = GetMin(slideSize, tailSlideEndW - index);
-            for (int64_t kStart = 0;kStart< GetMax(singleCoreKW,1);kStart+=splitSingleCoreKMax) {
-                int64_t slideKNum = GetMin((singleCoreKW - kStart),splitSingleCoreKMax);
+            for (int64_t kStart = 0; kStart < GetMax(singleCoreKW, 1); kStart += splitSingleCoreKMax) {
+                int64_t slideKNum = GetMin((singleCoreKW - kStart), splitSingleCoreKMax);
                 CalculateIntermediateTensor(kStart + xMin, outputShapes[3] - 1, realScaleW, slideKNum);
                 CalculateRadioTensor(index, slideLength, 0, slideKNum);
-                CopyRadioTensorToGm(slideLength,kStart,slideKNum);
+                CopyRadioTensorToGm(slideLength, kStart, slideKNum);
             }
             calculateWidthExtension(xMin, index, tailRowStartW, tailRowEndW);
         }
@@ -358,32 +366,34 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::HDirectionExpansion()
     int64_t count = 0;
     if (slideStartH < slideEndH) {
         for (int64_t index = slideStartH; index < slideEndH; index += slideSize) {
-            if (isZeroVecCore == (++count % 2 == 0)) continue;
+            if (isZeroVecCore == (++count % 2 == 0))
+                continue;
             xMin = CalculateInstartIdx(index, realScaleH);
-            xMin = GetMin(xMin,inputShapes[2] -1);
+            xMin = GetMin(xMin, inputShapes[2] - 1);
             singleCoreKH = GetMin(singleCoreMaxKH, inputShapes[2] - xMin);
             int64_t slideLength = GetMin(slideSize, slideEndH - index);
-            for (int64_t kStart = 0;kStart< GetMax(singleCoreKH,1);kStart+=splitSingleCoreKMax) {
-                int64_t slideKNum = GetMin((singleCoreKH - kStart),splitSingleCoreKMax);
+            for (int64_t kStart = 0; kStart < GetMax(singleCoreKH, 1); kStart += splitSingleCoreKMax) {
+                int64_t slideKNum = GetMin((singleCoreKH - kStart), splitSingleCoreKMax);
                 CalculateIntermediateTensor(kStart + xMin, outputShapes[2] - 1, realScaleH, slideKNum);
                 CalculateRadioTensor(index, slideLength, 1, slideKNum);
-                CopyRadioTensorToGmY(slideLength,singleCoreKH,kStart,slideKNum);
+                CopyRadioTensorToGmY(slideLength, singleCoreKH, kStart, slideKNum);
             }
             calculateHeightExtension(xMin, index, 0, 0);
         }
     }
     if (tailRowStartH < tailRowEndH) {
         for (int64_t index = tailSlideStartH; index < tailSlideEndH; index += slideSize) {
-            if (isZeroVecCore == (++count % 2 == 0)) continue;
+            if (isZeroVecCore == (++count % 2 == 0))
+                continue;
             xMin = CalculateInstartIdx(index, realScaleH);
-            xMin = GetMin(xMin,inputShapes[2] -1);
+            xMin = GetMin(xMin, inputShapes[2] - 1);
             singleCoreKH = GetMin(singleCoreMaxKH, inputShapes[2] - xMin);
             int64_t slideLength = GetMin(slideSize, tailSlideEndH - index);
-            for (int64_t kStart = 0;kStart< GetMax(singleCoreKH,1);kStart+=splitSingleCoreKMax) {
-                int64_t slideKNum = GetMin((singleCoreKH - kStart),splitSingleCoreKMax);
+            for (int64_t kStart = 0; kStart < GetMax(singleCoreKH, 1); kStart += splitSingleCoreKMax) {
+                int64_t slideKNum = GetMin((singleCoreKH - kStart), splitSingleCoreKMax);
                 CalculateIntermediateTensor(kStart + xMin, outputShapes[2] - 1, realScaleH, slideKNum);
                 CalculateRadioTensor(index, slideLength, 1, slideKNum);
-                CopyRadioTensorToGmY(slideLength,singleCoreKH,kStart,slideKNum);
+                CopyRadioTensorToGmY(slideLength, singleCoreKH, kStart, slideKNum);
             }
             calculateHeightExtension(xMin, index, tailRowStartH, tailRowEndH);
         }
@@ -401,8 +411,8 @@ __aicore__ inline int64_t UpsampleBicubic2dGradDCND<T>::CalculateInstartIdx(int6
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateIntermediateTensor(
-    int64_t xMinStart, int64_t maxIdx, float scale, int64_t length)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateIntermediateTensor(int64_t xMinStart, int64_t maxIdx,
+                                                                                 float scale, int64_t length)
 {
     // 使用标量计算中心点坐标，和cpu保持一致
     for (int64_t i = xMinStart; i < length + xMinStart; i++) {
@@ -431,12 +441,13 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateIntermediateTensor
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateRadioTensor(int64_t index, int64_t length, int64_t direction, int64_t slideKNum)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateRadioTensor(int64_t index, int64_t length,
+                                                                          int64_t direction, int64_t slideKNum)
 {
     // 当为H方向时，采用向上取整方式计算radio在K维度的num
-    int64_t alignSlideKNum = direction == 0 ? slideKNum : AlignUp(GetMax(slideKNum,1), perDataBlockNum);
+    int64_t alignSlideKNum = direction == 0 ? slideKNum : AlignUp(GetMax(slideKNum, 1), perDataBlockNum);
     // 初始化为0
-    Duplicate(radioTensor, float(0.0), GetMax(alignSlideKNum,perDataBlockNum) * length);
+    Duplicate(radioTensor, float(0.0), GetMax(alignSlideKNum, perDataBlockNum) * length);
     SetFlag<HardEvent::V_S>(eventIDVToS);
     WaitFlag<HardEvent::V_S>(eventIDVToS);
 
@@ -445,19 +456,22 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateRadioTensor(int64_
     bool isInputRightBorder = index + length == (direction == 0 ? outputShapes[3] : outputShapes[2]);
     for (int64_t i = 0; i < slideKNum; i++) {
         int64_t xValue = xTensor.GetValue(i);
-        if (xValue + NUMBER_TWO < index || xValue > index + length) continue;
+        if (xValue + NUMBER_TWO < index || xValue > index + length)
+            continue;
 
         int64_t xIdx = xValue - index;
         CalcWeights(weights, tTensor.GetValue(i));
         int64_t idxFirst = i;
-        for(int64_t j = 0;j< NUMBER_FOUR;j++) {
-            if(weights[j] == 0) continue;
+        for (int64_t j = 0; j < NUMBER_FOUR; j++) {
+            if (weights[j] == 0)
+                continue;
             int64_t idxSecond = xIdx - 1 + j;
-            if ((idxSecond < 0 && !isInputLeftBorder)|| (idxSecond >= length && !isInputRightBorder)) {
+            if ((idxSecond < 0 && !isInputLeftBorder) || (idxSecond >= length && !isInputRightBorder)) {
                 continue;
             }
             idxSecond = GetMin(GetMax(idxSecond, 0), length - 1);
-            int64_t realIdx = direction == 0 ? (idxFirst * length + idxSecond) : (idxSecond * alignSlideKNum + idxFirst);
+            int64_t realIdx = direction == 0 ? (idxFirst * length + idxSecond) :
+                                               (idxSecond * alignSlideKNum + idxFirst);
             if (isInputLeftBorder || isInputRightBorder) {
                 radioTensor.SetValue(realIdx, radioTensor.GetValue(realIdx) + weights[j]);
             } else {
@@ -467,7 +481,6 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateRadioTensor(int64_
     }
     SetFlag<HardEvent::S_V>(eventIDSToV);
     WaitFlag<HardEvent::S_V>(eventIDSToV);
-
 
     if constexpr (!IsSameType<T, float>::value) {
         Cast(radioCopyOutTensor, radioTensor, RoundMode::CAST_RINT, alignSlideKNum * length);
@@ -480,7 +493,8 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::CalculateRadioTensor(int64_
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CopyRadioTensorToGm(int64_t length, int64_t kStartIdx, int64_t slideKNum)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CopyRadioTensorToGm(int64_t length, int64_t kStartIdx,
+                                                                         int64_t slideKNum)
 {
     workSpaceRadioOffset = intermediateMatrixSize + radioMatrixSize * blockIdx;
     int64_t wsOffset = workSpaceRadioOffset + kStartIdx * length;
@@ -490,25 +504,28 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::CopyRadioTensorToGm(int64_t
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CopyRadioTensorToGmY(int64_t length, int64_t singleCoreK, int64_t kStartIdx, int64_t slideKNum)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::CopyRadioTensorToGmY(int64_t length, int64_t singleCoreK,
+                                                                          int64_t kStartIdx, int64_t slideKNum)
 {
     workSpaceRadioOffset = intermediateMatrixSize + radioMatrixSize * blockIdx;
     int64_t wsOffset = workSpaceRadioOffset + kStartIdx;
 
-    int64_t copyNum = GetMax(slideKNum,1);
+    int64_t copyNum = GetMax(slideKNum, 1);
     int64_t dstStrideNum = singleCoreK - slideKNum;
     if (copyNum % perDataBlockNum == 0 && dstStrideNum % perDataBlockNum == 0) {
-        DataCopyParams copyParams{static_cast<uint16_t>(length),static_cast<uint16_t>(copyNum / perDataBlockNum), 0, static_cast<uint16_t>(dstStrideNum / perDataBlockNum)};
+        DataCopyParams copyParams{static_cast<uint16_t>(length), static_cast<uint16_t>(copyNum / perDataBlockNum), 0,
+                                  static_cast<uint16_t>(dstStrideNum / perDataBlockNum)};
         DataCopy(intermediateTensorGm[wsOffset], radioCopyOutTensor, copyParams);
     } else {
-        DataCopyExtParams copyParams{static_cast<uint16_t>(length), (uint32_t)(copyNum * sizeof(T)), 0, static_cast<uint32_t>(dstStrideNum * sizeof(T)), 0};
+        DataCopyExtParams copyParams{static_cast<uint16_t>(length), (uint32_t)(copyNum * sizeof(T)), 0,
+                                     static_cast<uint32_t>(dstStrideNum * sizeof(T)), 0};
         DataCopyPad(intermediateTensorGm[wsOffset], radioCopyOutTensor, copyParams);
     }
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::calculateWidthExtension(
-    int64_t xMin, int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::calculateWidthExtension(int64_t xMin, int64_t tensorCIndex,
+                                                                             int64_t rowStart, int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTilingW->singleCoreM;
     int64_t singleCoreN = matmulTilingW->singleCoreN;
@@ -548,8 +565,8 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::calculateWidthExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::calculateHeightExtension(
-    int64_t xMin, int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::calculateHeightExtension(int64_t xMin, int64_t tensorCIndex,
+                                                                              int64_t rowStart, int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTilingH->singleCoreM;
     int64_t singleCoreN = matmulTilingH->singleCoreN;
@@ -592,7 +609,7 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dGradDCND<T>::ParseTilingData(UpsampleBicubic2dGradTilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dGradDCND<T>::ParseTilingData(UpsampleBicubic2dGradTilingData* tilingData)
 {
     slideSize = tilingData->slideSize;
     scaleW = tilingData->scalesW;
@@ -633,7 +650,7 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::ParseTilingData(UpsampleBic
         tailRowEndW = tailRowStartW + tilingData->perCoreTailSlideNumW;
     } else {
         tailRowStartW = (tilingData->perCoreTailSlideNumW + 1) * aiCoreIdx;
-        tailRowEndW = tailRowStartW +tilingData->perCoreTailSlideNumW + 1;
+        tailRowEndW = tailRowStartW + tilingData->perCoreTailSlideNumW + 1;
     }
 
     slideStartH = tilingData->perCoreSlideNumH * aiCoreIdx;
@@ -647,11 +664,11 @@ __aicore__ inline void UpsampleBicubic2dGradDCND<T>::ParseTilingData(UpsampleBic
         tailRowEndH = tailRowStartH + tilingData->perCoreTailSlideNumH;
     } else {
         tailRowStartH = (tilingData->perCoreTailSlideNumH + 1) * aiCoreIdx;
-        tailRowEndH = tailRowStartH +tilingData->perCoreTailSlideNumH + 1;
+        tailRowEndH = tailRowStartH + tilingData->perCoreTailSlideNumH + 1;
     }
     matmulTilingW = &tilingData->MMParamW;
     matmulTilingH = &tilingData->MMParamH;
 }
 
-}  // namespace UpsampleBicubic2dGrad
+} // namespace UpsampleBicubic2dGrad
 #endif

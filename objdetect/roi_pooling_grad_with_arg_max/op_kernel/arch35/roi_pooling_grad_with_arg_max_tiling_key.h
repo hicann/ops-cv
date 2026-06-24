@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /* !
  * \file roi_pooling_grad_with_arg_max_tiling_key.h
  * \brief roi_pooling_grad_with_arg_max tiling key declare
@@ -22,15 +21,10 @@
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
-ASCENDC_TPL_ARGS_DECL(
-    RoiPoolingGradWithArgMax,
-    ASCENDC_TPL_DTYPE_DECL(
-        dType, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP32, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP16) );
+ASCENDC_TPL_ARGS_DECL(RoiPoolingGradWithArgMax, ASCENDC_TPL_DTYPE_DECL(dType, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP32,
+                                                                       ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP16));
 
-ASCENDC_TPL_SEL(
-    ASCENDC_TPL_ARGS_SEL(
-        ASCENDC_TPL_DTYPE_SEL(dType, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP32) ),
-    ASCENDC_TPL_ARGS_SEL(
-        ASCENDC_TPL_DTYPE_SEL(dType, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP16) ));
+ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_DTYPE_SEL(dType, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP32)),
+                ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_DTYPE_SEL(dType, ROI_POOLING_GRAD_WITH_ARG_MAX_TPL_FP16)));
 
 #endif

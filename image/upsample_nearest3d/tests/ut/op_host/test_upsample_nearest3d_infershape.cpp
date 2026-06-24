@@ -17,24 +17,20 @@
 
 class UpsampleNearest3dTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UpsampleNearest3dTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UpsampleNearest3dTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UpsampleNearest3dTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UpsampleNearest3dTest TearDown" << std::endl; }
 };
 
 TEST_F(UpsampleNearest3dTest, UpsampleNearest3d_infer_test1_failed)
 {
-    gert::InfershapeContextPara infershapeContextPara("UpsampleNearest3d",
-                                                      {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {gert::InfershapeContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
-                                                       gert::InfershapeContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0}))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "UpsampleNearest3d", {{{{1, 1, 10, 10, 10}, {1, 1, 10, 10, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("input_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 5, 5, 5})),
+         gert::InfershapeContextPara::OpAttr("scales",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2.0, 2.0, 2.0}))});
     std::vector<std::vector<int64_t>> expectOutputShape = {{1, 1, 5, 5, 5}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
@@ -145,7 +141,8 @@ TEST_F(UpsampleNearest3dTest, UpsampleNearest3d_infer_test1_failed)
 // {
 //     ge::op::UpsampleNearest3d op;
 //     op.UpdateInputDesc("x",
-//         create_desc_with_ori({16, 3, 5, 512, 512}, ge::DT_FLOAT, ge::FORMAT_ND, {16, 3, 5, 512, 512}, ge::FORMAT_ND));
+//         create_desc_with_ori({16, 3, 5, 512, 512}, ge::DT_FLOAT, ge::FORMAT_ND, {16, 3, 5, 512, 512},
+//         ge::FORMAT_ND));
 //     std::vector<float> scales_vec = {2.5, 2.0, 3.8};
 //     op.SetAttr("scales", scales_vec);
 //     auto ret = op.InferShapeAndType();

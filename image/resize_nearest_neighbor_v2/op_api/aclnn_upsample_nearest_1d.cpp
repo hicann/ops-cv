@@ -41,16 +41,14 @@ static const int64_t ZERO = 0;
 static const std::initializer_list<op::DataType> ASCEND910_DTYPE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8};
 
-static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
-    op::DataType::DT_FLOAT,
-    op::DataType::DT_DOUBLE,
-    op::DataType::DT_UINT8,
+static const std::initializer_list<op::DataType> ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8,
     op::DataType::DT_BF16};
 
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
-static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(outputSize, return false);
@@ -58,7 +56,7 @@ static bool CheckNotNull(const aclTensor *self, const aclIntArray *outputSize, c
     return true;
 }
 
-static const std::initializer_list<DataType> &GetDtypeSupportList()
+static const std::initializer_list<DataType>& GetDtypeSupportList()
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
@@ -68,68 +66,61 @@ static const std::initializer_list<DataType> &GetDtypeSupportList()
     }
 }
 
-static bool CheckDtypeValid(const aclTensor *self)
+static bool CheckDtypeValid(const aclTensor* self)
 {
     auto supportList = GetDtypeSupportList();
     OP_CHECK_DTYPE_NOT_SUPPORT(self, supportList, return false);
     return true;
 }
 
-static bool CheckDtypeEqual(const aclTensor *self, const aclTensor *out)
+static bool CheckDtypeEqual(const aclTensor* self, const aclTensor* out)
 {
     OP_CHECK_DTYPE_NOT_MATCH(self, out->GetDataType(), return false);
     return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclIntArray *outputSize)
+static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize)
 {
     uint64_t size = outputSize->Size();
     OP_CHECK(size > ZERO,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The size of outputSize should be greater than 0,but got %zu", size),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The size of outputSize should be greater than 0,but got %zu", size),
+             return false);
     if (self->GetViewShape().GetDimNum() != THREEDIMS) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "It is expected input size equals to %zu, but got sizes %zu.",
-            THREEDIMS,
-            self->GetViewShape().GetDimNum());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input size equals to %zu, but got sizes %zu.", THREEDIMS,
+                self->GetViewShape().GetDimNum());
         return false;
     }
     if (self->GetViewShape().GetDim(1) == 0 || self->GetViewShape().GetDim(DIM_IDX_2) == 0) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Non-empty 3D data tensor expected but got a tensor with sizes %s.",
-            op::ToString(self->GetViewShape()).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Non-empty 3D data tensor expected but got a tensor with sizes %s.",
+                op::ToString(self->GetViewShape()).GetString());
         return false;
     }
     if (outputSize->GetData()[ZERO] == ZERO) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than %ld,"
-            "but got output (W: %ld).",
-            ZERO,
-            outputSize->GetData()[ZERO]);
+                "Input and output sizes should greater than %ld,"
+                "but got output (W: %ld).",
+                ZERO, outputSize->GetData()[ZERO]);
         return false;
     }
     return true;
 }
 
-static bool CheckFormat(const aclTensor *self, const aclTensor *out)
+static bool CheckFormat(const aclTensor* self, const aclTensor* out)
 {
     if (self->GetStorageFormat() != out->GetStorageFormat()) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Format of input and output should be equal, self [%s], out [%s].",
-            op::ToString(self->GetStorageFormat()).GetString(),
-            op::ToString(out->GetStorageFormat()).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format of input and output should be equal, self [%s], out [%s].",
+                op::ToString(self->GetStorageFormat()).GetString(), op::ToString(out->GetStorageFormat()).GetString());
         return false;
     }
     if (self->GetStorageFormat() != Format::FORMAT_NCL) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "Input format should be NCL. Actual: self [%s].",
-            op::ToString(self->GetStorageFormat()).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input format should be NCL. Actual: self [%s].",
+                op::ToString(self->GetStorageFormat()).GetString());
         return false;
     }
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputSize, const aclTensor *out)
+static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, outputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -149,12 +140,12 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclIntArray *outputS
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *View4dAs3d(const aclTensor *input, aclOpExecutor *executor)
+static const aclTensor* View4dAs3d(const aclTensor* input, aclOpExecutor* executor)
 {
     // NCHW -> squeeze -> reformat -> NCL
     // squeeze out into 3D
     const int64_t removeDim[] = {2};
-    aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, 1);
+    aclIntArray* dimSqueeze = executor->AllocIntArray(removeDim, 1);
     CHECK_RET(dimSqueeze != nullptr, nullptr);
     auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
     CHECK_RET(squeezedInput != nullptr, nullptr);
@@ -166,7 +157,7 @@ static const aclTensor *View4dAs3d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
-static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *executor)
+static const aclTensor* View3dAs4d(const aclTensor* input, aclOpExecutor* executor)
 {
     // NCL -> contigious -> unsqueeze(2) -> reformat -> NCHW
     // contigious
@@ -175,7 +166,7 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
 
     // unsqeeze( 2 )
     const int64_t appendDim[] = {2};
-    aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
+    aclIntArray* dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
     CHECK_RET(dimUnsqueeze != nullptr, nullptr);
     auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
     CHECK_RET(unsqueezedInput != nullptr, nullptr);
@@ -187,10 +178,10 @@ static const aclTensor *View3dAs4d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
-static const aclTensor *View4dAs5d(const aclTensor *input, aclOpExecutor *executor)
+static const aclTensor* View4dAs5d(const aclTensor* input, aclOpExecutor* executor)
 {
     const int64_t appendDim[] = {2};
-    aclIntArray *dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
+    aclIntArray* dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
     CHECK_RET(dimUnsqueeze != nullptr, nullptr);
     auto unsqueezedInput = l0op::UnsqueezeNd(input, dimUnsqueeze, executor);
     CHECK_RET(unsqueezedInput != nullptr, nullptr);
@@ -200,10 +191,10 @@ static const aclTensor *View4dAs5d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
-static const aclTensor *View5dAs4d(const aclTensor *input, aclOpExecutor *executor)
+static const aclTensor* View5dAs4d(const aclTensor* input, aclOpExecutor* executor)
 {
     const int64_t removeDim[] = {2};
-    aclIntArray *dimSqueeze = executor->AllocIntArray(removeDim, 1);
+    aclIntArray* dimSqueeze = executor->AllocIntArray(removeDim, 1);
     CHECK_RET(dimSqueeze != nullptr, nullptr);
     auto squeezedInput = l0op::SqueezeNd(input, dimSqueeze, executor);
     CHECK_RET(squeezedInput != nullptr, nullptr);
@@ -213,8 +204,8 @@ static const aclTensor *View5dAs4d(const aclTensor *input, aclOpExecutor *execut
     return reformatInput;
 }
 
-const aclTensor *upsampleNearest1dAiCpuCompute(
-    const aclTensor *selfContiguous, const aclTensor *outContiguous, const aclTensor *size, aclOpExecutor *executor)
+const aclTensor* upsampleNearest1dAiCpuCompute(const aclTensor* selfContiguous, const aclTensor* outContiguous,
+                                               const aclTensor* size, aclOpExecutor* executor)
 {
     if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NCHW) {
         const int64_t permuteNHWCList[] = {0, 2, 3, 1};
@@ -227,8 +218,8 @@ const aclTensor *upsampleNearest1dAiCpuCompute(
         auto outTranspose = l0op::Transpose(outContiguous, permuteNHWCArray, executor);
         CHECK_RET(outTranspose != nullptr, nullptr);
 
-        const aclTensor *resizeNearestOutAiCpu =
-            l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, false, false, outTranspose, executor);
+        const aclTensor* resizeNearestOutAiCpu = l0op::ResizeNearestNeighborV2(selfTranspose, size, nullptr, false,
+                                                                               false, outTranspose, executor);
         CHECK_RET(resizeNearestOutAiCpu != nullptr, nullptr);
 
         const int64_t permuteNCHWList[] = {0, 3, 1, 2};
@@ -241,42 +232,38 @@ const aclTensor *upsampleNearest1dAiCpuCompute(
     }
 }
 
-
-static const aclTensor *doResizeCompute(
-    const aclTensor *selfContiguous, const aclTensor *outContiguous, const aclTensor *size, aclOpExecutor *executor)
+static const aclTensor* doResizeCompute(const aclTensor* selfContiguous, const aclTensor* outContiguous,
+                                        const aclTensor* size, aclOpExecutor* executor)
 {
-    auto selfTransdata =
-        l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, executor);
+    auto selfTransdata = l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, executor);
     CHECK_RET(selfTransdata != nullptr, nullptr);
 
-    auto outTransdata =
-        l0op::TransDataSpecial(outContiguous, op::Format::FORMAT_NC1HWC0, 0, executor);
+    auto outTransdata = l0op::TransDataSpecial(outContiguous, op::Format::FORMAT_NC1HWC0, 0, executor);
     CHECK_RET(outTransdata != nullptr, nullptr);
 
-    const aclTensor *resizeNearestOutAiCore =
-        l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false, outTransdata, executor);
+    const aclTensor* resizeNearestOutAiCore = l0op::ResizeNearestNeighborV2(selfTransdata, size, nullptr, false, false,
+                                                                            outTransdata, executor);
     CHECK_RET(resizeNearestOutAiCore != nullptr, nullptr);
 
     return l0op::TransData(resizeNearestOutAiCore, selfContiguous->GetStorageFormat(), 0, executor);
 }
 
-static const aclTensor *doUpsampleCompute(
-    const aclTensor *selfContiguous, const aclIntArray *outputSize, aclOpExecutor *executor)
+static const aclTensor* doUpsampleCompute(const aclTensor* selfContiguous, const aclIntArray* outputSize,
+                                          aclOpExecutor* executor)
 {
     auto self = View4dAs5d(selfContiguous, executor);
     CHECK_RET(self != nullptr, nullptr);
 
-
     vector<float> scalesList(3, 0.0f);
-    const aclFloatArray *scales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
+    const aclFloatArray* scales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
     CHECK_RET(scales != nullptr, nullptr);
 
     vector<float> scalesCastList(3, 0.0f);
-    const aclFloatArray *castScales = executor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
+    const aclFloatArray* castScales = executor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
     CHECK_RET(castScales != nullptr, nullptr);
 
     vector<int64_t> sizeList = {1, 1, outputSize->GetData()[0]};
-    const aclIntArray *size = executor->AllocIntArray(sizeList.data(), sizeList.size());
+    const aclIntArray* size = executor->AllocIntArray(sizeList.data(), sizeList.size());
     CHECK_RET(size != nullptr, nullptr);
     auto outUpsampleNearest = l0op::UpsampleNearest3dNcdhw(self, size, scales, castScales, executor);
     CHECK_RET(outUpsampleNearest != nullptr, nullptr);
@@ -285,8 +272,8 @@ static const aclTensor *doUpsampleCompute(
 }
 } // namespace
 
-aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const aclIntArray *outputSize, aclTensor *out,
-    uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor* self, const aclIntArray* outputSize, aclTensor* out,
+                                                   uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnUpsampleNearest1d, DFX_IN(self, outputSize), DFX_OUT(out));
 
@@ -309,17 +296,17 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     FVector<int64_t> outputSizeVector{1, outputSize->GetData()[0]};
-    aclIntArray *outputSizeArray = uniqueExecutor.get()->AllocIntArray(outputSizeVector.data(), 2);
+    aclIntArray* outputSizeArray = uniqueExecutor.get()->AllocIntArray(outputSizeVector.data(), 2);
     CHECK_RET(outputSizeArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto size = uniqueExecutor.get()->ConvertToTensor(outputSizeArray, op::ToOpDataType(ACL_INT32));
     CHECK_RET(size != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    const aclTensor *resizeNearestOut = nullptr;
+    const aclTensor* resizeNearestOut = nullptr;
     if (CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST)) {
         if (IsRegBase()) {
-            resizeNearestOut =
-                l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous, uniqueExecutor.get());
+            resizeNearestOut = l0op::ResizeNearestNeighborV2(selfContiguous, size, nullptr, false, false, outContiguous,
+                                                             uniqueExecutor.get());
         } else if (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_2201) {
             resizeNearestOut = doUpsampleCompute(selfContiguous, outputSize, uniqueExecutor.get());
         } else {
@@ -330,7 +317,7 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
     }
     CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    const aclTensor *out3d = nullptr;
+    const aclTensor* out3d = nullptr;
     out3d = View4dAs3d(resizeNearestOut, uniqueExecutor.get());
     CHECK_RET(out3d != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
@@ -342,7 +329,7 @@ aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(const aclTensor *self, const 
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearest1d(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearest1d(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearest1d);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

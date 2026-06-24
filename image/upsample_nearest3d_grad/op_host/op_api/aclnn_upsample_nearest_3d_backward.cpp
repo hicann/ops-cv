@@ -30,8 +30,8 @@ using namespace op;
 extern "C" {
 #endif
 
-static bool CheckInputElement(
-    const aclTensor* gradOut, const aclTensor* gradInput, const aclIntArray* outputSize, const aclIntArray* inputSize)
+static bool CheckInputElement(const aclTensor* gradOut, const aclTensor* gradInput, const aclIntArray* outputSize,
+                              const aclIntArray* inputSize)
 {
     int64_t batch = (*inputSize)[DIM_ZERO];
     int64_t channels = (*inputSize)[DIM_ONE];
@@ -48,13 +48,12 @@ static bool CheckInputElement(
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
 
-    OP_CHECK(
-        inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, but got input (H: %ld,"
-            " W: %ld) output (H: %ld, W: %ld)", inputH, inputW, outH, outW),
-        return false);
+    OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, but got input (H: %ld,"
+                     " W: %ld) output (H: %ld, W: %ld)",
+                     inputH, inputW, outH, outW),
+             return false);
 
     auto res = CheckSizeLoop(dimNum, gradOutShape, fullOutSize);
     CHECK_RET(res == true, res);
@@ -64,24 +63,26 @@ static bool CheckInputElement(
         expectShape = op::Shape{batch, inputD, inputH, inputW, channels};
     }
     OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gradInput, expectShape, return false);
-    
+
     if (!IsRegBase()) {
-        OP_CHECK(batch <= INT32_MAX && channels <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
+        OP_CHECK(
+            batch <= INT32_MAX && channels <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld, %ld)",
-                INT32_MAX, batch, channels, outD, outH, outW),
+                    "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
+                    batch, channels, outD, outH, outW),
             return false);
-        OP_CHECK(batch <= INT32_MAX && channels <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "InputSize should not be greater than %d, but got inputSize[%ld, %ld, %ld, %ld, %ld]",
-                INT32_MAX, batch, channels, inputD , inputH , inputW),
-            return false);
+        OP_CHECK(batch <= INT32_MAX && channels <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX &&
+                     inputW <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "InputSize should not be greater than %d, but got inputSize[%ld, %ld, %ld, %ld, %ld]",
+                         INT32_MAX, batch, channels, inputD, inputH, inputW),
+                 return false);
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* gradInput)
+static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               const aclTensor* gradInput)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull2In2Out(gradOut, outputSize, inputSize, gradInput), ACLNN_ERR_PARAM_NULLPTR);
@@ -98,15 +99,15 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesD,
-    double scalesH, double scalesW, aclTensor* gradInput, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                           const aclIntArray* inputSize, double scalesD, double scalesH,
+                                                           double scalesW, aclTensor* gradInput,
+                                                           uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
-    L2_DFX_PHASE_1(
-        aclnnUpsampleNearest3dBackward, DFX_IN(gradOut, outputSize, inputSize, scalesD, scalesH, scalesW),
-        DFX_OUT(gradInput));
+    L2_DFX_PHASE_1(aclnnUpsampleNearest3dBackward, DFX_IN(gradOut, outputSize, inputSize, scalesD, scalesH, scalesW),
+                   DFX_OUT(gradInput));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -129,7 +130,8 @@ aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(
 
     vector<float> scaleList{};
     if (scalesD > 0 && scalesH > 0 && scalesW > 0) {
-        scaleList.insert(scaleList.end(), {static_cast<float>(scalesD), static_cast<float>(scalesH), static_cast<float>(scalesW)});
+        scaleList.insert(scaleList.end(),
+                         {static_cast<float>(scalesD), static_cast<float>(scalesH), static_cast<float>(scalesW)});
         outputSize = uniqueExecutor.get()->AllocIntArray({}, 0);
     }
     const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scaleList.data(), scaleList.size());
@@ -158,8 +160,8 @@ aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(
     CHECK_RET(castScales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 调用UpsampleNearest3dGradNcdhw算子kernel, inputSize对应[N, C, D, H, W]
-    auto result = l0op::UpsampleNearest3dGradNcdhw(
-        gradOutTranspose, outputSize, inputSize, scales, castScales, uniqueExecutor.get());
+    auto result = l0op::UpsampleNearest3dGradNcdhw(gradOutTranspose, outputSize, inputSize, scales, castScales,
+                                                   uniqueExecutor.get());
     CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto resultTranspose = result;
@@ -180,8 +182,8 @@ aclnnStatus aclnnUpsampleNearest3dBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearest3dBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearest3dBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                           aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearest3dBackward);
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

@@ -26,8 +26,8 @@ class ResizeBilinearV2AllCopy : public ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2AllCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2TilingData* data);
 
     __aicore__ inline void Process();
 
@@ -45,8 +45,8 @@ protected:
 };
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBilinearV2AllCopy<T_DATA>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
+__aicore__ inline void ResizeBilinearV2AllCopy<T_DATA>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                                             const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 

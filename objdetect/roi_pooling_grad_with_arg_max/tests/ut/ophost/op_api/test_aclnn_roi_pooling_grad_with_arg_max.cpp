@@ -20,15 +20,9 @@ using namespace std;
 
 class l2_roi_pooling_grad_with_arg_max_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "roi_pooling_grad_with_arg_max_test SetUp" << endl;
-    }
+    static void SetUpTestCase() { cout << "roi_pooling_grad_with_arg_max_test SetUp" << endl; }
 
-    static void TearDownTestCase()
-    {
-        cout << "roi_pooling_grad_with_arg_max_test TearDown" << endl;
-    }
+    static void TearDownTestCase() { cout << "roi_pooling_grad_with_arg_max_test TearDown" << endl; }
 };
 
 TEST_F(l2_roi_pooling_grad_with_arg_max_test, case_FLOAT)
@@ -38,8 +32,7 @@ TEST_F(l2_roi_pooling_grad_with_arg_max_test, case_FLOAT)
     auto rois_desc = TensorDesc({4, 5}, ACL_FLOAT, ACL_FORMAT_ND);
     auto grad_input_ref_desc = TensorDesc({1, 32, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
     auto ut = OP_API_UT(aclnnRoiPoolingGradWithArgMax,
-        INPUT(grad_out_desc, grad_input_ref_desc, rois_desc, argmax_desc, 2, 2, 1.0),
-        OUTPUT());
+                        INPUT(grad_out_desc, grad_input_ref_desc, rois_desc, argmax_desc, 2, 2, 1.0), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 1000000;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
@@ -53,8 +46,7 @@ TEST_F(l2_roi_pooling_grad_with_arg_max_test, case_FLOAT16)
     auto rois_desc = TensorDesc({4, 5}, ACL_FLOAT16, ACL_FORMAT_ND);
     auto grad_input_ref_desc = TensorDesc({1, 32, 3, 3}, ACL_FLOAT16, ACL_FORMAT_ND);
     auto ut = OP_API_UT(aclnnRoiPoolingGradWithArgMax,
-        INPUT(grad_out_desc, grad_input_ref_desc, rois_desc, argmax_desc, 2, 2, 1.0),
-        OUTPUT());
+                        INPUT(grad_out_desc, grad_input_ref_desc, rois_desc, argmax_desc, 2, 2, 1.0), OUTPUT());
     // SAMPLE: only test GetWorkspaceSize
     uint64_t workspace_size = 1000000;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);

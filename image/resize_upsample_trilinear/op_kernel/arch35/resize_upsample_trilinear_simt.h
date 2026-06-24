@@ -29,7 +29,7 @@ class ResizeUpsampleTrilinearSimt {
 public:
     __aicore__ inline ResizeUpsampleTrilinearSimt() = default;
     __aicore__ inline void Init(GM_ADDR output, GM_ADDR input,
-        const ResizeUpsampleTrilinearArch35TilingData* __restrict tiling);
+                                const ResizeUpsampleTrilinearArch35TilingData* __restrict tiling);
     __aicore__ inline void Process();
 
 private:

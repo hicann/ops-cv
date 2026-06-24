@@ -8,7 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
- /*!
+/*!
  * \file aipp_proto.h
  * \brief
  */
@@ -36,7 +36,8 @@ image normalization (by subtracting the mean value or multiplying a factor), ima
 *@par Third-party framework compatibility
 * It is a custom operator. It has no corresponding operator in Caffe.
 *@par Restrictions:
-*Warning: This operator can be integrated only by configuring INSERT_OP_FILE of aclgrphBuildModel. Please do not use it directly.
+*Warning: This operator can be integrated only by configuring INSERT_OP_FILE of aclgrphBuildModel. Please do not use it
+directly.
 */
 REG_OP(Aipp)
     .INPUT(images, TensorType{DT_UINT8})

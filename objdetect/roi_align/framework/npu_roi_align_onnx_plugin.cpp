@@ -61,15 +61,11 @@ static Status ParseParamsNpuRoiAlign(const Message* op_src, ge::Operator& op_des
 // register ROIAlign op info to GE
 REGISTER_CUSTOM_OP("ROIAlign")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("npu::1::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::11::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::12::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::13::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::14::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::15::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::16::NPURoiAlign"),
-                   ge::AscendString("ai.onnx::17::NPURoiAlign"),
+    .OriginOpType({ge::AscendString("npu::1::NPURoiAlign"), ge::AscendString("ai.onnx::11::NPURoiAlign"),
+                   ge::AscendString("ai.onnx::12::NPURoiAlign"), ge::AscendString("ai.onnx::13::NPURoiAlign"),
+                   ge::AscendString("ai.onnx::14::NPURoiAlign"), ge::AscendString("ai.onnx::15::NPURoiAlign"),
+                   ge::AscendString("ai.onnx::16::NPURoiAlign"), ge::AscendString("ai.onnx::17::NPURoiAlign"),
                    ge::AscendString("ai.onnx::18::NPURoiAlign")})
     .ParseParamsFn(ParseParamsNpuRoiAlign)
     .ImplyType(ImplyType::TVM);
-}  // namespace domi
+} // namespace domi

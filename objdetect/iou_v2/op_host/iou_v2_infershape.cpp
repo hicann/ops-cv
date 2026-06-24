@@ -18,65 +18,54 @@
 using namespace ge;
 using namespace std;
 
-namespace
-{
-    const int64_t INPUT_INDEX_BBOXES = 0;
-    const int64_t INPUT_INDEX_GTBOXES = 1;
-    const int64_t OUTPUT_INDEX_OVERLAP = 0;
-    const int64_t IOUS_DIM = 2;
-    const int64_t ALIGNED_INFO_IDX = 2;
+namespace {
+const int64_t INPUT_INDEX_BBOXES = 0;
+const int64_t INPUT_INDEX_GTBOXES = 1;
+const int64_t OUTPUT_INDEX_OVERLAP = 0;
+const int64_t IOUS_DIM = 2;
+const int64_t ALIGNED_INFO_IDX = 2;
 } // namespace
 
-namespace ops
+namespace ops {
+static ge::graphStatus InferShapeForIouV2(gert::InferShapeContext* context)
 {
-    static ge::graphStatus InferShapeForIouV2(gert::InferShapeContext *context)
-    {
-        auto overlapShape = context->GetOutputShape(OUTPUT_INDEX_OVERLAP);
-        auto const bboxesShape = context->GetInputShape(INPUT_INDEX_BBOXES);
-        auto const gtboxesShape = context->GetInputShape(INPUT_INDEX_GTBOXES);
+    auto overlapShape = context->GetOutputShape(OUTPUT_INDEX_OVERLAP);
+    auto const bboxesShape = context->GetInputShape(INPUT_INDEX_BBOXES);
+    auto const gtboxesShape = context->GetInputShape(INPUT_INDEX_GTBOXES);
 
-        auto attrs = context->GetAttrs();
+    auto attrs = context->GetAttrs();
 
-        if (bboxesShape == nullptr || gtboxesShape == nullptr || attrs == nullptr)
-        {
-            OP_LOGE(
-                context, "Either bboxesShape, gtboxesShape, or attrs is nullptr");
+    if (bboxesShape == nullptr || gtboxesShape == nullptr || attrs == nullptr) {
+        OP_LOGE(context, "Either bboxesShape, gtboxesShape, or attrs is nullptr");
+        return ge::GRAPH_FAILED;
+    }
+    const bool* aligned = attrs->GetAttrPointer<bool>(ALIGNED_INFO_IDX);
+
+    // update output shape.
+    overlapShape->SetDimNum(IOUS_DIM); // the output dimensions are 2.
+    if (*aligned) {
+        int64_t const bboxesNum = bboxesShape->GetDim(1);
+        int64_t const gtboxesNum = gtboxesShape->GetDim(1);
+        if (bboxesNum != gtboxesNum) {
+            OP_LOGE(context, "Parameter aligned is true, the num of bboxes and gtboxes must be same.");
             return ge::GRAPH_FAILED;
         }
-        const bool *aligned = attrs->GetAttrPointer<bool>(ALIGNED_INFO_IDX);
-
-        // update output shape.
-        overlapShape->SetDimNum(IOUS_DIM); // the output dimensions are 2.
-        if (*aligned)
-        {
-            int64_t const bboxesNum = bboxesShape->GetDim(1);
-            int64_t const gtboxesNum = gtboxesShape->GetDim(1);
-            if (bboxesNum != gtboxesNum)
-            {
-                OP_LOGE(
-                    context, "Parameter aligned is true, the num of bboxes and gtboxes must be same.");
-                return ge::GRAPH_FAILED;
-            }
-            overlapShape->SetDim(0, gtboxesNum);
-            overlapShape->SetDim(1, 1);
-        }
-        else
-        {
-            int64_t const bboxesNum = bboxesShape->GetDim(0);
-            int64_t const gtboxesNum = gtboxesShape->GetDim(0);
-            overlapShape->SetDim(0, gtboxesNum);
-            overlapShape->SetDim(1, bboxesNum);
-        }
-        return ge::GRAPH_SUCCESS;
+        overlapShape->SetDim(0, gtboxesNum);
+        overlapShape->SetDim(1, 1);
+    } else {
+        int64_t const bboxesNum = bboxesShape->GetDim(0);
+        int64_t const gtboxesNum = gtboxesShape->GetDim(0);
+        overlapShape->SetDim(0, gtboxesNum);
+        overlapShape->SetDim(1, bboxesNum);
     }
-    static ge::graphStatus InferDataTypeForIouV2(gert::InferDataTypeContext *context)
-    {
-        const ge::DataType feature_dtype = context->GetInputDataType(INPUT_INDEX_BBOXES);
-        context->SetOutputDataType(OUTPUT_INDEX_OVERLAP, feature_dtype);
-        return GRAPH_SUCCESS;
-    }
+    return ge::GRAPH_SUCCESS;
+}
+static ge::graphStatus InferDataTypeForIouV2(gert::InferDataTypeContext* context)
+{
+    const ge::DataType feature_dtype = context->GetInputDataType(INPUT_INDEX_BBOXES);
+    context->SetOutputDataType(OUTPUT_INDEX_OVERLAP, feature_dtype);
+    return GRAPH_SUCCESS;
+}
 
-    IMPL_OP_INFERSHAPE(IouV2)
-        .InferShape(InferShapeForIouV2)
-        .InferDataType(InferDataTypeForIouV2);
+IMPL_OP_INFERSHAPE(IouV2).InferShape(InferShapeForIouV2).InferDataType(InferDataTypeForIouV2);
 } // namespace ops

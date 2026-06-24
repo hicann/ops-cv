@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -29,7 +29,7 @@ constexpr uint32_t BEST_PERFORMANCE_SCALE_3 = 8;
 constexpr uint32_t BEST_PERFORMANCE_SCALE_4 = 5;
 
 constexpr uint32_t BYTE = 8;
-constexpr uint32_t BYTE_REPEAT = 256;  // The amount of data that can be processed by a repeat.
+constexpr uint32_t BYTE_REPEAT = 256; // The amount of data that can be processed by a repeat.
 constexpr uint32_t BYTE_BASIC_BLOCK = 1024;
 
 constexpr int8_t SHAPE_SIZE = 4;
@@ -59,12 +59,12 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinearAATiling {
 public:
-    explicit UpsampleBilinearAATiling(gert::TilingContext *context) : tilingContext(context){};
-    ge::graphStatus RunBigKernelTiling(gert::TilingContext *context);
+    explicit UpsampleBilinearAATiling(gert::TilingContext* context) : tilingContext(context) {};
+    ge::graphStatus RunBigKernelTiling(gert::TilingContext* context);
+
 private:
     void setScale();
-    inline float compute_scale_value(int64_t input_size, int64_t out_size,
-                                     bool align_corner, const float *scale) const;
+    inline float compute_scale_value(int64_t input_size, int64_t out_size, bool align_corner, const float* scale) const;
     bool getWorkSpace(uint32_t needCoreNum);
     void getShapes();
     void getSlideSize();
@@ -76,7 +76,7 @@ private:
     void FillTilingData();
     void getTCubeTiling_w();
     void getTCubeTiling_h();
-    inline bool CheckScales(const gert::TilingContext *context, float scales_w, float scales_h);
+    inline bool CheckScales(const gert::TilingContext* context, float scales_w, float scales_h);
 
     template <typename T1, typename T2>
     inline T1 CeilA2B(T1 a, T2 b) const;
@@ -87,16 +87,16 @@ private:
 private:
     int64_t slide_size{16};
     UpsampleBilinearAATilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize{4};
     gert::Shape input_shape;
-    const bool *align_corners{nullptr};
-    const float *scale_h{nullptr};
-    const float *scale_w{nullptr};
+    const bool* align_corners{nullptr};
+    const float* scale_h{nullptr};
+    const float* scale_w{nullptr};
     float realScale_h{0.0f};
     float realScale_w{0.0f};
-    const gert::ContinuousVector *output_size{nullptr};
+    const gert::ContinuousVector* output_size{nullptr};
 
     int64_t output_shapes[4] = {0};
     int64_t input_shapes[4] = {0};
@@ -109,7 +109,7 @@ private:
 
 void UpsampleBilinearAATiling::setScale()
 {
-    const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
 
     realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[0], *align_corners, scale_h);
     realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[1], *align_corners, scale_w);
@@ -136,8 +136,8 @@ void UpsampleBilinearAATiling::setScale()
     tilingData.set_invscale_h(invscale_h);
 }
 
-inline float UpsampleBilinearAATiling::compute_scale_value(
-    int64_t input_size, int64_t out_size, bool align_corner, const float *scale) const
+inline float UpsampleBilinearAATiling::compute_scale_value(int64_t input_size, int64_t out_size, bool align_corner,
+                                                           const float* scale) const
 {
     if (out_size == input_size) {
         return static_cast<float>(1);
@@ -149,25 +149,24 @@ inline float UpsampleBilinearAATiling::compute_scale_value(
             return static_cast<float>(0);
         }
     } else {
-        return (scale != nullptr && *scale > 0) ? static_cast<float>(*scale)
-                                                : (static_cast<float>(input_size) / out_size);
+        return (scale != nullptr && *scale > 0) ? static_cast<float>(*scale) :
+                                                  (static_cast<float>(input_size) / out_size);
     }
 }
 
-inline bool UpsampleBilinearAATiling::CheckScales(const gert::TilingContext *context, float scales_w, float scales_h)
+inline bool UpsampleBilinearAATiling::CheckScales(const gert::TilingContext* context, float scales_w, float scales_h)
 {
-    const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
     int64_t inputH = input_shape.GetDim(H_INDEX);
     int64_t inputW = input_shape.GetDim(W_INDEX);
     int64_t outputH = output_size_array[0];
     int64_t outputW = output_size_array[1];
     float tmpScalesH = scales_h > 0 ? scales_h : static_cast<float>(inputH / outputH);
     float tmpScalesW = scales_w > 0 ? scales_w : static_cast<float>(inputW / outputW);
-    OP_CHECK_IF((tmpScalesH > MAX_SUPPORT_SCALE || tmpScalesW > MAX_SUPPORT_SCALE),
-        OP_LOGE(context->GetNodeName(),
-            "Scales should not exceed 50, but got scale (scales_w: %f, scales_h: %f) ",
-            tmpScalesW,
-            tmpScalesH),
+    OP_CHECK_IF(
+        (tmpScalesH > MAX_SUPPORT_SCALE || tmpScalesW > MAX_SUPPORT_SCALE),
+        OP_LOGE(context->GetNodeName(), "Scales should not exceed 50, but got scale (scales_w: %f, scales_h: %f) ",
+                tmpScalesW, tmpScalesH),
         return false);
     return true;
 }
@@ -182,7 +181,7 @@ inline bool FloatEqual(float a, float b)
     }
 };
 
-ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling(gert::TilingContext *context)
+ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling(gert::TilingContext* context)
 {
     bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     if (regBase) {
@@ -191,18 +190,22 @@ ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling(gert::TilingContext
     }
     auto srcTensor = tilingContext->GetInputTensor(0);
     OP_CHECK_IF(srcTensor == nullptr, OP_LOGE(tilingContext->GetNodeName(), "srcTensor == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
 
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"), return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
-    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+                return ge::GRAPH_FAILED);
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
-    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
+                return ge::GRAPH_FAILED);
     scale_h = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
-    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"),
+                return ge::GRAPH_FAILED);
     scale_w = attrs->GetAttrPointer<float>(SCALE_W_ATTR);
-    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"),
+                return ge::GRAPH_FAILED);
 
     auto temp = tilingContext->GetInputDesc(0);
     OP_CHECK_IF(temp == nullptr, OP_LOGE(tilingContext->GetNodeName(), "temp == nullptr"), return ge::GRAPH_FAILED);
@@ -225,9 +228,9 @@ ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling(gert::TilingContext
         return ge::GRAPH_FAILED;
     }
 
-    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAACompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAACompileInfo*>(tilingContext->GetCompileInfo());
     OP_CHECK_IF(compileInfo == nullptr, OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     uint32_t coreNumPlatForm = compileInfo->coreNum;
 
     tilingContext->SetTilingKey(1);
@@ -280,11 +283,10 @@ void UpsampleBilinearAATiling::getTCubeTiling_w()
     mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX],
-        output_shapes[W_INDEX],
-        input_shapes[W_INDEX]);
-    mmTiling_w.SetShape(
-        input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], slide_size, singleCoreK_w);
+    mmTiling_w.SetOrgShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], output_shapes[W_INDEX],
+                           input_shapes[W_INDEX]);
+    mmTiling_w.SetShape(input_shapes[N_INDEX] * input_shapes[C_INDEX] * input_shape[H_INDEX], slide_size,
+                        singleCoreK_w);
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
         OP_LOGE(tilingContext->GetNodeName(), "getTCubeTiling_w Error, please Check inputShapes.");
         return;
@@ -310,13 +312,13 @@ void UpsampleBilinearAATiling::getTCubeTiling_h()
 // 先只算w方向
 bool UpsampleBilinearAATiling::getWorkSpace(uint32_t needCoreNum)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     if (workspaces == nullptr) {
         return false;
     }
     // 中间tensor
-    uint64_t intermediate_matrix_size =
-        output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] * dataTypeSize;
+    uint64_t intermediate_matrix_size = output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] *
+                                        dataTypeSize;
     intermediate_matrix_size = (intermediate_matrix_size + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
     int64_t singleCoreK = singleCoreK_w > singleCoreK_h ? singleCoreK_w : singleCoreK_h;
@@ -331,7 +333,7 @@ bool UpsampleBilinearAATiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBilinearAATiling::getShapes()
 {
-    const int64_t *output_size_array = reinterpret_cast<const int64_t *>(output_size->GetData());
+    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
@@ -503,19 +505,19 @@ uint32_t UpsampleBilinearAATiling::GetNeedCoreNumH(uint32_t coreNumPlatform)
 void UpsampleBilinearAATiling::FillTilingData()
 {
     tilingData.set_dataType(GetDataTypeVal());
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
-static ge::graphStatus tiling4UpsampleBilinearAATiling(gert::TilingContext *context)
+static ge::graphStatus tiling4UpsampleBilinearAATiling(gert::TilingContext* context)
 {
     UpsampleBilinearAATiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling(context);
 }
 
-static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
+static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleBilinear2dAACompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
@@ -524,10 +526,9 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext *context)
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
-        OP_LOGE(context->GetNodeName(),
-            "UpsampleBilinear2dAA GetHardwareInfo Failed, vectorCoreNum:%u",
-            compileInfo->coreNum),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "UpsampleBilinear2dAA GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->coreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -535,4 +536,4 @@ IMPL_OP_OPTILING(UpsampleBilinear2dAA)
     .Tiling(tiling4UpsampleBilinearAATiling)
     .TilingParse<UpsampleBilinear2dAACompileInfo>(tilingPrepareTiling);
 
-}  // namespace optiling
+} // namespace optiling

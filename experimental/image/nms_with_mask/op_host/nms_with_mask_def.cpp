@@ -28,13 +28,13 @@ class NMSWithMask : public OpDef {
 public:
     explicit NMSWithMask(const char* name) : OpDef(name)
     {
-        this->Input("x1")                                       // 输入x1定义
-            .ParamType(REQUIRED)                                // 必选输入
-            .DataType({ge::DT_FLOAT})             // 支持数据类型
+        this->Input("x1")                        // 输入x1定义
+            .ParamType(REQUIRED)                 // 必选输入
+            .DataType({ge::DT_FLOAT})            // 支持数据类型
             .Format({ge::FORMAT_ND})             // 支持format格式
             .UnknownShapeFormat({ge::FORMAT_ND}) // 未确定大小shape对应format格式
-            .AutoContiguous();                                  // 内存自动连续化
-        this->Input("x2")                                       // 输入x2定义
+            .AutoContiguous();                   // 内存自动连续化
+        this->Input("x2")                        // 输入x2定义
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT})
             .Format({ge::FORMAT_ND})
@@ -48,7 +48,7 @@ public:
             .AutoContiguous();
         this->Attr("iou_threshold").AttrType(OPTIONAL).Float(1e-1);
         this->Attr("scores_threshold").AttrType(OPTIONAL).Float(1e-1);
-        this->AICore().AddConfig("ascend910b"); 
+        this->AICore().AddConfig("ascend910b");
     }
 };
 OP_ADD(NMSWithMask); // 添加算子信息库

@@ -48,8 +48,8 @@ static bool IsAiCoreSupport(const aclTensor* self)
 }
 
 // AICPU算子kernel
-static const aclTensor* ResizeBilinearV2AICPU(
-    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclTensor* y, aclOpExecutor* executor)
+static const aclTensor* ResizeBilinearV2AICPU(const aclTensor* x, const aclTensor* size, const bool align_corners,
+                                              const aclTensor* y, aclOpExecutor* executor)
 {
     L0_DFX(ResizeBilinearV2AICPU, x, size, align_corners, y);
     const bool half_pixel_centers = !align_corners;
@@ -62,27 +62,27 @@ static const aclTensor* ResizeBilinearV2AICPU(
     }
 
     static internal::AicpuTaskSpace space("ResizeBilinear", ge::DEPEND_IN_SHAPE, true);
-    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(
-        ResizeBilinearV2, OP_ATTR_NAMES({"T", "align_corners", "half_pixel_centers"}), OP_INPUT(x, size),
-        OP_OUTPUT(out), OP_ATTR(x->GetDataType(), align_corners, half_pixel_centers));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(ResizeBilinearV2, OP_ATTR_NAMES({"T", "align_corners", "half_pixel_centers"}),
+                                          OP_INPUT(x, size), OP_OUTPUT(out),
+                                          OP_ATTR(x->GetDataType(), align_corners, half_pixel_centers));
     CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
     return out;
 }
 
-static const aclTensor* ResizeBilinearV2AICORE(
-    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclTensor* y, aclOpExecutor* executor)
+static const aclTensor* ResizeBilinearV2AICORE(const aclTensor* x, const aclTensor* size, const bool align_corners,
+                                               const aclTensor* y, aclOpExecutor* executor)
 {
     L0_DFX(ResizeBilinearV2AICORE, x, size, align_corners, y);
     const bool half_pixel_centers = !align_corners;
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        ResizeBilinearV2, OP_INPUT(x, size), OP_OUTPUT(y), OP_ATTR(align_corners, half_pixel_centers));
-    OP_CHECK(
-        ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeBilinearV2AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeBilinearV2, OP_INPUT(x, size), OP_OUTPUT(y),
+                                           OP_ATTR(align_corners, half_pixel_centers));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeBilinearV2AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return y;
 }
-const aclTensor* ResizeBilinearV2(
-    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclTensor* y, aclOpExecutor* executor)
+const aclTensor* ResizeBilinearV2(const aclTensor* x, const aclTensor* size, const bool align_corners,
+                                  const aclTensor* y, aclOpExecutor* executor)
 {
     if (IsAiCoreSupport(x)) {
         return ResizeBilinearV2AICORE(x, size, align_corners, y, executor);
@@ -91,32 +91,28 @@ const aclTensor* ResizeBilinearV2(
     }
 }
 
-static const aclTensor* ResizeBilinearV2AicoreWith4d(
-    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclFloatArray* scales,
-    const aclTensor* y, aclOpExecutor* executor)
+static const aclTensor* ResizeBilinearV2AicoreWith4d(const aclTensor* x, const aclTensor* size,
+                                                     const bool align_corners, const aclFloatArray* scales,
+                                                     const aclTensor* y, aclOpExecutor* executor)
 {
     L0_DFX(ResizeBilinearV2AicoreWith4d, x, size, align_corners, scales, y);
     const bool half_pixel_centers = !align_corners;
 
     auto ret = ACLNN_SUCCESS;
     if (scales == nullptr) {
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(
-            ResizeBilinearV2, OP_INPUT(x, size), OP_OUTPUT(y),
-            OP_ATTR(align_corners, half_pixel_centers, y->GetDataType()));
+        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeBilinearV2, OP_INPUT(x, size), OP_OUTPUT(y),
+                                          OP_ATTR(align_corners, half_pixel_centers, y->GetDataType()));
     } else {
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(
-            ResizeBilinearV2, OP_INPUT(x, size), OP_OUTPUT(y),
-            OP_ATTR(align_corners, half_pixel_centers, y->GetDataType(), scales));
+        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeBilinearV2, OP_INPUT(x, size), OP_OUTPUT(y),
+                                          OP_ATTR(align_corners, half_pixel_centers, y->GetDataType(), scales));
     }
-    OP_CHECK(
-        ret == ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ADD_TO_LAUNCHER_LIST_AICORE with scales failed."),
-        return nullptr);
+    OP_CHECK(ret == ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ADD_TO_LAUNCHER_LIST_AICORE with scales failed."),
+             return nullptr);
     return y;
 }
 
-const aclTensor* ResizeBilinearV2With4d(
-    const aclTensor* x, const aclTensor* size, const bool align_corners, const aclFloatArray* scales,
-    const aclTensor* y, aclOpExecutor* executor)
+const aclTensor* ResizeBilinearV2With4d(const aclTensor* x, const aclTensor* size, const bool align_corners,
+                                        const aclFloatArray* scales, const aclTensor* y, aclOpExecutor* executor)
 {
     if (IsAiCoreSupport(x)) {
         return ResizeBilinearV2AicoreWith4d(x, size, align_corners, scales, y, executor);

@@ -18,18 +18,11 @@
 using namespace op;
 using namespace std;
 
-class l2_upsample_trilinear_3d_backward_test : public testing::Test
-{
+class l2_upsample_trilinear_3d_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "l2_upsample_trilinear_3d_backward_test SetUp" << endl;
-    }
+    static void SetUpTestCase() { cout << "l2_upsample_trilinear_3d_backward_test SetUp" << endl; }
 
-    static void TearDownTestCase()
-    {
-        cout << "l2_upsample_trilinear_3d_backward_test TearDown" << endl;
-    }
+    static void TearDownTestCase() { cout << "l2_upsample_trilinear_3d_backward_test TearDown" << endl; }
 };
 
 // Double类型调用Aicpu不开源

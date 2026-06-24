@@ -18,22 +18,14 @@
 using namespace std;
 using namespace ge;
 
-
 class RasterizerTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RasterizerTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RasterizerTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RasterizerTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RasterizerTiling TearDown" << std::endl; }
 };
 
-struct RasterizerCompileInfo {
-};
+struct RasterizerCompileInfo {};
 
 TEST_F(RasterizerTiling, rasterizer_tiling_001)
 {
@@ -43,21 +35,20 @@ TEST_F(RasterizerTiling, rasterizer_tiling_001)
     gert::StorageShape findices_shape = {{10, 10}, {10, 10}};
     gert::StorageShape bary_shape = {{10, 10, 3}, {10, 10, 3}};
     RasterizerCompileInfo compileInfo = {};
-    gert::TilingContextPara tilingContextPara("Rasterizer",
-                                                {{v_shape, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {f_shape, ge::DT_INT32, ge::FORMAT_ND},
-                                                {d_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{findices_shape, ge::DT_INT32, ge::FORMAT_ND},
-                                                {bary_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("width", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
-                                                gert::TilingContextPara::OpAttr("height", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
-                                                gert::TilingContextPara::OpAttr("occlusion_truncation", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("use_depth_prior", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "Rasterizer",
+        {{v_shape, ge::DT_FLOAT, ge::FORMAT_ND},
+         {f_shape, ge::DT_INT32, ge::FORMAT_ND},
+         {d_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{findices_shape, ge::DT_INT32, ge::FORMAT_ND}, {bary_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("width", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
+         gert::TilingContextPara::OpAttr("height", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
+         gert::TilingContextPara::OpAttr("occlusion_truncation", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("use_depth_prior", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+        &compileInfo);
     uint64_t expectTilingKey = 1;
 
-    string expectTilingData =
-        "12884901889 42949672970 0 ";
+    string expectTilingData = "12884901889 42949672970 0 ";
     std::vector<size_t> expectWorkspaces = {33629184};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

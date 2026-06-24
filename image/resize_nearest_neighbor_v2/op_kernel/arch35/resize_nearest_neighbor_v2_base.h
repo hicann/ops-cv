@@ -36,43 +36,32 @@ protected:
     /*
      * Ceil operation
      */
-    __aicore__ inline int32_t Ceil(float x)
-    {
-        return static_cast<int64_t>(static_cast<int32_t>(x) + 1);
-    }
+    __aicore__ inline int32_t Ceil(float x) { return static_cast<int64_t>(static_cast<int32_t>(x) + 1); }
 
     /*
      * Floor operation
      */
-    __aicore__ inline int32_t Floor(float x)
-    {
-        return static_cast<int64_t>(static_cast<int32_t>(x));
-    }
+    __aicore__ inline int32_t Floor(float x) { return static_cast<int64_t>(static_cast<int32_t>(x)); }
 
     /*
      * Round operation
      */
-    __aicore__ inline int32_t Round(float x)
-    {
-        return static_cast<int64_t>(static_cast<int32_t>(x + 0.5f));
-    }
+    __aicore__ inline int32_t Round(float x) { return static_cast<int64_t>(static_cast<int32_t>(x + 0.5f)); }
 
-    __aicore__ inline int64_t Min(int64_t a, int64_t b)
-    {
-        return (a < b) ? a : b;
-    }
+    __aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
     /*
-    * Init、Process
-    */
+     * Init、Process
+     */
 public:
     __aicore__ inline void Init(GM_ADDR grads, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
                                 const ResizeNearestNeighborV2TilingData* tilingData);
+
 protected:
     int64_t srcHFactor_ = 0;
     int64_t srcWFactor_ = 0;
 
     // tiling接收的参数
-    float hScale_ = 1.0f;   // HScale: srcH / dstH
+    float hScale_ = 1.0f; // HScale: srcH / dstH
     float wScale_ = 1.0f;
     int64_t srcHSize_ = 0;
     int64_t srcWSize_ = 0;
@@ -92,12 +81,13 @@ protected:
     GlobalTensor<T> inputGm_;
     GlobalTensor<T> outputGm_;
     DataCopyExtParams copyParams_;
-    DataCopyPadExtParams<T> padParams_ {false, 0, 0, 0};
+    DataCopyPadExtParams<T> padParams_{false, 0, 0, 0};
 };
 
 template <typename T>
 __aicore__ inline void ResizeNearestNeighborV2Base<T>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
-                                                                const ResizeNearestNeighborV2TilingData* tilingData) {
+                                                            const ResizeNearestNeighborV2TilingData* tilingData)
+{
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
     bias_ = tilingData_->halfPixelCenters == 1 ? 0.5f : 0.0f;
@@ -111,6 +101,6 @@ __aicore__ inline void ResizeNearestNeighborV2Base<T>::Init(GM_ADDR x, GM_ADDR s
     pipe_.InitBuffer(xQue_, BUFFER_NUM, tilingData_->ubSize);
 }
 
-}  // namespace ResizeNearestNeighborV2
+} // namespace ResizeNearestNeighborV2
 
-#endif  // RESIZE_NEAREAST_NEIGHBOR_V2_BASE_H
+#endif // RESIZE_NEAREAST_NEIGHBOR_V2_BASE_H

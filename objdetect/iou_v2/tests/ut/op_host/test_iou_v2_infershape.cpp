@@ -13,43 +13,44 @@
 #include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
-class IouV2 : public testing::Test
-{
+class IouV2 : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "IouV2 Proto Test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "IouV2 Proto Test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "IouV2 Proto Test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "IouV2 Proto Test TearDown" << std::endl; }
 };
 
 TEST_F(IouV2, IouV2_infershape_iou_false_case_0)
 {
-    gert::InfershapeContextPara infershapeContextPara("IouV2",
-                                                      {{{{1024, 4}, {1024, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{1024, 4}, {1024, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
-                                                       gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
-                                                       gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1024, 1024},};
+    gert::InfershapeContextPara infershapeContextPara(
+        "IouV2",
+        {{{{1024, 4}, {1024, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{1024, 4}, {1024, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+         gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1024, 1024},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 TEST_F(IouV2, IouV2_infershape_iou_true_case_1)
 {
-    gert::InfershapeContextPara infershapeContextPara("IouV2",
-                                                      {{{{4, 1024}, {4, 1024}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{4, 1024}, {4, 1024}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
-                                                       gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
-                                                       gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1024, 1},};
+    gert::InfershapeContextPara infershapeContextPara(
+        "IouV2",
+        {{{{4, 1024}, {4, 1024}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{4, 1024}, {4, 1024}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+         gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1024, 1},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 

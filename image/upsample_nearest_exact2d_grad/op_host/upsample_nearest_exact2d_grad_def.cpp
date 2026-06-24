@@ -19,8 +19,7 @@ namespace ops {
 static const std::vector<ge::DataType> xDtype = {ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT};
 static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
-class UpsampleNearestExact2dGrad : public OpDef
-{
+class UpsampleNearestExact2dGrad : public OpDef {
 public:
     explicit UpsampleNearestExact2dGrad(const char* name) : OpDef(name)
     {

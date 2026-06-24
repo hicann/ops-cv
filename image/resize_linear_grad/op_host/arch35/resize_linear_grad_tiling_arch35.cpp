@@ -43,8 +43,8 @@ public:
     void PrintTilingData();
     void ComputeKey();
     void ComputeDataCopy();
-    void CalculateCoreNum(
-        int64_t inputSize, int64_t& realCoreNum, int64_t& ubLoopSizeT, int64_t& ubLoopSizeB, int64_t& blkProcessNum);
+    void CalculateCoreNum(int64_t inputSize, int64_t& realCoreNum, int64_t& ubLoopSizeT, int64_t& ubLoopSizeB,
+                          int64_t& blkProcessNum);
     void ComputeDesL1();
     void ComputeDesL1AndIntScale();
     void ComputeLenSrcL1();
@@ -79,8 +79,8 @@ private:
     float inverseScaleL_ = 0.0f;
 };
 
-void ResizeLinearGradTiling::CalculateCoreNum(
-    int64_t inputSize, int64_t& realCoreNum, int64_t& ubLoopSizeT, int64_t& ubLoopSizeB, int64_t& blkProcessNum)
+void ResizeLinearGradTiling::CalculateCoreNum(int64_t inputSize, int64_t& realCoreNum, int64_t& ubLoopSizeT,
+                                              int64_t& ubLoopSizeB, int64_t& blkProcessNum)
 {
     realCoreNum = (inputSize < (static_cast<int64_t>(coreNum_))) ? inputSize : coreNum_;
     OP_CHECK_IF((realCoreNum == 0), OP_LOGE("CalculateCoreNum", "realCoreNum is zero"), return);
@@ -102,8 +102,8 @@ void ResizeLinearGradTiling::ComputeDataCopy()
     isDetermine_ = static_cast<uint64_t>(0);
     alignCorners_ = static_cast<uint64_t>(0);
     ubSizeDb_ = ubSize_ / DB / blockSize_ * blockSize_; // 开db
-    int64_t coreNumNew =
-        xSize_ < static_cast<int64_t>(DB * coreNum_) ? static_cast<int64_t>(1) : static_cast<int64_t>(coreNum_);
+    int64_t coreNumNew = xSize_ < static_cast<int64_t>(DB * coreNum_) ? static_cast<int64_t>(1) :
+                                                                        static_cast<int64_t>(coreNum_);
     blkProcessNum_ = (xSize_ + coreNumNew - 1) / coreNumNew;
     realCoreNum_ = (xSize_ + blkProcessNum_ - 1) / blkProcessNum_;
     int64_t lastCoreProcessNum = xSize_ - (realCoreNum_ - 1) * blkProcessNum_;
@@ -155,8 +155,8 @@ void ResizeLinearGradTiling::ComputeOther(bool oddScale, bool isIntScale)
     }
     OP_LOGI(context_->GetNodeName(), "repeatNum is %ld", repeatNum);
     if (scaleL_ < LOWER_DETERMINE || repeatNum >= HIGH_DETERMINE) {
-        OP_LOGI(
-            context_->GetNodeName(), "scaleL is small than LOWER_DETERMINE or repeatNum greater than HIGH_DETERMINE");
+        OP_LOGI(context_->GetNodeName(),
+                "scaleL is small than LOWER_DETERMINE or repeatNum greater than HIGH_DETERMINE");
         isDetermine_ = static_cast<uint64_t>(1);
     }
     if (isDetermine_ == static_cast<uint64_t>(1)) {
@@ -243,7 +243,8 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
     if ((dtypeOut != dtypeOri) || (dtypeGrads != dtypeOri)) {
         std::string dtypeMsg = Ops::Base::ToString(dtypeGrads) + ", " + Ops::Base::ToString(dtypeOri) + " and " +
                                Ops::Base::ToString(dtypeOut);
-        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(),
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+            context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(),
             "The dtypes of input grads, original_image and output y must be the same");
         return ge::GRAPH_FAILED;
     }
@@ -260,14 +261,14 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
     int32_t yshapeDims = yShape.GetDimNum();
     if (gradsDims != DIM_3 || yshapeDims != DIM_3) {
         std::string dimMsg = std::to_string(gradsDims) + " and " + std::to_string(yshapeDims);
-        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
-            context_->GetNodeName(), "grads and y", dimMsg.c_str(), "The shapes of grads and y must be 3D");
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "grads and y", dimMsg.c_str(),
+                                                  "The shapes of grads and y must be 3D");
         return ge::GRAPH_FAILED;
     }
     if (oriShape != yShape) {
         std::string shapeMsg = Ops::Base::ToString(oriShape) + " and " + Ops::Base::ToString(yShape);
-        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-            context_->GetNodeName(), "original_image and y", shapeMsg.c_str(), "The shapes of original_image and y must be the same");
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "original_image and y", shapeMsg.c_str(),
+                                               "The shapes of original_image and y must be the same");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -275,9 +276,8 @@ ge::graphStatus ResizeLinearGradTiling::CheckShapeDtypeParams()
 
 ge::graphStatus ResizeLinearGradTiling::CheckParams()
 {
-    OP_CHECK_IF(
-        CheckShapeDtypeParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckShapeDtypeParams failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckShapeDtypeParams() != ge::GRAPH_SUCCESS,
+                OP_LOGE(context_->GetNodeName(), "CheckShapeDtypeParams failed"), return ge::GRAPH_FAILED);
     gert::Shape yShape = context_->GetOutputShape(DIM_0)->GetStorageShape();
     gert::Shape gradsShape = context_->GetInputShape(DIM_0)->GetStorageShape();
     lenSrcLOrUb_ = yShape.GetDim(DIM_2);
@@ -292,8 +292,8 @@ ge::graphStatus ResizeLinearGradTiling::CheckParams()
         std::string shapeMsg = Ops::Base::ToString(gradsShape) + " and " + Ops::Base::ToString(yShape);
         std::string reasonMsg = "The N-dimension and C-dimension of grads and y must be the same, "
                                 "where N is the 0th axis and C is the 1st axis";
-        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-            context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
+                                               reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
     OP_LOGI(context_->GetNodeName(), "n is %ld, c is %ld", n, c);
@@ -303,8 +303,8 @@ ge::graphStatus ResizeLinearGradTiling::CheckParams()
     if (n <= 0 || c <= 0 || lenDesL_ <= 0 || lenSrcLOrUb_ <= 0) {
         std::string shapeMsg = Ops::Base::ToString(gradsShape) + " and " + Ops::Base::ToString(yShape);
         std::string reasonMsg = "All axes of grads and y must be greater than zero";
-        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-            context_->GetNodeName(), "grads and y", shapeMsg.c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "grads and y", shapeMsg.c_str(),
+                                               reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -334,9 +334,8 @@ float ResizeLinearGradTiling::ComputeInverseScale(float scale, int64_t lenSrc, i
 
 ge::graphStatus ResizeLinearGradTiling::LinearComputeGrad()
 {
-    OP_CHECK_IF(
-        CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckParams failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckParams failed"),
+                return ge::GRAPH_FAILED);
     isDetermine_ = context_->GetDeterministic() == 1 ? static_cast<uint64_t>(1) : static_cast<uint64_t>(0);
     OP_LOGI(context_->GetNodeName(), "isDetermine_ is %ld", isDetermine_);
     auto attrs = context_->GetAttrs();
@@ -353,9 +352,8 @@ ge::graphStatus ResizeLinearGradTiling::LinearComputeGrad()
     if (alignCorners_ == static_cast<uint64_t>(0)) {
         inverseScaleL_ = ComputeInverseScale(scaleL_, lenSrcLOrUb_, lenDesL_);
         scaleL_ = ComputeScale(scaleL_, lenSrcLOrUb_, lenDesL_);
-        OP_LOGI(
-            context_->GetNodeName(), "alignCorners is False and new scaleL is %f, inverseScaleL_ is %f", scaleL_,
-            inverseScaleL_);
+        OP_LOGI(context_->GetNodeName(), "alignCorners is False and new scaleL is %f, inverseScaleL_ is %f", scaleL_,
+                inverseScaleL_);
     } else {
         scaleL_ = static_cast<float>(lenSrcLOrUb_) / static_cast<float>(lenDesL_);
         inverseScaleL_ = static_cast<float>(lenDesL_) / static_cast<float>(lenSrcLOrUb_);
@@ -365,9 +363,8 @@ ge::graphStatus ResizeLinearGradTiling::LinearComputeGrad()
         if (lenSrcLOrUb_ > static_cast<int64_t>(1)) {
             inverseScaleL_ = static_cast<float>(lenDesL_ - 1) / static_cast<float>(lenSrcLOrUb_ - 1);
         }
-        OP_LOGI(
-            context_->GetNodeName(), "alignCorners is True, new scaleL is %f, inverseScaleL_ is %f", scaleL_,
-            inverseScaleL_);
+        OP_LOGI(context_->GetNodeName(), "alignCorners is True, new scaleL is %f, inverseScaleL_ is %f", scaleL_,
+                inverseScaleL_);
     }
     isInt32_ = DIM_1;
     if (ySize_ > UINT32_MAX || xSize_ > UINT32_MAX) {
@@ -383,21 +380,19 @@ void ResizeLinearGradTiling::LinearGetPlatformData(const ResizeLinearGradCompile
     coreNum_ = compileInfo->totalCoreNum;
     ubSize_ = static_cast<int64_t>(compileInfo->totalUbSize);
     blockSize_ = compileInfo->blockSize;
-    OP_LOGI(
-        context_->GetNodeName(), "LinearGetPlatformData ubSize is %ld, coreNum_ is %d, blockSize_ is %d", ubSize_,
-        coreNum_, blockSize_);
+    OP_LOGI(context_->GetNodeName(), "LinearGetPlatformData ubSize is %ld, coreNum_ is %d, blockSize_ is %d", ubSize_,
+            coreNum_, blockSize_);
     return;
 }
 
 void ResizeLinearGradTiling::PrintTilingData()
 {
-    OP_LOGI(
-        context_->GetNodeName(),
-        "ResizeLinearGrad tilingData realCoreNum is %ld, initCoreNum is %ld, blkProcessNum is %ld,"
-        "ubLoopSizeB is %ld, ubLoopSizeT is %ld, ubFactor is %ld, ubFactorTailB is %ld, ubFactorTailT is %ld,"
-        "lenSrcLOrUb is %ld, lenDesL is %ld, scaleL is %f, inverseScaleL is %f",
-        realCoreNum_, initCoreNum_, blkProcessNum_, ubLoopSizeB_, ubLoopSizeT_, ubFactor_, ubFactorTailB_,
-        ubFactorTailT_, tilingData_.get_lenSrcLOrUb(), lenDesL_, scaleL_, inverseScaleL_);
+    OP_LOGI(context_->GetNodeName(),
+            "ResizeLinearGrad tilingData realCoreNum is %ld, initCoreNum is %ld, blkProcessNum is %ld,"
+            "ubLoopSizeB is %ld, ubLoopSizeT is %ld, ubFactor is %ld, ubFactorTailB is %ld, ubFactorTailT is %ld,"
+            "lenSrcLOrUb is %ld, lenDesL is %ld, scaleL is %f, inverseScaleL is %f",
+            realCoreNum_, initCoreNum_, blkProcessNum_, ubLoopSizeB_, ubLoopSizeT_, ubFactor_, ubFactorTailB_,
+            ubFactorTailT_, tilingData_.get_lenSrcLOrUb(), lenDesL_, scaleL_, inverseScaleL_);
     return;
 }
 
@@ -425,9 +420,8 @@ ge::graphStatus ResizeLinearGradTiling::SetTilingData()
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
     int64_t setNum = (realCoreNum_ < initCoreNum_) ? initCoreNum_ : realCoreNum_;
     context_->SetBlockDim(setNum);
-    OP_LOGI(
-        context_->GetNodeName(), "schId is %ld, isInt32 is %ld, alignCorners is %ld, isDetermine is %ld", schId_,
-        isInt32_, alignCorners_, isDetermine_);
+    OP_LOGI(context_->GetNodeName(), "schId is %ld, isInt32 is %ld, alignCorners is %ld, isDetermine is %ld", schId_,
+            isInt32_, alignCorners_, isDetermine_);
     const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, isInt32_, alignCorners_, isDetermine_);
     context_->SetTilingKey(tilingKey);
     context_->SetScheduleMode(1);
@@ -464,20 +458,18 @@ static ge::graphStatus TilingPrepare4ResizeLinearGrad(gert::TilingParseContext* 
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->totalCoreNum = static_cast<int32_t>(ascendcPlatform.GetCoreNumAiv());
-    OP_CHECK_IF(
-        (compileInfo->totalCoreNum <= 0), OP_LOGE(context->GetNodeName(), "coreNum is invalid, must greater than zero"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->totalCoreNum <= 0),
+                OP_LOGE(context->GetNodeName(), "coreNum is invalid, must greater than zero"), return ge::GRAPH_FAILED);
 
     uint64_t ubSizePlatForm = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
-    OP_CHECK_IF(
-        (compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is invalid, must greater than zero"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->totalUbSize <= 0),
+                OP_LOGE(context->GetNodeName(), "ubSize is invalid, must greater than zero"), return ge::GRAPH_FAILED);
     compileInfo->blockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context));
-    OP_CHECK_IF(
-        (compileInfo->blockSize <= 0), OP_LOGE(context->GetNodeName(), "blockSize is invalid, must greater than zero"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->blockSize <= 0),
+                OP_LOGE(context->GetNodeName(), "blockSize is invalid, must greater than zero"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

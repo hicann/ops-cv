@@ -33,7 +33,7 @@ constexpr uint64_t WORKSPACE_SIZE = 1 * 1024 * 1024;
 
 class UpsampleNearestExact2dGradTransposeTiling {
 public:
-    explicit UpsampleNearestExact2dGradTransposeTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleNearestExact2dGradTransposeTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init();
     ge::graphStatus RunBigKernelTiling();
 
@@ -300,8 +300,8 @@ void UpsampleNearestExact2dGradTransposeTiling::FillTilingData()
     tilingData.set_startBatches(startBatches);
     tilingData.set_endBatches(endBatches);
 
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 

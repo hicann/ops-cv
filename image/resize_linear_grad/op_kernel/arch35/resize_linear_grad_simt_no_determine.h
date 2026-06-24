@@ -32,24 +32,23 @@ public:
     __aicore__ inline ResizeLinearGradNoDetermine(){};
 
     __aicore__ inline void Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
-        const ResizeLinearGradTilingData *tilingData);
+                                const ResizeLinearGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     uint32_t blockIdx_;
     GlobalTensor<T1> inputGm_;
     GlobalTensor<T1> outputGm_;
-    const ResizeLinearGradTilingData *tilingData_;
+    const ResizeLinearGradTilingData* tilingData_;
 };
 
 template <typename T1, typename T2, uint64_t isCenter, uint64_t mode>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeNoDeter(T2 blkStartOffset,
-    T2 blkProcessNum, T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcLOrUb, float scaleL, __gm__ T1 *inputGm,
-    __gm__ T1 *outputGm)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComputeNoDeter(
+    T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcLOrUb, float scaleL, __gm__ T1* inputGm,
+    __gm__ T1* outputGm)
 {
     T2 srcL1 = lenSrcLOrUb - 1;
-    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
-        idx += static_cast<T2>(blockDim.x)) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         T2 NC = Simt::UintDiv(yGmIdx, mL, shiftL);
 
@@ -81,30 +80,32 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2, uint64_t isCenter, uint64_t mode>
-__simt_vf__ LAUNCH_BOUND(512) __aicore__ void calleeInt64NoDeter(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
-    T2 lenDesL, T2 lenSrcLOrUb, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_vf__ LAUNCH_BOUND(512) __aicore__
+    void calleeInt64NoDeter(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcLOrUb,
+                            float scaleL, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtComputeNoDeter<T1, T2, isCenter, mode>(blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcLOrUb, scaleL,
-        inputGm, outputGm);
+                                               inputGm, outputGm);
 }
 
 template <typename T1, typename T2, uint64_t isCenter, uint64_t mode>
-__simt_vf__ LAUNCH_BOUND(1024) __aicore__ void calleeInt32NoDeter(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
-    T2 lenDesL, T2 lenSrcLOrUb, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_vf__ LAUNCH_BOUND(1024) __aicore__
+    void calleeInt32NoDeter(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcLOrUb,
+                            float scaleL, __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtComputeNoDeter<T1, T2, isCenter, mode>(blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcLOrUb, scaleL,
-        inputGm, outputGm);
+                                               inputGm, outputGm);
 }
 
 template <typename T1, typename T2, uint64_t isCenter, uint64_t mode>
-__aicore__ inline void ResizeLinearGradNoDetermine<T1, T2, isCenter, mode>::Init(GM_ADDR grads, GM_ADDR originalImage,
-    GM_ADDR y, const ResizeLinearGradTilingData *tilingData)
+__aicore__ inline void ResizeLinearGradNoDetermine<T1, T2, isCenter, mode>::Init(
+    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, const ResizeLinearGradTilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    inputGm_.SetGlobalBuffer((__gm__ T1 *)grads);
-    outputGm_.SetGlobalBuffer((__gm__ T1 *)y);
+    inputGm_.SetGlobalBuffer((__gm__ T1*)grads);
+    outputGm_.SetGlobalBuffer((__gm__ T1*)y);
 }
 
 template <typename T1, typename T2, uint64_t isCenter, uint64_t mode>
@@ -135,13 +136,13 @@ __aicore__ inline void ResizeLinearGradNoDetermine<T1, T2, isCenter, mode>::Proc
         T2 lenSrcLOrUb = (T2)(tilingData_->lenSrcLOrUb);
         float scaleL = tilingData_->scaleL;
         if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-            asc_vf_call<calleeInt64NoDeter<T1, T2, isCenter, mode>>(dim3(512), blkStartOffset, blkProcessNum,
-                mL, shiftL, lenDesL, lenSrcLOrUb, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()),
-                (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+            asc_vf_call<calleeInt64NoDeter<T1, T2, isCenter, mode>>(
+                dim3(512), blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcLOrUb, scaleL,
+                (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()));
         } else {
-            asc_vf_call<calleeInt32NoDeter<T1, T2, isCenter, mode>>(dim3(1024), blkStartOffset, blkProcessNum,
-                mL, shiftL, lenDesL, lenSrcLOrUb, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()),
-                (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+            asc_vf_call<calleeInt32NoDeter<T1, T2, isCenter, mode>>(
+                dim3(1024), blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcLOrUb, scaleL,
+                (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()));
         }
     }
 }

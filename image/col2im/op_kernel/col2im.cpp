@@ -20,7 +20,8 @@ using namespace AscendC;
 using namespace Col2imOps;
 
 template <uint64_t dType>
-__global__ __aicore__ void col2im(GM_ADDR gradOut, GM_ADDR outputSize, GM_ADDR gradIn, GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void col2im(GM_ADDR gradOut, GM_ADDR outputSize, GM_ADDR gradIn, GM_ADDR workspace,
+                                  GM_ADDR tiling)
 {
     // 仅AIV支持simt，此处限制之用V核
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);

@@ -17,8 +17,7 @@
 
 #include "graph/operator_reg.h"
 
-namespace ge
-{
+namespace ge {
 /**
 * @brief Obtains the ROI feature matrix from the feature map. It is a customized FasterRcnn operator . \n
 
@@ -31,17 +30,21 @@ namespace ge
 * @li rois_n: An optional input of type int32, specifying the number of valid ROIs. This parameter is reserved . \n
 
 * @par Attributes:
-* @li spatial_scale: A required attribute of type float32, specifying the scaling ratio of "features" to the original image.
+* @li spatial_scale: A required attribute of type float32, specifying the scaling ratio of "features" to the original
+image.
 * @li pooled_height: A required attribute of type int32, specifying the H dimension.
 * @li pooled_width: A required attribute of type int32, specifying the W dimension.
-* @li sample_num: An optional attribute of type int32, specifying the horizontal and vertical sampling frequency of each output. If this attribute is set to "0",
+* @li sample_num: An optional attribute of type int32, specifying the horizontal and vertical sampling frequency of each
+output. If this attribute is set to "0",
 * the sampling frequency is equal to the rounded up value of "rois", which is a floating point number. Defaults to "2".
-* @li roi_end_mode: An optional attribute of type int32, specifying the align mode. Defaults to "1", supports 0/1/2/3. \n
-* "0" is compatible with align = False for all frameworks. \n 
+* @li roi_end_mode: An optional attribute of type int32, specifying the align mode. Defaults to "1", supports 0/1/2/3.
+\n
+* "0" is compatible with align = False for all frameworks. \n
 * "1" is compatible with align = True for TensorFlow. \n
-* "2" is compatible with align = True for pyTorch. \n 
+* "2" is compatible with align = True for pyTorch. \n
 * "3" is compatible with align = True for MmDetecion v0.6. \n
-* @li pool_mode: An optional attribute of type string, specifying the pooling mode. Defaults to "avg", supports "avg" and "max". \n
+* @li pool_mode: An optional attribute of type string, specifying the pooling mode. Defaults to "avg", supports "avg"
+and "max". \n
 
 * @par Outputs:
 * y: Outputs the feature sample of each ROI position. The format is 5HD Tensor of type float32 or float16.

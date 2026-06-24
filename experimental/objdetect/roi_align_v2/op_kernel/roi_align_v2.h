@@ -50,9 +50,8 @@ public:
 
 private:
     __aicore__ inline void ProcessOneROI(uint32_t roiIdx);
-    __aicore__ inline float BilinearInterpolate(AscendC::LocalTensor<T> &featureLocal,
-                                                 float y, float x,
-                                                 int32_t featW, int32_t featH);
+    __aicore__ inline float BilinearInterpolate(AscendC::LocalTensor<T>& featureLocal, float y, float x, int32_t featW,
+                                                int32_t featH);
 
 private:
     AscendC::TPipe pipe;
@@ -68,7 +67,7 @@ private:
     uint32_t myRoiStart;
 
     uint32_t roiLength;
-    uint32_t outRoiSize; 
+    uint32_t outRoiSize;
 
     uint32_t channels;
     uint32_t height;
@@ -81,7 +80,7 @@ private:
 
 template <typename T>
 __aicore__ inline void RoiAlignV2<T>::Init(GM_ADDR features, GM_ADDR rois, GM_ADDR output,
-                                const RoiAlignV2TilingData* tiling_data)
+                                           const RoiAlignV2TilingData* tiling_data)
 {
     uint32_t blockIdx = AscendC::GetBlockIdx();
     // Calculate how many ROIs this core processes
@@ -107,10 +106,8 @@ __aicore__ inline void RoiAlignV2<T>::Init(GM_ADDR features, GM_ADDR rois, GM_AD
     this->samplingRatio = tiling_data->samplingRatio;
     // Set global buffers
     featuresGm.SetGlobalBuffer((__gm__ T*)features, tiling_data->featureTotalSize);
-    roisGm.SetGlobalBuffer((__gm__ T*)rois + myRoiStart * this->roiLength,
-                            myRoiNum * this->roiLength);
-    outputGm.SetGlobalBuffer((__gm__ T*)output + myRoiStart * this->outRoiSize,
-                            myRoiNum * this->outRoiSize);
+    roisGm.SetGlobalBuffer((__gm__ T*)rois + myRoiStart * this->roiLength, myRoiNum * this->roiLength);
+    outputGm.SetGlobalBuffer((__gm__ T*)output + myRoiStart * this->outRoiSize, myRoiNum * this->outRoiSize);
 
     // KEY CHANGE: Initialize queues for ONE channel at a time (not entire C*H*W)
     uint32_t singleChannelSize = this->height * this->width;
@@ -153,8 +150,10 @@ __aicore__ inline void RoiAlignV2<T>::ProcessOneROI(uint32_t roiIdx)
     float roi_h = roi_y2 - roi_y1;
 
     // Clamp to minimum size
-    if (roi_w < 1.0f) roi_w = 1.0f;
-    if (roi_h < 1.0f) roi_h = 1.0f;
+    if (roi_w < 1.0f)
+        roi_w = 1.0f;
+    if (roi_h < 1.0f)
+        roi_h = 1.0f;
 
     int32_t outW = this->pooledWidth;
     int32_t outH = this->pooledHeight;
@@ -168,12 +167,14 @@ __aicore__ inline void RoiAlignV2<T>::ProcessOneROI(uint32_t roiIdx)
     // Determine sampling grid size
     int32_t samplingRatio = this->samplingRatio;
     int32_t grid_h = samplingRatio > 0 ? samplingRatio :
-                    static_cast<int32_t>((roi_h / static_cast<float>(outH)) + 0.99f);
+                                         static_cast<int32_t>((roi_h / static_cast<float>(outH)) + 0.99f);
     int32_t grid_w = samplingRatio > 0 ? samplingRatio :
-                    static_cast<int32_t>((roi_w / static_cast<float>(outW)) + 0.99f);
+                                         static_cast<int32_t>((roi_w / static_cast<float>(outW)) + 0.99f);
 
-    if (grid_h < 1) grid_h = 1;
-    if (grid_w < 1) grid_w = 1;
+    if (grid_h < 1)
+        grid_h = 1;
+    if (grid_w < 1)
+        grid_w = 1;
 
     float count = static_cast<float>(grid_h * grid_w);
 
@@ -234,9 +235,8 @@ __aicore__ inline void RoiAlignV2<T>::ProcessOneROI(uint32_t roiIdx)
 }
 
 template <typename T>
-__aicore__ inline float RoiAlignV2<T>::BilinearInterpolate(AscendC::LocalTensor<T> &featureLocal,
-                                                 float y, float x,
-                                                 int32_t featW, int32_t featH)
+__aicore__ inline float RoiAlignV2<T>::BilinearInterpolate(AscendC::LocalTensor<T>& featureLocal, float y, float x,
+                                                           int32_t featW, int32_t featH)
 {
     // Boundary check
     float featH_f = static_cast<float>(featH);
@@ -247,10 +247,14 @@ __aicore__ inline float RoiAlignV2<T>::BilinearInterpolate(AscendC::LocalTensor<
     }
 
     // Clamp to valid range
-    if (y < 0.0f) y = 0.0f;
-    if (y > featH_f - 1.0f) y = featH_f - 1.0f;
-    if (x < 0.0f) x = 0.0f;
-    if (x > featW_f - 1.0f) x = featW_f - 1.0f;
+    if (y < 0.0f)
+        y = 0.0f;
+    if (y > featH_f - 1.0f)
+        y = featH_f - 1.0f;
+    if (x < 0.0f)
+        x = 0.0f;
+    if (x > featW_f - 1.0f)
+        x = featW_f - 1.0f;
 
     // Get integer coordinates
     int32_t y0 = static_cast<int32_t>(y);
@@ -277,8 +281,7 @@ __aicore__ inline float RoiAlignV2<T>::BilinearInterpolate(AscendC::LocalTensor<
     float v11_f = static_cast<float>(v11);
 
     // Bilinear interpolation
-    float result = (hy * hx) * v00_f + (hy * lx) * v01_f +
-                    (ly * hx) * v10_f + (ly * lx) * v11_f;
+    float result = (hy * hx) * v00_f + (hy * lx) * v01_f + (ly * hx) * v10_f + (ly * lx) * v11_f;
 
     return result;
 }

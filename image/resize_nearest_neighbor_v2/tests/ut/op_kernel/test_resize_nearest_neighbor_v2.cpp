@@ -32,45 +32,38 @@ using namespace std;
 using namespace AscendC;
 using namespace ResizeNearestNeighborV2;
 
-constexpr int TPL_SCH_MODE_SIMT_INPUT_EQ_OUTPUT = 4;  // Input size == Output size
+constexpr int TPL_SCH_MODE_SIMT_INPUT_EQ_OUTPUT = 4; // Input size == Output size
 
-class resize_nearest_neighbor_v2_test : public testing::Test
-{
+class resize_nearest_neighbor_v2_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "resize_nearest_neighbor_v2 SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "resize_nearest_neighbor_v2 TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "resize_nearest_neighbor_v2 SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "resize_nearest_neighbor_v2 TearDown\n" << endl; }
 };
 
 TEST_F(resize_nearest_neighbor_v2_test, test_simt_input_eq_output_fp16)
 {
     // Direct Simt class invocation (bypass ASCENDC_TPL template macros)
     // Test TPL_SCH_MODE_SIMT_INPUT_EQ_OUTPUT (mode=4) branch: input == output size
-    
+
     size_t inputByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t sizeByteSize = 2 * sizeof(int32_t);
     size_t outputByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t tilingDataSize = sizeof(ResizeNearestNeighborV2TilingData);
-    
-    uint8_t *x = (uint8_t *)GmAlloc(inputByteSize);
-    uint8_t *size_tensor = (uint8_t *)GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)GmAlloc(outputByteSize);
-    
-    uint8_t *tiling = (uint8_t *)GmAlloc(tilingDataSize);
-    
+
+    uint8_t* x = (uint8_t*)GmAlloc(inputByteSize);
+    uint8_t* size_tensor = (uint8_t*)GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)GmAlloc(outputByteSize);
+
+    uint8_t* tiling = (uint8_t*)GmAlloc(tilingDataSize);
+
     // Initialize input data to fixed value for reliability
     memset(x, 0, inputByteSize);
-    
+
     // Prepare size data
     int32_t* sizeData = reinterpret_cast<int32_t*>(size_tensor);
-    sizeData[0] = 2;  // output H
-    sizeData[1] = 2;  // output W
-    
+    sizeData[0] = 2; // output H
+    sizeData[1] = 2; // output W
+
     // Manually construct TilingData
     ResizeNearestNeighborV2TilingData* tilingData = reinterpret_cast<ResizeNearestNeighborV2TilingData*>(tiling);
     tilingData->realCoreNum = 1;
@@ -110,13 +103,14 @@ TEST_F(resize_nearest_neighbor_v2_test, test_simt_input_eq_output_fp16)
     tilingData->splitCountDesW = 1;
     tilingData->scaleW = 1.0f;
     tilingData->scaleH = 1.0f;
-    
+
     // Directly instantiate ResizeNearestNeighborV2Simt class (no ICPU_RUN_KF needed)
-    // Template params: T=half, T_IDX=uint32_t, format=FORMAT_NCHW, mode=INPUT_EQ_OUTPUT, align_corner=false, half_pixel=false
+    // Template params: T=half, T_IDX=uint32_t, format=FORMAT_NCHW, mode=INPUT_EQ_OUTPUT, align_corner=false,
+    // half_pixel=false
     ResizeNearestNeighborV2Simt<half, uint32_t, FORMAT_NCHW, TPL_SCH_MODE_SIMT_INPUT_EQ_OUTPUT, false, false> op;
     op.Init(x, size_tensor, y, tilingData);
     op.Process();
-    
+
     GmFree(x);
     GmFree(size_tensor);
     GmFree(y);

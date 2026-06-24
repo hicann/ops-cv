@@ -13,12 +13,9 @@
 namespace op {
 
 SocVersion g_socVersion = SocVersion::ASCEND910B;
-PlatformInfo *g_platformInfo = new PlatformInfo();
+PlatformInfo* g_platformInfo = new PlatformInfo();
 
-bool PlatformInfo::CheckSupport(SocSpec socSpec, SocSpecAbility ability) const
-{
-    return true;
-}
+bool PlatformInfo::CheckSupport(SocSpec socSpec, SocSpecAbility ability) const { return true; }
 
 PlatformInfo::~PlatformInfo()
 {
@@ -27,73 +24,39 @@ PlatformInfo::~PlatformInfo()
     }
 }
 
-bool PlatformInfo::Valid() const
-{
-    return valid_;
-}
+bool PlatformInfo::Valid() const { return valid_; }
 
-void PlatformInfo::SetPlatformImpl(PlatformInfoImpl *impl)
+void PlatformInfo::SetPlatformImpl(PlatformInfoImpl* impl)
 {
     impl_ = impl;
     valid_ = true;
 }
 
-SocVersion PlatformInfo::GetSocVersion() const
-{
-    return g_socVersion;
-}
+SocVersion PlatformInfo::GetSocVersion() const { return g_socVersion; }
 
-const std::string& PlatformInfo::GetSocLongVersion() const
-{
-    return "";
-}
+const std::string& PlatformInfo::GetSocLongVersion() const { return ""; }
 
-int32_t PlatformInfo::GetDeviceId() const
-{
-    return 0;
-}
+int32_t PlatformInfo::GetDeviceId() const { return 0; }
 
-int64_t PlatformInfo::GetBlockSize() const
-{
-    return 0;
-}
+int64_t PlatformInfo::GetBlockSize() const { return 0; }
 
-uint32_t PlatformInfo::GetCubeCoreNum() const
-{
-    return 0;
-}
+uint32_t PlatformInfo::GetCubeCoreNum() const { return 0; }
 
-uint32_t PlatformInfo::GetVectorCoreNum() const
-{
-    return 0;
-}
+uint32_t PlatformInfo::GetVectorCoreNum() const { return 0; }
 
-bool PlatformInfo::GetFftsPlusMode() const
-{
-    return true;
-}
+bool PlatformInfo::GetFftsPlusMode() const { return true; }
 
-fe::PlatFormInfos* PlatformInfo::GetPlatformInfos() const
-{
-    return nullptr;
-}
+fe::PlatFormInfos* PlatformInfo::GetPlatformInfos() const { return nullptr; }
 
-const PlatformInfo& GetCurrentPlatformInfo()
-{
-    return *g_platformInfo;
-}
+const PlatformInfo& GetCurrentPlatformInfo() { return *g_platformInfo; }
 
 NpuArch PlatformInfo::GetCurNpuArch() const
 {
     static const std::map<SocVersion, NpuArch> soc2ArchMap = {
-        {SocVersion::ASCEND910, NpuArch::DAV_1001},
-        {SocVersion::ASCEND910B, NpuArch::DAV_2201},
-        {SocVersion::ASCEND910_93, NpuArch::DAV_2201},
-        {SocVersion::ASCEND950, NpuArch::DAV_3510},
-        {SocVersion::ASCEND310P, NpuArch::DAV_2002},
-        {SocVersion::ASCEND310B, NpuArch::DAV_3002},
-        {SocVersion::ASCEND610LITE, NpuArch::DAV_3102}
-    };
+        {SocVersion::ASCEND910, NpuArch::DAV_1001},    {SocVersion::ASCEND910B, NpuArch::DAV_2201},
+        {SocVersion::ASCEND910_93, NpuArch::DAV_2201}, {SocVersion::ASCEND950, NpuArch::DAV_3510},
+        {SocVersion::ASCEND310P, NpuArch::DAV_2002},   {SocVersion::ASCEND310B, NpuArch::DAV_3002},
+        {SocVersion::ASCEND610LITE, NpuArch::DAV_3102}};
     const auto it = soc2ArchMap.find(g_socVersion);
     if (it != soc2ArchMap.end()) {
         return it->second;
@@ -127,9 +90,6 @@ ge::AscendString ToString(SocVersion socVersion)
     }
 }
 
-void SetPlatformSocVersion(SocVersion socVersion)
-{
-    g_socVersion = socVersion;
-}
+void SetPlatformSocVersion(SocVersion socVersion) { g_socVersion = socVersion; }
 
 } // namespace op

@@ -76,8 +76,8 @@ constexpr uint32_t SIMD_FLOAT32_TILING_KEY = 7;
 template <typename TilingData>
 class GridSampler3DGradTiling {
 public:
-    explicit GridSampler3DGradTiling(
-        InputParamsInfo& param, const uint32_t inputCoreNum, const uint32_t inputUbSize, const uint32_t deterministic)
+    explicit GridSampler3DGradTiling(InputParamsInfo& param, const uint32_t inputCoreNum, const uint32_t inputUbSize,
+                                     const uint32_t deterministic)
     {
         this->coreNum = inputCoreNum;
         this->batch = param.batch;
@@ -281,16 +281,16 @@ void GridSampler3DGradTiling<TilingData>::GetTiling(TilingData* tilingData)
 }
 
 template <typename TilingData>
-void GetGridSampler3DGradTiling(
-    TilingData* tilingData, InputParamsInfo& params, uint32_t coreNum, uint32_t ubSize, uint32_t deterministic)
+void GetGridSampler3DGradTiling(TilingData* tilingData, InputParamsInfo& params, uint32_t coreNum, uint32_t ubSize,
+                                uint32_t deterministic)
 {
     class GridSampler3DGradTiling<TilingData> tilingObj(params, coreNum, ubSize, deterministic);
     tilingObj.GetTiling(tilingData);
 }
 
-static ge::graphStatus CheckShapes(
-    gert::TilingContext* tilingContext, InputParamsInfo& params, const gert::StorageShape* gradShape,
-    const gert::StorageShape* xShape, const gert::StorageShape* gridShape)
+static ge::graphStatus CheckShapes(gert::TilingContext* tilingContext, InputParamsInfo& params,
+                                   const gert::StorageShape* gradShape, const gert::StorageShape* xShape,
+                                   const gert::StorageShape* gridShape)
 {
     OP_CHECK_IF((gradShape == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get gradShape Failed."), return false);
     OP_CHECK_IF((xShape == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get xShape Failed."), return false);
@@ -397,9 +397,8 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
             sysWorkspaceSize = 0;
         }
     }
-    OP_CHECK_IF(
-        (currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
-        return false);
+    OP_CHECK_IF((currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
+                return false);
     currentWorkspace[0] = sysWorkspaceSize;
 
     return ge::GRAPH_SUCCESS;
@@ -455,8 +454,8 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
 
     tilingContext->SetBlockDim(tilingData.get_blockNum());
     tilingContext->SetNeedAtomic(true);
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
     OP_LOGI(tilingContext->GetNodeName(), "tiling4GridSampler3DGradTiling end.");
     return ge::GRAPH_SUCCESS;
@@ -472,15 +471,13 @@ static ge::graphStatus tilingPrepare4GridSampler3DGrad(gert::TilingParseContext*
     auto ascendCPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendCPlatform.GetCoreNumAiv();
     compileInfo->regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
-    OP_CHECK_IF(
-        (compileInfo->coreNum <= 0), OP_LOGE(context->GetNodeName(), "Failed to get core num."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->coreNum <= 0), OP_LOGE(context->GetNodeName(), "Failed to get core num."),
+                return ge::GRAPH_FAILED);
     uint64_t ubSizePlatForm;
     ascendCPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->ubSizePlatForm = ubSizePlatForm;
-    OP_CHECK_IF(
-        (compileInfo->ubSizePlatForm <= 0), OP_LOGE(context->GetNodeName(), "Failed to get ub size."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->ubSizePlatForm <= 0), OP_LOGE(context->GetNodeName(), "Failed to get ub size."),
+                return ge::GRAPH_FAILED);
     OP_LOGI(context->GetNodeName(), "TilingPrepare4GridSampler3DGrad end.");
     return ge::GRAPH_SUCCESS;
 }

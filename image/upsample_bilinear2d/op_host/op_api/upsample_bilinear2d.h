@@ -18,8 +18,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleBilinear2dNcdhw(const aclTensor *x, const aclTensor *size, const bool alignCorners,
-    const double scalesH, const double scalesW, const aclTensor *y, aclOpExecutor *executor);
+const aclTensor* UpsampleBilinear2dNcdhw(const aclTensor* x, const aclTensor* size, const bool alignCorners,
+                                         const double scalesH, const double scalesW, const aclTensor* y,
+                                         aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR2D_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR2D_H_

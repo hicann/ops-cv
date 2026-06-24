@@ -63,7 +63,7 @@ struct ResizeBilinearV2GradCompileInfo {
 class ResizeBilinearV2GradTilingAscendC {
 public:
     explicit ResizeBilinearV2GradTilingAscendC(gert::TilingContext* context)
-        : context_(context), nodeName_(context->GetNodeName()){};
+        : context_(context), nodeName_(context->GetNodeName()) {};
 
     ge::graphStatus Init(const ResizeBilinearV2GradCompileInfo* compileInfo);
     ge::graphStatus DoTiling();

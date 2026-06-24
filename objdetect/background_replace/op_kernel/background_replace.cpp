@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
-*/
+ */
 
 /*!
  * \file background_replace.cpp
@@ -23,10 +23,9 @@ constexpr int32_t CHANNEL_NUM = 3;
 template <typename T1, typename T2>
 class KernelBackgroundReplaceC1 {
 public:
-    __aicore__ inline KernelBackgroundReplaceC1()
-    {}
-    __aicore__ inline void Init(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace, size_t bufferNum, 
-                                size_t bufferBytes, size_t gmIdx, size_t gmDataLen)
+    __aicore__ inline KernelBackgroundReplaceC1() {}
+    __aicore__ inline void Init(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace,
+                                size_t bufferNum, size_t bufferBytes, size_t gmIdx, size_t gmDataLen)
     {
         if (bufferBytes <= 0) {
             return;
@@ -64,12 +63,12 @@ public:
         inQueueSrc.EnQue(srcLocal);
         inQueueMask.EnQue(maskLocal);
 
-        //compute
+        // compute
         bkgLocal = inQueueBkg.DeQue<T1>();
         srcLocal = inQueueSrc.DeQue<T1>();
         maskLocal = inQueueMask.DeQue<T2>();
 
-        if constexpr(sizeof(T1) == 1) {
+        if constexpr (sizeof(T1) == 1) {
             LocalTensor<half> bkgTmpLocal = calcBufX1.Get<half>();
             LocalTensor<half> srcTmpLocal = calcBufX2.Get<half>();
             Cast(bkgTmpLocal, bkgLocal, RoundMode::CAST_NONE, len);
@@ -88,7 +87,7 @@ public:
             Add(dstLocal, bkgLocal, srcLocal, len);
         }
 
-        //CopyOut
+        // CopyOut
         outQueuedst.EnQue(dstLocal);
         inQueueBkg.FreeTensor(bkgLocal);
         inQueueSrc.FreeTensor(srcLocal);
@@ -115,10 +114,9 @@ private:
 template <typename T1, typename T2>
 class KernelBackgroundReplaceC3 {
 public:
-    __aicore__ inline KernelBackgroundReplaceC3()
-    {}
-    __aicore__ inline void Init(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace, size_t bufferNum, 
-                                size_t bufferBytes, size_t gmIdx, size_t gmDataLen)
+    __aicore__ inline KernelBackgroundReplaceC3() {}
+    __aicore__ inline void Init(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace,
+                                size_t bufferNum, size_t bufferBytes, size_t gmIdx, size_t gmDataLen)
     {
         if (bufferBytes <= 0) {
             return;
@@ -163,7 +161,7 @@ public:
         inQueueSrc.EnQue(srcLocal);
         inQueueMask.EnQue(maskLocal);
 
-        //compute
+        // compute
         bkgLocal = inQueueBkg.DeQue<T1>();
         srcLocal = inQueueSrc.DeQue<T1>();
         maskLocal = inQueueMask.DeQue<T2>();
@@ -173,7 +171,7 @@ public:
         LocalTensor<half> maskC3Local = calcBufX3.Get<half>();
         auto dstLocal = outQueuedst.AllocTensor<T1>();
         BroadCast<half, dimNum, 1>(maskC3Local, maskLocal, dstShape, srcShape);
-        if constexpr(sizeof(T1) == 1) {
+        if constexpr (sizeof(T1) == 1) {
             LocalTensor<half> bkgTmpLocal = calcBufX1.Get<half>();
             LocalTensor<half> srcTmpLocal = calcBufX2.Get<half>();
             Cast(bkgTmpLocal, bkgLocal, RoundMode::CAST_NONE, srclen);
@@ -192,8 +190,8 @@ public:
             Add(dstLocal, bkgLocal, srcLocal, srclen);
         }
 
-        //CopyOut
-        
+        // CopyOut
+
         outQueuedst.EnQue(dstLocal);
         inQueueBkg.FreeTensor(bkgLocal);
         inQueueSrc.FreeTensor(srcLocal);
@@ -202,6 +200,7 @@ public:
         DataCopy(zGm[idx * CHANNEL_NUM], dstLocal, srclen);
         outQueuedst.FreeTensor(dstLocal);
     }
+
 protected:
     TPipe pipe;
     TQue<QuePosition::VECIN, BUFFER_NUM> inQueueBkg;
@@ -218,7 +217,8 @@ protected:
 };
 
 template <typename T1, typename T2>
-__aicore__ void run_op(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace, GM_ADDR tiling, float ubVarNum, bool isRGB=false)
+__aicore__ void run_op(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace, GM_ADDR tiling,
+                       float ubVarNum, bool isRGB = false)
 {
     GET_TILING_DATA(tilingData, tiling);
     if (!isRGB) {
@@ -236,7 +236,8 @@ __aicore__ void run_op(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_A
     }
 }
 
-extern "C" __global__ __aicore__ void background_replace(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void background_replace(GM_ADDR bkg, GM_ADDR src, GM_ADDR mask, GM_ADDR out,
+                                                         GM_ADDR workspace, GM_ADDR tiling)
 {
     if (TILING_KEY_IS(1)) {
         constexpr float ubVarNum = 5;

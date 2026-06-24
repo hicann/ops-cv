@@ -45,13 +45,13 @@ static constexpr int64_t EXPECT_SIZE = 1;
 static constexpr float FLOAT_NEGONE = -1.0f;
 static constexpr float FLOAT_ZERO = 0.0;
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT,
+                                                                       op::DataType::DT_DOUBLE, op::DataType::DT_BF16};
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
-static bool CheckNotNull(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* gradInput)
+static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                         const aclTensor* gradInput)
 {
     OP_CHECK_NULL(gradOut, return false);
     OP_CHECK_NULL(outputSize, return false);
@@ -72,20 +72,18 @@ static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, 
     size_t gradOutDimNum = gradOut->GetViewShape().GetDimNum();
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
-    OP_CHECK(
-        gradOutDimNum == DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOut to be 3d Tensor, instead got: %zu", gradOutDimNum),
-        return false);
+    OP_CHECK(gradOutDimNum == DIM_LIMIT,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOut to be 3d Tensor, instead got: %zu", gradOutDimNum),
+             return false);
 
     OP_CHECK(
         outputSizeNum == EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 1, but got size %zu", outputSizeNum),
         return false);
 
-    OP_CHECK(
-        inputSizeNum == DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 3, but got size %zu", inputSizeNum),
-        return false);
+    OP_CHECK(inputSizeNum == DIM_LIMIT,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 3, but got size %zu", inputSizeNum),
+             return false);
     return true;
 }
 
@@ -99,22 +97,19 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
     size_t dimNum = gradOutShape.GetDimNum();
     FVector<int64_t> outputShape = {batch, channels, outL};
 
-    OP_CHECK(
-        inputL > 0 && outL > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0,"
-            "but got input (L: %ld) output (L: %ld)",
-            inputL, outL),
-        return false);
+    OP_CHECK(inputL > 0 && outL > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0,"
+                     "but got input (L: %ld) output (L: %ld)",
+                     inputL, outL),
+             return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
         if (gradOutShape.GetDim(i) != outputShape[i]) {
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "Expected grad_output to have the same shape as output;"
-                " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, outputShape[i], i, gradOutShape.GetDim(i));
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Expected grad_output to have the same shape as output;"
+                    " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
+                    i, outputShape[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
@@ -128,16 +123,15 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
     int64_t outDimN = out->GetViewShape().GetDim(DIM_ZERO);
     int64_t outDimC = out->GetViewShape().GetDim(DIM_ONE);
     if ((outDimC != selfDimC) || (outDimN != selfDimN)) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .", selfDimC,
-            outDimC, selfDimN, outDimN);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .",
+                selfDimC, outDimC, selfDimN, outDimN);
         return false;
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* out)
+static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -204,9 +198,9 @@ static const aclTensor* View3dAs4d(const aclTensor* input, bool ifAiCpu, aclOpEx
     return reformatInput;
 }
 
-const aclTensor* upsampleNearest1dBackwardAiCpuCompute(
-    const aclTensor* gradOutContiguous, const aclIntArray* outputSize, double scales, const aclTensor* size,
-    aclOpExecutor* executor)
+const aclTensor* upsampleNearest1dBackwardAiCpuCompute(const aclTensor* gradOutContiguous,
+                                                       const aclIntArray* outputSize, double scales,
+                                                       const aclTensor* size, aclOpExecutor* executor)
 {
     const float scalesList[] = {FLOAT_NEGONE, FLOAT_NEGONE, FLOAT_NEGONE, static_cast<float>(scales)};
     auto scalesArray = executor->AllocFloatArray(scalesList, 4);
@@ -215,16 +209,16 @@ const aclTensor* upsampleNearest1dBackwardAiCpuCompute(
     auto scalesTensor = executor->ConvertToTensor(scalesArray, op::ToOpDataType(ACL_FLOAT));
     CHECK_RET(scalesTensor != nullptr, nullptr);
 
-    const aclTensor* resizeNearestOutAiCpu =
-        l0op::ResizeGrad(gradOutContiguous, outputSize, scalesTensor, size, executor);
+    const aclTensor* resizeNearestOutAiCpu = l0op::ResizeGrad(gradOutContiguous, outputSize, scalesTensor, size,
+                                                              executor);
     CHECK_RET(resizeNearestOutAiCpu != nullptr, nullptr);
 
     return resizeNearestOutAiCpu;
 }
 
-aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, double scales,
-    aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                           const aclIntArray* inputSize, double scales, aclTensor* out,
+                                                           uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnUpsampleNearest1dBackward, DFX_IN(gradOut, outputSize, inputSize, scales), DFX_OUT(out));
 
@@ -283,12 +277,11 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
         out3d = View4dAs3d(resizeNearestOut, out, false, uniqueExecutor.get());
     } else {
         // 当支持类型不在aicore范围内或者传入的scales大于0时使用aicpu算子
-        bool ifAiCpu =
-            ((gradOut->GetDataType() != op::DataType::DT_FLOAT || scales > FLOAT_ZERO) &&
-             gradOut->GetDataType() != op::DataType::DT_BF16 && check_scales);
-        bool ifAiCpu950 =
-            (gradOut->GetDataType() != op::DataType::DT_FLOAT && gradOut->GetDataType() != op::DataType::DT_FLOAT16 &&
-             gradOut->GetDataType() != op::DataType::DT_BF16);
+        bool ifAiCpu = ((gradOut->GetDataType() != op::DataType::DT_FLOAT || scales > FLOAT_ZERO) &&
+                        gradOut->GetDataType() != op::DataType::DT_BF16 && check_scales);
+        bool ifAiCpu950 = (gradOut->GetDataType() != op::DataType::DT_FLOAT &&
+                           gradOut->GetDataType() != op::DataType::DT_FLOAT16 &&
+                           gradOut->GetDataType() != op::DataType::DT_BF16);
         // l0算子要求传入4维tensor
         curArch = GetCurrentPlatformInfo().GetCurNpuArch();
         bool is950 = IsRegBase(curArch);
@@ -304,16 +297,16 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
             if (ifAiCpu950) {
                 auto originSizeTensor = uniqueExecutor.get()->ConvertToTensor(originSizeArray, op::DataType::DT_INT64);
                 CHECK_RET(originSizeTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
-                resizeNearestOut = upsampleNearest1dBackwardAiCpuCompute(
-                    gradOutContiguous, originSizeArray, scales, originSizeTensor, uniqueExecutor.get());
+                resizeNearestOut = upsampleNearest1dBackwardAiCpuCompute(gradOutContiguous, originSizeArray, scales,
+                                                                         originSizeTensor, uniqueExecutor.get());
             } else {
                 vector<float> scalesList{};
                 scalesList.push_back(1.0f);
                 scalesList.push_back(scales);
                 const aclFloatArray* scalesNew = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
                 CHECK_RET(scalesNew != nullptr, ACLNN_ERR_INNER_NULLPTR);
-                resizeNearestOut = l0op::ResizeNearestNeighborV2Grad(
-                    gradOutContiguous, originSizeArray, false, false, scalesNew, uniqueExecutor.get());
+                resizeNearestOut = l0op::ResizeNearestNeighborV2Grad(gradOutContiguous, originSizeArray, false, false,
+                                                                     scalesNew, uniqueExecutor.get());
             }
             CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
             // 转回3维tensor
@@ -332,16 +325,16 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
                 }
                 auto originSizeTensor = uniqueExecutor.get()->ConvertToTensor(originSizeArray, op::DataType::DT_INT64);
                 CHECK_RET(originSizeTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
-                resizeNearestOut = upsampleNearest1dBackwardAiCpuCompute(
-                    gradOutContiguous, originSizeArray, scales, originSizeTensor, uniqueExecutor.get());
+                resizeNearestOut = upsampleNearest1dBackwardAiCpuCompute(gradOutContiguous, originSizeArray, scales,
+                                                                         originSizeTensor, uniqueExecutor.get());
                 CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
                 if (op::DataType::DT_FLOAT16 == dataType) {
                     resizeNearestOut = l0op::Cast(resizeNearestOut, op::DataType::DT_FLOAT16, uniqueExecutor.get());
                 }
             } else {
                 // aicore算子ResizeNearestNeighborV2Grad要求格式为NC1HWC0
-                auto gradOutTransdata =
-                    l0op::TransDataSpecial(gradOutContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+                auto gradOutTransdata = l0op::TransDataSpecial(gradOutContiguous, op::Format::FORMAT_NC1HWC0, 0,
+                                                               uniqueExecutor.get());
                 CHECK_RET(gradOutTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
                 // ResizeNearestNeighborV2Grad算子要求传入的默认参数
@@ -351,8 +344,8 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
                     gradOutTransdata, originSizeArray, alignCorners, halfPixelCenters, uniqueExecutor.get());
                 CHECK_RET(resizeNearestOutAiCore != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-                resizeNearestOut = l0op::TransData(
-                    resizeNearestOutAiCore, gradOutContiguous->GetStorageFormat(), 0, uniqueExecutor.get());
+                resizeNearestOut = l0op::TransData(resizeNearestOutAiCore, gradOutContiguous->GetStorageFormat(), 0,
+                                                   uniqueExecutor.get());
                 CHECK_RET(resizeNearestOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
             }
         }
@@ -369,8 +362,8 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearest1dBackward(
-    void* workspace, uint64_t workspace_size, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearest1dBackward(void* workspace, uint64_t workspace_size, aclOpExecutor* executor,
+                                           aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearest1dBackward);
     return CommonOpExecutorRun(workspace, workspace_size, executor, stream);

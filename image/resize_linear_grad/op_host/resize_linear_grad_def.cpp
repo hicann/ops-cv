@@ -15,45 +15,41 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-static const std::vector<ge::DataType> inputDataType = {
-    ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16
-};
+static const std::vector<ge::DataType> inputDataType = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
 
-static const std::vector<ge::Format> inputFormat = {
-    ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND
-};
+static const std::vector<ge::Format> inputFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 
 class ResizeLinearGrad : public OpDef {
- public:
-  explicit ResizeLinearGrad(const char* name) : OpDef(name)
-  {
-    this->Input("grads")
-        .ParamType(REQUIRED)
-        .DataType(inputDataType)
-        .Format(inputFormat)
-        .UnknownShapeFormat(inputFormat);
-    this->Input("original_image")
-        .ParamType(REQUIRED)
-        .DataType(inputDataType)
-        .Format(inputFormat)
-        .UnknownShapeFormat(inputFormat);
-    this->Output("y")
-        .ParamType(REQUIRED)
-        .DataType(inputDataType)
-        .Format(inputFormat)
-        .UnknownShapeFormat(inputFormat);
+public:
+    explicit ResizeLinearGrad(const char* name) : OpDef(name)
+    {
+        this->Input("grads")
+            .ParamType(REQUIRED)
+            .DataType(inputDataType)
+            .Format(inputFormat)
+            .UnknownShapeFormat(inputFormat);
+        this->Input("original_image")
+            .ParamType(REQUIRED)
+            .DataType(inputDataType)
+            .Format(inputFormat)
+            .UnknownShapeFormat(inputFormat);
+        this->Output("y")
+            .ParamType(REQUIRED)
+            .DataType(inputDataType)
+            .Format(inputFormat)
+            .UnknownShapeFormat(inputFormat);
 
-    this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
-    this->Attr("scale").AttrType(OPTIONAL).Float(0.0f);
+        this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
+        this->Attr("scale").AttrType(OPTIONAL).Float(0.0f);
 
-    OpAICoreConfig aicoreConfig;
-    aicoreConfig.DynamicCompileStaticFlag(true)
-        .DynamicRankSupportFlag(true)
-        .DynamicShapeSupportFlag(true)
-        .ExtendCfgInfo("opFile.value", "resize_linear_grad_apt");
-    this->AICore().AddConfig("ascend950", aicoreConfig);
-  }
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "resize_linear_grad_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
+    }
 };
 
 OP_ADD(ResizeLinearGrad);
-}
+} // namespace ops

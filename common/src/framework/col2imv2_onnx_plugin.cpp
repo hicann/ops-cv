@@ -24,9 +24,9 @@ namespace domi {
 using NodeProto = ge::onnx::NodeProto;
 
 namespace {
-static void SetCol2ImV2ByCondition(
-    ge::Operator& op_dest, bool set_dilations_flag, std::vector<int>& v_dilations, bool set_pads_flag,
-    std::vector<int>& v_pads, bool set_strides_flag, std::vector<int>& v_strides)
+static void SetCol2ImV2ByCondition(ge::Operator& op_dest, bool set_dilations_flag, std::vector<int>& v_dilations,
+                                   bool set_pads_flag, std::vector<int>& v_pads, bool set_strides_flag,
+                                   std::vector<int>& v_strides)
 {
     if (set_dilations_flag) {
         op_dest.SetAttr("dilation", v_dilations);
@@ -101,8 +101,8 @@ static Status ParseOnnxParamsCol2ImV2(const Message* op_src, ge::Operator& op_de
         }
     }
 
-    SetCol2ImV2ByCondition(
-        op_dest, set_dilations_flag, v_dilations, set_pads_flag, v_pads, set_strides_flag, v_strides);
+    SetCol2ImV2ByCondition(op_dest, set_dilations_flag, v_dilations, set_pads_flag, v_pads, set_strides_flag,
+                           v_strides);
     SetCol2ImV2ByNode(op_dest, node);
 
     return SUCCESS;
@@ -167,4 +167,4 @@ REGISTER_CUSTOM_OP("PartitionedCall")
     .ParseParamsFn(ParseOnnxParamsCol2ImV2)
     .ParseOpToGraphFn(ParseOnnxOpToGraphCol2ImV2)
     .ImplyType(ImplyType::TVM);
-}  // domi
+} // namespace domi

@@ -17,28 +17,29 @@
 
 class ResizeBicubicV2GradInfershapeTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeBicubicV2GradInfershapeTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeBicubicV2GradInfershapeTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeBicubicV2GradInfershapeTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeBicubicV2GradInfershapeTest TearDown" << std::endl; }
 };
 
 TEST_F(ResizeBicubicV2GradInfershapeTest, resize_bicubic_v2_grad_infershape_test_01)
 {
     gert::StorageShape inputGradsShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
     gert::StorageShape inputOriImageShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
-    gert::StorageShape outputShape = {{-2,}, {-2,}};
+    gert::StorageShape outputShape = {{
+                                          -2,
+                                      },
+                                      {
+                                          -2,
+                                      }};
 
     gert::InfershapeContextPara infershapeContextPara(
         "ResizeBicubicV2Grad",
         {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
         {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 3, 32, 32},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 3, 32, 32},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

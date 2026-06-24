@@ -18,9 +18,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor* UpsampleNearestExact2dGrad(
-    const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize, aclTensor* output,
-    float scales_h, float scales_w, bool isExact, aclOpExecutor* executor);
+const aclTensor* UpsampleNearestExact2dGrad(const aclTensor* gradOutput, const aclIntArray* outputSize,
+                                            const aclIntArray* inputSize, aclTensor* output, float scales_h,
+                                            float scales_w, bool isExact, aclOpExecutor* executor);
 }
 
 #endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_EXACT2D_GRAD_H_

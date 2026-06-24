@@ -18,9 +18,9 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleBilinear2dGrad(const aclTensor *gradOutput, const aclIntArray *outputSize,
-    const aclIntArray *inputSize, const aclTensor *output, const bool alignCorners, const float scales_h,
-    const float scales_w, aclOpExecutor *executor);
+const aclTensor* UpsampleBilinear2dGrad(const aclTensor* gradOutput, const aclIntArray* outputSize,
+                                        const aclIntArray* inputSize, const aclTensor* output, const bool alignCorners,
+                                        const float scales_h, const float scales_w, aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR2D_GRAD_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_BILINEAR2D_GRAD_H_

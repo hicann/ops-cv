@@ -32,37 +32,40 @@ class ResizeGather {
 public:
     __aicore__ inline ResizeGather(){};
     __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y,
-        const ResizeNearestNeighborV2TilingData *tilingData);
+                                const ResizeNearestNeighborV2TilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline int64_t ComputeOriIds(int64_t dstIds, int64_t maxIds, float scale, float bais);
-    __aicore__ inline void GatherOutput(LocalTensor<T> &outUb, LocalTensor<T> &srcUb, int64_t ubFactor, int64_t srcLen,
-        int64_t dstLen, int64_t srcHwStart);
-    __aicore__ inline void DataCopyIn(LocalTensor<T> &xLocal, int64_t blockCount, int64_t blockLen, int64_t srcStride,
-        int64_t offset);
-    __aicore__ inline void DataCopyOut(LocalTensor<T> &yLocal, int64_t blockCount, int64_t blockLen, int64_t srcStride,
-        int64_t offset);
-    __aicore__ inline void ComputeDataCopyGather(LocalTensor<T> &srcUb, LocalTensor<T> &outUb, LocalTensor<T1> &idxHwUb, int64_t num);
+    __aicore__ inline void GatherOutput(LocalTensor<T>& outUb, LocalTensor<T>& srcUb, int64_t ubFactor, int64_t srcLen,
+                                        int64_t dstLen, int64_t srcHwStart);
+    __aicore__ inline void DataCopyIn(LocalTensor<T>& xLocal, int64_t blockCount, int64_t blockLen, int64_t srcStride,
+                                      int64_t offset);
+    __aicore__ inline void DataCopyOut(LocalTensor<T>& yLocal, int64_t blockCount, int64_t blockLen, int64_t srcStride,
+                                       int64_t offset);
+    __aicore__ inline void ComputeDataCopyGather(LocalTensor<T>& srcUb, LocalTensor<T>& outUb, LocalTensor<T1>& idxHwUb,
+                                                 int64_t num);
     __aicore__ inline void ComputeAllHw();
     __aicore__ inline void ComputeIdsSpecial(int64_t dstWSizeAlgin, int64_t srcWSizeAlgin);
     __aicore__ inline void ComputeCutH();
-    __aicore__ inline void ComputeOriHIdx(LocalTensor<T1> &idxHUb, LocalTensor<T1> &idxH1Ub, int64_t onceHsize,
-        int64_t hoStart, int64_t hiStart);
-    __aicore__ inline void ComputeOriHWidx(LocalTensor<T1> &idxWUb, LocalTensor<T1> &idxH1Ub, LocalTensor<T1> &idxHwUb,
-        int64_t onceHsize);
-    __aicore__ inline void ComputeHWids(LocalTensor<T1> &idxUb, LocalTensor<T1> &idxHUb, LocalTensor<T1> &idxWUb,
-        int64_t dstWSizeAlgin);
-    __aicore__ inline void ComputeHids(LocalTensor<T1> &idxHUb, int64_t hFactor);
+    __aicore__ inline void ComputeOriHIdx(LocalTensor<T1>& idxHUb, LocalTensor<T1>& idxH1Ub, int64_t onceHsize,
+                                          int64_t hoStart, int64_t hiStart);
+    __aicore__ inline void ComputeOriHWidx(LocalTensor<T1>& idxWUb, LocalTensor<T1>& idxH1Ub, LocalTensor<T1>& idxHwUb,
+                                           int64_t onceHsize);
+    __aicore__ inline void ComputeHWids(LocalTensor<T1>& idxUb, LocalTensor<T1>& idxHUb, LocalTensor<T1>& idxWUb,
+                                        int64_t dstWSizeAlgin);
+    __aicore__ inline void ComputeHids(LocalTensor<T1>& idxHUb, int64_t hFactor);
     constexpr static int32_t bufferNum = 2;
 
-    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = { AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::NO_SAT, AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND };
-    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = { AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::NO_SAT, AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR };
-    constexpr static AscendC::MicroAPI::CastTrait castInt32ToF = { AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::UNKNOWN, AscendC::MicroAPI::MaskMergeMode::ZEROING,
-        AscendC::RoundMode::CAST_FLOOR };
+    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND};
+    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::MicroAPI::CastTrait castInt32ToF = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::UNKNOWN,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
 
 private:
     TPipe pipe;
@@ -104,18 +107,18 @@ private:
     float bias_ = 0.0f;
     int32_t blockNumSize_ = Ops::Base::GetUbBlockSize() / sizeof(T);
     // tiling params
-    const ResizeNearestNeighborV2TilingData *tiling_;
-    DataCopyPadExtParams<T> padParams_{ false, 0, 0, 0 };
-    DataCopyExtParams copyParams_{ 1, 1, 0, 0, 0 };
+    const ResizeNearestNeighborV2TilingData* tiling_;
+    DataCopyPadExtParams<T> padParams_{false, 0, 0, 0};
+    DataCopyExtParams copyParams_{1, 1, 0, 0, 0};
 };
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y,
-    const ResizeNearestNeighborV2TilingData *tilingData)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::Init(
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, const ResizeNearestNeighborV2TilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
-    xGm_.SetGlobalBuffer((__gm__ T *)x);
-    yGm_.SetGlobalBuffer((__gm__ T *)y);
+    xGm_.SetGlobalBuffer((__gm__ T*)x);
+    yGm_.SetGlobalBuffer((__gm__ T*)y);
     tiling_ = tilingData;
 
     // 接收tilingdata信息
@@ -150,11 +153,11 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::Init(GM_ADDR x,
 
     pipe.InitBuffer(inQue_, bufferNum, xUb_);
     pipe.InitBuffer(outQue_, bufferNum, yUb_);
-    pipe.InitBuffer(idxBuf_, idsUb_); // 存放h*w坐标
+    pipe.InitBuffer(idxBuf_, idsUb_);                       // 存放h*w坐标
     pipe.InitBuffer(idxWBuf_, dstWAlignSize_ * sizeof(T1)); // 放w的坐标
     if (schId == TPL_SCH_MODE_GATHER_ALL_HW) {
         int64_t dstHAlignSize = (dstHSize_ + blockNumSize_ - 1) / blockNumSize_ * blockNumSize_;
-        pipe.InitBuffer(idxHBuf_, dstHAlignSize * sizeof(T1));  // 放h的坐标
+        pipe.InitBuffer(idxHBuf_, dstHAlignSize * sizeof(T1)); // 放h的坐标
     }
     if constexpr (schId == TPL_SCH_MODE_GATHER_CUT_H) {
         int64_t dstHAlignSize = (ubFactor_ + blockNumSize_ - 1) / blockNumSize_ * blockNumSize_;
@@ -165,7 +168,7 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::Init(GM_ADDR x,
 
 template <typename T, typename T1, int schId, bool alignCorners>
 __aicore__ inline int64_t ResizeGather<T, T1, schId, alignCorners>::ComputeOriIds(int64_t dstIds, int64_t maxIds,
-    float scale, float bais)
+                                                                                  float scale, float bais)
 {
     int64_t srcIds = 0;
     if constexpr (alignCorners) {
@@ -182,16 +185,18 @@ __aicore__ inline int64_t ResizeGather<T, T1, schId, alignCorners>::ComputeOriId
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::GatherOutput(LocalTensor<T> &outUb,
-    LocalTensor<T> &srcUb, int64_t ubFactor, int64_t srcLen, int64_t dstLen, int64_t srcHwStart)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::GatherOutput(LocalTensor<T>& outUb,
+                                                                              LocalTensor<T>& srcUb, int64_t ubFactor,
+                                                                              int64_t srcLen, int64_t dstLen,
+                                                                              int64_t srcHwStart)
 {
     uint16_t times = CeilDivision(dstLen, vlLen_);
     LocalTensor<T1> idxUb = idxBuf_.AllocTensor<T1>();
-    auto idxUbAddr = (__ubuf__ T1 *)idxUb.GetPhyAddr();
-    auto srcUbAddr = (__ubuf__ T *)srcUb.GetPhyAddr();
-    auto dstUbAddr = (__ubuf__ T *)outUb.GetPhyAddr();
+    auto idxUbAddr = (__ubuf__ T1*)idxUb.GetPhyAddr();
+    auto srcUbAddr = (__ubuf__ T*)srcUb.GetPhyAddr();
+    auto dstUbAddr = (__ubuf__ T*)outUb.GetPhyAddr();
     T1 srcHwNum = srcHwStart;
-    auto dstUbAddr1 = (__ubuf__ T *)outUb[dstLen].GetPhyAddr();
+    auto dstUbAddr1 = (__ubuf__ T*)outUb[dstLen].GetPhyAddr();
 
     uint32_t vfLen = vlLen_;
     uint32_t dstHwAlign = dstLen;
@@ -224,8 +229,8 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::GatherOutput(Lo
                 AscendC::MicroAPI::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
                 AscendC::MicroAPI::Sub(idxRegT, idxRegT, startReg, preg);
                 for (uint16_t i = 0; i < ubFactorTimes; i++) {
-                    AscendC::MicroAPI::AddrReg outOffset =
-                        AscendC::MicroAPI::CreateAddrReg<T>(jj, vfLen, i, dstHwAlign);
+                    AscendC::MicroAPI::AddrReg outOffset = AscendC::MicroAPI::CreateAddrReg<T>(jj, vfLen, i,
+                                                                                               dstHwAlign);
                     Adds(idxRegT, idxRegT, srcLenNum, preg);
                     DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
                     AscendC::MicroAPI::DataCopy(dstUbAddr1, dstReg, outOffset, preg);
@@ -236,8 +241,9 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::GatherOutput(Lo
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::DataCopyIn(LocalTensor<T> &xLocal, int64_t blockCount,
-    int64_t blockLen, int64_t srcStride, int64_t offset)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::DataCopyIn(LocalTensor<T>& xLocal, int64_t blockCount,
+                                                                            int64_t blockLen, int64_t srcStride,
+                                                                            int64_t offset)
 {
     copyParams_.blockCount = blockCount;
     copyParams_.blockLen = blockLen * sizeof(T);
@@ -247,8 +253,9 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::DataCopyIn(Loca
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::DataCopyOut(LocalTensor<T> &yLocal, int64_t blockCount,
-    int64_t blockLen, int64_t srcStride, int64_t offset)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::DataCopyOut(LocalTensor<T>& yLocal, int64_t blockCount,
+                                                                             int64_t blockLen, int64_t srcStride,
+                                                                             int64_t offset)
 {
     copyParams_.blockCount = blockCount;
     copyParams_.blockLen = blockLen * sizeof(T);
@@ -258,13 +265,15 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::DataCopyOut(Loc
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeDataCopyGather(LocalTensor<T> &srcUb,
-    LocalTensor<T> &outUb, LocalTensor<T1> &idxHwUb, int64_t num)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeDataCopyGather(LocalTensor<T>& srcUb,
+                                                                                       LocalTensor<T>& outUb,
+                                                                                       LocalTensor<T1>& idxHwUb,
+                                                                                       int64_t num)
 {
     uint16_t times = CeilDivision(num, vlLen_);
-    auto idxUbAddr = (__ubuf__ T1 *)idxHwUb.GetPhyAddr();
-    auto srcUbAddr = (__ubuf__ T *)srcUb.GetPhyAddr();
-    auto dstUbAddr = (__ubuf__ T *)outUb.GetPhyAddr();
+    auto idxUbAddr = (__ubuf__ T1*)idxHwUb.GetPhyAddr();
+    auto srcUbAddr = (__ubuf__ T*)srcUb.GetPhyAddr();
+    auto dstUbAddr = (__ubuf__ T*)outUb.GetPhyAddr();
     uint32_t vfLen = vlLen_;
     uint32_t onceSize = num;
     __VEC_SCOPE__
@@ -283,10 +292,10 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeDataCopy
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHids(LocalTensor<T1> &idxHUb, int64_t hFactor)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHids(LocalTensor<T1>& idxHUb, int64_t hFactor)
 {
-    auto idxUbAddr = (__ubuf__ T1 *)idxHUb.GetPhyAddr();
-    auto idxUbRemainAddr = (__ubuf__ T1 *)idxHUb[vlLenB32_].GetPhyAddr();
+    auto idxUbAddr = (__ubuf__ T1*)idxHUb.GetPhyAddr();
+    auto idxUbRemainAddr = (__ubuf__ T1*)idxHUb[vlLenB32_].GetPhyAddr();
     uint16_t times = 0;
     uint32_t remainNum = 0;
     uint32_t numH = vlLenB32_;
@@ -304,32 +313,32 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHids(Loc
         AscendC::MicroAPI::MaskReg pregRemainB32;
         Arange(idxInt32Reg, 0);
         if constexpr (sizeof(T1) == sizeof(int32_t)) {
-            DataCopy(idxUbAddr, (MicroAPI::RegTensor<T1> &)idxInt32Reg, pregB32);
+            DataCopy(idxUbAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg, pregB32);
         } else {
-            DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbAddr, (MicroAPI::RegTensor<T1> &)idxInt32Reg,
-                pregB32);
+            DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg,
+                                                                      pregB32);
         }
         for (uint16_t i = 0; i < times; i++) {
             pregRemainB32 = AscendC::MicroAPI::UpdateMask<int32_t>(remainNum);
             Adds(idxInt32Reg, idxInt32Reg, 64, pregRemainB32);
             AscendC::MicroAPI::AddrReg dstOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, 64);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxUbRemainAddr, (MicroAPI::RegTensor<T1> &)idxInt32Reg, dstOffset, pregRemainB32);
+                DataCopy(idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
             } else {
-                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbRemainAddr,
-                    (MicroAPI::RegTensor<T1> &)idxInt32Reg, dstOffset, pregRemainB32);
+                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(
+                    idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
             }
         }
     }
 }
 
 template <typename T1, bool isH, bool alignCorners>
-__aicore__ inline void ComputeHOrWids(LocalTensor<T1> &idxUb, float bias, float scale, int64_t srcSize, int64_t dstSize,
-    int64_t srcWsize)
+__aicore__ inline void ComputeHOrWids(LocalTensor<T1>& idxUb, float bias, float scale, int64_t srcSize, int64_t dstSize,
+                                      int64_t srcWsize)
 {
     uint32_t vfLenb32 = Ops::Base::GetVRegSize() / sizeof(float);
-    auto idxUbAddr = (__ubuf__ T1 *)idxUb.GetPhyAddr();
-    auto idxUbRemainAddr = (__ubuf__ T1 *)idxUb[vfLenb32].GetPhyAddr();
+    auto idxUbAddr = (__ubuf__ T1*)idxUb.GetPhyAddr();
+    auto idxUbRemainAddr = (__ubuf__ T1*)idxUb[vfLenb32].GetPhyAddr();
     uint32_t oneTimeNum = vfLenb32;
     uint32_t remainNum = 0;
     int32_t srcW = srcWsize;
@@ -342,13 +351,15 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1> &idxUb, float bias, float 
         remainNum = dstSize - vfLenb32;
         times = CeilDivision(remainNum, vfLenb32);
     }
-    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = { AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::NO_SAT, AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND };
-    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = { AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::NO_SAT, AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR };
-    constexpr static AscendC::MicroAPI::CastTrait castInt32ToF = { AscendC::MicroAPI::RegLayout::UNKNOWN,
-        AscendC::MicroAPI::SatMode::UNKNOWN, AscendC::MicroAPI::MaskMergeMode::ZEROING,
-        AscendC::RoundMode::CAST_FLOOR };
+    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND};
+    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::MicroAPI::CastTrait castInt32ToF = {
+        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::UNKNOWN,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
 
     __VEC_SCOPE__
     {
@@ -375,10 +386,10 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1> &idxUb, float bias, float 
             Muls(hIdxInt32C, hIdxInt32C, srcW, pregB32);
         }
         if constexpr (sizeof(T1) == sizeof(int32_t)) {
-            DataCopy(idxUbAddr, (MicroAPI::RegTensor<T1> &)hIdxInt32C, pregB32);
+            DataCopy(idxUbAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C, pregB32);
         } else {
-            DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbAddr, (MicroAPI::RegTensor<T1> &)hIdxInt32C,
-                pregB32);
+            DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C,
+                                                                      pregB32);
         }
         for (uint16_t i = 0; i < times; i++) {
             pregRemainB32 = AscendC::MicroAPI::UpdateMask<int32_t>(remainNum);
@@ -396,22 +407,24 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1> &idxUb, float bias, float 
             }
             AscendC::MicroAPI::AddrReg dstOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, 64);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxUbRemainAddr, (MicroAPI::RegTensor<T1> &)hIdxInt32C, dstOffset, pregRemainB32);
+                DataCopy(idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
             } else {
-                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbRemainAddr,
-                    (MicroAPI::RegTensor<T1> &)hIdxInt32C, dstOffset, pregRemainB32);
+                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(
+                    idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
             }
         }
     }
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(LocalTensor<T1> &idxHUb,
-    LocalTensor<T1> &idxH1Ub, int64_t onceHsize, int64_t hoStart, int64_t hiStart)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(LocalTensor<T1>& idxHUb,
+                                                                                LocalTensor<T1>& idxH1Ub,
+                                                                                int64_t onceHsize, int64_t hoStart,
+                                                                                int64_t hiStart)
 {
     // 先计算h的原始坐标
-    auto idxHubAddr = (__ubuf__ T1 *)idxHUb.GetPhyAddr();
-    auto idxH1UbAddr = (__ubuf__ T1 *)idxH1Ub.GetPhyAddr();
+    auto idxHubAddr = (__ubuf__ T1*)idxHUb.GetPhyAddr();
+    auto idxH1UbAddr = (__ubuf__ T1*)idxH1Ub.GetPhyAddr();
     uint32_t size = onceHsize;
     uint32_t vfLenB32 = vlLenB32_;
     uint16_t hTimes = CeilDivision(size, vfLenB32);
@@ -435,10 +448,10 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(
             preg = AscendC::MicroAPI::UpdateMask<int32_t>(size);
             AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, vfLenB32);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy((MicroAPI::RegTensor<T1> &)idxInt32Reg, idxHubAddr, srcIdxOffset);
+                DataCopy((MicroAPI::RegTensor<T1>&)idxInt32Reg, idxHubAddr, srcIdxOffset);
             } else {
-                DataCopy<T1, MicroAPI::LoadDist::DIST_UNPACK_B16>((MicroAPI::RegTensor<T1> &)idxInt32Reg, idxHubAddr,
-                    srcIdxOffset);
+                DataCopy<T1, MicroAPI::LoadDist::DIST_UNPACK_B16>((MicroAPI::RegTensor<T1>&)idxInt32Reg, idxHubAddr,
+                                                                  srcIdxOffset);
             }
             //
             Adds(idxInt32Reg, idxInt32Reg, hoStartData, preg); // 输出位置
@@ -455,22 +468,24 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(
             Sub(idxInt32OriReg, idxInt32OriReg, hiStartReg, preg);
             Muls(idxInt32OriWReg, idxInt32OriReg, wSize, preg);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxH1UbAddr, (MicroAPI::RegTensor<T1> &)idxInt32OriWReg, srcIdxOffset, preg);
+                DataCopy(idxH1UbAddr, (MicroAPI::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
             } else {
-                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxH1UbAddr,
-                    (MicroAPI::RegTensor<T1> &)idxInt32OriWReg, srcIdxOffset, preg);
+                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(
+                    idxH1UbAddr, (MicroAPI::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
             }
         }
     }
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHWidx(LocalTensor<T1> &idxWUb,
-    LocalTensor<T1> &idxH1Ub, LocalTensor<T1> &idxHwUb, int64_t onceHsize)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHWidx(LocalTensor<T1>& idxWUb,
+                                                                                 LocalTensor<T1>& idxH1Ub,
+                                                                                 LocalTensor<T1>& idxHwUb,
+                                                                                 int64_t onceHsize)
 {
     // 计算h*w的合轴的坐标
-    auto idxHwUbAddr = (__ubuf__ T1 *)idxHwUb.GetPhyAddr();
-    auto idxWubAddr = (__ubuf__ T1 *)idxWUb.GetPhyAddr();
+    auto idxHwUbAddr = (__ubuf__ T1*)idxHwUb.GetPhyAddr();
+    auto idxWubAddr = (__ubuf__ T1*)idxWUb.GetPhyAddr();
 
     uint16_t onceHTimes = onceHsize;
     uint32_t dstWSize = dstWAlignSize_;
@@ -481,8 +496,8 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHWidx
         wTailTimes = 1;
     }
     uint32_t vfLen = vlLen_;
-    auto idxWubAddr1 = (__ubuf__ T1 *)idxWUb[wTimes * vfLen].GetPhyAddr();
-    auto idxHwUbAddr1 = (__ubuf__ T1 *)idxHwUb[wTimes * vfLen].GetPhyAddr();
+    auto idxWubAddr1 = (__ubuf__ T1*)idxWUb[wTimes * vfLen].GetPhyAddr();
+    auto idxHwUbAddr1 = (__ubuf__ T1*)idxHwUb[wTimes * vfLen].GetPhyAddr();
 
     __VEC_SCOPE__
     {
@@ -557,19 +572,21 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeCutH()
 }
 
 template <typename T, typename T1, int schId, bool alignCorners>
-__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHWids(LocalTensor<T1> &idxUb,
-    LocalTensor<T1> &idxHUb, LocalTensor<T1> &idxWUb, int64_t dstWSizeAlgin)
+__aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHWids(LocalTensor<T1>& idxUb,
+                                                                              LocalTensor<T1>& idxHUb,
+                                                                              LocalTensor<T1>& idxWUb,
+                                                                              int64_t dstWSizeAlgin)
 {
     T1 hSize = dstHSize_;
     uint32_t vfLen = vlLen_;
     T1 wTimes = dstWSizeAlgin / vlLen_;
     uint32_t tail = dstWSizeAlgin % vlLen_;
     uint16_t tailTimes = tail > 0 ? 1 : 0;
-    auto idxUbAddr = (__ubuf__ T1 *)idxUb.GetPhyAddr();
-    auto idxUbAddr1 = (__ubuf__ T1 *)idxUb[wTimes * vfLen].GetPhyAddr();
+    auto idxUbAddr = (__ubuf__ T1*)idxUb.GetPhyAddr();
+    auto idxUbAddr1 = (__ubuf__ T1*)idxUb[wTimes * vfLen].GetPhyAddr();
 
-    auto idxWUbAddr = (__ubuf__ T1 *)idxWUb.GetPhyAddr();
-    auto idxWUbAddr1 = (__ubuf__ T1 *)idxWUb[wTimes * vfLen].GetPhyAddr();
+    auto idxWUbAddr = (__ubuf__ T1*)idxWUb.GetPhyAddr();
+    auto idxWUbAddr1 = (__ubuf__ T1*)idxWUb[wTimes * vfLen].GetPhyAddr();
     uint32_t wAlign = dstWSizeAlgin;
     __VEC_SCOPE__
     {
@@ -601,7 +618,7 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHWids(Lo
 
 template <typename T, typename T1, int schId, bool alignCorners>
 __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeIdsSpecial(int64_t dstWSizeAlgin,
-    int64_t srcWSizeAlgin)
+                                                                                   int64_t srcWSizeAlgin)
 {
     LocalTensor<T1> idxUb = idxBuf_.Get<T1>();
     LocalTensor<T1> idxHUb = idxHBuf_.Get<T1>();

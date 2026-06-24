@@ -65,10 +65,9 @@ constexpr uint32_t MAX_SMALL_SHPAE = 8192;
 constexpr uint32_t MAX_SMALL_SACALE = 2;
 constexpr uint8_t SCHEDULE_MODE = 1;
 
-class UpsampleNearestTiling
-{
+class UpsampleNearestTiling {
 public:
-    explicit UpsampleNearestTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleNearestTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus RunBigKernelTiling();
 
 private:
@@ -353,8 +352,8 @@ void UpsampleNearestTiling::FillTilingData()
     tilingContext->SetBlockDim(needCoreNum);
     tilingContext->SetTilingKey(tilingKey);
 
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 

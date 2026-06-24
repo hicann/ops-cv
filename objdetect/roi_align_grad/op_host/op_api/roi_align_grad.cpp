@@ -25,11 +25,12 @@ static const size_t DIM_3 = 3;
 
 OP_TYPE_REGISTER(ROIAlignGrad);
 
-const aclTensor *ROIAlignGrad(const aclTensor *gradOutput, const aclTensor *boxes,const aclIntArray *inputShape, 
-    int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio, int64_t roiEndMode, 
-    aclOpExecutor *executor)
+const aclTensor* ROIAlignGrad(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                              int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                              int64_t roiEndMode, aclOpExecutor* executor)
 {
-    L0_DFX(ROIAlignGrad, gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio, roiEndMode);
+    L0_DFX(ROIAlignGrad, gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio,
+           roiEndMode);
 
     op::Shape outStorageShape = gradOutput->GetStorageShape();
     op::Shape outOriginalShape = gradOutput->GetOriginalShape();
@@ -41,18 +42,19 @@ const aclTensor *ROIAlignGrad(const aclTensor *gradOutput, const aclTensor *boxe
     outOriginalShape.SetDim(DIM_2, (*inputShape)[DIM_2]);
     outOriginalShape.SetDim(DIM_3, (*inputShape)[DIM_3]);
 
-    auto gradInput = executor->AllocTensor(outStorageShape, outOriginalShape, gradOutput->GetDataType(), gradOutput->GetStorageFormat(),
-        gradOutput->GetOriginalFormat());
+    auto gradInput = executor->AllocTensor(outStorageShape, outOriginalShape, gradOutput->GetDataType(),
+                                           gradOutput->GetStorageFormat(), gradOutput->GetOriginalFormat());
     if (gradInput == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc gradInput tensor failed");
         return nullptr;
     }
 
     // 调用device的RoiAlignGrad算子
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ROIAlignGrad, OP_INPUT(gradOutput, boxes), OP_OUTPUT(gradInput),
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        ROIAlignGrad, OP_INPUT(gradOutput, boxes), OP_OUTPUT(gradInput),
         OP_ATTR(inputShape, pooledWidth, pooledHeight, spatialScale, samplingRatio, roiEndMode));
-    OP_CHECK(ret ==  ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ROIAlignGrad ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+    OP_CHECK(ret == ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ROIAlignGrad ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
 
     return gradInput;
 }

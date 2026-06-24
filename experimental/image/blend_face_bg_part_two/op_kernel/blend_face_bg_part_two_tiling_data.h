@@ -22,11 +22,11 @@
 #include <cstdint>
 
 struct BlendFaceBgPartTwoTilingData {
-    uint32_t totalElems;   // total number of elements (broadcast across 4 inputs)
-    uint32_t baseElems;    // base elements per core (floor division)
-    uint32_t pivot;        // first 'pivot' cores get baseElems+1
-    uint32_t tileSize;     // UB tile size in elements
-    float    epsilon;      // attribute epsilon for numerical stability
+    uint32_t totalElems; // total number of elements (broadcast across 4 inputs)
+    uint32_t baseElems;  // base elements per core (floor division)
+    uint32_t pivot;      // first 'pivot' cores get baseElems+1
+    uint32_t tileSize;   // UB tile size in elements
+    float epsilon;       // attribute epsilon for numerical stability
 };
 
 #endif

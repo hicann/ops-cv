@@ -29,10 +29,7 @@ constexpr uint32_t INDEX_NUM_ONE = 1;
 constexpr uint32_t INDEX_NUM_TWO = 2;
 constexpr uint32_t INDEX_NUM_THREE = 3;
 
-__aicore__ inline int64_t Min(int64_t a, int64_t b)
-{
-    return (a < b) ? a : b;
-}
+__aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCubicConvolution1(float t, float a)
 {
@@ -59,7 +56,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcCubic
 }
 
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcCubicCoefficients(float coeffs[4],
-    float idxDiff)
+                                                                                            float idxDiff)
 {
     float a = -0.75f;
 
@@ -82,6 +79,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CalcSourc
     }
 }
 
-}  // namespace ResizeBicubicV2Grad
+} // namespace ResizeBicubicV2Grad
 
-#endif  // CANN_RESIZE_BICUBIC_V2_GRAD_BASE_H
+#endif // CANN_RESIZE_BICUBIC_V2_GRAD_BASE_H

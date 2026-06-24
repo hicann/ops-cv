@@ -38,18 +38,20 @@ class UpsampleBilinearAAND {
 public:
     TPipe pipe;
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
 
     __aicore__ inline UpsampleBilinearAAND(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBilinearAATilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                const UpsampleBilinearAATilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -91,7 +93,7 @@ private:
     {
         return a > b ? a : b;
     };
-    __aicore__ inline void ParseTilingData(const UpsampleBilinearAATilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBilinearAATilingData* tilingData);
     __aicore__ inline void WExpansion();
     __aicore__ inline void HExpansion();
     __aicore__ inline void calculateIntermediateTensor(int64_t index, int64_t length, int8_t direction);
@@ -126,8 +128,8 @@ private:
     TBuf<QuePosition::VECCALC> floorQueue_w;
     TBuf<QuePosition::VECCALC> floorQueue_h;
 
-    const TCubeTiling *__restrict matmulTiling_w;
-    const TCubeTiling *__restrict matmulTiling_h;
+    const TCubeTiling* __restrict matmulTiling_w;
+    const TCubeTiling* __restrict matmulTiling_h;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -203,8 +205,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleBilinearAATilingData *tilingData)
+__aicore__ inline void UpsampleBilinearAAND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                     const UpsampleBilinearAATilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
     inTensorsPtr = input;
@@ -232,9 +234,9 @@ __aicore__ inline void UpsampleBilinearAAND<T>::Init(
         pipe.InitBuffer(radioQueue_h, BUFFER_NUM, radio_matrix_size_h * sizeof(float));
     }
 
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)inTensorsPtr);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)outTensorsPtr);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)inTensorsPtr);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)outTensorsPtr);
 }
 
 template <typename T>
@@ -347,8 +349,8 @@ __aicore__ inline void UpsampleBilinearAAND<T>::HExpansion()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::calculateIntermediateTensor(
-    int64_t index, int64_t length, int8_t direction)
+__aicore__ inline void UpsampleBilinearAAND<T>::calculateIntermediateTensor(int64_t index, int64_t length,
+                                                                            int8_t direction)
 {
     length = Max(length, EACH_SLICE_HANDLE_NUM);
     float scale = scale_w;
@@ -500,8 +502,8 @@ __aicore__ inline void UpsampleBilinearAAND<T>::copyRadioTensorToGm(int8_t direc
     } else {
         int8_t size = 32 / sizeof(T);
         LocalTensor<T> radioTensor = initRadioTensor(direction);
-        DataCopy(
-            intermediateTensorGm[workSpaceRadioOffset], radioTensor, (radioTensor.GetSize() + size - 1) / size * size);
+        DataCopy(intermediateTensorGm[workSpaceRadioOffset], radioTensor,
+                 (radioTensor.GetSize() + size - 1) / size * size);
         event_t eventID2 = static_cast<event_t>(pipe.FetchEventID(HardEvent::MTE3_MTE2));
         SetFlag<HardEvent::MTE3_MTE2>(eventID2);
         WaitFlag<HardEvent::MTE3_MTE2>(eventID2);
@@ -531,8 +533,8 @@ __aicore__ inline void UpsampleBilinearAAND<T>::releaseRadioTensor(int8_t direct
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::calculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleBilinearAAND<T>::calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                        int64_t rowEnd)
 {
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
@@ -564,8 +566,8 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateWidthExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::calculateHeightExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpsampleBilinearAAND<T>::calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                         int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTiling_h->singleCoreM;
     int64_t singleCoreN = matmulTiling_h->singleCoreN;
@@ -606,7 +608,7 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBilinearAAND<T>::ParseTilingData(const UpsampleBilinearAATilingData *tilingData)
+__aicore__ inline void UpsampleBilinearAAND<T>::ParseTilingData(const UpsampleBilinearAATilingData* tilingData)
 {
     slide_size = tilingData->slide_size;
     scale_w = tilingData->scale_w;
@@ -678,6 +680,6 @@ __aicore__ inline void UpsampleBilinearAAND<T>::getSlideRange()
     }
 }
 
-}  // namespace UpsampleBilinear2dAA
+} // namespace UpsampleBilinear2dAA
 
-#endif  // UPSAMPLE_BILINEAR2D_AA
+#endif // UPSAMPLE_BILINEAR2D_AA

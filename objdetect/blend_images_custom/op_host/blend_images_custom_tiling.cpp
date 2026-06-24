@@ -23,9 +23,10 @@ using namespace optiling;
 
 static constexpr uint32_t ASCEND_310P_BLOCK_DIM = 8;
 
-static ge::graphStatus Tiling4BlendImagesCustom(gert::TilingContext* context) {
+static ge::graphStatus Tiling4BlendImagesCustom(gert::TilingContext* context)
+{
     if (context == nullptr) {
-      return ge::GRAPH_FAILED;
+        return ge::GRAPH_FAILED;
     }
     OP_LOGD(context->GetNodeName(), "Tiling4BlendImagesCustom running begin");
     auto tensorAlpha = context->GetInputTensor(1);
@@ -38,12 +39,13 @@ static ge::graphStatus Tiling4BlendImagesCustom(gert::TilingContext* context) {
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus TilingPrepareForBlendImagesCustom(gert::TilingParseContext* context) {
-  OP_LOGD("BlendImagesCustom", "TilingPrepareForBlendImagesCustom start.");
-  if (context == nullptr) {
+static ge::graphStatus TilingPrepareForBlendImagesCustom(gert::TilingParseContext* context)
+{
+    OP_LOGD("BlendImagesCustom", "TilingPrepareForBlendImagesCustom start.");
+    if (context == nullptr) {
+        return ge::GRAPH_SUCCESS;
+    }
     return ge::GRAPH_SUCCESS;
-  }
-  return ge::GRAPH_SUCCESS;
 }
 struct BlendImagesCustomCompileInfo {};
 

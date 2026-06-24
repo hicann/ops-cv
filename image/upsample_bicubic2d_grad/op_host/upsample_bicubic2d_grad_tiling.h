@@ -186,37 +186,37 @@ REGISTER_TILING_DATA_CLASS(UpsampleBicubic2dGrad, UpsampleBicubic2dGradTilingDat
 
 class UpsampleBicubic2dGradTiling {
 public:
-    ge::graphStatus runTiling(gert::TilingContext *context);
+    ge::graphStatus runTiling(gert::TilingContext* context);
 
 protected:
     uint32_t GetDtypeSize();
     uint32_t GetNumPerBlock();
-    bool GetPlatformInfo(const gert::TilingContext *context);
-    bool GetCheckAttr(const gert::TilingContext *context);
-    bool CheckInOutShapes(const gert::TilingContext *context);
-    bool GetMMTilingData(const gert::TilingContext *context);
+    bool GetPlatformInfo(const gert::TilingContext* context);
+    bool GetCheckAttr(const gert::TilingContext* context);
+    bool CheckInOutShapes(const gert::TilingContext* context);
+    bool GetMMTilingData(const gert::TilingContext* context);
     bool GetClearTilingData();
-    bool GetTilingData(const gert::TilingContext *context);
-    bool SetTilingData(gert::TilingContext *context);
-    bool SetLaunchInfo(gert::TilingContext *context);
-    bool IsDeterministicCalc(const gert::TilingContext * context);
-    bool GetTilingDataDC(const gert::TilingContext *context);
+    bool GetTilingData(const gert::TilingContext* context);
+    bool SetTilingData(gert::TilingContext* context);
+    bool SetLaunchInfo(gert::TilingContext* context);
+    bool IsDeterministicCalc(const gert::TilingContext* context);
+    bool GetTilingDataDC(const gert::TilingContext* context);
     void CalcScales();
     void CalcNeedCoreNum();
     void CalcNeedCoreNumW();
     void CalcNeedCoreNumH();
     void CalcSingleCoreK();
-    void CalcTCubeTiling(const gert::TilingContext *context);
-    bool SetTilingDataDC(gert::TilingContext *context);
-    bool SetLaunchInfoDC(gert::TilingContext *context);
+    void CalcTCubeTiling(const gert::TilingContext* context);
+    bool SetTilingDataDC(gert::TilingContext* context);
+    bool SetLaunchInfoDC(gert::TilingContext* context);
     void TilingPrintParam(const gert::TilingContext* context);
-    void InitPlatformInfo(
-        const UpsampleBicubic2dGradCompileInfo *compileInfoPtr, matmul_tiling::PlatformInfo &platformInfo) const;
+    void InitPlatformInfo(const UpsampleBicubic2dGradCompileInfo* compileInfoPtr,
+                          matmul_tiling::PlatformInfo& platformInfo) const;
 
 private:
     UpsampleBicubic2dGradTilingData tilingData;
     UpsampleBicubic2dGradParam _Params;
 };
 
-}  // namespace optiling
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_GRAD_H
+} // namespace optiling
+#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BICUBIC2D_GRAD_H

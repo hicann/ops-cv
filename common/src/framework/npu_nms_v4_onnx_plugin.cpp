@@ -97,17 +97,13 @@ static Status ParseOpToGraphNmsV4(const ge::Operator& op, ge::Graph& graph)
 
 // register NonMaxSuppressionV4 op info to GE
 REGISTER_CUSTOM_OP("PartitionedCall")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("npu::1::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::11::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::12::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::13::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::14::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::15::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::16::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::17::NPUNmsV4"),
-                 ge::AscendString("ai.onnx::18::NPUNmsV4")})
-  .ParseParamsFn(ParseParamsNmsV4)
-  .ParseOpToGraphFn(ParseOpToGraphNmsV4)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("npu::1::NPUNmsV4"), ge::AscendString("ai.onnx::11::NPUNmsV4"),
+                   ge::AscendString("ai.onnx::12::NPUNmsV4"), ge::AscendString("ai.onnx::13::NPUNmsV4"),
+                   ge::AscendString("ai.onnx::14::NPUNmsV4"), ge::AscendString("ai.onnx::15::NPUNmsV4"),
+                   ge::AscendString("ai.onnx::16::NPUNmsV4"), ge::AscendString("ai.onnx::17::NPUNmsV4"),
+                   ge::AscendString("ai.onnx::18::NPUNmsV4")})
+    .ParseParamsFn(ParseParamsNmsV4)
+    .ParseOpToGraphFn(ParseOpToGraphNmsV4)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

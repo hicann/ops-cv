@@ -20,15 +20,9 @@
 
 class ResizeBilinearV2Infershape : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeBilinearV2Infershape SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeBilinearV2Infershape SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeBilinearV2Infershape TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeBilinearV2Infershape TearDown" << std::endl; }
 };
 
 TEST_F(ResizeBilinearV2Infershape, resize_bilinear_v2_infer_test_1)

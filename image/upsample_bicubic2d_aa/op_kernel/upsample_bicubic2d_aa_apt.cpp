@@ -20,7 +20,6 @@
 #include "./arch35/upsample_bicubic2d_aa_tiling_key.h"
 #include "./arch35/upsample_bicubic2d_aa_tiling_data.h"
 
-
 using namespace AscendC;
 using namespace UpsampleBicubic2dAA;
 
@@ -40,7 +39,7 @@ __global__ __aicore__ void upsample_bicubic2d_aa(GM_ADDR x, GM_ADDR y, GM_ADDR w
         op.Process();
         return;
     } else {
-        if constexpr(isInt32 == 1) {
+        if constexpr (isInt32 == 1) {
             Bicubic2dAASimt<DTYPE_X, uint32_t, int32_t, schId> op;
             op.Init(x, y, &tilingData);
             op.Process();

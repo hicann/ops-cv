@@ -32,17 +32,10 @@ using namespace std;
 using namespace AscendC;
 using namespace ResizeNearestNeighborV2Grad;
 
-class resize_nearest_neighbor_v2_grad_test : public testing::Test
-{
+class resize_nearest_neighbor_v2_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "resize_nearest_neighbor_v2_grad SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "resize_nearest_neighbor_v2_grad TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "resize_nearest_neighbor_v2_grad SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "resize_nearest_neighbor_v2_grad TearDown\n" << endl; }
 };
 
 TEST_F(resize_nearest_neighbor_v2_grad_test, test_resize_nearest_neighbor_v2_grad_all_copy_fp16)
@@ -52,11 +45,11 @@ TEST_F(resize_nearest_neighbor_v2_grad_test, test_resize_nearest_neighbor_v2_gra
     size_t yByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t tilingDataSize = sizeof(ResizeNearestNeighborV2GradTilingData);
 
-    uint8_t *grads = (uint8_t *)GmAlloc(gradsByteSize);
-    uint8_t *size_tensor = (uint8_t *)GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)GmAlloc(yByteSize);
+    uint8_t* grads = (uint8_t*)GmAlloc(gradsByteSize);
+    uint8_t* size_tensor = (uint8_t*)GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)GmAlloc(yByteSize);
 
-    uint8_t *tiling = (uint8_t *)GmAlloc(tilingDataSize);
+    uint8_t* tiling = (uint8_t*)GmAlloc(tilingDataSize);
 
     memset(grads, 0, gradsByteSize);
 
@@ -64,7 +57,8 @@ TEST_F(resize_nearest_neighbor_v2_grad_test, test_resize_nearest_neighbor_v2_gra
     sizeData[0] = 2;
     sizeData[1] = 2;
 
-    ResizeNearestNeighborV2GradTilingData* tilingData = reinterpret_cast<ResizeNearestNeighborV2GradTilingData*>(tiling);
+    ResizeNearestNeighborV2GradTilingData* tilingData = reinterpret_cast<ResizeNearestNeighborV2GradTilingData*>(
+        tiling);
     tilingData->ubSize = 262144;
     tilingData->lenN = 1;
     tilingData->lenC = 1;
@@ -102,11 +96,11 @@ TEST_F(resize_nearest_neighbor_v2_grad_test, test_resize_nearest_neighbor_v2_gra
     size_t yByteSize = 1 * 1 * 4 * 4 * sizeof(float);
     size_t tilingDataSize = sizeof(ResizeNearestNeighborV2GradTilingData);
 
-    uint8_t *grads = (uint8_t *)GmAlloc(gradsByteSize);
-    uint8_t *size_tensor = (uint8_t *)GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)GmAlloc(yByteSize);
+    uint8_t* grads = (uint8_t*)GmAlloc(gradsByteSize);
+    uint8_t* size_tensor = (uint8_t*)GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)GmAlloc(yByteSize);
 
-    uint8_t *tiling = (uint8_t *)GmAlloc(tilingDataSize);
+    uint8_t* tiling = (uint8_t*)GmAlloc(tilingDataSize);
 
     memset(grads, 0, gradsByteSize);
 
@@ -114,7 +108,8 @@ TEST_F(resize_nearest_neighbor_v2_grad_test, test_resize_nearest_neighbor_v2_gra
     sizeData[0] = 4;
     sizeData[1] = 4;
 
-    ResizeNearestNeighborV2GradTilingData* tilingData = reinterpret_cast<ResizeNearestNeighborV2GradTilingData*>(tiling);
+    ResizeNearestNeighborV2GradTilingData* tilingData = reinterpret_cast<ResizeNearestNeighborV2GradTilingData*>(
+        tiling);
     tilingData->ubSize = 262144;
     tilingData->lenN = 1;
     tilingData->lenC = 1;

@@ -15,7 +15,7 @@
 #include "onnx_common.h"
 #include "op_cv_proto_extend.h"
 
-namespace domi {        
+namespace domi {
 using NodeProto = ge::onnx::NodeProto;
 
 static Status ParseParamsNpuRotatedIou(const Message* op_src, ge::Operator& op_dest)
@@ -61,8 +61,8 @@ static Status ParseParamsNpuRotatedIou(const Message* op_src, ge::Operator& op_d
     return SUCCESS;
 }
 
-static Status GetAttrByName(
-    const ge::Operator& op, bool& trans, std::string& mode, bool& is_cross, float& v_threshold, float& e_threshold)
+static Status GetAttrByName(const ge::Operator& op, bool& trans, std::string& mode, bool& is_cross, float& v_threshold,
+                            float& e_threshold)
 {
     if (op.GetAttr("trans", trans) != ge::GRAPH_SUCCESS) {
         OP_LOGE(GetOpName(op).c_str(), "get attr trans failed.");
@@ -112,14 +112,16 @@ static Status ParseOpToGraphNpuRotatedIou(const ge::Operator& op, ge::Graph& gra
     std::vector<int32_t> perm_boxes = {0, 2, 1};
     auto tensor_perm_boxes = Vec2Tensor(perm_boxes, {3}, ge::DT_INT32);
     auto const_perm_boxes = ge::op::Const((ori_name + "_Const_0").c_str()).set_attr_value(tensor_perm_boxes);
-    auto transpose_op_0 =
-        ge::op::Transpose((ori_name + "_Transpose_0").c_str()).set_input_x(data0).set_input_perm(const_perm_boxes);
+    auto transpose_op_0 = ge::op::Transpose((ori_name + "_Transpose_0").c_str())
+                              .set_input_x(data0)
+                              .set_input_perm(const_perm_boxes);
 
     std::vector<int32_t> perm_queryboxes = {0, 2, 1};
     auto tensor_perm_queryboxes = Vec2Tensor(perm_queryboxes, {3}, ge::DT_INT32);
     auto const_perm_queryboxes = ge::op::Const((ori_name + "_Const_1").c_str()).set_attr_value(tensor_perm_queryboxes);
-    auto transpose_op_1 =
-        ge::op::Transpose((ori_name + "_Transpose_1").c_str()).set_input_x(data1).set_input_perm(const_perm_queryboxes);
+    auto transpose_op_1 = ge::op::Transpose((ori_name + "_Transpose_1").c_str())
+                              .set_input_x(data1)
+                              .set_input_perm(const_perm_queryboxes);
 
     auto rotated_npu_iou_op = ge::op::RotatedIou((ori_name + "_RotatedIou").c_str())
                                   .set_input_boxes(transpose_op_0)
@@ -138,18 +140,14 @@ static Status ParseOpToGraphNpuRotatedIou(const ge::Operator& op, ge::Graph& gra
 }
 
 // register npu_rotated_iou op info to GE
-REGISTER_CUSTOM_OP("PartitionedCall")                            
-    .FrameworkType(ONNX)                                
-    .OriginOpType({ge::AscendString("npu::1::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::11::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::12::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::13::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::14::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::15::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::16::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::17::NPURotatedIou"),
-                   ge::AscendString("ai.onnx::18::NPURotatedIou")})                            
+REGISTER_CUSTOM_OP("PartitionedCall")
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("npu::1::NPURotatedIou"), ge::AscendString("ai.onnx::11::NPURotatedIou"),
+                   ge::AscendString("ai.onnx::12::NPURotatedIou"), ge::AscendString("ai.onnx::13::NPURotatedIou"),
+                   ge::AscendString("ai.onnx::14::NPURotatedIou"), ge::AscendString("ai.onnx::15::NPURotatedIou"),
+                   ge::AscendString("ai.onnx::16::NPURotatedIou"), ge::AscendString("ai.onnx::17::NPURotatedIou"),
+                   ge::AscendString("ai.onnx::18::NPURotatedIou")})
     .ParseParamsFn(ParseParamsNpuRotatedIou)
-    .ParseOpToGraphFn(ParseOpToGraphNpuRotatedIou)                
+    .ParseOpToGraphFn(ParseOpToGraphNpuRotatedIou)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

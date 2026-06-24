@@ -21,21 +21,15 @@ extern "C" {
  * @brief aclnnRoiPoolingGradWithArgMax的第一段接口，根据具体的计算流程，计算workspace大小。
  * @domain aclnn_ops_train
  */
-ACLNN_API aclnnStatus aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(const aclTensor *gradOutput,
-    const aclTensor *gradInputRef,
-    const aclTensor *rois,
-    const aclTensor *argmax,
-    int64_t pooledH,
-    int64_t pooledW,
-    double spatialScale,
-    uint64_t *workspaceSize,
-    aclOpExecutor **executor);
+ACLNN_API aclnnStatus aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(
+    const aclTensor* gradOutput, const aclTensor* gradInputRef, const aclTensor* rois, const aclTensor* argmax,
+    int64_t pooledH, int64_t pooledW, double spatialScale, uint64_t* workspaceSize, aclOpExecutor** executor);
 
 /**
  * @brief aclnnRoiPoolingGradWithArgMax的第二段接口，用于执行计算。
  */
-ACLNN_API aclnnStatus aclnnRoiPoolingGradWithArgMax(
-    void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream);
+ACLNN_API aclnnStatus aclnnRoiPoolingGradWithArgMax(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                                    aclrtStream stream);
 
 #ifdef __cplusplus
 }

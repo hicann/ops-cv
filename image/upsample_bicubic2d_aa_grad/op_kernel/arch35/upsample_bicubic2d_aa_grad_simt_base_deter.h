@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -27,7 +27,8 @@ namespace UpsampleBicubic2dAAGrad {
 using namespace AscendC;
 
 template <typename T3>
-static __simt_callee__ __aicore__ inline void CalculateBounds(T3 &minVal, T3 &maxVal, float center, float scale, float support, T3 lenSrc)
+static __simt_callee__ __aicore__ inline void CalculateBounds(T3& minVal, T3& maxVal, float center, float scale,
+                                                              float support, T3 lenSrc)
 {
     if (likely(scale > 0.0f)) {
         minVal = static_cast<T3>(floorf((center - support) / scale + 0.5f));
@@ -41,7 +42,8 @@ static __simt_callee__ __aicore__ inline void CalculateBounds(T3 &minVal, T3 &ma
 }
 
 template <typename T3>
-static __simt_callee__ __aicore__ inline float CalculateWeight(float center, float outputCenter, float invScale, float support, T3 lenDst)
+static __simt_callee__ __aicore__ inline float CalculateWeight(float center, float outputCenter, float invScale,
+                                                               float support, T3 lenDst)
 {
     float weight = CubicFilterAA((center - outputCenter) * invScale);
     if (weight == 0.0f) {
@@ -69,13 +71,12 @@ static __simt_callee__ __aicore__ inline float CalculateWeight(float center, flo
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterCompute(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
-    T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
-    T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
-    float supportH, float supportW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterCompute(
+    __gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH,
+    T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH,
+    float invScaleW, float supportH, float supportW)
 {
-    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum;
-         idx += static_cast<T3>(blockDim.x)) {
+    for (T3 idx = static_cast<T3>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T3>(blockDim.x)) {
         T3 yGmIdx = blkStartOffset + idx;
         T2 W = 0;
         T2 H = 0;
@@ -103,7 +104,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterC
                 continue;
             }
 
-            const T3 clampedH = max(static_cast<T3>(0), min(lenSrcH, h));               
+            const T3 clampedH = max(static_cast<T3>(0), min(lenSrcH, h));
             for (T3 w = minW; w < maxW; ++w) {
                 const float outputCenterW = (static_cast<float>(w) + 0.5f) * scaleW;
                 float weightW = CalculateWeight(centerW, outputCenterW, invScaleW, supportW, lenDstW);
@@ -111,7 +112,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterC
                     continue;
                 }
 
-                const T3 clampedW = max(static_cast<T3>(0), min(lenSrcW - 1, w));              
+                const T3 clampedW = max(static_cast<T3>(0), min(lenSrcW - 1, w));
                 const T3 input_idx = Batch * lenSrcHw + clampedH * lenSrcW + clampedW;
                 value += inputGm[input_idx] * weightH * weightW;
             }
@@ -121,24 +122,26 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterC
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32)__aicore__ void calleeDeterInt32(__gm__ T1 *inputGm, __gm__ T1 *outputGm,
-    T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
-    T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
-    float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B32) __aicore__
+    void calleeDeterInt32(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN,
+                          T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW,
+                          float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
-    SimtDeterCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, 
-        mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+    SimtDeterCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW,
+                                        shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH,
+                                        invScaleW, supportH, supportW);
 }
 
 template <typename T1, typename T2, typename T3, uint64_t schId>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64)__aicore__ void calleeDeterInt64(__gm__ T1 *inputGm, __gm__ T1 *outputGm, 
-    T3 blkStartOffset, T3 blkProcessNum, T3 lenN, T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, 
-    T3 lenSrcW, T3 lenDstH, T3 lenDstW, float scaleH, float scaleW, float invScaleH, float invScaleW, 
-    float supportH, float supportW)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_B64) __aicore__
+    void calleeDeterInt64(__gm__ T1* inputGm, __gm__ T1* outputGm, T3 blkStartOffset, T3 blkProcessNum, T3 lenN,
+                          T3 lenC, T2 mH, T2 shiftH, T2 mW, T2 shiftW, T3 lenSrcH, T3 lenSrcW, T3 lenDstH, T3 lenDstW,
+                          float scaleH, float scaleW, float invScaleH, float invScaleW, float supportH, float supportW)
 {
-    SimtDeterCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH,
-        mW, shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH, invScaleW, supportH, supportW);
+    SimtDeterCompute<T1, T2, T3, schId>(inputGm, outputGm, blkStartOffset, blkProcessNum, lenN, lenC, mH, shiftH, mW,
+                                        shiftW, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW, invScaleH,
+                                        invScaleW, supportH, supportW);
 }
 
-}// namespace UpsampleBicubic2dAAGrad
+} // namespace UpsampleBicubic2dAAGrad
 #endif // UPSAMPLE_BICUBIC2D_AA_GRAD_SIMT_BASE_DETER_H

@@ -26,8 +26,8 @@
 
 using namespace optiling;
 
-extern "C" __global__ __aicore__ void upsample_bilinear2d_aa(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling);
+extern "C" __global__ __aicore__ void upsample_bilinear2d_aa(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                             GM_ADDR tiling);
 
 class upsample_bilinear2d_aa_test : public testing::Test {
 protected:
@@ -38,10 +38,7 @@ protected:
         system(cmd.c_str());
         system("chmod -R 755 ./cos_data/");
     }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_bilinear2d_aa_test TearDown\n" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "upsample_bilinear2d_aa_test TearDown\n" << std::endl; }
 
 private:
     const static std::string rootPath;
@@ -49,24 +46,32 @@ private:
 };
 
 const std::string upsample_bilinear2d_aa_test::rootPath = "../../../../";
-const std::string upsample_bilinear2d_aa_test::dataPath = rootPath + "image/upsample_bilinear2d_aa/tests/ut/op_kernel/cos_data";
+const std::string upsample_bilinear2d_aa_test::dataPath = rootPath +
+                                                          "image/upsample_bilinear2d_aa/tests/ut/op_kernel/cos_data";
 
 template <typename T1, typename T2>
-inline T1 CeilAlign(T1 a, T2 b) {
+inline T1 CeilAlign(T1 a, T2 b)
+{
     return (a + b - 1) / b * b;
 }
 
-TEST_F(upsample_bilinear2d_aa_test, test_case_float_1) {
+TEST_F(upsample_bilinear2d_aa_test, test_case_float_1)
+{
     optiling::UpsampleBilinear2dAACompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16};
-    gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAA",
-                                              {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                              {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
-                                                {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
-                                                {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
-                                              &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAA",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+        &compileInfo);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -98,17 +103,23 @@ TEST_F(upsample_bilinear2d_aa_test, test_case_float_1) {
     system("cd ./cos_data/ && python3 compare_data.py 'float32'");
 }
 
-TEST_F(upsample_bilinear2d_aa_test, test_case_float16_2) {
+TEST_F(upsample_bilinear2d_aa_test, test_case_float16_2)
+{
     optiling::UpsampleBilinear2dAACompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16};
-    gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAA",
-                                              {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                              {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
-                                                {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
-                                                {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
-                                              &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAA",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+        &compileInfo);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -140,17 +151,23 @@ TEST_F(upsample_bilinear2d_aa_test, test_case_float16_2) {
     system("cd ./cos_data/ && python3 compare_data.py 'float16'");
 }
 
-TEST_F(upsample_bilinear2d_aa_test, test_case_bfloat16_3) {
+TEST_F(upsample_bilinear2d_aa_test, test_case_bfloat16_3)
+{
     optiling::UpsampleBilinear2dAACompileInfo compileInfo = {24};
     std::vector<int64_t> output_size = {16, 16};
-    gert::TilingContextPara tilingContextPara("UpsampleBilinear2dAA",
-                                              {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND},},
-                                              {{{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND},},
-                                              {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
-                                                {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
-                                                {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
-                                                {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
-                                              &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAA",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_BF16, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 16, 16}, {1, 1, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+        &compileInfo);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);

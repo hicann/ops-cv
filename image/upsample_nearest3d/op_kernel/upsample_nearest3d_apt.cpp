@@ -20,7 +20,6 @@
 #include "./arch35/upsample_nearest3d_tiling_key.h"
 #include "./arch35/upsample_nearest3d_tiling_data.h"
 
-
 using namespace AscendC;
 using namespace UpsampleNearest3d;
 
@@ -40,7 +39,7 @@ __global__ __aicore__ void upsample_nearest3d(GM_ADDR x, GM_ADDR y, GM_ADDR work
         op.Process();
         return;
     } else if constexpr (schId != SCH_MODE_4) {
-        if constexpr(isUint32 == 1) {
+        if constexpr (isUint32 == 1) {
             Nearest3dSimt<DTYPE_X, uint32_t, false, schId> op;
             op.Init(x, y, &tilingData);
             op.Process();

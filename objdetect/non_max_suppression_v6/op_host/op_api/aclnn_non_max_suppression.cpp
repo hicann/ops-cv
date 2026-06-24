@@ -28,14 +28,17 @@ extern "C" {
 #endif
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> FLOAT_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
+static const std::initializer_list<op::DataType> FLOAT_DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
+                                                                             op::DataType::DT_FLOAT};
 
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t NUM_FOUR = 4;
 static constexpr int32_t MAX_VALID_OUTPUT = 700;
 
 // 检查入参是否为nullptr
-static bool CheckNotNull(const aclTensor *boxes, const aclTensor *scores, aclFloatArray *iouThreshold, aclTensor *selectedIndices) {
+static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, aclFloatArray* iouThreshold,
+                         aclTensor* selectedIndices)
+{
     OP_CHECK_NULL(boxes, return false);
     OP_CHECK_NULL(scores, return false);
     if (iouThreshold->Size() <= 0) {
@@ -45,7 +48,8 @@ static bool CheckNotNull(const aclTensor *boxes, const aclTensor *scores, aclFlo
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *boxes, const aclTensor *scores, aclFloatArray *iouThreshold) {
+static bool CheckDtypeValid(const aclTensor* boxes, const aclTensor* scores, aclFloatArray* iouThreshold)
+{
     // 检查输入的数据类型是否在算子的支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(boxes, FLOAT_DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(scores, FLOAT_DTYPE_SUPPORT_LIST, return false);
@@ -57,23 +61,27 @@ static bool CheckDtypeValid(const aclTensor *boxes, const aclTensor *scores, acl
     return true;
 }
 
-static bool CheckFormatValid(const aclTensor *boxes, const aclTensor *scores, aclTensor *selectedIndices)
+static bool CheckFormatValid(const aclTensor* boxes, const aclTensor* scores, aclTensor* selectedIndices)
 {
-    return boxes->GetStorageFormat() == op::Format::FORMAT_ND && scores->GetStorageFormat() == op::Format::FORMAT_ND && selectedIndices->GetStorageFormat() == op::Format::FORMAT_ND;
+    return boxes->GetStorageFormat() == op::Format::FORMAT_ND && scores->GetStorageFormat() == op::Format::FORMAT_ND &&
+           selectedIndices->GetStorageFormat() == op::Format::FORMAT_ND;
 }
 
-static bool CheckShape(const aclTensor* boxes, const aclTensor *scores) {
+static bool CheckShape(const aclTensor* boxes, const aclTensor* scores)
+{
     OP_CHECK_WRONG_DIMENSION(boxes, 3, return false);
     OP_CHECK_WRONG_DIMENSION(scores, 3, return false);
 
-    auto const &boxesShape = boxes->GetViewShape();
-    auto const &scoresShape = scores->GetViewShape();
+    auto const& boxesShape = boxes->GetViewShape();
+    auto const& scoresShape = scores->GetViewShape();
     if (boxesShape.GetDim(0) != scoresShape.GetDim(0)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim0 [%ld] and scores shape dim0 [%ld] should be same", boxesShape.GetDim(0), scoresShape.GetDim(0));
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim0 [%ld] and scores shape dim0 [%ld] should be same",
+                boxesShape.GetDim(0), scoresShape.GetDim(0));
         return false;
     }
     if (boxesShape.GetDim(1) != scoresShape.GetDim(DIM_TWO)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim1 [%ld] and scores shape dim2 [%ld] should be same", boxesShape.GetDim(1), scoresShape.GetDim(DIM_TWO));
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim1 [%ld] and scores shape dim2 [%ld] should be same",
+                boxesShape.GetDim(1), scoresShape.GetDim(DIM_TWO));
         return false;
     }
     if (boxesShape.GetDim(DIM_TWO) != NUM_FOUR) {
@@ -83,7 +91,8 @@ static bool CheckShape(const aclTensor* boxes, const aclTensor *scores) {
     return true;
 }
 
-static bool CheckAttr(const int centerPointBox) {
+static bool CheckAttr(const int centerPointBox)
+{
     if (centerPointBox != 0 && centerPointBox != 1) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "centerPointBox [%d] should be equal to 0 or 1", centerPointBox);
         return false;
@@ -91,7 +100,9 @@ static bool CheckAttr(const int centerPointBox) {
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *boxes, const aclTensor *scores, aclFloatArray *iouThreshold, aclTensor *selectedIndices, int centerPointBox) {
+static aclnnStatus CheckParams(const aclTensor* boxes, const aclTensor* scores, aclFloatArray* iouThreshold,
+                               aclTensor* selectedIndices, int centerPointBox)
+{
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(boxes, scores, iouThreshold, selectedIndices), ACLNN_ERR_PARAM_NULLPTR);
 
@@ -110,11 +121,18 @@ static aclnnStatus CheckParams(const aclTensor *boxes, const aclTensor *scores, 
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor *boxes, const aclTensor *scores, aclIntArray *maxOutputBoxesPerClass,
-    aclFloatArray *iouThreshold, aclFloatArray *scoreThreshold, int centerPointBox, aclTensor *selectedIndices, uint64_t *workspaceSize, aclOpExecutor **executor) {
+aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const aclTensor* scores,
+                                                   aclIntArray* maxOutputBoxesPerClass, aclFloatArray* iouThreshold,
+                                                   aclFloatArray* scoreThreshold, int centerPointBox,
+                                                   aclTensor* selectedIndices, uint64_t* workspaceSize,
+                                                   aclOpExecutor** executor)
+{
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
     int64_t maxBoxesSize = 0;
-    L2_DFX_PHASE_1(aclnnNonMaxSuppression, DFX_IN(boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox, maxBoxesSize), DFX_OUT(selectedIndices));
+    L2_DFX_PHASE_1(
+        aclnnNonMaxSuppression,
+        DFX_IN(boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox, maxBoxesSize),
+        DFX_OUT(selectedIndices));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -133,7 +151,8 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor *boxes, const
 
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch != NpuArch::DAV_2002) {
-        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "aclnnNonMaxSuppression is not supported %u npuArch", static_cast<uint32_t>(curArch));
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "aclnnNonMaxSuppression is not supported %u npuArch",
+                static_cast<uint32_t>(curArch));
         return ACLNN_ERR_RUNTIME_ERROR;
     }
 
@@ -142,7 +161,9 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor *boxes, const
     auto scoresContigous = l0op::Contiguous(scores, uniqueExecutor.get());
 
     // // 调用non_max_suppression算子
-    const aclTensor *nmsOut = l0op::NonMaxSuppressionV6(boxesContigous, scoresContigous, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox, maxBoxesSize, selectedIndices, uniqueExecutor.get());
+    const aclTensor* nmsOut = l0op::NonMaxSuppressionV6(boxesContigous, scoresContigous, maxOutputBoxesPerClass,
+                                                        iouThreshold, scoreThreshold, centerPointBox, maxBoxesSize,
+                                                        selectedIndices, uniqueExecutor.get());
 
     // 固定写法，将计算结果拷贝到输出selectedIndices上，selectedIndices可能是非连续的tensor
     auto viewCopyResult = l0op::ViewCopy(nmsOut, selectedIndices, uniqueExecutor.get());
@@ -154,7 +175,8 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor *boxes, const
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnNonMaxSuppression(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream) {
+aclnnStatus aclnnNonMaxSuppression(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
+{
     L2_DFX_PHASE_2(aclnnNonMaxSuppression);
     // 固定写法，调用框架能力，完成计算
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);

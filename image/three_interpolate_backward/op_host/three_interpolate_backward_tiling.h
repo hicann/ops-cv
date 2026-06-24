@@ -20,8 +20,7 @@
 
 namespace optiling {
 
-enum class ThreeInterpolateBackwardTilingType
-{
+enum class ThreeInterpolateBackwardTilingType {
     TILING_MODE_FP32_INT32,
     TILING_MODE_FP32_INT64,
     TILING_MODE_FP16_INT32,

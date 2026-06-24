@@ -54,23 +54,22 @@ template <typename T_GRADS, typename T_OUT>
 class ResizeBilinearV2GradNc : public ResizeBilinearV2GradBase {
 public:
     __aicore__ inline ResizeBilinearV2GradNc(){};
-    __aicore__ inline void Init(
-        GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2GradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void ClearOutputGm();
     __aicore__ inline void ComputeDivideN(OffsetDefSt& stOffset);
-    __aicore__ inline void DataCopyPadGm2UbV2(
-        TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<T_GRADS>& srcGm, OffsetDefSt& stOffset);
-    __aicore__ inline void DataCopyPadUb2GmV2(
-        LocalTensor<T_OUT>& ubTensorOut, int64_t ubOffset, GlobalTensor<T_OUT>& dstGm, int64_t gmOffset,
-        OffsetDefSt& stOffset);
+    __aicore__ inline void DataCopyPadGm2UbV2(TQue<QuePosition::VECIN, BUFF_NUM>& inQueue, GlobalTensor<T_GRADS>& srcGm,
+                                              OffsetDefSt& stOffset);
+    __aicore__ inline void DataCopyPadUb2GmV2(LocalTensor<T_OUT>& ubTensorOut, int64_t ubOffset,
+                                              GlobalTensor<T_OUT>& dstGm, int64_t gmOffset, OffsetDefSt& stOffset);
     __aicore__ inline void Compute4SrcDotWithGrads(uint32_t totalLen);
     __aicore__ inline void ComputeSrcIdx(int64_t& dstIdx, float& srcIdx, float scale);
     __aicore__ inline void ComputeDeltaArgus(int64_t idxHw, OffsetDefSt& stOffset);
-    __aicore__ inline void DataMoveUb2Gm(
-        TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<T_OUT>& dstGm, OffsetDefSt& stOffset);
+    __aicore__ inline void DataMoveUb2Gm(TQue<QuePosition::VECOUT, BUFF_NUM>& outQueue, GlobalTensor<T_OUT>& dstGm,
+                                         OffsetDefSt& stOffset);
     __aicore__ inline void ComputeLengthOffset(OffsetDefSt& stOffset);
 
 private:
@@ -100,8 +99,9 @@ private:
 };
 
 template <typename T_GRADS, typename T_OUT>
-__aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::Init(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2GradTilingData* tilingData)
+__aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::Init(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
+                                                                    TPipe* pipe,
+                                                                    const ResizeBilinearV2GradTilingData* tilingData)
 {
     this->BaseInit(grads, y, pipe);
     blockIdx_ = GetBlockIdx();
@@ -110,10 +110,10 @@ __aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::Init(
     lenDstHw_ = tilingDataPtr_->lenDesH * tilingDataPtr_->lenDesW;
     lenDstHwc_ = lenDstHw_ * tilingDataPtr_->lenC;
     int64_t max_size = this->Max(sizeof(T_GRADS), sizeof(T_OUT));
-    ubCFactor_ =
-        (Ops::Base::CeilDiv(static_cast<uint32_t>(tilingDataPtr_->ubCFactor * max_size), Ops::Base::GetUbBlockSize()) *
-         Ops::Base::GetUbBlockSize()) /
-        max_size;
+    ubCFactor_ = (Ops::Base::CeilDiv(static_cast<uint32_t>(tilingDataPtr_->ubCFactor * max_size),
+                                     Ops::Base::GetUbBlockSize()) *
+                  Ops::Base::GetUbBlockSize()) /
+                 max_size;
     dataBuffLen_ = ubCFactor_ * tilingDataPtr_->ubNFactor;
     this->pipe_->InitBuffer(gradsQueue, BUFF_NUM, dataBuffLen_ * sizeof(T_GRADS));
     this->pipe_->InitBuffer(outQueue, BUFF_NUM, dataBuffLen_ * sizeof(T_OUT) * POS_TOTAL);
@@ -153,9 +153,11 @@ __aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::DataCopyPadGm2UbV
 }
 
 template <typename T_GRADS, typename T_OUT>
-__aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::DataCopyPadUb2GmV2(
-    LocalTensor<T_OUT>& ubTensorOut, int64_t ubOffset, GlobalTensor<T_OUT>& dstGm, int64_t gmOffset,
-    OffsetDefSt& stOffset)
+__aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::DataCopyPadUb2GmV2(LocalTensor<T_OUT>& ubTensorOut,
+                                                                                  int64_t ubOffset,
+                                                                                  GlobalTensor<T_OUT>& dstGm,
+                                                                                  int64_t gmOffset,
+                                                                                  OffsetDefSt& stOffset)
 {
     DataCopyExtParams copyParams;
     copyParams.blockCount = stOffset.nDataLen;
@@ -226,23 +228,23 @@ __aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::Compute4SrcDotWit
                 MicroAPI::Pack((RegTensor<uint16_t>&)regOutRd, (RegTensor<uint32_t>&)regTmpOutput);
 
                 MicroAPI::MaskPack(pregFp16, pregFp32);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrLu, regOutLu, oneRepeat_, pregFp16);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrRu, regOutRu, oneRepeat_, pregFp16);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrLd, regOutLd, oneRepeat_, pregFp16);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrRd, regOutRd, oneRepeat_, pregFp16);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrLu, regOutLu, oneRepeat_,
+                                                                                   pregFp16);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrRu, regOutRu, oneRepeat_,
+                                                                                   pregFp16);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrLd, regOutLd, oneRepeat_,
+                                                                                   pregFp16);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrRd, regOutRd, oneRepeat_,
+                                                                                   pregFp16);
             } else {
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrLu, reg_out_lu, oneRepeat_, pregFp32);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrRu, reg_out_ru, oneRepeat_, pregFp32);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrLd, reg_out_ld, oneRepeat_, pregFp32);
-                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    outUbPtrRd, reg_out_rd, oneRepeat_, pregFp32);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrLu, reg_out_lu, oneRepeat_,
+                                                                                   pregFp32);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrRu, reg_out_ru, oneRepeat_,
+                                                                                   pregFp32);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrLd, reg_out_ld, oneRepeat_,
+                                                                                   pregFp32);
+                MicroAPI::DataCopy<T_OUT, MicroAPI::PostLiteral::POST_MODE_UPDATE>(outUbPtrRd, reg_out_rd, oneRepeat_,
+                                                                                   pregFp32);
             }
         }
     }
@@ -355,8 +357,8 @@ __aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::ComputeDivideN(Of
 }
 
 template <typename T_GRADS, typename T_OUT>
-__aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::ComputeSrcIdx(
-    int64_t& dstIdx, float& srcIdx, float scale)
+__aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::ComputeSrcIdx(int64_t& dstIdx, float& srcIdx,
+                                                                             float scale)
 {
     if ((tilingDataPtr_->alignCorners == 0) && (tilingDataPtr_->halfPixelCenters == 1)) {
         srcIdx = (dstIdx + 0.5f) * scale - 0.5f;

@@ -22,10 +22,10 @@
 
 namespace optiling {
 BEGIN_TILING_DATA_DEF(TilingDataBlendImages)
-  TILING_DATA_FIELD_DEF(uint32_t, totalAlphaLength);
+TILING_DATA_FIELD_DEF(uint32_t, totalAlphaLength);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(BlendImagesCustom, TilingDataBlendImages)
-}
+} // namespace optiling
 
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_BLEND_IMAGES_CUSTOM_TILING_H_
+#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_BLEND_IMAGES_CUSTOM_TILING_H_

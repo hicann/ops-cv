@@ -28,7 +28,7 @@ struct RoiPoolingWithArgMaxCompileInfo {};
 
 class RoiPoolingWithArgMaxTiling {
 public:
-    explicit RoiPoolingWithArgMaxTiling(gert::TilingContext *context) : context_(context){};
+    explicit RoiPoolingWithArgMaxTiling(gert::TilingContext* context) : context_(context) {};
     ge::graphStatus DoTiling();
     ge::graphStatus GetPlatformInfo();
     ge::graphStatus InitTilingData();
@@ -41,8 +41,8 @@ public:
     void SetTilingData();
 
 private:
-    RoiPoolingWithArgMaxRegBaseTilingData *tilingData_{nullptr};
-    gert::TilingContext *context_ = nullptr;
+    RoiPoolingWithArgMaxRegBaseTilingData* tilingData_{nullptr};
+    gert::TilingContext* context_ = nullptr;
 
     int64_t usrWorkspaceSize_ = 1;
     uint64_t dataTypeTilingKey_ = 0;
@@ -61,5 +61,5 @@ private:
     float spatialW_ = 1.0f;
 };
 
-}  // namespace optiling
+} // namespace optiling
 #endif

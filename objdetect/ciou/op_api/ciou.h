@@ -15,9 +15,9 @@
 
 namespace l0op {
 // used in aclnnCIou
-const std::tuple<aclTensor*, aclTensor*> CIoU(
-    const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross, const char* mode, bool atanSubFlag,
-    aclOpExecutor* executor);
+const std::tuple<aclTensor*, aclTensor*> CIoU(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans,
+                                              bool isCross, const char* mode, bool atanSubFlag,
+                                              aclOpExecutor* executor);
 } // namespace l0op
 
 #endif // OP_API_INC_LEVEL0_CIOU_V2_H_

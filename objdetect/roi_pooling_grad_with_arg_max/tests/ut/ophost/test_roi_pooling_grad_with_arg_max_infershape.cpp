@@ -21,14 +21,8 @@
 
 class RoiPoolingGradWithArgMax : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RoiPoolingGradWithArgMaxInfershape SetUp" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "RoiPoolingGradWithArgMaxInfershape TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RoiPoolingGradWithArgMaxInfershape SetUp" << std::endl; }
+    static void TearDownTestCase() { std::cout << "RoiPoolingGradWithArgMaxInfershape TearDown" << std::endl; }
 };
 
 TEST_F(RoiPoolingGradWithArgMax, roi_pooling_grad_with_arg_max_infershape_fp16)
@@ -41,18 +35,23 @@ TEST_F(RoiPoolingGradWithArgMax, roi_pooling_grad_with_arg_max_infershape_fp16)
     int width = 3;
     int rois_n = 4;
 
-    gert::InfershapeContextPara infershapeContextPara("RoiPoolingGradWithArgMax",
-                                                      {{{{rois_n, c, poolh, poolw}, {n, c, poolh, poolw}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{n, c, height, width}, {n, c, height, width}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{rois_n, 5}, {rois_n, 5}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{rois_n, 5}, {rois_n, 5}}, ge::DT_INT32, ge::FORMAT_ND},
-                                                      {{{rois_n, c, poolh, poolw}, {n, c, poolh, poolw}}, ge::DT_INT32, ge::FORMAT_ND}},
-                                                      {{{{n, c, height, width}, {n, c, height, width}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolh)),
-                                                       gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolw)),
-                                                       gert::InfershapeContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
-                                                       gert::InfershapeContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
-                                                       gert::InfershapeContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(c))});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{n, c, height, width},};
+    gert::InfershapeContextPara infershapeContextPara(
+        "RoiPoolingGradWithArgMax",
+        {{{{rois_n, c, poolh, poolw}, {n, c, poolh, poolw}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{n, c, height, width}, {n, c, height, width}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{rois_n, 5}, {rois_n, 5}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{rois_n, 5}, {rois_n, 5}}, ge::DT_INT32, ge::FORMAT_ND},
+         {{{rois_n, c, poolh, poolw}, {n, c, poolh, poolw}}, ge::DT_INT32, ge::FORMAT_ND}},
+        {
+            {{{n, c, height, width}, {n, c, height, width}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolh)),
+         gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(poolw)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(c))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {n, c, height, width},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

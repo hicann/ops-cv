@@ -34,8 +34,8 @@ class ResizeBilinearV2CParallel : public ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2CParallel(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2TilingData* data);
 
     __aicore__ inline void Process();
 
@@ -55,13 +55,13 @@ protected:
 
     DataCopyPadExtParams<uint8_t> padParams_ = {false, 0, 0, 0};
 
-    constexpr static MicroAPI::CastTrait castTrait0 = {
-        MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN, MicroAPI::MaskMergeMode::ZEROING,
-        RoundMode::UNKNOWN}; // bf16 --float
+    constexpr static MicroAPI::CastTrait castTrait0 = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN,
+                                                       MicroAPI::MaskMergeMode::ZEROING,
+                                                       RoundMode::UNKNOWN}; // bf16 --float
 
-    constexpr static MicroAPI::CastTrait castTrait1 = {
-        MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::NO_SAT, MicroAPI::MaskMergeMode::ZEROING,
-        RoundMode::CAST_RINT}; // float---bf16
+    constexpr static MicroAPI::CastTrait castTrait1 = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::NO_SAT,
+                                                       MicroAPI::MaskMergeMode::ZEROING,
+                                                       RoundMode::CAST_RINT}; // float---bf16
 
     int64_t nStrideX_;
     int64_t hwStrideX_;
@@ -80,8 +80,8 @@ protected:
 };
 
 template <typename T_X, typename T_Y>
-__aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
+__aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                                                 const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -109,8 +109,9 @@ __aicore__ inline float ResizeBilinearV2CParallel<T_X, T_Y>::CalcInputPos(int64_
 }
 
 template <typename T_X, typename T_Y>
-__aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::CopyInSinglePoint(
-    LocalTensor<uint8_t> xTensor, int64_t queIdx, int64_t hPos, int64_t wPos)
+__aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::CopyInSinglePoint(LocalTensor<uint8_t> xTensor,
+                                                                              int64_t queIdx, int64_t hPos,
+                                                                              int64_t wPos)
 {
     int64_t xOffsetInGM = nOffset_ * nStrideX_ + (hPos * tilingData_->lenSrcW + wPos) * hwStrideX_ + cOffset_;
 
@@ -120,8 +121,8 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::CopyInSinglePoint(
     gm2ubParams.srcStride = (nStrideX_ - cLength_) * sizeof(T_X);
     gm2ubParams.dstStride = 0;
 
-    DataCopyPad<uint8_t, PaddingMode::Compact>(
-        xTensor[queIdx * bufferLen_ * sizeof(T_X)], xGM_[xOffsetInGM * sizeof(T_X)], gm2ubParams, padParams_);
+    DataCopyPad<uint8_t, PaddingMode::Compact>(xTensor[queIdx * bufferLen_ * sizeof(T_X)],
+                                               xGM_[xOffsetInGM * sizeof(T_X)], gm2ubParams, padParams_);
 }
 
 template <typename T_X, typename T_Y>
@@ -250,11 +251,11 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
                 MicroAPI::Cast<T_Y, float, castTrait1>(regTmp, regSumFp32, pregFp32);
                 MicroAPI::Pack((RegTensor<uint16_t>&)regRst, (RegTensor<uint32_t>&)regTmp);
                 MicroAPI::MaskPack(pregFp16, pregFp32);
-                MicroAPI::DataCopy<T_Y, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    yAddr, regRst, (int32_t)oneRepeat, pregFp16);
+                MicroAPI::DataCopy<T_Y, MicroAPI::PostLiteral::POST_MODE_UPDATE>(yAddr, regRst, (int32_t)oneRepeat,
+                                                                                 pregFp16);
             } else {
-                MicroAPI::DataCopy<T_Y, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
-                    yAddr, regSumFp32, (int32_t)oneRepeat, pregFp32);
+                MicroAPI::DataCopy<T_Y, MicroAPI::PostLiteral::POST_MODE_UPDATE>(yAddr, regSumFp32, (int32_t)oneRepeat,
+                                                                                 pregFp32);
             }
         }
     }

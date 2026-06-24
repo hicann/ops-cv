@@ -23,24 +23,16 @@
 
 extern "C" __global__ __aicore__ void upsample_nearest3d_grad(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
-class upsample_nearest3d_grad_test : public testing::Test
-{
+class upsample_nearest3d_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "upsample_nearest3d_grad_test SetUp\n" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "upsample_nearest3d_grad_test TearDown\n" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "upsample_nearest3d_grad_test SetUp\n" << std::endl; }
+    static void TearDownTestCase() { std::cout << "upsample_nearest3d_grad_test TearDown\n" << std::endl; }
 };
 
 TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest3d_grad_data/");
     system("cd ./upsample_nearest3d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'float32'");
 
@@ -213,9 +205,8 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float_1)
 
 TEST_F(upsample_nearest3d_grad_test, test_case_float16)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest3d_grad_data/");
     system("cd ./upsample_nearest3d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'float16'");
 
@@ -387,9 +378,8 @@ TEST_F(upsample_nearest3d_grad_test, test_case_float16)
 }
 TEST_F(upsample_nearest3d_grad_test, test_case_bfloat16)
 {
-    system(
-        "cp -rf "
-        "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
+    system("cp -rf "
+           "../../../../image/upsample_nearest3d_grad/tests/ut/op_kernel/upsample_nearest3d_grad_data ./");
     system("chmod -R 755 ./upsample_nearest3d_grad_data/");
     system("cd ./upsample_nearest3d_grad_data/ && python3 gen_data.py '(1, 1, 4, 4, 4)' '(16, 16, 16)' 'bfloat16'");
 

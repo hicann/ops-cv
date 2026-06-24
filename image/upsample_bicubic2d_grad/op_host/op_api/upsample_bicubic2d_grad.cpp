@@ -29,19 +29,19 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(UpsampleBicubic2dGrad);
 
-const aclTensor *UpsampleBicubic2dGrad(const aclTensor *input, const bool align_corners, const float scales_h,
-    const float scales_w, const aclTensor *output, aclOpExecutor *executor)
+const aclTensor* UpsampleBicubic2dGrad(const aclTensor* input, const bool align_corners, const float scales_h,
+                                       const float scales_w, const aclTensor* output, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleBicubic2dGrad, input, align_corners, scales_h, scales_w, output);
 
-    aclTensor *out = executor->AllocTensor(output->GetViewShape(), output->GetDataType(), output->GetViewFormat());
+    aclTensor* out = executor->AllocTensor(output->GetViewShape(), output->GetDataType(), output->GetViewFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleBicubic2dGrad, OP_INPUT(input), OP_OUTPUT(out), OP_ATTR(align_corners, scales_h, scales_w));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBicubic2dGrad, OP_INPUT(input), OP_OUTPUT(out),
+                                           OP_ATTR(align_corners, scales_h, scales_w));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBicubic2dGradAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBicubic2dGradAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

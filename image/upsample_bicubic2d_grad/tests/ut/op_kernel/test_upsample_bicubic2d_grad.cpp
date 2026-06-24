@@ -21,19 +21,13 @@
 
 using namespace std;
 
-extern "C" __global__ __aicore__ void upsample_bicubic2d_grad(
-    GM_ADDR grad_output, GM_ADDR grad_input, GM_ADDR workspace, GM_ADDR tiling_addr);
+extern "C" __global__ __aicore__ void upsample_bicubic2d_grad(GM_ADDR grad_output, GM_ADDR grad_input,
+                                                              GM_ADDR workspace, GM_ADDR tiling_addr);
 
 class upsample_bicubic2d_grad_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "upsample_bicubic2d_grad_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "upsample_bicubic2d_grad_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "upsample_bicubic2d_grad_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "upsample_bicubic2d_grad_test TearDown\n" << endl; }
 };
 
 TEST_F(upsample_bicubic2d_grad_test, test_case_1)
@@ -50,13 +44,13 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_1)
         platform_ascendc::SocVersion socVersion;
         std::string socVersionStr = "";
     } compile_info;
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dGrad",
-                                                {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
-                                                &compile_info);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dGrad", {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
+        &compile_info);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -93,13 +87,13 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_2)
         platform_ascendc::SocVersion socVersion;
         std::string socVersionStr = "";
     } compile_info;
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dGrad",
-                                                {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
-                                                &compile_info);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dGrad", {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
+        &compile_info);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -136,13 +130,13 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_3)
         platform_ascendc::SocVersion socVersion;
         std::string socVersionStr = "";
     } compile_info;
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dGrad",
-                                                {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
-                                                &compile_info);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dGrad", {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
+        &compile_info);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -179,13 +173,13 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_4)
         platform_ascendc::SocVersion socVersion;
         std::string socVersionStr = "";
     } compile_info;
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dGrad",
-                                                {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
-                                                &compile_info);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dGrad", {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
+        &compile_info);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
@@ -222,13 +216,13 @@ TEST_F(upsample_bicubic2d_grad_test, test_case_5)
         platform_ascendc::SocVersion socVersion;
         std::string socVersionStr = "";
     } compile_info;
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2dGrad",
-                                                {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
-                                                &compile_info);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dGrad", {{{{2, 16, 64, 64}, {2, 16, 64, 64}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {{{{2, 16, 16, 16}, {2, 16, 16, 16}}, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
+        &compile_info);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);

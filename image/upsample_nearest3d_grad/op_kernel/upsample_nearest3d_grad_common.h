@@ -28,8 +28,8 @@ __aicore__ inline int64_t ROUND_UP(int64_t x, int64_t block_number)
 }
 
 template <typename T>
-__aicore__ inline void InitGmZero(
-    const GlobalTensor<T>& outGm, TBuf<TPosition::VECCALC>& TmpZeroTBuf, int64_t zeroLen, int64_t outOffset)
+__aicore__ inline void InitGmZero(const GlobalTensor<T>& outGm, TBuf<TPosition::VECCALC>& TmpZeroTBuf, int64_t zeroLen,
+                                  int64_t outOffset)
 {
     int64_t alignLen_ = BLOCK_SIZE / sizeof(T);
     LocalTensor<T> temp_zero_tensor = TmpZeroTBuf.Get<T>();

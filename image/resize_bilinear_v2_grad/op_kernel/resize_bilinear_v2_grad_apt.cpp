@@ -38,8 +38,8 @@
 
 using namespace AscendC;
 
-extern "C" __global__ __aicore__ void resize_bilinear_v2_grad(
-    GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void resize_bilinear_v2_grad(GM_ADDR grads, GM_ADDR originalImage, GM_ADDR y,
+                                                              GM_ADDR workspace, GM_ADDR tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIV_1_0);
     GET_TILING_DATA(tilingData, tiling);
@@ -150,14 +150,14 @@ extern "C" __global__ __aicore__ void resize_bilinear_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_NCHW_DETERMINE_SCALES)) {
         if (tilingData.halfPixelCenters > 0) {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, true, uint32_t, FORMAT_NCHW>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, true, uint32_t,
+                                                                          FORMAT_NCHW>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
         } else {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, false, uint32_t, FORMAT_NCHW>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, false, uint32_t,
+                                                                          FORMAT_NCHW>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
@@ -167,14 +167,14 @@ extern "C" __global__ __aicore__ void resize_bilinear_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_NHWC_DETERMINE_SCALES)) {
         if (tilingData.halfPixelCenters > 0) {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, true, uint32_t, FORMAT_NHWC>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, true, uint32_t,
+                                                                          FORMAT_NHWC>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
         } else {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, false, uint32_t, FORMAT_NHWC>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, false, uint32_t,
+                                                                          FORMAT_NHWC>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
@@ -199,14 +199,14 @@ extern "C" __global__ __aicore__ void resize_bilinear_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_NCHW_DETERMINE_SCALES_IDX64)) {
         if (tilingData.halfPixelCenters > 0) {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, true, uint64_t, FORMAT_NCHW>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, true, uint64_t,
+                                                                          FORMAT_NCHW>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
         } else {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, false, uint64_t, FORMAT_NCHW>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, false, uint64_t,
+                                                                          FORMAT_NCHW>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
@@ -231,14 +231,14 @@ extern "C" __global__ __aicore__ void resize_bilinear_v2_grad(
 
     if (TILING_KEY_IS(TILING_KEY_SIMT_NHWC_DETERMINE_SCALES_IDX64)) {
         if (tilingData.halfPixelCenters > 0) {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, true, uint64_t, FORMAT_NHWC>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, true, uint64_t,
+                                                                          FORMAT_NHWC>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();
         } else {
-            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<
-                DTYPE_GRADS, DTYPE_Y, false, uint64_t, FORMAT_NHWC>
+            ResizeBilinearV2Grad::ResizeBilinearV2GradSimtDetermineScales<DTYPE_GRADS, DTYPE_Y, false, uint64_t,
+                                                                          FORMAT_NHWC>
                 op;
             op.Init(grads, originalImage, y, &tilingData);
             op.Process();

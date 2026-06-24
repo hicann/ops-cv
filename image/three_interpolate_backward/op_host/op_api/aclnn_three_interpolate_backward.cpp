@@ -39,8 +39,8 @@ constexpr uint8_t CONST_2 = 2;
 constexpr uint8_t CONST_3 = 3;
 } // namespace
 
-static bool CheckNotNull(
-    const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, const aclTensor* grad_y)
+static bool CheckNotNull(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight,
+                         const aclTensor* grad_y)
 {
     OP_CHECK_NULL(grad_x, return false);
     OP_CHECK_NULL(idx, return false);
@@ -49,11 +49,11 @@ static bool CheckNotNull(
     return true;
 }
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT,
+                                                                       op::DataType::DT_FLOAT16};
 
-static const std::initializer_list<op::DataType> IDX_DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_INT32, op::DataType::DT_INT64};
+static const std::initializer_list<op::DataType> IDX_DTYPE_SUPPORT_LIST = {op::DataType::DT_INT32,
+                                                                           op::DataType::DT_INT64};
 
 static bool CheckDtypeValid(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight)
 {
@@ -64,8 +64,8 @@ static bool CheckDtypeValid(const aclTensor* grad_x, const aclTensor* idx, const
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, const aclTensor* grad_y)
+static aclnnStatus CheckParams(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight,
+                               const aclTensor* grad_y)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(grad_x, idx, weight, grad_y), ACLNN_ERR_PARAM_NULLPTR);
@@ -84,9 +84,9 @@ static void CreateGradXReshapeData(const aclTensor* grad_x, FVector<int64_t>& ne
     newShapeVector.push_back(shape.GetDim(DIM_INDEX_M));
 }
 
-aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(
-    const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m, aclTensor* grad_y,
-    uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor* grad_x, const aclTensor* idx,
+                                                          const aclTensor* weight, int m, aclTensor* grad_y,
+                                                          uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
@@ -135,8 +135,8 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnThreeInterpolateBackward(
-    void* workspace, uint64_t workspace_size, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnThreeInterpolateBackward(void* workspace, uint64_t workspace_size, aclOpExecutor* executor,
+                                          aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnThreeInterpolateBackward);
     // 固定写法，调用框架能力，完成计算

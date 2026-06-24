@@ -25,17 +25,10 @@ using namespace std;
 
 extern "C" __global__ __aicore__ void upsample_bicubic2d(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling);
 
-
 class upsample_bicubic2d_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "upsample_bicubic2d_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "upsample_bicubic2d_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "upsample_bicubic2d_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "upsample_bicubic2d_test TearDown\n" << endl; }
 };
 struct UpsampleBicubic2dCompileInfo {
     uint16_t totalCoreNum = 0;
@@ -55,14 +48,14 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_1)
     UpsampleBicubic2dCompileInfo compileInfo = {24, 220};
     std::vector<int64_t> output_size = {4, 4};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2d",
-                                                {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo, socVersion, 48, 192*1024, 8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2d", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}}, {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -70,8 +63,8 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_1)
 
     size_t inputByteSize = 16 * 16 * sizeof(float);
     size_t outputByteSize = 4 * 4 * sizeof(float);
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
     std::string fileName = "./upsample_bicubic2d_data/float32_input_bicubic2d.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
@@ -83,10 +76,10 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_1)
     fileName = "./upsample_bicubic2d_data/float32_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bicubic2d_data/ && python3 compare_data.py 'float32'");
 }
@@ -104,14 +97,14 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_2)
     UpsampleBicubic2dCompileInfo compileInfo = {24, 220};
     std::vector<int64_t> output_size = {3, 3};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2d",
-                                                {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo, socVersion, 48, 192*1024, 8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2d", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}}, {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -119,8 +112,8 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_2)
 
     size_t inputByteSize = 21 * 21 * sizeof(float);
     size_t outputByteSize = 3 * 3 * sizeof(float);
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
     std::string fileName = "./upsample_bicubic2d_data/float32_input_bicubic2d.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
@@ -132,10 +125,10 @@ TEST_F(upsample_bicubic2d_test, test_case_float32_2)
     fileName = "./upsample_bicubic2d_data/float32_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bicubic2d_data/ && python3 compare_data.py 'float32'");
 }
@@ -153,14 +146,15 @@ TEST_F(upsample_bicubic2d_test, test_case_float16_1)
     UpsampleBicubic2dCompileInfo compileInfo = {24, 220};
     std::vector<int64_t> output_size = {16, 16};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2d",
-                                                {{input_shape, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {{out_shape, ge::DT_FLOAT16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo, socVersion, 48, 192*1024, 8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2d", {{input_shape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {{out_shape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -168,8 +162,8 @@ TEST_F(upsample_bicubic2d_test, test_case_float16_1)
 
     size_t inputByteSize = 4 * 4 * sizeof(half);
     size_t outputByteSize = 16 * 16 * sizeof(half);
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
     std::string fileName = "./upsample_bicubic2d_data/float16_input_bicubic2d.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
@@ -181,10 +175,10 @@ TEST_F(upsample_bicubic2d_test, test_case_float16_1)
     fileName = "./upsample_bicubic2d_data/float16_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bicubic2d_data/ && python3 compare_data.py 'float16'");
 }
@@ -202,14 +196,14 @@ TEST_F(upsample_bicubic2d_test, test_case_bfloat16_1)
     UpsampleBicubic2dCompileInfo compileInfo = {24, 220};
     std::vector<int64_t> output_size = {16, 16};
     string socVersion = "Ascend910b";
-    gert::TilingContextPara tilingContextPara("UpsampleBicubic2d",
-                                                {{input_shape, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {{out_shape, ge::DT_BF16, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
-                                                gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-                                                &compileInfo, socVersion, 48, 192*1024, 8192);
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2d", {{input_shape, ge::DT_BF16, ge::FORMAT_ND}}, {{out_shape, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
 
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
@@ -217,8 +211,8 @@ TEST_F(upsample_bicubic2d_test, test_case_bfloat16_1)
 
     size_t inputByteSize = 4 * 4 * sizeof(half);
     size_t outputByteSize = 16 * 16 * sizeof(half);
-    uint8_t *x = (uint8_t *)AscendC::GmAlloc(inputByteSize);
-    uint8_t *y = (uint8_t *)AscendC::GmAlloc(outputByteSize);
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
     std::string fileName = "./upsample_bicubic2d_data/bfloat16_input_bicubic2d.bin";
     ReadFile(fileName, inputByteSize, x, inputByteSize);
 
@@ -230,10 +224,10 @@ TEST_F(upsample_bicubic2d_test, test_case_bfloat16_1)
     fileName = "./upsample_bicubic2d_data/bfloat16_output_bicubic2d.bin";
     WriteFile(fileName, y, outputByteSize);
 
-    AscendC::GmFree((void *)(x));
-    AscendC::GmFree((void *)(y));
-    AscendC::GmFree((void *)workspace);
-    AscendC::GmFree((void *)tiling);
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
 
     system("cd ./upsample_bicubic2d_data/ && python3 compare_data.py 'bfloat16'");
 }

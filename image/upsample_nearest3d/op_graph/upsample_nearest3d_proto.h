@@ -48,6 +48,6 @@ REG_OP(UpsampleNearest3d)
     .ATTR(scales, ListFloat, {})
     .OP_END_FACTORY_REG(UpsampleNearest3d)
 
-}  // namespace ge
+} // namespace ge
 
-#endif  // OPS_OP_PROTO_INC_UPSAMPLE_NEAREST3D_H_
+#endif // OPS_OP_PROTO_INC_UPSAMPLE_NEAREST3D_H_

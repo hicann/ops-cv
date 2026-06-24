@@ -21,24 +21,23 @@
 // using namespace op;
 using namespace std;
 
-class l2_iou_test : public testing::Test
-{
+class l2_iou_test : public testing::Test {
 protected:
-  static void SetUpTestCase() { cout << "l2_iou_test SetUp" << endl; }
+    static void SetUpTestCase() { cout << "l2_iou_test SetUp" << endl; }
 
-  static void TearDownTestCase() { cout << "l2_iou_test TearDown" << endl; }
+    static void TearDownTestCase() { cout << "l2_iou_test TearDown" << endl; }
 };
 
 TEST_F(l2_iou_test, success_case_1)
 {
-  // auto bBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
-  // auto gtBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
-  // auto overlap = TensorDesc({20, 1}, ACL_FLOAT, ACL_FORMAT_ND);
+    // auto bBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    // auto gtBoxes = TensorDesc({20, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    // auto overlap = TensorDesc({20, 1}, ACL_FLOAT, ACL_FORMAT_ND);
 
-  // auto ut = OP_API_UT(aclnnIou, INPUT(bBoxes, gtBoxes, "iou", 0.01, true), OUTPUT(overlap));
-  // uint64_t workspace_size = 0;
-  // aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
-  // EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    // auto ut = OP_API_UT(aclnnIou, INPUT(bBoxes, gtBoxes, "iou", 0.01, true), OUTPUT(overlap));
+    // uint64_t workspace_size = 0;
+    // aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    // EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
 // TEST_F(l2_iou_test, success_case_2)

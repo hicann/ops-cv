@@ -52,9 +52,10 @@ bool CheckScalesGrad(float scaleW, float scaleH, float scaleD)
     return (scaleW >= MIN_SUPPORT_SCALE && scaleH >= MIN_SUPPORT_SCALE && scaleD >= MIN_SUPPORT_SCALE);
 }
 
-const aclTensor* UpsampleTrilinear3dGradNcdhw(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, bool alignCorners,
-    const aclFloatArray* scales, const aclFloatArray* castScales, aclOpExecutor* executor)
+const aclTensor* UpsampleTrilinear3dGradNcdhw(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                              const aclIntArray* inputSize, bool alignCorners,
+                                              const aclFloatArray* scales, const aclFloatArray* castScales,
+                                              aclOpExecutor* executor)
 {
     L0_DFX(UpsampleTrilinear3dGradNcdhw, gradOut, outputSize, inputSize, alignCorners, scales);
 
@@ -78,8 +79,8 @@ const aclTensor* UpsampleTrilinear3dGradNcdhw(
 
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     auto dataType = gradOut->GetDataType();
-    if ((curArch == NpuArch::DAV_2201) &&
-        CheckType(gradOut->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) && CheckScalesGrad(scaleW, scaleH, scaleD)) {
+    if ((curArch == NpuArch::DAV_2201) && CheckType(gradOut->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
+        CheckScalesGrad(scaleW, scaleH, scaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
             gradOut = l0op::Cast(gradOut, op::DataType::DT_FLOAT, executor);
             CHECK_RET(gradOut != nullptr, nullptr);

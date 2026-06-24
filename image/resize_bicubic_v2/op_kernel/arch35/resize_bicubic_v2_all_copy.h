@@ -25,8 +25,8 @@ class ResizeBicubicV2AllCopy : public ResizeBicubicV2Base {
 public:
     __aicore__ inline ResizeBicubicV2AllCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBicubicV2TilingData *tilingData_);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBicubicV2TilingData* tilingData_);
 
     __aicore__ inline void Process();
 
@@ -35,7 +35,7 @@ protected:
 
     __aicore__ inline void CopyOut(int64_t yOffsetInGM, int64_t length);
 
-    const ResizeBicubicV2TilingData *tilingData_;
+    const ResizeBicubicV2TilingData* tilingData_;
 
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, BUFFER_NUM> dataQue_;
 
@@ -46,7 +46,7 @@ protected:
 
 template <typename T_DATA, uint64_t halfPixel, uint64_t mode, typename T_IDX, typename T_IDX2>
 __aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_IDX2>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe *pipe, const ResizeBicubicV2TilingData *data)
+    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBicubicV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -57,8 +57,8 @@ __aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_
 }
 
 template <typename T_DATA, uint64_t halfPixel, uint64_t mode, typename T_IDX, typename T_IDX2>
-__aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_IDX2>::CopyIn(
-    int64_t xOffsetInGM, int64_t length)
+__aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_IDX2>::CopyIn(int64_t xOffsetInGM,
+                                                                                              int64_t length)
 {
     LocalTensor<uint8_t> xTensor = dataQue_.AllocTensor<uint8_t>();
 
@@ -80,8 +80,8 @@ __aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_
 }
 
 template <typename T_DATA, uint64_t halfPixel, uint64_t mode, typename T_IDX, typename T_IDX2>
-__aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_IDX2>::CopyOut(
-    int64_t yOffsetInGM, int64_t length)
+__aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_IDX2>::CopyOut(int64_t yOffsetInGM,
+                                                                                               int64_t length)
 {
     LocalTensor<uint8_t> yTensor = dataQue_.DeQue<uint8_t>();
 
@@ -122,6 +122,6 @@ __aicore__ inline void ResizeBicubicV2AllCopy<T_DATA, halfPixel, mode, T_IDX, T_
     }
 }
 
-}  // namespace ResizeBicubicV2
+} // namespace ResizeBicubicV2
 
-#endif  // RESIZE_BICUBIC_V2_ALL_COPY_H
+#endif // RESIZE_BICUBIC_V2_ALL_COPY_H

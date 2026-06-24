@@ -27,25 +27,25 @@ class ResizeBilinearV2PointCopy : public ResizeBilinearV2Base {
 public:
     __aicore__ inline ResizeBilinearV2PointCopy(){};
 
-    __aicore__ inline void Init(
-        GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                const ResizeBilinearV2TilingData* data);
     __aicore__ inline void Process();
 
 protected:
-    __aicore__ inline void CopyIn(
-        int64_t& xOffsetInGM, int64_t& startHOffset, int64_t& startWOffset, int64_t& endHOffset, int64_t& endWOffset,
-        int64_t& overStepH, int64_t& overStepW, int64_t& hMaxOffset, int64_t& wMaxOffset, int64_t& curBlockCount,
-        bool& wOverStep, bool& hOverStep);
+    __aicore__ inline void CopyIn(int64_t& xOffsetInGM, int64_t& startHOffset, int64_t& startWOffset,
+                                  int64_t& endHOffset, int64_t& endWOffset, int64_t& overStepH, int64_t& overStepW,
+                                  int64_t& hMaxOffset, int64_t& wMaxOffset, int64_t& curBlockCount, bool& wOverStep,
+                                  bool& hOverStep);
     __aicore__ inline void CopyOut();
     __aicore__ inline void CalcTile();
-    __aicore__ inline void ComputeParams(
-        int64_t& startHOffset, int64_t& startWOffset, int64_t& endHOffset, int64_t& endWOffset, bool& hOverStep,
-        int64_t& overStepH, bool& wOverStep, int64_t& overStepW, int64_t& curBlockCount, int64_t& hMaxOffset,
-        int64_t& wMaxOffset);
-    __aicore__ inline void CopyInOverstepH(
-        LocalTensor<uint8_t>& xTensor, bool& wOverStep, int64_t& xOffsetInGM, int64_t& hMaxOffset, int64_t& wMaxOffset,
-        int64_t& startWOffset, int64_t& overStepH, int64_t& overStepW, DataCopyExtParams& gm2ubParams,
-        DataCopyExtParams& gm2ubParamsW);
+    __aicore__ inline void ComputeParams(int64_t& startHOffset, int64_t& startWOffset, int64_t& endHOffset,
+                                         int64_t& endWOffset, bool& hOverStep, int64_t& overStepH, bool& wOverStep,
+                                         int64_t& overStepW, int64_t& curBlockCount, int64_t& hMaxOffset,
+                                         int64_t& wMaxOffset);
+    __aicore__ inline void CopyInOverstepH(LocalTensor<uint8_t>& xTensor, bool& wOverStep, int64_t& xOffsetInGM,
+                                           int64_t& hMaxOffset, int64_t& wMaxOffset, int64_t& startWOffset,
+                                           int64_t& overStepH, int64_t& overStepW, DataCopyExtParams& gm2ubParams,
+                                           DataCopyExtParams& gm2ubParamsW);
 
     const ResizeBilinearV2TilingData* tilingData_;
 
@@ -88,8 +88,8 @@ protected:
 };
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::Init(
-    GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe, const ResizeBilinearV2TilingData* data)
+__aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, TPipe* pipe,
+                                                               const ResizeBilinearV2TilingData* data)
 {
     this->BaseInit(x, size, y, pipe);
 
@@ -101,10 +101,12 @@ __aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::Init(
 }
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::ComputeParams(
-    int64_t& startHOffset, int64_t& startWOffset, int64_t& endHOffset, int64_t& endWOffset, bool& hOverStep,
-    int64_t& overStepH, bool& wOverStep, int64_t& overStepW, int64_t& curBlockCount, int64_t& hMaxOffset,
-    int64_t& wMaxOffset)
+__aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::ComputeParams(int64_t& startHOffset, int64_t& startWOffset,
+                                                                        int64_t& endHOffset, int64_t& endWOffset,
+                                                                        bool& hOverStep, int64_t& overStepH,
+                                                                        bool& wOverStep, int64_t& overStepW,
+                                                                        int64_t& curBlockCount, int64_t& hMaxOffset,
+                                                                        int64_t& wMaxOffset)
 {
     if (tilingData_->halfPixelCenters > 0) {
         startHOffset = min(hMaxOffset, ((2 * hOffset_ + 1) * hPointStride_ - 1) / 2 * hStrideX_);
@@ -141,8 +143,8 @@ __aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::CopyInOverstepH(
             int64_t xOffsetInTensor = nIdx * nStrideY_ + heightIdx * hStrideY_;
             if (!wOverStep) {
                 int64_t newWOffset = (xOffsetInGM + hMaxOffset + startWOffset) * sizeof(T_DATA);
-                DataCopyPad<uint8_t, PaddingMode::Compact>(
-                    xTensor[xOffsetInTensor * sizeof(T_DATA)], xGM_[newWOffset], gm2ubParams, padParams);
+                DataCopyPad<uint8_t, PaddingMode::Compact>(xTensor[xOffsetInTensor * sizeof(T_DATA)], xGM_[newWOffset],
+                                                           gm2ubParams, padParams);
             } else {
                 int64_t newWOffset = (xOffsetInGM + hMaxOffset + wMaxOffset) * sizeof(T_DATA);
                 DataCopyPad<uint8_t, PaddingMode::Compact>(
@@ -159,15 +161,16 @@ __aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::CopyInOverstepH(
 }
 
 template <typename T_DATA>
-__aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::CopyIn(
-    int64_t& xOffsetInGM, int64_t& startHOffset, int64_t& startWOffset, int64_t& endHOffset, int64_t& endWOffset,
-    int64_t& overStepH, int64_t& overStepW, int64_t& hMaxOffset, int64_t& wMaxOffset, int64_t& curBlockCount,
-    bool& wOverStep, bool& hOverStep)
+__aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::CopyIn(int64_t& xOffsetInGM, int64_t& startHOffset,
+                                                                 int64_t& startWOffset, int64_t& endHOffset,
+                                                                 int64_t& endWOffset, int64_t& overStepH,
+                                                                 int64_t& overStepW, int64_t& hMaxOffset,
+                                                                 int64_t& wMaxOffset, int64_t& curBlockCount,
+                                                                 bool& wOverStep, bool& hOverStep)
 {
     LocalTensor<uint8_t> xTensor = dataQue_.AllocTensor<uint8_t>();
-    ComputeParams(
-        startHOffset, startWOffset, endHOffset, endWOffset, hOverStep, overStepH, wOverStep, overStepW, curBlockCount,
-        hMaxOffset, wMaxOffset);
+    ComputeParams(startHOffset, startWOffset, endHOffset, endWOffset, hOverStep, overStepH, wOverStep, overStepW,
+                  curBlockCount, hMaxOffset, wMaxOffset);
 
     LoopModeParams loopParams;
     loopParams.loop2Size = nLength_;
@@ -201,8 +204,8 @@ __aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::CopyIn(
         DataCopyPad<uint8_t, PaddingMode::Compact>(
             xTensor, xGM_[(xOffsetInGM + startHOffset + startWOffset) * sizeof(T_DATA)], gm2ubParamsW, padParams);
         for (int64_t widthIdx = wLength_ - overStepW; widthIdx < wLength_; widthIdx++) {
-            DataCopyPad<uint8_t, PaddingMode::Compact>(
-                xTensor[widthIdx * cLength_ * sizeof(T_DATA)], xGM_[newWOffset], gm2ubParams, padParams);
+            DataCopyPad<uint8_t, PaddingMode::Compact>(xTensor[widthIdx * cLength_ * sizeof(T_DATA)], xGM_[newWOffset],
+                                                       gm2ubParams, padParams);
         }
     }
 
@@ -210,9 +213,8 @@ __aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::CopyIn(
 
     // 如果有H轴方向越界，那么将越界的部分继续搬入
     if (hOverStep) {
-        CopyInOverstepH(
-            xTensor, wOverStep, xOffsetInGM, hMaxOffset, wMaxOffset, startWOffset, overStepH, overStepW, gm2ubParams,
-            gm2ubParamsW);
+        CopyInOverstepH(xTensor, wOverStep, xOffsetInGM, hMaxOffset, wMaxOffset, startWOffset, overStepH, overStepW,
+                        gm2ubParams, gm2ubParamsW);
     }
 
     dataQue_.EnQue(xTensor);
@@ -321,9 +323,8 @@ __aicore__ inline void ResizeBilinearV2PointCopy<T_DATA>::Process()
                     int64_t curBlockCount = wLength_;
                     bool wOverStep = false;
                     bool hOverStep = false;
-                    CopyIn(
-                        xOffsetInGM, startHOffset, startWOffset, endHOffset, endWOffset, overStepH, overStepW,
-                        hMaxOffset, wMaxOffset, curBlockCount, wOverStep, hOverStep);
+                    CopyIn(xOffsetInGM, startHOffset, startWOffset, endHOffset, endWOffset, overStepH, overStepW,
+                           hMaxOffset, wMaxOffset, curBlockCount, wOverStep, hOverStep);
                     CopyOut();
                 }
             }

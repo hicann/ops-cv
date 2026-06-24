@@ -28,19 +28,21 @@ class ResizeLinearSimtNCL {
 public:
     __aicore__ inline ResizeLinearSimtNCL(){};
 
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, const ResizeLinearTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR size, GM_ADDR y, const ResizeLinearTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     uint32_t blockIdx_;
     GlobalTensor<T1> inputGm_;
     GlobalTensor<T1> outputGm_;
-    const ResizeLinearTilingData *tilingData_;
+    const ResizeLinearTilingData* tilingData_;
 };
 
 template <typename T1, typename T2>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeMode0(float origWidth, T2 srcL1,
-    T2 origBaseIdx, T2 yGmIdx, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+                                                                                   T2 origBaseIdx, T2 yGmIdx,
+                                                                                   __gm__ T1* inputGm,
+                                                                                   __gm__ T1* outputGm)
 {
     // 计算原图中坐标点
     T2 leftX = floorf(origWidth);
@@ -74,11 +76,13 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeOr
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(T2 blkStartOffset, T2 blkProcessNum,
-    T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+                                                                                  T2 mL, T2 shiftL, T2 lenDesL,
+                                                                                  T2 lenSrcL, float scaleL,
+                                                                                  __gm__ T1* inputGm,
+                                                                                  __gm__ T1* outputGm)
 {
     T2 srcL1 = lenSrcL - 1;
-    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum;
-        idx += static_cast<T2>(blockDim.x)) {
+    for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T2>(blockDim.x)) {
         T2 yGmIdx = blkStartOffset + idx;
         if constexpr (mode == 1) {
             // 纯搬运，输出完全等于输入，直接赋值
@@ -115,30 +119,32 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
-__simt_vf__ LAUNCH_BOUND(512) __aicore__ void calleeInt64(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
-    T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_vf__ LAUNCH_BOUND(512) __aicore__
+    void calleeInt64(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcL, float scaleL,
+                     __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtCompute<T1, T2, halfPixel, mode>(blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcL, scaleL, inputGm,
-        outputGm);
+                                         outputGm);
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
-__simt_vf__ LAUNCH_BOUND(1024) __aicore__ void calleeInt32(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL,
-    T2 lenDesL, T2 lenSrcL, float scaleL, __gm__ T1 *inputGm, __gm__ T1 *outputGm)
+__simt_vf__ LAUNCH_BOUND(1024) __aicore__
+    void calleeInt32(T2 blkStartOffset, T2 blkProcessNum, T2 mL, T2 shiftL, T2 lenDesL, T2 lenSrcL, float scaleL,
+                     __gm__ T1* inputGm, __gm__ T1* outputGm)
 {
     SimtCompute<T1, T2, halfPixel, mode>(blkStartOffset, blkProcessNum, mL, shiftL, lenDesL, lenSrcL, scaleL, inputGm,
-        outputGm);
+                                         outputGm);
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
 __aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Init(GM_ADDR x, GM_ADDR size, GM_ADDR y,
-    const ResizeLinearTilingData *tilingData)
+                                                                          const ResizeLinearTilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    inputGm_.SetGlobalBuffer((__gm__ T1 *)x);
-    outputGm_.SetGlobalBuffer((__gm__ T1 *)y);
+    inputGm_.SetGlobalBuffer((__gm__ T1*)x);
+    outputGm_.SetGlobalBuffer((__gm__ T1*)y);
 }
 
 template <typename T1, typename T2, uint64_t halfPixel, uint64_t mode>
@@ -155,7 +161,7 @@ __aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Process()
     } else {
         blkProcessNum = tilingData_->blkProcessNum;
         blkStartOffset = tilingData_->splitBlockTailFactor * (tilingData_->blkProcessNum + 1) +
-            (blockIdx_ - tilingData_->splitBlockTailFactor) * blkProcessNum;
+                         (blockIdx_ - tilingData_->splitBlockTailFactor) * blkProcessNum;
     }
     T2 mL = 0;
     T2 shiftL = 0;
@@ -165,11 +171,13 @@ __aicore__ inline void ResizeLinearSimtNCL<T1, T2, halfPixel, mode>::Process()
     T2 lenSrcL = (T2)(tilingData_->lenSrcL);
     float scaleL = tilingData_->scaleL;
     if constexpr (sizeof(T2) == sizeof(uint64_t)) {
-        asc_vf_call<calleeInt64<T1, T2, halfPixel, mode>>(dim3(512), blkStartOffset, blkProcessNum, mL, shiftL,
-            lenDesL, lenSrcL, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+        asc_vf_call<calleeInt64<T1, T2, halfPixel, mode>>(dim3(512), blkStartOffset, blkProcessNum, mL, shiftL, lenDesL,
+                                                          lenSrcL, scaleL, (__gm__ T1*)(inputGm_.GetPhyAddr()),
+                                                          (__gm__ T1*)(outputGm_.GetPhyAddr()));
     } else {
         asc_vf_call<calleeInt32<T1, T2, halfPixel, mode>>(dim3(1024), blkStartOffset, blkProcessNum, mL, shiftL,
-            lenDesL, lenSrcL, scaleL, (__gm__ T1 *)(inputGm_.GetPhyAddr()), (__gm__ T1 *)(outputGm_.GetPhyAddr()));
+                                                          lenDesL, lenSrcL, scaleL, (__gm__ T1*)(inputGm_.GetPhyAddr()),
+                                                          (__gm__ T1*)(outputGm_.GetPhyAddr()));
     }
 }
 } // namespace ResizeLinear

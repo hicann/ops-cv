@@ -49,9 +49,8 @@ float16 or bfloat16, then the dtype of y must be the same as x.The N, C dimensio
 */
 
 REG_OP(ResizeBilinearV2)
-    .INPUT(
-        x, TensorType(
-               {DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BF16}))
+    .INPUT(x, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE,
+                          DT_BF16}))
     .INPUT(size, TensorType({DT_INT32}))
     .OUTPUT(y, TensorType({DT_UINT8, DT_FLOAT, DT_FLOAT16, DT_BF16}))
     .ATTR(align_corners, Bool, false)

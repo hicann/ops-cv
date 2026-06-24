@@ -20,9 +20,8 @@ using namespace NMSWithMaskOp;
 
 #define TILING_KEY_FOR_MULTICORE 10000
 
-extern "C" __global__ __aicore__ void nms_with_mask(
-    GM_ADDR box_scores, GM_ADDR selected_boxes, GM_ADDR selected_idx, GM_ADDR selected_mask, GM_ADDR workspace,
-    GM_ADDR tiling)
+extern "C" __global__ __aicore__ void nms_with_mask(GM_ADDR box_scores, GM_ADDR selected_boxes, GM_ADDR selected_idx,
+                                                    GM_ADDR selected_mask, GM_ADDR workspace, GM_ADDR tiling)
 {
     if (workspace == nullptr) {
         return;

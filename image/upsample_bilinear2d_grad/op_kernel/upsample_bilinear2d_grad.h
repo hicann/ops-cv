@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -33,21 +33,27 @@ class UpSampleBilinear2dGradND {
 public:
     TPipe pipe;
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmulH;
     __aicore__ inline UpSampleBilinear2dGradND(){};
     __aicore__ inline void calculateIntermediateTensorX(LocalTensor<float> centerTensor,
-        LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor, int64_t slideStart_w, int64_t slideEnd_w);
+                                                        LocalTensor<float> xIndexTensor,
+                                                        LocalTensor<float> xLambdaTensor, int64_t slideStart_w,
+                                                        int64_t slideEnd_w);
     __aicore__ inline void calculateIntermediateTensorY(LocalTensor<float> centerTensor,
-        LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor, int64_t slideStart_h, int64_t slideEnd_h);
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBilinear2dGradTilingData *tilingData);
+                                                        LocalTensor<float> xIndexTensor,
+                                                        LocalTensor<float> xLambdaTensor, int64_t slideStart_h,
+                                                        int64_t slideEnd_h);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                UpsampleBilinear2dGradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -86,20 +92,20 @@ private:
         }
     }
     __aicore__ inline void setRadioValueW(LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor,
-        LocalTensor<float> centerTensor, int64_t index, int64_t length);
+                                          LocalTensor<float> centerTensor, int64_t index, int64_t length);
 
     __aicore__ inline void setRadioValueH(LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor,
-        LocalTensor<float> centerTensor, int64_t index, int64_t length);
+                                          LocalTensor<float> centerTensor, int64_t index, int64_t length);
     __aicore__ inline void setZeroRadioValue(LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor,
-        LocalTensor<float> centerTensor, int64_t index, int64_t length);
+                                             LocalTensor<float> centerTensor, int64_t index, int64_t length);
     __aicore__ inline void getQueueSize();
     __aicore__ inline void WDirectionExpansion();
     __aicore__ inline void HDirectionExpansion();
-    __aicore__ inline void ParseTilingData(UpsampleBilinear2dGradTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(UpsampleBilinear2dGradTilingData* tilingData);
     __aicore__ inline void calculateRadioTensor(LocalTensor<float> centerTensor, LocalTensor<float> xIndexTensor,
-        LocalTensor<float> xLambdaTensor, int64_t index, int64_t length);
+                                                LocalTensor<float> xLambdaTensor, int64_t index, int64_t length);
     __aicore__ inline void calculateRadioTensorH(LocalTensor<float> centerTensor, LocalTensor<float> xIndexTensor,
-        LocalTensor<float> xLambdaTensor, int64_t index, int64_t length);
+                                                 LocalTensor<float> xLambdaTensor, int64_t index, int64_t length);
     __aicore__ inline void calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
     __aicore__ inline void copyRadioTensorToGm(int64_t length);
     __aicore__ inline void calculateHeightExtension(int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd);
@@ -112,8 +118,8 @@ private:
     TQue<QuePosition::VECOUT, NO_BUFFER_NUM> radioQueue;
     TQue<QuePosition::VECOUT, NO_BUFFER_NUM> radioCastQueue;
 
-    const TCubeTiling *__restrict matmulTiling_w;
-    const TCubeTiling *__restrict matmulTiling_h;
+    const TCubeTiling* __restrict matmulTiling_w;
+    const TCubeTiling* __restrict matmulTiling_h;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -178,8 +184,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpSampleBilinear2dGradND<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleBilinear2dGradTilingData *tilingData)
+__aicore__ inline void UpSampleBilinear2dGradND<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                         UpsampleBilinear2dGradTilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -203,9 +209,9 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::Init(
     pipe.InitBuffer(radioQueue, NO_BUFFER_NUM, (radioSize * sizeof(float) + 31) / 32 * 32);
     pipe.InitBuffer(radioCastQueue, NO_BUFFER_NUM, (radioSize * sizeof(T) + 31) / 32 * 32);
 
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)inTensorsPtr);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)outTensorsPtr);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)inTensorsPtr);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)outTensorsPtr);
 };
 
 template <typename T>
@@ -246,10 +252,10 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::getQueueSize()
     zeroScaleW = input_shapes[3] > 0 ? static_cast<float>(output_shapes[3]) / input_shapes[3] : 1;
     zeroScaleH = input_shapes[2] > 0 ? static_cast<float>(output_shapes[2]) / input_shapes[2] : 1;
 
-    int64_t inSlide_w = scale_w > 0 ? static_cast<int64_t>((slide_size + 4) / scale_w) + 2 * RESERVED_VALUE
-                                    : static_cast<int64_t>((xSlideSize + 4) / zeroScaleW) + 2 * RESERVED_VALUE;
-    int64_t inSlide_h = scale_h > 0 ? static_cast<int64_t>((slide_size + 4) / scale_h) + 2 * RESERVED_VALUE
-                                    : static_cast<int64_t>((ySlideSize + 4) / zeroScaleH) + 2 * RESERVED_VALUE;
+    int64_t inSlide_w = scale_w > 0 ? static_cast<int64_t>((slide_size + 4) / scale_w) + 2 * RESERVED_VALUE :
+                                      static_cast<int64_t>((xSlideSize + 4) / zeroScaleW) + 2 * RESERVED_VALUE;
+    int64_t inSlide_h = scale_h > 0 ? static_cast<int64_t>((slide_size + 4) / scale_h) + 2 * RESERVED_VALUE :
+                                      static_cast<int64_t>((ySlideSize + 4) / zeroScaleH) + 2 * RESERVED_VALUE;
 
     if (inSlide_w > inSlide_h) {
         queueSize = inSlide_w;
@@ -331,10 +337,13 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::HDirectionExpansion()
 
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateIntermediateTensorX(LocalTensor<float> centerTensor,
-    LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor, int64_t slideStart_w, int64_t slideEnd_w)
+                                                                                 LocalTensor<float> xIndexTensor,
+                                                                                 LocalTensor<float> xLambdaTensor,
+                                                                                 int64_t slideStart_w,
+                                                                                 int64_t slideEnd_w)
 {
-    instart_w = scale_w > 0 ? static_cast<int64_t>((float)(slideStart_w - 2) / scale_w) - 1
-                            : static_cast<int64_t>((float)(slideStart_w - 2) / zeroScaleW) - 1;
+    instart_w = scale_w > 0 ? static_cast<int64_t>((float)(slideStart_w - 2) / scale_w) - 1 :
+                              static_cast<int64_t>((float)(slideStart_w - 2) / zeroScaleW) - 1;
 
     if (instart_w < 0) {
         instart_w = 0;
@@ -349,8 +358,8 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateIntermediateTensorX
         PipeBarrier<PIPE_V>();
     } else {
         for (int64_t i = 0; i < length; i++) {
-            float centerValue = static_cast<float>(
-                (centerTensor.GetValue(i) + static_cast<float>(0.5)) * scale_w - static_cast<float>(0.5));
+            float centerValue = static_cast<float>((centerTensor.GetValue(i) + static_cast<float>(0.5)) * scale_w -
+                                                   static_cast<float>(0.5));
             centerTensor.SetValue(i, centerValue);
         }
         PipeBarrier<PIPE_V>();
@@ -372,10 +381,13 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateIntermediateTensorX
 
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateIntermediateTensorY(LocalTensor<float> centerTensor_h,
-    LocalTensor<float> xIndexTensor_h, LocalTensor<float> xLambdaTensor_h, int64_t slideStart_h, int64_t slideEnd_h)
+                                                                                 LocalTensor<float> xIndexTensor_h,
+                                                                                 LocalTensor<float> xLambdaTensor_h,
+                                                                                 int64_t slideStart_h,
+                                                                                 int64_t slideEnd_h)
 {
-    instart_h = scale_h > 0 ? static_cast<int64_t>((float)(slideStart_h - 2) / scale_h) - 1
-                            : static_cast<int64_t>((float)(slideStart_h - 2) / zeroScaleH) - 1;
+    instart_h = scale_h > 0 ? static_cast<int64_t>((float)(slideStart_h - 2) / scale_h) - 1 :
+                              static_cast<int64_t>((float)(slideStart_h - 2) / zeroScaleH) - 1;
 
     if (instart_h < 0) {
         instart_h = 0;
@@ -390,8 +402,8 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateIntermediateTensorY
         PipeBarrier<PIPE_V>();
     } else {
         for (int64_t i = 0; i < length; i++) {
-            float centerValue = static_cast<float>(
-                (centerTensor_h.GetValue(i) + static_cast<float>(0.5)) * scale_h - static_cast<float>(0.5));
+            float centerValue = static_cast<float>((centerTensor_h.GetValue(i) + static_cast<float>(0.5)) * scale_h -
+                                                   static_cast<float>(0.5));
             centerTensor_h.SetValue(i, centerValue);
         }
         PipeBarrier<PIPE_V>();
@@ -414,7 +426,9 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateIntermediateTensorY
 
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::setRadioValueW(LocalTensor<float> xIndexTensor,
-    LocalTensor<float> xLambdaTensor, LocalTensor<float> centerTensor, int64_t index, int64_t length)
+                                                                   LocalTensor<float> xLambdaTensor,
+                                                                   LocalTensor<float> centerTensor, int64_t index,
+                                                                   int64_t length)
 {
     workSpaceLineOffset = workSpaceRadioOffset;
     for (int64_t i = instartIndex; i < inendIndex; i++) {
@@ -463,7 +477,9 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::setRadioValueW(LocalTensor<f
 }
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateRadioTensor(LocalTensor<float> centerTensor,
-    LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor, int64_t index, int64_t length)
+                                                                         LocalTensor<float> xIndexTensor,
+                                                                         LocalTensor<float> xLambdaTensor,
+                                                                         int64_t index, int64_t length)
 {
     for (int64_t i = 0; i < xIndexTensor.GetSize(); i++) {
         float downValue = xIndexTensor.GetValue(i);
@@ -497,7 +513,9 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateRadioTensor(LocalTe
 
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::setRadioValueH(LocalTensor<float> xIndexTensor,
-    LocalTensor<float> xLambdaTensor, LocalTensor<float> centerTensor, int64_t index, int64_t length)
+                                                                   LocalTensor<float> xLambdaTensor,
+                                                                   LocalTensor<float> centerTensor, int64_t index,
+                                                                   int64_t length)
 {
     workSpaceLineOffset = workSpaceRadioOffset;
     for (int64_t j = index; j < index + length; j++) {
@@ -535,7 +553,9 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::setRadioValueH(LocalTensor<f
 
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::setZeroRadioValue(LocalTensor<float> xIndexTensor,
-    LocalTensor<float> xLambdaTensor, LocalTensor<float> centerTensor, int64_t index, int64_t length)
+                                                                      LocalTensor<float> xLambdaTensor,
+                                                                      LocalTensor<float> centerTensor, int64_t index,
+                                                                      int64_t length)
 {
     workSpaceLineOffset = workSpaceRadioOffset;
 
@@ -561,7 +581,9 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::setZeroRadioValue(LocalTenso
 
 template <typename T>
 __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateRadioTensorH(LocalTensor<float> centerTensor,
-    LocalTensor<float> xIndexTensor, LocalTensor<float> xLambdaTensor, int64_t index, int64_t length)
+                                                                          LocalTensor<float> xIndexTensor,
+                                                                          LocalTensor<float> xLambdaTensor,
+                                                                          int64_t index, int64_t length)
 {
     // 计算影响该块的原始矩阵点的下标
     for (int64_t i = 0; i < xIndexTensor.GetSize(); i++) {
@@ -616,8 +638,8 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::copyRadioTensorToGm(int64_t 
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBilinear2dGradND<T>::calculateWidthExtension(
-    int64_t tensorCIndex, int64_t rowStart, int64_t rowEnd)
+__aicore__ inline void UpSampleBilinear2dGradND<T>::calculateWidthExtension(int64_t tensorCIndex, int64_t rowStart,
+                                                                            int64_t rowEnd)
 {
     int64_t singleCoreM = matmulTiling_w->singleCoreM;
     int64_t singleCoreN = matmulTiling_w->singleCoreN;
@@ -661,8 +683,8 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateWidthExtension(
     matmulW.End();
 }
 template <typename T>
-__aicore__ inline void UpSampleBilinear2dGradND<T>::calculateHeightExtension(
-    int64_t tensorCIndex, int64_t batchStart, int64_t batchEnd)
+__aicore__ inline void UpSampleBilinear2dGradND<T>::calculateHeightExtension(int64_t tensorCIndex, int64_t batchStart,
+                                                                             int64_t batchEnd)
 {
     int64_t singleCoreM = matmulTiling_h->singleCoreM;
     int64_t singleCoreN = matmulTiling_h->singleCoreN;
@@ -709,7 +731,7 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::calculateHeightExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpSampleBilinear2dGradND<T>::ParseTilingData(UpsampleBilinear2dGradTilingData *tilingData)
+__aicore__ inline void UpSampleBilinear2dGradND<T>::ParseTilingData(UpsampleBilinear2dGradTilingData* tilingData)
 {
     slide_size = tilingData->slide_size;
     scale_w = tilingData->scale_w;
@@ -745,11 +767,11 @@ __aicore__ inline void UpSampleBilinear2dGradND<T>::ParseTilingData(UpsampleBili
     tailRowEnd_h = tilingData->tailRowEndList_h[blockIdx];
     tailBatchStart_h = tilingData->tailBatchStartList_h[blockIdx];
     tailBatchEnd_h = tilingData->tailBatchEndList_h[blockIdx];
-    
+
     matmulTiling_w = &tilingData->matmulTiling_w;
     matmulTiling_h = &tilingData->matmulTiling_h;
     dataType = tilingData->dataType;
 }
 
-}  // namespace UpSampleBilinear2dGrad
+} // namespace UpSampleBilinear2dGrad
 #endif

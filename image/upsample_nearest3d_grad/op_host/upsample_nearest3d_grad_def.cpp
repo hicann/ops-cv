@@ -18,8 +18,7 @@
 namespace ops {
 static const std::vector<ge::DataType> xDtype = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
 static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
-class UpsampleNearest3dGrad : public OpDef
-{
+class UpsampleNearest3dGrad : public OpDef {
 public:
     explicit UpsampleNearest3dGrad(const char* name) : OpDef(name)
     {
@@ -48,11 +47,7 @@ public:
             .DataType(xDtype)
             .Format(xFormat)
             .UnknownShapeFormat(xFormat);
-        regbaseConfig.Output("y")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("y").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
         regbaseConfig.DynamicCompileStaticFlag(true)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)

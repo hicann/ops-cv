@@ -22,40 +22,35 @@
 using namespace ge;
 using namespace std;
 
-class TilingForRoiAlignRotated : public testing::Test
-{
+class TilingForRoiAlignRotated : public testing::Test {
 protected:
-  static void SetUpTestCase()
-  {
-    std::cout << "TilingForRoiAlignRotated SetUp" << std::endl;
-  }
+    static void SetUpTestCase() { std::cout << "TilingForRoiAlignRotated SetUp" << std::endl; }
 
-  static void TearDownTestCase()
-  {
-    std::cout << "TilingForRoiAlignRotated TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "TilingForRoiAlignRotated TearDown" << std::endl; }
 };
 
 TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_0)
 {
     optiling::RoiAlignRotatedCompileInfo compileInfo = {48, 196608};
-    gert::TilingContextPara tilingContextPara("RoiAlignRotated",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
-                                                {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{8, 2, 2, 8}, {8, 2, 2, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
-                                                    gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
-                                                    gert::TilingContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                    gert::TilingContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(1)),
-                                                    gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                    gert::TilingContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "RoiAlignRotated",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{8, 2, 2, 8}, {8, 2, 2, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+            gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+            gert::TilingContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+            gert::TilingContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(1)),
+            gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        },
+        &compileInfo);
     uint64_t expectTilingKey = 1;
-    string expectTilingData = "4294967296 8 270582939649 34359738400 34359738376 34359738376 34359738376 4539628424389459968 8589934593 2 262144 ";
+    string expectTilingData = "4294967296 8 270582939649 34359738400 34359738376 34359738376 34359738376 "
+                              "4539628424389459968 8589934593 2 262144 ";
     std::vector<size_t> expectWorkspaces = {0};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
-
 
 // TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_0)
 // {

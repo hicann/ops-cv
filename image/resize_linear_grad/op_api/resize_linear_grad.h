@@ -19,8 +19,7 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor* ResizeLinearGrad(
-    const aclTensor* grads, const aclTensor* originalImage, const bool alignCorners, const float scale,
-    const aclTensor* out, aclOpExecutor* executor);
+const aclTensor* ResizeLinearGrad(const aclTensor* grads, const aclTensor* originalImage, const bool alignCorners,
+                                  const float scale, const aclTensor* out, aclOpExecutor* executor);
 }
 #endif // PTA_NPU_OP_API_INC_LEVEL0_OP_RESIZE_LINEAR_GRAD_OP_H_

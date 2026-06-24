@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #include "resize_linear_grad.h"
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
@@ -24,24 +24,22 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(ResizeLinearGrad);
 
-static const aclTensor* ResizeLinearGradAICORE(
-    const aclTensor* gradOut, const aclTensor* image, bool alignCorners, const float scale, aclTensor* y,
-    aclOpExecutor* executor)
+static const aclTensor* ResizeLinearGradAICORE(const aclTensor* gradOut, const aclTensor* image, bool alignCorners,
+                                               const float scale, aclTensor* y, aclOpExecutor* executor)
 {
     L0_DFX(ResizeLinearGradAICORE, gradOut, image, alignCorners, scale, y);
 
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        ResizeLinearGrad, OP_INPUT(gradOut, image), OP_OUTPUT(y), OP_ATTR(alignCorners, scale));
-    OP_CHECK(
-        ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeLinearGradAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."), return nullptr);
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeLinearGrad, OP_INPUT(gradOut, image), OP_OUTPUT(y),
+                                           OP_ATTR(alignCorners, scale));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeLinearGradAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
 
     return y;
 }
 
-const aclTensor* ResizeLinearGrad(
-    const aclTensor* grads, const aclTensor* originalImage, const bool alignCorners, const float scale,
-    const aclTensor* out, aclOpExecutor* executor)
+const aclTensor* ResizeLinearGrad(const aclTensor* grads, const aclTensor* originalImage, const bool alignCorners,
+                                  const float scale, const aclTensor* out, aclOpExecutor* executor)
 {
     auto y = executor->AllocTensor(out->GetViewShape(), out->GetDataType(), out->GetViewFormat());
     if (y == nullptr) {

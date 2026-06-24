@@ -18,9 +18,10 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor* UpsampleTrilinear3dNcdhw(
-    const aclTensor* self, const aclIntArray* outputSize, bool alignCorners, const aclFloatArray* scales,
-    const aclFloatArray* castScales, float checkScaleW, float checkScaleH, float checkScaleD, aclOpExecutor* executor);
+const aclTensor* UpsampleTrilinear3dNcdhw(const aclTensor* self, const aclIntArray* outputSize, bool alignCorners,
+                                          const aclFloatArray* scales, const aclFloatArray* castScales,
+                                          float checkScaleW, float checkScaleH, float checkScaleD,
+                                          aclOpExecutor* executor);
 }
 
 #endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_TRILINEAR_3D_H_

@@ -25,8 +25,8 @@ namespace l0op {
 
 OP_TYPE_REGISTER(ResizeLinear);
 
-static const aclTensor *ResizeLinearAICORE(const aclTensor *x, const aclTensor *size, const bool alignCorners,
-    const float scale, aclTensor *y, aclOpExecutor *executor)
+static const aclTensor* ResizeLinearAICORE(const aclTensor* x, const aclTensor* size, const bool alignCorners,
+                                           const float scale, aclTensor* y, aclOpExecutor* executor)
 {
     L0_DFX(ResizeLinearAICORE, x, size, alignCorners, scale, y);
 
@@ -35,8 +35,8 @@ static const aclTensor *ResizeLinearAICORE(const aclTensor *x, const aclTensor *
     return y;
 }
 
-const aclTensor *ResizeLinear(const aclTensor *self, const aclIntArray *outputSize, const bool alignCorners,
-    const float scale, const aclTensor *out, aclOpExecutor *executor)
+const aclTensor* ResizeLinear(const aclTensor* self, const aclIntArray* outputSize, const bool alignCorners,
+                              const float scale, const aclTensor* out, aclOpExecutor* executor)
 {
     auto size = executor->ConvertToTensor(outputSize, op::ToOpDataType(ACL_INT32));
     if (size == nullptr) {
@@ -53,4 +53,4 @@ const aclTensor *ResizeLinear(const aclTensor *self, const aclIntArray *outputSi
     return ResizeLinearAICORE(self, size, alignCorners, scale, y, executor);
 }
 
-}  // namespace l0op
+} // namespace l0op

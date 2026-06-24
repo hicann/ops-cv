@@ -33,17 +33,18 @@ namespace ge {
      must be the same as grads.
 
 *@par Outputs:
-*y: A 4D Tensor, represents the gradient of original_image. Format and dtype and shape must be the same as original_image.
+*y: A 4D Tensor, represents the gradient of original_image. Format and dtype and shape must be the same as
+original_image.
 
 *@par Attributes:
 *@li align_corners: An optional bool. If true, the centers of the 4 corner pixels of the input and output tensors are
      aligned, preserving the values at the corner pixels. Defaults to false.
-*@li half_pixel_centers: An optional bool. If true, the center of pixels locate in [0.5, 0.5]. Defaults to false. 
+*@li half_pixel_centers: An optional bool. If true, the center of pixels locate in [0.5, 0.5]. Defaults to false.
 *@li scales: An optional listfloat which has two elements. The first element represents the ratio of the H axis
      subscripts of pixels in grads to the H axis subscripts of pixels in y, only takes effect when align_corners is
      true and the value is greater than 0. The second element represents the ratio of the W axis subscripts of pixels in
      grads to the W axis subscripts of pixels in y, only takes effect when align_corners is true and the value is
-     greater than 0.0f. Defaults to {0.0f, 0.0f}. 
+     greater than 0.0f. Defaults to {0.0f, 0.0f}.
 
 *@par Third-party framework compatibility
 *Compatible with tensorflow and pytorch ResizeBilinearV2Grad operator.
@@ -59,4 +60,3 @@ REG_OP(ResizeBilinearV2Grad)
 } // namespace ge
 
 #endif // OPS_OP_PROTO_INC_RESIZE_BILINEAR_V2_GRAD_H_
-

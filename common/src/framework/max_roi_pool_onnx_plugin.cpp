@@ -47,21 +47,15 @@ static Status ParseParamsMaxRoiPool(const Message* op_src, ge::Operator& op_dest
     return SUCCESS;
 }
 
-//register MaxRoiPool op info to GE
+// register MaxRoiPool op info to GE
 REGISTER_CUSTOM_OP("ROIPooling")
     .FrameworkType(ONNX)
-    .OriginOpType({ge::AscendString("ai.onnx::1::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::8::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::9::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::10::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::11::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::12::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::13::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::14::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::15::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::16::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::17::MaxRoiPool"),
-                   ge::AscendString("ai.onnx::18::MaxRoiPool")})
+    .OriginOpType({ge::AscendString("ai.onnx::1::MaxRoiPool"), ge::AscendString("ai.onnx::8::MaxRoiPool"),
+                   ge::AscendString("ai.onnx::9::MaxRoiPool"), ge::AscendString("ai.onnx::10::MaxRoiPool"),
+                   ge::AscendString("ai.onnx::11::MaxRoiPool"), ge::AscendString("ai.onnx::12::MaxRoiPool"),
+                   ge::AscendString("ai.onnx::13::MaxRoiPool"), ge::AscendString("ai.onnx::14::MaxRoiPool"),
+                   ge::AscendString("ai.onnx::15::MaxRoiPool"), ge::AscendString("ai.onnx::16::MaxRoiPool"),
+                   ge::AscendString("ai.onnx::17::MaxRoiPool"), ge::AscendString("ai.onnx::18::MaxRoiPool")})
     .ParseParamsFn(ParseParamsMaxRoiPool)
     .ImplyType(ImplyType::TVM);
-}  // namespace domi
+} // namespace domi

@@ -96,7 +96,8 @@ ge::graphStatus ResizeLinearTiling::CheckShapeAndAxes()
     int32_t yshapeDims = yShape.GetDimNum();
     if (imagesDims != DIM_3 || yshapeDims != DIM_3) {
         std::string dimMsg = std::to_string(imagesDims) + " and " + std::to_string(yshapeDims);
-        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(), "The shapes of x and y must be 3D");
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context_->GetNodeName(), "x and y", dimMsg.c_str(),
+                                                  "The shapes of x and y must be 3D");
         return ge::GRAPH_FAILED;
     }
 
@@ -110,7 +111,8 @@ ge::graphStatus ResizeLinearTiling::CheckShapeAndAxes()
     int64_t oC = yShape.GetDim(DIM_1);
     if (n != oN || c != oC) {
         std::string shapeMsg = Ops::Base::ToString(imagesShape) + " and " + Ops::Base::ToString(yShape);
-        std::string reasonMsg = "The N-dimension and C-dimension of x and y must be the same, where N is the 0th axis and C is the 1st axis";
+        std::string reasonMsg = "The N-dimension and C-dimension of x and y must be the same, where N is the 0th axis "
+                                "and C is the 1st axis";
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
@@ -139,16 +141,17 @@ ge::graphStatus ResizeLinearTiling::CheckSizeInput()
     gert::Shape sizeShape = Ops::Cv::OpTiling::EnsureNotScalar(size->GetStorageShape());
     int32_t sizeDims = sizeShape.GetDimNum();
     OP_CHECK_IF(sizeDims != DIM_1,
-        OP_LOGE_FOR_INVALID_SHAPEDIM(context_->GetNodeName(), "size", std::to_string(sizeDims).c_str(), "1D"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_SHAPEDIM(context_->GetNodeName(), "size", std::to_string(sizeDims).c_str(), "1D"),
+                return ge::GRAPH_FAILED);
     int64_t sizeL = 0;
-    OP_CHECK_IF(
-        !Ops::Base::GetConstInt(context_, DIM_1, sizeL), OP_LOGE(context_->GetNodeName(), "get size failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!Ops::Base::GetConstInt(context_, DIM_1, sizeL), OP_LOGE(context_->GetNodeName(), "get size failed"),
+                return ge::GRAPH_FAILED);
     OP_LOGI(context_->GetNodeName(), "sizeL is %ld", sizeL);
     if (sizeL != lenDesL_) {
-        std::string reasonMsg = "The linear-dimension of output y must be equal to the value (" + std::to_string(sizeL) + ") of input parameter size";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "y", Ops::Base::ToString(yShape).c_str(), reasonMsg.c_str());
+        std::string reasonMsg = "The linear-dimension of output y must be equal to the value (" +
+                                std::to_string(sizeL) + ") of input parameter size";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "y", Ops::Base::ToString(yShape).c_str(),
+                                              reasonMsg.c_str());
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -156,13 +159,11 @@ ge::graphStatus ResizeLinearTiling::CheckSizeInput()
 
 ge::graphStatus ResizeLinearTiling::CheckParams()
 {
-    OP_CHECK_IF(
-        (CheckShapeAndAxes() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckShapeAndAxes failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckShapeAndAxes() != ge::GRAPH_SUCCESS),
+                OP_LOGE(context_->GetNodeName(), "CheckShapeAndAxes failed."), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        (CheckSizeInput() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckSizeInput failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((CheckSizeInput() != ge::GRAPH_SUCCESS), OP_LOGE(context_->GetNodeName(), "CheckSizeInput failed."),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -180,9 +181,8 @@ float ResizeLinearTiling::ComputeScale(float scale, int64_t lenSrc, int64_t lenD
 
 ge::graphStatus ResizeLinearTiling::LinearCompute()
 {
-    OP_CHECK_IF(
-        CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "input params is error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "input params is error"),
+                return ge::GRAPH_FAILED);
     // Get attrs: alignCorners
     auto attrs = context_->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context_, attrs);
@@ -228,11 +228,10 @@ void ResizeLinearTiling::LinearGetPlatformData(const ResizeLinearCompileInfo* co
 
 void ResizeLinearTiling::PrintTilingData()
 {
-    OP_LOGI(
-        context_->GetNodeName(),
-        "ResizeLinear tilingData realCoreNum is %ld, blkProcessNum is %ld,"
-        "splitBlockTailFactor is %ld, lenSrcL is %ld, lenDesL is %ld, scaleL is %f",
-        realCoreNum_, blkProcessNum_, splitBlockTailFactor_, lenSrcL_, lenDesL_, scaleL_);
+    OP_LOGI(context_->GetNodeName(),
+            "ResizeLinear tilingData realCoreNum is %ld, blkProcessNum is %ld,"
+            "splitBlockTailFactor is %ld, lenSrcL is %ld, lenDesL is %ld, scaleL is %f",
+            realCoreNum_, blkProcessNum_, splitBlockTailFactor_, lenSrcL_, lenDesL_, scaleL_);
     return;
 }
 
@@ -286,15 +285,14 @@ static ge::graphStatus TilingPrepare4ResizeLinear(gert::TilingParseContext* cont
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        (compileInfo->totalCoreNum <= 0), OP_LOGE(context->GetNodeName(), "coreNum is error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->totalCoreNum <= 0), OP_LOGE(context->GetNodeName(), "coreNum is error"),
+                return ge::GRAPH_FAILED);
 
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
-    OP_CHECK_IF(
-        (compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than zero"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than zero"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

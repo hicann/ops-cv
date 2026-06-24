@@ -18,8 +18,8 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor *UpsampleNearestExact2d(const aclTensor *self, const aclIntArray *outputSize, float scalesH,
-    float scalesW, bool exactMode, aclOpExecutor *executor);
+const aclTensor* UpsampleNearestExact2d(const aclTensor* self, const aclIntArray* outputSize, float scalesH,
+                                        float scalesW, bool exactMode, aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_EXACT2D_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_NEAREST_EXACT2D_H_

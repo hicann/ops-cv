@@ -17,22 +17,21 @@
 
 class ResizeBicubicV2InfershapeTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeBicubicV2InfershapeTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeBicubicV2InfershapeTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeBicubicV2InfershapeTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeBicubicV2InfershapeTest TearDown" << std::endl; }
 };
 
 TEST_F(ResizeBicubicV2InfershapeTest, resize_bicubic_v2_infershape_test_01)
 {
     gert::StorageShape inputXShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
     gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
-    gert::StorageShape outputShape = {{-2,}, {-2,}};
+    gert::StorageShape outputShape = {{
+                                          -2,
+                                      },
+                                      {
+                                          -2,
+                                      }};
     int size_value[2] = {32, 32};
 
     gert::InfershapeContextPara infershapeContextPara(
@@ -40,7 +39,8 @@ TEST_F(ResizeBicubicV2InfershapeTest, resize_bicubic_v2_infershape_test_01)
         {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
         {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 3, 32, 32},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 3, 32, 32},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
-

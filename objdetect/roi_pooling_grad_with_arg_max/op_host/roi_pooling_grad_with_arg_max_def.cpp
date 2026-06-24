@@ -17,7 +17,7 @@
 namespace ops {
 class RoiPoolingGradWithArgMax : public OpDef {
 public:
-    explicit RoiPoolingGradWithArgMax(const char *name) : OpDef(name)
+    explicit RoiPoolingGradWithArgMax(const char* name) : OpDef(name)
     {
         this->Input("grad")
             .ParamType(REQUIRED)
@@ -54,21 +54,11 @@ public:
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
             .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
-        this->Attr("pooled_h")
-            .AttrType(REQUIRED)
-            .Int();
-        this->Attr("pooled_w")
-            .AttrType(REQUIRED)
-            .Int();
-        this->Attr("spatial_scale_h")
-            .AttrType(REQUIRED)
-            .Float();
-        this->Attr("spatial_scale_w")
-            .AttrType(REQUIRED)
-            .Float();
-        this->Attr("pool_channel")
-            .AttrType(REQUIRED)
-            .Int();
+        this->Attr("pooled_h").AttrType(REQUIRED).Int();
+        this->Attr("pooled_w").AttrType(REQUIRED).Int();
+        this->Attr("spatial_scale_h").AttrType(REQUIRED).Float();
+        this->Attr("spatial_scale_w").AttrType(REQUIRED).Float();
+        this->Attr("pool_channel").AttrType(REQUIRED).Int();
 
         OpAICoreConfig aicoreConfig;
         aicoreConfig.DynamicCompileStaticFlag(true)

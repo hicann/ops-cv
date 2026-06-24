@@ -47,10 +47,9 @@ constexpr uint64_t DATE_TYPE_HALF = 3;
 
 constexpr int32_t RESERVED_VALUE = 4;
 
-class UpsampleNearestExact2dGradTiling
-{
+class UpsampleNearestExact2dGradTiling {
 public:
-    explicit UpsampleNearestExact2dGradTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleNearestExact2dGradTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init();
     ge::graphStatus RunBigKernelTiling();
 
@@ -106,7 +105,7 @@ private:
     int64_t tailSlideEndList_h[MAX_CORE_CONT] = {0};
     int64_t tailRowStartList_h[MAX_CORE_CONT] = {0};
     int64_t tailRowEndList_h[MAX_CORE_CONT] = {0};
-    
+
     int64_t input_shapes[4] = {0};
     int64_t output_shapes[4] = {0};
 
@@ -128,7 +127,7 @@ void UpsampleNearestExact2dGradTiling::setScale()
 
         tilingData.set_scale_h(realScale_h);
         tilingData.set_scale_w(realScale_w);
-        
+
         float invscale_w = (realScale_w >= 1.0) ? 1.0 / realScale_w : 1.0;
         float invscale_h = (realScale_h >= 1.0) ? 1.0 / realScale_h : 1.0;
 
@@ -136,7 +135,6 @@ void UpsampleNearestExact2dGradTiling::setScale()
         tilingData.set_invscale_h(invscale_h);
     }
 }
-
 
 ge::graphStatus UpsampleNearestExact2dGradTiling::getAttrs()
 {
@@ -173,9 +171,8 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
         return ge::GRAPH_FAILED;
     }
 
-    OP_CHECK_IF(
-        (getAttrs() != ge::GRAPH_SUCCESS), OP_LOGE(tilingContext->GetNodeName(), "getAttrs failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((getAttrs() != ge::GRAPH_SUCCESS), OP_LOGE(tilingContext->GetNodeName(), "getAttrs failed."),
+                return ge::GRAPH_FAILED);
 
     auto temp = tilingContext->GetInputDesc(0);
     if (temp == nullptr) {
@@ -212,7 +209,7 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-bool UpsampleNearestExact2dGradTiling::CheckTranspose() 
+bool UpsampleNearestExact2dGradTiling::CheckTranspose()
 {
     auto inputFormat = static_cast<ge::Format>(GetPrimaryFormat(tilingContext->GetInputDesc(0)->GetStorageFormat()));
     std::string opType(tilingContext->GetNodeType());
@@ -283,17 +280,17 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNumH(uint32_t coreNumPlatf
             if (groupIndex < remainder) {
                 // 算出第几个分组
                 tailSlideStartList_h[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
-                tailSlideEndList_h[coreIndex] = std::min(
-                    tailSlideStartList_h[coreIndex] + slide_size, static_cast<int64_t>(output_shapes[H_INDEX]));
+                tailSlideEndList_h[coreIndex] = std::min(tailSlideStartList_h[coreIndex] + slide_size,
+                                                         static_cast<int64_t>(output_shapes[H_INDEX]));
 
                 int64_t coreIndexInGroup = 0;
                 coreIndexInGroup = (groupCoreNum == 0) ? 0 : coreIndex % groupCoreNum;
                 tailRowStartList_h[coreIndex] = coreIndexInGroup * tailAvergingRows;
-                tailRowEndList_h[coreIndex] = std::min(
-                    tailRowStartList_h[coreIndex] + tailAvergingRows, static_cast<int64_t>(output_shapes[W_INDEX]));
+                tailRowEndList_h[coreIndex] = std::min(tailRowStartList_h[coreIndex] + tailAvergingRows,
+                                                       static_cast<int64_t>(output_shapes[W_INDEX]));
                 tailBatchStartListH[coreIndex] = coreIndexInGroup * tailAvergingBatch;
-                tailBatchEndListH[coreIndex] =
-                    std::min(tailBatchStartListH[coreIndex] + tailAvergingBatch, static_cast<int64_t>(inputBatch));
+                tailBatchEndListH[coreIndex] = std::min(tailBatchStartListH[coreIndex] + tailAvergingBatch,
+                                                        static_cast<int64_t>(inputBatch));
                 needCoreNum_h++;
             }
         }
@@ -325,12 +322,10 @@ void UpsampleNearestExact2dGradTiling::getTCubeTiling_w()
     mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_w.SetOrgShape(
-        input_shape.GetDim(N_INDEX) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX), output_shapes[W_INDEX],
-        input_shape.GetDim(W_INDEX));
-    mmTiling_w.SetShape(
-        input_shape.GetDim(N_INDEX) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX), slide_size,
-        singleCoreK_w);
+    mmTiling_w.SetOrgShape(input_shape.GetDim(N_INDEX) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX),
+                           output_shapes[W_INDEX], input_shape.GetDim(W_INDEX));
+    mmTiling_w.SetShape(input_shape.GetDim(N_INDEX) * input_shape.GetDim(C_INDEX) * input_shape.GetDim(H_INDEX),
+                        slide_size, singleCoreK_w);
 
     if (mmTiling_w.GetTiling(tilingData.matmulTiling_w) == -1) {
         return;
@@ -342,8 +337,8 @@ void UpsampleNearestExact2dGradTiling::getWorkSpace(uint32_t needCoreNum)
 {
     size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     // 中间tensor
-    uint64_t intermediate_matrix_size =
-        output_shapes[0] * output_shapes[1] * input_shape.GetDim(2) * output_shapes[3] * dataTypeSize;
+    uint64_t intermediate_matrix_size = output_shapes[0] * output_shapes[1] * input_shape.GetDim(2) * output_shapes[3] *
+                                        dataTypeSize;
 
     uint64_t radioMatrixWorkspaceSize = slide_size * singleCoreK_w;
     uint64_t radioMatrixWorkspaceSize_h = slide_size * singleCoreK_h;
@@ -431,10 +426,7 @@ uint8_t UpsampleNearestExact2dGradTiling::GetDataTypeVal()
     }
 }
 
-uint8_t UpsampleNearestExact2dGradTiling::GetTilingKeyVal()
-{
-    return 1;
-}
+uint8_t UpsampleNearestExact2dGradTiling::GetTilingKeyVal() { return 1; }
 uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNum(uint32_t coreNumPlatform)
 {
     uint32_t needCoreNumW = 0;
@@ -497,15 +489,15 @@ uint32_t UpsampleNearestExact2dGradTiling::GetNeedCoreNumW(uint32_t coreNumPlatf
         if (groupIndex < remainder) {
             // 算出第几个分组
             tailSlideStartList_w[coreIndex] = (tailStartSlideNum + groupIndex) * slide_size;
-            tailSlideEndList_w[coreIndex] =
-                std::min(tailSlideStartList_w[coreIndex] + slide_size, static_cast<int64_t>(outputSize));
+            tailSlideEndList_w[coreIndex] = std::min(tailSlideStartList_w[coreIndex] + slide_size,
+                                                     static_cast<int64_t>(outputSize));
             int64_t coreIndexInGroupNum = 0;
             if (groupCoreNum != 0) {
                 coreIndexInGroupNum = coreIndex % groupCoreNum;
             }
             tailRowStartList_w[coreIndex] = coreIndexInGroupNum * tailAvergingRows;
-            tailRowEndList_w[coreIndex] =
-                std::min(tailRowStartList_w[coreIndex] + tailAvergingRows, static_cast<int64_t>(input_h));
+            tailRowEndList_w[coreIndex] = std::min(tailRowStartList_w[coreIndex] + tailAvergingRows,
+                                                   static_cast<int64_t>(input_h));
 
             needCoreCount++;
         }
@@ -536,8 +528,8 @@ void UpsampleNearestExact2dGradTiling::FillTilingData()
 
     tilingData.set_dataType(GetDataTypeVal());
 
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
@@ -556,12 +548,10 @@ static ge::graphStatus tilingPrepareTiling(gert::TilingParseContext* context)
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 
-    OP_CHECK_IF(
-        compileInfo->coreNum <= 0,
-        OP_LOGE(
-            context->GetNodeName(), "UpsampleNearestExact2dGrad GetHardwareInfo Failed, vectorCoreNum:%u",
-            compileInfo->coreNum),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(compileInfo->coreNum <= 0,
+                OP_LOGE(context->GetNodeName(), "UpsampleNearestExact2dGrad GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->coreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

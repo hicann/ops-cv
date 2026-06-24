@@ -44,16 +44,17 @@ public:
     };
 
 private:
-    __aicore__ inline void ComputeJhCutHw(
-        jhParams& loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset, int64_t mode);
+    __aicore__ inline void ComputeJhCutHw(jhParams& loopParams, int64_t srcNOffset, int64_t nBlockOffset,
+                                          int64_t hwBlockOffset, int64_t mode);
     __aicore__ inline void ComputeSmallJhCut(processParams& params);
     __aicore__ inline void ComputeHwLoop(int64_t no, int64_t nLoopOnce, processParams& params, int64_t mode);
     __aicore__ inline void ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail, int64_t hwTimes, int64_t hwTail);
 };
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(
-    jhParams& loopParams, int64_t srcNOffset, int64_t nBlockOffset, int64_t hwBlockOffset, int64_t mode)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(jhParams& loopParams, int64_t srcNOffset,
+                                                                       int64_t nBlockOffset, int64_t hwBlockOffset,
+                                                                       int64_t mode)
 {
     LocalTensor<T> inputUb = this->xQue_.template AllocTensor<T>();
     for (int64_t howo = 0; howo < loopParams.hwOnceLoop; howo++) {
@@ -67,8 +68,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(
             h = this->Min(this->Round(static_cast<float>(ho * this->hScale_)), this->srcHSize_ - 1);
             w = this->Min(this->Round(static_cast<float>(wo * this->wScale_)), this->srcWSize_ - 1);
         }
-        int64_t inputOffset =
-            srcNOffset + loopParams.no * this->tilingData_->lenCAlign + h * this->tilingData_->wcNum + w * this->lenC_;
+        int64_t inputOffset = srcNOffset + loopParams.no * this->tilingData_->lenCAlign + h * this->tilingData_->wcNum +
+                              w * this->lenC_;
         this->copyParams_.blockCount = loopParams.nLoopOnce;
         this->copyParams_.blockLen = this->lenC_ * sizeof(T);
         this->copyParams_.srcStride = (this->tilingData_->hwcNum - this->lenC_) * sizeof(T);
@@ -88,8 +89,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop(
-    int64_t no, int64_t nLoopOnce, processParams& params, int64_t mode)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop(int64_t no, int64_t nLoopOnce,
+                                                                      processParams& params, int64_t mode)
 {
     jhParams loopParams;
     for (int64_t hw = 0; hw < params.hwLoopTimes; hw++) {
@@ -107,7 +108,7 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop(
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeSmallJhCut(processParams &params)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeSmallJhCut(processParams& params)
 {
     int64_t mode = this->tilingData_->condition;
     for (int64_t no = 0; no < params.nLoopTimes; no++) {
@@ -117,8 +118,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeSmallJhCut(proces
 }
 
 template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(
-    int64_t nLoopTimes, int64_t nLoopTail, int64_t hwTimes, int64_t hwTail)
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail,
+                                                                       int64_t hwTimes, int64_t hwTail)
 {
     processParams params;
     params.nLoopTimes = nLoopTimes;
@@ -127,8 +128,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(
     params.hwLoopTail = hwTail;
     switch (this->tilingData_->switchParams) {
         case 4:
-            params.srcNOffset =
-                this->blockIdx_ * this->tilingData_->splitBlockFactor * this->srcHSize_ * this->srcWSize_ * this->lenC_;
+            params.srcNOffset = this->blockIdx_ * this->tilingData_->splitBlockFactor * this->srcHSize_ *
+                                this->srcWSize_ * this->lenC_;
             params.nOffset = this->blockIdx_ * this->tilingData_->lenN;
             params.hwOffset = 0;
             ComputeSmallJhCut(params);
@@ -148,13 +149,11 @@ template <typename T>
 __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::Process()
 {
     if (this->blockIdx_ == this->tilingData_->realCoreNum - 1) {
-        ProcessPreCore(
-            this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast, this->tilingData_->wcLoopTimesLast,
-            this->tilingData_->wcLoopTailLast);
+        ProcessPreCore(this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast,
+                       this->tilingData_->wcLoopTimesLast, this->tilingData_->wcLoopTailLast);
     } else {
-        ProcessPreCore(
-            this->tilingData_->nLoopTimesBefore, this->tilingData_->splitBlockTailFactor,
-            this->tilingData_->wcLoopTimesBefore, this->tilingData_->wcLoopTailBefore);
+        ProcessPreCore(this->tilingData_->nLoopTimesBefore, this->tilingData_->splitBlockTailFactor,
+                       this->tilingData_->wcLoopTimesBefore, this->tilingData_->wcLoopTailBefore);
     }
 }
 } // namespace ResizeNearestNeighborV2

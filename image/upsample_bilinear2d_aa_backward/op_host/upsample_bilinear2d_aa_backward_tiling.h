@@ -70,6 +70,6 @@ END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleBilinear2dAABackward, UpsampleBilinear2dAABackwardTilingData)
 ge::graphStatus Tiling4UpsampleBilinear2dAABackwardRegbase(gert::TilingContext* context);
-}  // namespace optiling
+} // namespace optiling
 
-#endif  // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BILINEAR2D_AA_BACKWARD_TILING_H
+#endif // OPS_BUILT_IN_OP_TILING_RUNTIME_UPSAMPLE_BILINEAR2D_AA_BACKWARD_TILING_H

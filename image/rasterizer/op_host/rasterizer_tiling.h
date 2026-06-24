@@ -21,16 +21,15 @@
 
 namespace optiling {
 
-struct RasterizerCompileInfo {
-};
+struct RasterizerCompileInfo {};
 
 BEGIN_TILING_DATA_DEF(RasterizerTilingData)
-  TILING_DATA_FIELD_DEF(uint32_t, numFaces);
-  TILING_DATA_FIELD_DEF(uint32_t, numVertices);
-  TILING_DATA_FIELD_DEF(uint32_t, height);
-  TILING_DATA_FIELD_DEF(uint32_t, width);
-  TILING_DATA_FIELD_DEF(float, occlusionTruncation);
-  TILING_DATA_FIELD_DEF(uint32_t, useDepthPrior);
+TILING_DATA_FIELD_DEF(uint32_t, numFaces);
+TILING_DATA_FIELD_DEF(uint32_t, numVertices);
+TILING_DATA_FIELD_DEF(uint32_t, height);
+TILING_DATA_FIELD_DEF(uint32_t, width);
+TILING_DATA_FIELD_DEF(float, occlusionTruncation);
+TILING_DATA_FIELD_DEF(uint32_t, useDepthPrior);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(Rasterizer, RasterizerTilingData)

@@ -52,8 +52,10 @@ __attribute__((visibility("default"))) aclnnStatus aclnnUpsampleNearestExact2dBa
  * @param [in] stream: 指定执行任务的AscendCL Stream流。
  * @return aclnnStatus: 返回状态码。
  */
-__attribute__((visibility("default"))) aclnnStatus aclnnUpsampleNearestExact2dBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream);
+__attribute__((visibility("default"))) aclnnStatus aclnnUpsampleNearestExact2dBackward(void* workspace,
+                                                                                       uint64_t workspaceSize,
+                                                                                       aclOpExecutor* executor,
+                                                                                       aclrtStream stream);
 
 #ifdef __cplusplus
 }

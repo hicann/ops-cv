@@ -20,8 +20,8 @@
 
 using namespace UpsampleTrilinearNs;
 
-extern "C" __global__ __aicore__ void resize_upsample_trilinear(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void resize_upsample_trilinear(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                                GM_ADDR tiling)
 {
     GET_TILING_DATA(tiling_data, tiling);
     const UpsampleTrilinearTilingData* __restrict tilingData = &tiling_data;
@@ -46,11 +46,10 @@ extern "C" __global__ __aicore__ void resize_upsample_trilinear(
     const TCubeTiling* __restrict matmulTilingW = &(tilingData->matmul_tiling_w);
     const TCubeTiling* __restrict matmulTilingH = &(tilingData->matmul_tiling_h);
     const TCubeTiling* __restrict matmulTilingD = &(tilingData->matmul_tiling_d);
-#define INIT_AND_PROCESS                                                                                     \
-    REGIST_MATMUL_OBJ(                                                                                       \
-        &op.pipe, GetSysWorkSpacePtr(), op.matmul_w, matmulTilingW, op.matmul_h, matmulTilingH, op.matmul_d, \
-        matmulTilingD);                                                                                      \
-    op.Init(input, output, userWs, &tiling_data);                                                            \
+#define INIT_AND_PROCESS                                                                                      \
+    REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmul_w, matmulTilingW, op.matmul_h, matmulTilingH, \
+                      op.matmul_d, matmulTilingD);                                                            \
+    op.Init(input, output, userWs, &tiling_data);                                                             \
     op.Process()
 
     if (TILING_KEY_IS(1000)) {

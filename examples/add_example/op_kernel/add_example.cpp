@@ -21,10 +21,9 @@
 
 // 定义Add算子的tiling key枚举
 // tiling key用于区分不同数据类型的实现策略
-enum class AddExampleTilingKey : uint32_t
-{
-    TILING_KEY_EXAMPLE_FLOAT = 0,  // 浮点数据类型的tiling key
-    TILING_KEY_EXAMPLE_INT32 = 1,  // 32位整数数据类型的tiling key
+enum class AddExampleTilingKey : uint32_t {
+    TILING_KEY_EXAMPLE_FLOAT = 0, // 浮点数据类型的tiling key
+    TILING_KEY_EXAMPLE_INT32 = 1, // 32位整数数据类型的tiling key
 };
 
 // Add算子的kernel入口函数

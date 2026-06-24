@@ -33,7 +33,7 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 
-static bool CheckNotNull3Tensor(const aclTensor *t0, const aclTensor *t1, const aclTensor *t2)
+static bool CheckNotNull3Tensor(const aclTensor* t0, const aclTensor* t1, const aclTensor* t2)
 {
     // 检查输入是否是空指针
     OP_CHECK_NULL(t0, return false);
@@ -44,7 +44,7 @@ static bool CheckNotNull3Tensor(const aclTensor *t0, const aclTensor *t1, const 
     return true;
 }
 // 检查3个输入和1个输出是否是空指针
-static bool CheckNotNull4Tensor(const aclTensor *t0, const aclTensor *t1, const aclTensor *t2, const aclTensor *t3)
+static bool CheckNotNull4Tensor(const aclTensor* t0, const aclTensor* t1, const aclTensor* t2, const aclTensor* t3)
 {
     // 检查输入是否是空指针
     OP_CHECK_NULL(t0, return false);
@@ -56,8 +56,8 @@ static bool CheckNotNull4Tensor(const aclTensor *t0, const aclTensor *t1, const 
     return true;
 }
 
-static bool CheckNotNull2In1Out(const aclTensor *gradOutput, const aclTensor *input, const aclTensor *grid,
-    const aclTensor *inputGrad, const aclTensor *gridGrad)
+static bool CheckNotNull2In1Out(const aclTensor* gradOutput, const aclTensor* input, const aclTensor* grid,
+                                const aclTensor* inputGrad, const aclTensor* gridGrad)
 {
     OP_CHECK_NULL(gradOutput, return false);
     OP_CHECK_NULL(input, return false);
@@ -67,8 +67,8 @@ static bool CheckNotNull2In1Out(const aclTensor *gradOutput, const aclTensor *in
     return true;
 }
 
-static bool CheckNotNull2In2Out(
-    const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *gradInput)
+static bool CheckNotNull2In2Out(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                                const aclTensor* gradInput)
 {
     OP_CHECK_NULL(gradOut, return false);
     OP_CHECK_NULL(outputSize, return false);
@@ -82,7 +82,7 @@ static bool CheckNotNull2In2Out(
  * 2. 输入输出的shape必须一致
  * 3. 输入的维度必须小于等于8
  */
-static bool CheckSameShape1In1Out(const aclTensor *self, const aclTensor *out)
+static bool CheckSameShape1In1Out(const aclTensor* self, const aclTensor* out)
 {
     // self和out的shape必须一致
     OP_CHECK_SHAPE_NOT_EQUAL(self, out, return false);
@@ -92,7 +92,7 @@ static bool CheckSameShape1In1Out(const aclTensor *self, const aclTensor *out)
     return true;
 }
 
-static bool CheckShapeCumMinMax(const aclTensor *self, const aclTensor *valuesOut, const aclTensor *indicesOut)
+static bool CheckShapeCumMinMax(const aclTensor* self, const aclTensor* valuesOut, const aclTensor* indicesOut)
 {
     // 所有输入的维度都不能超过8
     OP_CHECK_MAX_DIM(self, MAX_SUPPORT_DIMS_NUMS, return false);
@@ -103,17 +103,17 @@ static bool CheckShapeCumMinMax(const aclTensor *self, const aclTensor *valuesOu
     return true;
 }
 
-static bool CheckShapeNotlimitDim1In1Out(const aclTensor *self)
+static bool CheckShapeNotlimitDim1In1Out(const aclTensor* self)
 {
     OP_CHECK_MAX_DIM(self, MAX_SUPPORT_DIMS_NUMS, return false);
     return true;
 }
 
 // 检查1个输入和1个输出的数据类型是否在算子的支持列表内
-static bool CheckDtypeValid1In1OutScalar(const aclTensor *self, const aclScalar *attrScalar, const aclTensor *out,
-    const std::initializer_list<op::DataType> &dtypeSupportList,
-    const std::initializer_list<op::DataType> &attrScalarSupportList,
-    const std::initializer_list<op::DataType> &dtypeOutList)
+static bool CheckDtypeValid1In1OutScalar(const aclTensor* self, const aclScalar* attrScalar, const aclTensor* out,
+                                         const std::initializer_list<op::DataType>& dtypeSupportList,
+                                         const std::initializer_list<op::DataType>& attrScalarSupportList,
+                                         const std::initializer_list<op::DataType>& dtypeOutList)
 {
     // 检查self的数据类型是否在支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(self, dtypeSupportList, return false);
@@ -129,10 +129,10 @@ static bool CheckDtypeValid1In1OutScalar(const aclTensor *self, const aclScalar 
 }
 
 // 检查1个输入和1个输出的数据类型是否在算子的支持列表内
-static bool CheckDtypeValid1In1OutTensor(const aclTensor *self, const aclTensor *attrTensor, const aclTensor *out,
-    const std::initializer_list<op::DataType> &dtypeSupportList,
-    const std::initializer_list<op::DataType> &attrTensorSupportList,
-    const std::initializer_list<op::DataType> &dtypeOutList)
+static bool CheckDtypeValid1In1OutTensor(const aclTensor* self, const aclTensor* attrTensor, const aclTensor* out,
+                                         const std::initializer_list<op::DataType>& dtypeSupportList,
+                                         const std::initializer_list<op::DataType>& attrTensorSupportList,
+                                         const std::initializer_list<op::DataType>& dtypeOutList)
 {
     // 检查self的数据类型是否在支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(self, dtypeSupportList, return false);
@@ -147,8 +147,9 @@ static bool CheckDtypeValid1In1OutTensor(const aclTensor *self, const aclTensor 
     return true;
 }
 
-static bool CheckDtypeValid1In1OutMatch(const aclTensor *self, const aclTensor *valueOut, const aclTensor *inverseOut,
-    const aclTensor *countsOut, const std::initializer_list<op::DataType> &dtypeSupportList)
+static bool CheckDtypeValid1In1OutMatch(const aclTensor* self, const aclTensor* valueOut, const aclTensor* inverseOut,
+                                        const aclTensor* countsOut,
+                                        const std::initializer_list<op::DataType>& dtypeSupportList)
 {
     // 检查self的数据类型是否在UniqueConsecutive算子的支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(self, dtypeSupportList, return false);
@@ -171,19 +172,19 @@ static bool CheckDtypeValid1In1OutMatch(const aclTensor *self, const aclTensor *
  * l1: ASCEND910B ~ ASCEND910E芯片，该算子支持的数据类型列表
  * l2: 其他芯片，该算子支持的数据类型列表
  */
-static const std::initializer_list<DataType> &GetDtypeSupportListV2(
-    const std::initializer_list<op::DataType> &l1, const std::initializer_list<op::DataType> &l2)
+static const std::initializer_list<DataType>& GetDtypeSupportListV2(const std::initializer_list<op::DataType>& l1,
+                                                                    const std::initializer_list<op::DataType>& l2)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if(curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
+    if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
         return l1;
     } else {
         return l2;
     }
 }
 
-static const std::initializer_list<op::DataType> GetDtypeSupportListV3(
-    const std::initializer_list<op::DataType> &l1, const std::initializer_list<op::DataType> &l2)
+static const std::initializer_list<op::DataType> GetDtypeSupportListV3(const std::initializer_list<op::DataType>& l1,
+                                                                       const std::initializer_list<op::DataType>& l2)
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     switch (curArch) {
@@ -201,8 +202,8 @@ static const std::initializer_list<op::DataType> GetDtypeSupportListV3(
     }
 }
 
-static aclnnStatus CheckArrayDataAvgPoolBackWard(
-    const aclIntArray *kernelSize, const aclIntArray *stride, const aclIntArray *padding)
+static aclnnStatus CheckArrayDataAvgPoolBackWard(const aclIntArray* kernelSize, const aclIntArray* stride,
+                                                 const aclIntArray* padding)
 {
     for (uint64_t i = 0; i < kernelSize->Size(); i++) {
         auto size = (*kernelSize)[i];
@@ -228,11 +229,8 @@ static aclnnStatus CheckArrayDataAvgPoolBackWard(
         auto halfKsize = (*kernelSize)[i] / 2;
         auto padSize = (*padding)[i];
         if (halfKsize < padSize) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "padding [%lu] data [%li] should less than kernelSize / 2 [%ld]",
-                i,
-                padSize,
-                halfKsize);
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "padding [%lu] data [%li] should less than kernelSize / 2 [%ld]", i,
+                    padSize, halfKsize);
             return ACLNN_ERR_PARAM_INVALID;
         }
         if (padSize < 0) {
@@ -243,7 +241,7 @@ static aclnnStatus CheckArrayDataAvgPoolBackWard(
     return ACLNN_SUCCESS;
 }
 
-static bool CheckDtypeValid1Out1In(const aclTensor *gradOut, const aclTensor *gradInput)
+static bool CheckDtypeValid1Out1In(const aclTensor* gradOut, const aclTensor* gradInput)
 {
     // 检查gradOut的数据类型是否在ResizeNearestNeighborV2Grad算子的支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LISTS, return false);
@@ -252,40 +250,38 @@ static bool CheckDtypeValid1Out1In(const aclTensor *gradOut, const aclTensor *gr
     return true;
 }
 
-static bool CheckUpsampleShape(const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize)
+static bool CheckUpsampleShape(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize)
 {
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, UPSAMPLE_DIM_LIMIT, return false);
-    OP_CHECK(outputSizeNum == UPSAMPLE_EXPECT_SIZE,
+    OP_CHECK(
+        outputSizeNum == UPSAMPLE_EXPECT_SIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 3, but got size %zu", outputSizeNum),
         return false);
 
     OP_CHECK(inputSizeNum == UPSAMPLE_DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 5, but got size %zu", inputSizeNum),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 5, but got size %zu", inputSizeNum),
+             return false);
     return true;
 }
 
 // 循环判断size是否相等
-static bool CheckSizeLoop(size_t dimNum, Shape gradOutShape, FVector<int64_t> &fullOutputSize)
+static bool CheckSizeLoop(size_t dimNum, Shape gradOutShape, FVector<int64_t>& fullOutputSize)
 {
     for (size_t i = 0; i < dimNum; ++i) {
         if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Expected grad_output to have the same shape as output;"
-                " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i,
-                fullOutputSize[i],
-                i,
-                gradOutShape.GetDim(i));
+                    "Expected grad_output to have the same shape as output;"
+                    " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
+                    i, fullOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
     return true;
 }
 
-static inline bool CheckInpuNullTensorMaxUnPool3D(const aclTensor *self)
+static inline bool CheckInpuNullTensorMaxUnPool3D(const aclTensor* self)
 {
     auto inputShape = self->GetViewShape();
     size_t dimNum = inputShape.GetDimNum();
@@ -293,48 +289,43 @@ static inline bool CheckInpuNullTensorMaxUnPool3D(const aclTensor *self)
     for (size_t i = 1; i < dimNum; ++i) {
         if (inputShape.GetDim(i) <= 0) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "max_unpool3d(): Expected input to have non-zero size for non-batch dimensions, "
-                "but got %zu with dimension %zu being empty.",
-                dimNum,
-                i);
+                    "max_unpool3d(): Expected input to have non-zero size for non-batch dimensions, "
+                    "but got %zu with dimension %zu being empty.",
+                    dimNum, i);
             return false;
         }
     }
     return true;
 }
 
-static inline bool CheckArraySize3(const aclIntArray *array, const char *arrayName)
+static inline bool CheckArraySize3(const aclIntArray* array, const char* arrayName)
 {
     constexpr int64_t EXPECT_SIZE = 3;
     OP_CHECK(array->Size() == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "There should be exactly three elements (depth, height, width) in "
-            "%s, but got %zu elements",
-            arrayName,
-            array->Size()),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "There should be exactly three elements (depth, height, width) in "
+                     "%s, but got %zu elements",
+                     arrayName, array->Size()),
+             return false);
     return true;
 }
 
-static inline bool CheckPositiveValues(const aclIntArray *array, const char *arrayName, size_t size)
+static inline bool CheckPositiveValues(const aclIntArray* array, const char* arrayName, size_t size)
 {
     for (size_t i = 0; i < size; ++i) {
         if ((*array)[i] <= 0) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "%s[%zu] should be greater than zero, but got %ld.",
-                arrayName,
-                i,
-                (*array)[i]);
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "%s[%zu] should be greater than zero, but got %ld.", arrayName, i,
+                    (*array)[i]);
             return false;
         }
     }
     return true;
 }
 
-static inline void GetSpatialDimensions(const aclTensor *self, int64_t &dimD, int64_t &dimH, int64_t &dimW)
+static inline void GetSpatialDimensions(const aclTensor* self, int64_t& dimD, int64_t& dimH, int64_t& dimW)
 {
     constexpr size_t NCDHW_DIM_NUM = 5;
-    
+
     if (self->GetViewShape().GetDimNum() == NCDHW_DIM_NUM) {
         dimD = self->GetViewShape().GetDim(DIM_TWO);
         dimH = self->GetViewShape().GetDim(DIM_THREE);
@@ -346,32 +337,26 @@ static inline void GetSpatialDimensions(const aclTensor *self, int64_t &dimD, in
     }
 }
 
-static inline bool CheckOutputSizeValid(const aclIntArray *outputSize, int64_t dimD, int64_t dimH, int64_t dimW)
+static inline bool CheckOutputSizeValid(const aclIntArray* outputSize, int64_t dimD, int64_t dimH, int64_t dimW)
 {
     int64_t outputTotal = (*outputSize)[DIM_ZERO] * (*outputSize)[DIM_ONE] * (*outputSize)[DIM_TWO];
     int64_t inputTotal = dimD * dimH * dimW;
-    
+
     OP_CHECK(outputTotal >= inputTotal,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "The output dimensions are of size %ld x %ld x %ld, "
-            "should be greater than or equal to self of size %ld x %ld x %ld.",
-            (*outputSize)[DIM_ZERO],
-            (*outputSize)[DIM_ONE],
-            (*outputSize)[DIM_TWO],
-            dimD,
-            dimH,
-            dimW),
-        return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "The output dimensions are of size %ld x %ld x %ld, "
+                     "should be greater than or equal to self of size %ld x %ld x %ld.",
+                     (*outputSize)[DIM_ZERO], (*outputSize)[DIM_ONE], (*outputSize)[DIM_TWO], dimD, dimH, dimW),
+             return false);
     return true;
 }
 
-static inline bool CheckIntArrayShapeMaxUnPool3D(
-    const aclTensor *self, const aclIntArray *outputSize, const aclIntArray *stride, const aclIntArray *padding)
+static inline bool CheckIntArrayShapeMaxUnPool3D(const aclTensor* self, const aclIntArray* outputSize,
+                                                 const aclIntArray* stride, const aclIntArray* padding)
 {
     constexpr int64_t EXPECT_SIZE = 3;
 
-    if (!CheckArraySize3(outputSize, "output_size") ||
-        !CheckArraySize3(stride, "stride") ||
+    if (!CheckArraySize3(outputSize, "output_size") || !CheckArraySize3(stride, "stride") ||
         !CheckArraySize3(padding, "padding")) {
         return false;
     }
@@ -387,7 +372,7 @@ static inline bool CheckIntArrayShapeMaxUnPool3D(
     return CheckOutputSizeValid(outputSize, dimD, dimH, dimW);
 }
 
-static void CalculateValuesSliceUpper(const aclTensor *self, int64_t &dim, int64_t &start, int64_t &end)
+static void CalculateValuesSliceUpper(const aclTensor* self, int64_t& dim, int64_t& start, int64_t& end)
 {
     if (dim < 0) {
         dim = dim + self->GetViewShape().GetDimNum();
@@ -400,7 +385,7 @@ static void CalculateValuesSliceUpper(const aclTensor *self, int64_t &dim, int64
     }
 }
 
-static void CalculateValuesSliceLower(const aclTensor *self, int64_t &dim, int64_t &start, int64_t &end)
+static void CalculateValuesSliceLower(const aclTensor* self, int64_t& dim, int64_t& start, int64_t& end)
 {
     if (start < 0) {
         start = 0;
@@ -414,24 +399,21 @@ static void CalculateValuesSliceLower(const aclTensor *self, int64_t &dim, int64
     }
 }
 
-static bool CheckDimValueWithUnique(const aclTensor *self, int64_t dim)
+static bool CheckDimValueWithUnique(const aclTensor* self, int64_t dim)
 {
     int64_t dimSize = self->GetViewShape().GetDimNum();
     int64_t dimMin = std::min(-1 * dimSize, dimSize - 1);
     int64_t dimMax = std::max(-1 * dimSize, dimSize - 1);
     if (dim > dimMax || dim < dimMin) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "The param of dim must be in the range of [%ld, %ld], but got %ld.",
-            dimMin,
-            dimMax,
-            dim);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The param of dim must be in the range of [%ld, %ld], but got %ld.", dimMin,
+                dimMax, dim);
         return false;
     }
     return true;
 }
 
-}  // namespace op
+} // namespace op
 #ifdef __cplusplus
 }
 #endif
-#endif  // CV_COMMON_LEVEL2_BASE_H_
+#endif // CV_COMMON_LEVEL2_BASE_H_

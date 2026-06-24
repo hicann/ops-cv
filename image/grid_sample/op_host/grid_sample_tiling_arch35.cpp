@@ -26,10 +26,7 @@ static constexpr uint32_t USE_UINT64_TYPE = 100;
 
 static const std::set<ge::DataType> supportDtype = {ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16};
 
-bool GridSampleArch35Tiling::IsCapable()
-{
-    return true;
-}
+bool GridSampleArch35Tiling::IsCapable() { return true; }
 
 ge::graphStatus GridSampleArch35Tiling::DoOpTiling()
 {
@@ -63,7 +60,7 @@ ge::graphStatus GridSampleArch35Tiling::DoOpTiling()
     if (outputSize > MAX_OUTPUT_SIZE || inputSize > MAX_OUTPUT_SIZE || gridSize > MAX_OUTPUT_SIZE || dimension != 0) {
         threadNum = VF_MAX_THREAD_NUM_3D;
     }
-    
+
     needCoreNum = (outputSize + threadNum - 1) / threadNum;
     needCoreNum = std::min(needCoreNum, coreNumVar);
     tilingData.set_needCoreNum(needCoreNum);
@@ -83,15 +80,12 @@ ge::graphStatus GridSampleArch35Tiling::PostTiling()
     workspaces[0] = workspaceSize_;
 
     gert::TilingData* rawTilingData = context_->GetRawTilingData();
-    OP_CHECK_IF(
-        rawTilingData == nullptr, OP_LOGE(context_->GetNodeType(), "GetRawTilingData failed."),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        tilingData.GetDataSize() > rawTilingData->GetCapacity(),
-        OP_LOGE(
-            context_, "actual tiling data size %zu > context tiling data size %zu", tilingData.GetDataSize(),
-            rawTilingData->GetCapacity()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(rawTilingData == nullptr, OP_LOGE(context_->GetNodeType(), "GetRawTilingData failed."),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tilingData.GetDataSize() > rawTilingData->GetCapacity(),
+                OP_LOGE(context_, "actual tiling data size %zu > context tiling data size %zu",
+                        tilingData.GetDataSize(), rawTilingData->GetCapacity()),
+                return ge::GRAPH_FAILED);
     tilingData.SaveToBuffer(rawTilingData->GetData(), rawTilingData->GetCapacity());
     rawTilingData->SetDataSize(tilingData.GetDataSize());
 
@@ -104,7 +98,7 @@ uint64_t GridSampleArch35Tiling::GetTilingKey() const
     if (dimension != 0) {
         tilingKey = SIMT_COMMON_3D_TILING_KEY;
     }
-    
+
     if (outputSize > MAX_OUTPUT_SIZE || inputSize > MAX_OUTPUT_SIZE || gridSize > MAX_OUTPUT_SIZE) {
         tilingKey += USE_UINT64_TYPE;
     }

@@ -123,10 +123,8 @@ REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad_30000, ResizeBicubicV2GradAllCopy
 
 class ResizeBicubicV2GradBaseTiling : public Ops::Cv::OpTiling::TilingBaseClass {
 public:
-    explicit ResizeBicubicV2GradBaseTiling(gert::TilingContext* context) : TilingBaseClass(context)
-    {}
-    ~ResizeBicubicV2GradBaseTiling() override
-    {}
+    explicit ResizeBicubicV2GradBaseTiling(gert::TilingContext* context) : TilingBaseClass(context) {}
+    ~ResizeBicubicV2GradBaseTiling() override {}
 
     ResizeBicubicV2GradCompileInfo compileInfo_;
     ResizeBicubicV2GradInputInfo inputInfo_;
@@ -155,10 +153,8 @@ protected:
 
 class ResizeBicubicV2GradSimtTiling : public ResizeBicubicV2GradBaseTiling {
 public:
-    explicit ResizeBicubicV2GradSimtTiling(gert::TilingContext* context) : ResizeBicubicV2GradBaseTiling(context)
-    {}
-    ~ResizeBicubicV2GradSimtTiling() override
-    {}
+    explicit ResizeBicubicV2GradSimtTiling(gert::TilingContext* context) : ResizeBicubicV2GradBaseTiling(context) {}
+    ~ResizeBicubicV2GradSimtTiling() override {}
 
     ResizeBicubicV2GradSimtTilingData tilingData_;
 
@@ -178,8 +174,7 @@ public:
     explicit ResizeBicubicV2GradSimtDetermineTiling(gert::TilingContext* context)
         : ResizeBicubicV2GradBaseTiling(context)
     {}
-    ~ResizeBicubicV2GradSimtDetermineTiling() override
-    {}
+    ~ResizeBicubicV2GradSimtDetermineTiling() override {}
 
     ResizeBicubicV2GradSimtDetermineTilingData tilingData_;
 
@@ -196,10 +191,8 @@ private:
 
 class ResizeBicubicV2GradAllCopyTiling : public ResizeBicubicV2GradBaseTiling {
 public:
-    explicit ResizeBicubicV2GradAllCopyTiling(gert::TilingContext* context) : ResizeBicubicV2GradBaseTiling(context)
-    {}
-    ~ResizeBicubicV2GradAllCopyTiling() override
-    {}
+    explicit ResizeBicubicV2GradAllCopyTiling(gert::TilingContext* context) : ResizeBicubicV2GradBaseTiling(context) {}
+    ~ResizeBicubicV2GradAllCopyTiling() override {}
 
     ResizeBicubicV2GradAllCopyTilingData tilingData_;
 

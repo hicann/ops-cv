@@ -49,15 +49,11 @@ __global__ __aicore__ void roi_pooling_with_arg_max(GM_ADDR x, GM_ADDR rois, GM_
 
     if constexpr (dType == ROI_POOLING_WITH_ARG_MAX_TPL_FP32) {
         Simt::VF_CALL<RoiPoolingWithArgMaxCompute<float>>(
-            dim3{1024, 1, 1},
-            (__gm__ float*)x, (__gm__ float*)rois, (__gm__ float*)roi_actual_num, (__gm__ float*)y,
-            indicesPtr, ch, fh, fw, rn, ph, pw, sh, sw,
-            mPoolW, shiftPoolW, mPoolH, shiftPoolH, mCH, shiftCH);
+            dim3{1024, 1, 1}, (__gm__ float*)x, (__gm__ float*)rois, (__gm__ float*)roi_actual_num, (__gm__ float*)y,
+            indicesPtr, ch, fh, fw, rn, ph, pw, sh, sw, mPoolW, shiftPoolW, mPoolH, shiftPoolH, mCH, shiftCH);
     } else if constexpr (dType == ROI_POOLING_WITH_ARG_MAX_TPL_FP16) {
         Simt::VF_CALL<RoiPoolingWithArgMaxCompute<half>>(
-            dim3{1024, 1, 1},
-            (__gm__ half*)x, (__gm__ half*)rois, (__gm__ half*)roi_actual_num, (__gm__ half*)y,
-            indicesPtr, ch, fh, fw, rn, ph, pw, sh, sw,
-            mPoolW, shiftPoolW, mPoolH, shiftPoolH, mCH, shiftCH);
+            dim3{1024, 1, 1}, (__gm__ half*)x, (__gm__ half*)rois, (__gm__ half*)roi_actual_num, (__gm__ half*)y,
+            indicesPtr, ch, fh, fw, rn, ph, pw, sh, sw, mPoolW, shiftPoolW, mPoolH, shiftPoolH, mCH, shiftCH);
     }
 }

@@ -13,18 +13,11 @@
 #include "experiment_ops.h"
 #include "op_api/utils/ut_op_common.h"
 
-class ThreeInterpolateGradProtoTest : public testing::Test
-{
+class ThreeInterpolateGradProtoTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ThreeInterpolateGradProtoTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ThreeInterpolateGradProtoTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ThreeInterpolateGradProtoTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ThreeInterpolateGradProtoTest TearDown" << std::endl; }
 };
 
 // fp16 infer dtype

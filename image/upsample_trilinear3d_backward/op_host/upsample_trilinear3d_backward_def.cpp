@@ -16,8 +16,7 @@
 #include "../register/op_def_registry.h"
 
 namespace ops {
-class UpsampleTrilinear3dBackward : public OpDef
-{
+class UpsampleTrilinear3dBackward : public OpDef {
 public:
     explicit UpsampleTrilinear3dBackward(const char* name) : OpDef(name)
     {

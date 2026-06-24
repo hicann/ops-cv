@@ -14,13 +14,13 @@
  */
 #include "roi_align_rotated.h"
 
-extern "C" __global__ __aicore__ void roi_align_rotated(GM_ADDR input, GM_ADDR rois, GM_ADDR output, GM_ADDR workspace, GM_ADDR tiling)
+extern "C" __global__ __aicore__ void roi_align_rotated(GM_ADDR input, GM_ADDR rois, GM_ADDR output, GM_ADDR workspace,
+                                                        GM_ADDR tiling)
 {
     GET_TILING_DATA(tiling_data, tiling);
     RoiAlignRotated op;
     op.Init(input, rois, output, &tiling_data);
-    if (TILING_KEY_IS(1))
-    {
+    if (TILING_KEY_IS(1)) {
         op.Process();
     }
 }

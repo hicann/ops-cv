@@ -46,16 +46,16 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 class UpsampleBilinear2dAABackwardTiling {
 public:
-    explicit UpsampleBilinear2dAABackwardTiling(gert::TilingContext *context) : tilingContext(context){};
+    explicit UpsampleBilinear2dAABackwardTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init() const;
     ge::graphStatus RunBigKernelTiling();
 
 private:
-    float ComputeScales(int64_t inSize, int64_t outSize, const float *scale) const;
+    float ComputeScales(int64_t inSize, int64_t outSize, const float* scale) const;
     bool CheckScales() const;
     void SetScale();
-    inline float ComputeScaleValue(int64_t inSize, int64_t outSize, const float *scale) const;
-    inline bool GetNeedResize(int64_t inSize, int64_t outSize, const float *scale) const;
+    inline float ComputeScaleValue(int64_t inSize, int64_t outSize, const float* scale) const;
+    inline bool GetNeedResize(int64_t inSize, int64_t outSize, const float* scale) const;
     void GetWorkSpace(uint32_t needCoreNum);
     void GetShapes();
     void GetSlideSize();
@@ -77,17 +77,17 @@ private:
 private:
     int64_t slideSize = BEST_PERFORMANCE_SIZE;
     UpsampleBilinear2dAABackwardTilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint8_t dataTypeSize = BYTE_LENGTH_FOUR;
     gert::Shape inputShape;
-    const bool *alignCorners = nullptr;
-    const float *scaleH = nullptr;
-    const float *scaleW = nullptr;
+    const bool* alignCorners = nullptr;
+    const float* scaleH = nullptr;
+    const float* scaleW = nullptr;
     float realScaleH = 0.0f;
     float realScaleW = 0.0f;
-    const gert::ContinuousVector *inputSize = nullptr;
-    const gert::ContinuousVector *outputSize = nullptr;
+    const gert::ContinuousVector* inputSize = nullptr;
+    const gert::ContinuousVector* outputSize = nullptr;
     int64_t slideStartListW[MAX_CORE_CONT] = {0};
     int64_t slideEndListW[MAX_CORE_CONT] = {0};
     int64_t tailSlideStartListW[MAX_CORE_CONT] = {0};
@@ -122,10 +122,7 @@ inline bool FloatEqual(float a, float b)
     }
 };
 
-ge::graphStatus UpsampleBilinear2dAABackwardTiling::Init() const
-{
-    return ge::GRAPH_SUCCESS;
-}
+ge::graphStatus UpsampleBilinear2dAABackwardTiling::Init() const { return ge::GRAPH_SUCCESS; }
 
 ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
 {
@@ -141,17 +138,20 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     }
 
     // 获取输入的参数
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     if (attrs == nullptr) {
         return ge::GRAPH_FAILED;
     }
     size_t idx = 0;
     outputSize = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
-    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSize == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSize == nullptr"),
+                return ge::GRAPH_FAILED);
     inputSize = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
-    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "inputSize == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputSize == nullptr, OP_LOGE(tilingContext->GetNodeName(), "inputSize == nullptr"),
+                return ge::GRAPH_FAILED);
     alignCorners = attrs->GetAttrPointer<bool>(idx++);
-    OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"),
+                return ge::GRAPH_FAILED);
     scaleH = attrs->GetAttrPointer<float>(idx++);
     OP_CHECK_IF(scaleH == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleH == nullptr"), return ge::GRAPH_FAILED);
     scaleW = attrs->GetAttrPointer<float>(idx++);
@@ -175,7 +175,8 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     GetSlideSize();
     GetShapes();
 
-    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAABackwardCompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAABackwardCompileInfo*>(
+        tilingContext->GetCompileInfo());
     uint32_t coreNumPlatform = (compileInfo != nullptr) ? compileInfo->coreNum : 0;
     uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatform);
     GetWorkSpace(needCoreNum);
@@ -186,7 +187,7 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-float UpsampleBilinear2dAABackwardTiling::ComputeScales(int64_t inSize, int64_t outSize, const float *scale) const
+float UpsampleBilinear2dAABackwardTiling::ComputeScales(int64_t inSize, int64_t outSize, const float* scale) const
 {
     if (*scale > ZERO_FLOAT) {
         return *scale;
@@ -197,15 +198,13 @@ float UpsampleBilinear2dAABackwardTiling::ComputeScales(int64_t inSize, int64_t 
 
 bool UpsampleBilinear2dAABackwardTiling::CheckScales() const
 {
-    const int64_t *inputSizeArray = reinterpret_cast<const int64_t *>(inputSize->GetData());
+    const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSize->GetData());
     float scalesH = ComputeScales(inputSizeArray[H_INDEX], inputShape.GetDim(H_INDEX), scaleH);
     float scalesW = ComputeScales(inputSizeArray[W_INDEX], inputShape.GetDim(W_INDEX), scaleW);
     OP_CHECK_IF(scalesH < MIN_SUPPORT_SCALE || scalesW < MIN_SUPPORT_SCALE,
-        OP_LOGE(tilingContext->GetNodeName(),
-            "scalesH and scalesW are too small, scalesH [%f], scalesW [%f].",
-            scalesH,
-            scalesW),
-        return false);
+                OP_LOGE(tilingContext->GetNodeName(), "scalesH and scalesW are too small, scalesH [%f], scalesW [%f].",
+                        scalesH, scalesW),
+                return false);
     return true;
 }
 
@@ -223,7 +222,7 @@ void UpsampleBilinear2dAABackwardTiling::GetSlideSize()
 
 void UpsampleBilinear2dAABackwardTiling::SetScale()
 {
-    const int64_t *inputSizeArray = reinterpret_cast<const int64_t *>(inputSize->GetData());
+    const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSize->GetData());
     needResizeH = GetNeedResize(inputSizeArray[H_INDEX], inputShape.GetDim(H_INDEX), scaleH);
     needResizeW = GetNeedResize(inputSizeArray[W_INDEX], inputShape.GetDim(W_INDEX), scaleW);
     if (!needResizeH && !needResizeW) {
@@ -253,8 +252,8 @@ void UpsampleBilinear2dAABackwardTiling::SetScale()
     tilingData.set_invscaleW(invscaleW);
 }
 
-inline float UpsampleBilinear2dAABackwardTiling::ComputeScaleValue(
-    int64_t inSize, int64_t outSize, const float *scale) const
+inline float UpsampleBilinear2dAABackwardTiling::ComputeScaleValue(int64_t inSize, int64_t outSize,
+                                                                   const float* scale) const
 {
     if (*alignCorners) {
         if (outSize > 1) {
@@ -263,12 +262,12 @@ inline float UpsampleBilinear2dAABackwardTiling::ComputeScaleValue(
             return ZERO_FLOAT;
         }
     } else {
-        return (scale != nullptr && *scale > ZERO_FLOAT) ? static_cast<float>(*scale)
-                                                         : (static_cast<float>(inSize) / outSize);
+        return (scale != nullptr && *scale > ZERO_FLOAT) ? static_cast<float>(*scale) :
+                                                           (static_cast<float>(inSize) / outSize);
     }
 }
 
-inline bool UpsampleBilinear2dAABackwardTiling::GetNeedResize(int64_t inSize, int64_t outSize, const float *scale) const
+inline bool UpsampleBilinear2dAABackwardTiling::GetNeedResize(int64_t inSize, int64_t outSize, const float* scale) const
 {
     if (*alignCorners) {
         return inSize != outSize;
@@ -279,7 +278,7 @@ inline bool UpsampleBilinear2dAABackwardTiling::GetNeedResize(int64_t inSize, in
 
 void UpsampleBilinear2dAABackwardTiling::GetShapes()
 {
-    const int64_t *inputSizeArray = reinterpret_cast<const int64_t *>(inputSize->GetData());
+    const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSize->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         inputShapes[i] = inputShape.GetDim(i);
         outputShapes[i] = inputSizeArray[i];
@@ -350,12 +349,12 @@ uint32_t UpsampleBilinear2dAABackwardTiling::GetNeedCoreNumW(uint32_t coreNumPla
             int64_t groupIndex = groupCoreNum > 0 ? coreIndex / groupCoreNum : 0;
             if (groupIndex < remainder) {
                 tailSlideStartListW[coreIndex] = (tailStartSlideNum + groupIndex) * slideSize;
-                tailSlideEndListW[coreIndex] =
-                    std::min(tailSlideStartListW[coreIndex] + slideSize, static_cast<int64_t>(outputW));
+                tailSlideEndListW[coreIndex] = std::min(tailSlideStartListW[coreIndex] + slideSize,
+                                                        static_cast<int64_t>(outputW));
                 int64_t coreIndexInGroup = groupCoreNum > 0 ? coreIndex % groupCoreNum : 0;
                 tailRowStartListW[coreIndex] = coreIndexInGroup * tailAvergingRows;
-                tailRowEndListW[coreIndex] =
-                    std::min(tailRowStartListW[coreIndex] + tailAvergingRows, static_cast<int64_t>(inputH));
+                tailRowEndListW[coreIndex] = std::min(tailRowStartListW[coreIndex] + tailAvergingRows,
+                                                      static_cast<int64_t>(inputH));
                 needCoreNum++;
             }
         }
@@ -396,12 +395,12 @@ uint32_t UpsampleBilinear2dAABackwardTiling::GetNeedCoreNumH(uint32_t coreNumPla
             int64_t groupIndex = groupCoreNum > 0 ? coreIndex / groupCoreNum : 0;
             if (groupIndex < remainder) {
                 tailSlideStartListH[coreIndex] = (tailStartSlideNum + groupIndex) * slideSize;
-                tailSlideEndListH[coreIndex] =
-                    std::min(tailSlideStartListH[coreIndex] + slideSize, static_cast<int64_t>(outputH));
+                tailSlideEndListH[coreIndex] = std::min(tailSlideStartListH[coreIndex] + slideSize,
+                                                        static_cast<int64_t>(outputH));
                 int64_t coreIndexInGroup = groupCoreNum > 0 ? coreIndex % groupCoreNum : 0;
                 tailRowStartListH[coreIndex] = coreIndexInGroup * tailAvergingRows;
-                tailRowEndListH[coreIndex] =
-                    std::min(tailRowStartListH[coreIndex] + tailAvergingRows, static_cast<int64_t>(inputW));
+                tailRowEndListH[coreIndex] = std::min(tailRowStartListH[coreIndex] + tailAvergingRows,
+                                                      static_cast<int64_t>(inputW));
                 needCoreNum++;
             }
         }
@@ -416,10 +415,10 @@ uint32_t UpsampleBilinear2dAABackwardTiling::GetNeedCoreNumH(uint32_t coreNumPla
 
 void UpsampleBilinear2dAABackwardTiling::GetWorkSpace(uint32_t needCoreNum)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
     // 中间tensor
-    uint64_t intermediateMatrixSize =
-        outputShapes[N_INDEX] * outputShapes[C_INDEX] * inputShapes[H_INDEX] * outputShapes[W_INDEX];
+    uint64_t intermediateMatrixSize = outputShapes[N_INDEX] * outputShapes[C_INDEX] * inputShapes[H_INDEX] *
+                                      outputShapes[W_INDEX];
 
     // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
     int64_t singleCoreK = singleCoreKW > singleCoreKH ? singleCoreKW : singleCoreKH;
@@ -441,8 +440,8 @@ void UpsampleBilinear2dAABackwardTiling::GetTCubeTilingW()
     mmTilingW.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTilingW.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTilingW.SetOrgShape(
-        inputShapes[N_INDEX] * inputShapes[C_INDEX] * inputShape[H_INDEX], outputShapes[W_INDEX], inputShapes[W_INDEX]);
+    mmTilingW.SetOrgShape(inputShapes[N_INDEX] * inputShapes[C_INDEX] * inputShape[H_INDEX], outputShapes[W_INDEX],
+                          inputShapes[W_INDEX]);
     mmTilingW.SetShape(inputShapes[N_INDEX] * inputShapes[C_INDEX] * inputShape[H_INDEX], slideSize, singleCoreKW);
     if (mmTilingW.GetTiling(tilingData.matmulTilingW) == -1) {
         OP_LOGE(tilingContext->GetNodeName(), "GetTCubeTilingW Error, please Check inputShapes.");
@@ -482,8 +481,8 @@ void UpsampleBilinear2dAABackwardTiling::FillTilingData()
     tilingData.set_tailRowEndListH(tailRowEndListH);
 
     tilingData.set_dataType(GetDataTypeVal());
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
@@ -535,14 +534,14 @@ inline int32_t UpsampleBilinear2dAABackwardTiling::Ceil(T1 x) const
     return floorX + 1;
 }
 
-static ge::graphStatus Tiling4UpsampleBilinear2dAABackwardTiling(gert::TilingContext *context)
+static ge::graphStatus Tiling4UpsampleBilinear2dAABackwardTiling(gert::TilingContext* context)
 {
     UpsampleBilinear2dAABackwardTiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling();
 }
 
-static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext *context)
+static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleBilinear2dAABackwardCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
@@ -551,10 +550,9 @@ static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext *context)
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAic();
 
     OP_CHECK_IF(compileInfo->coreNum <= 0,
-        OP_LOGE(context->GetNodeName(),
-            "UpsampleBilinear2dAABackward GetHardwareInfo Failed, vectorCoreNum:%u",
-            compileInfo->coreNum),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "UpsampleBilinear2dAABackward GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->coreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -562,4 +560,4 @@ IMPL_OP_OPTILING(UpsampleBilinear2dAABackward)
     .Tiling(Tiling4UpsampleBilinear2dAABackwardTiling)
     .TilingParse<UpsampleBilinear2dAABackwardCompileInfo>(TilingPrepareTiling);
 
-}  // namespace optiling
+} // namespace optiling

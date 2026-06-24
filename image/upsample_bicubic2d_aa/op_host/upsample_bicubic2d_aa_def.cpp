@@ -20,7 +20,7 @@ static const std::vector<ge::DataType> xDtype = {ge::DT_FLOAT16, ge::DT_FLOAT, g
 static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
 class UpsampleBicubic2dAA : public OpDef {
 public:
-    explicit UpsampleBicubic2dAA(const char *name) : OpDef(name)
+    explicit UpsampleBicubic2dAA(const char* name) : OpDef(name)
     {
         this->Input("x")
             .ParamType(REQUIRED)
@@ -41,21 +41,13 @@ public:
         this->AICore().AddConfig("ascend910_93");
 
         OpAICoreConfig regbaseConfig;
-        regbaseConfig.Input("x")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
-        regbaseConfig.Output("y")
-            .ParamType(REQUIRED)
-            .DataType(xDtype)
-            .Format(xFormat)
-            .UnknownShapeFormat(xFormat);
+        regbaseConfig.Input("x").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("y").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
         regbaseConfig.DynamicCompileStaticFlag(true)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
             .ExtendCfgInfo("opFile.value", "upsample_bicubic2d_aa_apt");
-        this->AICore().AddConfig("ascend950", regbaseConfig); 
+        this->AICore().AddConfig("ascend950", regbaseConfig);
 
         OpAICoreConfig config_kirin = GetKirinCoreConfig();
         this->AICore().AddConfig("kirinx90", config_kirin);
@@ -87,4 +79,4 @@ private:
 };
 
 OP_ADD(UpsampleBicubic2dAA);
-}  // namespace ops
+} // namespace ops

@@ -35,25 +35,9 @@ constexpr uint32_t OUTPUT_GRAD_Y = 0u;
 constexpr uint32_t CONST_3 = 3u;
 constexpr uint32_t WORKSPACE_16MBYTE_SIZE = 16u * 1024u * 1024u;
 
-enum class DIR : uint32_t
-{
-    DIR_INPUT,
-    DIR_OUTPUT,
-    DIR_MAX
-};
-enum class DIM : size_t
-{
-    DIM_0,
-    DIM_1,
-    DIM_2,
-    DIM_3,
-    DIM_4
-};
-enum class MULTI_CORE_MODE : uint32_t
-{
-    MOLTI_CORE_MODE_N_AXIS,
-    MOLTI_CORE_MODE_B_AXIS
-};
+enum class DIR : uint32_t { DIR_INPUT, DIR_OUTPUT, DIR_MAX };
+enum class DIM : size_t { DIM_0, DIM_1, DIM_2, DIM_3, DIM_4 };
+enum class MULTI_CORE_MODE : uint32_t { MOLTI_CORE_MODE_N_AXIS, MOLTI_CORE_MODE_B_AXIS };
 
 inline static uint32_t CeilDiv(uint32_t value, uint32_t factor)
 {
@@ -90,14 +74,13 @@ void TilingDebugPrint(gert::TilingContext* context, ThreeInterpolateBackwardTili
     OP_LOGD(context, "%s:%u.", "c_move_loop_times", tiling_data.get_c_move_loop_times());
     OP_LOGD(context, "%s:%u.", "mulit_core_mode", tiling_data.get_mulit_core_mode());
     OP_LOGD(context, "%s:%u.", "each_core_proc_batch_num", tiling_data.get_each_core_proc_batch_num());
-    OP_LOGD(
-        context, "%s:%u.", "core_proc_batch_padding_idx", tiling_data.get_core_proc_batch_padding_idx());
+    OP_LOGD(context, "%s:%u.", "core_proc_batch_padding_idx", tiling_data.get_core_proc_batch_padding_idx());
 }
 
 template <typename DATA_T, typename IDX_T>
-ge::graphStatus TilingProcess(
-    ThreeInterpolateBackwardTilingData& tiling_host, const uint32_t& aicore_num, const int64_t& ub_platform_byte_size,
-    bool force_multi_core_mode_1_flag, gert::TilingContext* context)
+ge::graphStatus TilingProcess(ThreeInterpolateBackwardTilingData& tiling_host, const uint32_t& aicore_num,
+                              const int64_t& ub_platform_byte_size, bool force_multi_core_mode_1_flag,
+                              gert::TilingContext* context)
 {
     // 实现tiling 逻辑
     OP_LOGD(context, "aicore_num %u ub_platform_byte_size:%ld.", aicore_num, ub_platform_byte_size);
@@ -112,8 +95,8 @@ ge::graphStatus TilingProcess(
         tiling_host.set_mulit_core_mode(static_cast<uint32_t>(MULTI_CORE_MODE::MOLTI_CORE_MODE_N_AXIS));
         tiling_host.set_used_core_num((tiling_host.get_ns() <= aicore_num) ? tiling_host.get_ns() : aicore_num);
         tiling_host.set_each_core_proc_num(tiling_host.get_ns() / tiling_host.get_used_core_num());
-        tiling_host.set_last_core_proc_num(
-            tiling_host.get_ns() - tiling_host.get_each_core_proc_num() * (tiling_host.get_used_core_num() - 1));
+        tiling_host.set_last_core_proc_num(tiling_host.get_ns() - tiling_host.get_each_core_proc_num() *
+                                                                      (tiling_host.get_used_core_num() - 1));
     }
 
     // double buffer
@@ -122,32 +105,32 @@ ge::graphStatus TilingProcess(
     // 单核循环搬运次数为
     tiling_host.set_each_core_loop_times(CeilDiv(tiling_host.get_each_core_proc_num(), N0));
     tiling_host.set_each_core_each_loop_n_cnt(N0);
-    tiling_host.set_each_core_last_loop_n_cnt(
-        tiling_host.get_each_core_proc_num() - N0 * (tiling_host.get_each_core_loop_times() - 1));
+    tiling_host.set_each_core_last_loop_n_cnt(tiling_host.get_each_core_proc_num() -
+                                              N0 * (tiling_host.get_each_core_loop_times() - 1));
 
     // 最后一个核循环搬运次数为
     tiling_host.set_last_core_loop_times(CeilDiv(tiling_host.get_last_core_proc_num(), N0));
     tiling_host.set_last_core_each_loop_n_cnt(N0);
-    tiling_host.set_last_core_last_loop_n_cnt(
-        tiling_host.get_last_core_proc_num() - N0 * (tiling_host.get_last_core_loop_times() - 1));
+    tiling_host.set_last_core_last_loop_n_cnt(tiling_host.get_last_core_proc_num() -
+                                              N0 * (tiling_host.get_last_core_loop_times() - 1));
 
     tiling_host.set_weight_move_block_size(CONST_3 * N0 * sizeof(DATA_T) / BLOCK_BYTE_SIZE);
     tiling_host.set_idx_move_block_size(CONST_3 * N0 * sizeof(IDX_T) / BLOCK_BYTE_SIZE);
 
-    ub_free_byte_size =
-        ub_free_byte_size - (tiling_host.get_weight_move_block_size() + CONST_3 * C0 * N0 * sizeof(DATA_T));
+    ub_free_byte_size = ub_free_byte_size -
+                        (tiling_host.get_weight_move_block_size() + CONST_3 * C0 * N0 * sizeof(DATA_T));
 
     tiling_host.set_c_move_num(ub_free_byte_size / (C0 * N0 * sizeof(DATA_T) + CONST_3 * C0 * N0 * sizeof(DATA_T)));
-    tiling_host.set_c_move_num(
-        tiling_host.get_c_move_num() >= tiling_host.get_c1() ? tiling_host.get_c1() : tiling_host.get_c_move_num());
+    tiling_host.set_c_move_num(tiling_host.get_c_move_num() >= tiling_host.get_c1() ? tiling_host.get_c1() :
+                                                                                      tiling_host.get_c_move_num());
     if (tiling_host.get_c_move_num() == 0) {
         OP_LOGD(context, "c_move_num is zero.");
         return ge::GRAPH_FAILED;
     }
 
     tiling_host.set_c_move_loop_times(CeilDiv(tiling_host.get_c1(), tiling_host.get_c_move_num()));
-    tiling_host.set_c_last_loop_move_num(
-        tiling_host.get_c1() - (tiling_host.get_c_move_num() * (tiling_host.get_c_move_loop_times() - 1)));
+    tiling_host.set_c_last_loop_move_num(tiling_host.get_c1() -
+                                         (tiling_host.get_c_move_num() * (tiling_host.get_c_move_loop_times() - 1)));
 
     tiling_host.set_grad_x_move_block_size(tiling_host.get_c_move_num() * N0 * C0 * sizeof(DATA_T) / BLOCK_BYTE_SIZE);
     tiling_host.set_grad_y_move_block_size(CONST_3 * tiling_host.get_grad_x_move_block_size());
@@ -162,16 +145,15 @@ ge::graphStatus TilingProcess(
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus TilingGetDimSizeByIndex(
-    gert::TilingContext* context, uint32_t index, DIM dim, DIR dir, uint32_t& dim_size)
+ge::graphStatus TilingGetDimSizeByIndex(gert::TilingContext* context, uint32_t index, DIM dim, DIR dir,
+                                        uint32_t& dim_size)
 {
     auto shape_ptr = (dir == DIR::DIR_INPUT) ? context->GetInputShape(index) : context->GetOutputShape(index);
     OP_CHECK_NULL_WITH_CONTEXT(context, shape_ptr);
 
     auto shape_val = shape_ptr->GetStorageShape();
-    OP_CHECK_IF(
-        static_cast<size_t>(dim) > shape_val.GetDimNum(), OP_LOGE(context, "shape_val limit error."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(static_cast<size_t>(dim) > shape_val.GetDimNum(), OP_LOGE(context, "shape_val limit error."),
+                return ge::GRAPH_FAILED);
 
     dim_size = shape_val.GetDim(static_cast<size_t>(dim));
     return ge::GRAPH_SUCCESS;
@@ -181,24 +163,16 @@ ge::graphStatus TilingBasicShapeInfo(gert::TilingContext* context, ThreeInterpol
 {
     ge::graphStatus ret = ge::GRAPH_FAILED;
     ret = TilingGetDimSizeByIndex(context, INDEX_INPUT_GRAD_X, DIM::DIM_0, DIR::DIR_INPUT, shape_info.bs);
-    OP_CHECK_IF(
-        ret != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
+    OP_CHECK_IF(ret != ge::GRAPH_SUCCESS, OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
 
     ret = TilingGetDimSizeByIndex(context, OUTPUT_GRAD_Y, DIM::DIM_2, DIR::DIR_OUTPUT, shape_info.ms);
-    OP_CHECK_IF(
-        ret != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
+    OP_CHECK_IF(ret != ge::GRAPH_SUCCESS, OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
 
     ret = TilingGetDimSizeByIndex(context, INDEX_INPUT_GRAD_X, DIM::DIM_1, DIR::DIR_INPUT, shape_info.c1);
-    OP_CHECK_IF(
-        ret != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
+    OP_CHECK_IF(ret != ge::GRAPH_SUCCESS, OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
 
     ret = TilingGetDimSizeByIndex(context, INDEX_INPUT_GRAD_X, DIM::DIM_2, DIR::DIR_INPUT, shape_info.ns);
-    OP_CHECK_IF(
-        ret != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
+    OP_CHECK_IF(ret != ge::GRAPH_SUCCESS, OP_LOGE(context, "TilingGetDimSizeByIndex failed."), return ret);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -209,32 +183,32 @@ void SaveTilingDataToBuffer(gert::TilingContext* context, ThreeInterpolateBackwa
     context->GetRawTilingData()->SetDataSize(tiling_host.GetDataSize());
 }
 
-ge::graphStatus TilingMainProcess(
-    ThreeInterpolateBackwardTilingData& tiling_host, const ThreeInterpolateBackwardCompileInfo* compileInfo,
-    gert::TilingContext* context, ge::DataType grad_x_dtype, ge::DataType idx_dtype)
+ge::graphStatus TilingMainProcess(ThreeInterpolateBackwardTilingData& tiling_host,
+                                  const ThreeInterpolateBackwardCompileInfo* compileInfo, gert::TilingContext* context,
+                                  ge::DataType grad_x_dtype, ge::DataType idx_dtype)
 {
     uint64_t tiling_key = 0;
     auto ret = context->GetDeterministic();
     auto aicore_num_used = (ret == 0) ? compileInfo->aicore_num : 1;
     ge::graphStatus tiling_ret = ge::GRAPH_FAILED;
     if (grad_x_dtype == ge::DT_FLOAT && idx_dtype == ge::DT_INT32) {
-        tiling_ret = TilingProcess<float, int32_t>(
-            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, false, context);
+        tiling_ret = TilingProcess<float, int32_t>(tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size,
+                                                   false, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP32_INT32);
     } else if (grad_x_dtype == ge::DT_FLOAT && idx_dtype == ge::DT_INT64) {
-        tiling_ret = TilingProcess<float, int64_t>(
-            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, false, context);
+        tiling_ret = TilingProcess<float, int64_t>(tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size,
+                                                   false, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP32_INT64);
     } else if (grad_x_dtype == ge::DT_FLOAT16 && idx_dtype == ge::DT_INT32) {
-        tiling_ret = TilingProcess<uint16_t, int32_t>(
-            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, true, context);
+        tiling_ret = TilingProcess<uint16_t, int32_t>(tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size,
+                                                      true, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP16_INT32);
     } else if (grad_x_dtype == ge::DT_FLOAT16 && idx_dtype == ge::DT_INT64) {
-        tiling_ret = TilingProcess<uint16_t, int64_t>(
-            tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size, true, context);
+        tiling_ret = TilingProcess<uint16_t, int64_t>(tiling_host, aicore_num_used, compileInfo->ub_platform_byte_size,
+                                                      true, context);
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP16_INT64);
     } else {
@@ -243,9 +217,7 @@ ge::graphStatus TilingMainProcess(
     }
 
     context->SetTilingKey(tiling_key);
-    OP_CHECK_IF(
-        tiling_ret != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "TilingProcess failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(tiling_ret != ge::GRAPH_SUCCESS, OP_LOGE(context, "TilingProcess failed."), return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -258,19 +230,15 @@ static ge::graphStatus Tiling4ThreeInterpolateBackward(gert::TilingContext* cont
     OP_CHECK_NULL_WITH_CONTEXT(context, grad_x_desc);
 
     const auto& grad_x_format = static_cast<ge::Format>(ge::GetPrimaryFormat(grad_x_desc->GetStorageFormat()));
-    OP_CHECK_IF(
-        grad_x_format != ge::FORMAT_NC1HWC0,
-        OP_LOGE(context, "input format error tiling failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(grad_x_format != ge::FORMAT_NC1HWC0, OP_LOGE(context, "input format error tiling failed."),
+                return ge::GRAPH_FAILED);
 
     auto idx_desc = context->GetInputDesc(INDEX_INPUT_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, idx_desc);
 
     ThreeInterpolateShapeInfo shape_info;
-    OP_CHECK_IF(
-        TilingBasicShapeInfo(context, shape_info) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "TilingBasicShapeInfo failed."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(TilingBasicShapeInfo(context, shape_info) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "TilingBasicShapeInfo failed."), return ge::GRAPH_FAILED);
 
     ThreeInterpolateBackwardTilingData tiling_host;
     tiling_host.set_bs(shape_info.bs);
@@ -281,10 +249,9 @@ static ge::graphStatus Tiling4ThreeInterpolateBackward(gert::TilingContext* cont
     auto compileInfo = reinterpret_cast<const ThreeInterpolateBackwardCompileInfo*>(context->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
 
-    OP_CHECK_IF(
-        TilingMainProcess(tiling_host, compileInfo, context, grad_x_desc->GetDataType(), idx_desc->GetDataType()) !=
-            ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "tiling failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(TilingMainProcess(tiling_host, compileInfo, context, grad_x_desc->GetDataType(),
+                                  idx_desc->GetDataType()) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "tiling failed."), return ge::GRAPH_FAILED);
 
     size_t sysWorkspaceSize = WORKSPACE_16MBYTE_SIZE;
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
@@ -307,20 +274,16 @@ static ge::graphStatus TilingPrepare4ThreeInterpolateBackward(gert::TilingParseC
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->aicore_num = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        (compileInfo->aicore_num <= 0),
-        OP_LOGE(
-            context, "TilingPrepare4ThreeInterpolateBackward fail to get core num."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->aicore_num <= 0),
+                OP_LOGE(context, "TilingPrepare4ThreeInterpolateBackward fail to get core num."),
+                return ge::GRAPH_FAILED);
 
     uint64_t ub_platform_byte_size = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_platform_byte_size);
     compileInfo->ub_platform_byte_size = static_cast<int64_t>(ub_platform_byte_size);
-    OP_CHECK_IF(
-        (compileInfo->ub_platform_byte_size <= 0),
-        OP_LOGE(
-            context, "TilingPrepare4ThreeInterpolateBackward fail to get ub size."),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF((compileInfo->ub_platform_byte_size <= 0),
+                OP_LOGE(context, "TilingPrepare4ThreeInterpolateBackward fail to get ub size."),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }

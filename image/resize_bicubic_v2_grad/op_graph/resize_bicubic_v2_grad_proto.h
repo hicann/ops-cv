@@ -30,7 +30,8 @@ namespace ge {
      same as grads.The N, C dimension must be the same as grads.
 
 *@par Outputs:
-*y: A 4D tensor, represents the gradient of original_image. Format and data dtype and shape must be the same as original_image.
+*y: A 4D tensor, represents the gradient of original_image. Format and data dtype and shape must be the same as
+original_image.
 
 *@par Attributes:
 *@li align_corners: An optional bool. If true, the centers of the 4 corner pixels of the input and output tensors are
@@ -40,7 +41,7 @@ namespace ge {
      subscripts of pixels in grads to the H axis subscripts of pixels in y, only takes effect when align_corners is
      true and the value is greater than 0. The second element represents the ratio of the W axis subscripts of pixels in
      grads to the W axis subscripts of pixels in y, only takes effect when align_corners is true and the value is
-     greater than 0.0f. Defaults to {0.0f, 0.0f}. 
+     greater than 0.0f. Defaults to {0.0f, 0.0f}.
 
 *@par Third-party framework compatibility
 *Compatible with PyTorch upsample_bicubic2d_backward operator.
@@ -55,4 +56,3 @@ REG_OP(ResizeBicubicV2Grad)
 } // namespace ge
 
 #endif // OPS_OP_PROTO_INC_RESIZE_BICUBIC_V2_GRAD_H_
-

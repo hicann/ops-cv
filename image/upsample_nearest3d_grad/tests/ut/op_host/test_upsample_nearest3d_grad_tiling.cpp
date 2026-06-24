@@ -19,18 +19,11 @@
 using namespace std;
 using namespace optiling;
 
-class UpsampleNearest3dGradTiling : public testing::Test
-{
+class UpsampleNearest3dGradTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UpsampleNearest3dGradTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UpsampleNearest3dGradTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UpsampleNearest3dGradTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UpsampleNearest3dGradTiling TearDown" << std::endl; }
 };
 
 TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_001)
@@ -39,10 +32,10 @@ TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_001)
     gert::TilingContextPara tilingContextPara(
         "UpsampleNearest3dGrad", {{{{1, 1, 128, 128, 128}, {1, 1, 128, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{1, 1, 256, 256, 256}, {1, 1, 256, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 128, 128, 128})),
-         gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({256, 256, 256})),
+        {gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 128, 128, 128})),
+         gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({256, 256, 256})),
          gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0, 0.0}))},
         &compileInfo);
     uint64_t expectTilingKey = 1;
@@ -61,10 +54,10 @@ TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_002)
     gert::TilingContextPara tilingContextPara(
         "UpsampleNearest3dGrad", {{{{1, 1, 64, 64, 64}, {1, 1, 64, 64, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{1, 1, 32, 32, 32}, {1, 1, 32, 32, 32}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 32, 32, 32})),
-         gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({64, 64, 64})),
+        {gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 32, 32, 32})),
+         gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({64, 64, 64})),
          gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.5, 0.5, 0.5}))},
         &compileInfo);
     uint64_t expectTilingKey = 1;
@@ -87,10 +80,10 @@ TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_003)
     gert::TilingContextPara tilingContextPara(
         "UpsampleNearest3dGrad", {{{{1, 1, 64, 64, 64}, {1, 1, 64, 64, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{{{1, 1, 32, 32, 32}, {1, 1, 32, 32, 32}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr(
-             "input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 32, 32, 32})),
-         gert::TilingContextPara::OpAttr(
-             "output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({64, 64, 64})),
+        {gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 32, 32, 32})),
+         gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({64, 64, 64})),
          gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.5, 0.5, 0.5}))},
         &compileInfo, socVersion);
     uint64_t expectTilingKey = 259;

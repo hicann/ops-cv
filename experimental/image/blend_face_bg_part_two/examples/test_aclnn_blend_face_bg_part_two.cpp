@@ -47,25 +47,28 @@
 static int64_t GetShapeSize(const std::vector<int64_t>& shape)
 {
     int64_t s = 1;
-    for (auto d : shape) s *= d;
+    for (auto d : shape)
+        s *= d;
     return s;
 }
 
 template <typename T>
-static int CreateAclTensor(const std::vector<T>& host, const std::vector<int64_t>& shape,
-                           void** dev, aclDataType dt, aclTensor** t)
+static int CreateAclTensor(const std::vector<T>& host, const std::vector<int64_t>& shape, void** dev, aclDataType dt,
+                           aclTensor** t)
 {
     auto sz = static_cast<size_t>(GetShapeSize(shape)) * sizeof(T);
     auto ret = aclrtMalloc(dev, sz, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (ret != ACL_SUCCESS) return ret;
+    if (ret != ACL_SUCCESS)
+        return ret;
     ret = aclrtMemcpy(*dev, sz, host.data(), sz, ACL_MEMCPY_HOST_TO_DEVICE);
-    if (ret != ACL_SUCCESS) return ret;
+    if (ret != ACL_SUCCESS)
+        return ret;
     std::vector<int64_t> strides(shape.size(), 1);
     for (int64_t i = static_cast<int64_t>(shape.size()) - 2; i >= 0; --i) {
         strides[i] = shape[i + 1] * strides[i + 1];
     }
-    *t = aclCreateTensor(shape.data(), shape.size(), dt, strides.data(), 0,
-                         aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), *dev);
+    *t = aclCreateTensor(shape.data(), shape.size(), dt, strides.data(), 0, aclFormat::ACL_FORMAT_ND, shape.data(),
+                         shape.size(), *dev);
     return 0;
 }
 
@@ -87,18 +90,18 @@ struct CaseDeviceData {
     aclTensor *fT = nullptr, *mT = nullptr, *xT = nullptr, *bT = nullptr, *oT = nullptr;
 };
 
-static void make_inputs(const Case& c,
-                        std::vector<float>& accFace,
-                        std::vector<float>& accMask,
-                        std::vector<float>& maxMask,
-                        std::vector<float>& bgImg)
+static void make_inputs(const Case& c, std::vector<float>& accFace, std::vector<float>& accMask,
+                        std::vector<float>& maxMask, std::vector<float>& bgImg)
 {
     int64_t n = GetShapeSize(c.shape);
-    accFace.resize(n); accMask.resize(n); maxMask.resize(n); bgImg.resize(n);
+    accFace.resize(n);
+    accMask.resize(n);
+    maxMask.resize(n);
+    bgImg.resize(n);
 
     std::mt19937 rng(0xB1E11Du);
     std::uniform_real_distribution<float> faceDist(0.05f, 5.0f);
-    std::uniform_real_distribution<float> maskDist(0.05f, 5.0f);   // acc_mask kept >= 0.05 to mirror real pipeline
+    std::uniform_real_distribution<float> maskDist(0.05f, 5.0f); // acc_mask kept >= 0.05 to mirror real pipeline
     std::uniform_real_distribution<float> bgDist(0.0f, 1.0f);
     std::uniform_real_distribution<float> alphaDist(0.0f, 1.0f);
     std::bernoulli_distribution bimodal(0.5);
@@ -106,21 +109,26 @@ static void make_inputs(const Case& c,
     for (int64_t i = 0; i < n; ++i) {
         accFace[i] = faceDist(rng);
         accMask[i] = maskDist(rng);
-        bgImg[i]   = bgDist(rng);
+        bgImg[i] = bgDist(rng);
         switch (c.alpha) {
-            case AlphaDist::Uniform01: maxMask[i] = alphaDist(rng); break;
-            case AlphaDist::AllZero:   maxMask[i] = 0.0f; break;
-            case AlphaDist::AllOne:    maxMask[i] = 1.0f; break;
-            case AlphaDist::Bimodal:   maxMask[i] = bimodal(rng) ? 1.0f : 0.0f; break;
+            case AlphaDist::Uniform01:
+                maxMask[i] = alphaDist(rng);
+                break;
+            case AlphaDist::AllZero:
+                maxMask[i] = 0.0f;
+                break;
+            case AlphaDist::AllOne:
+                maxMask[i] = 1.0f;
+                break;
+            case AlphaDist::Bimodal:
+                maxMask[i] = bimodal(rng) ? 1.0f : 0.0f;
+                break;
         }
     }
 }
 
-static void ref_blend(const std::vector<float>& accFace,
-                      const std::vector<float>& accMask,
-                      const std::vector<float>& maxMask,
-                      const std::vector<float>& bgImg,
-                      double epsilon,
+static void ref_blend(const std::vector<float>& accFace, const std::vector<float>& accMask,
+                      const std::vector<float>& maxMask, const std::vector<float>& bgImg, double epsilon,
                       std::vector<float>& fused)
 {
     int64_t n = static_cast<int64_t>(accFace.size());
@@ -132,43 +140,49 @@ static void ref_blend(const std::vector<float>& accFace,
     }
 }
 
-static int CreateCaseTensors(const Case& c,
-                             const std::vector<float>& accFace,
-                             const std::vector<float>& accMask,
-                             const std::vector<float>& maxMask,
-                             const std::vector<float>& bgImg,
-                             const std::vector<float>& outHost,
-                             CaseDeviceData& data)
+static int CreateCaseTensors(const Case& c, const std::vector<float>& accFace, const std::vector<float>& accMask,
+                             const std::vector<float>& maxMask, const std::vector<float>& bgImg,
+                             const std::vector<float>& outHost, CaseDeviceData& data)
 {
-    int rc = CreateAclTensor(accFace, c.shape, &data.fDev, ACL_FLOAT, &data.fT); if (rc) return rc;
-    rc     = CreateAclTensor(accMask, c.shape, &data.mDev, ACL_FLOAT, &data.mT); if (rc) return rc;
-    rc     = CreateAclTensor(maxMask, c.shape, &data.xDev, ACL_FLOAT, &data.xT); if (rc) return rc;
+    int rc = CreateAclTensor(accFace, c.shape, &data.fDev, ACL_FLOAT, &data.fT);
+    if (rc)
+        return rc;
+    rc = CreateAclTensor(accMask, c.shape, &data.mDev, ACL_FLOAT, &data.mT);
+    if (rc)
+        return rc;
+    rc = CreateAclTensor(maxMask, c.shape, &data.xDev, ACL_FLOAT, &data.xT);
+    if (rc)
+        return rc;
     if (c.bgDType == BgDType::Uint8) {
         std::vector<uint8_t> bgImgU8(bgImg.size());
         for (size_t i = 0; i < bgImg.size(); ++i) {
             bgImgU8[i] = static_cast<uint8_t>(std::round(bgImg[i]));
         }
-        rc = CreateAclTensor(bgImgU8, c.shape, &data.bDev, ACL_UINT8, &data.bT); if (rc) return rc;
+        rc = CreateAclTensor(bgImgU8, c.shape, &data.bDev, ACL_UINT8, &data.bT);
+        if (rc)
+            return rc;
     } else {
-        rc = CreateAclTensor(bgImg, c.shape, &data.bDev, ACL_FLOAT, &data.bT); if (rc) return rc;
+        rc = CreateAclTensor(bgImg, c.shape, &data.bDev, ACL_FLOAT, &data.bT);
+        if (rc)
+            return rc;
     }
-    rc     = CreateAclTensor(outHost, c.shape, &data.oDev, ACL_FLOAT, &data.oT); if (rc) return rc;
+    rc = CreateAclTensor(outHost, c.shape, &data.oDev, ACL_FLOAT, &data.oT);
+    if (rc)
+        return rc;
     return ACL_SUCCESS;
 }
 
-static int PrepareExecutor(const Case& c, const CaseDeviceData& data, uint64_t& wsSize,
-                           aclOpExecutor*& executor)
+static int PrepareExecutor(const Case& c, const CaseDeviceData& data, uint64_t& wsSize, aclOpExecutor*& executor)
 {
-    int rc = aclnnBlendFaceBgPartTwoGetWorkspaceSize(data.fT, data.mT, data.xT, data.bT, c.epsilon,
-                                                     data.oT, &wsSize, &executor);
+    int rc = aclnnBlendFaceBgPartTwoGetWorkspaceSize(data.fT, data.mT, data.xT, data.bT, c.epsilon, data.oT, &wsSize,
+                                                     &executor);
     if (rc != ACL_SUCCESS) {
         LOG_PRINT("[FAIL %s] GetWorkspaceSize=%d\n", c.name, rc);
     }
     return rc;
 }
 
-static int RunExecutor(const Case& c, aclrtStream stream, uint64_t wsSize, aclOpExecutor* executor,
-                       void*& wsAddr)
+static int RunExecutor(const Case& c, aclrtStream stream, uint64_t wsSize, aclOpExecutor* executor, void*& wsAddr)
 {
     if (wsSize > 0) {
         aclrtMalloc(&wsAddr, wsSize, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -183,27 +197,34 @@ static int RunExecutor(const Case& c, aclrtStream stream, uint64_t wsSize, aclOp
     return ACL_SUCCESS;
 }
 
-static void CopyOutputAndCompare(const CaseDeviceData& data, const std::vector<float>& refOut,
-                                 int nElems, float& maxErr)
+static void CopyOutputAndCompare(const CaseDeviceData& data, const std::vector<float>& refOut, int nElems,
+                                 float& maxErr)
 {
     std::vector<float> dev(nElems);
-    aclrtMemcpy(dev.data(), nElems * sizeof(float), data.oDev, nElems * sizeof(float),
-                ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dev.data(), nElems * sizeof(float), data.oDev, nElems * sizeof(float), ACL_MEMCPY_DEVICE_TO_HOST);
 
     maxErr = 0.0f;
     for (int i = 0; i < nElems; ++i) {
         float diff = std::fabs(dev[i] - refOut[i]);
-        if (diff > maxErr) maxErr = diff;
+        if (diff > maxErr)
+            maxErr = diff;
     }
 }
 
 static void DestroyCaseTensors(const CaseDeviceData& data, void* wsAddr)
 {
-    aclDestroyTensor(data.fT); aclDestroyTensor(data.mT); aclDestroyTensor(data.xT);
-    aclDestroyTensor(data.bT); aclDestroyTensor(data.oT);
-    aclrtFree(data.fDev); aclrtFree(data.mDev); aclrtFree(data.xDev);
-    aclrtFree(data.bDev); aclrtFree(data.oDev);
-    if (wsAddr) aclrtFree(wsAddr);
+    aclDestroyTensor(data.fT);
+    aclDestroyTensor(data.mT);
+    aclDestroyTensor(data.xT);
+    aclDestroyTensor(data.bT);
+    aclDestroyTensor(data.oT);
+    aclrtFree(data.fDev);
+    aclrtFree(data.mDev);
+    aclrtFree(data.xDev);
+    aclrtFree(data.bDev);
+    aclrtFree(data.oDev);
+    if (wsAddr)
+        aclrtFree(wsAddr);
 }
 
 static int run_case(aclrtStream stream, const Case& c, float& maxErr, int& nElems)
@@ -221,16 +242,19 @@ static int run_case(aclrtStream stream, const Case& c, float& maxErr, int& nElem
     CaseDeviceData data;
     std::vector<float> outHost(nElems, 0.0f);
     int rc = CreateCaseTensors(c, accFace, accMask, maxMask, bgImg, outHost, data);
-    if (rc) return rc;
+    if (rc)
+        return rc;
 
     uint64_t wsSize = 0;
     aclOpExecutor* executor = nullptr;
     rc = PrepareExecutor(c, data, wsSize, executor);
-    if (rc != ACL_SUCCESS) return rc;
+    if (rc != ACL_SUCCESS)
+        return rc;
 
     void* wsAddr = nullptr;
     rc = RunExecutor(c, stream, wsSize, executor, wsAddr);
-    if (rc != ACL_SUCCESS) return rc;
+    if (rc != ACL_SUCCESS)
+        return rc;
 
     CopyOutputAndCompare(data, refOut, nElems, maxErr);
     DestroyCaseTensors(data, wsAddr);
@@ -241,9 +265,12 @@ int main()
 {
     int32_t deviceId = 0;
     aclrtStream stream;
-    auto ret = aclInit(nullptr);          CHECK_RET(ret == ACL_SUCCESS, return ret);
-    ret      = aclrtSetDevice(deviceId);  CHECK_RET(ret == ACL_SUCCESS, return ret);
-    ret      = aclrtCreateStream(&stream); CHECK_RET(ret == ACL_SUCCESS, return ret);
+    auto ret = aclInit(nullptr);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    ret = aclrtSetDevice(deviceId);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    ret = aclrtCreateStream(&stream);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     // Tolerances calibrated for fp32 fused-multiply-add: max ~1 ulp ≈ 1e-6 relative.
     // Use 5e-5 absolute to absorb worst-case roundtrip on Div + Muls + Add chain.
@@ -256,17 +283,17 @@ int main()
     //   alpha=1  : output = (face/(mask+eps)) only (bg masked out)
     //   bimodal  : sharp transitions, covers Mul/Add precision under jumps
     Case cases[] = {
-        {"scalar_min",          {1, 1, 1, 1},       1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"tiny_uniform",        {1, 3, 4, 4},      1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"single_core_multi",   {1, 1, 64, 128},   1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"multicore_aligned",   {1, 3, 256, 256},  1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"ragged_tail",         {1, 3, 17, 31},    1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"alpha_all_zero",      {1, 3, 32, 32},    1e-12, AlphaDist::AllZero,   BgDType::Float32, 5e-5f},
-        {"alpha_all_one",       {1, 3, 32, 32},    1e-12, AlphaDist::AllOne,    BgDType::Float32, 5e-5f},
-        {"alpha_bimodal",       {1, 3, 32, 32},    1e-12, AlphaDist::Bimodal,   BgDType::Float32, 5e-5f},
-        {"epsilon_default",     {1, 3, 4, 4},      1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"epsilon_loose",       {1, 3, 4, 4},      1e-3,  AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
-        {"bg_uint8_uniform",    {1, 3, 17, 31},    1e-12, AlphaDist::Uniform01, BgDType::Uint8,   1e-4f},
+        {"scalar_min", {1, 1, 1, 1}, 1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"tiny_uniform", {1, 3, 4, 4}, 1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"single_core_multi", {1, 1, 64, 128}, 1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"multicore_aligned", {1, 3, 256, 256}, 1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"ragged_tail", {1, 3, 17, 31}, 1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"alpha_all_zero", {1, 3, 32, 32}, 1e-12, AlphaDist::AllZero, BgDType::Float32, 5e-5f},
+        {"alpha_all_one", {1, 3, 32, 32}, 1e-12, AlphaDist::AllOne, BgDType::Float32, 5e-5f},
+        {"alpha_bimodal", {1, 3, 32, 32}, 1e-12, AlphaDist::Bimodal, BgDType::Float32, 5e-5f},
+        {"epsilon_default", {1, 3, 4, 4}, 1e-12, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"epsilon_loose", {1, 3, 4, 4}, 1e-3, AlphaDist::Uniform01, BgDType::Float32, 5e-5f},
+        {"bg_uint8_uniform", {1, 3, 17, 31}, 1e-12, AlphaDist::Uniform01, BgDType::Uint8, 1e-4f},
     };
     const int total = sizeof(cases) / sizeof(cases[0]);
     int passed = 0, failed = 0;
@@ -277,9 +304,12 @@ int main()
         int nElems = 0;
         int rc = run_case(stream, cases[i], maxErr, nElems);
         bool ok = (rc == ACL_SUCCESS) && (maxErr <= cases[i].tol);
-        LOG_PRINT("[%s] %-22s n=%-7d max_err=%.3e (tol=%.0e) rc=%d\n",
-                  ok ? "PASS" : "FAIL", cases[i].name, nElems, maxErr, cases[i].tol, rc);
-        if (ok) ++passed; else ++failed;
+        LOG_PRINT("[%s] %-22s n=%-7d max_err=%.3e (tol=%.0e) rc=%d\n", ok ? "PASS" : "FAIL", cases[i].name, nElems,
+                  maxErr, cases[i].tol, rc);
+        if (ok)
+            ++passed;
+        else
+            ++failed;
     }
     LOG_PRINT("=== SUMMARY: %d/%d PASS ===\n", passed, total);
 

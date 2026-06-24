@@ -31,20 +31,20 @@ class KernelUpsampleTrilinear {
 
 public:
     TPipe pipe;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmul_w;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmul_h;
-    matmul::Matmul<
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-        MDL_CFG>
+    matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
         matmul_d;
 
     __aicore__ inline KernelUpsampleTrilinear(){};
@@ -73,22 +73,24 @@ private:
 
     __aicore__ inline void CalcInputOffsetD();
 
-    __aicore__ inline void CalcRatioMetrixInRight(
-        const int32_t output_start_indx, const int32_t output_end_indx, const int32_t omega_metrix_w,
-        const int32_t omega_metrix_h, float scale, const int32_t input_start_indx, const int32_t input_end_indx);
+    __aicore__ inline void CalcRatioMetrixInRight(const int32_t output_start_indx, const int32_t output_end_indx,
+                                                  const int32_t omega_metrix_w, const int32_t omega_metrix_h,
+                                                  float scale, const int32_t input_start_indx,
+                                                  const int32_t input_end_indx);
 
-    __aicore__ inline void CalcRatioMetrixInLeft(
-        const int32_t output_start_indx, const int32_t output_end_indx, const int32_t omega_metrix_w,
-        const int32_t omega_metrix_h, float scale, const int32_t input_start_indx, const int32_t input_end_indx);
+    __aicore__ inline void CalcRatioMetrixInLeft(const int32_t output_start_indx, const int32_t output_end_indx,
+                                                 const int32_t omega_metrix_w, const int32_t omega_metrix_h,
+                                                 float scale, const int32_t input_start_indx,
+                                                 const int32_t input_end_indx);
 
-    __aicore__ inline void CalcMatMulInW(
-        int32_t input_col_start, int32_t output_col_start, int32_t row_start, int32_t row_end, int32_t k, int32_t n);
+    __aicore__ inline void CalcMatMulInW(int32_t input_col_start, int32_t output_col_start, int32_t row_start,
+                                         int32_t row_end, int32_t k, int32_t n);
 
-    __aicore__ inline void CalcMatMulInH(
-        int32_t input_col_start, int32_t output_col_start, int32_t batch_index, int32_t m, int32_t n, int32_t k);
+    __aicore__ inline void CalcMatMulInH(int32_t input_col_start, int32_t output_col_start, int32_t batch_index,
+                                         int32_t m, int32_t n, int32_t k);
 
-    __aicore__ inline void CalcMatMulInD(
-        int32_t input_col_start, int32_t output_col_start, int32_t batch_index, int32_t m, int32_t n, int32_t k);
+    __aicore__ inline void CalcMatMulInD(int32_t input_col_start, int32_t output_col_start, int32_t batch_index,
+                                         int32_t m, int32_t n, int32_t k);
 
     __aicore__ inline void CopyRatioMetrix2Gm();
 
@@ -153,8 +155,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void KernelUpsampleTrilinear<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleTrilinearTilingData* tilingData)
+__aicore__ inline void KernelUpsampleTrilinear<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                        const UpsampleTrilinearTilingData* tilingData)
 {
     input_gm.SetGlobalBuffer((__gm__ T*)input);
     output_gm.SetGlobalBuffer((__gm__ T*)output);
@@ -276,22 +278,22 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetD()
             output_start_idx = tail_group_block_start_indx_d;
             output_end_idx = tail_group_block_end_indx_d;
             input_start_idx = static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_d, output_start_idx));
-            input_end_idx =
-                MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_d, output_end_idx)) + 1, input_d - 1);
+            input_end_idx = MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_d, output_end_idx)) + 1,
+                                input_d - 1);
             omega_metrix_h = output_end_idx - output_start_idx + 1;
         } else {
             output_start_idx = slide_start_indx_d + slide_size * i;
             output_end_idx = output_start_idx + slide_size - 1;
             input_start_idx = static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_d, output_start_idx));
-            input_end_idx =
-                MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_d, output_end_idx)) + 1, input_d - 1);
+            input_end_idx = MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_d, output_end_idx)) + 1,
+                                input_d - 1);
             omega_metrix_h = slide_size;
         }
         // singleK
         omega_metrix_w = input_end_idx - input_start_idx + 1;
         // calc metrix
-        CalcRatioMetrixInLeft(
-            output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_d, input_start_idx, input_end_idx);
+        CalcRatioMetrixInLeft(output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_d,
+                              input_start_idx, input_end_idx);
         CopyRatioMetrix2Gm();
         for (size_t j = batch_start; j < batch_end; j++) {
             CalcMatMulInD(input_start_idx, output_start_idx, j, omega_metrix_h, output_w * output_h, omega_metrix_w);
@@ -318,22 +320,22 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetH()
             output_start_idx = tail_group_block_start_indx_h;
             output_end_idx = tail_group_block_end_indx_h;
             input_start_idx = static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_h, output_start_idx));
-            input_end_idx =
-                MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_h, output_end_idx)) + 1, input_h - 1);
+            input_end_idx = MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_h, output_end_idx)) + 1,
+                                input_h - 1);
             omega_metrix_h = output_end_idx - output_start_idx + 1;
         } else {
             output_start_idx = slide_start_indx_h + slide_size * i;
             output_end_idx = output_start_idx + slide_size - 1;
             input_start_idx = static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_h, output_start_idx));
-            input_end_idx =
-                MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_h, output_end_idx)) + 1, input_h - 1);
+            input_end_idx = MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_h, output_end_idx)) + 1,
+                                input_h - 1);
             omega_metrix_h = slide_size;
         }
         // singleK
         omega_metrix_w = input_end_idx - input_start_idx + 1;
         // calc metrix
-        CalcRatioMetrixInLeft(
-            output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_h, input_start_idx, input_end_idx);
+        CalcRatioMetrixInLeft(output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_h,
+                              input_start_idx, input_end_idx);
         CopyRatioMetrix2Gm();
         for (size_t j = batch_start; j < batch_end; j++) {
             CalcMatMulInH(input_start_idx, output_start_idx, j, omega_metrix_h, output_w, omega_metrix_w);
@@ -359,23 +361,23 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetW()
             }
             input_start_idx = static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_w, output_start_idx));
             omega_metrix_w = output_end_idx - output_start_idx + 1;
-            input_end_idx =
-                MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_w, output_end_idx)) + 1, input_w - 1);
+            input_end_idx = MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_w, output_end_idx)) + 1,
+                                input_w - 1);
             row_start = tail_group_block_start_indx_w;
             row_end = tail_group_block_end_indx_w;
         } else {
             output_start_idx = slide_start_indx_w + slide_size * i;
             output_end_idx = output_start_idx + slide_size - 1;
             input_start_idx = static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_w, output_start_idx));
-            input_end_idx =
-                MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_w, output_end_idx)) + 1, input_w - 1);
+            input_end_idx = MIN(static_cast<int32_t>(AreaPixelComputeSourceIndex(scale_w, output_end_idx)) + 1,
+                                input_w - 1);
             omega_metrix_w = slide_size;
         }
         // singleK
         omega_metrix_h = input_end_idx - input_start_idx + 1;
         // calc metrix
-        CalcRatioMetrixInRight(
-            output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_w, input_start_idx, input_end_idx);
+        CalcRatioMetrixInRight(output_start_idx, output_end_idx, omega_metrix_w, omega_metrix_h, scale_w,
+                               input_start_idx, input_end_idx);
         CopyRatioMetrix2Gm();
         // matmul算完之后，下一个系数矩阵才能往gm上面copy要看下这块后续是否有性能问题
         CalcMatMulInW(input_start_idx, output_start_idx, row_start, row_end, omega_metrix_h, omega_metrix_w);
@@ -383,8 +385,8 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcInputOffsetW()
 }
 
 template <typename T>
-__aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInD(
-    int32_t input_col_start, int32_t output_col_start, int32_t batch_index, int32_t m, int32_t n, int32_t k)
+__aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInD(int32_t input_col_start, int32_t output_col_start,
+                                                                 int32_t batch_index, int32_t m, int32_t n, int32_t k)
 {
     int32_t singleCoreM = m;
     int32_t singleCoreN = n;
@@ -413,8 +415,8 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInD(
 }
 
 template <typename T>
-__aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInH(
-    int32_t input_col_start, int32_t output_col_start, int32_t batch_index, int32_t m, int32_t n, int32_t k)
+__aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInH(int32_t input_col_start, int32_t output_col_start,
+                                                                 int32_t batch_index, int32_t m, int32_t n, int32_t k)
 {
     int32_t singleCoreM = m;
     int32_t singleCoreN = n;
@@ -443,8 +445,9 @@ __aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInH(
 }
 
 template <typename T>
-__aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInW(
-    int32_t input_col_start, int32_t output_col_start, int32_t row_start, int32_t row_end, int32_t k, int32_t n)
+__aicore__ inline void KernelUpsampleTrilinear<T>::CalcMatMulInW(int32_t input_col_start, int32_t output_col_start,
+                                                                 int32_t row_start, int32_t row_end, int32_t k,
+                                                                 int32_t n)
 {
     int32_t singleCoreM = matmul_tiling_w->singleCoreM;
     int32_t singleCoreN = n;

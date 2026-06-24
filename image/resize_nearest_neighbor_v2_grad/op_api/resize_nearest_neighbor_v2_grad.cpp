@@ -37,30 +37,28 @@ static constexpr size_t NHWC_DIM_H = 1;
 static constexpr size_t NHWC_DIM_W = 2;
 
 // AICORE算子kernel 仅支持float
-static const aclTensor *ResizeNearestNeighborV2GradAICORE(const aclTensor *grads, const aclTensor *inputSize,
-    bool alignCorners, bool halfPixelCenters, const aclFloatArray *scales, aclTensor *out, aclOpExecutor *executor)
+static const aclTensor* ResizeNearestNeighborV2GradAICORE(const aclTensor* grads, const aclTensor* inputSize,
+                                                          bool alignCorners, bool halfPixelCenters,
+                                                          const aclFloatArray* scales, aclTensor* out,
+                                                          aclOpExecutor* executor)
 {
     L0_DFX(ResizeNearestNeighborV2GradAICORE, grads, inputSize, alignCorners, halfPixelCenters, out);
     auto ret = ACLNN_SUCCESS;
     if (scales == nullptr) {
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeNearestNeighborV2Grad,
-            OP_INPUT(grads, inputSize),
-            OP_OUTPUT(out),
-            OP_ATTR(alignCorners, halfPixelCenters));
+        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeNearestNeighborV2Grad, OP_INPUT(grads, inputSize), OP_OUTPUT(out),
+                                          OP_ATTR(alignCorners, halfPixelCenters));
     } else {
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeNearestNeighborV2Grad,
-            OP_INPUT(grads, inputSize),
-            OP_OUTPUT(out),
-            OP_ATTR(alignCorners, halfPixelCenters, scales));
+        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeNearestNeighborV2Grad, OP_INPUT(grads, inputSize), OP_OUTPUT(out),
+                                          OP_ATTR(alignCorners, halfPixelCenters, scales));
     }
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeNearestNeighborV2GradAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeNearestNeighborV2GradAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return out;
 }
 
-const aclTensor *ResizeNearestNeighborV2Grad5Hd(const aclTensor *grads, const aclIntArray *inputSize, bool alignCorners,
-    bool halfPixelCenters, aclOpExecutor *executor)
+const aclTensor* ResizeNearestNeighborV2Grad5Hd(const aclTensor* grads, const aclIntArray* inputSize, bool alignCorners,
+                                                bool halfPixelCenters, aclOpExecutor* executor)
 {
     int64_t inputSizeH = (*inputSize)[NCHW_DIM_H];
     int64_t inputSizeW = (*inputSize)[NCHW_DIM_W];
@@ -70,7 +68,7 @@ const aclTensor *ResizeNearestNeighborV2Grad5Hd(const aclTensor *grads, const ac
         inputSizeW = (*inputSize)[NHWC_DIM_W];
     }
     const int64_t shapes[2] = {inputSizeH, inputSizeW};
-    aclIntArray *shapeArray = executor->AllocIntArray(shapes, sizeof(shapes) / sizeof(int64_t));
+    aclIntArray* shapeArray = executor->AllocIntArray(shapes, sizeof(shapes) / sizeof(int64_t));
     CHECK_RET(shapeArray != nullptr, nullptr);
     auto inputSizeTensor = executor->ConvertToTensor(shapeArray, op::ToOpDataType(ACL_INT32));
     CHECK_RET(inputSizeTensor != nullptr, nullptr);
@@ -87,19 +85,17 @@ const aclTensor *ResizeNearestNeighborV2Grad5Hd(const aclTensor *grads, const ac
         gradsOriginalShape.SetDim(NHWC_DIM_W, inputSizeW);
     }
 
-    auto out = executor->AllocTensor(gradsStorageShape,
-        gradsOriginalShape,
-        grads->GetDataType(),
-        grads->GetStorageFormat(),
-        grads->GetOriginalFormat());
+    auto out = executor->AllocTensor(gradsStorageShape, gradsOriginalShape, grads->GetDataType(),
+                                     grads->GetStorageFormat(), grads->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    return ResizeNearestNeighborV2GradAICORE(
-        grads, inputSizeTensor, alignCorners, halfPixelCenters, nullptr, out, executor);
+    return ResizeNearestNeighborV2GradAICORE(grads, inputSizeTensor, alignCorners, halfPixelCenters, nullptr, out,
+                                             executor);
 }
 
-const aclTensor *ResizeNearestNeighborV2Grad(const aclTensor *grads, const aclIntArray *inputSize, bool alignCorners,
-    bool halfPixelCenters, const aclFloatArray *scales, aclOpExecutor *executor)
+const aclTensor* ResizeNearestNeighborV2Grad(const aclTensor* grads, const aclIntArray* inputSize, bool alignCorners,
+                                             bool halfPixelCenters, const aclFloatArray* scales,
+                                             aclOpExecutor* executor)
 {
     int64_t inputSizeH = 0;
     int64_t inputSizeW = 0;
@@ -112,7 +108,7 @@ const aclTensor *ResizeNearestNeighborV2Grad(const aclTensor *grads, const aclIn
     }
 
     const int64_t shapes[2] = {inputSizeH, inputSizeW};
-    aclIntArray *shapeArray = executor->AllocIntArray(shapes, sizeof(shapes) / sizeof(int64_t));
+    aclIntArray* shapeArray = executor->AllocIntArray(shapes, sizeof(shapes) / sizeof(int64_t));
     CHECK_RET(shapeArray != nullptr, nullptr);
     auto inputSizeTensor = executor->ConvertToTensor(shapeArray, op::ToOpDataType(ACL_INT32));
     CHECK_RET(inputSizeTensor != nullptr, nullptr);
@@ -131,15 +127,12 @@ const aclTensor *ResizeNearestNeighborV2Grad(const aclTensor *grads, const aclIn
         gradsOriginalShape.SetDim(NHWC_DIM_W, inputSizeW);
     }
 
-    auto out = executor->AllocTensor(gradsStorageShape,
-        gradsOriginalShape,
-        grads->GetDataType(),
-        grads->GetStorageFormat(),
-        grads->GetOriginalFormat());
+    auto out = executor->AllocTensor(gradsStorageShape, gradsOriginalShape, grads->GetDataType(),
+                                     grads->GetStorageFormat(), grads->GetOriginalFormat());
 
     CHECK_RET(out != nullptr, nullptr);
 
-    return ResizeNearestNeighborV2GradAICORE(
-        grads, inputSizeTensor, alignCorners, halfPixelCenters, scales, out, executor);
+    return ResizeNearestNeighborV2GradAICORE(grads, inputSizeTensor, alignCorners, halfPixelCenters, scales, out,
+                                             executor);
 }
-}  // namespace l0op
+} // namespace l0op

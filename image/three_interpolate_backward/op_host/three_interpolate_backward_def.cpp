@@ -15,8 +15,7 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-class ThreeInterpolateBackward : public OpDef
-{
+class ThreeInterpolateBackward : public OpDef {
 public:
     explicit ThreeInterpolateBackward(const char* name) : OpDef(name)
     {

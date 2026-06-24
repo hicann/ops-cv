@@ -119,8 +119,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void KernelUpsampleTrilinear310p<T>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, UpsampleTrilinearTilingData* tilingData)
+__aicore__ inline void KernelUpsampleTrilinear310p<T>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                            UpsampleTrilinearTilingData* tilingData)
 {
     // parse tilingdata
     blockIdx = GetBlockIdx();
@@ -250,8 +250,8 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ProcessSingleSlide(int64_
                 realIndexTensor.SetValue(i, realIndex);
             }
             srcStartW = Min(static_cast<int64_t>(realIndexTensor.GetValue(0)), input_w - 1);
-            srcDataLength =
-                Min(static_cast<int64_t>(realIndexTensor.GetValue(dataLength - 1)) + 1, input_w - 1) - srcStartW + 1;
+            srcDataLength = Min(static_cast<int64_t>(realIndexTensor.GetValue(dataLength - 1)) + 1, input_w - 1) -
+                            srcStartW + 1;
             lastStartW = startW;
         }
         ComputeSmallBatch();
@@ -280,8 +280,8 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ComputeSmallBatch()
         float weightD = d == 0 ? static_cast<float>(1) - lambdaD1 : lambdaD1;
         for (int64_t h = 0; h < hSize; h++) {
             float weightH = h == 0 ? static_cast<float>(1) - lambdaH1 : lambdaH1;
-            int64_t indexInput =
-                ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w + srcStartW) * batches;
+            int64_t indexInput = ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w + srcStartW) *
+                                 batches;
             CopyIn(indexInput, CeilA2B(calCount, blockSize) * blockSize);
             if (std::is_same_v<T, float>) {
                 LocalTensor<float> srcDataLocal = inputQueue.DeQue<float>();
@@ -312,16 +312,14 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ComputeW()
         for (int64_t w = 0; w < dataLength; w++) {
             int32_t srcIndexW0 = Min(static_cast<int64_t>(realIndexTensor.GetValue(w)), input_w - 1);
             if (widthZoom || srcIndexW0 == input_w - 1) {
-                Muls(
-                    dstDataLocal[w * batches], cacheTensor1[(srcIndexW0 - srcStartW) * batches], static_cast<float>(1),
-                    batches);
+                Muls(dstDataLocal[w * batches], cacheTensor1[(srcIndexW0 - srcStartW) * batches], static_cast<float>(1),
+                     batches);
             } else {
-                float weight1 =
-                    Min(Max(realIndexTensor.GetValue(w) - static_cast<float>(srcIndexW0), static_cast<float>(0)),
-                        static_cast<float>(1));
-                Muls(
-                    cacheTensor2, cacheTensor1[(srcIndexW0 - srcStartW) * batches], static_cast<float>(1) - weight1,
-                    batches);
+                float weight1 = Min(
+                    Max(realIndexTensor.GetValue(w) - static_cast<float>(srcIndexW0), static_cast<float>(0)),
+                    static_cast<float>(1));
+                Muls(cacheTensor2, cacheTensor1[(srcIndexW0 - srcStartW) * batches], static_cast<float>(1) - weight1,
+                     batches);
                 Muls(dstDataLocal[w * batches], cacheTensor1[(srcIndexW0 + 1 - srcStartW) * batches], weight1, batches);
                 Add(dstDataLocal[w * batches], dstDataLocal[w * batches], cacheTensor2, batches);
             }
@@ -333,19 +331,16 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ComputeW()
         for (int64_t w = 0; w < dataLength; w++) {
             int32_t srcIndexW0 = Min(static_cast<int64_t>(realIndexTensor.GetValue(w)), input_w - 1);
             if (widthZoom || srcIndexW0 == input_w - 1) {
-                Muls(
-                    castOutputTensor[w * batches], cacheTensor1[(srcIndexW0 - srcStartW) * batches],
-                    static_cast<float>(1), batches);
+                Muls(castOutputTensor[w * batches], cacheTensor1[(srcIndexW0 - srcStartW) * batches],
+                     static_cast<float>(1), batches);
             } else {
-                float weight1 =
-                    Min(Max(realIndexTensor.GetValue(w) - static_cast<float>(srcIndexW0), static_cast<float>(0)),
-                        static_cast<float>(1));
-                Muls(
-                    cacheTensor2, cacheTensor1[(srcIndexW0 - srcStartW) * batches], static_cast<float>(1) - weight1,
-                    batches);
-                Muls(
-                    castOutputTensor[w * batches], cacheTensor1[(srcIndexW0 + 1 - srcStartW) * batches], weight1,
-                    batches);
+                float weight1 = Min(
+                    Max(realIndexTensor.GetValue(w) - static_cast<float>(srcIndexW0), static_cast<float>(0)),
+                    static_cast<float>(1));
+                Muls(cacheTensor2, cacheTensor1[(srcIndexW0 - srcStartW) * batches], static_cast<float>(1) - weight1,
+                     batches);
+                Muls(castOutputTensor[w * batches], cacheTensor1[(srcIndexW0 + 1 - srcStartW) * batches], weight1,
+                     batches);
                 Add(castOutputTensor[w * batches], castOutputTensor[w * batches], cacheTensor2, batches);
             }
         }
@@ -366,9 +361,10 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ComputeLargeBatch(int64_t
                 float weightH = h == 0 ? static_cast<float>(1) - lambdaH1 : lambdaH1;
                 for (int64_t w = 0; w < wSize; w++) {
                     float weightW = w == 0 ? static_cast<float>(1) - lambdaW1 : lambdaW1;
-                    int64_t inputIndex =
-                        ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w + srcIndexW0 + w) * batches +
-                        batchOffset;
+                    int64_t inputIndex = ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w +
+                                          srcIndexW0 + w) *
+                                             batches +
+                                         batchOffset;
                     CopyIn(inputIndex, CeilA2B(batchCount, blockSize) * blockSize);
                     LocalTensor<float> srcDataLocal = inputQueue.DeQue<float>();
                     Muls(castInputTensor, srcDataLocal, weightD * weightH * weightW, batchCount);
@@ -388,9 +384,10 @@ __aicore__ inline void KernelUpsampleTrilinear310p<T>::ComputeLargeBatch(int64_t
                 float weightH = h == 0 ? static_cast<float>(1) - lambdaH1 : lambdaH1;
                 for (int64_t w = 0; w < wSize; w++) {
                     float weightW = w == 0 ? static_cast<float>(1) - lambdaW1 : lambdaW1;
-                    int64_t indexInput =
-                        ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w + srcIndexW0 + w) * batches +
-                        batchOffset;
+                    int64_t indexInput = ((srcIndexD0 + d) * input_h * input_w + (srcIndexH0 + h) * input_w +
+                                          srcIndexW0 + w) *
+                                             batches +
+                                         batchOffset;
                     CopyIn(indexInput, CeilA2B(batchCount, blockSize) * blockSize);
                     LocalTensor<T> srcDataLocal = inputQueue.DeQue<T>();
                     Cast(castInputTensor, srcDataLocal, RoundMode::CAST_NONE, batchCount);

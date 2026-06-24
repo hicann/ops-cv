@@ -39,12 +39,10 @@ ge::graphStatus ResizeLinearGradInferShape(gert::InferShapeContext* context)
     if (Ops::Base::IsUnknownRank(*imageShape)) {
         Ops::Base::SetUnknownShape(IN_GRADS_DIMS, *yShape);
     } else {
-        OP_CHECK_IF(
-            imageShape->GetDimNum() != IN_GRADS_DIMS, OP_LOGE(nodeName, "original_image shape only support 3D"),
-            return GRAPH_FAILED);
-        OP_CHECK_IF(
-            imageShape->GetDim(IDX_L) == 0,
-            OP_LOGE(nodeName, "original_image size should be greater than 0"), return GRAPH_FAILED);
+        OP_CHECK_IF(imageShape->GetDimNum() != IN_GRADS_DIMS, OP_LOGE(nodeName, "original_image shape only support 3D"),
+                    return GRAPH_FAILED);
+        OP_CHECK_IF(imageShape->GetDim(IDX_L) == 0, OP_LOGE(nodeName, "original_image size should be greater than 0"),
+                    return GRAPH_FAILED);
         *yShape = *imageShape;
     }
 
@@ -57,9 +55,9 @@ graphStatus ResizeLinearGradInferDtype(gert::InferDataTypeContext* context)
     OP_LOGI(context->GetNodeName(), "Begin to do ResizeLinearGradInferDtype");
 
     auto gradsDtype = context->GetInputDataType(IN_GRADS);
-    OP_CHECK_IF(
-        (gradsDtype != ge::DT_FLOAT) && (gradsDtype != ge::DT_FLOAT16) && (gradsDtype != ge::DT_BF16),
-        OP_LOGE(context->GetNodeName(), "grads dtype only support float, float16 and bfloat16"), return GRAPH_FAILED);
+    OP_CHECK_IF((gradsDtype != ge::DT_FLOAT) && (gradsDtype != ge::DT_FLOAT16) && (gradsDtype != ge::DT_BF16),
+                OP_LOGE(context->GetNodeName(), "grads dtype only support float, float16 and bfloat16"),
+                return GRAPH_FAILED);
 
     context->SetOutputDataType(OUT_Y, gradsDtype);
 

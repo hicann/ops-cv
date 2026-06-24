@@ -51,14 +51,14 @@ constexpr uint32_t DOUBLE_VALUE = 2;
 
 class UpsampleBicubic2dAATiling {
 public:
-    explicit UpsampleBicubic2dAATiling(gert::TilingContext *context) : tilingContext(context){};
-    ge::graphStatus RunBigKernelTiling(gert::TilingContext *context);
+    explicit UpsampleBicubic2dAATiling(gert::TilingContext* context) : tilingContext(context) {};
+    ge::graphStatus RunBigKernelTiling(gert::TilingContext* context);
 
 private:
     void SetScale();
     void SetSliceSize();
     inline float ComputeScaleValue(int64_t inputSize, int64_t outputSize, bool alignCornersFlag,
-        const float *scale) const;
+                                   const float* scale) const;
     void GetWorkSpace(uint32_t needCoreNum);
     void GetOutputShape();
     uint8_t GetDataTypeSize() const;
@@ -79,16 +79,16 @@ private:
 private:
     int64_t sliceSize = 0;
     UpsampleBicubic2dAATilingData tilingData;
-    gert::TilingContext *tilingContext = nullptr;
+    gert::TilingContext* tilingContext = nullptr;
     ge::DataType dataType = ge::DT_UNDEFINED;
     uint16_t dataTypeSize = 0;
     gert::Shape inputShape;
-    const bool *alignCorners = nullptr;
-    const float *scaleH = nullptr;
-    const float *scaleW = nullptr;
+    const bool* alignCorners = nullptr;
+    const float* scaleH = nullptr;
+    const float* scaleW = nullptr;
     float realScaleH = 0.0;
     float realScaleW = 0.0;
-    const gert::ContinuousVector *outputSizeVevtor = nullptr;
+    const gert::ContinuousVector* outputSizeVevtor = nullptr;
     int32_t sliceStartListW[MAX_CORE_CONT] = {0};
     int32_t sliceEndListW[MAX_CORE_CONT] = {0};
     int32_t tailSliceStartListW[MAX_CORE_CONT] = {0};
@@ -116,7 +116,7 @@ private:
 
 void UpsampleBicubic2dAATiling::SetScale()
 {
-    const int64_t *outputSizeArray = reinterpret_cast<const int64_t *>(outputSizeVevtor->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(outputSizeVevtor->GetData());
 
     int64_t outputHeight = outputSizeArray[0];
     int64_t outputWidth = outputSizeArray[1];
@@ -152,8 +152,8 @@ void UpsampleBicubic2dAATiling::SetScale()
     tilingData.set_invscaleH(invscaleH);
 }
 
-inline float UpsampleBicubic2dAATiling::ComputeScaleValue(
-    int64_t inputSize, int64_t outputSize, bool alignCornersFlag, const float *scale) const
+inline float UpsampleBicubic2dAATiling::ComputeScaleValue(int64_t inputSize, int64_t outputSize, bool alignCornersFlag,
+                                                          const float* scale) const
 {
     if (alignCornersFlag) {
         if (outputSize > 1) {
@@ -169,7 +169,7 @@ inline float UpsampleBicubic2dAATiling::ComputeScaleValue(
     }
 }
 
-ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling(gert::TilingContext *context)
+ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling(gert::TilingContext* context)
 {
     bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(context);
     if (regBase) {
@@ -177,32 +177,30 @@ ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling(gert::TilingContex
         return Tiling4UpsampleBicubic2dAARegbase(tilingContext);
     }
 
-    const gert::RuntimeAttrs *attrs = tilingContext->GetAttrs();
+    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     if (attrs == nullptr) {
         return ge::GRAPH_FAILED;
     }
     outputSizeVevtor = attrs->GetAttrPointer<gert::ContinuousVector>(0);
     OP_CHECK_IF(outputSizeVevtor == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSizeVevtor == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     alignCorners = attrs->GetAttrPointer<bool>(1);
     OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     scaleH = attrs->GetAttrPointer<float>(H_INDEX);
-    OP_CHECK_IF(scaleH == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleH == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scaleH == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleH == nullptr"), return ge::GRAPH_FAILED);
     scaleW = attrs->GetAttrPointer<float>(W_INDEX);
-    OP_CHECK_IF(scaleW == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleW == nullptr"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scaleW == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scaleW == nullptr"), return ge::GRAPH_FAILED);
 
     auto tempInputDesc = tilingContext->GetInputDesc(0);
     OP_CHECK_IF(tempInputDesc == nullptr, OP_LOGE(tilingContext->GetNodeName(), "InputDesc == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     dataType = tempInputDesc->GetDataType();
     dataTypeSize = GetDataTypeSize();
 
     auto srcShape = tilingContext->GetInputShape(0);
-    OP_CHECK_IF(
-        srcShape == nullptr, OP_LOGE(tilingContext->GetNodeName(), "InputShape == nullptr"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(srcShape == nullptr, OP_LOGE(tilingContext->GetNodeName(), "InputShape == nullptr"),
+                return ge::GRAPH_FAILED);
 
     inputShape = srcShape->GetOriginShape();
     if (CheckShapes() == false) {
@@ -217,9 +215,9 @@ ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling(gert::TilingContex
 
     SetSliceSize();
 
-    auto compileInfo = reinterpret_cast<const UpsampleBicubic2dAACompileInfo *>(tilingContext->GetCompileInfo());
+    auto compileInfo = reinterpret_cast<const UpsampleBicubic2dAACompileInfo*>(tilingContext->GetCompileInfo());
     OP_CHECK_IF(compileInfo == nullptr, OP_LOGE(tilingContext->GetNodeName(), "compileInfo == nullptr"),
-        return ge::GRAPH_FAILED);
+                return ge::GRAPH_FAILED);
     uint32_t coreNumPlatForm = compileInfo->totalCoreNum;
 
     needCoreNumW = GetNeedCoreNumWidth(coreNumPlatForm);
@@ -258,22 +256,19 @@ void UpsampleBicubic2dAATiling::SetSliceSize()
 bool UpsampleBicubic2dAATiling::CheckShapes() const
 {
     OP_CHECK_IF(inputShape.GetDimNum() != 4,
-        OP_LOGE(tilingContext->GetNodeName(), "Input tensor dim num must equal to 4"),
-        return false);
+                OP_LOGE(tilingContext->GetNodeName(), "Input tensor dim num must equal to 4"), return false);
 
-    const int64_t *outputSizeArray = reinterpret_cast<const int64_t *>(outputSizeVevtor->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(outputSizeVevtor->GetData());
     int64_t inputH = inputShape.GetDim(2);
     int64_t inputW = inputShape.GetDim(3);
     int64_t outH = outputSizeArray[0];
     int64_t outW = outputSizeArray[1];
 
-    OP_CHECK_IF(!(inputH > 0 && inputW > 0 && outH > 0 && outW > 0),
+    OP_CHECK_IF(
+        !(inputH > 0 && inputW > 0 && outH > 0 && outW > 0),
         OP_LOGE(tilingContext->GetNodeName(),
-            "Input and output sizes should greater than 0, but got input (H: %ld, W: %ld) output (H: %ld, W: %ld)",
-            inputH,
-            inputW,
-            outH,
-            outW),
+                "Input and output sizes should greater than 0, but got input (H: %ld, W: %ld) output (H: %ld, W: %ld)",
+                inputH, inputW, outH, outW),
         return false);
 
     return true;
@@ -312,9 +307,9 @@ void UpsampleBicubic2dAATiling::GetTCubeTilingH()
 
 void UpsampleBicubic2dAATiling::GetWorkSpace(uint32_t needCoreNum)
 {
-    size_t *workspaces = tilingContext->GetWorkspaceSizes(1);
-    uint64_t intermediateMatrixSize =
-        static_cast<uint64_t>(outputShapes[0]) * outputShapes[1] * inputShapes[2] * outputShapes[3] * dataTypeSize;
+    size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
+    uint64_t intermediateMatrixSize = static_cast<uint64_t>(outputShapes[0]) * outputShapes[1] * inputShapes[2] *
+                                      outputShapes[3] * dataTypeSize;
 
     singleCoreKW = Ceil(sliceSize * realScaleW) + Ceil(DOUBLE_VALUE * tilingData.get_supportW());
     uint32_t radioMatrixWSize = sliceSize * singleCoreKW * dataTypeSize;
@@ -323,8 +318,8 @@ void UpsampleBicubic2dAATiling::GetWorkSpace(uint32_t needCoreNum)
     uint32_t radioMatrixWorkspaceSize = std::max(radioMatrixWSize, radioMatrixHSize);
     intermediateMatrixSize = (intermediateMatrixSize + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     if (workspaces != nullptr) {
-        workspaces[0] = intermediateMatrixSize + static_cast<uint64_t>(radioMatrixWorkspaceSize) *
-            needCoreNum * BUFFER_LEN + WORK_SPACE_SIZE;
+        workspaces[0] = intermediateMatrixSize +
+                        static_cast<uint64_t>(radioMatrixWorkspaceSize) * needCoreNum * BUFFER_LEN + WORK_SPACE_SIZE;
     }
 
     tilingData.set_radioMatrixWSize(radioMatrixWSize);
@@ -334,7 +329,7 @@ void UpsampleBicubic2dAATiling::GetWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBicubic2dAATiling::GetOutputShape()
 {
-    const int64_t *outputSizeArr = reinterpret_cast<const int64_t *>(outputSizeVevtor->GetData());
+    const int64_t* outputSizeArr = reinterpret_cast<const int64_t*>(outputSizeVevtor->GetData());
     for (int8_t i = 0; static_cast<uint32_t>(i) < MAX_ATTR_COUNT; i++) {
         inputShapes[i] = inputShape.GetDim(i);
         outputShapes[i] = inputShape.GetDim(i);
@@ -434,12 +429,12 @@ uint32_t UpsampleBicubic2dAATiling::GetNeedCoreNumWidth(uint32_t coreNumPlatform
         int64_t groupIndex = coreIndex / groupCore;
         if (groupIndex < remainder) {
             tailSliceStartListW[coreIndex] = (tailStartSliceNum + groupIndex) * sliceSize;
-            tailsliceEndListW[coreIndex] =
-                std::min(tailSliceStartListW[coreIndex] + sliceSize, static_cast<int64_t>(outputSize));
+            tailsliceEndListW[coreIndex] = std::min(tailSliceStartListW[coreIndex] + sliceSize,
+                                                    static_cast<int64_t>(outputSize));
             int64_t coreIndexInGroup = coreIndex % groupCore;
             tailRowStartListW[coreIndex] = coreIndexInGroup * tailAvergingRows;
-            tailRowEndListW[coreIndex] =
-                std::min(tailRowStartListW[coreIndex] + tailAvergingRows, static_cast<int64_t>(inputH));
+            tailRowEndListW[coreIndex] = std::min(tailRowStartListW[coreIndex] + tailAvergingRows,
+                                                  static_cast<int64_t>(inputH));
             needCoreNum++;
         }
     }
@@ -483,12 +478,12 @@ uint32_t UpsampleBicubic2dAATiling::GetNeedCoreNumHeight(uint32_t coreNumPlatfor
         int64_t groupIndex = coreIndex / groupCoreNum;
         if (groupIndex < remainder) {
             tailSliceStartListH[coreIndex] = (tailStartSliceNum + groupIndex) * sliceSize;
-            tailSliceEndListH[coreIndex] =
-                std::min(tailSliceStartListH[coreIndex] + sliceSize, static_cast<int64_t>(outputSize));
+            tailSliceEndListH[coreIndex] = std::min(tailSliceStartListH[coreIndex] + sliceSize,
+                                                    static_cast<int64_t>(outputSize));
             int64_t coreIndexInGroup = coreIndex % groupCoreNum;
             tailBatchStartListH[coreIndex] = coreIndexInGroup * tailAvergingBatch;
-            tailBatchEndListH[coreIndex] =
-                std::min(tailBatchStartListH[coreIndex] + tailAvergingBatch, static_cast<int64_t>(inputBatch));
+            tailBatchEndListH[coreIndex] = std::min(tailBatchStartListH[coreIndex] + tailAvergingBatch,
+                                                    static_cast<int64_t>(inputBatch));
             needCoreNum++;
         }
     }
@@ -518,19 +513,19 @@ void UpsampleBicubic2dAATiling::FillTilingData()
     tilingData.set_tailBatchStartListH(tailBatchStartListH);
     tilingData.set_tailBatchEndListH(tailBatchEndListH);
 
-    tilingData.SaveToBuffer(
-        tilingContext->GetRawTilingData()->GetData(), tilingContext->GetRawTilingData()->GetCapacity());
+    tilingData.SaveToBuffer(tilingContext->GetRawTilingData()->GetData(),
+                            tilingContext->GetRawTilingData()->GetCapacity());
     tilingContext->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
 }
 
-static ge::graphStatus Tiling4UpsampleBicubic2dAA(gert::TilingContext *context)
+static ge::graphStatus Tiling4UpsampleBicubic2dAA(gert::TilingContext* context)
 {
     UpsampleBicubic2dAATiling tilingObject(context);
     context->SetScheduleMode(SCHEDULE_MODE);
     return tilingObject.RunBigKernelTiling(context);
 }
 
-static ge::graphStatus TilingPrepare4Bicubic2DAA(gert::TilingParseContext *context)
+static ge::graphStatus TilingPrepare4Bicubic2DAA(gert::TilingParseContext* context)
 {
     auto compileInfo = context->GetCompiledInfo<UpsampleBicubic2dAACompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
@@ -539,10 +534,9 @@ static ge::graphStatus TilingPrepare4Bicubic2DAA(gert::TilingParseContext *conte
     compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAic();
 
     OP_CHECK_IF(compileInfo->totalCoreNum <= 0,
-        OP_LOGE(context->GetNodeName(),
-            "UpsampleBicubic2dAA GetHardwareInfo Failed, vectorCoreNum:%u",
-            compileInfo->totalCoreNum),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dAA GetHardwareInfo Failed, vectorCoreNum:%u",
+                        compileInfo->totalCoreNum),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -550,4 +544,4 @@ IMPL_OP_OPTILING(UpsampleBicubic2dAA)
     .Tiling(Tiling4UpsampleBicubic2dAA)
     .TilingParse<UpsampleBicubic2dAACompileInfo>(TilingPrepare4Bicubic2DAA);
 
-}  // namespace optiling
+} // namespace optiling

@@ -25,13 +25,12 @@ using namespace AscendC;
 constexpr bool IS_UNROLL_W = true;
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermineHWCompute(__gm__ T_DATA *grads,
-    __gm__ T_DATA *y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
-    float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW,
-    T_IDX shiftW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDetermineHWCompute(
+    __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH,
+    T_IDX lenDstW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH,
+    T_IDX mW, T_IDX shiftW)
 {
-    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor;
-        idx += static_cast<T_IDX>(blockDim.x)) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor; idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yIdx = coreOffset + idx;
 
         // calculate the index of y in H and W dim.
@@ -62,7 +61,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterm
                 T_IDX yTempIdx = n * (lenC * lenSrcHW) + c * lenSrcHW + yIdx;
                 float addValue = 0.0f;
                 for (T_IDX i = gradsIdxHStart; i < gradsIdxHEnd; i++) {
-                    #pragma unroll
+#pragma unroll
                     for (T_IDX j = gradsIdxWStart; j < gradsIdxWEnd; j++) {
                         addValue += static_cast<float>(grads[gradsBaseIdx + i * lenDstW + j]);
                     }
@@ -74,23 +73,27 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtDeterm
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT32)__aicore__
-    void calleeSimtDetermineHWInt32(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH,
-    T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor,
-    T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT32) __aicore__
+    void calleeSimtDetermineHWInt32(__gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH,
+                                    T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float inverseScaleH,
+                                    float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH,
+                                    T_IDX mW, T_IDX shiftW)
 {
     SimtDetermineHWCompute<T_DATA, T_IDX, HALF_PIXEL>(grads, y, lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
-        inverseScaleH, inverseScaleW, coreFactor, coreOffset, mH, shiftH, mW, shiftW);
+                                                      inverseScaleH, inverseScaleW, coreFactor, coreOffset, mH, shiftH,
+                                                      mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
-__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT64)__aicore__
-    void calleeSimtDetermineHWInt64(__gm__ T_DATA *grads, __gm__ T_DATA *y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH,
-    T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float inverseScaleH, float inverseScaleW, T_IDX coreFactor,
-    T_IDX coreOffset, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT64) __aicore__
+    void calleeSimtDetermineHWInt64(__gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenN, T_IDX lenC, T_IDX lenSrcH,
+                                    T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float inverseScaleH,
+                                    float inverseScaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mH, T_IDX shiftH,
+                                    T_IDX mW, T_IDX shiftW)
 {
     SimtDetermineHWCompute<T_DATA, T_IDX, HALF_PIXEL>(grads, y, lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
-        inverseScaleH, inverseScaleW, coreFactor, coreOffset, mH, shiftH, mW, shiftW);
+                                                      inverseScaleH, inverseScaleW, coreFactor, coreOffset, mH, shiftH,
+                                                      mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
@@ -99,7 +102,6 @@ public:
     __aicore__ inline ResizeNearestNeighborV2GradSimtDetermineHW(){};
     __aicore__ inline void Process();
 };
-
 
 template <typename T_DATA, typename T_IDX, bool HALF_PIXEL>
 __aicore__ inline void ResizeNearestNeighborV2GradSimtDetermineHW<T_DATA, T_IDX, HALF_PIXEL>::Process()
@@ -136,15 +138,15 @@ __aicore__ inline void ResizeNearestNeighborV2GradSimtDetermineHW<T_DATA, T_IDX,
 
     if (this->blockIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
-            asc_vf_call<calleeSimtDetermineHWInt32<T_DATA, T_IDX, HALF_PIXEL>>(dim3(SIMT_THREAD_NUM_INT32),
-                (__gm__ T_DATA *)(this->gradsGm_.GetPhyAddr()), (__gm__ T_DATA *)(this->yGm_.GetPhyAddr()), lenN, lenC,
-                lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH,
-                shiftH, mW, shiftW);
+            asc_vf_call<calleeSimtDetermineHWInt32<T_DATA, T_IDX, HALF_PIXEL>>(
+                dim3(SIMT_THREAD_NUM_INT32), (__gm__ T_DATA*)(this->gradsGm_.GetPhyAddr()),
+                (__gm__ T_DATA*)(this->yGm_.GetPhyAddr()), lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
+                inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH, shiftH, mW, shiftW);
         } else {
-            asc_vf_call<calleeSimtDetermineHWInt64<T_DATA, T_IDX, HALF_PIXEL>>(dim3(SIMT_THREAD_NUM_INT64),
-                (__gm__ T_DATA *)(this->gradsGm_.GetPhyAddr()), (__gm__ T_DATA *)(this->yGm_.GetPhyAddr()), lenN, lenC,
-                lenSrcH, lenSrcW, lenDstH, lenDstW, inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH,
-                shiftH, mW, shiftW);
+            asc_vf_call<calleeSimtDetermineHWInt64<T_DATA, T_IDX, HALF_PIXEL>>(
+                dim3(SIMT_THREAD_NUM_INT64), (__gm__ T_DATA*)(this->gradsGm_.GetPhyAddr()),
+                (__gm__ T_DATA*)(this->yGm_.GetPhyAddr()), lenN, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
+                inverseScaleH, inverseScaleW, blkProcessNum, blkStartOffset, mH, shiftH, mW, shiftW);
         }
     }
 }

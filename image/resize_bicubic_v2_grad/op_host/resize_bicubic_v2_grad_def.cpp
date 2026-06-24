@@ -15,42 +15,31 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
-static const std::vector<ge::DataType> dataType = {
-    ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_BF16, ge::DT_BF16
-};
+static const std::vector<ge::DataType> dataType = {ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT,
+                                                   ge::DT_FLOAT,   ge::DT_BF16,    ge::DT_BF16};
 
-static const std::vector<ge::Format> format = {
-    ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NCHW, ge::FORMAT_NHWC
-};
+static const std::vector<ge::Format> format = {ge::FORMAT_NCHW, ge::FORMAT_NHWC, ge::FORMAT_NCHW,
+                                               ge::FORMAT_NHWC, ge::FORMAT_NCHW, ge::FORMAT_NHWC};
 
 class ResizeBicubicV2Grad : public OpDef {
- public:
-  explicit ResizeBicubicV2Grad(const char* name) : OpDef(name)
-  {
-    this->Input("grads")
-        .ParamType(REQUIRED)
-        .DataType(dataType)
-        .Format(format);
-    this->Input("original_image")
-        .ParamType(REQUIRED)
-        .DataType(dataType)
-        .Format(format);
-    this->Output("y")
-        .ParamType(REQUIRED)
-        .DataType(dataType)
-        .Format(format);
+public:
+    explicit ResizeBicubicV2Grad(const char* name) : OpDef(name)
+    {
+        this->Input("grads").ParamType(REQUIRED).DataType(dataType).Format(format);
+        this->Input("original_image").ParamType(REQUIRED).DataType(dataType).Format(format);
+        this->Output("y").ParamType(REQUIRED).DataType(dataType).Format(format);
 
-    this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
-    this->Attr("scales").AttrType(OPTIONAL).ListFloat({0.0f, 0.0f});
+        this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
+        this->Attr("scales").AttrType(OPTIONAL).ListFloat({0.0f, 0.0f});
 
-    OpAICoreConfig aicoreConfig;
-    aicoreConfig.DynamicCompileStaticFlag(true)
-        .DynamicRankSupportFlag(true)
-        .DynamicShapeSupportFlag(true)
-        .ExtendCfgInfo("opFile.value", "resize_bicubic_v2_grad");
-    this->AICore().AddConfig("ascend950", aicoreConfig);
-  }
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "resize_bicubic_v2_grad");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
+    }
 };
 
 OP_ADD(ResizeBicubicV2Grad);
-}
+} // namespace ops

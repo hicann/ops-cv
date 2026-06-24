@@ -46,10 +46,10 @@ __aicore__ inline void ResizeBilinearV2SimtNCHW<T1, T2, halfPixel, mode, T_IDX>:
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    inputGm_.SetGlobalBuffer(
-        (__gm__ T1*)x, tilingData_->lenN * tilingData_->lenC * tilingData_->lenSrcH * tilingData_->lenSrcW);
-    outputGm_.SetGlobalBuffer(
-        (__gm__ T2*)y, tilingData_->lenN * tilingData_->lenC * tilingData_->lenDesH * tilingData_->lenDesW);
+    inputGm_.SetGlobalBuffer((__gm__ T1*)x,
+                             tilingData_->lenN * tilingData_->lenC * tilingData_->lenSrcH * tilingData_->lenSrcW);
+    outputGm_.SetGlobalBuffer((__gm__ T2*)y,
+                              tilingData_->lenN * tilingData_->lenC * tilingData_->lenDesH * tilingData_->lenDesW);
 }
 
 template <typename T_IDX>
@@ -80,15 +80,14 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
     T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input,
     __gm__ T2* output, T_IDX blkStartOffset, T_IDX blkProcessNum)
 {
-    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum;
-         idx += static_cast<T_IDX>(blockDim.x)) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < blkProcessNum; idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX yGmIdx = blkStartOffset + idx;
         T_IDX tmp = yGmIdx;
 
         T_IDX N = 0, C = 0, H = 0, W = 0;
 
-        QuickDivForSimtComputenchw(
-            N, C, H, W, tmp, mW, shiftW, lenDesW, mH, shiftH, lenDesH, mC, shiftC, lenC, mN, shiftN, lenN);
+        QuickDivForSimtComputenchw(N, C, H, W, tmp, mW, shiftW, lenDesW, mH, shiftH, lenDesH, mC, shiftC, lenC, mN,
+                                   shiftN, lenN);
         float origHeight_ = 0.0f, origWidth_ = 0.0f, deltaX = 0.0f, deltaY = 0.0f;
 
         T_IDX leftX = 0, rightX = 0, topY = 0, bottomY = 0, lenSrcWH_ = lenSrcW * lenSrcH;
@@ -148,25 +147,27 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 
 // LAUNCH_BOUND
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__ void calleeInt32nchw(
-    float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH, T_IDX lenSrcW,
-    T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input,
-    __gm__ T2* output, T_IDX blkStartOffset, T_IDX blkProcessNum)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
+    void calleeInt32nchw(float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW,
+                         T_IDX lenSrcH, T_IDX lenSrcW, T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH,
+                         T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ T2* output, T_IDX blkStartOffset,
+                         T_IDX blkProcessNum)
 {
-    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(
-        scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftN, mN, shiftC, mC, shiftH, mH, shiftW, mW,
-        input, output, blkStartOffset, blkProcessNum);
+    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftN,
+                                                mN, shiftC, mC, shiftH, mH, shiftW, mW, input, output, blkStartOffset,
+                                                blkProcessNum);
 }
 
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
-__simt_vf__ LAUNCH_BOUND(THREAD_NUM_MIDDLE) __aicore__ void calleeInt64nchw(
-    float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW, T_IDX lenSrcH, T_IDX lenSrcW,
-    T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH, T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input,
-    __gm__ T2* output, T_IDX blkStartOffset, T_IDX blkProcessNum)
+__simt_vf__ LAUNCH_BOUND(THREAD_NUM_MIDDLE) __aicore__
+    void calleeInt64nchw(float scaleH, float scaleW, T_IDX lenN, T_IDX lenC, T_IDX lenDesH, T_IDX lenDesW,
+                         T_IDX lenSrcH, T_IDX lenSrcW, T_IDX shiftN, T_IDX mN, T_IDX shiftC, T_IDX mC, T_IDX shiftH,
+                         T_IDX mH, T_IDX shiftW, T_IDX mW, __gm__ T1* input, __gm__ T2* output, T_IDX blkStartOffset,
+                         T_IDX blkProcessNum)
 {
-    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(
-        scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftN, mN, shiftC, mC, shiftH, mH, shiftW, mW,
-        input, output, blkStartOffset, blkProcessNum);
+    SimtCompute<T1, T2, halfPixel, mode, T_IDX>(scaleH, scaleW, lenN, lenC, lenDesH, lenDesW, lenSrcH, lenSrcW, shiftN,
+                                                mN, shiftC, mC, shiftH, mH, shiftW, mW, input, output, blkStartOffset,
+                                                blkProcessNum);
 }
 // process
 template <typename T1, typename T2, bool halfPixel, int mode, typename T_IDX>
@@ -198,10 +199,10 @@ __aicore__ inline void ResizeBilinearV2SimtNCHW<T1, T2, halfPixel, mode, T_IDX>:
 
     if constexpr (sizeof(T_IDX) == sizeof(uint64_t)) {
         asc_vf_call<calleeInt64nchw<T1, T2, halfPixel, mode, T_IDX>>(
-            dim3(THREAD_NUM_MIDDLE), tilingData_->scaleH, tilingData_->scaleW, tilingData_->lenN,
-            tilingData_->lenC, tilingData_->lenDesH, tilingData_->lenDesW, tilingData_->lenSrcH, tilingData_->lenSrcW,
-            shiftN, mN, shiftC, mC, shiftH, mH, shiftW, mW, (__gm__ T1*)(inputGm_.GetPhyAddr()),
-            (__gm__ T2*)(outputGm_.GetPhyAddr()), blkStartOffset, blkProcessNum);
+            dim3(THREAD_NUM_MIDDLE), tilingData_->scaleH, tilingData_->scaleW, tilingData_->lenN, tilingData_->lenC,
+            tilingData_->lenDesH, tilingData_->lenDesW, tilingData_->lenSrcH, tilingData_->lenSrcW, shiftN, mN, shiftC,
+            mC, shiftH, mH, shiftW, mW, (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T2*)(outputGm_.GetPhyAddr()),
+            blkStartOffset, blkProcessNum);
     } else {
         asc_vf_call<calleeInt32nchw<T1, T2, halfPixel, mode, T_IDX>>(
             dim3(THREAD_NUM), tilingData_->scaleH, tilingData_->scaleW, tilingData_->lenN, tilingData_->lenC,

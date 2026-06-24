@@ -22,33 +22,34 @@
 using namespace AscendC;
 
 namespace GridSampler3DGradSimtBase {
-    constexpr int32_t GRAD_INPUT_INDEX_SIMT = 0;
-    constexpr int32_t X_INPUT_INDEX_SIMT = 1;
-    constexpr int32_t GRID_INPUT_INDEX_SIMT = 2;
-    constexpr int32_t DX_INPUT_INDEX_SIMT = 3;
-    constexpr int32_t DGRID_INPUT_INDEX_SIMT = 4;
-    constexpr int32_t WORKSPACE_INDEX = 5;
-    constexpr int32_t TMP_OUT_INDEX = 0;
-    constexpr int32_t GM_PARAMS_SIZE = 6;
-    constexpr int32_t DX_OUTPUT_INDEX = 0;
-    constexpr int32_t DGRID_OUTPUT_INDEX = 1;
-    constexpr int32_t BILINEAR = 0;
-    constexpr int32_t NEAREST = 1;
-    constexpr int32_t BICUBIC = 2;
-    constexpr int32_t ZEROS = 0;
-    constexpr int32_t BORDER = 1;
-    constexpr int32_t REFLECTION = 2;
-    constexpr int32_t CONST_TWO = 2;
-    constexpr int32_t INDEX_ZERO = 0;
-    constexpr int32_t INDEX_ONE = 1;
-    constexpr int32_t INDEX_TWO = 2;
-    constexpr int32_t INDEX_THREE = 3;
-    constexpr int32_t COEFFS_LENS = 4;
-    constexpr uint32_t VF_MAX_THREAD_NUM = 256;
-    constexpr float DEFAULT_FAULT_VALUE = -100.0f;
+constexpr int32_t GRAD_INPUT_INDEX_SIMT = 0;
+constexpr int32_t X_INPUT_INDEX_SIMT = 1;
+constexpr int32_t GRID_INPUT_INDEX_SIMT = 2;
+constexpr int32_t DX_INPUT_INDEX_SIMT = 3;
+constexpr int32_t DGRID_INPUT_INDEX_SIMT = 4;
+constexpr int32_t WORKSPACE_INDEX = 5;
+constexpr int32_t TMP_OUT_INDEX = 0;
+constexpr int32_t GM_PARAMS_SIZE = 6;
+constexpr int32_t DX_OUTPUT_INDEX = 0;
+constexpr int32_t DGRID_OUTPUT_INDEX = 1;
+constexpr int32_t BILINEAR = 0;
+constexpr int32_t NEAREST = 1;
+constexpr int32_t BICUBIC = 2;
+constexpr int32_t ZEROS = 0;
+constexpr int32_t BORDER = 1;
+constexpr int32_t REFLECTION = 2;
+constexpr int32_t CONST_TWO = 2;
+constexpr int32_t INDEX_ZERO = 0;
+constexpr int32_t INDEX_ONE = 1;
+constexpr int32_t INDEX_TWO = 2;
+constexpr int32_t INDEX_THREE = 3;
+constexpr int32_t COEFFS_LENS = 4;
+constexpr uint32_t VF_MAX_THREAD_NUM = 256;
+constexpr float DEFAULT_FAULT_VALUE = -100.0f;
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormalizeSetGrad(
-    float coord, uint32_t size, uint32_t alignCorners, float* gradInValue)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormalizeSetGrad(float coord, uint32_t size,
+                                                                                          uint32_t alignCorners,
+                                                                                          float* gradInValue)
 {
     if (alignCorners == 1) {
         // unnormalize coord from [-1, 1] to [0, size - 1]
@@ -62,8 +63,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float Unnormali
     return coord;
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoorDinatesSetGrad(
-    float coord, uint32_t clip_limit, float* gradClipValue)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoorDinatesSetGrad(float coord,
+                                                                                              uint32_t clip_limit,
+                                                                                              float* gradClipValue)
 {
     if (coord <= static_cast<float>(0)) {
         *gradClipValue = static_cast<float>(0);
@@ -80,8 +82,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoorD
     }
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ReflectCoordinatesSetGrad(
-    float coord, int twiceLow, uint32_t twiceHigh, float* gradReflValue)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ReflectCoordinatesSetGrad(float coord,
+                                                                                                 int twiceLow,
+                                                                                                 uint32_t twiceHigh,
+                                                                                                 float* gradReflValue)
 {
     if (twiceLow == twiceHigh) {
         *gradReflValue = static_cast<float>(0);
@@ -129,20 +133,20 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetGradOut
         uint32_t gradOutValueIndex = batchNum * channel * gridD * gridH * gridW + channelIndex * gridD * gridH * gridW +
                                      depthCol * gridH * gridW + heightCol * gridW + widthCol;
         *gradOutValue = static_cast<float>(gradOutGmAddr[gradOutValueIndex]);
-        *dxIndex = static_cast<uint32_t>(
-            newInputIndex + channelIndex * xD * xH * xW + inputXDepth * xH * xW + inputXHeight * xW + inputXWidth);
+        *dxIndex = static_cast<uint32_t>(newInputIndex + channelIndex * xD * xH * xW + inputXDepth * xH * xW +
+                                         inputXHeight * xW + inputXWidth);
     }
 }
 
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetGradOutValueAndDxIndex(
     __gm__ T* gradOutGmAddr, int32_t inputXHeight, int32_t inputXWidth, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t channelIndex,
-    uint32_t newInputIndex, uint32_t xH, uint32_t xW, uint32_t channel, float* gradOutValue, uint32_t* dxIndex)
+    uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t channelIndex, uint32_t newInputIndex,
+    uint32_t xH, uint32_t xW, uint32_t channel, float* gradOutValue, uint32_t* dxIndex)
 {
     if (inputXHeight >= 0 && inputXWidth >= 0 && inputXHeight < xH && inputXWidth < xW) {
         uint32_t gradOutValueIndex = batchNum * channel * gridH * gridW + channelIndex * gridH * gridW +
-                                    heightCol * gridW + widthCol;
+                                     heightCol * gridW + widthCol;
         *gradOutValue = static_cast<float>(gradOutGmAddr[gradOutValueIndex]);
         *dxIndex = static_cast<uint32_t>(newInputIndex + channelIndex * xH * xW + inputXHeight * xW + inputXWidth);
     }
@@ -191,8 +195,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float CubicConv
 
 // Compute 4 cubic interpolation coefficients for forward pass (used for grad_input)
 // coeffs[0] = CubicConv2(t+1), coeffs[1] = CubicConv1(t), coeffs[2] = CubicConv1(1-t), coeffs[3] = CubicConv2(2-t)
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicUpsampleCoefficients(
-    float coeffs[4], float t, size_t coeffsLen)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicUpsampleCoefficients(float coeffs[4],
+                                                                                                   float t,
+                                                                                                   size_t coeffsLen)
 {
     if (coeffsLen == COEFFS_LENS) {
         coeffs[INDEX_ZERO] = CubicConvolution2(t + 1.0f);
@@ -205,8 +210,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicUp
 // Compute derivatives of cubic coefficients w.r.t. t (used for grad_grid)
 // d(CubicConv1(x))/dx = 3*(A+2)*x^2 - 2*(A+3)*x
 // d(CubicConv2(x))/dx = 3*A*x^2 - 10*A*x + 8*A
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCoefficientsGrad(
-    float coeffs[4], float t, size_t coeffsLen)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCoefficientsGrad(float coeffs[4], float t,
+                                                                                               size_t coeffsLen)
 {
     float A = -0.75f;
     float x;
@@ -242,9 +247,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t Compute
         return idx;
     } else if (padding == BORDER) { // border
         float clipped = coord;
-        if (clipped < 0.0f) clipped = 0.0f;
+        if (clipped < 0.0f)
+            clipped = 0.0f;
         float maxVal = static_cast<float>(size - 1);
-        if (clipped > maxVal) clipped = maxVal;
+        if (clipped > maxVal)
+            clipped = maxVal;
         return static_cast<int32_t>(clipped);
     } else { // reflection
         float gradReflValue = 0;
@@ -261,9 +268,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t Compute
 
 // Get value from input with boundary handling (for grad_grid computation)
 template <typename T>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetValueBounded(
-    __gm__ T* data, float x, float y, uint32_t W, uint32_t H,
-    uint32_t sW, uint32_t sH, uint32_t padding, uint32_t alignCorners)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetValueBounded(__gm__ T* data, float x, float y,
+                                                                                       uint32_t W, uint32_t H,
+                                                                                       uint32_t sW, uint32_t sH,
+                                                                                       uint32_t padding,
+                                                                                       uint32_t alignCorners)
 {
     if (padding == ZEROS) { // zeros
         if (x < 0 || x >= static_cast<float>(W) || y < 0 || y >= static_cast<float>(H)) {
@@ -295,9 +304,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float GetValueB
 
 // Add value to grad_input with boundary handling (for grad_input computation)
 template <typename T>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void AddValueBounded(
-    __gm__ T* data, float x, float y, uint32_t W, uint32_t H,
-    uint32_t sW, uint32_t sH, float delta, uint32_t padding, uint32_t alignCorners)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void AddValueBounded(__gm__ T* data, float x, float y,
+                                                                                      uint32_t W, uint32_t H,
+                                                                                      uint32_t sW, uint32_t sH,
+                                                                                      float delta, uint32_t padding,
+                                                                                      uint32_t alignCorners)
 {
     if (padding == ZEROS) { // zeros
         if (x < 0 || x >= static_cast<float>(W) || y < 0 || y >= static_cast<float>(H)) {

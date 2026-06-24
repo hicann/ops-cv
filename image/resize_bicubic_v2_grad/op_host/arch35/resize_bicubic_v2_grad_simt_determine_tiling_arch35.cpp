@@ -104,9 +104,8 @@ ge::graphStatus ResizeBicubicV2GradSimtDetermineTiling::PostTiling()
 
     OP_CHECK_IF(
         tilingData_.GetDataSize() > context_->GetRawTilingData()->GetCapacity(),
-        OP_LOGE(
-            context_->GetNodeName(), "actual simt determine tiling data size %zu > context tiling data size %zu",
-            tilingData_.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
+        OP_LOGE(context_->GetNodeName(), "actual simt determine tiling data size %zu > context tiling data size %zu",
+                tilingData_.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
         return ge::GRAPH_FAILED);
     tilingData_.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
@@ -114,6 +113,6 @@ ge::graphStatus ResizeBicubicV2GradSimtDetermineTiling::PostTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-REGISTER_OPS_TILING_TEMPLATE(
-    ResizeBicubicV2Grad, ResizeBicubicV2GradSimtDetermineTiling, TILING_PRIORITY_SIMT_DETERMINE);
+REGISTER_OPS_TILING_TEMPLATE(ResizeBicubicV2Grad, ResizeBicubicV2GradSimtDetermineTiling,
+                             TILING_PRIORITY_SIMT_DETERMINE);
 } // namespace optiling

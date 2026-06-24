@@ -37,9 +37,9 @@ static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 static constexpr size_t DIM_FIVE = 5;
 
-static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = { DataType::DT_FLOAT, DataType::DT_FLOAT16 };
+static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = {DataType::DT_FLOAT, DataType::DT_FLOAT16};
 
-static bool CheckNotNull(const aclTensor *self, const aclTensor *boxes, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* self, const aclTensor* boxes, const aclTensor* out)
 {
     OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(boxes, return false);
@@ -47,7 +47,7 @@ static bool CheckNotNull(const aclTensor *self, const aclTensor *boxes, const ac
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor *self, const aclTensor *boxes, const aclTensor *out)
+static bool CheckDtypeValid(const aclTensor* self, const aclTensor* boxes, const aclTensor* out)
 {
     OP_CHECK_DTYPE_NOT_SUPPORT(self, FLOAT_DTYPE_SUPPORT_LIST, return false);
     OP_CHECK_DTYPE_NOT_MATCH(self, boxes->GetDataType(), return false);
@@ -56,27 +56,27 @@ static bool CheckDtypeValid(const aclTensor *self, const aclTensor *boxes, const
     return true;
 }
 
-static bool CheckFormatValid(const aclTensor *self, const aclTensor *boxes, const aclTensor *out)
+static bool CheckFormatValid(const aclTensor* self, const aclTensor* boxes, const aclTensor* out)
 {
-    if (self->GetStorageFormat() != op::Format::FORMAT_NCHW || boxes->GetStorageFormat() != op::Format::FORMAT_ND
-        || out->GetStorageFormat() != op::Format::FORMAT_NCHW) {
+    if (self->GetStorageFormat() != op::Format::FORMAT_NCHW || boxes->GetStorageFormat() != op::Format::FORMAT_ND ||
+        out->GetStorageFormat() != op::Format::FORMAT_NCHW) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format error. self and out only support NCHW, boxes only support ND.");
         return false;
     }
 
-    return  true;
+    return true;
 }
 
-static bool CheckShape(const aclTensor *self, const aclTensor *boxes, const aclTensor *out, 
-    int64_t pooledHeight, int64_t pooledWidth)
+static bool CheckShape(const aclTensor* self, const aclTensor* boxes, const aclTensor* out, int64_t pooledHeight,
+                       int64_t pooledWidth)
 {
     OP_CHECK_WRONG_DIMENSION(self, DIM_FOUR, return false);
     OP_CHECK_WRONG_DIMENSION(boxes, DIM_TWO, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_FOUR, return false);
 
-    auto const &selfShape = self->GetViewShape();
-    auto const &boxesShape = boxes->GetViewShape();
-    auto const &outShape = out->GetViewShape();
+    auto const& selfShape = self->GetViewShape();
+    auto const& boxesShape = boxes->GetViewShape();
+    auto const& outShape = out->GetViewShape();
     if (selfShape.GetDim(DIM_ZERO) == DIM_ZERO || selfShape.GetDim(DIM_TWO) == DIM_ZERO ||
         selfShape.GetDim(DIM_THREE) == DIM_ZERO) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "self shape [%ld,%ld,%ld,%ld] contains 0 in N/H/W", selfShape.GetDim(DIM_ZERO),
@@ -89,22 +89,22 @@ static bool CheckShape(const aclTensor *self, const aclTensor *boxes, const aclT
     }
     if (outShape.GetDim(DIM_ZERO) != boxesShape.GetDim(DIM_ZERO)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim0 [%ld] and boxes shape dim0 [%ld] should be equal",
-            outShape.GetDim(DIM_ZERO), boxesShape.GetDim(DIM_ZERO));
+                outShape.GetDim(DIM_ZERO), boxesShape.GetDim(DIM_ZERO));
         return false;
     }
     if (outShape.GetDim(DIM_ONE) != selfShape.GetDim(DIM_ONE)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim1 [%ld] and self shape dim1 [%ld] should be equal",
-            outShape.GetDim(DIM_ONE), selfShape.GetDim(DIM_ONE));
+                outShape.GetDim(DIM_ONE), selfShape.GetDim(DIM_ONE));
         return false;
     }
     if (outShape.GetDim(DIM_TWO) != pooledHeight) { // 2: dim2
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim2 [%ld] and pooledHeight [%ld] should be equal",
-            outShape.GetDim(DIM_TWO), pooledHeight); // 2: dim2
+                outShape.GetDim(DIM_TWO), pooledHeight); // 2: dim2
         return false;
     }
     if (outShape.GetDim(DIM_THREE) != pooledWidth) { // 3: dim3
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "out shape dim3 [%ld] and pooledWidth [%ld] should be equal",
-            outShape.GetDim(DIM_THREE), pooledWidth); // 3: dim3
+                outShape.GetDim(DIM_THREE), pooledWidth); // 3: dim3
         return false;
     }
 
@@ -124,8 +124,8 @@ static bool CheckAttr(int64_t samplingRatio, float spatialScale)
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor *self, const aclTensor *boxes, const aclTensor *out, 
-    int64_t pooledHeight, int64_t pooledWidth, int64_t samplingRatio, float spatialScale)
+static aclnnStatus CheckParams(const aclTensor* self, const aclTensor* boxes, const aclTensor* out,
+                               int64_t pooledHeight, int64_t pooledWidth, int64_t samplingRatio, float spatialScale)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(self, boxes, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -145,22 +145,23 @@ static aclnnStatus CheckParams(const aclTensor *self, const aclTensor *boxes, co
     return ACLNN_SUCCESS;
 }
 
-static const aclTensor *GetOutTensorWithValueZero(aclTensor *out, aclOpExecutor *executor)
+static const aclTensor* GetOutTensorWithValueZero(aclTensor* out, aclOpExecutor* executor)
 {
-    aclScalar *scalar = executor->AllocScalar(0);
+    aclScalar* scalar = executor->AllocScalar(0);
     auto valueTensor = executor->ConvertToTensor(scalar, out->GetDataType());
     auto outputDims = op::ToShapeVector(out->GetViewShape());
-    aclIntArray *dimArray = executor->AllocIntArray(outputDims.data(), outputDims.size());
+    aclIntArray* dimArray = executor->AllocIntArray(outputDims.data(), outputDims.size());
     auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
     return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
 }
 
-aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor *self, const aclTensor *boxes, int64_t pooledHeight, 
-                int64_t pooledWidth, float spatialScale, int64_t samplingRatio, bool aligned, aclTensor *out,
-                uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor* self, const aclTensor* boxes, int64_t pooledHeight,
+                                            int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                                            bool aligned, aclTensor* out, uint64_t* workspaceSize,
+                                            aclOpExecutor** executor)
 {
     L2_DFX_PHASE_1(aclnnRoiAlignV2,
-        DFX_IN(self, boxes, pooledHeight, pooledWidth, spatialScale, samplingRatio, aligned), DFX_OUT(out));
+                   DFX_IN(self, boxes, pooledHeight, pooledWidth, spatialScale, samplingRatio, aligned), DFX_OUT(out));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -199,8 +200,8 @@ aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor *self, const aclTens
     int64_t roiEndMode = aligned ? DIM_TWO : DIM_ZERO; // roiEndMode = 2 for torch aligned = true
 
     // 进行计算
-    auto roiAlignOut = l0op::ROIAlignV2(selfTransData, boxesContiguous, spatialScale, pooledHeight,
-        pooledWidth, samplingRatio, "avg", roiEndMode, uniqueExecutor.get());
+    auto roiAlignOut = l0op::ROIAlignV2(selfTransData, boxesContiguous, spatialScale, pooledHeight, pooledWidth,
+                                        samplingRatio, "avg", roiEndMode, uniqueExecutor.get());
     CHECK_RET(roiAlignOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 将roiAlignOut的私有格式数据转为NCHW
@@ -217,7 +218,7 @@ aclnnStatus aclnnRoiAlignV2GetWorkspaceSize(const aclTensor *self, const aclTens
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnRoiAlignV2(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnRoiAlignV2(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnRoiAlignV2);
 

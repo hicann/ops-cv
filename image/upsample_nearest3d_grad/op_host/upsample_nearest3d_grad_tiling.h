@@ -60,7 +60,6 @@ END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(UpsampleNearest3dGrad, UpsampleNearest3dGradTilingData);
 REGISTER_TILING_DATA_CLASS(UpsampleNearestExact3dGrad, UpsampleNearest3dGradTilingData);
 
-
 ge::graphStatus Tiling4UpsampleNearest3dGradRegbase(gert::TilingContext* context);
 } // namespace optiling
 

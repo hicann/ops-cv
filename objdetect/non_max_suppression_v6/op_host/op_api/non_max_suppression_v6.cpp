@@ -28,15 +28,20 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(NonMaxSuppressionV6);
 
-const aclTensor *NonMaxSuppressionV6(const aclTensor *boxes, const aclTensor *scores, aclIntArray *maxOutputBoxesPerClass, 
-    aclFloatArray *iouThreshold, aclFloatArray *scoreThreshold, int centerPointBox, int maxBoxesSize, aclTensor *selectedIndices, aclOpExecutor *executor) {
-    L0_DFX(NonMaxSuppressionV6, boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox, maxBoxesSize);
+const aclTensor* NonMaxSuppressionV6(const aclTensor* boxes, const aclTensor* scores,
+                                     aclIntArray* maxOutputBoxesPerClass, aclFloatArray* iouThreshold,
+                                     aclFloatArray* scoreThreshold, int centerPointBox, int maxBoxesSize,
+                                     aclTensor* selectedIndices, aclOpExecutor* executor)
+{
+    L0_DFX(NonMaxSuppressionV6, boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox,
+           maxBoxesSize);
 
     auto maxOutputBoxesSize = executor->ConvertToTensor(maxOutputBoxesPerClass, op::ToOpDataType(ACL_INT32));
     auto iouThd = executor->ConvertToTensor(iouThreshold, op::ToOpDataType(ACL_FLOAT));
     auto scoreThd = executor->ConvertToTensor(scoreThreshold, op::ToOpDataType(ACL_FLOAT));
 
-    aclTensor *out = executor->AllocTensor(selectedIndices->GetViewShape(), selectedIndices->GetDataType(), selectedIndices->GetViewFormat());
+    aclTensor* out = executor->AllocTensor(selectedIndices->GetViewShape(), selectedIndices->GetDataType(),
+                                           selectedIndices->GetViewFormat());
     if (out == nullptr) {
         OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc out tensor failed");
         return nullptr;
@@ -44,10 +49,10 @@ const aclTensor *NonMaxSuppressionV6(const aclTensor *boxes, const aclTensor *sc
 
     auto ret = ADD_TO_LAUNCHER_LIST_AICORE(NonMaxSuppressionV6,
                                            OP_INPUT(boxes, scores, maxOutputBoxesSize, iouThd, scoreThd),
-                                           OP_OUTPUT(out),
-                                           OP_ATTR(centerPointBox, maxBoxesSize));
-    OP_CHECK(ret ==  ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "NonMaxSuppressionV6AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+                                           OP_OUTPUT(out), OP_ATTR(centerPointBox, maxBoxesSize));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "NonMaxSuppressionV6AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return out;
 }
-}
+} // namespace l0op

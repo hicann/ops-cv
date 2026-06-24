@@ -32,14 +32,13 @@ const int64_t DEFAULT_UB_MAX_DATA_COUNT = 2048;
 const int64_t DEFAULT_UB_MAX_COPY_SIZE = 64 * 1024; // 64kb
 
 template <typename T, int32_t MODE>
-class UpsampleNearestND
-{
+class UpsampleNearestND {
 public:
     TPipe pipe;
 
     __aicore__ inline UpsampleNearestND(){};
-    __aicore__ inline void Init(
-        GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleNearestTilingData* __restrict__ tilingData);
+    __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                const UpsampleNearestTilingData* __restrict__ tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -66,14 +65,14 @@ private:
     __aicore__ inline void CopyInBatch(int64_t indexInput, int64_t calCount, uint16_t blockCnt);
     __aicore__ inline void CopyOutBatch(int64_t indexOutput, int64_t calCount);
     __aicore__ inline void CopyOutBase(LocalTensor<T> dstDataLocal, int64_t indexOutput, int64_t calCount);
-    __aicore__ inline void ProcessOutput(
-        int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH);
-    __aicore__ inline void ProcessOutputBase(
-        int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH);
-    __aicore__ inline void ProcessOutputSmallC(
-        int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH);
-    __aicore__ inline void ProcessOutputSmallCW(
-        int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH);
+    __aicore__ inline void ProcessOutput(int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW,
+                                         int64_t lengthH);
+    __aicore__ inline void ProcessOutputBase(int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW,
+                                             int64_t lengthH);
+    __aicore__ inline void ProcessOutputSmallC(int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW,
+                                               int64_t lengthH);
+    __aicore__ inline void ProcessOutputSmallCW(int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW,
+                                                int64_t lengthH);
 
 private:
     TBuf<QuePosition::VECCALC> centerQueueW;
@@ -115,8 +114,8 @@ private:
 };
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::Init(
-    GM_ADDR input, GM_ADDR output, GM_ADDR workspace, const UpsampleNearestTilingData* __restrict__ tilingData)
+__aicore__ inline void UpsampleNearestND<T, MODE>::Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,
+                                                        const UpsampleNearestTilingData* __restrict__ tilingData)
 {
     blockIdx = GetBlockIdx();
 
@@ -193,10 +192,10 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::NearestComputeSmallNCH()
 
             for (int64_t batchIdx = 0; batchIdx < inputN; batchIdx++) {
                 for (int64_t channelIdx = 0; channelIdx < inputC; channelIdx++) {
-                    int64_t indexInput =
-                        batchIdx * inputC * inputBatchSize + channelIdx * inputBatchSize + srcH * inputW + srcStartW;
-                    int64_t indexOutput =
-                        batchIdx * inputC * outputBatchSize + channelIdx * outputBatchSize + indexH * outputW + indexW;
+                    int64_t indexInput = batchIdx * inputC * inputBatchSize + channelIdx * inputBatchSize +
+                                         srcH * inputW + srcStartW;
+                    int64_t indexOutput = batchIdx * inputC * outputBatchSize + channelIdx * outputBatchSize +
+                                          indexH * outputW + indexW;
 
                     CopyIn(indexInput, lengthW);
 
@@ -310,8 +309,8 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::CalculateIdxTensor(int64_t in
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutput(
-    int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH)
+__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutput(int64_t batchIdx, int64_t indexW, int64_t indexH,
+                                                                 int64_t lengthW, int64_t lengthH)
 {
     if constexpr (MODE == 1) {
         ProcessOutputSmallCW(batchIdx, indexW, indexH, lengthW, lengthH);
@@ -323,8 +322,8 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutput(
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputBase(
-    int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH)
+__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputBase(int64_t batchIdx, int64_t indexW, int64_t indexH,
+                                                                     int64_t lengthW, int64_t lengthH)
 {
     LocalTensor<float> srcTensorW = xIntQueueW.Get<float>();
     LocalTensor<float> srcTensorH = xIntQueueH.Get<float>();
@@ -353,8 +352,8 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputBase(
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputSmallC(
-    int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH)
+__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputSmallC(int64_t batchIdx, int64_t indexW, int64_t indexH,
+                                                                       int64_t lengthW, int64_t lengthH)
 {
     LocalTensor<float> srcTensorW = xIntQueueW.Get<float>();
     LocalTensor<float> srcTensorH = xIntQueueH.Get<float>();
@@ -398,8 +397,9 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputSmallC(
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputSmallCW(
-    int64_t batchIdx, int64_t indexW, int64_t indexH, int64_t lengthW, int64_t lengthH)
+__aicore__ inline void UpsampleNearestND<T, MODE>::ProcessOutputSmallCW(int64_t batchIdx, int64_t indexW,
+                                                                        int64_t indexH, int64_t lengthW,
+                                                                        int64_t lengthH)
 {
     LocalTensor<float> srcTensorW = xIntQueueW.Get<float>();
     LocalTensor<float> srcTensorH = xIntQueueH.Get<float>();
@@ -452,8 +452,8 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::CopyOut(int64_t indexOutput, 
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::CopyOutBase(
-    LocalTensor<T> dstDataLocal, int64_t indexOutput, int64_t calCount)
+__aicore__ inline void UpsampleNearestND<T, MODE>::CopyOutBase(LocalTensor<T> dstDataLocal, int64_t indexOutput,
+                                                               int64_t calCount)
 {
     event_t eventID1 = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_MTE3));
     SetFlag<HardEvent::V_MTE3>(eventID1);
@@ -497,7 +497,8 @@ __aicore__ inline void UpsampleNearestND<T, MODE>::CopyOutBatch(int64_t indexOut
 }
 
 template <typename T, int32_t MODE>
-__aicore__ inline void UpsampleNearestND<T, MODE>::ParseTilingData(const UpsampleNearestTilingData* __restrict__ tilingData)
+__aicore__ inline void UpsampleNearestND<T, MODE>::ParseTilingData(
+    const UpsampleNearestTilingData* __restrict__ tilingData)
 {
     slideSize = DEFAULT_UB_MAX_DATA_COUNT;
     dataType = tilingData->dataType;

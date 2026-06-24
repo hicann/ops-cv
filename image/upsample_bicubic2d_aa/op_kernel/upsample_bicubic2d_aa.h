@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -33,19 +33,20 @@ class UpsampleBicubic2dAAND {
 public:
     TPipe pipe;
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>, MDL_CFG>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, true>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
-        matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>,
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T, false>, MDL_CFG>
         matmulH;
 
     __aicore__ inline UpsampleBicubic2dAAND(){};
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace, const UpsampleBicubic2dAATilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace,
+                                const UpsampleBicubic2dAATilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -92,7 +93,7 @@ private:
         }
     };
 
-    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dAATilingData *tilingData);
+    __aicore__ inline void ParseTilingData(const UpsampleBicubic2dAATilingData* tilingData);
     __aicore__ inline void CalculateIndexTensor(int32_t index, int32_t length, uint8_t direction, int32_t inputSize);
     __aicore__ inline void CalculateRadioTensor(int32_t index, int32_t length, int32_t tensorLength, float invscale);
     __aicore__ inline void CalculateWidthExtension(int32_t tensorCIndex, int32_t rowStart, int32_t rowEnd);
@@ -112,8 +113,8 @@ private:
     TBuf<> floorTensorBuff;
     TBuf<> weightTensorBuff;
 
-    const TCubeTiling *__restrict matmulTilingW;
-    const TCubeTiling *__restrict matmulTilingH;
+    const TCubeTiling* __restrict matmulTilingW;
+    const TCubeTiling* __restrict matmulTilingH;
 
     GlobalTensor<T> inTensorsGM;
     GlobalTensor<T> outTensorsGM;
@@ -170,8 +171,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::Init(
-    GM_ADDR x, GM_ADDR y, GM_ADDR workspace, const UpsampleBicubic2dAATilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR workspace,
+                                                      const UpsampleBicubic2dAATilingData* tilingData)
 {
     blockIdx = GetBlockIdx() / 2;
 
@@ -189,9 +190,9 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::Init(
 
     pipe.InitBuffer(weightTensorBuff, CeilA2B(maxInterpSize * sizeof(float), 32));
 
-    intermediateTensorGm.SetGlobalBuffer((__gm__ T *)workspace);
-    inTensorsGM.SetGlobalBuffer((__gm__ T *)x);
-    outTensorsGM.SetGlobalBuffer((__gm__ T *)y);
+    intermediateTensorGm.SetGlobalBuffer((__gm__ T*)workspace);
+    inTensorsGM.SetGlobalBuffer((__gm__ T*)x);
+    outTensorsGM.SetGlobalBuffer((__gm__ T*)y);
 }
 
 template <typename T>
@@ -276,8 +277,8 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::ProcessHeightDirection()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateIndexTensor(
-    int32_t index, int32_t length, uint8_t direction, int32_t inputSize)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateIndexTensor(int32_t index, int32_t length, uint8_t direction,
+                                                                      int32_t inputSize)
 {
     int32_t realDataCount = MaxFun(length, EACH_SLICE_HANDLE_NUM);
 
@@ -312,8 +313,8 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateIndexTensor(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateRadioTensor(
-    int32_t index, int32_t length, int32_t tensorLength, float invscale)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateRadioTensor(int32_t index, int32_t length,
+                                                                      int32_t tensorLength, float invscale)
 {
     LocalTensor<float> radioTensor = radioQueue.AllocTensor<float>();
     centerTensor = centerTensorBuff.Get<float>();
@@ -363,8 +364,8 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::CopyRadioTensorToGm(int32_t len
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateWidthExtension(
-    int32_t tensorCIndex, int32_t rowStart, int32_t rowEnd)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateWidthExtension(int32_t tensorCIndex, int32_t rowStart,
+                                                                         int32_t rowEnd)
 {
     int64_t singleCoreM = matmulTilingW->singleCoreM;
     int64_t singleCoreN = matmulTilingW->singleCoreN;
@@ -391,8 +392,8 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateWidthExtension(
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateHeightExtension(
-    int32_t tensorCIndex, int32_t batchStart, int32_t batchEnd)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::CalculateHeightExtension(int32_t tensorCIndex, int32_t batchStart,
+                                                                          int32_t batchEnd)
 {
     int64_t singleCoreM = matmulTilingH->singleCoreM;
     int64_t singleCoreN = matmulTilingH->singleCoreN;
@@ -443,7 +444,7 @@ __aicore__ inline int32_t UpsampleBicubic2dAAND<T>::GetHeightTensorSize()
 }
 
 template <typename T>
-__aicore__ inline void UpsampleBicubic2dAAND<T>::ParseTilingData(const UpsampleBicubic2dAATilingData *tilingData)
+__aicore__ inline void UpsampleBicubic2dAAND<T>::ParseTilingData(const UpsampleBicubic2dAATilingData* tilingData)
 {
     scaleW = tilingData->scaleW;
     scaleH = tilingData->scaleH;
@@ -492,6 +493,6 @@ __aicore__ inline void UpsampleBicubic2dAAND<T>::ParseTilingData(const UpsampleB
     matmulTilingW = &tilingData->matmulTilingW;
     matmulTilingH = &tilingData->matmulTilingH;
 }
-}  // namespace UpsampleBicubic2dAA
+} // namespace UpsampleBicubic2dAA
 
-#endif  // UPSAMPLE_BICUBIC2D_AA
+#endif // UPSAMPLE_BICUBIC2D_AA

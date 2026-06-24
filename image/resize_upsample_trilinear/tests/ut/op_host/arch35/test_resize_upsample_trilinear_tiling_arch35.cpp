@@ -17,15 +17,9 @@
 
 class ResizeUpsampleTrilinearArch35TilingTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeUpsampleTrilinearArch35TilingTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeUpsampleTrilinearArch35TilingTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeUpsampleTrilinearArch35TilingTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeUpsampleTrilinearArch35TilingTest TearDown" << std::endl; }
 };
 
 struct ResizeUpsampleTrilinearArch35CompileInfo {
@@ -40,20 +34,18 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_output
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {12, 256, 256};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
-    string expectTilingData = "3298534883330 4398046511168 1024 786432 1 4 128 128 12 256 256 4539628425440832171 1056964608 ";
+    string expectTilingData = "3298534883330 4398046511168 1024 786432 1 4 128 128 12 256 256 4539628425440832171 "
+                              "1056964608 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -65,20 +57,18 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp16_output
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {16, 128, 128};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 1;
-    string expectTilingData = "4398046511105 2199023255616 512 524288 2 8 64 64 16 128 128 4539628425446424576 1056964608 ";
+    string expectTilingData = "4398046511105 2199023255616 512 524288 2 8 64 64 16 128 128 4539628425446424576 "
+                              "1056964608 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -90,20 +80,17 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_bf16_output
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {20, 96, 96};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_BF16, ge::FORMAT_ND}},
-        {{outShape, ge::DT_BF16, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_BF16, ge::FORMAT_ND}}, {{outShape, ge::DT_BF16, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 2;
-    string expectTilingData = "3092376453123 6597069766720 1536 1105920 6 10 48 48 20 96 96 4539628425446424576 1056964608 ";
+    string expectTilingData = "3092376453123 6597069766720 1536 1105920 6 10 48 48 20 96 96 4539628425446424576 "
+                              "1056964608 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -115,18 +102,15 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_align_
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {8, 8, 8};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "4294967297 2199023255553 512 512 1 4 4 4 8 8 8 4529334484052176311 5349535159 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -140,18 +124,15 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_scales
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {0, 0, 0};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(2.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "4294967297 2199023255553 512 512 1 4 4 4 8 8 8 4539628425446424576 1056964608 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -165,18 +146,15 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_small_
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {3, 3, 3};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "4294967297 137438953473 27 27 1 2 2 2 3 3 3 4551638025887197867 1059760811 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -190,20 +168,18 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_downsa
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {30, 128, 256};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
-    string expectTilingData = "4123168604164 8796093022272 2048 1966080 2 60 256 512 30 128 256 4611686019501129728 1073741824 ";
+    string expectTilingData = "4123168604164 8796093022272 2048 1966080 2 60 256 512 30 128 256 4611686019501129728 "
+                              "1073741824 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -215,20 +191,18 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_large_
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {64, 128, 128};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
-    string expectTilingData = "4398046511168 140737488355392 32768 33554432 32 32 64 64 64 128 128 4539628425446424576 1056964608 ";
+    string expectTilingData = "4398046511168 140737488355392 32768 33554432 32 32 64 64 64 128 128 4539628425446424576 "
+                              "1056964608 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -240,18 +214,15 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_scale_
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {101, 101, 101};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -265,18 +236,15 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_nc_mismatch
     ResizeUpsampleTrilinearArch35CompileInfo compileInfo = {64, 3510};
     std::vector<int64_t> output_size = {8, 8, 8};
     gert::TilingContextPara tilingContextPara(
-        "ResizeUpsampleTrilinear",
-        {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        "ResizeUpsampleTrilinear", {{inputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
          gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
          gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144);
+        &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "";
     std::vector<size_t> expectWorkspaces = {16777216};

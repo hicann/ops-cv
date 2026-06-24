@@ -36,9 +36,9 @@ static ge::graphStatus InferShapeRoiAlignV2(gert::InferShapeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferShapeRoiAlignV2");
 
-    const gert::Shape *features_shape = context->GetInputShape(0);
-    const gert::Shape *rois_shape = context->GetInputShape(1);
-    gert::Shape *output_shape = context->GetOutputShape(0);
+    const gert::Shape* features_shape = context->GetInputShape(0);
+    const gert::Shape* rois_shape = context->GetInputShape(1);
+    gert::Shape* output_shape = context->GetOutputShape(0);
 
     uint32_t numRois = rois_shape->GetDim(0);
     uint32_t channels = features_shape->GetDim(1);

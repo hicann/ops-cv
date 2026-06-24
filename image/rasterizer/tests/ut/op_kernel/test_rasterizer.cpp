@@ -24,18 +24,13 @@
 using namespace std;
 using namespace optiling;
 
-extern "C" void rasterizer(uint8_t *v, uint8_t *f, uint8_t *d, uint8_t *findices, uint8_t *barycentric, uint8_t *workspace, uint8_t *tiling);
+extern "C" void rasterizer(uint8_t* v, uint8_t* f, uint8_t* d, uint8_t* findices, uint8_t* barycentric,
+                           uint8_t* workspace, uint8_t* tiling);
 
 class rasterizer_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "rasterizer_test SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "rasterizer_test TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "rasterizer_test SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "rasterizer_test TearDown\n" << endl; }
 };
 
 TEST_F(rasterizer_test, test_case_test01)
@@ -52,30 +47,30 @@ TEST_F(rasterizer_test, test_case_test01)
     gert::StorageShape findices_shape = {{10, 10}, {10, 10}};
     gert::StorageShape bary_shape = {{10, 10, 3}, {10, 10, 3}};
     RasterizerCompileInfo compileInfo = {};
-    gert::TilingContextPara tilingContextPara("Rasterizer",
-                                                {{v_shape, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                {f_shape, ge::DT_INT32, ge::FORMAT_ND},
-                                                {d_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{findices_shape, ge::DT_INT32, ge::FORMAT_ND},
-                                                {bary_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("width", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
-                                                gert::TilingContextPara::OpAttr("height", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
-                                                gert::TilingContextPara::OpAttr("occlusion_truncation", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
-                                                gert::TilingContextPara::OpAttr("use_depth_prior", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "Rasterizer",
+        {{v_shape, ge::DT_FLOAT, ge::FORMAT_ND},
+         {f_shape, ge::DT_INT32, ge::FORMAT_ND},
+         {d_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{findices_shape, ge::DT_INT32, ge::FORMAT_ND}, {bary_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("width", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
+         gert::TilingContextPara::OpAttr("height", Ops::Cv::AnyValue::CreateFrom<int64_t>(10)),
+         gert::TilingContextPara::OpAttr("occlusion_truncation", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("use_depth_prior", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))},
+        &compileInfo);
     TilingInfo tilingInfo;
     auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
     EXPECT_EQ(tilingRet, true);
 
-    uint8_t *v = (uint8_t *)AscendC::GmAlloc(vByteSize);
-    uint8_t *f = (uint8_t *)AscendC::GmAlloc(fByteSize);
-    uint8_t *d = (uint8_t *)AscendC::GmAlloc(dByteSize);
-    uint8_t *findices = (uint8_t *)AscendC::GmAlloc(findicesByteSize);
-    uint8_t *bary = (uint8_t *)AscendC::GmAlloc(baryByteSize);
+    uint8_t* v = (uint8_t*)AscendC::GmAlloc(vByteSize);
+    uint8_t* f = (uint8_t*)AscendC::GmAlloc(fByteSize);
+    uint8_t* d = (uint8_t*)AscendC::GmAlloc(dByteSize);
+    uint8_t* findices = (uint8_t*)AscendC::GmAlloc(findicesByteSize);
+    uint8_t* bary = (uint8_t*)AscendC::GmAlloc(baryByteSize);
 
     uint32_t numBlocks = 16;
 
-    char *path_ = get_current_dir_name();
+    char* path_ = get_current_dir_name();
     string path(path_);
 
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);

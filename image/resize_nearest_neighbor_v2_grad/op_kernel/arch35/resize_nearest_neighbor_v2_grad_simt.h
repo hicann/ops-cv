@@ -30,31 +30,31 @@ class ResizeNearestNeighborV2GradSimt {
 public:
     __aicore__ inline ResizeNearestNeighborV2GradSimt(){};
 
-    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR y, const ResizeNearestNeighborV2GradTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR grads, GM_ADDR y, const ResizeNearestNeighborV2GradTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     GlobalTensor<T_DATA> gradsGm_;
     GlobalTensor<T_DATA> yGm_;
     int32_t blockIdx_;
-    const ResizeNearestNeighborV2GradTilingData *tilingData_;
+    const ResizeNearestNeighborV2GradTilingData* tilingData_;
 };
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool ALIGN_CORNERS, bool HALF_PIXEL>
 __aicore__ inline void ResizeNearestNeighborV2GradSimt<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS, HALF_PIXEL>::Init(
-    GM_ADDR grads, GM_ADDR y, const ResizeNearestNeighborV2GradTilingData *tilingData)
+    GM_ADDR grads, GM_ADDR y, const ResizeNearestNeighborV2GradTilingData* tilingData)
 {
     blockIdx_ = GetBlockIdx();
     tilingData_ = tilingData;
 
-    gradsGm_.SetGlobalBuffer((__gm__ T_DATA *)grads);
-    yGm_.SetGlobalBuffer((__gm__ T_DATA *)y);
+    gradsGm_.SetGlobalBuffer((__gm__ T_DATA*)grads);
+    yGm_.SetGlobalBuffer((__gm__ T_DATA*)y);
 }
 
 template <typename T_IDX, int32_t FORMAT>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcInputDimIdx(T_IDX gradsIdx, T_IDX lenC,
-    T_IDX lenDstH, T_IDX lenDstW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW, T_IDX &idxN,
-    T_IDX &idxC, T_IDX &gradsIdxH, T_IDX &gradsIdxW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcInputDimIdx(
+    T_IDX gradsIdx, T_IDX lenC, T_IDX lenDstH, T_IDX lenDstW, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW,
+    T_IDX shiftW, T_IDX& idxN, T_IDX& idxC, T_IDX& gradsIdxH, T_IDX& gradsIdxW)
 {
     T_IDX tmpIdx = gradsIdx;
     T_IDX tmpRes = 0;
@@ -83,7 +83,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void CalcInputD
 
 template <typename T_IDX, int32_t FORMAT>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline T_IDX CalcOutputIdx(T_IDX lenC, T_IDX lenSrcH,
-    T_IDX lenSrcW, T_IDX idxN, T_IDX idxC, T_IDX idxH, T_IDX idxW)
+                                                                                     T_IDX lenSrcW, T_IDX idxN,
+                                                                                     T_IDX idxC, T_IDX idxH, T_IDX idxW)
 {
     if constexpr (FORMAT == FORMAT_NCHW) {
         return ((idxN * lenC + idxC) * lenSrcH + idxH) * lenSrcW + idxW;
@@ -94,30 +95,28 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline T_IDX CalcOutpu
 
 template <typename T_IDX, bool ALIGN_CORNERS, bool HALF_PIXEL>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline T_IDX CalcSourceIndex(float scale, T_IDX dstIdx,
-    T_IDX srcIdxMax)
+                                                                                       T_IDX srcIdxMax)
 {
     if constexpr (ALIGN_CORNERS && !HALF_PIXEL) {
         return min(static_cast<T_IDX>(roundf(static_cast<float>(dstIdx) * scale)), srcIdxMax);
     } else if constexpr (!ALIGN_CORNERS && HALF_PIXEL) {
-        return min(static_cast<T_IDX>(floorf(static_cast<float>(dstIdx + HALF_PIXEL_VAL) * scale)),
-            srcIdxMax);
+        return min(static_cast<T_IDX>(floorf(static_cast<float>(dstIdx + HALF_PIXEL_VAL) * scale)), srcIdxMax);
     } else {
         return min(static_cast<T_IDX>(floorf(static_cast<float>(dstIdx) * scale)), srcIdxMax);
     }
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool ALIGN_CORNERS, bool HALF_PIXEL>
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(__gm__ T_DATA *grads,
-    __gm__ T_DATA *y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH,
-    float scaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW,
-    T_IDX shiftW)
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtCompute(
+    __gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW,
+    float scaleH, float scaleW, T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH,
+    T_IDX mW, T_IDX shiftW)
 {
-    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor;
-        idx += static_cast<T_IDX>(blockDim.x)) {
+    for (T_IDX idx = static_cast<T_IDX>(threadIdx.x); idx < coreFactor; idx += static_cast<T_IDX>(blockDim.x)) {
         T_IDX gradsIdx = coreOffset + idx;
         T_IDX idxN = 0, idxC = 0, gradsIdxH = 0, gradsIdxW = 0;
         CalcInputDimIdx<T_IDX, FORMAT>(gradsIdx, lenC, lenDstH, lenDstW, mC, shiftC, mH, shiftH, mW, shiftW, idxN, idxC,
-            gradsIdxH, gradsIdxW);
+                                       gradsIdxH, gradsIdxW);
 
         T_IDX yIdxH = CalcSourceIndex<T_IDX, ALIGN_CORNERS, HALF_PIXEL>(scaleH, gradsIdxH, lenSrcH - 1);
         T_IDX yIdxW = CalcSourceIndex<T_IDX, ALIGN_CORNERS, HALF_PIXEL>(scaleW, gradsIdxW, lenSrcW - 1);
@@ -127,21 +126,25 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtComput
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool ALIGN_CORNERS, bool HALF_PIXEL>
-__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT32)__aicore__ void calleeSimtInt32(__gm__ T_DATA *grads, __gm__ T_DATA *y,
-    T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW,
-    T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT32) __aicore__
+    void calleeSimtInt32(__gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW,
+                         T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX coreFactor, T_IDX coreOffset,
+                         T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
     SimtCompute<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS, HALF_PIXEL>(grads, y, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
-        scaleH, scaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
+                                                                  scaleH, scaleW, coreFactor, coreOffset, mC, shiftC,
+                                                                  mH, shiftH, mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool ALIGN_CORNERS, bool HALF_PIXEL>
-__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT64)__aicore__ void calleeSimtInt64(__gm__ T_DATA *grads, __gm__ T_DATA *y,
-    T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW, T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW,
-    T_IDX coreFactor, T_IDX coreOffset, T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
+__simt_vf__ LAUNCH_BOUND(SIMT_THREAD_NUM_INT64) __aicore__
+    void calleeSimtInt64(__gm__ T_DATA* grads, __gm__ T_DATA* y, T_IDX lenC, T_IDX lenSrcH, T_IDX lenSrcW,
+                         T_IDX lenDstH, T_IDX lenDstW, float scaleH, float scaleW, T_IDX coreFactor, T_IDX coreOffset,
+                         T_IDX mC, T_IDX shiftC, T_IDX mH, T_IDX shiftH, T_IDX mW, T_IDX shiftW)
 {
     SimtCompute<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS, HALF_PIXEL>(grads, y, lenC, lenSrcH, lenSrcW, lenDstH, lenDstW,
-        scaleH, scaleW, coreFactor, coreOffset, mC, shiftC, mH, shiftH, mW, shiftW);
+                                                                  scaleH, scaleW, coreFactor, coreOffset, mC, shiftC,
+                                                                  mH, shiftH, mW, shiftW);
 }
 
 template <typename T_DATA, typename T_IDX, int32_t FORMAT, bool ALIGN_CORNERS, bool HALF_PIXEL>
@@ -188,13 +191,13 @@ __aicore__ inline void ResizeNearestNeighborV2GradSimt<T_DATA, T_IDX, FORMAT, AL
     if (blockIdx_ < useCoreNum) {
         if constexpr (sizeof(T_IDX) == sizeof(uint32_t)) {
             asc_vf_call<calleeSimtInt32<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS, HALF_PIXEL>>(
-                dim3(SIMT_THREAD_NUM_INT32), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
-                (__gm__ T_DATA *)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
+                dim3(SIMT_THREAD_NUM_INT32), (__gm__ T_DATA*)(gradsGm_.GetPhyAddr()),
+                (__gm__ T_DATA*)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
                 blkProcessNum, blkStartOffset, mC, shiftC, mH, shiftH, mW, shiftW);
         } else {
             asc_vf_call<calleeSimtInt64<T_DATA, T_IDX, FORMAT, ALIGN_CORNERS, HALF_PIXEL>>(
-                dim3(SIMT_THREAD_NUM_INT64), (__gm__ T_DATA *)(gradsGm_.GetPhyAddr()),
-                (__gm__ T_DATA *)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
+                dim3(SIMT_THREAD_NUM_INT64), (__gm__ T_DATA*)(gradsGm_.GetPhyAddr()),
+                (__gm__ T_DATA*)(yGm_.GetPhyAddr()), lenC, lenSrcH, lenSrcW, lenDstH, lenDstW, scaleH, scaleW,
                 blkProcessNum, blkStartOffset, mC, shiftC, mH, shiftH, mW, shiftW);
         }
     }

@@ -39,8 +39,8 @@ class Rasterizer {
 public:
     __aicore__ inline Rasterizer(){};
 
-    __aicore__ inline void Init( GM_ADDR v, GM_ADDR f, GM_ADDR d, GM_ADDR findices, GM_ADDR barycentric, 
-        GM_ADDR workSpace, RasterizerTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR v, GM_ADDR f, GM_ADDR d, GM_ADDR findices, GM_ADDR barycentric,
+                                GM_ADDR workSpace, RasterizerTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
@@ -128,7 +128,7 @@ private:
 
 template <typename T>
 __aicore__ inline void Rasterizer<T>::Init(GM_ADDR v, GM_ADDR f, GM_ADDR d, GM_ADDR findices, GM_ADDR barycentric,
-    GM_ADDR workSpace, RasterizerTilingData* tilingData)
+                                           GM_ADDR workSpace, RasterizerTilingData* tilingData)
 {
     this->height = tilingData->height;
     this->width = tilingData->width;
@@ -167,13 +167,14 @@ __aicore__ inline void Rasterizer<T>::Init(GM_ADDR v, GM_ADDR f, GM_ADDR d, GM_A
         offsetFid = blockIdx * numFindices + numFindicesReminder;
     }
 
-    this->findicesGM.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(findices) + offsetFid);
-    this->barycentricGM.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(barycentric) + offsetFid * NUM_VAL_PER_BARY);
+    this->findicesGM.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(findices) + offsetFid);
+    this->barycentricGM.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(barycentric) + offsetFid * NUM_VAL_PER_BARY);
 
     const int64_t findicesSize = height * width;
 
-    fIdxGM.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(workSpace) + findicesSize * blockIdx);
-    depthGM.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(workSpace) + findicesSize * blockNum + RESERVE_SIZE + findicesSize * blockIdx);
+    fIdxGM.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(workSpace) + findicesSize * blockIdx);
+    depthGM.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(workSpace) + findicesSize * blockNum + RESERVE_SIZE +
+                            findicesSize * blockIdx);
 
     InitBuf();
     InitGM();
@@ -368,10 +369,9 @@ __aicore__ inline void Rasterizer<T>::CalcZBufferMask(int32_t currentFIdx)
 template <typename T>
 __aicore__ inline uint64_t Rasterizer<T>::CalcMask(uint32_t idx, LocalTensor<uint16_t>& tensor)
 {
-    return static_cast<uint64_t>(tensor.GetValue(idx)) |
-            (static_cast<uint64_t>(tensor.GetValue(idx + 1)) << 16) |
-            (static_cast<uint64_t>(tensor.GetValue(idx + 2)) << 32) |
-            (static_cast<uint64_t>(tensor.GetValue(idx + 3)) << 48);
+    return static_cast<uint64_t>(tensor.GetValue(idx)) | (static_cast<uint64_t>(tensor.GetValue(idx + 1)) << 16) |
+           (static_cast<uint64_t>(tensor.GetValue(idx + 2)) << 32) |
+           (static_cast<uint64_t>(tensor.GetValue(idx + 3)) << 48);
 }
 
 template <typename T>

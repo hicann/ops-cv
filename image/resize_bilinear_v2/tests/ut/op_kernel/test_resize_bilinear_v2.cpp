@@ -34,43 +34,36 @@ using namespace std;
 using namespace AscendC;
 using namespace ResizeBilinearV2;
 
-class resize_bilinear_v2_test : public testing::Test
-{
+class resize_bilinear_v2_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "resize_bilinear_v2 SetUp\n" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "resize_bilinear_v2 TearDown\n" << endl;
-    }
+    static void SetUpTestCase() { cout << "resize_bilinear_v2 SetUp\n" << endl; }
+    static void TearDownTestCase() { cout << "resize_bilinear_v2 TearDown\n" << endl; }
 };
 
 TEST_F(resize_bilinear_v2_test, test_resize_bilinear_v2_950_all_copy_fp16)
 {
     // Test TILING_KEY_ALL_COPY (40000): input and output sizes identical
     // Directly instantiate ResizeBilinearV2AllCopy class (bypass Simt branches)
-    
+
     size_t inputByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t sizeByteSize = 2 * sizeof(int32_t);
     size_t outputByteSize = 1 * 1 * 2 * 2 * sizeof(half);
     size_t tilingDataSize = sizeof(ResizeBilinearV2TilingData);
-    
-    uint8_t *x = (uint8_t *)GmAlloc(inputByteSize);
-    uint8_t *size_tensor = (uint8_t *)GmAlloc(sizeByteSize);
-    uint8_t *y = (uint8_t *)GmAlloc(outputByteSize);
-    
-    uint8_t *tiling = (uint8_t *)GmAlloc(tilingDataSize);
-    
+
+    uint8_t* x = (uint8_t*)GmAlloc(inputByteSize);
+    uint8_t* size_tensor = (uint8_t*)GmAlloc(sizeByteSize);
+    uint8_t* y = (uint8_t*)GmAlloc(outputByteSize);
+
+    uint8_t* tiling = (uint8_t*)GmAlloc(tilingDataSize);
+
     // Initialize input data to fixed value for reliability
     memset(x, 0, inputByteSize);
-    
+
     // Prepare size data
     int32_t* sizeData = reinterpret_cast<int32_t*>(size_tensor);
-    sizeData[0] = 2;  // output H
-    sizeData[1] = 2;  // output W
-    
+    sizeData[0] = 2; // output H
+    sizeData[1] = 2; // output W
+
     // Manually construct TilingData
     ResizeBilinearV2TilingData* tilingData = reinterpret_cast<ResizeBilinearV2TilingData*>(tiling);
     tilingData->tilingKey = 40000;
@@ -98,13 +91,13 @@ TEST_F(resize_bilinear_v2_test, test_resize_bilinear_v2_950_all_copy_fp16)
     tilingData->ubHWFactor = 4;
     tilingData->scaleW = 1.0f;
     tilingData->scaleH = 1.0f;
-    
+
     // Directly instantiate ResizeBilinearV2AllCopy class (no Simt dependency)
     TPipe pipe;
     ResizeBilinearV2AllCopy<half> op;
     op.Init(x, size_tensor, y, &pipe, tilingData);
     op.Process();
-    
+
     GmFree(x);
     GmFree(size_tensor);
     GmFree(y);

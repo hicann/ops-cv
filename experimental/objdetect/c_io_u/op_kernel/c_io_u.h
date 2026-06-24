@@ -47,8 +47,8 @@ private:
 
     // Reuse one input queue per source tensor.  Each coordinate is copied and
     // cast into TBuf before the next coordinate reuses the queue.
-    AscendC::TQue<AscendC::TPosition::VECIN, 1>  inAQueue;
-    AscendC::TQue<AscendC::TPosition::VECIN, 1>  inBQueue;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> inAQueue;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> inBQueue;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> outOverlapQueue;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> outAtanSubQueue;
 
@@ -56,7 +56,7 @@ private:
     AscendC::TBuf<AscendC::TPosition::VECCALC> b0Buf, b1Buf, b2Buf, b3Buf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> x1aBuf, y1aBuf, x2aBuf, y2aBuf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> x1bBuf, y1bBuf, x2bBuf, y2bBuf;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> w1Buf,  h1Buf,  w2Buf,  h2Buf;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> w1Buf, h1Buf, w2Buf, h2Buf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> tmp1Buf, tmp2Buf, tmp3Buf, tmp4Buf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> overlapBuf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> atanSubBuf;
@@ -69,18 +69,16 @@ private:
     AscendC::GlobalTensor<T> atanSubGm;
 
     uint32_t totalN, basePerCore, pivot, tileN, usedCoreNum, alignElem, tailN;
-    int32_t  trans, modeId, atanSubFlag;
-    float    eps;
+    int32_t trans, modeId, atanSubFlag;
+    float eps;
 
     uint32_t programId, myN, myStart, innerLoops;
 
 public:
     __aicore__ inline CIoU() {}
 
-    __aicore__ inline void Init(GM_ADDR bboxes, GM_ADDR gtboxes,
-                                GM_ADDR overlap, GM_ADDR atanSub,
-                                const CIoUTilingData* td,
-                                AscendC::TPipe* pipePtr)
+    __aicore__ inline void Init(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, GM_ADDR atanSub,
+                                const CIoUTilingData* td, AscendC::TPipe* pipePtr)
     {
         this->pipe = pipePtr;
         InitTilingFields(td);
@@ -94,10 +92,12 @@ public:
 
     __aicore__ inline void Process()
     {
-        if (myN == 0) return;
+        if (myN == 0)
+            return;
         for (uint32_t i = 0; i < innerLoops; i++) {
             uint32_t tileOffset = i * tileN;
-            if (tileOffset >= myN) break;
+            if (tileOffset >= myN)
+                break;
             uint32_t cnt = (tileOffset + tileN <= myN) ? tileN : (myN - tileOffset);
             Compute(myStart + tileOffset, cnt);
             CopyOut(i, cnt);
@@ -117,17 +117,17 @@ private:
 
     __aicore__ inline void InitTilingFields(const CIoUTilingData* td)
     {
-        this->totalN      = td->totalN;
+        this->totalN = td->totalN;
         this->basePerCore = td->basePerCore;
-        this->pivot       = td->pivot;
-        this->tileN       = td->tileN;
+        this->pivot = td->pivot;
+        this->tileN = td->tileN;
         this->usedCoreNum = td->usedCoreNum;
-        this->alignElem   = td->alignElem;
-        this->tailN       = td->tailN;
-        this->trans       = td->trans;
-        this->modeId      = td->modeId;
+        this->alignElem = td->alignElem;
+        this->tailN = td->tailN;
+        this->trans = td->trans;
+        this->modeId = td->modeId;
         this->atanSubFlag = td->atanSubFlag;
-        this->eps         = td->eps;
+        this->eps = td->eps;
     }
 
     __aicore__ inline void InitCoreRange()
@@ -135,18 +135,16 @@ private:
         this->programId = AscendC::GetBlockIdx();
         uint32_t extra = (programId < pivot) ? alignElem : 0u;
         this->myN = basePerCore + extra;
-        this->myStart = programId * basePerCore +
-                        ((programId < pivot) ? programId : pivot) * alignElem;
+        this->myStart = programId * basePerCore + ((programId < pivot) ? programId : pivot) * alignElem;
         if (programId == usedCoreNum - 1) {
             this->myN += tailN;
         }
         this->innerLoops = (myN == 0) ? 0u : (myN + tileN - 1) / tileN;
     }
 
-    __aicore__ inline void InitGlobalBuffers(GM_ADDR bboxes, GM_ADDR gtboxes,
-                                             GM_ADDR overlap, GM_ADDR atanSub)
+    __aicore__ inline void InitGlobalBuffers(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, GM_ADDR atanSub)
     {
-        bboxesGm.SetGlobalBuffer((__gm__ T*)bboxes,  totalN * 4);
+        bboxesGm.SetGlobalBuffer((__gm__ T*)bboxes, totalN * 4);
         gtboxesGm.SetGlobalBuffer((__gm__ T*)gtboxes, totalN * 4);
         overlapGm.SetGlobalBuffer((__gm__ T*)overlap, totalN);
         atanSubGm.SetGlobalBuffer((__gm__ T*)atanSub, totalN);
@@ -169,18 +167,30 @@ private:
 
     __aicore__ inline void InitComputeBuffers(uint32_t fBytes)
     {
-        pipe->InitBuffer(a0Buf, fBytes); pipe->InitBuffer(a1Buf, fBytes);
-        pipe->InitBuffer(a2Buf, fBytes); pipe->InitBuffer(a3Buf, fBytes);
-        pipe->InitBuffer(b0Buf, fBytes); pipe->InitBuffer(b1Buf, fBytes);
-        pipe->InitBuffer(b2Buf, fBytes); pipe->InitBuffer(b3Buf, fBytes);
-        pipe->InitBuffer(x1aBuf, fBytes); pipe->InitBuffer(y1aBuf, fBytes);
-        pipe->InitBuffer(x2aBuf, fBytes); pipe->InitBuffer(y2aBuf, fBytes);
-        pipe->InitBuffer(x1bBuf, fBytes); pipe->InitBuffer(y1bBuf, fBytes);
-        pipe->InitBuffer(x2bBuf, fBytes); pipe->InitBuffer(y2bBuf, fBytes);
-        pipe->InitBuffer(w1Buf,  fBytes); pipe->InitBuffer(h1Buf,  fBytes);
-        pipe->InitBuffer(w2Buf,  fBytes); pipe->InitBuffer(h2Buf,  fBytes);
-        pipe->InitBuffer(tmp1Buf, fBytes); pipe->InitBuffer(tmp2Buf, fBytes);
-        pipe->InitBuffer(tmp3Buf, fBytes); pipe->InitBuffer(tmp4Buf, fBytes);
+        pipe->InitBuffer(a0Buf, fBytes);
+        pipe->InitBuffer(a1Buf, fBytes);
+        pipe->InitBuffer(a2Buf, fBytes);
+        pipe->InitBuffer(a3Buf, fBytes);
+        pipe->InitBuffer(b0Buf, fBytes);
+        pipe->InitBuffer(b1Buf, fBytes);
+        pipe->InitBuffer(b2Buf, fBytes);
+        pipe->InitBuffer(b3Buf, fBytes);
+        pipe->InitBuffer(x1aBuf, fBytes);
+        pipe->InitBuffer(y1aBuf, fBytes);
+        pipe->InitBuffer(x2aBuf, fBytes);
+        pipe->InitBuffer(y2aBuf, fBytes);
+        pipe->InitBuffer(x1bBuf, fBytes);
+        pipe->InitBuffer(y1bBuf, fBytes);
+        pipe->InitBuffer(x2bBuf, fBytes);
+        pipe->InitBuffer(y2bBuf, fBytes);
+        pipe->InitBuffer(w1Buf, fBytes);
+        pipe->InitBuffer(h1Buf, fBytes);
+        pipe->InitBuffer(w2Buf, fBytes);
+        pipe->InitBuffer(h2Buf, fBytes);
+        pipe->InitBuffer(tmp1Buf, fBytes);
+        pipe->InitBuffer(tmp2Buf, fBytes);
+        pipe->InitBuffer(tmp3Buf, fBytes);
+        pipe->InitBuffer(tmp4Buf, fBytes);
         pipe->InitBuffer(overlapBuf, fBytes);
         pipe->InitBuffer(atanSubBuf, fBytes);
         if (atanSubFlag) {
@@ -189,16 +199,14 @@ private:
     }
 
     template <int BUF_NUM>
-    __aicore__ inline void CopyInOne(AscendC::TQue<AscendC::TPosition::VECIN, BUF_NUM>& q,
-                                     AscendC::GlobalTensor<T>& gm,
+    __aicore__ inline void CopyInOne(AscendC::TQue<AscendC::TPosition::VECIN, BUF_NUM>& q, AscendC::GlobalTensor<T>& gm,
                                      uint32_t gmOffset, uint32_t cnt)
     {
         AscendC::LocalTensor<T> local = q.template AllocTensor<T>();
-        uint32_t blockLen  = cnt * sizeof(T);
+        uint32_t blockLen = cnt * sizeof(T);
         uint32_t paddedLen = ((blockLen + 31u) / 32u) * 32u;
-        uint8_t  rightPad  = static_cast<uint8_t>((paddedLen - blockLen) / sizeof(T));
-        AscendC::DataCopyPad(local, gm[gmOffset],
-                             {1, static_cast<uint16_t>(blockLen), 0, 0},
+        uint8_t rightPad = static_cast<uint8_t>((paddedLen - blockLen) / sizeof(T));
+        AscendC::DataCopyPad(local, gm[gmOffset], {1, static_cast<uint16_t>(blockLen), 0, 0},
                              {true, static_cast<uint8_t>(0), rightPad, static_cast<uint64_t>(0)});
         q.EnQue(local);
     }
@@ -229,10 +237,8 @@ private:
         outQ.EnQue(outLocal);
     }
 
-    __aicore__ inline void CopyInPair(uint32_t tileStart, uint32_t coord,
-                                      AscendC::LocalTensor<float>& dstA,
-                                      AscendC::LocalTensor<float>& dstB,
-                                      uint32_t cnt)
+    __aicore__ inline void CopyInPair(uint32_t tileStart, uint32_t coord, AscendC::LocalTensor<float>& dstA,
+                                      AscendC::LocalTensor<float>& dstB, uint32_t cnt)
     {
         CopyInOne(inAQueue, bboxesGm, coord * totalN + tileStart, cnt);
         CopyInOne(inBQueue, gtboxesGm, coord * totalN + tileStart, cnt);
@@ -267,18 +273,14 @@ private:
 
     __aicore__ inline ComputeLocal GetComputeLocal()
     {
-        return {a0Buf.template Get<float>(), a1Buf.template Get<float>(),
-                a2Buf.template Get<float>(), a3Buf.template Get<float>(),
-                b0Buf.template Get<float>(), b1Buf.template Get<float>(),
-                b2Buf.template Get<float>(), b3Buf.template Get<float>(),
-                x1aBuf.template Get<float>(), y1aBuf.template Get<float>(),
-                x2aBuf.template Get<float>(), y2aBuf.template Get<float>(),
-                x1bBuf.template Get<float>(), y1bBuf.template Get<float>(),
-                x2bBuf.template Get<float>(), y2bBuf.template Get<float>(),
-                w1Buf.template Get<float>(), h1Buf.template Get<float>(),
-                w2Buf.template Get<float>(), h2Buf.template Get<float>(),
-                tmp1Buf.template Get<float>(), tmp2Buf.template Get<float>(),
-                tmp3Buf.template Get<float>(), tmp4Buf.template Get<float>(),
+        return {a0Buf.template Get<float>(),      a1Buf.template Get<float>(),     a2Buf.template Get<float>(),
+                a3Buf.template Get<float>(),      b0Buf.template Get<float>(),     b1Buf.template Get<float>(),
+                b2Buf.template Get<float>(),      b3Buf.template Get<float>(),     x1aBuf.template Get<float>(),
+                y1aBuf.template Get<float>(),     x2aBuf.template Get<float>(),    y2aBuf.template Get<float>(),
+                x1bBuf.template Get<float>(),     y1bBuf.template Get<float>(),    x2bBuf.template Get<float>(),
+                y2bBuf.template Get<float>(),     w1Buf.template Get<float>(),     h1Buf.template Get<float>(),
+                w2Buf.template Get<float>(),      h2Buf.template Get<float>(),     tmp1Buf.template Get<float>(),
+                tmp2Buf.template Get<float>(),    tmp3Buf.template Get<float>(),   tmp4Buf.template Get<float>(),
                 overlapBuf.template Get<float>(), atanSubBuf.template Get<float>()};
     }
 
@@ -468,10 +470,8 @@ private:
         AscendC::LocalTensor<T> ov = outOverlapQueue.template DeQue<T>();
         AscendC::LocalTensor<T> at = outAtanSubQueue.template DeQue<T>();
         uint32_t tileStart = myStart + i * tileN;
-        AscendC::DataCopyPad(overlapGm[tileStart], ov,
-                             {1, static_cast<uint16_t>(cnt * sizeof(T)), 0, 0});
-        AscendC::DataCopyPad(atanSubGm[tileStart], at,
-                             {1, static_cast<uint16_t>(cnt * sizeof(T)), 0, 0});
+        AscendC::DataCopyPad(overlapGm[tileStart], ov, {1, static_cast<uint16_t>(cnt * sizeof(T)), 0, 0});
+        AscendC::DataCopyPad(atanSubGm[tileStart], at, {1, static_cast<uint16_t>(cnt * sizeof(T)), 0, 0});
         outOverlapQueue.FreeTensor(ov);
         outAtanSubQueue.FreeTensor(at);
     }

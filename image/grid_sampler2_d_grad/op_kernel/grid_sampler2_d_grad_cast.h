@@ -23,9 +23,8 @@ template <typename T, typename GridSamplerGradTilingData>
 class GridSampler2DGradCast {
 public:
     __aicore__ inline GridSampler2DGradCast(){};
-    __aicore__ inline void Init(
-        const GridSamplerGradTilingData& __restrict tilingData, GM_ADDR inputTensors[INPUT_NUM + OUTPUT_NUM + 1],
-        TPipe* inputPipe);
+    __aicore__ inline void Init(const GridSamplerGradTilingData& __restrict tilingData,
+                                GM_ADDR inputTensors[INPUT_NUM + OUTPUT_NUM + 1], TPipe* inputPipe);
     __aicore__ inline void CopyOut(const int32_t offset, const int32_t calCount);
     __aicore__ inline void CopyIn(const int64_t offset, const int32_t calCount);
     __aicore__ inline void Compute(const int32_t computeCount);
@@ -77,8 +76,8 @@ __aicore__ inline void GridSampler2DGradCast<T, GridSamplerGradTilingData>::Init
 }
 
 template <typename T, typename GridSamplerGradTilingData>
-__aicore__ inline void GridSampler2DGradCast<T, GridSamplerGradTilingData>::CopyIn(
-    const int64_t offset, const int32_t calCount)
+__aicore__ inline void GridSampler2DGradCast<T, GridSamplerGradTilingData>::CopyIn(const int64_t offset,
+                                                                                   const int32_t calCount)
 {
     LocalTensor<float> dataLocal = dataInQueue.AllocTensor<float>();
     DataCopyExtParams copyParams = {1, static_cast<uint32_t>(calCount * sizeof(float)), 0, 0, 0};
@@ -88,8 +87,8 @@ __aicore__ inline void GridSampler2DGradCast<T, GridSamplerGradTilingData>::Copy
 }
 
 template <typename T, typename GridSamplerGradTilingData>
-__aicore__ inline void GridSampler2DGradCast<T, GridSamplerGradTilingData>::CopyOut(
-    const int32_t offset, const int32_t calCount)
+__aicore__ inline void GridSampler2DGradCast<T, GridSamplerGradTilingData>::CopyOut(const int32_t offset,
+                                                                                    const int32_t calCount)
 {
     LocalTensor<T> dstLocal = dataOutQueue.DeQue<T>();
     DataCopyExtParams copyParams{1, static_cast<uint32_t>(calCount * sizeof(T)), 0, 0, 0};

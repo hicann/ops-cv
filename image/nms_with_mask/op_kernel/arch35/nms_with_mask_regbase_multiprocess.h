@@ -20,9 +20,10 @@
 
 namespace NMSWithMaskOp {
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::Init(
-    GM_ADDR boxScores, GM_ADDR selectedBoxes, GM_ADDR selectedIdx, GM_ADDR selectedMask, GM_ADDR workspace,
-    const NMSWithMaskTilingData& tilingData)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::Init(GM_ADDR boxScores, GM_ADDR selectedBoxes,
+                                                               GM_ADDR selectedIdx, GM_ADDR selectedMask,
+                                                               GM_ADDR workspace,
+                                                               const NMSWithMaskTilingData& tilingData)
 {
     ParseTilingData(tilingData);
     boxScoresGmAddr_ = boxScores;
@@ -155,8 +156,8 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::PostProcess()
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(
-    int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(int64_t refGroupIdx, int64_t dstGroupIdx,
+                                                                 int32_t refCount, int32_t dstCount)
 {
     LocalTensor<T> refBoxesUb = refBoxesQue_.AllocTensor<T>();
     LocalTensor<T> dstBoxesUb = dstBoxesQue_.AllocTensor<T>();
@@ -192,8 +193,8 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(
     // 添加selectedBoxes的搬入
     if (refGroupIdx == dstGroupIdx) {
         LocalTensor<T> selectedBoxesUb = selectedBoxesQueIn_.AllocTensor<T>();
-        DataCopyExtParams copyParams = {
-            static_cast<uint16_t>(refCount), static_cast<uint32_t>(ELEMENT_NUM * sizeof(T)), 0, 0, 0};
+        DataCopyExtParams copyParams = {static_cast<uint16_t>(refCount), static_cast<uint32_t>(ELEMENT_NUM * sizeof(T)),
+                                        0, 0, 0};
         DataCopyPadExtParams<T> padParams{false, 0, 0, 0};
         DataCopyPad(selectedBoxesUb, boxScoresGm_[refOffset], copyParams, padParams);
         selectedBoxesQueIn_.EnQue(selectedBoxesUb);
@@ -203,8 +204,8 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMask(
-    int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMask(int64_t refGroupIdx, int64_t dstGroupIdx,
+                                                                      int32_t refCount, int32_t dstCount)
 {
     LocalTensor<T> refBoxesUb = refBoxesQue_.DeQue<T>();
     LocalTensor<T> dstBoxesUb = dstBoxesQue_.DeQue<T>();
@@ -242,25 +243,25 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMask(
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyOutMask(
-    int64_t refGroupIdx, int64_t dstGroupIdx, int64_t blockIdx, int32_t refCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyOutMask(int64_t refGroupIdx, int64_t dstGroupIdx,
+                                                                      int64_t blockIdx, int32_t refCount)
 {
     // 搬出iou_mask
     LocalTensor<int32_t> maskUb = maskQueOut_.DeQue<int32_t>();
-    DataCopyExtParams copyParams{
-        static_cast<uint16_t>(groupSize_), static_cast<uint32_t>(groupSize_ / BIT_PER_BYTE), 0, 0, 0};
+    DataCopyExtParams copyParams{static_cast<uint16_t>(groupSize_), static_cast<uint32_t>(groupSize_ / BIT_PER_BYTE), 0,
+                                 0, 0};
     DataCopyPad<int32_t>(tempMaskGm_[blockIdx * bytesPerBlock_ / sizeof(int32_t)], maskUb, copyParams);
     maskQueOut_.FreeTensor(maskUb);
     // 搬出selectedBoxes和selectedIndices
     if (refGroupIdx == dstGroupIdx) {
         LocalTensor<T> selectedBoxesUb = selectedBoxesQueOut_.DeQue<T>();
         LocalTensor<int32_t> selectedIndicesUb = selectedIndicesOut_.DeQue<int32_t>();
-        DataCopyExtParams copyParamsForSelectedBoxes{
-            static_cast<uint16_t>(refCount), static_cast<uint32_t>(ELEMENT_NUM * sizeof(T)), 0, 0, 0};
+        DataCopyExtParams copyParamsForSelectedBoxes{static_cast<uint16_t>(refCount),
+                                                     static_cast<uint32_t>(ELEMENT_NUM * sizeof(T)), 0, 0, 0};
         uint64_t offsetForSelectedBoxes = refGroupIdx * groupSize_ * ELEMENT_NUM;
         DataCopyPad(selectedBoxesGm_[offsetForSelectedBoxes], selectedBoxesUb, copyParamsForSelectedBoxes);
-        DataCopyExtParams copyParamsForSelectedIndices{
-            static_cast<uint16_t>(1), static_cast<uint32_t>(refCount * sizeof(int32_t)), 0, 0, 0};
+        DataCopyExtParams copyParamsForSelectedIndices{static_cast<uint16_t>(1),
+                                                       static_cast<uint32_t>(refCount * sizeof(int32_t)), 0, 0, 0};
         uint64_t offsetForSelectedIndices = refGroupIdx * groupSize_;
         DataCopyPad(selectedIdxGm_[offsetForSelectedIndices], selectedIndicesUb, copyParamsForSelectedIndices);
         selectedBoxesQueOut_.FreeTensor(selectedBoxesUb);
@@ -279,13 +280,14 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyOut(int64_t dstGro
 
 template <typename T>
 template <bool isDiagonal>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyInMask(
-    int64_t blockIdx, int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyInMask(int64_t blockIdx, int64_t refGroupIdx,
+                                                                     int64_t dstGroupIdx, int32_t refCount,
+                                                                     int32_t dstCount)
 {
     // 拷贝PreProcess获得的局部mask结果（bytesPerBlock个元素）
     LocalTensor<int32_t> maskUb = maskQueIn_.AllocTensor<int32_t>();
-    DataCopyExtParams copyParams{
-        static_cast<uint16_t>(groupSize_), static_cast<uint32_t>(groupSize_ / BIT_PER_BYTE), 0, 0, 0};
+    DataCopyExtParams copyParams{static_cast<uint16_t>(groupSize_), static_cast<uint32_t>(groupSize_ / BIT_PER_BYTE), 0,
+                                 0, 0};
     DataCopyPadExtParams<int32_t> padParams{false, 0, 0, 0};
     DataCopyPad<int32_t>(maskUb, tempMaskGm_[blockIdx * bytesPerBlock_ / sizeof(int32_t)], copyParams, padParams);
     maskQueIn_.EnQue(maskUb);
@@ -310,8 +312,8 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyInMask(
 
 template <typename T>
 template <bool isDiagonal>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMS(
-    int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMS(int64_t refGroupIdx, int64_t dstGroupIdx,
+                                                                     int32_t refCount, int32_t dstCount)
 {
     LocalTensor<int32_t> maskUb = maskQueIn_.DeQue<int32_t>();
     LocalTensor<uint8_t> dstSelMaskUbIn = dstSelMaskQueIn_.DeQue<uint8_t>();
@@ -337,8 +339,9 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMS(
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForDiagonal(
-    __ubuf__ uint8_t* dstMaskAddr, __ubuf__ int32_t* maskUbAddr, int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForDiagonal(__ubuf__ uint8_t* dstMaskAddr,
+                                                                                __ubuf__ int32_t* maskUbAddr,
+                                                                                int32_t dstCount)
 {
     int32_t vlSize = VL_SIZE / sizeof(uint8_t);
     uint16_t rowNum = static_cast<uint16_t>(dstCount);          // how many cols to iterate
@@ -384,9 +387,10 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForDiagonal(
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForNormal(
-    __ubuf__ uint8_t* refMaskAddr, __ubuf__ uint8_t* dstMaskAddr, __ubuf__ int32_t* maskUbAddr, int32_t refCount,
-    int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForNormal(__ubuf__ uint8_t* refMaskAddr,
+                                                                              __ubuf__ uint8_t* dstMaskAddr,
+                                                                              __ubuf__ int32_t* maskUbAddr,
+                                                                              int32_t refCount, int32_t dstCount)
 {
     int32_t vlSize = VL_SIZE / sizeof(uint8_t);
     uint16_t rowNum = static_cast<uint16_t>(refCount);          // how many rows to iterate
@@ -426,8 +430,8 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForNormal(
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeRefArea(
-    __ubuf__ T* refLocalAddr, __ubuf__ float* refAreaAddr, int32_t refCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeRefArea(__ubuf__ T* refLocalAddr,
+                                                                         __ubuf__ float* refAreaAddr, int32_t refCount)
 {
     int32_t vlSize = VL_SIZE / sizeof(float);
     uint16_t loopNum = Ops::Base::CeilDiv(refCount, vlSize);
@@ -485,9 +489,11 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CalcIntersection(
 
 template <typename T>
 template <bool dstIsOddBlock>
-__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(
-    __ubuf__ T* refLocalAddr, __ubuf__ T* dstLocalAddr, __ubuf__ float* refAreaAddr, __ubuf__ int32_t* maskUbAddr,
-    int32_t refCount, int32_t dstCount)
+__aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(__ubuf__ T* refLocalAddr,
+                                                                        __ubuf__ T* dstLocalAddr,
+                                                                        __ubuf__ float* refAreaAddr,
+                                                                        __ubuf__ int32_t* maskUbAddr, int32_t refCount,
+                                                                        int32_t dstCount)
 {
     int32_t vlSize = VL_SIZE / sizeof(float);
     uint16_t rowNum = static_cast<uint16_t>(refCount);            // how many rows to iterate
@@ -535,12 +541,12 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(
             CopyInReg<T, false>(dstY2, dstLocalAddr + dstBlockIdx * vlSize * 2 + INDEX_X2 * dstCountAligned, preg0);
             CopyInReg<T, false>(dstX2, dstLocalAddr + dstBlockIdx * vlSize * 2 + INDEX_Y2 * dstCountAligned, preg0);
             CopyInReg<T, false>(dstY3, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize, preg1);
-            CopyInReg<T, false>(
-                dstX3, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_Y1 * dstCountAligned, preg1);
-            CopyInReg<T, false>(
-                dstY4, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_X2 * dstCountAligned, preg1);
-            CopyInReg<T, false>(
-                dstX4, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_Y2 * dstCountAligned, preg1);
+            CopyInReg<T, false>(dstX3, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_Y1 * dstCountAligned,
+                                preg1);
+            CopyInReg<T, false>(dstY4, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_X2 * dstCountAligned,
+                                preg1);
+            CopyInReg<T, false>(dstX4, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_Y2 * dstCountAligned,
+                                preg1);
             MicroAPI::Sub(dstWidth, dstX2, dstX1, preg0);
             MicroAPI::Sub(dstHeight, dstY2, dstY1, preg0);
             MicroAPI::Mul(dstArea0, dstWidth, dstHeight, preg0);
@@ -551,19 +557,19 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(
                 // 要满足16 byte搬出，最终mask存为int32类型；pre过程计算的中间mask大小为groupSize_ *
                 // groupSize_，每行对应groupSize_个bit，因此源操作数的偏移量是groupSize_ / BIT_PER_BYTE /
                 // sizeof(int32_t)
-                MicroAPI::AddrReg offsetReg = MicroAPI::CreateAddrReg<int32_t>(
-                    dstBlockIdx, dstStride, refIdx, srcStride); // 4：16 / sizeof(int32)
+                MicroAPI::AddrReg offsetReg = MicroAPI::CreateAddrReg<int32_t>(dstBlockIdx, dstStride, refIdx,
+                                                                               srcStride); // 4：16 / sizeof(int32)
                 CopyInReg<T, true>(refY1, refLocalAddr + refIdx, pregAll);
                 CopyInReg<T, true>(refX1, refLocalAddr + refIdx + INDEX_Y1 * refCountAligned, pregAll);
                 CopyInReg<T, true>(refY2, refLocalAddr + refIdx + INDEX_X2 * refCountAligned, pregAll);
                 CopyInReg<T, true>(refX2, refLocalAddr + refIdx + INDEX_Y2 * refCountAligned, pregAll);
                 CopyInReg<float, true>(refArea, refAreaAddr + refIdx, pregAll);
                 MicroAPI::Add(sumArea, dstArea0, refArea, preg0);
-                CalcIntersection(
-                    pregIou0, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX1, dstY1, dstX2, dstY2, preg0);
+                CalcIntersection(pregIou0, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX1, dstY1, dstX2, dstY2,
+                                 preg0);
                 MicroAPI::Add(sumArea, dstArea1, refArea, preg1);
-                CalcIntersection(
-                    pregIou1, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX3, dstY3, dstX4, dstY4, preg1);
+                CalcIntersection(pregIou1, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX3, dstY3, dstX4, dstY4,
+                                 preg1);
                 // interleave from b32 maskreg to b16 maskreg
                 MicroAPI::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou1); // 16B对齐
                 // maskUbAddr + offset
@@ -586,8 +592,8 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(
                 CopyInReg<T, true>(refX2, refLocalAddr + refIdx + INDEX_Y2 * refCountAligned, pregAll);
                 CopyInReg<float, true>(refArea, refAreaAddr + refIdx, pregAll);
                 MicroAPI::Add(sumArea, dstArea0, refArea, preg0);
-                CalcIntersection(
-                    pregIou0, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX1, dstY1, dstX2, dstY2, preg0);
+                CalcIntersection(pregIou0, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX1, dstY1, dstX2, dstY2,
+                                 preg0);
                 // interleave from b32 maskreg to b16 maskreg
                 MicroAPI::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou0);
                 MicroAPI::DataCopy<int32_t, MicroAPI::MaskDist::DIST_PACK>(

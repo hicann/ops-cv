@@ -18,33 +18,31 @@
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 
-namespace optiling
-{
+namespace optiling {
 
-    struct StackGroupPointsCompileInfo
-    {
-        int32_t totalCoreNum = 0;
-        int64_t ubSize = 0;
-    };
+struct StackGroupPointsCompileInfo {
+    int32_t totalCoreNum = 0;
+    int64_t ubSize = 0;
+};
 
-    BEGIN_TILING_DATA_DEF(StackGroupPointsTilingData)
-    TILING_DATA_FIELD_DEF(int64_t, b);
-    TILING_DATA_FIELD_DEF(int64_t, m);
-    TILING_DATA_FIELD_DEF(int64_t, c);
-    TILING_DATA_FIELD_DEF(int64_t, nsample);
-    TILING_DATA_FIELD_DEF(int64_t, res);
-    TILING_DATA_FIELD_DEF(int64_t, featuresSize);
-    TILING_DATA_FIELD_DEF(int64_t, indicesSize);
-    TILING_DATA_FIELD_DEF(int64_t, fbcSize);
-    TILING_DATA_FIELD_DEF(int64_t, ibcSize);
-    TILING_DATA_FIELD_DEF(int64_t, reminder);
-    TILING_DATA_FIELD_DEF(int64_t, outLength);
-    TILING_DATA_FIELD_DEF(int64_t, n);
-    TILING_DATA_FIELD_DEF(int64_t, standard);
-    TILING_DATA_FIELD_DEF(int64_t, actCore);
+BEGIN_TILING_DATA_DEF(StackGroupPointsTilingData)
+TILING_DATA_FIELD_DEF(int64_t, b);
+TILING_DATA_FIELD_DEF(int64_t, m);
+TILING_DATA_FIELD_DEF(int64_t, c);
+TILING_DATA_FIELD_DEF(int64_t, nsample);
+TILING_DATA_FIELD_DEF(int64_t, res);
+TILING_DATA_FIELD_DEF(int64_t, featuresSize);
+TILING_DATA_FIELD_DEF(int64_t, indicesSize);
+TILING_DATA_FIELD_DEF(int64_t, fbcSize);
+TILING_DATA_FIELD_DEF(int64_t, ibcSize);
+TILING_DATA_FIELD_DEF(int64_t, reminder);
+TILING_DATA_FIELD_DEF(int64_t, outLength);
+TILING_DATA_FIELD_DEF(int64_t, n);
+TILING_DATA_FIELD_DEF(int64_t, standard);
+TILING_DATA_FIELD_DEF(int64_t, actCore);
 
-    END_TILING_DATA_DEF;
+END_TILING_DATA_DEF;
 
-    REGISTER_TILING_DATA_CLASS(StackGroupPoints, StackGroupPointsTilingData)
+REGISTER_TILING_DATA_CLASS(StackGroupPoints, StackGroupPointsTilingData)
 } // namespace optiling
 #endif // OPS_BUILT_IN_OP_TILING_RUNTIME_STACK_GROUP_POINTS_TILING_H_

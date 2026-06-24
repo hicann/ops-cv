@@ -74,10 +74,8 @@ bool ResizeUpsampleTrilinearArch35Tiling::IsCapable()
 ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::GetPlatformInfo()
 {
     if (platformInfoCached_) {
-        OP_CHECK_IF(
-            coreNum_ <= 0,
-            OP_LOGE(context_->GetNodeName(), "coreNum is error: %d", coreNum_),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_->GetNodeName(), "coreNum is error: %d", coreNum_),
+                    return ge::GRAPH_FAILED);
         OP_LOGI(context_->GetNodeName(), "A5 coreNum(AIV)=%d", coreNum_);
         return ge::GRAPH_SUCCESS;
     }
@@ -85,10 +83,8 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::GetPlatformInfo()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     coreNum_ = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(
-        coreNum_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "coreNum is error: %d", coreNum_),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_->GetNodeName(), "coreNum is error: %d", coreNum_),
+                return ge::GRAPH_FAILED);
     OP_LOGI(context_->GetNodeName(), "A5 coreNum(AIV)=%d", coreNum_);
     return ge::GRAPH_SUCCESS;
 }
@@ -99,10 +95,8 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ValidateAndGetInputShape()
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputShape);
     gert::Shape inShape = inputShape->GetStorageShape();
     int32_t inDims = inShape.GetDimNum();
-    OP_CHECK_IF(
-        inDims != DIM_5,
-        OP_LOGE(context_->GetNodeName(), "input dims must be 5, but got %d", inDims),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inDims != DIM_5, OP_LOGE(context_->GetNodeName(), "input dims must be 5, but got %d", inDims),
+                return ge::GRAPH_FAILED);
     inN_ = inShape.GetDim(DIM_0);
     inC_ = inShape.GetDim(DIM_1);
     inputD_ = inShape.GetDim(DIM_2);
@@ -117,10 +111,8 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ValidateAndGetOutputShape()
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputShape);
     gert::Shape outShape = outputShape->GetStorageShape();
     int32_t outDims = outShape.GetDimNum();
-    OP_CHECK_IF(
-        outDims != DIM_5,
-        OP_LOGE(context_->GetNodeName(), "output dims must be 5, but got %d", outDims),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outDims != DIM_5, OP_LOGE(context_->GetNodeName(), "output dims must be 5, but got %d", outDims),
+                return ge::GRAPH_FAILED);
     outN_ = outShape.GetDim(DIM_0);
     outC_ = outShape.GetDim(DIM_1);
     outputD_ = outShape.GetDim(DIM_2);
@@ -131,20 +123,17 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ValidateAndGetOutputShape()
 
 ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ValidateShapeValues()
 {
-    OP_CHECK_IF(
-        inputD_ <= 0 || inputH_ <= 0 || inputW_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "input D/H/W must be positive, got D=%ld H=%ld W=%ld",
-                inputD_, inputH_, inputW_),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        outputD_ <= 0 || outputH_ <= 0 || outputW_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "output D/H/W must be positive, got D=%ld H=%ld W=%ld",
-                outputD_, outputH_, outputW_),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
-        inN_ <= 0 || inC_ <= 0,
-        OP_LOGE(context_->GetNodeName(), "input N/C must be positive, got N=%ld C=%ld", inN_, inC_),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inputD_ <= 0 || inputH_ <= 0 || inputW_ <= 0,
+                OP_LOGE(context_->GetNodeName(), "input D/H/W must be positive, got D=%ld H=%ld W=%ld", inputD_,
+                        inputH_, inputW_),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputD_ <= 0 || outputH_ <= 0 || outputW_ <= 0,
+                OP_LOGE(context_->GetNodeName(), "output D/H/W must be positive, got D=%ld H=%ld W=%ld", outputD_,
+                        outputH_, outputW_),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inN_ <= 0 || inC_ <= 0,
+                OP_LOGE(context_->GetNodeName(), "input N/C must be positive, got N=%ld C=%ld", inN_, inC_),
+                return ge::GRAPH_FAILED);
     batchCount_ = inN_ * inC_;
     return ge::GRAPH_SUCCESS;
 }
@@ -195,30 +184,27 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::GetShapeAttrsInfo()
 
 ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ValidateDimensionsAndComputeTotal()
 {
-    OP_CHECK_IF(
-        inN_ != outN_ || inC_ != outC_,
-        OP_LOGE(context_->GetNodeName(), "input and output N/C dimensions must match"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(inN_ != outN_ || inC_ != outC_,
+                OP_LOGE(context_->GetNodeName(), "input and output N/C dimensions must match"),
+                return ge::GRAPH_FAILED);
     int64_t dhw = outputD_ * outputH_;
-    OP_CHECK_IF(
-        outputH_ > 0 && dhw > INT64_MAX / outputW_,
-        OP_LOGE(context_->GetNodeName(), "output D*H*W overflow, outputD=%ld outputH=%ld outputW=%ld",
-                outputD_, outputH_, outputW_),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputH_ > 0 && dhw > INT64_MAX / outputW_,
+                OP_LOGE(context_->GetNodeName(), "output D*H*W overflow, outputD=%ld outputH=%ld outputW=%ld", outputD_,
+                        outputH_, outputW_),
+                return ge::GRAPH_FAILED);
     dhw *= outputW_;
-    OP_CHECK_IF(
-        batchCount_ > INT64_MAX / dhw,
-        OP_LOGE(context_->GetNodeName(), "totalElements overflow detected, batchCount=%ld outputD=%ld outputH=%ld outputW=%ld",
-                batchCount_, outputD_, outputH_, outputW_),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(batchCount_ > INT64_MAX / dhw,
+                OP_LOGE(context_->GetNodeName(),
+                        "totalElements overflow detected, batchCount=%ld outputD=%ld outputH=%ld outputW=%ld",
+                        batchCount_, outputD_, outputH_, outputW_),
+                return ge::GRAPH_FAILED);
     totalElements_ = static_cast<uint64_t>(batchCount_) * static_cast<uint64_t>(dhw);
     float checkScaleD = (scaleD_ > 0.0f) ? 1.0f / scaleD_ : 0.0f;
     float checkScaleH = (scaleH_ > 0.0f) ? 1.0f / scaleH_ : 0.0f;
     float checkScaleW = (scaleW_ > 0.0f) ? 1.0f / scaleW_ : 0.0f;
     OP_CHECK_IF(
         checkScaleD > MAX_SUPPORT_SCALE || checkScaleH > MAX_SUPPORT_SCALE || checkScaleW > MAX_SUPPORT_SCALE,
-        OP_LOGE(context_->GetNodeName(),
-                "scales exceed max support scale %f, got scaleD=%f scaleH=%f scaleW=%f",
+        OP_LOGE(context_->GetNodeName(), "scales exceed max support scale %f, got scaleD=%f scaleH=%f scaleW=%f",
                 MAX_SUPPORT_SCALE, checkScaleD, checkScaleH, checkScaleW),
         return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
@@ -241,10 +227,9 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::HandleZeroElements()
 
 ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ComputeThreadBlockConfig()
 {
-    OP_CHECK_IF(
-        totalElements_ > static_cast<uint64_t>(MAX_ELEMENTS_PER_THREAD) * MAX_THREADS_PER_BLOCK * MAX_BLOCKS,
-        OP_LOGE(context_->GetNodeName(), "totalElements too large for SIMT processing: %lu", totalElements_),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(totalElements_ > static_cast<uint64_t>(MAX_ELEMENTS_PER_THREAD) * MAX_THREADS_PER_BLOCK * MAX_BLOCKS,
+                OP_LOGE(context_->GetNodeName(), "totalElements too large for SIMT processing: %lu", totalElements_),
+                return ge::GRAPH_FAILED);
     threadsPerBlock_ = MAX_THREADS_PER_BLOCK;
     elementsPerThread_ = MIN_ELEMENTS_PER_THREAD;
     uint64_t totalThreads = (totalElements_ + elementsPerThread_ - 1) / elementsPerThread_;
@@ -261,8 +246,9 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ComputeThreadBlockConfig()
             elementsPerThread_ > MAX_ELEMENTS_PER_THREAD,
             OP_LOGE(context_->GetNodeName(), "cannot reduce blockCount below MAX_BLOCKS after max elementsPerThread"),
             return ge::GRAPH_FAILED);
-        if(elementsPerThread_ == 0){
-            return ge::GRAPH_FAILED;}
+        if (elementsPerThread_ == 0) {
+            return ge::GRAPH_FAILED;
+        }
         totalThreads = (totalElements_ + elementsPerThread_ - 1) / elementsPerThread_;
         blockCount_ = static_cast<uint32_t>((totalThreads + threadsPerBlock_ - 1) / threadsPerBlock_);
         if (blockCount_ == 0) {
@@ -286,8 +272,8 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ComputeFinalTilingConfig()
     if (blockCount_ == 1) {
         tailElements_ = static_cast<uint32_t>(totalElements_);
     } else {
-        tailElements_ = static_cast<uint32_t>(
-            totalElements_ - static_cast<uint64_t>(blockCount_ - 1) * baseElementsPerBlock_);
+        tailElements_ = static_cast<uint32_t>(totalElements_ -
+                                              static_cast<uint64_t>(blockCount_ - 1) * baseElementsPerBlock_);
     }
 
     static constexpr int64_t INT32_MAX_VAL = 2147483647LL;
@@ -295,17 +281,12 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::ComputeFinalTilingConfig()
     int64_t strideBcOutput = outputD_ * outputH_ * outputW_;
     int64_t strideDInput = inputH_ * inputW_;
     int64_t strideDOutput = outputH_ * outputW_;
-    useInt32_ = (totalElements_ <= static_cast<uint64_t>(INT32_MAX_VAL) &&
-                 strideBcInput <= INT32_MAX_VAL &&
-                 strideBcOutput <= INT32_MAX_VAL &&
-                 strideDInput <= INT32_MAX_VAL &&
-                 strideDOutput <= INT32_MAX_VAL &&
-                 inputW_ <= INT32_MAX_VAL &&
-                 outputW_ <= INT32_MAX_VAL &&
-                 inputD_ <= INT32_MAX_VAL &&
-                 inputH_ <= INT32_MAX_VAL &&
-                 outputD_ <= INT32_MAX_VAL &&
-                 outputH_ <= INT32_MAX_VAL) ? 1 : 0;
+    useInt32_ = (totalElements_ <= static_cast<uint64_t>(INT32_MAX_VAL) && strideBcInput <= INT32_MAX_VAL &&
+                 strideBcOutput <= INT32_MAX_VAL && strideDInput <= INT32_MAX_VAL && strideDOutput <= INT32_MAX_VAL &&
+                 inputW_ <= INT32_MAX_VAL && outputW_ <= INT32_MAX_VAL && inputD_ <= INT32_MAX_VAL &&
+                 inputH_ <= INT32_MAX_VAL && outputD_ <= INT32_MAX_VAL && outputH_ <= INT32_MAX_VAL) ?
+                    1 :
+                    0;
 
     return ge::GRAPH_SUCCESS;
 }
@@ -321,15 +302,9 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::DoOpTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::DoLibApiTiling()
-{
-    return ge::GRAPH_SUCCESS;
-}
+ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::DoLibApiTiling() { return ge::GRAPH_SUCCESS; }
 
-uint64_t ResizeUpsampleTrilinearArch35Tiling::GetTilingKey() const
-{
-    return GET_TPL_TILING_KEY(dtypeKey_);
-}
+uint64_t ResizeUpsampleTrilinearArch35Tiling::GetTilingKey() const { return GET_TPL_TILING_KEY(dtypeKey_); }
 
 ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::GetWorkspaceSize()
 {
@@ -362,11 +337,10 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::PostTiling()
     auto* rawTilingData = context_->GetRawTilingData();
     OP_CHECK_NULL_WITH_CONTEXT(context_, rawTilingData);
     uint32_t tilingSize = sizeof(tilingData);
-    OP_CHECK_IF(
-        rawTilingData->GetCapacity() < tilingSize,
-        OP_LOGE(context_->GetNodeName(), "tiling data capacity %zu is less than required %u",
-                rawTilingData->GetCapacity(), tilingSize),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(rawTilingData->GetCapacity() < tilingSize,
+                OP_LOGE(context_->GetNodeName(), "tiling data capacity %zu is less than required %u",
+                        rawTilingData->GetCapacity(), tilingSize),
+                return ge::GRAPH_FAILED);
     errno_t cpyRet = memcpy_s(rawTilingData->GetData(), rawTilingData->GetCapacity(), &tilingData, tilingSize);
     if (cpyRet != EOK) {
         OP_LOGE(context_->GetNodeName(), "memcpy_s tiling data failed, ret=%d.", cpyRet);
@@ -379,13 +353,13 @@ ge::graphStatus ResizeUpsampleTrilinearArch35Tiling::PostTiling()
     OP_LOGI(context_->GetNodeName(),
             "ResizeUpsampleTrilinear A5 tiling: dtypeKey=%lu, elementsPerThread=%u, "
             "blockCount=%u, usedCoreNum=%u, baseElementsPerBlock=%u, tailElements=%u, totalElements=%lu",
-            dtypeKey_, elementsPerThread_, blockCount_, usedCoreNum_,
-            baseElementsPerBlock_, tailElements_, totalElements_);
+            dtypeKey_, elementsPerThread_, blockCount_, usedCoreNum_, baseElementsPerBlock_, tailElements_,
+            totalElements_);
     OP_LOGI(context_->GetNodeName(),
             "ResizeUpsampleTrilinear A5 tiling: batchCount=%ld, inputD=%ld, inputH=%ld, inputW=%ld, "
             "outputD=%ld, outputH=%ld, outputW=%ld, scaleD=%f, scaleH=%f, scaleW=%f, alignCorners=%d, useInt32=%d",
-            batchCount_, inputD_, inputH_, inputW_, outputD_, outputH_, outputW_,
-            scaleD_, scaleH_, scaleW_, alignCorners_, useInt32_);
+            batchCount_, inputD_, inputH_, inputW_, outputD_, outputH_, outputW_, scaleD_, scaleH_, scaleW_,
+            alignCorners_, useInt32_);
     return ge::GRAPH_SUCCESS;
 }
 

@@ -23,20 +23,22 @@ using namespace op;
 namespace l0op {
 OP_TYPE_REGISTER(RoiPoolingGradWithArgMax);
 
-const aclTensor *RoiPoolingGradWithArgMax(const aclTensor *grad, const aclTensor *x, const aclTensor *rois,
-    const aclTensor *roiActualNumOptional, const aclTensor *argmax,
-    int64_t pooledH, int64_t pooledW, double spatialScaleH, double spatialScaleW, int64_t poolChannel, 
-    aclOpExecutor *executor)
+const aclTensor* RoiPoolingGradWithArgMax(const aclTensor* grad, const aclTensor* x, const aclTensor* rois,
+                                          const aclTensor* roiActualNumOptional, const aclTensor* argmax,
+                                          int64_t pooledH, int64_t pooledW, double spatialScaleH, double spatialScaleW,
+                                          int64_t poolChannel, aclOpExecutor* executor)
 {
-    L0_DFX(RoiPoolingGradWithArgMax, grad, x, rois, roiActualNumOptional, argmax, pooledH, pooledW, spatialScaleH, spatialScaleW, poolChannel);
-    auto out = executor->AllocTensor(
-        grad->GetDataType(), grad->GetStorageFormat(), grad->GetOriginalFormat());
-    INFER_SHAPE(RoiPoolingGradWithArgMax, OP_INPUT(grad, x, rois, roiActualNumOptional, argmax), OP_OUTPUT(out), OP_ATTR(pooledH, pooledW, spatialScaleH, spatialScaleW, poolChannel));
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        RoiPoolingGradWithArgMax, OP_INPUT(grad, x, rois, roiActualNumOptional, argmax), OP_OUTPUT(out), OP_ATTR(pooledH, pooledW, spatialScaleH, spatialScaleW, poolChannel));
+    L0_DFX(RoiPoolingGradWithArgMax, grad, x, rois, roiActualNumOptional, argmax, pooledH, pooledW, spatialScaleH,
+           spatialScaleW, poolChannel);
+    auto out = executor->AllocTensor(grad->GetDataType(), grad->GetStorageFormat(), grad->GetOriginalFormat());
+    INFER_SHAPE(RoiPoolingGradWithArgMax, OP_INPUT(grad, x, rois, roiActualNumOptional, argmax), OP_OUTPUT(out),
+                OP_ATTR(pooledH, pooledW, spatialScaleH, spatialScaleW, poolChannel));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(RoiPoolingGradWithArgMax,
+                                           OP_INPUT(grad, x, rois, roiActualNumOptional, argmax), OP_OUTPUT(out),
+                                           OP_ATTR(pooledH, pooledW, spatialScaleH, spatialScaleW, poolChannel));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiPoolingGradWithArgMaxAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiPoolingGradWithArgMaxAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

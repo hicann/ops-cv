@@ -19,8 +19,8 @@
 
 namespace l0op {
 
-const aclTensor *UpsampleLinear1dNcdhw(const aclTensor *x, const aclTensor *outputSize, const bool alignCorners,
-    const aclTensor *y, const double scale, aclOpExecutor *executor);
+const aclTensor* UpsampleLinear1dNcdhw(const aclTensor* x, const aclTensor* outputSize, const bool alignCorners,
+                                       const aclTensor* y, const double scale, aclOpExecutor* executor);
 }
 
-#endif  // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_LINEAR1D_H_
+#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_UPSAMPLE_LINEAR1D_H_

@@ -16,21 +16,20 @@
 
 class ResizeNearestNeighborV2GradInfershapeTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResizeNearestNeighborV2GradInfershapeTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResizeNearestNeighborV2GradInfershapeTest SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResizeNearestNeighborV2GradInfershapeTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResizeNearestNeighborV2GradInfershapeTest TearDown" << std::endl; }
 };
 
 TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_grad_infershape_test_01)
 {
     gert::StorageShape inputXShape = {{1, 2, 3, 32}, {1, 2, 3, 32}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 2, 6, 64}, {1, 2, 6, 64}};
     int size_value[2] = {6, 64};
 
@@ -39,14 +38,21 @@ TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_gra
         {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
         {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 2, 6, 64},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 2, 6, 64},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_grad_infershape_test_02)
 {
     gert::StorageShape inputXShape = {{1, 8, 10, 16}, {1, 8, 10, 16}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 8, 5, 8}, {1, 8, 5, 8}};
     int size_value[2] = {5, 8};
 
@@ -55,30 +61,44 @@ TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_gra
         {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
         {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 8, 5, 8},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 8, 5, 8},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_grad_infershape_test_03_nhwc)
 {
     gert::StorageShape inputXShape = {{1, 10, 16, 8}, {1, 10, 16, 8}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 5, 8, 8}, {1, 5, 8, 8}};
     int size_value[2] = {5, 8};
 
-    gert::InfershapeContextPara infershapeContextPara(
-        "ResizeNearestNeighborV2Grad",
-        {{inputXShape, ge::DT_FLOAT16, ge::FORMAT_NHWC}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
-        {{outputShape, ge::DT_FLOAT16, ge::FORMAT_NHWC}});
+    gert::InfershapeContextPara infershapeContextPara("ResizeNearestNeighborV2Grad",
+                                                      {{inputXShape, ge::DT_FLOAT16, ge::FORMAT_NHWC},
+                                                       {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+                                                      {{outputShape, ge::DT_FLOAT16, ge::FORMAT_NHWC}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 5, 8, 8},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 5, 8, 8},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_grad_infershape_test_04_same_size)
 {
     gert::StorageShape inputXShape = {{2, 3, 4, 4}, {2, 3, 4, 4}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{2, 3, 4, 4}, {2, 3, 4, 4}};
     int size_value[2] = {4, 4};
 
@@ -87,14 +107,21 @@ TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_gra
         {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
         {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{2, 3, 4, 4},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 3, 4, 4},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_grad_infershape_test_05_bf16)
 {
     gert::StorageShape inputXShape = {{1, 4, 64, 64}, {1, 4, 64, 64}};
-    gert::StorageShape inputSizeShape = {{2,}, {2,}};
+    gert::StorageShape inputSizeShape = {{
+                                             2,
+                                         },
+                                         {
+                                             2,
+                                         }};
     gert::StorageShape outputShape = {{1, 4, 32, 32}, {1, 4, 32, 32}};
     int size_value[2] = {32, 32};
 
@@ -103,6 +130,8 @@ TEST_F(ResizeNearestNeighborV2GradInfershapeTest, resize_nearest_neighbor_v2_gra
         {{inputXShape, ge::DT_BF16, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
         {{outputShape, ge::DT_BF16, ge::FORMAT_NCHW}});
 
-    std::vector<std::vector<int64_t>> expectOutputShape = {{1, 4, 32, 32},};
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 4, 32, 32},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

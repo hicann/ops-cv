@@ -58,11 +58,11 @@ REG_OP(NonMaxSuppressionV3)
     .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(scores, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(max_output_size, TensorType({DT_INT32}))
-    .INPUT(iou_threshold, TensorType({DT_FLOAT16,DT_FLOAT}))
-    .INPUT(score_threshold, TensorType({DT_FLOAT16,DT_FLOAT}))
+    .INPUT(iou_threshold, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(score_threshold, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OUTPUT(selected_indices, TensorType({DT_INT32}))
     .ATTR(offset, Int, 0)
     .OP_END_FACTORY_REG(NonMaxSuppressionV3)
-}
+} // namespace ge
 
 #endif

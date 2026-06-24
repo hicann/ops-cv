@@ -38,23 +38,23 @@ struct ResizeLinearGradTilingData {
 
 #define __aicore__
 #ifdef __NPU_TILING__
-inline __aicore__ void InitTilingData(const __gm__ uint8_t *tiling, ResizeLinearGradTilingData *constData)
+inline __aicore__ void InitTilingData(const __gm__ uint8_t* tiling, ResizeLinearGradTilingData* constData)
 {
-    const __gm__ uint32_t *src = (const __gm__ uint32_t *)tiling;
-    uint32_t *dst = (uint32_t *)constData;
+    const __gm__ uint32_t* src = (const __gm__ uint32_t*)tiling;
+    uint32_t* dst = (uint32_t*)constData;
     for (auto i = 0; i < sizeof(ResizeLinearGradTilingData) / 4; i++)
         *(dst + i) = *(src + i);
 }
 #else
-inline void InitTilingData(uint8_t *tiling, ResizeLinearGradTilingData *constData)
+inline void InitTilingData(uint8_t* tiling, ResizeLinearGradTilingData* constData)
 {
     memcpy(constData, tiling, sizeof(ResizeLinearGradTilingData));
 }
 #endif // __NPU_TILING__
 
-#define CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer) \
-    __ubuf__ tilingStruct *tilingDataPointer =                              \
-        reinterpret_cast<__ubuf__ tilingStruct *>((__ubuf__ uint8_t *)(tilingPointer));
+#define CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer)              \
+    __ubuf__ tilingStruct* tilingDataPointer = reinterpret_cast<__ubuf__ tilingStruct*>( \
+        (__ubuf__ uint8_t*)(tilingPointer));
 
 #define INIT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer) \
     CONVERT_TILING_DATA(tilingStruct, tilingDataPointer, tilingPointer);
@@ -64,7 +64,7 @@ inline void InitTilingData(uint8_t *tiling, ResizeLinearGradTilingData *constDat
     InitTilingData(tilingArg, &tilingData)
 
 #define GET_TILING_DATA(tilingData, tilingArg) \
-    ResizeLinearGradTilingData tilingData; \
+    ResizeLinearGradTilingData tilingData;     \
     InitTilingData(tilingArg, &tilingData)
 
 #define REGISTER_TILING_DEFAULT(T)

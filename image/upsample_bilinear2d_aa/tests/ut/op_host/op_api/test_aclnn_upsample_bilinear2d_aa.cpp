@@ -15,15 +15,9 @@
 
 class l2_upsample_bilinear2d_aa_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "l2_upsample_bilinear2d_aa_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "l2_upsample_bilinear2d_aa_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "l2_upsample_bilinear2d_aa_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "l2_upsample_bilinear2d_aa_test TearDown" << std::endl; }
 };
 
 // self nullptr
@@ -35,9 +29,8 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_self_nullp
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(nullptr, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA, INPUT(nullptr, output_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -53,8 +46,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_out_nullpt
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(nullptr));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(nullptr));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -69,8 +61,8 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_outputsize
     const double_t scales_h = 0.0;
     const double_t scales_w = 0.0;
 
-    auto ut = OP_API_UT(
-        aclnnUpsampleBilinear2dAA, INPUT(self_desc, nullptr, align_corners, scales_h, scales_w), OUTPUT(output_desc));
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA, INPUT(self_desc, nullptr, align_corners, scales_h, scales_w),
+                        OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
@@ -87,8 +79,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_dtype_floa
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
 }
@@ -104,8 +95,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_dtype_floa
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
 }
@@ -121,8 +111,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_self_empty
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -139,8 +128,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_self_empty
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -157,8 +145,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_self_empty
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -175,8 +162,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_outputsize
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -193,8 +179,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_outputsize
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -211,8 +196,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_shape_3d)
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
@@ -229,8 +213,7 @@ TEST_F(l2_upsample_bilinear2d_aa_test, l2_upsample_bilinear2d_aa_test_dtype_diff
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAA,
-        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w),
-        OUTPUT(output_desc));
+                        INPUT(self_desc, output_size_desc, align_corners, scales_h, scales_w), OUTPUT(output_desc));
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);

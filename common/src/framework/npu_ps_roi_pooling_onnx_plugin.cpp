@@ -54,16 +54,12 @@ static Status ParseParamsNpuPsRoiPooling(const Message* op_src, ge::Operator& op
 }
 
 REGISTER_CUSTOM_OP("PSROIPoolingV2")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("npu::1::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::11::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::12::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::13::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::14::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::15::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::16::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::17::NPUPsRoiPooling"),
-                 ge::AscendString("ai.onnx::18::NPUPsRoiPooling")})
-  .ParseParamsFn(ParseParamsNpuPsRoiPooling)
-  .ImplyType(ImplyType::TVM);
+    .FrameworkType(ONNX)
+    .OriginOpType({ge::AscendString("npu::1::NPUPsRoiPooling"), ge::AscendString("ai.onnx::11::NPUPsRoiPooling"),
+                   ge::AscendString("ai.onnx::12::NPUPsRoiPooling"), ge::AscendString("ai.onnx::13::NPUPsRoiPooling"),
+                   ge::AscendString("ai.onnx::14::NPUPsRoiPooling"), ge::AscendString("ai.onnx::15::NPUPsRoiPooling"),
+                   ge::AscendString("ai.onnx::16::NPUPsRoiPooling"), ge::AscendString("ai.onnx::17::NPUPsRoiPooling"),
+                   ge::AscendString("ai.onnx::18::NPUPsRoiPooling")})
+    .ParseParamsFn(ParseParamsNpuPsRoiPooling)
+    .ImplyType(ImplyType::TVM);
 } // namespace domi

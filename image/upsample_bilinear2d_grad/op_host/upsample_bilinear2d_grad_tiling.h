@@ -65,6 +65,6 @@ END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(UpsampleBilinear2dGrad, UpsampleBilinear2dGradTilingData);
 
-}  // namespace optiling
+} // namespace optiling
 
 #endif

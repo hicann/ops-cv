@@ -25,7 +25,7 @@ constexpr uint32_t ELENUM_BLOCK_FP32 = 8;
 constexpr uint32_t ELENUM_REPEAT_FP32 = 64;
 
 constexpr uint32_t MAX_PROC_ELENUM = 1920; // max proc pix num
-constexpr uint32_t TRANS_COL_ELENUM = 96; // trans pix num
+constexpr uint32_t TRANS_COL_ELENUM = 96;  // trans pix num
 
 constexpr uint32_t FACE_VERT_NUM = 3;
 constexpr uint32_t VERT_COORD_NUM = 4;
@@ -37,20 +37,20 @@ template <typename T>
 class BarycentricFromImgcoordAIV {
 public:
     __aicore__ inline BarycentricFromImgcoordAIV(){};
-    __aicore__ inline void Init(GM_ADDR v, GM_ADDR f,
-        GM_ADDR findices, GM_ADDR barycentric, GM_ADDR workspace, RasterizerTilingData *tilingData);
+    __aicore__ inline void Init(GM_ADDR v, GM_ADDR f, GM_ADDR findices, GM_ADDR barycentric, GM_ADDR workspace,
+                                RasterizerTilingData* tilingData);
     __aicore__ inline void Process();
 
     __aicore__ inline void InitParam();
     __aicore__ inline void InitUbuf();
     __aicore__ inline void ReuseUbuf();
-    __aicore__ inline void ParseTilingData(RasterizerTilingData *tilingData);
+    __aicore__ inline void ParseTilingData(RasterizerTilingData* tilingData);
 
     __aicore__ inline void GenMaskDataInGM();
 
     __aicore__ inline void PreProcess(uint32_t loopId, uint32_t curCalPixNum);
-    __aicore__ inline void CopyInDepth(uint32_t loopId, uint32_t preLoopId, uint32_t curPrePixNum,  uint32_t pingFlag);
-    __aicore__ inline void TransposeDepth(uint32_t curPrePixNum,  uint32_t pingFlag);
+    __aicore__ inline void CopyInDepth(uint32_t loopId, uint32_t preLoopId, uint32_t curPrePixNum, uint32_t pingFlag);
+    __aicore__ inline void TransposeDepth(uint32_t curPrePixNum, uint32_t pingFlag);
     __aicore__ inline void ReduceMinDepth(uint32_t preLoopId, uint32_t curPrePixNum, uint32_t pingFlag);
 
     __aicore__ inline void GenFindicesAndPreVertData(uint32_t loopId, uint32_t curCalPixNum);
@@ -72,7 +72,7 @@ private:
     GlobalTensor<T> barycentricGM;
     GlobalTensor<int32_t> zBufIdxGM; // zbuffer save (idx + 1)
     GlobalTensor<float> zBufDepthGM; // zbuffer save depth
-    GlobalTensor<uint32_t> maskGM; // save gather mask
+    GlobalTensor<uint32_t> maskGM;   // save gather mask
 
     TBuf<QuePosition::VECCALC> uBuf;
 
@@ -132,6 +132,6 @@ private:
 
     uint32_t rsv = 64;
 };
-}  // namespace BarycentricFromImgcoord
+} // namespace BarycentricFromImgcoord
 
-#endif  // BARYCENTRIC_FROM_IMGCOORD_BASE_AIV_H
+#endif // BARYCENTRIC_FROM_IMGCOORD_BASE_AIV_H

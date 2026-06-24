@@ -16,6 +16,6 @@ namespace l0op {
 aclTensor* ConcatD(const aclTensorList* inputs, int64_t dim, op::DataType outDtype, aclOpExecutor* executor);
 
 aclTensor* ConcatD(const aclTensorList* inputs, int64_t dim, aclOpExecutor* executor);
-}
+} // namespace l0op
 
-#endif  // COMMON_INC_EXTERNAL_LEVEL0_CONCAT_H
+#endif // COMMON_INC_EXTERNAL_LEVEL0_CONCAT_H

@@ -20,12 +20,12 @@ using namespace ge;
 using ge::Operator;
 
 namespace {
-  constexpr int boxes_index = 0;
-  constexpr int socre_index = 1;
-  constexpr int max_output_boxes_index = 2;
-  constexpr int iou_threshold_index = 3;
-  constexpr int score_threshold_index = 4;
-}
+constexpr int boxes_index = 0;
+constexpr int socre_index = 1;
+constexpr int max_output_boxes_index = 2;
+constexpr int iou_threshold_index = 3;
+constexpr int score_threshold_index = 4;
+} // namespace
 
 namespace domi {
 using NodeProto = ge::onnx::NodeProto;
@@ -96,48 +96,53 @@ static Status ParseOpToGraphNonMaxSuppression(const ge::Operator& op, Graph& gra
     std::vector<Operator> inputs{boxes, scores};
     std::vector<std::pair<Operator, std::vector<size_t>>> output_indexs;
     if (input_size == (socre_index + 1)) {
-        non_max_suppression.set_input_boxes(boxes).set_input_scores(scores)
-            .set_attr_center_point_box(center_point_box);
+        non_max_suppression.set_input_boxes(boxes).set_input_scores(scores).set_attr_center_point_box(center_point_box);
     } else if (input_size == (max_output_boxes_index + 1)) {
         inputs.push_back(max_output_boxes);
         non_max_suppression.set_input_boxes(boxes)
-            .set_input_scores(scores).set_input_max_output_size(max_output_boxes)
+            .set_input_scores(scores)
+            .set_input_max_output_size(max_output_boxes)
             .set_attr_center_point_box(center_point_box);
     } else if (input_size == (iou_threshold_index + 1)) {
         inputs.push_back(max_output_boxes);
         inputs.push_back(iou_threshold);
-        non_max_suppression.set_input_boxes(boxes).set_input_scores(scores).set_input_max_output_size(max_output_boxes)
-            .set_input_iou_threshold(iou_threshold).set_attr_center_point_box(center_point_box);
+        non_max_suppression.set_input_boxes(boxes)
+            .set_input_scores(scores)
+            .set_input_max_output_size(max_output_boxes)
+            .set_input_iou_threshold(iou_threshold)
+            .set_attr_center_point_box(center_point_box);
     } else if (input_size == (score_threshold_index + 1)) {
         inputs.push_back(max_output_boxes);
         inputs.push_back(iou_threshold);
         inputs.push_back(score_threshold);
-        non_max_suppression.set_input_boxes(boxes).set_input_scores(scores).set_input_max_output_size(max_output_boxes)
-            .set_input_iou_threshold(iou_threshold).set_input_score_threshold(score_threshold).set_attr_center_point_box(center_point_box);
+        non_max_suppression.set_input_boxes(boxes)
+            .set_input_scores(scores)
+            .set_input_max_output_size(max_output_boxes)
+            .set_input_iou_threshold(iou_threshold)
+            .set_input_score_threshold(score_threshold)
+            .set_attr_center_point_box(center_point_box);
     } else {
         OP_LOGE(GetOpName(op).c_str(), "The input_size is error.");
         return FAILED;
     }
 
-    auto output_int64 =
-        op::Cast((ori_name + "_Cast").c_str()).set_input_x(non_max_suppression).set_attr_dst_type(DT_INT64);
+    auto output_int64 = op::Cast((ori_name + "_Cast").c_str())
+                            .set_input_x(non_max_suppression)
+                            .set_attr_dst_type(DT_INT64);
     output_indexs.emplace_back(output_int64, std::vector<size_t>{0});
     graph.SetInputs(inputs).SetOutputs(output_indexs);
     return SUCCESS;
 }
 
 REGISTER_CUSTOM_OP("PartitionedCall")
-  .FrameworkType(ONNX)
-  .OriginOpType({ge::AscendString("ai.onnx::10::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::11::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::12::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::13::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::14::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::15::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::16::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::17::NonMaxSuppression"),
-                 ge::AscendString("ai.onnx::18::NonMaxSuppression")})
-  .ParseParamsFn(ParseParamsNonMaxSuppression)
-  .ParseOpToGraphFn(ParseOpToGraphNonMaxSuppression)
-  .ImplyType(ImplyType::TVM);
-}  // namespace domi
+    .FrameworkType(ONNX)
+    .OriginOpType(
+        {ge::AscendString("ai.onnx::10::NonMaxSuppression"), ge::AscendString("ai.onnx::11::NonMaxSuppression"),
+         ge::AscendString("ai.onnx::12::NonMaxSuppression"), ge::AscendString("ai.onnx::13::NonMaxSuppression"),
+         ge::AscendString("ai.onnx::14::NonMaxSuppression"), ge::AscendString("ai.onnx::15::NonMaxSuppression"),
+         ge::AscendString("ai.onnx::16::NonMaxSuppression"), ge::AscendString("ai.onnx::17::NonMaxSuppression"),
+         ge::AscendString("ai.onnx::18::NonMaxSuppression")})
+    .ParseParamsFn(ParseParamsNonMaxSuppression)
+    .ParseOpToGraphFn(ParseOpToGraphNonMaxSuppression)
+    .ImplyType(ImplyType::TVM);
+} // namespace domi

@@ -22,20 +22,21 @@
 #include "./arch35/resize_nearest_neighbor_v2_grad_simt_hw.h"
 
 using namespace ResizeNearestNeighborV2Grad;
- 
+
 template <uint64_t schId, uint64_t format, uint64_t alignCorners, uint64_t halfPixelCenters, uint64_t idxType>
-__global__ __aicore__ void resize_nearest_neighbor_v2_grad(GM_ADDR grads, GM_ADDR size, GM_ADDR y, GM_ADDR workspace, GM_ADDR tiling) 
+__global__ __aicore__ void resize_nearest_neighbor_v2_grad(GM_ADDR grads, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
+                                                           GM_ADDR tiling)
 {
     if (workspace == nullptr) {
         return;
     }
- 
+
     SetSysWorkspace(workspace);
     GM_ADDR userWS = GetUserWorkspace(workspace);
     if (userWS == nullptr) {
         return;
     }
- 
+
     GET_TILING_DATA(tilingData, tiling);
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIV_1_0);
     TPipe pipe;
@@ -48,40 +49,52 @@ __global__ __aicore__ void resize_nearest_neighbor_v2_grad(GM_ADDR grads, GM_ADD
 
     if (schId == TPL_SCH_ID_NOT_DETERMINE) {
         if (idxType == TPL_IDX_INT32) {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimt<DTYPE_Y, uint32_t, format, alignCorners, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimt<DTYPE_Y, uint32_t, format, alignCorners,
+                                                                         halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
         } else {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimt<DTYPE_Y, uint64_t, format, alignCorners, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimt<DTYPE_Y, uint64_t, format, alignCorners,
+                                                                         halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
-        } 
+        }
     }
 
     if (schId == TPL_SCH_ID_NOT_DETERMINE_HW) {
         if (idxType == TPL_IDX_INT32) {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtHW<DTYPE_Y, uint32_t, format, alignCorners, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtHW<DTYPE_Y, uint32_t, format, alignCorners,
+                                                                           halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
         } else {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtHW<DTYPE_Y, uint64_t, format, alignCorners, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtHW<DTYPE_Y, uint64_t, format, alignCorners,
+                                                                           halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
-        } 
+        }
     }
 
     if (schId == TPL_SCH_ID_DETERMINE) {
         if (idxType == TPL_IDX_INT32) {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine<DTYPE_Y, uint32_t, format, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine<DTYPE_Y, uint32_t, format,
+                                                                                  halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
         } else {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine<DTYPE_Y, uint64_t, format, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine<DTYPE_Y, uint64_t, format,
+                                                                                  halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
@@ -90,12 +103,14 @@ __global__ __aicore__ void resize_nearest_neighbor_v2_grad(GM_ADDR grads, GM_ADD
 
     if (schId == TPL_SCH_ID_DETERMINE_HW) {
         if (idxType == TPL_IDX_INT32) {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermineHW<DTYPE_Y, uint32_t, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermineHW<DTYPE_Y, uint32_t, halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
         } else {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermineHW<DTYPE_Y, uint64_t, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermineHW<DTYPE_Y, uint64_t, halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
@@ -104,12 +119,16 @@ __global__ __aicore__ void resize_nearest_neighbor_v2_grad(GM_ADDR grads, GM_ADD
 
     if (schId == TPL_SCH_ID_DETERMINE_1D) {
         if (idxType == TPL_IDX_INT32) {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine1D<DTYPE_Y, uint32_t, format, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine1D<DTYPE_Y, uint32_t, format,
+                                                                                    halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;
         } else {
-            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine1D<DTYPE_Y, uint64_t, format, halfPixelCenters> op;
+            ResizeNearestNeighborV2Grad::ResizeNearestNeighborV2GradSimtDetermine1D<DTYPE_Y, uint64_t, format,
+                                                                                    halfPixelCenters>
+                op;
             op.Init(grads, y, &tilingData);
             op.Process();
             return;

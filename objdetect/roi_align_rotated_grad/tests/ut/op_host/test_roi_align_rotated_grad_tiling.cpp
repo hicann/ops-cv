@@ -25,35 +25,28 @@
 using namespace ge;
 using namespace std;
 
-class TilingForRoiAlignRotatedGrad : public testing::Test
-{
+class TilingForRoiAlignRotatedGrad : public testing::Test {
 protected:
-  static void SetUpTestCase()
-  {
-    std::cout << "TilingForRoiAlignRotatedGrad SetUp" << std::endl;
-  }
+    static void SetUpTestCase() { std::cout << "TilingForRoiAlignRotatedGrad SetUp" << std::endl; }
 
-  static void TearDownTestCase()
-  {
-    std::cout << "TilingForRoiAlignRotatedGrad TearDown" << std::endl;
-  }
+    static void TearDownTestCase() { std::cout << "TilingForRoiAlignRotatedGrad TearDown" << std::endl; }
 };
 
 TEST_F(TilingForRoiAlignRotatedGrad, roi_align_rotated_grad_tiling_0)
 {
     optiling::RoiAlignRotatedGradCompileInfo compileInfo = {48, 196608};
-    gert::TilingContextPara tilingContextPara("RoiAlignRotatedGrad",
-                                                {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}, 
-                                                {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {{{{8, 2, 2, 8}, {8, 2, 2, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-                                                {gert::TilingContextPara::OpAttr("y_grad_shape", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({8, 2, 2, 8})),
-                                                gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
-                                                gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
-                                                gert::TilingContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
-                                                gert::TilingContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(1)),
-                                                gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-                                                gert::TilingContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
-                                                &compileInfo);
+    gert::TilingContextPara tilingContextPara(
+        "RoiAlignRotatedGrad",
+        {{{{8, 8, 8, 8}, {8, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{8, 2, 2, 8}, {8, 2, 2, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("y_grad_shape", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({8, 2, 2, 8})),
+         gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+         gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+         gert::TilingContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(1)),
+         gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false))},
+        &compileInfo);
 
     std::vector<size_t> expectWorkspaces = {16777216};
     TilingInfo tilingInfo;

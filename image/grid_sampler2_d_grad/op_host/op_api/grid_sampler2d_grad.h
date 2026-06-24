@@ -18,10 +18,14 @@
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const std::tuple<aclTensor *, aclTensor *> GridSampler2DGrad(const aclTensor *gradOutput, const aclTensor *input,
-    const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode, bool alignCorners, aclOpExecutor *executor);
-const std::tuple<aclTensor *, aclTensor *> GridSamplerGrad(const aclTensor *gradOutput, const aclTensor *input,
-    const aclTensor *grid, int64_t interpolationMode, int64_t paddingMode, bool alignCorners, aclOpExecutor *executor);
-}  // namespace l0op
+const std::tuple<aclTensor*, aclTensor*> GridSampler2DGrad(const aclTensor* gradOutput, const aclTensor* input,
+                                                           const aclTensor* grid, int64_t interpolationMode,
+                                                           int64_t paddingMode, bool alignCorners,
+                                                           aclOpExecutor* executor);
+const std::tuple<aclTensor*, aclTensor*> GridSamplerGrad(const aclTensor* gradOutput, const aclTensor* input,
+                                                         const aclTensor* grid, int64_t interpolationMode,
+                                                         int64_t paddingMode, bool alignCorners,
+                                                         aclOpExecutor* executor);
+} // namespace l0op
 
-#endif  // OP_API_INC_LEVEL0_GRID_SAMPLER2D_GRAD_H_
+#endif // OP_API_INC_LEVEL0_GRID_SAMPLER2D_GRAD_H_

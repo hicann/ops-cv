@@ -52,15 +52,15 @@ namespace ge {
 */
 
 REG_OP(ResizeNearestNeighborV2Grad)
-    .INPUT(grads, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32,
-                              DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BF16}))
+    .INPUT(grads, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT,
+                              DT_DOUBLE, DT_BF16}))
     .INPUT(size, TensorType({DT_INT32}))
-    .OUTPUT(y, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32,
-                           DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BF16}))
+    .OUTPUT(y, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE,
+                           DT_BF16}))
     .ATTR(align_corners, Bool, false)
     .ATTR(half_pixel_centers, Bool, false)
     .ATTR(scales, ListFloat, {0.0f, 0.0f})
     .OP_END_FACTORY_REG(ResizeNearestNeighborV2Grad)
-}
+} // namespace ge
 
 #endif

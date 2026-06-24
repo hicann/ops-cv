@@ -33,14 +33,15 @@ struct Col2imRegBaseTilingData {
     int64_t colH;
     int64_t colW;
 
-    std::string toString() const {
-        return "totalLength = " + std::to_string(totalLength) + ", outputSizeH = " + std::to_string(outputSizeH) 
-                + ", outputSizeW = " + std::to_string(outputSizeW) + ", kernelSizeH = " + std::to_string(kernelSizeH)
-                + ", kernelSizeW = " + std::to_string(kernelSizeW) + ", dilationH = " + std::to_string(dilationH) 
-                + ", dilationW = " + std::to_string(dilationW) + ", paddingH = " + std::to_string(paddingH)
-                + ", paddingW = " + std::to_string(paddingW) + ", strideH = " + std::to_string(strideH) 
-                + ", strideW = " + std::to_string(strideW) + ", colH = " + std::to_string(colH)
-                + ", colW = " + std::to_string(colW);
+    std::string toString() const
+    {
+        return "totalLength = " + std::to_string(totalLength) + ", outputSizeH = " + std::to_string(outputSizeH) +
+               ", outputSizeW = " + std::to_string(outputSizeW) + ", kernelSizeH = " + std::to_string(kernelSizeH) +
+               ", kernelSizeW = " + std::to_string(kernelSizeW) + ", dilationH = " + std::to_string(dilationH) +
+               ", dilationW = " + std::to_string(dilationW) + ", paddingH = " + std::to_string(paddingH) +
+               ", paddingW = " + std::to_string(paddingW) + ", strideH = " + std::to_string(strideH) +
+               ", strideW = " + std::to_string(strideW) + ", colH = " + std::to_string(colH) +
+               ", colW = " + std::to_string(colW);
     }
 };
 #endif

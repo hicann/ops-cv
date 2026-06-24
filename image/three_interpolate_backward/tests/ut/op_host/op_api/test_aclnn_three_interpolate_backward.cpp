@@ -18,18 +18,11 @@ constexpr uint32_t C0 = 16;
 constexpr uint32_t THREE_POINT = 3;
 } // namespace
 
-class three_interpolate_backward_test : public testing::Test
-{
+class three_interpolate_backward_test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "three_interpolate_backward_test SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "three_interpolate_backward_test SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "three_interpolate_backward_test TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "three_interpolate_backward_test TearDown" << std::endl; }
 };
 
 TEST_F(three_interpolate_backward_test, grad_x_null_test)
@@ -43,8 +36,8 @@ TEST_F(three_interpolate_backward_test, grad_x_null_test)
     auto weight = TensorDesc({bs, ns, THREE_POINT}, ACL_FLOAT, ACL_FORMAT_ND);
     auto grad_y = TensorDesc({bs, cs, ms, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
 
-    auto ut =
-        OP_API_UT(aclnnThreeInterpolateBackward, INPUT((aclTensor*)nullptr, idx, weight, (int)ms), OUTPUT(grad_y));
+    auto ut = OP_API_UT(aclnnThreeInterpolateBackward, INPUT((aclTensor*)nullptr, idx, weight, (int)ms),
+                        OUTPUT(grad_y));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -62,8 +55,8 @@ TEST_F(three_interpolate_backward_test, idx_x_null_test)
     auto weight = TensorDesc({bs, ns, THREE_POINT}, ACL_FLOAT, ACL_FORMAT_ND);
     auto grad_y = TensorDesc({bs, cs, ms, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
 
-    auto ut =
-        OP_API_UT(aclnnThreeInterpolateBackward, INPUT(grad_x, (aclTensor*)nullptr, weight, (int)ms), OUTPUT(grad_y));
+    auto ut = OP_API_UT(aclnnThreeInterpolateBackward, INPUT(grad_x, (aclTensor*)nullptr, weight, (int)ms),
+                        OUTPUT(grad_y));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
@@ -81,8 +74,8 @@ TEST_F(three_interpolate_backward_test, weight_null_test)
     auto idx = TensorDesc({bs, ns, THREE_POINT}, ACL_INT32, ACL_FORMAT_ND);
     auto grad_y = TensorDesc({bs, cs, ms, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
 
-    auto ut =
-        OP_API_UT(aclnnThreeInterpolateBackward, INPUT(grad_x, idx, (aclTensor*)nullptr, (int)ms), OUTPUT(grad_y));
+    auto ut = OP_API_UT(aclnnThreeInterpolateBackward, INPUT(grad_x, idx, (aclTensor*)nullptr, (int)ms),
+                        OUTPUT(grad_y));
 
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);

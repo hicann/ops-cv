@@ -27,20 +27,20 @@ static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 
-const aclTensor *UpsampleBilinear2dAA(const aclTensor *input, const aclIntArray *outputSize, const aclTensor *output,
-    bool alignCorners, float scales_h, float scales_w, aclOpExecutor *executor)
+const aclTensor* UpsampleBilinear2dAA(const aclTensor* input, const aclIntArray* outputSize, const aclTensor* output,
+                                      bool alignCorners, float scales_h, float scales_w, aclOpExecutor* executor)
 {
     L0_DFX(UpsampleBilinear2dAA, input, outputSize, output, alignCorners, scales_h, scales_w);
 
     auto out = executor->AllocTensor(output->GetViewShape(), input->GetDataType(), output->GetStorageFormat());
     CHECK_RET(out != nullptr, nullptr);
 
-    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
-        UpsampleBilinear2dAA, OP_INPUT(input), OP_OUTPUT(out), OP_ATTR(outputSize, alignCorners, scales_h, scales_w));
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(UpsampleBilinear2dAA, OP_INPUT(input), OP_OUTPUT(out),
+                                           OP_ATTR(outputSize, alignCorners, scales_h, scales_w));
     OP_CHECK(ret == ACLNN_SUCCESS,
-        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAAAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-        return nullptr);
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "UpsampleBilinear2dAAAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
 
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

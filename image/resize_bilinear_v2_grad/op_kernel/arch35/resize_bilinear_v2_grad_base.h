@@ -68,28 +68,16 @@ protected:
     /*
      * Ceil operation
      */
-    __aicore__ inline int64_t Ceil(float x)
-    {
-        return static_cast<int64_t>(x) + 1;
-    }
+    __aicore__ inline int64_t Ceil(float x) { return static_cast<int64_t>(x) + 1; }
 
     /*
      * Floor operation
      */
-    __aicore__ inline int64_t Floor(float x)
-    {
-        return static_cast<int64_t>(x);
-    }
+    __aicore__ inline int64_t Floor(float x) { return static_cast<int64_t>(x); }
 
-    __aicore__ inline int64_t Min(int64_t a, int64_t b)
-    {
-        return (a < b) ? a : b;
-    }
+    __aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
-    __aicore__ inline int64_t Max(int64_t a, int64_t b)
-    {
-        return (a > b) ? a : b;
-    }
+    __aicore__ inline int64_t Max(int64_t a, int64_t b) { return (a > b) ? a : b; }
 
 protected:
     TPipe* pipe_;

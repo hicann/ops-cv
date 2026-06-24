@@ -30,8 +30,8 @@ static const std::string HALF_PIXEL = "half_pixel";
 static const std::string MODE = "nearest";
 static const std::string NEAREST_MODE = "floor";
 
-const aclTensor *ResizeGrad(const aclTensor *gradOutput, const aclIntArray *inputSize, const aclTensor *scales,
-    const aclTensor *sizes, aclOpExecutor *executor)
+const aclTensor* ResizeGrad(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclTensor* scales,
+                            const aclTensor* sizes, aclOpExecutor* executor)
 {
     L0_DFX(ResizeGrad, gradOutput, scales, sizes);
     const int64_t inputSizeW = (*inputSize)[DIM_W];
@@ -40,19 +40,15 @@ const aclTensor *ResizeGrad(const aclTensor *gradOutput, const aclIntArray *inpu
     gradsStorageShape.SetDim(DIM_W, inputSizeW);
     gradsOriginalShape.SetDim(DIM_W, inputSizeW);
 
-    auto out = executor->AllocTensor(gradsStorageShape,
-        gradsOriginalShape,
-        gradOutput->GetDataType(),
-        gradOutput->GetStorageFormat(),
-        gradOutput->GetOriginalFormat());
+    auto out = executor->AllocTensor(gradsStorageShape, gradsOriginalShape, gradOutput->GetDataType(),
+                                     gradOutput->GetStorageFormat(), gradOutput->GetOriginalFormat());
     CHECK_RET(out != nullptr, nullptr);
     static internal::AicpuTaskSpace space("ResizeGrad");
-    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(ResizeGrad,
-        OP_ATTR_NAMES({"coordinate_transformation_mode", "cubic_coeff_a", "mode", "nearest_mode"}),
-        OP_INPUT(gradOutput, scales, scales, sizes),
-        OP_OUTPUT(out),
+    auto ret = ADD_TO_LAUNCHER_LIST_AICPU(
+        ResizeGrad, OP_ATTR_NAMES({"coordinate_transformation_mode", "cubic_coeff_a", "mode", "nearest_mode"}),
+        OP_INPUT(gradOutput, scales, scales, sizes), OP_OUTPUT(out),
         OP_ATTR(HALF_PIXEL, CUBIC_COEFF_A, MODE, NEAREST_MODE));
     CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
     return out;
 }
-}  // namespace l0op
+} // namespace l0op

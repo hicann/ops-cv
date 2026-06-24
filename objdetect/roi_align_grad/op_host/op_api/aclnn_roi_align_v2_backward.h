@@ -40,23 +40,25 @@ extern "C" {
  * @return aclnnStatus: 返回状态码。
  */
 ACLNN_API aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* boxes,
-                        const aclIntArray* inputShape, int64_t pooledHeight, int64_t pooledWidth, 
-                        float spatialScale, int64_t samplingRatio, bool aligned, aclTensor* gradInput, 
-                        uint64_t* workspaceSize, aclOpExecutor** executor);
+                                                              const aclIntArray* inputShape, int64_t pooledHeight,
+                                                              int64_t pooledWidth, float spatialScale,
+                                                              int64_t samplingRatio, bool aligned, aclTensor* gradInput,
+                                                              uint64_t* workspaceSize, aclOpExecutor** executor);
 
 /**
  * @brief aclnnRoiAlignV2Backward的第二段接口，用于执行计算。
  * @param [in] workspace: 在npu device侧申请的workspace内存起址。
- * @param [in] workspace_size: 在npu device侧申请的workspace大小，由第一段接口aclnnRoiAlignV2BackwardGetWorkspaceSize获取。
+ * @param [in] workspace_size: 在npu
+ * device侧申请的workspace大小，由第一段接口aclnnRoiAlignV2BackwardGetWorkspaceSize获取。
  * @param [in] exector: op执行器，包含了算子计算流程。
  * @param [in] stream: acl stream流。
  * @return aclnnStatus: 返回状态码
  */
 ACLNN_API aclnnStatus aclnnRoiAlignV2Backward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
-                                    aclrtStream stream);
+                                              aclrtStream stream);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // OP_API_INC_LEVEL2_ACLNN_ROI_ALIGN_BACKWARD_H_
+#endif // OP_API_INC_LEVEL2_ACLNN_ROI_ALIGN_BACKWARD_H_

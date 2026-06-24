@@ -21,14 +21,8 @@
 
 class grid_sampler2d_grad : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "grid_sampler2d_grad SetUp" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "grid_sampler2d_grad TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "grid_sampler2d_grad SetUp" << std::endl; }
+    static void TearDownTestCase() { std::cout << "grid_sampler2d_grad TearDown" << std::endl; }
 };
 
 TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fp16)
@@ -40,16 +34,25 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fp16)
     int h_out = 5;
     int w_out = 6;
 
-    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
-                                                      {{{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{n, c, h_in, w_in},{n, h_out, w_out, 2},};
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridSampler2DGrad",
+        {
+            {{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("interpolation_mode",
+                                             Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {n, c, h_in, w_in},
+        {n, h_out, w_out, 2},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
@@ -62,16 +65,25 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fp32)
     int h_out = 15;
     int w_out = 26;
 
-    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
-                                                      {{{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{n, c, h_in, w_in},{n, h_out, w_out, 2},};
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridSampler2DGrad",
+        {
+            {{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("interpolation_mode",
+                                             Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {n, c, h_in, w_in},
+        {n, h_out, w_out, 2},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
@@ -84,16 +96,25 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_double)
     int h_out = 15;
     int w_out = 26;
 
-    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
-                                                      {{{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_DOUBLE, ge::FORMAT_ND},
-                                                      {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_DOUBLE, ge::FORMAT_ND},
-                                                      {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_DOUBLE, ge::FORMAT_ND},},
-                                                      {{{{}, {}}, ge::DT_DOUBLE, ge::FORMAT_ND},
-                                                      {{{}, {}}, ge::DT_DOUBLE, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
-    std::vector<std::vector<int64_t>> expectOutputShape = {{n, c, h_in, w_in},{n, h_out, w_out, 2},};
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridSampler2DGrad",
+        {
+            {{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_DOUBLE, ge::FORMAT_ND},
+            {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_DOUBLE, ge::FORMAT_ND},
+            {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_DOUBLE, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_DOUBLE, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_DOUBLE, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("interpolation_mode",
+                                             Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {n, c, h_in, w_in},
+        {n, h_out, w_out, 2},
+    };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
@@ -106,15 +127,21 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fail_x)
     int h_out = 15;
     int w_out = 16;
 
-    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
-                                                      {{{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{n, c, h_in}, {n, c, h_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                      {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridSampler2DGrad",
+        {
+            {{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{n, c, h_in}, {n, c, h_in}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("interpolation_mode",
+                                             Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
@@ -127,15 +154,21 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fail_grad)
     int h_out = 15;
     int w_out = 16;
 
-    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
-                                                      {{{{n, h_out, w_out}, {n, h_out, w_out}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                      {{{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridSampler2DGrad",
+        {
+            {{{n, h_out, w_out}, {n, h_out, w_out}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{n, h_out, w_out, 2}, {n, h_out, w_out, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("interpolation_mode",
+                                             Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
@@ -148,14 +181,20 @@ TEST_F(grid_sampler2d_grad, grid_sampler2d_grad_infershape_fail_grid)
     int h_out = 15;
     int w_out = 16;
 
-    gert::InfershapeContextPara infershapeContextPara("GridSampler2DGrad",
-                                                      {{{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{n, h_out, w_out}, {n, h_out, w_out}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                      {{{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-                                                      {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},},
-                                                      {gert::InfershapeContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
-                                                       gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
-                                                       gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridSampler2DGrad",
+        {
+            {{{n, c, h_out, w_out}, {n, c, h_out, w_out}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{n, c, h_in, w_in}, {n, c, h_in, w_in}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{n, h_out, w_out}, {n, h_out, w_out}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("interpolation_mode",
+                                             Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
+         gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
+         gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))});
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }

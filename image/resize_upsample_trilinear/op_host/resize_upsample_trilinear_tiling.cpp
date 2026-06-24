@@ -90,10 +90,7 @@ inline uint32_t CEILA2B(T1 a, T2 b)
     }
 }
 
-inline bool AllTrue(bool a, bool b)
-{
-    return a && b;
-}
+inline bool AllTrue(bool a, bool b) { return a && b; }
 
 inline uint32_t GET_DATATYPE_SIZE(ge::DataType dataType)
 {
@@ -165,41 +162,36 @@ static bool CheckShapes(gert::TilingContext* context, int64_t w, int64_t h, int6
 
 static bool CheckShapeMaxLimit(gert::TilingContext* context, UpsampleTrilinearTilingData& tiling)
 {
-    OP_CHECK_IF(
-        tiling.get_input_w() > INT32_MAX,
-        OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Input_w must less than 2147483647."),
-        return false);
-    OP_CHECK_IF(
-        tiling.get_output_d() > INT32_MAX,
-        OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_d must less than 2147483647."),
-        return false);
+    OP_CHECK_IF(tiling.get_input_w() > INT32_MAX,
+                OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Input_w must less than 2147483647."),
+                return false);
+    OP_CHECK_IF(tiling.get_output_d() > INT32_MAX,
+                OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_d must less than 2147483647."),
+                return false);
     OP_CHECK_IF(
         tiling.get_output_w() * tiling.get_output_h() > INT32_MAX,
         OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_h * output_w must less than 2147483647."),
         return false);
     OP_CHECK_IF(
         tiling.get_batches() * tiling.get_input_d() * tiling.get_input_h() > INT32_MAX,
-        OP_LOGE(
-            context->GetNodeName(),
-            "The shape exceeds the limit. Output_n * output_c * output_d * output_h must less than 2147483647."),
+        OP_LOGE(context->GetNodeName(),
+                "The shape exceeds the limit. Output_n * output_c * output_d * output_h must less than 2147483647."),
         return false);
     return true;
 }
 
 static bool CheckScales(gert::TilingContext* context, float scalesW, float scalesH, float scalesD)
 {
-    OP_CHECK_IF(
-        (scalesW > MAX_SUPPORT_SCALE || scalesH > MAX_SUPPORT_SCALE || scalesD > MAX_SUPPORT_SCALE),
-        OP_LOGE(
-            context->GetNodeName(),
-            "Scales should less than 50, but got scale (scalesW: %f, scalesH: %f, scalesD: %f) ", scalesW, scalesH,
-            scalesD),
-        return false);
+    OP_CHECK_IF((scalesW > MAX_SUPPORT_SCALE || scalesH > MAX_SUPPORT_SCALE || scalesD > MAX_SUPPORT_SCALE),
+                OP_LOGE(context->GetNodeName(),
+                        "Scales should less than 50, but got scale (scalesW: %f, scalesH: %f, scalesD: %f) ", scalesW,
+                        scalesH, scalesD),
+                return false);
     return true;
 }
 
-static bool SetTCubeTilingD(
-    gert::TilingContext* context, uint32_t batches, UpsampleTrilinearTilingData& tiling, ge::DataType dataType)
+static bool SetTCubeTilingD(gert::TilingContext* context, uint32_t batches, UpsampleTrilinearTilingData& tiling,
+                            ge::DataType dataType)
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_d;
@@ -207,57 +199,51 @@ static bool SetTCubeTilingD(
     mmTiling_d.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_d.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
     // 这里设置的k不能比kernel里面设置的小，否则会出问题
-    mmTiling_d.SetShape(
-        tiling.get_output_d(), tiling.get_output_w() * tiling.get_output_h(),
-        CEIL(SLIDE_SIZE * tiling.get_scale_d()) + REDUNDANCE);
-    mmTiling_d.SetOrgShape(
-        tiling.get_output_d(), tiling.get_output_w() * tiling.get_output_h(), batches * tiling.get_input_d());
-    OP_CHECK_IF(
-        (mmTiling_d.GetTiling(tiling.matmul_tiling_d) == -1),
-        OP_LOGE(context->GetNodeName(), "MatmulApiTiling_d set failed"), return false);
+    mmTiling_d.SetShape(tiling.get_output_d(), tiling.get_output_w() * tiling.get_output_h(),
+                        CEIL(SLIDE_SIZE * tiling.get_scale_d()) + REDUNDANCE);
+    mmTiling_d.SetOrgShape(tiling.get_output_d(), tiling.get_output_w() * tiling.get_output_h(),
+                           batches * tiling.get_input_d());
+    OP_CHECK_IF((mmTiling_d.GetTiling(tiling.matmul_tiling_d) == -1),
+                OP_LOGE(context->GetNodeName(), "MatmulApiTiling_d set failed"), return false);
     return true;
 }
 
-static bool SetTCubeTilingH(
-    gert::TilingContext* context, uint32_t batches, UpsampleTrilinearTilingData& tiling, ge::DataType dataType)
+static bool SetTCubeTilingH(gert::TilingContext* context, uint32_t batches, UpsampleTrilinearTilingData& tiling,
+                            ge::DataType dataType)
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_h;
     mmTiling_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_h.SetShape(
-        tiling.get_output_h(), tiling.get_output_w(), CEIL(SLIDE_SIZE * tiling.get_scale_h()) + REDUNDANCE);
-    mmTiling_h.SetOrgShape(
-        tiling.get_output_h(), tiling.get_output_w(), batches * tiling.get_input_d() * tiling.get_input_h());
-    OP_CHECK_IF(
-        (mmTiling_h.GetTiling(tiling.matmul_tiling_h) == -1),
-        OP_LOGE(context->GetNodeName(), "MatmulApiTiling_h set failed"), return false);
+    mmTiling_h.SetShape(tiling.get_output_h(), tiling.get_output_w(),
+                        CEIL(SLIDE_SIZE * tiling.get_scale_h()) + REDUNDANCE);
+    mmTiling_h.SetOrgShape(tiling.get_output_h(), tiling.get_output_w(),
+                           batches * tiling.get_input_d() * tiling.get_input_h());
+    OP_CHECK_IF((mmTiling_h.GetTiling(tiling.matmul_tiling_h) == -1),
+                OP_LOGE(context->GetNodeName(), "MatmulApiTiling_h set failed"), return false);
     return true;
 }
 
-static bool SetTCubeTilingW(
-    gert::TilingContext* context, uint32_t batches, UpsampleTrilinearTilingData& tiling, ge::DataType dataType)
+static bool SetTCubeTilingW(gert::TilingContext* context, uint32_t batches, UpsampleTrilinearTilingData& tiling,
+                            ge::DataType dataType)
 {
     auto mmDataType = static_cast<matmul_tiling::DataType>(dataType);
     matmul_tiling::MatmulApiTiling mmTiling_w;
     mmTiling_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType, false);
     mmTiling_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, mmDataType);
-    mmTiling_w.SetShape(
-        batches * tiling.get_input_d() * tiling.get_input_h(), SLIDE_SIZE,
-        CEIL(SLIDE_SIZE * tiling.get_scale_w()) + REDUNDANCE);
-    mmTiling_w.SetOrgShape(
-        batches * tiling.get_input_d() * tiling.get_input_h(), tiling.get_output_w(), tiling.get_input_w());
-    OP_CHECK_IF(
-        (mmTiling_w.GetTiling(tiling.matmul_tiling_w) == -1),
-        OP_LOGE(context->GetNodeName(), "MatmulApiTiling_w set failed"), return false);
+    mmTiling_w.SetShape(batches * tiling.get_input_d() * tiling.get_input_h(), SLIDE_SIZE,
+                        CEIL(SLIDE_SIZE * tiling.get_scale_w()) + REDUNDANCE);
+    mmTiling_w.SetOrgShape(batches * tiling.get_input_d() * tiling.get_input_h(), tiling.get_output_w(),
+                           tiling.get_input_w());
+    OP_CHECK_IF((mmTiling_w.GetTiling(tiling.matmul_tiling_w) == -1),
+                OP_LOGE(context->GetNodeName(), "MatmulApiTiling_w set failed"), return false);
     return true;
 }
 
-static void SetTailGroupList(
-    UpsampleTrilinearTilingData& tiling, int direction, uint32_t* tailGroupSlideStartInxList,
-    uint32_t* tailGroupSlideEndInxList)
+static void SetTailGroupList(UpsampleTrilinearTilingData& tiling, int direction, uint32_t* tailGroupSlideStartInxList,
+                             uint32_t* tailGroupSlideEndInxList)
 {
     if (DIREC_WIDTH == direction) {
         tiling.set_tail_group_slide_start_inx_w_list(tailGroupSlideStartInxList);
@@ -272,9 +258,8 @@ static void SetTailGroupList(
     }
 }
 
-static void SetTailBatchList(
-    UpsampleTrilinearTilingData& tiling, int direction, uint32_t* tailGroupBlockStartInxList,
-    uint32_t* tailGroupBlockEndInxList)
+static void SetTailBatchList(UpsampleTrilinearTilingData& tiling, int direction, uint32_t* tailGroupBlockStartInxList,
+                             uint32_t* tailGroupBlockEndInxList)
 {
     if (DIREC_WIDTH == direction) {
         tiling.set_tail_group_start_inx_w_list(tailGroupBlockStartInxList);
@@ -289,9 +274,8 @@ static void SetTailBatchList(
     }
 }
 
-static uint32_t calcIndxPerCoreInTailBlockW(
-    UpsampleTrilinearTilingData& tiling, uint32_t core_num, uint32_t group_size, uint32_t* core_per_group,
-    uint32_t group_tail_w)
+static uint32_t calcIndxPerCoreInTailBlockW(UpsampleTrilinearTilingData& tiling, uint32_t core_num, uint32_t group_size,
+                                            uint32_t* core_per_group, uint32_t group_tail_w)
 {
     uint32_t batch = tiling.get_batches() * tiling.get_input_d() * tiling.get_input_h();
     vector<uint32_t> tailGroupBlockStartInxList(MAX_CORE_COUNT, 0);
@@ -318,13 +302,13 @@ static uint32_t calcIndxPerCoreInTailBlockW(
                 break;
             }
             tailGroupBlockStartInxList[idx] = tail_block_start;
-            tailGroupBlockEndInxList[idx] =
-                std::min(batch - 1, tailGroupBlockStartInxList[idx] + avg_blocks_per_core - 1);
+            tailGroupBlockEndInxList[idx] = std::min(batch - 1,
+                                                     tailGroupBlockStartInxList[idx] + avg_blocks_per_core - 1);
             if (i == 0) {
                 tailGroupSlideStartInxList[idx] = last_slide_idx == 0 ? 0 : last_slide_idx + i * SLIDE_SIZE + 1;
             } else {
-                tailGroupSlideStartInxList[idx] =
-                    last_slide_idx == 0 ? i * SLIDE_SIZE : last_slide_idx + i * SLIDE_SIZE + 1;
+                tailGroupSlideStartInxList[idx] = last_slide_idx == 0 ? i * SLIDE_SIZE :
+                                                                        last_slide_idx + i * SLIDE_SIZE + 1;
             }
             if (i == group_size - 1) {
                 uint32_t group_width = group_tail_w == 0 ? SLIDE_SIZE : group_tail_w;
@@ -341,9 +325,8 @@ static uint32_t calcIndxPerCoreInTailBlockW(
     return coreRealNeedNum;
 }
 
-static uint32_t calcIndxPerCoreInTailBlock(
-    UpsampleTrilinearTilingData& tiling, uint32_t core_num, int direction, uint32_t group_size,
-    uint32_t* core_per_group, uint32_t group_tail)
+static uint32_t calcIndxPerCoreInTailBlock(UpsampleTrilinearTilingData& tiling, uint32_t core_num, int direction,
+                                           uint32_t group_size, uint32_t* core_per_group, uint32_t group_tail)
 {
     uint32_t batch;
     uint32_t last_slide_index;
@@ -387,8 +370,8 @@ static uint32_t calcIndxPerCoreInTailBlock(
             if (i == 0) {
                 tailGroupSlideStartInxList[idx] = last_slide_index == 0 ? 0 : last_slide_index + i * SLIDE_SIZE + 1;
             } else {
-                tailGroupSlideStartInxList[idx] =
-                    last_slide_index == 0 ? i * SLIDE_SIZE : last_slide_index + i * SLIDE_SIZE + 1;
+                tailGroupSlideStartInxList[idx] = last_slide_index == 0 ? i * SLIDE_SIZE :
+                                                                          last_slide_index + i * SLIDE_SIZE + 1;
             }
             if (i == group_size - 1) {
                 // 当前核处理最后一组，但是要考虑到如果尾块是0，说明最后一组处理地也是一个完整滑块
@@ -469,18 +452,18 @@ static uint32_t calcIndxPerCore(UpsampleTrilinearTilingData& tiling, uint32_t co
     for (size_t i = 0; i < group_size; i++) {
         if (core_num_per_group_tail_temp > 0) {
             core_num_per_group_tail_temp--;
-            core_per_group[i] =
-                (i + 1) * core_num_per_group + core_num_per_group_tail - core_num_per_group_tail_temp - 1;
+            core_per_group[i] = (i + 1) * core_num_per_group + core_num_per_group_tail - core_num_per_group_tail_temp -
+                                1;
         } else {
             core_per_group[i] = (i + 1) * core_num_per_group + core_num_per_group_tail - 1;
         }
     }
     if (DIREC_WIDTH == direction) {
-        core_real_need_num =
-            calcIndxPerCoreInTailBlockW(tiling, core_num, group_size, core_per_group.data(), group_tail_size);
+        core_real_need_num = calcIndxPerCoreInTailBlockW(tiling, core_num, group_size, core_per_group.data(),
+                                                         group_tail_size);
     } else {
-        core_real_need_num =
-            calcIndxPerCoreInTailBlock(tiling, core_num, direction, group_size, core_per_group.data(), group_tail_size);
+        core_real_need_num = calcIndxPerCoreInTailBlock(tiling, core_num, direction, group_size, core_per_group.data(),
+                                                        group_tail_size);
     }
     return slide_num > 0 ? core_num : core_real_need_num;
 }
@@ -527,8 +510,8 @@ static uint32_t GetNeedCoreNum(UpsampleTrilinearTilingData& tiling, uint32_t cor
     return needCoreNum;
 }
 
-static uint64_t GetWorkSpaceSize(
-    UpsampleTrilinearTilingData& tiling, uint32_t batches, uint32_t coreRealNeedNum, uint32_t data_type_size)
+static uint64_t GetWorkSpaceSize(UpsampleTrilinearTilingData& tiling, uint32_t batches, uint32_t coreRealNeedNum,
+                                 uint32_t data_type_size)
 {
     uint64_t temp_result_w_size;
     uint64_t temp_result_h_size;
@@ -588,24 +571,23 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
     const auto align_corners = GetOptionalAttr<bool>(attrs, SCALES_IDX, false);
 
     auto output_storage_shape = context->GetOutputShape(0)->GetStorageShape();
-    if (!CheckShapes(
-            context, output_storage_shape.GetDim(outwIdx), output_storage_shape.GetDim(outhIdx),
-            output_storage_shape.GetDim(outdIdx))) {
+    if (!CheckShapes(context, output_storage_shape.GetDim(outwIdx), output_storage_shape.GetDim(outhIdx),
+                     output_storage_shape.GetDim(outdIdx))) {
         return ge::GRAPH_FAILED;
     }
     tiling.set_output_w(output_storage_shape.GetDim(outwIdx));
     tiling.set_output_h(output_storage_shape.GetDim(outhIdx));
     tiling.set_output_d(output_storage_shape.GetDim(outdIdx));
     auto input_storage_shape = context->GetInputShape(0)->GetStorageShape();
-    tiling.set_scale_w(AreaPixelComputeScale(
-        align_corners, input_storage_shape.GetDim(weightIdx), output_storage_shape.GetDim(outwIdx),
-        GetOptionalAttr<float>(attrs, SCALE_W_IDX, static_cast<float>(1.0))));
-    tiling.set_scale_h(AreaPixelComputeScale(
-        align_corners, input_storage_shape.GetDim(heightIdx), output_storage_shape.GetDim(outhIdx),
-        GetOptionalAttr<float>(attrs, SCALE_H_IDX, static_cast<float>(1.0))));
-    tiling.set_scale_d(AreaPixelComputeScale(
-        align_corners, input_storage_shape.GetDim(depthIdx), output_storage_shape.GetDim(outdIdx),
-        GetOptionalAttr<float>(attrs, SCALE_D_IDX, static_cast<float>(1.0))));
+    tiling.set_scale_w(AreaPixelComputeScale(align_corners, input_storage_shape.GetDim(weightIdx),
+                                             output_storage_shape.GetDim(outwIdx),
+                                             GetOptionalAttr<float>(attrs, SCALE_W_IDX, static_cast<float>(1.0))));
+    tiling.set_scale_h(AreaPixelComputeScale(align_corners, input_storage_shape.GetDim(heightIdx),
+                                             output_storage_shape.GetDim(outhIdx),
+                                             GetOptionalAttr<float>(attrs, SCALE_H_IDX, static_cast<float>(1.0))));
+    tiling.set_scale_d(AreaPixelComputeScale(align_corners, input_storage_shape.GetDim(depthIdx),
+                                             output_storage_shape.GetDim(outdIdx),
+                                             GetOptionalAttr<float>(attrs, SCALE_D_IDX, static_cast<float>(1.0))));
     if (!CheckScales(context, tiling.get_scale_w(), tiling.get_scale_h(), tiling.get_scale_d())) {
         return ge::GRAPH_FAILED;
     }
@@ -635,7 +617,7 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
     tiling.set_total_core_num(maxCoreNum);
     const int64_t batch = input_storage_shape.GetDim(batchIdx);
     const int64_t channel = input_storage_shape.GetDim(channelIdx);
-    tiling.set_batches(batch * channel); 
+    tiling.set_batches(batch * channel);
 
     if (!CheckShapeMaxLimit(context, tiling)) {
         return ge::GRAPH_FAILED;
@@ -669,8 +651,8 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
     }
 
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
-    currentWorkspace[0] =
-        GetWorkSpaceSize(tiling, batch * channel, coreRealNeedNum, data_type_size) + RESERVED_WORKSPACE_SIZE;
+    currentWorkspace[0] = GetWorkSpaceSize(tiling, batch * channel, coreRealNeedNum, data_type_size) +
+                          RESERVED_WORKSPACE_SIZE;
 
     // savetobuffer会把数据加载到缓存里面待发送，所以对tiling的所有设值在在此之前执行
     tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());

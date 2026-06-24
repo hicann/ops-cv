@@ -17,8 +17,7 @@
 
 namespace ops {
 
-class UpsampleNearest : public OpDef
-{
+class UpsampleNearest : public OpDef {
 public:
     explicit UpsampleNearest(const char* name) : OpDef(name)
     {

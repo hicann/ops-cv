@@ -36,7 +36,7 @@ const aclTensor* ViewCopy(const aclTensor* x, const aclTensor* y, aclOpExecutor*
     return y;
 }
 
-const aclTensor *UnsqueezeNd(const aclTensor *x, const aclIntArray* dim, aclOpExecutor *executor)
+const aclTensor* UnsqueezeNd(const aclTensor* x, const aclIntArray* dim, aclOpExecutor* executor)
 {
     (void)x;
     (void)dim;
@@ -44,7 +44,7 @@ const aclTensor *UnsqueezeNd(const aclTensor *x, const aclIntArray* dim, aclOpEx
     return x;
 }
 
-const aclTensor *UnsqueezeNd(const aclTensor *x, int64_t dim, aclOpExecutor *executor)
+const aclTensor* UnsqueezeNd(const aclTensor* x, int64_t dim, aclOpExecutor* executor)
 {
     (void)x;
     (void)dim;
@@ -52,7 +52,7 @@ const aclTensor *UnsqueezeNd(const aclTensor *x, int64_t dim, aclOpExecutor *exe
     return x;
 }
 
-const aclTensor *SqueezeNd(const aclTensor *x, const aclIntArray* dim, aclOpExecutor *executor)
+const aclTensor* SqueezeNd(const aclTensor* x, const aclIntArray* dim, aclOpExecutor* executor)
 {
     (void)x;
     (void)dim;
@@ -60,15 +60,15 @@ const aclTensor *SqueezeNd(const aclTensor *x, const aclIntArray* dim, aclOpExec
     return x;
 }
 
-const aclTensor *SqueezeNd(const aclTensor *x, int64_t dim, aclOpExecutor *executor)
+const aclTensor* SqueezeNd(const aclTensor* x, int64_t dim, aclOpExecutor* executor)
 {
     (void)x;
     (void)dim;
     (void)executor;
-    return x;    
+    return x;
 }
 
-const aclTensor *ReFormat(const aclTensor *x, const op::Format &format, aclOpExecutor *executor=nullptr)
+const aclTensor* ReFormat(const aclTensor* x, const op::Format& format, aclOpExecutor* executor = nullptr)
 {
     (void)x;
     (void)format;
@@ -76,10 +76,8 @@ const aclTensor *ReFormat(const aclTensor *x, const op::Format &format, aclOpExe
     return x;
 }
 
-const aclTensor *TransDataSpecial(const aclTensor *x,
-                                  op::Format dstPrimaryFormat,
-                                  int64_t groups,
-                                  aclOpExecutor *executor)
+const aclTensor* TransDataSpecial(const aclTensor* x, op::Format dstPrimaryFormat, int64_t groups,
+                                  aclOpExecutor* executor)
 {
     (void)x;
     (void)dstPrimaryFormat;
@@ -88,7 +86,7 @@ const aclTensor *TransDataSpecial(const aclTensor *x,
     return x;
 }
 
-const aclTensor *Cast(const aclTensor *self, op::DataType dstDtype, aclOpExecutor *executor)
+const aclTensor* Cast(const aclTensor* self, op::DataType dstDtype, aclOpExecutor* executor)
 {
     (void)self;
     (void)dstDtype;
@@ -96,7 +94,7 @@ const aclTensor *Cast(const aclTensor *self, op::DataType dstDtype, aclOpExecuto
     return self;
 }
 
-const aclTensor *CastOnlyForConvBackward(const aclTensor* self, op::DataType dstDtype, aclOpExecutor* executor)
+const aclTensor* CastOnlyForConvBackward(const aclTensor* self, op::DataType dstDtype, aclOpExecutor* executor)
 {
     (void)self;
     (void)dstDtype;
@@ -104,10 +102,7 @@ const aclTensor *CastOnlyForConvBackward(const aclTensor* self, op::DataType dst
     return self;
 }
 
-const aclTensor *TransData(const aclTensor *x,
-                           op::Format dstPrimaryFormat,
-                           int64_t groups,
-                           aclOpExecutor *executor)
+const aclTensor* TransData(const aclTensor* x, op::Format dstPrimaryFormat, int64_t groups, aclOpExecutor* executor)
 {
     (void)x;
     (void)dstPrimaryFormat;
@@ -124,7 +119,6 @@ const aclTensor* Reshape(const aclTensor* x, const op::Shape& shape, aclOpExecut
     return x;
 }
 
-
 const aclTensor* Reshape(const aclTensor* x, const aclIntArray* shape, aclOpExecutor* executor)
 {
     (void)x;
@@ -133,8 +127,8 @@ const aclTensor* Reshape(const aclTensor* x, const aclIntArray* shape, aclOpExec
     return x;
 }
 
-const aclTensor *Fill(const aclTensor *dims, const aclTensor *value, const aclIntArray *outShape,
-    aclOpExecutor *executor)
+const aclTensor* Fill(const aclTensor* dims, const aclTensor* value, const aclIntArray* outShape,
+                      aclOpExecutor* executor)
 {
     (void)dims;
     (void)value;

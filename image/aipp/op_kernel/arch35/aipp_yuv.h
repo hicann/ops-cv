@@ -36,10 +36,8 @@ template <typename T, typename DataType>
 class AippYuv : public AippBase<T, DataType> {
 public:
     __aicore__ inline AippYuv(){};
-    __aicore__ inline void Init(const AippTilingData& tilingData,
-        const tagAippDynamicParaHeader& tilingParamHeader,
-        const __gm__ uint8_t* gmParams,
-        uint8_t dynamicTilingKey);
+    __aicore__ inline void Init(const AippTilingData& tilingData, const tagAippDynamicParaHeader& tilingParamHeader,
+                                const __gm__ uint8_t* gmParams, uint8_t dynamicTilingKey);
     __aicore__ inline void Process(GM_ADDR x, GM_ADDR y);
 
 private:
@@ -48,20 +46,17 @@ private:
 
 template <typename T, typename DataType>
 __aicore__ inline void AippYuv<T, DataType>::Init(const AippTilingData& tilingData,
-    const tagAippDynamicParaHeader& tilingParamHeader,
-    const __gm__ uint8_t* gmParams,
-    uint8_t dynamicTilingKey)
+                                                  const tagAippDynamicParaHeader& tilingParamHeader,
+                                                  const __gm__ uint8_t* gmParams, uint8_t dynamicTilingKey)
 {
     this->BaseInit(tilingData, tilingParamHeader, gmParams, dynamicTilingKey);
 }
 
 template <typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline void ComputeDstYuv444Idx(
-    DataType dstYIdx[YUV_PER_DEAL_NUM],
-    DataType& dstUBase,
-    DataType& dstVBase,
-    const CoordPack<DataType>& coord,
-    const AippTilingData& tD)
+__simt_callee__ __attribute__((always_inline)) inline void ComputeDstYuv444Idx(DataType dstYIdx[YUV_PER_DEAL_NUM],
+                                                                               DataType& dstUBase, DataType& dstVBase,
+                                                                               const CoordPack<DataType>& coord,
+                                                                               const AippTilingData& tD)
 {
     const DataType outputSizeH = tD.outputSizeH;
     const DataType outputSizeW = tD.outputSizeW;
@@ -91,16 +86,15 @@ __simt_callee__ __attribute__((always_inline)) inline void ComputeDstYuv444Idx(
 }
 
 template <typename T, typename DataType>
-__simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(
-    __gm__ uint8_t* inputGM, __gm__ T* outputGM,
-    DataType dstYIdx, DataType dstUIdx, DataType dstVIdx,
-    uint32_t nIdx, uint32_t croodH, uint32_t croodW,
-    const AippTilingData& tD)
+__simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(__gm__ uint8_t* inputGM,
+                                                                              __gm__ T* outputGM, DataType dstYIdx,
+                                                                              DataType dstUIdx, DataType dstVIdx,
+                                                                              uint32_t nIdx, uint32_t croodH,
+                                                                              uint32_t croodW, const AippTilingData& tD)
 {
     const uint32_t yuvPlaneSize = tD.inputSizeH * tD.inputSizeW * 3 / 2;
 
-    uint32_t srcYIdx = nIdx * yuvPlaneSize +
-                       (tD.cropParam.cropStartPosH + croodH) * tD.inputSizeW +
+    uint32_t srcYIdx = nIdx * yuvPlaneSize + (tD.cropParam.cropStartPosH + croodH) * tD.inputSizeW +
                        (tD.cropParam.cropStartPosW + croodW);
     uint32_t srcUIdx = nIdx * yuvPlaneSize + tD.inputSizeH * tD.inputSizeW +
                        ((tD.cropParam.cropStartPosH + (croodH & ~1u)) >> 1) * tD.inputSizeW +
@@ -117,12 +111,9 @@ __simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(
 
 template <typename T, typename DataType>
 __simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Block(
-    __gm__ uint8_t* inputGM, __gm__ T* outputGM,
-    const DataType dstYIdx[YUV_PER_DEAL_NUM],
-    DataType dstUBase, DataType dstVBase,
-    const CoordPack<DataType>& coord,
-    const AippTilingData& tD, float padValue,
-    bool allEvenPadding, bool blockAllInPadding)
+    __gm__ uint8_t* inputGM, __gm__ T* outputGM, const DataType dstYIdx[YUV_PER_DEAL_NUM], DataType dstUBase,
+    DataType dstVBase, const CoordPack<DataType>& coord, const AippTilingData& tD, float padValue, bool allEvenPadding,
+    bool blockAllInPadding)
 {
     const uint32_t actualH = coord.hIdx * DIGIT_2;
     const uint32_t actualW = coord.wIdx * DIGIT_2;
@@ -161,26 +152,22 @@ __simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Block(
         } else {
             uint32_t cropCoordH = pixelH - tD.paddingParam.topPaddingSize;
             uint32_t cropCoordW = pixelW - tD.paddingParam.leftPaddingSize;
-            ProcessYuv444Pixel<T, DataType>(inputGM, outputGM,
-                dstYIdx[i], dstUIdx[i], dstVIdx[i],
-                coord.nIdx, cropCoordH, cropCoordW, tD);
+            ProcessYuv444Pixel<T, DataType>(inputGM, outputGM, dstYIdx[i], dstUIdx[i], dstVIdx[i], coord.nIdx,
+                                            cropCoordH, cropCoordW, tD);
         }
     }
 }
 
 template <typename T, typename DataType>
-__simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuv420ToYuv444(
-    __gm__ uint8_t* inputGM, __gm__ T* outputGM, AippTilingData tD,
-    const __gm__ uint8_t* gmParams,
-    uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
+__simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
+    void SimtComputeYuv420ToYuv444(__gm__ uint8_t* inputGM, __gm__ T* outputGM, AippTilingData tD,
+                                   const __gm__ uint8_t* gmParams, uint32_t blockIdx, uint32_t blockNum,
+                                   uint64_t batchSize, uint8_t dynamicTilingKey)
 {
-    const uint32_t outputSizeH     = tD.outputSizeH;
-    const uint32_t outputSizeW     = tD.outputSizeW;
+    const uint32_t outputSizeH = tD.outputSizeH;
+    const uint32_t outputSizeW = tD.outputSizeW;
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x;
-         idx < batchSize;
-         idx += blockNum * blockDim.x) {
-
+    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         // 1. Decode idx → 2x2-block coordinate (nIdx, hIdx, wIdx)
         CoordPack<DataType> coord;
         coord.nIdx = idx / ((outputSizeH >> 1) * (outputSizeW >> 1));
@@ -191,15 +178,13 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuv420ToYuv4
             UpdateDynamicBatchPara(coord, tD, gmParams);
         }
 
-        const int32_t  topPaddingSize  = tD.paddingParam.topPaddingSize;
-        const int32_t  bottomPaddingSize = tD.paddingParam.bottomPaddingSize;
-        const int32_t  leftPaddingSize = tD.paddingParam.leftPaddingSize;
-        const int32_t  rightPaddingSize = tD.paddingParam.rightPaddingSize;
-        const float    padValue        = tD.paddingParam.padValue;
-        const bool allEvenPadding = (topPaddingSize % DIGIT_2 == 0) &&
-                                    (bottomPaddingSize % DIGIT_2 == 0) &&
-                                    (leftPaddingSize % DIGIT_2 == 0) &&
-                                    (rightPaddingSize % DIGIT_2 == 0);
+        const int32_t topPaddingSize = tD.paddingParam.topPaddingSize;
+        const int32_t bottomPaddingSize = tD.paddingParam.bottomPaddingSize;
+        const int32_t leftPaddingSize = tD.paddingParam.leftPaddingSize;
+        const int32_t rightPaddingSize = tD.paddingParam.rightPaddingSize;
+        const float padValue = tD.paddingParam.padValue;
+        const bool allEvenPadding = (topPaddingSize % DIGIT_2 == 0) && (bottomPaddingSize % DIGIT_2 == 0) &&
+                                    (leftPaddingSize % DIGIT_2 == 0) && (rightPaddingSize % DIGIT_2 == 0);
 
         // 2. Compute destination indices for this 2x2 block
         DataType dstYIdx[YUV_PER_DEAL_NUM];
@@ -216,22 +201,20 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__ void SimtComputeYuv420ToYuv4
                                         (actualW >= leftPaddingSize + tD.cropParam.cropSizeW));
 
         // 4. Process block (padding check + CSC + DataConversion per pixel)
-        ProcessYuv444Block<T, DataType>(inputGM, outputGM,
-            dstYIdx, dstUBase, dstVBase, coord, tD,
-            padValue, allEvenPadding, blockAllInPadding);
+        ProcessYuv444Block<T, DataType>(inputGM, outputGM, dstYIdx, dstUBase, dstVBase, coord, tD, padValue,
+                                        allEvenPadding, blockAllInPadding);
     }
 }
 
 template <typename T, typename DataType>
 __aicore__ inline void AippYuv<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
-    uint64_t batchSize = (uint64_t)this->tilingData_.batchNum *
-                         ((uint64_t)this->tilingData_.outputSizeH >> 1) *
+    uint64_t batchSize = (uint64_t)this->tilingData_.batchNum * ((uint64_t)this->tilingData_.outputSizeH >> 1) *
                          ((uint64_t)this->tilingData_.outputSizeW >> 1);
 
-    asc_vf_call<Aipp_Kernel::SimtComputeYuv420ToYuv444<T, DataType>>(dim3(this->blockDimX_),
-        (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->gmParams_,
-         this->blockIdx_, this->blockNum_, batchSize, this->dynamicTilingKey_);
+    asc_vf_call<Aipp_Kernel::SimtComputeYuv420ToYuv444<T, DataType>>(
+        dim3(this->blockDimX_), (__gm__ uint8_t*)x, (__gm__ T*)y, this->tilingData_, this->gmParams_, this->blockIdx_,
+        this->blockNum_, batchSize, this->dynamicTilingKey_);
 }
 
 } // namespace Aipp_Kernel

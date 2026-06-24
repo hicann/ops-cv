@@ -39,27 +39,25 @@ static constexpr size_t EXPECT_SIZE = 4;
 static const double MIN_SUPPORT_SCALE = 0.02;
 static constexpr size_t EXPECT_OUTPUTSIZE = 2;
 
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_BF16};
 
-static bool CheckShape(
-    const aclTensor* gradOutput, const aclTensor* out, const aclIntArray* outputSize, const aclIntArray* inputSize)
+static bool CheckShape(const aclTensor* gradOutput, const aclTensor* out, const aclIntArray* outputSize,
+                       const aclIntArray* inputSize)
 {
     const op::Format gradOutputFormat = gradOutput->GetStorageFormat();
     if (gradOutputFormat != out->GetStorageFormat()) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "Format of input and output should be equal, gradOutput [%s], out [%s].",
-            op::ToString(gradOutputFormat).GetString(), op::ToString(out->GetStorageFormat()).GetString());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format of input and output should be equal, gradOutput [%s], out [%s].",
+                op::ToString(gradOutputFormat).GetString(), op::ToString(out->GetStorageFormat()).GetString());
         return false;
     }
     size_t inputSizeNum = inputSize->Size();
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOutput, DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
-    OP_CHECK(
-        inputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
-        return false);
+    OP_CHECK(inputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             return false);
     OP_CHECK(
         outputSizeNum == EXPECT_OUTPUTSIZE,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
@@ -86,16 +84,14 @@ static double ComputeNearestExact2dBackwardScales(int64_t input_size, int64_t ou
 static bool CheckScalesValid(const double weight, const double high)
 {
     if ((weight < 0) || (high < 0)) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "scales_w and scales_h cannot be negative , scales_w [%f], scales_h [%f].", weight,
-            high);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scales_w and scales_h cannot be negative , scales_w [%f], scales_h [%f].",
+                weight, high);
         return false;
     }
     return true;
 }
 
-static bool CheckInputElement(
-    const aclTensor* gradOutput, const aclIntArray* inputSize, double scalesH, double scalesW)
+static bool CheckInputElement(const aclTensor* gradOutput, const aclIntArray* inputSize, double scalesH, double scalesW)
 {
     auto gradOutputShape = gradOutput->GetViewShape();
     int64_t inputH = (*inputSize)[DIM_TWO];
@@ -113,21 +109,17 @@ static bool CheckInputElement(
     double realScalesH = ComputeNearestExact2dBackwardScales(inputH, outH, scalesH);
     double realScalesW = ComputeNearestExact2dBackwardScales(inputW, outW, scalesW);
 
-    OP_CHECK(
-        realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].", realScalesH,
-            realScalesW),
-        return false);
+    OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scalesH and scalesW are too large, scalesH [%f], scalesW [%f].",
+                     realScalesH, realScalesW),
+             return false);
 
-    OP_CHECK(
-        outN > 0 && inputH > 0 && inputW > 0 && outC > 0 && outH > 0 && outW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
-            " H: %ld, W: %ld) output (H: %ld, W: %ld)",
-            outN, outC, inputH, inputW, outH, outW),
-        return false);
+    OP_CHECK(outN > 0 && inputH > 0 && inputW > 0 && outC > 0 && outH > 0 && outW > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
+                     " H: %ld, W: %ld) output (H: %ld, W: %ld)",
+                     outN, outC, inputH, inputW, outH, outW),
+             return false);
     return true;
 }
 
@@ -151,17 +143,15 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
         return false;
     }
     if ((outDimC != selfDimC) || (outDimN != selfDimN)) {
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .", selfDimC,
-            outDimC, selfDimN, outDimN);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .",
+                selfDimC, outDimC, selfDimN, outDimN);
         return false;
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesH,
-    double scalesW, const aclTensor* out)
+static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               double scalesH, double scalesW, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOutput, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -184,14 +174,16 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
-    const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize, double scalesH,
-    double scalesW, aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(const aclTensor* gradOutput,
+                                                                const aclIntArray* outputSize,
+                                                                const aclIntArray* inputSize, double scalesH,
+                                                                double scalesW, aclTensor* out, uint64_t* workspaceSize,
+                                                                aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
 
-    L2_DFX_PHASE_1(
-        aclnnUpsampleNearestExact2dBackward, DFX_IN(gradOutput, outputSize, inputSize, scalesH, scalesW), DFX_OUT(out));
+    L2_DFX_PHASE_1(aclnnUpsampleNearestExact2dBackward, DFX_IN(gradOutput, outputSize, inputSize, scalesH, scalesW),
+                   DFX_OUT(out));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -249,8 +241,8 @@ aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleNearestExact2dBackward(
-    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleNearestExact2dBackward(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+                                                aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleNearestExact2dBackward);
     // 固定写法，调用框架能力，完成计算

@@ -35,7 +35,7 @@ const std::string EXACT_3D_TYPE = "UpsampleNearestExact3d";
 
 class UpsampleNearest3dTiling {
 public:
-    explicit UpsampleNearest3dTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleNearest3dTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init() const;
     ge::graphStatus RunBigKernelTiling(gert::TilingContext* context);
 
@@ -56,10 +56,7 @@ private:
     int64_t inputShapes[3] = {0};
 };
 
-ge::graphStatus UpsampleNearest3dTiling::Init() const
-{
-    return ge::GRAPH_SUCCESS;
-}
+ge::graphStatus UpsampleNearest3dTiling::Init() const { return ge::GRAPH_SUCCESS; }
 
 ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling(gert::TilingContext* context)
 {
@@ -108,8 +105,8 @@ ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling(gert::TilingContext*
     float scales[3] = {*scaleD, *scaleH, *scaleW};
     auto compileInfo = reinterpret_cast<const UpsampleNearest3dCompileInfo*>(tilingContext->GetCompileInfo());
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, compileInfo);
-    UpsampleNearest3d::UpsampleNearest3dTilingData* tilingData =
-        tilingContext->GetTilingData<UpsampleNearest3d::UpsampleNearest3dTilingData>();
+    UpsampleNearest3d::UpsampleNearest3dTilingData*
+        tilingData = tilingContext->GetTilingData<UpsampleNearest3d::UpsampleNearest3dTilingData>();
     UpsampleNearest3d::UpsampleNearest3dTiling::UpsampleNearest3dCommonTiling<gert::Shape>(
         srcShape->GetStorageShape(), scales, outputShapes, *tilingData, compileInfo->coreNum);
 
@@ -154,27 +151,33 @@ inline bool UpsampleNearest3dTiling::CheckMaxSizes(const gert::TilingContext* co
 {
     if (inputShape.GetDim(0) > INT32_MAX) {
         std::string reasonMsg = "The N-dimension of x must be less than or equal to INT32_MAX, where N is the 0th axis";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(),
+                                              reasonMsg.c_str());
         return false;
     }
     if (inputShape.GetDim(1) > INT32_MAX) {
         std::string reasonMsg = "The C-dimension of x must be less than or equal to INT32_MAX, where C is the 1st axis";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(),
+                                              reasonMsg.c_str());
         return false;
     }
     if (inputShapes[0] > INT32_MAX) {
         std::string reasonMsg = "The D-dimension of x must be less than or equal to INT32_MAX, where D is the 2nd axis";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(),
+                                              reasonMsg.c_str());
         return false;
     }
     if (inputShapes[1] > INT32_MAX) {
         std::string reasonMsg = "The H-dimension of x must be less than or equal to INT32_MAX, where H is the 3rd axis";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(),
+                                              reasonMsg.c_str());
         return false;
     }
     if (inputShapes[2] > INT32_MAX) {
-        std::string reasonMsg = "The W-dimension of x must be less than or equal to INT32_MAX, where W is the last axis";
-        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(), reasonMsg.c_str());
+        std::string
+            reasonMsg = "The W-dimension of x must be less than or equal to INT32_MAX, where W is the last axis";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "x", Ops::Base::ToString(inputShape).c_str(),
+                                              reasonMsg.c_str());
         return false;
     }
 
@@ -182,8 +185,8 @@ inline bool UpsampleNearest3dTiling::CheckMaxSizes(const gert::TilingContext* co
         std::string valueMsg = "(" + std::to_string(outputShapes[0]) + ", " + std::to_string(outputShapes[1]) + ", " +
                                std::to_string(outputShapes[2]) + ")";
         std::string reasonMsg = "Each value of output_size must be less than or equal to INT32_MAX";
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
-            context->GetNodeName(), "output_size", valueMsg.c_str(), reasonMsg.c_str());
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "output_size", valueMsg.c_str(),
+                                              reasonMsg.c_str());
         return false;
     }
     return true;
@@ -208,9 +211,8 @@ static ge::graphStatus TilingPrepareTiling(gert::TilingParseContext* context)
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->coreNum = ascendcPlatform.GetCoreNumAiv();
 
-    OP_CHECK_IF(
-        compileInfo->coreNum <= 0, OP_LOGE(context->GetNodeName(), "UpsampleNearest3d GetHardwareInfo Failed"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(compileInfo->coreNum <= 0, OP_LOGE(context->GetNodeName(), "UpsampleNearest3d GetHardwareInfo Failed"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

@@ -40,14 +40,14 @@ static constexpr size_t DIM_LIMIT = 4;
 static constexpr int64_t EXPECT_SIZE = 2;
 
 // 根据API定义，需要列出所能支持的所有dtype
-static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {
-    op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT};
+static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT16,
+                                                                       op::DataType::DT_FLOAT};
 
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
-static bool CheckNotNull(
-    const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize, const aclTensor *out)
+static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                         const aclTensor* out)
 {
     OP_CHECK_NULL(gradOut, return false);
     OP_CHECK_NULL(outputSize, return false);
@@ -56,7 +56,7 @@ static bool CheckNotNull(
     return true;
 }
 
-static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inputSize)
+static bool CheckIOSizesIsSame(const aclTensor* gradOut, const aclIntArray* inputSize)
 {
     auto gradOutShape = gradOut->GetViewShape();
     size_t dimNum = gradOutShape.GetDimNum();
@@ -69,7 +69,7 @@ static bool CheckIOSizesIsSame(const aclTensor *gradOut, const aclIntArray *inpu
     return true;
 }
 
-static bool ChecksInputElement(const aclTensor *gradOut, const aclIntArray *outputSize, const aclIntArray *inputSize)
+static bool ChecksInputElement(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize)
 {
     int64_t outH = (*outputSize)[DIM_ZERO];
     int64_t outW = (*outputSize)[DIM_ONE];
@@ -90,22 +90,19 @@ static bool ChecksInputElement(const aclTensor *gradOut, const aclIntArray *outp
         fullOutputSize[DIM_THREE] = channels;
     }
 
-    OP_CHECK(
-        inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Input and output sizes should greater than 0, bug got input (H: %ld,"
-            " W: %ld) output (H: %ld, W: %ld)",
-            inputH, inputW, outH, outW),
-        return false);
+    OP_CHECK(inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Input and output sizes should greater than 0, bug got input (H: %ld,"
+                     " W: %ld) output (H: %ld, W: %ld)",
+                     inputH, inputW, outH, outW),
+             return false);
 
     for (size_t i = 0; i < dimNum; ++i) {
         if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID,
-                "Expected grad_output to have the same shape as output;"
-                " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
-                i, fullOutputSize[i], i, gradOutShape.GetDim(i));
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Expected grad_output to have the same shape as output;"
+                    " output.size(%zu) = %ld but got grad_output.size(%zu) = %ld",
+                    i, fullOutputSize[i], i, gradOutShape.GetDim(i));
             return false;
         }
     }
@@ -132,17 +129,15 @@ static bool CheckDtypeValid(const aclTensor* gradOut, const aclTensor* out, cons
 
 static bool CheckFormat(const aclTensor* gradOut, const aclTensor* out)
 {
-    OP_CHECK(
-        gradOut->GetStorageFormat() == out->GetStorageFormat(),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The gradOut and out must have same format"), return false);
-    OP_CHECK(
-        (out->GetStorageFormat() == op::Format::FORMAT_NCHW || out->GetStorageFormat() == op::Format::FORMAT_NHWC),
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The format must be NCHW or NHWC"), return false);
+    OP_CHECK(gradOut->GetStorageFormat() == out->GetStorageFormat(),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The gradOut and out must have same format"), return false);
+    OP_CHECK((out->GetStorageFormat() == op::Format::FORMAT_NCHW || out->GetStorageFormat() == op::Format::FORMAT_NHWC),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The format must be NCHW or NHWC"), return false);
     return true;
 }
 
-static bool CheckShape(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* out)
+static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                       const aclTensor* out)
 {
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
@@ -152,10 +147,9 @@ static bool CheckShape(
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
         return false);
 
-    OP_CHECK(
-        inputSizeNum == DIM_LIMIT,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
-        return false);
+    OP_CHECK(inputSizeNum == DIM_LIMIT,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             return false);
 
     int64_t outputH = (*outputSize)[DIM_ZERO];
     int64_t outputW = (*outputSize)[DIM_ONE];
@@ -181,36 +175,30 @@ static bool CheckShape(
         fullInputSize = {N, inputH, inputW, C};
     }
 
-    OP_CHECK(
-        inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), "
-            "output (H: %ld, W: %ld)",
-            inputH, inputW, outputH, outputW),
-        return false);
+    OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), "
+                     "output (H: %ld, W: %ld)",
+                     inputH, inputW, outputH, outputW),
+             return false);
 
     auto gradOutShape = gradOut->GetViewShape();
     auto outShape = out->GetViewShape();
     for (size_t i = 0; i < DIM_FOUR; ++i) {
-        OP_CHECK(
-            gradOutShape.GetDim(i) == fullOutputSize[i],
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID, "The dim %zu of gradOut should be %ld, but got %ld", i, fullOutputSize[i],
-                gradOutShape.GetDim(i)),
-            return false);
-        OP_CHECK(
-            outShape.GetDim(i) == fullInputSize[i],
-            OP_LOGE(
-                ACLNN_ERR_PARAM_INVALID, "The dim %zu of out should be %ld, but got %ld", i, fullInputSize[i],
-                outShape.GetDim(i)),
-            return false);
+        OP_CHECK(gradOutShape.GetDim(i) == fullOutputSize[i],
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim %zu of gradOut should be %ld, but got %ld", i,
+                         fullOutputSize[i], gradOutShape.GetDim(i)),
+                 return false);
+        OP_CHECK(outShape.GetDim(i) == fullInputSize[i],
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim %zu of out should be %ld, but got %ld", i, fullInputSize[i],
+                         outShape.GetDim(i)),
+                 return false);
     }
     return true;
 }
 
-static aclnnStatus CheckParams(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, const aclTensor* out)
+static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                               const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -235,13 +223,13 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleBilinear2dBackwardGetWorkspaceSize(
-    const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize, bool alignCorners,
-    double scalesH, double scalesW, aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
+aclnnStatus aclnnUpsampleBilinear2dBackwardGetWorkspaceSize(const aclTensor* gradOut, const aclIntArray* outputSize,
+                                                            const aclIntArray* inputSize, bool alignCorners,
+                                                            double scalesH, double scalesW, aclTensor* out,
+                                                            uint64_t* workspaceSize, aclOpExecutor** executor)
 {
-    L2_DFX_PHASE_1(
-        aclnnUpsampleBilinear2dBackward, DFX_IN(gradOut, outputSize, inputSize, alignCorners, scalesH, scalesW),
-        DFX_OUT(out));
+    L2_DFX_PHASE_1(aclnnUpsampleBilinear2dBackward,
+                   DFX_IN(gradOut, outputSize, inputSize, alignCorners, scalesH, scalesW), DFX_OUT(out));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -270,35 +258,35 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardGetWorkspaceSize(
         }
 
         if (IsRegBase()) {
-            auto originalImage =
-                uniqueExecutor.get()->AllocTensor(imageShape, out->GetDataType(), out->GetViewFormat());
+            auto originalImage = uniqueExecutor.get()->AllocTensor(imageShape, out->GetDataType(),
+                                                                   out->GetViewFormat());
             CHECK_RET(originalImage != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             const float scalesList[] = {static_cast<float>(scalesH), static_cast<float>(scalesW)};
             auto scales = uniqueExecutor->AllocFloatArray(scalesList, DIM_TWO);
             CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-            outTransdata = l0op::ResizeBilinearV2Grad(
-                gradOutContiguous, originalImage, alignCorners, halfPixelCenters, scales, uniqueExecutor.get());
+            outTransdata = l0op::ResizeBilinearV2Grad(gradOutContiguous, originalImage, alignCorners, halfPixelCenters,
+                                                      scales, uniqueExecutor.get());
             CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
         } else {
-            auto gradOutTransdata =
-                l0op::TransDataSpecial(gradOutContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+            auto gradOutTransdata = l0op::TransDataSpecial(gradOutContiguous, op::Format::FORMAT_NC1HWC0, 0,
+                                                           uniqueExecutor.get());
             CHECK_RET(gradOutTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-            auto gradOutCast =
-                l0op::CastOnlyForConvBackward(gradOutTransdata, op::DataType::DT_FLOAT, uniqueExecutor.get());
+            auto gradOutCast = l0op::CastOnlyForConvBackward(gradOutTransdata, op::DataType::DT_FLOAT,
+                                                             uniqueExecutor.get());
             CHECK_RET(gradOutCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-            auto image =
-                uniqueExecutor.get()->AllocTensor(imageShape, gradOutCast->GetDataType(), gradOutCast->GetViewFormat());
+            auto image = uniqueExecutor.get()->AllocTensor(imageShape, gradOutCast->GetDataType(),
+                                                           gradOutCast->GetViewFormat());
             CHECK_RET(image != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             auto imageTransdata = l0op::TransDataSpecial(image, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
             CHECK_RET(imageTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-            auto v2GradOut = l0op::ResizeBilinearV2Grad5Hd(
-                gradOutCast, imageTransdata, alignCorners, halfPixelCenters, uniqueExecutor.get());
+            auto v2GradOut = l0op::ResizeBilinearV2Grad5Hd(gradOutCast, imageTransdata, alignCorners, halfPixelCenters,
+                                                           uniqueExecutor.get());
             CHECK_RET(v2GradOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
             auto outCast = l0op::CastOnlyForConvBackward(v2GradOut, out->GetDataType(), uniqueExecutor.get());
@@ -318,8 +306,8 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardGetWorkspaceSize(
     return ACLNN_SUCCESS;
 }
 
-aclnnStatus aclnnUpsampleBilinear2dBackward(
-    void* workspace, uint64_t workspace_size, aclOpExecutor* executor, aclrtStream stream)
+aclnnStatus aclnnUpsampleBilinear2dBackward(void* workspace, uint64_t workspace_size, aclOpExecutor* executor,
+                                            aclrtStream stream)
 {
     L2_DFX_PHASE_2(aclnnUpsampleBilinear2dBackward);
     // 固定写法，调用框架能力，完成计算
