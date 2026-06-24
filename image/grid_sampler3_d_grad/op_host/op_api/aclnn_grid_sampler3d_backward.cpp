@@ -191,11 +191,8 @@ static aclnnStatus CheckParams(
     return ACLNN_SUCCESS;
 }
 
-static bool CheckTranspose(const aclTensor* input)
+static bool CheckTranspose(const aclTensor* input, int64_t channel)
 {
-    const auto& inputShape = input->GetViewShape();
-    auto channel = input->GetStorageFormat() == op::Format::FORMAT_NDHWC ? inputShape.GetDim(FIFTH_DIM) :
-                                                                           inputShape.GetDim(SECOND_DIM);
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     int64_t deterministicValue = 0;
     aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
@@ -203,11 +200,11 @@ static bool CheckTranspose(const aclTensor* input)
         deterministicValue = 0;
         OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
     }
+    bool transposeArch = curArch != NpuArch::DAV_1001 && curArch != NpuArch::DAV_3510;
+    bool regbaseTranspose = curArch == NpuArch::DAV_3510 && deterministicValue == 0 &&
+        channel >= REGBASE_MAX_CHANNEL_NUM;
     if ((input->GetStorageFormat() == op::Format::FORMAT_NCDHW || input->GetStorageFormat() == op::Format::FORMAT_ND) &&
-        (channel <= AICORE_CHANNEL_LIMIT) && (curArch != NpuArch::DAV_1001)) {
-        if (curArch == NpuArch::DAV_3510 && channel < REGBASE_MAX_CHANNEL_NUM && deterministicValue == 0) {
-            return false;
-        }
+        (channel <= AICORE_CHANNEL_LIMIT) && (transposeArch || regbaseTranspose)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(input, ASCEND910B_DTYPE_SUPPORT_LIST, return false);
     } else {
         return false;
@@ -262,7 +259,9 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
     auto gridContiguous = l0op::Contiguous(grid, uniqueExecutor.get());
     CHECK_RET(gridContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    bool needTranspose = CheckTranspose(input);
+    auto channel = input->GetStorageFormat() == op::Format::FORMAT_NDHWC ?
+        input->GetViewShape().GetDim(FIFTH_DIM) : input->GetViewShape().GetDim(SECOND_DIM);
+    bool needTranspose = CheckTranspose(input, channel);
 
     // 进行计算
     std::tuple<aclTensor*, aclTensor*> gridSampler3DBackwardOut;
@@ -300,8 +299,9 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(
         // 输入为float16/bfloat16类型时，将其转为float32
         auto castDtype = inputContiguous->GetDataType();
         auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-        if ((castDtype == op::DataType::DT_FLOAT16 || castDtype == op::DataType::DT_BF16) &&
-            (curArch != NpuArch::DAV_3510)) {
+        bool dtypeCast = castDtype == op::DataType::DT_FLOAT16 || castDtype == op::DataType::DT_BF16;
+        bool regBaseCast = curArch != NpuArch::DAV_3510 || (curArch == NpuArch::DAV_3510 && channel >= AICORE_CHANNEL_LIMIT);
+        if (dtypeCast && regBaseCast) {
             gradOutputContiguous = l0op::Cast(gradOutputContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gradOutputContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
             inputContiguous = l0op::Cast(inputContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
