@@ -91,3 +91,63 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_03)
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Test 04: NCHW downsampling with scales
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_04)
+{
+    gert::StorageShape inputGradsShape = {{1, 3, 16, 16}, {1, 3, 16, 16}};
+    gert::StorageShape inputOriImageShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
+    gert::StorageShape outputShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.5f, 0.5f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 05: NHWC with half_pixel_centers (simulated) upsampling
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_05)
+{
+    gert::StorageShape inputGradsShape = {{2, 4, 6, 64}, {2, 4, 6, 64}};
+    gert::StorageShape inputOriImageShape = {{2, 2, 3, 64}, {2, 2, 3, 64}};
+    gert::StorageShape outputShape = {{2, 2, 3, 64}, {2, 2, 3, 64}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NHWC}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 06: Large NCHW all-copy
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_06)
+{
+    gert::StorageShape inputGradsShape = {{4, 8, 64, 64}, {4, 8, 64, 64}};
+    gert::StorageShape inputOriImageShape = {{4, 8, 64, 64}, {4, 8, 64, 64}};
+    gert::StorageShape outputShape = {{4, 8, 64, 64}, {4, 8, 64, 64}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.0f, 0.0f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

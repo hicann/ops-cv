@@ -113,3 +113,63 @@ TEST_F(ResizeLinearGradTilingTest, resize_linear_grad_tiling_04)
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Test 05: upsampling with integer scale, align_corners=false
+TEST_F(ResizeLinearGradTilingTest, resize_linear_grad_tiling_05)
+{
+    gert::StorageShape inputGradsShape = {{2, 5, 32}, {2, 5, 32}};
+    gert::StorageShape inputOriImageShape = {{2, 5, 16}, {2, 5, 16}};
+    gert::StorageShape outputShape = {{2, 5, 16}, {2, 5, 16}};
+
+    ResizeLinearGradCompileInfo compileInfo = {64, 200704, 32};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinearGrad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(2.0f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 06: large tensor upsampling with scales
+TEST_F(ResizeLinearGradTilingTest, resize_linear_grad_tiling_06)
+{
+    gert::StorageShape inputGradsShape = {{200, 8, 64}, {200, 8, 64}};
+    gert::StorageShape inputOriImageShape = {{200, 8, 32}, {200, 8, 32}};
+    gert::StorageShape outputShape = {{200, 8, 32}, {200, 8, 32}};
+
+    ResizeLinearGradCompileInfo compileInfo = {64, 200704, 32};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinearGrad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(0.5f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 07: downsampling with align_corners=true
+TEST_F(ResizeLinearGradTilingTest, resize_linear_grad_tiling_07)
+{
+    gert::StorageShape inputGradsShape = {{1, 3, 16}, {1, 3, 16}};
+    gert::StorageShape inputOriImageShape = {{1, 3, 32}, {1, 3, 32}};
+    gert::StorageShape outputShape = {{1, 3, 32}, {1, 3, 32}};
+
+    ResizeLinearGradCompileInfo compileInfo = {64, 200704, 32};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinearGrad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(0.0f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

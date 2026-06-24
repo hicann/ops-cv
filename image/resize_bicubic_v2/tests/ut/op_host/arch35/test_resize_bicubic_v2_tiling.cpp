@@ -72,3 +72,87 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_02)
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Test 03: NCHW upsampling integer scale (PointCopy, DIM_6)
+TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_03)
+{
+    gert::StorageShape inputXShape = {{1, 3, 16, 16}, {1, 3, 16, 16}};
+    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape outputShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
+    int size_value[2] = {32, 32};
+
+    ResizeBicubicV2CompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.0f, 0.0f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 04: NCHW upsampling align_corners=true (DIM_4)
+TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_04)
+{
+    gert::StorageShape inputXShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
+    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape outputShape = {{1, 3, 64, 64}, {1, 3, 64, 64}};
+    int size_value[2] = {64, 64};
+
+    ResizeBicubicV2CompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.0f, 0.0f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 05: NHWC upsampling with scales (DIM_0 fallback)
+TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_05)
+{
+    gert::StorageShape inputXShape = {{1, 16, 16, 64}, {1, 16, 16, 64}};
+    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape outputShape = {{1, 32, 32, 64}, {1, 32, 32, 64}};
+    int size_value[2] = {32, 32};
+
+    ResizeBicubicV2CompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NHWC}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 06: NCHW downsample non-integer scale (DIM_0 fallback)
+TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_06)
+{
+    gert::StorageShape inputXShape = {{1, 3, 64, 64}, {1, 3, 64, 64}};
+    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape outputShape = {{1, 3, 20, 20}, {1, 3, 20, 20}};
+    int size_value[2] = {20, 20};
+
+    ResizeBicubicV2CompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({3.0f, 3.0f}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

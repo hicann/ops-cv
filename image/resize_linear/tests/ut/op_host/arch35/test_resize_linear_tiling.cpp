@@ -110,3 +110,87 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_03)
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Test 04: upsampling with integer scale + align_corners (DIM_4)
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_04)
+{
+    gert::StorageShape inputXShape = {{1, 3, 16}, {1, 3, 16}};
+    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape outputShape = {{1, 3, 64}, {1, 3, 64}};
+    int size_value[1] = {64};
+
+    ResizeLinearCompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinear",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(4.0f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 05: input size = 1 with align_corners=false (DIM_2)
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_05)
+{
+    gert::StorageShape inputXShape = {{2, 5, 1}, {2, 5, 1}};
+    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape outputShape = {{2, 5, 12}, {2, 5, 12}};
+    int size_value[1] = {12};
+
+    ResizeLinearCompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinear",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(0.0f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 06: output size = 1 with align_corners=true (DIM_3)
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_06)
+{
+    gert::StorageShape inputXShape = {{1, 3, 64}, {1, 3, 64}};
+    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape outputShape = {{1, 3, 1}, {1, 3, 1}};
+    int size_value[1] = {1};
+
+    ResizeLinearCompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinear",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(0.0f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 07: non-integer scale upsampling (DIM_0 fallback)
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_07)
+{
+    gert::StorageShape inputXShape = {{1, 3, 32}, {1, 3, 32}};
+    gert::StorageShape inputSizeShape = {{1,}, {1,}};
+    gert::StorageShape outputShape = {{1, 3, 50}, {1, 3, 50}};
+    int size_value[1] = {50};
+
+    ResizeLinearCompileInfo compileInfo = {64, 200704};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeLinear",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(1.5f))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
