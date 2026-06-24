@@ -1,0 +1,117 @@
+# aclnnRgb2yuv422
+
+[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/experimental/image/rgb2yuv422)
+
+## 产品支持情况
+
+| 产品 | 是否支持 |
+| :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                       |     √    |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>      |    ×     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>      |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                       |    ×     |
+| <term>Atlas 推理系列产品</term>                               |    ×     |
+| <term>Atlas 训练系列产品</term>                               |    ×     |
+
+## 功能说明
+
+将 RGB 图像转换为 YUV422（YUYV 打包格式）色彩空间。基于 ITU-R BT.601 标准矩阵进行 RGB → YUV444 转换，再进行水平 2:1 色度子采样（YUV422），最终按 YUYV 格式交替打包输出。
+
+## 计算公式
+
+**float16/float32 输入（归一化公式）：**
+
+$$
+Y  =  0.29900 \cdot R + 0.58700 \cdot G + 0.11400 \cdot B
+$$
+$$
+U  = -0.16874 \cdot R - 0.33126 \cdot G + 0.50000 \cdot B
+$$
+$$
+V  =  0.50000 \cdot R - 0.41869 \cdot G - 0.08131 \cdot B
+$$
+
+**uint8 输入（含 +128 偏移公式）：**
+
+$$
+Y  =  0.29900 \cdot R + 0.58700 \cdot G + 0.11400 \cdot B
+$$
+$$
+U  = -0.16874 \cdot R - 0.33126 \cdot G + 0.50000 \cdot B + 128
+$$
+$$
+V  =  0.50000 \cdot R - 0.41869 \cdot G - 0.08131 \cdot B + 128
+$$
+
+## 函数原型
+
+### GetWorkspaceSize 接口
+
+```cpp
+aclnnStatus aclnnRgb2yuv422GetWorkspaceSize(
+    const aclTensor* x,
+    const char* dataFormat,
+    const aclTensor* y,
+    uint64_t* workspaceSize,
+    aclOpExecutor** executor
+);
+```
+
+### 执行接口
+
+```cpp
+aclnnStatus aclnnRgb2yuv422(
+    void* workspace,
+    uint64_t workspaceSize,
+    aclOpExecutor* executor,
+    const aclrtStream stream
+);
+```
+
+## 参数说明
+
+| 参数名 | 输入/输出 | 描述 | 使用说明 | 数据类型 | 数据格式 | 维度 | 非连续Tensor |
+|--------|----------|------|----------|----------|----------|------|-------------|
+| x | 输入 | RGB 图像张量 | NHWC: [..., H, W, 3]; NCHW: [..., 3, H, W] | uint8, float16, float32 | ND | ≥3 | 支持 |
+| dataFormat | 输入 | 数据格式 | "NHWC" 或 "NCHW" | const char* | - | - | - |
+| y | 输出 | YUV422 输出张量 | NHWC: [..., H, W, 2]; NCHW: [..., 2, H, W] | 与输入一致 | ND | ≥3 | 支持 |
+| workspaceSize | 输出 | workspace 大小 | 返回0 | uint64_t* | - | - | - |
+| executor | 输出 | op 执行器 | - | - | - | - | - |
+
+## 返回值错误码表
+
+| 错误码 | 触发条件 |
+|--------|---------|
+| ACLNN_SUCCESS | 正常执行 |
+| ACLNN_ERR_PARAM_NULLPTR | x 或 y 为空指针 |
+| ACLNN_ERR_PARAM_INVALID | dtype 不在支持列表中、data_format 不为 NHWC/NCHW、通道维不等于3、rank < 3 |
+
+## 约束说明
+
+- 输入必须至少为 3 维
+- 通道维大小必须为 3
+- data_format 必须为 "NHWC" 或 "NCHW"
+- 输入输出 dtype 必须一致
+- 仅支持 ascend950 平台
+
+## 调用示例
+
+```cpp
+#include "aclnnop/aclnn_rgb2yuv422.h"
+
+int64_t xShape[] = {4, 8, 3};
+aclDataType dataType = ACL_UINT8;
+aclFormat format = ACL_FORMAT_ND;
+
+uint64_t workspaceSize = 0;
+aclOpExecutor* executor = nullptr;
+aclnnRgb2yuv422GetWorkspaceSize(x, "NHWC", y, &workspaceSize, &executor);
+
+void* workspaceAddr = nullptr;
+if (workspaceSize > 0) {
+    aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
+}
+
+aclnnRgb2yuv422(workspaceAddr, workspaceSize, executor, stream);
+aclrtSynchronizeStream(stream);
+```
