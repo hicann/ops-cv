@@ -47,31 +47,33 @@ constexpr int32_t COEFFS_LENS = 4;
 constexpr uint32_t VF_MAX_THREAD_NUM = 256;
 constexpr float DEFAULT_FAULT_VALUE = -100.0f;
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float UnnormalizeSetGrad(float coord, uint32_t size,
-                                                                                          uint32_t alignCorners,
-                                                                                          float* gradInValue)
+template <typename T>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T UnnormalizeSetGrad(T coord, uint32_t size,
+                                                                                      uint32_t alignCorners,
+                                                                                      T* gradInValue)
 {
+    float coord_f = static_cast<float>(coord);
     if (alignCorners == 1) {
         // unnormalize coord from [-1, 1] to [0, size - 1]
-        coord = (coord + 1) / CONST_TWO * (size - 1);
+        coord_f = (coord_f + 1) / CONST_TWO * (size - 1);
         *gradInValue = static_cast<float>(size - 1) / CONST_TWO;
     } else {
         // unnormalize coord from [-1, 1] to [-0.5, size - 0.5]
-        coord = ((coord + 1) * size - 1) / CONST_TWO;
+        coord_f = ((coord_f + 1) * size - 1) / CONST_TWO;
         *gradInValue = static_cast<float>(size) / CONST_TWO;
     }
-    return coord;
+    return static_cast<T>(coord_f);
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoorDinatesSetGrad(float coord,
-                                                                                              uint32_t clip_limit,
-                                                                                              float* gradClipValue)
+template <typename T>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T ClipCoorDinatesSetGrad(T coord, uint32_t clip_limit,
+                                                                                          float* gradClipValue)
 {
-    if (coord <= static_cast<float>(0)) {
+    if (coord <= static_cast<T>(0)) {
         *gradClipValue = static_cast<float>(0);
-        return static_cast<float>(0);
+        return static_cast<T>(0);
     } else {
-        float max = static_cast<float>(clip_limit - 1);
+        T max = static_cast<T>(clip_limit - 1);
         if (coord >= max) {
             *gradClipValue = static_cast<float>(0);
             return max;
@@ -82,34 +84,34 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline float ClipCoorD
     }
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ReflectCoordinatesSetGrad(float coord,
-                                                                                                 int twiceLow,
-                                                                                                 uint32_t twiceHigh,
-                                                                                                 float* gradReflValue)
+template <typename T>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T ReflectCoordinatesSetGrad(T coord, int twiceLow,
+                                                                                             uint32_t twiceHigh,
+                                                                                             float* gradReflValue)
 {
     if (twiceLow == twiceHigh) {
         *gradReflValue = static_cast<float>(0);
-        return static_cast<float>(0);
+        return static_cast<T>(0);
     }
     float gradInMult = 0;
     float min = static_cast<float>(twiceLow) / 2;
     float span = static_cast<float>(twiceHigh - twiceLow) / 2;
     coord = coord - min;
-    if (coord < static_cast<float>(0)) {
+    if (coord < static_cast<T>(0)) {
         gradInMult = static_cast<float>(-1);
         coord = -coord;
     } else {
         gradInMult = static_cast<float>(1);
     }
     // `fmod` returns same sign as `in`, which is positive after the `if` above.
-    float extra = fmodf(coord, span);
-    int32_t flips = static_cast<int32_t>(floorf(coord / span));
+    float extra = fmodf(static_cast<float>(coord), span);
+    int32_t flips = static_cast<int32_t>(floorf(static_cast<float>(coord) / span));
     if (flips % 2 == 0) {
         *gradReflValue = gradInMult;
-        return extra + min;
+        return static_cast<T>(extra + min);
     } else {
         *gradReflValue = -gradInMult;
-        return span - extra + min;
+        return static_cast<T>(span - extra + min);
     }
 }
 
@@ -152,8 +154,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetGradOut
     }
 }
 
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline float ComputeSourceIndexSetGrad(
-    float coord, uint32_t size, uint32_t padding, uint32_t alignCorners, float* gradInValue)
+template <typename T>
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline T ComputeSourceIndexSetGrad(T coord, uint32_t size,
+                                                                                             uint32_t padding,
+                                                                                             uint32_t alignCorners,
+                                                                                             T* gradInValue)
 {
     float gradClipValue = 0;
     float gradReflValue = 0;
@@ -231,38 +236,6 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void GetCubicCo
         // d(CubicConv2(2-t))/dt = -CubicConv2Grad(2-t) (chain rule: d(2-t)/dt = -1)
         x = 2.0f - t;
         coeffs[INDEX_THREE] = -((3.0f * A * x - 10.0f * A) * x + 8.0f * A);
-    }
-}
-
-// Apply padding (clip/reflect) to a single neighbor coordinate and return the clipped integer index
-// Returns -1 if the point is out of bounds (for zeros padding)
-__simt_callee__ __aicore__ __attribute__((always_inline)) inline int32_t ComputeBicubicNeighborIndex(
-    float coord, uint32_t size, uint32_t padding, uint32_t alignCorners)
-{
-    if (padding == ZEROS) { // zeros
-        int32_t idx = static_cast<int32_t>(floorf(coord));
-        if (idx < 0 || idx >= static_cast<int32_t>(size)) {
-            return -1; // out of bounds
-        }
-        return idx;
-    } else if (padding == BORDER) { // border
-        float clipped = coord;
-        if (clipped < 0.0f)
-            clipped = 0.0f;
-        float maxVal = static_cast<float>(size - 1);
-        if (clipped > maxVal)
-            clipped = maxVal;
-        return static_cast<int32_t>(clipped);
-    } else { // reflection
-        float gradReflValue = 0;
-        float gradClipValue = 0;
-        if (alignCorners) {
-            coord = ReflectCoordinatesSetGrad(coord, 0, CONST_TWO * (size - 1), &gradReflValue);
-        } else {
-            coord = ReflectCoordinatesSetGrad(coord, -1, CONST_TWO * size - 1, &gradReflValue);
-        }
-        coord = ClipCoorDinatesSetGrad(coord, size, &gradClipValue);
-        return static_cast<int32_t>(coord);
     }
 }
 

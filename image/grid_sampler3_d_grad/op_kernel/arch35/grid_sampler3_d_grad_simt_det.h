@@ -92,11 +92,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void determinis
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop1Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
-    __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
-    uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, float tnw,
-    float tne, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
-    float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
+    __gm__ T* dxOutValueGmAddr, T iz, T iy, T ix, uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum,
+    uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
+    uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, T tnw, T tne, int32_t iz_tnw,
+    int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix, float* giy, float* giz,
+    uint32_t blockNum, uint32_t blockId)
 {
     // tnw
     uint32_t tnwDxIndex = static_cast<uint32_t>(-100);
@@ -134,11 +134,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop2Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
-    __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
-    uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, float tsw,
-    float tse, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
-    float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
+    __gm__ T* dxOutValueGmAddr, T iz, T iy, T ix, uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum,
+    uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
+    uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, T tsw, T tse, int32_t iz_tnw,
+    int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix, float* giy, float* giz,
+    uint32_t blockNum, uint32_t blockId)
 {
     // tsw
     uint32_t tswDxIndex = static_cast<uint32_t>(-100);
@@ -176,11 +176,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeTop
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBottom1Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
-    __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
-    uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, float bnw,
-    float bne, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
-    float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
+    __gm__ T* dxOutValueGmAddr, T iz, T iy, T ix, uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum,
+    uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
+    uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, T bnw, T bne, int32_t iz_tnw,
+    int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix, float* giy, float* giz,
+    uint32_t blockNum, uint32_t blockId)
 {
     // bnw
     uint32_t bnwDxIndex = static_cast<uint32_t>(-100);
@@ -218,11 +218,11 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBottom2Points(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ uint32_t* dxOutGmAddr,
-    __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol,
-    uint32_t newInputIndex, uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, float bsw,
-    float bse, int32_t iz_tnw, int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix,
-    float* giy, float* giz, uint32_t blockNum, uint32_t blockId)
+    __gm__ T* dxOutValueGmAddr, T iz, T iy, T ix, uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum,
+    uint32_t channelIndex, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
+    uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, T bsw, T bse, int32_t iz_tnw,
+    int32_t iy_tnw, int32_t ix_tnw, int32_t iz_t1, int32_t iy_t1, int32_t ix_t1, float* gix, float* giy, float* giz,
+    uint32_t blockNum, uint32_t blockId)
 {
     // bsw
     uint32_t bswDxIndex = static_cast<uint32_t>(-100);
@@ -260,10 +260,10 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBot
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, __gm__ uint32_t* dxOutGmAddr,
-    __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
-    uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t pNumPerCore,
-    uint32_t blockNum, float* ixGradMultValue, float* iyGradMultValue, float* izGradMultValue, uint32_t blockId)
+    __gm__ T* dxOutValueGmAddr, T iz, T iy, T ix, uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum,
+    uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr,
+    uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t pNumPerCore, uint32_t blockNum,
+    T* ixGradMultValue, T* iyGradMultValue, T* izGradMultValue, uint32_t blockId)
 {
     int32_t ix_tnw = static_cast<int32_t>(floorf(ix));
     int32_t iy_tnw = static_cast<int32_t>(floorf(iy));
@@ -274,14 +274,14 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBil
     int32_t iz_t1 = iz_tnw + 1;
 
     // get surfaces to each neighbor:
-    float bnw = (ix_t1 - ix) * (iy_t1 - iy) * (iz - iz_tnw);
-    float bne = (ix - ix_tnw) * (iy_t1 - iy) * (iz - iz_tnw);
-    float bsw = (ix_t1 - ix) * (iy - iy_tnw) * (iz - iz_tnw);
-    float bse = (ix - ix_tnw) * (iy - iy_tnw) * (iz - iz_tnw);
-    float tnw = (ix_t1 - ix) * (iy_t1 - iy) * (iz_t1 - iz);
-    float tne = (ix - ix_tnw) * (iy_t1 - iy) * (iz_t1 - iz);
-    float tsw = (ix_t1 - ix) * (iy - iy_tnw) * (iz_t1 - iz);
-    float tse = (ix - ix_tnw) * (iy - iy_tnw) * (iz_t1 - iz);
+    T bnw = (ix_t1 - ix) * (iy_t1 - iy) * (iz - iz_tnw);
+    T bne = (ix - ix_tnw) * (iy_t1 - iy) * (iz - iz_tnw);
+    T bsw = (ix_t1 - ix) * (iy - iy_tnw) * (iz - iz_tnw);
+    T bse = (ix - ix_tnw) * (iy - iy_tnw) * (iz - iz_tnw);
+    T tnw = (ix_t1 - ix) * (iy_t1 - iy) * (iz_t1 - iz);
+    T tne = (ix - ix_tnw) * (iy_t1 - iy) * (iz_t1 - iz);
+    T tsw = (ix_t1 - ix) * (iy - iy_tnw) * (iz_t1 - iz);
+    T tse = (ix - ix_tnw) * (iy - iy_tnw) * (iz_t1 - iz);
 
     float gix = static_cast<float>(0);
     float giy = static_cast<float>(0);
@@ -319,10 +319,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBil
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNearest(
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, __gm__ uint32_t* dxOutGmAddr,
-    __gm__ T* dxOutValueGmAddr, float iz, float iy, float ix, uint32_t gridD, uint32_t gridH, uint32_t gridW,
-    uint32_t batchNum, uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
-    uint32_t offsetBaseAddr, uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t pNumPerCore,
-    uint32_t blockNum, uint32_t blockId)
+    __gm__ T* dxOutValueGmAddr, T iz, T iy, T ix, uint32_t gridD, uint32_t gridH, uint32_t gridW, uint32_t batchNum,
+    uint32_t depthCol, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex, uint32_t offsetBaseAddr,
+    uint32_t xD, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t pNumPerCore, uint32_t blockNum, uint32_t blockId)
 {
     int32_t iz_nearest = static_cast<int32_t>(rintf(iz));
     int32_t iy_nearest = static_cast<int32_t>(rintf(iy));
@@ -375,14 +374,14 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__
         uint32_t newInputIndex = batchNum * channel * xD * xH * xW;
 
         // multipliers for gradients on ix, iy, and iz
-        float ixGradMultValue = 0;
-        float iyGradMultValue = 0;
-        float izGradMultValue = 0;
+        T ixGradMultValue = 0;
+        T iyGradMultValue = 0;
+        T izGradMultValue = 0;
 
         // get the corresponding input x, y, z co-ordinates from grid
-        float ix = static_cast<float>(gridGmAddr[offsetBaseAddr]);     // ix
-        float iy = static_cast<float>(gridGmAddr[offsetBaseAddr + 1]); // iy
-        float iz = static_cast<float>(gridGmAddr[offsetBaseAddr + 2]); // iz
+        T ix = gridGmAddr[offsetBaseAddr];     // ix
+        T iy = gridGmAddr[offsetBaseAddr + 1]; // iy
+        T iz = gridGmAddr[offsetBaseAddr + 2]; // iz
 
         ix = ComputeSourceIndexSetGrad(ix, xW, padding, alignCorners, &ixGradMultValue);
         iy = ComputeSourceIndexSetGrad(iy, xH, padding, alignCorners, &iyGradMultValue);

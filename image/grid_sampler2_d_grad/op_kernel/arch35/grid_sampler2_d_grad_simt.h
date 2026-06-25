@@ -62,10 +62,10 @@ __aicore__ inline void GridSampler2DGradSimt<T>::Init(const GridSampler2DGradTil
 
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputePoints(
-    __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, float iy, float ix, uint32_t gridH, uint32_t gridW,
+    __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, T iy, T ix, uint32_t gridH, uint32_t gridW,
     uint32_t batchNum, uint32_t channelIndex, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
-    uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel, float tnw, float tne, float tsw, float tse,
-    int32_t iy_tnw, int32_t ix_tnw, float* gix, float* giy)
+    uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel, T tnw, T tne, T tsw, T tse, int32_t iy_tnw,
+    int32_t ix_tnw, float* gix, float* giy)
 {
     float tnwGradOutValue = static_cast<float>(0.0);
     uint32_t tnwDxIndex = static_cast<uint32_t>(-100);
@@ -117,18 +117,18 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputePoi
 
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBilinear(
-    __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, float iy, float ix,
-    uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
-    uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel, float* ixGradMultValue, float* iyGradMultValue)
+    __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, T iy, T ix, uint32_t gridH,
+    uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
+    uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel, T* ixGradMultValue, T* iyGradMultValue)
 {
     int32_t ix_tnw = static_cast<int32_t>(floorf(ix));
     int32_t iy_tnw = static_cast<int32_t>(floorf(iy));
 
     // get surfaces to each neighbor:
-    float tnw = (ix_tnw + 1 - ix) * (iy_tnw + 1 - iy);
-    float tne = (ix - ix_tnw) * (iy_tnw + 1 - iy);
-    float tsw = (ix_tnw + 1 - ix) * (iy - iy_tnw);
-    float tse = (ix - ix_tnw) * (iy - iy_tnw);
+    T tnw = (ix_tnw + 1 - ix) * (iy_tnw + 1 - iy);
+    T tne = (ix - ix_tnw) * (iy_tnw + 1 - iy);
+    T tsw = (ix_tnw + 1 - ix) * (iy - iy_tnw);
+    T tse = (ix - ix_tnw) * (iy - iy_tnw);
 
     float gix = static_cast<float>(0);
     float giy = static_cast<float>(0);
@@ -146,8 +146,8 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBil
 
 template <typename T>
 __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeNearest(
-    __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, float iy, float ix,
-    uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
+    __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, T iy, T ix, uint32_t gridH,
+    uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
     uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel)
 {
     int32_t ix_nearest = rintf(ix);
@@ -172,7 +172,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void ComputeBic
     __gm__ T* gradOutGmAddr, __gm__ T* xGmAddr, __gm__ T* dxGmAddr, __gm__ T* dgridGmAddr, float iy, float ix,
     uint32_t gridH, uint32_t gridW, uint32_t batchNum, uint32_t heightCol, uint32_t widthCol, uint32_t newInputIndex,
     uint32_t offsetBaseAddr, uint32_t xH, uint32_t xW, uint32_t channel, uint32_t padding, uint32_t alignCorners,
-    float* ixGradMultValue, float* iyGradMultValue)
+    T* ixGradMultValue, T* iyGradMultValue)
 {
     // For bicubic, we use unnormalize only (not compute_source_index_set_grad)
     // because bicubic needs to preserve negative coordinates (e.g., ix = floor(x) = -1)
@@ -253,12 +253,12 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__
         uint32_t offsetBaseAddr = (batchNum * gridH * gridW + heightCol * gridW + widthCol) * 2;
 
         // get the corresponding input x, y, z co-ordinates from grid
-        float ix = static_cast<float>(gridGmAddr[offsetBaseAddr]);     // ix
-        float iy = static_cast<float>(gridGmAddr[offsetBaseAddr + 1]); // iy
+        T ix = gridGmAddr[offsetBaseAddr];     // ix
+        T iy = gridGmAddr[offsetBaseAddr + 1]; // iy
 
         // multipliers for gradients on ix, iy
-        float ixGradMultValue = 0;
-        float iyGradMultValue = 0;
+        T ixGradMultValue = 0;
+        T iyGradMultValue = 0;
 
         if (interpolation == BICUBIC) {
             // For bicubic, only unnormalize (no clip/reflect on the coordinate itself)
@@ -282,8 +282,9 @@ __simt_vf__ LAUNCH_BOUND(VF_MAX_THREAD_NUM) __aicore__
                            channel);
         } else if (interpolation == BICUBIC) {
             ComputeBicubic((__gm__ T*)gradOutGmAddr, (__gm__ T*)xGmAddr, (__gm__ T*)dxGmAddr, (__gm__ T*)dgridGmAddr,
-                           iy, ix, gridH, gridW, batchNum, heightCol, widthCol, newInputIndex, offsetBaseAddr, xH, xW,
-                           channel, padding, alignCorners, &ixGradMultValue, &iyGradMultValue);
+                           static_cast<float>(iy), static_cast<float>(ix), gridH, gridW, batchNum, heightCol, widthCol,
+                           newInputIndex, offsetBaseAddr, xH, xW, channel, padding, alignCorners, &ixGradMultValue,
+                           &iyGradMultValue);
         }
     }
 }
