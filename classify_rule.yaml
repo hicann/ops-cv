@@ -142,3 +142,16 @@ conv_forward_ascendc@ops-cv:
         - ops/ops-cv/image/aipp/tests/
       non_delivery: null
       open_source: null
+
+VC8@ops-cv:
+  src:
+    release:
+      style:
+        - ops/ops-cv/image/image_projective_transform/
+      opensource_style: null
+      kernel_style: null
+    unrelease:
+      test_code:
+        - ops/ops-cv/image/image_projective_transform/tests/
+      non_delivery: null
+      open_source: null
