@@ -102,16 +102,6 @@ else ()
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "cmake build type")
 endif()
 
-option(ENABLE_CCACHE "Enable ccache" ON)
-message(STATUS "Enable ccache ${ENABLE_CCACHE}")
-if(ENABLE_CCACHE)
-  find_program(CCACHE_PROGRAM ccache)
-  if(CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
-    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
-  endif()
-endif()
-
 # Cmake Compile配置
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "c++17 is needed for this project")
 include(cmake/third_party/opbase.cmake) # 放在dependencies.cmake前面
