@@ -132,7 +132,8 @@
 - images输入必须为4维（NHWC格式）。
 - transforms输入必须为2维，shape为(N, 8)，数据类型为FLOAT。
 - output_shape输入必须为1维，shape为(2,)，数据类型为INT32。
-- 仅支持Ascend 950平台。
 - fill_mode当前仅支持"CONSTANT"模式，填充值为0。
 
 ## 调用说明
+
+无

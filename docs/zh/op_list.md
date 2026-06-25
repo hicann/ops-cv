@@ -108,6 +108,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/image_projective_transform/README.md">image_projective_transform</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>对输入图像施加射影变换，根据变换矩阵将输出图像中的每个像素映射回输入图像中对应的坐标，再通过插值计算输出像素值。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/non_max_suppression_v3/README.md">non_max_suppression_v3</a></td>
     <td>&check;</td>
     <td>&check;</td>
