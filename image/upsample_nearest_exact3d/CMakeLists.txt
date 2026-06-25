@@ -14,7 +14,9 @@ if(NOT ENABLE_TEST AND NOT BENCHMARK)
     list(REMOVE_ITEM CURRENT_DIRS tests)
 endif()
 
-add_dependent_ops(upsample_nearest3d)
+if(NOT ASCEND_OP_NAME OR "upsample_nearest_exact3d" IN_LIST ASCEND_OP_NAME)
+    add_dependent_ops(upsample_nearest3d)
+endif()
 
 foreach(SUB_DIR ${CURRENT_DIRS})
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}/CMakeLists.txt")
