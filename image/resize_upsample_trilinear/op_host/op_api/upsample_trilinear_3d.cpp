@@ -84,8 +84,18 @@ const aclTensor* UpsampleTrilinear3dNcdhw(const aclTensor* self, const aclIntArr
     op::Shape outShape;
     op::ToShape(selfShape.data(), selfShape.size(), outShape);
     auto dataType = self->GetDataType();
-    if ((curArch == NpuArch::DAV_2201) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
+    if ((curArch == NpuArch::DAV_3510) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
         CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
+        const aclTensor* out = executor->AllocTensor(outShape, dataType, self->GetStorageFormat());
+        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
+                                          OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
+        OP_CHECK(
+            ret == ACLNN_SUCCESS,
+            OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearA950AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+            return nullptr);
+        return out;
+    } else if ((curArch == NpuArch::DAV_2201) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
+               CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
         if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
             self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
             OP_CHECK(self != nullptr,
@@ -105,20 +115,6 @@ const aclTensor* UpsampleTrilinear3dNcdhw(const aclTensor* self, const aclIntArr
             // cast back to bf16
             out = l0op::Cast(out, op::DataType::DT_BF16, executor);
         }
-        return out;
-    } else if (curArch == NpuArch::DAV_3510 && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
-               CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
-        // A5 SIMT Kernel handles FP16/BF16->FP32 Cast internally via if constexpr,
-        // no external Cast needed (unlike DAV_2201 path which Casts externally).
-        // NDHWC format is handled by L2 layer upsampleTrilinear3dCompute
-        // (transpose NDHWC->NCDHW before calling this L0 function).
-        const aclTensor* out = executor->AllocTensor(outShape, self->GetDataType(), self->GetStorageFormat());
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
-                                          OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
-        OP_CHECK(
-            ret == ACLNN_SUCCESS,
-            OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearA5AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-            return nullptr);
         return out;
     } else if ((curArch == NpuArch::DAV_2002) && CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST) &&
                CheckScales(checkScaleW, checkScaleH, checkScaleD)) {

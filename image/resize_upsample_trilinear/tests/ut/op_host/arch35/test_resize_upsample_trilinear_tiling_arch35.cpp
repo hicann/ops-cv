@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
-#include "../../../../op_host/resize_upsample_trilinear_tiling_arch35.h"
+#include "../../../../op_host/resize_upsample_trilinear_tiling.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
 
@@ -129,9 +129,9 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_scales
         {gert::TilingContextPara::OpAttr("output_size",
                                          Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(2.0)),
-         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2.0)),
-         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2.0))},
+         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
         &compileInfo, "Ascend950", 64, 262144);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "4294967297 2199023255553 512 512 1 4 4 4 8 8 8 4539628425446424576 1056964608 ";

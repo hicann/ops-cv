@@ -1,98 +1,99 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 /*!
  * \file resize_upsample_trilinear_simt.h
- * \brief ResizeUpsampleTrilinear SIMT kernel implementation for A5
+ * \brief ResizeUpsampleTrilinear SIMT kernel implementation for arch35.
  */
 
-#ifndef RESIZE_UPSAMPLE_TRILINEAR_SIMT_H
-#define RESIZE_UPSAMPLE_TRILINEAR_SIMT_H
+#ifndef RESIZE_UPSAMPLE_TRILINEAR_SIMT_H_
+#define RESIZE_UPSAMPLE_TRILINEAR_SIMT_H_
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_simt.h"
 #include "./resize_upsample_trilinear_simt_base.h"
 #include "./resize_upsample_trilinear_tiling_data.h"
 
 namespace ResizeUpsampleTrilinear {
 using namespace AscendC;
 
-template <typename T>
+template <typename T1, typename T2>
 class ResizeUpsampleTrilinearSimt {
 public:
-    __aicore__ inline ResizeUpsampleTrilinearSimt() = default;
-    __aicore__ inline void Init(GM_ADDR output, GM_ADDR input,
-                                const ResizeUpsampleTrilinearArch35TilingData* __restrict tiling);
+    __aicore__ inline ResizeUpsampleTrilinearSimt(){};
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y,
+                                const ResizeUpsampleTrilinearRegBaseTilingData* __restrict tilingData);
     __aicore__ inline void Process();
 
 private:
-    const ResizeUpsampleTrilinearArch35TilingData* tilingData;
-    uint32_t bid = 0;
-    GlobalTensor<T> outputGm;
-    GlobalTensor<T> inputGm;
+    const ResizeUpsampleTrilinearRegBaseTilingData* tilingData_;
+    int32_t blockIdx_ = 0;
+    GlobalTensor<T1> inputGm_;
+    GlobalTensor<T1> outputGm_;
 };
 
-template <typename T>
-__aicore__ inline void ResizeUpsampleTrilinearSimt<T>::Init(
-    GM_ADDR output, GM_ADDR input, const ResizeUpsampleTrilinearArch35TilingData* __restrict tiling)
+template <typename T1, typename T2>
+__aicore__ inline void ResizeUpsampleTrilinearSimt<T1, T2>::Init(
+    GM_ADDR x, GM_ADDR y, const ResizeUpsampleTrilinearRegBaseTilingData* __restrict tilingData)
 {
-    outputGm.SetGlobalBuffer((__gm__ T*)output);
-    inputGm.SetGlobalBuffer((__gm__ T*)input);
-    tilingData = tiling;
-    bid = static_cast<uint32_t>(GetBlockIdx());
+    inputGm_.SetGlobalBuffer((__gm__ T1*)x);
+    outputGm_.SetGlobalBuffer((__gm__ T1*)y);
+    blockIdx_ = GetBlockIdx();
+    tilingData_ = tilingData;
 }
 
-template <typename T>
-__aicore__ inline void ResizeUpsampleTrilinearSimt<T>::Process()
+template <typename T1, typename T2>
+__aicore__ inline void ResizeUpsampleTrilinearSimt<T1, T2>::Process()
 {
-    uint32_t baseElementsPerBlock = tilingData->base_elements_per_block;
-    uint32_t blockCount = tilingData->block_count;
-    uint32_t tailElements = tilingData->tail_elements;
-
-    if (bid >= blockCount) {
+    if (blockIdx_ >= static_cast<int32_t>(GetBlockNum())) {
         return;
     }
-
-    __gm__ T* outputPtr = (__gm__ T*)outputGm.GetAddr();
-    __gm__ T* inputPtr = (__gm__ T*)inputGm.GetAddr();
-
-    if (tilingData->use_int32 != 0) {
-        int32_t blkStartOffset = static_cast<int32_t>(bid) * static_cast<int32_t>(baseElementsPerBlock);
-        int32_t blkProcessNum;
-        if (bid == blockCount - 1) {
-            blkProcessNum = static_cast<int32_t>(tailElements);
-        } else {
-            blkProcessNum = static_cast<int32_t>(baseElementsPerBlock);
-        }
-
-        if (blkProcessNum <= 0) {
-            return;
-        }
-
-        calleeInt32<T, int32_t>(outputPtr, inputPtr, blkStartOffset, blkProcessNum, tilingData);
+    T2 blkProcessNum = static_cast<T2>(tilingData_->blkProcessNum);
+    T2 blkStartOffset = static_cast<T2>(blockIdx_) * blkProcessNum;
+    if (blockIdx_ < tilingData_->tailBlockNum) {
+        blkProcessNum = blkProcessNum + 1;
+        blkStartOffset = blkStartOffset + static_cast<T2>(blockIdx_);
     } else {
-        int64_t blkStartOffset = static_cast<int64_t>(bid) * static_cast<int64_t>(baseElementsPerBlock);
-        int64_t blkProcessNum;
-        if (bid == blockCount - 1) {
-            blkProcessNum = static_cast<int64_t>(tailElements);
-        } else {
-            blkProcessNum = static_cast<int64_t>(baseElementsPerBlock);
-        }
+        blkStartOffset = blkStartOffset + static_cast<T2>(tilingData_->tailBlockNum);
+    }
 
-        if (blkProcessNum <= 0) {
-            return;
-        }
+    T2 lenSrcD = static_cast<T2>(tilingData_->inD);
+    T2 lenSrcH = static_cast<T2>(tilingData_->inH);
+    T2 lenSrcW = static_cast<T2>(tilingData_->inW);
+    T2 lenDstD = static_cast<T2>(tilingData_->outD);
+    T2 lenDstH = static_cast<T2>(tilingData_->outH);
+    T2 lenDstW = static_cast<T2>(tilingData_->outW);
 
-        calleeInt64<T, int64_t>(outputPtr, inputPtr, blkStartOffset, blkProcessNum, tilingData);
+    T2 mW = 0;
+    T2 shiftW = 0;
+    T2 mH = 0;
+    T2 shiftH = 0;
+    T2 mD = 0;
+    T2 shiftD = 0;
+    GetUintDivMagicAndShift(mW, shiftW, lenDstW);
+    GetUintDivMagicAndShift(mH, shiftH, lenDstH);
+    GetUintDivMagicAndShift(mD, shiftD, lenDstD);
+
+    if constexpr (sizeof(T2) == sizeof(uint64_t)) {
+        asc_vf_call<calleeInt64<T1, T2>>(
+            dim3(THREAD_NUM_B64), (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()),
+            blkStartOffset, blkProcessNum, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD,
+            lenDstH, lenDstW, tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW, tilingData_->alignCorners);
+    } else {
+        asc_vf_call<calleeInt32<T1, T2>>(
+            dim3(THREAD_NUM_B32), (__gm__ T1*)(inputGm_.GetPhyAddr()), (__gm__ T1*)(outputGm_.GetPhyAddr()),
+            blkStartOffset, blkProcessNum, mD, shiftD, mH, shiftH, mW, shiftW, lenSrcD, lenSrcH, lenSrcW, lenDstD,
+            lenDstH, lenDstW, tilingData_->scaleD, tilingData_->scaleH, tilingData_->scaleW, tilingData_->alignCorners);
     }
 }
 } // namespace ResizeUpsampleTrilinear
 
-#endif // RESIZE_UPSAMPLE_TRILINEAR_SIMT_H
+#endif // RESIZE_UPSAMPLE_TRILINEAR_SIMT_H_

@@ -15,6 +15,11 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
+static const std::vector<ge::DataType> xDtype = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16,
+                                                 ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16};
+static const std::vector<ge::Format> xFormat = {ge::FORMAT_ND,    ge::FORMAT_ND,    ge::FORMAT_ND,
+                                                ge::FORMAT_NCDHW, ge::FORMAT_NCDHW, ge::FORMAT_NCDHW};
+
 class ResizeUpsampleTrilinear : public OpDef {
 public:
     explicit ResizeUpsampleTrilinear(const char* name) : OpDef(name)
@@ -41,6 +46,17 @@ public:
 
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+
+        OpAICoreConfig regbaseConfig;
+        regbaseConfig.Input("input").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
+        regbaseConfig.Output("output").ParamType(REQUIRED).DataType(xDtype).Format(xFormat).UnknownShapeFormat(xFormat);
+        regbaseConfig.DynamicCompileStaticFlag(true)
+            .DynamicFormatFlag(true)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "resize_upsample_trilinear_apt");
+        this->AICore().AddConfig("ascend950", regbaseConfig);
+
         OpAICoreConfig config310p;
         config310p.DynamicCompileStaticFlag(true)
             .DynamicFormatFlag(true)
@@ -59,25 +75,6 @@ public:
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
             .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
         this->AICore().AddConfig("ascend310p", config310p);
-
-        OpAICoreConfig config950;
-        config950.DynamicCompileStaticFlag(true)
-            .DynamicFormatFlag(true)
-            .DynamicRankSupportFlag(true)
-            .DynamicShapeSupportFlag(true)
-            .NeedCheckSupportFlag(false)
-            .PrecisionReduceFlag(true);
-        config950.Input("input")
-            .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
-        config950.Output("output")
-            .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
-        this->AICore().AddConfig("ascend950", config950);
     }
 };
 

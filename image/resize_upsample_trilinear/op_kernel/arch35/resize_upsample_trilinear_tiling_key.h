@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -10,22 +10,25 @@
 
 /*!
  * \file resize_upsample_trilinear_tiling_key.h
- * \brief resize_upsample_trilinear tiling key declare for arch35
+ * \brief ResizeUpsampleTrilinear tiling key declare for arch35.
  */
 
-#ifndef RESIZE_UPSAMPLE_TRILINEAR_ARCH35_TILING_KEY_H
-#define RESIZE_UPSAMPLE_TRILINEAR_ARCH35_TILING_KEY_H
+#ifndef RESIZE_UPSAMPLE_TRILINEAR_TILING_KEY_DECL_H_
+#define RESIZE_UPSAMPLE_TRILINEAR_TILING_KEY_DECL_H_
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
-#define TPL_DTYPE_FP32 0
-#define TPL_DTYPE_FP16 1
-#define TPL_DTYPE_BF16 2
+#define RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_NCDHW 1
 
-ASCENDC_TPL_ARGS_DECL(ResizeUpsampleTrilinear, ASCENDC_TPL_UINT_DECL(dtypeKey, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST,
-                                                                     TPL_DTYPE_FP32, TPL_DTYPE_FP16, TPL_DTYPE_BF16));
+#define RESIZE_UPSAMPLE_TRILINEAR_TPL_KEY_DECL()                                                                   \
+    ASCENDC_TPL_UINT_DECL(schId, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_NCDHW), \
+        ASCENDC_TPL_UINT_DECL(isInt32, ASCENDC_TPL_8_BW, ASCENDC_TPL_UI_LIST, 0, 1)
 
-ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_UINT_SEL(dtypeKey, ASCENDC_TPL_UI_RANGE, 1, TPL_DTYPE_FP32,
-                                                          TPL_DTYPE_BF16)));
+#define RESIZE_UPSAMPLE_TRILINEAR_TPL_KEY_SEL()                                                 \
+    ASCENDC_TPL_UINT_SEL(schId, ASCENDC_TPL_UI_LIST, RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_NCDHW), \
+        ASCENDC_TPL_UINT_SEL(isInt32, ASCENDC_TPL_UI_LIST, 0, 1)
 
-#endif // RESIZE_UPSAMPLE_TRILINEAR_ARCH35_TILING_KEY_H
+ASCENDC_TPL_ARGS_DECL(ResizeUpsampleTrilinear, RESIZE_UPSAMPLE_TRILINEAR_TPL_KEY_DECL());
+ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(RESIZE_UPSAMPLE_TRILINEAR_TPL_KEY_SEL()));
+
+#endif // RESIZE_UPSAMPLE_TRILINEAR_TILING_KEY_DECL_H_
