@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
-#include "../../../../op_host/resize_upsample_trilinear_tiling_arch35.h"
+#include "../../../../op_host/resize_upsample_trilinear_tiling.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
 
@@ -145,9 +145,9 @@ TEST_F(ResizeUpsampleTrilinearArch35TilingTest, upsample_trilinear3d_fp32_scales
         {{outShape, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
          gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
-         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(2.0)),
-         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2.0)),
-         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2.0))},
+         gert::TilingContextPara::OpAttr("scales_d", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5))},
         &compileInfo,
         "Ascend950",
         64,

@@ -73,6 +73,17 @@ TILING_DATA_FIELD_DEF_STRUCT(TCubeTiling, matmul_tiling_d);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(ResizeUpsampleTrilinear, UpsampleTrilinearTilingData)
+
+#if defined(__GNUC__)
+#define RESIZE_UPSAMPLE_TRILINEAR_WEAK_SYMBOL __attribute__((weak))
+#else
+#define RESIZE_UPSAMPLE_TRILINEAR_WEAK_SYMBOL
+#endif
+
+ge::graphStatus Tiling4ResizeUpsampleTrilinearRegbase(gert::TilingContext* context)
+    RESIZE_UPSAMPLE_TRILINEAR_WEAK_SYMBOL;
+
+#undef RESIZE_UPSAMPLE_TRILINEAR_WEAK_SYMBOL
 } // namespace optiling
 
 #endif // RESIZE_UPSAMPLE_TRILINEAR_TILING_DEF_H

@@ -14,6 +14,7 @@
  */
 #include <vector>
 #include "resize_upsample_trilinear_tiling.h"
+#include "op_host/tiling_util.h"
 
 namespace optiling {
 
@@ -64,6 +65,7 @@ constexpr uint8_t SCHEDULE_MODE = 1;
 
 static constexpr uint16_t SOC_VERSION_310 = 200;
 static constexpr uint16_t SOC_VERSION_910 = 220;
+static constexpr uint16_t SOC_VERSION_950 = 350;
 
 struct UpsampleTrilinearCompileInfo {
     uint16_t totalCoreNum = 0;
@@ -553,11 +555,19 @@ static uint64_t GetWorkSpaceSize(
     return (temp_result_w_size + temp_result_h_size + max_ratio_size * coreRealNeedNum) * data_type_size;
 }
 
+static ge::graphStatus Tiling4ResizeUpsampleTrilinearRegbaseIfAvailable(gert::TilingContext* context)
+{
+    if (Tiling4ResizeUpsampleTrilinearRegbase == nullptr) {
+        OP_LOGE(context->GetNodeName(), "ResizeUpsampleTrilinear regbase tiling function is not linked.");
+        return ge::GRAPH_FAILED;
+    }
+    return Tiling4ResizeUpsampleTrilinearRegbase(context);
+}
+
 static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
 {
-    auto templateStatus = Ops::Cv::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context);
-    if (templateStatus == ge::GRAPH_SUCCESS) {
-        return ge::GRAPH_SUCCESS;
+    if (Ops::Cv::OpTiling::IsRegbaseSocVersion(context)) {
+        return Tiling4ResizeUpsampleTrilinearRegbaseIfAvailable(context);
     }
 
     int batchIdx = OUTPUT_DEPTH_IDX;
@@ -571,6 +581,9 @@ static ge::graphStatus Tiling4UpsampleTrilinear(gert::TilingContext* context)
 
     auto compileInfo = reinterpret_cast<const UpsampleTrilinearCompileInfo*>(context->GetCompileInfo());
     auto socVersionType = compileInfo->socVersionType;
+    if (socVersionType == SOC_VERSION_950) {
+        return Tiling4ResizeUpsampleTrilinearRegbaseIfAvailable(context);
+    }
     if (socVersionType == SOC_VERSION_310) {
         batchIdx = SCALE_H_IDX;
         channelIdx = SCALE_W_IDX;
@@ -692,6 +705,9 @@ static ge::graphStatus TilingPrepare4UpsampleTrilinear(gert::TilingParseContext*
     if (npuArch == NpuArch::DAV_2002) {
         compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
         compileInfo->socVersionType = SOC_VERSION_310;
+    } else if (npuArch == NpuArch::DAV_3510) {
+        compileInfo->totalCoreNum = ascendcPlatform.GetCoreNumAiv();
+        compileInfo->socVersionType = SOC_VERSION_950;
     }
     return ge::GRAPH_SUCCESS;
 }
