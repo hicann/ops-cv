@@ -175,7 +175,7 @@ ge::graphStatus UpsampleBilinear2dAABackwardTiling::RunBigKernelTiling()
     GetSlideSize();
     GetShapes();
 
-    auto compileInfo = reinterpret_cast<const UpsampleBilinear2dAABackwardCompileInfo*>(
+    auto compileInfo = static_cast<const UpsampleBilinear2dAABackwardCompileInfo*>(
         tilingContext->GetCompileInfo());
     uint32_t coreNumPlatform = (compileInfo != nullptr) ? compileInfo->coreNum : 0;
     uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatform);
@@ -198,7 +198,7 @@ float UpsampleBilinear2dAABackwardTiling::ComputeScales(int64_t inSize, int64_t 
 
 bool UpsampleBilinear2dAABackwardTiling::CheckScales() const
 {
-    const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSize->GetData());
+    const int64_t* inputSizeArray = static_cast<const int64_t*>(inputSize->GetData());
     float scalesH = ComputeScales(inputSizeArray[H_INDEX], inputShape.GetDim(H_INDEX), scaleH);
     float scalesW = ComputeScales(inputSizeArray[W_INDEX], inputShape.GetDim(W_INDEX), scaleW);
     OP_CHECK_IF(scalesH < MIN_SUPPORT_SCALE || scalesW < MIN_SUPPORT_SCALE,
@@ -222,7 +222,7 @@ void UpsampleBilinear2dAABackwardTiling::GetSlideSize()
 
 void UpsampleBilinear2dAABackwardTiling::SetScale()
 {
-    const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSize->GetData());
+    const int64_t* inputSizeArray = static_cast<const int64_t*>(inputSize->GetData());
     needResizeH = GetNeedResize(inputSizeArray[H_INDEX], inputShape.GetDim(H_INDEX), scaleH);
     needResizeW = GetNeedResize(inputSizeArray[W_INDEX], inputShape.GetDim(W_INDEX), scaleW);
     if (!needResizeH && !needResizeW) {
@@ -278,7 +278,7 @@ inline bool UpsampleBilinear2dAABackwardTiling::GetNeedResize(int64_t inSize, in
 
 void UpsampleBilinear2dAABackwardTiling::GetShapes()
 {
-    const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSize->GetData());
+    const int64_t* inputSizeArray = static_cast<const int64_t*>(inputSize->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         inputShapes[i] = inputShape.GetDim(i);
         outputShapes[i] = inputSizeArray[i];

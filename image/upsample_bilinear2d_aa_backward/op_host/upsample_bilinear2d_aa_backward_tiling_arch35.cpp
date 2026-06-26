@@ -33,6 +33,8 @@ constexpr int32_t CONST_2 = 2;
 constexpr int32_t CONST_3 = 3;
 constexpr int32_t CONST_4 = 4;
 constexpr int64_t INPUT_DIMS = 4;
+constexpr int64_t RESERVED_LENGTH = 5;
+constexpr float RESERVED_LENGTH_FLOAT = 5.0f;
 constexpr int32_t CACHE_LINE = 128;
 constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
 
@@ -169,13 +171,15 @@ void UpsampleBilinear2dAABackwardRegbaseTiling::ComputeScalesSupportValues(float
     baseTiling_.supportW = (baseTiling_.scaleW >= 1.0f) ? baseTiling_.scaleW : 1.0f;
     int64_t maxInterpSizeH = baseTiling_.outH;
     if (baseTiling_.scaleH > 0.0f) {
-        maxInterpSizeH = static_cast<int64_t>(std::ceil(5.0f / baseTiling_.scaleH)) +
-                         static_cast<int64_t>(std::ceil(baseTiling_.supportH)) * 2 + 5;
+        maxInterpSizeH = static_cast<int64_t>(std::ceil(RESERVED_LENGTH_FLOAT / baseTiling_.scaleH)) +
+                         static_cast<int64_t>(std::ceil(baseTiling_.supportH)) * CONST_2 +
+                         RESERVED_LENGTH;
     }
     int64_t maxInterpSizeW = baseTiling_.outW;
     if (baseTiling_.scaleW > 0.0f) {
-        maxInterpSizeW = static_cast<int64_t>(std::ceil(5.0f / baseTiling_.scaleW)) +
-                         static_cast<int64_t>(std::ceil(baseTiling_.supportW)) * 2 + 5;
+        maxInterpSizeW = static_cast<int64_t>(std::ceil(RESERVED_LENGTH_FLOAT / baseTiling_.scaleW)) +
+                         static_cast<int64_t>(std::ceil(baseTiling_.supportW)) * CONST_2 +
+                         RESERVED_LENGTH;
     }
     baseTiling_.maxInterpSizeH = maxInterpSizeH;
     baseTiling_.maxInterpSizeW = maxInterpSizeW;
@@ -259,14 +263,14 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::CheckInputShapeAndAtt
     OP_CHECK_IF(outSizeNum != CONST_2,
                 OP_LOGE(context_, "the num of outputSize is %ld, invalid, must be 2", outSizeNum),
                 return ge::GRAPH_FAILED);
-    const int64_t* outData = reinterpret_cast<const int64_t*>(outputSize->GetData());
+    const int64_t* outData = static_cast<const int64_t*>(outputSize->GetData());
     OP_CHECK_IF((baseTiling_.outH != outData[CONST_0]) || (baseTiling_.outW != outData[CONST_1]),
                 OP_LOGE(context_, "The output H W dimensions must be the same as the attribute outputSize."),
                 return ge::GRAPH_FAILED);
     int64_t inSizeNum = inputSize->GetSize();
     OP_CHECK_IF(inSizeNum != CONST_4, OP_LOGE(context_, "the num of inputSize is %ld, invalid, must be 4", inSizeNum),
                 return ge::GRAPH_FAILED);
-    const int64_t* inData = reinterpret_cast<const int64_t*>(inputSize->GetData());
+    const int64_t* inData = static_cast<const int64_t*>(inputSize->GetData());
     OP_CHECK_IF((baseTiling_.dimN != inData[CONST_0]) || (baseTiling_.dimC != inData[CONST_1]) ||
                     (baseTiling_.inH != inData[CONST_2]) || (baseTiling_.inW != inData[CONST_3]),
                 OP_LOGE(context_, "The input N C H W dimensions must be the same as the attribute inputSize."),
