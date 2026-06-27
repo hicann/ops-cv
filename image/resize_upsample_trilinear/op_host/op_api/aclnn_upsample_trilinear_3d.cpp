@@ -347,7 +347,6 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
     float supportScaleW = GetMaxScale(scaleW, checkScaleW);
     float supportScaleH = GetMaxScale(scaleH, checkScaleH);
     float supportScaleD = GetMaxScale(scaleD, checkScaleD);
-
     if (CheckIsPlatform310p(self) && CheckScales(supportScaleW, supportScaleH, supportScaleD)) {
         if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
             // 将输入self进行transpose，shape：NDHWC-->DHWNC

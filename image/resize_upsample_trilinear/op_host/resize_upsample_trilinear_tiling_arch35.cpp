@@ -227,7 +227,7 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShapeAndAttr()
     auto* attrs = context_->GetAttrs();
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_, "attrs is nullptr"), return ge::GRAPH_FAILED);
 
-    auto outputSizeAttr = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
+    auto outputSizeAttr = attrs->GetAttrPointer<gert::TypedContinuousVector<int64_t>>(OUTPUT_SIZE_ATTR);
     int64_t outputSizeNum = outputSizeAttr == nullptr ? 0 : outputSizeAttr->GetSize();
     if (outputSizeAttr != nullptr) {
         OP_CHECK_IF(outputSizeNum > 0 && outputSizeNum != CONST_3,
@@ -235,7 +235,7 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShapeAndAttr()
             return ge::GRAPH_FAILED);
     }
     if (outputSizeAttr != nullptr && outputSizeNum == CONST_3) {
-        const int64_t* outputSizeData = reinterpret_cast<const int64_t*>(outputSizeAttr->GetData());
+        const int64_t* outputSizeData = outputSizeAttr->GetData();
         OP_CHECK_IF((baseTiling_.outD != outputSizeData[CONST_0]) || (baseTiling_.outH != outputSizeData[CONST_1]) ||
                         (baseTiling_.outW != outputSizeData[CONST_2]),
             OP_LOGE(context_, "output D/H/W dimensions must be same as output_size attr"),
