@@ -20,8 +20,12 @@
 #include "tiling/platform/platform_ascendc.h"
 #include "log/log.h"
 #include "upsample_bilinear2d_grad_tiling.h"
+#include "op_host/tiling_util.h"
 
 namespace optiling {
+
+ge::graphStatus UpsampleBilinear2dGradTilingArch35(gert::TilingContext* context);
+
 constexpr uint32_t BEST_PERFORMANCE_SIZE = 16;
 constexpr uint32_t BYTE = 8;
 constexpr uint32_t BYTE_REPEAT = 256;
@@ -57,6 +61,7 @@ public:
     explicit UpsampleBilinear2dGradTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init() const;
     ge::graphStatus RunBigKernelTiling();
+    ge::graphStatus ParseInputAttrs();
 
 private:
     void setScale();
@@ -201,7 +206,7 @@ void UpsampleBilinear2dGradTiling::setSingleCoreK()
     }
 }
 
-ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
+ge::graphStatus UpsampleBilinear2dGradTiling::ParseInputAttrs()
 {
     auto srcTensor = tilingContext->GetInputTensor(0);
     if (srcTensor == nullptr) {
@@ -230,25 +235,35 @@ ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
     scale_w = attrs->GetAttrPointer<float>(RESERVED_VALUE);
     OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"),
                 return ge::GRAPH_FAILED);
+
     auto tmp = tilingContext->GetInputDesc(0);
     if (tmp == nullptr) {
         return ge::GRAPH_FAILED;
     }
 
-    ge::DataType srcDtype = ge::DT_UNDEFINED;
-    srcDtype = tmp->GetDataType();
-
+    ge::DataType srcDtype = tmp->GetDataType();
     if (dataType == ge::DT_UNDEFINED) {
         dataType = srcDtype;
         dataTypeSize = GetDataTypeSize();
     } else if (srcDtype != dataType) {
         return ge::GRAPH_FAILED;
     }
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
+{
+    bool regBase = Ops::Cv::OpTiling::IsRegbaseSocVersion(tilingContext);
+    if (regBase) {
+        OP_LOGI(tilingContext->GetNodeName(), "enter UpsampleBilinear2dGradTilingArch35");
+        return UpsampleBilinear2dGradTilingArch35(tilingContext);
+    }
+
+    OP_CHECK_IF(ParseInputAttrs() != ge::GRAPH_SUCCESS, OP_LOGE(tilingContext->GetNodeName(), "ParseInputAttrs failed"),
+                return ge::GRAPH_FAILED);
 
     auto srcShape = tilingContext->GetInputShape(0);
-    // 固定是2
     dim = srcShape->GetStorageShape().GetDimNum() - 2;
-
     input_shape = srcShape->GetOriginShape();
 
     auto compileInfo = reinterpret_cast<const UpsampleBilinear2dGradCompileInfo*>(tilingContext->GetCompileInfo());
@@ -260,7 +275,6 @@ ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
 
     uint32_t needCoreNum = GetNeedCoreNum(coreNumPlatForm);
 
-    // 计算workspace，每个核的系数矩阵（是否要乘2，避免doubelBuffer矩阵相互影响？），中间矩阵大小
     getWorkSpace(needCoreNum);
 
     tilingContext->SetBlockDim(needCoreNum);

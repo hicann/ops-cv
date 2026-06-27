@@ -38,6 +38,15 @@ public:
         this->Attr("scales_w").AttrType(OPTIONAL).Float();
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicFormatFlag(false)
+            .DynamicRankSupportFlag(false)
+            .DynamicShapeSupportFlag(true)
+            .NeedCheckSupportFlag(false)
+            .PrecisionReduceFlag(true)
+            .ExtendCfgInfo("opFile.value", "upsample_bilinear2d_grad_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };
 
