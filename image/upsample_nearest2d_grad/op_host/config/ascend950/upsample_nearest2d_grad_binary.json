@@ -1,0 +1,140 @@
+{
+  "op_type": "UpsampleNearest2dGrad",
+  "op_list": [
+    {
+      "bin_filename": "UpsampleNearest2dGrad_f32",
+      "inputs": [
+        {
+          "name": "grad_output",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [-2]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grad_input",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [-2]
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": null
+        },
+        {
+          "name": "input_size",
+          "dtype": "list_int",
+          "value": null
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float32",
+          "value": null
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float32",
+          "value": null
+        }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleNearest2dGrad_f16",
+      "inputs": [
+        {
+          "name": "grad_output",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [-2]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grad_input",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [-2]
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": null
+        },
+        {
+          "name": "input_size",
+          "dtype": "list_int",
+          "value": null
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float32",
+          "value": null
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float32",
+          "value": null
+        }
+      ]
+    },
+    {
+      "bin_filename": "UpsampleNearest2dGrad_bf16",
+      "inputs": [
+        {
+          "name": "grad_output",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [-2]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grad_input",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [-2]
+        }
+      ],
+      "attrs": [
+        {
+          "name": "output_size",
+          "dtype": "list_int",
+          "value": null
+        },
+        {
+          "name": "input_size",
+          "dtype": "list_int",
+          "value": null
+        },
+        {
+          "name": "scales_h",
+          "dtype": "float32",
+          "value": null
+        },
+        {
+          "name": "scales_w",
+          "dtype": "float32",
+          "value": null
+        }
+      ]
+    }
+  ]
+}

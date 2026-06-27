@@ -241,7 +241,7 @@
     {"name":"UpsampleNearest3dGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}, "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"UpsampleNearestExact3dGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}, "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"UpsampleBicubic2dAAGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
-    {"name":"UpsampleNearest2dGrad", "compute_units": ["ascend910_93", "ascend910b"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
+    {"name":"UpsampleNearest2dGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : true, "compile_options": {"ascend950": ["-DENABLE_CV_COMM_VIA_SSBUF=true"]}},
     {"name":"UpsampleNearestExact2dGrad", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : {"ascend910_93": true, "ascend910b": true, "ascend950": false}, "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"RmsNormGrad", "compute_units": ["ascend950", "ascend910_93", "ascend910b", "ascend910", "ascend310p"], "auto_sync" : false},
     {"name":"RotaryPositionEmbedding", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync" : true},
@@ -587,5 +587,7 @@
     {"name":"Addr", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"NMSWithMask", "compute_units": ["ascend910b", "ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"Rasterizer", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false, "impl_mode" : ""},
-    {"name":"RoiAlignV2", "compute_units": ["ascend910b"], "auto_sync":false, "impl_mode" : ""}
+    {"name":"RoiAlignV2", "compute_units": ["ascend910b"], "auto_sync":false, "impl_mode" : ""},
+    {"name":"DIoUGrad", "compute_units": ["ascend950"], "auto_sync": false},
+    {"name":"GIoUGrad", "compute_units": ["ascend950"], "auto_sync": false}
 ]

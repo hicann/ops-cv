@@ -458,6 +458,26 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/d_io_u_grad/README.md">d_io_u_grad</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>计算Distance-IoU (DIoU)损失函数的反向梯度。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/g_io_u_grad/README.md">g_io_u_grad</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>AI Core</td>
+    <td>计算Generalized-IoU (GIoU)损失函数的反向梯度。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/iou_v2/README.md">iou_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
