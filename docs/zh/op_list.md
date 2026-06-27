@@ -68,6 +68,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/extract_glimpse_v2/README.md">extract_glimpse_v2</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>从批量输入图像中提取指定位置和大小的子图像（glimpse）。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/grid_sample/README.md">grid_sample</a></td>
     <td>&check;</td>
     <td>&check;</td>

@@ -16,6 +16,7 @@ if (UT_TEST_ALL OR OP_KERNEL_UT)
     # 算子自己的tiling文件路径
     set(upsample_bicubic2d_tiling_files
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/upsample_bicubic2d_tiling.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/upsample_bicubic2d_tiling_arch35.cpp
         # ${elewise_common_tiling_files}
         )
     # 使用AddOpTestCase
