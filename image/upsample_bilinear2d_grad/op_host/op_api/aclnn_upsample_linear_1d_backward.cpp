@@ -439,7 +439,7 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor* gradO
             auto gradOutCast = l0op::Cast(gradOutContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gradOutCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
             const aclTensor* upsampleOut = l0op::UpsampleBilinear2dGrad(
-                gradOutCast, outputSizeArray, originSizeArray, const_cast<aclTensor*>(outContiguous), alignCorners,
+                gradOutCast, outputSizeArray, originSizeArray, outContiguous, alignCorners,
                 realScales_h, realScales_w, uniqueExecutor.get());
             CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
             auto outTransdata = l0op::TransData(upsampleOut, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
