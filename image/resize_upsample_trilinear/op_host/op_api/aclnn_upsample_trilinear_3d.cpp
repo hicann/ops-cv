@@ -312,7 +312,6 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(const aclTensor* self, cons
     float scaleW = AsComputeScale(alignCorners, inputShape.GetDim(DIM_FOUR), outShape.GetDim(DIM_FOUR), scalesW1);
     float scaleH = AsComputeScale(alignCorners, inputShape.GetDim(DIM_THREE), outShape.GetDim(DIM_THREE), scalesH1);
     float scaleD = AsComputeScale(alignCorners, inputShape.GetDim(DIM_TWO), outShape.GetDim(DIM_TWO), scalesD1);
-
     if (CheckIsPlatform310p(self) && CheckScales(scaleW, scaleH, scaleD)) {
         if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
             // 将输入self进行transpose，shape：NDHWC-->DHWNC
