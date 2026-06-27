@@ -138,6 +138,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/rgb2_yuv422/README.md">rgb2_yuv422</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将 RGB 图像转换为 YUV422 (YUYV 打包格式) 色彩空间。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/resize_bicubic_v2/README.md">resize_bicubic_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -415,6 +425,16 @@
     <td>&check;</td>
     <td>AI CPU</td>
     <td>用于对输入图像或特征图进行几何变换等操作。</td>
+  </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/yuv4442_yuv422/README.md">yuv4442_yuv422</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将 YUV444 格式图像数据转换为 YUV422 格式。</td>
   </tr>
   <tr>
     <td>objdetect</td>
