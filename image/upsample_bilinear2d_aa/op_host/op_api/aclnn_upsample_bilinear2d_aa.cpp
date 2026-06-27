@@ -110,6 +110,27 @@ static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSi
                      " H: %ld, W: %ld) output (H: %ld, W: %ld)",
                      outN, outC, inputH, inputW, outH, outW),
              return false);
+
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201) {
+        OP_CHECK(outN <= INT32_MAX && outC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "input sizes should not be greater than %d, bug got input (N: %ld, C: %ld, H: %ld, W: %ld)", 
+                         INT32_MAX, outN, outC, inputH, inputW),
+                 return false);
+        OP_CHECK(outH <= INT32_MAX && outW <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "output sizes should not be greater than %d, bug got output (H: %ld, W: %ld)", 
+                         INT32_MAX, outH, outW),
+                 return false);
+
+        int64_t M = outN * outC * inputH;
+        OP_CHECK(M <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "N * C * input_H should not be greater than %d, bug got %ld", INT32_MAX, M),
+                 return false);
+    }
+
     return true;
 }
 

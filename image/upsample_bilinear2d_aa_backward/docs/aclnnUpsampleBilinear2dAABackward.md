@@ -308,15 +308,20 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
 
-  输入数据缩放场景放大倍数必须小于等于50，即：
+  - gradOutput、out的所有维度取值均小于等于(2^31-1)。
+  - $N * C * outputSize\_H$ <= 2^31-1
+    其中：
+      - N代表输入和输出的N轴。
+      - C代表输入和输出的C轴。
+  - 输入数据缩放场景放大倍数必须小于等于50，即：
 
-  $$
-  outputSize\_H / 输出shape的高度H <= 50
-  $$
-  
-  $$
-  outputSize\_W / 输出shape的宽度W <=50
-  $$
+    $$
+    outputSize\_H / 输出shape的高度H <= 50
+    $$
+    
+    $$
+    outputSize\_W / 输出shape的宽度W <=50
+    $$
 
 - 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
 

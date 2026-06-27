@@ -112,7 +112,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradOut（aclTensor*）</td>
       <td>输入</td>
       <td>表示反向计算的梯度Tensor，对应公式描述中的`gradOut`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li><li>`gradOut`的所有维度取值均小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型与`gradInput`一致。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -172,7 +172,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
       <td>gradInput（aclTensor*）</td>
       <td>输出</td>
       <td>表示反向计算的输出张量，对应公式中的`gradInput`。</td>
-      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式与`gradOut`保持一致。</li><li>shape的N轴和C轴与`gradOut`保持一致。</li><li>`gradInput`的所有维度取值均小于等于(2^31-1)。</li></ul></td>
+      <td><ul><li>不支持空Tensor。</li><li>数据类型、数据格式与`gradOut`保持一致。</li><li>shape的N轴和C轴与`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCHW、ND、NHWC</td>
       <td>4</td>
@@ -313,6 +313,14 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
+- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
+
+  - gradOut、gradInput的所有维度取值均小于等于(2^31-1)。
+  - $N * C * outputSize\_H$ <= 2^31-1
+    其中：
+      - N代表输入和输出的N轴。
+      - C代表输入和输出的C轴。
 
 - 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
 

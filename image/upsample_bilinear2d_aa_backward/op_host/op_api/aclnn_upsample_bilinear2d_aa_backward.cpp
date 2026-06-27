@@ -121,7 +121,25 @@ static bool CheckInputElement(const aclIntArray* outputSize, const aclIntArray* 
                      inputN, inputC, inputH, inputW, outH, outW),
              return false);
 
-    if (!IsRegBase()) {
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_2201) {
+        OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "input sizes should not be greater than %d, bug got input (N: %ld, C: %ld, H: %ld, W: %ld)", 
+                         INT32_MAX, inputN, inputC, inputH, inputW),
+                 return false);
+        OP_CHECK(outH <= INT32_MAX && outW <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "output sizes should not be greater than %d, bug got output (H: %ld, W: %ld)", 
+                         INT32_MAX, outH, outW),
+                 return false);
+
+        int64_t M = inputN * inputC * outH;
+        OP_CHECK(M <= INT32_MAX,
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "N * C * outputSize_H should not be greater than %d, bug got %ld", INT32_MAX, M),
+                 return false);
+
         double realScalesH = ComputeBilinear2dAABackwardScales(inputH, outH, scalesH);
         double realScalesW = ComputeBilinear2dAABackwardScales(inputW, outW, scalesW);
         OP_CHECK(realScalesH >= MIN_SUPPORT_SCALE && realScalesW >= MIN_SUPPORT_SCALE,

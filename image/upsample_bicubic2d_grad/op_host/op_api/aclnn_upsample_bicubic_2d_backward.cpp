@@ -192,6 +192,39 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
     return true;
 }
 
+static bool CheckUplimit(const aclIntArray* outputSize, const aclIntArray* inputSize)
+{
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch != NpuArch::DAV_2201) {
+        return true;
+    }
+
+    int64_t N = (*inputSize)[DIM_ZERO];
+    int64_t C = (*inputSize)[DIM_ONE];
+    int64_t inputH = (*inputSize)[DIM_TWO];
+    int64_t inputW = (*inputSize)[DIM_THREE];
+    OP_CHECK(N <= INT32_MAX && C <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld)", 
+                     INT32_MAX, N, C, inputH, inputW),
+             return false);
+
+    int64_t outputH = (*outputSize)[DIM_ZERO];
+    int64_t outputW = (*outputSize)[DIM_ONE];
+    OP_CHECK(outputH <= INT32_MAX && outputW <= INT32_MAX,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld)", 
+                     INT32_MAX, N, C, outputH, outputW),
+             return false);
+
+    int64_t M = N * C * outputH;
+    OP_CHECK(M <= INT32_MAX,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                     "N * C * outputSize_H should not be greater than %d, bug got %ld", INT32_MAX, M),
+             return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
                                const aclTensor* gradInput)
 {
@@ -206,6 +239,9 @@ static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outp
 
     // check input dtype
     CHECK_RET(CheckDtypeValid(gradOut, gradInput), ACLNN_ERR_PARAM_INVALID);
+
+    // check uplimit
+    CHECK_RET(CheckUplimit(outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }
