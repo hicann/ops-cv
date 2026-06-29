@@ -108,8 +108,10 @@ int main()
     // 3. 调用CANN算子库API，需要修改为具体的Api名称
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
+    const double scalesH = 1.1;
+    const double scalesW = 1.1;
     // 调用aclnnUpsampleBicubic2dBackward第一段接口
-    ret = aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(self, outputSize, inputSize, 1, 1.1, 1.1, out, &workspaceSize,
+    ret = aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(self, outputSize, inputSize, 1, scalesH, scalesW, out, &workspaceSize,
                                                          &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBicubic2dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
