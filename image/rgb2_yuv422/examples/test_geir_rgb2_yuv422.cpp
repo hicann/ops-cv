@@ -132,7 +132,7 @@ int CreateOppInGraph(DataType inDtype, std::vector<ge::Tensor>& input, std::vect
 {
     Status ret = SUCCESS;
     // 自定义代码：添加单算子定义到图中
-    auto add1 = op::Rgb2yuv422("rgb2_yuv422_1");
+    auto add1 = op::RGB2YUV422("rgb2_yuv422_1");
     std::vector<int64_t> xShape = {4, 8, 3};
     ADD_INPUT(1, rgb, inDtype, xShape);
 

@@ -140,6 +140,7 @@ static ge::graphStatus Yuv4442yuv422TilingFunc(gert::TilingContext* context)
         perCorePairs = PER_CORE_MIN;
     }
     int64_t needCoreNum = Ops::Base::CeilDiv(totalPairs, perCorePairs);
+    needCoreNum = std::max(needCoreNum, 1L);  // W=0/W=1 兜底
 
     return FillTilingData(context, totalPairs, h, w, needCoreNum, ubSize);
 }
