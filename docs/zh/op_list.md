@@ -597,6 +597,16 @@
     <td>根据特征点所属的组，重组点云中的特征点。 </td>
   </tr>
   <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/anchor_response_flags/README.md">anchor_response_flags</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>在目标检测网络中生成锚框的响应标志。根据真值框的中心点位置，确定哪些锚框网格位置负责检测目标，并生成对应的标志位。</td>
+  </tr>
+  <tr>
     <td>image</td>
     <td><a href="../../image/nms_with_mask/README.md">nms_with_mask</a></td>
     <td>&check;</td>
