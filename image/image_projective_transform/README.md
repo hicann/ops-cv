@@ -136,4 +136,6 @@
 
 ## 调用说明
 
-无
+| 调用方式 | 调用样例 | 说明 |
+|--------------|------------------------------------------------------------------------|----------------------------------------------------------------|
+| 图模式调用 | [test_geir_image_projective_transform](./examples/arch35/test_geir_image_projective_transform.cpp) | 通过[算子IR](./op_graph/image_projective_transform_proto.h)构图方式调用ImageProjectiveTransform算子。 |
