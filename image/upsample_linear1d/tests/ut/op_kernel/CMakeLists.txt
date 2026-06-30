@@ -15,7 +15,7 @@ if (UT_TEST_ALL OR OP_KERNEL_UT)
     #         )
     # 算子自己的tiling文件路径
     set(upsample_linear1d_tiling_files
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/upsample_linear1d_tiling.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/arch22/upsample_linear1d_tiling.cpp
         )
     # 使用AddOpTestCase
     # param1：算子名称，以kernel方式命名

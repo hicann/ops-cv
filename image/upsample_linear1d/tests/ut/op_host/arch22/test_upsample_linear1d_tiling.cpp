@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>
-#include "../../../op_host/upsample_linear1d_tiling.h"
+#include "../../../../op_host/arch22/upsample_linear1d_tiling.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
 
