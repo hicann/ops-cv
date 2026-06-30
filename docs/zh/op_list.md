@@ -539,12 +539,12 @@
   <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/roi_align_grad/README.md">roi_align_grad</a></td>
-    <td>&cross;</td>
-    <td>&cross;</td>
+    <td>&check;</td>
+    <td>&check;</td>
     <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
-    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+    <td>用于从非均匀尺寸的特征图中提取固定尺寸的ROI（Region of Interest）特征。</td>
   </tr>
   <tr>
     <td>objdetect</td>

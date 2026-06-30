@@ -1,0 +1,88 @@
+{
+  "op_type": "ROIAlignGrad",
+  "op_list": [
+    {
+      "bin_filename": "ROIAlignGrad_a1f32827238e1555db7b997c7bce2928",
+      "inputs": [
+        {
+          "name": "ydiff",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "rois",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "rois_n",
+          "index": 2,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "xdiff_shape",
+          "dtype": "list_int",
+          "value": [1, 16, 28, 28]
+        },
+        {
+          "name": "pooled_width",
+          "dtype": "int",
+          "value": 7
+        },
+        {
+          "name": "pooled_height",
+          "dtype": "int",
+          "value": 7
+        },
+        {
+          "name": "spatial_scale",
+          "dtype": "float",
+          "value": 1.0
+        },
+        {
+          "name": "sample_num",
+          "dtype": "int",
+          "value": 2
+        },
+        {
+          "name": "roi_end_mode",
+          "dtype": "int",
+          "value": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "xdiff",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ]
+    }
+  ]
+}
