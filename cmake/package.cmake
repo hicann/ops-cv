@@ -112,16 +112,10 @@ function(pack_built_in)
       ${CANN_CMAKE_DIR}/scripts/install/version_compatiable.inc
       ${CANN_CMAKE_DIR}/scripts/install/check_version_required.awk
   )
-  set(CONF_FILES
-      ${CANN_CMAKE_DIR}/scripts/package/cfg/path.cfg
-  )
 
   install(FILES ${CMAKE_BINARY_DIR}/version.ops_cv.info
         DESTINATION share/info/ops_cv
         RENAME version.info
-  )
-  install(FILES ${CONF_FILES}
-      DESTINATION ${CMAKE_SYSTEM_PROCESSOR}-linux/conf
   )
   install(FILES ${PACKAGE_FILES}
       DESTINATION share/info/ops_cv/script
@@ -139,5 +133,8 @@ function(pack_built_in)
 
   message(STATUS "current compute_unit is: ${compute_unit}")
 
-  set_cann_cpack_config(ops-cv COMPUTE_UNIT ${ASCEND_COMPUTE_UNIT} SHARE_INFO_NAME ops_cv)
+  # CPack component name uses a hyphen, while version.cmake registers ops_cv.
+  set(CANN_VERSION_ops-cv_VERSION "${CANN_VERSION_ops_cv_VERSION}")
+  set(CANN_VERSION_ops-cv_VERSION_MAJOR_MINOR "${CANN_VERSION_ops_cv_VERSION_MAJOR_MINOR}")
+  set_cann_cpack_config(ops-cv COMPUTE_UNIT ${ASCEND_COMPUTE_UNIT} SHARE_INFO_NAME ops_cv PACKAGE_TYPE "${PACKAGE_TYPE}")
 endfunction()

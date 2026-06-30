@@ -24,7 +24,7 @@ SUPPORTED_LONG_OPTS=(
   "pkg" "asan" "valgrind" "make_clean" "static" "simulator"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
   "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "dump_cce"
-  "bisheng_flags=" "kernel_template_input=" "rule_launch=" "ccache="
+  "bisheng_flags=" "kernel_template_input=" "rule_launch=" "ccache=" "pkg-type="
 )
 
 in_array() {
@@ -37,6 +37,14 @@ in_array() {
     fi
   done
   return 1
+}
+
+check_pkg_type() {
+  local pkg_type="$1"
+  if [[ "$pkg_type" != "run" && "$pkg_type" != "rpm" && "$pkg_type" != "deb" ]]; then
+    echo "[ERROR] --pkg-type only supports run/rpm/deb"
+    exit 1
+  fi
 }
 
 check_option_validity() {
@@ -147,6 +155,7 @@ usage() {
         echo "Package Build Options:"
         echo $dotted_line
         echo "    --pkg                  Build run package with kernel bin"
+        echo "    --pkg-type=<TYPE>      Specify package type(TYPE options: run/rpm/deb), Default: run"
         echo "    --static               Build static library package"
         echo "    --jit                  Build run package without kernel bin"
         echo "    --soc=soc_version      Compile for specified Ascend SoC"
@@ -171,6 +180,8 @@ usage() {
         echo $dotted_line
         echo "Examples:"
         echo "    bash build.sh --pkg --soc=ascend910b --vendor_name=customize -j16 -O3"
+        echo "    bash build.sh --pkg --pkg-type=deb --soc=ascend910b"
+        echo "    bash build.sh --pkg --pkg-type=rpm --soc=ascend910b"
         echo "    bash build.sh --pkg --ops=add,sub --build-type=Debug"
         echo "    bash build.sh --pkg --static --soc=ascend910b"
         echo "    bash build.sh --pkg --ops=add,sub --debug"
@@ -438,6 +449,7 @@ usage() {
   echo "    --opkernel_aicpu build aicpu kernel"
   echo "    --jit build run package without kernel bin"
   echo "    --pkg build run package with kernel bin"
+  echo "    --pkg-type=<TYPE> Specify package type(TYPE options: run/rpm/deb), Default: run"
   echo "    --static build static library package"
   echo "    --experimental Build experimental version"
   echo "    --opapi_test build and run opapi unit tests"
@@ -561,6 +573,26 @@ check_param() {
         echo "[ERROR] --kernel_template_input must be used with --ops= and can only specify a single operator"
         exit 1
       fi
+    fi
+  fi
+
+  if [[ "$PACKAGE_TYPE_SET" == "TRUE" && "$ENABLE_PACKAGE" != "TRUE" ]]; then
+    echo "[ERROR] --pkg-type can only be used with --pkg"
+    exit 1
+  fi
+
+  if [[ "$PACKAGE_TYPE" != "run" ]]; then
+    if [[ "$ENABLE_STATIC" == "TRUE" ]]; then
+      echo "[ERROR] --pkg-type=${PACKAGE_TYPE} cannot be used with --static"
+      exit 1
+    fi
+    if [[ "$ENABLE_JIT" == "TRUE" ]]; then
+      echo "[ERROR] --pkg-type=${PACKAGE_TYPE} cannot be used with --jit"
+      exit 1
+    fi
+    if [[ "$ENABLE_CUSTOM" == "TRUE" ]]; then
+      echo "[ERROR] --pkg-type=${PACKAGE_TYPE} only supports built-in ops-cv packages; do not use --ops, --vendor_name, or --experimental"
+      exit 1
     fi
   fi
 
@@ -722,6 +754,8 @@ checkopts() {
   KERNEL_TEMPLATE_INPUT=""
 
   BUILD_TYPE="Release"
+  PACKAGE_TYPE="run"
+  PACKAGE_TYPE_SET=FALSE
   ENABLE_MSSANITIZER=FALSE
   ENABLE_OOM=FALSE
   ENABLE_DUMP_CCE=FALSE
@@ -769,6 +803,13 @@ checkopts() {
       if ! check_option_validity "$arg"; then
         echo "Use 'bash build.sh --help' for more information."
         exit 1
+      fi
+      if [[ "$arg" == "--pkg-type" ]]; then
+        echo "[ERROR] --pkg-type requires a value: run/rpm/deb"
+        exit 1
+      fi
+      if [[ "$arg" == --pkg-type=* ]]; then
+        check_pkg_type "${arg#*=}"
       fi
     fi
   done
@@ -883,6 +924,11 @@ checkopts() {
           ;;
         build-type=*)
           BUILD_TYPE=${OPTARG#*=}
+          ;;
+        pkg-type=*)
+          PACKAGE_TYPE=${OPTARG#*=}
+          check_pkg_type "${PACKAGE_TYPE}"
+          PACKAGE_TYPE_SET=TRUE
           ;;
         mssanitizer) ENABLE_MSSANITIZER=TRUE ;;
         oom) ENABLE_OOM=TRUE ;;
@@ -1130,7 +1176,7 @@ assemble_cmake_args() {
     custom_cmake_args
   fi
   if [[ "$ENABLE_PACKAGE" == "TRUE" ]]; then
-    CMAKE_ARGS="$CMAKE_ARGS -DENABLE_PACKAGE=TRUE"
+    CMAKE_ARGS="$CMAKE_ARGS -DENABLE_PACKAGE=TRUE -DPACKAGE_TYPE=${PACKAGE_TYPE}"
   fi
   if [[ "$ENABLE_EXPERIMENTAL" == "TRUE" ]]; then
     CMAKE_ARGS="$CMAKE_ARGS -DENABLE_EXPERIMENTAL=TRUE"
@@ -1386,8 +1432,63 @@ build_package() {
     cmake --build . --target build_es_cv -- ${VERBOSE} -j $THREAD_NUM
     [ $? -ne 0 ] && echo "[ERROR] target:build_es_cv compile failed!" && exit 1
   fi
+  clean_rpm_deb_package
   cmake --build . --target package -- ${VERBOSE} -j $THREAD_NUM
+  if [ $? -ne 0 ]; then
+    echo "[ERROR] target:package build failed!"
+    exit 1
+  fi
+  collect_rpm_deb_package
   echo "--------------- build package end ---------------"
+}
+
+find_rpm_deb_package() {
+  if [[ "$PACKAGE_TYPE" == "run" ]]; then
+    return 0
+  fi
+
+  find "${BUILD_PATH}" -type f -name "cann-ops-cv*.${PACKAGE_TYPE}" | sort
+}
+
+clean_rpm_deb_package() {
+  if [[ "$PACKAGE_TYPE" == "run" ]]; then
+    return 0
+  fi
+
+  local package_files=()
+  while IFS= read -r package_file; do
+    package_files+=("${package_file}")
+  done < <(find_rpm_deb_package)
+
+  if [[ ${#package_files[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  for package_file in "${package_files[@]}"; do
+    rm -f "${package_file}"
+    echo "[INFO] Removed stale package artifact: ${package_file}"
+  done
+}
+
+collect_rpm_deb_package() {
+  if [[ "$PACKAGE_TYPE" == "run" ]]; then
+    return 0
+  fi
+
+  local package_files=()
+  while IFS= read -r package_file; do
+    package_files+=("${package_file}")
+  done < <(find_rpm_deb_package)
+
+  if [[ ${#package_files[@]} -eq 0 ]]; then
+    echo "[ERROR] No .${PACKAGE_TYPE} package found in ${BUILD_PATH}"
+    exit 1
+  fi
+
+  for package_file in "${package_files[@]}"; do
+    cp -f "${package_file}" "${BUILD_OUT_PATH}/"
+    echo "[INFO] Package artifact copied to ${BUILD_OUT_PATH}/$(basename "${package_file}")"
+  done
 }
 
 build_ut() {
