@@ -29,7 +29,7 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(
 ```Cpp
 aclnnStatus aclnnThreeInterpolateBackward(
   void          *workspace, 
-  uint64_t       workspaceSize, 
+  uint64_t       workspace_size, 
   aclOpExecutor *executor, 
   aclrtStream    stream)
 ```
