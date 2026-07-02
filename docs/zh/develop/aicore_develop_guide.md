@@ -23,9 +23,9 @@
 
 2. [算子定义](#算子定义)：算子功能说明与原型定义
 
-3. [Tiling实现](#Tiling实现)：实现Host侧算子Tiling函数。
+3. [Tiling实现](#tiling实现)：实现Host侧算子Tiling函数。
 
-4. [Kernel实现](#Kernel实现)：实现Device侧算子核函数。
+4. [Kernel实现](#kernel实现)：实现Device侧算子核函数。
 
 5. [图模式适配](#图模式适配)：自定义算子实现运行图模式。
 
