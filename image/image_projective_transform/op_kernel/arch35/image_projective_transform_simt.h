@@ -73,7 +73,7 @@ __simt_callee__ inline float ReadAsFloat<half>(half val)
 // cast; matches TF 2.x uint8 truncation behavior).
 __simt_callee__ inline uint8_t ClampToUint8(float val)
 {
-    int32_t truncated = static_cast<int32_t>(val);
+    int32_t truncated = __float2int_rz(val);
     if (truncated < 0) {
         return 0;
     }
@@ -137,7 +137,7 @@ __simt_callee__ inline uint8_t CastResult<uint8_t>(float val)
 template <>
 __simt_callee__ inline int32_t CastResult<int32_t>(float val)
 {
-    return static_cast<int32_t>(val);
+    return SafeTruncToInt32(val);
 }
 
 // ===== Fill output with 0 (CONSTANT mode default) =====

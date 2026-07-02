@@ -191,6 +191,20 @@ __simt_callee__ inline int32_t SafeRoundToInt32(float f)
     return static_cast<int32_t>(roundf(f));
 }
 
+// ===== Safe float -> int32 truncation (matches x86 cvttss2si overflow behavior) =====
+// NaN/Inf/overflow (|val| >= 2^31) return INT_MIN, matching x86 cvttss2si.
+// Uses a single integer comparison on the IEEE 754 magnitude (absU):
+//   2^31.0f encodes as 0x4F000000; any |val| >= 2^31, Inf, or NaN has
+//   absU >= 0x4F000000, so one comparison covers all three cases.
+__simt_callee__ inline int32_t SafeTruncToInt32(float val)
+{
+    uint32_t absU = __float_as_uint(val) & 0x7FFFFFFFu;
+    if (absU >= 0x4F000000U) {
+        return INT32_MIN;
+    }
+    return static_cast<int32_t>(val);
+}
+
 // ===== Fast-path selector =====
 __aicore__ inline bool IsFiniteAndBounded(float f, uint32_t threshAbsU)
 {
