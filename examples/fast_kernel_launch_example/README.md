@@ -31,11 +31,14 @@
 3. 构建Wheel包 | Build the Wheel：
 
     ```sh
+    # NPU_SOC_VERSION设置编译款型, Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"
+    export NPU_SOC_VERSION=ascend910b
     # -n: non-isolated build (uses existing environment)
     python3 -m build --wheel -n
     ```
 
-    构建完成后，产物在当前目录的`dist`文件夹下，产物名`ascend_ops-1.0.0-${python_version}-abi3-${arch}.whl`，`${python_version}`表示当前环境中的python版本(python3.8.3为cp38)，`${arch}`表示CPU架构。
+    构建完成后，产物在当前目录的`dist`文件夹下，产物名`ascend_ops-1.0.0-cp38-abi3-${arch}.whl`，`cp38-abi3`表示该Wheel包使用Python 3.8稳定ABI并支持Python 3.8及以上版本，`${arch}`表示CPU架构。
+    旧环境变量`NPU_ARCH`仍可兼容读取，但建议使用`NPU_SOC_VERSION`。
 
 4. 安装Wheel包 | Install Package：
 
