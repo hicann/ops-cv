@@ -359,6 +359,7 @@ int main()
     aclTensor *out = nullptr;
     std::vector<float> selfHostData = {1, 4.1};
     std::vector<float> outHostData = {0, 0, 0};
+    double scales = 1.1;
 
     // 创建self aclTensor
     ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT, &self);
@@ -381,7 +382,7 @@ int main()
     aclOpExecutor *executor;
     // 调用aclnnUpsampleNearest1dBackward第一段接口
     ret = aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
-        self, outputSize, inputSize, 1.1, out, &workspaceSize, &executor);
+        self, outputSize, inputSize, scales, out, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleNearest1dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存

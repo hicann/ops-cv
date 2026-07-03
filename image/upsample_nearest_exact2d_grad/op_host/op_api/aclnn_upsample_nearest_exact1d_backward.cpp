@@ -249,9 +249,8 @@ aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(const aclTensor*
     }
 
     // 调用算子计算
-    const aclTensor* upsampleOut = l0op::UpsampleNearestExact2dGrad(selfContiguous, outputSizeArray, inputSizeArray,
-                                                                    const_cast<aclTensor*>(outContiguous), realScales_h,
-                                                                    realScales_w, true, uniqueExecutor.get());
+    const aclTensor* upsampleOut = l0op::UpsampleNearestExact2dGrad(
+        selfContiguous, outputSizeArray, inputSizeArray, out, realScales_h, realScales_w, true, uniqueExecutor.get());
     CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 转回初始精度
