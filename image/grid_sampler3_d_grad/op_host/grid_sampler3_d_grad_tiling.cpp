@@ -72,6 +72,7 @@ constexpr uint32_t DET_FLOAT32_TILING_KEY = 4;
 constexpr uint32_t DET_FLOAT16_TILING_KEY = 5;
 constexpr uint32_t DET_BFLOAT16_TILING_KEY = 6;
 constexpr uint32_t SIMD_FLOAT32_TILING_KEY = 7;
+constexpr uint8_t SCHEDULE_MODE = 1;
 
 template <typename TilingData>
 class GridSampler3DGradTiling {
@@ -409,9 +410,7 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
 {
     OP_LOGI(tilingContext->GetNodeName(), "Tiling4GridSampler3DGradTiling start.");
     uint32_t deterministic = tilingContext->GetDeterministic();
-    if (deterministic == 0) {
-        OP_LOGI(tilingContext->GetNodeName(), "Deterministic status is closed.");
-    } else {
+    if (deterministic == 1) {
         OP_LOGI(tilingContext->GetNodeName(), "Deterministic status is open.");
     }
     auto compileInfo = reinterpret_cast<const Tiling4GridSampler3DGradCompileInfo*>(tilingContext->GetCompileInfo());
@@ -419,10 +418,9 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
 
     uint32_t ubSize = static_cast<uint32_t>(ubSizePlatForm);
     uint32_t availableUb = ubSize - RESERVED_UB;
-    uint32_t coreNum = 0;
 
     ge::DataType inputDatatype = tilingContext->GetInputDesc(GRAD_INPUT_INDEX)->GetDataType();
-    coreNum = compileInfo->coreNum;
+    uint32_t coreNum = compileInfo->coreNum;
     OP_LOGI(tilingContext->GetNodeName(), "ubSizePlatForm: %lu, coreNum: %u", ubSizePlatForm, coreNum);
 
     InputParamsInfo params;
@@ -438,6 +436,7 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
         tilingContext->SetTilingKey(FLOAT32_TILING_KEY);
         if (deterministic == 1 && compileInfo->regBase) {
             tilingContext->SetTilingKey(DET_FLOAT32_TILING_KEY);
+            tilingContext->SetScheduleMode(SCHEDULE_MODE);
         } else if (params.regBaseSIMD) {
             tilingContext->SetTilingKey(SIMD_FLOAT32_TILING_KEY);
         }
@@ -445,11 +444,13 @@ static ge::graphStatus tiling4GridSampler3DGradTiling(gert::TilingContext* tilin
         tilingContext->SetTilingKey(FLOAT16_TILING_KEY);
         if (deterministic == 1) {
             tilingContext->SetTilingKey(DET_FLOAT16_TILING_KEY);
+            tilingContext->SetScheduleMode(SCHEDULE_MODE);
         }
     } else if (inputDatatype == ge::DT_BF16) {
         tilingContext->SetTilingKey(BFLOAT16_TILING_KEY);
         if (deterministic == 1) {
             tilingContext->SetTilingKey(DET_BFLOAT16_TILING_KEY);
+            tilingContext->SetScheduleMode(SCHEDULE_MODE);
         }
     }
 

@@ -469,6 +469,7 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
                 // bilinear/nearest deterministic: offset from 1-6 to 7-12
                 params.tilingKey += 6;
             }
+            tilingContext->SetScheduleMode(SCHEDULE_MODE);
             uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
             return WORKSPACE_SIZE + VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * CONST_TWO * DET_UB_NUM * params.batch * batchNumPerCore;
         } else {
