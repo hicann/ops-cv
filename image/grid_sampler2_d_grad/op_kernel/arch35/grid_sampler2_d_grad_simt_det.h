@@ -57,6 +57,7 @@ __aicore__ inline void GridSampler2DGradSimtDet<T>::Init(const GridSampler2DGrad
                                                          GM_ADDR inputTensors[GM_PARAMS_SIZE + 1])
 {
     tiling_ = tilingData;
+    uint64_t tmpOutSize = static_cast<uint64_t>(VF_MAX_THREAD_NUM * 16 * tiling_->blockNum);
     // init inputTensor
     inputGm[GRAD_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[GRAD_INPUT_INDEX_SIMT]));
     inputGm[X_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[X_INPUT_INDEX_SIMT]));
@@ -64,12 +65,13 @@ __aicore__ inline void GridSampler2DGradSimtDet<T>::Init(const GridSampler2DGrad
     inputGm[DX_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DX_INPUT_INDEX_SIMT]));
     inputGm[DGRID_INPUT_INDEX_SIMT].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DGRID_INPUT_INDEX_SIMT]));
     tmpOutGm[TMP_OUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ uint32_t*>(inputTensors[WORKSPACE_INDEX]),
-                                            static_cast<uint64_t>(VF_MAX_THREAD_NUM * 16 * tiling_->blockNum));
+                                            tmpOutSize);
     tmpOutValueGm[TMP_OUT_INDEX].SetGlobalBuffer(
-        reinterpret_cast<__gm__ T*>(
-            inputTensors[WORKSPACE_INDEX] +
-            static_cast<uint64_t>(VF_MAX_THREAD_NUM * sizeof(uint32_t) * 16 * tiling_->blockNum)),
-        static_cast<uint64_t>(VF_MAX_THREAD_NUM * 4 * tiling_->blockNum));
+        reinterpret_cast<__gm__ T*>(inputTensors[WORKSPACE_INDEX] + tmpOutSize * sizeof(uint32_t)), tmpOutSize);
+    for (uint64_t i = 0; i < tmpOutSize; i++) {
+        tmpOutGm[TMP_OUT_INDEX].SetValue(i, 0);
+        tmpOutValueGm[TMP_OUT_INDEX].SetValue(i, static_cast<T>(0));
+    }
 }
 
 template <typename T>

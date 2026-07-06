@@ -55,6 +55,10 @@ __aicore__ inline void GridSampler3DGradSimtDet<T>::Init(const GridSampler3DGrad
                                             tmpOutSize);
     tmpOutValueGm[TMP_OUT_INDEX].SetGlobalBuffer(
         reinterpret_cast<__gm__ T*>(inputTensors[WORKSPACE_INDEX] + static_cast<uint64_t>(tmpOutSize * 4)), tmpOutSize);
+    for (uint64_t i = 0; i < tmpOutSize; i++) {
+        tmpOutGm[TMP_OUT_INDEX].SetValue(i, 0);
+        tmpOutValueGm[TMP_OUT_INDEX].SetValue(i, static_cast<T>(0));
+    }
 }
 
 template <typename T>

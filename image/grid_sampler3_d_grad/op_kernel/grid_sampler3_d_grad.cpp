@@ -63,14 +63,17 @@ extern "C" __global__ __aicore__ void grid_sampler3_d_grad(GM_ADDR grad, GM_ADDR
     } else if (TILING_KEY_IS(4)) {
         GridSampler3DGradSimtDet<float> op;
         op.Init(&tilingData, gmTensor);
+        SyncAll();
         op.Process();
     } else if (TILING_KEY_IS(5)) {
         GridSampler3DGradSimtDet<half> op;
         op.Init(&tilingData, gmTensor);
+        SyncAll();
         op.Process();
     } else if (TILING_KEY_IS(6)) {
         GridSampler3DGradSimtDet<bfloat16_t> op;
         op.Init(&tilingData, gmTensor);
+        SyncAll();
         op.Process();
     } else if (TILING_KEY_IS(7)) {
         GridSampler3DGradNS<float> op;
