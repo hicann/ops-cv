@@ -132,6 +132,7 @@
 - images输入必须为4维（NHWC格式）。
 - transforms输入必须为2维，shape为(N, 8)，数据类型为FLOAT。
 - output_shape输入必须为1维，shape为(2,)，数据类型为INT32。
+- output_shape的两个元素[height, width]决定了输出transformed_images的中间两维(HOut, WOut)，即transformed_images.shape[1]=output_shape[0]，transformed_images.shape[2]=output_shape[1]。当output_shape某元素为0时，表示输出为空tensor，算子直接返回，不进行计算。
 - fill_mode当前仅支持"CONSTANT"模式，填充值为0。
 
 ## 调用说明

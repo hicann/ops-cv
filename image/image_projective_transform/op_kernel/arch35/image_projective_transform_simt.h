@@ -22,16 +22,16 @@
 #ifndef IMAGE_PROJECTIVE_TRANSFORM_SIMT_H_
 #define IMAGE_PROJECTIVE_TRANSFORM_SIMT_H_
 
-#include "kernel_operator.h"
-#include "kernel_tiling/kernel_tiling.h"
-#include "simt_api/common_functions.h"
-#include "simt_api/asc_simt.h"
-#include "simt_api/math_functions.h"
-#include "simt_api/asc_fp16.h"
-#include "simt_api/asc_bf16.h"
+#include "image_projective_transform_safe_math.h"
 #include "image_projective_transform_tiling_data.h"
 #include "image_projective_transform_tiling_key.h"
-#include "image_projective_transform_safe_math.h"
+#include "kernel_operator.h"
+#include "kernel_tiling/kernel_tiling.h"
+#include "simt_api/asc_bf16.h"
+#include "simt_api/asc_fp16.h"
+#include "simt_api/asc_simt.h"
+#include "simt_api/common_functions.h"
+#include "simt_api/math_functions.h"
 
 // Disable FMA (fused multiply-add) contraction for all float arithmetic.
 //
@@ -50,7 +50,8 @@
 // NOT affected by this pragma — they still produce correctly-rounded FMA results.
 #pragma clang fp contract(off)
 
-namespace NsImageProjectiveTransform {
+namespace NsImageProjectiveTransform
+{
 
 using namespace AscendC;
 // ===== Helper functions =====
@@ -74,10 +75,12 @@ __simt_callee__ inline float ReadAsFloat<half>(half val)
 __simt_callee__ inline uint8_t ClampToUint8(float val)
 {
     int32_t truncated = __float2int_rz(val);
-    if (truncated < 0) {
+    if (truncated < 0)
+    {
         return 0;
     }
-    if (truncated > 255) {
+    if (truncated > 255)
+    {
         return 255;
     }
     return static_cast<uint8_t>(truncated);
@@ -145,7 +148,8 @@ template <typename T>
 __simt_callee__ inline void FillOutput(__gm__ T* output, int64_t outBase, int32_t channels)
 {
     T fv = CastFillValue<T>(0.0f);
-    for (int32_t c = 0; c < channels; c++) {
+    for (int32_t c = 0; c < channels; c++)
+    {
         output[outBase + c] = fv;
     }
 }
@@ -156,27 +160,67 @@ template <typename T>
 __simt_callee__ inline void FillOutputNaN(__gm__ T* output, int64_t outBase, int32_t channels)
 {
     T nanVal;
-    if constexpr (std::is_same_v<T, half>) {
-        union {
+    if constexpr (std::is_same_v<T, half>)
+    {
+        union
+        {
             float f;
             uint32_t u;
         } nanConv;
         nanConv.u = 0x7FC00000U;
         nanVal = __float2half(nanConv.f);
-    } else if constexpr (std::is_same_v<T, int32_t>) {
+    }
+    else if constexpr (std::is_same_v<T, int32_t>)
+    {
         nanVal = static_cast<int32_t>(0x80000000U);
-    } else if constexpr (std::is_same_v<T, uint8_t>) {
+    }
+    else if constexpr (std::is_same_v<T, uint8_t>)
+    {
         nanVal = 0;
-    } else {
-        union {
+    }
+    else
+    {
+        union
+        {
             float f;
             uint32_t u;
         } nanConv;
         nanConv.u = 0x7FC00000U;
         nanVal = nanConv.f;
     }
-    for (int32_t c = 0; c < channels; c++) {
+    for (int32_t c = 0; c < channels; c++)
+    {
         output[outBase + c] = nanVal;
+    }
+}
+
+// Per-channel bilinear interpolation — volatile prevents FMA contraction on AI Core
+// (matches TF's separate mul+add with individual rounding).
+template <typename T>
+__simt_callee__ inline void BilinearInterpolateChannel(__gm__ T* images, __gm__ T* output, int64_t outBase,
+                                                       int64_t off00, int64_t off10, int64_t off01, int64_t off11,
+                                                       bool valid00, bool valid10, bool valid01, bool valid11,
+                                                       float wx0, float wx1, float wy0, float wy1, float fillValue,
+                                                       int32_t channels)
+{
+    for (int32_t c = 0; c < channels; c++)
+    {
+        float p00 = valid00 ? ReadAsFloat<T>(images[off00 + c]) : fillValue;
+        float p10 = valid10 ? ReadAsFloat<T>(images[off10 + c]) : fillValue;
+        float p01 = valid01 ? ReadAsFloat<T>(images[off01 + c]) : fillValue;
+        float p11 = valid11 ? ReadAsFloat<T>(images[off11 + c]) : fillValue;
+        volatile float m00 = wx0 * p00;
+        volatile float m10 = wx1 * p10;
+        float valYfloor = m00 + m10;
+        volatile float m01 = wx0 * p01;
+        volatile float m11 = wx1 * p11;
+        float valYceil = m01 + m11;
+        volatile float vYf = valYfloor;
+        volatile float vYc = valYceil;
+        volatile float mYf = wy0 * vYf;
+        volatile float mYc = wy1 * vYc;
+        float result = mYf + mYc;
+        output[outBase + c] = CastResult<T>(result);
     }
 }
 
@@ -207,10 +251,13 @@ __simt_callee__ inline void BilinearInterpolateFloat(__gm__ T* images, __gm__ T*
     float yCeil = yFloor + 1.0f;
 
     int32_t x0, y0;
-    if constexpr (FastPath) {
+    if constexpr (FastPath)
+    {
         x0 = static_cast<int32_t>(xFloor);
         y0 = static_cast<int32_t>(yFloor);
-    } else {
+    }
+    else
+    {
         x0 = SafeFloorToInt32(xIn);
         y0 = SafeFloorToInt32(yIn);
     }
@@ -218,10 +265,10 @@ __simt_callee__ inline void BilinearInterpolateFloat(__gm__ T* images, __gm__ T*
     int32_t y1 = y0 + 1;
 
     // Interpolation weights — FMA disabled, matching TF's separate mul+add
-    float wx0 = xCeil - xIn;  // = x_ceil - x
-    float wx1 = xIn - xFloor; // = x - x_floor
-    float wy0 = yCeil - yIn;  // = y_ceil - y
-    float wy1 = yIn - yFloor; // = y - y_floor
+    float wx0 = xCeil - xIn;   // = x_ceil - x
+    float wx1 = xIn - xFloor;  // = x - x_floor
+    float wy0 = yCeil - yIn;   // = y_ceil - y
+    float wy1 = yIn - yFloor;  // = y - y_floor
 
     // Check each neighbor individually (TF behavior: OOB neighbors use fill_value)
     bool valid00 = (x0 >= 0 && x0 < wIn && y0 >= 0 && y0 < hIn);
@@ -235,26 +282,8 @@ __simt_callee__ inline void BilinearInterpolateFloat(__gm__ T* images, __gm__ T*
     int64_t off01 = batchOff + (static_cast<int64_t>(y1) * wIn + x0) * channels;
     int64_t off11 = batchOff + (static_cast<int64_t>(y1) * wIn + x1) * channels;
 
-    for (int32_t c = 0; c < channels; c++) {
-        float p00 = valid00 ? ReadAsFloat<T>(images[off00 + c]) : fillValue;
-        float p10 = valid10 ? ReadAsFloat<T>(images[off10 + c]) : fillValue;
-        float p01 = valid01 ? ReadAsFloat<T>(images[off01 + c]) : fillValue;
-        float p11 = valid11 ? ReadAsFloat<T>(images[off11 + c]) : fillValue;
-        // Bilinear interpolation — volatile prevents FMA contraction on AI Core
-        // (matches TF's separate mul+add with individual rounding)
-        volatile float m00 = wx0 * p00;
-        volatile float m10 = wx1 * p10;
-        float valYfloor = m00 + m10;
-        volatile float m01 = wx0 * p01;
-        volatile float m11 = wx1 * p11;
-        float valYceil = m01 + m11;
-        volatile float vYf = valYfloor;
-        volatile float vYc = valYceil;
-        volatile float mYf = wy0 * vYf;
-        volatile float mYc = wy1 * vYc;
-        float result = mYf + mYc;
-        output[outBase + c] = CastResult<T>(result);
-    }
+    BilinearInterpolateChannel<T>(images, output, outBase, off00, off10, off01, off11, valid00, valid10, valid01,
+                                  valid11, wx0, wx1, wy0, wy1, fillValue, channels);
 }
 
 // ===== Nearest interpolation =====
@@ -267,21 +296,26 @@ __simt_callee__ inline void NearestInterpolate(__gm__ T* images, __gm__ T* outpu
                                                float yIn, int32_t hIn, int32_t wIn, int32_t channels, int64_t b)
 {
     int32_t xi, yi;
-    if constexpr (FastPath) {
+    if constexpr (FastPath)
+    {
         xi = static_cast<int32_t>(roundf(xIn));
         yi = static_cast<int32_t>(roundf(yIn));
-    } else {
+    }
+    else
+    {
         xi = SafeRoundToInt32(xIn);
         yi = SafeRoundToInt32(yIn);
     }
 
-    if (xi < 0 || xi >= wIn || yi < 0 || yi >= hIn) {
+    if (xi < 0 || xi >= wIn || yi < 0 || yi >= hIn)
+    {
         FillOutput<T>(output, outBase, channels);
         return;
     }
 
     int64_t inOffset = (b * static_cast<int64_t>(hIn) * wIn + static_cast<int64_t>(yi) * wIn + xi) * channels;
-    for (int32_t c = 0; c < channels; c++) {
+    for (int32_t c = 0; c < channels; c++)
+    {
         output[outBase + c] = images[inOffset + c];
     }
 }
@@ -332,7 +366,8 @@ __simt_callee__ inline void ComputeProjection(__gm__ float* transforms, IDX_T b,
     float a5 = transforms[transBase + 5];
     float a6 = transforms[transBase + 6];
     float a7 = transforms[transBase + 7];
-    if constexpr (FastPath) {
+    if constexpr (FastPath)
+    {
         volatile float a6fx = a6 * fxOut;
         volatile float a7fy = a7 * fyOut;
         denom = a6fx + a7fy + 1.0f;
@@ -342,7 +377,9 @@ __simt_callee__ inline void ComputeProjection(__gm__ float* transforms, IDX_T b,
         volatile float a4fy = a4 * fyOut;
         numX = a0fx + a1fy + a2;
         numY = a3fx + a4fy + a5;
-    } else {
+    }
+    else
+    {
         denom = SafeSum3(SafeMul(a6, fxOut), SafeMul(a7, fyOut), 1.0f);
         numX = SafeSum3(SafeMul(a0, fxOut), SafeMul(a1, fyOut), a2);
         numY = SafeSum3(SafeMul(a3, fxOut), SafeMul(a4, fyOut), a5);
@@ -354,9 +391,12 @@ template <typename T, uint32_t interpMode, bool FastPath>
 __simt_callee__ inline void DispatchInterpolate(__gm__ T* images, __gm__ T* output, int64_t outBase, float xIn,
                                                 float yIn, int32_t hIn, int32_t wIn, int32_t channels, int64_t b)
 {
-    if constexpr (interpMode == IPT_TPL_BILINEAR) {
+    if constexpr (interpMode == IPT_TPL_BILINEAR)
+    {
         BilinearInterpolateFloat<T, FastPath>(images, output, outBase, xIn, yIn, hIn, wIn, channels, b);
-    } else {
+    }
+    else
+    {
         NearestInterpolate<T, FastPath>(images, output, outBase, xIn, yIn, hIn, wIn, channels, b);
     }
 }
@@ -368,32 +408,40 @@ __simt_callee__ inline void ProcessPixelImpl(IDX_T xOut, IDX_T yOut, IDX_T b, in
 {
     float fxOut = static_cast<float>(xOut);
     float fyOut = static_cast<float>(yOut);
-    int64_t outBase = (static_cast<int64_t>(b) * hOut * wOut + static_cast<int64_t>(yOut) * wOut +
-                       static_cast<int64_t>(xOut)) *
-                      channels;
+    int64_t outBase =
+        (static_cast<int64_t>(b) * hOut * wOut + static_cast<int64_t>(yOut) * wOut + static_cast<int64_t>(xOut)) *
+        channels;
 
     float denom, numX, numY;
     ComputeProjection<FastPath>(transforms, b, fxOut, fyOut, denom, numX, numY);
 
-    if (denom == 0.0f) {
+    if (denom == 0.0f)
+    {
         FillOutput<T>(output, outBase, channels);
         return;
     }
 
     float xIn, yIn;
-    if constexpr (FastPath) {
+    if constexpr (FastPath)
+    {
         xIn = DsDiv(numX, denom);
         yIn = DsDiv(numY, denom);
         DispatchInterpolate<T, interpMode, true>(images, output, outBase, xIn, yIn, hIn, wIn, channels,
                                                  static_cast<int64_t>(b));
-    } else {
+    }
+    else
+    {
         xIn = FlushSubnormal(SafeDiv(numX, denom));
         yIn = FlushSubnormal(SafeDiv(numY, denom));
         bool notFinite = isinf(xIn) || isnan(xIn) || isinf(yIn) || isnan(yIn);
-        if (notFinite) {
-            if constexpr (interpMode == IPT_TPL_BILINEAR) {
+        if (notFinite)
+        {
+            if constexpr (interpMode == IPT_TPL_BILINEAR)
+            {
                 FillOutputNaN<T>(output, outBase, channels);
-            } else {
+            }
+            else
+            {
                 FillOutput<T>(output, outBase, channels);
             }
             return;
@@ -415,13 +463,29 @@ __simt_callee__ inline void ProcessPixelMixed(IDX_T xOut, IDX_T yOut, IDX_T b, i
                                               int32_t wOut, int32_t channels, __gm__ T* images,
                                               __gm__ float* transforms, __gm__ T* output, bool fastPath)
 {
-    if (fastPath) {
+    if (fastPath)
+    {
         ProcessPixelImpl<T, interpMode, true, IDX_T>(xOut, yOut, b, hIn, wIn, hOut, wOut, channels, images, transforms,
                                                      output);
-    } else {
+    }
+    else
+    {
         ProcessPixelImpl<T, interpMode, false, IDX_T>(xOut, yOut, b, hIn, wIn, hOut, wOut, channels, images, transforms,
                                                       output);
     }
+}
+
+// ===== Coordinate decomposition helper (shared by both VF kernels) =====
+// Decomposes a flat pixel index into batch index b and spatial coordinates (xOut, yOut).
+// R002: replaces hardware division with magic+shift multiplication.
+template <typename IDX_T>
+__simt_callee__ inline void DecomposePixel(IDX_T pixelIdx, IDX_T magicSpatial, IDX_T shiftSpatial, IDX_T spatialSize,
+                                           IDX_T magicW, IDX_T shiftW, int32_t wOut, IDX_T& b, IDX_T& yOut, IDX_T& xOut)
+{
+    b = Simt::UintDiv<IDX_T>(pixelIdx, magicSpatial, shiftSpatial);
+    IDX_T remainder = pixelIdx - b * spatialSize;
+    yOut = Simt::UintDiv<IDX_T>(remainder, magicW, shiftW);
+    xOut = remainder - yOut * static_cast<IDX_T>(wOut);
 }
 
 // ===== Main SIMT VF kernel (uniform fastPath, R001 + R002 + R003 + R006) =====
@@ -447,12 +511,10 @@ __simt_vf__ __aicore__ __launch_bounds__(THREADS<IDX_T>) inline void OpImageProj
     IDX_T step = static_cast<IDX_T>(blockDim.x) * static_cast<IDX_T>(gridDim.x);
     for (IDX_T pixelIdx =
              static_cast<IDX_T>(blockIdx.x) * static_cast<IDX_T>(blockDim.x) + static_cast<IDX_T>(threadIdx.x);
-         pixelIdx < totalPixels; pixelIdx += step) {
-        // R002: fast division by constant spatialSize and wOut
-        IDX_T b = Simt::UintDiv<IDX_T>(pixelIdx, magicSpatial, shiftSpatial);
-        IDX_T remainder = pixelIdx - b * spatialSize;
-        IDX_T yOut = Simt::UintDiv<IDX_T>(remainder, magicW, shiftW);
-        IDX_T xOut = remainder - yOut * static_cast<IDX_T>(wOut);
+         pixelIdx < totalPixels; pixelIdx += step)
+    {
+        IDX_T b, yOut, xOut;
+        DecomposePixel<IDX_T>(pixelIdx, magicSpatial, shiftSpatial, spatialSize, magicW, shiftW, wOut, b, yOut, xOut);
         ProcessPixelImpl<T, interpMode, FastPath, IDX_T>(xOut, yOut, b, hIn, wIn, hOut, wOut, channels, images,
                                                          transforms, output);
     }
@@ -472,11 +534,10 @@ __simt_vf__ __aicore__ __launch_bounds__(THREADS<IDX_T>) inline void OpImageProj
     IDX_T step = static_cast<IDX_T>(blockDim.x) * static_cast<IDX_T>(gridDim.x);
     for (IDX_T pixelIdx =
              static_cast<IDX_T>(blockIdx.x) * static_cast<IDX_T>(blockDim.x) + static_cast<IDX_T>(threadIdx.x);
-         pixelIdx < totalPixels; pixelIdx += step) {
-        IDX_T b = Simt::UintDiv<IDX_T>(pixelIdx, magicSpatial, shiftSpatial);
-        IDX_T remainder = pixelIdx - b * spatialSize;
-        IDX_T yOut = Simt::UintDiv<IDX_T>(remainder, magicW, shiftW);
-        IDX_T xOut = remainder - yOut * static_cast<IDX_T>(wOut);
+         pixelIdx < totalPixels; pixelIdx += step)
+    {
+        IDX_T b, yOut, xOut;
+        DecomposePixel<IDX_T>(pixelIdx, magicSpatial, shiftSpatial, spatialSize, magicW, shiftW, wOut, b, yOut, xOut);
         bool fastPath = (fastPathFlags[static_cast<size_t>(b)] != 0);
         ProcessPixelMixed<T, interpMode, IDX_T>(xOut, yOut, b, hIn, wIn, hOut, wOut, channels, images, transforms,
                                                 output, fastPath);
@@ -503,15 +564,20 @@ __aicore__ inline void DispatchVf(IDX_T totalPixels, IDX_T spatialSize, int32_t 
     GetUintDivMagicAndShift<IDX_T>(magicSpatial, shiftSpatial, spatialSize);
     GetUintDivMagicAndShift<IDX_T>(magicW, shiftW, static_cast<IDX_T>(wOut));
 
-    if (allFast) {
+    if (allFast)
+    {
         asc_vf_call<OpImageProjectiveTransformSimtKernel<T, interpMode, true, IDX_T>>(
             dim3(THREADS<IDX_T>), totalPixels, spatialSize, hIn, wIn, hOut, wOut, channels, imagesGm, transformsGm,
             outputGm, magicSpatial, shiftSpatial, magicW, shiftW);
-    } else if (allSafe) {
+    }
+    else if (allSafe)
+    {
         asc_vf_call<OpImageProjectiveTransformSimtKernel<T, interpMode, false, IDX_T>>(
             dim3(THREADS<IDX_T>), totalPixels, spatialSize, hIn, wIn, hOut, wOut, channels, imagesGm, transformsGm,
             outputGm, magicSpatial, shiftSpatial, magicW, shiftW);
-    } else {
+    }
+    else
+    {
         asc_vf_call<OpImageProjectiveTransformSimtKernelMixed<T, interpMode, IDX_T>>(
             dim3(THREADS<IDX_T>), totalPixels, spatialSize, hIn, wIn, hOut, wOut, channels, imagesGm, transformsGm,
             outputGm, magicSpatial, shiftSpatial, magicW, shiftW, fastPathFlags);
@@ -528,7 +594,8 @@ __aicore__ inline void ComputeBatchFastPath(__gm__ float* transformsGm, int32_t 
 {
     allFast = true;
     allSafe = true;
-    for (int32_t b = 0; b < batchSize; b++) {
+    for (int32_t b = 0; b < batchSize; b++)
+    {
         int64_t transBase = static_cast<int64_t>(b) * 8;
         float a0 = transformsGm[transBase + 0];
         float a1 = transformsGm[transBase + 1];
@@ -540,9 +607,12 @@ __aicore__ inline void ComputeBatchFastPath(__gm__ float* transformsGm, int32_t 
         float a7 = transformsGm[transBase + 7];
         bool fp = IsFastPath(a0, a1, a2, a3, a4, a5, a6, a7);
         fastPathFlags[b] = fp ? 1 : 0;
-        if (fp) {
+        if (fp)
+        {
             allSafe = false;
-        } else {
+        }
+        else
+        {
             allFast = false;
         }
     }
@@ -563,34 +633,55 @@ __aicore__ inline void Process(GM_ADDR images, GM_ADDR transforms, GM_ADDR trans
     int64_t totalPixels64 = static_cast<int64_t>(tilingData->batchSize) * hOut * wOut;
     int32_t batchSize = tilingData->batchSize;
 
+    if (totalPixels64 <= 0 || batchSize <= 0)
+    {
+        return;
+    }
+
     // ===== Batch-level fastPath pre-computation (R001) =====
     // transforms 对同一 batch 的所有像素相同，逐像素重复 IsFastPath 判断是冗余的。
     // 在 scalar 侧按 batch 预计算 fastPath 标志到 UB，并判定全 fast / 全 safe / 混合。
     // 全 fast / 全 safe 时 VF 内编译期消除分支；混合时退化到运行时分支（极少触发）。
-    LocalMemAllocator<Hardware::UB> ubAlloc;
+    //
+    // UB 容量自适应：fastPathFlags 需要 batchSize bytes（32 对齐）。当 batch 数超过
+    // UB 安全阈值时，跳过预计算，统一走 safe path（allSafe=true）。功能正确，仅损失
+    // fast path 的性能优化。正常图像场景 batch 数远小于阈值，不受影响。
+    constexpr int64_t UB_FASTPATH_LIMIT = 65536;
     int64_t alignedBatchN = ((static_cast<int64_t>(batchSize) + 31) / 32) * 32;
-    LocalTensor<uint8_t> fastPathTensor = ubAlloc.Alloc<uint8_t>(alignedBatchN);
-    __ubuf__ uint8_t* fastPathFlags = (__ubuf__ uint8_t*)fastPathTensor.GetPhyAddr();
 
-    bool allFast = true;
+    bool allFast = false;
     bool allSafe = true;
-    ComputeBatchFastPath<T>(transformsGm, batchSize, fastPathFlags, allFast, allSafe);
-    DataSyncBarrier<MemDsbT::UB>();
+    __ubuf__ uint8_t* fastPathFlags = nullptr;
+
+    if (alignedBatchN <= UB_FASTPATH_LIMIT)
+    {
+        LocalMemAllocator<AscendC::Hardware::UB> ubAlloc;
+        LocalTensor<uint8_t> fastPathTensor = ubAlloc.Alloc<uint8_t>(alignedBatchN);
+        fastPathFlags = (__ubuf__ uint8_t*)fastPathTensor.GetPhyAddr();
+
+        allFast = true;
+        allSafe = true;
+        ComputeBatchFastPath<T>(transformsGm, batchSize, fastPathFlags, allFast, allSafe);
+        DataSyncBarrier<MemDsbT::UB>();
+    }
 
     // ===== R003: dispatch by index width =====
     // totalPixels <= INT32_MAX → uint32_t path (32-bit arithmetic, 1024 threads)
     // totalPixels >  INT32_MAX → uint64_t path (64-bit arithmetic, 512 threads)
-    if (totalPixels64 <= INT32_MAX_VAL) {
+    if (totalPixels64 <= INT32_MAX_VAL)
+    {
         DispatchVf<T, interpMode, uint32_t>(static_cast<uint32_t>(totalPixels64), static_cast<uint32_t>(spatialSize64),
                                             tilingData->hIn, tilingData->wIn, hOut, wOut, tilingData->channels,
                                             imagesGm, transformsGm, outputGm, allFast, allSafe, fastPathFlags);
-    } else {
+    }
+    else
+    {
         DispatchVf<T, interpMode, uint64_t>(static_cast<uint64_t>(totalPixels64), static_cast<uint64_t>(spatialSize64),
                                             tilingData->hIn, tilingData->wIn, hOut, wOut, tilingData->channels,
                                             imagesGm, transformsGm, outputGm, allFast, allSafe, fastPathFlags);
     }
 }
 
-} // namespace NsImageProjectiveTransform
+}  // namespace NsImageProjectiveTransform
 
-#endif // IMAGE_PROJECTIVE_TRANSFORM_SIMT_H_
+#endif  // IMAGE_PROJECTIVE_TRANSFORM_SIMT_H_

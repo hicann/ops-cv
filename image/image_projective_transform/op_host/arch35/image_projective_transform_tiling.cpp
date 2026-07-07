@@ -11,16 +11,18 @@
 
 #include <set>
 #include <string>
-#include "log/log.h"
-#include "platform/platform_ascendc.h"
-#include "util/math_util.h"
-#include "op_host/tiling_util.h"
-#include "op_host/tiling_templates_registry.h"
-#include "exe_graph/runtime/runtime_attrs.h"
+
 #include "../../op_kernel/arch35/image_projective_transform_tiling_data.h"
 #include "../../op_kernel/arch35/image_projective_transform_tiling_key.h"
+#include "exe_graph/runtime/runtime_attrs.h"
+#include "log/log.h"
+#include "op_host/tiling_templates_registry.h"
+#include "op_host/tiling_util.h"
+#include "platform/platform_ascendc.h"
+#include "util/math_util.h"
 
-namespace optiling {
+namespace optiling
+{
 
 constexpr int64_t PER_CORE_MIN_PIXELS = 1024;
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
@@ -28,7 +30,9 @@ constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 constexpr int32_t INTERP_BILINEAR = 0;
 constexpr int32_t INTERP_NEAREST = 1;
 
-struct ImageProjectiveTransformCompileInfo {};
+struct ImageProjectiveTransformCompileInfo
+{
+};
 
 static const std::set<ge::DataType> SUPPORTED_DTYPES = {ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_UINT8, ge::DT_INT32};
 
@@ -37,9 +41,61 @@ static ge::graphStatus CheckInputDtype(gert::TilingContext* context)
     auto inputDesc = context->GetInputDesc(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
     auto inputDtype = inputDesc->GetDataType();
-    if (SUPPORTED_DTYPES.count(inputDtype) == 0) {
+    if (SUPPORTED_DTYPES.count(inputDtype) == 0)
+    {
         OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "images", Ops::Base::ToString(inputDtype).c_str(),
                                   "float16, float, uint8 and int32");
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
+// Validate that transforms is 2-D (N, 8) with N matching images batch, and
+// output_shape is 1-D with at least 2 elements. infershape performs the same
+// checks but may not run in all graph modes; tiling is the guaranteed gate.
+// imagesN is passed as int64_t to avoid truncating huge batch sizes (>INT32_MAX)
+// that would silently skip the batch-equality check via int32_t overflow.
+static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t imagesN)
+{
+    auto transformsInput = context->GetInputShape(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, transformsInput);
+    auto transformsShape = transformsInput->GetStorageShape();
+    if (transformsShape.GetDimNum() != 2)
+    {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "transforms",
+                                     std::to_string(transformsShape.GetDimNum()).c_str(), "2D");
+        return ge::GRAPH_FAILED;
+    }
+    if (transformsShape.GetDim(1) != 8)
+    {
+        OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "transforms",
+                                  std::to_string(transformsShape.GetDim(1)).c_str(), "8");
+        return ge::GRAPH_FAILED;
+    }
+    int64_t transformsN = transformsShape.GetDim(0);
+    if (imagesN >= 0 && transformsN >= 0 && imagesN != transformsN)
+    {
+        OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(context->GetNodeName(), "transforms, images",
+                                               (std::to_string(transformsN) + ", " + std::to_string(imagesN)).c_str(),
+                                               "transforms.shape[0] must equal images.shape[0]");
+        return ge::GRAPH_FAILED;
+    }
+
+    auto outputShapeInput = context->GetInputShape(2);
+    OP_CHECK_NULL_WITH_CONTEXT(context, outputShapeInput);
+    auto outputShapeInputShape = outputShapeInput->GetStorageShape();
+    if (outputShapeInputShape.GetDimNum() != 1)
+    {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "output_shape",
+                                     std::to_string(outputShapeInputShape.GetDimNum()).c_str(), "1D");
+        return ge::GRAPH_FAILED;
+    }
+    int64_t outputShapeSize = outputShapeInputShape.GetDim(0);
+    if (outputShapeSize >= 0 && outputShapeSize < 2)
+    {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "output_shape",
+                                              std::to_string(outputShapeSize).c_str(),
+                                              "output_shape must have at least 2 elements [H, W]");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -51,13 +107,15 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     coreNum = ascendcPlatform.GetCoreNumAiv();
-    if (coreNum == 0) {
+    if (coreNum == 0)
+    {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "coreNum", std::to_string(coreNum).c_str(),
                                               "coreNum must be greater than zero");
         return ge::GRAPH_FAILED;
     }
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    if (ubSize == 0) {
+    if (ubSize == 0)
+    {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "ubSize", std::to_string(ubSize).c_str(),
                                               "ubSize must be greater than zero");
         return ge::GRAPH_FAILED;
@@ -68,22 +126,28 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
 static void ResolveOutputShape(gert::TilingContext* context, int32_t HIn, int32_t WIn, int32_t& HOut, int32_t& WOut)
 {
     const auto* outputShapeTensor = context->GetInputTensor(2);
-    if (outputShapeTensor != nullptr) {
+    if (outputShapeTensor != nullptr)
+    {
         const int32_t* outputShapeData = outputShapeTensor->GetData<int32_t>();
-        if (outputShapeData != nullptr && outputShapeTensor->GetShapeSize() >= 2) {
+        if (outputShapeData != nullptr && outputShapeTensor->GetShapeSize() >= 2)
+        {
             HOut = outputShapeData[0];
             WOut = outputShapeData[1];
         }
     }
 
-    if (HOut <= 0 || WOut <= 0) {
+    if (HOut <= 0 || WOut <= 0)
+    {
         const auto* outShape = context->GetOutputShape(0);
-        if (outShape != nullptr) {
+        if (outShape != nullptr)
+        {
             auto outStorageShape = outShape->GetStorageShape();
-            if (outStorageShape.GetDimNum() >= 3) {
+            if (outStorageShape.GetDimNum() >= 3)
+            {
                 int64_t dim1 = outStorageShape.GetDim(1);
                 int64_t dim2 = outStorageShape.GetDim(2);
-                if (dim1 > 0 && dim2 > 0) {
+                if (dim1 > 0 && dim2 > 0)
+                {
                     HOut = static_cast<int32_t>(dim1);
                     WOut = static_cast<int32_t>(dim2);
                 }
@@ -91,7 +155,8 @@ static void ResolveOutputShape(gert::TilingContext* context, int32_t HIn, int32_
         }
     }
 
-    if (HOut <= 0 || WOut <= 0) {
+    if (HOut <= 0 || WOut <= 0)
+    {
         HOut = HIn;
         WOut = WIn;
     }
@@ -100,11 +165,14 @@ static void ResolveOutputShape(gert::TilingContext* context, int32_t HIn, int32_
 static int32_t ParseInterpMode(gert::TilingContext* context)
 {
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
-    if (attrs != nullptr) {
+    if (attrs != nullptr)
+    {
         const char* interpStr = attrs->GetStr(0);
-        if (interpStr != nullptr) {
+        if (interpStr != nullptr)
+        {
             std::string interpStrVal(interpStr);
-            if (interpStrVal == "NEAREST") {
+            if (interpStrVal == "NEAREST")
+            {
                 return INTERP_NEAREST;
             }
         }
@@ -115,10 +183,12 @@ static int32_t ParseInterpMode(gert::TilingContext* context)
 static int32_t ComputeNeedCoreNum(int64_t totalPixels, int64_t coreNum)
 {
     int64_t perCorePixels = (totalPixels > 0) ? Ops::Base::CeilDiv(totalPixels, coreNum) : 0;
-    if (perCorePixels > 0 && perCorePixels < PER_CORE_MIN_PIXELS) {
+    if (perCorePixels > 0 && perCorePixels < PER_CORE_MIN_PIXELS)
+    {
         perCorePixels = PER_CORE_MIN_PIXELS;
     }
-    if (perCorePixels > 0) {
+    if (perCorePixels > 0)
+    {
         perCorePixels = (perCorePixels + 31) / 32 * 32;
     }
     return (totalPixels > 0) ? static_cast<int32_t>(Ops::Base::CeilDiv(totalPixels, perCorePixels)) : 0;
@@ -131,7 +201,8 @@ static ge::graphStatus PopulateTilingData(gert::TilingContext* context, int32_t 
     auto* tiling = context->GetTilingData<ImageProjectiveTransformTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     if (memset_s(tiling, sizeof(ImageProjectiveTransformTilingData), 0, sizeof(ImageProjectiveTransformTilingData)) !=
-        EOK) {
+        EOK)
+    {
         return ge::GRAPH_FAILED;
     }
 
@@ -149,13 +220,15 @@ static ge::graphStatus PopulateTilingData(gert::TilingContext* context, int32_t 
 
 static ge::graphStatus SetWorkspaceAndMemory(gert::TilingContext* context, uint64_t ubSize)
 {
-    if (ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE) {
+    if (ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE)
+    {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "ubSize", std::to_string(ubSize).c_str(),
                                               "ubSize must be greater than DCACHE_SIZE");
         return ge::GRAPH_FAILED;
     }
     auto res = context->SetLocalMemorySize(static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
-    if (res != ge::GRAPH_SUCCESS) {
+    if (res != ge::GRAPH_SUCCESS)
+    {
         return ge::GRAPH_FAILED;
     }
 
@@ -169,32 +242,52 @@ static ge::graphStatus SetWorkspaceAndMemory(gert::TilingContext* context, uint6
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* context)
+// Parse images shape, validate dims, and check transforms/output_shape.
+// Returns N, HIn, WIn, C via output parameters.
+static ge::graphStatus ParseAndValidateInputs(gert::TilingContext* context, int32_t& N, int32_t& HIn, int32_t& WIn,
+                                              int32_t& C)
 {
-    uint64_t ubSize = 0;
-    int64_t coreNum = 0;
-    if (GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS) {
-        return ge::GRAPH_FAILED;
-    }
-
-    if (CheckInputDtype(context) != ge::GRAPH_SUCCESS) {
-        return ge::GRAPH_FAILED;
-    }
-
     auto imagesInput = context->GetInputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, imagesInput);
     auto imagesShape = imagesInput->GetStorageShape();
 
-    if (imagesShape.GetDimNum() != 4) {
+    if (imagesShape.GetDimNum() != 4)
+    {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "images", std::to_string(imagesShape.GetDimNum()).c_str(),
                                      "4");
         return ge::GRAPH_FAILED;
     }
 
-    int32_t N = static_cast<int32_t>(imagesShape.GetDim(0));
-    int32_t HIn = static_cast<int32_t>(imagesShape.GetDim(1));
-    int32_t WIn = static_cast<int32_t>(imagesShape.GetDim(2));
-    int32_t C = static_cast<int32_t>(imagesShape.GetDim(3));
+    N = static_cast<int32_t>(imagesShape.GetDim(0));
+    HIn = static_cast<int32_t>(imagesShape.GetDim(1));
+    WIn = static_cast<int32_t>(imagesShape.GetDim(2));
+    C = static_cast<int32_t>(imagesShape.GetDim(3));
+
+    return CheckInputShapes(context, imagesShape.GetDim(0));
+}
+
+static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* context)
+{
+    uint64_t ubSize = 0;
+    int64_t coreNum = 0;
+    if (GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS)
+    {
+        return ge::GRAPH_FAILED;
+    }
+
+    if (CheckInputDtype(context) != ge::GRAPH_SUCCESS)
+    {
+        return ge::GRAPH_FAILED;
+    }
+
+    int32_t N = 0;
+    int32_t HIn = 0;
+    int32_t WIn = 0;
+    int32_t C = 0;
+    if (ParseAndValidateInputs(context, N, HIn, WIn, C) != ge::GRAPH_SUCCESS)
+    {
+        return ge::GRAPH_FAILED;
+    }
 
     int32_t HOut = 0;
     int32_t WOut = 0;
@@ -207,24 +300,27 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
 
     int32_t needCoreNum = ComputeNeedCoreNum(totalPixels, coreNum);
 
-    if (totalPixels == 0) {
+    if (totalPixels == 0)
+    {
         context->SetBlockDim(1);
         return ge::GRAPH_SUCCESS;
     }
 
     if (PopulateTilingData(context, needCoreNum, totalPixels, spatialSize, N, HIn, WIn, HOut, WOut, C) !=
-        ge::GRAPH_SUCCESS) {
+        ge::GRAPH_SUCCESS)
+    {
         return ge::GRAPH_FAILED;
     }
 
     context->SetBlockDim(needCoreNum);
 
-    if (SetWorkspaceAndMemory(context, ubSize) != ge::GRAPH_SUCCESS) {
+    if (SetWorkspaceAndMemory(context, ubSize) != ge::GRAPH_SUCCESS)
+    {
         return ge::GRAPH_FAILED;
     }
 
-    uint64_t tilingKeyVal = (interpMode == INTERP_NEAREST) ? static_cast<uint64_t>(IPT_TPL_NEAREST) :
-                                                             static_cast<uint64_t>(IPT_TPL_BILINEAR);
+    uint64_t tilingKeyVal = (interpMode == INTERP_NEAREST) ? static_cast<uint64_t>(IPT_TPL_NEAREST)
+                                                           : static_cast<uint64_t>(IPT_TPL_BILINEAR);
     context->SetTilingKey(GET_TPL_TILING_KEY(tilingKeyVal));
 
     return ge::GRAPH_SUCCESS;
@@ -240,4 +336,4 @@ IMPL_OP_OPTILING(ImageProjectiveTransform)
     .TilingParse<ImageProjectiveTransformCompileInfo>(TilingParseForImageProjectiveTransform)
     .TilingInputsDataDependency({2});
 
-} // namespace optiling
+}  // namespace optiling
