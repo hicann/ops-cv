@@ -116,7 +116,9 @@ class CompileOpStaticLib:
         if is_need_path and file_path.name.endswith(".json"):
             with open(file_path, 'r', encoding='UTF-8') as json_fd:
                 json_dict = json.load(json_fd)
-                json_dict["filePath"] = str(file_path).split("/bin/")[-1].split("/kernel/")[-1]
+                json_dict["filePath"] = (
+                    str(file_path).split("/bin/")[-1].split("/kernel/")[-1].replace("/ops_cv/", "/", 1)
+                )
                 file_path = os.path.join(out_path, os.path.basename(file_path))
                 with open(file_path, 'w', encoding='UTF-8') as new_json_fd:
                     new_json_fd.write(json.dumps(json_dict, indent=4))
