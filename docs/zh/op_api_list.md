@@ -42,7 +42,7 @@
 | [aclnnThreeInterpolateBackward](../../image/three_interpolate_backward/docs/aclnnThreeInterpolateBackward.md) | 根据grad_x, idx, weight进行三点插值计算梯度得到grad_y。      |默认非确定性实现，不支持配置开启| - |
 | [aclnnUpsampleNearest1d](../../image/resize_nearest_neighbor_v2/docs/aclnnUpsampleNearest1d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleNearest2d](../../image/resize_nearest_neighbor_v2/docs/aclnnUpsampleNearest2d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|
-| [aclnnUpsampleTrilinear3d](../../image/resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md) | 对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。 |默认确定性实现| - |
+| [aclnnUpsampleTrilinear3d](../../image/resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md) | 对由多个输入通道组成的输入信号应用三线性插值算法进行上采样。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleBicubic2d](../../image/upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md) | 对由多个输入通道组成的输入信号应用2D双三次上采样。           |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleBicubic2dAA](../../image/upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md) | 对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleBicubic2dAAGrad](../../image/upsample_bicubic2d_aa_grad/docs/aclnnUpsampleBicubic2dAAGrad.md) | [aclnnUpsampleBicubic2dAA](../../image/upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。 |默认确定性实现|默认非确定性实现，支持配置开启|

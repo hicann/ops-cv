@@ -542,7 +542,7 @@ int main()
     aclDestroyTensor(d);
     aclDestroyTensor(findices);
     aclDestroyTensor(barycentric);
-
+    
     // 7. 释放device资源，需要根据具体API的接口定义修改
     if (workspaceSize > 0) {
         aclrtFree(workspaceAddr);
