@@ -145,7 +145,7 @@ static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputS
 }
 
 static const aclTensor* upsampleNearestExact1dCompute(const aclTensor* selfContiguous, const aclIntArray* outputSize,
-                                                      float scales, const aclTensor* outContiguous,
+                                                      float scales, float originScales, const aclTensor* outContiguous,
                                                       aclOpExecutor* executor)
 {
     if (IsRegBase()) {
@@ -164,7 +164,11 @@ static const aclTensor* upsampleNearestExact1dCompute(const aclTensor* selfConti
 
             auto size = executor->ConvertToTensor(outputSizeArray, op::ToOpDataType(ACL_INT32));
             CHECK_RET(size != nullptr, nullptr);
-            auto result = l0op::ResizeNearestNeighborV2(self4d, size, nullptr, false, true, out4d, executor);
+
+            vector<float> scalesList{1, originScales};
+            const aclFloatArray* scalesArray = executor->AllocFloatArray(scalesList.data(), DIM_TWO);
+            CHECK_RET(scalesArray != nullptr, nullptr);
+            auto result = l0op::ResizeNearestNeighborV2(self4d, size, scalesArray, false, true, out4d, executor);
             CHECK_RET(result != nullptr, nullptr);
             return View4dAs3d(result, selfContiguous->GetStorageFormat(), executor);
         }
@@ -223,9 +227,10 @@ aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(const aclTensor* self, c
     CHECK_RET(outContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
     // 使用double类型计算1/scale，避免tiling中用float计算造成精度损失
     float realScales = scales > 0 ? static_cast<float>(1.0 / scales) : 0;
+    float originScales = scales > 0 ? static_cast<float>(scales) : 0;
 
     // 调用upsampleNearestExact1dCompute计算
-    auto result = upsampleNearestExact1dCompute(selfContiguous, outputSize, realScales, outContiguous,
+    auto result = upsampleNearestExact1dCompute(selfContiguous, outputSize, realScales, originScales, outContiguous,
                                                 uniqueExecutor.get());
     CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
