@@ -6,7 +6,7 @@
 
 1. **[前提条件](../README.md)**：参考项目README完成环境准备和源码下载，此处不再赘述。快速入门场景**推荐CANNLab或Docker部署**，操作简单。
 
-   > **说明**：CANNLab或Docker环境默认提供最新商发版CANN包；如需体验master分支最新能力，可手动搭建环境。
+   > **说明**：CANNLab或Docker环境默认提供最新版本CANN包；如需体验master分支最新能力，可手动搭建环境。
 
 2. **[编译运行](#一编译运行)**：编译自定义算子包并安装，实现快速调用算子。
 
@@ -24,14 +24,14 @@
 
 - CANNLab云开发环境：
 
-   默认提供最新商发版CANN包配套的项目源码，进入源码目录，\$\{gitCode\_id\}替换为开发者个人gitCode账号。
+   默认提供最新版本CANN包配套的项目源码，进入源码目录，\$\{gitCode\_id\}替换为开发者个人gitCode账号。
 
    ```bash
    cd /mnt/workspace/gitCode/${gitCode_id}/ops-cv
    ```
 
 - 非CANNLab云开发环境：
-  
+
   根据[release仓库](https://gitcode.com/cann/release-management)源码与CANN版本配套关系，执行如下命令下载源码，\$\{tag\_version\}替换为目标分支标签，例如9.0.0。
 
   ```bash
@@ -47,7 +47,7 @@
 
 本指南默认采用**单算子编译**：仅构建目标算子，编译时间短，适合快速入门与日常开发。通用命令格式：`bash build.sh --pkg --soc=<芯片版本> --ops=<算子名>`。
 
-> 若需编译整个算子库（省略`--ops`），请参阅 [源码构建指南 · 全量编译（ops-cv包）](zh/install/compile.md#ops-cv包)。
+> 若需编译整个算子库（省略`--ops`），请参阅[源码构建指南 · 全量编译（ops-cv包）](zh/install/compile.md#ops-cv包)。
 
 以AddExample算子为例，编译命令如下：
 
@@ -149,7 +149,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
     ```bash
     ./build_out/cann-ops-cv-*linux*.run
     ```
-    
+
 3. **重新验证**：
 
     ```bash
@@ -180,10 +180,10 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
 请在`examples/add_example/op_kernel/add_example.h`中进行代码修改。
 
-* **printf**
+- **printf**
 
   该接口支持打印Scalar类型数据，如整数、字符型、布尔型等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中"算子调测API > printf"。
-  
+
   ```c++
   blockLength_ = (remainderLength > tilingData->blockFactor) ? tilingData->blockFactor : remainderLength;
   ubLength_ = tilingData->ubFactor;
@@ -191,10 +191,10 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
   AscendC::PRINTF("Tiling blockLength is %llu\n", blockLength_);
   ```
 
-* **DumpTensor**
+- **DumpTensor**
 
   该接口支持Dump指定Tensor的内容，同时支持打印自定义附加信息，比如当前行号等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > DumpTensor”。
-  
+
   ```c++
   AscendC::LocalTensor<T> xLocal = inputQueueX.DeQue<T>();
   AscendC::LocalTensor<T> yLocal = inputQueueY.DeQue<T>();
@@ -209,7 +209,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 当算子功能验证正确后，可通过`msprof`工具采集算子性能数据。
 
 - **生成可执行文件**
-  
+
     调用AddExample算子的example样例，生成可执行文件（test_aclnn_add_example），该文件位于项目`ops-cv/build`目录。
 
     ```bash
@@ -224,7 +224,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
     msprof --application="./test_aclnn_add_example"
     ```
 
-采集结果在项目`ops-cv/build/`目录，msprof命令执行完后会自动解析并导出性能数据结果文件，详细内容请参见[msprof](https://www.hiascend.com/document/detail/zh/mindstudio/82RC1/T&ITools/Profiling/atlasprofiling_16_0110.html#ZH-CN_TOPIC_0000002504160251)。
+采集结果在项目`ops-cv/build/`目录，msprof命令执行完后会自动解析并导出性能数据结果文件，详细内容请参见[msProf性能数据文件参考](https://gitcode.com/Ascend/msprof/blob/master/docs/zh/user_guide/profile_data_file_references.md)。
 
 ## 四、算子验证
 
@@ -239,7 +239,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 ```c++
 int main() {
     // ... 初始化代码...
-    
+
     // === ① 修改selfX的输入 ===
     // 修改前：shape = {32, 4, 4, 4}, 数值全为1
     // 修改后：将输入shape改为 {8, 8, 8, 8}，并填充不同的测试数据
@@ -251,7 +251,7 @@ int main() {
         selfXHostData[i] = static_cast<float>(i % 10); // 填充0-9的循环值
     }
     // === ② 参考selfX，同理修改selfY和out，并确保hostData长度与shape元素数一致 ===
-    
+
     // ... 后续执行代码...
 }
 ```

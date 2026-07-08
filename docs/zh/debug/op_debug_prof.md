@@ -24,7 +24,7 @@
 
 * **aclnn异常错误信息获取**
 
-   通过aclGetRecentErrMsg接口（参见[《acl API（C）》](https://hiascend.com/document/redirect/CannCommunityCppApi)）获取aclnn接口调用过程中的异常信息，使用方法如下：
+   通过aclGetRecentErrMsg接口（[《Runtime运行时API》](https://hiascend.com/document/redirect/CannCommunityRuntimeApi)）获取aclnn接口调用过程中的异常信息，使用方法如下：
 
    ```sh
    printf(aclGetRecentErrMsg());
@@ -43,7 +43,7 @@
 * **printf**
 
   该接口支持打印Scalar类型数据，如整数、字符、布尔型等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > printf”。
-  
+
   ```c++
   blockLength_ = tilingData->totalLength / AscendC::GetBlockNum();
   tileNum_ = tilingData->tileNum;
@@ -55,7 +55,7 @@
 * **DumpTensor**
 
   该接口支持Dump指定Tensor的内容，同时支持打印自定义附加信息，比如当前行号等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > DumpTensor”。
-  
+
   ```c++
   AscendC::LocalTensor<T> zLocal = outputQueueZ.DeQue<T>();
   // 打印zLocal Tensor信息
@@ -77,7 +77,7 @@
 
 常见调试方法如下：
 
-* **KERNEL\_LOG宏**
+- **KERNEL\_LOG宏**
 
   可通过如下宏打印算子执行过程中的日志信息，包括DEBUG、INFO、WARN、ERROR级别日志。
 
@@ -121,11 +121,11 @@
 
 ### 方式一上板性能采集
 
-   * **前提条件**
+   - **前提条件**
 
       完成算子开发和编译后，假设采用aclnn接口方式调用，生成的算子可执行文件（test_aclnn_add_example）所在目录为本项目`examples/add_example/examples/build/bin/`。
 
-   * **采集性能数据**
+   - **采集性能数据**
 
       当需要采集算子上板运行各项流水指标时可以进入算子可执行文件所在目录，执行如下命令：
 
@@ -134,11 +134,11 @@
       ```
 
       采集结果在本项目`examples/add_example/examples/build/bin/OPPROF_*`目录，采集完成后打印如下信息：
-      
+
       ``` text
       Op Name: AddExample_a1532827238e1555db7b997c7bce2928_high_performance_1
-      Op Type: vector             
-      Task Duration(us): 97.861954 
+      Op Type: vector
+      Task Duration(us): 97.861954
       Block Dim: 8
       Mix Block Dim:
       Device Id: 0
@@ -152,12 +152,12 @@
       算子各项流水详细指标可关注`OPPROF_*`下`ArithmeticUtilization`文件，包含了当前各项流水的占比，具体介绍参见[msProf](https://www.hiascend.com/document/redirect/CannCommunityToolMsprof)中“性能数据文件 > msprof op > ArithmeticUtilization（cube及vector类型指令耗时和占比）”章节。
 
 ### 方式二仿真流水图采集
-  
-   * **前提条件**
+
+   - **前提条件**
 
       完成算子开发和编译后，假设采用aclnn接口方式调用，生成的算子可执行文件（test_aclnn_add_example）所在目录为本项目`examples/add_example/examples/build/bin/`。
 
-   * **针对Ascend 950PR，可使用[CANN Simulator](./cann_sim.md)仿真工具，执行仿真命令，生成仿真数据**
+   - **针对Ascend 950PR，可使用[CANN Simulator](./cann_sim.md)仿真工具，执行仿真命令，生成仿真数据**
 
       执行仿真命令，生成仿真数据
 
@@ -173,16 +173,16 @@
 
       在Chrome浏览器中输入“chrome://tracing”地址，并将生成的指令流水图文件（trace_core0.json）拖到空白处打开，具体参数介绍参考CANN Simulator中[“仿真结果解析说明”](./cann_sim.md#仿真结果解析说明)章节。
 
-   * **针对Atlas A2/A3系列产品，可使用[msProf](https://www.hiascend.com/document/redirect/CannCommunityToolMsprof)工具，执行仿真命令，生成仿真数据**
+   - **针对Atlas A2/A3系列产品，可使用[msProf](https://www.hiascend.com/document/redirect/CannCommunityToolMsprof)工具，执行仿真命令，生成仿真数据**
 
       msProf工具进行算子仿真调优之前，需执行如下命令配置环境变量。
 
       ```bash
-      export LD_LIBRARY_PATH=${INSTALL_DIR}/tools/simulator/Ascendxxxyy/lib:$LD_LIBRARY_PATH 
+      export LD_LIBRARY_PATH=${INSTALL_DIR}/tools/simulator/Ascendxxxyy/lib:$LD_LIBRARY_PATH
       ```
 
       请根据CANN软件包实际安装路径和AI处理器型号对以上环境变量进行修改。
-      
+
       之后进入算子可执行文件所在目录，执行如下命令：
 
       ```bash
