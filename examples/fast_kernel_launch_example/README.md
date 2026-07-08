@@ -16,7 +16,7 @@
 - gcc 9.4.0+
 - python 3.8+
 - torch>=2.6.0
-- 对应版本的[torch_npu](https://gitcode.com/Ascend/pytorch/releases)
+- 对应版本的[TorchNPU](https://gitcode.com/Ascend/pytorch/releases)
 
 ## 安装步骤 | Installation Steps
 
@@ -209,6 +209,6 @@ print("Verification successful!")
     }  // namespace Add
     }  // namespace ascend_ops
     ```
-    
+
 4. 参考[安装步骤](#安装步骤--installation-steps)章节重新构建Wheel包并安装。
 5. 基于pytest测试算子API，请参考[test_add.py](tests/add/test_add.py)的实现。

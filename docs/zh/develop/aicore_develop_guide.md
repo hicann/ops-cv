@@ -164,7 +164,7 @@ static ge::graphStatus TilingFunc(gert::TilingContext* context){
     OP_CHECK_IF(
         GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetPlatformInfo error"),
         return ge::GRAPH_FAILED);
-    
+
     // 2.2获取输入信息
     // 获取输入张量shape信息
     auto inputX = context->GetInputShape(0);
@@ -303,7 +303,7 @@ class AddExample
 {
 public:
     // 默认构造函数，__aicore__表示该函数在AI Core上运行
-    __aicore__ inline AddExample(){};     
+    __aicore__ inline AddExample(){};
     // 初始化函数，用于设置输入输出地址和Tiling切分信息计算
     __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, const AddExampleTilingData* tilingData);
     // 主处理函数，执行数据拷贝和计算
@@ -333,7 +333,7 @@ private:
     GlobalTensor<T> inputGMY_;
     // 输出Z的GM地址
     GlobalTensor<T> outputGMZ_;
-    
+
     // 总数据长度
     int64_t blockLength_ = 0;
     // 每个block被划分多少块
@@ -420,7 +420,7 @@ __aicore__ inline void AddExample<T>::Process()
    ```bash
    # 编译指定算子，如bash build.sh --pkg --ops=add_example -j16
    bash build.sh --pkg --soc=${soc_version} --vendor_name=${vendor_name} --ops=${op_list} [-j${n}]
-   
+
    # 编译experimental目录下指定算子
    bash build.sh --pkg --soc=${soc_version} --vendor_name=${vendor_name} --ops=${op_list} [--experimental] [-j${n}]
    ```
@@ -440,7 +440,7 @@ __aicore__ inline void AddExample<T>::Process()
 4. **安装自定义算子包。**
 
     执行以下命令进行安装：
-    
+
     ```bash
     # 安装run包
     ./build_out/cann-ops-cv-${vendor_name}_linux-${arch}.run
