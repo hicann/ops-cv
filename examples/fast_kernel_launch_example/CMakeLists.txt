@@ -23,8 +23,16 @@ include(cmake/torch.cmake)
 include(cmake/torch_npu.cmake)
 include(cmake/func.cmake)
 
-# set NPU architecture, default to ascend910b
-set(NPU_ARCH "ascend910b" CACHE STRING "NPU architecture")
+# set NPU SOC version, default to ascend910b
+if(NOT DEFINED NPU_SOC_VERSION)
+    if(DEFINED NPU_ARCH)
+        set(NPU_SOC_VERSION "${NPU_ARCH}" CACHE STRING "NPU SOC version")
+    else()
+        set(NPU_SOC_VERSION "ascend910b" CACHE STRING "NPU SOC version")
+    endif()
+else()
+    set(NPU_SOC_VERSION "${NPU_SOC_VERSION}" CACHE STRING "NPU SOC version")
+endif()
 # set EXTENSION_MODULE_NAME to `ascend_ops`
 set(EXTENSION_MODULE_NAME "ascend_ops" CACHE STRING "Extension module name")
 

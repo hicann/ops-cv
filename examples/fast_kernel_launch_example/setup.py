@@ -106,9 +106,13 @@ class CMakeBuildCommand(Command):
         TORCH_NPU_PATH = os.path.dirname(torch_npu.__file__)
         logging.info(f"Using Torch NPU path: {TORCH_NPU_PATH}")
 
-        # Get NPU_ARCH from environment variable or set default
-        NPU_ARCH = os.environ.get('NPU_ARCH', 'ascend910b')
-        logging.info(f"Using NPU_ARCH: {NPU_ARCH}")
+        # Get NPU_SOC_VERSION from environment variable or set default
+        npu_soc_version = os.environ.get('NPU_SOC_VERSION')
+        if npu_soc_version is None:
+            npu_soc_version = os.environ.get('NPU_ARCH', 'ascend910b')
+            if 'NPU_ARCH' in os.environ:
+                logging.info("NPU_ARCH is deprecated, please use NPU_SOC_VERSION.")
+        logging.info(f"Using NPU_SOC_VERSION: {npu_soc_version}")
 
         # Build the CMake project
         build_temp = os.path.join(os.getcwd(), 'build')
@@ -116,7 +120,7 @@ class CMakeBuildCommand(Command):
                                 '-DCMAKE_BUILD_TYPE=Release',
                                 f'-DTorch_DIR={Torch_DIR}',
                                 f'-DTORCH_NPU_PATH={TORCH_NPU_PATH}',
-                                f'-DNPU_ARCH={NPU_ARCH}'
+                                f'-DNPU_SOC_VERSION={npu_soc_version}'
                                 ]
         subprocess.check_call(cmake_config_command, cwd=os.getcwd())
         subprocess.check_call(['cmake', '--build', build_temp, '--config', 'Release', '--parallel', num_jobs], cwd=os.getcwd())

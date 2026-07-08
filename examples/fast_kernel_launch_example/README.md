@@ -31,6 +31,8 @@
 3. 构建Wheel包 | Build the Wheel：
 
     ```sh
+    # NPU_SOC_VERSION设置编译款型, Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"
+    export NPU_SOC_VERSION=ascend910b
     # -n: non-isolated build (uses existing environment)
     python3 -m build --wheel -n
     ```
@@ -151,7 +153,7 @@ print("Verification successful!")
 
     /**
      * 实现算子调用接口
-     * 在这个接口中, 需要完成NPU Kernel的调用
+     * 在这个接口中，需要完成NPU Kernel的调用
      * 1. 计算出输出的Tensor的个数/Shape/Dtype(可以调用Meta函数实现，也可以直接实现)
      * 2. 计算Tiling：根据Shape得到如何分块计算
      * 3. 调用NPU Kernel
@@ -164,9 +166,9 @@ print("Verification successful!")
         const c10::OptionalDeviceGuard guard(x.device());
         auto z = add_meta(x, y);
         auto stream = c10_npu::getCurrentNPUStream().stream(false);
-        int64_t totalLength, blockDim, blockLength, tileSize;
+        int64_t totalLength, numBlocks, blockLength, tileSize;
         totalLength = x.numel();
-        std::tie(blockDim, blockLength, tileSize) = calc_tiling_params(totalLength);
+        std::tie(numBlocks, blockLength, tileSize) = calc_tiling_params(totalLength);
         auto x_ptr = (GM_ADDR)x.data_ptr();
         auto y_ptr = (GM_ADDR)y.data_ptr();
         auto z_ptr = (GM_ADDR)z.data_ptr();
@@ -176,15 +178,15 @@ print("Verification successful!")
                 // 根据不同的数据类型，调用不同的NPU Kernel
                 AT_DISPATCH_CASE(torch::kFloat32, [&] {
                     using scalar_t = float;
-                    add_kernel<scalar_t><<<blockDim, nullptr, stream>>>(x_ptr, y_ptr, z_ptr, totalLength, blockLength, tileSize);
+                    add_kernel<scalar_t><<<numBlocks, nullptr, stream>>>(x_ptr, y_ptr, z_ptr, totalLength, blockLength, tileSize);
                 })
                 AT_DISPATCH_CASE(torch::kFloat16, [&] {
                     using scalar_t = half;
-                    add_kernel<scalar_t><<<blockDim, nullptr, stream>>>(x_ptr, y_ptr, z_ptr, totalLength, blockLength, tileSize);
+                    add_kernel<scalar_t><<<numBlocks, nullptr, stream>>>(x_ptr, y_ptr, z_ptr, totalLength, blockLength, tileSize);
                 })
                 AT_DISPATCH_CASE(torch::kInt32, [&] {
                     using scalar_t = int32_t;
-                    add_kernel<scalar_t><<<blockDim, nullptr, stream>>>(x_ptr, y_ptr, z_ptr, totalLength, blockLength, tileSize);
+                    add_kernel<scalar_t><<<numBlocks, nullptr, stream>>>(x_ptr, y_ptr, z_ptr, totalLength, blockLength, tileSize);
                 })
             );
             return 0;
