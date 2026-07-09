@@ -23,7 +23,8 @@ Docs目录结构说明如下：
 │    ├── invocation                         # 算子调用指导文档（包括aclnn调用、图模式调用等）
 │    │   ├── quick_op_invocation.md
 │    │   ├── ...
-│    ├── op_api_list.md                     # 全量算子接口列表（aclnn）
+│    ├── menu_aclnn_api.md                  # 全量aclnn接口索引文件
+│    ├── op_api_list.md                     # aclnn接口列表
 │    ├── op_list.md                         # 全量算子列表
 ├── CONTRIBUTING_DOCS.md                 # 文档贡献说明
 ├── QUICKSTART.md                        # 快速入门
