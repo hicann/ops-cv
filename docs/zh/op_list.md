@@ -478,6 +478,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/bounding_box_encode/README.md">bounding_box_encode</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>计算锚框与真实边界框之间的编码偏移量，生成目标检测回归目标。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/ciou/README.md">ciou</a></td>
     <td>&cross;</td>
     <td>&cross;</td>
