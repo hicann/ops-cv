@@ -1,0 +1,60 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+#include "roi_align_grad.h"
+#include "opdev/make_op_executor.h"
+#include "opdev/op_def.h"
+#include "opdev/op_dfx.h"
+#include "opdev/op_log.h"
+#include "opdev/shape_utils.h"
+
+using namespace op;
+
+namespace l0op {
+static const size_t DIM_0 = 0;
+static const size_t DIM_1 = 1;
+static const size_t DIM_2 = 2;
+static const size_t DIM_3 = 3;
+
+OP_TYPE_REGISTER(RoiAlignGrad);
+
+const aclTensor* RoiAlignGrad(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                              int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                              int64_t roiEndMode, aclOpExecutor* executor)
+{
+    L0_DFX(RoiAlignGrad, gradOutput, boxes, inputShape, pooledHeight, pooledWidth, spatialScale, samplingRatio,
+           roiEndMode);
+
+    op::Shape outStorageShape = gradOutput->GetStorageShape();
+    op::Shape outOriginalShape = gradOutput->GetOriginalShape();
+
+    outStorageShape.SetDim(DIM_0, (*inputShape)[DIM_0]);
+    outStorageShape.SetDim(DIM_2, (*inputShape)[DIM_2]);
+    outStorageShape.SetDim(DIM_3, (*inputShape)[DIM_3]);
+    outOriginalShape.SetDim(DIM_0, (*inputShape)[DIM_0]);
+    outOriginalShape.SetDim(DIM_2, (*inputShape)[DIM_2]);
+    outOriginalShape.SetDim(DIM_3, (*inputShape)[DIM_3]);
+
+    auto gradInput = executor->AllocTensor(outStorageShape, outOriginalShape, gradOutput->GetDataType(),
+                                           gradOutput->GetStorageFormat(), gradOutput->GetOriginalFormat());
+    if (gradInput == nullptr) {
+        OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "alloc gradInput tensor failed");
+        return nullptr;
+    }
+
+    // 调用device的RoiAlignGrad算子
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(
+        RoiAlignGrad, OP_INPUT(gradOutput, boxes), OP_OUTPUT(gradInput),
+        OP_ATTR(inputShape, pooledWidth, pooledHeight, spatialScale, samplingRatio, roiEndMode));
+    OP_CHECK(ret == ACLNN_SUCCESS, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "RoiAlignGrad ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
+
+    return gradInput;
+}
+} // namespace l0op
