@@ -61,7 +61,6 @@ constexpr uint32_t ALIGN_CORNERS_FALSE = 0;
 constexpr uint32_t ALIGN_CORNERS_TRUE = 1;
 constexpr uint32_t VF_MAX_THREAD_NUM = 256;
 constexpr uint32_t GRID_LAST_NUM = 3;
-constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
 constexpr uint32_t REGBASE_MAX_CHANNEL_NUM = 128;
 constexpr uint32_t DETERMINISTIC_BATCH_NUM = 1;
 constexpr uint32_t DETERMINISTIC_COMPUTE_NUM = 16;
@@ -178,7 +177,7 @@ void GridSampler3DGradTiling<TilingData>::GetUsedCore()
     if (regBase && !regBaseSIMD) {
         uint64_t mulNCDHW = static_cast<uint64_t>(batch) * gridD * gridH * gridW * GRID_LAST_NUM;
         uint32_t tmpCoreNum = Ceil(mulNCDHW, VF_MAX_THREAD_NUM);
-        usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
+        usedCoreNum = tmpCoreNum <= coreNum ? tmpCoreNum : coreNum;
         pNumPerCore = 0;
         tailPNum = 0;
         if (isDeterministic == 1) {
@@ -391,9 +390,8 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     if (params.regBase && !params.regBaseSIMD) {
         uint32_t deterministic = tilingContext->GetDeterministic();
         if (deterministic == 1) {
-            uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
             sysWorkspaceSize = WORKSPACE_SIZE + VF_MAX_THREAD_NUM * sizeof(int32_t) * DETERMINISTIC_COMPUTE_NUM *
-                                                    REGBASE_MAX_CORE_NUM * params.batch;
+                                                    compileInfo->coreNum * params.batch;
         } else {
             sysWorkspaceSize = 0;
         }

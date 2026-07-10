@@ -83,7 +83,6 @@ constexpr uint32_t ALIGN_256_BYTES = 256;
 constexpr uint32_t GRID_LAST_NUM = 2;
 constexpr uint32_t VF_MAX_THREAD_NUM = 1024;
 constexpr uint32_t VF_MAX_THREAD_NUM_DET = 256;
-constexpr uint32_t REGBASE_MAX_CORE_NUM = 56;
 constexpr uint32_t REGBASE_MAX_CHANNEL_NUM = 32;
 constexpr uint32_t REGBASE_BIG_CHANNEL_NUM = 128;
 constexpr uint32_t WORKSPACE_SIZE = 16 * 1024 * 1024;
@@ -214,12 +213,12 @@ void GridSampler2DGradTiling<TilingData, dataTypeLen>::GetUsedCore()
     if (regBase && !regBaseSIMD) {
         uint64_t mulNCHW = static_cast<uint64_t>(batch) * gridH * gridW * GRID_LAST_NUM;
         uint32_t tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM);
-        usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
+        usedCoreNum = tmpCoreNum <= coreNum ? tmpCoreNum : coreNum;
         pNumPerCore = 0;
         tailPNum = 0;
         if (isDeterministic == 1) {
             tmpCoreNum = Ceil(mulNCHW, VF_MAX_THREAD_NUM_DET);
-            usedCoreNum = tmpCoreNum <= REGBASE_MAX_CORE_NUM ? tmpCoreNum : REGBASE_MAX_CORE_NUM;
+            usedCoreNum = tmpCoreNum <= coreNum ? tmpCoreNum : coreNum;
             if (batch > coreNum) {
                 usedCoreNum = coreNum;
                 pNumPerCore = Ceil(batch, usedCoreNum);
@@ -461,9 +460,10 @@ static ge::graphStatus CheckInputInfo(gert::TilingContext* tilingContext, InputP
     return ge::GRAPH_SUCCESS;
 }
 
-static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParamsInfo& params, size_t sysWorkspaceSize)
+static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParamsInfo& params, size_t sysWorkspaceSize,
+                                  uint32_t maxCoreNum)
 {
-    if (params.regBase && !params.regBaseSIMD) {
+    if (params.regBase && !params.regBaseSIMD && maxCoreNum > 0) {
         uint32_t isDeterministic = tilingContext->GetDeterministic();
         if (isDeterministic == 1) {
             if (params.interpolation == BICUBIC) {
@@ -474,7 +474,7 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
                 params.tilingKey += 6;
             }
             tilingContext->SetScheduleMode(SCHEDULE_MODE);
-            uint32_t batchNumPerCore = params.batch > REGBASE_MAX_CORE_NUM ? (params.batch / REGBASE_MAX_CORE_NUM) : 1;
+            uint32_t batchNumPerCore = params.batch > maxCoreNum ? (params.batch / maxCoreNum) : 1;
             return WORKSPACE_SIZE +
                    VF_MAX_THREAD_NUM_DET * sizeof(int32_t) * CONST_TWO * DET_UB_NUM * params.batch * batchNumPerCore;
         } else {
@@ -514,7 +514,8 @@ static ge::graphStatus GetBicubicTiling(gert::TilingContext* tilingContext, Inpu
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
+static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype,
+                                    uint32_t coreNum)
 {
     OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
     if (CheckInputInfo(tilingContext, params, dtype) != ge::GRAPH_SUCCESS) {
@@ -558,7 +559,7 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     size_t* currentWorkspace = tilingContext->GetWorkspaceSizes(1);
     OP_CHECK_IF((currentWorkspace == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get currentWorkspace Failed."),
                 return false);
-    currentWorkspace[0] = GetCurWorkspaceSize(tilingContext, params, sysWorkspaceSize);
+    currentWorkspace[0] = GetCurWorkspaceSize(tilingContext, params, sysWorkspaceSize, coreNum);
     OP_LOGI(tilingContext->GetNodeName(), "sysWorkspaceSize is %zu.", sysWorkspaceSize);
     return ge::GRAPH_SUCCESS;
 }
@@ -589,7 +590,7 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
     tilingContext->SetNeedAtomic(true);
 
     InputParamsInfo params;
-    if (GetInputInfo(tilingContext, params, inputDatatype) != ge::GRAPH_SUCCESS) {
+    if (GetInputInfo(tilingContext, params, inputDatatype, coreNum) != ge::GRAPH_SUCCESS) {
         OP_LOGW(tilingContext->GetNodeName(), "Failed to Parse input params , please check inputs");
         return ge::GRAPH_FAILED;
     }
