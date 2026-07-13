@@ -12,22 +12,25 @@
 
 /*!
  * \file upsample_bilinear2d_grad_tiling_arch35.cpp
- * \brief Tiling implementation for upsample_bilinear2d_grad (arch35)
+ * \brief SIMT Tiling implementation for upsample_bilinear2d_grad (arch35)
  */
 
-#include "log/log.h"
+#include <climits>
+#include <cmath>
+#include <cstring>
+
 #include "register/op_impl_registry.h"
-#include "platform/platform_ascendc.h"
+#include "register/tilingdata_base.h"
+#include "tiling/tiling_api.h"
+#include "tiling/platform/platform_ascendc.h"
+#include "log/log.h"
 #include "util/math_util.h"
-#include "util/platform_util.h"
 #include "op_host/tiling_util.h"
 #include "op_host/tiling_templates_registry.h"
-#include "image/upsample_bilinear2d_grad/op_kernel/arch35/upsample_bilinear2d_grad_tiling_data.h"
-#include "image/upsample_bilinear2d_grad/op_kernel/arch35/upsample_bilinear2d_grad_tiling_key.h"
+#include "../op_kernel/arch35/upsample_bilinear2d_grad_tiling_data.h"
+#include "../op_kernel/arch35/upsample_bilinear2d_grad_tiling_key.h"
 
 namespace optiling {
-
-using namespace Ops::Cv::OpTiling;
 
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
@@ -62,6 +65,9 @@ static ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& 
 
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
+
+    const auto* outputSizeVec = attrs->GetListInt(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, outputSizeVec);
 
     const auto* inputSizeVec = attrs->GetListInt(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputSizeVec);

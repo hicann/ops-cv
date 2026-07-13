@@ -114,20 +114,38 @@ __simt_callee__ inline void ComputeRange(int32_t inCoord, float invScale, int32_
 
 // ============================================================
 // Get h-weight for a given hIn and hOut
-// Returns 0 if hOut does not contribute to hIn
+// When h1 >= inputHeight, h0 gets full weight 1.0 (matching PyTorch).
+// Sets hasZeroWeight=true when h1w==0 at boundary (inf*0=nan case).
 // ============================================================
 template <int32_t AlignCorners>
-__simt_callee__ inline float GetHWeight(int32_t hIn, int32_t hOut, float scalesH, int32_t inputHeight)
+__simt_callee__ inline float GetHWeight(int32_t hIn, int32_t hOut, float scalesH, int32_t inputHeight, bool& isTarget,
+                                        bool& hasZeroWeight)
 {
     float hSrc = ComputeSrcCoord1D<AlignCorners>(hOut, scalesH);
     int32_t h0 = static_cast<int32_t>(floorf(hSrc));
     int32_t h1 = h0 + 1;
     float h1w = hSrc - static_cast<float>(h0);
     float h0w = 1.0f - h1w;
+    isTarget = false;
+    hasZeroWeight = false;
     if (hIn == h0 && h0 >= 0 && h0 < inputHeight) {
+        isTarget = true;
+        if (h1 >= inputHeight) {
+            if (h1w == 0.0f) {
+                hasZeroWeight = true;
+            }
+            return 1.0f;
+        }
+        if (h0w == 0.0f) {
+            hasZeroWeight = true;
+        }
         return h0w;
     }
     if (hIn == h1 && h1 >= 0 && h1 < inputHeight) {
+        isTarget = true;
+        if (h1w == 0.0f) {
+            hasZeroWeight = true;
+        }
         return h1w;
     }
     return 0.0f;
@@ -150,17 +168,26 @@ __simt_callee__ inline float GatherGradient(int32_t hIn, int32_t wIn, int32_t n,
     int64_t ncBase = (static_cast<int64_t>(n) * channels + c) * static_cast<int64_t>(outputHeight) * outputWidth;
     float sum = 0.0f;
     for (int32_t hOut = hOutStart; hOut <= hOutEnd; hOut++) {
-        float hWeight = GetHWeight<AlignCorners>(hIn, hOut, scalesH, inputHeight);
-        if (hWeight == 0.0f) {
+        bool hIsTarget = false;
+        bool hHasZero = false;
+        float hWeight = GetHWeight<AlignCorners>(hIn, hOut, scalesH, inputHeight, hIsTarget, hHasZero);
+        if (!hIsTarget) {
             continue;
         }
         int64_t hBase = ncBase + static_cast<int64_t>(hOut) * outputWidth;
         for (int32_t wOut = wOutStart; wOut <= wOutEnd; wOut++) {
-            float wWeight = GetHWeight<AlignCorners>(wIn, wOut, scalesW, inputWidth);
-            if (wWeight == 0.0f) {
+            bool wIsTarget = false;
+            bool wHasZero = false;
+            float wWeight = GetHWeight<AlignCorners>(wIn, wOut, scalesW, inputWidth, wIsTarget, wHasZero);
+            if (!wIsTarget) {
                 continue;
             }
-            sum += GradToFloat<T>(gradOutput[hBase + wOut]) * hWeight * wWeight;
+            float gradVal = GradToFloat<T>(gradOutput[hBase + wOut]);
+            if ((hHasZero || wHasZero) && (isinf(gradVal) || isnan(gradVal))) {
+                sum += gradVal - gradVal;
+            }
+            float contrib = gradVal * hWeight * wWeight;
+            sum += contrib;
         }
     }
     return sum;
@@ -229,4 +256,5 @@ __aicore__ inline void Process(GM_ADDR gradOutput, GM_ADDR gradInput,
 }
 
 } // namespace NsUpsampleBilinear2dGrad
+
 #endif // UPSAMPLE_BILINEAR2D_GRAD_SIMT_H
