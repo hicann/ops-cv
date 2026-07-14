@@ -429,8 +429,8 @@ int main()
     std::vector<int64_t> outputSize = {kSize4, 2};
     std::vector<int64_t> inputSize = {1, 1, 8, 4};
     bool alignCorners = true;
-    double scalesH = 2.0;
-    double scalesW = 2.0;
+    double scalesH = 0.5;
+    double scalesW = 0.5;
     // 创建input aclTensor
     ret = CreateAclNchTensor(inputHostData, inputShape, &inputDeviceAddr, aclDataType::ACL_FLOAT, &input);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
