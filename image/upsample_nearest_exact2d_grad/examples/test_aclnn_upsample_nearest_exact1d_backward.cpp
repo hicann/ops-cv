@@ -81,7 +81,8 @@ int main()
 
     // 2. 构造输入与输出，需要根据API的接口自定义构造
     int64_t gradOutputL = 2;
-    int64_t gradInputL = 4 std::vector<int64_t> inputShape = {1, 1, gradOutputL};
+    int64_t gradInputL = 4;
+    std::vector<int64_t> inputShape = {1, 1, gradOutputL};
     std::vector<int64_t> outShape = {1, 1, gradInputL};
     void* inputDeviceAddr = nullptr;
     void* outDeviceAddr = nullptr;
