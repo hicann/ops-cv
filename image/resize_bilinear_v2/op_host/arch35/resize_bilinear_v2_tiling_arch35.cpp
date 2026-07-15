@@ -591,7 +591,8 @@ void ResizeBilinearV2AscendCTilingImpl::DoTilingSIMT_HW()
 
 void ResizeBilinearV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKey()
 {
-    bool useIdx32 = yShape_.GetShapeSize() < UINT32_MAX && xShape_.GetShapeSize() < UINT32_MAX;
+    bool useIdx32 = yShape_.GetShapeSize() < UINT32_MAX && xShape_.GetShapeSize() < UINT32_MAX &&
+                    lenSrcH_ <= INT32_MAX && lenSrcW_ <= INT32_MAX && lenDesH_ <= INT32_MAX && lenDesW_ <= INT32_MAX;
     if (IsMatchAllCopy()) {
         tilingKey_ = TILING_KEY_ALL_COPY;
     } else if (IsMatchPointCopy()) {

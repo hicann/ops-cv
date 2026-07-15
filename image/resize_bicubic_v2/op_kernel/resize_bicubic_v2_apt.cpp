@@ -34,10 +34,12 @@ __global__ __aicore__ void resize_bicubic_v2(GM_ADDR x, GM_ADDR size, GM_ADDR y,
         ResizeBicubicV2::ResizeBicubicV2AllCopy<DTYPE_X, isHalfPixel, schId, uint32_t, int32_t> op;
         op.Init(x, size, y, &pipe, &tilingData);
         op.Process();
+        return;
     } else if (schId == RESIZE_BICUBIC_V2_TPL_SCH_MODE_6) {
         ResizeBicubicV2::ResizeBicubicV2PointCopy<DTYPE_X, isHalfPixel, schId, uint32_t, int32_t> op;
         op.Init(x, size, y, &pipe, &tilingData);
         op.Process();
+        return;
     }
     if constexpr (isNchw == 1) {
         if constexpr (isInt32 == 1) {
@@ -49,6 +51,7 @@ __global__ __aicore__ void resize_bicubic_v2(GM_ADDR x, GM_ADDR size, GM_ADDR y,
             op.Init(x, size, y, &tilingData);
             op.Process();
         }
+        return;
     } else {
         if constexpr (isInt32 == 1) {
             ResizeBicubicV2::ResizeBicubicV2SimtNHWC<DTYPE_X, isHalfPixel, schId, uint32_t, int32_t> op;
@@ -59,5 +62,6 @@ __global__ __aicore__ void resize_bicubic_v2(GM_ADDR x, GM_ADDR size, GM_ADDR y,
             op.Init(x, size, y, &tilingData);
             op.Process();
         }
+        return;
     }
 }

@@ -69,6 +69,20 @@
       <td>FLOAT16、FLOAT32、BFLOAT16</td>
       <td>NCHW、NHWC</td>
     </tr>
+    <tr>
+      <td>align_corners</td>
+      <td>属性</td>
+      <td>是否对齐输入与输出张量四个角像素的中心以保留角点像素值。默认值：false。</td>
+      <td>Bool</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>scales</td>
+      <td>属性</td>
+      <td>空间维度（高、宽）的缩放系数。默认值：{0.0, 0.0}。</td>
+      <td>ListFloat</td>
+      <td>-</td>
+    </tr>
   </tbody>
 </table>
 

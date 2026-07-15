@@ -429,7 +429,8 @@ bool ResizeNearestNeighborV2GradTiling::IsSimtNotDetermineHW()
 
 void ResizeNearestNeighborV2GradTiling::SetIndexType()
 {
-    bool isIdx32 = yShape_.GetShapeSize() < UINT32_MAX && gradsShape_.GetShapeSize() < UINT32_MAX;
+    bool isIdx32 = yShape_.GetShapeSize() < UINT32_MAX && gradsShape_.GetShapeSize() < UINT32_MAX &&
+                   lenSrcH_ <= INT32_MAX && lenSrcW_ <= INT32_MAX && lenDstH_ <= INT32_MAX && lenDstW_ <= INT32_MAX;
     idxType_ = static_cast<uint64_t>(isIdx32 ? TPL_IDX_INT32 : TPL_IDX_INT64);
 }
 

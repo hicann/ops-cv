@@ -319,7 +319,11 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckShapes()
         return ge::GRAPH_FAILED;
     }
     int64_t uint32Max = static_cast<int64_t>(std::numeric_limits<uint32_t>::max());
-    int32_t isUint32 = static_cast<int32_t>((inputSize <= uint32Max) && (outputSize <= uint32Max));
+    int64_t int32Max = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
+    int32_t isUint32 = static_cast<int32_t>((inputSize <= uint32Max) && (outputSize <= uint32Max) &&
+                                            baseTiling_.inD <= int32Max && baseTiling_.inH <= int32Max &&
+                                            baseTiling_.inW <= int32Max && baseTiling_.outD <= int32Max &&
+                                            baseTiling_.outH <= int32Max && baseTiling_.outW <= int32Max);
     baseTiling_.isUint32 = isUint32;
     return ge::GRAPH_SUCCESS;
 }

@@ -371,6 +371,9 @@ ge::graphStatus ResizeLinearGradTiling::LinearComputeGrad()
         OP_LOGI(context_->GetNodeName(), "ySize or xSize is large than UINT32_MAX");
         isInt32_ = DIM_0;
     }
+    if (lenSrcLOrUb_ > INT32_MAX || lenDesL_ > INT32_MAX) {
+        isInt32_ = DIM_0;
+    }
     ComputeKey();
     return ge::GRAPH_SUCCESS;
 }

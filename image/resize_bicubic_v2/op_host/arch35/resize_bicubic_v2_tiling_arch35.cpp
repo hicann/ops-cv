@@ -294,7 +294,7 @@ ge::graphStatus ResizeBicubicV2Tiling::CheckParams()
                 return ge::GRAPH_FAILED);
 
     isNchw_ = DIM_1;
-    if ((dataFormat == ge::FORMAT_NHWC) && (lenDesH_ != lenSrcH_ && lenDesW_ != lenSrcW_)) {
+    if ((dataFormat == ge::FORMAT_NHWC) && (lenDesH_ != lenSrcH_ || lenDesW_ != lenSrcW_)) {
         isNchw_ = DIM_0;
     }
 
@@ -470,6 +470,9 @@ void ResizeBicubicV2Tiling::DoTilingKeyPostProcess()
     isInt32_ = DIM_1;
     if (ySize_ > UINT32_MAX || xSize_ > UINT32_MAX) {
         OP_LOGI(context_->GetNodeName(), "ySize or xSize is too large");
+        isInt32_ = DIM_0;
+    }
+    if (lenSrcH_ > INT32_MAX || lenSrcW_ > INT32_MAX || lenDesH_ > INT32_MAX || lenDesW_ > INT32_MAX) {
         isInt32_ = DIM_0;
     }
     if (schId_ == DIM_5 || schId_ == DIM_6) { // simd scenario ignores isInt32_ and isNchw_ params
