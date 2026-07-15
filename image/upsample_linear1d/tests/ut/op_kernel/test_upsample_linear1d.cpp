@@ -20,7 +20,7 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../../../op_host/arch22/upsample_linear1d_tiling.h"
+#include "../../../op_host/upsample_linear1d_tiling.h"
 #include "data_utils.h"
 
 extern "C" __global__ __aicore__ void upsample_linear1d(GM_ADDR x, GM_ADDR size, GM_ADDR y, GM_ADDR workspace,
