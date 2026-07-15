@@ -21,62 +21,62 @@
 
   $findices$记录每个像素点最小深度对应的面索引，$barycentric$记录每个顶点相对于$findices$中记录的面的重心坐标透视矫正插值。
   计算过程中使用的Z-Buffer记录每个像素点$(x, y)$的最小深度$z_{\min}(x, y)$以及该深度对应的三角形面片索引$\text{face\_idx}(x, y)$。
-  
+
   计算过程如下：
   对空间中的每个三角形面片$f$：
-  
+
   1. 将$f$的三个顶点坐标$(v_0, v_1, v_2)$转换为屏幕坐标$(v_{s0}, v_{s1}, v_{s2})$
   2. 根据$(v_{s0}, v_{s1}, v_{s2})$计算包围$f$的矩形范围
   3. 对矩形内每个像素点$v_i = (x_i, y_i)$，执行以下操作：
 
-     a. 计算像素中心坐标$v_c$  
-     b. 计算$v_c$相对于三角形$f$的重心坐标$(\alpha, \beta, \gamma)$  
+     a. 计算像素中心坐标$v_c$
+     b. 计算$v_c$相对于三角形$f$的重心坐标$(\alpha, \beta, \gamma)$
      c. 根据$(\alpha, \beta, \gamma)$判断$v_c$是否在三角形内部。若$v_c$不在三角形内部，则处理矩形内下个像素点，否则执行下述步骤
      d. 使用$(\alpha, \beta, \gamma)$和$(v_{s0}, v_{s1}, v_{s2})$得到当前像素的深度值depth
-     e. 若启用了深度先验；否则，直接执行下一步“Z-Buffer更新”
+     e. 若启用了深度先验，则使用深度先验图计算深度阈值depth_thres；否则，直接执行下一步“Z-Buffer更新”
 
-     - 使用深度先验图计算深度阈值depth_thres
-     - 如果depth < depth_thres，处理矩形内下个像素点，否则执行下述步骤
+        - 使用深度先验图计算深度阈值depth_thres
+        - 如果depth < depth_thres，处理矩形内下个像素点，否则执行下述步骤
 
      f. Z-Buffer更新：
-     
-     - 若$depth < z_{\min}(x_i, y_i)$：
-     
-     $$
-     \quad z_{\min}(x_i, y_i) \gets \text{depth} \\
-     \quad \text{face\_idx}(x_i, y_i) \gets f
-     $$
-     
-     - 若$depth = z_{\min}(x_i, y_i)$：
-     
-     $$
-     \quad \text{face\_idx}(x_i, y_i) \gets \min(\text{face\_idx}(x_i, y_i),\ f)
-     $$
-  
+
+       - 若$depth < z_{\min}(x_i, y_i)$：
+
+         $$
+         \quad z_{\min}(x_i, y_i) \gets \text{depth} \\
+         \quad \text{face\_idx}(x_i, y_i) \gets f
+         $$
+
+       - 若$depth = z_{\min}(x_i, y_i)$：
+
+         $$
+         \quad \text{face\_idx}(x_i, y_i) \gets \min(\text{face\_idx}(x_i, y_i),\ f)
+         $$
+
   按上述步骤对空间中所有的三角形面片进行处理后，对大小为$height * width$的屏幕上每个像素点$v_i = (x_i, y_i)$：
-  
+
   1. 取Z-Buffer中$v_i$对应的面片索引$f_{idx}$，$findices (x_i, y_i) \gets f_{idx}$
   2. 将$f$的三个顶点坐标$(v_0, v_1, v_2)$转换为屏幕坐标$(v_{s0}, v_{s1}, v_{s2})$
   3. 计算$v_i$的中心点坐标$v_c$
   4. 计算$v_c$相对于三角形$f$的重心坐标$(\alpha, \beta, \gamma)$
   5. 使用$(\alpha, \beta, \gamma)$计算透视矫正插值$(\tilde{\alpha}, \tilde{\beta}, \tilde{\gamma})$
   6. $barycentric(x_i, y_i) \gets (\tilde{\alpha}, \tilde{\beta}, \tilde{\gamma})$
-  
+
   以下是涉及的各种具体计算方法：
-  
+
   - 顶点$v = (x, y, z, w)$转换为屏幕坐标$v_s = (x_s, y_s, z_s)$
-  
+
     $$
     x_s = (x / w * 0.5 + 0.5) * (width - 1) + 0.5\\
     y_s = (0.5 + 0.5 * y / w) * (height - 1) + 0.5\\
     z_s = z / w * 0.49999 + 0.5
     $$
-  
+
   - 点$v$相对于三角形 $(v_0, v_1, v_2)$的重心坐标$(\alpha, \beta, \gamma)$
-    
-    1. 分别计算计算三角形$(v_0, v_1, v_2)$、$(v_0, v, v_2)$和$(v_0, v_1, v)$的有向面积$area$、$beta\_tri$和$gamma\_tri$
+
+    1. 分别计算三角形$(v_0, v_1, v_2)$、$(v_0, v, v_2)$和$(v_0, v_1, v)$的有向面积$area$、$beta\_tri$和$gamma\_tri$
     2. 若$area$为0，则$\alpha = \beta = \gamma = -1$，否则
-    
+
       $$
       \beta = beta\_tri / area\\
       \gamma = gamma\_tri / area\\
@@ -84,23 +84,23 @@
       $$
 
   - 由顶点$v_0 = (x_0, y_0, z_0)$，$v_1 = (x_1, y_1, z_1)$和$v_2 = (x_2, y_2, z_2)$组成的三角形的有向面积
-  
+
     $$
     area = (x_2 - x_0) * (y_1 - y_0) - (x_1 - x_0) * (y_2 - y_0)
     $$
-  
+
   - 结合重心坐标$(\alpha, \beta, \gamma)$和三角形屏幕坐标$(v_0 = (x_0, y_0, z_0), v_1 = (x_1, y_1, z_1), v_2 = (x_2, y_2, z_2))$计算像素点$v = (x, y)$ 的深度$depth$
-    
+
     $$
     depth = \alpha * z_0 + \beta * z_1 + \gamma * z_2
     $$
 
   - 结合深度图$d$，遮挡截断$occlusion\_truncation$计算点$v = (x, y)$的深度阈值$depth\_thres$
-  
+
     $$
     depth\_thres = d(x, y) * 0.49999 + 0.5 + occlusion\_truncation
     $$
-  
+
   - 根据重心坐标$(\alpha, \beta, \gamma)$判断顶点是否在三角形内
     如果$\alpha >= 0$且$\beta >= 0$且$\gamma >= 0$则点在三角形内（包括在三角形边上），否则点不在三角形内。
   - 结合重心坐标$(\lambda_0, \lambda_1, \lambda_2)$以及三角形的三个顶点坐标$v_0 = (x_0, y_0, z_0, w_0)$，$v_1 = (x_1, y_1, z_1, w_1)$和$v_2 = (x_2, y_2, z_2, w_2)$计算透视矫正插值$(\lambda_0^{corrected}, \lambda_1^{corrected}, \lambda_2^{corrected})$
@@ -139,7 +139,7 @@ aclnnStatus aclnnRasterizer(
 ## aclnnRasterizerGetWorkspaceSize
 
 - **参数说明**
-  
+
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 170px">
   <col style="width: 120px">
@@ -277,7 +277,7 @@ aclnnStatus aclnnRasterizer(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](https://gitcode.com/cann/ops-cv/blob/master/docs/zh/context/aclnn%E8%BF%94%E5%9B%9E%E7%A0%81.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -352,7 +352,7 @@ aclnnStatus aclnnRasterizer(
   </tbody>
   </table>
 - **返回值**
-  
+
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明

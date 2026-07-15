@@ -17,7 +17,7 @@
 
 - 接口功能：提供一个输入张量input，以及一个对应的grid网格，根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到grid指定的位置，得到最终的输出。
 - 计算公式：
-  
+
   输入input、grid网格、输出output的尺寸如下：
 
   $$
@@ -32,7 +32,7 @@
     - alignCorners=true，表示特征值位于像素中心。
 
       $$
-      x' = (grid\_x + 1) / 2 * (D_{in} - 1)
+      x' = (grid\_x + 1) / 2 * (W_{in} - 1)
       $$
 
       $$
@@ -40,13 +40,13 @@
       $$
 
       $$
-      z' = (grid\_z +1) / 2 * (W_{in} - 1)
+      z' = (grid\_z +1) / 2 * (D_{in} - 1)
       $$
 
     - alignCorners=false，表示特征值位于像素的角点。
 
       $$
-      x' = ((grid\_x +1) * D_{in} - 1) / 2
+      x' = ((grid\_x +1) * W_{in} - 1) / 2
       $$
 
       $$
@@ -54,7 +54,7 @@
       $$
 
       $$
-      z' = ((grid\_z +1) * W_{in} - 1) / 2
+      z' = ((grid\_z +1) * D_{in} - 1) / 2
       $$
 
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -65,7 +65,7 @@
     - interpolationMode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
 
       $$
-      {output(N, C, D_{out}, H_{out}, W_{out})} = \sum_{i=0}^{2}\sum_{j=0}^{2}\sum_{k=0}^{2}{w(i, j, k)} * {f(x', y', z')}
+      {output(N, C, D_{out}, H_{out}, W_{out})} = \sum_{i=0}^{1}\sum_{j=0}^{1}\sum_{k=0}^{1}{w(i, j, k)} * {f(x', y', z')}
       $$
 
       其中：
@@ -106,8 +106,8 @@
       其中：
 
       $$
-      D_{out} = min(round(x'),  H - 1)\\
-      D_{out} = max(round(x'),  0)
+      W_{out} = min(round(x'),  W - 1)\\
+      W_{out} = max(round(x'),  0)
       $$
 
       $$
@@ -116,8 +116,8 @@
       $$
 
       $$
-      W_{out} = min(round(z'),  W - 1)\\
-      W_{out} = max(round(z'),  0)
+      D_{out} = min(round(z'),  D- 1)\\
+      D_{out} = max(round(z'),  0)
       $$
 
 ## 函数原型
@@ -184,7 +184,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>grid（aclTensor*）</td>
       <td>输入</td>
       <td>采样的网格，对应公式中描述的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>D</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 3)，且N与入参`input`的shape中的N一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, D<sub>out</sub>, H<sub>out</sub>, W<sub>out</sub>, 3)，且N与入参`input`的shape中的N一致。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>5</td>
@@ -254,13 +254,13 @@ aclnnStatus aclnnGridSampler3D(
   </table>
 
   - <term>Atlas 训练系列产品</term>：
-  
+
     参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
-  
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>

@@ -21,25 +21,25 @@
   - 计算流程：
     1. 根据grid存储的(x, y)或者(x, y, z)值，计算出映射到input上坐标，这些坐标和align_corners、padding_mode有关。
     2. 坐标根据输入的interpolation_mode，选择使用bilinear、nearest、bicubic不同插值模式计算输出值。
-  
+
   - 其中：
     - 3D场景：
-  
+
       输入input、grid网格、输出output的尺寸如下：
-  
+
       $$
       input: (N, C, D_{in}, H_{in}, W_{in})\\
       grid: (N, D_{out}, H_{out}, W_{out}, 3)\\
       output: (N, C, D_{out}, H_{out}, W_{out})
       $$
-  
+
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$D_{out}$、$H_{out}$、$W_{out}$是一致的，grid最后一维大小为3，表示input像素位置信息为(x, y, z)，会将x、y、z的取值范围归一化到[-1, 1]之间。
 
       - 反归一化的计算公式：
         - align_corners=true，表示特征值位于像素中心。
 
          $$
-         x' = (grid\_x + 1) / 2 * (D_{in} - 1)
+         x' = (grid\_x + 1) / 2 * (W_{in} - 1)
          $$
 
          $$
@@ -47,13 +47,13 @@
          $$
 
          $$
-         z' = (grid\_z +1) / 2 * (W_{in} - 1)
+         z' = (grid\_z +1) / 2 * (D_{in} - 1)
          $$
 
         - align_corners=false，表示特征值位于像素的角点。
 
          $$
-         x' = ((grid\_x +1) * D_{in} - 1) / 2
+         x' = ((grid\_x +1) * W_{in} - 1) / 2
          $$
 
          $$
@@ -61,7 +61,7 @@
          $$
 
          $$
-         z' = ((grid\_z +1) * W_{in} - 1) / 2
+         z' = ((grid\_z +1) * D_{in} - 1) / 2
          $$
 
       - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -72,7 +72,7 @@
         - interpolationMode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
 
           $$
-          {output(N, C, D_{out}, H_{out}, W_{out})} = \sum_{i=0}^{2}\sum_{j=0}^{2}\sum_{k=0}^{2}{w(i, j, k)} * {f(x', y', z')}
+          {output(N, C, D_{out}, H_{out}, W_{out})} = \sum_{i=0}^{1}\sum_{j=0}^{1}\sum_{k=0}^{1}{w(i, j, k)} * {f(x', y', z')}
           $$
 
           其中：
@@ -113,8 +113,8 @@
           其中：
 
           $$
-          D_{out} = min(round(x'),  H - 1)\\
-          D_{out} = max(round(x'),  0)
+          W_{out} = min(round(x'),  W - 1)\\
+          W_{out} = max(round(x'),  0)
           $$
 
           $$
@@ -123,10 +123,10 @@
           $$
 
           $$
-          W_{out} = min(round(z'),  W - 1)\\
-          W_{out} = max(round(z'),  0)
+          D_{out} = min(round(z'),  D - 1)\\
+          D_{out} = max(round(z'),  0)
           $$
-  
+
     - 2D场景：
 
       输入input、grid网格、输出output的尺寸如下：
@@ -136,28 +136,28 @@
       grid: (N, H_{out}, W_{out}, 2)\\
       output: (N, C, H_{out}, W_{out})
       $$
-  
+
       其中input、grid、output中的N是一致的，input和output中的C是一致的，grid和output中的$H_{out}$、$W_{out}$是一致的，grid最后一维大小为2，表示input像素位置信息为(x, y)，会将x和y的取值范围归一化到[-1, 1]之间，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
 
       - 反归一化的计算公式：
         - align_corners=true，表示特征值位于像素中心。
 
           $$
-          x' = (grid\_x + 1) / 2 * (H_{in} - 1)
+          x' = (grid\_x + 1) / 2 * (W_{in} - 1)
           $$
 
           $$
-          y' = (grid\_y +1) / 2 * (W_{in} - 1)
+          y' = (grid\_y +1) / 2 * (H_{in} - 1)
           $$
 
         - align_corners=false，表示特征值位于像素的角点。
 
           $$
-          x' = ((grid\_x +1) * H_{in} - 1) / 2
+          x' = ((grid\_x +1) * W_{in} - 1) / 2
           $$
 
           $$
-          y' = ((grid\_y +1) * W_{in} - 1) / 2
+          y' = ((grid\_y +1) * H_{in} - 1) / 2
           $$
 
       - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -205,13 +205,13 @@
           其中：
 
           $$
-          H_{out} = min(round(x'),  H - 1)\\
-          H_{out} = max(round(x'),  0)
+          W_{out} = min(round(x'),  W - 1)\\
+          W_{out} = max(round(x'),  0)
           $$
 
           $$
-          W_{out} = min(round(y'),  W - 1)\\
-          W_{out} = max(round(y'),  0)
+          H_{out} = min(round(y'),  H - 1)\\
+          H_{out} = max(round(y'),  0)
           $$
 
         - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。

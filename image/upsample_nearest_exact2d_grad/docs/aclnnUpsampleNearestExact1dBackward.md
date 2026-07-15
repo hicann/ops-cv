@@ -17,7 +17,7 @@
 
 - 接口功能：[aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。通过计算输出梯度张量的点映射到输入梯度张量的位置，将输出梯度的值累加到输入梯度张量上。
 - 计算公式：
-  
+
   对于输入gradOut(N, C, l)，输出gradInput上任意一点(N, C, L)，则有：
 
   $$
@@ -27,15 +27,15 @@
   其中：
 
   $$
-  scalesL = inputSize[2]/outputSize[0]
+  scalesL = outputSize[0]/inputSize[2]
   $$
 
   $$
-  srcL = Min(scalesL * L - 0.5, outputSize[0])
+  srcL = Min(ceil(scalesL * L - 0.5), outputSize[0])
   $$
 
   $$
-  srcLUp = Min(scalesL * (L + 1) - 0.5, outputSize[0])
+  srcLUp = Min(ceil(scalesL * (L + 1) - 0.5), outputSize[0])
   $$
 
 ## 函数原型
@@ -44,20 +44,20 @@
 
 ```cpp
 aclnnStatus aclnnUpsampleNearestExact1dBackwardGetWorkspaceSize(
-  const aclTensor   *gradOutput, 
-  const aclIntArray *outputSize, 
-  const aclIntArray *inputSize, 
-  double             scales, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOutput,
+  const aclIntArray *outputSize,
+  const aclIntArray *inputSize,
+  double             scales,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```cpp
 aclnnStatus aclnnUpsampleNearestExact1dBackward(
-  void             *workspace, 
-  uint64_t          workspaceSize, 
-  aclOpExecutor    *executor, 
+  void             *workspace,
+  uint64_t          workspaceSize,
+  aclOpExecutor    *executor,
   aclrtStream       stream)
 ```
 
@@ -119,7 +119,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
     <tr>
       <td>scales（double）</td>
       <td>输入</td>
-      <td>表示输出out的缩放系数。</td>
+      <td>公式中的`scalesL`，表示输出out的缩放系数。</td>
       <td>不能传入负值。</td>
       <td>-</td>
       <td>-</td>
@@ -164,7 +164,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -249,8 +249,8 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
 
 ## 约束说明
 
-- 输入数据缩放场景放大倍数必须小于等于50，即：
-  
+- 反向接口的输入数据缩小倍数必须小于等于50，即：
+
   $$
   outputSize[0]/输出shape的高度L <= 50
   $$

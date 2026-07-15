@@ -25,18 +25,15 @@
     对于out的某个方向上的点p(x,y,z)，映射回原始图像中的点记为q(x',y',z')，则有关系：
 
     $$
-    x' = \min(\lfloor x * scales\_depth \rfloor, self\_D - 1) ,\ 
-    scales\_depth = self\_D / outputSize[0]
+    x' = \min(\lfloor x * scales\_depth \rfloor, self\_D - 1), \quad scales\_depth = self\_D / outputSize[0]
     $$
 
     $$
-    y' = \min(\lfloor y * scales\_height \rfloor, self\_H - 1) ,\ 
-    scales\_height = self\_H / outputSize[1]
+    y' = \min(\lfloor y * scales\_height \rfloor, self\_H - 1), \quad scales\_height = self\_H / outputSize[1]
     $$
 
     $$
-    z' = \min(\lfloor z * scales\_width \rfloor, self\_W - 1) ,\ 
-    scales\_width = self\_W / outputSize[2]
+    z' = \min(\lfloor z * scales\_width \rfloor, self\_W - 1), \quad scales\_width = self\_W / outputSize[2]
     $$
 
     则有以下公式：

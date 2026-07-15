@@ -28,27 +28,27 @@
   其中：
 
   $$
-  scalesH = inputSize[2]/outputSize[0]
+  scalesH = outputSize[0]/inputSize[2]
   $$
 
   $$
-  scalesW = inputSize[3]/outputSize[1]
+  scalesW = outputSize[1]/inputSize[3]
   $$
 
   $$
-  srcH = Min(scalesH * H, outputSize[0])
+  srcH = Min(ceil(scalesH * H), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(scalesH * (H + 1), outputSize[0])
+  srcHUp = Min(ceil(scalesH * (H + 1)), outputSize[0])
   $$
 
   $$
-  srcW = Min(scalesW * W, outputSize[1])
+  srcW = Min(ceil(scalesW * W), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(scalesW * (W + 1), outputSize[1])
+  srcWUp = Min(ceil(scalesW * (W + 1)), outputSize[1])
   $$
 
 ## 函数原型
@@ -57,21 +57,21 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest2dBackwardGetWorkspaceSize(
-  const aclTensor   *gradOut, 
-  const aclIntArray *outputSize, 
-  const aclIntArray *inputSize, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor*         gradInput, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOut,
+  const aclIntArray *outputSize,
+  const aclIntArray *inputSize,
+  double             scalesH,
+  double             scalesW,
+  aclTensor*         gradInput,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest2dBackward(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -185,13 +185,13 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
   </table>
 
   - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
+
     入参`gradOut`和出参`gradInput`的数据类型仅支持FLOAT16。
-  
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>

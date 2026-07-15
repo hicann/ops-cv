@@ -23,15 +23,15 @@
   - 具体计算逻辑：
 
     $$
-    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1), \ scalesD = outputSize[0] / self\_D
+    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1), \quad scalesD = outputSize[0] / self\_D
     $$
 
     $$
-    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1), \ scalesH = outputSize[1] / self\_H
+    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1), \quad scalesH = outputSize[1] / self\_H
     $$
 
     $$
-    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1), \ scalesW = outputSize[2] / self\_W
+    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1), \quad scalesW = outputSize[2] / self\_W
     $$
 
     $$
@@ -44,21 +44,21 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest3dGetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  double             scalesD, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  double             scalesD,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest3d(
-  void             *workspace, 
-  uint64_t          workspaceSize, 
-  aclOpExecutor    *executor, 
+  void             *workspace,
+  uint64_t          workspaceSize,
+  aclOpExecutor    *executor,
   aclrtStream       stream)
 ```
 
@@ -183,9 +183,9 @@ aclnnStatus aclnnUpsampleNearest3d(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
-  
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">

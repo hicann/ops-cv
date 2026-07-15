@@ -17,9 +17,13 @@
 
 - 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。
 - 计算公式：
-  
+
   $$
-  out(N, C, l) = self(N, C, min(floor((l + 0.5) * scales),  L-1))
+  l_{src} = min(floor((l_{dst} + 0.5) / scales),  L - 1), \quad scales = outputSize[0] / L
+  $$
+
+  $$
+  out(N, C, l_{dst}) = self(N, C, l_{src})
   $$
 
 ## 函数原型
@@ -28,19 +32,19 @@
 
 ```cpp
 aclnnStatus aclnnUpsampleNearestExact1dGetWorkspaceSize(
-  const aclTensor   *self, 
+  const aclTensor   *self,
   const aclIntArray *outputSize,
-  double             scales, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  double             scales,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```cpp
 aclnnStatus aclnnUpsampleNearestExact1d(
-  void             *workspace, 
-  uint64_t          workspaceSize, 
-  aclOpExecutor    *executor, 
+  void             *workspace,
+  uint64_t          workspaceSize,
+  aclOpExecutor    *executor,
   aclrtStream       stream)
 ```
 
@@ -133,7 +137,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
   </table>
 
   - <term>Atlas 推理系列产品</term>：
-  
+
     入参`self`和出参`out`的数据类型不支持BFLOAT16。
 
 - **返回值**
@@ -222,8 +226,8 @@ aclnnStatus aclnnUpsampleNearestExact1d(
   参数`self`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
-  
+  - 内存占用需小于60GB。内存占用的计算公式如下：
+
     $$
     N *  (ceil(C/16) * 16) * (self\_L + out\_L) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
@@ -231,6 +235,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
 - 参数self、outputSize、scales需要满足如下约束：
 
   $$

@@ -97,22 +97,22 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  bool               alignCorners, 
-  double             scalesD, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *out,  
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  bool               alignCorners,
+  double             scalesD,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleTrilinear3d(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -251,7 +251,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -337,29 +337,30 @@ aclnnStatus aclnnUpsampleTrilinear3d(
 - 输入数据缩放场景缩小倍数必须小于等于50，即：
 
   $$
-  输出shape的深度D/outputSize\_D <= 50
+  输入shape的深度D/outputSize\_D <= 50
   $$
-  
+
   $$
-  输出shape的高度H/outputSize\_H <= 50
+  输入shape的高度H/outputSize\_H <= 50
   $$
-  
+
   $$
-  输出shape的宽度W/outputSize\_W <=50
+  输入shape的宽度W/outputSize\_W <=50
   $$
 
 - 参数`self`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
-    N * C * (self\_D * self\_H * self\_W + out\_D * out\_H * out\_W + self\_D * self\_H * out\_W + self\_D * out\_H * out\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
+    N * C * (self\_D * self\_H * self\_W + out\_D * out\_H * out\_W + self\_D * self\_H * out\_W + self\_D * out\_H * out\_W) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* self_D \* self_H < 2^31
   - out_W * out_H < 2^31
 - 参数self、outputSize、scalesD、scalesH、scalesW需要满足如下约束：

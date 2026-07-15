@@ -20,11 +20,11 @@
 - 计算公式：
 
   $$
-  h_{src} = min(floor(h_{dst} * scalesH),  H - 1), \ scalesH = outputSize[0] / self\_H
+  h_{src} = min(floor(h_{dst} * scalesH),  H - 1), \quad scalesH = outputSize[0] / self\_H
   $$
 
   $$
-  w_{src} = min(floor(w_{dst} * scalesW),  W - 1), \ scalesW = outputSize[1] / self\_W
+  w_{src} = min(floor(w_{dst} * scalesW),  W - 1), \quad scalesW = outputSize[1] / self\_W
   $$
 
   $$
@@ -37,20 +37,20 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest2dV2GetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  float              scalesH, 
-  float              scalesW, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  float              scalesH,
+  float              scalesW,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest2dV2(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -154,7 +154,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
   </table>
 
   - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
+
     入参`self`和出参`out`的数据类型不支持FLOAT32、BFLOAT16。
 
 - **返回值**

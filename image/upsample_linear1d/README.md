@@ -35,8 +35,8 @@
 
     $$
     x' =\begin{cases}
-    x * scale\_h & alignCorners=true \\
-    MAX(0,{(x+0.5)*scale\_h-0.5}) & alignCorners=false
+    x * scale & alignCorners=true \\
+    MAX(0,{(x+0.5)*scale-0.5}) & alignCorners=false
     \end{cases}
     $$
 
@@ -49,7 +49,7 @@
     - 则有以下公式：
 
       $$
-      {V(p_{x})} = {V(p_{x0})} * {lambda_{0}}  + {V(p_{x1})} * {lambda_{1}} 
+      {V(p_{x})} = {V(p_{x0})} * {lambda_{0}}  + {V(p_{x1})} * {lambda_{1}}
       $$
 
 ## 参数说明

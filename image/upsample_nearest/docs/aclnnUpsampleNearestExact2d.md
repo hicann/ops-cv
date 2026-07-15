@@ -19,11 +19,11 @@
 - 计算公式：
 
   $$
-  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1),scalesH = outputSize[0] / H
+  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1), \quad scalesH = outputSize[0] / H
   $$
 
   $$
-  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1),scalesW = outputSize[1] / W
+  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1), \quad scalesW = outputSize[1] / W
   $$
 
   $$
@@ -36,20 +36,20 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2dGetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2d(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -153,15 +153,15 @@ aclnnStatus aclnnUpsampleNearestExact2d(
   </table>
 
   - <term>Atlas 推理系列产品</term>：
-  
+
     参数self、out的数据类型仅支持FLOAT32、FLOAT16。
-  
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -246,8 +246,8 @@ aclnnStatus aclnnUpsampleNearestExact2d(
   参数`self`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
-  
+  - 内存占用需小于60GB。内存占用的计算公式如下：
+
     $$
     N *  (ceil(C/16) * 16) * (self\_H * self\_W + out\_H * out\_W) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
@@ -255,6 +255,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
 - 参数self、outputSize、scalesH、scalesW需要满足如下约束：
 
   $$

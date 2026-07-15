@@ -17,11 +17,11 @@
 
 - 接口功能：对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$out(N, C, h, w)$可以表示为：
-  
+
   $$
   {out(N, C, h, w)}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(h_i, w_j)}
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (self.dim(2)-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -29,7 +29,7 @@
   self.dim(2) / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (self.dim(3)-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -37,7 +37,7 @@
   self.dim(3) / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   其中：
   - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
@@ -188,18 +188,18 @@ aclnnStatus aclnnUpsampleBicubic2d(
     </tr>
   </tbody>
   </table>
-  
+
   - <term>Atlas 200I/500 A2 推理产品</term>、<term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
     - 数据类型：参数`self`、`out`不支持BFLOAT16。
     - 数据格式：参数`self`、`out`不支持NHWC。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-  
+
     参数`self`、`out`的数据格式不支持NHWC。
-  
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -256,7 +256,7 @@ aclnnStatus aclnnUpsampleBicubic2d(
       <td>self、outputSize、scalesH、scalesW不满足约束。</td>
     </tr>
   </tbody></table>
-  
+
 ## aclnnUpsampleBicubic2d
 
 - **参数说明**
@@ -305,15 +305,16 @@ aclnnStatus aclnnUpsampleBicubic2d(
 - 参数`self`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
-    (self\_H * self\_W + out\_H * out\_W + self\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
+    (self\_H * self\_W + out\_H * out\_W + self\_H * out\_W) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* self_H < 2^31
 - 参数self、outputSize、scalesH、scalesW需要满足如下约束：
 

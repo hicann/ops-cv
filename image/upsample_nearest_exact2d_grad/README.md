@@ -15,7 +15,7 @@
 
 - 算子功能：[UpsampleNearest](../upsample_nearest/README.md)在exact_mode为true时的反向传播。
 - 计算公式：
-  
+
   对于输入gradOut(N, C, h, w)，输出gradInput上任意一点(N, C, H, W)，则有：
 
   $$
@@ -25,27 +25,27 @@
   其中：
 
   $$
-  scalesH = inputSize[2]/outputSize[0]
+  scalesH = outputSize[0]/inputSize[2]
   $$
 
   $$
-  scalesW = inputSize[3]/outputSize[1]
+  scalesW = outputSize[1]/inputSize[3]
   $$
 
   $$
-  srcH = Min(scalesH * H - 0.5, outputSize[0])
+  srcH = Min(ceil(scalesH * H - 0.5), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(scalesH * (H + 1) - 0.5, outputSize[0])
+  srcHUp = Min(ceil(scalesH * (H + 1) - 0.5), outputSize[0])
   $$
 
   $$
-  srcW = Min(scalesW * W - 0.5, outputSize[1])
+  srcW = Min(ceil(scalesW * W - 0.5), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(scalesW * (W + 1) - 0.5, outputSize[1])
+  srcWUp = Min(ceil(scalesW * (W + 1) - 0.5), outputSize[1])
   $$
 
 ## 参数说明
