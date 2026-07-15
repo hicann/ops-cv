@@ -19,15 +19,15 @@
 - 计算公式：
 
   $$
-  d_{src} = min(floor((d_{dst} + 0.5) / scalesD),  D - 1),scalesD = outputSize[0] / D
+  d_{src} = min(floor((d_{dst} + 0.5) / scalesD),  D - 1), \quad scalesD = outputSize[0] / D
   $$
 
   $$
-  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1),scalesH = outputSize[1] / H
+  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1), \quad scalesH = outputSize[1] / H
   $$
 
   $$
-  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1),scalesW = outputSize[2] / W
+  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1), \quad scalesW = outputSize[2] / W
   $$
 
   $$

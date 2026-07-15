@@ -36,18 +36,18 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest2dGetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest2d(
-  void             *workspace, 
-  uint64_t          workspaceSize, 
-  aclOpExecutor    *executor, 
+  void             *workspace,
+  uint64_t          workspaceSize,
+  aclOpExecutor    *executor,
   const aclrtStream stream)
 ```
 
@@ -224,8 +224,8 @@ aclnnStatus aclnnUpsampleNearest2d(
 - 参数`self`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`self`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
-  
+  - 内存占用需小于60GB。内存占用的计算公式如下：
+
     $$
     N *  (ceil(C/16) * 16) * (self\_H * self\_W + out\_H * out\_W) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
@@ -233,6 +233,7 @@ aclnnStatus aclnnUpsampleNearest2d(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
 - 确定性计算：
   - aclnnUpsampleNearest2d默认确定性实现。
 

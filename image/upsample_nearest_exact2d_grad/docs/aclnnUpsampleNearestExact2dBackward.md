@@ -17,7 +17,7 @@
 
 - 接口功能：[aclnnUpsampleNearestExact2d](../../upsample_nearest/docs/aclnnUpsampleNearestExact2d.md)的反向传播。
 - 计算公式：
-  
+
   对于输入gradOut(N, C, h, w)，输出gradInput上任意一点(N, C, H, W)，则有：
 
   $$
@@ -27,50 +27,50 @@
   其中：
 
   $$
-  scalesH = inputSize[2]/outputSize[0]
+  scalesH = outputSize[0]/inputSize[2]
   $$
 
   $$
-  scalesW = inputSize[3]/outputSize[1]
+  scalesW = outputSize[1]/inputSize[3]
   $$
 
   $$
-  srcH = Min(scalesH * H - 0.5, outputSize[0])
+  srcH = Min(ceil(scalesH * H - 0.5), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(scalesH * (H + 1) - 0.5, outputSize[0])
+  srcHUp = Min(ceil(scalesH * (H + 1) - 0.5), outputSize[0])
   $$
 
   $$
-  srcW = Min(scalesW * W - 0.5, outputSize[1])
+  srcW = Min(ceil(scalesW * W - 0.5), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(scalesW * (W + 1) - 0.5, outputSize[1])
+  srcWUp = Min(ceil(scalesW * (W + 1) - 0.5), outputSize[1])
   $$
-  
+
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearestExact2dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2dBackwardGetWorkspaceSize(
-  const aclTensor   *gradOutput, 
-  const aclIntArray *outputSize, 
-  const aclIntArray *inputSize, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOutput,
+  const aclIntArray *outputSize,
+  const aclIntArray *inputSize,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact2dBackward(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -182,7 +182,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
     </tr>
   </tbody>
   </table>
-  
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -274,12 +274,12 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 
 ## 约束说明
 
-- 输入数据缩放场景放大倍数必须小于等于50，即：
+- 反向接口的输入数据缩小倍数必须小于等于50，即：
 
   $$
   outputSize\_H / 输出shape的高度H <= 50
   $$
-  
+
   $$
   outputSize\_W / 输出shape的宽度W <=50
   $$

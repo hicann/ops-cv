@@ -33,7 +33,7 @@
     \end{cases}
     $$
 
-    因此，对于output的某个方向上的点p(x,y)，映射回原始图像中的点记为q(x',y')，则有关系：
+    因此，对于output的某个方向上的点p(x)，映射回原始图像中的点记为q(x')，则有关系：
 
     $$
     x' =\begin{cases}
@@ -55,7 +55,7 @@
       $$
 
     - 假设：正向插值的输出图像out $(x)$受原图像input $(x_i)$影响，则有：
-  
+
       $$
       gradInput(x_i) += gradOut(x) * lambda(x_i)
       $$
@@ -66,21 +66,21 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(
-  const aclTensor   * gradOut, 
-  const aclIntArray * outputSize, 
-  const aclIntArray * inputSize, 
-  bool                alignCorners, 
-  double              scales, 
-  aclTensor         * out, 
-  uint64_t          * workspaceSize, 
+  const aclTensor   * gradOut,
+  const aclIntArray * outputSize,
+  const aclIntArray * inputSize,
+  bool                alignCorners,
+  double              scales,
+  aclTensor         * out,
+  uint64_t          * workspaceSize,
   aclOpExecutor    ** executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleLinear1dBackward(
-  void          * workspace, 
-  uint64_t        workspaceSize, 
-  aclOpExecutor * executor, 
+  void          * workspace,
+  uint64_t        workspaceSize,
+  aclOpExecutor * executor,
   aclrtStream     stream)
 ```
 
@@ -113,7 +113,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     <tr>
       <td>gradOut（aclTensor*）</td>
       <td>输入</td>
-      <td>表示进行上采样的输入张量，对应公式中的`gradOut`。</td>
+      <td>表示反向计算的梯度Tensor，对应公式中的`gradOut`。</td>
       <td><ul><li>不支持空Tensor。</li><li>当数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>ND、NCL</td>
@@ -163,7 +163,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     <tr>
       <td>out（aclTensor*）</td>
       <td>输出</td>
-      <td>表示采样后的输出张量，对应公式中的`gradInput`。</td>
+      <td>表示反向计算的输出Tensor，对应公式中的`gradInput`。</td>
       <td><ul><li>不支持空Tensor</li><li>输出维度必须是3维。数据类型、数据格式与入参`gradOut`保持一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、BFLOAT16</td>
       <td>NCL</td>
@@ -196,7 +196,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   - <term>Atlas 训练系列产品</term>：
 
     入参`gradOut`和出参`out`的数据类型仅支持FLOAT32、FLOAT16。
-  
+
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
 
     入参`gradOut`：当gradOut的shape对应轴的值与inputSize对应轴的值不相同时，数据类型仅支持FLOAT32、FLOAT16。
@@ -204,7 +204,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -302,7 +302,7 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
 - 参数`gradOut`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`gradOut`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
     (gradOut\_L + out\_L + out\_L) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
@@ -311,10 +311,11 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N * C < 2^31
 - 入参`gradOut`和出参`out`的数据格式不为NCL或ND时，输入其他数据格式默认按照NCL处理。
-- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：输入数据缩放场景放大倍数必须小于等于500，即：
-  
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：反向接口的输入数据缩小倍数必须小于等于500，即：
+
   $$
   outputSize[0] / 输出shape的长度L <= 500
   $$

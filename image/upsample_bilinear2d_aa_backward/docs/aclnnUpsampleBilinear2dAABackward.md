@@ -17,11 +17,11 @@
 
 - 接口功能：[aclnnUpsampleBilinear2dAA](../../upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA.md)的反向传播。
 - 计算公式：对于一个二维插值点$(N, C, H, W)$，插值$I(N, C, H, W)$可以表示为：
-  
+
   $$
   {I(N, C, H, W)} = \sum_{i=0}^{kW}\sum_{j=0}^{kH}{w(i) * w(j)} * {f(h_i, w_j)}/\sum_{i=0}^{kW}w(i)/\sum_{j=0}^{kH}w(j)
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -29,7 +29,7 @@
   inputSize[2] / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (inputSize[3]-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -37,7 +37,7 @@
   inputSize[3] / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   - 其中：
     - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
     - $kW$、$kH$分别表示W方向和H方向影响插值点大小的点的数量
@@ -60,11 +60,11 @@
       $$
 
   - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有：
-  
+
     $$
     gradInput(h_i,w_j) += gradOutput(h,w) * w(i) * w(j)
     $$
-  
+
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleBilinear2dAABackward”接口执行计算。
@@ -212,7 +212,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 * **返回值**：
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -308,12 +308,12 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
 
-  输入数据缩放场景放大倍数必须小于等于50，即：
+  反向接口的输入数据缩小倍数必须小于等于50，即：
 
   $$
   outputSize\_H / 输出shape的高度H <= 50
   $$
-  
+
   $$
   outputSize\_W / 输出shape的宽度W <=50
   $$

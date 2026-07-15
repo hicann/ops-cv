@@ -56,8 +56,8 @@
 | [aclnnUpsampleLinear1dBackward](../../image/upsample_bilinear2d_grad/docs/aclnnUpsampleLinear1dBackward.md) | [aclnnUpsampleLinear1d](../../image/upsample_linear1d/docs/aclnnUpsampleLinear1d.md)的反向传播。 |默认确定性实现|默认非确定性实现，支持配置开启|
 | [aclnnUpsampleNearestExact1d](../../image/upsample_nearest/docs/aclnnUpsampleNearestExact1d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleNearestExact2d](../../image/upsample_nearest/docs/aclnnUpsampleNearestExact2d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|
-| [aclnnUpsampleNearest1dBackward](../../image/upsample_nearest2d_grad/docs/aclnnUpsampleNearest1dBackward.md) | [aclnnUpsampleNearestExact1d](../../image/upsample_nearest/docs/aclnnUpsampleNearestExact1d.md)的反向传播。 |默认确定性实现|默认确定性实现|
-| [aclnnUpsampleNearest2dBackward](../../image/upsample_nearest2d_grad/docs/aclnnUpsampleNearest2dBackward.md) | [aclnnUpsampleNearestExact2d](../../image/upsample_nearest/docs/aclnnUpsampleNearestExact2d.md)的反向传播。 |默认确定性实现|默认确定性实现|
+| [aclnnUpsampleNearest1dBackward](../../image/upsample_nearest2d_grad/docs/aclnnUpsampleNearest1dBackward.md) | [aclnnUpsampleNearest1dV2](../../image/upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md)的反向传播。 |默认确定性实现|默认确定性实现|
+| [aclnnUpsampleNearest2dBackward](../../image/upsample_nearest2d_grad/docs/aclnnUpsampleNearest2dBackward.md) | [aclnnUpsampleNearest2dV2](../../image/upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md)的反向传播。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleNearest1dV2](../../image/upsample_nearest3d/docs/aclnnUpsampleNearest1dV2.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleNearest2dV2](../../image/upsample_nearest3d/docs/aclnnUpsampleNearest2dV2.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|
 | [aclnnUpsampleNearest3d](../../image/upsample_nearest3d/docs/aclnnUpsampleNearest3d.md) | 对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。 |默认确定性实现|默认确定性实现|

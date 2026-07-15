@@ -17,11 +17,11 @@
 
 - 接口功能：[aclnnUpsampleBicubic2dAA](../../upsample_bicubic2d_aa/docs/aclnnUpsampleBicubic2dAA.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
-  
+
   $$
   {gradInput(N, C, h, w)}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(h_i, w_j)}
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -29,7 +29,7 @@
   inputSize[2] / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (inputSize[3]-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -37,7 +37,7 @@
   inputSize[3] / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   其中：
   - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
@@ -203,7 +203,7 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -300,21 +300,22 @@ aclnnStatus aclnnUpsampleBicubic2dAAGrad(
   - 内存占用需要满足如下条件：
 
     $$
-    (gradOutput\_H * gradOutput\_W + out\_H * out\_W + gradOutput\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
+    (gradOutput\_H * gradOutput\_W + out\_H * out\_W + gradOutput\_H * out\_W) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* gradOutput_H < 2^31
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
 
-  输入数据缩放场景放大倍数必须小于等于50，即：
+  反向接口的输入数据缩小倍数必须小于等于50，即：
 
   $$
   outputSize\_H / 输出shape的高度H <= 50
   $$
-  
+
   $$
   outputSize\_W / 输出shape的宽度W <=50
   $$

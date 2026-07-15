@@ -37,8 +37,8 @@
 
     $$
     x' =\begin{cases}
-    x * scale\_h & alignCorners=true \\
-    MAX(0,{(x+0.5)*scale\_h-0.5}) & alignCorners=false
+    x * scale & alignCorners=true \\
+    MAX(0,{(x+0.5)*scale-0.5}) & alignCorners=false
     \end{cases}
     $$
 
@@ -51,7 +51,7 @@
     - 则有以下公式：
 
       $$
-      {V(p_{x})} = {V(p_{x0})} * {lambda_{0}}  + {V(p_{x1})} * {lambda_{1}} 
+      {V(p_{x})} = {V(p_{x0})} * {lambda_{0}}  + {V(p_{x1})} * {lambda_{1}}
       $$
 
 ## 函数原型
@@ -60,20 +60,20 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(
-  const aclTensor   *self, 
+  const aclTensor   *self,
   const aclIntArray *outputSize,
-  const bool         alignCorners, 
-  const double       scales, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const bool         alignCorners,
+  const double       scales,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleLinear1d(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -128,8 +128,8 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>bool类型参数，决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td><ul><li>如果设置为True，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。</li>
-      <li>如果设置为False，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
+      <td><ul><li>如果设置为true，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。</li>
+      <li>如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -185,7 +185,7 @@ aclnnStatus aclnnUpsampleLinear1d(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>

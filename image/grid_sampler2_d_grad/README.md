@@ -19,7 +19,7 @@
     1. 根据grid存储的(x, y)值，计算出映射到input上的坐标，这些坐标和align_corners、padding_mode有关。
     2. 根据输入的interpolationMode，选择使用bilinear、nearest、bicubic不同插值模式计算该坐标周围点分配到梯度的权重值。
     3. 根据grad存储的梯度值乘上对应点的权重值，计算出最终dx、dgrid的结果。
-  
+
 - 计算公式：
 
   grad、input、grid、dx、dgrid的尺寸如下：
@@ -32,7 +32,7 @@
   $$
 
   其中grad、input、grid、dx、dgrid中的N均相同，grad、input和dx中的C相同，input和dx中的$H_{in}$、$W_{in}$相同，grad、grid和dgrid中的$H_{out}$、$W_{out}$相同，grid最后一维大小为2，表示input像素位置信息为(x, y)。x和y的取值范围归一化到[-1, 1]，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
-  
+
   1. 坐标反归一化：
      grid中的(x, y)需要先反归一化到input像素坐标(ix, iy)，同时计算梯度乘子`gix_mult`、`giy_mult`（用于后续dgrid计算）：
      - align_corners = true：
@@ -59,7 +59,7 @@
 
        四个角点坐标和权重为：
 
-       | 角点 | 坐标$(i_p, j_p)$ | 权重$w_p$ |
+       | 角点 | 坐标$(iy_p, ix_p)$ | 权重$w_p$ |
        |:------:|:------:|:----------:|
        | nw（西北） | $(iy_{nw}, ix_{nw})$ | $(ix_{se} - ix) × (iy_{se} - iy)$ |
        | ne（东北） | $(iy_{ne}, ix_{ne})$ | $(ix - ix_{sw}) × (iy_{sw} - iy)$ |
@@ -82,7 +82,7 @@
        - dx（input梯度）：将上游梯度按权重散射到input对应位置
 
          $$
-         dx(N, C, i_p, j_p) \mathrel{+}= w_p \cdot grad(N, C, H_{out}, W_{out})
+         dx(N, C, iy_p, ix_p) \mathrel{+}= w_p \cdot grad(N, C, H_{out}, W_{out})
          $$
 
          即对每个输出像素(h, w)，将其梯度乘以双线性权重，累加到input的四个相邻像素位置（越界位置不累加）。
@@ -96,7 +96,7 @@
          giy = \sum_{c} \left[ -V_{nw} \cdot (ix_{se} - ix) - V_{ne} \cdot   (ix - ix_{sw}) + V_{sw} \cdot (ix_{ne} - ix) + V_{se} \cdot (ix - ix_{nw}) \right] \cdot grad(N, C, H_{out}, W_{out})
          $$
 
-         其中 $V_p = input(N, C, i_p, j_p)$（仅当角点在边界内时参与计算）。
+         其中 $V_p = input(N, C, iy_p, ix_p)$（仅当角点在边界内时参与计算）。
        - 最终：
 
          $$
@@ -128,43 +128,48 @@
           $(ix', iy') = (ix_{nw}-1+i, iy_{nw}-1+j)$，$i,j \in \{0,1,2,3\}$，越界位置根据padding_mode处理。
 
           $$
+          tx = ix - floor(ix) \\
+          ty = iy - floor(iy) \\
+          $$
+
+          $$
           A = -0.75 \\
-          x_0 = x + 1.0 \\
+          x_0 = tx + 1.0 \\
           x\_coeffs[0] = ((A * x_0 - 5* A) * x_0 + 8 * A) * x_0 - 4 * A
           $$
 
           $$
-          x_1 = x \\
+          x_1 = tx \\
           x\_coeffs[1] = ((A + 2)* x_1 - (A + 3)) * x_1 * x_1 + 1
           $$
 
           $$
-          x_2 = 1 - x \\
+          x_2 = 1 - tx \\
           x\_coeffs[2] = ((A + 2)* x_2 - (A + 3)) * x_2 * x_2 + 1
           $$
 
           $$
-          x_3 = 2 - x \\
+          x_3 = 2 - tx \\
           x\_coeffs[3] = ((A * x_3 - 5* A) * x_3 + 8 * A) * x_3 - 4 * A
           $$
 
           $$
-          y_0 = y + 1.0 \\
+          y_0 = ty + 1.0 \\
           y\_coeffs[0] = ((A * y_0 - 5* A) * y_0 + 8 * A) * y_0 - 4 * A
           $$
 
           $$
-          y_1 = y \\
+          y_1 = ty \\
           y\_coeffs[1] = ((A + 2)* y_1 - (A + 3)) * y_1 * y_1 + 1
           $$
 
           $$
-          y_2 = 1 - y \\
+          y_2 = 1 - ty \\
           y\_coeffs[2] = ((A + 2)* y_2 - (A + 3)) * y_2 * y_2 + 1
           $$
 
           $$
-          y_3 = 2 - y \\
+          y_3 = 2 - ty \\
           y\_coeffs[3] = ((A * y_3 - 5* A) * y_3 + 8 * A) * y_3 - 4 * A
           $$
 
@@ -181,11 +186,6 @@
           其中：
 
           $V_{ij} = get\_value\_bounded(input(N, C, H_{in}, W_{in}), ix_{nw}-1+i, iy_{nw}-1  +j)$，`x_coeffs_grad`和`y_coeffs_grad`是三次插值系数对tx/ty的导数：
-
-          $$
-          tx = ix - floor(ix) \\
-          ty = iy - floor(iy) \\
-          $$
 
           $$
           x\_coeffs\_grad[0] = (-3A \cdot x - 10A) \cdot x - 8A \\

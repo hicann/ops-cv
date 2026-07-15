@@ -90,11 +90,11 @@
     - 则有以下公式：
 
       $$
-      {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}} 
+      {V(p_{x, y, z})} = {V(p_{x0, y0, z0})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x0, y0, z1})} * {lambda_{0}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x0, y1, z0})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x0, y1, z1})} * {lambda_{0}} * {lambdb_{1}} * {lambdc_{1}} + {V(p_{x1, y0, z0})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{0}} + {V(p_{x1, y0, z1})} * {lambda_{1}} * {lambdb_{0}} * {lambdc_{1}} + {V(p_{x1, y1, z0})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{0}} + {V(p_{x1, y1, z1})} * {lambda_{1}} * {lambdb_{1}} * {lambdc_{1}}
       $$
 
     - 假设：正向插值的输出图像out $(x, y, z)$受原图像input $(x_i, y_j, z_k)$影响，则有：
-  
+
       $$
       gradInput(x_i,y_j,z_k) += gradOut(x,y,z) * lambda(x_i,y_j,z_k)* lambdb(x_i,y_j,z_k)* lambdc(x_i,y_j,z_k)
       $$
@@ -105,23 +105,23 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleTrilinear3dBackwardGetWorkspaceSize(
-  const aclTensor   *gradOut, 
-  const aclIntArray *outputSize, 
-  const aclIntArray *inputSize, 
-  bool               alignCorners, 
-  double             scalesD, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *gradInput, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOut,
+  const aclIntArray *outputSize,
+  const aclIntArray *inputSize,
+  bool               alignCorners,
+  double             scalesD,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *gradInput,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleTrilinear3dBackward(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -255,7 +255,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   </table>
 
   - <term>Atlas 训练系列产品</term>：
-  
+
     参数`gradOut`和`gradInput`的数据类型不支持BFLOAT16。
 
 - **返回值**
@@ -263,7 +263,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -364,15 +364,16 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
 - 参数`gradOut`、`gradInput`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`gradInput`的N轴和C轴与`gradOut`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
-    N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
+    N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* gradOut_D \* gradOut_H < 2^31
   - gradInput_W * gradInput_H < 2^31
 - 参数inputSize、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
@@ -380,7 +381,7 @@ aclnnStatus aclnnUpsampleTrilinear3dBackward(
   $$
   outputSize\_D = floor(inputSize\_D * scalesD)
   $$
-  
+
   $$
   outputSize\_H = floor(inputSize\_H * scalesH)
   $$

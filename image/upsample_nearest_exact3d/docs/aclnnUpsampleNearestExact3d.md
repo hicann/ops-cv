@@ -19,15 +19,15 @@
 - 计算公式：
 
   $$
-  d_{src} = min(floor((d_{dst} + 0.5) / scalesD),  D - 1),scalesD = outputSize[0] / D
+  d_{src} = min(floor((d_{dst} + 0.5) / scalesD),  D - 1), \quad scalesD = outputSize[0] / D
   $$
 
   $$
-  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1),scalesH = outputSize[1] / H
+  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1), \quad scalesH = outputSize[1] / H
   $$
 
   $$
-  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1),scalesW = outputSize[2] / W
+  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1), \quad scalesW = outputSize[2] / W
   $$
 
   $$
@@ -40,21 +40,21 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dGetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  double             scalesD, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  double             scalesD,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3d(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -168,7 +168,7 @@ aclnnStatus aclnnUpsampleNearestExact3d(
   </table>
 
   - <term>Atlas 推理系列产品</term>：
-  
+
     参数`self`、`out`的数据类型仅支持FLOAT32、FLOAT16。
 
 - **返回值**

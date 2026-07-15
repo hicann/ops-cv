@@ -17,7 +17,7 @@
 
 - 接口功能：提供一个输入Tensor以及一个对应的grid网格，然后根据grid中每个位置提供的坐标信息，将input中对应位置的像素值填充到网格指定的位置，得到最终的输出。
 - 计算公式：
-  
+
   输入input、grid网格、输出output的尺寸如下：
 
   $$
@@ -31,21 +31,21 @@
     - alignCorners=true，表示特征值位于像素中心。
 
       $$
-      x' = (grid\_x + 1) / 2 * (H_{in} - 1)
+      x' = (grid\_x + 1) / 2 * (W_{in} - 1)
       $$
 
       $$
-      y' = (grid\_y +1) / 2 * (W_{in} - 1)
+      y' = (grid\_y +1) / 2 * (H_{in} - 1)
       $$
 
     - alignCorners=false，表示特征值位于像素的角点。
 
       $$
-      x' = ((grid\_x +1) * H_{in} - 1) / 2
+      x' = ((grid\_x +1) * W_{in} - 1) / 2
       $$
 
       $$
-      y' = ((grid\_y +1) * W_{in} - 1) / 2
+      y' = ((grid\_y +1) * H_{in} - 1) / 2
       $$
 
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -59,7 +59,7 @@
     - interpolationMode=0，表示取(x, y)周围四个坐标的加权平均值。
 
       $$
-      output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{2}\sum_{j=0}^{2}{w(i, j)} * {f(x', y')}
+      output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{1}\sum_{j=0}^{1}{w(i, j)} * {f(x', y')}
       $$
 
       其中：
@@ -93,13 +93,13 @@
       其中：
 
       $$
-      H_{out} = min(round(x'),  H - 1)\\
-      H_{out} = max(round(x'),  0)
+      W_{out} = min(round(x'),  W - 1)\\
+      W_{out} = max(round(x'),  0)
       $$
 
       $$
-      W_{out} = min(round(y'),  W - 1)\\
-      W_{out} = max(round(y'),  0)
+      H_{out} = min(round(y'),  H - 1)\\
+      H_{out} = max(round(y'),  0)
       $$
 
     - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。
@@ -179,7 +179,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>input（aclTensor*）</td>
       <td>输入</td>
       <td>进行插值计算的输入张量，对应公式中描述的`input`。</td>
-      <td><ul><li>支持空Tensor。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>in</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>in</em>)。H*W < INT32的最大值。`input`的shape最后两维的维度值不能为0。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>支持shape为(N, C, H<sub>in</sub>, W<sub>in</sub>)。H*W < INT32的最大值。`input`的shape最后两维的维度值不能为0。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>4</td>
@@ -189,7 +189,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>grid（aclTensor*）</td>
       <td>输入</td>
       <td>采样的网格，对应公式中描述的`grid`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 2)，且N与入参`input`的shape中的N一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与入参`input`的数据类型一致。</li><li>支持shape为(N, H<sub>out</sub>, W<sub>out</sub>, 2)，且N与入参`input`的shape中的N一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>4</td>
@@ -229,7 +229,7 @@ aclnnStatus aclnnGridSampler2D(
       <td>out（aclTensor*）</td>
       <td>输出</td>
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
-      <td><ul><li>支持空Tensor。</li><li>数据类型与input的数据类型一致。</li><li>支持shape为(N, C, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>)，且N、C与input的shape中的N、C一致，<em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>与grid的shape中的<em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>、<em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>一致。</li></ul></td>
+      <td><ul><li>支持空Tensor。</li><li>数据类型与input的数据类型一致。</li><li>支持shape为(N, C, H<sub>out</sub>, W<sub>out</sub>)，且N、C与input的shape中的N、C一致，H<sub>out</sub>、W<sub>out</sub>与grid的shape中的H<sub>out</sub>、W<sub>out</sub>一致。</li></ul></td>
       <td>FLOAT32、FLOAT16、DOUBLE、BFLOAT16</td>
       <td>ND</td>
       <td>4</td>
@@ -262,17 +262,17 @@ aclnnStatus aclnnGridSampler2D(
     - 入参`interpolationMode`不支持插值模式2：bicubic（双三次插值）。
     - 参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-    
+
     入参`interpolationMode`，仅当input数据类型为FLOAT32、FLOAT16或者BFLOAT16时，支持2：bicubic（双三次插值）。
   - <term>Atlas 200I/500 A2 推理产品</term>：
-    
+
     当接口运行在AI Core时，需要满足如下条件：
     - 入参`interpolationMode`为bilinear。
     - 入参`paddingMode`为zeros。
     - 参数`input`、`grid`、`out`的数据类型为FLOAT16。
     - 参数`input`的shape需要满足C维的值为32。
   - <term>Atlas 推理系列产品</term>：
-    
+
     当接口运行在AI Core时，需要满足如下条件：
     - 入参`interpolationMode`为bilinear。
     - 入参`paddingMode`为zeros。
@@ -283,7 +283,7 @@ aclnnStatus aclnnGridSampler2D(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>

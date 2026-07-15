@@ -15,7 +15,7 @@
 
 - 算子功能：[UpsampleNearest3d](../upsample_nearest3d/README.md)的反向计算。
 - 计算公式：
-  
+
   对于输入gradOut(N, C, d, h, w)，输出gradInput上任意一点(N, C, D, H, W)，则有：
 
   $$
@@ -25,39 +25,39 @@
   其中：
 
   $$
-  scalesD = inputSize[2]/outputSize[0]
+  scalesD = outputSize[0]/inputSize[2]
   $$
 
   $$
-  scalesH = inputSize[3]/outputSize[1]
+  scalesH = outputSize[1]/inputSize[3]
   $$
 
   $$
-  scalesW = inputSize[4]/outputSize[2]
-  $$
-  
-  $$
-  srcD = Min(scalesD * D, outputSize[0])
+  scalesW = outputSize[2]/inputSize[4]
   $$
 
   $$
-  srcDUp = Min(scalesD * (D + 1), outputSize[0])
+  srcD = Min(ceil(scalesD * D), outputSize[0])
   $$
 
   $$
-  srcH = Min(scalesH * H, outputSize[1])
+  srcDUp = Min(ceil(scalesD * (D + 1)), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(scalesH * (H + 1), outputSize[1])
+  srcH = Min(ceil(scalesH * H), outputSize[1])
   $$
 
   $$
-  srcW = Min(scalesW * W, outputSize[2])
+  srcHUp = Min(ceil(scalesH * (H + 1)), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(scalesW * (W + 1), outputSize[2])
+  srcW = Min(ceil(scalesW * W), outputSize[2])
+  $$
+
+  $$
+  srcWUp = Min(ceil(scalesW * (W + 1)), outputSize[2])
   $$
 
 ## 参数说明

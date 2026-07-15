@@ -18,11 +18,11 @@
 - 接口功能：对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$out(N, C, h, w)$可以表示为：
-  
+
   $$
   {out(N, C, h, w)}=\sum_{i=0}^{kW}\sum_{j=0}^{kH}{W(i, j)}*{f(h_i, w_j)}
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (x.dim(2)-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -30,7 +30,7 @@
   x.dim(2) / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (x.dim(3)-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -38,7 +38,7 @@
   x.dim(3) / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   其中：
   - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
@@ -135,7 +135,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
       <td>alignCorners（bool）</td>
       <td>输入</td>
       <td>决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
-      <td>alignCorners为True，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
+      <td>alignCorners为true，则输入和输出张量的角像素点会被对齐，否则不对齐。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -197,7 +197,7 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -282,24 +282,25 @@ aclnnStatus aclnnUpsampleBicubic2dAA(
 - 参数`x`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`x`保持一致，且C轴、H轴、W轴大于0。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
-    (x\_H * x\_W + out\_H * out\_W + x\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
+    (x\_H * x\_W + out\_H * out\_W + x\_H * out\_W) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* x_H < 2^31
 - - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
 
   输入数据缩放场景缩小倍数必须小于等于50，即：
-  
+
   $$
   输入shape的高度H/outputSize\_H <= 50
   $$
-  
+
   $$
   输入shape的宽度W/outputSize\_W <=50
   $$

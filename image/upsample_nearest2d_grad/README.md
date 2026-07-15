@@ -25,27 +25,27 @@
   其中：
 
   $$
-  scalesH = inputSize[2]/outputSize[0]
+  scalesH = outputSize[0]/inputSize[2]
   $$
 
   $$
-  scalesW = inputSize[3]/outputSize[1]
+  scalesW = outputSize[1]/inputSize[3]
   $$
 
   $$
-  srcH = Min(scalesH * H, outputSize[0])
+  srcH = Min(ceil(scalesH * H), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(scalesH * (H + 1), outputSize[0])
+  srcHUp = Min(ceil(scalesH * (H + 1)), outputSize[0])
   $$
 
   $$
-  srcW = Min(scalesW * W, outputSize[1])
+  srcW = Min(ceil(scalesW * W), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(scalesW * (W + 1), outputSize[1])
+  srcWUp = Min(ceil(scalesW * (W + 1)), outputSize[1])
   $$
 
 ## 参数说明

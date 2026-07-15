@@ -27,39 +27,39 @@
   其中：
 
   $$
-  scalesD = inputSize[2]/outputSize[0]
+  scalesD = outputSize[0]/inputSize[2]
   $$
 
   $$
-  scalesH = inputSize[3]/outputSize[1]
+  scalesH = outputSize[1]/inputSize[3]
   $$
 
   $$
-  scalesW = inputSize[4]/outputSize[2]
-  $$
-  
-  $$
-  srcD = Min(scalesD * D - 0.5, outputSize[0])
+  scalesW = outputSize[2]/inputSize[4]
   $$
 
   $$
-  srcDUp = Min(scalesD * (D + 1) -0.5, outputSize[0])
+  srcD = Min(ceil(scalesD * D - 0.5), outputSize[0])
   $$
 
   $$
-  srcH = Min(scalesH * H - 0.5, outputSize[1])
+  srcDUp = Min(ceil(scalesD * (D + 1) - 0.5), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(scalesH * (H + 1) -0.5, outputSize[1])
+  srcH = Min(ceil(scalesH * H - 0.5), outputSize[1])
   $$
 
   $$
-  srcW = Min(scalesW * W - 0.5, outputSize[2])
+  srcHUp = Min(ceil(scalesH * (H + 1) - 0.5), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(scalesW * (W + 1) -0.5, outputSize[2])
+  srcW = Min(ceil(scalesW * W - 0.5), outputSize[2])
+  $$
+
+  $$
+  srcWUp = Min(ceil(scalesW * (W + 1) - 0.5), outputSize[2])
   $$
 
 ## 函数原型
@@ -68,22 +68,22 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dBackwardGetWorkspaceSize(
-  const aclTensor   *gradOut, 
-  const aclIntArray *outputSize, 
-  const aclIntArray *inputSize, 
-  double             scalesD, 
-  double             scalesH, 
-  double             scalesW, 
-  aclTensor         *gradInput, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOut,
+  const aclIntArray *outputSize,
+  const aclIntArray *inputSize,
+  double             scalesD,
+  double             scalesH,
+  double             scalesW,
+  aclTensor         *gradInput,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearestExact3dBackward(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -211,7 +211,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  
+
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
   <col style="width: 268px">
   <col style="width: 140px">
@@ -315,19 +315,20 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 - 参数`gradOut`、`gradInput`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`gradInput`的N轴和C轴与`gradOut`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
-    N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(float) < 60 * 1024 * 1024 * 1024
+    N * C * (gradOut\_D * gradOut\_H * gradOut\_W + gradInput\_D * gradInput\_H * gradInput\_W + gradOut\_D * gradOut\_H * gradInput\_W + gradOut\_D * gradInput\_H * gradInput\_W) * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* gradOut_D \* gradOut_H < 2^31
   - gradInput_W * gradInput_H < 2^31
 - 参数gradOut、gradInput的数据格式不为NCDHW或NDHWC时，输入其他数据格式默认按NCDHW处理。
-- 输入数据缩放场景放大倍数必须小于等于50，即：
+- 反向接口的输入数据缩小倍数必须小于等于50，即：
 
   $$
   outputSize\_D / 输出shape的深度D <= 50
@@ -336,7 +337,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   $$
   outputSize\_H / 输出shape的高度H <= 50
   $$
-  
+
   $$
   outputSize\_W / 输出shape的宽度W <=50
   $$
@@ -346,7 +347,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   $$
   outputSize\_D = floor(inputSize\_D * scalesD)
   $$
-  
+
   $$
   outputSize\_H = floor(inputSize\_H * scalesH)
   $$

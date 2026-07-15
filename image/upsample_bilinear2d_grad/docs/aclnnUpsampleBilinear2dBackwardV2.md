@@ -77,7 +77,7 @@
       $$
 
     - 假设：正向插值的输出图像out $(x, y)$受原图像input $(x_i, y_j)$影响，则有：
-  
+
       $$
       gradInput(x_i,y_j) += gradOutput(x,y) * lambda(x_i,y_j) * lambdb(x_i,y_j)
       $$
@@ -227,13 +227,13 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
   </table>
 
   - <term>Atlas 训练系列产品</term>、<term>Atlas 推理系列产品</term>：
-  
+
     参数`gradOut`、`out`的数据类型不支持BFLOAT16。
 
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -255,8 +255,8 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
       <td>传入的gradOut、outputSize、inputSize或out是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="12">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="12">161002</td>
+      <td rowspan="10">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="10">161002</td>
       <td>gradOut、out的数据类型和数据格式不在支持的范围之内。</td>
     </tr>
     <tr>
@@ -336,15 +336,16 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
 - 参数`gradOut`、`out`的shape约束：
   - 每个维度的取值小于等于2^20。
   - 参数`out`的N轴和C轴与`gradOut`保持一致。
-  - 内存占用需小于60G。内存占用的计算公式如下：
+  - 内存占用需小于60GB。内存占用的计算公式如下：
 
     $$
-    (gradOut\_H * gradOut\_W + out\_H * out\_W + gradOut\_H * out\_W) * N * C  * sizeof(float) < 60 * 1024 * 1024 * 1024
+    (gradOut\_H * gradOut\_W + out\_H * out\_W + gradOut\_H * out\_W) * N * C  * sizeof(dtype) < 60 * 1024 * 1024 * 1024
     $$
 
     其中：
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
+    - dtype代表输入张量的数据类型。
   - N \* C \* gradOut_H < 2^31
 - 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
 

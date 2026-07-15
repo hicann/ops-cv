@@ -28,15 +28,15 @@
   其中：
 
   $$
-  scalesL = inputSize[2]/outputSize[0]
+  scalesL = outputSize[0]/inputSize[2]
   $$
 
   $$
-  srcL = Min(scalesL * L, outputSize[0])
+  srcL = Min(ceil(scalesL * L), outputSize[0])
   $$
 
   $$
-  srcLUp = Min(scalesL * (L + 1), outputSize[0])
+  srcLUp = Min(ceil(scalesL * (L + 1)), outputSize[0])
   $$
 
 ## 函数原型
@@ -45,20 +45,20 @@
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
-  const aclTensor   *gradOut, 
-  const aclIntArray *outputSize, 
-  const aclIntArray *inputSize, 
-  double             scales, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOut,
+  const aclIntArray *outputSize,
+  const aclIntArray *inputSize,
+  double             scales,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest1dBackward(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -164,11 +164,11 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
   </table>
 
   - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：入参`gradOut`和出参`out`的数据类型仅支持FLOAT16。
-  
+
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
