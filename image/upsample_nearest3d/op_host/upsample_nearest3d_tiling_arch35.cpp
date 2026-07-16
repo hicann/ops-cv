@@ -44,6 +44,7 @@ const std::string EXACT_3D_TYPE = "UpsampleNearestExact3d";
 constexpr int64_t SIMD_THRESHOLD_HIGH = 5000000; // SIMD模式高阈值
 constexpr int64_t SIMD_THRESHOLD_LOW = 86400;    // SIMD模式低阈值
 constexpr int64_t SIMD_WIDTH_THRESHOLD = 95;     // SIMD宽度阈值
+constexpr int64_t SIMD_MIN_OUT_WIDTH = 85;       // SIMD最小输出宽度阈值
 constexpr int64_t OUTPUT_SIZE_EXPECTED = 3;      // 期望的输出尺寸数量
 constexpr int64_t SIMD_SCHEDULE_ID = 4;          // SIMD调度ID
 
@@ -187,6 +188,10 @@ bool UpsampleNearest3dRegbaseTiling::GetIsSimd()
                       baseTiling_.outW == baseTiling_.inW && std::abs(baseTiling_.scaleD - 1.0f) <= EPSILON &&
                       std::abs(baseTiling_.scaleH - 1.0f) <= EPSILON && std::abs(baseTiling_.scaleW - 1.0f) <= EPSILON;
     if (isDataCopy) {
+        return false;
+    }
+
+    if (baseTiling_.outW <= SIMD_MIN_OUT_WIDTH) {
         return false;
     }
 
