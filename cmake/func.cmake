@@ -643,7 +643,7 @@ macro(add_all_modules_sources)
     endif()
   endif()
 
-  file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/op_graph/*_graph_*.cpp)
+  file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/op_graph/*_graph_*.cpp ${SOURCE_DIR}/op_graph/*_fallback.cpp ${SOURCE_DIR}/op_graph/fusion_pass/*_pass.cpp)
   if(OP_GRAPH_SRCS)
     add_op_graph_modules() 
     target_sources(${OP_GRAPH_NAME}_obj PRIVATE ${OP_GRAPH_SRCS})
