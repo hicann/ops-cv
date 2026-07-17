@@ -214,6 +214,9 @@ ge::graphStatus ResizeLinearTiling::LinearCompute()
         OP_LOGI(context_->GetNodeName(), "ySize or xSize is too large");
         isInt32_ = DIM_0;
     }
+    if (lenSrcL_ > INT32_MAX || lenDesL_ > INT32_MAX) {
+        isInt32_ = DIM_0;
+    }
     ComputeKey();
     return ge::GRAPH_SUCCESS;
 }

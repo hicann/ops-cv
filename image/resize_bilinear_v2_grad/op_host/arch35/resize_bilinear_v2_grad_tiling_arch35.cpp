@@ -418,7 +418,10 @@ void ResizeBilinearV2GradTilingAscendC::SetFactors()
 
 void ResizeBilinearV2GradTilingAscendC::SetSimtTilingKey(bool isDetermine)
 {
-    bool isIdx32 = lenN_ * lenC_ * lenDesH_ * lenDesW_ < UINT32_MAX && lenN_ * lenC_ * lenSrcH_ * lenSrcW_ < UINT32_MAX;
+    int64_t ySize_ = lenN_ * lenC_ * lenDesH_ * lenDesW_;
+    int64_t xSize_ = lenN_ * lenC_ * lenSrcH_ * lenSrcW_;
+    bool isIdx32 = ySize_ < UINT32_MAX && xSize_ < UINT32_MAX && lenSrcH_ <= INT32_MAX && lenSrcW_ <= INT32_MAX &&
+                   lenDesH_ <= INT32_MAX && lenDesW_ <= INT32_MAX;
     if ((isDetermine && alignCorners_) ||
         (isDetermine && !alignCorners_ &&
          (std::fabs(static_cast<float>(lenSrcH_) / lenDesH_ - scaleH_) < FLT_EPSILON) &&

@@ -371,7 +371,8 @@ void ResizeBicubicV2GradBaseTiling::SetScales()
 bool ResizeBicubicV2GradBaseTiling::IsUseIdx32() const
 {
     return calcInfo_.gradsShapeSize <= UINT32_MAX && calcInfo_.yShapeSize <= UINT32_MAX &&
-           inputInfo_.lenSrcH <= INT32_MAX && inputInfo_.lenSrcW <= INT32_MAX;
+           inputInfo_.lenSrcH <= INT32_MAX && inputInfo_.lenSrcW <= INT32_MAX && inputInfo_.lenDstH <= INT32_MAX &&
+           inputInfo_.lenDstW <= INT32_MAX;
 }
 
 ge::graphStatus Tiling4ResizeBicubicV2Grad(gert::TilingContext* context)

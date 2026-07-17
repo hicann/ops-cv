@@ -698,7 +698,8 @@ void ResizeNearestNeighborV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKe
         idxUseInt32_ = static_cast<uint64_t>(1);
         format_ = ge::FORMAT_NCHW;
     } else {
-        idxUseInt32_ = xShape_.GetShapeSize() < UINT32_MAX && yShape_.GetShapeSize() < UINT32_MAX;
+        idxUseInt32_ = xShape_.GetShapeSize() < UINT32_MAX && yShape_.GetShapeSize() < UINT32_MAX &&
+                       lenSrcH_ <= INT32_MAX && lenSrcW_ <= INT32_MAX && lenDesH_ <= INT32_MAX && lenDesW_ <= INT32_MAX;
         if (lenSrcH_ == lenDesH_ && lenSrcW_ == lenDesW_) {
             schId_ = SCHEDULE_ID_SIMT_INPUT_EQ_OUTPUT;
         } else if (lenSrcH_ == DIM_1 && lenSrcW_ == DIM_1) {
