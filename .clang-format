@@ -47,6 +47,10 @@ AllowAllParametersOfDeclarationOnNextLine: true
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
 
+ # 宏语句定义
+StatementMacros:
+  - OP_END_FACTORY_REG
+
 BinPackArguments: true
 BreakBeforeTernaryOperators: false
 SpacesBeforeTrailingComments: 1

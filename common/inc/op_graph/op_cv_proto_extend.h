@@ -168,13 +168,12 @@ round_prefer_ceil, floor, ceil. Only used by nearest interpolation.
 */
 
 REG_OP(Resize)
-    .INPUT(x, TensorType({DT_INT8,DT_UINT8,DT_INT16,DT_UINT16,DT_INT32,
-                          DT_INT64,DT_FLOAT16,DT_FLOAT,DT_DOUBLE}))
-    .OPTIONAL_INPUT(roi, TensorType({DT_FLOAT16,DT_FLOAT,DT_DOUBLE}))
+    .INPUT(x, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .OPTIONAL_INPUT(roi, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
     .OPTIONAL_INPUT(scales, TensorType({DT_FLOAT}))
-    .OPTIONAL_INPUT(sizes, TensorType({DT_INT64,DT_INT32}))
-    .OUTPUT(y, TensorType({DT_INT8,DT_UINT8,DT_INT16,DT_UINT16,DT_INT32,
-                           DT_INT64,DT_FLOAT16,DT_FLOAT,DT_DOUBLE}))
+    .OPTIONAL_INPUT(sizes, TensorType({DT_INT64, DT_INT32}))
+    .OUTPUT(
+        y, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
     .ATTR(coordinate_transformation_mode, String, "half_pixel")
     .ATTR(cubic_coeff_a, Float, -0.75)
     .ATTR(exclude_outside, Int, 0)
@@ -220,12 +219,1311 @@ REG_OP(NonMaxSuppressionV4)
     .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(scores, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(max_output_size, TensorType({DT_INT32}))
-    .INPUT(iou_threshold, TensorType({DT_FLOAT16,DT_FLOAT}))
-    .INPUT(score_threshold, TensorType({DT_FLOAT16,DT_FLOAT}))
+    .INPUT(iou_threshold, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(score_threshold, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OUTPUT(selected_indices, TensorType({DT_INT32}))
     .OUTPUT(valid_outputs, TensorType({DT_INT32}))
     .ATTR(pad_to_max_output_size, Bool, false)
     .OP_END_FACTORY_REG(NonMaxSuppressionV4)
-}
+
+/* ===== Migrated from canndev ops_proto_legacy.h (macro guards stripped) ===== */
+
+/**
+*@brief Computes nms for input boxes and score, support multiple batch and classes.
+* will do clip to window, score filter, top_k, and nms
+
+*@par Inputs:
+* Four inputs, including:
+*@li boxes: boxes, a 4D Tensor of type float16 or float32 with
+* shape (batch, num_anchors, num_classes, 4). "batch" indicates the batch size of image,
+* and "num_anchors" indicates num of boxes, and "num_classes" indicates classes of detect.
+* and the value "4" refers to "x0", "x1", "y0", and "y1".
+*@li scores: boxes, a 4D Tensor of type float16 or float32 with
+* shape (batch, num_anchors, num_classes).
+*@li clip_window: window size, a 2D Tensor of type float16 or float32 with
+* shape (batch, 4). 4" refers to "anchor_x0", "anchor_x1", "anchor_y0", and "anchor_y1".
+*@li num_valid_boxes: valid boxes number for each batch, a 1D Tensor of type int32 with
+* shape (batch,) . \n
+
+*@par Attributes:
+*@li score_threshold: A required attribute of type float32, specifying the score filter iou iou_threshold.
+*@li iou_threshold: A required attribute of type float32, specifying the nms iou iou_threshold.
+*@li max_size_per_class: A required attribute of type int, specifying the nms output num per class.
+*@li max_total_size: A required attribute of type int, specifying the the nms output num per batch.
+*@li change_coordinate_frame: A optional attribute of type bool, whether to normalize coordinates after clipping.
+* @li transpose_box: A optional attribute of type bool, whether inserted transpose before this op. must be "false".
+* @li image_size: A optional attribute of type ListInt, the size of the image. \n
+
+*@par Outputs:
+*@li nmsed_boxes: A 3D Tensor of type float16 or float32 with shape (batch, max_total_size, 4),
+* specifying the output nms boxes per batch.
+*@li nmsed_scores: A 2D Tensor of type float16 or float32 with shape (batch, max_total_size),
+* specifying the output nms score per batch.
+*@li nmsed_classes: A 2D Tensor of type float16 or float32 with shape (batch, max_total_size),
+* specifying the output nms class per batch.
+*@li nmsed_num: A 1D Tensor of type int32 with shape (batch), specifying the valid num of nmsed_boxes . \n
+
+*@attention Constraints:
+* Only computation of float16 or float32 data is supported.
+* Note: when the class num per image * max_size_per_class is too big, will compile fail with ERROR-insufficient
+memory
+*/
+REG_OP(BatchMultiClassNonMaxSuppression)
+    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(scores, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OPTIONAL_INPUT(clip_window, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OPTIONAL_INPUT(num_valid_boxes, TensorType({DT_INT32}))
+    .OUTPUT(nmsed_boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(nmsed_scores, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(nmsed_classes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(nmsed_num, TensorType({DT_INT32}))
+    .REQUIRED_ATTR(score_threshold, Float)
+    .REQUIRED_ATTR(iou_threshold, Float)
+    .REQUIRED_ATTR(max_size_per_class, Int)
+    .REQUIRED_ATTR(max_total_size, Int)
+    .ATTR(change_coordinate_frame, Bool, false)
+    .ATTR(transpose_box, Bool, false)
+    .ATTR(image_size, ListInt, {})
+    .OP_END_FACTORY_REG(BatchMultiClassNonMaxSuppression)
+
+/**
+*@brief Generates bounding boxes based on "rois" and "deltas".
+* It is a customized FasterRcnn operator . \n
+
+*@par Inputs:
+* Two inputs, including:
+*@li rois: Region of interests (ROIs) generated by the region proposal
+* network (RPN). A 2D Tensor of type float32 or float16 with shape (N, 4).
+* "N" indicates the number of ROIs, and the value "4" refers to "x0", "x1",
+* "y0", and "y1".
+*@li deltas: Absolute variation between the ROIs generated by the RPN and
+* ground truth boxes. A 2D Tensor of type float32 or float16 with shape (N, 4).
+* "N" indicates the number of errors, and 4 indicates "dx", "dy", "dw", and "dh" . \n
+
+*@par Attributes:
+*@li means: An index of type float32. Defaults to [0.0, 0.0, 0.0, 0.0].
+* "deltas" = "deltas" x "stds" + "means".
+*@li stds: An index of type float32. Defaults to [1.0, 1.0, 1.0, 1.0].
+* "deltas" = "deltas" x "stds" + "means".
+*@li max_shape: Shape [h, w], specifying the size of the image transferred to
+* the network. Used to ensure that the bbox shape after conversion does not
+* exceed "max_shape".
+*@li wh_ratio_clip: Defaults to "16/1000". The values of "dw" and "dh" fall
+* within (-wh_ratio_clip, wh_ratio_clip) . \n
+
+*@par Outputs:
+*bboxes: Bboxes generated based on "rois" and "deltas". Have the same format
+* and type as "rois".
+*/
+REG_OP(BoundingBoxDecode)
+    .INPUT(rois, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(deltas, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(means, ListFloat, {0.0, 0.0, 0.0, 0.0})
+    .ATTR(stds, ListFloat, {1.0, 1.0, 1.0, 1.0})
+    .REQUIRED_ATTR(max_shape, ListInt)
+    .ATTR(wh_ratio_clip, Float, 0.016f)
+    .OP_END_FACTORY_REG(BoundingBoxDecode)
+
+/**
+* @brief Computes the coordinate variations between bboxes and ground truth
+* boxes. It is a customized FasterRcnn operator.
+
+* @par Inputs:
+* Two inputs, including:
+* @li anchor_box: Anchor boxes. A 2D Tensor of float32 or float16 with shape (N, 4).
+* "N" indicates the number of bounding boxes, and the value "4" refers to
+* "x0", "x1", "y0", "y1".
+* @li ground_truth_box: Ground truth boxes. A 2D Tensor of float32 or float16 with
+* shape (N, 4). "N" indicates the number of bounding boxes, and the value "4"
+* refers to "x0", "x1", "y0" "y1". \n
+
+* @par Attributes:
+* @li means: An index of type int. Defaults to [0,0, 0,0].
+* "deltas" = "deltas" x "stds" + "means".
+* @li stds: An index of type int. Defaults to [1.0, 1.0, 1.0, 1.0].
+* "deltas" = "deltas" x "stds" + "means". \n
+
+* @par Outputs:
+* delats: A 2D Tensor of type float32 or float16 with shape (N, 4),
+* specifying the variations between all anchor boxes and ground truth boxes.
+*/
+REG_OP(BoundingBoxEncode)
+    .INPUT(anchor_box, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(ground_truth_box, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(delats, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(means, ListFloat, {0.0, 0.0, 0.0, 0.0})
+    .ATTR(stds, ListFloat, {1.0, 1.0, 1.0, 1.0})
+    .OP_END_FACTORY_REG(BoundingBoxEncode)
+
+/**
+*@brief Judges whether the bounding box is valid. It is a customized
+* FasterRcnn operator .
+
+*@par Inputs:
+* Two inputs, including:
+* @li bbox_tensor: Bounding box. A 2D Tensor of type float16 or float32 with shape (N, 4).
+* "N" indicates the number of bounding boxes, the value "4" indicates "x0",
+* "x1", "y0", and "y1".
+* @li img_metas: Valid boundary value of the image. A 1D Tensor of type float16 or float32
+* with shape (16,) \n
+
+*@par Outputs:
+*valid_tensor: A bool with shape (N, 1), specifying whether an input anchor is
+* in an image. "1" indicates valid, while "0" indicates invalid . \n
+
+*@attention Constraints:
+* 16 "img_metas" are input. The first three numbers (height, width, ratio) are
+* valid, specifying the valid boundary (heights x ratio, weights x ratio).
+*/
+REG_OP(CheckValid)
+    .INPUT(bbox_tensor, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(img_metas, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(valid_tensor, TensorType({DT_INT8}))
+    .OP_END_FACTORY_REG(CheckValid)
+
+/**
+*@brief Greedily selects a subset of bounding boxes in descending order of score,
+This operation performs non_max_suppression on the inputs per batch, across all classes.
+
+*@par Inputs:
+*@li boxes: A 4-D float tensor of shape `[batch_size, num_boxes, q, 4]`. If `q` is 1 then
+same boxes are used for all classes otherwise, if `q` is equal to number of
+classes, class-specific boxes are used.
+*@li scores: A 3-D float tensor of shape `[batch_size, num_boxes, num_classes]`
+representing a single score corresponding to each box (each row of boxes).
+*@li max_output_size_per_class: An int32 scalar integer tensor representing the maximum number of
+boxes to be selected by non max suppression per class.
+*@li max_total_size: An int32 scalar representing maximum number of boxes retained over all classes.
+*@li iou_threshold: A 0-D float tensor representing the threshold for deciding whether
+boxes overlap too much with respect to IOU.
+*@li score_threshold: A 0-D float tensor representing the threshold for deciding when to remove
+boxes based on score . \n
+
+*@par Attributes:
+*@li pad_per_class: If false, the output nmsed boxes, scores and classes
+are padded/clipped to `max_total_size`. If true, the
+output nmsed boxes, scores and classes are padded to be of length
+`max_size_per_class`*`num_classes`, unless it exceeds `max_total_size` in
+which case it is clipped to `max_total_size`. Defaults to false.
+*@li clip_boxes: If true, assume the box coordinates are between [0, 1] and clip the output boxes
+if they fall beyond [0, 1]. If false, do not do clipping and output the box
+coordinates as it is. If not specified, defaults to true . \n
+
+*@par Outputs:
+*@li nmsed_boxes: Type is float
+*@li nmsed_scores: Type is float
+*@li nmsed_classes: Type is float
+*@li valid_detections: Type is INT32 \n
+
+*@par Third-party framework compatibility
+* Compatible with tensorflow CombinedNonMaxSuppression operator.
+*/
+REG_OP(CombinedNonMaxSuppression)
+    .INPUT(boxes, TensorType({DT_FLOAT}))
+    .INPUT(scores, TensorType({DT_FLOAT}))
+    .INPUT(max_output_size_per_class, TensorType({DT_INT32}))
+    .INPUT(max_total_size, TensorType({DT_INT32}))
+    .INPUT(iou_threshold, TensorType({DT_FLOAT}))
+    .INPUT(score_threshold, TensorType({DT_FLOAT}))
+    .OUTPUT(nmsed_boxes, TensorType({DT_FLOAT}))
+    .OUTPUT(nmsed_scores, TensorType({DT_FLOAT}))
+    .OUTPUT(nmsed_classes, TensorType({DT_FLOAT}))
+    .OUTPUT(valid_detections, TensorType({DT_INT32}))
+    .ATTR(pad_per_class, Bool, false)
+    .ATTR(clip_boxes, Bool, true)
+    .OP_END_FACTORY_REG(CombinedNonMaxSuppression)
+
+/**
+* @brief First calculate the minimum closure area of the two boxes, IoU,
+* The DIoU is obtained by combining the center distance and IoU. \n
+
+* @par Inputs:
+* Two inputs, including:
+* @li bboxes: Bounding boxes, a 2D Tensor of type float16 or float32 with
+* shape (4, N). "N" indicates the number of bounding boxes, and the value
+* "4" refers to [x1, y1, x2, y2] or [x, y, w, h].
+* @li gtboxes: Ground-truth boxes, a 2D Tensor of type float16 or float32
+* with shape (4, M). "M" indicates the number of ground truth boxes, and
+* the value "4" refers to [x1, y1, x2, y2] or [x, y, w, h] . \n
+
+* @par Attributes:
+* @li trans: An optional bool, true for 'xywh', false for 'xyxy', default value is false.
+* @li is_cross: An optional bool, control whether the output shape is [N, M] or [1, N], default value is false.
+* @li mode: An optional string, computation mode, a character string with the value range of [iou, iof],
+* default value is 'iou'. \n
+
+* @par Outputs:
+* overlap: A 2D Tensor of type float16 or float32 with shape [N, M] or [1, N],
+* specifying the IoU or IoF ratio . \n
+
+* @attention Constraints:
+* "is_cross" only support false.
+*/
+REG_OP(DIoU)
+    .INPUT(bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(gtboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(overlap, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(trans, Bool, false)
+    .ATTR(is_cross, Bool, true)
+    .ATTR(mode, String, "iou")
+    .OP_END_FACTORY_REG(DIoU)
+
+/**
+ *@brief Computes decode bboxv2 function.
+ *
+ *@par Inputs:
+ *Inputs include:
+ * @li boxes: A Tensor. Must be float16 or float32. Supported format list ["ND"].
+ * @li anchors: A Tensor. Must be float16 or float32. Supported format list ["ND"].
+ *
+ *@par Attributes:
+ * @li scales: optional, listfloat. Default value is [1.0,1.0,1.0,1.0].
+ * @li decode_clip: optional, float, threahold of decode process. Default value is 0.0
+ * @li reversed_boxes: optional, bool. Default value is false.
+ *
+ *@par Outputs:
+ * y: A Tensor. Must have the same type as box_predictions. Supported format list ["ND"].
+ */
+REG_OP(DecodeBboxV2)
+    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(anchors, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(scales, ListFloat, {1.0, 1.0, 1.0, 1.0})
+    .ATTR(decode_clip, Float, 0.0)
+    .ATTR(reversed_box, Bool, false)
+    .OP_END_FACTORY_REG(DecodeBboxV2)
+
+/**
+* @brief Performs Dilation2D on the input .
+
+* @par Inputs:
+* @li x: A 4D tensor, format support NHWC. Support following data types:
+* float16, float, double, int32, int64, uint8, int16, int8, uint16.
+* @li filter: A tensor of shape is 3d, the type is same with x,
+* and the c dimension is same with x. \n
+
+* @par Attributes:
+* @li strides: A required list of 4 ints, specifying the stride of the
+* sliding window. The strides of the N and C dimensions are 1.
+* @li rates: A required list of 4 ints.
+* The rates of the N and C dimensions are 1.
+* @li padding_mode: A optional string.
+* Defaults to "SAME", it support SAME and VALID.
+* @li pads: An optional list of 4 ints. Defaults to {0, 0, 0, 0}.
+* @li ceil_mode: An optional bool. Defaults to "false". Use ceil or floor
+* to calculate the output size when padding_mode is "CALCULATED".
+* @li data_format: An optional string, specifying the data format
+* of "rates" and "strides", either "NCHW" or "NHWC" (default). \n
+
+* @par Outputs:
+* y: The output tensor. Has the same type and format as input "x" . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator Dilation2D.
+*/
+REG_OP(Dilation2D)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .INPUT(
+        filter,
+        TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .OUTPUT(
+        y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .REQUIRED_ATTR(strides, ListInt)
+    .REQUIRED_ATTR(rates, ListInt)
+    .ATTR(padding_mode, String, "SAME")
+    .ATTR(pads, ListInt, {0, 0, 0, 0})
+    .ATTR(ceil_mode, Bool, false)
+    .ATTR(data_format, String, "NHWC")
+    .OP_END_FACTORY_REG(Dilation2D)
+
+/**
+* @brief Performs Dilation2DBackpropFilter on the input.
+
+* @par Inputs:
+* @li x: A tensor of shape is 4d, format is support NHWC.
+* @li filter: A tensor of shape is 3d, the type is same with x, and the c dimension is same with x.
+* @li out_backprop: Has the same type and format as input x and the c dimension is same with x. \n
+
+* @par Attributes
+* @li strides: A required list of 4 ints, specifying the stride of the sliding window. The strides of the N and C
+dimension are 1.
+* @li rates: A required list of 4 ints, the rates of the N and C dimensions are 1.
+* @li padding_mode: A optional string. Defaults to "SAME", it support SAME and VALID.
+* @li pads: A optional list of 4 ints.
+* @li ceil_mode: An optional bool. Defaults to "false". Use ceil or floor to calculate the output size when
+padding_mode is "CALCULATED".
+* @li data_format: An optional string, specifying the data format of "rates" and "strides", either "NCHW" or "NHWC"
+(default). \n
+
+* @par Outputs:
+* y: The output tensor. Has the same type and format as input "filter" . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator Dilation2DBackpropFilter.
+*/
+REG_OP(Dilation2DBackpropFilter)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .INPUT(
+        filter,
+        TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .INPUT(
+        out_backprop,
+        TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .OUTPUT(
+        y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .REQUIRED_ATTR(strides, ListInt)
+    .REQUIRED_ATTR(rates, ListInt)
+    .ATTR(padding_mode, String, "SAME")
+    .ATTR(pads, ListInt, {0, 0, 0, 0})
+    .ATTR(ceil_mode, Bool, false)
+    .ATTR(data_format, String, "NHWC")
+    .OP_END_FACTORY_REG(Dilation2DBackpropFilter)
+
+/**
+* @brief Performs Dilation2DBackpropInput on the input.
+
+* @par Inputs:
+* @li x: A tensor of shape is 4d, format is support NHWC.
+* @li filter: A tensor of shape is 3d, the type is same with x, and the c dimension is same with x.
+* @li out_backprop: Has the same type and format as input x and the c dimension is same with x. \n
+
+* @par Attributes
+* @li strides: A required list of 4 ints, specifying the stride of the sliding window. The strides of the N and C
+dimension are 1.
+* @li rates: A required list of 4 ints, the rates of the N and C dimensions are 1.
+* @li padding_mode: A optional string. Defaults to "SAME", it support SAME and VALID.
+* @li pads: A optional list of 4 ints. Defaults to {0, 0, 0, 0}.
+* @li ceil_mode: An optional bool. Defaults to "false". Use ceil or floor to calculate the output size when
+padding_mode is "CALCULATED".
+* @li data_format: An optional string, specifying the data format of "rates" and "strides", either "NCHW" or "NHWC"
+(default). \n
+
+* @par Outputs:
+* y: The output tensor. Has the same type and format as input "x" . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator Dilation2DBackpropInput.
+*/
+REG_OP(Dilation2DBackpropInput)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .INPUT(
+        filter,
+        TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .INPUT(
+        out_backprop,
+        TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .OUTPUT(
+        y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
+    .REQUIRED_ATTR(strides, ListInt)
+    .REQUIRED_ATTR(rates, ListInt)
+    .ATTR(padding_mode, String, "SAME")
+    .ATTR(pads, ListInt, {0, 0, 0, 0})
+    .ATTR(ceil_mode, Bool, false)
+    .ATTR(data_format, String, "NHWC")
+    .OP_END_FACTORY_REG(Dilation2DBackpropInput)
+
+/**
+* @brief Extract "patches" from "images" and stacks them in the "depth"
+* dimension of the output . \n
+* @par Inputs:
+* x: A Tensor with shape [batch, depth, in_rows, in_cols] or [batch, depth1, in_rows, in_cols, depth0].
+* Support dtype: [float16, float32, bfloat16, int8, uint8]
+* Support format: When x dtype is in [float16, float32, bfloat16], format support: [NCHW, NC1HWC0].
+* When x dtype is in [int8, uint8], format support: [NC1HWC0].
+* @par Attributes:
+* @li ksizes: A required list or tuple. The size of the sliding window for each
+* dimension of images.
+* @li strides: A required list or tuple. How far the centers of two consecutive
+* patches are in the images. Must be: [1, stride_rows, stride_cols, 1].
+* @li rates: A required list or tuple. Must be: [1, rate_rows, rate_cols, 1].
+* This is the input stride, specifying how far two consecutive patch
+* samples are in the input. Equivalent to extracting patches
+* with patch_sizes_eff = patch_sizes + (patch_sizes - 1) *
+* (rates - 1), followed by subsampling them spatially by a factor of rates.
+* This is equivalent to rate in dilated (a.k.a. Atrous) convolutions.
+* @li padding: A required string. The type of padding algorithm to use,
+  support "SAME" or "VALID". \n
+
+* @par Outputs:
+* y: A Tensor with shape [batch, out_rows, out_cols, ksize_rows *
+* ksize_cols * depth] containing image patches with size ksize_rows x ksize_cols
+* x depth vectorized in the "depth" dimension. Note "out_rows" and "out_cols"
+* are the dimensions of the output patches . Support dtype: [float16, float32, bfloat16, int8, uint8],
+* Support format: [NHWC] \n
+
+* @attention Constraints:
+* "ksizes", "strides" and "rates" are lists of integers . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator ExtractImagePatches.
+*/
+REG_OP(ExtractImagePatches)
+    .INPUT(x, TensorType::RealNumberType())
+    .OUTPUT(y, TensorType::RealNumberType())
+    .REQUIRED_ATTR(ksizes, ListInt)
+    .REQUIRED_ATTR(strides, ListInt)
+    .REQUIRED_ATTR(rates, ListInt)
+    .REQUIRED_ATTR(padding, String)
+    .OP_END_FACTORY_REG(ExtractImagePatches)
+
+/**
+* @brief Select top 'pre_nms_topn' scoring boxes, decodes them with respect to anchors, applies non-maximal
+suppression
+* on overlapping boxes with higher than 'nms_threshold' intersection-over-union (IoU) value, discarding boxes where
+* shorter side is less than 'min_size'. \n
+
+* @par Inputs:
+* scores: 4-D tensor with shape of [num_images, height, width, num_anchors], containing the scores of the boxes for
+* given anchors, can be unsorted. Must be one of the following types: float16, float32 . \n
+* bbox_deltas: 4-D tensor with shape of [num_images, height, width, 4 * num_anchors], encoding boxes with respect to
+* each anchor. Coordinates are given in the form [dy, dx, dh, dw].
+* Must be one of the following types: float16, float32.. \n
+* image_info: 2-D tensor with shape of [num_images, 5], containing image information Height, Width, Scale. Must be
+one
+* of the following types: float16, float32. \n
+* anchors: 3-D tensor with shape of [height, width, 4 * num_anchors], describing the anchor boxes. Boxes are
+formatted
+* in the form [y1, x1, y2, x2]. Must be one of the following types: float16, float32. \n
+* nms_threshold: A scalar of type float16 or float32, non-maximal suppression threshold. \n
+* pre_nms_topn: A scalar of type int32, number of top scoring boxes to be used as input. \n
+* min_size: A scalar of type float32, Any boxes that has a smaller size than min_size will be discarded. \n
+
+* @par Attributes:
+* post_nms_topn: An optional int32. Maximum number of rois in the output. Defaults to be 300. \n
+
+* @par Outputs:
+* @li rois: 3-D tensor with shape of [num_images, post_nms_topn, 4], padded by 0 if less than 'post_nms_topn'. Must
+be
+* one of the following types: float16, float32 . \n
+* @li rois_probabilities: 2-D tensor with shape of [num_images, post_nms_topn], probability of each roi in 'rois'
+* padded by 0 if needed, sorted by scores. Must be one of the following types: float16, float32. \n
+
+* @attention Constraints:+
+* Only supports 2864 input boxes at one time.\n
+
+*/
+REG_OP(GenerateBoundingBoxProposals)
+    .INPUT(scores, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(bbox_deltas, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(image_info, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(anchors, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(nms_threshold, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(pre_nms_topn, TensorType({DT_INT32}))
+    .INPUT(min_size, TensorType({DT_FLOAT}))
+    .OUTPUT(rois, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .OUTPUT(rois_probabilities, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .ATTR(post_nms_topn, Int, 300)
+    .OP_END_FACTORY_REG(GenerateBoundingBoxProposals)
+
+/**
+*@brief This operation samples input x by using interpolation based on flow
+*field grid, which is usually gennerated by affine_grid. The grid of shape
+*[N, H, W, 2] is the concatenation of (x, y) coordinates with shape [N, H, W]
+*each, where x is indexing the 4th dimension (in width dimension) of input
+*data x and y is indexng the 3rd dimention (in height dimension), finally
+*results is the interpolation value of 4 nearest corner points. The output
+*tensor shape will be [N, C, H, W].
+
+*@par Inputs:
+*@li x: 4-D Tensor with shape `[batch, channels, height, width]`. Must be one
+*of the following types: float16, float, double.
+*@li grid: flow field grid, 4-D Tensor with shape `[batch, height, width, 2]`
+*and has same dtype as `x`. \n
+
+*@par Attributes:
+*@li interpolation_mode: An optional string specifying the interpolation
+*method, either 'bilinear', 'nearest' and 'bicubic'. Defaults to
+*"bilinear".
+*@li padding_mode: An optional string specifying the pad method, either
+*"zeros", "border", or "reflection". Defaults to "zeros".
+*@li align_corners: An optional bool. If "true", the centers of the corner
+*pixels of the input and output tensors are aligned. Defaults to "false" . \n
+
+*@par Outputs:
+*y: Returns 4-D Tensor with the same dtype as `x`. \n
+
+*@par Third-party framework compatibility
+*Compatible with pytorch GridSampler2D operator.
+*/
+REG_OP(GridSampler2D)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(grid, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .ATTR(interpolation_mode, String, "bilinear")
+    .ATTR(padding_mode, String, "zeros")
+    .ATTR(align_corners, Bool, false)
+    .OP_END_FACTORY_REG(GridSampler2D)
+
+/**
+*@brief This operation unnormalize input Grid, which is usually gennerated by affine_grid.
+
+*@par Inputs:
+*@li grid: flow field grid, 4-D Tensor with shape `[batch, height, width, 2]`.
+ Must be one of the following types: float16, float32.
+*@li assist: Assist matrix, a 4-D tensor with the same shape and dtype as `grid`.
+
+*@par Attributes:
+*align_corners: An optional bool. If "true", the centers of the corner
+ pixels of the input and output tensors are aligned. Defaults to "false" .
+
+*@par Outputs:
+*@li diff: Returns 4-D Tensor with the same shape and dtype as `grid`.
+*@li position: Returns 4-D Tensor with the same shape as `grid`.
+*/
+REG_OP(GridUnnormal)
+    .INPUT(grid, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(assist, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(diff, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(position, TensorType({DT_INT32}))
+    .ATTR(align_corners, Bool, false)
+    .OP_END_FACTORY_REG(GridUnnormal)
+
+/**
+*@brief Resizes "images" with "offset" using bilinear interpolation. \n
+
+*@par Inputs:
+*@li img: input image, A 5-D tensor of shape `[n, 4, c, h, w]`,
+and 4 mean input[(h_top, w_left), (h_top, w_right), (h_bottom, w_left),
+(h_bottom, w_right)]. Must be one of the following types: float16, float32.
+The format support ND.
+*@li warp_index: the resize offset A 4-D float tensor of shape `[n, 2, h, w]`,
+2 means (x, y) for resize point. The format support ND. Must be the type float32.
+
+*@par Outputs:
+*warp_img: A Tensor after ResizeBilinear, A 4-D tensor of shape `[n, c, h, w]`.
+The format support ND. Must be one of the following types: float16, float32.
+Must has the same type as "img". \n
+*/
+REG_OP(IMGWarpResize)
+    .INPUT(img, TensorType({DT_FLOAT16, DT_FLOAT32}))
+    .INPUT(warp_index, TensorType({DT_FLOAT32}))
+    .OUTPUT(warp_img, TensorType({DT_FLOAT16, DT_FLOAT32}))
+    .OP_END_FACTORY_REG(IMGWarpResize)
+
+/**
+* @brief Applies the given transform to each of the images.
+
+* @par Inputs:
+* @li images: 4-D tensor with shape of [batch, height, width, channels].
+* Must be one of the following types: uint8, int32, int64, float16, float32, double
+* @li transforms: 2-D tensor with shape of [batch, 8] or [1, 8].
+* Must be one of the following types: float32.
+* @li output_shape: 1-D tensor [new_height, new_width].
+* Must be one of the following types: int32.
+
+* @par Attributes:
+* @li interpolation: A required string. Interpolation method, "NEAREST" or "BILINEAR".
+* @li fill_mode: An optional string.
+* Defaults to "CONSTANT". Fill mode, "REFLECT", "WRAP", or "CONSTANT".
+
+* @par Outputs
+* transformed_images: Has the same type as images,
+* 4-D tensor with shape[batch, new_height, new_width, channels]. \n
+
+* @par Third-party framework compatibility.
+* Compatible with tensorflow ImageProjectiveTransform operator.
+*/
+REG_OP(ImageProjectiveTransform)
+    .INPUT(images, TensorType({DT_UINT8, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(transforms, TensorType({DT_FLOAT}))
+    .INPUT(output_shape, TensorType({DT_INT32}))
+    .REQUIRED_ATTR(interpolation, String)
+    .ATTR(fill_mode, String, "CONSTANT")
+    .OUTPUT(transformed_images, TensorType({DT_UINT8, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .OP_END_FACTORY_REG(ImageProjectiveTransform)
+
+/**
+* @brief image to transforms. \n
+
+* @par Inputs:
+* @li images: [batch, height, width, channels], 4-D tensor,
+* type support uint8, int32, int64, float32, double.
+* @li transforms: [batch, 8] or [1, 8] matrix, 2-D tensor, type support float32.
+* @li outout_shape: [new_height, new_width], 1-D tensor, type support int32.
+* @li fill_value: [scalar], 1-D tensor, type support uint8, int32, int64, float32,
+* double, this argus is optional.
+
+* @par Attributes:
+* @li interpolation: Interpolation method, type is string,
+* support "NEAREST" or "BILINEAR".
+* @li fill_mode: Fill mode, defaults is "CONSTANT" also support
+* "REFLECT", "WRAP", or "CONSTANT".
+
+* @par Outputs
+* transformed_images: 4-D tensor with shape[batch, new_height, new_width,
+* channels], as images,support uint8, int32, int64, float32, double\n
+
+* @par Third-party framework compatibility.
+* Compatible with tensorflow ImageProjectiveTransformv2 operator.
+*/
+REG_OP(ImageProjectiveTransformV2)
+    .INPUT(images, TensorType({DT_UINT8, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(transforms, TensorType({DT_FLOAT}))
+    .INPUT(output_shape, TensorType({DT_INT32}))
+    .OPTIONAL_INPUT(fill_value, TensorType({DT_UINT8, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .REQUIRED_ATTR(interpolation, String)
+    .ATTR(fill_mode, String, "CONSTANT")
+    .OUTPUT(transformed_images, TensorType({DT_UINT8, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .OP_END_FACTORY_REG(ImageProjectiveTransformV2)
+
+/**
+* @brief Calculate the intersection ratio of two rotated cuboids . \n
+
+* @par Inputs:
+* @li bboxes : data of grad increment, a 3D Tensor of type float32 with
+* shape (B, 7, N). "N" indicates the number of boxes, and the value
+* "7" refers to [x, y, z, w, h, d, theta].
+* @li gtboxes: Bounding boxes, a 3D Tensor of type float32 with
+* shape (B, 7, K). "K" indcates the number of boxes, and the value
+* "7" refers to [x, y, z, w, h, d, theta].
+
+* @par Outputs:
+* iou: A 3D Tensor of float32 with shape [B, N, K].
+
+* @attention Constraints:
+* In each batch, the invalid box cannot appear before the valid box.
+*/
+REG_OP(Iou3D)
+    .INPUT(bboxes, TensorType({DT_FLOAT}))
+    .INPUT(gtboxes, TensorType({DT_FLOAT}))
+    .OUTPUT(iou, TensorType({DT_FLOAT}))
+    .OP_END_FACTORY_REG(Iou3D)
+
+/**
+* @brief LUT3D
+* Find the corresponding optimal pixel value for the pixel values in the input img. \n
+*
+* @par Inputs:
+* Two inputs, including:
+* @li img: A 3D or 4D Tensor of type uint8 or float32, with shape [H,W,C] or [N,H,W,C] respectively.
+* The format of the tensor is ND. The range of values for elements within the tensor is [0, 255].
+* @li lut_table: A 4D Tensor of the same type as "img", with shape [lut_table_n, lut_table_n, lut_table_n, 3].
+* The format of the tensor is ND. The value of lut_table_n is limited to 17. \n
+
+* @par Outputs:
+* lut_img: A 3D or 4D Tensor of type uint8 or float32. Has the same shape as "img" .
+* The format of the tensor is ND. \n
+*/
+REG_OP(LUT3D)
+    .INPUT(img, TensorType({DT_UINT8, DT_FLOAT}))
+    .INPUT(lut_table, TensorType({DT_UINT8, DT_FLOAT}))
+    .OUTPUT(lut_img, TensorType({DT_FLOAT}))
+    .OP_END_FACTORY_REG(LUT3D)
+
+/**
+*@brief Greedily selects a subset of bounding boxes in descending order of
+score . \n
+
+*@par Inputs:
+*@li boxes: A input tensor with shape [num_batches,spatial_dimension,4].
+The single box data format is indicated by center_point_box.
+Support float16, float32 type.
+*@li scores: A input tensor with shape [num_batches,num_classes,spatial_dimension]
+Support float16, float32 type.
+*@li max_output_size: A scalar integer tensor representing the maximum number
+of boxes to be selected by non max suppression. Must be int32 type.
+*@li iou_threshold: A 0-D float tensor representing the threshold for deciding
+whether boxes overlap too much with respect to IOU. Must be float32 type.
+*@li score_threshold: A 0-D float tensor representing the threshold for
+deciding when to remove boxes based on score. Must be float32 type. \n
+*@li index_id: A input tensor with shape [num_batches,num_classes,spatial_dimension,3]
+the last dim representing (batch_id,class_id,index_id). Must be float16 type. \n
+
+*@par Attributes:
+*@li center_point_box:Integer indicate the format of the box data.
+The default is 0. 0 - the box data is supplied as [y1, x1, y2, x2]
+where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair
+of box corners and the coordinates can be provided as normalized
+(i.e., lying in the interval [0, 1]) or absolute.Mostly used for TF models.
+1 - the box data is supplied as [x_center, y_center, width, height].
+ Mostly used for Pytorch models. \n
+*@li max_boxes_size: An optional attribute integer representing the real maximum
+*number of boxes to be selected by non max suppression . \n
+
+*@par Outputs:
+*selected_indices: A 2-D integer tensor of shape [M] representing the
+selected indices from the boxes tensor, where M <= max_output_size. Must be int32 type. \n
+
+*@attention Constraints:
+*Input boxes and scores support float16, float32 type. \n
+
+*@par Third-party framework compatibility
+*Compatible with onnx NonMaxSuppression operator.
+*/
+REG_OP(NonMaxSuppressionV7)
+    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(scores, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OPTIONAL_INPUT(max_output_size, TensorType({DT_INT32}))
+    .OPTIONAL_INPUT(iou_threshold, TensorType({DT_FLOAT}))
+    .OPTIONAL_INPUT(score_threshold, TensorType({DT_FLOAT}))
+    .OPTIONAL_INPUT(index_id, TensorType({DT_FLOAT16}))
+    .OUTPUT(selected_indices, TensorType({DT_INT32}))
+    .ATTR(center_point_box, Int, 0)
+    .ATTR(max_boxes_size, Int, 0)
+    .OP_END_FACTORY_REG(NonMaxSuppressionV7)
+
+/**
+ *@brief Computes Normalize bbox function.
+ *
+ *@par Inputs:
+ *Inputs include:
+ * @li boxes: A Tensor. Must be float16 or float32.
+ * @li shape_hw: A Tensor. Must be int32.
+ *
+ *@par Attributes:
+ * reversed_box: optional, bool. Defaults to "False"
+ *
+ *@par Outputs:
+ * y: A Tensor. Must have the same type and shape as boxes.
+ */
+REG_OP(NormalizeBBox)
+    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(shape_hw, TensorType({DT_INT32}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(reversed_box, Bool, false)
+    .OP_END_FACTORY_REG(NormalizeBBox)
+
+/**
+* @brief Performs the backpropagation of ROIAlign for training scenarios . \n
+
+* @par Inputs:
+* Three inputs, including:
+* @li ydiff: A 5HD gradient input of type float32.
+* @li rois: ROI position. A 2D Tensor of float32 with shape (N, 5). "N" indicates the number of ROIs,
+* the value "5" indicates the indexes of images where the ROIs are located, "x0", "x1", "y0", and "y1".
+* @li rois_n: An optional input, specifying the number of valid ROIs. This parameter is reserved . \n
+
+* @par Attributes:
+* @li xdiff_shape: A required list of 4 ints, obtained based on the shape of "features" of ROIAlign.
+* @li pooled_width: A required attribute of type int, specifying the W dimension.
+* @li pooled_height: A required attribute of type int, specifying the H dimension.
+* @li spatial_scale: A required attribute of type float, specifying the scaling ratio of "features" to the original
+image.
+* @li sample_num: An optional attribute of type int, specifying the horizontal and vertical
+* sampling frequency of each output. If this attribute is set to "0", the sampling frequency is
+* equal to the rounded up value of "rois", which is a floating point number. Defaults to "2" .
+* @li roi_end_mode: An optional attribute of type int, specifying the align mode . Defaults to "1". \n
+
+* @par Outputs:
+* xdiff: Gradient added to input "features". Has the same 5HD shape as input "features".
+*/
+REG_OP(ROIAlignGrad)
+    .INPUT(ydiff, TensorType({DT_FLOAT}))
+    .INPUT(rois, TensorType({DT_FLOAT}))
+    .OPTIONAL_INPUT(rois_n, TensorType({DT_INT32}))
+    .OUTPUT(xdiff, TensorType({DT_FLOAT}))
+    .REQUIRED_ATTR(xdiff_shape, ListInt)
+    .REQUIRED_ATTR(pooled_width, Int)
+    .REQUIRED_ATTR(pooled_height, Int)
+    .REQUIRED_ATTR(spatial_scale, Float)
+    .ATTR(sample_num, Int, 2)
+    .ATTR(roi_end_mode, Int, 1)
+    .OP_END_FACTORY_REG(ROIAlignGrad)
+
+/**
+*@brief Calculate the resize_d function. \n
+
+*@par Inputs:
+*One input, including:
+* x: A 4D tensor, indicating the original size. Must be one of the following types:
+* float16, float32. The format must be NCHW. \n
+
+*@par Attributes:
+*@li sizes: A required listInt.
+* Size of the output parameter shape in the H and W dimensions.
+*@li scales: An optional listFloat. Scaling factor of the output data.
+* Defaults to none.
+*@li roi: An optional listInt. Coordinates of the roi,
+* which are normalized in the coordinate system of the input image.
+* Defaults to none.
+*@li coordinate_transformation_mode: An optional String.
+* Alignment mode in Bicubic interpolation mode.
+* Defaults to "half_pixel", other optional: align_corners.
+*@li cubic_coeff_a: An optional float.
+* Indicates the calculation weight coefficient of the interpolation.
+* Defaults to -0.75.
+*@li exclude_outside: An optional int.
+* Whether input parameter excludes out-of-range points during interpolation.
+* Defaults to 0.
+*@li extrapolation_value: An optional float.
+* The fill value used when the interpolation point is out of the data range.
+* Defaults to 0.0.
+*@li mode: An optional String. ResizeD interpolation mode.
+* Defaults to "nearest", other optional: linear or cubic.
+* Currently, this parameter cannot be set to nearest.
+* When mode is set to linear, the H axis of the operator input tensor must be 1.
+*@li nearest_mode: An optional String. When processing non-integer coordinates,
+* the nearest neighbor interpolation selects the processing mode of the nearest pixel.
+* Defaults to "round_prefer_floor",
+* other optional: "round_prefer_ceil", "floor", "ceil".
+*@li data_format: An optional String. Format of the input data converted during calculation.
+* Defaults to "NCHW", other optional: "HWNC".
+
+*@par Outputs:
+*y: A 4D tensor, indicating the target size. Must have the same type and format as x.
+* Shape depends on x and sizes.
+
+*@attention Constraints:
+*@li The operator will not be enhanced in the future.
+*@li For Ascend 910D AI Processors, replace it with ResizeLinear and ResizeBicubicV2 operators.
+*/
+REG_OP(ResizeD)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .REQUIRED_ATTR(sizes, ListInt)
+    .ATTR(scales, ListFloat, {})
+    .ATTR(roi, ListInt, {})
+    .ATTR(coordinate_transformation_mode, String, "half_pixel")
+    .ATTR(cubic_coeff_a, Float, -0.75)
+    .ATTR(exclude_outside, Int, 0)
+    .ATTR(extrapolation_value, Float, 0.0)
+    .ATTR(mode, String, "nearest")
+    .ATTR(nearest_mode, String, "round_prefer_floor")
+    .ATTR(data_format, String, "NCHW")
+    .OP_END_FACTORY_REG(ResizeD)
+
+/**
+*@brief Calculate the resize_grad_d function. \n
+
+*@par Inputs:
+* One input, including:
+* grads: A 4D tensor, indicating the original size. Must be one of the following types:
+* float16, float32. The format must be NCHW. \n
+
+*@par Attributes:
+*@li original_size: A required listInt. Shape of original_image.
+* - When mode is set to cubic, original_size supports four numbers.
+* The first two numbers are the same as the first two numbers of the input shape,
+* and the last two numbers are the same as the last two numbers of the output shape.
+* - When mode is set to linear, the value of original_size can be three numbers.
+* The first two numbers are the same as the first two numbers of the input shape,
+* and the second number is the same as the last number of the output shape.
+*@li roi: An optional listInt.
+* Represents the coordinates that are normalized in the coordinate system of the input image.
+* 1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X.
+* It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize".
+* Defaults to none.
+*@li scales: An optional listFloat. Array of scaling factors for each dimension.
+* It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling.
+* Defaults to none.
+* - When mode is set to cubic, only one of 'scales' and 'original_size' can be specified.
+* If 'original_size' is specified, then set the scales to empty data (zero shape) in the input list of this
+operator.
+* - When mode is set to linear, the value of scales is: the last dimension of grads divided by the last dimension of
+original_size.
+*@li coordinate_transformation_mode: An optional String.
+* This attribute describes how to transform the coordinate in the resized tensor
+* to the coordinate in the original tensor.
+* Support "half_pixel" and "align_corners". Defaults to "half_pixel".
+*@li cubic_coeff_a: An optional float.
+* Indicates the calculation weight coefficient of the interpolation.
+* Two common choice are -0.5 (in some cases of TensorFlow) and -0.75 (in PyTorch).
+* This attribute is valid only if "mode" is "cubic".
+* Defaults to -0.75.
+*@li exclude_outside: An optional int.
+* Whether input parameter excludes out-of-range points during interpolation.
+* If set to 1, the weight of sampling locations outside the tensor will be set to 0
+* and the weight will be renormalized so that their sum is 1.0.
+* Defaults to 0.
+*@li extrapolation_value: An optional float.
+* The fill value used when the interpolation point is out of the data range.
+* When coordinate_transformation_mode is "tf_crop_and_resize" and x_original is outside
+* the range [0, length_original - 1], this value is used as the corresponding output value.
+* Defaults to 0.0.
+*@li mode: An optional String. ResizeGradD interpolation mode.
+* Support "nearest", "linear" and "cubic". Defaults to "nearest".
+* Currently, this parameter cannot be set to nearest.
+* When mode is set to linear, the H axis of the operator input tensor must be 1.
+*@li nearest_mode: An optional String. When processing non-integer coordinates,
+* the nearest neighbor interpolation selects the processing mode of the nearest pixel.
+* Only used by nearest interpolation.
+* Support "round_prefer_floor" and "round_prefer_ceil". Defaults to "round_prefer_floor".
+*@li data_format: An optional String. Format of the input data converted during calculation.
+* Support "NCHW" and "HWNC". Defaults to "NCHW".
+
+*@par Outputs:
+* y: A 4D tensor, indicating the target size. Must have the same type and format as grads.
+* Shape depends on grads and original_size. \n
+*/
+REG_OP(ResizeGradD)
+    .INPUT(grads, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .REQUIRED_ATTR(original_size, ListInt)
+    .ATTR(roi, ListInt, {})
+    .ATTR(scales, ListFloat, {})
+    .ATTR(coordinate_transformation_mode, String, "half_pixel")
+    .ATTR(cubic_coeff_a, Float, -0.75)
+    .ATTR(exclude_outside, Int, 0)
+    .ATTR(extrapolation_value, Float, 0.0)
+    .ATTR(mode, String, "nearest")
+    .ATTR(nearest_mode, String, "round_prefer_floor")
+    .ATTR(data_format, String, "NCHW")
+    .OP_END_FACTORY_REG(ResizeGradD)
+
+/**
+* @brief Resize images to size using trilinear interpolation . \n
+
+* @par Inputs:
+* Input images must be a 5-D tensor. Inputs include:
+* @li x: A 5-D tensor, type must be float16, float32 or double. Must set the format, supported format list
+is ["NCDHW, NDHWC"] .
+* @li size: A 1-D tensor, type must be int32. Contains 3 elements: new_depth, new_height, new_width.
+Set the shape of output y . \n
+
+* @par Attributes:
+* @li align_corners: If true, the centers of the 8 corner pixels of the input and
+output tensors are aligned, preserving the values at the corner pixels.
+Defaults to false .
+* @li half_pixel_centers: An optional bool. Defaults to false . \n
+* @par Outputs:
+* y: 5-D with shape [batch, channels, new_depth, new_height, new_width] . \n
+
+* @par Third-party framework compatibility
+* Compatible with onnx Resize operator using trilinear interpolation.
+*/
+REG_OP(ResizeTrilinear)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(size, TensorType({DT_INT32}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .ATTR(align_corners, Bool, false)
+    .ATTR(half_pixel_centers, Bool, false)
+    .OP_END_FACTORY_REG(ResizeTrilinear)
+
+/**
+*@brief Obtains the ROI feature matrix from the feature map list. It is a customized fused operator for mmdetection.
+\n
+
+*@par Inputs:
+* Two inputs, including:
+*@li features: A 5HD Tensor list of type float32 or float16.
+*@li rois: ROI position. A 2D Tensor of float32 or float16 with shape (N, 5). "N" indicates the number of ROIs,
+* the value "5" indicates the indexes of images where the ROIs are located, "x0", "y0", "x1", and "y1".
+*@li index: Optional input, provided by the operator inserted before fusion-pass under specific models.
+
+*@par Attributes:
+*@li finest_scale: A optional attribute of type int, specifying the scale of calculate levels of "rois".
+*@li roi_scale_factor: A optional attribute of type float32, specifying the rescaling of "rois" coordinates.
+*@li spatial_scale: A optional attribute of type list float32, specifying the scaling ratio of "features"
+* to the original image.
+*@li pooled_height: A optional attribute of type int32, specifying the H dimension.
+*@li pooled_width: A optional attribute of type int32, specifying the W dimension.
+*@li sample_num: An optional attribute of type int32, specifying the horizontal and vertical sampling frequency
+* of each output. If this attribute is set to "0", the sampling frequency is equal to the rounded up value of
+"rois",
+* which is a floating point number. Defaults to "0".
+*@li pool_mode: An optional attribute of type string to indicate pooling mode. Defaults to "avg", only supports
+"avg". \n
+*@li aligned: An optional attribute of type bool, specifying the align to corner. Defaults to true. \n
+
+*@par Outputs:
+* output: Outputs the feature sample of each ROI position. The format is 5HD Tensor of type float32 or float16.
+* The axis N is the number of input ROIs. Axes H, W, and C are consistent with the values of "pooled_height",
+* "pooled_width", and "features", respectively.
+
+*@par Third-party framework compatibility
+*Compatible with mmdetection SingleRoIExtractor operator.
+*/
+REG_OP(RoiExtractor)
+    .DYNAMIC_INPUT(features, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(rois, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OPTIONAL_INPUT(index, TensorType({DT_INT32}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(finest_scale, Int, 56)
+    .ATTR(roi_scale_factor, Float, 0)
+    .ATTR(spatial_scale, ListFloat, {1.f / 4, 1.f / 8, 1.f / 16, 1.f / 32})
+    .ATTR(pooled_height, Int, 7)
+    .ATTR(pooled_width, Int, 7)
+    .ATTR(sample_num, Int, 0)
+    .ATTR(pool_mode, String, "avg")
+    .ATTR(aligned, Bool, true)
+    .OP_END_FACTORY_REG(RoiExtractor)
+
+/**
+*@brief RotatedBoxDecode. \n
+
+*@par Inputs:
+* Two inputs, including:
+*@li anchor_box: A 3D Tensor of float32 (float16) with shape (B, 5, N).
+* "B" indicates the number of batch size
+* "N" indicates the number of bounding boxes, and the value "5" refers to
+* "x0", "x1", "y0", "y1" and "angle".
+*@li deltas: A 3D Tensor of float32 (float16) with shape (B, 5, N).
+* "B" indicates the number of batch size
+* "N" indicates the number of bounding boxes, and the value "5" refers to
+* "x0", "x1", "y0", "y1" and "angle". \n
+
+*@par Attributes:
+*@li weight: A float list for "x0", "x1", "y0", "y1" and "angle",
+* defaults to [1.0, 1.0, 1.0, 1.0, 1.0].
+
+*@par Outputs:
+*@li y: A 3D Tensor of type float32 (float16) with shape (B, 5, N),
+* specifying the variations between all anchor boxes and ground truth boxes.
+*/
+REG_OP(RotatedBoxDecode)
+    .INPUT(anchor_box, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(deltas, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(weight, ListFloat, {1.0, 1.0, 1.0, 1.0, 1.0})
+    .OP_END_FACTORY_REG(RotatedBoxDecode)
+
+/**
+*@brief RotatedBoxEncode. \n
+
+*@par Inputs:
+* Two inputs, including:
+*@li anchor_box: A 3D Tensor of float32 (float16) with shape (B, 5, N).
+* "B" indicates the number of batch size
+* "N" indicates the number of bounding boxes, and the value "5" refers to
+* "x0", "x1", "y0", "y1" and "angle".
+*@li gt_box: A 3D Tensor of float32 (float16) with shape (B, 5, N).
+* "B" indicates the number of batch size
+* "N" indicates the number of bounding boxes, and the value "5" refers to
+* "x0", "x1", "y0", "y1" and "angle". \n
+
+* @par Attributes:
+*@li weight: A float list for "x0", "x1", "y0", "y1" and "angle",
+* defaults to [1.0, 1.0, 1.0, 1.0, 1.0].
+
+*@par Outputs:
+*@li y: A 3D Tensor of type float32 (float16) with shape (B, 5, N),
+* specifying the variations between all anchor boxes and ground truth boxes.
+*/
+REG_OP(RotatedBoxEncode)
+    .INPUT(anchor_box, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(gt_box, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(weight, ListFloat, {1.0, 1.0, 1.0, 1.0, 1.0})
+    .OP_END_FACTORY_REG(RotatedBoxEncode)
+
+/**
+* @brief RotatedOverlaps . \n
+
+*@par Inputs:
+*@li boxes : data of grad increment, a 3D Tensor of type float32 with
+* shape (B, 5, N). "N" indicates the number of boxes, and the value
+* "5" refers to [x1, y1, x2, y2, theta] or [x, y, w, h, theta].
+* @li query_boxes: Bounding boxes, a 3D Tensor of type float32 with
+* shape (B, 5, K). "K" indicates the number of boxes, and the value
+* "5" refers to [x1, y1, x2, y2, theta] or [x, y, w, h, theta].
+
+* @par Attributes:
+* trans: An optional attr, true for 'xyxyt', false for 'xywht'.
+
+*@par Outputs:
+* overlaps: A 3D Tensor of type float32 with shape [B, N, K].
+
+*@attention Constraints:
+* In each batch, the invalid box cannot appear before the valid box.
+*/
+REG_OP(RotatedOverlaps)
+    .INPUT(boxes, TensorType({DT_FLOAT}))
+    .INPUT(query_boxes, TensorType({DT_FLOAT}))
+    .OUTPUT(overlaps, TensorType({DT_FLOAT}))
+    .ATTR(trans, Bool, false)
+    .OP_END_FACTORY_REG(RotatedOverlaps)
+
+/**
+*@brief Computes Fastrcnn RpnProposals function . \n
+
+*@par Inputs:
+*Inputs include:
+* @li rois: A Tensor. Must be float16. N-D with shape [N, 4].
+* @li cls_bg_prob: A Tensor. Must be float16. N-D with shape [N, 1].
+* @li img_size: A Tensor. Must be int32. shape [H, W] . \n
+
+*@par Attributes:
+* @li score_threshold: required, float, threahold of topk process.
+* @li k: required, Int, threahold of topk process.
+* @li min_size: required, float, threahold of nms process.
+* @li nms_threshold: required, float, threahold of nms process.
+* @li post_nms_num: required, float, threahold of nms process.
+* @li score_filter: bool, mark of score_filter. Defaults to "true"
+* @li box_filter: bool, mark of box_filter. Defaults to "true"
+* @li score_sigmoid: bool, mark of score_sigmoid. Defaults to "false"
+
+*@par Outputs:
+* @li sorted_rois: A Tensor. Must be float16. N-D with shape [N, 4].
+* @li sorted_scores: A Tensor. Must be float16. N-D with shape [N, 1].
+* @li sorted_classes: A Tensor. Must be float16. N-D with shape [N, 1] . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator Unpack.
+*/
+REG_OP(RpnProposals)
+    .INPUT(rois, TensorType({DT_FLOAT16}))
+    .INPUT(cls_bg_prob, TensorType({DT_FLOAT16}))
+    .INPUT(img_size, TensorType({DT_INT32}))
+    .REQUIRED_ATTR(score_threshold, Float)
+    .REQUIRED_ATTR(k, Int)
+    .REQUIRED_ATTR(min_size, Float)
+    .REQUIRED_ATTR(nms_threshold, Float)
+    .REQUIRED_ATTR(post_nms_num, Int)
+    .ATTR(score_filter, Bool, true)
+    .ATTR(box_filter, Bool, true)
+    .ATTR(score_sigmoid, Bool, false)
+    .OUTPUT(sorted_box, TensorType({DT_FLOAT16}))
+    .OP_END_FACTORY_REG(RpnProposals)
+
+/**
+* @brief Greedily selects a subset of bounding boxes in descending order of
+* score . \n
+
+* @par Inputs:
+* @li boxes: A 2-D float tensor of shape [num_boxes, 4]. They are expected to be in (x1, y1, x2, y2) format
+* with 0 <= x1 < x2 and 0 <= y1 < y2. Supported type: float16, float32. Supported format: ND.
+* @li sorted_scores: A 1-D float tensor of shape [num_boxes] representing boxes' scores, which is sorted
+* by descending order. Supported type: float16, float32. Supported format: ND.
+* @li input_indices: A 1-D integer tensor of shape [num_boxes] representing the indices for each row of
+* boxes that would sort row of boxes by scores in descending order. Supported type: int32. Supported format: ND.
+* @li max_output_size: A scalar integer tensor representing the maximum number
+* of boxes to be selected by non max suppression. Supported type: int32. Supported format: ND.
+* @li iou_threshold: A 0-D float tensor representing the threshold for deciding
+* whether boxes overlap too much with respect to IOU. Supported type: float16, float32. Supported format: ND.
+* @li score_threshold: A 0-D float tensor representing the threshold for
+* deciding when to remove boxes based on score. Supported type: float16, float32. Supported format: ND . \n
+
+* @par Attributes:
+* offset: An optional int. Defaults to "0". \n
+
+* @par Outputs:
+* @li selected_indices: A 1-D integer tensor of shape [M] representing the selected
+* indices from the boxes tensor, where M <= max_output_size. Supported type: int32. Supported format: ND . \n
+
+* @attention Constraints:
+* Input boxes and scores must be float type . \n
+*/
+REG_OP(SortedNMS)
+    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(sorted_scores, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(input_indices, TensorType({DT_INT32}))
+    .INPUT(max_output_size, TensorType({DT_INT32}))
+    .INPUT(iou_threshold, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(score_threshold, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(selected_indices, TensorType({DT_INT32}))
+    .ATTR(offset, Int, 0)
+    .OP_END_FACTORY_REG(SortedNMS)
+
+/**
+* @brief To absolute the bounding box .
+
+* @par Inputs:
+* @li normalized_boxes: A 3D Tensor of type float16 or float32. Must be the format "ND".
+* @li shape_hw: A 1D Tensor of type int32. Must be the format "ND". \n
+
+* @par Attributes:
+* reversed_box: An optional bool, specifying the last two dims is "4,num" or
+* "num,4", "true" for "4,num", "false" for "num,4". Defaults to "false" . \n
+
+* @par Outputs:
+* y: A Tensor. Has the same type and shape as "normalized_boxes" . \n
+
+* @attention Constraints:
+* "normalized_boxes"'s shape must be (batch,num,4) or (batch,4,num).
+* "shape_hw"'s shape must be (4,)
+*/
+REG_OP(ToAbsoluteBBox)
+    .INPUT(normalized_boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(shape_hw, TensorType({DT_INT32}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(reversed_box, Bool, false)
+    .OP_END_FACTORY_REG(ToAbsoluteBBox)
+
+/**
+*@brief HDRNet and ISP direct data conversion
+returned tensor's dimension will correspond to input dimension [0, 3, 4, 2, 1],
+convert tensor dtype float16 to int16 . \n
+
+*@par Inputs:
+*one inputs, including:
+*@li x: A Tensor. Must be one of the following types: float16.
+
+*@par Outputs:
+*y: A Tensor. Must be one of the following types: int16. \n
+
+*@par Third-party framework compatibility
+*only for use by corresponding operators in HDRnet networks
+*/
+REG_OP(TransArgb)
+    .INPUT(x, "T1")
+    .OUTPUT(y, "T2")
+    .DATATYPE(T1, TensorType({DT_FLOAT16}))
+    .DATATYPE(T2, TensorType({DT_INT16}))
+    .OP_END_FACTORY_REG(TransArgb)
+
+/**
+*@brief Normalizes data. It is called Region on YOLO v2 and Yolo on YOLO v3 . \n
+
+*@par Inputs:
+*x: An NCHW tensor of type float16. The data is with shape (N, boxes*(coords+obj+classes), H, W),
+where, "obj" indicates the confidence of an object, and only one confidence is supported. Boxes are arranged
+as xx...xyy...yww...whh...hbb...bc0c0..c0c1c1...c1......cncn...cn . \n
+
+*@par Attributes:
+*@li boxes: A required int32, specifying the number of anchor boxes. Defaults to "5" for V2 or "3" for V3.
+*@li coords: An int32, specifying the number of parameters required for locating an object. The value is fixed at
+"4", corresponding to (x,y,w,h).
+*@li classes: An int32, specifying the number of prediction classes. Defaults to "80". The value range is [1, 1024].
+*@li yolo_version: A string, specifying the YOLO version, either "V2" or "V3".Defaults to "V3"
+*@li softmax: A bool, specifying whether to perform softmax, valid only when "yolo_version = V2". Defaults to
+"false".
+*@li background: A bool, specifying the operation types of the obj and classes, used in conjunction with "softmax"
+and valid only when "yolo_version = V2". Defaults to "false".
+*@li softmaxtree: A bool, Fixed to False, defined in Lite, but not used. Defaults to "false" . \n
+
+*@par Outputs:
+*@li coord_data: A float16 with shape [N, boxes*coords, ceilx(height*width*2+32, 32)/2],
+* where "ceil" indicates that a detected box is aligned upwards with the second parameter. Specifies the coordinates
+of a detected box.
+*@li obj_prob: A float16 with shape [N, ceilx(boxes*height*width *2+32, 32)/2],
+* where "ceil" indicates that a detected box is aligned upwards with the second parameter. Specifies the confidence.
+*@li classes_prob: A float16 with shape [N, classes, ceilx(boxes*height*width *2+32, 32)/2],
+* where "ceil" indicates that a detected box is aligned upwards with the second parameter. Specifies the prediction
+classes . \n
+
+*@attention Constraints:
+*@li This operator applies to YOLO v2,v3 and v5 networks.
+*@li The succeeding layer of the Yolo operator must be operator Yolov5DetectionOutput.
+*@par Third-party framework compatibility
+* It is a custom operator.
+*/
+REG_OP(YoloPreDetection)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(coord_data, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(obj_prob, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(classes_prob, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(boxes, Int, 3)
+    .ATTR(coords, Int, 4)
+    .ATTR(classes, Int, 80)
+    .ATTR(yolo_version, String, "V5")
+    .ATTR(softmax, Bool, false)
+    .ATTR(background, Bool, false)
+    .ATTR(softmaxtree, Bool, false)
+    .OP_END_FACTORY_REG(YoloPreDetection)
+
+/**
+* @brief Generates bounding boxes based on "priors" and "bboxes".
+* It is a customized yolox operator . \n
+
+* @par Inputs:
+* Two inputs, including:
+* @li priors: prior sample boxes of origin image
+* A 2D Tensor of type float32 or float16 with shape (N, 4).
+* "N" indicates the number of boxes, and the value "4" refers to "x0", "x1", "y0", and "y1".
+* @li bboxes_input: bboxes predicted by the model. A 2D Tensor of type float32 or float16 with shape (B, N, 4).
+* "B" indicates the batch_size, N indicates the number of boxes, 4 indicates "dx", "dy", "dw", and "dh" . \n
+
+* @par Outputs:
+* bboxes_output: Bboxes generated based on "priors" and "bboxes_input". Have the same format
+* and type as "bboxes_input".
+*/
+REG_OP(YoloxBoundingBoxDecode)
+    .INPUT(priors, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(decoded_bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OP_END_FACTORY_REG(YoloxBoundingBoxDecode)
+
+} // namespace ge
 
 #endif
