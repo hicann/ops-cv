@@ -2,7 +2,7 @@
   "op_type": "ResizeUpsampleTrilinear",
   "op_list": [
     {
-      "bin_filename": "ResizeUpsampleTrilinear_a950_float32",
+      "bin_filename": "ResizeUpsampleTrilinear_a950_d_reuse_v10_float32",
       "inputs": [
         {
           "name": "input",
@@ -56,7 +56,7 @@
       ]
     },
     {
-      "bin_filename": "ResizeUpsampleTrilinear_a950_bfloat16",
+      "bin_filename": "ResizeUpsampleTrilinear_a950_d_reuse_v10_bfloat16",
       "inputs": [
         {
           "name": "input",
@@ -110,7 +110,7 @@
       ]
     },
     {
-      "bin_filename": "ResizeUpsampleTrilinear_a950_float16",
+      "bin_filename": "ResizeUpsampleTrilinear_a950_d_reuse_v10_float16",
       "inputs": [
         {
           "name": "input",
@@ -164,7 +164,7 @@
       ]
     },
     {
-      "bin_filename": "ResizeUpsampleTrilinear_a950_float32_ncdhw",
+      "bin_filename": "ResizeUpsampleTrilinear_a950_d_reuse_v10_float32_ncdhw",
       "inputs": [
         {
           "name": "input",
@@ -218,7 +218,7 @@
       ]
     },
     {
-      "bin_filename": "ResizeUpsampleTrilinear_a950_bfloat16_ncdhw",
+      "bin_filename": "ResizeUpsampleTrilinear_a950_d_reuse_v10_bfloat16_ncdhw",
       "inputs": [
         {
           "name": "input",
@@ -272,7 +272,7 @@
       ]
     },
     {
-      "bin_filename": "ResizeUpsampleTrilinear_a950_float16_ncdhw",
+      "bin_filename": "ResizeUpsampleTrilinear_a950_d_reuse_v10_float16_ncdhw",
       "inputs": [
         {
           "name": "input",

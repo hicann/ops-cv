@@ -193,6 +193,30 @@ static bool CheckUplimit(const aclTensor* self, const aclTensor* out)
     return true;
 }
 
+static bool IsSameShape(const op::Shape& lhs, const op::Shape& rhs)
+{
+    if (lhs.GetDimNum() != rhs.GetDimNum()) {
+        return false;
+    }
+    for (size_t i = 0; i < lhs.GetDimNum(); ++i) {
+        if (lhs.GetDim(i) != rhs.GetDim(i)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool CanDirectWriteOutput(const aclTensor* input, const aclTensor* out)
+{
+    if (GetCurrentPlatformInfo().GetCurNpuArch() != NpuArch::DAV_3510) {
+        return false;
+    }
+    if (input->GetStorageFormat() != out->GetStorageFormat() || out->GetViewOffset() != 0) {
+        return false;
+    }
+    return IsSameShape(out->GetViewShape(), out->GetStorageShape());
+}
+
 static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
@@ -215,7 +239,7 @@ static aclnnStatus CheckParams(const aclTensor* self, const aclIntArray* outputS
 const aclTensor* upsampleTrilinear3dCompute(const aclTensor* selfContiguous, const aclIntArray* outputSize,
                                             bool alignCorners, const aclFloatArray* scales,
                                             const aclFloatArray* castScales, float scaleW, float scaleH, float scaleD,
-                                            aclOpExecutor* executor)
+                                            aclOpExecutor* executor, aclTensor* directOut)
 {
     if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
         const int64_t permuteNCDHWList[] = {DIM_ZERO, DIM_FOUR, DIM_ONE, DIM_TWO, DIM_THREE};
@@ -235,13 +259,123 @@ const aclTensor* upsampleTrilinear3dCompute(const aclTensor* selfContiguous, con
         return l0op::Transpose(selfUpsampleTrilinear, permuteNDHWCArray, executor);
     } else {
         return l0op::UpsampleTrilinear3dNcdhw(selfContiguous, outputSize, alignCorners, scales, castScales, scaleW,
-                                              scaleH, scaleD, executor);
+                                              scaleH, scaleD, executor, directOut);
     }
 }
 
 static bool CheckScales(float scaleW, float scaleH, float scaleD)
 {
     return (scaleW <= MAX_SUPPORT_SCALE && scaleH <= MAX_SUPPORT_SCALE && scaleD <= MAX_SUPPORT_SCALE);
+}
+
+// 310P NDHWC path: transpose NDHWC→DHWNC, upsample, transpose back to NDHWC, ViewCopy to out.
+static aclnnStatus Run310pNdhwc(const aclTensor* selfContiguous, const aclIntArray* outputSize, bool alignCorners,
+                                const aclFloatArray* scales, const aclFloatArray* castScales, float scaleW,
+                                float scaleH, float scaleD, aclTensor* out, aclOpExecutor* executor)
+{
+    const int64_t permuteDHWNCList[] = {DIM_ONE, DIM_TWO, DIM_THREE, DIM_ZERO, DIM_FOUR};
+    auto permuteDHWNCArray = executor->AllocIntArray(permuteDHWNCList, UPSAMPLE_DIM_LIMIT);
+    CHECK_RET(permuteDHWNCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto selfTranspose = l0op::Transpose(selfContiguous, permuteDHWNCArray, executor);
+    CHECK_RET(selfTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto selfUpsampleTrilinear = l0op::UpsampleTrilinear3dNcdhw(selfTranspose, outputSize, alignCorners, scales,
+                                                                castScales, scaleW, scaleH, scaleD, executor);
+    CHECK_RET(selfUpsampleTrilinear != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    const int64_t permuteNDHWList[] = {DIM_THREE, DIM_ZERO, DIM_ONE, DIM_TWO, DIM_FOUR};
+    auto permuteNDHWCArray = executor->AllocIntArray(permuteNDHWList, UPSAMPLE_DIM_LIMIT);
+    CHECK_RET(permuteNDHWCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNDHWCArray, executor);
+    auto viewCopyResult = l0op::ViewCopy(result, out, executor);
+    CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    return ACLNN_SUCCESS;
+}
+
+// 310P NCDHW path: transpose NCDHW→DHWNC, upsample, transpose back to NCDHW, ViewCopy to out.
+static aclnnStatus Run310pNcdhw(const aclTensor* selfContiguous, const aclIntArray* outputSize, bool alignCorners,
+                                const aclFloatArray* scales, const aclFloatArray* castScales, float scaleW,
+                                float scaleH, float scaleD, aclTensor* out, aclOpExecutor* executor)
+{
+    const int64_t permuteHWNCList[] = {DIM_TWO, DIM_THREE, DIM_FOUR, DIM_ZERO, DIM_ONE};
+    auto permuteHWNCArray = executor->AllocIntArray(permuteHWNCList, UPSAMPLE_DIM_LIMIT);
+    CHECK_RET(permuteHWNCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto selfTranspose = l0op::Transpose(selfContiguous, permuteHWNCArray, executor);
+    CHECK_RET(selfTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto selfUpsampleTrilinear = l0op::UpsampleTrilinear3dNcdhw(selfTranspose, outputSize, alignCorners, scales,
+                                                                castScales, scaleW, scaleH, scaleD, executor);
+    CHECK_RET(selfUpsampleTrilinear != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    const int64_t permuteNDHWList[] = {DIM_THREE, DIM_FOUR, DIM_ZERO, DIM_ONE, DIM_TWO};
+    auto permuteNCDHWArray = executor->AllocIntArray(permuteNDHWList, UPSAMPLE_DIM_LIMIT);
+    CHECK_RET(permuteNCDHWArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNCDHWArray, executor);
+    auto viewCopyResult = l0op::ViewCopy(result, out, executor);
+    CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    return ACLNN_SUCCESS;
+}
+
+// Non-310P fallback path: direct compute via upsampleTrilinear3dCompute, ViewCopy to out if needed.
+static aclnnStatus RunNon310pCompute(const aclTensor* selfContiguous, const aclIntArray* outputSize, bool alignCorners,
+                                     const aclFloatArray* scales, const aclFloatArray* castScales, float scaleW,
+                                     float scaleH, float scaleD, aclTensor* out, aclOpExecutor* executor)
+{
+    aclTensor* directOut = CanDirectWriteOutput(selfContiguous, out) ? out : nullptr;
+    auto result = upsampleTrilinear3dCompute(selfContiguous, outputSize, alignCorners, scales, castScales, scaleW,
+                                             scaleH, scaleD, executor, directOut);
+    CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    if (result != out) {
+        auto viewCopyResult = l0op::ViewCopy(result, out, executor);
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
+    return ACLNN_SUCCESS;
+}
+
+// Allocate scales (1/x) and castScales (x) float arrays. Both are empty when any
+// scale is non-positive.
+static aclnnStatus AllocScalesArrays(double scalesD, double scalesH, double scalesW, const aclFloatArray*& scales,
+                                     const aclFloatArray*& castScales, aclOpExecutor* executor)
+{
+    vector<float> scalesList{};
+    vector<float> scalesCastList{};
+    if (scalesD > 0 && scalesH > 0 && scalesW > 0) {
+        scalesList.push_back(scalesD);
+        scalesList.push_back(scalesH);
+        scalesList.push_back(scalesW);
+        scalesCastList.push_back(static_cast<float>(1.0 / scalesD));
+        scalesCastList.push_back(static_cast<float>(1.0 / scalesH));
+        scalesCastList.push_back(static_cast<float>(1.0 / scalesW));
+    }
+    scales = executor->AllocFloatArray(scalesList.data(), scalesList.size());
+    CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    castScales = executor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
+    CHECK_RET(castScales != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    return ACLNN_SUCCESS;
+}
+
+// Resolve per-axis source scales from castScales and output shape; returns the
+// alignCorners-adjusted W/H/D scales used by downstream compute.
+struct ResolvedScales {
+    float scaleW;
+    float scaleH;
+    float scaleD;
+};
+
+static ResolvedScales ResolveScales(bool alignCorners, const aclFloatArray* castScales, const aclTensor* self,
+                                    const op::Shape& outShape)
+{
+    uint64_t size = 0;
+    float scalesD1 = 0.0;
+    float scalesH1 = 0.0;
+    float scalesW1 = 0.0;
+    if (aclGetFloatArraySize(castScales, &size) == ACLNN_SUCCESS && size == DIM_THREE) {
+        scalesD1 = (*castScales)[DIM_ZERO];
+        scalesH1 = (*castScales)[DIM_ONE];
+        scalesW1 = (*castScales)[DIM_TWO];
+    }
+    auto inputShape = self->GetViewShape();
+    ResolvedScales rs;
+    rs.scaleW = AsComputeScale(alignCorners, inputShape.GetDim(DIM_FOUR), outShape.GetDim(DIM_FOUR), scalesW1);
+    rs.scaleH = AsComputeScale(alignCorners, inputShape.GetDim(DIM_THREE), outShape.GetDim(DIM_THREE), scalesH1);
+    rs.scaleD = AsComputeScale(alignCorners, inputShape.GetDim(DIM_TWO), outShape.GetDim(DIM_TWO), scalesD1);
+    return rs;
 }
 } // namespace
 
@@ -269,98 +403,36 @@ aclnnStatus aclnnUpsampleTrilinear3dGetWorkspaceSize(const aclTensor* self, cons
     auto selfContiguous = l0op::Contiguous(self, uniqueExecutor.get());
     CHECK_RET(selfContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    vector<float> scalesList{};
-    if (scalesD > 0 && scalesH > 0 && scalesW > 0) {
-        scalesList.push_back(scalesD);
-        scalesList.push_back(scalesH);
-        scalesList.push_back(scalesW);
-    }
-    const aclFloatArray* scales = uniqueExecutor->AllocFloatArray(scalesList.data(), scalesList.size());
-    CHECK_RET(scales != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-    vector<float> scalesCastList{};
-    if (scalesD > 0 && scalesH > 0 && scalesW > 0) {
-        scalesCastList.push_back(static_cast<float>(1.0 / scalesD));
-        scalesCastList.push_back(static_cast<float>(1.0 / scalesH));
-        scalesCastList.push_back(static_cast<float>(1.0 / scalesW));
-    }
-    const aclFloatArray* castScales = uniqueExecutor->AllocFloatArray(scalesCastList.data(), scalesCastList.size());
-    CHECK_RET(castScales != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    const aclFloatArray* scales = nullptr;
+    const aclFloatArray* castScales = nullptr;
+    auto allocRet = AllocScalesArrays(scalesD, scalesH, scalesW, scales, castScales, uniqueExecutor.get());
+    CHECK_RET(allocRet == ACLNN_SUCCESS, allocRet);
 
     auto selfShape = op::ToShapeVector(self->GetViewShape());
-    float scalesD1 = 0.0;
-    float scalesH1 = 0.0;
-    float scalesW1 = 0.0;
-
     selfShape[DIM_TWO] = (*outputSize)[DIM_ZERO];
     selfShape[DIM_THREE] = (*outputSize)[DIM_ONE];
     selfShape[DIM_FOUR] = (*outputSize)[DIM_TWO];
-
-    uint64_t size = 0;
-    checkTrilinear3dRet = aclGetFloatArraySize(castScales, &size);
-    if (checkTrilinear3dRet == ACLNN_SUCCESS && size == DIM_THREE) {
-        scalesD1 = (*castScales)[DIM_ZERO];
-        scalesH1 = (*castScales)[DIM_ONE];
-        scalesW1 = (*castScales)[DIM_TWO];
-    }
-
     op::Shape outShape;
     op::ToShape(selfShape.data(), selfShape.size(), outShape);
 
-    auto inputShape = self->GetViewShape();
-    // if scale is bigger than 50,back to AICPU
-    float scaleW = AsComputeScale(alignCorners, inputShape.GetDim(DIM_FOUR), outShape.GetDim(DIM_FOUR), scalesW1);
-    float scaleH = AsComputeScale(alignCorners, inputShape.GetDim(DIM_THREE), outShape.GetDim(DIM_THREE), scalesH1);
-    float scaleD = AsComputeScale(alignCorners, inputShape.GetDim(DIM_TWO), outShape.GetDim(DIM_TWO), scalesD1);
+    auto rs = ResolveScales(alignCorners, castScales, self, outShape);
+    float scaleW = rs.scaleW;
+    float scaleH = rs.scaleH;
+    float scaleD = rs.scaleD;
     if (CheckIsPlatform310p(self) && CheckScales(scaleW, scaleH, scaleD)) {
         if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
-            // 将输入self进行transpose，shape：NDHWC-->DHWNC
-            const int64_t permuteDHWNCList[] = {DIM_ONE, DIM_TWO, DIM_THREE, DIM_ZERO, DIM_FOUR};
-            auto permuteDHWNCArray = uniqueExecutor.get()->AllocIntArray(permuteDHWNCList, UPSAMPLE_DIM_LIMIT);
-            CHECK_RET(permuteDHWNCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
-            auto selfTranspose = l0op::Transpose(selfContiguous, permuteDHWNCArray, uniqueExecutor.get());
-            CHECK_RET(selfTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            auto selfUpsampleTrilinear = l0op::UpsampleTrilinear3dNcdhw(selfTranspose, outputSize, alignCorners, scales,
-                                                                        castScales, scaleW, scaleH, scaleD,
-                                                                        uniqueExecutor.get());
-            CHECK_RET(selfUpsampleTrilinear != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            const int64_t permuteNDHWList[] = {DIM_THREE, DIM_ZERO, DIM_ONE, DIM_TWO, DIM_FOUR};
-            auto permuteNDHWCArray = uniqueExecutor.get()->AllocIntArray(permuteNDHWList, UPSAMPLE_DIM_LIMIT);
-            CHECK_RET(permuteNDHWCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNDHWCArray, uniqueExecutor.get());
-            auto viewCopyResult = l0op::ViewCopy(result, out, uniqueExecutor.get());
-            CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            auto ret = Run310pNdhwc(selfContiguous, outputSize, alignCorners, scales, castScales, scaleW, scaleH,
+                                    scaleD, out, uniqueExecutor.get());
+            CHECK_RET(ret == ACLNN_SUCCESS, ret);
         } else {
-            // 将输入self进行transpose，shape：NCDHW-->DHWNC
-            const int64_t permuteHWNCList[] = {DIM_TWO, DIM_THREE, DIM_FOUR, DIM_ZERO, DIM_ONE};
-            auto permuteHWNCArray = uniqueExecutor.get()->AllocIntArray(permuteHWNCList, UPSAMPLE_DIM_LIMIT);
-            CHECK_RET(permuteHWNCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
-            auto selfTranspose = l0op::Transpose(selfContiguous, permuteHWNCArray, uniqueExecutor.get());
-            CHECK_RET(selfTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            auto selfUpsampleTrilinear = l0op::UpsampleTrilinear3dNcdhw(selfTranspose, outputSize, alignCorners, scales,
-                                                                        castScales, scaleW, scaleH, scaleD,
-                                                                        uniqueExecutor.get());
-            CHECK_RET(selfUpsampleTrilinear != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            const int64_t permuteNDHWList[] = {DIM_THREE, DIM_FOUR, DIM_ZERO, DIM_ONE, DIM_TWO};
-            auto permuteNCDHWArray = uniqueExecutor.get()->AllocIntArray(permuteNDHWList, UPSAMPLE_DIM_LIMIT);
-            CHECK_RET(permuteNCDHWArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-            auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNCDHWArray, uniqueExecutor.get());
-            auto viewCopyResult = l0op::ViewCopy(result, out, uniqueExecutor.get());
-            CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            auto ret = Run310pNcdhw(selfContiguous, outputSize, alignCorners, scales, castScales, scaleW, scaleH,
+                                    scaleD, out, uniqueExecutor.get());
+            CHECK_RET(ret == ACLNN_SUCCESS, ret);
         }
     } else {
-        auto result = upsampleTrilinear3dCompute(selfContiguous, outputSize, alignCorners, scales, castScales, scaleW,
-                                                 scaleH, scaleD, uniqueExecutor.get());
-        CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
-        auto viewCopyResult = l0op::ViewCopy(result, out, uniqueExecutor.get());
-        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        auto ret = RunNon310pCompute(selfContiguous, outputSize, alignCorners, scales, castScales, scaleW, scaleH,
+                                     scaleD, out, uniqueExecutor.get());
+        CHECK_RET(ret == ACLNN_SUCCESS, ret);
     }
 
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();

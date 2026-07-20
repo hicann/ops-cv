@@ -24,6 +24,25 @@
 #include "image/resize_upsample_trilinear/op_kernel/arch35/resize_upsample_trilinear_tiling_data.h"
 #include "image/resize_upsample_trilinear/op_kernel/arch35/resize_upsample_trilinear_tiling_key.h"
 
+namespace {
+// FULL_3D_SIMD allocates UB for these maxima. Width alignment keeps every
+// Gather/DataCopy row naturally aligned for FP16, BF16, and FP32.
+constexpr int64_t FULL3D_MIN_IN_D = 4;
+constexpr int64_t FULL3D_MAX_IN_D = 8;
+constexpr int64_t FULL3D_MIN_IN_H = 64;
+constexpr int64_t FULL3D_MAX_IN_H = 128;
+constexpr int64_t FULL3D_MIN_IN_W = 64;
+constexpr int64_t FULL3D_MAX_IN_W = 128;
+constexpr int64_t FULL3D_MIN_OUT_D = 128;
+constexpr int64_t FULL3D_MAX_OUT_D = 256;
+constexpr int64_t FULL3D_MIN_OUT_H = 128;
+constexpr int64_t FULL3D_MAX_OUT_H = 256;
+constexpr int64_t FULL3D_MIN_OUT_W = 128;
+constexpr int64_t FULL3D_MAX_OUT_W = 256;
+constexpr int64_t FULL3D_WIDTH_ALIGN = 16;
+constexpr int64_t FULL3D_TARGET_NC = 64;
+} // namespace
+
 namespace optiling {
 using namespace Ops::Cv::OpTiling;
 
@@ -33,7 +52,10 @@ constexpr int32_t CONST_2 = 2;
 constexpr int32_t CONST_3 = 3;
 constexpr int32_t CONST_4 = 4;
 constexpr int64_t INPUT_DIMS = 5;
-constexpr size_t WORKSPACE_SIZE = static_cast<size_t>(16 * 1024 * 1024);
+// All A950 schedules operate directly on input/output GM and use only per-core
+// UB/register storage.  Reserving a workspace here would allocate device memory
+// that the kernel entry explicitly ignores.
+constexpr size_t WORKSPACE_SIZE = 0;
 
 constexpr int32_t OUTPUT_SIZE_ATTR = 0;
 constexpr int32_t ALIGN_CORNERS_ATTR = 1;
@@ -42,6 +64,9 @@ constexpr int32_t SCALE_H_ATTR = 3;
 constexpr int32_t SCALE_W_ATTR = 4;
 
 constexpr float MAX_SUPPORT_SCALE = 50.0f;
+constexpr int64_t D_ONLY_MIN_ELEMENTS = 1024 * 1024;
+constexpr int64_t D_REUSE_MIN_OUTPUT_ELEMENTS = 60 * 1024 * 1024;
+constexpr int64_t D_REUSE_MIN_EXPANSION = 4;
 
 struct ResizeUpsampleTrilinearBaseTiling {
     int64_t lenN = 0;
@@ -59,9 +84,11 @@ struct ResizeUpsampleTrilinearBaseTiling {
     int32_t coreNum = 0;
     int32_t alignCorners = 0;
     uint64_t isInt32 = 1;
+    ge::DataType inputDtype = ge::DT_UNDEFINED;
     float scaleD = 0.0f;
     float scaleH = 0.0f;
     float scaleW = 0.0f;
+    uint64_t scheduleMode = RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_NCDHW;
 };
 
 static bool IsInputDtypeSupported(ge::DataType inputDtype)
@@ -92,15 +119,21 @@ static bool IsDimProductWithinLimit(int64_t dimD, int64_t dimH, int64_t dimW, ui
 
 class ResizeUpsampleTrilinearRegbaseTiling {
 public:
-    explicit ResizeUpsampleTrilinearRegbaseTiling(gert::TilingContext* context) : context_(context){};
+    explicit ResizeUpsampleTrilinearRegbaseTiling(gert::TilingContext* context) : context_(context) {};
     ge::graphStatus Init();
     ge::graphStatus DoTiling();
 
 private:
     ge::graphStatus CheckInputParams();
+    ge::graphStatus CheckInputDtype();
+    ge::graphStatus CheckInputShape();
     ge::graphStatus CheckInputShapeAndAttr();
     void ComputeScales(float originalScaleD, float originalScaleH, float originalScaleW);
     void CalTilingData();
+    bool TryFull3dSimdTiling(int64_t totalNc);
+    bool TryDReuseTiling(int64_t totalNc);
+    bool TryDOnlyTiling(int64_t totalNc);
+    void CalDefaultTiling();
     void FillTilingData();
 
 private:
@@ -140,18 +173,32 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::Init()
 
 ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputParams()
 {
+    OP_CHECK_IF(CheckInputDtype() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputDtype failed"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckInputShape() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShape failed"),
+                return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputDtype()
+{
     auto inputDesc = context_->GetInputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputDesc);
     ge::DataType inputDtype = inputDesc->GetDataType();
     OP_CHECK_IF(!IsInputDtypeSupported(inputDtype),
                 OP_LOGE(context_, "input dtype is not support, but input dtype is %d", inputDtype),
                 return ge::GRAPH_FAILED);
+    baseTiling_.inputDtype = inputDtype;
 
     auto outputDesc = context_->GetOutputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputDesc);
     OP_CHECK_IF(outputDesc->GetDataType() != inputDtype, OP_LOGE(context_, "input and output dtype must be same"),
                 return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
 
+ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShape()
+{
     auto inputX = context_->GetInputShape(CONST_0);
     auto outY = context_->GetOutputShape(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputX);
@@ -242,14 +289,99 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShapeAndAttr()
 
 void ResizeUpsampleTrilinearRegbaseTiling::CalTilingData()
 {
-    baseTiling_.realCoreNum = baseTiling_.outSize < static_cast<int64_t>(baseTiling_.coreNum) ? baseTiling_.outSize :
-                                                                                                baseTiling_.coreNum;
+    int64_t totalNc = baseTiling_.lenN * baseTiling_.lenC;
+    if (TryFull3dSimdTiling(totalNc) || TryDReuseTiling(totalNc) || TryDOnlyTiling(totalNc)) {
+        return;
+    }
+    CalDefaultTiling();
+}
+
+bool ResizeUpsampleTrilinearRegbaseTiling::TryFull3dSimdTiling(int64_t totalNc)
+{
+    bool inputInRange = baseTiling_.inD >= FULL3D_MIN_IN_D && baseTiling_.inD <= FULL3D_MAX_IN_D &&
+                        baseTiling_.inH >= FULL3D_MIN_IN_H && baseTiling_.inH <= FULL3D_MAX_IN_H &&
+                        baseTiling_.inW >= FULL3D_MIN_IN_W && baseTiling_.inW <= FULL3D_MAX_IN_W;
+    bool outputInRange = baseTiling_.outD >= FULL3D_MIN_OUT_D && baseTiling_.outD <= FULL3D_MAX_OUT_D &&
+                         baseTiling_.outH >= FULL3D_MIN_OUT_H && baseTiling_.outH <= FULL3D_MAX_OUT_H &&
+                         baseTiling_.outW >= FULL3D_MIN_OUT_W && baseTiling_.outW <= FULL3D_MAX_OUT_W;
+    bool widthAligned = baseTiling_.inW % FULL3D_WIDTH_ALIGN == 0 && baseTiling_.outW % FULL3D_WIDTH_ALIGN == 0;
+    bool isFull3dUpsample = baseTiling_.outD > baseTiling_.inD && baseTiling_.outH > baseTiling_.inH &&
+                            baseTiling_.outW > baseTiling_.inW;
+    bool scaleValid = baseTiling_.scaleD > 0.0f && baseTiling_.scaleH > 0.0f && baseTiling_.scaleW > 0.0f;
+    int64_t targetCoreNum = std::min(static_cast<int64_t>(baseTiling_.coreNum), FULL3D_TARGET_NC);
+    bool ncSaturatesCores = totalNc >= targetCoreNum;
+    bool addressSafe = baseTiling_.isInt32 == 1;
+    bool shapeSupported = inputInRange && outputInRange && widthAligned && isFull3dUpsample;
+    if (shapeSupported && scaleValid && ncSaturatesCores && addressSafe) {
+        baseTiling_.realCoreNum = static_cast<int32_t>(std::min(totalNc, static_cast<int64_t>(baseTiling_.coreNum)));
+        baseTiling_.blkProcessNum = totalNc / baseTiling_.realCoreNum;
+        baseTiling_.tailBlockNum = static_cast<int32_t>(totalNc % baseTiling_.realCoreNum);
+        baseTiling_.scheduleMode = RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_FULL_3D_SIMD;
+        return true;
+    }
+    return false;
+}
+
+bool ResizeUpsampleTrilinearRegbaseTiling::TryDReuseTiling(int64_t totalNc)
+{
+    uint64_t uint32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+    bool ncHwFitsUint32 = IsDimProductWithinLimit(totalNc, baseTiling_.outH, baseTiling_.outW, uint32Max);
+    // D_REUSE uses uint32_t task indices for N*C*H*W. Validate that product on
+    // the host so the device hot path does not need 64-bit overflow guards.
+    bool useDReuseNcHw = baseTiling_.isInt32 == 1 && ncHwFitsUint32 &&
+                         baseTiling_.outSize >= D_REUSE_MIN_OUTPUT_ELEMENTS &&
+                         baseTiling_.outD >= baseTiling_.inD * D_REUSE_MIN_EXPANSION &&
+                         (baseTiling_.outH != baseTiling_.inH || baseTiling_.outW != baseTiling_.inW);
+    if (useDReuseNcHw) {
+        int64_t ncHwElements = totalNc * baseTiling_.outH * baseTiling_.outW;
+        baseTiling_.realCoreNum = static_cast<int32_t>(
+            std::min(ncHwElements, static_cast<int64_t>(baseTiling_.coreNum)));
+        baseTiling_.blkProcessNum = ncHwElements / baseTiling_.realCoreNum;
+        baseTiling_.tailBlockNum = static_cast<int32_t>(ncHwElements % baseTiling_.realCoreNum);
+        baseTiling_.scheduleMode = RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_D_REUSE_NC_HW;
+        return true;
+    }
+    return false;
+}
+
+bool ResizeUpsampleTrilinearRegbaseTiling::TryDOnlyTiling(int64_t totalNc)
+{
+    bool scaleDEq = baseTiling_.scaleD == 1.0f;
+    bool scaleHEq = baseTiling_.scaleH == 1.0f;
+    bool scaleWEq = baseTiling_.scaleW == 1.0f;
+    // Half-pixel coordinates use FMA in SIMT. Keep the vector path only where ordinary scalar arithmetic is exact.
+    bool dCoordinateSafe = baseTiling_.alignCorners == 1 || baseTiling_.scaleD == 0.5f;
+    bool dOnlyShape = baseTiling_.inD != baseTiling_.outD && baseTiling_.inH == baseTiling_.outH &&
+                      baseTiling_.inW == baseTiling_.outW;
+    if (dOnlyShape && scaleHEq && scaleWEq && !scaleDEq && dCoordinateSafe &&
+        baseTiling_.outSize >= D_ONLY_MIN_ELEMENTS && totalNc >= baseTiling_.coreNum) {
+        // The D-only vector path processes complete H*W planes and therefore splits by N*C.
+        baseTiling_.realCoreNum = static_cast<int32_t>(std::min(totalNc, static_cast<int64_t>(baseTiling_.coreNum)));
+        baseTiling_.blkProcessNum = totalNc / baseTiling_.realCoreNum;
+        baseTiling_.tailBlockNum = static_cast<int32_t>(totalNc % baseTiling_.realCoreNum);
+        baseTiling_.scheduleMode = RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_D_ONLY;
+        return true;
+    }
+    return false;
+}
+
+void ResizeUpsampleTrilinearRegbaseTiling::CalDefaultTiling()
+{
+    // Generic SIMT and identity-copy paths use a balanced linear element split.
+    constexpr int32_t MIN_ELEMENTS_PER_CORE = 64;
+    int64_t idealCoreNum = std::max(baseTiling_.outSize / MIN_ELEMENTS_PER_CORE, static_cast<int64_t>(1));
+    baseTiling_.realCoreNum = static_cast<int32_t>(std::min(idealCoreNum, static_cast<int64_t>(baseTiling_.coreNum)));
+    baseTiling_.realCoreNum = static_cast<int32_t>(
+        std::min(static_cast<int64_t>(baseTiling_.realCoreNum), baseTiling_.outSize));
     if (baseTiling_.realCoreNum <= 0) {
         baseTiling_.realCoreNum = 1;
     }
     baseTiling_.blkProcessNum = baseTiling_.outSize / static_cast<int64_t>(baseTiling_.realCoreNum);
     baseTiling_.tailBlockNum = static_cast<int32_t>(baseTiling_.outSize %
                                                     static_cast<int64_t>(baseTiling_.realCoreNum));
+    if (baseTiling_.scaleD == 1.0f && baseTiling_.scaleH == 1.0f && baseTiling_.scaleW == 1.0f) {
+        baseTiling_.scheduleMode = RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_COPY;
+    }
 }
 
 void ResizeUpsampleTrilinearRegbaseTiling::FillTilingData()
@@ -279,7 +411,14 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::DoTiling()
     CalTilingData();
     FillTilingData();
 
-    const uint64_t tilingKey = GET_TPL_TILING_KEY(RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_NCDHW, baseTiling_.isInt32);
+    const uint64_t tilingKey = GET_TPL_TILING_KEY(baseTiling_.scheduleMode, baseTiling_.isInt32);
+    OP_LOGI(context_,
+            "ResizeUpsampleTrilinear A950 tilingKey=%lu scheduleMode=%lu isInt32=%lu blockDim=%d "
+            "shape=[%ld,%ld,%ld,%ld,%ld]->[%ld,%ld,%ld,%ld,%ld] scale=[%f,%f,%f]",
+            tilingKey, baseTiling_.scheduleMode, baseTiling_.isInt32, baseTiling_.realCoreNum, baseTiling_.lenN,
+            baseTiling_.lenC, baseTiling_.inD, baseTiling_.inH, baseTiling_.inW, baseTiling_.lenN, baseTiling_.lenC,
+            baseTiling_.outD, baseTiling_.outH, baseTiling_.outW, baseTiling_.scaleD, baseTiling_.scaleH,
+            baseTiling_.scaleW);
     context_->SetTilingKey(tilingKey);
     context_->SetBlockDim(baseTiling_.realCoreNum);
     size_t* workspaces = context_->GetWorkspaceSizes(1);

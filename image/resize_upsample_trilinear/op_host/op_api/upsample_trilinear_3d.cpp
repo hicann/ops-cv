@@ -46,10 +46,112 @@ bool CheckScales(float scaleW, float scaleH, float scaleD)
     return (scaleW <= MAX_SUPPORT_SCALE && scaleH <= MAX_SUPPORT_SCALE && scaleD <= MAX_SUPPORT_SCALE);
 }
 
+static const aclTensor* CastToFp32(const aclTensor* self, aclOpExecutor* executor)
+{
+    self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
+    OP_CHECK(self != nullptr, OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
+             return nullptr);
+    return self;
+}
+
+static const aclTensor* CastBackFromFp32(const aclTensor* out, op::DataType dataType, aclOpExecutor* executor)
+{
+    if (dataType == op::DataType::DT_FLOAT16 || dataType == op::DataType::DT_BF16) {
+        out = l0op::Cast(out, dataType, executor);
+    }
+    return out;
+}
+
+// A950 (DAV_3510) AICORE branch
+static const aclTensor* UpsampleTrilinear3dA950AiCore(const aclTensor* self, const aclIntArray* outputSize,
+                                                      bool alignCorners, float scalesD, float scalesH, float scalesW,
+                                                      const op::Shape& outShape, aclOpExecutor* executor,
+                                                      aclTensor* directOut)
+{
+    auto dataType = self->GetDataType();
+    const aclTensor* out = directOut == nullptr ? executor->AllocTensor(outShape, dataType, self->GetStorageFormat()) :
+                                                  directOut;
+    CHECK_RET(out != nullptr, nullptr);
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
+                                           OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearA950AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
+    return out;
+}
+
+// A2 (DAV_2201) AICORE branch: cast fp16/bf16 → fp32 → compute → cast back
+static const aclTensor* UpsampleTrilinear3dA2AiCore(const aclTensor* self, const aclIntArray* outputSize,
+                                                    bool alignCorners, float scalesD, float scalesH, float scalesW,
+                                                    const op::Shape& outShape, aclOpExecutor* executor)
+{
+    auto dataType = self->GetDataType();
+    if (dataType == op::DataType::DT_FLOAT16 || dataType == op::DataType::DT_BF16) {
+        self = CastToFp32(self, executor);
+        CHECK_RET(self != nullptr, nullptr);
+    }
+    const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, self->GetStorageFormat());
+    auto ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
+                                           OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
+    OP_CHECK(ret == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
+    return CastBackFromFp32(out, dataType, executor);
+}
+
+// 310P (DAV_2002) AICORE branch: cast fp16 → fp32 → compute → cast back to fp16
+static const aclTensor* UpsampleTrilinear3d310PAiCore(const aclTensor* self, const aclIntArray* outputSize,
+                                                      bool alignCorners, float scalesD, float scalesH, float scalesW,
+                                                      const op::Shape& outShape, aclOpExecutor* executor)
+{
+    auto dataType = self->GetDataType();
+    if (dataType == op::DataType::DT_FLOAT16) {
+        self = CastToFp32(self, executor);
+        CHECK_RET(self != nullptr, nullptr);
+    }
+    const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, self->GetStorageFormat());
+    auto aicoreRet = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
+                                                 OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
+    OP_CHECK(aicoreRet == ACLNN_SUCCESS,
+             OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinear310PAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
+             return nullptr);
+    if (dataType == op::DataType::DT_FLOAT16) {
+        out = l0op::Cast(out, op::DataType::DT_FLOAT16, executor);
+    }
+    return out;
+}
+
+// AICPU fallback branch: bf16 → fp32 → compute → cast back to bf16
+static const aclTensor* UpsampleTrilinear3dAiCpu(const aclTensor* self, const aclIntArray* outputSize,
+                                                 bool alignCorners, const aclFloatArray* scales, const aclFloatArray*,
+                                                 const op::Shape& outShape, aclOpExecutor* executor)
+{
+    auto dataType = self->GetDataType();
+    if (dataType == op::DataType::DT_BF16) {
+        self = CastToFp32(self, executor);
+        CHECK_RET(self != nullptr, nullptr);
+    }
+    uint64_t size = 0;
+    auto ret = aclGetFloatArraySize(scales, &size);
+    if (ret == ACLNN_SUCCESS && size == DIM_THREE) {
+        outputSize = executor->AllocIntArray({}, 0);
+    }
+    const aclTensor* out = executor->AllocTensor(outShape, self->GetDataType(), self->GetStorageFormat());
+    CHECK_RET(out != nullptr, nullptr);
+    static internal::AicpuTaskSpace space("UpsampleTrilinear3d");
+    ret = ADD_TO_LAUNCHER_LIST_AICPU(UpsampleTrilinear3d, OP_ATTR_NAMES({"output_size", "scales", "align_corners"}),
+                                     OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales, alignCorners));
+    CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
+    if (dataType == op::DataType::DT_BF16) {
+        out = l0op::Cast(out, op::DataType::DT_BF16, executor);
+    }
+    return out;
+}
+
 const aclTensor* UpsampleTrilinear3dNcdhw(const aclTensor* self, const aclIntArray* outputSize, bool alignCorners,
                                           const aclFloatArray* scales, const aclFloatArray* castScales,
                                           float checkScaleW, float checkScaleH, float checkScaleD,
-                                          aclOpExecutor* executor)
+                                          aclOpExecutor* executor, aclTensor* directOut)
 {
     L0_DFX(UpsampleTrilinear3dNcdhw, self, outputSize, alignCorners, scales);
 
@@ -83,81 +185,22 @@ const aclTensor* UpsampleTrilinear3dNcdhw(const aclTensor* self, const aclIntArr
     }
     op::Shape outShape;
     op::ToShape(selfShape.data(), selfShape.size(), outShape);
-    auto dataType = self->GetDataType();
-    if ((curArch == NpuArch::DAV_3510) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
-        CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
-        const aclTensor* out = executor->AllocTensor(outShape, dataType, self->GetStorageFormat());
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
-                                          OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
-        OP_CHECK(
-            ret == ACLNN_SUCCESS,
-            OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearA950AiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-            return nullptr);
-        return out;
-    } else if ((curArch == NpuArch::DAV_2201) && CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST) &&
-               CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
-        if (op::DataType::DT_FLOAT16 == dataType || op::DataType::DT_BF16 == dataType) {
-            self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
-            OP_CHECK(self != nullptr,
-                     OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
-                     return nullptr);
-        }
-        const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, self->GetStorageFormat());
-        ret = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
-                                          OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
-        OP_CHECK(ret == ACLNN_SUCCESS,
-                 OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-                 return nullptr);
-        // cast back to fp16
-        if (op::DataType::DT_FLOAT16 == dataType) {
-            out = l0op::Cast(out, op::DataType::DT_FLOAT16, executor);
-        } else if (op::DataType::DT_BF16 == dataType) {
-            // cast back to bf16
-            out = l0op::Cast(out, op::DataType::DT_BF16, executor);
-        }
-        return out;
-    } else if ((curArch == NpuArch::DAV_2002) && CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST) &&
-               CheckScales(checkScaleW, checkScaleH, checkScaleD)) {
-        if (op::DataType::DT_FLOAT16 == dataType) {
-            self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
-            OP_CHECK(self != nullptr,
-                     OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
-                     return nullptr);
-        }
-        const aclTensor* out = executor->AllocTensor(outShape, op::DataType::DT_FLOAT, self->GetStorageFormat());
-        auto aicoreRet = ADD_TO_LAUNCHER_LIST_AICORE(ResizeUpsampleTrilinear, OP_INPUT(self), OP_OUTPUT(out),
-                                                     OP_ATTR(outputSize, alignCorners, scalesD, scalesH, scalesW));
-        OP_CHECK(
-            aicoreRet == ACLNN_SUCCESS,
-            OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinear310PAiCore ADD_TO_LAUNCHER_LIST_AICORE failed."),
-            return nullptr);
-        if (op::DataType::DT_FLOAT16 == dataType) {
-            out = l0op::Cast(out, op::DataType::DT_FLOAT16, executor);
-        }
-        return out;
-    } else {
-        if (op::DataType::DT_BF16 == dataType) {
-            self = l0op::Cast(self, op::DataType::DT_FLOAT, executor);
-            OP_CHECK(self != nullptr,
-                     OP_LOGE(ACLNN_ERR_INNER_NULLPTR, "ResizeUpsampleTrilinearAiCore cast self failed."),
-                     return nullptr);
-        }
-        ret = aclGetFloatArraySize(scales, &size);
-        if (ret == ACLNN_SUCCESS && size == DIM_THREE) {
-            outputSize = executor->AllocIntArray({}, 0);
-        }
 
-        const aclTensor* out = executor->AllocTensor(outShape, self->GetDataType(), self->GetStorageFormat());
-        CHECK_RET(out != nullptr, nullptr);
-        static internal::AicpuTaskSpace space("UpsampleTrilinear3d");
-        ret = ADD_TO_LAUNCHER_LIST_AICPU(UpsampleTrilinear3d, OP_ATTR_NAMES({"output_size", "scales", "align_corners"}),
-                                         OP_INPUT(self), OP_OUTPUT(out), OP_ATTR(outputSize, scales, alignCorners));
-        CHECK_RET(ret == ACLNN_SUCCESS, nullptr);
-        if (op::DataType::DT_BF16 == dataType) {
-            // cast back to bf16
-            out = l0op::Cast(out, op::DataType::DT_BF16, executor);
-        }
-        return out;
+    bool scalesOk = CheckScales(checkScaleW, checkScaleH, checkScaleD);
+    bool dtypeOkA5OrA2 = CheckType(self->GetDataType(), AICORE_DTYPE_SUPPORT_LIST);
+    bool dtypeOk310P = CheckType(self->GetDataType(), AICORE_310P_SUPPORT_LIST);
+    if (curArch == NpuArch::DAV_3510 && dtypeOkA5OrA2 && scalesOk) {
+        return UpsampleTrilinear3dA950AiCore(self, outputSize, alignCorners, scalesD, scalesH, scalesW, outShape,
+                                             executor, directOut);
     }
+    if (curArch == NpuArch::DAV_2201 && dtypeOkA5OrA2 && scalesOk) {
+        return UpsampleTrilinear3dA2AiCore(self, outputSize, alignCorners, scalesD, scalesH, scalesW, outShape,
+                                           executor);
+    }
+    if (curArch == NpuArch::DAV_2002 && dtypeOk310P && scalesOk) {
+        return UpsampleTrilinear3d310PAiCore(self, outputSize, alignCorners, scalesD, scalesH, scalesW, outShape,
+                                             executor);
+    }
+    return UpsampleTrilinear3dAiCpu(self, outputSize, alignCorners, scales, castScales, outShape, executor);
 }
 } // namespace l0op
