@@ -1569,6 +1569,92 @@ REG_OP(YoloBoxesEncode)
     .OUTPUT(encoded_bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OP_END_FACTORY_REG(YoloBoxesEncode)
 
+/**
+*@brief Performs Position Sensitive PS ROI Pooling Grad. \n
+
+ *@par Inputs:
+ *@li assigned_gt_inds: A tensor of type float16 or float32, shape (n, ).
+ *  Indicates the assigned ground truth index for each predicted box.
+ *@li overlaps: A tensor. Datatype is same as assigned_gt_inds, IOU(Intersection over Union, between[0,1]) between
+gt_bboxes and bboxes, shape (k, n).
+ *  Where k is the number of ground truths, n is the number of predicted boxes.
+ *@li box_responsible_flags: A tensor. Support uint8, shape (n, ).
+ *  Flag to indicate whether the box is responsible for being assigned to a ground truth.
+ *@li max_overlaps: A tensor. Datatype is same as assigned_gt_inds, overlaps.max(axis=0), shape (n, ).
+ *  Maximum IOU for each predicted box across all ground truths.
+ *@li argmax_overlaps: A tensor. Support int32, overlaps.argmax(axis=0), shape (n, ).
+ *  Index of the ground truth with maximum IOU for each predicted box.
+ *@li gt_max_overlaps: A tensor. Datatype is same as assigned_gt_inds, overlaps.max(axis=1), shape (k, ).
+ *  Maximum IOU for each ground truth across all predicted boxes.
+ *@li gt_argmax_overlaps: A tensor. Support int32, overlaps.argmax(axis=1), shape (k, ).
+ *  Index of the predicted box with maximum IOU for each ground truth.
+ *@li num_gts: A tensor. Support int32, shape (1, ).
+ *  Real number of ground truths \n
+
+ *@par Attributes:
+ *@li pos_iou_thr: float. IOU threshold for positive bboxes. Bboxes with IOU >= pos_iou_thr are considered positive.
+ *@li min_pos_iou: float. Minimum IOU for a bbox to be considered as a positive bbox.
+ *@li gt_max_assign_all: bool. Whether to assign all bboxes with the same highest overlap with some gt to that gt. \n
+
+ *@par Outputs:
+ * assigned_gt_inds_pos: A tensor. Support float16/float32, shape (n, ).
+ *   The final assigned ground truth indices for positive bboxes, used for gradient computation. \n
+ */
+
+REG_OP(GridAssignPositive)
+    .INPUT(assigned_gt_inds, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(overlaps, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(box_responsible_flags, TensorType({DT_UINT8}))
+    .INPUT(max_overlaps, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(argmax_overlaps, TensorType({DT_INT32}))
+    .INPUT(gt_max_overlaps, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .INPUT(gt_argmax_overlaps, TensorType({DT_INT32}))
+    .INPUT(num_gts, TensorType({DT_INT32}))
+    .OUTPUT(assigned_gt_inds_pos, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .REQUIRED_ATTR(pos_iou_thr, Float)
+    .REQUIRED_ATTR(min_pos_iou, Float)
+    .REQUIRED_ATTR(gt_max_assign_all, Bool)
+    .OP_END_FACTORY_REG(GridAssignPositive)
+
+/**
+* @brief Performs non-maximum suppression (NMS) on the rotated boxes according
+* to their intersection-over-union (IoU). Rotated NMS interatively removes lower
+* scoring rotated boxes which have an IoU greater than iou_threshold with
+* another (higher scoring) rotated box.
+
+* @par Inputs:
+* Three inputs, including:
+* @li boxes: A 2D Tensor of float16 or float32 with shape (N, 5). Rotated boxes to
+* perform NMS on. They are expected to be in (x1, y1, x2, y2, angle_degress) format.
+* @li scores: A 1D Tensor of float16 or float32 with shape (N). Scores for each one of
+* the rotated boxes.
+* @li labels: A 1D Tensor of int32 or int64 with shape (N). Labels for each one of
+* the rotated boxes.
+
+* @par Attributes:
+* iou_threshold: A required float attribute. Discards all overlapping rotated
+* boxes with IoU < iou_threshold.
+
+* @par Outputs:
+* Two outputs, including:
+* @li selected_detections: A 2D Tensor of float16 or float32 with shape (N, 5).
+* The selected boxes that kept by Rotated NMS, sorted in decreasing order of scores.
+* @li keep_indices: A 1D Tensor of int32 or int64 with shape (N). The indices of
+* selected_detections.
+
+* @attention Constraints:
+* Currently, the tensor type of input (boxes, scores) only support float.
+* The tensor type of keep_indices only support int32.
+*/
+REG_OP(RotatedNMS)
+    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(scores, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(labels, TensorType({DT_INT32, DT_INT64}))
+    .OUTPUT(selected_detections, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(keep_indices, TensorType({DT_INT32, DT_INT64}))
+    .REQUIRED_ATTR(iou_threshold, Float)
+    .ATTR(is_angle, Bool, true)
+    .OP_END_FACTORY_REG(RotatedNMS)
 } // namespace ge
 
 #endif
