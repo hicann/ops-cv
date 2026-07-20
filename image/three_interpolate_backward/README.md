@@ -44,7 +44,7 @@
       <td>输入</td>
       <td>网络反向传播前一步的梯度值，对应公式中的`grad_x`。</td>
       <td>FLOAT32、FLOAT16</td>
-      <td>5HD</td>
+      <td>5HD（NC1HWC0）</td>
     </tr>
     <tr>
       <td>idx</td>
@@ -61,17 +61,25 @@
       <td>ND</td>
     </tr>
     <tr>
+      <td>m</td>
+      <td>属性</td>
+      <td>输入特征最低维度的大小，用于指导infershape时推导`grad_y`的形状。</td>
+      <td>INT32</td>
+      <td>-</td>
+    </tr>
+    <tr>
       <td>grad_y</td>
       <td>输出</td>
       <td>梯度计算结果，对应公式中的`grad_y`。数据类型和数据格式需要与`grad_x`的数据类型和数据格式一致。</td>
       <td>FLOAT32、FLOAT16</td>
-      <td>5HD</td>
+      <td>5HD（NC1HWC0）</td>
     </tr>
   </tbody></table>
 
 ## 约束说明
 
-无
+- `idx`中的取值应该小于`m`。
+- `grad_x`、`grad_y`的数据格式为5HD（即NC1HWC0，与算子IR定义`FORMAT_NC1HWC0`一致）；通过aclnn接口调用时，支持以NCHW格式传入，由框架自动转换为NC1HWC0。
 
 ## 调用说明
 

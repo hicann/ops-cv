@@ -77,7 +77,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0pky">网络反向传播前一步的梯度值。</td>
       <td class="tg-0lax">shape支持（b, c, n）</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
-      <td class="tg-0lax">支持NCHW</td>
+      <td class="tg-0lax">支持NCHW（底层算子以NC1HWC0/5HD格式处理）</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">√</td>
     </tr>
@@ -117,7 +117,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0lax">梯度计算结果。</td>
       <td class="tg-0lax">shape支持（b, c, m）。</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
-      <td class="tg-0lax">支持NCHW</td>
+      <td class="tg-0lax">支持NCHW（底层算子以NC1HWC0/5HD格式处理）</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">√</td>
     </tr>
