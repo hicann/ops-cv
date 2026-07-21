@@ -61,7 +61,7 @@ $$
     <tr>
       <td>size</td>
       <td>输入</td>
-      <td>裁剪尺寸[glimpse_h, glimpse_w]，1D const tensor，shape为[2]。</td>
+      <td>裁剪尺寸[size_h, size_w]，1D const tensor，shape为[2]，不能小于0。</td>
       <td>INT32</td>
       <td>ND</td>
     </tr>
@@ -75,7 +75,7 @@ $$
     <tr>
       <td>glimpse</td>
       <td>输出</td>
-      <td>裁剪后的图像批次，4D tensor，shape为[batch, size_h, size_w, channels]。</td>
+      <td>裁剪后的图像批次，4D tensor，shape为[batch, size_h, size_w, channels]。其中size_h, size_w为size的输入。</td>
       <td>FLOAT</td>
       <td>ND</td>
     </tr>
@@ -111,12 +111,12 @@ $$
 
 ## 约束说明
 
-- input 必须为 4D tensor。
-- offsets 必须为 2D tensor，且第二维必须为 2。
-- size 必须为 1D const tensor，且长度为 2。
-- input 和 offsets 的 batch 维度必须一致。
-- 当前仅支持 float32 数据类型。
-- 当前仅支持 noise="zero" 的越界填充模式。
+- input必须为4D tensor。
+- offsets必须为2D tensor，且第二维必须为2。
+- size必须为1D const tensor，且长度为2，大小不能小于0。
+- input和offsets的batch维度必须一致。
+- 当前仅支持float32数据类型。
+- 当前仅支持noise="zero"的越界填充模式。
 
 ## 调用说明
 
