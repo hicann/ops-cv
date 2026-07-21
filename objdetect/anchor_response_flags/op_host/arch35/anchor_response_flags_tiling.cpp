@@ -34,9 +34,8 @@ struct AnchorResponseFlagsCompileInfo {};
 // 2. Get attributes by index (order matches REG_OP definition)
 // Index 0: featmap_size (ListInt), Index 1: strides (ListInt), Index 2: num_base_anchors (Int)
 // 3. Validate attributes
-static ge::graphStatus GetAndValidateAttrs(gert::TilingContext* context,
-    int32_t& featH, int32_t& featW, int32_t& strideH, int32_t& strideW,
-    int32_t& numBaseAnchors)
+static ge::graphStatus GetAndValidateAttrs(gert::TilingContext* context, int32_t& featH, int32_t& featW,
+                                           int32_t& strideH, int32_t& strideW, int32_t& numBaseAnchors)
 {
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
@@ -55,18 +54,12 @@ static ge::graphStatus GetAndValidateAttrs(gert::TilingContext* context,
     OP_CHECK_NULL_WITH_CONTEXT(context, numBaseAnchorsPtr);
     numBaseAnchors = static_cast<int32_t>(*numBaseAnchorsPtr);
 
-    OP_CHECK_IF(featmapSizeLen != 2,
-        OP_LOGE(context, "featmap_size must have exactly 2 elements"),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(stridesLen != 2,
-        OP_LOGE(context, "strides must have exactly 2 elements"),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(stridesData[0] <= 0 || stridesData[1] <= 0,
-        OP_LOGE(context, "strides must be positive"),
-        return ge::GRAPH_FAILED);
-    OP_CHECK_IF(numBaseAnchors <= 0,
-        OP_LOGE(context, "num_base_anchors must be positive"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(featmapSizeLen != 2, OP_LOGE(context, "featmap_size must have exactly 2 elements"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(stridesLen != 2, OP_LOGE(context, "strides must have exactly 2 elements"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(stridesData[0] <= 0 || stridesData[1] <= 0, OP_LOGE(context, "strides must be positive"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(numBaseAnchors <= 0, OP_LOGE(context, "num_base_anchors must be positive"), return ge::GRAPH_FAILED);
 
     featH = static_cast<int32_t>(featmapSizeData[0]);
     featW = static_cast<int32_t>(featmapSizeData[1]);
@@ -76,11 +69,46 @@ static ge::graphStatus GetAndValidateAttrs(gert::TilingContext* context,
     return ge::GRAPH_SUCCESS;
 }
 
+// 4. Get and validate input shape: gt_bboxes must be 2D and second dim must be 4
+static ge::graphStatus ValidateInputShape(gert::TilingContext* context, int64_t& n)
+{
+    auto inputGtBboxes = context->GetInputShape(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputGtBboxes);
+    const auto& storageShape = inputGtBboxes->GetStorageShape();
+    OP_CHECK_IF(storageShape.GetDimNum() != 2,
+                OP_LOGE(context, "gt_bboxes must be 2D, but got %zu dims", storageShape.GetDimNum()),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(storageShape.GetDim(1) != 4,
+                OP_LOGE(context, "gt_bboxes second dimension must be 4, but got %ld", storageShape.GetDim(1)),
+                return ge::GRAPH_FAILED);
+    n = storageShape.GetDim(0);
+    return ge::GRAPH_SUCCESS;
+}
+
+// Validate input and output dtype: gt_bboxes in {float32, float16}, flags in {uint8}
+static ge::graphStatus ValidateDtype(gert::TilingContext* context)
+{
+    auto inputDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    ge::DataType inputDtype = inputDesc->GetDataType();
+    OP_CHECK_IF(
+        inputDtype != ge::DT_FLOAT && inputDtype != ge::DT_FLOAT16,
+        OP_LOGE(context, "gt_bboxes dtype must be float32 or float16, but got %d", static_cast<int32_t>(inputDtype)),
+        return ge::GRAPH_FAILED);
+
+    auto outputDesc = context->GetOutputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, outputDesc);
+    ge::DataType outputDtype = outputDesc->GetDataType();
+    OP_CHECK_IF(outputDtype != ge::DT_UINT8,
+                OP_LOGE(context, "flags dtype must be uint8, but got %d", static_cast<int32_t>(outputDtype)),
+                return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 // 5. Compute tiling parameters
 // 6. Core count calculation (gather algorithm iterates over featHW)
-static void ComputeTilingParams(int32_t featH, int32_t featW, int32_t numBaseAnchors,
-    int64_t coreNum, int64_t& featHW, int64_t& totalAnchors,
-    int64_t& perCoreElements, int64_t& needCoreNum)
+static void ComputeTilingParams(int32_t featH, int32_t featW, int32_t numBaseAnchors, int64_t coreNum, int64_t& featHW,
+                                int64_t& totalAnchors, int64_t& perCoreElements, int64_t& needCoreNum)
 {
     featHW = static_cast<int64_t>(featH) * featW;
     totalAnchors = featHW * numBaseAnchors;
@@ -94,17 +122,15 @@ static void ComputeTilingParams(int32_t featH, int32_t featW, int32_t numBaseAnc
 }
 
 // 7. Set tiling data
-static ge::graphStatus FillTilingData(gert::TilingContext* context,
-    int64_t needCoreNum, int64_t n, int32_t featH, int32_t featW,
-    int32_t strideH, int32_t strideW, int32_t numBaseAnchors, int64_t totalAnchors)
+static ge::graphStatus FillTilingData(gert::TilingContext* context, int64_t needCoreNum, int64_t n, int32_t featH,
+                                      int32_t featW, int32_t strideH, int32_t strideW, int32_t numBaseAnchors,
+                                      int64_t totalAnchors)
 {
     AnchorResponseFlagsTilingData* tiling = context->GetTilingData<AnchorResponseFlagsTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(
-        memset_s(tiling, sizeof(AnchorResponseFlagsTilingData), 0,
-            sizeof(AnchorResponseFlagsTilingData)) != EOK,
-        OP_LOGE(context, "memset tiling data error"),
-        return ge::GRAPH_FAILED);
+        memset_s(tiling, sizeof(AnchorResponseFlagsTilingData), 0, sizeof(AnchorResponseFlagsTilingData)) != EOK,
+        OP_LOGE(context, "memset tiling data error"), return ge::GRAPH_FAILED);
 
     tiling->needCoreNum = static_cast<int32_t>(needCoreNum);
     tiling->n = static_cast<int32_t>(n);
@@ -121,16 +147,12 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context,
 // 9. Set local memory size
 // 10. Set workspace (system workspace only, no user workspace)
 static ge::graphStatus SetupMemAndWorkspace(gert::TilingContext* context,
-    platform_ascendc::PlatformAscendC& ascendcPlatform, uint64_t ubSize)
+                                            platform_ascendc::PlatformAscendC& ascendcPlatform, uint64_t ubSize)
 {
     OP_CHECK_IF((ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE),
-        OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize),
-        return ge::GRAPH_FAILED);
-    auto res = context->SetLocalMemorySize(
-        static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
-    OP_CHECK_IF((res != ge::GRAPH_SUCCESS),
-        OP_LOGE(context, "SetLocalMemorySize failed"),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize), return ge::GRAPH_FAILED);
+    auto res = context->SetLocalMemorySize(static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
+    OP_CHECK_IF((res != ge::GRAPH_SUCCESS), OP_LOGE(context, "SetLocalMemorySize failed"), return ge::GRAPH_FAILED);
 
     uint64_t sysWorkspaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
     size_t* ws = context->GetWorkspaceSizes(1);
@@ -159,8 +181,7 @@ static ge::graphStatus SetupTilingKey(gert::TilingContext* context, int64_t tota
 
     // R003: use 32-bit index path when totalAnchors fits in int32
     bool use32Bit = (totalAnchors > 0 && totalAnchors <= static_cast<int64_t>(INT32_MAX));
-    uint32_t is32Bit = use32Bit ? ANCHOR_RESPONSE_FLAGS_IS_32BIT
-                                : ANCHOR_RESPONSE_FLAGS_IS_64BIT;
+    uint32_t is32Bit = use32Bit ? ANCHOR_RESPONSE_FLAGS_IS_32BIT : ANCHOR_RESPONSE_FLAGS_IS_64BIT;
 
     uint64_t tilingKey = GET_TPL_TILING_KEY(schMode, is32Bit);
     context->SetTilingKey(tilingKey);
@@ -191,27 +212,31 @@ static ge::graphStatus AnchorResponseFlagsTilingFunc(gert::TilingContext* contex
         return ret;
     }
 
-    // 4. Get input shape
-    auto inputGtBboxes = context->GetInputShape(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, inputGtBboxes);
-    int64_t n = inputGtBboxes->GetStorageShape().GetDim(0);
+    // 4. Get and validate input shape and dtype
+    int64_t n = 0;
+    ret = ValidateInputShape(context, n);
+    if (ret != ge::GRAPH_SUCCESS) {
+        return ret;
+    }
+    ret = ValidateDtype(context);
+    if (ret != ge::GRAPH_SUCCESS) {
+        return ret;
+    }
 
     int64_t featHW = 0;
     int64_t totalAnchors = 0;
     int64_t perCoreElements = 0;
     int64_t needCoreNum = 0;
-    ComputeTilingParams(featH, featW, numBaseAnchors, coreNum, featHW, totalAnchors,
-                        perCoreElements, needCoreNum);
+    ComputeTilingParams(featH, featW, numBaseAnchors, coreNum, featHW, totalAnchors, perCoreElements, needCoreNum);
 
-    ret = FillTilingData(context, needCoreNum, n, featH, featW, strideH, strideW,
-                         numBaseAnchors, totalAnchors);
+    ret = FillTilingData(context, needCoreNum, n, featH, featW, strideH, strideW, numBaseAnchors, totalAnchors);
     if (ret != ge::GRAPH_SUCCESS) {
         return ret;
     }
 
     // 8. Set block dim and schedule mode
     context->SetBlockDim(static_cast<uint32_t>(needCoreNum));
-    context->SetScheduleMode(1);  // Enable SyncAll support (required by MDE §1.2)
+    context->SetScheduleMode(1); // Enable SyncAll support (required by MDE §1.2)
 
     ret = SetupMemAndWorkspace(context, ascendcPlatform, ubSize);
     if (ret != ge::GRAPH_SUCCESS) {
@@ -226,8 +251,7 @@ static ge::graphStatus AnchorResponseFlagsTilingFunc(gert::TilingContext* contex
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus TilingParseForAnchorResponseFlags(
-    [[maybe_unused]] gert::TilingParseContext* context)
+static ge::graphStatus TilingParseForAnchorResponseFlags([[maybe_unused]] gert::TilingParseContext* context)
 {
     return ge::GRAPH_SUCCESS;
 }
