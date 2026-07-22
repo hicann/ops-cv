@@ -41,8 +41,8 @@ in_array() {
 
 check_pkg_type() {
   local pkg_type="$1"
-  if [[ "$pkg_type" != "run" && "$pkg_type" != "rpm" && "$pkg_type" != "deb" ]]; then
-    echo "[ERROR] --pkg-type only supports run/rpm/deb"
+  if [[ "$pkg_type" != "run" && "$pkg_type" != "rpm" && "$pkg_type" != "deb" && "$pkg_type" != "all" ]]; then
+    echo "[ERROR] --pkg-type only supports run/rpm/deb/all, got: $pkg_type"
     exit 1
   fi
 }
@@ -155,7 +155,7 @@ usage() {
         echo "Package Build Options:"
         echo $dotted_line
         echo "    --pkg                  Build run package with kernel bin"
-        echo "    --pkg-type=<TYPE>      Specify package type(TYPE options: run/rpm/deb), Default: run"
+        echo "    --pkg-type=<TYPE>      Specify package type(TYPE options: run/rpm/deb/all), Default: run"
         echo "    --static               Build static library package"
         echo "    --jit                  Build run package without kernel bin"
         echo "    --soc=soc_version      Compile for specified Ascend SoC"
@@ -449,7 +449,7 @@ usage() {
   echo "    --opkernel_aicpu build aicpu kernel"
   echo "    --jit build run package without kernel bin"
   echo "    --pkg build run package with kernel bin"
-  echo "    --pkg-type=<TYPE> Specify package type(TYPE options: run/rpm/deb), Default: run"
+  echo "    --pkg-type=<TYPE> Specify package type(TYPE options: run/rpm/deb/all), Default: run"
   echo "    --static build static library package"
   echo "    --experimental Build experimental version"
   echo "    --opapi_test build and run opapi unit tests"
@@ -805,7 +805,7 @@ checkopts() {
         exit 1
       fi
       if [[ "$arg" == "--pkg-type" ]]; then
-        echo "[ERROR] --pkg-type requires a value: run/rpm/deb"
+        echo "[ERROR] --pkg-type requires a value: run/rpm/deb/all"
         exit 1
       fi
       if [[ "$arg" == --pkg-type=* ]]; then
@@ -1479,11 +1479,6 @@ collect_rpm_deb_package() {
   while IFS= read -r package_file; do
     package_files+=("${package_file}")
   done < <(find_rpm_deb_package)
-
-  if [[ ${#package_files[@]} -eq 0 ]]; then
-    echo "[ERROR] No .${PACKAGE_TYPE} package found in ${BUILD_PATH}"
-    exit 1
-  fi
 
   for package_file in "${package_files[@]}"; do
     cp -f "${package_file}" "${BUILD_OUT_PATH}/"
