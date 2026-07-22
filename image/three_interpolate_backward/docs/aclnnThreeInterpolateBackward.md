@@ -13,14 +13,14 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnThreeInterpolateBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnThreeInterpolateBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/two_phase_api.md)，必须先调用“aclnnThreeInterpolateBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnThreeInterpolateBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(
   const aclTensor *grad_x,
   const aclTensor *idx,
   const aclTensor *weight,
-  int              m, 
+  int              m,
   aclTensor       *grad_y,
   uint64_t        *workspaceSize,
   aclOpExecutor  **executor)
@@ -28,9 +28,9 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(
 
 ```Cpp
 aclnnStatus aclnnThreeInterpolateBackward(
-  void          *workspace, 
-  uint64_t       workspace_size, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspace_size,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -41,7 +41,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 - 计算公式：
 
   $$
-  grad\_y[b,c,idx[b,n,i]] = 
+  grad\_y[b,c,idx[b,n,i]] =
   grad\_y[b,c,idx[b,n,i]] + grad\_x[b,c,n]*weight[b,n,i]\\ i\in[0,2]\ b\in[0,B) \ c\in[0,C) \ n\in[0,N)
   $$
 
@@ -145,7 +145,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 - **返回值**
 
-  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
 
@@ -218,7 +218,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 - **返回值**
 
-  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus: 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
 
 ## 约束说明
 
@@ -228,7 +228,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/compile_and_run_sample.md)。
 
 ```Cpp
 #include <iostream>

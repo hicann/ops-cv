@@ -18,29 +18,29 @@
 - 接口功能：对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。如果输入shape为(N, C, L)，则输出shape为(N, C, outputSize)。
 
 - 计算公式：
-  
+
   $$
   out(N, C, l) = self(N, C, min(floor(l * scale),  L-1)), \ scale = self\_L / outputSize[0]
   $$
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleNearest1dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearest1d”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/two_phase_api.md)，必须先调用“aclnnUpsampleNearest1dGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnUpsampleNearest1d”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest1dGetWorkspaceSize(
-  const aclTensor   *self, 
-  const aclIntArray *outputSize, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *self,
+  const aclIntArray *outputSize,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnUpsampleNearest1d(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
@@ -124,13 +124,13 @@ aclnnStatus aclnnUpsampleNearest1d(
   </table>
 
   - <term>Atlas 推理系列产品</term>、<term>Atlas 训练系列产品</term>：
-  
+
     入参`self`和出参`out`的数据类型不支持BFLOAT16。
-  
+
 - **返回值**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -205,7 +205,7 @@ aclnnStatus aclnnUpsampleNearest1d(
 
 - **返回值**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
 
 ## 约束说明
 
@@ -214,7 +214,7 @@ aclnnStatus aclnnUpsampleNearest1d(
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/compile_and_run_sample.md)。
 
 ```Cpp
 #include <iostream>

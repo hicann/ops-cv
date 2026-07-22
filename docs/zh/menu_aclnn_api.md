@@ -47,5 +47,5 @@
 - [aclnnUpsampleNearestExact3dBackward](../../image/upsample_nearest_exact3d_grad/docs/aclnnUpsampleNearestExact3dBackward.md)
 - [aclnnUpsampleTrilinear3d](../../image/resize_upsample_trilinear/docs/aclnnUpsampleTrilinear3d.md)
 - [aclnnUpsampleTrilinear3dBackward](../../image/upsample_trilinear3d_backward/docs/aclnnUpsampleTrilinear3dBackward.md)
-- [编译与运行样例](context/编译与运行样例.md)
-- [aclnn返回码](context/aclnn返回码.md)
+- [编译与运行样例](context/compile_and_run_sample.md)
+- [aclnn返回码](context/aclnn_return_code.md)

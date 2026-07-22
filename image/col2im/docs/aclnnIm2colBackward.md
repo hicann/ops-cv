@@ -17,7 +17,7 @@
 
 - 算子功能：从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。
 - 计算公式：
-  
+
   考虑一个形状为 $(N,C,*)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$*$表示任意空间维度。
 
   此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel\_size),L)$ 的3-D output张量的列（即最后一维）。
@@ -34,33 +34,33 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnIm2colBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnIm2colBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/two_phase_api.md)，必须先调用“aclnnIm2colBackwardGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnIm2colBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(
-  const aclTensor   *gradOutput, 
-  const aclIntArray *inputSize, 
-  const aclIntArray *kernelSize, 
-  const aclIntArray *dilation, 
-  const aclIntArray *padding, 
-  const aclIntArray *stride, 
-  aclTensor         *out, 
-  uint64_t          *workspaceSize, 
+  const aclTensor   *gradOutput,
+  const aclIntArray *inputSize,
+  const aclIntArray *kernelSize,
+  const aclIntArray *dilation,
+  const aclIntArray *padding,
+  const aclIntArray *stride,
+  aclTensor         *out,
+  uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnIm2colBackward(
-  void          *workspace, 
-  uint64_t       workspaceSize, 
-  aclOpExecutor *executor, 
+  void          *workspace,
+  uint64_t       workspaceSize,
+  aclOpExecutor *executor,
   aclrtStream    stream)
 ```
 
 ## aclnnIm2colBackwardGetWorkspaceSize
 
 - **参数说明**
-  
+
   <table style="undefined;table-layout: fixed; width: 1546px"><colgroup>
   <col style="width: 165px">
   <col style="width: 121px">
@@ -176,9 +176,9 @@ aclnnStatus aclnnIm2colBackward(
   </tbody></table>
 
 - **返回值**
-  
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed; width: 1124px"><colgroup>
@@ -230,7 +230,7 @@ aclnnStatus aclnnIm2colBackward(
 ## aclnnIm2colBackward
 
 - **参数说明**
-  
+
   <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
   <col style="width: 180px">
   <col style="width: 130px">
@@ -267,8 +267,8 @@ aclnnStatus aclnnIm2colBackward(
   </table>
 
 - **返回值**
-  
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
 
 ## 约束说明
 
@@ -277,7 +277,7 @@ aclnnStatus aclnnIm2colBackward(
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/compile_and_run_sample.md)。
 
 ```Cpp
 #include <iostream>

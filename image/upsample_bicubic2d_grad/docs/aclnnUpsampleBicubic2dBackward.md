@@ -18,11 +18,11 @@
 - 接口功能：[aclnnUpsampleBicubic2d](../../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
-  
+
   $$
   {gradInput(N, C, h, w)}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(h_i, w_j)}
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -30,7 +30,7 @@
   inputSize[2] / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (inputSize[3]-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -38,7 +38,7 @@
   inputSize[3] / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   其中：
   - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
@@ -59,7 +59,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnUpsampleBicubic2dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleBicubic2dBackward”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/two_phase_api.md)，必须先调用“aclnnUpsampleBicubic2dBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnUpsampleBicubic2dBackward”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(
@@ -205,13 +205,13 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     - 参数`gradOut`、`gradInput`的数据类型不支持BFLOAT16。
     - 参数`gradOut`、`gradInput`的数据格式不支持NHWC。
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-  
+
     参数`gradOut`、`gradInput`的数据格式不支持NHWC。
 
 - **返回值**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
+
   第一段接口完成入参校验，出现以下场景时报错：
 
   <table style="undefined;table-layout: fixed;width: 1170px"><colgroup>
@@ -267,7 +267,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
     <tr>
       <td>gradOut和gradInput的数据格式不在支持的范围之内。</td>
     </tr>
-  </tbody></table>  
+  </tbody></table>
 
 ## aclnnUpsampleBicubic2dBackward
 
@@ -309,8 +309,8 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   </table>
 
 - **返回值**
-  
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。
 
 ## 约束说明
 
@@ -333,7 +333,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
   $$
 
 - 确定性计算：
-  
+
   aclnnUpsampleBicubic2dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。当满足如下条件时不支持确定性计算：
   - $inputSize\_W$ > 130000
   - $inputSize\_H$/$outputSize\_H$ >=50
@@ -342,7 +342,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/compile_and_run_sample.md)。
 
 ```Cpp
 #include <iostream>
