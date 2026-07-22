@@ -21,15 +21,9 @@ using namespace ge;
 
 class ExtractGlimpseV2Tiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ExtractGlimpseV2Tiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ExtractGlimpseV2Tiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ExtractGlimpseV2Tiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ExtractGlimpseV2Tiling TearDown" << std::endl; }
 };
 
 static std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
@@ -54,11 +48,7 @@ TEST_F(ExtractGlimpseV2Tiling, extract_glimpse_v2_0)
             gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("zero")),
         },
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144,
-        4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 3;
     string expectTilingData = "4294967297 12884901891 8589934595 4294967298 1 12 1024 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -85,11 +75,7 @@ TEST_F(ExtractGlimpseV2Tiling, extract_glimpse_v2_1)
             gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("zero")),
         },
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144,
-        4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "64424509445 68719476749 8589934608 9 0 4320 1024 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -116,11 +102,7 @@ TEST_F(ExtractGlimpseV2Tiling, fail_uniform_noise_true)
             gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
             gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("zero")),
         },
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144,
-        4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
 }
 
@@ -144,11 +126,7 @@ TEST_F(ExtractGlimpseV2Tiling, fail_noise_not_zero)
             gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("uniform")),
         },
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144,
-        4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
 }
 
@@ -172,10 +150,78 @@ TEST_F(ExtractGlimpseV2Tiling, fail_noise_gaussian)
             gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
             gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("gaussian")),
         },
-        &compileInfo,
-        "Ascend950",
-        64,
-        262144,
-        4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ExtractGlimpseV2Tiling, fail_input_dtype_float16)
+{
+    struct ExtractGlimpseV2CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "ExtractGlimpseV2",
+        {
+            {{{1, 3, 3, 3}, {1, 3, 3, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{1, 2}, {1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 2, 2, 3}, {1, 2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("centered", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("normalized", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("zero")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ExtractGlimpseV2Tiling, fail_size_dtype_float)
+{
+    struct ExtractGlimpseV2CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "ExtractGlimpseV2",
+        {
+            {{{1, 3, 3, 3}, {1, 3, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{1, 2}, {1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 2, 2, 3}, {1, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("centered", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("normalized", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("zero")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ExtractGlimpseV2Tiling, fail_offsets_dtype_int32)
+{
+    struct ExtractGlimpseV2CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "ExtractGlimpseV2",
+        {
+            {{{1, 3, 3, 3}, {1, 3, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{1, 2}, {1, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 2, 2, 3}, {1, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("centered", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("normalized", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("uniform_noise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("noise", Ops::Cv::AnyValue::CreateFrom<std::string>("zero")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
 }

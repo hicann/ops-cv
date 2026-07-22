@@ -36,6 +36,9 @@ constexpr uint32_t ATTR_IDX_NOISE = 3;
 constexpr uint32_t SCENE_CENTERED_BIT = 2;
 constexpr uint32_t SCENE_NORMALIZED_BIT = 1;
 constexpr uint32_t WORKSPACE_COUNT = 1;
+constexpr uint32_t INPUT_IDX = 0;
+constexpr uint32_t SIZE_IDX = 1;
+constexpr uint32_t OFFSETS_IDX = 2;
 
 struct ExtractGlimpseV2CompileInfo {};
 
@@ -49,6 +52,40 @@ struct ShapeInfo {
     int64_t maxCoreNum;
     uint64_t ubSize;
 };
+
+static ge::graphStatus ValidateInputDataTypes(gert::TilingContext* context)
+{
+    auto inputDesc = context->GetInputDesc(INPUT_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    auto sizeDesc = context->GetInputDesc(SIZE_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, sizeDesc);
+    auto offsetsDesc = context->GetInputDesc(OFFSETS_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, offsetsDesc);
+
+    ge::DataType inputDtype = inputDesc->GetDataType();
+    ge::DataType sizeDtype = sizeDesc->GetDataType();
+    ge::DataType offsetsDtype = offsetsDesc->GetDataType();
+
+    if (inputDtype != ge::DT_FLOAT) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "input.dtype",
+                                              std::to_string(static_cast<int32_t>(inputDtype)).c_str(),
+                                              "input dtype must be DT_FLOAT");
+        return ge::GRAPH_FAILED;
+    }
+    if (sizeDtype != ge::DT_INT32) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "size.dtype",
+                                              std::to_string(static_cast<int32_t>(sizeDtype)).c_str(),
+                                              "size dtype must be DT_INT32");
+        return ge::GRAPH_FAILED;
+    }
+    if (offsetsDtype != ge::DT_FLOAT) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "offsets.dtype",
+                                              std::to_string(static_cast<int32_t>(offsetsDtype)).c_str(),
+                                              "offsets dtype must be DT_FLOAT");
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
 
 static ge::graphStatus GetPlatformAndShapeInfo(gert::TilingContext* context, ShapeInfo& info)
 {
@@ -175,6 +212,10 @@ static ge::graphStatus SetupMemoryAndWorkspace(gert::TilingContext* context, uin
 
 static ge::graphStatus ExtractGlimpseV2TilingFunc(gert::TilingContext* context)
 {
+    if (ValidateInputDataTypes(context) != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
+
     ShapeInfo shapeInfo{};
     if (GetPlatformAndShapeInfo(context, shapeInfo) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
