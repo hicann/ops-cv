@@ -19,7 +19,7 @@
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/contiguous.h"
 #include "grid_sample.h"
-#include "image/grid_sample2_d/op_host/op_api/grid_sampler2d.h"
+#include "grid_sampler2d.h"
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "opdev/platform.h"

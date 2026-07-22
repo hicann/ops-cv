@@ -11,7 +11,7 @@
 #include "level0/squeeze.h"
 #include "level0/unsqueeze.h"
 #include "aclnn_kernels/contiguous.h"
-#include "image/resize_grad/op_host/op_api/resize_grad.h"
+#include "resize_grad.h"
 #include "image/resize_nearest_neighbor_v2_grad/op_api/resize_nearest_neighbor_v2_grad.h"
 #include "image/upsample_nearest_exact2d_grad/op_host/op_api/upsample_nearest_exact2d_grad.h"
 #include "aclnn_kernels/common/op_error_check.h"

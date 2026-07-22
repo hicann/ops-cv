@@ -10,7 +10,7 @@
 
 #include "aclnn_grid_sampler3d.h"
 #include "aclnn_kernels/contiguous.h"
-#include "image/grid_sample3_d/op_host/op_api/grid_sampler3d.h"
+#include "grid_sampler3d.h"
 #include "image/grid_sample/op_api/grid_sample.h"
 #include "aclnn_kernels/transpose.h"
 #include "opdev/common_types.h"

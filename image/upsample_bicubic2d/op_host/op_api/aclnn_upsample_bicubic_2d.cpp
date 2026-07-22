@@ -14,7 +14,7 @@
  */
 
 #include "aclnn_upsample_bicubic_2d.h"
-#include "image/resize_d/op_host/op_api/resize_d.h"
+#include "image/upsample_linear1d/op_host/op_api/resize_d.h"
 #include "upsample_bicubic2d.h"
 #include "image/resize_bicubic_v2/op_api/resize_bicubic_v2.h"
 #include "aclnn_kernels/transdata.h"

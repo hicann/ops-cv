@@ -9,7 +9,7 @@
  */
 
 #include "aclnn_kernels/common/op_error_check.h"
-#include "image/resize_grad_d/op_host/op_api/resize_grad_d.h"
+#include "resize_grad_d.h"
 #include "upsample_bicubic2d_grad.h"
 #include "image/resize_bicubic_v2_grad/op_api/resize_bicubic_v2_grad.h"
 #include "aclnn_kernels/contiguous.h"
@@ -205,22 +205,22 @@ static bool CheckUplimit(const aclIntArray* outputSize, const aclIntArray* input
     int64_t inputW = (*inputSize)[DIM_THREE];
     OP_CHECK(N <= INT32_MAX && C <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld)", 
-                     INT32_MAX, N, C, inputH, inputW),
+                     "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld)", INT32_MAX,
+                     N, C, inputH, inputW),
              return false);
 
     int64_t outputH = (*outputSize)[DIM_ZERO];
     int64_t outputW = (*outputSize)[DIM_ONE];
     OP_CHECK(outputH <= INT32_MAX && outputW <= INT32_MAX,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld)", 
-                     INT32_MAX, N, C, outputH, outputW),
+                     "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld)", INT32_MAX, N,
+                     C, outputH, outputW),
              return false);
 
     int64_t M = N * C * outputH;
     OP_CHECK(M <= INT32_MAX,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "N * C * outputSize_H should not be greater than %d, bug got %ld", INT32_MAX, M),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "N * C * outputSize_H should not be greater than %d, bug got %ld",
+                     INT32_MAX, M),
              return false);
     return true;
 }

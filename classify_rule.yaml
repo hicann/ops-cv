@@ -93,8 +93,6 @@ image@ops-cv:
     release:
       style:
         - ops/ops-cv/image/grid_sample/
-        - ops/ops-cv/image/grid_sample2_d/
-        - ops/ops-cv/image/grid_sample3_d/
         - ops/ops-cv/image/grid_sampler2_d_grad/
         - ops/ops-cv/image/grid_sampler3_d_grad/
         - ops/ops-cv/image/resize_upsample_trilinear/
