@@ -4,14 +4,24 @@
 
 ## 产品支持情况
 
-|产品             |  是否支持  |
-|:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
-|  <term>Atlas 推理系列产品</term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
+<!-- npu="950" id1 -->
+- <term>Ascend 950PR/Ascend 950DT</term>：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持
+<!-- end id3 -->
+<!-- npu="310b" id4 -->
+- <term>Atlas 200I/500 A2 推理产品</term>：支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- <term>Atlas 推理系列产品</term>：支持
+<!-- end id5 -->
+<!-- npu="910" id6 -->
+- <term>Atlas 训练系列产品</term>：支持
+<!-- end id6 -->
 
 ## 功能说明
 
@@ -258,12 +268,17 @@ aclnnStatus aclnnGridSampler2D(
   </tbody>
   </table>
 
+  <!-- npu="910" id7 -->
   - <term>Atlas 训练系列产品</term>：
     - 入参`interpolationMode`不支持插值模式2：bicubic（双三次插值）。
     - 参数`input`、`grid`、`out`的数据类型不支持BFLOAT16。
+  <!-- end id7 -->
+  <!-- npu="A3,910b" id8 -->
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
 
     入参`interpolationMode`，仅当input数据类型为FLOAT32、FLOAT16或者BFLOAT16时，支持2：bicubic（双三次插值）。
+  <!-- end id8 -->
+  <!-- npu="310b" id9 -->
   - <term>Atlas 200I/500 A2 推理产品</term>：
 
     当接口运行在AI Core时，需要满足如下条件：
@@ -271,6 +286,8 @@ aclnnStatus aclnnGridSampler2D(
     - 入参`paddingMode`为zeros。
     - 参数`input`、`grid`、`out`的数据类型为FLOAT16。
     - 参数`input`的shape需要满足C维的值为32。
+  <!-- end id9 -->
+  <!-- npu="310p" id10 -->
   - <term>Atlas 推理系列产品</term>：
 
     当接口运行在AI Core时，需要满足如下条件：
@@ -279,6 +296,7 @@ aclnnStatus aclnnGridSampler2D(
     - 参数`input`、`grid`、`out`的数据类型为FLOAT32。
     - 参数`input`的shape需要满足C维的值为32或者C*H*W < 20480。
     - 参数`input`的数据格式不支持NHWC。
+  <!-- end id10 -->
 
 - **返回值**
 
@@ -371,10 +389,15 @@ aclnnStatus aclnnGridSampler2D(
 - 输入`input`的（H轴的大小 * W轴的大小）< INT32的最大值。
 - 当grid的输入值*图片（长或宽）大于24位的二进制数（16777216）时，采样点可能存在误差，精度可能产生偏差。
 - 如果grid含有大量超过[-1, 1]范围的数据，使用zeros或者border的填充策略时，计算结果中的值会大量重复。
+
+<!-- npu="A3,910b" id11 -->
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
   - 如果grid存在超出[-1, 1]范围的数据，使用bicubic插值时，小值域数据计算可能存在误差，精度可能产生偏差。
   - 使用bilinear或者bicubic插值时，针对FLOAT16数据类型，需要使用workspace内存。
+<!-- end id11 -->
+<!-- npu="910" id12 -->
 - <term>Atlas 训练系列产品</term>：使用bilinear插值时，针对FLOAT16数据类型，需要使用workspace内存。
+<!-- end id12 -->
 - 确定性计算：
   - aclnnGridSampler2D默认确定性实现。
 

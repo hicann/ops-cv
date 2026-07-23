@@ -4,14 +4,24 @@
 
 ## 产品支持情况
 
-|产品             |  是否支持  |
-|:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品</term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
+<!-- npu="950" id1 -->
+- <term>Ascend 950PR/Ascend 950DT</term>：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持
+<!-- end id3 -->
+<!-- npu="310b" id4 -->
+- <term>Atlas 200I/500 A2 推理产品</term>：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- <term>Atlas 推理系列产品</term>：不支持
+<!-- end id5 -->
+<!-- npu="910" id6 -->
+- <term>Atlas 训练系列产品</term>：支持
+<!-- end id6 -->
 
 ## 功能说明
 
@@ -193,13 +203,17 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   </tbody>
   </table>
 
+  <!-- npu="910" id7 -->
   - <term>Atlas 训练系列产品</term>：
 
     入参`gradOut`和出参`out`的数据类型仅支持FLOAT32、FLOAT16。
+  <!-- end id7 -->
 
+  <!-- npu="A3,910b" id8 -->
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
 
     入参`gradOut`：当gradOut的shape对应轴的值与inputSize对应轴的值不相同时，数据类型仅支持FLOAT32、FLOAT16。
+  <!-- end id8 -->
 
 - **返回值**
 
@@ -314,11 +328,14 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
     - dtype代表输入张量的数据类型。
   - N * C < 2^31
 - 入参`gradOut`和出参`out`的数据格式不为NCL或ND时，输入其他数据格式默认按照NCL处理。
+
+<!-- npu="A3,910b" id9 -->
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：反向接口的输入数据缩小倍数必须小于等于500，即：
 
   $$
   outputSize[0] / 输出shape的长度L <= 500
   $$
+<!-- end id9 -->
 
 - 参数inputSize、outputSize、scales需要满足如下约束：
 
@@ -327,8 +344,13 @@ aclnnStatus aclnnUpsampleLinear1dBackward(
   $$
 
 - 确定性计算：
+
+  <!-- npu="A3,910b,910" id10 -->
   - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas 训练系列产品</term>：aclnnUpsampleLinear1dBackward默认确定性实现。
+  <!-- end id10 -->
+  <!-- npu="950" id11 -->
   - <term>Ascend 950PR/Ascend 950DT</term>：aclnnUpsampleLinear1dBackward默认非确定性实现，支持通过aclrtCtxSetSysParamOpt开启确定性。
+  <!-- end id11 -->
 
 ## 调用示例
 

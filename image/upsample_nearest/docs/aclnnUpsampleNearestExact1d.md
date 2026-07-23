@@ -4,14 +4,24 @@
 
 ## 产品支持情况
 
-|产品             |  是否支持  |
-|:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品</term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
+<!-- npu="950" id1 -->
+- <term>Ascend 950PR/Ascend 950DT</term>：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持
+<!-- end id3 -->
+<!-- npu="310b" id4 -->
+- <term>Atlas 200I/500 A2 推理产品</term>：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- <term>Atlas 推理系列产品</term>：支持
+<!-- end id5 -->
+<!-- npu="910" id6 -->
+- <term>Atlas 训练系列产品</term>：不支持
+<!-- end id6 -->
 
 ## 功能说明
 
@@ -136,9 +146,11 @@ aclnnStatus aclnnUpsampleNearestExact1d(
   </tbody>
   </table>
 
+  <!-- npu="310p" id7 -->
   - <term>Atlas 推理系列产品</term>：
 
     入参`self`和出参`out`的数据类型不支持BFLOAT16。
+  <!-- end id7 -->
 
 - **返回值**
 
@@ -221,6 +233,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
 
 ## 约束说明
 
+<!-- npu="950" id8 -->
 - <term>Ascend 950PR/Ascend 950DT</term>：
 
   参数`self`、`out`的shape约束：
@@ -236,6 +249,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
     - N代表输入和输出的N轴。
     - C代表输入和输出的C轴。
     - dtype代表输入张量的数据类型。
+<!-- end id8 -->
 - 参数self、outputSize、scales需要满足如下约束：
 
   $$
