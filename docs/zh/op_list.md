@@ -488,6 +488,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/to_absolute_b_box/README.md">to_absolute_b_box</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将归一化边界框坐标按图像高宽转换为绝对像素坐标，用于目标检测推理后处理。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/ciou/README.md">ciou</a></td>
     <td>&cross;</td>
     <td>&cross;</td>

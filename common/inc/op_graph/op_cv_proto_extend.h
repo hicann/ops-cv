@@ -1300,31 +1300,6 @@ REG_OP(SortedNMS)
     .OP_END_FACTORY_REG(SortedNMS)
 
 /**
-* @brief To absolute the bounding box .
-
-* @par Inputs:
-* @li normalized_boxes: A 3D Tensor of type float16 or float32. Must be the format "ND".
-* @li shape_hw: A 1D Tensor of type int32. Must be the format "ND". \n
-
-* @par Attributes:
-* reversed_box: An optional bool, specifying the last two dims is "4,num" or
-* "num,4", "true" for "4,num", "false" for "num,4". Defaults to "false" . \n
-
-* @par Outputs:
-* y: A Tensor. Has the same type and shape as "normalized_boxes" . \n
-
-* @attention Constraints:
-* "normalized_boxes"'s shape must be (batch,num,4) or (batch,4,num).
-* "shape_hw"'s shape must be (4,)
-*/
-REG_OP(ToAbsoluteBBox)
-    .INPUT(normalized_boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .INPUT(shape_hw, TensorType({DT_INT32}))
-    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .ATTR(reversed_box, Bool, false)
-    .OP_END_FACTORY_REG(ToAbsoluteBBox)
-
-/**
 *@brief HDRNet and ISP direct data conversion
 returned tensor's dimension will correspond to input dimension [0, 3, 4, 2, 1],
 convert tensor dtype float16 to int16 . \n
