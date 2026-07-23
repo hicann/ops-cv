@@ -49,7 +49,7 @@ constexpr int32_t RESERVED_VALUE = 4;
 
 class UpsampleNearestExact2dGradTiling {
 public:
-    explicit UpsampleNearestExact2dGradTiling(gert::TilingContext* context) : tilingContext(context){};
+    explicit UpsampleNearestExact2dGradTiling(gert::TilingContext* context) : tilingContext(context) {};
     ge::graphStatus Init();
     ge::graphStatus RunBigKernelTiling();
 
@@ -161,10 +161,6 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::RunBigKernelTiling()
     if (regBase && (opType == EXACT_2D_GRAD_TYPE)) {
         OP_LOGI(tilingContext->GetNodeName(), "Enter Tiling4UpsampleNearestExact2dGradRegbase");
         return Tiling4UpsampleNearestExact2dGradRegbase(tilingContext);
-    }
-    if (regBase && (opType == "UpsampleNearest2dGrad")) {
-        OP_LOGI(tilingContext->GetNodeName(), "Enter UpsampleNearest2dGradArch35TilingFunc");
-        return UpsampleNearest2dGradArch35TilingFunc(tilingContext);
     }
     if (CheckTranspose()) {
         OP_LOGI(tilingContext->GetNodeName(), "Enter Tiling4UpsampleNearestExact2dGradTranspose");

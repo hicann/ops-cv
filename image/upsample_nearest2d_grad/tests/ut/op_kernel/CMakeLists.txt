@@ -12,7 +12,6 @@ set(upsample_nearest2d_grad_tiling_files
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../upsample_nearest_exact2d_grad/op_host/upsample_nearest_exact2d_grad_tiling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../upsample_nearest_exact2d_grad/op_host/upsample_nearest_exact2d_grad_transpose_tiling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../upsample_nearest_exact2d_grad/op_host/upsample_nearest_exact2d_grad_tiling_arch35.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/upsample_nearest2d_grad_tiling_arch35.cpp
     )
     # 使用AddOpTestCase
     # param1：算子名称，以kernel方式命名
