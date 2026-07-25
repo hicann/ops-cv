@@ -366,7 +366,7 @@ macro(add_modules_sources)
   get_filename_component(OP_NAME ${PARENT_DIR} NAME)
   list(FIND ASCEND_OP_NAME ${OP_NAME} INDEX)
 
-  if("${ASCEND_OP_NAME}" STREQUAL "add_example_aicpu" AND "${OP_NAME}" STREQUAL "add_example")
+  if("add_example_aicpu" IN_LIST ASCEND_OP_NAME AND "${OP_NAME}" STREQUAL "add_example")
     set(INDEX 0)
   endif()
 
