@@ -67,21 +67,16 @@ static ge::graphStatus ValidateInputDataTypes(gert::TilingContext* context)
     ge::DataType offsetsDtype = offsetsDesc->GetDataType();
 
     if (inputDtype != ge::DT_FLOAT) {
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "input.dtype",
-                                              std::to_string(static_cast<int32_t>(inputDtype)).c_str(),
-                                              "input dtype must be DT_FLOAT");
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "input", Ops::Base::ToString(inputDtype).c_str(), "FLOAT");
         return ge::GRAPH_FAILED;
     }
     if (sizeDtype != ge::DT_INT32) {
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "size.dtype",
-                                              std::to_string(static_cast<int32_t>(sizeDtype)).c_str(),
-                                              "size dtype must be DT_INT32");
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "size", Ops::Base::ToString(sizeDtype).c_str(), "INT32");
         return ge::GRAPH_FAILED;
     }
     if (offsetsDtype != ge::DT_FLOAT) {
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "offsets.dtype",
-                                              std::to_string(static_cast<int32_t>(offsetsDtype)).c_str(),
-                                              "offsets dtype must be DT_FLOAT");
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "offsets", Ops::Base::ToString(offsetsDtype).c_str(),
+                                  "FLOAT");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
