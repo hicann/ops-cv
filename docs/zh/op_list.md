@@ -246,6 +246,16 @@
       <td>AI CPU</td>
       <td>按给定输出尺寸、缩放因子和平移量对输入图像执行二维重采样。</td>
     </tr>
+   <tr>
+    <td>image</td>
+    <td><a href="../../image/three_interpolate/README.md">three_interpolate</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>根据features、idx、weight进行3个最近邻加权特征插值得到y。</td>
+  </tr>
   <tr>
     <td>image</td>
     <td><a href="../../image/three_interpolate_backward/README.md">three_interpolate_backward</a></td>
