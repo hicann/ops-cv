@@ -38,6 +38,29 @@ static gert::TilingContextPara::OpAttr MakeStrAttr(const std::string& name, cons
     return gert::TilingContextPara::OpAttr(name, Ops::Cv::AnyValue::CreateFrom<std::string>(val));
 }
 
+static void ExecuteDtypeFailureCase(ge::DataType dyDtype, ge::DataType bboxesDtype, ge::DataType gtboxesDtype)
+{
+    struct DIoUGradCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        MakeBoolAttr("trans", false),
+        MakeBoolAttr("is_cross", false),
+        MakeStrAttr("mode", "iou"),
+    };
+    gert::TilingContextPara tilingContextPara("DIoUGrad",
+                                              {
+                                                  {{{100}, {100}}, dyDtype, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, bboxesDtype, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, gtboxesDtype, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 100}, {4, 100}}, dyDtype, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, dyDtype, ge::FORMAT_ND},
+                                              },
+                                              attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
 TEST_F(DIoUGradTiling, d_io_u_grad_float32)
 {
     struct DIoUGradCompileInfo {
@@ -64,6 +87,31 @@ TEST_F(DIoUGradTiling, d_io_u_grad_float32)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_dy_bfloat16)
+{
+    ExecuteDtypeFailureCase(ge::DT_BF16, ge::DT_FLOAT, ge::DT_FLOAT);
+}
+
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_bboxes_bfloat16)
+{
+    ExecuteDtypeFailureCase(ge::DT_FLOAT, ge::DT_BF16, ge::DT_FLOAT);
+}
+
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_gtboxes_bfloat16)
+{
+    ExecuteDtypeFailureCase(ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_BF16);
+}
+
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_mixed_float16_float_float16)
+{
+    ExecuteDtypeFailureCase(ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT16);
+}
+
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_mixed_float_float_float16)
+{
+    ExecuteDtypeFailureCase(ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT16);
+}
+
 // Negative: dy is 2D (should be 1D)
 TEST_F(DIoUGradTiling, d_io_u_grad_neg_dy_not_1d)
 {
@@ -83,6 +131,126 @@ TEST_F(DIoUGradTiling, d_io_u_grad_neg_dy_not_1d)
                                               {
                                                   {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                   {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Negative: bboxes.shape[0] must be 4
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_bboxes_first_dim_not_4)
+{
+    struct DIoUGradCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        MakeBoolAttr("trans", false),
+        MakeBoolAttr("is_cross", false),
+        MakeStrAttr("mode", "iou"),
+    };
+    gert::TilingContextPara tilingContextPara("DIoUGrad",
+                                              {
+                                                  {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{5, 100}, {5, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{5, 100}, {5, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Negative: gtboxes.shape[0] must be 4
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_gtboxes_first_dim_not_4)
+{
+    struct DIoUGradCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        MakeBoolAttr("trans", false),
+        MakeBoolAttr("is_cross", false),
+        MakeStrAttr("mode", "iou"),
+    };
+    gert::TilingContextPara tilingContextPara("DIoUGrad",
+                                              {
+                                                  {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{5, 100}, {5, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{5, 100}, {5, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Negative: dy.N must equal bboxes.N
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_dy_n_not_equal_bboxes_n)
+{
+    struct DIoUGradCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        MakeBoolAttr("trans", false),
+        MakeBoolAttr("is_cross", false),
+        MakeStrAttr("mode", "iou"),
+    };
+    gert::TilingContextPara tilingContextPara("DIoUGrad",
+                                              {
+                                                  {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Negative: dy.N must equal gtboxes.N
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_dy_n_not_equal_gtboxes_n)
+{
+    struct DIoUGradCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        MakeBoolAttr("trans", false),
+        MakeBoolAttr("is_cross", false),
+        MakeStrAttr("mode", "iou"),
+    };
+    gert::TilingContextPara tilingContextPara("DIoUGrad",
+                                              {
+                                                  {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Negative: bboxes.N must equal gtboxes.N
+TEST_F(DIoUGradTiling, d_io_u_grad_neg_bboxes_n_not_equal_gtboxes_n)
+{
+    struct DIoUGradCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        MakeBoolAttr("trans", false),
+        MakeBoolAttr("is_cross", false),
+        MakeStrAttr("mode", "iou"),
+    };
+    gert::TilingContextPara tilingContextPara("DIoUGrad",
+                                              {
+                                                  {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 25}, {4, 25}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{4, 25}, {4, 25}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                               },
                                               attrs, &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);

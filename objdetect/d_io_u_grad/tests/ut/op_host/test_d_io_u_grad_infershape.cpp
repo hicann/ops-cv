@@ -60,13 +60,13 @@ TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_float16)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_cross)
+TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_aligned_n)
 {
     gert::InfershapeContextPara infershapeContextPara("DIoUGrad",
                                                       {
                                                           {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                           {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                          {{{4, 50}, {4, 50}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                       },
                                                       {
                                                           {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -74,7 +74,7 @@ TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_cross)
                                                       });
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {4, 100},
-        {4, 50},
+        {4, 100},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

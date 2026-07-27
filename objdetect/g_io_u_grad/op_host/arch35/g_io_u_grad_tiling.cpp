@@ -32,8 +32,47 @@ constexpr int64_t PER_CORE_MIN = 96; // 3 warps, warp-aligned
 
 struct GIoUGradCompileInfo {};
 
+static ge::graphStatus ValidateDtypes(gert::TilingContext* context)
+{
+    const auto* dyDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, dyDesc);
+    const auto* bboxesDesc = context->GetInputDesc(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, bboxesDesc);
+    const auto* gtboxesDesc = context->GetInputDesc(2);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesDesc);
+
+    const ge::DataType dyDtype = dyDesc->GetDataType();
+    const ge::DataType bboxesDtype = bboxesDesc->GetDataType();
+    const ge::DataType gtboxesDtype = gtboxesDesc->GetDataType();
+    const auto isSupported = [](ge::DataType dtype) { return dtype == ge::DT_FLOAT16 || dtype == ge::DT_FLOAT; };
+
+    OP_CHECK_IF(!isSupported(dyDtype),
+                OP_LOGE(context, "Input dy has dtype %d; allowed dtypes are DT_FLOAT16 and DT_FLOAT",
+                        static_cast<int32_t>(dyDtype)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!isSupported(bboxesDtype),
+                OP_LOGE(context, "Input bboxes has dtype %d; allowed dtypes are DT_FLOAT16 and DT_FLOAT",
+                        static_cast<int32_t>(bboxesDtype)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!isSupported(gtboxesDtype),
+                OP_LOGE(context, "Input gtboxes has dtype %d; allowed dtypes are DT_FLOAT16 and DT_FLOAT",
+                        static_cast<int32_t>(gtboxesDtype)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        dyDtype != bboxesDtype || dyDtype != gtboxesDtype,
+        OP_LOGE(context,
+                "Inputs dy/bboxes/gtboxes have dtypes %d/%d/%d; allowed combinations are all DT_FLOAT16 or "
+                "all DT_FLOAT",
+                static_cast<int32_t>(dyDtype), static_cast<int32_t>(bboxesDtype), static_cast<int32_t>(gtboxesDtype)),
+        return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 static ge::graphStatus GIoUGradTilingFunc(gert::TilingContext* context)
 {
+    OP_CHECK_IF(ValidateDtypes(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "ValidateDtypes failed"),
+                return ge::GRAPH_FAILED);
+
     // 1. Get platform info
     fe::PlatFormInfos* platformInfoPtr = context->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);

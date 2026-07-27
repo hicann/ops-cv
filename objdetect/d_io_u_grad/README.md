@@ -94,7 +94,7 @@
     <tr>
       <td>trans</td>
       <td>属性</td>
-      <td>true: xywh格式; false: xyxy格式。当前仅支持true</td>
+      <td>true：支持，按xywh格式[x, y, w, h]解释；false：支持，按xyxy格式[x1, y1, x2, y2]解释</td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
@@ -119,7 +119,7 @@
 - 所有输入的dtype必须一致（dy、bboxes、gtboxes必须同为float16或同为float32）
 - dy必须为1D Tensor
 - bboxes和gtboxes必须为2D Tensor，且dim[0]必须为 4
-- trans属性支持true（xywh）和false（xyxy）两种格式
+- trans属性支持true（xywh，即[x, y, w, h]）和false（xyxy，即[x1, y1, x2, y2]）两种格式
 - is_cross属性当前仅支持false（M=N）
 - mode属性当前仅支持"iou"
 - 输出dbboxes的shape与bboxes一致，dgtboxes的shape与gtboxes一致

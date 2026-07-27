@@ -32,8 +32,45 @@ static ge::graphStatus TilingParseForDIoUGrad([[maybe_unused]] gert::TilingParse
     return ge::GRAPH_SUCCESS;
 }
 
+static ge::graphStatus ValidateInputDtypes(gert::TilingContext* context)
+{
+    const auto* dyDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, dyDesc);
+    const auto* bboxesDesc = context->GetInputDesc(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, bboxesDesc);
+    const auto* gtboxesDesc = context->GetInputDesc(2);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesDesc);
+
+    const ge::DataType dyDtype = dyDesc->GetDataType();
+    const ge::DataType bboxesDtype = bboxesDesc->GetDataType();
+    const ge::DataType gtboxesDtype = gtboxesDesc->GetDataType();
+    OP_CHECK_IF(dyDtype != ge::DT_FLOAT16 && dyDtype != ge::DT_FLOAT,
+                OP_LOGE(context, "Input dy has dtype %d; allowed dtypes are {DT_FLOAT16, DT_FLOAT}",
+                        static_cast<int32_t>(dyDtype)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(bboxesDtype != ge::DT_FLOAT16 && bboxesDtype != ge::DT_FLOAT,
+                OP_LOGE(context, "Input bboxes has dtype %d; allowed dtypes are {DT_FLOAT16, DT_FLOAT}",
+                        static_cast<int32_t>(bboxesDtype)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(gtboxesDtype != ge::DT_FLOAT16 && gtboxesDtype != ge::DT_FLOAT,
+                OP_LOGE(context, "Input gtboxes has dtype %d; allowed dtypes are {DT_FLOAT16, DT_FLOAT}",
+                        static_cast<int32_t>(gtboxesDtype)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        dyDtype != bboxesDtype || dyDtype != gtboxesDtype,
+        OP_LOGE(context,
+                "Input dtype combination is invalid: dy=%d, bboxes=%d, gtboxes=%d; allowed combinations are "
+                "{DT_FLOAT16, DT_FLOAT16, DT_FLOAT16} or {DT_FLOAT, DT_FLOAT, DT_FLOAT}",
+                static_cast<int32_t>(dyDtype), static_cast<int32_t>(bboxesDtype), static_cast<int32_t>(gtboxesDtype)),
+        return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 static ge::graphStatus DIoUGradTilingFunc(gert::TilingContext* context)
 {
+    OP_CHECK_IF(ValidateInputDtypes(context) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "DIoUGrad: input dtype validation failed"), return ge::GRAPH_FAILED);
+
     fe::PlatFormInfos* platformInfoPtr = context->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
@@ -47,19 +84,21 @@ static ge::graphStatus DIoUGradTilingFunc(gert::TilingContext* context)
 
     auto dyShape = context->GetInputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, dyShape);
+    auto bboxesShape = context->GetInputShape(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, bboxesShape);
+    auto gtboxesShape = context->GetInputShape(2);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesShape);
     auto dyStorageShape = dyShape->GetStorageShape();
-    if (dyStorageShape.GetDimNum() != 1) {
-        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "dy", std::to_string(dyStorageShape.GetDimNum()).c_str(),
-                                     "1");
-        return ge::GRAPH_FAILED;
-    }
-    int64_t totalNum = dyStorageShape.GetDim(0);
+    auto bboxesStorageShape = bboxesShape->GetStorageShape();
+    auto gtboxesStorageShape = gtboxesShape->GetStorageShape();
 
-    const bool* transPtr = context->GetAttrs()->GetBool(0);
+    const gert::RuntimeAttrs* runtimeAttrs = context->GetAttrs();
+    OP_CHECK_NULL_WITH_CONTEXT(context, runtimeAttrs);
+    const bool* transPtr = runtimeAttrs->GetBool(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, transPtr);
-    const bool* isCrossPtr = context->GetAttrs()->GetBool(1);
+    const bool* isCrossPtr = runtimeAttrs->GetBool(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, isCrossPtr);
-    const char* modeStr = context->GetAttrs()->GetStr(2);
+    const char* modeStr = runtimeAttrs->GetStr(2);
     OP_CHECK_NULL_WITH_CONTEXT(context, modeStr);
     bool trans = *transPtr;
     bool isCross = *isCrossPtr;
@@ -67,6 +106,41 @@ static ge::graphStatus DIoUGradTilingFunc(gert::TilingContext* context)
     if (isCross) {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "is_cross", "true",
                                               "only is_cross=false is supported");
+        return ge::GRAPH_FAILED;
+    }
+
+    if (dyStorageShape.GetDimNum() != 1) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "dy", std::to_string(dyStorageShape.GetDimNum()).c_str(),
+                                     "1");
+        return ge::GRAPH_FAILED;
+    }
+    if (bboxesStorageShape.GetDimNum() != 2) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "bboxes",
+                                     std::to_string(bboxesStorageShape.GetDimNum()).c_str(), "2");
+        return ge::GRAPH_FAILED;
+    }
+    if (gtboxesStorageShape.GetDimNum() != 2) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "gtboxes",
+                                     std::to_string(gtboxesStorageShape.GetDimNum()).c_str(), "2");
+        return ge::GRAPH_FAILED;
+    }
+
+    int64_t totalNum = dyStorageShape.GetDim(0);
+    int64_t bboxesNum = bboxesStorageShape.GetDim(1);
+    int64_t gtboxesNum = gtboxesStorageShape.GetDim(1);
+    if (bboxesStorageShape.GetDim(0) != 4) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "bboxes.shape[0]",
+                                              std::to_string(bboxesStorageShape.GetDim(0)).c_str(), "expected 4");
+        return ge::GRAPH_FAILED;
+    }
+    if (gtboxesStorageShape.GetDim(0) != 4) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "gtboxes.shape[0]",
+                                              std::to_string(gtboxesStorageShape.GetDim(0)).c_str(), "expected 4");
+        return ge::GRAPH_FAILED;
+    }
+    if (totalNum != bboxesNum || totalNum != gtboxesNum) {
+        OP_LOGE(context, "DIoUGrad: dy.N (%ld), bboxes.N (%ld), and gtboxes.N (%ld) must be equal", totalNum, bboxesNum,
+                gtboxesNum);
         return ge::GRAPH_FAILED;
     }
 

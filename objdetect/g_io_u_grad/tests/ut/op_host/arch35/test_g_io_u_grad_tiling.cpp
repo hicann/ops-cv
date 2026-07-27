@@ -26,6 +26,32 @@ protected:
     static void TearDownTestCase() { std::cout << "GIoUGradTiling TearDown" << std::endl; }
 };
 
+static void ExecuteDtypeTestCase(ge::DataType dyDtype, ge::DataType bboxesDtype, ge::DataType gtboxesDtype,
+                                 ge::graphStatus expectedStatus)
+{
+    struct GIoUGradCompileInfo {
+    } compileInfo;
+    constexpr int64_t N = 1000;
+    gert::TilingContextPara tilingContextPara(
+        "GIoUGrad",
+        {
+            {{{N}, {N}}, dyDtype, ge::FORMAT_ND},
+            {{{4, N}, {4, N}}, bboxesDtype, ge::FORMAT_ND},
+            {{{4, N}, {4, N}}, gtboxesDtype, ge::FORMAT_ND},
+        },
+        {
+            {{{4, N}, {4, N}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{4, N}, {4, N}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("trans", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("is_cross", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, expectedStatus);
+}
+
 // Test case: float32, trans=false (tiling key = SCH_MODE_0 = 0)
 TEST_F(GIoUGradTiling, g_io_u_grad_float32_trans_false)
 {
@@ -193,4 +219,24 @@ TEST_F(GIoUGradTiling, g_io_u_grad_float16_trans_false)
     string expectTilingData = "500 "; // totalElements = N = 500
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(GIoUGradTiling, g_io_u_grad_neg_dy_bf16)
+{
+    ExecuteDtypeTestCase(ge::DT_BF16, ge::DT_FLOAT, ge::DT_FLOAT, ge::GRAPH_FAILED);
+}
+
+TEST_F(GIoUGradTiling, g_io_u_grad_neg_bboxes_int32)
+{
+    ExecuteDtypeTestCase(ge::DT_FLOAT, ge::DT_INT32, ge::DT_FLOAT, ge::GRAPH_FAILED);
+}
+
+TEST_F(GIoUGradTiling, g_io_u_grad_neg_gtboxes_bf16)
+{
+    ExecuteDtypeTestCase(ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_BF16, ge::GRAPH_FAILED);
+}
+
+TEST_F(GIoUGradTiling, g_io_u_grad_neg_mixed_float16_float)
+{
+    ExecuteDtypeTestCase(ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT16, ge::GRAPH_FAILED);
 }
