@@ -13,20 +13,88 @@
 #include "register/op_impl_registry.h"
 #include "exe_graph/runtime/infer_shape_context.h"
 #include "op_common/log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
 namespace ops {
 
+static constexpr int64_t IDX_ANCHOR = 0;
+static constexpr int64_t IDX_GT = 1;
+static constexpr int64_t IDX_OUT = 0;
+static constexpr size_t RANK_2 = 2;
+static constexpr size_t LAST_DIM_IDX = 1;
+static constexpr int64_t BOX_COORD_NUM = 4;
+
+// Validate one box input's shape (rank==2, last dim==4) when the shape is statically known.
+// Unknown-rank ([-2]) and unknown-dim (-1) cases are skipped to preserve dynamic-shape support.
+static ge::graphStatus CheckBoxShape(gert::InferShapeContext* context, const gert::Shape& shape, const char* name)
+{
+    if (Ops::Base::IsUnknownRank(shape)) {
+        return ge::GRAPH_SUCCESS;
+    }
+    if (shape.GetDimNum() != RANK_2) {
+        OP_LOGE(context->GetNodeName(), "%s rank must be 2 (shape (N, 4)), but got rank %zu.", name, shape.GetDimNum());
+        return ge::GRAPH_FAILED;
+    }
+    int64_t lastDim = shape.GetDim(LAST_DIM_IDX);
+    if (lastDim != ge::UNKNOWN_DIM && lastDim != BOX_COORD_NUM) {
+        OP_LOGE(context->GetNodeName(), "%s last dim must be 4 (x1,y1,x2,y2), but got %ld.", name, lastDim);
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 static ge::graphStatus InferShape4BoundingBoxEncode(gert::InferShapeContext* context)
 {
-    const gert::Shape* inputShape = context->GetInputShape(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, inputShape);
+    const gert::Shape* anchorShape = context->GetInputShape(IDX_ANCHOR);
+    OP_CHECK_NULL_WITH_CONTEXT(context, anchorShape);
+    const gert::Shape* gtShape = context->GetInputShape(IDX_GT);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtShape);
 
-    gert::Shape* outputShape = context->GetOutputShape(0);
+    gert::Shape* outputShape = context->GetOutputShape(IDX_OUT);
     OP_CHECK_NULL_WITH_CONTEXT(context, outputShape);
 
-    *outputShape = *inputShape;
+    // 1b: dtype of anchor_box and ground_truth_box must be identical.
+    const auto* anchorDesc = context->GetInputDesc(IDX_ANCHOR);
+    OP_CHECK_NULL_WITH_CONTEXT(context, anchorDesc);
+    const auto* gtDesc = context->GetInputDesc(IDX_GT);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtDesc);
+    if (anchorDesc->GetDataType() != gtDesc->GetDataType()) {
+        OP_LOGE(context->GetNodeName(), "anchor_box dtype (%d) and ground_truth_box dtype (%d) must be the same.",
+                static_cast<int>(anchorDesc->GetDataType()), static_cast<int>(gtDesc->GetDataType()));
+        return ge::GRAPH_FAILED;
+    }
+
+    // 2c rank==2 and 2a last-dim==4 for each box (guarded for dynamic shape).
+    if (CheckBoxShape(context, *anchorShape, "anchor_box") != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
+    if (CheckBoxShape(context, *gtShape, "ground_truth_box") != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
+
+    // 2b: anchor_box and ground_truth_box shapes must be exactly the same (compare known dims only).
+    if (!Ops::Base::IsUnknownRank(*anchorShape) && !Ops::Base::IsUnknownRank(*gtShape)) {
+        if (anchorShape->GetDimNum() != gtShape->GetDimNum()) {
+            OP_LOGE(context->GetNodeName(), "anchor_box rank (%zu) and ground_truth_box rank (%zu) must be the same.",
+                    anchorShape->GetDimNum(), gtShape->GetDimNum());
+            return ge::GRAPH_FAILED;
+        }
+        for (size_t i = 0; i < anchorShape->GetDimNum(); ++i) {
+            int64_t aDim = anchorShape->GetDim(i);
+            int64_t gDim = gtShape->GetDim(i);
+            if (aDim != ge::UNKNOWN_DIM && gDim != ge::UNKNOWN_DIM && aDim != gDim) {
+                OP_LOGE(context->GetNodeName(),
+                        "anchor_box and ground_truth_box shapes must be exactly the same, but dim[%zu] differs "
+                        "(%ld vs %ld).",
+                        i, aDim, gDim);
+                return ge::GRAPH_FAILED;
+            }
+        }
+    }
+
+    *outputShape = *anchorShape;
     return ge::GRAPH_SUCCESS;
 }
 
