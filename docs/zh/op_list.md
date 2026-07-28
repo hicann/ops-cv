@@ -226,6 +226,16 @@
     <td>AI Core</td>
     <td>对由多个输入通道组成的输入信号应用最近邻插值算法进行上采样。</td>
   </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../image/resize_nearest_neighbor_v2_grad/README.md">resize_nearest_neighbor_v2_grad</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>根据最近邻插值的映射关系，将输出梯度散射回输入空间并累加。</td>
+  </tr>
     <tr>
     <td>image</td>
     <td><a href="../../image/resize_upsample_trilinear/README.md">resize_upsample_trilinear</a></td>
