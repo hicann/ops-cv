@@ -47,6 +47,17 @@ check_pkg_type() {
   fi
 }
 
+normalize_compute_unit() {
+  local compute_unit="$1"
+  local compute_unit_lower
+  compute_unit_lower=$(echo "$compute_unit" | tr '[:upper:]' '[:lower:]')
+  if [[ "$compute_unit_lower" =~ ^ascend950[0-9a-z_-]*$ ]]; then
+    echo "ascend950"
+  else
+    echo "$compute_unit_lower"
+  fi
+}
+
 check_option_validity() {
   local arg="$1"
 
@@ -1206,7 +1217,7 @@ assemble_cmake_args() {
     CMAKE_ARGS="$CMAKE_ARGS -DUT_TEST_ALL=TRUE"
   fi
   if [[ -n $COMPUTE_UNIT ]]; then
-    COMPUTE_UNIT=$(echo "$COMPUTE_UNIT" | tr '[:upper:]' '[:lower:]')
+    COMPUTE_UNIT=$(normalize_compute_unit "$COMPUTE_UNIT")
     found=0
     for support_unit in "${SUPPORT_COMPUTE_UNIT_SHORT[@]}"; do
       if [[ "$COMPUTE_UNIT" == "$support_unit" ]]; then
