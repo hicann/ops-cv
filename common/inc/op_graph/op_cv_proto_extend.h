@@ -799,29 +799,6 @@ REG_OP(ImageProjectiveTransformV2)
     .OP_END_FACTORY_REG(ImageProjectiveTransformV2)
 
 /**
-* @brief Calculate the intersection ratio of two rotated cuboids . \n
-
-* @par Inputs:
-* @li bboxes : data of grad increment, a 3D Tensor of type float32 with
-* shape (B, 7, N). "N" indicates the number of boxes, and the value
-* "7" refers to [x, y, z, w, h, d, theta].
-* @li gtboxes: Bounding boxes, a 3D Tensor of type float32 with
-* shape (B, 7, K). "K" indcates the number of boxes, and the value
-* "7" refers to [x, y, z, w, h, d, theta].
-
-* @par Outputs:
-* iou: A 3D Tensor of float32 with shape [B, N, K].
-
-* @attention Constraints:
-* In each batch, the invalid box cannot appear before the valid box.
-*/
-REG_OP(Iou3D)
-    .INPUT(bboxes, TensorType({DT_FLOAT}))
-    .INPUT(gtboxes, TensorType({DT_FLOAT}))
-    .OUTPUT(iou, TensorType({DT_FLOAT}))
-    .OP_END_FACTORY_REG(Iou3D)
-
-/**
 * @brief LUT3D
 * Find the corresponding optimal pixel value for the pixel values in the input img. \n
 *

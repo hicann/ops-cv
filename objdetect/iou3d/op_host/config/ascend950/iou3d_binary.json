@@ -1,0 +1,40 @@
+{
+    "op_type": "Iou3D",
+    "op_list": [
+        {
+            "bin_filename": "Iou3D_float32",
+            "inputs": [
+                {
+                    "name": "bboxes",
+                    "index": 0,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [-2],
+                    "format_match_mode": "FormatAgnostic"
+                },
+                {
+                    "name": "gtboxes",
+                    "index": 1,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [-2],
+                    "format_match_mode": "FormatAgnostic"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "iou",
+                    "index": 0,
+                    "dtype": "float32",
+                    "format": "ND",
+                    "paramType": "required",
+                    "shape": [-2],
+                    "format_match_mode": "FormatAgnostic"
+                }
+            ],
+            "attrs": []
+        }
+    ]
+}

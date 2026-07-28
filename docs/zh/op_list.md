@@ -538,6 +538,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/iou3d/README.md">iou3d</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>3D旋转框IoU算子：对两组7-DoF旋转框，先在BEV（鸟瞰）平面求旋转矩形交集面积，乘以Z轴重叠高度得到交集体积，再除以并集体积。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/iou_v2/README.md">iou_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
