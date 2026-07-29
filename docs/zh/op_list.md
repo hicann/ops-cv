@@ -657,6 +657,16 @@
     <td>在目标检测网络中生成锚框的响应标志。根据真值框的中心点位置，确定哪些锚框网格位置负责检测目标，并生成对应的标志位。</td>
   </tr>
   <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/yolo/README.md">yolo</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>对YOLOv2/v3目标检测网络的检测特征图进行数据重组和激活处理，将原始卷积输出转换为检测框坐标、目标置信度和类别概率三个输出。</td>
+  </tr>
+  <tr>
     <td>image</td>
     <td><a href="../../image/nms_with_mask/README.md">nms_with_mask</a></td>
     <td>&check;</td>
