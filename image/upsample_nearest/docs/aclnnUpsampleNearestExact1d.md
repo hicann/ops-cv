@@ -88,7 +88,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>输入</td>
       <td>公式中的输入`self`，表示进行上采样的输入张量。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据格式为ND时，默认按照NCL格式处理。</li></ul></td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、UINT8</td>
       <td>NCL、ND</td>
       <td>3</td>
       <td>√</td>
@@ -118,7 +118,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
       <td>输出</td>
       <td>公式中的输出`out`，表示采样后的输出张量。</td>
       <td><ul><li>不支持空Tensor。</li><li>数据类型和数据格式需要与入参`self`保持一致。</li></ul></td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、UINT8</td>
       <td>NCL、ND</td>
       <td>3</td>
       <td>√</td>
@@ -151,6 +151,8 @@ aclnnStatus aclnnUpsampleNearestExact1d(
 
     入参`self`和出参`out`的数据类型不支持BFLOAT16。
   <!-- end id7 -->
+
+  - UINT8数据类型仅<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>支持。
 
 - **返回值**
 

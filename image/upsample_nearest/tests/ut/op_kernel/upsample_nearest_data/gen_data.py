@@ -27,16 +27,23 @@ def gen_data_and_golden(input_shape_str, output_size_str, d_type="float32"):
     d_type_dict = {
         "float32": np.float32,
         "float16": np.float16,
+        "uint8": np.uint8,
     }
     np_type = d_type_dict[d_type]
     input_shape, _ = parse_str_to_shape_list(input_shape_str)
     _, output_size = parse_str_to_shape_list(output_size_str)
 
     size = np.prod(input_shape)
-    tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
-    x_tensor = torch.tensor(tmp_input, dtype=torch.float32).permute([0, 3, 1, 2])
-    y_golden = interpolate(x_tensor, output_size, mode='nearest-exact')
-    tmp_golden = np.array(y_golden).astype(np_type)
+    if d_type == "uint8":
+        tmp_input = np.random.randint(0, 256, size=size).reshape(input_shape).astype(np_type)
+        x_tensor = torch.tensor(tmp_input, dtype=torch.float32).permute([0, 3, 1, 2])
+        y_golden = interpolate(x_tensor, output_size, mode='nearest-exact')
+        tmp_golden = np.array(y_golden).astype(np_type)
+    else:
+        tmp_input = np.random.random(size).reshape(input_shape).astype(np_type)
+        x_tensor = torch.tensor(tmp_input, dtype=torch.float32).permute([0, 3, 1, 2])
+        y_golden = interpolate(x_tensor, output_size, mode='nearest-exact')
+        tmp_golden = np.array(y_golden).astype(np_type)
 
     tmp_input.astype(np_type).tofile(f"{d_type}_input_upsample_nearest.bin")
     tmp_golden.astype(np_type).tofile(f"{d_type}_golden_upsample_nearest.bin")

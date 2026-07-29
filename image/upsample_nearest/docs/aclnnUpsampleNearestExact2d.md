@@ -94,7 +94,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>输入</td>
       <td>表示进行上采样的输入张量，对应公式中的输入`self`。</td>
       <td><ul><li>支持空Tensor。</li><li>当数据格式为ND时，默认按照NCHW格式处理。</li></ul></td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、UINT8</td>
       <td>NCHW、NHWC、ND</td>
       <td>4</td>
       <td>√</td>
@@ -134,7 +134,7 @@ aclnnStatus aclnnUpsampleNearestExact2d(
       <td>输出</td>
       <td>表示采样后的输出张量，对应公式中的输出`out`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与入参`self`保持一致。</li><li>shape的N轴、C轴与入参`self`保持一致。</li></ul></td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
+      <td>FLOAT32、FLOAT16、BFLOAT16、UINT8</td>
       <td>NCHW、NHWC、ND</td>
       <td>4</td>
       <td>√</td>
@@ -168,6 +168,8 @@ aclnnStatus aclnnUpsampleNearestExact2d(
     参数self、out的数据类型仅支持FLOAT32、FLOAT16。
   <!-- end id7 -->
 
+  - UINT8数据类型仅<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>支持。
+  
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn_return_code.md)。

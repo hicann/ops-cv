@@ -27,6 +27,7 @@
 #include "level0/squeeze.h"
 #include "level0/unsqueeze.h"
 #include "aclnn_kernels/transdata.h"
+#include "opdev/platform.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -34,7 +35,11 @@ extern "C" {
 #endif
 
 // 根据API定义，需要列出所能支持的所有dtype
+// A2/A3（非 RegBase）支持 uint8
 static const std::initializer_list<op::DataType> DTYPE_AICORE_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_UINT8};
+// 950（RegBase）不支持 uint8
+static const std::initializer_list<op::DataType> DTYPE_AICORE_SUPPORT_LIST_REGBASE = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_BF16};
 
 static const int64_t DIM_LIMIT = 3;
@@ -91,8 +96,12 @@ static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, c
 
 static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
 {
-    // 检查self的数据类型是否在UpsampleNearestExact1d算子的支持列表内
-    OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_AICORE_SUPPORT_LIST, return false);
+    // 检查self的数据类型是否在UpsampleNearestExact1d算子的支持列表内（按 SoC 区分：950 不支持 uint8）
+    if (IsRegBase()) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_AICORE_SUPPORT_LIST_REGBASE, return false);
+    } else {
+        OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_AICORE_SUPPORT_LIST, return false);
+    }
     // 检查self的数据类型是否与out一致
     OP_CHECK_DTYPE_NOT_MATCH(self, out->GetDataType(), return false);
     return true;

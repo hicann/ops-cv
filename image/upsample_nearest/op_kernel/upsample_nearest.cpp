@@ -45,6 +45,10 @@ extern "C" __global__ __aicore__ void upsample_nearest(GM_ADDR input, GM_ADDR ou
     }
 #else
     if (TILING_KEY_IS(1000)) {
+        if (tilingDataParams->dataType == 1) {
+            UpsampleNearestND<uint8_t, 0> op;
+            INIT_PROCESS;
+        }
         if (tilingDataParams->dataType == 2) {
             UpsampleNearestND<half, 0> op;
             INIT_PROCESS;
@@ -54,6 +58,10 @@ extern "C" __global__ __aicore__ void upsample_nearest(GM_ADDR input, GM_ADDR ou
             INIT_PROCESS;
         }
     } else if (TILING_KEY_IS(1001)) {
+        if (tilingDataParams->dataType == 1) {
+            UpsampleNearestND<uint8_t, 1> op;
+            INIT_PROCESS;
+        }
         if (tilingDataParams->dataType == 2) {
             UpsampleNearestND<half, 1> op;
             INIT_PROCESS;
@@ -63,6 +71,10 @@ extern "C" __global__ __aicore__ void upsample_nearest(GM_ADDR input, GM_ADDR ou
             INIT_PROCESS;
         }
     } else if (TILING_KEY_IS(1002)) {
+        if (tilingDataParams->dataType == 1) {
+            UpsampleNearestND<uint8_t, 2> op;
+            INIT_PROCESS;
+        }
         if (tilingDataParams->dataType == 2) {
             UpsampleNearestND<half, 2> op;
             INIT_PROCESS;
@@ -72,6 +84,10 @@ extern "C" __global__ __aicore__ void upsample_nearest(GM_ADDR input, GM_ADDR ou
             INIT_PROCESS;
         }
     } else if (TILING_KEY_IS(1003)) {
+        if (tilingDataParams->dataType == 1) {
+            UpsampleNearestND<uint8_t, 3> op;
+            INIT_PROCESS;
+        }
         if (tilingDataParams->dataType == 2) {
             UpsampleNearestND<half, 3> op;
             INIT_PROCESS;

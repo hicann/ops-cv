@@ -443,3 +443,288 @@ TEST_F(upsample_nearest_test, test_case_float16_3)
 
     system("cd ./upsample_nearest_data/ && python3 compare_data.py 'float16'");
 }
+
+TEST_F(upsample_nearest_test, test_case_uint8_1)
+{
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("chmod -R 755 ./upsample_nearest_data/");
+    system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'uint8'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    size_t inputByteSize = 4 * 4 * sizeof(uint8_t);
+    size_t outputByteSize = 16 * 16 * sizeof(uint8_t);
+    size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 1;
+
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest_data/uint8_input_upsample_nearest.bin";
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearestTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestTilingData*>(tiling);
+
+    tilingDatafromBin->dataType = 1; // UINT8 = 1 字节
+    tilingDatafromBin->exactMode = true;
+    tilingDatafromBin->scaleW = 0.25; // 放大 4 倍
+    tilingDatafromBin->scaleH = 0.25;
+
+    tilingDatafromBin->inputShapes[0] = 1;
+    tilingDatafromBin->inputShapes[1] = 4;
+    tilingDatafromBin->inputShapes[2] = 4;
+    tilingDatafromBin->inputShapes[3] = 1;
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 16;
+    tilingDatafromBin->outputShapes[2] = 16;
+    tilingDatafromBin->outputShapes[3] = 1;
+
+    tilingDatafromBin->tailColStartList[0] = 0;
+    tilingDatafromBin->tailColEndList[0] = 16;
+    tilingDatafromBin->tailRowStartList[0] = 0;
+    tilingDatafromBin->tailRowEndList[0] = 16;
+
+    ICPU_SET_TILING_KEY(1002);
+
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    fileName = "./upsample_nearest_data/uint8_output_upsample_nearest.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_nearest_data/ && python3 compare_data.py 'uint8'");
+}
+
+TEST_F(upsample_nearest_test, test_case_uint8_2)
+{
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("chmod -R 755 ./upsample_nearest_data/");
+    system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'uint8'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    size_t inputByteSize = 4 * 4 * sizeof(uint8_t);
+    size_t outputByteSize = 16 * 16 * sizeof(uint8_t);
+    size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 1;
+
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest_data/uint8_input_upsample_nearest.bin";
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearestTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestTilingData*>(tiling);
+
+    tilingDatafromBin->dataType = 1;
+    tilingDatafromBin->exactMode = true;
+    tilingDatafromBin->scaleW = 0.25;
+    tilingDatafromBin->scaleH = 0.25;
+
+    tilingDatafromBin->inputShapes[0] = 1;
+    tilingDatafromBin->inputShapes[1] = 4;
+    tilingDatafromBin->inputShapes[2] = 4;
+    tilingDatafromBin->inputShapes[3] = 1;
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 16;
+    tilingDatafromBin->outputShapes[2] = 16;
+    tilingDatafromBin->outputShapes[3] = 1;
+
+    tilingDatafromBin->tailColStartList[0] = 0;
+    tilingDatafromBin->tailColEndList[0] = 16;
+    tilingDatafromBin->tailRowStartList[0] = 0;
+    tilingDatafromBin->tailRowEndList[0] = 16;
+
+    ICPU_SET_TILING_KEY(1001); // 触发 Cast 桥接
+
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    fileName = "./upsample_nearest_data/uint8_output_upsample_nearest.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_nearest_data/ && python3 compare_data.py 'uint8'");
+}
+
+TEST_F(upsample_nearest_test, test_case_uint8_3)
+{
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("chmod -R 755 ./upsample_nearest_data/");
+    system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 1, 128, 1)' '(1, 64)' 'uint8'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    size_t inputByteSize = 1 * 128 * sizeof(uint8_t);
+    size_t outputByteSize = 1 * 64 * sizeof(uint8_t);
+    size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 8;
+
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest_data/uint8_input_upsample_nearest.bin";
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearestTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestTilingData*>(tiling);
+
+    tilingDatafromBin->dataType = 1;
+    tilingDatafromBin->exactMode = true;
+    tilingDatafromBin->scaleW = 2; // 缩小 2 倍
+    tilingDatafromBin->scaleH = 1;
+
+    tilingDatafromBin->inputShapes[0] = 1;
+    tilingDatafromBin->inputShapes[1] = 1;
+    tilingDatafromBin->inputShapes[2] = 128;
+    tilingDatafromBin->inputShapes[3] = 1;
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 1;
+    tilingDatafromBin->outputShapes[2] = 64;
+    tilingDatafromBin->outputShapes[3] = 1;
+
+    tilingDatafromBin->tailColStartList[0] = 0;
+    tilingDatafromBin->tailColEndList[0] = 64;
+    tilingDatafromBin->tailRowStartList[0] = 0;
+    tilingDatafromBin->tailRowEndList[0] = 1;
+
+    ICPU_SET_TILING_KEY(1000);
+
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    fileName = "./upsample_nearest_data/uint8_output_upsample_nearest.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_nearest_data/ && python3 compare_data.py 'uint8'");
+}
+
+TEST_F(upsample_nearest_test, test_case_uint8_4)
+{
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("chmod -R 755 ./upsample_nearest_data/");
+    system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 4, 4, 1)' '(16, 16)' 'uint8'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    size_t inputByteSize = 4 * 4 * sizeof(uint8_t);
+    size_t outputByteSize = 16 * 16 * sizeof(uint8_t);
+    size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 1;
+
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(1024);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(1024);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest_data/uint8_input_upsample_nearest.bin";
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearestTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestTilingData*>(tiling);
+
+    tilingDatafromBin->dataType = 1;
+    tilingDatafromBin->exactMode = true;
+    tilingDatafromBin->scaleW = 0.25;
+    tilingDatafromBin->scaleH = 0.25;
+
+    tilingDatafromBin->inputShapes[0] = 1; // N
+    tilingDatafromBin->inputShapes[1] = 1; // C
+    tilingDatafromBin->inputShapes[2] = 4; // H
+    tilingDatafromBin->inputShapes[3] = 4; // W
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 1;
+    tilingDatafromBin->outputShapes[2] = 16; // outputH
+    tilingDatafromBin->outputShapes[3] = 16; // outputW
+
+    tilingDatafromBin->tailColStartList[0] = 0;
+    tilingDatafromBin->tailColEndList[0] = 16;
+    tilingDatafromBin->tailRowStartList[0] = 0;
+    tilingDatafromBin->tailRowEndList[0] = 16;
+
+    ICPU_SET_TILING_KEY(1003); // 触发 NCHW + Cast 桥接
+
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    fileName = "./upsample_nearest_data/uint8_output_upsample_nearest.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_nearest_data/ && python3 compare_data.py 'uint8'");
+}
+
+TEST_F(upsample_nearest_test, test_case_uint8_5)
+{
+    system("cp -rf "
+           "../../../../image/upsample_nearest/tests/ut/op_kernel/upsample_nearest_data ./");
+    system("chmod -R 755 ./upsample_nearest_data/");
+    system("cd ./upsample_nearest_data/ && python3 gen_data.py '(1, 1, 1, 1)' '(1, 1)' 'uint8'");
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+
+    size_t inputByteSize = 1 * 1 * sizeof(uint8_t);
+    size_t outputByteSize = 1 * 1 * sizeof(uint8_t);
+    size_t tiling_data_size = sizeof(UpsampleNearestTilingData);
+    size_t workspaceSize = 32 * 1024 * 1024;
+    uint32_t numBlocks = 1;
+
+    uint8_t* x = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(workspaceSize);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+
+    std::string fileName = "./upsample_nearest_data/uint8_input_upsample_nearest.bin";
+    ReadFile(fileName, inputByteSize, x, inputByteSize);
+
+    UpsampleNearestTilingData* tilingDatafromBin = reinterpret_cast<UpsampleNearestTilingData*>(tiling);
+
+    tilingDatafromBin->dataType = 1;
+    tilingDatafromBin->exactMode = true;
+    tilingDatafromBin->scaleW = 1;
+    tilingDatafromBin->scaleH = 1;
+
+    tilingDatafromBin->inputShapes[0] = 1;
+    tilingDatafromBin->inputShapes[1] = 1;
+    tilingDatafromBin->inputShapes[2] = 1;
+    tilingDatafromBin->inputShapes[3] = 1;
+    tilingDatafromBin->outputShapes[0] = 1;
+    tilingDatafromBin->outputShapes[1] = 1;
+    tilingDatafromBin->outputShapes[2] = 1;
+    tilingDatafromBin->outputShapes[3] = 1;
+
+    tilingDatafromBin->tailColStartList[0] = 0;
+    tilingDatafromBin->tailColEndList[0] = 1;
+    tilingDatafromBin->tailRowStartList[0] = 0;
+    tilingDatafromBin->tailRowEndList[0] = 1;
+
+    ICPU_SET_TILING_KEY(1003);
+
+    ICPU_RUN_KF(upsample_nearest, numBlocks, x, y, workspace, (uint8_t*)(tilingDatafromBin));
+    fileName = "./upsample_nearest_data/uint8_output_upsample_nearest.bin";
+    WriteFile(fileName, y, outputByteSize);
+
+    AscendC::GmFree((void*)(x));
+    AscendC::GmFree((void*)(y));
+    AscendC::GmFree((void*)workspace);
+    AscendC::GmFree((void*)tiling);
+
+    system("cd ./upsample_nearest_data/ && python3 compare_data.py 'uint8'");
+}

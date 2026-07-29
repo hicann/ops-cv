@@ -52,6 +52,7 @@ constexpr uint32_t DATE_TYPE_HALF = 3;
 constexpr uint64_t WORK_SPACE_SIZE = 32 * 1024 * 1024;
 constexpr uint32_t BYTE_LEN_4 = 4;
 constexpr uint32_t BYTE_LEN_2 = 2;
+constexpr uint32_t BYTE_LEN_1 = 1;
 
 constexpr uint32_t NHWC_DIM_SIZE = 4;
 constexpr uint32_t NLC_DIM_SIZE = 3;
@@ -243,6 +244,8 @@ uint32_t UpsampleNearestTiling::GetDataTypeVal() const
             return BYTE_LEN_2;
         case ge::DT_BF16:
             return BYTE_LEN_2;
+        case ge::DT_UINT8:
+            return BYTE_LEN_1;
         default:
             return 0;
     }

@@ -78,3 +78,111 @@ TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_002)
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_uint8_small_c)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_UINT8, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_UINT8, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    uint64_t expectTilingKey = 1002;
+    string expectTilingData =
+        "4575657221408423937 5360320512 1 1 1 1 128 1 1 1 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {33554432};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_uint8_nchw)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 1, 1, 64}, {1, 1, 1, 64}}, ge::DT_UINT8, ge::FORMAT_NCHW},
+        },
+        {
+            {{{1, 1, 1, 128}, {1, 1, 1, 128}}, ge::DT_UINT8, ge::FORMAT_NCHW},
+        },
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({128, 128})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    uint64_t expectTilingKey = 1003;
+    string expectTilingData =
+        "4611686018427387905 5368709120 1 1 1 1 64 1 1 128 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 128 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {33554432};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_uint8_small_cw)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 4, 4, 8}, {1, 4, 4, 8}}, ge::DT_UINT8, ge::FORMAT_NHWC},
+        },
+        {
+            {{{1, 8, 8, 8}, {1, 8, 8, 8}}, ge::DT_UINT8, ge::FORMAT_NHWC},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    uint64_t expectTilingKey = 1001;
+    string expectTilingData =
+        "4539628424389459969 5351931904 1 1 4 4 8 1 8 8 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {33554432};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_uint8_common)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 4, 4, 10000}, {1, 4, 4, 10000}}, ge::DT_UINT8, ge::FORMAT_NHWC},
+        },
+        {
+            {{{1, 4, 4, 10000}, {1, 4, 4, 10000}}, ge::DT_UINT8, ge::FORMAT_NHWC},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({4, 4})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    uint64_t expectTilingKey = 1000;
+    string expectTilingData =
+        "4575657221408423937 5360320512 1 1 4 4 10000 1 4 4 10000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {33554432};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}

@@ -25,6 +25,9 @@ def compare_data(golden_file_lists, output_file_lists, d_type):
         precision = 1/100
     elif d_type == "float32":
         precision = 1/10000
+    elif d_type == "uint8":
+        np_dtype = np.uint8
+        precision = 0  # 整数严格相等
     else:
         precision = 1/100
     
@@ -32,7 +35,10 @@ def compare_data(golden_file_lists, output_file_lists, d_type):
     for gold, out in zip(golden_file_lists, output_file_lists):
         tmp_out = np.fromfile(out, np_dtype)
         tmp_gold = np.fromfile(gold, np_dtype)
-        diff_res = np.isclose(tmp_out, tmp_gold, precision, 0, True)
+        if d_type == "uint8":
+            diff_res = (tmp_out == tmp_gold)
+        else:
+            diff_res = np.isclose(tmp_out, tmp_gold, precision, 0, True)
         diff_idx = np.where(diff_res != True)[0]
         if len(diff_idx) == 0:
             print("PASSED!")
