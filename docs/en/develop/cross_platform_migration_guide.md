@@ -3,19 +3,19 @@
 This guide introduces the adaptation points and solutions for operator migration across multiple platforms. Taking the operator migration from Atlas A2 series to Ascend 950 series as an example, it compares hardware architecture differences and related adaptation points, and provides relevant operator adaptation samples.
 
 ## 1. Hardware Architecture and Specification Parameter Comparison
-<!--
+
 ### Atlas A2 Series Hardware Architecture
 
 <div align="center">
-  <img src="../figures/Atlas A2硬件架构.png" width="900" alt="Atlas A2 Hardware Architecture" />
+  <img src="../figures/AtlasA2_hardware_architecture.png" width="900" alt="Atlas A2 Hardware Architecture" />
 </div>
 
 ### Ascend 950 Series Hardware Architecture
 
 <div align="center">
-  <img src="../figures/Ascend 950硬件架构.png" width="900" alt="Ascend 950 Hardware Architecture" />
+  <img src="../figures/Ascend950_hardware_architecture.png" width="900" alt="Ascend 950 Hardware Architecture" />
 </div>
--->
+
 ### Generation Specification Parameter Comparison
 
 Usually multiple product models are divided according to different application scenarios, processes or hardware configurations. Each model may have certain differences in performance, resource configuration and other aspects. For ease of explanation and direct comparison, this section selects representative configurations as parameter display and difference analysis objects. Other related adjustments should be based on actual manuals or official releases.
@@ -132,11 +132,11 @@ Usually multiple product models are divided according to different application s
 #### Global Memory Same Address Access Conflict Optimization
 
 Ascend 950 hardware adds same address request parallel processing feature, no need to additionally avoid same address access conflicts in various core partitioning scenarios. During migration, the core partitioning strategy designed for "staggered conflict avoidance" on Atlas A2 can be simplified to more regular sliding window templates (such as row group window + column direction round-trip scanning), reducing invalid offsets and redundant address transformations. In practice, it is recommended to first aim for functional equivalence and retain original tile size, then gradually relax core partitioning constraints, combine profiling data to observe key indicators such as MAC utilization, MTE2 utilization, L2 hit rate, and confirm whether template adjustment brings stable benefits.
-<!--
+
 <div align="center">
-  <img src="../figures/SWAT滑动窗口模板.png" width="900" alt="SWAT Sliding Window Template" />
+  <img src="../figures/SWAT_sliding_window_template.png" width="900" alt="SWAT Sliding Window Template" />
 </div>
--->
+
 #### Tile Size Adjustment
 
 On Atlas A2, L0C size is 128KB. Ascend 950 increases to 256KB, meaning single pass can carry larger accumulation result blocks. During migration, priority can be given to increasing Tile block partitioning granularity or increasing K-direction single-round processing depth to reduce block-cut and K-cut rounds, lowering loop control and transfer overhead. At the same time, need to re-balance L1/L0/UB capacity budget to avoid L0C enlargement squeezing A/B/scale buffer causing pipeline breakpoints.
@@ -326,11 +326,11 @@ __VEC_SCOPE_
 #### MTE Data Transfer Path Changes
 
 Ascend 950 new architecture introduces direct connection paths between UB2L1 & L0C2UB, enabling fast transfer of matrix computation data, aiming to simplify CV fusion operator development and improve performance.
-<!--
+
 <div align="center">
-  <img src="../figures/Ascend950新增CV直连通路.png" width="700" alt="Ascend950 New CV Direct Connection Path" />
+  <img src="../figures/Ascend950_CV_passthrough_link.png" width="700" alt="Ascend950 New CV Direct Connection Path" />
 </div>
--->
+
 **Matrix Transfer In**
 
 Enable UB to L1 (UB2L1) direct connection path, through DataCopy interface, supports vector computation results of fusion operators directly transferred to L1.

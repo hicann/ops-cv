@@ -10,11 +10,11 @@ Developers should pay attention to the following points when preparing local cod
 Developer contribution scenarios mainly include:
 
 ## 1. Contributing New Operators
-<!--
+
 The operator development contribution process is as follows:
 
-![Operator Development Contribution Process](./docs/zh/figures/算子开发贡献流程.png "Operator Development Contribution Process Diagram")
--->
+![Operator Development Contribution Process](docs/en/figures/Operator_development_contribution_process.png "Operator Development Contribution Process Diagram")
+
 If you have a completely new operator that you want to design and implement based on NPU, you are welcome to propose your ideas and design solutions in an Issue. The complete contribution process is as follows:
 
 ### 1. Create an Issue Request
