@@ -99,7 +99,7 @@ __aicore__ inline void Process(GM_ADDR features, GM_ADDR idx, GM_ADDR weight, GM
         return;
     }
 
-    LocalMemAllocator<Hardware::UB> ubAlloc;
+    LocalMemAllocator<AscendC::Hardware::UB> ubAlloc;
     LocalTensor<uint32_t> divParams = ubAlloc.Alloc<uint32_t>(8);
 
     uint32_t magicCs = 0;
