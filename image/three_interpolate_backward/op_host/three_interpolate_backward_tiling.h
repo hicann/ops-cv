@@ -16,6 +16,7 @@
 #define THREE_INTERPOLATE_BACKWARD_TILING_H_
 #include <cstdint>
 #include <vector>
+#include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 
 namespace optiling {
@@ -67,6 +68,9 @@ TILING_DATA_FIELD_DEF(uint32_t, rsv);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(ThreeInterpolateBackward, ThreeInterpolateBackwardTilingData)
+
+// ascend950（arch35）regbase tiling 入口（实现见 three_interpolate_backward_tiling_arch35.cpp）
+ge::graphStatus Tiling4ThreeInterpolateBackwardRegbase(gert::TilingContext* context);
 
 } // namespace optiling
 

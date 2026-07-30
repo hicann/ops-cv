@@ -4,7 +4,7 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 |  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
@@ -15,9 +15,9 @@
 
 - 算子功能：根据grad_x, idx, weight进行三点插值计算梯度得到grad_y。
 - 计算公式：
-  
+
   $$
-  grad\_y[b,c,idx[b,n,i]] = 
+  grad\_y[b,c,idx[b,n,i]] =
   grad\_y[b,c,idx[b,n,i]] + grad\_x[b,c,n]*weight[b,n,i]\\ i\in[0,2]\ b\in[0,B) \ c\in[0,C) \ n\in[0,N)
   $$
 
@@ -44,7 +44,7 @@
       <td>输入</td>
       <td>网络反向传播前一步的梯度值，对应公式中的`grad_x`。</td>
       <td>FLOAT32、FLOAT16</td>
-      <td>5HD（NC1HWC0）</td>
+      <td>5HD（NC1HWC0）、ND</td>
     </tr>
     <tr>
       <td>idx</td>
@@ -72,14 +72,18 @@
       <td>输出</td>
       <td>梯度计算结果，对应公式中的`grad_y`。数据类型和数据格式需要与`grad_x`的数据类型和数据格式一致。</td>
       <td>FLOAT32、FLOAT16</td>
-      <td>5HD（NC1HWC0）</td>
+      <td>5HD（NC1HWC0）、ND</td>
     </tr>
   </tbody></table>
 
 ## 约束说明
 
 - `idx`中的取值应该小于`m`。
-- `grad_x`、`grad_y`的数据格式为5HD（即NC1HWC0，与算子IR定义`FORMAT_NC1HWC0`一致）；通过aclnn接口调用时，支持以NCHW格式传入，由框架自动转换为NC1HWC0。
+- `grad_x` shape为(B, C, N)，`idx`/`weight` shape为(B, N, 3)，`grad_y` shape为(B, C, M)。
+- 属性`m`必须大于0。
+- `grad_x`/`weight`/`grad_y`为FLOAT32或FLOAT16，`idx`为INT32或INT64。
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：`grad_x`、`grad_y`的数据格式为5HD（即NC1HWC0，与算子IR定义`FORMAT_NC1HWC0`一致）。
+- <term>Ascend 950PR/Ascend 950DT</term>：`grad_x`、`grad_y`的数据格式为ND。
 
 ## 调用说明
 

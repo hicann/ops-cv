@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -43,6 +43,41 @@ public:
 
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
+
+        // 950(arch35)：kernel 原生 ND，aclnn 跳过 TransDataSpecial 直连，按芯片覆盖为 ND format
+        static const std::vector<ge::DataType> gradXDtype950 = {ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT16,
+                                                                ge::DT_FLOAT16};
+        static const std::vector<ge::DataType> idxDtype950 = {ge::DT_INT32, ge::DT_INT64, ge::DT_INT32, ge::DT_INT64};
+        static const std::vector<ge::Format> ndFormat950 = {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND};
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.Input("grad_x")
+            .ParamType(REQUIRED)
+            .DataType(gradXDtype950)
+            .Format(ndFormat950)
+            .UnknownShapeFormat(ndFormat950);
+        aicoreConfig.Input("idx")
+            .ParamType(REQUIRED)
+            .DataType(idxDtype950)
+            .Format(ndFormat950)
+            .UnknownShapeFormat(ndFormat950);
+        aicoreConfig.Input("weight")
+            .ParamType(REQUIRED)
+            .DataType(gradXDtype950)
+            .Format(ndFormat950)
+            .UnknownShapeFormat(ndFormat950);
+        aicoreConfig.Output("grad_y")
+            .ParamType(REQUIRED)
+            .DataType(gradXDtype950)
+            .Format(ndFormat950)
+            .UnknownShapeFormat(ndFormat950);
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicFormatFlag(false)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .NeedCheckSupportFlag(false)
+            .PrecisionReduceFlag(true)
+            .ExtendCfgInfo("opFile.value", "three_interpolate_backward_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };
 

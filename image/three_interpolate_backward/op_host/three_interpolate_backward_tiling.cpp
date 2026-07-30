@@ -21,6 +21,7 @@
 
 #include "platform/platform_info.h"
 #include "three_interpolate_backward_tiling.h"
+#include "op_host/tiling_util.h"
 
 namespace {
 constexpr uint32_t C0 = 16;
@@ -225,6 +226,12 @@ ge::graphStatus TilingMainProcess(ThreeInterpolateBackwardTilingData& tiling_hos
 static ge::graphStatus Tiling4ThreeInterpolateBackward(gert::TilingContext* context)
 {
     OP_LOGD(context, "Tiling4ThreeInterpolateBackward running begin");
+
+    // ascend950（arch35）regbase 芯片分发到 ND 确定性行私有 tiling
+    if (Ops::Cv::OpTiling::IsRegbaseSocVersion(context)) {
+        OP_LOGI(context, "Enter Tiling4ThreeInterpolateBackwardRegbase");
+        return Tiling4ThreeInterpolateBackwardRegbase(context);
+    }
 
     auto grad_x_desc = context->GetInputDesc(INDEX_INPUT_GRAD_X);
     OP_CHECK_NULL_WITH_CONTEXT(context, grad_x_desc);

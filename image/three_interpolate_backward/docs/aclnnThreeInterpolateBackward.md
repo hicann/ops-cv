@@ -3,7 +3,7 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- <term>Ascend 950PR/Ascend 950DT</term>：不支持
+- <term>Ascend 950PR/Ascend 950DT</term>：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持
@@ -87,7 +87,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0pky">网络反向传播前一步的梯度值。</td>
       <td class="tg-0lax">shape支持（b, c, n）</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
-      <td class="tg-0lax">支持NCHW（底层算子以NC1HWC0/5HD格式处理）</td>
+      <td class="tg-0lax">NCHW、ND</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">√</td>
     </tr>
@@ -95,7 +95,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0pky">idx（aclTensor*）</td>
       <td class="tg-0pky">输入</td>
       <td class="tg-0pky">目标特征的三个最近邻特征索引。</td>
-      <td class="tg-0lax">shape支持（b, n, 3），不支持空Tensor。</td>
+      <td class="tg-0lax">shape支持（b, n, 3）。</td>
       <td class="tg-0lax">INT32、INT64</td>
       <td class="tg-0lax">ND</td>
       <td class="tg-0lax">-</td>
@@ -105,7 +105,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0pky">weight（aclTensor*）</td>
       <td class="tg-0pky">输入</td>
       <td class="tg-0pky">目标特征的三个最近邻特征权重。</td>
-      <td class="tg-0lax">shape支持（b, n, 3），不支持空Tensor。</td>
+      <td class="tg-0lax">shape支持（b, n, 3）。</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
       <td class="tg-0lax">ND</td>
       <td class="tg-0lax">-</td>
@@ -127,7 +127,7 @@ aclnnStatus aclnnThreeInterpolateBackward(
       <td class="tg-0lax">梯度计算结果。</td>
       <td class="tg-0lax">shape支持（b, c, m）。</td>
       <td class="tg-0lax">FLOAT、FLOAT16</td>
-      <td class="tg-0lax">支持NCHW（底层算子以NC1HWC0/5HD格式处理）</td>
+      <td class="tg-0lax">NCHW、ND</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">√</td>
     </tr>
@@ -234,11 +234,31 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 - idx中的取值应该小于m。
 - 确定性计算：
-  - aclnnThreeInterpolateBackward默认非确定性实现，不支持配置开启。
+  <!-- npu="A3,910b" id7 -->
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：aclnnThreeInterpolateBackward默认非确定性实现，不支持配置开启。
+  <!-- end id7 -->
+  <!-- npu="950" id8 -->
+  - <term>Ascend 950PR/Ascend 950DT</term>：aclnnThreeInterpolateBackward默认确定性实现。
+  <!-- end id8 -->
+<!-- npu="A3,910b" id9 -->
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：grad_x、grad_y以NCHW格式、4D shape传入，分别为（b, c, n, 1）、（b, c, m, 1）。
+<!-- end id9 -->
+<!-- npu="950" id10 -->
+- <term>Ascend 950PR/Ascend 950DT</term>：grad_x、grad_y以ND格式、3D shape传入，分别为（b, c, n）、（b, c, m）。
+<!-- end id10 -->
 
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/compile_and_run_sample.md)。
+
+> 说明：本示例面向<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>（4D NCHW输入）。<term>Ascend 950PR/Ascend 950DT</term>请按下述差异修改输入构造（其余流程相同）：
+>
+> ```Cpp
+> // 3D ND 输入
+> std::vector<int64_t> gradXShape = {bs, cs, ns}; // 4D NCHW 输入时为 {bs, cs, ns, 1} + ACL_FORMAT_NCHW
+> std::vector<int64_t> gradYShape = {bs, cs, ms}; // 4D NCHW 输入时为 {bs, cs, ms, 1} + ACL_FORMAT_NCHW
+> // CreateAclTensor 的 format 参数统一使用 ACL_FORMAT_ND
+> ```
 
 ```Cpp
 #include <iostream>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "opdev/format_utils.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
+#include "opdev/platform.h"
 #include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 
@@ -115,19 +116,31 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor* grad_
     auto weight_contiguous = l0op::Contiguous(weight, uniqueExecutor.get());
     CHECK_RET(weight_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // grad_x:(b,c,n,1)(NCHW) -> (b,c1,n,1,c0)(5HD)
-    auto grad_x_5d = l0op::TransDataSpecial(grad_x_contiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
-    CHECK_RET(grad_x_5d != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (curArch == NpuArch::DAV_3510) {
+        // 950(arch35)：def.cpp 该芯片 format=ND，kernel 原生 ND，跳过 5HD 转换直连
+        auto outNd = l0op::ThreeInterpolateBackwardNd(grad_x_contiguous, idx_contiguous, weight_contiguous, m,
+                                                      uniqueExecutor.get());
+        CHECK_RET(outNd != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // grad_x:(b,c1,n,1,c0)(5HD) -> grad_y:(b,c1,m,1,c0)(5HD)
-    auto out_5d = l0op::ThreeInterpolateBackward(grad_x_5d, idx_contiguous, weight_contiguous, m, uniqueExecutor.get());
-    CHECK_RET(out_5d != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        auto viewCopyResult = l0op::ViewCopy(outNd, grad_y, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    } else {
+        // grad_x:(b,c,n,1)(NCHW) -> (b,c1,n,1,c0)(5HD)
+        auto grad_x_5d = l0op::TransDataSpecial(grad_x_contiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
+        CHECK_RET(grad_x_5d != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto out_4d = l0op::TransDataSpecial(out_5d, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
-    CHECK_RET(out_4d != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        // grad_x:(b,c1,n,1,c0)(5HD) -> grad_y:(b,c1,m,1,c0)(5HD)
+        auto out_5d = l0op::ThreeInterpolateBackward(grad_x_5d, idx_contiguous, weight_contiguous, m,
+                                                     uniqueExecutor.get());
+        CHECK_RET(out_5d != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    auto viewCopyResult = l0op::ViewCopy(out_4d, grad_y, uniqueExecutor.get());
-    CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        auto out_4d = l0op::TransDataSpecial(out_5d, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
+        CHECK_RET(out_4d != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        auto viewCopyResult = l0op::ViewCopy(out_4d, grad_y, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
 
     // 固定写法，获取计算过程中需要使用的workspace大小
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();

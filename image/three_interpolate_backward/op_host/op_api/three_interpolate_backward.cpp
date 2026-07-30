@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -71,6 +71,22 @@ const aclTensor* ThreeInterpolateBackward(const aclTensor* grad_x, const aclTens
 
     auto grad_y = executor->AllocTensor(grad_y_storage_shape, grad_y_view_shape, dtype, grad_y_storage_format,
                                         grad_y_view_format);
+    CHECK_RET(grad_y != nullptr, nullptr);
+
+    return ThreeInterpolateBackwardAicore(grad_x, idx, weight, m, grad_y, executor);
+}
+
+const aclTensor* ThreeInterpolateBackwardNd(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight,
+                                            int m, aclOpExecutor* executor)
+{
+    // 950(arch35) ND 路径：def.cpp 该芯片 format=ND，kernel 原生 ND，
+    // storage/view 均为 (B, C, M)，format ND，无需 5HD 转换
+    Shape gradYShape;
+    gradYShape.AppendDim(grad_x->GetViewShape().GetDim(DIM_INDEX_B)); // B
+    gradYShape.AppendDim(grad_x->GetViewShape().GetDim(DIM_INDEX_C)); // C
+    gradYShape.AppendDim(m);                                          // M
+    auto grad_y = executor->AllocTensor(gradYShape, gradYShape, grad_x->GetDataType(), op::Format::FORMAT_ND,
+                                        op::Format::FORMAT_ND);
     CHECK_RET(grad_y != nullptr, nullptr);
 
     return ThreeInterpolateBackwardAicore(grad_x, idx, weight, m, grad_y, executor);
