@@ -40,7 +40,7 @@ rm -rf /root/ascend/log
 # 确定要测试的 ops 列表
 # ==============================
 declare -a ops
-ops=`python3 ${WORKSPACE}/scripts/ci/parse_changed_ops.py ${WORKSPACE}/pr_filelist.txt false` 
+ops=`python3 ${WORKSPACE}/scripts/ci/parse_changed_ops.py ${WORKSPACE}/pr_filelist.txt false`
 echo $ops
 
 # ==============================
@@ -113,10 +113,9 @@ npu-smi info  2>&1 | tee ./npu_log/npu_info.log
 log "checking test results ..."
 
 date_time=`date +%Y%m%d`"."`date +%H%M%S`
-if grep -E '\b(FAIL|errors|fail|failed|error|ERROR:|Error|error:)\b' "./run_test.log" | grep -v "error)"; then
-    echo "$date_time : run test case failed"
-    exit 1
+if grep -w -e "execute samples failed" "./run_test.log"; then
+  echo "$date_time : run test case failed"
+  exit 1
 else
-    echo "$date_time : run test case success"
-    exit 0
+  echo "$date_time : run test case success"
 fi

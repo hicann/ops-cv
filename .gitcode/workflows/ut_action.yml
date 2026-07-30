@@ -21,7 +21,7 @@ jobs:
         identifier: process_checkout
         uses: checkout
         with:
-          ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+          ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
           token: ${{ secrets.GIT_TOKEN }}
       -
         name: download
@@ -38,7 +38,7 @@ jobs:
             ${{ env.obs_path }}/ut.sh
             ${{ env.obs_path }}/update_image.sh
           path: ${{ steps.process_checkout.outputs.path }}
-      - 
+      -
         name: redis-cache
         uses: cann/.gitcode/actions/redis-cache@master
       -

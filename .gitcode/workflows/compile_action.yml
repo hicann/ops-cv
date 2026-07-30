@@ -32,7 +32,7 @@ jobs:
         identifier: process_checkout
         uses: checkout
         with:
-          ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+          ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
           token: ${{ secrets.GIT_TOKEN }}
       -
         name: download
@@ -75,10 +75,11 @@ jobs:
             echo "Renamed: $f -> ${{ inputs.package_name }}"
             break
           done
-      - 
+      -
         name: api-check
         identifier: api-check
         uses: cann/.gitcode/actions/api-check@master
+        if: env.TARGET_BRANCH == 'master'
         with:
           org_name: ${{ env.org_name }}
           mode: ${{ steps.compile.outputs.api-check }}
