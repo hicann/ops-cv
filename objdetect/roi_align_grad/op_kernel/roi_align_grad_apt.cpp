@@ -26,7 +26,6 @@ __global__ __aicore__ void roi_align_grad(GM_ADDR ydiff, GM_ADDR rois, GM_ADDR r
 {
     REGISTER_TILING_DEFAULT(ROIAlignGradTilingData);
     GET_TILING_DATA_WITH_STRUCT(ROIAlignGradTilingData, tilingData, tiling);
-
     if constexpr (schMode == ROI_END_MODE_0) {
         NsROIAlignGrad::Process<float, ROI_END_MODE_0>(ydiff, rois, rois_n, xdiff, &tilingData);
     } else if constexpr (schMode == ROI_END_MODE_1) {

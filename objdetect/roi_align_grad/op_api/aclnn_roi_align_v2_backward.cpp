@@ -217,27 +217,39 @@ aclnnStatus aclnnRoiAlignV2BackwardGetWorkspaceSize(const aclTensor* gradOutput,
     auto boxesContiguous = l0op::Contiguous(boxes, uniqueExecutor.get());
     CHECK_RET(boxesContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 将gradOutput转为私有格式NC1HWC0
-    auto gradOutputTransData = l0op::TransDataSpecial(gradOutputContiguous, op::Format::FORMAT_NC1HWC0, 0,
+    // A5不需要转为私有格式，直接按原格式传入；其他芯片需要转为私有格式NC1HWC0
+    bool is950 = (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510);
+    const aclTensor* gradOutputForCompute = gradOutputContiguous;
+    const aclTensor* roiAlignBackwardOut = nullptr;
+    if (!is950) {
+        // 将gradOutput转为私有格式NC1HWC0
+        gradOutputForCompute = l0op::TransDataSpecial(gradOutputContiguous, op::Format::FORMAT_NC1HWC0, 0,
                                                       uniqueExecutor.get());
-    CHECK_RET(gradOutputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        CHECK_RET(gradOutputForCompute != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
 
     // 基于aligned判断roiEndMode取值
     int64_t roiEndMode = aligned ? DIM_TWO : DIM_ZERO; // roiEndMode = 2 for torch aligned = true
 
+    const aclTensor* roisN = nullptr;
+
     // 进行计算
-    auto roiAlignBackwardOut = l0op::ROIAlignGrad(gradOutputTransData, boxesContiguous, inputShape, pooledHeight,
-                                                  pooledWidth, spatialScale, samplingRatio, roiEndMode,
-                                                  uniqueExecutor.get());
+    roiAlignBackwardOut = l0op::ROIAlignGrad(gradOutputForCompute, boxesContiguous, roisN, inputShape, pooledHeight,
+                                             pooledWidth, spatialScale, samplingRatio, roiEndMode,
+                                             uniqueExecutor.get());
     CHECK_RET(roiAlignBackwardOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 将roiAlignBackwardOut的私有格式数据转为NCHW
-    auto gradInputTransData = l0op::TransDataSpecial(roiAlignBackwardOut, gradInput->GetOriginalFormat(), 0,
-                                                     uniqueExecutor.get());
-    CHECK_RET(gradInputTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    // A5不需要TransData转回NCHW，直接ViewCopy；其他芯片需要将私有格式数据转为NCHW
+    const aclTensor* gradInputForCopy = roiAlignBackwardOut;
+    if (!is950) {
+        // 将roiAlignBackwardOut的私有格式数据转为NCHW
+        gradInputForCopy = l0op::TransDataSpecial(roiAlignBackwardOut, gradInput->GetOriginalFormat(), 0,
+                                                  uniqueExecutor.get());
+        CHECK_RET(gradInputForCopy != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
 
     // 固定写法，将计算结果拷贝到输出gradInput上，gradInput可能是非连续的tensor
-    auto viewCopyResult = l0op::ViewCopy(gradInputTransData, gradInput, uniqueExecutor.get());
+    auto viewCopyResult = l0op::ViewCopy(gradInputForCopy, gradInput, uniqueExecutor.get());
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     // 固定写法，获取计算过程中需要使用的workspace大小

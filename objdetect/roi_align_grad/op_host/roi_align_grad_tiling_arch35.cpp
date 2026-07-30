@@ -34,11 +34,51 @@ constexpr int64_t PER_CORE_MIN = 1024;
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 
+// Input/output tensor indices
+constexpr uint32_t INPUT_YDIFF_IDX = 0;
+constexpr uint32_t INPUT_ROIS_IDX = 1;
+constexpr uint32_t OUTPUT_XDIFF_IDX = 0;
+
+// Attribute indices
+constexpr uint32_t ATTR_XDIFF_SHAPE_IDX = 0;
+constexpr uint32_t ATTR_POOLED_WIDTH_IDX = 1;
+constexpr uint32_t ATTR_POOLED_HEIGHT_IDX = 2;
+constexpr uint32_t ATTR_SPATIAL_SCALE_IDX = 3;
+constexpr uint32_t ATTR_SAMPLE_NUM_IDX = 4;
+constexpr uint32_t ATTR_ROI_END_MODE_IDX = 5;
+
+// Shape dimension counts
+constexpr uint32_t DIM_NUM_4D = 4;
+constexpr uint32_t DIM_NUM_2D = 2;
+
+// Dimension indices
+constexpr uint32_t N_DIM = 0;
+constexpr uint32_t C_DIM = 1;
+constexpr uint32_t H_DIM = 2;
+constexpr uint32_t W_DIM = 3;
+
+// ROI and xdiff_shape constants
+constexpr uint32_t ROI_COL_NUM = 5;
+constexpr uint32_t XDIFF_SHAPE_SIZE = 4;
+
+// roi_end_mode range
+constexpr int32_t ROI_END_MODE_MIN = 0;
+constexpr int32_t ROI_END_MODE_MAX = 3;
+
+// Default attribute values
+constexpr int32_t DEFAULT_SAMPLE_NUM = 2;
+constexpr int32_t DEFAULT_ROI_END_MODE = 1;
+
+// Alignment
+constexpr int64_t ALIGN_32 = 32;
+constexpr int64_t ALIGN_32_MASK = 31;
+
 struct ROIAlignGradCompileInfo {};
 
 struct RoiAlignGradTilingParams {
     int32_t N, C, pooledH, pooledW;
     int32_t B, H, W;
+    int32_t attrC;
     int32_t attrPooledWidth, attrPooledHeight;
     float spatialScale;
     int32_t sampleNum, roiEndMode;
@@ -56,13 +96,39 @@ static ge::graphStatus InitPlatformAndShapes(gert::TilingContext* context,
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, params.ubSize);
     OP_CHECK_IF(params.ubSize == 0, OP_LOGE(context, "ubSize is 0"), return ge::GRAPH_FAILED);
 
-    auto ydiffInput = context->GetInputShape(0);
+    auto ydiffInput = context->GetInputShape(INPUT_YDIFF_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, ydiffInput);
     auto ydiffShape = ydiffInput->GetShape();
-    params.N = static_cast<int32_t>(ydiffShape.GetDim(0));
-    params.C = static_cast<int32_t>(ydiffShape.GetDim(1));
-    params.pooledH = static_cast<int32_t>(ydiffShape.GetDim(2));
-    params.pooledW = static_cast<int32_t>(ydiffShape.GetDim(3));
+    if (ydiffShape.GetDimNum() != DIM_NUM_4D) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "ydiff", std::to_string(ydiffShape.GetDimNum()).c_str(),
+                                     "4D");
+        return ge::GRAPH_FAILED;
+    }
+    params.N = static_cast<int32_t>(ydiffShape.GetDim(N_DIM));
+    params.C = static_cast<int32_t>(ydiffShape.GetDim(C_DIM));
+    params.pooledH = static_cast<int32_t>(ydiffShape.GetDim(H_DIM));
+    params.pooledW = static_cast<int32_t>(ydiffShape.GetDim(W_DIM));
+
+    auto roisInput = context->GetInputShape(INPUT_ROIS_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, roisInput);
+    auto roisShape = roisInput->GetShape();
+    if (roisShape.GetDimNum() != DIM_NUM_2D) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "rois", std::to_string(roisShape.GetDimNum()).c_str(),
+                                     "2D");
+        return ge::GRAPH_FAILED;
+    }
+    if (roisShape.GetDim(1) != ROI_COL_NUM) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "rois",
+                                              std::to_string(roisShape.GetDim(1)).c_str(), "rois dim1 should be 5");
+        return ge::GRAPH_FAILED;
+    }
+    if (roisShape.GetDim(0) != params.N) {
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context->GetNodeName(), "rois and ydiff",
+            (std::to_string(roisShape.GetDim(0)) + " and " + std::to_string(params.N)).c_str(),
+            "rois dim0 should equal ydiff dim0");
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -71,36 +137,152 @@ static ge::graphStatus ParseOpAttrs(gert::TilingContext* context, RoiAlignGradTi
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
 
-    const auto* xdiffShapeVec = attrs->GetListInt(0);
+    const auto* xdiffShapeVec = attrs->GetListInt(ATTR_XDIFF_SHAPE_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, xdiffShapeVec);
+    if (xdiffShapeVec->GetSize() != XDIFF_SHAPE_SIZE) {
+        OP_LOGE_FOR_INVALID_LISTSIZE(context->GetNodeName(), "xdiff_shape",
+                                     std::to_string(xdiffShapeVec->GetSize()).c_str(), "4");
+        return ge::GRAPH_FAILED;
+    }
     const int64_t* xdiffShapeData = xdiffShapeVec->GetData();
-    params.B = static_cast<int32_t>(xdiffShapeData[0]);
-    params.H = static_cast<int32_t>(xdiffShapeData[2]);
-    params.W = static_cast<int32_t>(xdiffShapeData[3]);
+    params.B = static_cast<int32_t>(xdiffShapeData[N_DIM]);
+    params.attrC = static_cast<int32_t>(xdiffShapeData[C_DIM]);
+    params.H = static_cast<int32_t>(xdiffShapeData[H_DIM]);
+    params.W = static_cast<int32_t>(xdiffShapeData[W_DIM]);
 
-    const auto* pooledWidthPtr = attrs->GetAttrPointer<int64_t>(1);
+    const auto* pooledWidthPtr = attrs->GetAttrPointer<int64_t>(ATTR_POOLED_WIDTH_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, pooledWidthPtr);
     params.attrPooledWidth = static_cast<int32_t>(*pooledWidthPtr);
 
-    const auto* pooledHeightPtr = attrs->GetAttrPointer<int64_t>(2);
+    const auto* pooledHeightPtr = attrs->GetAttrPointer<int64_t>(ATTR_POOLED_HEIGHT_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, pooledHeightPtr);
     params.attrPooledHeight = static_cast<int32_t>(*pooledHeightPtr);
 
-    const auto* spatialScalePtr = attrs->GetAttrPointer<float>(3);
+    const auto* spatialScalePtr = attrs->GetAttrPointer<float>(ATTR_SPATIAL_SCALE_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context, spatialScalePtr);
     params.spatialScale = *spatialScalePtr;
 
-    params.sampleNum = 2;
-    const auto* sampleNumPtr = attrs->GetAttrPointer<int64_t>(4);
+    params.sampleNum = DEFAULT_SAMPLE_NUM;
+    const auto* sampleNumPtr = attrs->GetAttrPointer<int64_t>(ATTR_SAMPLE_NUM_IDX);
     if (sampleNumPtr != nullptr) {
         params.sampleNum = static_cast<int32_t>(*sampleNumPtr);
     }
 
-    params.roiEndMode = 1;
-    const auto* roiEndModePtr = attrs->GetAttrPointer<int64_t>(5);
+    params.roiEndMode = DEFAULT_ROI_END_MODE;
+    const auto* roiEndModePtr = attrs->GetAttrPointer<int64_t>(ATTR_ROI_END_MODE_IDX);
     if (roiEndModePtr != nullptr) {
         params.roiEndMode = static_cast<int32_t>(*roiEndModePtr);
     }
+    return ge::GRAPH_SUCCESS;
+}
+
+static ge::graphStatus ValidateParams(gert::TilingContext* context, const RoiAlignGradTilingParams& params)
+{
+    // dtype check: only DT_FLOAT is supported (kernel hardcodes float for rois/xdiff)
+    auto ydiffDesc = context->GetInputDesc(INPUT_YDIFF_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, ydiffDesc);
+    ge::DataType ydiffDtype = ydiffDesc->GetDataType();
+    if (ydiffDtype != ge::DT_FLOAT) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "ydiff.dtype",
+                                              std::to_string(static_cast<int32_t>(ydiffDtype)).c_str(),
+                                              "ydiff dtype must be DT_FLOAT");
+        return ge::GRAPH_FAILED;
+    }
+
+    auto roisDesc = context->GetInputDesc(INPUT_ROIS_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, roisDesc);
+    ge::DataType roisDtype = roisDesc->GetDataType();
+    if (roisDtype != ge::DT_FLOAT) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "rois.dtype",
+                                              std::to_string(static_cast<int32_t>(roisDtype)).c_str(),
+                                              "rois dtype must be DT_FLOAT");
+        return ge::GRAPH_FAILED;
+    }
+
+    auto xdiffDesc = context->GetOutputDesc(OUTPUT_XDIFF_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, xdiffDesc);
+    ge::DataType xdiffDtype = xdiffDesc->GetDataType();
+    if (xdiffDtype != ge::DT_FLOAT) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "xdiff.dtype",
+                                              std::to_string(static_cast<int32_t>(xdiffDtype)).c_str(),
+                                              "xdiff dtype must be DT_FLOAT");
+        return ge::GRAPH_FAILED;
+    }
+
+    // xdiff_shape elements must be positive (SE 2.4: 4-element positive integer list)
+    if (params.B <= 0 || params.attrC <= 0 || params.H <= 0 || params.W <= 0) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "xdiff_shape",
+                                              (std::to_string(params.B) + ", " + std::to_string(params.attrC) + ", " +
+                                               std::to_string(params.H) + ", " + std::to_string(params.W))
+                                                  .c_str(),
+                                              "xdiff_shape elements must be positive");
+        return ge::GRAPH_FAILED;
+    }
+
+    // pooled_height >= 1 (SE 2.4)
+    if (params.attrPooledHeight < 1) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "pooled_height",
+                                              std::to_string(params.attrPooledHeight).c_str(),
+                                              "pooled_height should be >= 1");
+        return ge::GRAPH_FAILED;
+    }
+
+    // pooled_width >= 1 (SE 2.4)
+    if (params.attrPooledWidth < 1) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "pooled_width",
+                                              std::to_string(params.attrPooledWidth).c_str(),
+                                              "pooled_width should be >= 1");
+        return ge::GRAPH_FAILED;
+    }
+
+    // spatial_scale > 0 (SE 2.4)
+    if (params.spatialScale <= 0.0f) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "spatial_scale",
+                                              std::to_string(params.spatialScale).c_str(),
+                                              "spatial_scale should be > 0");
+        return ge::GRAPH_FAILED;
+    }
+
+    // sample_num >= 0 (SE 2.4)
+    if (params.sampleNum < 0) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "sample_num",
+                                              std::to_string(params.sampleNum).c_str(), "sample_num should be >= 0");
+        return ge::GRAPH_FAILED;
+    }
+
+    // roi_end_mode in {0, 1, 2, 3} (SE 2.4)
+    if (params.roiEndMode < ROI_END_MODE_MIN || params.roiEndMode > ROI_END_MODE_MAX) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "roi_end_mode",
+                                              std::to_string(params.roiEndMode).c_str(),
+                                              "roi_end_mode should be in [0, 3]");
+        return ge::GRAPH_FAILED;
+    }
+
+    // ydiff C must equal xdiff_shape C (channel consistency)
+    if (params.C != params.attrC) {
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context->GetNodeName(), "ydiff and xdiff_shape",
+            (std::to_string(params.C) + " and " + std::to_string(params.attrC)).c_str(),
+            "ydiff C should equal xdiff_shape C");
+        return ge::GRAPH_FAILED;
+    }
+
+    // ydiff dim2 (pooledH) must equal pooledHeight attribute
+    if (params.pooledH != params.attrPooledHeight) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+            context->GetNodeName(), "ydiff", std::to_string(params.pooledH).c_str(),
+            "ydiff dim2 should equal pooled_height " + std::to_string(params.attrPooledHeight));
+        return ge::GRAPH_FAILED;
+    }
+
+    // ydiff dim3 (pooledW) must equal pooledWidth attribute
+    if (params.pooledW != params.attrPooledWidth) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+            context->GetNodeName(), "ydiff", std::to_string(params.pooledW).c_str(),
+            "ydiff dim3 should equal pooled_width " + std::to_string(params.attrPooledWidth));
+        return ge::GRAPH_FAILED;
+    }
+
     return ge::GRAPH_SUCCESS;
 }
 
@@ -126,31 +308,28 @@ static ge::graphStatus HandleEmptyTiling(gert::TilingContext* context,
 }
 
 static ge::graphStatus CalcCoreDistribution(gert::TilingContext* context, const RoiAlignGradTilingParams& params,
-                                            int64_t totalYdiffElements, int32_t& needCoreNum, int64_t& perCoreElements)
+                                            int64_t totalXdiffElements, int32_t& needCoreNum, int64_t& perCoreElements)
 {
-    int64_t xdiffHW = static_cast<int64_t>(params.H) * params.W;
+    // Gather mode: parallelism is driven by xdiff elements (B*C*H*W)
     int64_t effectiveMaxCores = params.maxCoreNum;
-    if (xdiffHW > 4096 && params.N > 16) {
-        effectiveMaxCores = std::min(params.maxCoreNum, static_cast<int64_t>(8));
-    }
     if (effectiveMaxCores == 0) {
         OP_LOGE(context, "effectiveMaxCores is 0");
         return ge::GRAPH_FAILED;
     }
-    perCoreElements = (totalYdiffElements + effectiveMaxCores - 1) / effectiveMaxCores;
+    perCoreElements = (totalXdiffElements + effectiveMaxCores - 1) / effectiveMaxCores;
     perCoreElements = std::max(perCoreElements, PER_CORE_MIN);
-    perCoreElements = ((perCoreElements + 31) / 32) * 32;
+    perCoreElements = ((perCoreElements + ALIGN_32_MASK) / ALIGN_32) * ALIGN_32;
     if (perCoreElements == 0) {
         OP_LOGE(context, "perCoreElements is 0");
         return ge::GRAPH_FAILED;
     }
-    needCoreNum = static_cast<int32_t>((totalYdiffElements + perCoreElements - 1) / perCoreElements);
+    needCoreNum = static_cast<int32_t>((totalXdiffElements + perCoreElements - 1) / perCoreElements);
     return ge::GRAPH_SUCCESS;
 }
 
-static void FillTilingData(ROIAlignGradTilingData* tiling, const RoiAlignGradTilingParams& params,
-                           int32_t needCoreNum, int64_t perCoreElements, int64_t totalYdiffElements,
-                           int64_t totalXdiffElements, int64_t batchXdiffStride)
+static void FillTilingData(ROIAlignGradTilingData* tiling, const RoiAlignGradTilingParams& params, int32_t needCoreNum,
+                           int64_t perCoreElements, int64_t totalYdiffElements, int64_t totalXdiffElements,
+                           int64_t batchXdiffStride)
 {
     tiling->needCoreNum = needCoreNum;
     tiling->perCoreElements = perCoreElements;
@@ -182,6 +361,10 @@ static ge::graphStatus ROIAlignGradTilingFunc(gert::TilingContext* context)
     if (ret != ge::GRAPH_SUCCESS)
         return ret;
 
+    ret = ValidateParams(context, params);
+    if (ret != ge::GRAPH_SUCCESS)
+        return ret;
+
     int64_t totalYdiffElements = static_cast<int64_t>(params.N) * params.C * params.pooledH * params.pooledW;
 
     ROIAlignGradTilingData* tiling = context->GetTilingData<ROIAlignGradTilingData>();
@@ -193,14 +376,14 @@ static ge::graphStatus ROIAlignGradTilingFunc(gert::TilingContext* context)
         return HandleEmptyTiling(context, ascendcPlatform, tiling, params);
     }
 
-    int32_t needCoreNum;
-    int64_t perCoreElements;
-    ret = CalcCoreDistribution(context, params, totalYdiffElements, needCoreNum, perCoreElements);
-    if (ret != ge::GRAPH_SUCCESS)
-        return ret;
-
     int64_t batchXdiffStride = static_cast<int64_t>(params.C) * params.H * params.W;
     int64_t totalXdiffElements = static_cast<int64_t>(params.B) * batchXdiffStride;
+
+    int32_t needCoreNum;
+    int64_t perCoreElements;
+    ret = CalcCoreDistribution(context, params, totalXdiffElements, needCoreNum, perCoreElements);
+    if (ret != ge::GRAPH_SUCCESS)
+        return ret;
 
     FillTilingData(tiling, params, needCoreNum, perCoreElements, totalYdiffElements, totalXdiffElements,
                    batchXdiffStride);
