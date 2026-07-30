@@ -128,6 +128,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/img_warp_resize/README.md">img_warp_resize</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>图像双线性插值采样算子，用于 OCR 场景中的图像变形缩放。接收预处理好的四角像素值和浮点坐标，通过双线性插值计算输出像素值。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/non_max_suppression_v3/README.md">non_max_suppression_v3</a></td>
     <td>&check;</td>
     <td>&check;</td>
