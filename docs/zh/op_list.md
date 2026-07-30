@@ -138,6 +138,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/lut3_d/README.md">lut3_d</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>通过3D颜色查找表对输入图像进行三线性插值颜色变换。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/non_max_suppression_v3/README.md">non_max_suppression_v3</a></td>
     <td>&check;</td>
     <td>&check;</td>
