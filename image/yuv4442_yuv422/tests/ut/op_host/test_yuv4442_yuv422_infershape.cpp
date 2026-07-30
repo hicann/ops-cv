@@ -54,3 +54,42 @@ TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_test2)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_abnormal_dtype_fp32)
+{
+    // Input dtype float32 is not supported, infershape must fail
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{2, 4, 4}, {2, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_abnormal_shape_2d)
+{
+    // 2D input is not supported, infershape must fail
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{4, 4}, {4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_abnormal_shape_channel3)
+{
+    // Channel 3 is not supported, infershape must fail
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{4, 8, 3}, {4, 8, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}

@@ -34,7 +34,6 @@ constexpr int64_t PER_CORE_MIN = 1024;
 
 struct Yuv4442yuv422CompileInfo {};
 
-// Get platform info (ubSize, coreNum)
 static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& ubSize, int64_t& coreNum)
 {
     fe::PlatFormInfos* platformInfoPtr = context->GetPlatformInfo();
@@ -47,33 +46,41 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
     return ge::GRAPH_SUCCESS;
 }
 
-// Get shape info and validate
 static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t& h, int64_t& w, int64_t& totalPairs)
 {
     auto inputShape = context->GetInputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputShape);
     auto storageShape = inputShape->GetStorageShape();
 
-    // Validate input dimensions must be 3
-    OP_CHECK_IF(storageShape.GetDimNum() != 3,
-                OP_LOGE(context, "Input must be 3D (h, w, 4), got %zu dims", storageShape.GetDimNum()),
-                return ge::GRAPH_FAILED);
+    if (storageShape.GetDimNum() != 3) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "x", std::to_string(storageShape.GetDimNum()).c_str(),
+                                     "3");
+        return ge::GRAPH_FAILED;
+    }
 
-    // Validate channel count must be 4
     int64_t channels = storageShape.GetDim(2);
-    OP_CHECK_IF(channels != 4, OP_LOGE(context, "Input channels must be 4, got %ld", channels),
-                return ge::GRAPH_FAILED);
+    if (channels != 4) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "x", std::to_string(channels).c_str(),
+                                                 "the last dim (channel) must be 4");
+        return ge::GRAPH_FAILED;
+    }
+
+    auto inputDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    auto inputDtype = inputDesc->GetDataType();
+    if (inputDtype != ge::DT_FLOAT16) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "x", Ops::Base::ToString(inputDtype).c_str(), "FLOAT16");
+        return ge::GRAPH_FAILED;
+    }
 
     h = storageShape.GetDim(0);
     w = storageShape.GetDim(1);
 
-    // Compute total pixel pairs
     totalPairs = h * (w / 2);
 
     return ge::GRAPH_SUCCESS;
 }
 
-// Get workspace size
 static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 {
     int64_t userWorkspaceSize = 0;
@@ -116,31 +123,26 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context, int64_t tota
     return SetLocalMemory(context, ubSize);
 }
 
-// Tiling dispatch entry
 static ge::graphStatus Yuv4442yuv422TilingFunc(gert::TilingContext* context)
 {
-    // 1. Get platform info
     uint64_t ubSize;
     int64_t maxCoreNum;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,
                 OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
 
-    // 2. Get shape info
     int64_t h, w, totalPairs;
     OP_CHECK_IF(GetShapeInfo(context, h, w, totalPairs) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetShapeInfo error"),
                 return ge::GRAPH_FAILED);
 
-    // 3. Get workspace size
     OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
                 return ge::GRAPH_FAILED);
 
-    // 4. Compute core distribution (two-step method)
     int64_t perCorePairs = Ops::Base::CeilDiv(totalPairs, maxCoreNum);
     if (perCorePairs < PER_CORE_MIN) {
         perCorePairs = PER_CORE_MIN;
     }
     int64_t needCoreNum = Ops::Base::CeilDiv(totalPairs, perCorePairs);
-    needCoreNum = std::max(needCoreNum, 1L);  // W=0/W=1 兜底
+    needCoreNum = std::max(needCoreNum, 1L);
 
     return FillTilingData(context, totalPairs, h, w, needCoreNum, ubSize);
 }
@@ -150,7 +152,6 @@ static ge::graphStatus TilingParseForYuv4442yuv422([[maybe_unused]] gert::Tiling
     return ge::GRAPH_SUCCESS;
 }
 
-// Tiling registration entry
 IMPL_OP_OPTILING(YUV4442YUV422)
     .Tiling(Yuv4442yuv422TilingFunc)
     .TilingParse<Yuv4442yuv422CompileInfo>(TilingParseForYuv4442yuv422);

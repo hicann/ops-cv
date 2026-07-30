@@ -75,3 +75,60 @@ TEST_F(Yuv4442yuv422Tiling, yuv4442_yuv422_1)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(Yuv4442yuv422Tiling, yuv4442_yuv422_abnormal_dtype_fp32)
+{
+    struct Yuv4442yuv422CompileInfo {
+    } compileInfo;
+    // Input dtype float32 is not supported, tiling must fail
+    gert::TilingContextPara tilingContextPara("YUV4442YUV422",
+                                              {
+                                                  {{{2, 4, 4}, {2, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // input x
+                                              },
+                                              {
+                                                  {{{2, 4, 2}, {2, 4, 2}}, ge::DT_UINT8, ge::FORMAT_ND}, // output y
+                                              },
+                                              {
+                                                  /* attrs */
+                                              },
+                                              &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(Yuv4442yuv422Tiling, yuv4442_yuv422_abnormal_shape_2d)
+{
+    struct Yuv4442yuv422CompileInfo {
+    } compileInfo;
+    // 2D input is not supported, tiling must fail
+    gert::TilingContextPara tilingContextPara("YUV4442YUV422",
+                                              {
+                                                  {{{4, 4}, {4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // input x
+                                              },
+                                              {
+                                                  {{{4, 2}, {4, 2}}, ge::DT_UINT8, ge::FORMAT_ND}, // output y
+                                              },
+                                              {
+                                                  /* attrs */
+                                              },
+                                              &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(Yuv4442yuv422Tiling, yuv4442_yuv422_abnormal_shape_channel3)
+{
+    struct Yuv4442yuv422CompileInfo {
+    } compileInfo;
+    // Channel 3 is not supported, tiling must fail
+    gert::TilingContextPara tilingContextPara("YUV4442YUV422",
+                                              {
+                                                  {{{4, 8, 3}, {4, 8, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // input x
+                                              },
+                                              {
+                                                  {{{4, 8, 2}, {4, 8, 2}}, ge::DT_UINT8, ge::FORMAT_ND}, // output y
+                                              },
+                                              {
+                                                  /* attrs */
+                                              },
+                                              &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}

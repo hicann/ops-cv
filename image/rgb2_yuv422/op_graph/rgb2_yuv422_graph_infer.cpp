@@ -27,9 +27,13 @@ static ge::graphStatus InferDataTypeRgb2yuv422(gert::InferDataTypeContext* conte
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferDataTypeRgb2yuv422");
 
-    // 设置输出的dtype，与输入dtype相同
     ge::DataType inputDtype = context->GetInputDataType(IDX_0);
-    context->SetOutputDataType(IDX_0, inputDtype);
+    if (inputDtype != ge::DT_UINT8) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "rgb", Ops::Base::ToString(inputDtype).c_str(), "uint8");
+        return GRAPH_FAILED;
+    }
+
+    context->SetOutputDataType(IDX_0, ge::DT_UINT8);
 
     OP_LOGD(context->GetNodeName(), "End to do InferDataTypeRgb2yuv422");
     return GRAPH_SUCCESS;

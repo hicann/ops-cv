@@ -27,7 +27,12 @@ static ge::graphStatus InferDataTypeYuv4442yuv422(gert::InferDataTypeContext* co
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferDataTypeYuv4442yuv422");
 
-    // Output dtype is always uint8 regardless of input dtype
+    ge::DataType inputDtype = context->GetInputDataType(IDX_0);
+    if (inputDtype != ge::DT_FLOAT16) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "x", Ops::Base::ToString(inputDtype).c_str(), "float16");
+        return GRAPH_FAILED;
+    }
+
     context->SetOutputDataType(IDX_0, ge::DT_UINT8);
 
     OP_LOGD(context->GetNodeName(), "End to do InferDataTypeYuv4442yuv422");

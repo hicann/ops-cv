@@ -13,9 +13,6 @@
 /*!
  * \file three_interpolate_infershape.cpp
  * \brief InferShape implementation for three_interpolate operator
- *
- * Output shape: (B, N, C) where B from features, N from idx, C from features
- * Output dtype: same as features dtype
  */
 
 #include "register/op_impl_registry.h"
@@ -61,41 +58,86 @@ static ge::graphStatus InferShape4ThreeInterpolate(gert::InferShapeContext* cont
         return GRAPH_SUCCESS;
     }
 
-    // Shape validation: features must be 3D, idx must be 3D
-    OP_CHECK_IF(featuresShape->GetDimNum() != DIM_NUM,
-                OP_LOGE(context->GetNodeName(), "features should be 3D, got %zu", featuresShape->GetDimNum()),
-                return GRAPH_FAILED);
-    OP_CHECK_IF(idxShape->GetDimNum() != DIM_NUM,
-                OP_LOGE(context->GetNodeName(), "idx should be 3D, got %zu", idxShape->GetDimNum()),
-                return GRAPH_FAILED);
-    OP_CHECK_IF(weightShape->GetDimNum() != DIM_NUM,
-                OP_LOGE(context->GetNodeName(), "weight should be 3D, got %zu", weightShape->GetDimNum()),
-                return GRAPH_FAILED);
+    // Shape validation
+    if (featuresShape->GetDimNum() != DIM_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "features",
+                                     (std::to_string(featuresShape->GetDimNum()) + "D").c_str(),
+                                     (std::to_string(DIM_NUM) + "D").c_str());
+        return GRAPH_FAILED;
+    }
+    if (idxShape->GetDimNum() != DIM_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "idx",
+                                     (std::to_string(idxShape->GetDimNum()) + "D").c_str(),
+                                     (std::to_string(DIM_NUM) + "D").c_str());
+        return GRAPH_FAILED;
+    }
+    if (weightShape->GetDimNum() != DIM_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "weight",
+                                     (std::to_string(weightShape->GetDimNum()) + "D").c_str(),
+                                     (std::to_string(DIM_NUM) + "D").c_str());
+        return GRAPH_FAILED;
+    }
+
+    auto featuresDesc = context->GetInputDesc(IDX_FEATURES);
+    OP_CHECK_NULL_WITH_CONTEXT(context, featuresDesc);
+    ge::DataType featuresDtype = featuresDesc->GetDataType();
+    if (featuresDtype != DT_FLOAT && featuresDtype != DT_FLOAT16) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "features", Ops::Base::ToString(featuresDtype).c_str(),
+                                  "float32 or float16");
+        return GRAPH_FAILED;
+    }
+    auto idxDesc = context->GetInputDesc(IDX_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, idxDesc);
+    ge::DataType idxDtype = idxDesc->GetDataType();
+    if (idxDtype != DT_INT32 && idxDtype != DT_INT64) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "idx", Ops::Base::ToString(idxDtype).c_str(),
+                                  "int32 or int64");
+        return GRAPH_FAILED;
+    }
+    auto weightDesc = context->GetInputDesc(IDX_WEIGHT);
+    OP_CHECK_NULL_WITH_CONTEXT(context, weightDesc);
+    ge::DataType weightDtype = weightDesc->GetDataType();
+    if (weightDtype != featuresDtype) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "weight", Ops::Base::ToString(weightDtype).c_str(),
+                                  "same as features dtype");
+        return GRAPH_FAILED;
+    }
 
     // Skip dim equality checks when either side is UNKNOW_DIM (-1)
-    OP_CHECK_IF(featuresShape->GetDim(0) != UNKNOW_DIM && idxShape->GetDim(0) != UNKNOW_DIM &&
-                    featuresShape->GetDim(0) != idxShape->GetDim(0),
-                OP_LOGE(context->GetNodeName(), "batch dim mismatch: features=%ld, idx=%ld", featuresShape->GetDim(0),
-                        idxShape->GetDim(0)),
-                return GRAPH_FAILED);
-    OP_CHECK_IF(featuresShape->GetDim(0) != UNKNOW_DIM && weightShape->GetDim(0) != UNKNOW_DIM &&
-                    featuresShape->GetDim(0) != weightShape->GetDim(0),
-                OP_LOGE(context->GetNodeName(), "batch dim mismatch: features=%ld, weight=%ld",
-                        featuresShape->GetDim(0), weightShape->GetDim(0)),
-                return GRAPH_FAILED);
-    OP_CHECK_IF(idxShape->GetDim(1) != UNKNOW_DIM && weightShape->GetDim(1) != UNKNOW_DIM &&
-                    idxShape->GetDim(1) != weightShape->GetDim(1),
-                OP_LOGE(context->GetNodeName(), "N dim mismatch: idx=%ld, weight=%ld", idxShape->GetDim(1),
-                        weightShape->GetDim(1)),
-                return GRAPH_FAILED);
-    OP_CHECK_IF(idxShape->GetDim(2) != UNKNOW_DIM && idxShape->GetDim(2) != NEIGHBOR_NUM,
-                OP_LOGE(context->GetNodeName(), "idx last dim should be 3, got %ld", idxShape->GetDim(2)),
-                return GRAPH_FAILED);
-    OP_CHECK_IF(weightShape->GetDim(2) != UNKNOW_DIM && weightShape->GetDim(2) != NEIGHBOR_NUM,
-                OP_LOGE(context->GetNodeName(), "weight last dim should be 3, got %ld", weightShape->GetDim(2)),
-                return GRAPH_FAILED);
+    if (featuresShape->GetDim(0) != UNKNOW_DIM && idxShape->GetDim(0) != UNKNOW_DIM &&
+        featuresShape->GetDim(0) != idxShape->GetDim(0)) {
+        std::string dimMsg = std::to_string(featuresShape->GetDim(0)) + " and " + std::to_string(idxShape->GetDim(0));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "features and idx", dimMsg.c_str(),
+                                                  "batch dim of features and idx must be equal");
+        return GRAPH_FAILED;
+    }
+    if (featuresShape->GetDim(0) != UNKNOW_DIM && weightShape->GetDim(0) != UNKNOW_DIM &&
+        featuresShape->GetDim(0) != weightShape->GetDim(0)) {
+        std::string dimMsg = std::to_string(featuresShape->GetDim(0)) + " and " +
+                             std::to_string(weightShape->GetDim(0));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "features and weight", dimMsg.c_str(),
+                                                  "batch dim of features and weight must be equal");
+        return GRAPH_FAILED;
+    }
+    if (idxShape->GetDim(1) != UNKNOW_DIM && weightShape->GetDim(1) != UNKNOW_DIM &&
+        idxShape->GetDim(1) != weightShape->GetDim(1)) {
+        std::string dimMsg = std::to_string(idxShape->GetDim(1)) + " and " + std::to_string(weightShape->GetDim(1));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "idx and weight", dimMsg.c_str(),
+                                                  "N dim of idx and weight must be equal");
+        return GRAPH_FAILED;
+    }
+    if (idxShape->GetDim(2) != UNKNOW_DIM && idxShape->GetDim(2) != NEIGHBOR_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "idx", std::to_string(idxShape->GetDim(2)).c_str(),
+                                     std::to_string(NEIGHBOR_NUM).c_str());
+        return GRAPH_FAILED;
+    }
+    if (weightShape->GetDim(2) != UNKNOW_DIM && weightShape->GetDim(2) != NEIGHBOR_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "weight", std::to_string(weightShape->GetDim(2)).c_str(),
+                                     std::to_string(NEIGHBOR_NUM).c_str());
+        return GRAPH_FAILED;
+    }
 
-    // Output shape: (B, N, C). Prefer the known dim when one input is UNKNOW_DIM.
+    // Output shape: (B, N, C)
     int64_t bs = (featuresShape->GetDim(0) != UNKNOW_DIM) ? featuresShape->GetDim(0) : idxShape->GetDim(0);
     int64_t ns = (idxShape->GetDim(1) != UNKNOW_DIM) ? idxShape->GetDim(1) : weightShape->GetDim(1);
     int64_t cs = featuresShape->GetDim(2);

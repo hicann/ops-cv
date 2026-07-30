@@ -27,10 +27,13 @@ constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 constexpr uint32_t IDX_FEATURES = 0;
 constexpr uint32_t IDX_IDX = 1;
+constexpr uint32_t IDX_WEIGHT = 2;
 constexpr uint32_t DIM_BS = 0;
 constexpr uint32_t DIM_MS = 1;
 constexpr uint32_t DIM_CS = 2;
 constexpr uint32_t DIM_NS = 1;
+constexpr uint32_t DIM_NEIGHBOR = 2;
+constexpr size_t DIM_NUM = 3;
 constexpr uint64_t ALIGN_SIZE = 32;
 constexpr uint64_t NEIGHBOR_NUM = 3;
 
@@ -56,30 +59,149 @@ static ge::graphStatus ThreeInterpolateTilingFunc(gert::TilingContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, idxInput);
     auto idxShape = idxInput->GetStorageShape();
 
+    auto weightInput = context->GetInputShape(IDX_WEIGHT);
+    OP_CHECK_NULL_WITH_CONTEXT(context, weightInput);
+    auto weightShape = weightInput->GetStorageShape();
+
+    // Structural validation mirrors infershape so that dynamic-shape executions
+    // are guarded at tiling time as well. Unknown dims (-1) are skipped here and
+    // re-validated when the concrete shape is known.
+    if (featuresShape.GetDimNum() != DIM_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "features",
+                                     (std::to_string(featuresShape.GetDimNum()) + "D").c_str(), "3D");
+        return ge::GRAPH_FAILED;
+    }
+    if (idxShape.GetDimNum() != DIM_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "idx",
+                                     (std::to_string(idxShape.GetDimNum()) + "D").c_str(), "3D");
+        return ge::GRAPH_FAILED;
+    }
+    if (weightShape.GetDimNum() != DIM_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "weight",
+                                     (std::to_string(weightShape.GetDimNum()) + "D").c_str(), "3D");
+        return ge::GRAPH_FAILED;
+    }
+
+    if (featuresShape.GetDim(DIM_BS) >= 0 && idxShape.GetDim(DIM_BS) >= 0 &&
+        featuresShape.GetDim(DIM_BS) != idxShape.GetDim(DIM_BS)) {
+        std::string dimMsg = std::to_string(featuresShape.GetDim(DIM_BS)) + " and " +
+                             std::to_string(idxShape.GetDim(DIM_BS));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "features and idx", dimMsg.c_str(),
+                                                  "batch dim of features and idx must be equal");
+        return ge::GRAPH_FAILED;
+    }
+    if (featuresShape.GetDim(DIM_BS) >= 0 && weightShape.GetDim(DIM_BS) >= 0 &&
+        featuresShape.GetDim(DIM_BS) != weightShape.GetDim(DIM_BS)) {
+        std::string dimMsg = std::to_string(featuresShape.GetDim(DIM_BS)) + " and " +
+                             std::to_string(weightShape.GetDim(DIM_BS));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "features and weight", dimMsg.c_str(),
+                                                  "batch dim of features and weight must be equal");
+        return ge::GRAPH_FAILED;
+    }
+    if (idxShape.GetDim(DIM_NS) >= 0 && weightShape.GetDim(DIM_NS) >= 0 &&
+        idxShape.GetDim(DIM_NS) != weightShape.GetDim(DIM_NS)) {
+        std::string dimMsg = std::to_string(idxShape.GetDim(DIM_NS)) + " and " +
+                             std::to_string(weightShape.GetDim(DIM_NS));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "idx and weight", dimMsg.c_str(),
+                                                  "N dim of idx and weight must be equal");
+        return ge::GRAPH_FAILED;
+    }
+    if (idxShape.GetDim(DIM_NEIGHBOR) >= 0 && idxShape.GetDim(DIM_NEIGHBOR) != static_cast<int64_t>(NEIGHBOR_NUM)) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "idx",
+                                     std::to_string(idxShape.GetDim(DIM_NEIGHBOR)).c_str(),
+                                     std::to_string(NEIGHBOR_NUM).c_str());
+        return ge::GRAPH_FAILED;
+    }
+    if (weightShape.GetDim(DIM_NEIGHBOR) >= 0 &&
+        weightShape.GetDim(DIM_NEIGHBOR) != static_cast<int64_t>(NEIGHBOR_NUM)) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "weight",
+                                     std::to_string(weightShape.GetDim(DIM_NEIGHBOR)).c_str(),
+                                     std::to_string(NEIGHBOR_NUM).c_str());
+        return ge::GRAPH_FAILED;
+    }
+
+    auto featuresDesc = context->GetInputDesc(IDX_FEATURES);
+    OP_CHECK_NULL_WITH_CONTEXT(context, featuresDesc);
+    ge::DataType featuresDtype = featuresDesc->GetDataType();
+    if (featuresDtype != ge::DT_FLOAT && featuresDtype != ge::DT_FLOAT16) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "features", Ops::Base::ToString(featuresDtype).c_str(),
+                                  "float32 or float16");
+        return ge::GRAPH_FAILED;
+    }
+    auto idxDesc = context->GetInputDesc(IDX_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, idxDesc);
+    ge::DataType idxDtype = idxDesc->GetDataType();
+    if (idxDtype != ge::DT_INT32 && idxDtype != ge::DT_INT64) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "idx", Ops::Base::ToString(idxDtype).c_str(),
+                                  "int32 or int64");
+        return ge::GRAPH_FAILED;
+    }
+    auto weightDesc = context->GetInputDesc(IDX_WEIGHT);
+    OP_CHECK_NULL_WITH_CONTEXT(context, weightDesc);
+    ge::DataType weightDtype = weightDesc->GetDataType();
+    if (weightDtype != featuresDtype) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "weight", Ops::Base::ToString(weightDtype).c_str(),
+                                  "same as features dtype");
+        return ge::GRAPH_FAILED;
+    }
+    auto yDesc = context->GetOutputDesc(IDX_FEATURES);
+    OP_CHECK_NULL_WITH_CONTEXT(context, yDesc);
+    if (yDesc->GetDataType() != featuresDtype) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "y", Ops::Base::ToString(yDesc->GetDataType()).c_str(),
+                                  "same as features dtype");
+        return ge::GRAPH_FAILED;
+    }
+
     int64_t bsRaw = featuresShape.GetDim(DIM_BS);
     int64_t msRaw = featuresShape.GetDim(DIM_MS);
     int64_t csRaw = featuresShape.GetDim(DIM_CS);
     int64_t nsRaw = idxShape.GetDim(DIM_NS);
-    OP_CHECK_IF(bsRaw > static_cast<int64_t>(UINT32_MAX) || msRaw > static_cast<int64_t>(UINT32_MAX) ||
-                    csRaw > static_cast<int64_t>(UINT32_MAX) || nsRaw > static_cast<int64_t>(UINT32_MAX),
-                OP_LOGE(context, "dimension exceeds uint32_t range"), return ge::GRAPH_FAILED);
+    if (bsRaw > static_cast<int64_t>(UINT32_MAX) || msRaw > static_cast<int64_t>(UINT32_MAX) ||
+        csRaw > static_cast<int64_t>(UINT32_MAX) || nsRaw > static_cast<int64_t>(UINT32_MAX)) {
+        std::string dimMsg = "[" + std::to_string(bsRaw) + ", " + std::to_string(msRaw) + ", " + std::to_string(csRaw) +
+                             "] and N=" + std::to_string(nsRaw);
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "features and idx", dimMsg.c_str(),
+                                                  "all dims must be within uint32_t range");
+        return ge::GRAPH_FAILED;
+    }
     uint32_t bs = static_cast<uint32_t>(bsRaw);
     uint32_t ms = static_cast<uint32_t>(msRaw);
     uint32_t cs = static_cast<uint32_t>(csRaw);
     uint32_t ns = static_cast<uint32_t>(nsRaw);
 
+    // Reject M == 0 with non-empty output: no known points to interpolate from,
+    // and the kernel would read the empty features tensor OOB after idx clamping.
+    if (ms == 0 && bs != 0 && ns != 0 && cs != 0) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "features", "0",
+                                                 "M dim must be greater than 0 when output is non-empty");
+        return ge::GRAPH_FAILED;
+    }
+
     uint64_t nscProduct = static_cast<uint64_t>(ns) * cs;
-    OP_CHECK_IF(nscProduct > static_cast<uint64_t>(UINT32_MAX),
-                OP_LOGE(context, "ns * cs = %lu exceeds uint32_t range", nscProduct), return ge::GRAPH_FAILED);
+    if (nscProduct > static_cast<uint64_t>(UINT32_MAX)) {
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "idx and features",
+                                                  (std::to_string(ns) + " * " + std::to_string(cs)).c_str(),
+                                                  "ns * cs exceeds uint32_t range");
+        return ge::GRAPH_FAILED;
+    }
 
     // Guard GM offset ranges used by the kernel: idx/weight tensors have bs*ns*3
     // elements and features has bs*ms*cs elements; both must not overflow uint64.
     uint64_t bnProduct = static_cast<uint64_t>(bs) * ns;
-    OP_CHECK_IF(bnProduct > UINT64_MAX / NEIGHBOR_NUM, OP_LOGE(context, "bs * ns * 3 overflows uint64_t range"),
-                return ge::GRAPH_FAILED);
+    if (bnProduct > UINT64_MAX / NEIGHBOR_NUM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "features and idx",
+                                                  (std::to_string(bs) + " * " + std::to_string(ns)).c_str(),
+                                                  "bs * ns * 3 overflows uint64_t range");
+        return ge::GRAPH_FAILED;
+    }
     uint64_t bmProduct = static_cast<uint64_t>(bs) * ms;
-    OP_CHECK_IF(cs != 0 && bmProduct > UINT64_MAX / cs, OP_LOGE(context, "bs * ms * cs overflows uint64_t range"),
-                return ge::GRAPH_FAILED);
+    if (cs != 0 && bmProduct > UINT64_MAX / cs) {
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(
+            context->GetNodeName(), "features",
+            (std::to_string(bs) + " * " + std::to_string(ms) + " * " + std::to_string(cs)).c_str(),
+            "bs * ms * cs overflows uint64_t range");
+        return ge::GRAPH_FAILED;
+    }
 
     uint64_t totalElements = static_cast<uint64_t>(bs) * ns * cs;
 

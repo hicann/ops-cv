@@ -61,6 +61,167 @@ TEST_F(ThreeInterpolateInfershape, three_interpolate_infershape_test2)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+TEST_F(ThreeInterpolateInfershape, three_interpolate_infershape_abnormal_dtype_features)
+{
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_infershape_abnormal_dtype_idx)
+{
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_infershape_abnormal_dtype_weight)
+{
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_invalid_rank_weight)
+{
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2}, {2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_invalid_rank_features)
+{
+    // features is 2D, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_invalid_rank_idx)
+{
+    // idx is 2D, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2}, {2, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_batch_mismatch_features_idx)
+{
+    // features batch 2 vs idx batch 5, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{5, 2, 3}, {5, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_batch_mismatch_features_weight)
+{
+    // features batch 2 vs weight batch 5, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{5, 2, 3}, {5, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_n_mismatch_idx_weight)
+{
+    // idx N 2 vs weight N 5, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 5, 3}, {2, 5, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_idx_last_dim_not_3)
+{
+    // idx last dim is 4, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 4}, {2, 2, 4}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ThreeInterpolateInfershape, three_interpolate_weight_last_dim_not_3)
+{
+    // weight last dim is 2, should fail
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 2}, {2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
 TEST_F(ThreeInterpolateInfershape, three_interpolate_unknown_shape)
 {
     // UnknownShape inputs: all dims are -1, output should be (-1, -1, -1)

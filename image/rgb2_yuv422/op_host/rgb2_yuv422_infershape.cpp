@@ -30,18 +30,31 @@ static ge::graphStatus InferShapeRgb2yuv422(gert::InferShapeContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
 
     size_t rank = xShape->GetDimNum();
-    OP_CHECK_IF(rank < 3, OP_LOGE(context, "Input must have at least 3 dimensions, got rank %zu", rank),
-                return GRAPH_FAILED);
+    if (rank < 3) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "rgb", std::to_string(rank).c_str(),
+                                                 "input must have at least 3 dimensions");
+        return GRAPH_FAILED;
+    }
 
     // NHWC: channel must be 3 (last dim)
-    OP_CHECK_IF(xShape->GetDim(rank - 1) != 3,
-                OP_LOGE(context, "Input channel dimension must be 3, got %ld", xShape->GetDim(rank - 1)),
-                return GRAPH_FAILED);
+    if (xShape->GetDim(rank - 1) != 3) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "rgb",
+                                                 std::to_string(xShape->GetDim(rank - 1)).c_str(),
+                                                 "the last dim (channel) must be 3");
+        return GRAPH_FAILED;
+    }
+
+    auto inputDesc = context->GetInputDesc(IDX_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    auto inputDtype = inputDesc->GetDataType();
+    if (inputDtype != DT_UINT8) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "rgb", Ops::Base::ToString(inputDtype).c_str(), "UINT8");
+        return GRAPH_FAILED;
+    }
 
     gert::Shape* yShape = context->GetOutputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
 
-    // Output shape: same as input, channel dim (last) replaced with 2
     yShape->SetDimNum(rank);
     for (size_t i = 0; i < rank; i++) {
         yShape->SetDim(i, (i == rank - 1) ? 2 : xShape->GetDim(i));

@@ -26,7 +26,7 @@ protected:
     static void TearDownTestCase() { std::cout << "Rgb2yuv422Tiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
+static std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
 
 // NHWC uint8: [4, 8, 3] → tilingKey=0
 TEST_F(Rgb2yuv422Tiling, rgb2_yuv422_uint8_nhwc)
@@ -48,4 +48,61 @@ TEST_F(Rgb2yuv422Tiling, rgb2_yuv422_uint8_nhwc)
     string expectTilingData = "1 4 34359738372 17179869185 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Input dtype float16 is not supported, tiling must fail
+TEST_F(Rgb2yuv422Tiling, rgb2_yuv422_abnormal_dtype_fp16)
+{
+    struct Rgb2yuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("RGB2YUV422",
+                                              {
+                                                  {{{4, 8, 3}, {4, 8, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 8, 2}, {4, 8, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  /* attrs */
+                                              },
+                                              &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// 2D input is not supported, tiling must fail
+TEST_F(Rgb2yuv422Tiling, rgb2_yuv422_abnormal_shape_2d)
+{
+    struct Rgb2yuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("RGB2YUV422",
+                                              {
+                                                  {{{8, 3}, {8, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{8, 2}, {8, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  /* attrs */
+                                              },
+                                              &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Channel 4 is not supported, tiling must fail
+TEST_F(Rgb2yuv422Tiling, rgb2_yuv422_abnormal_shape_channel4)
+{
+    struct Rgb2yuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("RGB2YUV422",
+                                              {
+                                                  {{{4, 8, 4}, {4, 8, 4}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{4, 8, 2}, {4, 8, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  /* attrs */
+                                              },
+                                              &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }

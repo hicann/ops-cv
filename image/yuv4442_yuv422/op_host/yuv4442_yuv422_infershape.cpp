@@ -26,28 +26,37 @@ static ge::graphStatus InferShapeYuv4442yuv422(gert::InferShapeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferShapeYuv4442yuv422");
 
-    // Get input shape
     const gert::Shape* xShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
 
-    // Validate input dimensions must be 3
     auto xDimNum = xShape->GetDimNum();
-    OP_CHECK_IF(xDimNum != 3, OP_LOGE(context, "Input must be 3D (h, w, 4), got %zu dims", xDimNum),
-                return GRAPH_FAILED);
+    if (xDimNum != 3) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "x", std::to_string(xDimNum).c_str(), "3");
+        return GRAPH_FAILED;
+    }
 
-    // Validate input third dimension must be 4
     int64_t channels = xShape->GetDim(2);
-    OP_CHECK_IF(channels != 4, OP_LOGE(context, "Input channels must be 4, got %ld", channels), return GRAPH_FAILED);
+    if (channels != 4) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "x", std::to_string(channels).c_str(),
+                                                 "the last dim (channel) must be 4");
+        return GRAPH_FAILED;
+    }
 
-    // Get output shape
+    auto inputDesc = context->GetInputDesc(IDX_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    auto inputDtype = inputDesc->GetDataType();
+    if (inputDtype != DT_FLOAT16) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "x", Ops::Base::ToString(inputDtype).c_str(), "FLOAT16");
+        return GRAPH_FAILED;
+    }
+
     gert::Shape* yShape = context->GetOutputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
 
-    // Output shape: (h, w, 2)
     yShape->SetDimNum(3);
-    yShape->SetDim(0, xShape->GetDim(0)); // h
-    yShape->SetDim(1, xShape->GetDim(1)); // w
-    yShape->SetDim(2, 2);                 // YUV422 fixed 2 channels
+    yShape->SetDim(0, xShape->GetDim(0));
+    yShape->SetDim(1, xShape->GetDim(1));
+    yShape->SetDim(2, 2);
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeYuv4442yuv422");
     return GRAPH_SUCCESS;

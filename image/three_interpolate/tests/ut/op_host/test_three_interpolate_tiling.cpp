@@ -65,3 +65,207 @@ TEST_F(ThreeInterpolateTiling, three_interpolate_fp16_int64)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_invalid_rank_features)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_batch_mismatch_features_idx)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{5, 2, 3}, {5, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_batch_mismatch_features_weight)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{5, 2, 3}, {5, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_n_mismatch_idx_weight)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 5, 3}, {2, 5, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_idx_last_dim_not_3)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 4}, {2, 2, 4}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_weight_last_dim_not_3)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 2}, {2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_features_dtype_not_supported)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_idx_dtype_not_supported)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_weight_dtype_mismatch)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_y_dtype_mismatch)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_ms_zero_non_empty_output)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 0, 3}, {2, 0, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(ThreeInterpolateTiling, three_interpolate_invalid_rank_weight)
+{
+    struct ThreeInterpolateCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("ThreeInterpolate",
+                                              {
+                                                  {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{2, 2}, {2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              &compileInfo, "Ascend950");
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}

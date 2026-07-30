@@ -62,13 +62,27 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t& H, in
     auto storageShape = inputShape->GetStorageShape();
     size_t rank = storageShape.GetDimNum();
 
-    OP_CHECK_IF(rank < 3, OP_LOGE(context, "Input must have at least 3 dimensions, got rank %zu", rank),
-                return ge::GRAPH_FAILED);
+    if (rank < 3) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "rgb", std::to_string(rank).c_str(),
+                                                 "input must have at least 3 dimensions");
+        return ge::GRAPH_FAILED;
+    }
 
     // NHWC: [..., H, W, 3]
-    OP_CHECK_IF(storageShape.GetDim(rank - 1) != 3,
-                OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 1)),
-                return ge::GRAPH_FAILED);
+    if (storageShape.GetDim(rank - 1) != 3) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "rgb",
+                                                 std::to_string(storageShape.GetDim(rank - 1)).c_str(),
+                                                 "the last dim (channel) must be 3");
+        return ge::GRAPH_FAILED;
+    }
+
+    auto inputDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    auto inputDtype = inputDesc->GetDataType();
+    if (inputDtype != ge::DT_UINT8) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "rgb", Ops::Base::ToString(inputDtype).c_str(), "UINT8");
+        return ge::GRAPH_FAILED;
+    }
     H = static_cast<int32_t>(storageShape.GetDim(rank - 3));
     W = static_cast<int32_t>(storageShape.GetDim(rank - 2));
     outerDims = Product(storageShape, 0, rank - 3);
@@ -137,7 +151,6 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
     int64_t totalRows = outerDims * H;
     int32_t pairsPerRow = (static_cast<int32_t>(W) + 1) / 2;
 
-    // 边界保护：空 tensor
     if (totalRows <= 0 || W <= 0) {
         return FillTilingData(context, 1, 0, 0, static_cast<int32_t>(W), static_cast<int32_t>(outerDims), pairsPerRow,
                               ubSize);
