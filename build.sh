@@ -11,7 +11,7 @@
 
 set -e
 RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin")
-UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
+SUPPORTED_UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
                             "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62" "kirinx90" "kirin9030")
 
@@ -999,7 +999,7 @@ checkopts() {
           ;;
         *)
           ## 如果不在RELEASE_TARGETS 或者 UT_TARGETS，不做处理
-          if ! in_array "$OPTARG" "${RELEASE_TARGETS[@]}" && ! in_array "$OPTARG" "${UT_TARGETS[@]}"; then
+          if ! in_array "$OPTARG" "${RELEASE_TARGETS[@]}" && ! in_array "$OPTARG" "${SUPPORTED_UT_TARGETS[@]}"; then
             echo "[ERROR] Invalid option: --$OPTARG"
             usage
             exit 1
@@ -1754,6 +1754,7 @@ build_example_graph() {
       -I ${GE_INCLUDE_PATH} \
       -I ${INCLUDE_PATH} \
       -I ${INC_INCLUDE_PATH} \
+      -I ${BASE_PATH}/common/inc \
       -I ${CP_GRAPH_INCLUDE_PATH} \
       -I ${CP_GE_INCLUDE_PATH} \
       -I ${CP_GE_EXTERNAL_INCLUDE_PATH} \

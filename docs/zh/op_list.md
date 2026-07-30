@@ -88,6 +88,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/grid_unnormal/README.md">grid_unnormal</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将归一化采样网格坐标转换为输入特征图的像素坐标。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/grid_sampler2_d/README.md">grid_sampler2_d</a></td>
     <td>&check;</td>
     <td>&check;</td>
