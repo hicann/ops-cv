@@ -1766,6 +1766,13 @@ build_example_graph() {
       -o test_geir_${EXAMPLE_NAME}
 
     ./test_geir_${EXAMPLE_NAME}
+
+    if [ $? -eq 0 ]; then
+      echo "run test_geir_${EXAMPLE_NAME}, execute samples success"
+    else
+      echo "run test_geir_${EXAMPLE_NAME}, execute samples failed"
+      exit 1
+    fi
   done
 }
 
