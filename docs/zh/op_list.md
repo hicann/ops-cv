@@ -88,6 +88,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/grid_sampler2_d/README.md">grid_sampler2_d</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>根据二维采样网格提供的归一化坐标，对输入特征图进行双线性、最近邻或双三次插值采样。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/grid_sampler2_d_grad/README.md">grid_sampler2_d_grad</a></td>
     <td>&check;</td>
     <td>&check;</td>
