@@ -119,7 +119,7 @@ void UpsampleBicubic2dAAGradRegbaseTiling::CalTilingData()
     int64_t outNCHW = baseTiling_.dimN * outCHW;
     int64_t maxNum = static_cast<int64_t>(baseTiling_.coreNum) * THREAD_NUM;
     bool isDataCopy = baseTiling_.outH == baseTiling_.inH && baseTiling_.outW == baseTiling_.inW &&
-                      baseTiling_.scaleH == 1.0f && baseTiling_.scaleW == 1.0f;
+                      std::abs(baseTiling_.scaleH - 1.0f) < 1e-6f && std::abs(baseTiling_.scaleW - 1.0f) < 1e-6f;
     baseTiling_.cacheLineNum = CACHE_LINE / baseTiling_.dtypeSize;
     baseTiling_.realCoreNum = baseTiling_.coreNum;
     if (isDataCopy) {

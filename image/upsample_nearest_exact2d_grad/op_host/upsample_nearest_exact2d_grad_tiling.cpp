@@ -13,6 +13,7 @@
  * \brief
  */
 
+#include <cmath>
 #include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "log/log.h"
@@ -392,7 +393,7 @@ template <typename T1>
 inline int32_t UpsampleNearestExact2dGradTiling::Ceil(T1 x)
 {
     int32_t floor_x = int32_t(x);
-    if (x == floor_x) {
+    if (std::abs(x - static_cast<T1>(floor_x)) < 1e-6f) {
         return floor_x;
     }
     return floor_x + 1;

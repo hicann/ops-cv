@@ -14,6 +14,7 @@
  * \file upsample_bicubic2d_tiling.cpp
  * \brief
  */
+#include <cmath>
 #include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
@@ -420,7 +421,7 @@ template <typename T1>
 inline int32_t UpsampleBicubic2dTiling::Ceil(const T1 x) const
 {
     int32_t floor_x = int32_t(x);
-    if (x == floor_x) {
+    if (std::abs(x - static_cast<T1>(floor_x)) < 1e-6f) {
         return floor_x;
     }
     return floor_x + 1;

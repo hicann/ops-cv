@@ -13,6 +13,7 @@
  * \brief
  */
 #include <vector>
+#include <cmath>
 #include "resize_upsample_trilinear_tiling.h"
 #include "op_host/tiling_util.h"
 
@@ -76,7 +77,7 @@ template <typename T>
 inline uint32_t CEIL(T x)
 {
     int32_t floor_v = int32_t(x);
-    if (x == floor_v) {
+    if (std::abs(x - static_cast<T>(floor_v)) < 1e-6f) {
         return floor_v;
     }
     return floor_v + 1;

@@ -13,6 +13,7 @@
  * \brief
  */
 
+#include <cmath>
 #include "log/log.h"
 #include "op_host/tiling_util.h"
 #include "upsample_bilinear2d_aa_tiling.h"
@@ -374,7 +375,7 @@ template <typename T1>
 inline int32_t UpsampleBilinearAATiling::Ceil(T1 x) const
 {
     int32_t floor_x = int32_t(x);
-    if (x == floor_x) {
+    if (std::abs(x - static_cast<T1>(floor_x)) < 1e-6f) {
         return floor_x;
     }
     return floor_x + 1;

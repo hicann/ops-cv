@@ -346,11 +346,11 @@ bool ResizeUpsampleTrilinearRegbaseTiling::TryDReuseTiling(int64_t totalNc)
 
 bool ResizeUpsampleTrilinearRegbaseTiling::TryDOnlyTiling(int64_t totalNc)
 {
-    bool scaleDEq = baseTiling_.scaleD == 1.0f;
-    bool scaleHEq = baseTiling_.scaleH == 1.0f;
-    bool scaleWEq = baseTiling_.scaleW == 1.0f;
+    bool scaleDEq = std::abs(baseTiling_.scaleD - 1.0f) < 1e-6f;
+    bool scaleHEq = std::abs(baseTiling_.scaleH - 1.0f) < 1e-6f;
+    bool scaleWEq = std::abs(baseTiling_.scaleW - 1.0f) < 1e-6f;
     // Half-pixel coordinates use FMA in SIMT. Keep the vector path only where ordinary scalar arithmetic is exact.
-    bool dCoordinateSafe = baseTiling_.alignCorners == 1 || baseTiling_.scaleD == 0.5f;
+    bool dCoordinateSafe = baseTiling_.alignCorners == 1 || std::abs(baseTiling_.scaleD - 0.5f) < 1e-6f;
     bool dOnlyShape = baseTiling_.inD != baseTiling_.outD && baseTiling_.inH == baseTiling_.outH &&
                       baseTiling_.inW == baseTiling_.outW;
     if (dOnlyShape && scaleHEq && scaleWEq && !scaleDEq && dCoordinateSafe &&
@@ -379,7 +379,8 @@ void ResizeUpsampleTrilinearRegbaseTiling::CalDefaultTiling()
     baseTiling_.blkProcessNum = baseTiling_.outSize / static_cast<int64_t>(baseTiling_.realCoreNum);
     baseTiling_.tailBlockNum = static_cast<int32_t>(baseTiling_.outSize %
                                                     static_cast<int64_t>(baseTiling_.realCoreNum));
-    if (baseTiling_.scaleD == 1.0f && baseTiling_.scaleH == 1.0f && baseTiling_.scaleW == 1.0f) {
+    if (std::abs(baseTiling_.scaleD - 1.0f) < 1e-6f && std::abs(baseTiling_.scaleH - 1.0f) < 1e-6f &&
+        std::abs(baseTiling_.scaleW - 1.0f) < 1e-6f) {
         baseTiling_.scheduleMode = RESIZE_UPSAMPLE_TRILINEAR_SCH_MODE_COPY;
     }
 }

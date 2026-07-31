@@ -116,7 +116,7 @@ void UpsampleBilinear2dAABackwardRegbaseTiling::ComputeDataCopy()
 void UpsampleBilinear2dAABackwardRegbaseTiling::CalTilingData()
 {
     bool isDataCopy = baseTiling_.outH == baseTiling_.inH && baseTiling_.outW == baseTiling_.inW &&
-                      baseTiling_.scaleH == 1.0f && baseTiling_.scaleW == 1.0f;
+                      std::abs(baseTiling_.scaleH - 1.0f) < 1e-6f && std::abs(baseTiling_.scaleW - 1.0f) < 1e-6f;
 
     if (isDataCopy) {
         OP_LOGI(context_, "enter datacopy");
@@ -172,14 +172,12 @@ void UpsampleBilinear2dAABackwardRegbaseTiling::ComputeScalesSupportValues(float
     int64_t maxInterpSizeH = baseTiling_.outH;
     if (baseTiling_.scaleH > 0.0f) {
         maxInterpSizeH = static_cast<int64_t>(std::ceil(RESERVED_LENGTH_FLOAT / baseTiling_.scaleH)) +
-                         static_cast<int64_t>(std::ceil(baseTiling_.supportH)) * CONST_2 +
-                         RESERVED_LENGTH;
+                         static_cast<int64_t>(std::ceil(baseTiling_.supportH)) * CONST_2 + RESERVED_LENGTH;
     }
     int64_t maxInterpSizeW = baseTiling_.outW;
     if (baseTiling_.scaleW > 0.0f) {
         maxInterpSizeW = static_cast<int64_t>(std::ceil(RESERVED_LENGTH_FLOAT / baseTiling_.scaleW)) +
-                         static_cast<int64_t>(std::ceil(baseTiling_.supportW)) * CONST_2 +
-                         RESERVED_LENGTH;
+                         static_cast<int64_t>(std::ceil(baseTiling_.supportW)) * CONST_2 + RESERVED_LENGTH;
     }
     baseTiling_.maxInterpSizeH = maxInterpSizeH;
     baseTiling_.maxInterpSizeW = maxInterpSizeW;
