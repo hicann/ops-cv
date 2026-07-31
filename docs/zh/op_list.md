@@ -517,6 +517,16 @@
     <td>将 YUV444 格式图像数据转换为 YUV422 格式。</td>
   </tr>
   <tr>
+    <td>image</td>
+    <td><a href="../../image/blend_face_bg_part_two/README.md">blend_face_bg_part_two</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>完成人脸融合背景第二阶段的归一化与Alpha合成计算，支持uint8/float32背景图输入。</td>
+  </tr>
+  <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
     <td>&check;</td>
