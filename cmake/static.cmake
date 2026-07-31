@@ -1,18 +1,18 @@
 # ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
 if (TARGET ${OPHOST_NAME}_infer_obj OR TARGET ${OPHOST_NAME}_tiling_obj OR TARGET ${OPHOST_NAME}_aicpu_objs)
     add_library(
         ${OPHOST_NAME}_static STATIC
-        $<$<TARGET_EXISTS:${OPHOST_NAME}_infer_obj>:$<TARGET_OBJECTS:${OPHOST_NAME}_infer_obj>>  
-        $<$<TARGET_EXISTS:${OPHOST_NAME}_tiling_obj>:$<TARGET_OBJECTS:${OPHOST_NAME}_tiling_obj>>  
+        $<$<TARGET_EXISTS:${OPHOST_NAME}_infer_obj>:$<TARGET_OBJECTS:${OPHOST_NAME}_infer_obj>>
+        $<$<TARGET_EXISTS:${OPHOST_NAME}_tiling_obj>:$<TARGET_OBJECTS:${OPHOST_NAME}_tiling_obj>>
         $<$<TARGET_EXISTS:${OPHOST_NAME}_aicpu_objs>:$<TARGET_OBJECTS:${OPHOST_NAME}_aicpu_objs>>
         $<$<TARGET_EXISTS:${COMMON_NAME}_obj>:$<TARGET_OBJECTS:${COMMON_NAME}_obj>>
         $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>
@@ -60,30 +60,32 @@ if (TARGET ${OPHOST_NAME}_opapi_obj OR TARGET opbuild_gen_aclnn_all)
             -s ${PROJECT_SOURCE_DIR}/build/${OPAPI_NAME}.txt
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin_tmp)
 endif ()
-add_custom_target(${OPSTATIC_NAME})
-foreach (compute_unit ${ASCEND_COMPUTE_UNIT})
-    set(RESOURCE_PATH ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit}/aclnnop_resource)
-    file(GLOB RESOURCE_CPP ${RESOURCE_PATH}/*.cpp)
-    if (RESOURCE_CPP)
-        add_library(resource_${compute_unit}_static STATIC ${RESOURCE_CPP})
-        target_include_directories(resource_${compute_unit}_static PRIVATE
-                ${OPAPI_INCLUDE})
-        set_target_properties(resource_${compute_unit}_static PROPERTIES
-                ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit}
-                OUTPUT_NAME resource_static)
-        add_dependencies(${OPSTATIC_NAME} resource_${compute_unit}_static)
-        add_custom_command(TARGET ${OPSTATIC_NAME}
-                PRE_BUILD
-                COMMAND ${CMAKE_AR} x ${CMAKE_BINARY_DIR}/lib${OPHOST_NAME}_static.a
-                COMMAND ${CMAKE_AR} x libresource_static.a
-                COMMAND ${CMAKE_AR} x ${CMAKE_BINARY_DIR}/lib${OPAPI_NAME}_static.a
-                COMMAND ${CMAKE_AR} qcs lib${OPSTATIC_NAME}.a *.o
-                COMMAND rm *.o
-                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit})
-        if (ENABLE_PACKAGE)
-            install(FILES ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit}/lib${OPSTATIC_NAME}.a
-                    DESTINATION ${CMAKE_BINARY_DIR}/static_library_files/lib64
-                    OPTIONAL)
+if (TARGET ${OPHOST_NAME}_static OR TARGET ${OPAPI_NAME}_static)
+    add_custom_target(${OPSTATIC_NAME})
+    foreach (compute_unit ${ASCEND_COMPUTE_UNIT})
+        set(RESOURCE_PATH ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit}/aclnnop_resource)
+        file(GLOB RESOURCE_CPP ${RESOURCE_PATH}/*.cpp)
+        if (RESOURCE_CPP)
+            add_library(resource_${compute_unit}_static STATIC ${RESOURCE_CPP})
+            target_include_directories(resource_${compute_unit}_static PRIVATE
+                    ${OPAPI_INCLUDE})
+            set_target_properties(resource_${compute_unit}_static PROPERTIES
+                    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit}
+                    OUTPUT_NAME resource_static)
+            add_dependencies(${OPSTATIC_NAME} resource_${compute_unit}_static)
+            add_custom_command(TARGET ${OPSTATIC_NAME}
+                    PRE_BUILD
+                    COMMAND ${CMAKE_AR} x ${CMAKE_BINARY_DIR}/lib${OPHOST_NAME}_static.a
+                    COMMAND ${CMAKE_AR} x libresource_static.a
+                    COMMAND ${CMAKE_AR} x ${CMAKE_BINARY_DIR}/lib${OPAPI_NAME}_static.a
+                    COMMAND ${CMAKE_AR} qcs lib${OPSTATIC_NAME}.a *.o
+                    COMMAND rm *.o
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit})
+            if (ENABLE_PACKAGE)
+                install(FILES ${CMAKE_BINARY_DIR}/bin_tmp/${compute_unit}/lib${OPSTATIC_NAME}.a
+                        DESTINATION ${CMAKE_BINARY_DIR}/static_library_files/lib64
+                        OPTIONAL)
+            endif ()
         endif ()
-    endif ()
-endforeach ()
+    endforeach ()
+endif ()
