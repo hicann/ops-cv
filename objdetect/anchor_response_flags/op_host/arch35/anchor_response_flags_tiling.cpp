@@ -59,7 +59,7 @@ static ge::graphStatus GetAndValidateAttrs(gert::TilingContext* context, int32_t
     OP_CHECK_IF(stridesLen != 2, OP_LOGE(context, "strides must have exactly 2 elements"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(stridesData[0] <= 0 || stridesData[1] <= 0, OP_LOGE(context, "strides must be positive"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(numBaseAnchors <= 0, OP_LOGE(context, "num_base_anchors must be positive"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(numBaseAnchors < 0, OP_LOGE(context, "num_base_anchors must not be negative"), return ge::GRAPH_FAILED);
 
     featH = static_cast<int32_t>(featmapSizeData[0]);
     featW = static_cast<int32_t>(featmapSizeData[1]);
