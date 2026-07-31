@@ -58,6 +58,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/crop/README.md">crop</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>从输入张量中按照指定轴和偏移量裁剪出指定大小的子张量，兼容Caffe框架的Crop层。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/crop_and_resize/README.md">crop_and_resize</a></td>
     <td>&check;</td>
     <td>&check;</td>
