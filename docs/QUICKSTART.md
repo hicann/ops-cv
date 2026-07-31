@@ -184,7 +184,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
   blockLength_ = (remainderLength > tilingData->blockFactor) ? tilingData->blockFactor : remainderLength;
   ubLength_ = tilingData->ubFactor;
   // 打印当前核计算Block长度
-  AscendC::PRINTF("Tiling blockLength is %llu\n", blockLength_);
+  AscendC::PRINTF("Tiling blockLength is %ld\n", blockLength_);
   ```
 
 - **DumpTensor**
