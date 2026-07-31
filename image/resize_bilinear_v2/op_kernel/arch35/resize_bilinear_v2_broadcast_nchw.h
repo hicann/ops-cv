@@ -164,18 +164,17 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTenso
 
     __VEC_SCOPE__
     {
-        MicroAPI::MaskReg preg;
-        MicroAPI::RegTensor<U> regData;
+        Reg::MaskReg preg;
+        Reg::RegTensor<U> regData;
 
         for (uint16_t ncLoop = 0; ncLoop < (uint16_t)lenNC; ncLoop++) {
             U val = *xAddr;
             __ubuf__ U* yLineAddr = yAddr;
             uint32_t oneLineLen = lineLen;
             for (uint16_t inLoop = 0; inLoop < (uint16_t)repeatTimes; inLoop++) {
-                preg = MicroAPI::UpdateMask<U>(oneLineLen);
-                MicroAPI::Duplicate(regData, val, preg);
-                MicroAPI::DataCopy<U, MicroAPI::PostLiteral::POST_MODE_UPDATE>(yLineAddr, regData, (int32_t)oneRepeat,
-                                                                               preg);
+                preg = Reg::UpdateMask<U>(oneLineLen);
+                Reg::Duplicate(regData, val, preg);
+                Reg::DataCopy<U, Reg::PostLiteral::POST_MODE_UPDATE>(yLineAddr, regData, (int32_t)oneRepeat, preg);
             }
 
             xAddr++;

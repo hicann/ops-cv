@@ -22,10 +22,10 @@
 
 namespace ResizeNearestNeighborV2 {
 using namespace AscendC;
-using AscendC::MicroAPI::AddrReg;
-using AscendC::MicroAPI::CreateAddrReg;
-using AscendC::MicroAPI::RegTensor;
-using AscendC::MicroAPI::UpdateMask;
+using AscendC::Reg::AddrReg;
+using AscendC::Reg::CreateAddrReg;
+using AscendC::Reg::RegTensor;
+using AscendC::Reg::UpdateMask;
 
 template <typename T, int cutNH>
 class ResizeNearestNeighborV2NHWC {

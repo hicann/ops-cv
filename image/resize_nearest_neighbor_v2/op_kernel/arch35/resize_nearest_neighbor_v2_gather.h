@@ -46,12 +46,12 @@ private:
     constexpr static int32_t bufferNum = 2;
     constexpr static int64_t NUM_FOUR = 4;
     constexpr static int32_t blockSize = 32;
-    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND};
-    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::Reg::CastTrait castTraitRound = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::NO_SAT, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_ROUND};
+    constexpr static AscendC::Reg::CastTrait castTraitFloor = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::NO_SAT, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_FLOOR};
 
 private:
     TPipe pipe;
@@ -259,21 +259,20 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(__ubuf__ T*
 {
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<int32_t> idxInitLower;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInitHeigher;
-        AscendC::MicroAPI::RegTensor<float> idxLowerF;
-        AscendC::MicroAPI::RegTensor<float> idxHigherF;
-        AscendC::MicroAPI::RegTensor<int32_t> idxLowerI;
-        AscendC::MicroAPI::RegTensor<int32_t> idxHigherI;
-        AscendC::MicroAPI::RegTensor<uint16_t> idxLower;
-        AscendC::MicroAPI::RegTensor<uint16_t> idxHigher;
-        AscendC::MicroAPI::RegTensor<T> vDstReg;
-        AscendC::MicroAPI::UnalignReg u0;
+        AscendC::Reg::RegTensor<int32_t> idxInitLower;
+        AscendC::Reg::RegTensor<int32_t> idxInitHeigher;
+        AscendC::Reg::RegTensor<float> idxLowerF;
+        AscendC::Reg::RegTensor<float> idxHigherF;
+        AscendC::Reg::RegTensor<int32_t> idxLowerI;
+        AscendC::Reg::RegTensor<int32_t> idxHigherI;
+        AscendC::Reg::RegTensor<uint16_t> idxLower;
+        AscendC::Reg::RegTensor<uint16_t> idxHigher;
+        AscendC::Reg::RegTensor<T> vDstReg;
+        AscendC::Reg::UnalignReg u0;
 
-        AscendC::MicroAPI::MaskReg
-            preg32 = AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
+        AscendC::Reg::MaskReg preg32 = AscendC::Reg::CreateMask<uint32_t, AscendC::Reg::MaskPattern::ALL>();
         uint32_t sregLast = num;
-        AscendC::MicroAPI::MaskReg preg16 = AscendC::MicroAPI::UpdateMask<uint16_t>(sregLast);
+        AscendC::Reg::MaskReg preg16 = AscendC::Reg::UpdateMask<uint16_t>(sregLast);
         float sregLow = startIdx;
         Arange(idxLowerF, sregLow);
         Muls(idxLowerF, idxLowerF, wScale_, preg32);
@@ -294,14 +293,14 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeMain(__ubuf__ T*
         __ubuf__ T* dstUbT = dstAddr;
         for (uint16_t j = 0; j < static_cast<uint16_t>(hNum_); ++j) {
             Adds(idxLowerI, idxInitLower, static_cast<int32_t>(srcWAlign_) * hIdexUb.GetValue(j), preg32);
-            MicroAPI::Pack<uint16_t, int32_t, AscendC::MicroAPI::HighLowPart::LOWEST>(idxLower, idxLowerI);
+            Reg::Pack<uint16_t, int32_t, AscendC::Reg::HighLowPart::LOWEST>(idxLower, idxLowerI);
             Adds(idxHigherI, idxInitHeigher, static_cast<int32_t>(srcWAlign_) * hIdexUb.GetValue(j), preg32);
-            MicroAPI::Pack<uint16_t, int32_t, AscendC::MicroAPI::HighLowPart::HIGHEST>(idxHigher, idxHigherI);
+            Reg::Pack<uint16_t, int32_t, AscendC::Reg::HighLowPart::HIGHEST>(idxHigher, idxHigherI);
             Or(idxLower, idxLower, idxHigher, preg16);
             DataCopyGather(vDstReg, srcAddr, idxLower, preg16);
             dstUbT = dstAddr + j * wNum_;
             DataCopyUnAlign(dstUbT, vDstReg, u0, num);
-            AscendC::MicroAPI::DataCopyUnAlignPost(dstUbT, u0, 0);
+            AscendC::Reg::DataCopyUnAlignPost(dstUbT, u0, 0);
         }
     }
 }
@@ -313,18 +312,17 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(__ubuf__ T*
 {
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<float> idxLowerF;
-        AscendC::MicroAPI::RegTensor<int32_t> idxLowerI;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInit;
-        AscendC::MicroAPI::RegTensor<uint16_t> idxLower;
-        AscendC::MicroAPI::UnalignReg u0;
-        AscendC::MicroAPI::RegTensor<T> vDstReg;
+        AscendC::Reg::RegTensor<float> idxLowerF;
+        AscendC::Reg::RegTensor<int32_t> idxLowerI;
+        AscendC::Reg::RegTensor<int32_t> idxInit;
+        AscendC::Reg::RegTensor<uint16_t> idxLower;
+        AscendC::Reg::UnalignReg u0;
+        AscendC::Reg::RegTensor<T> vDstReg;
 
-        AscendC::MicroAPI::MaskReg
-            mask0 = AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
+        AscendC::Reg::MaskReg mask0 = AscendC::Reg::CreateMask<uint32_t, AscendC::Reg::MaskPattern::ALL>();
         uint32_t sregTail = wTail_;
         float sregLow = startIdx;
-        AscendC::MicroAPI::MaskReg mask1 = AscendC::MicroAPI::UpdateMask<uint16_t>(sregTail);
+        AscendC::Reg::MaskReg mask1 = AscendC::Reg::UpdateMask<uint16_t>(sregTail);
         // init w direction index
         Arange(idxLowerF, sregLow);
         Muls(idxLowerF, idxLowerF, wScale_, mask0);
@@ -338,11 +336,11 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::ComputeTail(__ubuf__ T*
         __ubuf__ T* dstUbT = dstAddr;
         for (uint16_t i = 0; i < static_cast<uint16_t>(hNum_); ++i) {
             Adds(idxLowerI, idxInit, srcWAlign_ * hIdexUb.GetValue(i), mask0);
-            MicroAPI::Pack<uint16_t, int32_t, AscendC::MicroAPI::HighLowPart::LOWEST>(idxLower, idxLowerI);
+            Reg::Pack<uint16_t, int32_t, AscendC::Reg::HighLowPart::LOWEST>(idxLower, idxLowerI);
             DataCopyGather(vDstReg, srcAddr, idxLower, mask1);
             dstUbT = dstAddr + i * wNum_;
             DataCopyUnAlign(dstUbT, vDstReg, u0, wTail_);
-            AscendC::MicroAPI::DataCopyUnAlignPost(dstUbT, u0, 0);
+            AscendC::Reg::DataCopyUnAlignPost(dstUbT, u0, 0);
         }
     }
 }
@@ -354,16 +352,15 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute32(__ubuf__ T* d
 {
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<float> idxFloat;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInt32;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInit;
-        AscendC::MicroAPI::RegTensor<T> vDstReg;
-        AscendC::MicroAPI::UnalignReg u0;
+        AscendC::Reg::RegTensor<float> idxFloat;
+        AscendC::Reg::RegTensor<int32_t> idxInt32;
+        AscendC::Reg::RegTensor<int32_t> idxInit;
+        AscendC::Reg::RegTensor<T> vDstReg;
+        AscendC::Reg::UnalignReg u0;
 
         uint32_t sregTail = num;
-        AscendC::MicroAPI::MaskReg
-            mask0 = AscendC::MicroAPI::CreateMask<uint32_t, AscendC::MicroAPI::MaskPattern::ALL>();
-        AscendC::MicroAPI::MaskReg mask1 = AscendC::MicroAPI::UpdateMask<uint32_t>(sregTail);
+        AscendC::Reg::MaskReg mask0 = AscendC::Reg::CreateMask<uint32_t, AscendC::Reg::MaskPattern::ALL>();
+        AscendC::Reg::MaskReg mask1 = AscendC::Reg::UpdateMask<uint32_t>(sregTail);
 
         float sregLow = startIdx;
         Arange(idxFloat, sregLow);
@@ -378,10 +375,10 @@ __aicore__ inline void ResizeNearestNeighborV2Gather<T>::Compute32(__ubuf__ T* d
         __ubuf__ T* dstUbT = dstAddr;
         for (uint16_t i = 0; i < static_cast<uint16_t>(hNum_); ++i) {
             Adds(idxInt32, idxInit, static_cast<int32_t>(srcWAlign_) * hIdexUb.GetValue(i), mask0);
-            DataCopyGather(vDstReg, srcAddr, (AscendC::MicroAPI::RegTensor<uint32_t>&)idxInt32, mask1);
+            DataCopyGather(vDstReg, srcAddr, (AscendC::Reg::RegTensor<uint32_t>&)idxInt32, mask1);
             dstUbT = dstAddr + i * wNum_;
             DataCopyUnAlign(dstUbT, vDstReg, u0, num);
-            AscendC::MicroAPI::DataCopyUnAlignPost(dstUbT, u0, 0);
+            AscendC::Reg::DataCopyUnAlignPost(dstUbT, u0, 0);
         }
     }
 }

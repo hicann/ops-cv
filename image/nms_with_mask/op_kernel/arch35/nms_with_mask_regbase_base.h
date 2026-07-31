@@ -41,56 +41,56 @@ static constexpr int32_t VL_SIZE = 256;
 static constexpr int32_t VL_SIZE_FLOAT = 64;
 static constexpr MultiCopyConfig copyConfig = {false, 0, 0, false};
 
-static constexpr MicroAPI::CastTrait castTraitB16ToB32 = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN,
-                                                          MicroAPI::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
+static constexpr Reg::CastTrait castTraitB16ToB32 = {Reg::RegLayout::ZERO, Reg::SatMode::UNKNOWN,
+                                                     Reg::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
 
 template <typename T, bool isBroadcast>
-__aicore__ inline void CopyInReg(MicroAPI::RegTensor<float>& vregIn, __ubuf__ T* inAddr, MicroAPI::MaskReg& mask)
+__aicore__ inline void CopyInReg(Reg::RegTensor<float>& vregIn, __ubuf__ T* inAddr, Reg::MaskReg& mask)
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         if constexpr (isBroadcast) {
-            MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
+            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
         } else {
-            MicroAPI::DataCopy<T>(vregIn, inAddr);
+            Reg::DataCopy<T>(vregIn, inAddr);
         }
     } else {
-        MicroAPI::RegTensor<T> vregInB16;
+        Reg::RegTensor<T> vregInB16;
         if constexpr (isBroadcast) {
-            MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
+            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
         } else {
-            MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
+            Reg::DataCopy<T, Reg::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
         }
-        MicroAPI::Cast<float, T, castTraitB16ToB32>(vregIn, vregInB16, mask);
+        Reg::Cast<float, T, castTraitB16ToB32>(vregIn, vregInB16, mask);
     }
 }
 
 template <typename T, bool isBroadcast>
-__aicore__ inline void CopyInReg(MicroAPI::RegTensor<float>& vregIn, MicroAPI::RegTensor<T>& vregInB16,
-                                 __ubuf__ T* inAddr, MicroAPI::MaskReg& mask)
+__aicore__ inline void CopyInReg(Reg::RegTensor<float>& vregIn, Reg::RegTensor<T>& vregInB16, __ubuf__ T* inAddr,
+                                 Reg::MaskReg& mask)
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         if constexpr (isBroadcast) {
-            MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
+            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
         } else {
-            MicroAPI::DataCopy<T>(vregIn, inAddr);
+            Reg::DataCopy<T>(vregIn, inAddr);
         }
     } else {
         if constexpr (isBroadcast) {
-            MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
+            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
         } else {
-            MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
+            Reg::DataCopy<T, Reg::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
         }
-        MicroAPI::Cast<float, T, castTraitB16ToB32>(vregIn, vregInB16, mask);
+        Reg::Cast<float, T, castTraitB16ToB32>(vregIn, vregInB16, mask);
     }
 }
 
 template <typename T, bool isBroadcast>
-__aicore__ inline void CopyInRegToFP32(MicroAPI::RegTensor<float>& vregIn, __ubuf__ T* inAddr, MicroAPI::MaskReg& mask)
+__aicore__ inline void CopyInRegToFP32(Reg::RegTensor<float>& vregIn, __ubuf__ T* inAddr, Reg::MaskReg& mask)
 {
     if constexpr (isBroadcast) {
-        MicroAPI::DataCopy<T, MicroAPI::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
+        Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
     } else {
-        MicroAPI::DataCopy<T>(vregIn, inAddr);
+        Reg::DataCopy<T>(vregIn, inAddr);
     }
 }
 
@@ -109,12 +109,12 @@ private:
     __aicore__ inline void CopyIn(int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount);
     __aicore__ inline void ComputeMask(int64_t refGroupIdx, int64_t dstGroupIdx, int32_t refCount, int32_t dstCount);
     __aicore__ inline void ComputeRefArea(__ubuf__ T* refLocalAddr, __ubuf__ float* refAreaAddr, int32_t refCount);
-    __aicore__ inline void CalcIntersection(MicroAPI::MaskReg& pregIou, MicroAPI::RegTensor<float>& sumArea,
-                                            MicroAPI::RegTensor<float>& vregZeros, MicroAPI::RegTensor<float>& refX1,
-                                            MicroAPI::RegTensor<float>& refY1, MicroAPI::RegTensor<float>& refX2,
-                                            MicroAPI::RegTensor<float>& refY2, MicroAPI::RegTensor<float>& dstX1,
-                                            MicroAPI::RegTensor<float>& dstY1, MicroAPI::RegTensor<float>& dstX2,
-                                            MicroAPI::RegTensor<float>& dstY2, MicroAPI::MaskReg& preg);
+    __aicore__ inline void CalcIntersection(Reg::MaskReg& pregIou, Reg::RegTensor<float>& sumArea,
+                                            Reg::RegTensor<float>& vregZeros, Reg::RegTensor<float>& refX1,
+                                            Reg::RegTensor<float>& refY1, Reg::RegTensor<float>& refX2,
+                                            Reg::RegTensor<float>& refY2, Reg::RegTensor<float>& dstX1,
+                                            Reg::RegTensor<float>& dstY1, Reg::RegTensor<float>& dstX2,
+                                            Reg::RegTensor<float>& dstY2, Reg::MaskReg& preg);
     template <bool dstIsOddBlock>
     __aicore__ inline void ComputeMaskVf(__ubuf__ T* refLocalAddr, __ubuf__ T* dstLocalAddr,
                                          __ubuf__ float* refAreaAddr, __ubuf__ int32_t* maskUbAddr, int32_t refCount,

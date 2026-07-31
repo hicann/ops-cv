@@ -22,10 +22,10 @@
 
 namespace ResizeNearestNeighborV2 {
 using namespace AscendC;
-using AscendC::MicroAPI::AddrReg;
-using AscendC::MicroAPI::CreateAddrReg;
-using AscendC::MicroAPI::RegTensor;
-using AscendC::MicroAPI::UpdateMask;
+using AscendC::Reg::AddrReg;
+using AscendC::Reg::CreateAddrReg;
+using AscendC::Reg::RegTensor;
+using AscendC::Reg::UpdateMask;
 
 template <typename T, typename T1, int schId, bool alignCorners>
 class ResizeGather {
@@ -57,15 +57,15 @@ private:
     __aicore__ inline void ComputeHids(LocalTensor<T1>& idxHUb, int64_t hFactor);
     constexpr static int32_t bufferNum = 2;
 
-    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND};
-    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
-    constexpr static AscendC::MicroAPI::CastTrait castInt32ToF = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::UNKNOWN,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::Reg::CastTrait castTraitRound = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::NO_SAT, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_ROUND};
+    constexpr static AscendC::Reg::CastTrait castTraitFloor = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::NO_SAT, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::Reg::CastTrait castInt32ToF = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::UNKNOWN, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_FLOOR};
 
 private:
     TPipe pipe;
@@ -207,33 +207,32 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::GatherOutput(Lo
     uint32_t hwNum1 = dstLen;
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<T1> startReg;
-        AscendC::MicroAPI::RegTensor<T1> idxRegT;
-        AscendC::MicroAPI::RegTensor<T> dstReg;
-        AscendC::MicroAPI::MaskReg preg;
+        AscendC::Reg::RegTensor<T1> startReg;
+        AscendC::Reg::RegTensor<T1> idxRegT;
+        AscendC::Reg::RegTensor<T> dstReg;
+        AscendC::Reg::MaskReg preg;
         // 先处理第一行的hw
         Duplicate<T1>(startReg, srcHwNum);
         for (uint16_t j = 0; j < times; j++) {
-            preg = AscendC::MicroAPI::UpdateMask<T>(hwNum);
-            AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(j, vfLen);
-            AscendC::MicroAPI::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
-            AscendC::MicroAPI::Sub(idxRegT, idxRegT, startReg, preg);
+            preg = AscendC::Reg::UpdateMask<T>(hwNum);
+            AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
+            AscendC::Reg::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
+            AscendC::Reg::Sub(idxRegT, idxRegT, startReg, preg);
             DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
-            AscendC::MicroAPI::DataCopy(dstUbAddr, dstReg, srcIdxOffset, preg);
+            AscendC::Reg::DataCopy(dstUbAddr, dstReg, srcIdxOffset, preg);
         }
         // 从第二行开始处理
         for (uint16_t nc = 0; nc < timesNc; nc++) {
             for (uint16_t jj = 0; jj < times; jj++) {
-                preg = AscendC::MicroAPI::UpdateMask<T>(hwNum1);
-                AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(jj, vfLen);
-                AscendC::MicroAPI::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
-                AscendC::MicroAPI::Sub(idxRegT, idxRegT, startReg, preg);
+                preg = AscendC::Reg::UpdateMask<T>(hwNum1);
+                AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(jj, vfLen);
+                AscendC::Reg::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
+                AscendC::Reg::Sub(idxRegT, idxRegT, startReg, preg);
                 for (uint16_t i = 0; i < ubFactorTimes; i++) {
-                    AscendC::MicroAPI::AddrReg outOffset = AscendC::MicroAPI::CreateAddrReg<T>(jj, vfLen, i,
-                                                                                               dstHwAlign);
+                    AscendC::Reg::AddrReg outOffset = AscendC::Reg::CreateAddrReg<T>(jj, vfLen, i, dstHwAlign);
                     Adds(idxRegT, idxRegT, srcLenNum, preg);
                     DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
-                    AscendC::MicroAPI::DataCopy(dstUbAddr1, dstReg, outOffset, preg);
+                    AscendC::Reg::DataCopy(dstUbAddr1, dstReg, outOffset, preg);
                 }
             }
         }
@@ -278,15 +277,15 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeDataCopy
     uint32_t onceSize = num;
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<T1> idxRegT;
-        AscendC::MicroAPI::RegTensor<T> dstReg;
-        AscendC::MicroAPI::MaskReg preg;
+        AscendC::Reg::RegTensor<T1> idxRegT;
+        AscendC::Reg::RegTensor<T> dstReg;
+        AscendC::Reg::MaskReg preg;
         for (uint16_t j = 0; j < times; j++) {
-            preg = AscendC::MicroAPI::UpdateMask<T>(onceSize);
-            AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(j, vfLen);
-            AscendC::MicroAPI::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
+            preg = AscendC::Reg::UpdateMask<T>(onceSize);
+            AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
+            AscendC::Reg::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
             DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
-            AscendC::MicroAPI::DataCopy(dstUbAddr, dstReg, srcIdxOffset, preg);
+            AscendC::Reg::DataCopy(dstUbAddr, dstReg, srcIdxOffset, preg);
         }
     }
 }
@@ -308,25 +307,24 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHids(Loc
 
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<int32_t> idxInt32Reg;
-        AscendC::MicroAPI::MaskReg pregB32 = AscendC::MicroAPI::UpdateMask<uint32_t>(numH);
-        AscendC::MicroAPI::MaskReg pregRemainB32;
+        AscendC::Reg::RegTensor<int32_t> idxInt32Reg;
+        AscendC::Reg::MaskReg pregB32 = AscendC::Reg::UpdateMask<uint32_t>(numH);
+        AscendC::Reg::MaskReg pregRemainB32;
         Arange(idxInt32Reg, 0);
         if constexpr (sizeof(T1) == sizeof(int32_t)) {
-            DataCopy(idxUbAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg, pregB32);
+            DataCopy(idxUbAddr, (Reg::RegTensor<T1>&)idxInt32Reg, pregB32);
         } else {
-            DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg,
-                                                                      pregB32);
+            DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbAddr, (Reg::RegTensor<T1>&)idxInt32Reg, pregB32);
         }
         for (uint16_t i = 0; i < times; i++) {
-            pregRemainB32 = AscendC::MicroAPI::UpdateMask<int32_t>(remainNum);
+            pregRemainB32 = AscendC::Reg::UpdateMask<int32_t>(remainNum);
             Adds(idxInt32Reg, idxInt32Reg, 64, pregRemainB32);
-            AscendC::MicroAPI::AddrReg dstOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, 64);
+            AscendC::Reg::AddrReg dstOffset = AscendC::Reg::CreateAddrReg<T1>(i, 64);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
+                DataCopy(idxUbRemainAddr, (Reg::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
             } else {
-                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(
-                    idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
+                DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbRemainAddr, (Reg::RegTensor<T1>&)idxInt32Reg,
+                                                                     dstOffset, pregRemainB32);
             }
         }
     }
@@ -351,25 +349,25 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1>& idxUb, float bias, float 
         remainNum = dstSize - vfLenb32;
         times = CeilDivision(remainNum, vfLenb32);
     }
-    constexpr static AscendC::MicroAPI::CastTrait castTraitRound = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_ROUND};
-    constexpr static AscendC::MicroAPI::CastTrait castTraitFloor = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
-    constexpr static AscendC::MicroAPI::CastTrait castInt32ToF = {
-        AscendC::MicroAPI::RegLayout::UNKNOWN, AscendC::MicroAPI::SatMode::UNKNOWN,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::Reg::CastTrait castTraitRound = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::NO_SAT, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_ROUND};
+    constexpr static AscendC::Reg::CastTrait castTraitFloor = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::NO_SAT, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_FLOOR};
+    constexpr static AscendC::Reg::CastTrait castInt32ToF = {
+        AscendC::Reg::RegLayout::UNKNOWN, AscendC::Reg::SatMode::UNKNOWN, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::CAST_FLOOR};
 
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<float> idxInt32Reg;
-        AscendC::MicroAPI::RegTensor<float> hIdxF;
+        AscendC::Reg::RegTensor<float> idxInt32Reg;
+        AscendC::Reg::RegTensor<float> hIdxF;
 
-        AscendC::MicroAPI::RegTensor<int32_t> hIdxInt32;
-        AscendC::MicroAPI::RegTensor<int32_t> hIdxInt32C;
-        AscendC::MicroAPI::MaskReg pregB32 = AscendC::MicroAPI::UpdateMask<uint32_t>(oneTimeNum);
-        AscendC::MicroAPI::MaskReg pregRemainB32;
+        AscendC::Reg::RegTensor<int32_t> hIdxInt32;
+        AscendC::Reg::RegTensor<int32_t> hIdxInt32C;
+        AscendC::Reg::MaskReg pregB32 = AscendC::Reg::UpdateMask<uint32_t>(oneTimeNum);
+        AscendC::Reg::MaskReg pregRemainB32;
         Arange(idxInt32Reg, 0.0f);
 
         Adds(hIdxF, idxInt32Reg, bias, pregB32);
@@ -386,13 +384,12 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1>& idxUb, float bias, float 
             Muls(hIdxInt32C, hIdxInt32C, srcW, pregB32);
         }
         if constexpr (sizeof(T1) == sizeof(int32_t)) {
-            DataCopy(idxUbAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C, pregB32);
+            DataCopy(idxUbAddr, (Reg::RegTensor<T1>&)hIdxInt32C, pregB32);
         } else {
-            DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(idxUbAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C,
-                                                                      pregB32);
+            DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbAddr, (Reg::RegTensor<T1>&)hIdxInt32C, pregB32);
         }
         for (uint16_t i = 0; i < times; i++) {
-            pregRemainB32 = AscendC::MicroAPI::UpdateMask<int32_t>(remainNum);
+            pregRemainB32 = AscendC::Reg::UpdateMask<int32_t>(remainNum);
             Adds(idxInt32Reg, idxInt32Reg, 64.0f, pregRemainB32);
             Adds(hIdxF, idxInt32Reg, bias, pregRemainB32);
             Muls(hIdxF, hIdxF, scale, pregRemainB32);
@@ -405,12 +402,12 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1>& idxUb, float bias, float 
             if constexpr (isH) {
                 Muls(hIdxInt32C, hIdxInt32C, srcW, pregRemainB32);
             }
-            AscendC::MicroAPI::AddrReg dstOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, 64);
+            AscendC::Reg::AddrReg dstOffset = AscendC::Reg::CreateAddrReg<T1>(i, 64);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
+                DataCopy(idxUbRemainAddr, (Reg::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
             } else {
-                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(
-                    idxUbRemainAddr, (MicroAPI::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
+                DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbRemainAddr, (Reg::RegTensor<T1>&)hIdxInt32C,
+                                                                     dstOffset, pregRemainB32);
             }
         }
     }
@@ -436,22 +433,22 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(
     int64_t hiStartData = hiStart;
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<int32_t> hiStartReg;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInt32Reg;
-        AscendC::MicroAPI::RegTensor<float> hIdxF;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInt32OriReg;
-        AscendC::MicroAPI::RegTensor<int32_t> idxInt32OriWReg;
-        AscendC::MicroAPI::MaskReg preg;
+        AscendC::Reg::RegTensor<int32_t> hiStartReg;
+        AscendC::Reg::RegTensor<int32_t> idxInt32Reg;
+        AscendC::Reg::RegTensor<float> hIdxF;
+        AscendC::Reg::RegTensor<int32_t> idxInt32OriReg;
+        AscendC::Reg::RegTensor<int32_t> idxInt32OriWReg;
+        AscendC::Reg::MaskReg preg;
         Duplicate<int32_t>(hiStartReg, hiStartData);
 
         for (uint16_t i = 0; i < hTimes; i++) {
-            preg = AscendC::MicroAPI::UpdateMask<int32_t>(size);
-            AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, vfLenB32);
+            preg = AscendC::Reg::UpdateMask<int32_t>(size);
+            AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(i, vfLenB32);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy((MicroAPI::RegTensor<T1>&)idxInt32Reg, idxHubAddr, srcIdxOffset);
+                DataCopy((Reg::RegTensor<T1>&)idxInt32Reg, idxHubAddr, srcIdxOffset);
             } else {
-                DataCopy<T1, MicroAPI::LoadDist::DIST_UNPACK_B16>((MicroAPI::RegTensor<T1>&)idxInt32Reg, idxHubAddr,
-                                                                  srcIdxOffset);
+                DataCopy<T1, Reg::LoadDist::DIST_UNPACK_B16>((Reg::RegTensor<T1>&)idxInt32Reg, idxHubAddr,
+                                                             srcIdxOffset);
             }
             //
             Adds(idxInt32Reg, idxInt32Reg, hoStartData, preg); // 输出位置
@@ -468,10 +465,10 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(
             Sub(idxInt32OriReg, idxInt32OriReg, hiStartReg, preg);
             Muls(idxInt32OriWReg, idxInt32OriReg, wSize, preg);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxH1UbAddr, (MicroAPI::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
+                DataCopy(idxH1UbAddr, (Reg::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
             } else {
-                DataCopy<T1, AscendC::MicroAPI::StoreDist::DIST_PACK_B32>(
-                    idxH1UbAddr, (MicroAPI::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
+                DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxH1UbAddr, (Reg::RegTensor<T1>&)idxInt32OriWReg,
+                                                                     srcIdxOffset, preg);
             }
         }
     }
@@ -501,17 +498,17 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHWidx
 
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<T1> idxWReg;
-        AscendC::MicroAPI::RegTensor<T1> addsReg;
-        AscendC::MicroAPI::MaskReg preg = AscendC::MicroAPI::UpdateMask<T1>(tail);
-        AscendC::MicroAPI::MaskReg pregB32 = AscendC::MicroAPI::CreateMask<T1, AscendC::MicroAPI::MaskPattern::ALL>();
+        AscendC::Reg::RegTensor<T1> idxWReg;
+        AscendC::Reg::RegTensor<T1> addsReg;
+        AscendC::Reg::MaskReg preg = AscendC::Reg::UpdateMask<T1>(tail);
+        AscendC::Reg::MaskReg pregB32 = AscendC::Reg::CreateMask<T1, AscendC::Reg::MaskPattern::ALL>();
 
         for (uint16_t i = 0; i < onceHTimes; i++) {
             T1 hIdx = idxH1Ub.GetValue(i);
-            AscendC::MicroAPI::AddrReg outIdxOffset1 = AscendC::MicroAPI::CreateAddrReg<T1>(i, dstWSize);
+            AscendC::Reg::AddrReg outIdxOffset1 = AscendC::Reg::CreateAddrReg<T1>(i, dstWSize);
             for (uint16_t j = 0; j < static_cast<uint16_t>(wTimes); j++) {
-                AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(j, vfLen);
-                AscendC::MicroAPI::AddrReg outIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, dstWSize, j, vfLen);
+                AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
+                AscendC::Reg::AddrReg outIdxOffset = AscendC::Reg::CreateAddrReg<T1>(i, dstWSize, j, vfLen);
                 DataCopy(idxWReg, idxWubAddr, srcIdxOffset);
                 Adds(addsReg, idxWReg, hIdx, pregB32);
                 DataCopy(idxHwUbAddr, addsReg, outIdxOffset, pregB32);
@@ -590,21 +587,21 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHWids(Lo
     uint32_t wAlign = dstWSizeAlgin;
     __VEC_SCOPE__
     {
-        AscendC::MicroAPI::RegTensor<T1> wIdxReg;
-        AscendC::MicroAPI::RegTensor<T1> idxReg;
+        AscendC::Reg::RegTensor<T1> wIdxReg;
+        AscendC::Reg::RegTensor<T1> idxReg;
 
-        AscendC::MicroAPI::RegTensor<int32_t> hIdxInt32;
-        AscendC::MicroAPI::RegTensor<int32_t> hIdxInt32C;
-        AscendC::MicroAPI::MaskReg pregB32 = AscendC::MicroAPI::CreateMask<T1, AscendC::MicroAPI::MaskPattern::ALL>();
-        AscendC::MicroAPI::MaskReg pregTail = AscendC::MicroAPI::UpdateMask<T1>(tail);
+        AscendC::Reg::RegTensor<int32_t> hIdxInt32;
+        AscendC::Reg::RegTensor<int32_t> hIdxInt32C;
+        AscendC::Reg::MaskReg pregB32 = AscendC::Reg::CreateMask<T1, AscendC::Reg::MaskPattern::ALL>();
+        AscendC::Reg::MaskReg pregTail = AscendC::Reg::UpdateMask<T1>(tail);
         for (uint16_t i = 0; i < static_cast<uint16_t>(hSize); i++) {
             T1 hIdx = idxHUb.GetValue(i);
-            AscendC::MicroAPI::AddrReg outIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, wAlign);
+            AscendC::Reg::AddrReg outIdxOffset = AscendC::Reg::CreateAddrReg<T1>(i, wAlign);
             for (uint16_t j = 0; j < static_cast<uint16_t>(wTimes); j++) {
-                AscendC::MicroAPI::AddrReg srcIdxOffset = AscendC::MicroAPI::CreateAddrReg<T1>(j, vfLen);
+                AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
                 DataCopy(wIdxReg, idxWUbAddr, srcIdxOffset);
                 Adds(idxReg, wIdxReg, hIdx, pregB32);
-                AscendC::MicroAPI::AddrReg srcOutOffset = AscendC::MicroAPI::CreateAddrReg<T1>(i, wAlign, j, vfLen);
+                AscendC::Reg::AddrReg srcOutOffset = AscendC::Reg::CreateAddrReg<T1>(i, wAlign, j, vfLen);
                 DataCopy(idxUbAddr, idxReg, srcOutOffset, pregB32);
             }
             for (uint16_t jj = 0; jj < tailTimes; jj++) {

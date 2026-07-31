@@ -348,39 +348,38 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForDiagonal(
     uint16_t loopPerRow = Ops::Base::CeilDiv(dstCount, vlSize); // how many loops to iterate per row
     __VEC_SCOPE__
     {
-        MicroAPI::RegTensor<uint8_t> refTensor;
-        MicroAPI::RegTensor<uint8_t> dstTensor;
-        MicroAPI::RegTensor<uint8_t> vregZeros;
-        MicroAPI::RegTensor<uint8_t> outTensor;
-        MicroAPI::MaskReg preg;
-        MicroAPI::MaskReg iouMask;
-        MicroAPI::MaskReg removeMask;
-        MicroAPI::MaskReg refMask;
-        MicroAPI::MaskReg trilMask; // preg for lower triangular
-        MicroAPI::MaskReg triuMask; // preg for upper triangular
-        MicroAPI::MaskReg pregAll = MicroAPI::CreateMask<uint8_t, MicroAPI::MaskPattern::ALL>();
-        MicroAPI::Duplicate<uint8_t>(vregZeros, 0, pregAll);
+        Reg::RegTensor<uint8_t> refTensor;
+        Reg::RegTensor<uint8_t> dstTensor;
+        Reg::RegTensor<uint8_t> vregZeros;
+        Reg::RegTensor<uint8_t> outTensor;
+        Reg::MaskReg preg;
+        Reg::MaskReg iouMask;
+        Reg::MaskReg removeMask;
+        Reg::MaskReg refMask;
+        Reg::MaskReg trilMask; // preg for lower triangular
+        Reg::MaskReg triuMask; // preg for upper triangular
+        Reg::MaskReg pregAll = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
+        Reg::Duplicate<uint8_t>(vregZeros, 0, pregAll);
         for (uint16_t rowIdx = 0; rowIdx < rowNum; rowIdx++) {
-            MicroAPI::LocalMemBar<MicroAPI::MemType::VEC_STORE, MicroAPI::MemType::VEC_LOAD>();
+            Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
             uint32_t rowEleNum = static_cast<uint32_t>(dstCount);
             uint32_t trilEleNum = rowIdx + 1;
-            MicroAPI::DataCopy<uint8_t, MicroAPI::LoadDist::DIST_BRC_B8>(refTensor, dstMaskAddr + rowIdx);
-            MicroAPI::CompareScalar<uint8_t, CMPMODE::EQ>(
+            Reg::DataCopy<uint8_t, Reg::LoadDist::DIST_BRC_B8>(refTensor, dstMaskAddr + rowIdx);
+            Reg::CompareScalar<uint8_t, CMPMODE::EQ>(
                 refMask, refTensor, 1, pregAll); // refMask表示要么全选要么全不选，基于当前refTensor是否全为1来判断
             for (uint16_t loopIndex = 0; loopIndex < loopPerRow; loopIndex++) {
-                preg = MicroAPI::UpdateMask<uint8_t>(rowEleNum);
-                trilMask = MicroAPI::UpdateMask<uint8_t>(trilEleNum);
-                MicroAPI::MaskNot(triuMask, trilMask, pregAll);
-                MicroAPI::AddrReg offset = MicroAPI::CreateAddrReg<int32_t>(
-                    rowIdx, groupSize_ / BIT_PER_BYTE / sizeof(int32_t), loopIndex,
-                    vlSize / BIT_PER_BYTE / sizeof(int32_t));
+                preg = Reg::UpdateMask<uint8_t>(rowEleNum);
+                trilMask = Reg::UpdateMask<uint8_t>(trilEleNum);
+                Reg::MaskNot(triuMask, trilMask, pregAll);
+                Reg::AddrReg offset = Reg::CreateAddrReg<int32_t>(rowIdx, groupSize_ / BIT_PER_BYTE / sizeof(int32_t),
+                                                                  loopIndex, vlSize / BIT_PER_BYTE / sizeof(int32_t));
                 // 搬入待比较mask的reg，每一bit表示一个有效值
-                MicroAPI::DataCopy<int32_t, MicroAPI::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
-                MicroAPI::DataCopy<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
-                MicroAPI::MaskAnd(removeMask, iouMask, refMask, pregAll);
-                MicroAPI::MaskAnd(removeMask, removeMask, triuMask, pregAll);
-                MicroAPI::Select<uint8_t>(outTensor, vregZeros, dstTensor, removeMask);
-                MicroAPI::DataCopy<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
+                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
+                Reg::DataCopy<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
+                Reg::MaskAnd(removeMask, iouMask, refMask, pregAll);
+                Reg::MaskAnd(removeMask, removeMask, triuMask, pregAll);
+                Reg::Select<uint8_t>(outTensor, vregZeros, dstTensor, removeMask);
+                Reg::DataCopy<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
             }
         }
     }
@@ -398,32 +397,31 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForNormal(__
     int32_t dstCountAligned = Ops::Base::CeilAlign(dstCount, alignNum_);
     __VEC_SCOPE__
     {
-        MicroAPI::RegTensor<uint8_t> refTensor;
-        MicroAPI::RegTensor<uint8_t> dstTensor;
-        MicroAPI::RegTensor<uint8_t> vregZeros;
-        MicroAPI::RegTensor<uint8_t> outTensor;
-        MicroAPI::MaskReg preg;
-        MicroAPI::MaskReg iouMask;
-        MicroAPI::MaskReg removeMask;
-        MicroAPI::MaskReg refMask;
-        MicroAPI::MaskReg pregAll = MicroAPI::CreateMask<uint8_t, MicroAPI::MaskPattern::ALL>();
-        MicroAPI::Duplicate<uint8_t>(vregZeros, 0, pregAll);
+        Reg::RegTensor<uint8_t> refTensor;
+        Reg::RegTensor<uint8_t> dstTensor;
+        Reg::RegTensor<uint8_t> vregZeros;
+        Reg::RegTensor<uint8_t> outTensor;
+        Reg::MaskReg preg;
+        Reg::MaskReg iouMask;
+        Reg::MaskReg removeMask;
+        Reg::MaskReg refMask;
+        Reg::MaskReg pregAll = Reg::CreateMask<uint8_t, Reg::MaskPattern::ALL>();
+        Reg::Duplicate<uint8_t>(vregZeros, 0, pregAll);
         for (uint16_t rowIdx = 0; rowIdx < rowNum; rowIdx++) {
             uint32_t rowEleNum = static_cast<uint32_t>(dstCount);
-            MicroAPI::LocalMemBar<MicroAPI::MemType::VEC_STORE, MicroAPI::MemType::VEC_LOAD>();
-            MicroAPI::DataCopy<uint8_t, MicroAPI::LoadDist::DIST_BRC_B8>(refTensor, refMaskAddr + rowIdx);
-            MicroAPI::CompareScalar<uint8_t, CMPMODE::EQ>(refMask, refTensor, 1, pregAll);
+            Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
+            Reg::DataCopy<uint8_t, Reg::LoadDist::DIST_BRC_B8>(refTensor, refMaskAddr + rowIdx);
+            Reg::CompareScalar<uint8_t, CMPMODE::EQ>(refMask, refTensor, 1, pregAll);
             for (uint16_t loopIndex = 0; loopIndex < loopPerRow; loopIndex++) {
-                preg = MicroAPI::UpdateMask<uint8_t>(rowEleNum);
-                MicroAPI::AddrReg offset = MicroAPI::CreateAddrReg<int32_t>(
-                    rowIdx, groupSize_ / BIT_PER_BYTE / sizeof(int32_t), loopIndex,
-                    vlSize / BIT_PER_BYTE / sizeof(int32_t));
+                preg = Reg::UpdateMask<uint8_t>(rowEleNum);
+                Reg::AddrReg offset = Reg::CreateAddrReg<int32_t>(rowIdx, groupSize_ / BIT_PER_BYTE / sizeof(int32_t),
+                                                                  loopIndex, vlSize / BIT_PER_BYTE / sizeof(int32_t));
                 // 搬入待比较mask的reg，每一bit表示一个有效值
-                MicroAPI::DataCopy<int32_t, MicroAPI::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
-                MicroAPI::DataCopy<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
-                MicroAPI::MaskAnd(removeMask, iouMask, refMask, pregAll);
-                MicroAPI::Select<uint8_t>(outTensor, vregZeros, dstTensor, removeMask);
-                MicroAPI::DataCopy<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
+                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
+                Reg::DataCopy<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
+                Reg::MaskAnd(removeMask, iouMask, refMask, pregAll);
+                Reg::Select<uint8_t>(outTensor, vregZeros, dstTensor, removeMask);
+                Reg::DataCopy<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
             }
         }
     }
@@ -439,52 +437,52 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeRefArea(__ubuf_
     uint32_t count = static_cast<uint32_t>(refCount);
     __VEC_SCOPE__
     {
-        MicroAPI::RegTensor<float> x1;
-        MicroAPI::RegTensor<float> y1;
-        MicroAPI::RegTensor<float> x2;
-        MicroAPI::RegTensor<float> y2;
-        MicroAPI::RegTensor<float> width;
-        MicroAPI::RegTensor<float> height;
-        MicroAPI::RegTensor<float> area;
-        MicroAPI::MaskReg preg;
+        Reg::RegTensor<float> x1;
+        Reg::RegTensor<float> y1;
+        Reg::RegTensor<float> x2;
+        Reg::RegTensor<float> y2;
+        Reg::RegTensor<float> width;
+        Reg::RegTensor<float> height;
+        Reg::RegTensor<float> area;
+        Reg::MaskReg preg;
         for (uint16_t loopIdx = 0; loopIdx < loopNum; loopIdx++) {
-            preg = MicroAPI::UpdateMask<float>(count);
+            preg = Reg::UpdateMask<float>(count);
             CopyInReg<T, false>(y1, refLocalAddr + loopIdx * vlSize, preg);
             CopyInReg<T, false>(x1, refLocalAddr + loopIdx * vlSize + INDEX_Y1 * refCountAligned, preg);
             CopyInReg<T, false>(y2, refLocalAddr + loopIdx * vlSize + INDEX_X2 * refCountAligned, preg);
             CopyInReg<T, false>(x2, refLocalAddr + loopIdx * vlSize + INDEX_Y2 * refCountAligned, preg);
-            MicroAPI::Sub(width, x2, x1, preg);
-            MicroAPI::Sub(height, y2, y1, preg);
-            MicroAPI::Mul(area, width, height, preg);
-            MicroAPI::DataCopy<float, MicroAPI::PostLiteral::POST_MODE_UPDATE>(refAreaAddr, area, vlSize, preg);
+            Reg::Sub(width, x2, x1, preg);
+            Reg::Sub(height, y2, y1, preg);
+            Reg::Mul(area, width, height, preg);
+            Reg::DataCopy<float, Reg::PostLiteral::POST_MODE_UPDATE>(refAreaAddr, area, vlSize, preg);
         }
     }
 }
 
 template <typename T>
 __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CalcIntersection(
-    MicroAPI::MaskReg& pregIou, MicroAPI::RegTensor<float>& sumArea, MicroAPI::RegTensor<float>& vregZeros,
-    MicroAPI::RegTensor<float>& refX1, MicroAPI::RegTensor<float>& refY1, MicroAPI::RegTensor<float>& refX2,
-    MicroAPI::RegTensor<float>& refY2, MicroAPI::RegTensor<float>& dstX1, MicroAPI::RegTensor<float>& dstY1,
-    MicroAPI::RegTensor<float>& dstX2, MicroAPI::RegTensor<float>& dstY2, MicroAPI::MaskReg& preg)
+    Reg::MaskReg& pregIou, Reg::RegTensor<float>& sumArea, Reg::RegTensor<float>& vregZeros,
+    Reg::RegTensor<float>& refX1, Reg::RegTensor<float>& refY1, Reg::RegTensor<float>& refX2,
+    Reg::RegTensor<float>& refY2, Reg::RegTensor<float>& dstX1, Reg::RegTensor<float>& dstY1,
+    Reg::RegTensor<float>& dstX2, Reg::RegTensor<float>& dstY2, Reg::MaskReg& preg)
 {
-    MicroAPI::RegTensor<float> minX2;
-    MicroAPI::RegTensor<float> maxX1;
-    MicroAPI::RegTensor<float> minY2;
-    MicroAPI::RegTensor<float> maxY1;
-    MicroAPI::RegTensor<float> intersection;
-    MicroAPI::Min(minX2, refX2, dstX2, preg);
-    MicroAPI::Max(maxX1, refX1, dstX1, preg);
-    MicroAPI::Min(minY2, refY2, dstY2, preg);
-    MicroAPI::Max(maxY1, refY1, dstY1, preg);
-    MicroAPI::Sub(minX2, minX2, maxX1, preg);
-    MicroAPI::Sub(minY2, minY2, maxY1, preg);
-    MicroAPI::Max(minX2, minX2, vregZeros, preg);
-    MicroAPI::Max(minY2, minY2, vregZeros, preg);
-    MicroAPI::Mul(intersection, minX2, minY2, preg);
-    MicroAPI::Sub(sumArea, sumArea, intersection, preg); // 视sumArea为并集大小
-    MicroAPI::Muls(sumArea, sumArea, iouThreshold_, preg);
-    MicroAPI::Compare<float, CMPMODE::GT>(pregIou, intersection, sumArea, preg);
+    Reg::RegTensor<float> minX2;
+    Reg::RegTensor<float> maxX1;
+    Reg::RegTensor<float> minY2;
+    Reg::RegTensor<float> maxY1;
+    Reg::RegTensor<float> intersection;
+    Reg::Min(minX2, refX2, dstX2, preg);
+    Reg::Max(maxX1, refX1, dstX1, preg);
+    Reg::Min(minY2, refY2, dstY2, preg);
+    Reg::Max(maxY1, refY1, dstY1, preg);
+    Reg::Sub(minX2, minX2, maxX1, preg);
+    Reg::Sub(minY2, minY2, maxY1, preg);
+    Reg::Max(minX2, minX2, vregZeros, preg);
+    Reg::Max(minY2, minY2, vregZeros, preg);
+    Reg::Mul(intersection, minX2, minY2, preg);
+    Reg::Sub(sumArea, sumArea, intersection, preg); // 视sumArea为并集大小
+    Reg::Muls(sumArea, sumArea, iouThreshold_, preg);
+    Reg::Compare<float, CMPMODE::GT>(pregIou, intersection, sumArea, preg);
 }
 
 template <typename T>
@@ -506,36 +504,36 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(__ubuf__
     uint32_t srcStride = groupSize_ / BIT_PER_BYTE / sizeof(int32_t);
     __VEC_SCOPE__
     {
-        MicroAPI::RegTensor<float> refX1;
-        MicroAPI::RegTensor<float> refY1;
-        MicroAPI::RegTensor<float> refX2;
-        MicroAPI::RegTensor<float> refY2;
-        MicroAPI::RegTensor<float> dstX1;
-        MicroAPI::RegTensor<float> dstY1;
-        MicroAPI::RegTensor<float> dstX2;
-        MicroAPI::RegTensor<float> dstY2;
-        MicroAPI::RegTensor<float> dstX3;
-        MicroAPI::RegTensor<float> dstY3;
-        MicroAPI::RegTensor<float> dstX4;
-        MicroAPI::RegTensor<float> dstY4;
-        MicroAPI::RegTensor<float> refArea;
-        MicroAPI::RegTensor<float> dstHeight;
-        MicroAPI::RegTensor<float> dstWidth;
-        MicroAPI::RegTensor<float> dstArea0;
-        MicroAPI::RegTensor<float> dstArea1;
-        MicroAPI::RegTensor<float> sumArea;
-        MicroAPI::RegTensor<float> vregZeros;
-        MicroAPI::MaskReg preg0;
-        MicroAPI::MaskReg preg1;
-        MicroAPI::MaskReg pregIou0;
-        MicroAPI::MaskReg pregIou1;
-        MicroAPI::MaskReg pregRes0;
-        MicroAPI::MaskReg pregRes1;
-        MicroAPI::MaskReg pregAll = MicroAPI::CreateMask<float, MicroAPI::MaskPattern::ALL>();
-        MicroAPI::Duplicate<float>(vregZeros, 0.0f, pregAll);
+        Reg::RegTensor<float> refX1;
+        Reg::RegTensor<float> refY1;
+        Reg::RegTensor<float> refX2;
+        Reg::RegTensor<float> refY2;
+        Reg::RegTensor<float> dstX1;
+        Reg::RegTensor<float> dstY1;
+        Reg::RegTensor<float> dstX2;
+        Reg::RegTensor<float> dstY2;
+        Reg::RegTensor<float> dstX3;
+        Reg::RegTensor<float> dstY3;
+        Reg::RegTensor<float> dstX4;
+        Reg::RegTensor<float> dstY4;
+        Reg::RegTensor<float> refArea;
+        Reg::RegTensor<float> dstHeight;
+        Reg::RegTensor<float> dstWidth;
+        Reg::RegTensor<float> dstArea0;
+        Reg::RegTensor<float> dstArea1;
+        Reg::RegTensor<float> sumArea;
+        Reg::RegTensor<float> vregZeros;
+        Reg::MaskReg preg0;
+        Reg::MaskReg preg1;
+        Reg::MaskReg pregIou0;
+        Reg::MaskReg pregIou1;
+        Reg::MaskReg pregRes0;
+        Reg::MaskReg pregRes1;
+        Reg::MaskReg pregAll = Reg::CreateMask<float, Reg::MaskPattern::ALL>();
+        Reg::Duplicate<float>(vregZeros, 0.0f, pregAll);
         for (uint16_t dstBlockIdx = 0; dstBlockIdx < rowLoopNum; dstBlockIdx++) {
-            preg0 = MicroAPI::UpdateMask<float>(dstCountU32);
-            preg1 = MicroAPI::UpdateMask<float>(dstCountU32);
+            preg0 = Reg::UpdateMask<float>(dstCountU32);
+            preg1 = Reg::UpdateMask<float>(dstCountU32);
             CopyInReg<T, false>(dstY1, dstLocalAddr + dstBlockIdx * vlSize * 2, preg0);
             CopyInReg<T, false>(dstX1, dstLocalAddr + dstBlockIdx * vlSize * 2 + INDEX_Y1 * dstCountAligned, preg0);
             CopyInReg<T, false>(dstY2, dstLocalAddr + dstBlockIdx * vlSize * 2 + INDEX_X2 * dstCountAligned, preg0);
@@ -547,56 +545,56 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(__ubuf__
                                 preg1);
             CopyInReg<T, false>(dstX4, dstLocalAddr + dstBlockIdx * vlSize * 2 + vlSize + INDEX_Y2 * dstCountAligned,
                                 preg1);
-            MicroAPI::Sub(dstWidth, dstX2, dstX1, preg0);
-            MicroAPI::Sub(dstHeight, dstY2, dstY1, preg0);
-            MicroAPI::Mul(dstArea0, dstWidth, dstHeight, preg0);
-            MicroAPI::Sub(dstWidth, dstX4, dstX3, preg1);
-            MicroAPI::Sub(dstHeight, dstY4, dstY3, preg1);
-            MicroAPI::Mul(dstArea1, dstWidth, dstHeight, preg1);
+            Reg::Sub(dstWidth, dstX2, dstX1, preg0);
+            Reg::Sub(dstHeight, dstY2, dstY1, preg0);
+            Reg::Mul(dstArea0, dstWidth, dstHeight, preg0);
+            Reg::Sub(dstWidth, dstX4, dstX3, preg1);
+            Reg::Sub(dstHeight, dstY4, dstY3, preg1);
+            Reg::Mul(dstArea1, dstWidth, dstHeight, preg1);
             for (uint16_t refIdx = 0; refIdx < rowNum; refIdx++) {
                 // 要满足16 byte搬出，最终mask存为int32类型；pre过程计算的中间mask大小为groupSize_ *
                 // groupSize_，每行对应groupSize_个bit，因此源操作数的偏移量是groupSize_ / BIT_PER_BYTE /
                 // sizeof(int32_t)
-                MicroAPI::AddrReg offsetReg = MicroAPI::CreateAddrReg<int32_t>(dstBlockIdx, dstStride, refIdx,
-                                                                               srcStride); // 4：16 / sizeof(int32)
+                Reg::AddrReg offsetReg = Reg::CreateAddrReg<int32_t>(dstBlockIdx, dstStride, refIdx,
+                                                                     srcStride); // 4：16 / sizeof(int32)
                 CopyInReg<T, true>(refY1, refLocalAddr + refIdx, pregAll);
                 CopyInReg<T, true>(refX1, refLocalAddr + refIdx + INDEX_Y1 * refCountAligned, pregAll);
                 CopyInReg<T, true>(refY2, refLocalAddr + refIdx + INDEX_X2 * refCountAligned, pregAll);
                 CopyInReg<T, true>(refX2, refLocalAddr + refIdx + INDEX_Y2 * refCountAligned, pregAll);
                 CopyInReg<float, true>(refArea, refAreaAddr + refIdx, pregAll);
-                MicroAPI::Add(sumArea, dstArea0, refArea, preg0);
+                Reg::Add(sumArea, dstArea0, refArea, preg0);
                 CalcIntersection(pregIou0, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX1, dstY1, dstX2, dstY2,
                                  preg0);
-                MicroAPI::Add(sumArea, dstArea1, refArea, preg1);
+                Reg::Add(sumArea, dstArea1, refArea, preg1);
                 CalcIntersection(pregIou1, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX3, dstY3, dstX4, dstY4,
                                  preg1);
                 // interleave from b32 maskreg to b16 maskreg
-                MicroAPI::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou1); // 16B对齐
+                Reg::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou1); // 16B对齐
                 // maskUbAddr + offset
-                MicroAPI::DataCopy<int32_t, MicroAPI::MaskDist::DIST_PACK>(maskUbAddr, pregRes0, offsetReg);
+                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_PACK>(maskUbAddr, pregRes0, offsetReg);
             }
         }
         if constexpr (dstIsOddBlock) {
-            preg0 = MicroAPI::UpdateMask<float>(dstCountU32);
+            preg0 = Reg::UpdateMask<float>(dstCountU32);
             CopyInReg<T, false>(dstY1, dstLocalAddr + rowLoopNum * vlSize * 2, preg0);
             CopyInReg<T, false>(dstX1, dstLocalAddr + rowLoopNum * vlSize * 2 + INDEX_Y1 * dstCountAligned, preg0);
             CopyInReg<T, false>(dstY2, dstLocalAddr + rowLoopNum * vlSize * 2 + INDEX_X2 * dstCountAligned, preg0);
             CopyInReg<T, false>(dstX2, dstLocalAddr + rowLoopNum * vlSize * 2 + INDEX_Y2 * dstCountAligned, preg0);
-            MicroAPI::Sub(dstWidth, dstX2, dstX1, preg0);
-            MicroAPI::Sub(dstHeight, dstY2, dstY1, preg0);
-            MicroAPI::Mul(dstArea0, dstWidth, dstHeight, preg0);
+            Reg::Sub(dstWidth, dstX2, dstX1, preg0);
+            Reg::Sub(dstHeight, dstY2, dstY1, preg0);
+            Reg::Mul(dstArea0, dstWidth, dstHeight, preg0);
             for (uint16_t refIdx = 0; refIdx < rowNum; refIdx++) {
                 CopyInReg<T, true>(refY1, refLocalAddr + refIdx, pregAll);
                 CopyInReg<T, true>(refX1, refLocalAddr + refIdx + INDEX_Y1 * refCountAligned, pregAll);
                 CopyInReg<T, true>(refY2, refLocalAddr + refIdx + INDEX_X2 * refCountAligned, pregAll);
                 CopyInReg<T, true>(refX2, refLocalAddr + refIdx + INDEX_Y2 * refCountAligned, pregAll);
                 CopyInReg<float, true>(refArea, refAreaAddr + refIdx, pregAll);
-                MicroAPI::Add(sumArea, dstArea0, refArea, preg0);
+                Reg::Add(sumArea, dstArea0, refArea, preg0);
                 CalcIntersection(pregIou0, sumArea, vregZeros, refX1, refY1, refX2, refY2, dstX1, dstY1, dstX2, dstY2,
                                  preg0);
                 // interleave from b32 maskreg to b16 maskreg
-                MicroAPI::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou0);
-                MicroAPI::DataCopy<int32_t, MicroAPI::MaskDist::DIST_PACK>(
+                Reg::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou0);
+                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_PACK>(
                     maskUbAddr + rowLoopNum * dstStride + refIdx * srcStride, pregRes0);
             }
         }

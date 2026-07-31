@@ -20,7 +20,7 @@
 
 namespace ResizeBilinearV2 {
 using namespace AscendC;
-using AscendC::MicroAPI::RegTensor;
+using AscendC::Reg::RegTensor;
 constexpr int32_t BUFF_NUM = 2;
 constexpr int32_t POS_LU = 0;
 constexpr int32_t POS_RU = 1;
@@ -98,13 +98,13 @@ private:
     int64_t lenDstHw_ = 0;
     float delta_[POS_TOTAL];
     uint32_t oneRepeat_ = Ops::Base::GetVRegSize() / sizeof(float);
-    constexpr static AscendC::MicroAPI::CastTrait castTrait0 = {
-        AscendC::MicroAPI::RegLayout::ZERO, AscendC::MicroAPI::SatMode::UNKNOWN,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::UNKNOWN}; // bf16 --float
+    constexpr static AscendC::Reg::CastTrait castTrait0 = {
+        AscendC::Reg::RegLayout::ZERO, AscendC::Reg::SatMode::UNKNOWN, AscendC::Reg::MaskMergeMode::ZEROING,
+        AscendC::RoundMode::UNKNOWN}; // bf16 --float
 
-    constexpr static AscendC::MicroAPI::CastTrait castTrait1 = {
-        AscendC::MicroAPI::RegLayout::ZERO, AscendC::MicroAPI::SatMode::NO_SAT,
-        AscendC::MicroAPI::MaskMergeMode::ZEROING, AscendC::RoundMode::CAST_RINT}; // float---bf16
+    constexpr static AscendC::Reg::CastTrait castTrait1 = {AscendC::Reg::RegLayout::ZERO, AscendC::Reg::SatMode::NO_SAT,
+                                                           AscendC::Reg::MaskMergeMode::ZEROING,
+                                                           AscendC::RoundMode::CAST_RINT}; // float---bf16
 };
 
 template <typename Tin, typename Tout>
@@ -208,68 +208,66 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
     float delta_rd = delta_[POS_RD];
     __VEC_SCOPE__
     {
-        MicroAPI::MaskReg pregFp16;
-        MicroAPI::MaskReg pregFp32;
-        MicroAPI::RegTensor<Tin> reg_srcLu;
-        MicroAPI::RegTensor<Tin> reg_srcRu;
-        MicroAPI::RegTensor<Tin> reg_srcLd;
-        MicroAPI::RegTensor<Tin> reg_srcRd;
-        MicroAPI::RegTensor<Tin> reg_srcLui32;
-        MicroAPI::RegTensor<Tin> reg_srcRui32;
-        MicroAPI::RegTensor<Tin> reg_srcLdi32;
-        MicroAPI::RegTensor<Tin> reg_srcRdi32;
-        MicroAPI::RegTensor<Tout> regOutputT2;
-        MicroAPI::RegTensor<Tout> regTmpT2;
-        MicroAPI::RegTensor<float> regSrcLuf32;
-        MicroAPI::RegTensor<float> regSrcRuf32;
-        MicroAPI::RegTensor<float> regSrcLdf32;
-        MicroAPI::RegTensor<float> regSrcRdf32;
-        MicroAPI::RegTensor<float> regDeltaLu;
-        MicroAPI::RegTensor<float> regDeltaRu;
-        MicroAPI::RegTensor<float> regDeltaLd;
-        MicroAPI::RegTensor<float> regDeltaRd;
-        MicroAPI::RegTensor<float> regSumUpperF32;
-        MicroAPI::RegTensor<float> regSumDownF32;
-        MicroAPI::RegTensor<float> regSumF32;
+        Reg::MaskReg pregFp16;
+        Reg::MaskReg pregFp32;
+        Reg::RegTensor<Tin> reg_srcLu;
+        Reg::RegTensor<Tin> reg_srcRu;
+        Reg::RegTensor<Tin> reg_srcLd;
+        Reg::RegTensor<Tin> reg_srcRd;
+        Reg::RegTensor<Tin> reg_srcLui32;
+        Reg::RegTensor<Tin> reg_srcRui32;
+        Reg::RegTensor<Tin> reg_srcLdi32;
+        Reg::RegTensor<Tin> reg_srcRdi32;
+        Reg::RegTensor<Tout> regOutputT2;
+        Reg::RegTensor<Tout> regTmpT2;
+        Reg::RegTensor<float> regSrcLuf32;
+        Reg::RegTensor<float> regSrcRuf32;
+        Reg::RegTensor<float> regSrcLdf32;
+        Reg::RegTensor<float> regSrcRdf32;
+        Reg::RegTensor<float> regDeltaLu;
+        Reg::RegTensor<float> regDeltaRu;
+        Reg::RegTensor<float> regDeltaLd;
+        Reg::RegTensor<float> regDeltaRd;
+        Reg::RegTensor<float> regSumUpperF32;
+        Reg::RegTensor<float> regSumDownF32;
+        Reg::RegTensor<float> regSumF32;
 
         for (uint16_t idx = 0; idx < repeatTimes; idx++) {
-            pregFp32 = AscendC::MicroAPI::UpdateMask<float>(totalLen);
-            MicroAPI::DataCopy<Tin, MicroAPI::PostLiteral::POST_MODE_UPDATE>(reg_srcLu, srcUbLuPrt, oneRepeat_);
-            MicroAPI::DataCopy<Tin, MicroAPI::PostLiteral::POST_MODE_UPDATE>(reg_srcRu, srcUbRuPrt, oneRepeat_);
-            MicroAPI::DataCopy<Tin, MicroAPI::PostLiteral::POST_MODE_UPDATE>(reg_srcLd, srcUbLdPrt, oneRepeat_);
-            MicroAPI::DataCopy<Tin, MicroAPI::PostLiteral::POST_MODE_UPDATE>(reg_srcRd, srcUbRdPrt, oneRepeat_);
+            pregFp32 = AscendC::Reg::UpdateMask<float>(totalLen);
+            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcLu, srcUbLuPrt, oneRepeat_);
+            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcRu, srcUbRuPrt, oneRepeat_);
+            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcLd, srcUbLdPrt, oneRepeat_);
+            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcRd, srcUbRdPrt, oneRepeat_);
             if constexpr (sizeof(Tin) != sizeof(int32_t)) {
-                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcLui32, (RegTensor<int16_t>&)reg_srcLu);
-                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcRui32, (RegTensor<int16_t>&)reg_srcRu);
-                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcLdi32, (RegTensor<int16_t>&)reg_srcLd);
-                MicroAPI::UnPack((RegTensor<int32_t>&)reg_srcRdi32, (RegTensor<int16_t>&)reg_srcRd);
-                MicroAPI::Cast<float, Tin, castTrait0>(regSrcLuf32, reg_srcLui32, pregFp32);
-                MicroAPI::Cast<float, Tin, castTrait0>(regSrcRuf32, reg_srcRui32, pregFp32);
-                MicroAPI::Cast<float, Tin, castTrait0>(regSrcLdf32, reg_srcLdi32, pregFp32);
-                MicroAPI::Cast<float, Tin, castTrait0>(regSrcRdf32, reg_srcRdi32, pregFp32);
-                MicroAPI::Muls(regSrcLuf32, regSrcLuf32, delta_lu, pregFp32);
-                MicroAPI::Muls(regSrcRuf32, regSrcRuf32, delta_ru, pregFp32);
-                MicroAPI::Muls(regSrcLdf32, regSrcLdf32, delta_ld, pregFp32);
-                MicroAPI::Muls(regSrcRdf32, regSrcRdf32, delta_rd, pregFp32);
+                Reg::UnPack((RegTensor<int32_t>&)reg_srcLui32, (RegTensor<int16_t>&)reg_srcLu);
+                Reg::UnPack((RegTensor<int32_t>&)reg_srcRui32, (RegTensor<int16_t>&)reg_srcRu);
+                Reg::UnPack((RegTensor<int32_t>&)reg_srcLdi32, (RegTensor<int16_t>&)reg_srcLd);
+                Reg::UnPack((RegTensor<int32_t>&)reg_srcRdi32, (RegTensor<int16_t>&)reg_srcRd);
+                Reg::Cast<float, Tin, castTrait0>(regSrcLuf32, reg_srcLui32, pregFp32);
+                Reg::Cast<float, Tin, castTrait0>(regSrcRuf32, reg_srcRui32, pregFp32);
+                Reg::Cast<float, Tin, castTrait0>(regSrcLdf32, reg_srcLdi32, pregFp32);
+                Reg::Cast<float, Tin, castTrait0>(regSrcRdf32, reg_srcRdi32, pregFp32);
+                Reg::Muls(regSrcLuf32, regSrcLuf32, delta_lu, pregFp32);
+                Reg::Muls(regSrcRuf32, regSrcRuf32, delta_ru, pregFp32);
+                Reg::Muls(regSrcLdf32, regSrcLdf32, delta_ld, pregFp32);
+                Reg::Muls(regSrcRdf32, regSrcRdf32, delta_rd, pregFp32);
             } else {
-                MicroAPI::Muls(regSrcLuf32, reg_srcLu, delta_lu, pregFp32);
-                MicroAPI::Muls(regSrcRuf32, reg_srcRu, delta_ru, pregFp32);
-                MicroAPI::Muls(regSrcLdf32, reg_srcLd, delta_ld, pregFp32);
-                MicroAPI::Muls(regSrcRdf32, reg_srcRd, delta_rd, pregFp32);
+                Reg::Muls(regSrcLuf32, reg_srcLu, delta_lu, pregFp32);
+                Reg::Muls(regSrcRuf32, reg_srcRu, delta_ru, pregFp32);
+                Reg::Muls(regSrcLdf32, reg_srcLd, delta_ld, pregFp32);
+                Reg::Muls(regSrcRdf32, reg_srcRd, delta_rd, pregFp32);
             }
-            MicroAPI::Add(regSumUpperF32, regSrcLuf32, regSrcRuf32, pregFp32);
-            MicroAPI::Add(regSumDownF32, regSrcLdf32, regSrcRdf32, pregFp32);
-            MicroAPI::Add(regSumF32, regSumUpperF32, regSumDownF32, pregFp32);
+            Reg::Add(regSumUpperF32, regSrcLuf32, regSrcRuf32, pregFp32);
+            Reg::Add(regSumDownF32, regSrcLdf32, regSrcRdf32, pregFp32);
+            Reg::Add(regSumF32, regSumUpperF32, regSumDownF32, pregFp32);
 
             if constexpr (sizeof(Tout) == sizeof(int16_t)) {
-                MicroAPI::Cast<Tout, float, castTrait1>(regTmpT2, regSumF32, pregFp32);
-                MicroAPI::Pack((RegTensor<uint16_t>&)regOutputT2, (RegTensor<uint32_t>&)regTmpT2);
-                MicroAPI::MaskPack(pregFp16, pregFp32);
-                MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regOutputT2, oneRepeat_,
-                                                                                  pregFp16);
+                Reg::Cast<Tout, float, castTrait1>(regTmpT2, regSumF32, pregFp32);
+                Reg::Pack((RegTensor<uint16_t>&)regOutputT2, (RegTensor<uint32_t>&)regTmpT2);
+                Reg::MaskPack(pregFp16, pregFp32);
+                Reg::DataCopy<Tout, Reg::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regOutputT2, oneRepeat_, pregFp16);
             } else {
-                MicroAPI::DataCopy<Tout, MicroAPI::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regSumF32, oneRepeat_,
-                                                                                  pregFp32);
+                Reg::DataCopy<Tout, Reg::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regSumF32, oneRepeat_, pregFp32);
             }
         }
     }
@@ -346,7 +344,7 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::DivideNhwc()
                 src_offset = base_src_offset + (lenSrcW_ * src_down + src_right) * lenC_ + idx_c +
                              point_offset_st.cStart;
                 DataCopyPadGm2Ub(inQueue3, xGm_, src_offset, process_length);
-                // Step2: compute value throw MicroAPI
+                // Step2: compute value throw Reg
                 LocalTensor<Tout> ubTensorOut = outQueue.AllocTensor<Tout>();
                 ComputeDstValueWith4SrcDot(ubTensorOut, process_length);
                 outQueue.EnQue(ubTensorOut);
