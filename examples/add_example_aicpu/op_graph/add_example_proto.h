@@ -13,8 +13,8 @@
  * \brief Operator registration for AddExampleAicpu.
  *        Defines the operator interface including input/output types and compatibility.
  */
-#ifndef OPS_OP_PROTO_INC_AddEXAMPLE_H_
-#define OPS_OP_PROTO_INC_AddEXAMPLE_H_
+#ifndef OPS_OP_PROTO_INC_AddEXAMPLEAICPU_H_
+#define OPS_OP_PROTO_INC_AddEXAMPLEAICPU_H_
 
 #include "graph/operator_reg.h"
 #include "graph/types.h"
@@ -41,4 +41,4 @@ REG_OP(AddExampleAicpu)
 
 } // namespace ge
 
-#endif // OPS_OP_PROTO_INC_AddEXAMPLE_H_
+#endif // OPS_OP_PROTO_INC_AddEXAMPLEAICPU_H_

@@ -13,12 +13,12 @@
  * \brief tiling data struct
  */
 
-#ifndef _ROTARY_POSITION_EMBEDDING_GRAD_TILING_DATA_H_
-#define _ROTARY_POSITION_EMBEDDING_GRAD_TILING_DATA_H_
+#ifndef _ADD_EXAMPLE_TILING_DATA_H_
+#define _ADD_EXAMPLE_TILING_DATA_H_
 
 struct AddExampleTilingData {
     int64_t totalNum = 0;
     int64_t blockFactor = 0;
     int64_t ubFactor = 0;
 };
-#endif
+#endif // _ADD_EXAMPLE_TILING_DATA_H_
