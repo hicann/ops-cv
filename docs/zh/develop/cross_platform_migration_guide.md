@@ -99,8 +99,8 @@
     <td>所有使用int4_t的算子需要切换到支持的数据类型（如int8），并更新量化解算逻辑</td>
   </tr>
   <tr>
-    <td>不支持4：2稀疏矩阵计算</td>
-    <td>原依赖4：2稀疏特性提速的kernel需要改为稠密或其他支持的稀疏策略，并更新性能预期说明</td>
+    <td>不支持4:2稀疏矩阵计算</td>
+    <td>原依赖4:2稀疏特性提速的kernel需要改为稠密或其他支持的稀疏策略，并更新性能预期说明</td>
   </tr>
   <tr>
     <td rowspan="1">存储单元</td>
@@ -159,7 +159,7 @@ gather_v2算子根据合轴后的尾轴为单位进行gather，因此模板选�
 
 SIMD实现采用传统的向量化编程模型，需显式管理UB缓冲区和流水队列：
 
-```Cpp
+```cpp
 // SIMD: 使用队列机制管理数据缓冲
 TQueBind<QuePosition::VECIN, QuePosition::VECOUT, BUFFER_NUM> inQueue_;
 TBuf<QuePosition::VECCALC> indexBuf_;
@@ -168,14 +168,14 @@ TBuf<QuePosition::VECCALC> indexBuf_;
 for (int64_t j = 0; j < rows; j++) {
     INDICES_T index = GetIndex(yIdx, indiceEndIdx);  // 标量读取索引
     int64_t xIndex = index * tilingData_->innerSize;
-    DataCopyPad(xLocal[j * colsAlign], xGm[offset], dataCoptExtParams, dataCopyPadExtParams); // 批量连续数搬入
+    DataCopyPad(xLocal[j * colsAlign], xGm[offset], dataCopyExtParams, dataCopyPadExtParams); // 批量连续数搬入
 }
 inQueue_.EnQue<int8_t>(xLocal);  // 入队等待输出
 ```
 
 SIMT采用线程级并行模型，每个线程独立处理元素：
 
-```Cpp
+```cpp
 // SIMT: 使用线程级并行，无需显式buffer管理
 __simt_vf__ LAUNCH_BOUND(2048) void GatherSimt(...) {
     for (INDEX_SIZE_T index = Simt::GetThreadIdx();
@@ -385,7 +385,7 @@ Ascend 950引入集合通信加速器CCU1.0，降低了访存需求，减少了�
 以[MatmulAllReduce](https://gitcode.com/cann/ops-transformer/tree/master/mc2/matmul_all_reduce)算子迁移适配为例：
 设置NnopbaseSetHcclServerType枚举值，A2为NNOPBASE_HCCL_SERVER_AICPU，950为NNOPBASE_HCCL_SERVER_TYPE_CCU。
 
-```CPP
+```cpp
 // ...
 aclnnStatus aclnnMatmulAllReduce(
     void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, const aclrtStream stream)

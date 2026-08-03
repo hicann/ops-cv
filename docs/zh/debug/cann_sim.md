@@ -30,7 +30,7 @@ CANN Simulator集成在CANN toolkit包里，参考[环境部署](../install/quic
 
 # 快速开始
 
-下面以[add_examples](../../../examples/add_example/)为例，对算子仿真进行详细说明
+下面以[add_example](../../../examples/add_example/)为例，对算子仿真进行详细说明
 
 ## 算子编译
 
@@ -43,7 +43,7 @@ bash build.sh --pkg --soc=Ascend950 --vendor_name=custom --ops=add_example
 ./build_out/cann-ops-cv-${vendor_name}_linux-${arch}.run
 ```
 
-* 参考[aclnn调用](../invocation/quick_op_invocation.md#aclnn-api)完成test_aclnn_add_example.cpp的编译，编出可执行文件test_aclnn_add_example
+* 参考[aclnn调用](../invocation/quick_op_invocation.md#aclnn-api)完成test_aclnn_add_example.cpp的编译，编译出可执行文件test_aclnn_add_example
 
 ## 执行仿真命令
 
@@ -154,7 +154,7 @@ cannsim report [options]
 
 ## 使用示例
 
-1. 参考仿真执行执行算子仿真，对比输出示例，确保对应的结果执行正确。
+1. 参考仿真执行算子仿真，对比输出示例，确保对应的结果执行正确。
 2. 执行仿真结果解析命令，可参考以下执行用例。
 
     ```bash

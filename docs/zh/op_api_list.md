@@ -24,7 +24,7 @@
 > - 配置说明：因CANN或NPU型号不同等原因，可能无法保证同一个算子多次运行结果一致。在相同条件下（平台、设备、版本号和其他随机性参数等），部分算子接口可通过`aclrtCtxSetSysParamOpt`（参见[《Runtime运行时API》](https://hiascend.com/document/redirect/CannCommunityRuntimeApi)）开启确定性算法，使多次运行结果一致。
 > - 性能说明：同一个算子采用确定性计算通常比非确定性慢，因此模型单次运行性能可能会下降。但在实验、调试调测等需要保证多次运行结果相同来定位问题的场景，确定性计算可以提升效率。
 > - 线程说明：同一线程中只能设置一次确定性状态，多次设置以最后一次有效设置为准。有效设置是指设置确定性状态后，真正执行了一次算子任务下发。如果仅设置，没有算子下发，只能是确定性变量开启但未下发给算子，因此不执行算子。
->   解决方案：暂不推荐一个线程多次设置确定性。该问题在二进制开启和关闭情况下均存在，在后续版本中会解决该问题。
+>   解决方案：暂不推荐一个线程多次设置确定性状态。该问题在二进制开启和关闭情况下均存在，在后续版本中会解决该问题。
 
 算子接口列表如下：
 
@@ -75,4 +75,4 @@
 | [aclnnRoiAlignV2Backward](../../objdetect/roi_align_grad/docs/aclnnRoiAlignV2Backward.md) |[aclnnRoiAlignV2](../../objdetect/roi_align/docs/aclnnRoiAlignV2.md)的反向传播。 |默认非确定性实现，支持配置开启|- |
 | [aclnnRoiPoolingWithArgMax](../../objdetect/roi_pooling_with_arg_max/docs/aclnnRoiPoolingWithArgMax.md) | 对输入特征图按ROI（感兴趣区域）进行池化，在每个ROI内按空间划分为pooled_h × pooled_w个格子，对每个格子做最大池化，并输出池化结果及最大值在通道内的一维索引（argmax）。| - |默认确定性实现|
 | [aclnnRoiPoolingGradWithArgMax](../../objdetect/roi_pooling_grad_with_arg_max/docs/aclnnRoiPoolingGradWithArgMax.md) | [aclnnRoiPoolingWithArgMax](../../objdetect/roi_pooling_with_arg_max/docs/aclnnRoiPoolingWithArgMax.md)的反向传播。 | - |默认非确定性实现，不支持配置开启|
-| [aclnnIm2colBackward](../../image/col2im/docs/aclnnIm2colBackward.md) | 从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。 |默认确定性实现|默认确定性实现|
+| [aclnnIm2colBackward](../../image/col2im/docs/aclnnIm2colBackward.md) | 将梯度张量还原为原始输入张量的梯度分布，完成反向传播计算。 |默认确定性实现|默认确定性实现|

@@ -44,7 +44,7 @@
 
 1. **安装驱动与固件（运行态依赖）**
 
-   驱动与固件是运行态依赖，若仅编译算子，可以不安装。使用`npu-sim info`检查是否有NPU相关信息，若没有，请参考《[CANN快速安装](https://www.hiascend.com/cann/download)》完成驱动与固件安装。
+   驱动与固件是运行态依赖，若仅编译算子，可以不安装。使用`npu-smi info`检查是否有NPU相关信息，若没有，请参考《[CANN快速安装](https://www.hiascend.com/cann/download)》完成驱动与固件安装。
 
 2. **下载镜像**
 
@@ -92,7 +92,7 @@
 
     1. **安装驱动与固件（运行态依赖）**
 
-        驱动与固件是运行态依赖，若仅编译算子，可以不安装。使用`npu-sim info`检查是否有NPU相关信息，若没有，请参考《[CANN快速安装](https://www.hiascend.com/cann/download)》完成驱动与固件安装。
+        驱动与固件是运行态依赖，若仅编译算子，可以不安装。使用`npu-smi info`检查是否有NPU相关信息，若没有，请参考《[CANN快速安装](https://www.hiascend.com/cann/download)》完成驱动与固件安装。
 
     2. **安装CANN包**
 
@@ -119,7 +119,7 @@
         - \$\{soc\_name\}：表示NPU型号名称。
         - \$\{install\_path\}：表示指定安装路径，ops包需与toolkit包安装在相同路径，root用户默认安装在`/usr/local/Ascend`目录。
 
-  - **场景2：体验已发布版本能力或基于已发布版本进行开发**
+- **场景2：体验已发布版本能力或基于已发布版本进行开发**
 
     请访问[CANN官网下载中心](https://www.hiascend.com/cann/download)，选择发布版本（仅支持CANN 8.5.0及后续版本），并根据产品型号和环境架构下载对应包，最后参考网页提供的命令完成安装。
 

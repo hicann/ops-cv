@@ -64,7 +64,7 @@
     <td>&cross;</td>
     <td>&check;</td>
     <td>AI CPU</td>
-    <td>从输入图像中提取多个裁剪区域,并将它们统一调整为指定大小，支持双线性插值和最近邻插值。</td>
+    <td>从输入图像中提取多个裁剪区域，并将它们统一调整为指定大小，支持双线性插值和最近邻插值。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -234,7 +234,7 @@
     <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
-    <td>对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensorx的shape为(N,C,H,W)，则输出Tensorout的shape为(N,C,outputSize[0],outputSize[1])。</td>
+    <td>对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N,C,H,W)，则输出Tensor out的shape为(N,C,outputSize[0],outputSize[1])。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -244,7 +244,7 @@
     <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
-    <td>对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensorx的shape为(N,C,H,W)，则输出Tensorout的shape为(N,C,outputSize[0],outputSize[1])。</td>
+    <td>对由多个输入通道组成的输入信号应用双三次抗锯齿算法进行上采样。如果输入Tensor x的shape为(N,C,H,W)，则输出Tensor out的shape为(N,C,outputSize[0],outputSize[1])。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -334,7 +334,7 @@
     <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
-    <td>[UpsampleNearest](../../image/upsample_nearest/README.md)在exact_mode为true时的反向传播。</td>
+    <td><a href="../../image/upsample_nearest/README.md">UpsampleNearest</a>在exact_mode为true时的反向传播。</td>
   </tr>
   <tr>
     <td>image</td>

@@ -39,7 +39,7 @@
 
 目录创建是算子开发的重要步骤，为后续代码编写、编译构建和调试提供统一的目录结构和文件组织方式。
 
-本项目`build.sh`，支持快速创建算子目录。进入项目根目录，执行以下命令：
+本项目提供`build.sh`，支持快速创建算子目录。进入项目根目录，执行以下命令：
 
 ```bash
 # 创建指定算子目录，如bash build.sh --genop=examples/example_ops
@@ -56,13 +56,13 @@ Create the initial directory for ${op_name} under ${op_class} success
 
 创建完成后，目录结构如下所示：
 
-```tex
+```text
 ${op_name}                              # 替换为实际算子名的小写下划线形式
 ├── examples                            # 算子调用示例
 │   ├── test_aclnn_${op_name}.cpp       # 算子aclnn调用示例
 ├── op_graph                            # 算子图模式
-│   ├── {op_name}_graph_infer.cpp       # InferDtype实现，实现算子dtype推导，在运行时推导输出dtype
-│   └── {op_name}_proto.h               # 实现算子图模式的原型
+│   ├── ${op_name}_graph_infer.cpp       # InferDtype实现，实现算子dtype推导，在运行时推导输出dtype
+│   └── ${op_name}_proto.h               # 实现算子图模式的原型
 ├── op_host                             # Host侧实现
 │   ├── ${op_name}_def.cpp              # 算子信息库，定义算子基本信息，如名称、输入输出、数据类型等
 │   ├── ${op_name}_infershape.cpp       # InferShape实现，实现算子形状推导，在运行时推导输出shape
@@ -134,7 +134,7 @@ Tiling主要切分逻辑。
 > 1. **TilingParse**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
 > 2. **CompileInfo**：图模式标准交付件，保留函数定义以满足框架调用规范，无实际逻辑时可置空。
 
-```CPP
+```cpp
 // ${op_name}_tiling.cpp
 // 1.Tiling需要获取运行环境信息，包括可用核数、UB(Unified Buffer)大小，并将获取到的信息传递给CompileInfo, 自动生成aclnn不调用该函数，直接返回ge::GRAPH_SUCCESS即可。
 static ge::graphStatus TilingParse(gert::TilingParseContext* context)
@@ -296,7 +296,7 @@ __global__ __aicore__ void add_example(GM_ADDR x, GM_ADDR y, GM_ADDR z, GM_ADDR 
 
 如需查看详细实现，请参考[add_example.h](../../../examples/add_example/op_kernel/add_example.h)。
 
-```C++
+```cpp
 // 2、定义Kernel类
 template <typename T>
 class AddExample
@@ -351,10 +351,10 @@ __aicore__ inline void AddExample<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, cons
     blockLength_ = tilingData->totalLength / AscendC::GetBlockNum();
     ...
     // 3.2 初始化GM地址
-    inputGMX.SetGlobalBuffer((__gm__ T*)x + blockLength_ * AscendC::GetBlockIdx(), blockLength_);
+    inputGMX_.SetGlobalBuffer((__gm__ T*)x + blockLength_ * AscendC::GetBlockIdx(), blockLength_);
     ...
     // 3.3 初始化队列长度
-    pipe.InitBuffer(inputQueueX_, BUFFER_NUM, tileLength_ * sizeof(T));
+    pipe_.InitBuffer(inputQueueX_, BUFFER_NUM, tileLength_ * sizeof(T));
     ...
 }
 
@@ -392,7 +392,7 @@ __aicore__ inline void AddExample<T>::Process()
 
 ## 编译部署
 
-算子开发完成后，需对算子工程进行编译，生成自定义算子安装包\*\.run，详细的编译操作如下：
+算子开发完成后，需对算子工程进行编译，生成自定义算子安装包*.run，详细的编译操作如下：
 
 1. **准备工作。**
 
@@ -797,7 +797,7 @@ export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/${vendor_name}_cv/op_api/
     <td>op_kernel/{op_name}.cpp</td>
     <td>将原有op_host/{op_name}.cpp中kernel实现的核函数实现迁移至cpp文件，同时：
       <br>. 新增REGISTER_TILING_DEFAULT调用注册Tiling结构体，使用GET_TILING_DATA_WITH_STRUCT获取TilingData
-      <br>. 添加tiling模板，支持模板参数的传入，根据模板参数的分支判断，选择不同的kernel侧是实现
+      <br>. 添加tiling模板，支持模板参数的传入，根据模板参数的分支判断，选择不同的kernel侧的实现
     </td>
     <td><a href="#op_kernel/{op_name}.cpp">op_kernel/{op_name}.cpp</a></td>
   </tr>

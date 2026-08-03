@@ -13,7 +13,7 @@ ops-cv算子首个Beta版本v8.5.0-beta.1现已发布。
 
 ### 🔗 版本地址
 
-[CANN 8.5.0-beta 1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/)
+[CANN 8.5.0-beta.1](https://ascend.devcloud.huaweicloud.com/cann/run/software/8.5.0-beta.1/)
 
 ```text
 版本目录说明如下：
