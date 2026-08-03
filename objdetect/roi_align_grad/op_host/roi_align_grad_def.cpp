@@ -72,7 +72,8 @@ public:
             .DynamicShapeSupportFlag(true)
             .NeedCheckSupportFlag(false)
             .PrecisionReduceFlag(true)
-            .ExtendCfgInfo("opFile.value", "roi_align_grad_apt");
+            .ExtendCfgInfo("opFile.value", "roi_align_grad_apt")
+            .ExtendCfgInfo("opInterface.value", "roi_align_grad");
         this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };

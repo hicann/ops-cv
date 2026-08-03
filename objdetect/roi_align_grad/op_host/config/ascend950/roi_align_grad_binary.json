@@ -42,32 +42,32 @@
         {
           "name": "xdiff_shape",
           "dtype": "list_int",
-          "value": [1, 16, 28, 28]
+          "value": null
         },
         {
           "name": "pooled_width",
           "dtype": "int",
-          "value": 7
+          "value": null
         },
         {
           "name": "pooled_height",
           "dtype": "int",
-          "value": 7
+          "value": null
         },
         {
           "name": "spatial_scale",
           "dtype": "float",
-          "value": 1.0
+          "value": null
         },
         {
           "name": "sample_num",
           "dtype": "int",
-          "value": 2
+          "value": null
         },
         {
           "name": "roi_end_mode",
           "dtype": "int",
-          "value": 1
+          "value": null
         }
       ],
       "outputs": [

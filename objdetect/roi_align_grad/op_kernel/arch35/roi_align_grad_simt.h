@@ -12,7 +12,11 @@
 
 /*!
  * \file roi_align_grad_simt.h
- * \brief SIMT kernel implementation for roi_align_grad operator
+ * \brief SIMT kernel implementation for roi_align_grad operator (deterministic gather mode)
+ *
+ * Design: xdiff-centric gather — each thread owns one xdiff pixel (batch, c, Y, X),
+ *         scans all ROIs to collect gradient contributions, accumulates serially,
+ *         writes once. No atomic operations → fully deterministic.
  */
 
 #ifndef ROI_ALIGN_GRAD_SIMT_H_
@@ -21,7 +25,6 @@
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "simt_api/common_functions.h"
-#include "simt_api/device_atomic_functions.h"
 #include "simt_api/math_functions.h"
 #include "roi_align_grad_tiling_data.h"
 #include "roi_align_grad_tiling_key.h"
@@ -32,61 +35,23 @@ using namespace AscendC;
 
 static constexpr uint32_t THREAD_NUM = 256;
 
-__simt_callee__ inline void BilinearGrad(float sy, float sx, float g, int32_t height, int32_t width, int64_t xdiffBase,
-                                         __gm__ float* xdiff)
-{
-    if (sy < -1.0f || sy > static_cast<float>(height) || sx < -1.0f || sx > static_cast<float>(width)) {
-        return;
-    }
+// ROI columns: [batch_idx, x1, y1, x2, y2]
+static constexpr int64_t ROI_COL_STRIDE = 5;
+static constexpr int32_t ROI_BATCH_IDX = 0;
+static constexpr int32_t ROI_X1_IDX = 1;
+static constexpr int32_t ROI_Y1_IDX = 2;
+static constexpr int32_t ROI_X2_IDX = 3;
+static constexpr int32_t ROI_Y2_IDX = 4;
 
-    if (sy < 0.0f)
-        sy = 0.0f;
-    if (sx < 0.0f)
-        sx = 0.0f;
+// roi_end_mode values
+static constexpr uint32_t ROI_END_MODE_OFFSET = 0;
+static constexpr uint32_t ROI_END_MODE_SHIFT = 1;
+static constexpr uint32_t ROI_END_MODE_HALF_PIXEL_A = 2;
+static constexpr uint32_t ROI_END_MODE_HALF_PIXEL_B = 3;
 
-    int32_t yLow = static_cast<int32_t>(sy);
-    int32_t xLow = static_cast<int32_t>(sx);
-    int32_t yHigh;
-    int32_t xHigh;
-
-    if (yLow >= height - 1) {
-        yHigh = height - 1;
-        yLow = height - 1;
-        sy = static_cast<float>(yLow);
-    } else {
-        yHigh = yLow + 1;
-    }
-
-    if (xLow >= width - 1) {
-        xHigh = width - 1;
-        xLow = width - 1;
-        sx = static_cast<float>(xLow);
-    } else {
-        xHigh = xLow + 1;
-    }
-
-    float ly = sy - static_cast<float>(yLow);
-    float lx = sx - static_cast<float>(xLow);
-    float hy = 1.0f - ly;
-    float hx = 1.0f - lx;
-
-    int64_t yLowOff = static_cast<int64_t>(yLow) * width;
-    int64_t yHighOff = static_cast<int64_t>(yHigh) * width;
-
-    asc_atomic_add(&xdiff[xdiffBase + yLowOff + xLow], g * hy * hx);
-    asc_atomic_add(&xdiff[xdiffBase + yLowOff + xHigh], g * hy * lx);
-    asc_atomic_add(&xdiff[xdiffBase + yHighOff + xLow], g * ly * hx);
-    asc_atomic_add(&xdiff[xdiffBase + yHighOff + xHigh], g * ly * lx);
-}
-
-__simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void ZeroKernel(uint64_t totalElements, __gm__ float* xdiff)
-{
-    uint64_t gridSize = static_cast<uint64_t>(blockDim.x) * gridDim.x;
-    for (uint64_t idx = static_cast<uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x; idx < totalElements;
-         idx += gridSize) {
-        xdiff[idx] = 0.0f;
-    }
-}
+// Minimums
+static constexpr int32_t MIN_BIN_GRID = 1;
+static constexpr int64_t MIN_SAMPLE_COUNT = 1;
 
 struct RoiBinInfo {
     float roiY1, roiX1;
@@ -103,19 +68,19 @@ __simt_callee__ inline bool ComputeRoiBin(int32_t n, int32_t numRois, int32_t ba
 {
     if (n >= numRois)
         return false;
-    int64_t roiBase = static_cast<int64_t>(n) * 5;
-    info.batchIdx = static_cast<int32_t>(rois[roiBase]);
+    int64_t roiBase = static_cast<int64_t>(n) * ROI_COL_STRIDE;
+    info.batchIdx = static_cast<int32_t>(rois[roiBase + ROI_BATCH_IDX]);
     if (info.batchIdx < 0 || info.batchIdx >= batch)
         return false;
-    float roiX1 = rois[roiBase + 1] * spatialScale;
-    float roiY1 = rois[roiBase + 2] * spatialScale;
-    float roiX2 = rois[roiBase + 3] * spatialScale;
-    float roiY2 = rois[roiBase + 4] * spatialScale;
+    float roiX1 = rois[roiBase + ROI_X1_IDX] * spatialScale;
+    float roiY1 = rois[roiBase + ROI_Y1_IDX] * spatialScale;
+    float roiX2 = rois[roiBase + ROI_X2_IDX] * spatialScale;
+    float roiY2 = rois[roiBase + ROI_Y2_IDX] * spatialScale;
 
-    if constexpr (ROI_END_MODE == 1) {
+    if constexpr (ROI_END_MODE == ROI_END_MODE_SHIFT) {
         roiX2 += spatialScale;
         roiY2 += spatialScale;
-    } else if constexpr (ROI_END_MODE == 2 || ROI_END_MODE == 3) {
+    } else if constexpr (ROI_END_MODE == ROI_END_MODE_HALF_PIXEL_A || ROI_END_MODE == ROI_END_MODE_HALF_PIXEL_B) {
         roiX1 -= 0.5f;
         roiY1 -= 0.5f;
         roiX2 -= 0.5f;
@@ -125,7 +90,7 @@ __simt_callee__ inline bool ComputeRoiBin(int32_t n, int32_t numRois, int32_t ba
     float roiW = roiX2 - roiX1;
     float roiH = roiY2 - roiY1;
 
-    if constexpr (ROI_END_MODE == 0 || ROI_END_MODE == 1) {
+    if constexpr (ROI_END_MODE == ROI_END_MODE_OFFSET || ROI_END_MODE == ROI_END_MODE_SHIFT) {
         if (roiW < 1.0f)
             roiW = 1.0f;
         if (roiH < 1.0f)
@@ -139,67 +104,171 @@ __simt_callee__ inline bool ComputeRoiBin(int32_t n, int32_t numRois, int32_t ba
         info.roiBinGridH = sampleNum;
         info.roiBinGridW = sampleNum;
     } else {
-        info.roiBinGridH = max(static_cast<int32_t>(ceilf(roiH / static_cast<float>(pooledHeight))), 1);
-        info.roiBinGridW = max(static_cast<int32_t>(ceilf(roiW / static_cast<float>(pooledWidth))), 1);
+        info.roiBinGridH = max(static_cast<int32_t>(ceilf(roiH / static_cast<float>(pooledHeight))), MIN_BIN_GRID);
+        info.roiBinGridW = max(static_cast<int32_t>(ceilf(roiW / static_cast<float>(pooledWidth))), MIN_BIN_GRID);
     }
     info.count = static_cast<int64_t>(info.roiBinGridH) * info.roiBinGridW;
-    if (info.count < 1)
-        info.count = 1;
+    if (info.count < MIN_SAMPLE_COUNT)
+        info.count = MIN_SAMPLE_COUNT;
     info.roiY1 = roiY1;
     info.roiX1 = roiX1;
     return true;
 }
 
-__simt_callee__ inline void ScatterGrad(const RoiBinInfo& info, int32_t ph, int32_t pw, float g, int32_t height,
-                                        int32_t width, int64_t xdiffBase, __gm__ float* xdiff)
-{
-    for (int32_t iy = 0; iy < info.roiBinGridH; iy++) {
-        float y = info.roiY1 + static_cast<float>(ph) * info.binH +
-                  (static_cast<float>(iy) + 0.5f) * info.binH / static_cast<float>(info.roiBinGridH);
-        for (int32_t ix = 0; ix < info.roiBinGridW; ix++) {
-            float x = info.roiX1 + static_cast<float>(pw) * info.binW +
-                      (static_cast<float>(ix) + 0.5f) * info.binW / static_cast<float>(info.roiBinGridW);
-            BilinearGrad(y, x, g, height, width, xdiffBase, xdiff);
-        }
-    }
-}
-
+/*!
+ * \brief Deterministic gather kernel: each thread processes one xdiff pixel.
+ *
+ * For pixel (batch, c, Y, X), scan all ROIs whose batchIdx matches,
+ * iterate over sampling points, and collect gradient contributions
+ * that map to this pixel via bilinear interpolation.
+ *
+ * Key optimization: skip sampling points whose coordinate is outside
+ * [Y-1, Y+1] × [X-1, X+1] — only these can contribute to (Y, X).
+ */
 template <typename T, uint32_t ROI_END_MODE>
-__simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void RoiAlignGradKernel(
-    uint64_t totalElements, int32_t numRois, int32_t channels, int32_t pooledHeight, int32_t pooledWidth, int32_t batch,
-    int32_t height, int32_t width, float spatialScale, int32_t sampleNum, __gm__ T* ydiff, __gm__ float* rois,
-    __gm__ float* xdiff)
+__simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void RoiAlignGradGatherKernel(
+    uint64_t totalXdiffElements, int32_t numRois, int32_t channels, int32_t pooledHeight, int32_t pooledWidth,
+    int32_t batch, int32_t height, int32_t width, float spatialScale, int32_t sampleNum, __gm__ T* ydiff,
+    __gm__ float* rois, __gm__ float* xdiff)
 {
+    const int64_t HW = static_cast<int64_t>(height) * width;
     const int64_t pHpW = static_cast<int64_t>(pooledHeight) * pooledWidth;
     const int64_t CpHpW = static_cast<int64_t>(channels) * pHpW;
-    const int64_t HW = static_cast<int64_t>(height) * width;
-    const int64_t CHW = static_cast<int64_t>(channels) * HW;
 
     uint64_t gridSize = static_cast<uint64_t>(blockDim.x) * gridDim.x;
 
-    for (uint64_t idx = static_cast<uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x; idx < totalElements;
+    for (uint64_t idx = static_cast<uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x; idx < totalXdiffElements;
          idx += gridSize) {
+        // Decode idx → (batch, c, Y, X)
         uint64_t tmp = idx;
-        int32_t pw = static_cast<int32_t>(tmp % static_cast<uint64_t>(pooledWidth));
-        tmp = tmp / static_cast<uint64_t>(pooledWidth);
-        int32_t ph = static_cast<int32_t>(tmp % static_cast<uint64_t>(pooledHeight));
-        tmp = tmp / static_cast<uint64_t>(pooledHeight);
+        int32_t X = static_cast<int32_t>(tmp % static_cast<uint64_t>(width));
+        tmp /= static_cast<uint64_t>(width);
+        int32_t Y = static_cast<int32_t>(tmp % static_cast<uint64_t>(height));
+        tmp /= static_cast<uint64_t>(height);
         int32_t c = static_cast<int32_t>(tmp % static_cast<uint64_t>(channels));
-        int32_t n = static_cast<int32_t>(tmp / static_cast<uint64_t>(channels));
+        int32_t b = static_cast<int32_t>(tmp / static_cast<uint64_t>(channels));
 
-        RoiBinInfo info;
-        if (!ComputeRoiBin<ROI_END_MODE>(n, numRois, batch, pooledHeight, pooledWidth, spatialScale, sampleNum, rois,
-                                         info))
-            continue;
+        float acc = 0.0f;
 
-        int64_t ydiffIdx = static_cast<int64_t>(n) * CpHpW + static_cast<int64_t>(c) * pHpW +
-                           static_cast<int64_t>(ph) * pooledWidth + static_cast<int64_t>(pw);
-        float gradVal = static_cast<float>(ydiff[ydiffIdx]);
-        float g = gradVal / static_cast<float>(info.count);
+        // Precompute Y/X bounds for fast skip
+        float yLo = static_cast<float>(Y) - 1.0f;
+        float yHi = static_cast<float>(Y) + 1.0f;
+        float xLo = static_cast<float>(X) - 1.0f;
+        float xHi = static_cast<float>(X) + 1.0f;
 
-        int64_t xdiffBase = static_cast<int64_t>(info.batchIdx) * CHW + static_cast<int64_t>(c) * HW;
+        // Scan all ROIs
+        for (int32_t n = 0; n < numRois; n++) {
+            RoiBinInfo info;
+            if (!ComputeRoiBin<ROI_END_MODE>(n, numRois, batch, pooledHeight, pooledWidth, spatialScale, sampleNum,
+                                             rois, info))
+                continue;
+            if (info.batchIdx != b)
+                continue;
 
-        ScatterGrad(info, ph, pw, g, height, width, xdiffBase, xdiff);
+            float invCount = 1.0f / static_cast<float>(info.count);
+            float invGridH = 1.0f / static_cast<float>(info.roiBinGridH);
+            float invGridW = 1.0f / static_cast<float>(info.roiBinGridW);
+
+            // Iterate over pooled positions and sampling points
+            for (int32_t ph = 0; ph < pooledHeight; ph++) {
+                // Compute y range for this ph across all iy
+                // y = roiY1 + ph * binH + (iy + 0.5) * binH / roiBinGridH
+                // y_min = roiY1 + ph * binH + 0.5 * binH / roiBinGridH
+                // y_max = roiY1 + ph * binH + (roiBinGridH - 0.5) * binH / roiBinGridH
+                float yBase = info.roiY1 + static_cast<float>(ph) * info.binH;
+                float yMin = yBase + 0.5f * info.binH * invGridH;
+                float yMax = yBase + (static_cast<float>(info.roiBinGridH) - 0.5f) * info.binH * invGridH;
+                float yLoopMin = yMin < yMax ? yMin : yMax;
+                float yLoopMax = yMin < yMax ? yMax : yMin;
+
+                // Fast skip: no sampling point in this ph can hit [Y-1, Y+1]
+                if (yLoopMax < yLo || yLoopMin > yHi)
+                    continue;
+
+                for (int32_t pw = 0; pw < pooledWidth; pw++) {
+                    float xBase = info.roiX1 + static_cast<float>(pw) * info.binW;
+                    float xMin = xBase + 0.5f * info.binW * invGridW;
+                    float xMax = xBase + (static_cast<float>(info.roiBinGridW) - 0.5f) * info.binW * invGridW;
+                    float xLoopMin = xMin < xMax ? xMin : xMax;
+                    float xLoopMax = xMin < xMax ? xMax : xMin;
+
+                    // Fast skip: no sampling point in this pw can hit [X-1, X+1]
+                    if (xLoopMax < xLo || xLoopMin > xHi)
+                        continue;
+
+                    int64_t ydiffIdx = static_cast<int64_t>(n) * CpHpW + static_cast<int64_t>(c) * pHpW +
+                                       static_cast<int64_t>(ph) * pooledWidth + static_cast<int64_t>(pw);
+                    float gradVal = static_cast<float>(ydiff[ydiffIdx]);
+                    float g = gradVal * invCount;
+
+                    for (int32_t iy = 0; iy < info.roiBinGridH; iy++) {
+                        float sy = yBase + (static_cast<float>(iy) + 0.5f) * info.binH * invGridH;
+
+                        // Fast skip: sy outside [Y-1, Y+1]
+                        if (sy < yLo || sy > yHi)
+                            continue;
+
+                        for (int32_t ix = 0; ix < info.roiBinGridW; ix++) {
+                            float sx = xBase + (static_cast<float>(ix) + 0.5f) * info.binW * invGridW;
+
+                            // Fast skip: sx outside [X-1, X+1]
+                            if (sx < xLo || sx > xHi)
+                                continue;
+
+                            // Clamp and compute bilinear neighbors
+                            float y = sy;
+                            float x = sx;
+                            if (y < 0.0f)
+                                y = 0.0f;
+                            if (x < 0.0f)
+                                x = 0.0f;
+
+                            int32_t yLow = static_cast<int32_t>(y);
+                            int32_t xLow = static_cast<int32_t>(x);
+                            int32_t yHigh;
+                            int32_t xHigh;
+
+                            if (yLow >= height - 1) {
+                                yHigh = height - 1;
+                                yLow = height - 1;
+                                y = static_cast<float>(yLow);
+                            } else {
+                                yHigh = yLow + 1;
+                            }
+
+                            if (xLow >= width - 1) {
+                                xHigh = width - 1;
+                                xLow = width - 1;
+                                x = static_cast<float>(xLow);
+                            } else {
+                                xHigh = xLow + 1;
+                            }
+
+                            float ly = y - static_cast<float>(yLow);
+                            float lx = x - static_cast<float>(xLow);
+                            float hy = 1.0f - ly;
+                            float hx = 1.0f - lx;
+
+                            // Accumulate contribution if (Y, X) is one of the 4 neighbors
+                            if (Y == yLow && X == xLow) {
+                                acc += g * hy * hx;
+                            }
+                            if (Y == yLow && X == xHigh && xHigh != xLow) {
+                                acc += g * hy * lx;
+                            }
+                            if (Y == yHigh && X == xLow && yHigh != yLow) {
+                                acc += g * ly * hx;
+                            }
+                            if (Y == yHigh && X == xHigh && yHigh != yLow && xHigh != xLow) {
+                                acc += g * ly * lx;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        xdiff[idx] = acc;
     }
 }
 
@@ -211,13 +280,11 @@ __aicore__ inline void Process(GM_ADDR ydiff, GM_ADDR rois, GM_ADDR rois_n, GM_A
     __gm__ float* roisGm = (__gm__ float*)rois;
     __gm__ float* xdiffGm = (__gm__ float*)xdiff;
 
-    uint64_t totalElements = static_cast<uint64_t>(tilingData->totalYdiffElements);
     uint64_t totalXdiff = static_cast<uint64_t>(tilingData->totalXdiffElements);
 
-    asc_vf_call<ZeroKernel>(dim3(THREAD_NUM), totalXdiff, xdiffGm);
-
-    asc_vf_call<RoiAlignGradKernel<T, ROI_END_MODE>>(
-        dim3(THREAD_NUM), totalElements, tilingData->numRois, tilingData->channels, tilingData->pooledHeight,
+    // Gather mode: each thread writes its pixel exactly once — no zero-fill needed
+    asc_vf_call<RoiAlignGradGatherKernel<T, ROI_END_MODE>>(
+        dim3(THREAD_NUM), totalXdiff, tilingData->numRois, tilingData->channels, tilingData->pooledHeight,
         tilingData->pooledWidth, tilingData->batch, tilingData->height, tilingData->width, tilingData->spatialScale,
         tilingData->sampleNum, ydiffGm, roisGm, xdiffGm);
 }
