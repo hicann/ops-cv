@@ -251,14 +251,29 @@ aclnnStatus aclnnThreeInterpolateBackward(
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/compile_and_run_sample.md)。
 
-> 说明：本示例面向<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>（4D NCHW输入）。<term>Ascend 950PR/Ascend 950DT</term>请按下述差异修改输入构造（其余流程相同）：
->
-> ```Cpp
-> // 3D ND 输入
-> std::vector<int64_t> gradXShape = {bs, cs, ns}; // 4D NCHW 输入时为 {bs, cs, ns, 1} + ACL_FORMAT_NCHW
-> std::vector<int64_t> gradYShape = {bs, cs, ms}; // 4D NCHW 输入时为 {bs, cs, ms, 1} + ACL_FORMAT_NCHW
-> // CreateAclTensor 的 format 参数统一使用 ACL_FORMAT_ND
-> ```
+<!-- npu="A3,910b" id11 -->
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>:
+
+  > 说明：
+  >
+  > 本示例输入和输出的shape为4D，数据格式为NCHW。
+<!-- end id11 -->
+
+<!-- npu="950" id12 -->
+- <term>Ascend 950PR/Ascend 950DT</term>：
+
+  > 说明：
+  >
+  > 本示例输入和输出的shape为4D，数据格式为NCHW。
+  > 请按下述差异修改输入构造（其余流程相同）：
+  >
+  > ```Cpp
+  > // 3D ND 输入
+  > std::vector<int64_t> gradXShape = {bs, cs, ns}; // 4D NCHW 输入时为 {bs, cs, ns, 1} + ACL_FORMAT_NCHW
+  > std::vector<int64_t> gradYShape = {bs, cs, ms}; // 4D NCHW 输入时为 {bs, cs, ms, 1} + ACL_FORMAT_NCHW
+  > // CreateAclTensor 的 format 参数统一使用 ACL_FORMAT_ND
+  > ```
+<!-- end id12 -->
 
 ```Cpp
 #include <iostream>

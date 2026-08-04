@@ -149,10 +149,14 @@ aclnnStatus aclnnUpsampleNearestExact1d(
   <!-- npu="310p" id7 -->
   - <term>Atlas 推理系列产品</term>：
 
-    入参`self`和出参`out`的数据类型不支持BFLOAT16。
+    入参`self`和出参`out`的数据类型不支持BFLOAT16、UINT8。
   <!-- end id7 -->
 
-  - UINT8数据类型仅<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>支持。
+  <!-- npu="950" id9 -->
+  - <term>Ascend 950PR/Ascend 950DT</term>：
+
+    入参`self`和出参`out`的数据类型不支持UINT8。
+  <!-- end id9 -->
 
 - **返回值**
 
