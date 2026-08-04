@@ -26,7 +26,7 @@ protected:
     static void TearDownTestCase() { std::cout << "UpsampleBicubic2dTiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
+static std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
 
 TEST_F(UpsampleBicubic2dTiling, upsample_bicubic2d_float32_align_false)
 {
