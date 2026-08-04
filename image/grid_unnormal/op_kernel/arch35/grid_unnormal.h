@@ -27,7 +27,7 @@
 #define GRID_UNNORMAL_H
 
 #include "kernel_operator.h"
-#include "op_common/op_kernel/load_store_utils.h"
+#include "op_kernel/load_store_utils.h"
 #include "grid_unnormal_tiling_data.h"
 
 namespace NsGridUnnormal {
