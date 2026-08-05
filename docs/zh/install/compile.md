@@ -18,7 +18,7 @@
 | opbase(自CANN 9.0.0及以后版本需要下载) | master | [opbase](https://gitcode.com/cann/opbase) |
 | cann-cmake | master-044 | [cmake-master-044.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/cmake/cmake-master-044.tar.gz) |
 
-若您的编译环境可以访问网络，请参考[联网编译](#联网编译)，编译脚本会自动联网下载第三方软件。否则，请参考[未联网编译](#未联网编译)手动下载第三方软件。
+若编译环境可以访问网络，请参考[联网编译](#联网编译)，编译脚本会自动联网下载第三方软件。否则，请参考[未联网编译](#未联网编译)手动下载第三方软件。
 
 准备好开源第三方软件后，可采用如下编译方式，请按需选择：
 
@@ -32,7 +32,7 @@
 
 - **ops-cv静态库**：
 
-  > 说明：若您需要**基于本项目进行二次发布**并且对**软件包大小有要求**时，建议采用静态库编译，该库可以链接您的应用开发程序，仅保留业务所需的算子，从而实现软件最小化部署。
+  > 说明：如果需要**基于本项目进行二次发布**并且对**软件包大小有要求**时，建议采用静态库编译，该库可以链接应用开发程序，仅保留业务所需的算子，从而实现软件最小化部署。
 
   表示整个项目编译为一个静态库文件，包含libcann_cv_static.a和aclnn接口头文件。该包仅支持aclnn调用AI Core算子。
 
@@ -110,7 +110,7 @@
     ```bash
     Self-extractable archive "cann-${soc_name}-ops-cv_${cann_version}_linux-${arch}.run" successfully created.
     ```
-    
+
     \$\{soc\_name\}表示NPU型号名称，即\$\{soc\_version\}删除“ascend”后剩余的内容。编译成功后，run包存放于build_out目录下。
 
 2. **安装ops-cv包**
@@ -179,9 +179,9 @@
     在联网环境中提前下载第三方软件，目前有如下方式，请按需选择：
 
     - 方式1：根据[安装第三方依赖](#安装第三方依赖)提供的表格手动下载，若从其他地址下载，请确保版本号一致。
-    
+
     - 方式2：通过[third_lib_download.py](../../../scripts/tools/third_lib_download.py)脚本一键下载，该脚本在本项目`scripts/tools/`目录，下载该脚本并执行如下命令：
-    
+
         ```bash
         python ${scripts_dir}/third_lib_download.py
         ```
@@ -193,36 +193,34 @@
     将下载好的第三方软件上传至离线环境，可存放在`third_party`目录或自定义目录下。**推荐前者，其编译命令与联网编译场景下的命令一致。**
 
     - **third\_party目录**（推荐）
-    
-        请在本项目根目录创建`third_party`目录（若有则无需创建），将第三方软件拷贝到该指定目录。此时编译命令与联网编译命令一致，具体参考[联网编译](#联网编译)。
-    
+
     - **自定义目录**
-    
+
         在离线环境的任意位置新建`${cann_3rd_lib_path}`目录，将第三方软件拷贝到该目录，请确保该目录有权限访问。
 
         ```bash
         mkdir -p ${cann_3rd_lib_path}
         ```
-        
+
         此时编译命令需在联网编译命令基础上额外增加`--cann_3rd_lib_path=${cann_3rd_lib_path}`用于指定第三方软件所在路径。假设存放路径为`/path/cann_3rd_lib_path`，不同编译方式对应的命令如下：
-        
+
         - 自定义算子包
-        
+
             ```bash
             bash build.sh --pkg --soc=${soc_version} [--vendor_name=${vendor_name}] [--ops=${op_list}] --cann_3rd_lib_path=${cann_3rd_lib_path}
             # 以GridSample算子编译为例
             # bash build.sh --pkg --soc=ascend910b --ops=grid_sample -j16 --cann_3rd_lib_path=/path/cann_3rd_lib_path
             ```
-            
+
         - ops-cv整包
-        
+
             ```bash
             bash build.sh --pkg --soc=${soc_version} --cann_3rd_lib_path=${cann_3rd_lib_path}
             # bash build.sh --pkg --soc=ascend910b --cann_3rd_lib_path=/path/cann_3rd_lib_path
             ```
-            
+
         - ops-cv静态库
-        
+
             ```bash
             bash build.sh --pkg --static --soc=${soc_version} --cann_3rd_lib_path=${cann_3rd_lib_path}
             # bash build.sh --pkg --static --soc=ascend910b --cann_3rd_lib_path=/path/cann_3rd_lib_path

@@ -2,7 +2,7 @@
 
 ## 使用须知
 
-本指南旨在帮助您快速上手CANN和`ops-cv`算子仓的使用。为方便您快速了解算子开发全流程，以**AddExample**算子为实践对象，算子源码位于`ops-cv/examples/add_example`，操作流程如下：
+本指南旨在帮助开发者快速上手CANN和`ops-cv`算子仓的使用。为方便快速了解算子开发全流程，以**AddExample**算子为实践对象，算子源码位于`ops-cv/examples/add_example`，操作流程如下：
 
 1. **[前提条件](../README.md)**：参考项目README完成环境准备和源码下载，此处不再赘述。快速入门场景**推荐CANNLab或Docker部署**，操作简单。
 
@@ -178,9 +178,9 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
 - **printf**
 
-  该接口支持打印Scalar类型数据，如整数、字符型、布尔型等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中"算子调测API > printf"。
+  该接口支持打印Scalar类型数据，如整数、字符型、布尔型等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > printf”。
 
-  ```c++
+  ```cpp
   blockLength_ = (remainderLength > tilingData->blockFactor) ? tilingData->blockFactor : remainderLength;
   ubLength_ = tilingData->ubFactor;
   // 打印当前核计算Block长度
@@ -191,7 +191,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
   该接口支持Dump指定Tensor的内容，同时支持打印自定义附加信息，比如当前行号等，详细介绍请参见[《Ascend C API》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)中“算子调测API > DumpTensor”。
 
-  ```c++
+  ```cpp
   AscendC::LocalTensor<T> xLocal = inputQueueX.DeQue<T>();
   AscendC::LocalTensor<T> yLocal = inputQueueY.DeQue<T>();
   AscendC::LocalTensor<T> zLocal = outputQueueZ.AllocTensor<T>();
@@ -232,7 +232,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
 **修改输入/输出数据**：修改输入、输出的shape信息，以及初始化数据，构造相应的输入、输出tensor。
 
-```c++
+```cpp
 int main() {
     // ... 初始化代码...
 
@@ -266,4 +266,4 @@ int main() {
 
 ## 结语
 
-体验完上述流程，您已基本完成算子开发过程，如果您想进一步贡献新算子或学习更多高阶开发、调试等技能，请访问本项目README学习[进阶教程](../README.md#学习教程)和[贡献指南](../README.md#相关信息)等。
+体验完上述流程，已基本完成算子开发过程，如果想要进一步贡献新算子或学习更多高阶开发、调试等技能，请访问本项目README学习[进阶教程](../README.md#学习教程)和[贡献指南](../README.md#相关信息)等。

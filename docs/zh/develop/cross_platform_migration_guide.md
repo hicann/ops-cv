@@ -99,8 +99,8 @@
     <td>所有使用int4_t的算子需要切换到支持的数据类型（如int8），并更新量化解算逻辑</td>
   </tr>
   <tr>
-    <td>不支持4：2稀疏矩阵计算</td>
-    <td>原依赖4：2稀疏特性提速的kernel需要改为稠密或其他支持的稀疏策略，并更新性能预期说明</td>
+    <td>不支持4:2稀疏矩阵计算</td>
+    <td>原依赖4:2稀疏特性提速的kernel需要改为稠密或其他支持的稀疏策略，并更新性能预期说明</td>
   </tr>
   <tr>
     <td rowspan="1">存储单元</td>
@@ -159,7 +159,7 @@ gather_v2算子根据合轴后的尾轴为单位进行gather，因此模板选�
 
 SIMD实现采用传统的向量化编程模型，需显式管理UB缓冲区和流水队列：
 
-```Cpp
+```cpp
 // SIMD: 使用队列机制管理数据缓冲
 TQueBind<QuePosition::VECIN, QuePosition::VECOUT, BUFFER_NUM> inQueue_;
 TBuf<QuePosition::VECCALC> indexBuf_;
@@ -168,14 +168,14 @@ TBuf<QuePosition::VECCALC> indexBuf_;
 for (int64_t j = 0; j < rows; j++) {
     INDICES_T index = GetIndex(yIdx, indiceEndIdx);  // 标量读取索引
     int64_t xIndex = index * tilingData_->innerSize;
-    DataCopyPad(xLocal[j * colsAlign], xGm[offset], dataCoptExtParams, dataCopyPadExtParams); // 批量连续数搬入
+    DataCopyPad(xLocal[j * colsAlign], xGm[offset], dataCopyExtParams, dataCopyPadExtParams); // 批量连续数搬入
 }
 inQueue_.EnQue<int8_t>(xLocal);  // 入队等待输出
 ```
 
 SIMT采用线程级并行模型，每个线程独立处理元素：
 
-```Cpp
+```cpp
 // SIMT: 使用线程级并行，无需显式buffer管理
 __simt_vf__ LAUNCH_BOUND(2048) void GatherSimt(...) {
     for (INDEX_SIZE_T index = Simt::GetThreadIdx();
@@ -340,7 +340,7 @@ Ascend 950新架构引入UB2L1 & L0C2UB间的直连通路，实现矩阵计算�
 
 对于切K或多阶段融合场景，可将"L0C搬回GM再读回UB"改为"L0C直达UB累加/后处理"，降低GM往返带宽压力和时延。迁移时建议把中间结果归并、激活/量化前处理放到UB侧完成，并显式梳理MTE1/MTE2/MTE3与计算单元的事件同步顺序，确保跨单元流水连续，避免由于新增通路引入数据可见性或同步时序问题。关键接口定义可参考：
 
-```Cpp
+```cpp
 // 1. 新增: 搬入接口增加UB2L1的Nd2Nz搬入，支持Src&Dst都是LocalTensor的形式
 template <typename T>
 __aicore__ inline void DataCopy(const LocalTensor<T>& dst, const LocalTensor<T>& src, const Nd2NzParams& intriParams);

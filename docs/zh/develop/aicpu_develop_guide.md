@@ -184,9 +184,9 @@ uint32_t AddExampleCpuKernel::Compute(CpuKernelContext& ctx) {
     case DT_FLOAT:
       return AddCompute<float>(...);
     case DT_INT32:
-      return AddCompute<int32>(...);
+      return AddCompute<int32_t>(...);
       ....
-    default : return PARAM_INVALID;
+    default : return kParamInvalid;
   }
 }
 
@@ -201,7 +201,7 @@ REGISTER_CPU_KERNEL(kAddExample, AddExampleCpuKernel);
 
 ## 编译部署
 
-算子开发完成后，需对算子工程进行编译，生成自定义算子安装包\*\.run，具体操作如下：
+算子开发完成后，需对算子工程进行编译，生成自定义算子安装包*.run，具体操作如下：
 
 1. **准备工作。**
 
