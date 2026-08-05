@@ -9,7 +9,6 @@
  */
 
 #include "register/register.h"
-#include "graph/utils/op_desc_utils.h"
 
 #include "log/log.h"
 
@@ -22,19 +21,18 @@ static Status ParseResizeNearestNeighborV2Grad(const ge::Operator& op_src, ge::O
     if (AutoMappingByOpFn(op_src, op) != SUCCESS) {
         return FAILED;
     }
-    auto op_dsc = ge::OpDescUtils::GetOpDescFromOperator(op);
-    ge::GeTensorDesc input_tensor = op_dsc->GetInputDesc(POS_0);
+    ge::TensorDesc input_tensor = op.GetInputDesc(POS_0);
     input_tensor.SetOriginFormat(ge::FORMAT_NHWC);
     input_tensor.SetFormat(ge::FORMAT_NHWC);
-    auto ret = op_dsc->UpdateInputDesc(POS_0, input_tensor);
+    auto ret = op.UpdateInputDesc(POS_0, input_tensor);
     if (ret != ge::GRAPH_SUCCESS) {
         OP_LOGE(TbeGetName(op).c_str(), "update input format failed.");
         return FAILED;
     }
-    ge::GeTensorDesc output_tensor = op_dsc->GetOutputDesc(POS_0);
+    ge::TensorDesc output_tensor = op.GetOutputDesc(POS_0);
     output_tensor.SetOriginFormat(ge::FORMAT_NHWC);
     output_tensor.SetFormat(ge::FORMAT_NHWC);
-    auto ret_output = op_dsc->UpdateOutputDesc(POS_0, output_tensor);
+    auto ret_output = op.UpdateOutputDesc(POS_0, output_tensor);
     if (ret_output != ge::GRAPH_SUCCESS) {
         OP_LOGE(TbeGetName(op).c_str(), "update output format failed.");
         return FAILED;

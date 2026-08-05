@@ -9,7 +9,6 @@
  */
 
 #include "register/register.h"
-#include "graph/utils/op_desc_utils.h"
 
 #include "log/log.h"
 
@@ -20,23 +19,9 @@ namespace domi {
 static Status ROIAlignParams(const std::vector<const google::protobuf::Message*> insideNodes, ge::Operator& op)
 {
     OP_LOGI(TbeGetName(op).c_str(), "Enter ROIAlign fusion parser.");
-    auto opDesc = ge::OpDescUtils::GetOpDescFromOperator(op);
-    if (opDesc == nullptr) {
-        OP_LOGE(TbeGetName(op).c_str(), "Get op desc failed.");
-        return FAILED;
-    }
-    if (!ge::AttrUtils::SetFloat(opDesc, "spatial_scale", 1.0)) {
-        OP_LOGE(TbeGetName(op).c_str(), "Set spatial_scale failed.");
-        return FAILED;
-    }
-    if (!ge::AttrUtils::SetInt(opDesc, "pooled_height", NET_2D_H1_ROI_ALIGN_POOL_HEIGHT)) {
-        OP_LOGE(TbeGetName(op).c_str(), "Set pooled_height failed.");
-        return FAILED;
-    }
-    if (!ge::AttrUtils::SetInt(opDesc, "pooled_width", NET_2D_H1_ROI_ALIGN_POOL_WIDTH)) {
-        OP_LOGE(TbeGetName(op).c_str(), "Set pooled_width failed.");
-        return FAILED;
-    }
+    op.SetAttr("spatial_scale", 1.0f);
+    op.SetAttr("pooled_height", static_cast<int64_t>(NET_2D_H1_ROI_ALIGN_POOL_HEIGHT));
+    op.SetAttr("pooled_width", static_cast<int64_t>(NET_2D_H1_ROI_ALIGN_POOL_WIDTH));
     return SUCCESS;
 }
 

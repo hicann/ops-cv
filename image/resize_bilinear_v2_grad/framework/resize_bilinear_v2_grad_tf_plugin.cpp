@@ -9,7 +9,6 @@
  */
 
 #include "register/register.h"
-#include "graph/utils/op_desc_utils.h"
 
 namespace domi {
 static Status ResizeBilinearV2GradMappingFn(const ge::Operator& op_src, ge::Operator& op)
@@ -17,19 +16,18 @@ static Status ResizeBilinearV2GradMappingFn(const ge::Operator& op_src, ge::Oper
     if (AutoMappingByOpFn(op_src, op) != SUCCESS) {
         return FAILED;
     }
-    auto op_dsc = ge::OpDescUtils::GetOpDescFromOperator(op);
-    ge::GeTensorDesc tensor_desc_w = op_dsc->GetInputDesc(0);
-    ge::GeTensorDesc tensor_desc_w1 = op_dsc->GetInputDesc(1);
-    ge::GeTensorDesc tensor_desc_w2 = op_dsc->GetOutputDesc(0);
+    ge::TensorDesc tensor_desc_w = op.GetInputDesc(0);
+    ge::TensorDesc tensor_desc_w1 = op.GetInputDesc(1);
+    ge::TensorDesc tensor_desc_w2 = op.GetOutputDesc(0);
     tensor_desc_w.SetOriginFormat(ge::FORMAT_NHWC);
     tensor_desc_w1.SetOriginFormat(ge::FORMAT_NHWC);
     tensor_desc_w2.SetOriginFormat(ge::FORMAT_NHWC);
     tensor_desc_w.SetFormat(ge::FORMAT_NHWC);
     tensor_desc_w1.SetFormat(ge::FORMAT_NHWC);
     tensor_desc_w2.SetFormat(ge::FORMAT_NHWC);
-    auto ret = op_dsc->UpdateInputDesc(0, tensor_desc_w);
-    auto ret1 = op_dsc->UpdateInputDesc(1, tensor_desc_w1);
-    auto ret2 = op_dsc->UpdateOutputDesc(0, tensor_desc_w2);
+    auto ret = op.UpdateInputDesc(0, tensor_desc_w);
+    auto ret1 = op.UpdateInputDesc(1, tensor_desc_w1);
+    auto ret2 = op.UpdateOutputDesc(0, tensor_desc_w2);
     if (ret != ge::GRAPH_SUCCESS || ret1 != ge::GRAPH_SUCCESS || ret2 != ge::GRAPH_SUCCESS) {
         return FAILED;
     }
