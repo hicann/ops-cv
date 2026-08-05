@@ -20,6 +20,7 @@
 输入x的shape为(N, boxes*(coords+1+classes), H, W)，通道维度C按(elem, box)排列，即先排列所有锚框的x坐标，再排列所有锚框的y坐标，依此类推。
 
 坐标处理：
+
 - x, y坐标做sigmoid激活
 - w, h坐标直接搬移（move），输出时w和h位置交换，输出排列为(x, y, h, w)
 
@@ -28,6 +29,7 @@ sigmoid(x) = \frac{1}{1 + exp(-x)}
 $$
 
 目标置信度和类别概率根据yolo_mode处理，yolo_mode由yolo_version、softmax和background三个属性决定：
+
 - YOLO_MODE_1（V3，或V2且softmax=false且background=false）：obj=sigmoid, classes=sigmoid
 - YOLO_MODE_2（V2且softmax=true且background=false）：obj=sigmoid, classes=softmax
 - YOLO_MODE_3（V2且softmax=false且background=true）：obj=move, classes=sigmoid

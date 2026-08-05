@@ -112,17 +112,6 @@ $$
 
 ## 调用说明
 
-<table><thead>
-  <tr>
-    <th>调用方式</th>
-    <th>调用样例</th>
-    <th>说明</th>
-  </tr></thead>
-<tbody>
-  <tr>
-    <td>图模式调用</td>
-    <td><a href="./examples/test_geir_anchor_response_flags.cpp">test_geir_anchor_response_flags</a></td>
-    <td>参见<a href="../../docs/zh/invocation/quick_op_invocation.md">算子调用</a>完成算子编译和验证。</td>
-  </tr>
-</tbody>
-</table>
+| 调用方式 | 调用样例     | 说明           |
+|---------|---------------------------|--------------------------------|
+| GE图模式 | [test_geir_anchor_response_flags](examples/arch35/test_geir_anchor_response_flags.cpp)  | 通过[算子IR](op_graph/anchor_response_flags_proto.h)构图方式调用AnchorResponseFlags算子。   |
