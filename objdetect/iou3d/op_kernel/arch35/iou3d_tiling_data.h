@@ -20,6 +20,7 @@
  *   - coreNum/pairsPerCore       : 多核切分（总 (b,i,j) 对按核均分为不相交子集）
  *   - tileLen/tailLen            : 单核内 UB 批处理粒度（(i,j) 对数）
  *   - isEmpty                    : 空 Tensor 标志（batch==0 || N==0 || K==0），用于 TPL_EMPTY 短路
+ *   - cosTmpSize                 : RADIAN_REDUCTION Cos 显式 sharedTmpBuffer 字节数
  *
  * 注：极角排序（Sort32）临时 buffer 由 kernel 侧按固定 IOU3D_SORT32_LEN(32) 分配，与逻辑规模无关，
  *     故无需 Host 侧动态精算 sortTmpSize（历史遗留字段已移除）。
@@ -39,5 +40,6 @@ struct Iou3DTilingData {
     uint32_t tileLen = 0;      // 单批处理的 (i,j) 对数（UB 批大小）
     uint32_t tailLen = 0;      // 尾批 (i,j) 对数
     uint32_t isEmpty = 0;      // 空 Tensor 标志（batch==0 || N==0 || K==0）
+    uint32_t cosTmpSize = 0;   // 高精度 Cos 临时空间（字节）
 };
 #endif // _IOU3D_TILING_DATA_H_

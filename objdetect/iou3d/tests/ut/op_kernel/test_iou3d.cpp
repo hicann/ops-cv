@@ -72,6 +72,9 @@ void FillTiling(Iou3DTilingData* t, uint32_t batch, uint32_t numN, uint32_t numK
     t->pairsPerCore = total;
     t->tileLen = total < 256U ? total : 256U;
     t->tailLen = (t->tileLen == 0U) ? 0U : (total % t->tileLen);
+    // Cos/Sin sharedTmpBuffer: host uses GetCosMaxMinTmpSize; UT(CPU sim) 用安全上界。
+    //   8 elem: 768B, 256 elem: 3072B (POLYNOMIAL_APPROXIMATION max); 4096B 覆盖 tileLen≤256。
+    t->cosTmpSize = 4096U;
 }
 } // namespace
 

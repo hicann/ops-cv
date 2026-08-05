@@ -26,6 +26,7 @@
 #include "op_common/log/log.h"
 #include "op_common/op_host/util/math_util.h"
 #include "op_common/op_host/util/platform_util.h"
+#include "lib/math/cos_tiling.h"
 #include "../../op_kernel/arch35/iou3d_tiling_data.h"
 
 namespace optiling {
@@ -40,6 +41,9 @@ constexpr size_t WORKSPACE_NUM = 1;
 constexpr int64_t IOU3D_DOF = 7; // 7-DoF 通道
 // 单批处理的 (i,j) 对数（UB 批大小）。保守取 256（UB 预算 ~180KB < 248KB）。
 constexpr uint32_t IOU3D_TILE_LEN = 256U;
+
+// 对齐 kernel 侧配置：仅 Cos 使用高精度角度归约算法，Sin 路径保持不变。
+constexpr AscendC::CosConfig IOU3D_HIGH_PRECISION_COS_CONFIG{AscendC::CosAlgo::RADIAN_REDUCTION};
 
 // 获取平台信息（coreNum, ubSize）。
 static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t* ubSize, int64_t* coreNum)
@@ -86,7 +90,7 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t* batch
                         gShape.GetDim(0)),
                 return ge::GRAPH_FAILED);
     // D5 对标 mmcv：移除 K≤2000 上限（mmcv 无 K 限制）。多核切分按 totalPairs=B*N*K（int64）均分，
-    //   UB 批处理按固定 tileLen(256) 分批，Sort32 固定 32 元素（多边形顶点 <=8），均与 K 无耦合，任意 K 成立。
+    //   UB 批处理按固定 tileLen(256) 分批，Sort32 固定 32 元素（有效顶点 <=16），均与 K 无耦合，任意 K 成立。
 
     // dtype 校验（float32）。dtype 由 def 文件驱动展开 kernel 变体，此处仅运行时友好报错，
     // 不再编码进 tiling_key（避免与 def 的 DataType 声明重复编码 dtype 维度）。
@@ -161,6 +165,25 @@ static ge::graphStatus Iou3DTilingFunc(gert::TilingContext* context)
                                  IOU3D_TILE_LEN;
     tiling->tileLen = tileLen;
     tiling->tailLen = (tileLen == 0U) ? 0U : static_cast<uint32_t>(pairsPerCore % static_cast<int64_t>(tileLen));
+
+    // 使用与 kernel 相同的 RADIAN_REDUCTION 配置计算最大临时空间。
+    // kernel 的向量长度按 32B 对齐，所以这里也使用对齐后的 tile shape。
+    const uint32_t alignedTileLen = ((tileLen + 7U) / 8U) * 8U;
+    const ge::Shape cosTileShape({static_cast<int64_t>(alignedTileLen)});
+    uint32_t cosMaxTmpSize = 0U;
+    uint32_t cosMinTmpSize = 0U;
+    AscendC::GetCosMaxMinTmpSize(IOU3D_HIGH_PRECISION_COS_CONFIG, cosTileShape, sizeof(float), false, cosMaxTmpSize,
+                                 cosMinTmpSize);
+    // 部分 CANN 版本 CosConfig 重载可能返回 0（stub 未实现），回退到无 config 重载。
+    // 无 config 重载返回 POLYNOMIAL_APPROXIMATION 的 max tmp，该值 >= RADIAN_REDUCTION 的 max tmp
+    // （实测 8 elem: 768 vs 288；256 elem: 3072 vs 2080），作为上界安全。
+    if (cosMaxTmpSize == 0U) {
+        AscendC::GetCosMaxMinTmpSize(cosTileShape, sizeof(float), false, cosMaxTmpSize, cosMinTmpSize);
+    }
+    OP_CHECK_IF(cosMaxTmpSize == 0U || cosMaxTmpSize > ubSize,
+                OP_LOGE(context, "Iou3D: invalid high-precision Cos tmp size %u (UB=%lu)", cosMaxTmpSize, ubSize),
+                return ge::GRAPH_FAILED);
+    tiling->cosTmpSize = cosMaxTmpSize;
 
     context->SetBlockDim(static_cast<uint32_t>(usedCoreNum));
 

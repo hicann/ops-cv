@@ -21,20 +21,16 @@
  *   Z 轴重叠 clamp 非负 → epsilon 除法 → 普通 DataCopyPad 写回（(b,i,j) 单点不相交写，无需原子加）。
  *
  * 编程模型：RegBase(arch35) kernel-shell + Scalar 混合。
- *   - 向量批算：AscendC::Sin / AscendC::Cos（4/pair 顶点 theta，adv_api math）。
+ *   - 向量批算：AscendC::Sin / AscendC::Cos（逐 pair 的 theta，adv_api math）。
  *   - 硬件排序：>3 顶点走 AscendC::Sort32 + Extract（diamond-angle 极角键，替代标量选择排序）。
- *   - 标量几何：分支密集（corners_num∈{0..8}），逐对用 LocalTensor::GetValue 读标量控制。
+ *   - 标量几何：分支密集（corners_num∈{0..24}），逐对用 LocalTensor::GetValue 读标量控制。
  *   - 数值稳定三守卫：
  *       epsilon_guard_division   : iou = interVol / max(union, 1e-6)（对标 mmcv clamp，golden.py:377）
  *       clamp_z_overlap_nonneg   : real_d = max(min-max, 0)
  *       degenerate_polygon_guard : corners_num < 3 → area = 0
- *   - 近同旋转框 bowtie 半面积退化修复（fp32 特有）：
- *       幅值相对强去重 : CollectCorners 去重容差 tol=max(1e-6, 1e-4·max(1,|x|,|y|))，
- *                        坍缩 fp32 向量 Sin/Cos 逐 lane 微差产生的近重复顶点（m=6/8→4），
- *                        相对幅值以兼容大坐标场景（不误并真顶点）。
- *       signed shoelace: SortPolygonArea 面积用有符号鞋带（不 per-triangle 取 abs，末尾一次 abs），
- *                        对残留错序/自交鲁棒（错序正负抵消，不放大成半面积）。
- *       红线 : 面积层严禁任何 NaN 守卫；NaN/inf 按 IEEE754 自然传播。
+ *   - 候选点语义：CollectCorners 不去重，按 golden 顺序完整保留 16 组边交点、再收集 8 次包含点（最多 24 点）。
+ *   - MMCV fan area: SortPolygonArea 以排序后首顶点为基准做有符号扇形累加，末尾一次 abs。
+ *   - 红线 : 面积层严禁任何 NaN 守卫；NaN/inf 按 IEEE754 自然传播。
  *
  * 布局：bboxes[B,7,N] 索引(b,c,i)=b*7*N + c*N + i；gtboxes[B,7,K] 同理；iou[B,N,K] 索引(b,i,j)=b*N*K + i*K + j。
  * 每核负责 flatten (b,i,j) 的一段连续区间（不相交），每元素只被一个核写一次，输出连续段用普通 DataCopyPad 写回
@@ -52,28 +48,32 @@ namespace NsIou3D {
 
 using namespace AscendC;
 
-constexpr uint32_t IOU3D_DOF = 7;       // 7-DoF 通道数
-constexpr uint32_t IOU3D_CORNERS = 4;   // 每框 BEV 顶点数
-constexpr uint32_t IOU3D_MAX_INTER = 8; // 交集多边形顶点数上限（两凸四边形交集 <= 8）
-constexpr float IOU3D_EPSILON = 1e-6f;  // IoU 分母 clamp 下限（对标 mmcv golden.py:37 EPS_IOU=1e-6）
-// 对标 mmcv：边相交退化判据阈值。|s5-s1|>EPS_KERNEL 用叉积公式，否则退化一般式直线方程
-//   （对标 mmcv golden.py:35/153 EPS_KERNEL=1e-8）。
+constexpr uint32_t IOU3D_DOF = 7;     // 7-DoF 通道数
+constexpr uint32_t IOU3D_CORNERS = 4; // 每框 BEV 顶点数
+// 对齐 MMCV iou3d_cuda_kernel.cuh 的 Point cross_points[16]。
+constexpr uint32_t IOU3D_MAX_INTER = 16;
+constexpr float IOU3D_EPSILON = 1e-6f; // IoU 分母 clamp 下限（对标 mmcv golden.py:37 EPS_IOU=1e-6）
+// 对齐 MMCV CUDA intersection 的退化分支阈值。
 constexpr float IOU3D_EPS_KERNEL = 1e-8f;
+// float32 最大有限值：仅用于区分有限输入与 NaN/Inf，不改变 NaN/Inf 传播语义。
+constexpr float IOU3D_MAX_FINITE = 3.402823466e38f;
 // 对标 mmcv：顶点包含测试绝对容差。反向旋转到框局部系后判 |rot|<half+MARGIN
 //   （对标 mmcv golden.py:36/194-195 MARGIN=1e-2，严格 <）。
 constexpr float IOU3D_MARGIN = 1e-2f;
-constexpr float IOU3D_DEDUP_TOL = 1e-6f; // 顶点去重绝对容差下限（小坐标场景，D6 保留现状）
-// 幅值相对强去重容差（D6 保留现状）。fp32 向量 Sin/Cos 逐 lane 微差使「同一角点」在 bbox/gtbox 两通道间
-//   偏差 ~1e-7~1e-5·幅值，叠加近共线边额外交点，使 identical box 去重后仍残留 m∈{6,8} 近重复
-//   顶点 → Sort32 tie-break bowtie → 半面积 → IoU=1/3。用相对幅值容差 tol=max(ABS, REL·max(1,|x|,|y|))
-//   把近重复坍缩回 4 真角点；相对而非绝对以兼容大坐标（1e20 场景不被误并——真顶点间距 >> REL·幅值）。
-constexpr float IOU3D_DEDUP_REL = 1e-4f; // 顶点去重相对幅值容差（D6 保留现状）
 // fp32 32B(one data block) = 8 元素。RegBase(arch35) 向量 adv_api Sin/Cos 要求 src/dst 32B 对齐
 // （sin_3510_impl 用 Reg::StoreAlign<..,DIST_PACK_B32>），故所有参与向量计算的 UB 子段起址与长度按 8 对齐。
 constexpr uint32_t IOU3D_ALIGN_ELEM = 8; // fp32 一个 datablock 的元素数（32B / 4B）
+// Cos 精度修复只覆盖已确认存在默认角度归约缺口的窄角度域，并仅替换至少相差约 1 ULP 的结果。
+// 其他角度完整保留默认 Cos；Sin 路径始终不变。
+constexpr float IOU3D_COS_FIX_MIN_ABS_ANGLE = 2.8f;
+constexpr float IOU3D_COS_FIX_MAX_ABS_ANGLE = 3.0f;
+constexpr float IOU3D_COS_FIX_MIN_DELTA = 5.9e-8f;
 // 硬件极角排序（Sort32）常量。
-constexpr uint32_t IOU3D_SORT32_LEN = 32U;    // Sort32 一趟固定处理 32 元素（8 有效 + 24 padding 沉底）
-constexpr float IOU3D_NEG_INF_KEY = -1.0e30f; // padding 槽键值（沉底到排序末尾）
+constexpr uint32_t IOU3D_SORT32_LEN = 32U; // Sort32 一趟固定处理 32 元素（最多 16 有效，其余 padding 沉底）
+// 高精度 Cos：使用角度归约算法；默认 Cos 和 Sin 仍先按原路径计算。
+constexpr AscendC::CosConfig IOU3D_HIGH_PRECISION_COS_CONFIG{AscendC::CosAlgo::RADIAN_REDUCTION};
+
+constexpr float IOU3D_NEG_INF_KEY = -1.0e30f;    // padding 槽键值（沉底到排序末尾）
 constexpr uint32_t IOU3D_IDX_MASK = 0x07FFFFFFu; // Sort32 index 位宽 27bit，回读时按位与还原原始下标
 
 // 向上取整对齐到 IOU3D_ALIGN_ELEM 的倍数（32B 对齐）
@@ -100,26 +100,24 @@ private:
     //   判 |rot_x|<halfDx+MARGIN && |rot_y|<halfDy+MARGIN（MARGIN=1e-2 绝对，严格 <）。
     __aicore__ inline bool PointInRect(float px, float py, float cx, float cy, float halfDx, float halfDy, float sinT,
                                        float cosT);
-    // 线段相交（对标 mmcv check_rect_cross + 跨立实验 + 直线求交 golden.py:104-168），相交返回 true 并写 (ox, oy)
+    // 线段相交：逐分支对齐 MMCV check_rect_cross + 跨立实验 + 直线求交。
     __aicore__ inline bool SegIntersect(float a1x, float a1y, float a2x, float a2y, float b1x, float b1y, float b2x,
                                         float b2y, float& ox, float& oy);
-    // 收集交集顶点（含去重），返回顶点数。box1/box2 各传 (cx,cy,halfDx,halfDy,sinT,cosT) 供反向旋转包含测试。
+    // 收集交集候选点（不去重，MMCV 固定 16 槽），返回候选数。
+    // box1/box2 各传 (cx,cy,halfDx,halfDy,sinT,cosT) 供反向旋转包含测试。
     __aicore__ inline uint32_t CollectCorners(const float c1x[IOU3D_CORNERS], const float c1y[IOU3D_CORNERS],
                                               const float c2x[IOU3D_CORNERS], const float c2y[IOU3D_CORNERS],
                                               float box1cx, float box1cy, float box1hx, float box1hy, float box1sin,
                                               float box1cos, float box2cx, float box2cy, float box2hx, float box2hy,
                                               float box2sin, float box2cos, float px[IOU3D_MAX_INTER],
                                               float py[IOU3D_MAX_INTER]);
-    // 三角形面积（叉积法）
-    __aicore__ inline float TriArea(float x1, float y1, float x2, float y2, float x3, float y3);
-    // 多边形面积（0/1/2→0 守卫；3→三角形直算；>3→质心分解 + 硬件 Sort32 极角排序 + 三角形叉积和）
+    // 多边形面积（0/1/2→0；>=3 均对齐 MMCV：质心极角排序 + 首顶点扇形叉积和）
     __aicore__ inline float PolygonArea(float px[IOU3D_MAX_INTER], float py[IOU3D_MAX_INTER], uint32_t m);
-    // >3 顶点：硬件 Sort32 极角排序（diamond-angle 键）+ 质心分解叉积面积。
+    // >=3 顶点：硬件 Sort32 极角排序（diamond-angle 单调等价 atan2）+ MMCV 首顶点扇形面积。
     __aicore__ inline float SortPolygonArea(float px[IOU3D_MAX_INTER], float py[IOU3D_MAX_INTER], uint32_t m);
     // 读取一个框的 7-DoF 标量（layout [B,DOF,D]）
     __aicore__ inline void LoadBox(const GlobalTensor<DTYPE_BBOXES>& gm, int64_t b, int64_t idx, int64_t dimSize,
                                    float box[IOU3D_DOF]);
-
     __aicore__ inline float ScalarAbs(float v) { return v < 0.0f ? -v : v; }
     __aicore__ inline float ScalarMax(float a, float b) { return a > b ? a : b; }
     __aicore__ inline float ScalarMin(float a, float b) { return a < b ? a : b; }
@@ -145,10 +143,11 @@ private:
     uint32_t numN_ = 0;
     uint32_t numK_ = 0;
     uint32_t tileLen_ = 0;
-    uint32_t alignedTl_ = 0; // 32B 对齐后的单批粒度（各 UB 子段步长）
-    uint32_t isEmpty_ = 0;   // 空 Tensor 标志（从 tilingData 读取，用于运行时判断）
-    int64_t pairStart_ = 0;  // 本核 flatten (b,i,j) 起始
-    int64_t pairCount_ = 0;  // 本核 flatten 对数
+    uint32_t alignedTl_ = 0;  // 32B 对齐后的单批粒度（各 UB 子段步长）
+    uint32_t isEmpty_ = 0;    // 空 Tensor 标志（从 tilingData 读取，用于运行时判断）
+    uint32_t cosTmpSize_ = 0; // 高精度 Cos 显式 sharedTmpBuffer 字节数
+    int64_t pairStart_ = 0;   // 本核 flatten (b,i,j) 起始
+    int64_t pairCount_ = 0;   // 本核 flatten 对数
     int64_t totalPairs_ = 0;
 };
 
@@ -163,6 +162,7 @@ __aicore__ inline void Iou3D::Init(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR iou,
     numK_ = tilingData->numGtboxes;
     tileLen_ = tilingData->tileLen;
     isEmpty_ = tilingData->isEmpty; // 保存空 Tensor 标志
+    cosTmpSize_ = tilingData->cosTmpSize;
 
     totalPairs_ = static_cast<int64_t>(batch_) * numN_ * numK_;
     const int64_t pairsPerCore = tilingData->pairsPerCore;
@@ -186,8 +186,8 @@ __aicore__ inline void Iou3D::Init(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR iou,
     uint32_t tl = (tileLen_ == 0U) ? 1U : tileLen_;
     alignedTl_ = Iou3DCeilAlign(tl);
     pipe.InitBuffer(angleBuf, 6U * alignedTl_ * sizeof(float));
-    // Sin/Cos fp32 主路径不消耗 sharedTmpBuffer，但显式提供 32B 对齐的 tmp 以规避 PopStackBuffer 栈依赖。
-    pipe.InitBuffer(tmpBuf, alignedTl_ * sizeof(float));
+    // RADIAN_REDUCTION Cos 消耗 Host 按 tiling API 计算的显式 sharedTmpBuffer。
+    pipe.InitBuffer(tmpBuf, cosTmpSize_);
     pipe.InitBuffer(outBuf, alignedTl_ * sizeof(float));
 
     // 硬件极角排序（Sort32）缓冲：一次分配、跨对复用（>3 顶点分支）。
@@ -213,32 +213,36 @@ __aicore__ inline void Iou3D::LoadBox(const GlobalTensor<DTYPE_BBOXES>& gm, int6
 }
 
 // ---------------------------------------------------------------------------
-// BoxCorners（与 golden BoxCorners 顺序一致：P1 左上, P2 右上, P3 右下, P4 左下）
+// BoxCorners（严格对齐 MMCV：左下、右下、右上、左上，先轴对齐后逐点旋转）
 // ---------------------------------------------------------------------------
 
 __aicore__ inline void Iou3D::BoxCorners(float x, float y, float w, float h, float sinT, float cosT,
                                          float cx[IOU3D_CORNERS], float cy[IOU3D_CORNERS])
 {
-    float halfW = 0.5f * w;
-    float halfH = 0.5f * h;
-    float hwCos = halfW * cosT;
-    float hwSin = halfW * sinT;
-    float hhCos = halfH * cosT;
-    float hhSin = halfH * sinT;
+    float halfW = w / 2.0f;
+    float halfH = h / 2.0f;
+    float x1 = x - halfW;
+    float y1 = y - halfH;
+    float x2 = x + halfW;
+    float y2 = y + halfH;
 
-    float xSubW = x - hwCos;
-    float ySubW = y - hwSin;
-    float xAddW = x + hwCos;
-    float yAddW = y + hwSin;
+    cx[0] = x1;
+    cy[0] = y1;
+    cx[1] = x2;
+    cy[1] = y1;
+    cx[2] = x2;
+    cy[2] = y2;
+    cx[3] = x1;
+    cy[3] = y2;
 
-    cx[0] = xSubW - hhSin;
-    cy[0] = ySubW + hhCos; // P1 左上
-    cx[1] = xAddW - hhSin;
-    cy[1] = yAddW + hhCos; // P2 右上
-    cx[2] = xAddW + hhSin;
-    cy[2] = yAddW - hhCos; // P3 右下
-    cx[3] = xSubW + hhSin;
-    cy[3] = ySubW - hhCos; // P4 左下
+    for (uint32_t k = 0; k < IOU3D_CORNERS; ++k) {
+        float dx = cx[k] - x;
+        float dy = cy[k] - y;
+        float newX = dx * cosT - dy * sinT + x;
+        float newY = dx * sinT + dy * cosT + y;
+        cx[k] = newX;
+        cy[k] = newY;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -262,60 +266,51 @@ __aicore__ inline bool Iou3D::PointInRect(float px, float py, float cx, float cy
 }
 
 // ---------------------------------------------------------------------------
-// SegIntersect（对标 mmcv intersection golden.py:104-168，逐分支复刻）
-//   ⚠️ 已知会重引入 θ=π fp32 伪交点风险（用户明确接受，为逐分支对标 mmcv 的权衡）。
-//   变量映射（我方边 a=(a1→a2) 对应 mmcv p0→p1，边 b=(b1→b2) 对应 q0→q1）：
-//     p0=(a1x,a1y) p1=(a2x,a2y) q0=(b1x,b1y) q1=(b2x,b2y)
-//   ① check_rect_cross 快速排斥（golden.py:104-112 / 139）
-//   ② 跨立实验 s1*s2>0 && s3*s4>0（严格 >，共线/相切拒绝）（golden.py:143-149）
-//        cross_3pts(a,b,c)=(a.x-c.x)*(b.y-c.y)-(b.x-c.x)*(a.y-c.y)（golden.py:120）
-//   ③ |s5-s1|>EPS_KERNEL 用叉积公式，否则退化一般式直线方程（不判 D==0）（golden.py:152-166）
+// SegIntersect（逐分支对齐 MMCV intersection）
+//   p0=(a1x,a1y), p1=(a2x,a2y), q0=(b1x,b1y), q1=(b2x,b2y)。
+//   ① check_rect_cross AABB 快速排斥；
+//   ② s1*s2>0 && s3*s4>0 严格跨立；
+//   ③ |s5-s1|>1e-8 用叉积公式，否则使用一般式直线方程。
 // ---------------------------------------------------------------------------
 
 __aicore__ inline bool Iou3D::SegIntersect(float a1x, float a1y, float a2x, float a2y, float b1x, float b1y, float b2x,
                                            float b2y, float& ox, float& oy)
 {
-    // p0=(a1x,a1y) p1=(a2x,a2y) q0=(b1x,b1y) q1=(b2x,b2y)
-    // ① check_rect_cross 快速排斥（AABB 包围盒重叠判定），对标 golden.py:104-112
     if (!(ScalarMin(a1x, a2x) <= ScalarMax(b1x, b2x) && ScalarMin(b1x, b2x) <= ScalarMax(a1x, a2x) &&
           ScalarMin(a1y, a2y) <= ScalarMax(b1y, b2y) && ScalarMin(b1y, b2y) <= ScalarMax(a1y, a2y))) {
         return false;
     }
 
-    // cross_3pts(a,b,c) = (a.x-c.x)*(b.y-c.y) - (b.x-c.x)*(a.y-c.y)，对标 golden.py:115-120
-    // ② 跨立实验（叉积判别），对标 golden.py:143-146
-    float s1 = (b1x - a1x) * (a2y - a1y) - (a2x - a1x) * (b1y - a1y); // cross(q0, p1, p0)
-    float s2 = (a2x - a1x) * (b2y - a1y) - (b2x - a1x) * (a2y - a1y); // cross(p1, q1, p0)
-    float s3 = (a1x - b1x) * (b2y - b1y) - (b2x - b1x) * (a1y - b1y); // cross(p0, q1, q0)
-    float s4 = (b2x - b1x) * (a2y - b1y) - (a2x - b1x) * (b2y - b1y); // cross(q1, p1, q0)
+    float s1 = (b1x - a1x) * (a2y - a1y) - (a2x - a1x) * (b1y - a1y);
+    float s2 = (a2x - a1x) * (b2y - a1y) - (b2x - a1x) * (a2y - a1y);
+    float s3 = (a1x - b1x) * (b2y - b1y) - (b2x - b1x) * (a1y - b1y);
+    float s4 = (b2x - b1x) * (a2y - b1y) - (a2x - b1x) * (b2y - b1y);
 
-    // 严格 >：共线/相切被拒（对标 golden.py:148）
     if (!(s1 * s2 > 0.0f && s3 * s4 > 0.0f)) {
         return false;
     }
 
-    // ③ 交点坐标计算（对标 golden.py:152-166）
-    float s5 = (b2x - a1x) * (a2y - a1y) - (a2x - a1x) * (b2y - a1y); // cross(q1, p1, p0)
+    float s5 = (b2x - a1x) * (a2y - a1y) - (a2x - a1x) * (b2y - a1y);
     if (ScalarAbs(s5 - s1) > IOU3D_EPS_KERNEL) {
         ox = (s5 * b1x - s1 * b2x) / (s5 - s1);
         oy = (s5 * b1y - s1 * b2y) / (s5 - s1);
     } else {
-        // 退化情况：一般式直线方程（mmcv 不判 D==0，可产 inf/nan 并自然传播）
         float a0 = a1y - a2y;
         float b0 = a2x - a1x;
         float c0 = a1x * a2y - a2x * a1y;
-        float a1c = b1y - b2y;
-        float b1c = b2x - b1x;
-        float c1c = b1x * b2y - b2x * b1y;
-        float D = a0 * b1c - a1c * b0;
-        ox = (b0 * c1c - b1c * c0) / D;
-        oy = (a1c * c0 - a0 * c1c) / D;
+        float a1 = b1y - b2y;
+        float b1 = b2x - b1x;
+        float c1 = b1x * b2y - b2x * b1y;
+        float d = a0 * b1 - a1 * b0;
+
+        ox = (b0 * c1 - b1 * c0) / d;
+        oy = (a1 * c0 - a0 * c1) / d;
     }
     return true;
 }
 
 // ---------------------------------------------------------------------------
-// CollectCorners（框1顶点∈框2 + 框2顶点∈框1 + 16 边对相交，含去重）
+// CollectCorners（16 组边相交 + 8 次顶点包含，不去重；追加顺序对齐 golden）
 // ---------------------------------------------------------------------------
 
 __aicore__ inline uint32_t Iou3D::CollectCorners(const float c1x[IOU3D_CORNERS], const float c1y[IOU3D_CORNERS],
@@ -325,26 +320,9 @@ __aicore__ inline uint32_t Iou3D::CollectCorners(const float c1x[IOU3D_CORNERS],
                                                  float box2sin, float box2cos, float px[IOU3D_MAX_INTER],
                                                  float py[IOU3D_MAX_INTER])
 {
-    float rawX[IOU3D_MAX_INTER + IOU3D_MAX_INTER + 16];
-    float rawY[IOU3D_MAX_INTER + IOU3D_MAX_INTER + 16];
     uint32_t rawCnt = 0;
 
-    // 框1顶点 ∈ 框2（反向旋转到框2局部系测试），对标 mmcv golden.py:245 check_in_box2d(box_b, corners_a[k])
-    for (uint32_t i = 0; i < IOU3D_CORNERS; ++i) {
-        if (PointInRect(c1x[i], c1y[i], box2cx, box2cy, box2hx, box2hy, box2sin, box2cos)) {
-            rawX[rawCnt] = c1x[i];
-            rawY[rawCnt] = c1y[i];
-            ++rawCnt;
-        }
-    }
-    // 框2顶点 ∈ 框1，对标 mmcv golden.py:241 check_in_box2d(box_a, corners_b[k])
-    for (uint32_t i = 0; i < IOU3D_CORNERS; ++i) {
-        if (PointInRect(c2x[i], c2y[i], box1cx, box1cy, box1hx, box1hy, box1sin, box1cos)) {
-            rawX[rawCnt] = c2x[i];
-            rawY[rawCnt] = c2y[i];
-            ++rawCnt;
-        }
-    }
+    // Golden 先追加 4x4 边交点，再追加包含点；不去重时保持该顺序可对齐质心累加与排序 tie。
     for (uint32_t i = 0; i < IOU3D_CORNERS; ++i) {
         float a1x = c1x[i], a1y = c1y[i];
         float a2x = c1x[(i + 1) % IOU3D_CORNERS], a2y = c1y[(i + 1) % IOU3D_CORNERS];
@@ -353,71 +331,52 @@ __aicore__ inline uint32_t Iou3D::CollectCorners(const float c1x[IOU3D_CORNERS],
             float b2x = c2x[(j + 1) % IOU3D_CORNERS], b2y = c2y[(j + 1) % IOU3D_CORNERS];
             float ox, oy;
             if (SegIntersect(a1x, a1y, a2x, a2y, b1x, b1y, b2x, b2y, ox, oy)) {
-                rawX[rawCnt] = ox;
-                rawY[rawCnt] = oy;
+                px[rawCnt] = ox;
+                py[rawCnt] = oy;
                 ++rawCnt;
             }
         }
     }
 
-    // 去重（幅值相对强去重）。tol = max(ABS_TOL, REL·max(1,|x|,|y|))，
-    //   顶点自身幅值决定容差：小坐标退化为绝对 1e-6，大坐标（1e20）随幅值放大避免误并真顶点，
-    //   fp32 近重复顶点（identical box m=6/8）被坍缩回 4 真角点 → Sort32 键分离 → 稳定环序。
-    //   最多保留 IOU3D_MAX_INTER 个。
-    uint32_t m = 0;
-    for (uint32_t k = 0; k < rawCnt; ++k) {
-        float magK = ScalarMax(1.0f, ScalarMax(ScalarAbs(rawX[k]), ScalarAbs(rawY[k])));
-        float tolK = ScalarMax(IOU3D_DEDUP_TOL, IOU3D_DEDUP_REL * magK);
-        bool dup = false;
-        for (uint32_t u = 0; u < m; ++u) {
-            if (ScalarAbs(rawX[k] - px[u]) < tolK && ScalarAbs(rawY[k] - py[u]) < tolK) {
-                dup = true;
-                break;
-            }
+    // 每个 k 先收框2顶点 ∈ 框1，再收框1顶点 ∈ 框2，对齐 golden.py::_box_overlap。
+    for (uint32_t k = 0; k < IOU3D_CORNERS; ++k) {
+        if (PointInRect(c2x[k], c2y[k], box1cx, box1cy, box1hx, box1hy, box1sin, box1cos)) {
+            px[rawCnt] = c2x[k];
+            py[rawCnt] = c2y[k];
+            ++rawCnt;
         }
-        if (!dup && m < IOU3D_MAX_INTER) {
-            px[m] = rawX[k];
-            py[m] = rawY[k];
-            ++m;
+        if (PointInRect(c1x[k], c1y[k], box2cx, box2cy, box2hx, box2hy, box2sin, box2cos)) {
+            px[rawCnt] = c1x[k];
+            py[rawCnt] = c1y[k];
+            ++rawCnt;
         }
     }
-    return m;
+    return rawCnt;
 }
 
 // ---------------------------------------------------------------------------
-// TriArea（叉积法）
-// ---------------------------------------------------------------------------
-
-__aicore__ inline float Iou3D::TriArea(float x1, float y1, float x2, float y2, float x3, float y3)
-{
-    float v = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
-    return ScalarAbs(v) * 0.5f;
-}
-
-// ---------------------------------------------------------------------------
-// PolygonArea：0/1/2 顶点 → 0（degenerate_polygon_guard）；3 → 三角形；
-//   >3 → 硬件 Sort32 极角排序（SortPolygonArea）
+// PolygonArea：0/1/2 顶点 → 0；>=3 均进入 MMCV 的质心排序 + 首顶点扇形面积路径。
 // ---------------------------------------------------------------------------
 
 __aicore__ inline float Iou3D::PolygonArea(float px[IOU3D_MAX_INTER], float py[IOU3D_MAX_INTER], uint32_t m)
 {
     if (m < 3)
         return 0.0f; // degenerate_polygon_guard
-    if (m == 3)
-        return TriArea(px[0], py[0], px[1], py[1], px[2], py[2]);
     if (m > IOU3D_MAX_INTER)
-        m = IOU3D_MAX_INTER; // 顶点数上限守卫（两凸四边形交集 <=8）
+        m = IOU3D_MAX_INTER;
     return SortPolygonArea(px, py, m);
 }
 
 // ---------------------------------------------------------------------------
-// SortPolygonArea：>3 顶点，硬件 Sort32 极角排序（diamond-angle 键）+ 质心分解叉积面积。
+// SortPolygonArea：>=3 顶点，硬件 Sort32 极角排序（diamond-angle 键）+ MMCV 首顶点扇形面积。
 //   1. 质心 (xc,yc)；相对质心坐标 (xr,yr)。
-//   2. diamond-angle 键 key = (xr>=0)? t : (2-t)，t = yr/(|xr|+|yr|)，与 atan2(yr,xr) 单调同序；
-//      Sort32 为降序，故送 -key 得 angle 升序（逆时针）；padding 槽(idx>=m) 键置 -INF 沉底。
+//   2. diamond-angle 键与 CUDA atan2(yr,xr) 的 [-pi,pi] 分支切点一致：
+//      xr>=0 时 key=t；xr<0,yr>=0 时 key=2-t；xr<0,yr<0 时 key=-2-t，
+//      其中 t=yr/(|xr|+|yr|)。Sort32 为降序，故送 -key 得 angle 升序（逆时针）；
+//      padding 槽(idx>=m) 键置 -INF 沉底。
 //   3. Sort32 + Extract 得排序后原始下标序 order[0..m-1]（逆时针环序）。
-//   4. 质心分解：相邻 (C, v[order[i]], v[order[i+1]]) 三角形叉积绝对值累加。
-//   面积对环序方向（顺/逆）不敏感（叉积取绝对值），与 atan2 升序等价。
+//   4. 面积：以 order[0] 为基准，按 MMCV 顺序累加相邻顶点有符号叉积，末尾一次 abs / 2。
+//   排序键与 atan2 单调同序；面积累加的 float32 运算顺序与 MMCV box_overlap 对齐。
 // ---------------------------------------------------------------------------
 
 __aicore__ inline float Iou3D::SortPolygonArea(float px[IOU3D_MAX_INTER], float py[IOU3D_MAX_INTER], uint32_t m)
@@ -447,7 +406,15 @@ __aicore__ inline float Iou3D::SortPolygonArea(float px[IOU3D_MAX_INTER], float 
             float yr = py[i] - yc;
             float s = ScalarAbs(xr) + ScalarAbs(yr);
             float t = (s < 1.0e-20f) ? 0.0f : (yr / s);
-            float keyRaw = (xr >= 0.0f) ? t : (2.0f - t);
+            float keyRaw;
+            if (xr >= 0.0f) {
+                keyRaw = t;
+            } else if (yr >= 0.0f) {
+                keyRaw = 2.0f - t;
+            } else {
+                // 对齐 atan2 的负半轴分支：第三象限必须排在 [-pi,-pi/2)，不能循环移到 +pi 之后。
+                keyRaw = -2.0f - t;
+            }
             k = -keyRaw; // Sort32 降序 == angle 升序（逆时针）
         } else {
             k = IOU3D_NEG_INF_KEY; // padding 槽沉底
@@ -471,19 +438,19 @@ __aicore__ inline float Iou3D::SortPolygonArea(float px[IOU3D_MAX_INTER], float 
         order[i] = rawIdx;
     }
 
-    // 面积（signed shoelace 收尾）。质心分解累加**有符号**叉积（不 per-triangle 取 abs），
-    //   末尾对总和取一次 abs。去重已保证只剩真顶点、Sort32 环序为简单多边形，signed-shoelace
-    //   与 per-triangle abs-fan 结果一致（对方向鲁棒）；但对「万一残留的近重复点/方向错序」多一层符号
-    //   自洽保护——错序下正负三角形自然抵消，不会像 per-triangle abs-fan 那样把 bowtie 放大成半面积。
+    // 面积严格对齐 MMCV box_overlap：以排序后第一个顶点为基准，依次累加
+    // cross(points[k] - points[0], points[k + 1] - points[0])，末尾一次 abs / 2。
+    // 不以质心为基准，避免数学等价但 float32 运算顺序不同而产生 1 ULP 偏差。
     //   ⚠️ 严禁任何面积层 NaN 守卫；NaN/inf 必须按 IEEE754 自然传播到输出。
-    float signedTwice = 0.0f; // 2·有符号面积（相对质心的鞋带和）
-    for (uint32_t k = 0; k < m; ++k) {
+    uint32_t base = order[0];
+    float signedTwice = 0.0f;
+    for (uint32_t k = 0; k + 1U < m; ++k) {
         uint32_t a = order[k];
-        uint32_t bnext = order[(k + 1U == m) ? 0U : (k + 1U)];
-        float ax = px[a] - xc;
-        float ay = py[a] - yc;
-        float bx = px[bnext] - xc;
-        float by = py[bnext] - yc;
+        uint32_t bnext = order[k + 1U];
+        float ax = px[a] - px[base];
+        float ay = py[a] - py[base];
+        float bx = px[bnext] - px[base];
+        float by = py[bnext] - py[base];
         signedTwice += ax * by - ay * bx;
     }
     return ScalarAbs(signedTwice) * 0.5f;
@@ -516,6 +483,21 @@ __aicore__ inline float Iou3D::ComputePairIou(int64_t b, int64_t i, int64_t j, f
     float z2Min = rect2[2] - 0.5f * rect2[5];
     float z2Max = rect2[2] + 0.5f * rect2[5];
     float realD = ScalarMax(ScalarMin(z1Max, z2Max) - ScalarMax(z1Min, z2Min), 0.0f);
+
+    // 对有限输入，Z 轴无交集时 3D 交体积必为 0，与 BEV 形状无关。必须在
+    // PolygonArea 前短路，否则超大但有限的坐标/尺寸可能先在 fp32 BEV 几何中
+    // 溢出为 NaN/Inf，随后形成 NaN * 0，导致本应为 0 的 IoU 变成 NaN。
+    // 仅有限输入允许短路；包含 NaN/Inf 的输入继续走原路径，保持既定传播语义。
+    if (realD == 0.0f) {
+        bool allFinite = true;
+        for (uint32_t c = 0; c < IOU3D_DOF; ++c) {
+            allFinite = allFinite && (rect1[c] == rect1[c]) && (rect2[c] == rect2[c]) &&
+                        (ScalarAbs(rect1[c]) <= IOU3D_MAX_FINITE) && (ScalarAbs(rect2[c]) <= IOU3D_MAX_FINITE);
+        }
+        if (allFinite) {
+            return 0.0f;
+        }
+    }
 
     float px[IOU3D_MAX_INTER], py[IOU3D_MAX_INTER];
     // 反向旋转包含测试需框中心/半尺寸/sin/cos：halfDx=0.5*w, halfDy=0.5*h。
@@ -551,7 +533,7 @@ __aicore__ inline void Iou3D::Process()
     LocalTensor<float> sin2Buf = angle[4U * atl];
     LocalTensor<float> cos2Buf = angle[5U * atl];
     LocalTensor<float> outTile = outBuf.Get<float>();
-    LocalTensor<uint8_t> sinTmp = tmpBuf.Get<uint8_t>(); // 显式 sharedTmpBuffer（32B 对齐）
+    LocalTensor<uint8_t> sinTmp = tmpBuf.Get<uint8_t>(); // 默认与高精度 Cos 共用显式临时空间
 
     const int64_t nk = static_cast<int64_t>(numN_) * static_cast<int64_t>(numK_);
 
@@ -600,6 +582,37 @@ __aicore__ inline void Iou3D::Process()
         Cos(cos2Buf, theta2, sinTmp, alignedCnt);
         // Sin/Cos(向量写 UB) → GetValue(标量读 UB) 之间插同步，确保向量结果对标量可见。
         PipeBarrier<PIPE_ALL>();
+
+        // 仅修复 Cos：用 RADIAN_REDUCTION API 生成候选值到 outTile，
+        // Sin 缓冲始终保留 AscendC Sin 的默认结果。
+        Cos<float, false, IOU3D_HIGH_PRECISION_COS_CONFIG>(outTile, theta1, sinTmp, alignedCnt);
+        PipeBarrier<PIPE_ALL>();
+        for (uint32_t t = 0; t < curNum; ++t) {
+            float th1 = theta1.GetValue(t);
+            float absTh1 = ScalarAbs(th1);
+            if (absTh1 >= IOU3D_COS_FIX_MIN_ABS_ANGLE && absTh1 <= IOU3D_COS_FIX_MAX_ABS_ANGLE) {
+                float nativeCos1 = cos1Buf.GetValue(t);
+                float highPrecisionCos1 = outTile.GetValue(t);
+                if (ScalarAbs(highPrecisionCos1 - nativeCos1) > IOU3D_COS_FIX_MIN_DELTA) {
+                    cos1Buf.SetValue(t, highPrecisionCos1);
+                }
+            }
+        }
+        PipeBarrier<PIPE_ALL>();
+
+        Cos<float, false, IOU3D_HIGH_PRECISION_COS_CONFIG>(outTile, theta2, sinTmp, alignedCnt);
+        PipeBarrier<PIPE_ALL>();
+        for (uint32_t t = 0; t < curNum; ++t) {
+            float th2 = theta2.GetValue(t);
+            float absTh2 = ScalarAbs(th2);
+            if (absTh2 >= IOU3D_COS_FIX_MIN_ABS_ANGLE && absTh2 <= IOU3D_COS_FIX_MAX_ABS_ANGLE) {
+                float nativeCos2 = cos2Buf.GetValue(t);
+                float highPrecisionCos2 = outTile.GetValue(t);
+                if (ScalarAbs(highPrecisionCos2 - nativeCos2) > IOU3D_COS_FIX_MIN_DELTA) {
+                    cos2Buf.SetValue(t, highPrecisionCos2);
+                }
+            }
+        }
 
         // 3) 逐对标量几何计算 IoU
         for (uint32_t t = 0; t < curNum; ++t) {
