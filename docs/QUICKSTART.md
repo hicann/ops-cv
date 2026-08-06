@@ -22,7 +22,7 @@
 
 > 本指南以单算子编译过程为例，也支持编译整个算子库算子、离线编译等多种场景，编译过程中的常见问题均可参考[《源码构建指南》](zh/install/compile.md)。
 
-### 1. 进入项目源码
+### 1.进入项目源码
 
 - CANNLab云开发环境：
 
@@ -41,9 +41,11 @@
 > 1. 在源码目录执行`git branch`，查询当前源码版本。
 > 2. 在源码目录执行`git checkout ${tag_version}`，切换到目标分支源码，注意满足源码与CANN版本配套关系。若源码已存在，执行`git pull`拉取最新源码。
 
-### 2. 编译AddExample算子
+### 2.编译AddExample算子
 
 通用命令格式：`bash build.sh --pkg --soc=<芯片版本> --ops=<算子名>`。
+
+**说明**：编译前请确保已配置CANN环境变量，否则可能因找不到`ASCEND_HOME_PATH`等导致编译失败。默认路径安装时执行 `source /usr/local/Ascend/cann/set_env.sh`。
 
 以AddExample算子为例，编译命令如下：
 
@@ -65,7 +67,7 @@ Self-extractable archive "cann-ops-cv-custom_linux-${arch}.run" successfully cre
 
 编译成功后，run包存放于项目根目录的build_out目录下。
 
-### 3. 安装AddExample算子包
+### 3.安装AddExample算子包
 
 ```bash
 ./build_out/cann-ops-cv-*linux*.run
@@ -73,7 +75,7 @@ Self-extractable archive "cann-ops-cv-custom_linux-${arch}.run" successfully cre
 
 `AddExample`安装在```${ASCEND_HOME_PATH}/opp/vendors```路径中，```${ASCEND_HOME_PATH}```表示CANN软件安装目录。
 
-### 4. 配置环境变量
+### 4.配置环境变量
 
 将自定义算子包的路径加入环境变量，确保运行时能够找到。
 
@@ -81,7 +83,7 @@ Self-extractable archive "cann-ops-cv-custom_linux-${arch}.run" successfully cre
 export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/custom_cv/op_api/lib:${LD_LIBRARY_PATH}
 ```
 
-### 5. 快速验证：运行算子样例
+### 5.快速验证：运行算子样例
 
 通用的运行命令格式：`bash build.sh --run_example <算子名> <运行模式> <包模式>`。
 
@@ -90,8 +92,7 @@ export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/custom_cv/op_api/lib:${LD
 ```bash
 bash build.sh --run_example add_example eager cust --vendor_name=custom --soc=${soc_version}
 ```
-
-> **注意**：运行样例时需确保`--soc`参数与编译算子包时使用的`--soc`取值一致，否则可能报`error 161001`（如`aclnnXxxGetWorkspaceSize failed`）。如遇此错误，请回到[第2节](#2-编译addexample算子)核对`--soc`取值后重新编译安装。
+> **注意**：运行样例时需确保`--soc`参数与编译算子包时使用的`--soc`取值一致，否则可能报`error 161001`（如`aclnnXxxGetWorkspaceSize failed`）。如遇此错误，请回到[第2节](#2编译addexample算子)核对`--soc`取值后重新编译安装。
 
 预期输出：打印算子`AddExample`的加法计算结果，表明算子已成功部署并正确执行。
 
@@ -111,7 +112,7 @@ add_example first input[7] is: 1.000000, second input[7] is: 1.000000, result[7]
 
 本阶段目的是对已成功运行的AddExample算子尝试**修改核函数代码**。
 
-### 1. 修改Kernel实现
+### 1.修改Kernel实现
 
 找到AddExample算子的核心kernel实现文件`ops-cv/examples/add_example/op_kernel/add_example.h`，尝试将算子中的Add操作改为Mul操作：
 
@@ -130,7 +131,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 }
 ```
 
-### 2. 编译与验证
+### 2.编译与验证
 
 重复[编译运行](#一编译运行)章节中的步骤：
 
@@ -139,8 +140,10 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
     先回到项目根目录，编译命令如下：
 
     ```bash
-    bash build.sh --pkg --soc=ascend910b --ops=add_example -j16
+    bash build.sh --pkg --soc=${soc_version} --ops=add_example -j16
     ```
+
+   > **说明**：`${soc_version}`请根据实际芯片型号填写，取值方式同[编译AddExample算子](#2编译addexample算子)中的说明。
 
 2. **重新安装**：
 
@@ -154,7 +157,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
     bash build.sh --run_example add_example eager cust --vendor_name=custom --soc=${soc_version}
     ```
 
-4. **成功标志**：输出结果变成乘法结果。
+4. **成功标志**：输出结果变成乘法结果。每组结果应等于两个输入之积。
 
     ```bash
     add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 1.000000
@@ -172,7 +175,7 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
 
 本阶段以AddExample为例，在算子中添加打印并采集算子性能数据，以便后续问题分析定位。
 
-### 1. 打印
+### 1.打印
 
 算子如果出现执行失败、精度异常等问题，添加打印进行问题分析和定位。
 
@@ -202,9 +205,9 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
   outputQueueZ.EnQue<T>(zLocal);
   ```
 
-### 2. 性能采集
+### 2.性能采集
 
-当算子功能验证正确后，可通过`msprof`工具采集算子性能数据。
+当算子功能验证正确后，可通过`msprof op`命令采集算子级性能数据。
 
 - **生成可执行文件**
 
@@ -219,16 +222,18 @@ __aicore__ inline void AddExample<T>::Compute(int64_t currentNum)
     进入AddExample算子可执行文件目录`ops-cv/build/`，执行如下命令：
 
     ```bash
-    msprof --application="./test_aclnn_add_example"
+    msprof op --application="./test_aclnn_add_example"
     ```
 
-采集结果在项目`ops-cv/build/`目录，msprof命令执行完后会自动解析并导出性能数据结果文件，详细内容请参见[msProf性能数据文件参考](https://gitcode.com/Ascend/msprof/blob/master/docs/zh/user_guide/profile_data_file_references.md)。
+    执行后会直接打印算子基础信息（如Op Name、Op Type、Task Duration、Block Dim等）和性能瓶颈提示。
+
+采集结果保存在项目`ops-cv/build/`目录下的`OPPROF_*`文件夹中，命令执行完后会自动解析并导出性能数据文件。如需进一步解读各项性能指标（如流水占比、带宽利用率等），请参见[msProf性能数据文件参考](https://gitcode.com/Ascend/msprof/blob/master/docs/zh/user_guide/profile_data_file_references.md)。
 
 ## 四、算子验证
 
 本阶段通过修改AddExample算子example样例中的输入数据，验证该算子在多种场景下的功能正确性。
 
-### 1. 修改测试输入
+### 1.修改测试输入
 
 找到并编辑`AddExample`的`ops-cv/examples/add_example/examples/test_aclnn_add_example.cpp`，修改输入张量的形状和数值。
 
@@ -254,7 +259,7 @@ int main() {
 }
 ```
 
-### 2. 重新编译并验证
+### 2.重新编译并验证
 
 1. 由于只修改了example测试代码，无需重新编译算子包。
 
