@@ -11,7 +11,7 @@
 #
 # Global config: variables, paths, utility functions shared across all build scripts.
 
-RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin")
+RELEASE_TARGETS=("ophost" "opapi" "opgraph" "opkernel" "opkernel_aicpu" "onnxplugin" "tfplugin")
 SUPPORTED_UT_TARGETS=("ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test")
 SUPPORT_COMPUTE_UNIT_SHORT=("ascend031" "ascend035" "ascend310b" "ascend310p" "ascend610lite" "ascend630"
                             "ascend910_93" "ascend950" "ascend910b" "ascend910" "mc62" "kirinx90" "kirin9030")
@@ -24,7 +24,7 @@ SUPPORTED_LONG_OPTS=(
   "help" "ops=" "soc=" "vendor_name=" "build-type=" "cov" "noexec" "aicpu" "noaicpu" "opkernel" "opkernel_aicpu" "jit"
   "pkg" "asan" "valgrind" "make_clean" "static" "simulator"
   "ophost" "opapi" "opgraph" "ophost_test" "opapi_test" "opgraph_test" "opkernel_test" "opkernel_aicpu_test"
-  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "dump_cce"
+  "run_example" "genop=" "genop_aicpu=" "cann_3rd_lib_path"  "experimental" "mssanitizer" "oom" "onnxplugin" "tfplugin" "dump_cce"
   "bisheng_flags=" "kernel_template_input=" "rule_launch=" "ccache=" "pkg-type="
 )
 

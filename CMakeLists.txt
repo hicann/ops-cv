@@ -128,6 +128,7 @@ endif()
 include(cmake/func.cmake)
 include(cmake/intf_pub_linux.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/ut.cmake)
+init_tf_plugin_modules()
 
 include(version.cmake)
 check_cann_pkg_build_deps("ops_cv")

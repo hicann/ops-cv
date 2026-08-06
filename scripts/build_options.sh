@@ -205,6 +205,20 @@ usage() {
         echo "    bash build.sh --onnxplugin --build-type=Debug"
         return
         ;;
+      tfplugin)
+        echo "TFPlugin Build Options:"
+        echo $dotted_line
+        echo "    --tfplugin             Build tfplugin library"
+        echo "    -j[n]                  Compile thread nums, default is 8, eg: -j8"
+        echo "    -O[n]                  Compile optimization options, support [O0 O1 O2 O3], eg:-O3"
+        echo "    --build-type=<TYPE>    Specify build type(TYPE options: Release/Debug), Default:Release"
+        echo "    --ccache=<VALUE>       Enable or disable ccache (VALUE: on/off/true/false/disable), Default: on"
+        echo $dotted_line
+        echo "Examples:"
+        echo "    bash build.sh --tfplugin -j16 -O3"
+        echo "    bash build.sh --tfplugin --build-type=Debug"
+        return
+        ;;
       ophost_test)
         echo "Ophost Test Options:"
         echo $dotted_line
@@ -309,6 +323,7 @@ usage() {
   echo "    --aicpu build aicpu task"
   echo "    --opgraph build op_graph_cv.so"
   echo "    --onnxplugin build oponnx_plugin_cv.so"
+  echo "    --tfplugin build optf_plugin_cv.so"
   echo "    --opapi build opapi_cv.so"
   echo "    --ophost build ophost_cv.so"
   echo "    --opkernel build binary kernel"
@@ -347,7 +362,7 @@ check_help_combinations() {
   for arg in "${args[@]}"; do
     case "$arg" in
       -u) has_u=true ;;
-      --ophost_test | --opapi_test | --opgraph_test | --ophost | --opapi | --opgraph | --onnxplugin)
+      --ophost_test | --opapi_test | --opgraph_test | --ophost | --opapi | --opgraph | --onnxplugin | --tfplugin)
         has_test_command=true
         has_build_command=true
         ;;
@@ -498,7 +513,7 @@ set_create_libs() {
     return
   fi
   if [[ "$ENABLE_PACKAGE" == "TRUE" && "$ENABLE_CUSTOM" != "TRUE" ]]; then
-    BUILD_LIBS=("ophost_${REPOSITORY_NAME}" "opapi_${REPOSITORY_NAME}" "opgraph_${REPOSITORY_NAME}" "oponnx_plugin_${REPOSITORY_NAME}")
+    BUILD_LIBS=("ophost_${REPOSITORY_NAME}" "opapi_${REPOSITORY_NAME}" "opgraph_${REPOSITORY_NAME}" "oponnx_plugin_${REPOSITORY_NAME}" "optf_plugin_${REPOSITORY_NAME}")
     ENABLE_CREATE_LIB=TRUE
   else
     if [[ "$OP_HOST" == "TRUE" ]]; then
@@ -515,6 +530,10 @@ set_create_libs() {
     fi
     if [[ "$ONNX_PLUGIN" == "TRUE" ]]; then
       BUILD_LIBS+=("oponnx_plugin_${REPOSITORY_NAME}")
+      ENABLE_CREATE_LIB=TRUE
+    fi
+    if [[ "$TF_PLUGIN" == "TRUE" ]]; then
+      BUILD_LIBS+=("optf_plugin_${REPOSITORY_NAME}")
       ENABLE_CREATE_LIB=TRUE
     fi
     if [[ "$OP_KERNEL" == "TRUE" ]]; then
@@ -671,6 +690,7 @@ checkopts() {
   OP_HOST=FALSE
   OP_GRAPH=FALSE
   ONNX_PLUGIN=FALSE
+  TF_PLUGIN=FALSE
   OP_KERNEL=FALSE
   OP_KERNEL_AICPU=FALSE
   ENABLE_CREATE_LIB=FALSE
@@ -727,6 +747,7 @@ checkopts() {
           --opapi) SHOW_HELP="opapi" ;;
           --opgraph) SHOW_HELP="opgraph" ;;
           --onnxplugin) SHOW_HELP="onnxplugin" ;;
+          --tfplugin) SHOW_HELP="tfplugin" ;;
           --ophost_test) SHOW_HELP="ophost_test" ;;
           --opapi_test) SHOW_HELP="opapi_test" ;;
           --opgraph_test) SHOW_HELP="opgraph_test" ;;
@@ -863,6 +884,8 @@ checkopts() {
             OP_GRAPH=TRUE
           elif [[ "$OPTARG" == "onnxplugin" ]]; then
             ONNX_PLUGIN=TRUE
+          elif [[ "$OPTARG" == "tfplugin" ]]; then
+            TF_PLUGIN=TRUE
           elif [[ "$OPTARG" == "opkernel" ]]; then
             OP_KERNEL=TRUE
           elif [[ "$OPTARG" == "opkernel_aicpu" ]]; then

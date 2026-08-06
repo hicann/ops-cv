@@ -1,10 +1,10 @@
 # ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
@@ -299,7 +299,7 @@ function(add_op_graph_modules)
     else()
       add_library(${OP_GRAPH_NAME}_obj OBJECT)
     endif()
-    target_include_directories(${OP_GRAPH_NAME}_obj PRIVATE 
+    target_include_directories(${OP_GRAPH_NAME}_obj PRIVATE
       ${OP_PROTO_INCLUDE}
       ${PROJECT_SOURCE_DIR}/common/inc
       ${ASCEND_DIR}/include
@@ -374,13 +374,13 @@ macro(add_modules_sources)
     # ASCEND_OP_NAME 为空表示全部编译
     return()
   endif()
-  
+
   if(OP_NAME IN_LIST COMPILED_OPS)
     # 已经编译过，忽略
     message(STATUS "already compiled ${OP_NAME}, skip")
     return()
   endif()
-  
+
   # 记录全局的COMPILED_OPS和COMPILED_OP_DIRS，其中COMPILED_OP_DIRS只记录到算子名，例如image/crop_and_resize
   set(COMPILED_OPS
       ${COMPILED_OPS} ${OP_NAME}
@@ -542,14 +542,14 @@ macro(add_all_modules_sources)
   set(multiValueArgs OPTYPE ACLNNTYPE DEPENDENCIES COMPUTE_UNIT TILING_DIR)
 
   cmake_parse_arguments(MODULE "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})  
+  set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
   add_opbase_modules()
   # opapi l0 默认全部编译
   file(GLOB OPAPI_L0_SRCS ${SOURCE_DIR}/op_api/*.cpp)
   list(FILTER OPAPI_L0_SRCS EXCLUDE REGEX "aclnn_")
   if(OPAPI_L0_SRCS)
-    add_opapi_modules() 
+    add_opapi_modules()
     target_sources(${OPHOST_NAME}_opapi_obj PRIVATE ${OPAPI_L0_SRCS})
   endif()
 
@@ -591,13 +591,24 @@ macro(add_all_modules_sources)
 
   file(GLOB OPINFER_SRCS ${SOURCE_DIR}/op_host/*_infershape*.cpp)
   if(OPINFER_SRCS)
-    add_infer_modules() 
+    add_infer_modules()
     target_sources(${OPHOST_NAME}_infer_obj PRIVATE ${OPINFER_SRCS})
   endif()
 
   # 添加tiling文件
   find_value_by_key("${MODULE_COMPUTE_UNIT}" "${MODULE_TILING_DIR}" "${ASCEND_COMPUTE_UNIT}" tiling_dir)
   add_tiling_sources("${tiling_dir}" "${MODULE_DISABLE_IN_OPP}")
+
+  # Some existing TF plugin sources in ops-cv still depend on non-public GE headers
+  # and cannot be built with the installed CANN package yet. Keep automatic
+  # collection disabled by default and use add_tf_plugin_sources() for explicit
+  # verification until those files are adapted.
+  if(ENABLE_AUTO_TF_PLUGIN_SOURCES AND BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG AND NOT ENABLE_TEST)
+    file(GLOB TF_PLUGIN_SRCS ${SOURCE_DIR}/framework/*_tf_plugin.cpp)
+    if(TF_PLUGIN_SRCS)
+      target_sources(${TF_PLUGIN_NAME}_obj PRIVATE ${TF_PLUGIN_SRCS})
+    endif()
+  endif()
 
   if(NOT BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
     file(GLOB AICPU_SRCS ${SOURCE_DIR}/op_kernel_aicpu/*_aicpu*.cpp)
@@ -613,7 +624,7 @@ macro(add_all_modules_sources)
     if(NOT ${OpTypeLen} EQUAL ${AclnnTypeLen})
       message(FATAL_ERROR "OPTYPE AND ACLNNTYPE Should be One-to-One (cv op: ${OP_NAME})")
     endif()
-    
+
     math(EXPR index "${OpTypeLen} - 1")
     foreach(i RANGE ${index})
       list(GET MODULE_OPTYPE ${i} OpType)
@@ -645,7 +656,7 @@ macro(add_all_modules_sources)
 
   file(GLOB OP_GRAPH_SRCS ${SOURCE_DIR}/op_graph/*_graph_*.cpp ${SOURCE_DIR}/op_graph/*_fallback.cpp ${SOURCE_DIR}/op_graph/fusion_pass/*_pass.cpp)
   if(OP_GRAPH_SRCS)
-    add_op_graph_modules() 
+    add_op_graph_modules()
     target_sources(${OP_GRAPH_NAME}_obj PRIVATE ${OP_GRAPH_SRCS})
   endif()
 
@@ -735,7 +746,7 @@ endfunction()
 function(check_compiled_ops)
   message(STATUS "Ops for this compilation contains: ${COMPILED_OPS}")
   if(COMPILED_OPS STREQUAL "")
-    message(FATAL_ERROR "Specified ops not found in this depository, please check --ops paramater")
+    message(FATAL_ERROR "Specified ops not found in this depository, please check --ops parameter")
   endif()
 
   # 未指定算子，全部编译
@@ -758,11 +769,11 @@ function(check_compiled_ops)
   list(JOIN not_compiled_ops "," not_compiled_ops_str)
   if(ENABLE_EXPERIMENTAL)
     message(FATAL_ERROR
-        "Specified ops(${not_compiled_ops_str}) not found in experimental, please check --ops paramater"
+        "Specified ops(${not_compiled_ops_str}) not found in experimental, please check --ops parameter"
     )
   else()
     message(FATAL_ERROR
-        "Specified ops(${not_compiled_ops_str}) not found in this depository, please check --ops paramater"
+        "Specified ops(${not_compiled_ops_str}) not found in this depository, please check --ops parameter"
     )
   endif()
 endfunction()
@@ -819,7 +830,7 @@ function(protobuf_generate_external comp c_var h_var)
 
     if (_add_target)
       add_custom_target(
-        ${comp} DEPENDS ${${c_var}} ${${h_var}}) 
+        ${comp} DEPENDS ${${c_var}} ${${h_var}})
     endif()
 
     set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)
@@ -832,7 +843,7 @@ function(add_onnx_plugin_modules)
   if (NOT TARGET ${ONNX_PLUGIN_NAME}_obj)
     set(ge_onnx_proto_srcs
       ${ASCEND_DIR}/include/proto/ge_onnx.proto)
-    
+
     protobuf_generate_external(onnx ge_onnx_proto_cc ge_onnx_proto_h ${ge_onnx_proto_srcs})
 
     if(BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
@@ -887,6 +898,62 @@ macro(add_onnx_plugin_sources)
   add_onnx_plugin_modules()
   target_sources(${ONNX_PLUGIN_NAME}_obj PRIVATE ${ONNX_PLUGIN_SRCS})
 endmacro()
+
+function(add_tf_plugin_modules)
+  if(NOT BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG OR ENABLE_TEST)
+    return()
+  endif()
+
+  if(NOT TARGET ${TF_PLUGIN_NAME}_obj)
+    set(tf_proto_srcs
+      ${ASCEND_DIR}/include/proto/ge_ir.proto
+    )
+    protobuf_generate_external(tf tf_proto_cc tf_proto_h ${tf_proto_srcs})
+    npu_op_library(${TF_PLUGIN_NAME}_obj GRAPH ${tf_proto_h})
+    set_target_properties(${TF_PLUGIN_NAME}_obj PROPERTIES
+      CXX_STANDARD 14
+      CXX_STANDARD_REQUIRED ON
+      CXX_EXTENSIONS OFF
+    )
+    target_include_directories(${TF_PLUGIN_NAME}_obj
+      PRIVATE
+      ${OP_PROTO_INCLUDE}
+      ${HOST_PROTOC_SRC}
+      ${HOST_PROTOC_PATH}
+      ${PROTOBUF_INCLUDE_DIRS}
+      ${CMAKE_BINARY_DIR}/proto
+      ${TF_PLUGIN_COMMON_INCLUDE}
+    )
+    target_compile_definitions(${TF_PLUGIN_NAME}_obj PRIVATE OPS_UTILS_LOG_SUB_MOD_NAME="TF_PLUGIN" LOG_CPP)
+    target_compile_options(
+      ${TF_PLUGIN_NAME}_obj PRIVATE -Dgoogle=ascend_private -fvisibility=hidden -Wno-shadow -Wno-unused-parameter
+    )
+    target_link_libraries(
+      ${TF_PLUGIN_NAME}_obj
+      PRIVATE $<BUILD_INTERFACE:intf_pub_cxx14>
+              $<BUILD_INTERFACE:dlog_headers>
+              $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>
+              $<$<TARGET_EXISTS:opbase_infer_objs>:$<TARGET_OBJECTS:opbase_infer_objs>>
+              ascend_protobuf_static
+    )
+  endif()
+endfunction()
+
+function(init_tf_plugin_modules)
+  add_tf_plugin_modules()
+endfunction()
+
+function(add_tf_plugin_sources)
+  if(NOT BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG OR ENABLE_TEST)
+    return()
+  endif()
+
+  set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  file(GLOB TF_PLUGIN_SRCS ${SOURCE_DIR}/*_tf_plugin.cpp)
+  if(TF_PLUGIN_SRCS)
+    target_sources(${TF_PLUGIN_NAME}_obj PRIVATE ${TF_PLUGIN_SRCS})
+  endif()
+endfunction()
 
 
 # 删除以下重复函数，使用 cmake 仓版本:

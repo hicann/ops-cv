@@ -1,10 +1,10 @@
 # ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ endfunction()
 
 # gen es_cv
 function(gen_es_cv_lib_ready)
-  # 合并proto.h生成ops_proto_cv.h和ops_proto_cv.cpp 
+  # 合并proto.h生成ops_proto_cv.h和ops_proto_cv.cpp
   merge_graph_headers(TARGET merge_ops_proto_${PKG_NAME} OUT_DIR ${ASCEND_GRAPH_CONF_DST})
   add_library(
     proto_${PKG_NAME} SHARED
@@ -78,8 +78,8 @@ function(gen_es_cv_lib_ready)
                 -Wl,--as-needed
         )
   target_link_directories(proto_${PKG_NAME} PRIVATE ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64)
-  
-  # 生成 es_cv 
+
+  # 生成 es_cv
   add_es_library_and_whl(
     ES_LINKABLE_AND_ALL_TARGET es_${PKG_NAME}
     OPP_PROTO_TARGET proto_${PKG_NAME}
@@ -104,7 +104,7 @@ endfunction()
 
 # gen es_cv for custom
 function(gen_es_cv_lib_ready_cust)
-  # 合并proto.h生成ops_proto_cv.h和ops_proto_cv.cpp 
+  # 合并proto.h生成ops_proto_cv.h和ops_proto_cv.cpp
   merge_graph_headers(TARGET merge_ops_proto_${PKG_NAME}_cust OUT_DIR ${ASCEND_GRAPH_CONF_DST})
   add_library(
     proto_${PKG_NAME}_cust SHARED
@@ -120,8 +120,8 @@ function(gen_es_cv_lib_ready_cust)
                 -Wl,--as-needed
         )
   target_link_directories(proto_${PKG_NAME}_cust PRIVATE ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64)
-  
-  # 生成 es_cv 
+
+  # 生成 es_cv
   add_es_library(
     ES_LINKABLE_AND_ALL_TARGET es_${PKG_NAME}
     OPP_PROTO_TARGET proto_${PKG_NAME}_cust
@@ -163,7 +163,7 @@ function(gen_opgraph_symbol)
         $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>
         $<$<TARGET_EXISTS:opbase_infer_objs>:$<TARGET_OBJECTS:opbase_infer_objs>>
       )
-      
+
       target_link_libraries(
         ${OPGRAPH_NAME}
         PRIVATE $<BUILD_INTERFACE:intf_pub_cxx17>
@@ -182,11 +182,11 @@ function(gen_opgraph_symbol)
                 ascendalog
         )
 
-      target_link_directories(${OPGRAPH_NAME} PRIVATE 
+      target_link_directories(${OPGRAPH_NAME} PRIVATE
         ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64
         ${CMAKE_BINARY_DIR}/es_packages/lib64
       )
-      set_target_properties(${OPGRAPH_NAME} PROPERTIES 
+      set_target_properties(${OPGRAPH_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/opp/built-in/op_proto
       )
       install(
@@ -331,7 +331,7 @@ function(gen_cust_proto_symbol)
         -Wl,--as-needed
     )
   endif()
-  
+
   file(GLOB_RECURSE proto_headers ${ASCEND_AUTOGEN_PATH}/*_proto.h)
   install(
     FILES ${proto_headers}
@@ -517,6 +517,53 @@ function(gen_onnx_plugin_symbol)
 
 endfunction()
 
+function(gen_tf_plugin_symbol)
+  if(NOT BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG OR ENABLE_TEST)
+    return()
+  endif()
+
+  if(TARGET ${TF_PLUGIN_NAME}_obj)
+    unset(TF_PLUGIN_SOURCE)
+    get_target_property(TF_PLUGIN_SOURCE ${TF_PLUGIN_NAME}_obj SOURCES)
+    if(TF_PLUGIN_SOURCE)
+      list(FILTER TF_PLUGIN_SOURCE INCLUDE REGEX "_tf_plugin\\.(cpp|cc|cxx)$")
+    endif()
+  endif()
+
+  if(NOT TF_PLUGIN_SOURCE)
+    message(STATUS "No tf_plugin sources found for ${TF_PLUGIN_NAME}_obj, skipping tf_plugin library creation")
+    return()
+  endif()
+
+  add_library(
+    ${TF_PLUGIN_NAME} SHARED
+    $<TARGET_OBJECTS:${TF_PLUGIN_NAME}_obj>
+  )
+
+  target_link_libraries(
+    ${TF_PLUGIN_NAME}
+    PRIVATE $<BUILD_INTERFACE:intf_pub_cxx14>
+            c_sec
+            -Wl,--no-as-needed
+            register
+            -Wl,--as-needed
+            -Wl,--whole-archive
+            rt2_registry_static
+            -Wl,--no-whole-archive
+            unified_dlog
+            ascendalog
+            $<$<CONFIG:Release>:-s>
+    )
+
+  target_link_directories(${TF_PLUGIN_NAME} PRIVATE ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64)
+
+  install(
+    TARGETS ${TF_PLUGIN_NAME}
+    LIBRARY DESTINATION ${TF_PLUGIN_LIB_INSTALL_DIR}
+    OPTIONAL
+    )
+endfunction()
+
 function(gen_norm_symbol)
   gen_ophost_symbol()
 
@@ -527,6 +574,8 @@ function(gen_norm_symbol)
   gen_aicpu_const_symbol()
 
   gen_onnx_plugin_symbol()
+
+  gen_tf_plugin_symbol()
 endfunction()
 
 function(gen_cust_symbol)

@@ -14,6 +14,9 @@
     <file_info value="oponnx_plugin_cv_lib" copy_type="delivery" src_path="" dst_path="opp/built-in/framework/onnx/" install_path="opp/built-in/framework/onnx">
         <file value="liboponnx_plugin_cv.so" install_mod="550"/>
     </file_info>
+    <file_info value="optf_plugin_cv_lib" copy_type="delivery" src_path="" dst_path="opp/built-in/framework/tensorflow/" install_path="opp/built-in/framework/tensorflow" optional="true">
+        <file value="liboptf_plugin_cv.so" install_mod="550"/>
+    </file_info>
     <file_info copy_type="delivery" src_path="" dst_path="opp/built-in/op_impl/ai_core/tbe" install_path="opp/built-in/op_impl/ai_core/tbe" install_type="all">
         <file value="config" install_mod="550"/>
     </file_info>

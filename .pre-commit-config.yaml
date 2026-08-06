@@ -73,5 +73,6 @@ repos:
         language: system
         pass_filenames: true
         types: [file]
+        exclude: ^scripts/package/.*\.xml$
         stages: [pre-commit]
         verbose: true

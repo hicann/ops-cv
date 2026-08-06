@@ -1,10 +1,10 @@
 # ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
@@ -17,6 +17,7 @@ set(OPGRAPH_NAME opgraph_${PKG_NAME})
 set(OP_GRAPH_NAME op_graph_${PKG_NAME})
 set(GRAPH_PLUGIN_NAME graph_plugin_${PKG_NAME})
 set(ONNX_PLUGIN_NAME oponnx_plugin_${PKG_NAME})
+set(TF_PLUGIN_NAME optf_plugin_${PKG_NAME})
 
 set(OP_CATEGORY_LIST "image" "objdetect" "examples")
 
@@ -36,6 +37,7 @@ set(NEED_COMPILE_OPS "${ASCEND_OP_NAME}" CACHE STRING "Need to be compiled Ops" 
 # 已编译的算子
 set(COMPILED_OPS CACHE STRING "Compiled Ops" FORCE)
 set(COMPILED_OP_DIRS CACHE STRING "Compiled Ops Dirs" FORCE)
+set(ENABLE_AUTO_TF_PLUGIN_SOURCES OFF CACHE BOOL "Enable automatic collection of framework/*_tf_plugin.cpp")
 
 # src path
 get_filename_component(OPS_CV_CMAKE_DIR            "${OPS_CV_DIR}/cmake"                               REALPATH)
@@ -97,6 +99,7 @@ else()
   set(OPGRAPH_INC_INSTALL_DIR         ${OPP_PREFIX}/built-in/op_graph/inc)
   set(OPGRAPH_LIB_INSTALL_DIR         ${OPP_PREFIX}/built-in/op_graph/lib/linux/${CMAKE_SYSTEM_PROCESSOR})
   set(ONNX_PLUGIN_LIB_INSTALL_DIR     ${OPP_PREFIX}/built-in/framework/onnx)
+  set(TF_PLUGIN_LIB_INSTALL_DIR       ${OPP_PREFIX}/built-in/framework/tensorflow)
   set(COMMON_INC_INSTALL_DIR          ${CMAKE_SYSTEM_PROCESSOR}-linux/include)
   set(COMMON_LIB_INSTALL_DIR          ops_cv/lib)
   set(VERSION_INFO_INSTALL_DIR        ${CMAKE_SYSTEM_PROCESSOR}-linux)
@@ -193,6 +196,13 @@ foreach(OP_PROTO_FILE ${OP_PROTO_FILES})
 endforeach()
 
 set(ONNX_PLUGIN_COMMON_INCLUDE
+  ${OPS_CV_DIR}/common/inc/framework
+  ${OPS_CV_DIR}/common/inc/op_graph
+  ${OPS_CV_DIR}/common/stub/inc/framework
+  ${OP_PROTO_PATH_LIST}
+)
+
+set(TF_PLUGIN_COMMON_INCLUDE
   ${OPS_CV_DIR}/common/inc/framework
   ${OPS_CV_DIR}/common/inc/op_graph
   ${OPS_CV_DIR}/common/stub/inc/framework
