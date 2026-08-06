@@ -13,7 +13,7 @@
  * \brief
  */
 
-#include "../register/op_def_registry.h"
+#include "register/op_def_registry.h"
 
 namespace ops {
 class UpsampleTrilinear3dBackward : public OpDef {
