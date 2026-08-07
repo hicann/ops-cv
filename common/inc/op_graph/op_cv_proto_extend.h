@@ -291,58 +291,6 @@ REG_OP(CheckValid)
     .OP_END_FACTORY_REG(CheckValid)
 
 /**
-*@brief Greedily selects a subset of bounding boxes in descending order of score,
-This operation performs non_max_suppression on the inputs per batch, across all classes.
-
-*@par Inputs:
-*@li boxes: A 4-D float tensor of shape `[batch_size, num_boxes, q, 4]`. If `q` is 1 then
-same boxes are used for all classes otherwise, if `q` is equal to number of
-classes, class-specific boxes are used.
-*@li scores: A 3-D float tensor of shape `[batch_size, num_boxes, num_classes]`
-representing a single score corresponding to each box (each row of boxes).
-*@li max_output_size_per_class: An int32 scalar integer tensor representing the maximum number of
-boxes to be selected by non max suppression per class.
-*@li max_total_size: An int32 scalar representing maximum number of boxes retained over all classes.
-*@li iou_threshold: A 0-D float tensor representing the threshold for deciding whether
-boxes overlap too much with respect to IOU.
-*@li score_threshold: A 0-D float tensor representing the threshold for deciding when to remove
-boxes based on score . \n
-
-*@par Attributes:
-*@li pad_per_class: If false, the output nmsed boxes, scores and classes
-are padded/clipped to `max_total_size`. If true, the
-output nmsed boxes, scores and classes are padded to be of length
-`max_size_per_class`*`num_classes`, unless it exceeds `max_total_size` in
-which case it is clipped to `max_total_size`. Defaults to false.
-*@li clip_boxes: If true, assume the box coordinates are between [0, 1] and clip the output boxes
-if they fall beyond [0, 1]. If false, do not do clipping and output the box
-coordinates as it is. If not specified, defaults to true . \n
-
-*@par Outputs:
-*@li nmsed_boxes: Type is float
-*@li nmsed_scores: Type is float
-*@li nmsed_classes: Type is float
-*@li valid_detections: Type is INT32 \n
-
-*@par Third-party framework compatibility
-* Compatible with tensorflow CombinedNonMaxSuppression operator.
-*/
-REG_OP(CombinedNonMaxSuppression)
-    .INPUT(boxes, TensorType({DT_FLOAT}))
-    .INPUT(scores, TensorType({DT_FLOAT}))
-    .INPUT(max_output_size_per_class, TensorType({DT_INT32}))
-    .INPUT(max_total_size, TensorType({DT_INT32}))
-    .INPUT(iou_threshold, TensorType({DT_FLOAT}))
-    .INPUT(score_threshold, TensorType({DT_FLOAT}))
-    .OUTPUT(nmsed_boxes, TensorType({DT_FLOAT}))
-    .OUTPUT(nmsed_scores, TensorType({DT_FLOAT}))
-    .OUTPUT(nmsed_classes, TensorType({DT_FLOAT}))
-    .OUTPUT(valid_detections, TensorType({DT_INT32}))
-    .ATTR(pad_per_class, Bool, false)
-    .ATTR(clip_boxes, Bool, true)
-    .OP_END_FACTORY_REG(CombinedNonMaxSuppression)
-
-/**
 * @brief First calculate the minimum closure area of the two boxes, IoU,
 * The DIoU is obtained by combining the center distance and IoU. \n
 
