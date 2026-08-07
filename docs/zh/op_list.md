@@ -58,6 +58,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/combined_non_max_suppression/README.md">combined_non_max_suppression</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>对每个batch、每个类别独立执行贪心非极大值抑制，再按置信度从高到低合并各类别的候选框。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/crop/README.md">crop</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -568,6 +578,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/batch_multi_class_non_max_suppression/README.md">batch_multi_class_non_max_suppression</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>对每个batch、每个类别的候选框执行贪心非极大值抑制，再从所有类别的保留结果中按分数选择检测框。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/to_absolute_b_box/README.md">to_absolute_b_box</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -705,6 +725,16 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>根据特征点所属的组，重组点云中的特征点。 </td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/sorted_nms/README.md">sorted_nms</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>在已按分数降序排列的候选框序列上，按照交并比阈值贪心选择非抑制框，输出被选中框在原始候选框中的索引。</td>
   </tr>
   <tr>
     <td>objdetect</td>
