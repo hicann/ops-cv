@@ -1,0 +1,269 @@
+{
+  "op_type": "BatchMultiClassNonMaxSuppression",
+  "op_list": [
+    {
+      "bin_filename": "BatchMultiClassNonMaxSuppression_float16",
+      "inputs": [
+        {
+          "name": "boxes",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "scores",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "clip_window",
+          "index": 2,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "num_valid_boxes",
+          "index": 3,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nmsed_boxes",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "nmsed_scores",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "nmsed_classes",
+          "index": 2,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "nmsed_num",
+          "index": 3,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "score_threshold",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "iou_threshold",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "max_size_per_class",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "max_total_size",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "change_coordinate_frame",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "transpose_box",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "image_size",
+          "dtype": "list_int",
+          "value": []
+        }
+      ]
+    },
+    {
+      "bin_filename": "BatchMultiClassNonMaxSuppression_float32",
+      "inputs": [
+        {
+          "name": "boxes",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "scores",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "clip_window",
+          "index": 2,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "num_valid_boxes",
+          "index": 3,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nmsed_boxes",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "nmsed_scores",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "nmsed_classes",
+          "index": 2,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "nmsed_num",
+          "index": 3,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "score_threshold",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "iou_threshold",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "max_size_per_class",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "max_total_size",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "change_coordinate_frame",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "transpose_box",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "image_size",
+          "dtype": "list_int",
+          "value": []
+        }
+      ]
+    }
+  ]
+}

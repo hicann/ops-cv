@@ -304,6 +304,7 @@
     {"name":"AddRmsNormDynamicQuant", "compute_units": ["ascend910b", "ascend910_93", "ascend950"], "auto_sync" : false},
     {"name":"AddRmsNormDynamicQuantV2", "compute_units": ["ascend910b"], "auto_sync" : false},
     {"name":"BatchNormGradV3", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
+    {"name":"BatchMultiClassNonMaxSuppression", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"GroupNormV2", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"SwiGlu", "compute_units": ["ascend910_93", "ascend910b", "ascend950"], "auto_sync": true},
     {"name":"Axpy", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
