@@ -12,7 +12,7 @@
  * \file upsample_bilinear2d.cpp
  * \brief
  */
-#include "upsample_bilinear2d.h"
+#include "upsample_bilinear2d_kernel.h"
 
 using namespace UpsampleBilinear2d;
 

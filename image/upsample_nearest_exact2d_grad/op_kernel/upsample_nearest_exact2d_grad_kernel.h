@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file upsample_nearest_exact2d_grad.h
+ * \file upsample_nearest_exact2d_grad_kernel.h
  * \brief
  */
 

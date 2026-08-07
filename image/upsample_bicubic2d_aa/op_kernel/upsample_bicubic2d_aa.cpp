@@ -13,7 +13,7 @@
  * \brief
  */
 
-#include "upsample_bicubic2d_aa.h"
+#include "upsample_bicubic2d_aa_kernel.h"
 
 using namespace UpsampleBicubic2dAA;
 

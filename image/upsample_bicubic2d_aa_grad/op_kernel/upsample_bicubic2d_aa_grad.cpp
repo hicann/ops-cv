@@ -13,7 +13,7 @@
  * \brief
  */
 
-#include "upsample_bicubic2d_aa_grad.h"
+#include "upsample_bicubic2d_aa_grad_kernel.h"
 
 using namespace UpSampleBicubic2dAAGrad;
 

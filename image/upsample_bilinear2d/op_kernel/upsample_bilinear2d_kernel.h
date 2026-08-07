@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file upsample_bilinear2d.h
+ * \file upsample_bilinear2d_kernel.h
  * \brief
  */
 #ifndef UPSAMPLE_BILINEAR2D

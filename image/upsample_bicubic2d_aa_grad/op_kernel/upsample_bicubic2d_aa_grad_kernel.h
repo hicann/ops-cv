@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file upsample_bicubic2d_aa_grad.h
+ * \file upsample_bicubic2d_aa_grad_kernel.h
  * \brief
  */
 

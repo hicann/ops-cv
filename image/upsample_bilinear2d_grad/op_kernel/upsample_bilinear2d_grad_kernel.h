@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file upsample_bilinear2d_grad.h
+ * \file upsample_bilinear2d_grad_kernel.h
  * \brief
  */
 

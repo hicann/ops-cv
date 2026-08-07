@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file upsample_bicubic2d_aa.h
+ * \file upsample_bicubic2d_aa_kernel.h
  * \brief
  */
 #ifndef UPSAMPLE_BICUBIC2D_AA

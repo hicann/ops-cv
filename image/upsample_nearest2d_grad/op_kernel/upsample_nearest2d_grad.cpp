@@ -14,9 +14,9 @@
  */
 
 #ifdef __CCE_KT_TEST__
-#include "../../upsample_nearest_exact2d_grad/op_kernel/upsample_nearest_exact2d_grad.h"
+#include "../../upsample_nearest_exact2d_grad/op_kernel/upsample_nearest_exact2d_grad_kernel.h"
 #else
-#include "../upsample_nearest_exact2d_grad/upsample_nearest_exact2d_grad.h"
+#include "../upsample_nearest_exact2d_grad/upsample_nearest_exact2d_grad_kernel.h"
 #include "../upsample_nearest_exact2d_grad/upsample_nearest_exact2d_grad_transpose.h"
 #endif
 

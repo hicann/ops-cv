@@ -12,7 +12,7 @@
  * \file upsample_nearest_exact2d_grad.cpp
  * \brief
  */
-#include "upsample_nearest_exact2d_grad.h"
+#include "upsample_nearest_exact2d_grad_kernel.h"
 
 using namespace UpSampleNearestExact2dGrad;
 

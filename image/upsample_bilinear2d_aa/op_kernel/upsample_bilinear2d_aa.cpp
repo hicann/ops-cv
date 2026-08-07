@@ -13,7 +13,7 @@
  * \brief
  */
 
-#include "upsample_bilinear2d_aa.h"
+#include "upsample_bilinear2d_aa_kernel.h"
 
 using namespace UpsampleBilinear2dAA;
 
