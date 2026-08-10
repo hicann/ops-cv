@@ -199,7 +199,7 @@ __aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::Compute4SrcDotWit
 
         for (uint16_t idx = 0; idx < repeatTimes; idx++) {
             pregFp32 = AscendC::Reg::UpdateMask<float>(totalLen);
-            Reg::DataCopy<T_GRADS, Reg::PostLiteral::POST_MODE_UPDATE>(reg_grads, gradsUbPtr, oneRepeat_);
+            Reg::LoadAlign<T_GRADS, Reg::PostLiteral::POST_MODE_UPDATE>(reg_grads, gradsUbPtr, oneRepeat_);
             if constexpr (sizeof(T_GRADS) != sizeof(int32_t)) {
                 Reg::UnPack((RegTensor<int32_t>&)reg_grads_i32, (RegTensor<int16_t>&)reg_grads);
                 Reg::Cast<float, T_GRADS, castTrait0>(reg_grads_f32, reg_grads_i32, pregFp32);
@@ -227,16 +227,20 @@ __aicore__ inline void ResizeBilinearV2GradNc<T_GRADS, T_OUT>::Compute4SrcDotWit
                 Reg::Cast<T_OUT, float, castTrait1>(regTmpOutput, reg_out_rd, pregFp32);
                 Reg::Pack((RegTensor<uint16_t>&)regOutRd, (RegTensor<uint32_t>&)regTmpOutput);
 
-                Reg::MaskPack(pregFp16, pregFp32);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLu, regOutLu, oneRepeat_, pregFp16);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRu, regOutRu, oneRepeat_, pregFp16);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLd, regOutLd, oneRepeat_, pregFp16);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRd, regOutRd, oneRepeat_, pregFp16);
+                Reg::Pack(pregFp16, pregFp32);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLu, regOutLu, oneRepeat_, pregFp16);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRu, regOutRu, oneRepeat_, pregFp16);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLd, regOutLd, oneRepeat_, pregFp16);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRd, regOutRd, oneRepeat_, pregFp16);
             } else {
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLu, reg_out_lu, oneRepeat_, pregFp32);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRu, reg_out_ru, oneRepeat_, pregFp32);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLd, reg_out_ld, oneRepeat_, pregFp32);
-                Reg::DataCopy<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRd, reg_out_rd, oneRepeat_, pregFp32);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLu, reg_out_lu, oneRepeat_,
+                                                                           pregFp32);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRu, reg_out_ru, oneRepeat_,
+                                                                           pregFp32);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrLd, reg_out_ld, oneRepeat_,
+                                                                           pregFp32);
+                Reg::StoreAlign<T_OUT, Reg::PostLiteral::POST_MODE_UPDATE>(outUbPtrRd, reg_out_rd, oneRepeat_,
+                                                                           pregFp32);
             }
         }
     }

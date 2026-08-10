@@ -234,10 +234,10 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
 
         for (uint16_t idx = 0; idx < repeatTimes; idx++) {
             pregFp32 = AscendC::Reg::UpdateMask<float>(totalLen);
-            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcLu, srcUbLuPrt, oneRepeat_);
-            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcRu, srcUbRuPrt, oneRepeat_);
-            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcLd, srcUbLdPrt, oneRepeat_);
-            Reg::DataCopy<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcRd, srcUbRdPrt, oneRepeat_);
+            Reg::LoadAlign<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcLu, srcUbLuPrt, oneRepeat_);
+            Reg::LoadAlign<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcRu, srcUbRuPrt, oneRepeat_);
+            Reg::LoadAlign<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcLd, srcUbLdPrt, oneRepeat_);
+            Reg::LoadAlign<Tin, Reg::PostLiteral::POST_MODE_UPDATE>(reg_srcRd, srcUbRdPrt, oneRepeat_);
             if constexpr (sizeof(Tin) != sizeof(int32_t)) {
                 Reg::UnPack((RegTensor<int32_t>&)reg_srcLui32, (RegTensor<int16_t>&)reg_srcLu);
                 Reg::UnPack((RegTensor<int32_t>&)reg_srcRui32, (RegTensor<int16_t>&)reg_srcRu);
@@ -264,10 +264,10 @@ __aicore__ inline void ResizeBilinearV2Nc<Tin, Tout>::ComputeDstValueWith4SrcDot
             if constexpr (sizeof(Tout) == sizeof(int16_t)) {
                 Reg::Cast<Tout, float, castTrait1>(regTmpT2, regSumF32, pregFp32);
                 Reg::Pack((RegTensor<uint16_t>&)regOutputT2, (RegTensor<uint32_t>&)regTmpT2);
-                Reg::MaskPack(pregFp16, pregFp32);
-                Reg::DataCopy<Tout, Reg::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regOutputT2, oneRepeat_, pregFp16);
+                Reg::Pack(pregFp16, pregFp32);
+                Reg::StoreAlign<Tout, Reg::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regOutputT2, oneRepeat_, pregFp16);
             } else {
-                Reg::DataCopy<Tout, Reg::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regSumF32, oneRepeat_, pregFp32);
+                Reg::StoreAlign<Tout, Reg::PostLiteral::POST_MODE_UPDATE>(dstUbPtr, regSumF32, oneRepeat_, pregFp32);
             }
         }
     }

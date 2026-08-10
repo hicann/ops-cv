@@ -174,7 +174,7 @@ __aicore__ inline void ResizeBilinearV2BroadcastNCHW<T_DATA>::Compute(LocalTenso
             for (uint16_t inLoop = 0; inLoop < (uint16_t)repeatTimes; inLoop++) {
                 preg = Reg::UpdateMask<U>(oneLineLen);
                 Reg::Duplicate(regData, val, preg);
-                Reg::DataCopy<U, Reg::PostLiteral::POST_MODE_UPDATE>(yLineAddr, regData, (int32_t)oneRepeat, preg);
+                Reg::StoreAlign<U, Reg::PostLiteral::POST_MODE_UPDATE>(yLineAddr, regData, (int32_t)oneRepeat, preg);
             }
 
             xAddr++;

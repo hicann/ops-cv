@@ -216,23 +216,23 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::GatherOutput(Lo
         for (uint16_t j = 0; j < times; j++) {
             preg = AscendC::Reg::UpdateMask<T>(hwNum);
             AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
-            AscendC::Reg::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
+            AscendC::Reg::LoadAlign(idxRegT, idxUbAddr, srcIdxOffset);
             AscendC::Reg::Sub(idxRegT, idxRegT, startReg, preg);
-            DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
-            AscendC::Reg::DataCopy(dstUbAddr, dstReg, srcIdxOffset, preg);
+            Gather(dstReg, srcUbAddr, idxRegT, preg);
+            AscendC::Reg::StoreAlign(dstUbAddr, dstReg, srcIdxOffset, preg);
         }
         // 从第二行开始处理
         for (uint16_t nc = 0; nc < timesNc; nc++) {
             for (uint16_t jj = 0; jj < times; jj++) {
                 preg = AscendC::Reg::UpdateMask<T>(hwNum1);
                 AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(jj, vfLen);
-                AscendC::Reg::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
+                AscendC::Reg::LoadAlign(idxRegT, idxUbAddr, srcIdxOffset);
                 AscendC::Reg::Sub(idxRegT, idxRegT, startReg, preg);
                 for (uint16_t i = 0; i < ubFactorTimes; i++) {
                     AscendC::Reg::AddrReg outOffset = AscendC::Reg::CreateAddrReg<T>(jj, vfLen, i, dstHwAlign);
                     Adds(idxRegT, idxRegT, srcLenNum, preg);
-                    DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
-                    AscendC::Reg::DataCopy(dstUbAddr1, dstReg, outOffset, preg);
+                    Gather(dstReg, srcUbAddr, idxRegT, preg);
+                    AscendC::Reg::StoreAlign(dstUbAddr1, dstReg, outOffset, preg);
                 }
             }
         }
@@ -283,9 +283,9 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeDataCopy
         for (uint16_t j = 0; j < times; j++) {
             preg = AscendC::Reg::UpdateMask<T>(onceSize);
             AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
-            AscendC::Reg::DataCopy(idxRegT, idxUbAddr, srcIdxOffset);
-            DataCopyGather(dstReg, srcUbAddr, idxRegT, preg);
-            AscendC::Reg::DataCopy(dstUbAddr, dstReg, srcIdxOffset, preg);
+            AscendC::Reg::LoadAlign(idxRegT, idxUbAddr, srcIdxOffset);
+            Gather(dstReg, srcUbAddr, idxRegT, preg);
+            AscendC::Reg::StoreAlign(dstUbAddr, dstReg, srcIdxOffset, preg);
         }
     }
 }
@@ -312,19 +312,20 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHids(Loc
         AscendC::Reg::MaskReg pregRemainB32;
         Arange(idxInt32Reg, 0);
         if constexpr (sizeof(T1) == sizeof(int32_t)) {
-            DataCopy(idxUbAddr, (Reg::RegTensor<T1>&)idxInt32Reg, pregB32);
+            StoreAlign(idxUbAddr, (Reg::RegTensor<T1>&)idxInt32Reg, pregB32);
         } else {
-            DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbAddr, (Reg::RegTensor<T1>&)idxInt32Reg, pregB32);
+            StoreAlign<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbAddr, (Reg::RegTensor<T1>&)idxInt32Reg,
+                                                                   pregB32);
         }
         for (uint16_t i = 0; i < times; i++) {
             pregRemainB32 = AscendC::Reg::UpdateMask<int32_t>(remainNum);
             Adds(idxInt32Reg, idxInt32Reg, 64, pregRemainB32);
             AscendC::Reg::AddrReg dstOffset = AscendC::Reg::CreateAddrReg<T1>(i, 64);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxUbRemainAddr, (Reg::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
+                StoreAlign(idxUbRemainAddr, (Reg::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
             } else {
-                DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbRemainAddr, (Reg::RegTensor<T1>&)idxInt32Reg,
-                                                                     dstOffset, pregRemainB32);
+                StoreAlign<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(
+                    idxUbRemainAddr, (Reg::RegTensor<T1>&)idxInt32Reg, dstOffset, pregRemainB32);
             }
         }
     }
@@ -384,9 +385,9 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1>& idxUb, float bias, float 
             Muls(hIdxInt32C, hIdxInt32C, srcW, pregB32);
         }
         if constexpr (sizeof(T1) == sizeof(int32_t)) {
-            DataCopy(idxUbAddr, (Reg::RegTensor<T1>&)hIdxInt32C, pregB32);
+            StoreAlign(idxUbAddr, (Reg::RegTensor<T1>&)hIdxInt32C, pregB32);
         } else {
-            DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbAddr, (Reg::RegTensor<T1>&)hIdxInt32C, pregB32);
+            StoreAlign<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbAddr, (Reg::RegTensor<T1>&)hIdxInt32C, pregB32);
         }
         for (uint16_t i = 0; i < times; i++) {
             pregRemainB32 = AscendC::Reg::UpdateMask<int32_t>(remainNum);
@@ -404,10 +405,10 @@ __aicore__ inline void ComputeHOrWids(LocalTensor<T1>& idxUb, float bias, float 
             }
             AscendC::Reg::AddrReg dstOffset = AscendC::Reg::CreateAddrReg<T1>(i, 64);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxUbRemainAddr, (Reg::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
+                StoreAlign(idxUbRemainAddr, (Reg::RegTensor<T1>&)hIdxInt32C, dstOffset, pregRemainB32);
             } else {
-                DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbRemainAddr, (Reg::RegTensor<T1>&)hIdxInt32C,
-                                                                     dstOffset, pregRemainB32);
+                StoreAlign<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxUbRemainAddr, (Reg::RegTensor<T1>&)hIdxInt32C,
+                                                                       dstOffset, pregRemainB32);
             }
         }
     }
@@ -445,10 +446,10 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(
             preg = AscendC::Reg::UpdateMask<int32_t>(size);
             AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(i, vfLenB32);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy((Reg::RegTensor<T1>&)idxInt32Reg, idxHubAddr, srcIdxOffset);
+                LoadAlign((Reg::RegTensor<T1>&)idxInt32Reg, idxHubAddr, srcIdxOffset);
             } else {
-                DataCopy<T1, Reg::LoadDist::DIST_UNPACK_B16>((Reg::RegTensor<T1>&)idxInt32Reg, idxHubAddr,
-                                                             srcIdxOffset);
+                LoadAlign<T1, Reg::LoadDist::DIST_UNPACK_B16>((Reg::RegTensor<T1>&)idxInt32Reg, idxHubAddr,
+                                                              srcIdxOffset);
             }
             //
             Adds(idxInt32Reg, idxInt32Reg, hoStartData, preg); // 输出位置
@@ -465,10 +466,10 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHIdx(
             Sub(idxInt32OriReg, idxInt32OriReg, hiStartReg, preg);
             Muls(idxInt32OriWReg, idxInt32OriReg, wSize, preg);
             if constexpr (sizeof(T1) == sizeof(int32_t)) {
-                DataCopy(idxH1UbAddr, (Reg::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
+                StoreAlign(idxH1UbAddr, (Reg::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
             } else {
-                DataCopy<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(idxH1UbAddr, (Reg::RegTensor<T1>&)idxInt32OriWReg,
-                                                                     srcIdxOffset, preg);
+                StoreAlign<T1, AscendC::Reg::StoreDist::DIST_PACK_B32>(
+                    idxH1UbAddr, (Reg::RegTensor<T1>&)idxInt32OriWReg, srcIdxOffset, preg);
             }
         }
     }
@@ -509,14 +510,14 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeOriHWidx
             for (uint16_t j = 0; j < static_cast<uint16_t>(wTimes); j++) {
                 AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
                 AscendC::Reg::AddrReg outIdxOffset = AscendC::Reg::CreateAddrReg<T1>(i, dstWSize, j, vfLen);
-                DataCopy(idxWReg, idxWubAddr, srcIdxOffset);
+                LoadAlign(idxWReg, idxWubAddr, srcIdxOffset);
                 Adds(addsReg, idxWReg, hIdx, pregB32);
-                DataCopy(idxHwUbAddr, addsReg, outIdxOffset, pregB32);
+                StoreAlign(idxHwUbAddr, addsReg, outIdxOffset, pregB32);
             }
             for (uint16_t jj = 0; jj < wTailTimes; jj++) {
-                DataCopy(idxWReg, idxWubAddr1);
+                LoadAlign(idxWReg, idxWubAddr1);
                 Adds(addsReg, idxWReg, hIdx, preg);
-                DataCopy(idxHwUbAddr1, addsReg, outIdxOffset1, preg);
+                StoreAlign(idxHwUbAddr1, addsReg, outIdxOffset1, preg);
             }
         }
     }
@@ -599,15 +600,15 @@ __aicore__ inline void ResizeGather<T, T1, schId, alignCorners>::ComputeHWids(Lo
             AscendC::Reg::AddrReg outIdxOffset = AscendC::Reg::CreateAddrReg<T1>(i, wAlign);
             for (uint16_t j = 0; j < static_cast<uint16_t>(wTimes); j++) {
                 AscendC::Reg::AddrReg srcIdxOffset = AscendC::Reg::CreateAddrReg<T1>(j, vfLen);
-                DataCopy(wIdxReg, idxWUbAddr, srcIdxOffset);
+                LoadAlign(wIdxReg, idxWUbAddr, srcIdxOffset);
                 Adds(idxReg, wIdxReg, hIdx, pregB32);
                 AscendC::Reg::AddrReg srcOutOffset = AscendC::Reg::CreateAddrReg<T1>(i, wAlign, j, vfLen);
-                DataCopy(idxUbAddr, idxReg, srcOutOffset, pregB32);
+                StoreAlign(idxUbAddr, idxReg, srcOutOffset, pregB32);
             }
             for (uint16_t jj = 0; jj < tailTimes; jj++) {
-                DataCopy(wIdxReg, idxWUbAddr1);
+                LoadAlign(wIdxReg, idxWUbAddr1);
                 Adds(idxReg, wIdxReg, hIdx, pregTail);
-                DataCopy(idxUbAddr1, idxReg, outIdxOffset, pregTail);
+                StoreAlign(idxUbAddr1, idxReg, outIdxOffset, pregTail);
             }
         }
     }

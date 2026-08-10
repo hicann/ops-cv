@@ -215,10 +215,10 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
 
         for (uint16_t loop = 0; loop < (uint16_t)repeatTimes; loop++) {
             pregFp32 = Reg::UpdateMask<float>(totalLen);
-            Reg::DataCopy<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regNW, xAddrNW, (int32_t)oneRepeat);
-            Reg::DataCopy<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regNE, xAddrNE, (int32_t)oneRepeat);
-            Reg::DataCopy<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regSW, xAddrSW, (int32_t)oneRepeat);
-            Reg::DataCopy<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regSE, xAddrSE, (int32_t)oneRepeat);
+            Reg::LoadAlign<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regNW, xAddrNW, (int32_t)oneRepeat);
+            Reg::LoadAlign<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regNE, xAddrNE, (int32_t)oneRepeat);
+            Reg::LoadAlign<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regSW, xAddrSW, (int32_t)oneRepeat);
+            Reg::LoadAlign<T_X, Reg::PostLiteral::POST_MODE_UPDATE>(regSE, xAddrSE, (int32_t)oneRepeat);
 
             if constexpr (sizeof(T_X) == sizeof(int16_t)) {
                 Reg::UnPack((RegTensor<int32_t>&)regTmp, (RegTensor<int16_t>&)regNW);
@@ -248,10 +248,11 @@ __aicore__ inline void ResizeBilinearV2CParallel<T_X, T_Y>::Compute()
             if constexpr (sizeof(T_Y) == sizeof(int16_t)) {
                 Reg::Cast<T_Y, float, castTrait1>(regTmp, regSumFp32, pregFp32);
                 Reg::Pack((RegTensor<uint16_t>&)regRst, (RegTensor<uint32_t>&)regTmp);
-                Reg::MaskPack(pregFp16, pregFp32);
-                Reg::DataCopy<T_Y, Reg::PostLiteral::POST_MODE_UPDATE>(yAddr, regRst, (int32_t)oneRepeat, pregFp16);
+                Reg::Pack(pregFp16, pregFp32);
+                Reg::StoreAlign<T_Y, Reg::PostLiteral::POST_MODE_UPDATE>(yAddr, regRst, (int32_t)oneRepeat, pregFp16);
             } else {
-                Reg::DataCopy<T_Y, Reg::PostLiteral::POST_MODE_UPDATE>(yAddr, regSumFp32, (int32_t)oneRepeat, pregFp32);
+                Reg::StoreAlign<T_Y, Reg::PostLiteral::POST_MODE_UPDATE>(yAddr, regSumFp32, (int32_t)oneRepeat,
+                                                                         pregFp32);
             }
         }
     }
