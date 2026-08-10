@@ -501,7 +501,7 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNumW(const uint32_t coreNumPla
     int64_t minAvergingRows = slide_size;
 
     // 按照剩余尾块数给核分组，然后每组核再均分行数
-    int64_t groupCoreNum = coreNumPlatform / remainder;
+    int64_t groupCoreNum = remainder != 0 ? coreNumPlatform / remainder : coreNumPlatform;
 
     int64_t tailAvergingRows = std::max(CeilA2B(input_h, groupCoreNum), minAvergingRows);
 
