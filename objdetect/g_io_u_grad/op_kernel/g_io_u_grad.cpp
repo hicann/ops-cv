@@ -15,7 +15,7 @@
  * \brief GIoUGrad kernel entry point
  */
 
-#include "./arch35/g_io_u_grad_simt.h"
+#include "arch35/g_io_u_grad_simt.h"
 
 template <uint32_t schMode>
 __global__ __aicore__ void g_io_u_grad(GM_ADDR dy, GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR dbboxes, GM_ADDR dgtboxes,

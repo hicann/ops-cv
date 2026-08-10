@@ -64,22 +64,157 @@ __simt_callee__ inline half FromFloat32<half>(float val)
     return __float2half(val);
 }
 
+template <typename T>
+__simt_callee__ inline float RoundInputOp(float val)
+{
+    return val;
+}
+
+template <>
+__simt_callee__ inline float RoundInputOp<half>(float val)
+{
+    return __half2float(__float2half(val));
+}
+
+__simt_callee__ inline float PreciseMul(float lhs, float rhs) { return fmaf(lhs, rhs, 0.0f); }
+
+__simt_callee__ inline float TorchMin(float lhs, float rhs)
+{
+    if (lhs < rhs) {
+        return lhs;
+    }
+    if (rhs < lhs) {
+        return rhs;
+    }
+    return lhs == rhs ? lhs : lhs + rhs;
+}
+
+__simt_callee__ inline float TorchMax(float lhs, float rhs)
+{
+    if (lhs > rhs) {
+        return lhs;
+    }
+    if (rhs > lhs) {
+        return rhs;
+    }
+    return lhs == rhs ? lhs : lhs + rhs;
+}
+
+__simt_callee__ inline void NormalizeFloatMantissa(uint32_t& mantissa, int& exponent)
+{
+    if (exponent != 0) {
+        mantissa |= 0x00800000U;
+        exponent -= 127;
+        return;
+    }
+    exponent = -126;
+    while ((mantissa & 0x00800000U) == 0U) {
+        mantissa <<= 1U;
+        --exponent;
+    }
+}
+
+// Build an IEEE-754 subnormal quotient without relying on the device's
+// flush-to-zero scalar division path.
+__simt_callee__ inline float BuildSubnormalQuotient(float numerator, float denominator)
+{
+    union FloatBits {
+        float f;
+        uint32_t u;
+    } lhs, rhs, result;
+    lhs.f = numerator;
+    rhs.f = denominator;
+    uint32_t lhs_mantissa = lhs.u & 0x007FFFFFU;
+    uint32_t rhs_mantissa = rhs.u & 0x007FFFFFU;
+    int lhs_exponent = static_cast<int>((lhs.u >> 23U) & 0xFFU);
+    int rhs_exponent = static_cast<int>((rhs.u >> 23U) & 0xFFU);
+    NormalizeFloatMantissa(lhs_mantissa, lhs_exponent);
+    NormalizeFloatMantissa(rhs_mantissa, rhs_exponent);
+    int scale = lhs_exponent - rhs_exponent + 149;
+    if (scale <= -2) {
+        result.u = (lhs.u ^ rhs.u) & 0x80000000U;
+        return result.f;
+    }
+    uint64_t dividend = lhs_mantissa;
+    uint64_t divisor = rhs_mantissa;
+    if (scale >= 0) {
+        dividend <<= static_cast<uint32_t>(scale);
+    } else {
+        divisor <<= static_cast<uint32_t>(-scale);
+    }
+    uint64_t mantissa = dividend / divisor;
+    uint64_t remainder = dividend - mantissa * divisor;
+    uint64_t twice_remainder = remainder << 1U;
+    if (twice_remainder > divisor || (twice_remainder == divisor && (mantissa & 1U) != 0U)) {
+        ++mantissa;
+    }
+    result.u = ((lhs.u ^ rhs.u) & 0x80000000U) | static_cast<uint32_t>(mantissa);
+    return result.f;
+}
+
+// Ascend SIMT float division can differ from an IEEE-754 rounded quotient by
+// a few ULP. Correct the hardware quotient with an FMA-computed residual;
+// this is the scalar counterpart of CANN's high-precision Div implementation.
+__simt_callee__ inline float PreciseDiv(float numerator, float denominator)
+{
+    union FloatBits {
+        float f;
+        uint32_t u;
+    } quotient, previous, next, numerator_bits, denominator_bits;
+    quotient.f = numerator / denominator;
+    numerator_bits.f = numerator;
+    denominator_bits.f = denominator;
+    uint32_t abs_bits = quotient.u & 0x7FFFFFFFU;
+    if (abs_bits == 0U) {
+        uint32_t numerator_abs = numerator_bits.u & 0x7FFFFFFFU;
+        uint32_t denominator_abs = denominator_bits.u & 0x7FFFFFFFU;
+        if (numerator_abs != 0U && denominator_abs != 0U && numerator_abs < 0x7F800000U &&
+            denominator_abs < 0x7F800000U) {
+            return BuildSubnormalQuotient(numerator, denominator);
+        }
+        return quotient.f;
+    }
+    if (abs_bits >= 0x7F800000U) {
+        return quotient.f;
+    }
+    float neg_denominator = -denominator;
+    float signed_residual = fmaf(quotient.f, neg_denominator, numerator);
+    quotient.f += signed_residual / denominator;
+    previous.u = quotient.u - 1U;
+    next.u = quotient.u + 1U;
+    float residual = fabsf(fmaf(quotient.f, neg_denominator, numerator));
+    float previous_residual = fabsf(fmaf(previous.f, neg_denominator, numerator));
+    float next_residual = fabsf(fmaf(next.f, neg_denominator, numerator));
+    if (previous_residual < residual) {
+        quotient.f = previous.f;
+        residual = previous_residual;
+    }
+    if (next_residual < residual) {
+        quotient.f = next.f;
+    }
+    return quotient.f;
+}
+
 // ===================== Coordinate conversion =====================
 
-template <bool TRANS>
+template <typename T, bool TRANS>
 __simt_callee__ inline void ConvertToXyxy(float bx, float by, float bw, float bh, float gx, float gy, float gw,
                                           float gh, float& b_x1, float& b_y1, float& b_x2, float& b_y2, float& g_x1,
                                           float& g_y1, float& g_x2, float& g_y2)
 {
     if constexpr (TRANS) {
-        b_x1 = bx - bw * 0.5f;
-        b_y1 = by - bh * 0.5f;
-        b_x2 = bx + bw * 0.5f;
-        b_y2 = by + bh * 0.5f;
-        g_x1 = gx - gw * 0.5f;
-        g_y1 = gy - gh * 0.5f;
-        g_x2 = gx + gw * 0.5f;
-        g_y2 = gy + gh * 0.5f;
+        float b_half_w = RoundInputOp<T>(bw * 0.5f);
+        float b_half_h = RoundInputOp<T>(bh * 0.5f);
+        float g_half_w = RoundInputOp<T>(gw * 0.5f);
+        float g_half_h = RoundInputOp<T>(gh * 0.5f);
+        b_x1 = RoundInputOp<T>(bx - b_half_w);
+        b_y1 = RoundInputOp<T>(by - b_half_h);
+        b_x2 = RoundInputOp<T>(bx + b_half_w);
+        b_y2 = RoundInputOp<T>(by + b_half_h);
+        g_x1 = RoundInputOp<T>(gx - g_half_w);
+        g_y1 = RoundInputOp<T>(gy - g_half_h);
+        g_x2 = RoundInputOp<T>(gx + g_half_w);
+        g_y2 = RoundInputOp<T>(gy + g_half_h);
     } else {
         b_x1 = bx;
         b_y1 = by;
@@ -100,49 +235,41 @@ __simt_callee__ inline void ComputeForwardGrad(float dy_val, float b_x1, float b
                                                float& g_h, float& g_w, float& uni, float& cw, float& ch, float& enclose,
                                                float& dunion_val, float& dinter_val, float& dxlen, float& dylen)
 {
-    // Raw xlen/ylen (before clamping) — needed for boundary conditions (TBE: xlen >= 0)
-    xlen = fminf(b_x2, g_x2) - fmaxf(b_x1, g_x1);
-    ylen = fminf(b_y2, g_y2) - fmaxf(b_y1, g_y1);
-    inter_x = fmaxf(xlen, 0.0f);
-    inter_y = fmaxf(ylen, 0.0f);
-    inter = inter_x * inter_y;
-    b_h = fmaxf(b_y2 - b_y1, 0.0f) + EPS;
-    b_w = fmaxf(b_x2 - b_x1, 0.0f) + EPS;
-    g_h = fmaxf(g_y2 - g_y1, 0.0f) + EPS;
-    g_w = fmaxf(g_x2 - g_x1, 0.0f) + EPS;
-    float b_area = b_w * b_h;
-    float g_area = g_w * g_h;
+    xlen = TorchMin(b_x2, g_x2) - TorchMax(b_x1, g_x1);
+    ylen = TorchMin(b_y2, g_y2) - TorchMax(b_y1, g_y1);
+    bool has_intersection = xlen > 0.0f && ylen > 0.0f;
+    inter_x = has_intersection ? xlen : 0.0f;
+    inter_y = has_intersection ? ylen : 0.0f;
+    inter = has_intersection ? PreciseMul(xlen, ylen) : 0.0f;
+    b_h = b_y2 - b_y1;
+    b_w = b_x2 - b_x1;
+    g_h = g_y2 - g_y1;
+    g_w = g_x2 - g_x1;
+    float b_area = PreciseMul(b_w, b_h);
+    float g_area = PreciseMul(g_w, g_h);
     uni = b_area + g_area - inter;
-    cw = fmaxf(fmaxf(b_x2, g_x2) - fminf(b_x1, g_x1), 0.0f) + EPS;
-    ch = fmaxf(fmaxf(b_y2, g_y2) - fminf(b_y1, g_y1), 0.0f) + EPS;
-    enclose = cw * ch + EPS;
-    // dunion: match TBE computation order exactly
-    // tmp_a = dy/enclose, tmp_b = inter/union, tmp_c = tmp_b/union, tmp_d = dy*tmp_c
-    float dunion_tmp_a = dy_val / enclose;
-    float dunion_tmp_b = inter / uni;
-    float dunion_tmp_c = dunion_tmp_b / uni;
-    float dunion_tmp_d = dy_val * dunion_tmp_c;
-    dunion_val = dunion_tmp_a - dunion_tmp_d;
-    // dinter: match TBE order
-    dinter_val = dy_val / uni - dunion_val;
-    // denclose: match TBE order
-    // tmp_a = union/enclose, tmp_b = tmp_a/enclose, tmp_c = dy*tmp_b
-    float denc_tmp_a = uni / enclose;
-    float denc_tmp_b = denc_tmp_a / enclose;
-    float denc_tmp_c = dy_val * denc_tmp_b;
-    float denclose = -denc_tmp_c;
-    dxlen = denclose * ch;
-    dylen = denclose * cw;
+    cw = TorchMax(b_x2, g_x2) - TorchMin(b_x1, g_x1);
+    ch = TorchMax(b_y2, g_y2) - TorchMin(b_y1, g_y1);
+    enclose = PreciseMul(cw, ch);
+    float union_denom = uni + EPS;
+    float enclose_denom = enclose + EPS;
+    float iou = PreciseDiv(inter, union_denom);
+    // Match DivBackward0's float32 evaluation order in PyTorch:
+    // grad_other = -grad * (quotient / denominator).  Multiplying before
+    // the second division differs by one ULP in cancellation-heavy cases.
+    float grad_iou_union = PreciseMul(-dy_val, PreciseDiv(iou, union_denom));
+    float penalty_numer = enclose - uni;
+    float grad_penalty_numer = PreciseDiv(-dy_val, enclose_denom);
+    float penalty = PreciseDiv(penalty_numer, enclose_denom);
+    float grad_penalty_enclose = PreciseMul(dy_val, PreciseDiv(penalty, enclose_denom));
+    dunion_val = grad_iou_union - grad_penalty_numer;
+    dinter_val = PreciseDiv(dy_val, union_denom) - dunion_val;
+    float denclose = grad_penalty_numer + grad_penalty_enclose;
+    dxlen = PreciseMul(denclose, ch);
+    dylen = PreciseMul(denclose, cw);
 }
 
 // ===================== Distribute gradients to coordinates =====================
-// Boundary conditions match TBE reference (common_iou_grad.py + giou_grad.py):
-// - Inter part: condition is xlen >= 0 (raw, before clamping)
-//   - b_x1: b_x1 > g_x1 (strict), g_x1: g_x1 >= b_x1 (non-strict)
-//   - b_x2: b_x2 < g_x2 (strict), g_x2: g_x2 >= b_x2 (non-strict, i.e. b_x2 <= g_x2 → g gets)
-//   - Same pattern for y
-// - Enclose part (max): b_x2 > g_x2 (strict), g_x2 >= b_x2 (non-strict)
-// - Enclose part (min): b_x1 < g_x1 (strict), g_x1 <= b_x1 (non-strict)
 
 __simt_callee__ inline void DistributeCoordGrads(float dunion_val, float dinter_val, float dxlen, float dylen,
                                                  float b_x1, float b_y1, float b_x2, float b_y2, float g_x1, float g_y1,
@@ -151,74 +278,112 @@ __simt_callee__ inline void DistributeCoordGrads(float dunion_val, float dinter_
                                                  float& db_y1, float& db_x2, float& db_y2, float& dg_x1, float& dg_y1,
                                                  float& dg_x2, float& dg_y2)
 {
-    // === Union part (base gradients) ===
-    db_x1 = -dunion_val * b_h;
-    db_x2 = dunion_val * b_h;
-    db_y1 = -dunion_val * b_w;
-    db_y2 = dunion_val * b_w;
-    dg_x1 = -dunion_val * g_h;
-    dg_x2 = dunion_val * g_h;
-    dg_y1 = -dunion_val * g_w;
-    dg_y2 = dunion_val * g_w;
+    // Union and raw box-area gradients.
+    db_x1 = -PreciseMul(dunion_val, b_h);
+    db_x2 = PreciseMul(dunion_val, b_h);
+    db_y1 = -PreciseMul(dunion_val, b_w);
+    db_y2 = PreciseMul(dunion_val, b_w);
+    dg_x1 = -PreciseMul(dunion_val, g_h);
+    dg_x2 = PreciseMul(dunion_val, g_h);
+    dg_y1 = -PreciseMul(dunion_val, g_w);
+    dg_y2 = PreciseMul(dunion_val, g_w);
 
-    // === Inter part (condition: xlen >= 0, matching TBE vec_cmpv_ge) ===
-    if (xlen >= 0.0f) {
-        // x2: TBE vec_cmpv_lt(b_x2, g_x2) → b gets; else g gets
+    // Torchvision activates the intersection only when both dimensions are strictly positive.
+    if (xlen > 0.0f && ylen > 0.0f) {
+        float inter_grad_x = PreciseMul(dinter_val, inter_y);
         if (b_x2 < g_x2) {
-            db_x2 += dinter_val * inter_y;
+            db_x2 += inter_grad_x;
+        } else if (g_x2 < b_x2) {
+            dg_x2 += inter_grad_x;
         } else {
-            dg_x2 += dinter_val * inter_y;
+            db_x2 += inter_grad_x * 0.5f;
+            dg_x2 += inter_grad_x * 0.5f;
         }
-        // x1 (negated): TBE vec_cmpv_gt(b_x1, g_x1) → b gets; else g gets
+        inter_grad_x = -inter_grad_x;
         if (b_x1 > g_x1) {
-            db_x1 += -dinter_val * inter_y;
+            db_x1 += inter_grad_x;
+        } else if (g_x1 > b_x1) {
+            dg_x1 += inter_grad_x;
         } else {
-            dg_x1 += -dinter_val * inter_y;
+            db_x1 += inter_grad_x * 0.5f;
+            dg_x1 += inter_grad_x * 0.5f;
         }
-    }
-    if (ylen >= 0.0f) {
-        // y2: TBE vec_cmpv_lt(b_y2, g_y2) → b gets; else g gets
+
+        float inter_grad_y = PreciseMul(dinter_val, inter_x);
         if (b_y2 < g_y2) {
-            db_y2 += dinter_val * inter_x;
+            db_y2 += inter_grad_y;
+        } else if (g_y2 < b_y2) {
+            dg_y2 += inter_grad_y;
         } else {
-            dg_y2 += dinter_val * inter_x;
+            db_y2 += inter_grad_y * 0.5f;
+            dg_y2 += inter_grad_y * 0.5f;
         }
-        // y1 (negated): TBE vec_cmpv_gt(b_y1, g_y1) → b gets; else g gets
+        inter_grad_y = -inter_grad_y;
         if (b_y1 > g_y1) {
-            db_y1 += -dinter_val * inter_x;
+            db_y1 += inter_grad_y;
+        } else if (g_y1 > b_y1) {
+            dg_y1 += inter_grad_y;
         } else {
-            dg_y1 += -dinter_val * inter_x;
+            db_y1 += inter_grad_y * 0.5f;
+            dg_y1 += inter_grad_y * 0.5f;
         }
     }
 
-    // === Enclose part (max: x2/y2) ===
-    // TBE vec_cmpv_gt(b_x2, g_x2) → b gets dxlen; else g gets dxlen
+    // Binary torch min/max split gradients evenly when the two operands are equal.
     if (b_x2 > g_x2) {
         db_x2 += dxlen;
-    } else {
+    } else if (g_x2 > b_x2) {
         dg_x2 += dxlen;
+    } else {
+        db_x2 += dxlen * 0.5f;
+        dg_x2 += dxlen * 0.5f;
     }
     if (b_y2 > g_y2) {
         db_y2 += dylen;
-    } else {
+    } else if (g_y2 > b_y2) {
         dg_y2 += dylen;
+    } else {
+        db_y2 += dylen * 0.5f;
+        dg_y2 += dylen * 0.5f;
     }
 
-    // === Enclose part (min: x1/y1, negated dxlen/dylen) ===
-    // TBE vec_cmpv_lt(b_x1, g_x1) → b gets -dxlen; else g gets -dxlen
     if (b_x1 < g_x1) {
         db_x1 += -dxlen;
-    } else {
+    } else if (g_x1 < b_x1) {
         dg_x1 += -dxlen;
+    } else {
+        db_x1 += -dxlen * 0.5f;
+        dg_x1 += -dxlen * 0.5f;
     }
     if (b_y1 < g_y1) {
         db_y1 += -dylen;
-    } else {
+    } else if (g_y1 < b_y1) {
         dg_y1 += -dylen;
+    } else {
+        db_y1 += -dylen * 0.5f;
+        dg_y1 += -dylen * 0.5f;
     }
 }
 
 // ===================== Write-back output =====================
+
+template <typename T, typename INDEX_SIZE_T>
+__simt_callee__ inline void WriteTransBox(float dx1, float dy1, float dx2, float dy2, INDEX_SIZE_T idx, INDEX_SIZE_T N,
+                                          __gm__ T* output)
+{
+    dx1 = RoundInputOp<T>(dx1);
+    dy1 = RoundInputOp<T>(dy1);
+    dx2 = RoundInputOp<T>(dx2);
+    dy2 = RoundInputOp<T>(dy2);
+    float dx1_half_grad = RoundInputOp<T>(-dx1 * 0.5f);
+    float dy1_half_grad = RoundInputOp<T>(-dy1 * 0.5f);
+    float dx2_half_grad = RoundInputOp<T>(dx2 * 0.5f);
+    float dy2_half_grad = RoundInputOp<T>(dy2 * 0.5f);
+    output[0 * N + idx] = FromFloat32<T>(RoundInputOp<T>(dx1 + dx2));
+    output[1 * N + idx] = FromFloat32<T>(RoundInputOp<T>(dy1 + dy2));
+    output[2 * N + idx] = FromFloat32<T>(RoundInputOp<T>(dx1_half_grad + dx2_half_grad));
+    output[3 * N + idx] = FromFloat32<T>(RoundInputOp<T>(dy1_half_grad + dy2_half_grad));
+}
 
 template <typename T, bool TRANS, typename INDEX_SIZE_T>
 __simt_callee__ inline void WriteBackOutput(float db_x1, float db_y1, float db_x2, float db_y2, float dg_x1,
@@ -226,14 +391,8 @@ __simt_callee__ inline void WriteBackOutput(float db_x1, float db_y1, float db_x
                                             __gm__ T* dbboxes, __gm__ T* dgtboxes)
 {
     if constexpr (TRANS) {
-        dbboxes[0 * N + idx] = FromFloat32<T>(db_x1 + db_x2);
-        dbboxes[1 * N + idx] = FromFloat32<T>(db_y1 + db_y2);
-        dbboxes[2 * N + idx] = FromFloat32<T>((db_x2 - db_x1) * 0.5f);
-        dbboxes[3 * N + idx] = FromFloat32<T>((db_y2 - db_y1) * 0.5f);
-        dgtboxes[0 * N + idx] = FromFloat32<T>(dg_x1 + dg_x2);
-        dgtboxes[1 * N + idx] = FromFloat32<T>(dg_y1 + dg_y2);
-        dgtboxes[2 * N + idx] = FromFloat32<T>((dg_x2 - dg_x1) * 0.5f);
-        dgtboxes[3 * N + idx] = FromFloat32<T>((dg_y2 - dg_y1) * 0.5f);
+        WriteTransBox<T, INDEX_SIZE_T>(db_x1, db_y1, db_x2, db_y2, idx, N, dbboxes);
+        WriteTransBox<T, INDEX_SIZE_T>(dg_x1, dg_y1, dg_x2, dg_y2, idx, N, dgtboxes);
     } else {
         dbboxes[0 * N + idx] = FromFloat32<T>(db_x1);
         dbboxes[1 * N + idx] = FromFloat32<T>(db_y1);
@@ -268,7 +427,7 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM_LAUNCH_BOUND<INDEX_SIZE_T>) 
         float gh = ToFloat32<T>(gtboxes[3 * N + idx]);
         // Coordinate conversion
         float b_x1, b_y1, b_x2, b_y2, g_x1, g_y1, g_x2, g_y2;
-        ConvertToXyxy<TRANS>(bx, by, bw, bh, gx, gy, gw, gh, b_x1, b_y1, b_x2, b_y2, g_x1, g_y1, g_x2, g_y2);
+        ConvertToXyxy<T, TRANS>(bx, by, bw, bh, gx, gy, gw, gh, b_x1, b_y1, b_x2, b_y2, g_x1, g_y1, g_x2, g_y2);
         // Forward + gradient intermediates
         float xlen, ylen, inter_x, inter_y, inter, b_h, b_w, g_h, g_w;
         float uni, cw, ch, enclose, dunion_val, dinter_val, dxlen, dylen;
