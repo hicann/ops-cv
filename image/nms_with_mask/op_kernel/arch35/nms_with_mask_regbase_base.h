@@ -39,7 +39,7 @@ static constexpr int32_t INDEX_Y2 = 3;
 static constexpr int32_t PACK_BYTES = 16;
 static constexpr int32_t VL_SIZE = 256;
 static constexpr int32_t VL_SIZE_FLOAT = 64;
-static constexpr MultiCopyConfig copyConfig = {false, 0, 0, false};
+static constexpr NdDmaConfig copyConfig = {false, 0, 0, false};
 
 static constexpr Reg::CastTrait castTraitB16ToB32 = {Reg::RegLayout::ZERO, Reg::SatMode::UNKNOWN,
                                                      Reg::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
@@ -49,16 +49,16 @@ __aicore__ inline void CopyInReg(Reg::RegTensor<float>& vregIn, __ubuf__ T* inAd
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         if constexpr (isBroadcast) {
-            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
+            Reg::LoadAlign<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
         } else {
-            Reg::DataCopy<T>(vregIn, inAddr);
+            Reg::LoadAlign<T>(vregIn, inAddr);
         }
     } else {
         Reg::RegTensor<T> vregInB16;
         if constexpr (isBroadcast) {
-            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
+            Reg::LoadAlign<T, Reg::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
         } else {
-            Reg::DataCopy<T, Reg::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
+            Reg::LoadAlign<T, Reg::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
         }
         Reg::Cast<float, T, castTraitB16ToB32>(vregIn, vregInB16, mask);
     }
@@ -70,15 +70,15 @@ __aicore__ inline void CopyInReg(Reg::RegTensor<float>& vregIn, Reg::RegTensor<T
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         if constexpr (isBroadcast) {
-            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
+            Reg::LoadAlign<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
         } else {
-            Reg::DataCopy<T>(vregIn, inAddr);
+            Reg::LoadAlign<T>(vregIn, inAddr);
         }
     } else {
         if constexpr (isBroadcast) {
-            Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
+            Reg::LoadAlign<T, Reg::LoadDist::DIST_BRC_B16>(vregInB16, inAddr);
         } else {
-            Reg::DataCopy<T, Reg::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
+            Reg::LoadAlign<T, Reg::LoadDist::DIST_UNPACK_B16>(vregInB16, inAddr);
         }
         Reg::Cast<float, T, castTraitB16ToB32>(vregIn, vregInB16, mask);
     }
@@ -88,9 +88,9 @@ template <typename T, bool isBroadcast>
 __aicore__ inline void CopyInRegToFP32(Reg::RegTensor<float>& vregIn, __ubuf__ T* inAddr, Reg::MaskReg& mask)
 {
     if constexpr (isBroadcast) {
-        Reg::DataCopy<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
+        Reg::LoadAlign<T, Reg::LoadDist::DIST_BRC_B32>(vregIn, inAddr);
     } else {
-        Reg::DataCopy<T>(vregIn, inAddr);
+        Reg::LoadAlign<T>(vregIn, inAddr);
     }
 }
 

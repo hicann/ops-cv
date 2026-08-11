@@ -166,7 +166,7 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(int64_t refGrou
     uint8_t refPadNum = static_cast<uint8_t>(Ops::Base::CeilAlign(refCount, alignNum_) - refCount);
     uint8_t dstPadNum = static_cast<uint8_t>(Ops::Base::CeilAlign(dstCount, alignNum_) - dstCount);
 
-    MultiCopyLoopInfo<INPUT_DIM_NUM> refLoopInfo;
+    NdDmaLoopInfo<INPUT_DIM_NUM> refLoopInfo;
     refLoopInfo.loopSrcStride[0] = 1;
     refLoopInfo.loopSrcStride[1] = ELEMENT_NUM;
     refLoopInfo.loopDstStride[0] = refCount + refPadNum;
@@ -175,9 +175,9 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(int64_t refGrou
     refLoopInfo.loopSize[1] = refCount;
     refLoopInfo.loopRpSize[0] = refPadNum;
     refLoopInfo.loopRpSize[1] = 0;
-    MultiCopyParams<T, INPUT_DIM_NUM> refParams{refLoopInfo, 0};
+    NdDmaParams<T, INPUT_DIM_NUM> refParams{refLoopInfo, 0};
 
-    MultiCopyLoopInfo<INPUT_DIM_NUM> dstLoopInfo;
+    NdDmaLoopInfo<INPUT_DIM_NUM> dstLoopInfo;
     dstLoopInfo.loopSrcStride[0] = 1;
     dstLoopInfo.loopSrcStride[1] = ELEMENT_NUM;
     dstLoopInfo.loopDstStride[0] = dstCount + dstPadNum;
@@ -186,7 +186,7 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::CopyIn(int64_t refGrou
     dstLoopInfo.loopSize[1] = dstCount;
     dstLoopInfo.loopRpSize[0] = dstPadNum;
     dstLoopInfo.loopRpSize[1] = 0;
-    MultiCopyParams<T, INPUT_DIM_NUM> dstParams{dstLoopInfo, 0};
+    NdDmaParams<T, INPUT_DIM_NUM> dstParams{dstLoopInfo, 0};
 
     DataCopy<T, INPUT_DIM_NUM, copyConfig>(refBoxesUb, boxScoresGm_[refOffset], refParams);
     DataCopy<T, INPUT_DIM_NUM, copyConfig>(dstBoxesUb, boxScoresGm_[dstOffset], dstParams);
@@ -364,22 +364,22 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForDiagonal(
             Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
             uint32_t rowEleNum = static_cast<uint32_t>(dstCount);
             uint32_t trilEleNum = rowIdx + 1;
-            Reg::DataCopy<uint8_t, Reg::LoadDist::DIST_BRC_B8>(refTensor, dstMaskAddr + rowIdx);
-            Reg::CompareScalar<uint8_t, CMPMODE::EQ>(
+            Reg::LoadAlign<uint8_t, Reg::LoadDist::DIST_BRC_B8>(refTensor, dstMaskAddr + rowIdx);
+            Reg::Compares<uint8_t, CMPMODE::EQ>(
                 refMask, refTensor, 1, pregAll); // refMask表示要么全选要么全不选，基于当前refTensor是否全为1来判断
             for (uint16_t loopIndex = 0; loopIndex < loopPerRow; loopIndex++) {
                 preg = Reg::UpdateMask<uint8_t>(rowEleNum);
                 trilMask = Reg::UpdateMask<uint8_t>(trilEleNum);
-                Reg::MaskNot(triuMask, trilMask, pregAll);
+                Reg::Not(triuMask, trilMask, pregAll);
                 Reg::AddrReg offset = Reg::CreateAddrReg<int32_t>(rowIdx, groupSize_ / BIT_PER_BYTE / sizeof(int32_t),
                                                                   loopIndex, vlSize / BIT_PER_BYTE / sizeof(int32_t));
                 // 搬入待比较mask的reg，每一bit表示一个有效值
-                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
-                Reg::DataCopy<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
-                Reg::MaskAnd(removeMask, iouMask, refMask, pregAll);
-                Reg::MaskAnd(removeMask, removeMask, triuMask, pregAll);
+                Reg::LoadAlign<int32_t, Reg::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
+                Reg::LoadAlign<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
+                Reg::And(removeMask, iouMask, refMask, pregAll);
+                Reg::And(removeMask, removeMask, triuMask, pregAll);
                 Reg::Select<uint8_t>(outTensor, vregZeros, dstTensor, removeMask);
-                Reg::DataCopy<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
+                Reg::StoreAlign<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
             }
         }
     }
@@ -410,18 +410,18 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeNMSForNormal(__
         for (uint16_t rowIdx = 0; rowIdx < rowNum; rowIdx++) {
             uint32_t rowEleNum = static_cast<uint32_t>(dstCount);
             Reg::LocalMemBar<Reg::MemType::VEC_STORE, Reg::MemType::VEC_LOAD>();
-            Reg::DataCopy<uint8_t, Reg::LoadDist::DIST_BRC_B8>(refTensor, refMaskAddr + rowIdx);
-            Reg::CompareScalar<uint8_t, CMPMODE::EQ>(refMask, refTensor, 1, pregAll);
+            Reg::LoadAlign<uint8_t, Reg::LoadDist::DIST_BRC_B8>(refTensor, refMaskAddr + rowIdx);
+            Reg::Compares<uint8_t, CMPMODE::EQ>(refMask, refTensor, 1, pregAll);
             for (uint16_t loopIndex = 0; loopIndex < loopPerRow; loopIndex++) {
                 preg = Reg::UpdateMask<uint8_t>(rowEleNum);
                 Reg::AddrReg offset = Reg::CreateAddrReg<int32_t>(rowIdx, groupSize_ / BIT_PER_BYTE / sizeof(int32_t),
                                                                   loopIndex, vlSize / BIT_PER_BYTE / sizeof(int32_t));
                 // 搬入待比较mask的reg，每一bit表示一个有效值
-                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
-                Reg::DataCopy<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
-                Reg::MaskAnd(removeMask, iouMask, refMask, pregAll);
+                Reg::LoadAlign<int32_t, Reg::MaskDist::DIST_NORM>(iouMask, maskUbAddr, offset);
+                Reg::LoadAlign<uint8_t>(dstTensor, dstMaskAddr + loopIndex * vlSize);
+                Reg::And(removeMask, iouMask, refMask, pregAll);
                 Reg::Select<uint8_t>(outTensor, vregZeros, dstTensor, removeMask);
-                Reg::DataCopy<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
+                Reg::StoreAlign<uint8_t>(dstMaskAddr + loopIndex * vlSize, outTensor, preg);
             }
         }
     }
@@ -454,7 +454,7 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeRefArea(__ubuf_
             Reg::Sub(width, x2, x1, preg);
             Reg::Sub(height, y2, y1, preg);
             Reg::Mul(area, width, height, preg);
-            Reg::DataCopy<float, Reg::PostLiteral::POST_MODE_UPDATE>(refAreaAddr, area, vlSize, preg);
+            Reg::StoreAlign<float, Reg::PostLiteral::POST_MODE_UPDATE>(refAreaAddr, area, vlSize, preg);
         }
     }
 }
@@ -571,7 +571,7 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(__ubuf__
                 // interleave from b32 maskreg to b16 maskreg
                 Reg::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou1); // 16B对齐
                 // maskUbAddr + offset
-                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_PACK>(maskUbAddr, pregRes0, offsetReg);
+                Reg::StoreAlign<int32_t, Reg::MaskDist::DIST_PACK>(maskUbAddr, pregRes0, offsetReg);
             }
         }
         if constexpr (dstIsOddBlock) {
@@ -594,7 +594,7 @@ __aicore__ inline void NMSWithMaskRegbaseMultiProcess<T>::ComputeMaskVf(__ubuf__
                                  preg0);
                 // interleave from b32 maskreg to b16 maskreg
                 Reg::MaskDeInterleave<half>(pregRes0, pregRes1, pregIou0, pregIou0);
-                Reg::DataCopy<int32_t, Reg::MaskDist::DIST_PACK>(
+                Reg::StoreAlign<int32_t, Reg::MaskDist::DIST_PACK>(
                     maskUbAddr + rowLoopNum * dstStride + refIdx * srcStride, pregRes0);
             }
         }
