@@ -41,6 +41,8 @@ namespace ge {
  *@par Third-party framework compatibility
  *Custom Ascend operator, no third-party framework equivalent.
  */
+#ifndef OPS_PROTO_DEF_ANCHORRESPONSEFLAGS
+#define OPS_PROTO_DEF_ANCHORRESPONSEFLAGS
 REG_OP(AnchorResponseFlags)
     .INPUT(gt_bboxes, TensorType({DT_FLOAT, DT_FLOAT16}))
     .OUTPUT(flags, TensorType({DT_UINT8}))
@@ -48,7 +50,7 @@ REG_OP(AnchorResponseFlags)
     .REQUIRED_ATTR(strides, ListInt)
     .REQUIRED_ATTR(num_base_anchors, Int)
     .OP_END_FACTORY_REG(AnchorResponseFlags)
-
+#endif
 } // namespace ge
 
 #endif // OPS_OP_PROTO_INC_ANCHOR_RESPONSE_FLAGS_H_
