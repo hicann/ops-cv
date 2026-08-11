@@ -177,6 +177,12 @@ aclTensorList* TensorListDesc::ToAclTypeRawPtr() const
     for (size_t i = 0; i < arr_.size(); i++)
         ts[i] = arr_[i].ToAclTypeRawPtr();
     auto tensor_list = aclCreateTensorList(ts, arr_.size());
+    if (tensor_list == nullptr) {
+        for (size_t i = 0; i < arr_.size(); i++) {
+            Release(ts[i]);
+        }
+    }
+    delete[] ts;
     return tensor_list;
 }
 

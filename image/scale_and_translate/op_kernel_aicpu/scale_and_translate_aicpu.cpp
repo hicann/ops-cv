@@ -141,7 +141,12 @@ uint32_t InitSpans(const Kernel& kernel, int64_t output_size, int64_t input_size
     spans->starts = new (std::nothrow) Eigen::Tensor<int32_t, 1>(output_size);
     KERNEL_CHECK_NULLPTR(spans->starts, KERNEL_STATUS_PARAM_INVALID, "New spans starts failed.")
     spans->weights = new (std::nothrow) Eigen::Tensor<float, 1>(spans->span_size * output_size);
-    KERNEL_CHECK_NULLPTR(spans->weights, KERNEL_STATUS_PARAM_INVALID, "New spans weights failed.")
+    if (spans->weights == nullptr) {
+        delete spans->starts;
+        spans->starts = nullptr;
+        KERNEL_LOG_ERROR("New spans weights failed.");
+        return KERNEL_STATUS_PARAM_INVALID;
+    }
     return KERNEL_STATUS_OK;
 }
 
@@ -195,8 +200,26 @@ uint32_t ComputeSpansCore(CpuKernelContext& context, const Kernel& kernel, const
             starts_vec(x) = span_start;
         }
     };
-    SWITCH_PARALLEL(shard_x, output_size, context);
+    if (output_size <= kParallelDataNums) {
+        for (size_t i = 0; i < size_t(output_size); i++) {
+            shard_x(i, i + 1);
+        }
+    } else {
+        uint32_t parallelRet = CpuKernelUtils::ParallelFor(context, output_size, 1, shard_x);
+        if (parallelRet != KERNEL_STATUS_OK) {
+            KERNEL_LOG_ERROR("ScaleAndTranslate shard_x Compute failed.");
+            delete spans->starts;
+            delete spans->weights;
+            spans->starts = nullptr;
+            spans->weights = nullptr;
+            return parallelRet;
+        }
+    }
     if (shard_ret != KERNEL_STATUS_OK) {
+        delete spans->starts;
+        delete spans->weights;
+        spans->starts = nullptr;
+        spans->weights = nullptr;
         return shard_ret;
     }
     return KERNEL_STATUS_OK;
@@ -318,12 +341,24 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(CpuKernelContext& 
     typename TTypes<float, 4>::Tensor output_data(outputTensor.tensor<float, 4>());
 
     Spans col_spans;
-    ComputeSpans(ctx, p.kernel_type, p.output_width, p.input_width, p.col_scale, p.col_translation, p.antialias,
-                 &col_spans);
+    col_spans.starts = nullptr;
+    col_spans.weights = nullptr;
+    uint32_t col_ret = ComputeSpans(ctx, p.kernel_type, p.output_width, p.input_width, p.col_scale, p.col_translation,
+                                    p.antialias, &col_spans);
+    if (col_ret != KERNEL_STATUS_OK) {
+        return col_ret;
+    }
 
     Spans row_spans;
-    ComputeSpans(ctx, p.kernel_type, p.output_height, p.input_height, p.row_scale, p.row_translation, p.antialias,
-                 &row_spans);
+    row_spans.starts = nullptr;
+    row_spans.weights = nullptr;
+    uint32_t row_ret = ComputeSpans(ctx, p.kernel_type, p.output_height, p.input_height, p.row_scale, p.row_translation,
+                                    p.antialias, &row_spans);
+    if (row_ret != KERNEL_STATUS_OK) {
+        delete col_spans.starts;
+        delete col_spans.weights;
+        return row_ret;
+    }
 
     Eigen::Tensor<float, 4> intermediate_tensor_middle(p.batch_size, p.output_height, p.input_width, p.channels);
     Eigen::TensorMap<Eigen::Tensor<float, 4>> intermediate_data(intermediate_tensor_middle.data(),
@@ -333,90 +368,112 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(CpuKernelContext& 
     Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> col_starts(col_spans.starts->data(), col_spans.starts->dimensions());
     Eigen::TensorMap<Eigen::Tensor<float, 1>> col_weights(col_spans.weights->data(), col_spans.weights->dimensions());
 
-    GatherSpans<T>()(ctx, row_spans.span_size, row_starts, row_weights, col_spans.span_size, col_starts, col_weights,
-                     image_data, intermediate_data, output_data);
+    uint32_t gatherRet = GatherSpans<T>()(ctx, row_spans.span_size, row_starts, row_weights, col_spans.span_size,
+                                          col_starts, col_weights, image_data, intermediate_data, output_data);
 
     delete col_spans.starts;
     delete col_spans.weights;
     delete row_spans.starts;
     delete row_spans.weights;
 
+    if (gatherRet != KERNEL_STATUS_OK) {
+        return gatherRet;
+    }
     return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-inline void GatherColumnPixel(const T* input_row_start, const int32_t* starts, const float* weights, int x,
-                              int span_size, int64_t input_width, int channels, float* out_pixel)
+inline void GatherColumnPixel(const T* inputRowStart, const int32_t* starts, const float* weights, int x, int spanSize,
+                              int64_t inputWidth, int channels, float* outPixel)
 {
-    const T* in_pixel = input_row_start + starts[x] * channels;
-    const float* weights_start = weights + x * span_size;
-    const int real_span_size = std::min(starts[x] + span_size, static_cast<int>(input_width)) - starts[x];
-    const float* weights_end = weights_start + real_span_size;
-    for (int c = 0; c < channels; ++c) {
-        out_pixel[c] = 0.0f;
-    }
-    for (const float* weight_ptr = weights_start; weight_ptr != weights_end; ++weight_ptr) {
-        float weight = *weight_ptr;
+    const T* srcPixel = inputRowStart + starts[x] * channels;
+    const float* weightBase = weights + x * spanSize;
+    int effectiveLen = std::min(starts[x] + spanSize, static_cast<int>(inputWidth)) - starts[x];
+    const float* const weightLimit = weightBase + effectiveLen;
+
+    std::fill_n(outPixel, channels, 0.0f);
+    for (const float* wIter = weightBase; wIter != weightLimit; ++wIter) {
+        float coeff = *wIter;
         for (int c = 0; c < channels; ++c) {
-            out_pixel[c] += weight * static_cast<float>(in_pixel[c]);
+            outPixel[c] += coeff * static_cast<float>(srcPixel[c]);
         }
-        in_pixel += channels;
+        srcPixel += channels;
     }
 }
 
 template <typename T>
-uint32_t GatherColumns(CpuKernelContext& context, int span_size, const int32_t* starts, const float* weights,
-                       const T* image, const int64_t input_height, const int64_t input_width,
-                       const int64_t output_height, const int64_t output_width, const int channels, float* output)
+uint32_t GatherColumns(CpuKernelContext& context, int spanSize, const int32_t* starts, const float* weights,
+                       const T* srcData, const int64_t srcHeight, const int64_t srcWidth, const int64_t dstHeight,
+                       const int64_t dstWidth, const int channelCnt, float* dstData)
 {
-    const int64_t in_row_size = input_width * channels;
-    const int64_t out_row_size = output_width * channels;
-    auto shard_column = [&](int start, int end) {
+    const int64_t srcRowStride = srcWidth * channelCnt;
+    const int64_t dstRowStride = dstWidth * channelCnt;
+    auto shardColumn = [&](int start, int end) {
         for (int y = start; y < end; ++y) {
-            const T* input_row_start = image + in_row_size * y;
-            float* out_pixel = output + out_row_size * y;
-            for (int x = 0; x < output_width; ++x, out_pixel += channels) {
-                GatherColumnPixel(input_row_start, starts, weights, x, span_size, input_width, channels, out_pixel);
+            const T* rowBase = srcData + srcRowStride * y;
+            float* dstPixel = dstData + dstRowStride * y;
+            for (int x = 0; x < dstWidth; ++x, dstPixel += channelCnt) {
+                GatherColumnPixel(rowBase, starts, weights, x, spanSize, srcWidth, channelCnt, dstPixel);
             }
         }
     };
-    SWITCH_PARALLEL(shard_column, output_height, context);
+    if (dstHeight <= kParallelDataNums) {
+        for (size_t i = 0; i < size_t(dstHeight); i++) {
+            shardColumn(i, i + 1);
+        }
+    } else {
+        uint32_t ret = CpuKernelUtils::ParallelFor(context, dstHeight, 1, shardColumn);
+        if (ret != KERNEL_STATUS_OK) {
+            KERNEL_LOG_ERROR("ScaleAndTranslate shardColumn Compute failed.");
+            return ret;
+        }
+    }
     return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-inline void AddScaledVector(const T* in_vec, int vec_length, float weight, float* out_vec)
+inline void AddScaledVector(const T* srcVec, int vecLen, float coeff, float* dstVec)
 {
-    float* out_vec_end = out_vec + vec_length;
-    for (; out_vec != out_vec_end; ++out_vec, ++in_vec) {
-        *out_vec += weight * static_cast<float>(*in_vec);
+    float* dstEnd = dstVec + vecLen;
+    for (; dstVec != dstEnd; ++dstVec, ++srcVec) {
+        *dstVec += coeff * static_cast<float>(*srcVec);
     }
 }
 
 template <typename T>
-uint32_t GatherRows(CpuKernelContext& context, int span_size, const int32_t* starts, const float* weights,
-                    const T* image, const int64_t input_height, const int64_t input_width, const int64_t output_height,
-                    const int64_t output_width, const int channels, float* output)
+uint32_t GatherRows(CpuKernelContext& context, int spanSize, const int32_t* starts, const float* weights,
+                    const T* srcData, const int64_t srcHeight, const int64_t srcWidth, const int64_t dstHeight,
+                    const int64_t dstWidth, const int channelCnt, float* dstData)
 {
-    const int64_t in_row_size = input_width * channels;
-    const int64_t out_row_size = output_width * channels;
-    auto shard_rows = [&](int start, int end) {
+    const int64_t srcRowStride = srcWidth * channelCnt;
+    const int64_t dstRowStride = dstWidth * channelCnt;
+    auto shardRows = [&](int start, int end) {
         for (int y = start; y < end; ++y) {
-            float* output_row_data = output + out_row_size * y;
-            std::fill(output_row_data, output_row_data + out_row_size, 0.0f);
-            int in_row = starts[y];
-            const T* input_row_data = image + in_row_size * in_row;
-            const float* weights_start = weights + y * span_size;
-            const int real_span_size = std::min(starts[y] + span_size, static_cast<int>(input_height)) - starts[y];
-            const float* const weights_end = weights_start + real_span_size;
+            float* dstRow = dstData + dstRowStride * y;
+            std::fill(dstRow, dstRow + dstRowStride, 0.0f);
+            int srcRowIdx = starts[y];
+            const T* srcRow = srcData + srcRowStride * srcRowIdx;
+            const float* weightBase = weights + y * spanSize;
+            int effectiveLen = std::min(starts[y] + spanSize, static_cast<int>(srcHeight)) - starts[y];
+            const float* const weightLimit = weightBase + effectiveLen;
 
-            for (const float* weight_it = weights_start; weight_it != weights_end; ++weight_it) {
-                AddScaledVector(input_row_data, in_row_size, *weight_it, output_row_data);
-                input_row_data += in_row_size;
+            for (const float* wIter = weightBase; wIter != weightLimit; ++wIter) {
+                AddScaledVector(srcRow, srcRowStride, *wIter, dstRow);
+                srcRow += srcRowStride;
             }
         }
     };
-    SWITCH_PARALLEL(shard_rows, output_height, context);
+    if (dstHeight <= kParallelDataNums) {
+        for (size_t i = 0; i < size_t(dstHeight); i++) {
+            shardRows(i, i + 1);
+        }
+    } else {
+        uint32_t ret = CpuKernelUtils::ParallelFor(context, dstHeight, 1, shardRows);
+        if (ret != KERNEL_STATUS_OK) {
+            KERNEL_LOG_ERROR("ScaleAndTranslate shardRows Compute failed.");
+            return ret;
+        }
+    }
     return KERNEL_STATUS_OK;
 }
 
@@ -430,30 +487,38 @@ uint32_t GatherSpans<T>::operator()(aicpu::CpuKernelContext& context, int row_sp
                                     Eigen::TensorMap<Eigen::Tensor<float, 4>> intermediate_buffer,
                                     typename TTypes<float, 4>::Tensor resized_images)
 {
-    const int batch_size = images.dimension(0);
-    const int64_t input_height = images.dimension(1);
-    const int64_t input_width = images.dimension(2);
-    const int channels = images.dimension(3);
+    const int batchCnt = images.dimension(0);
+    const int64_t srcHeight = images.dimension(1);
+    const int64_t srcWidth = images.dimension(2);
+    const int channelCnt = images.dimension(3);
 
-    const int64_t output_height = resized_images.dimension(1);
-    const int64_t output_width = resized_images.dimension(2);
+    const int64_t dstHeight = resized_images.dimension(1);
+    const int64_t dstWidth = resized_images.dimension(2);
 
-    const int64_t input_pix_per_batch = input_width * input_height * channels;
-    const int64_t intermediate_pix_per_batch = input_width * output_height * channels;
-    const int64_t output_pix_per_batch = output_width * output_height * channels;
-    float* intermediate_ptr = intermediate_buffer.data();
+    const int64_t srcBatchOffset = srcWidth * srcHeight * channelCnt;
+    const int64_t midBatchOffset = srcWidth * dstHeight * channelCnt;
+    const int64_t dstBatchOffset = dstWidth * dstHeight * channelCnt;
+    float* midData = intermediate_buffer.data();
 
-    const T* image_ptr = images.data();
-    float* out_ptr = resized_images.data();
+    const T* srcData = images.data();
+    float* dstData = resized_images.data();
 
-    auto row_start_data = row_starts.data();
-    auto row_weights_data = row_weights.data();
-    for (int b = 0; b < batch_size; ++b, image_ptr += input_pix_per_batch,
-             intermediate_ptr += intermediate_pix_per_batch, out_ptr += output_pix_per_batch) {
-        GatherRows(context, row_span_size, row_start_data, row_weights_data, image_ptr, input_height, input_width,
-                   output_height, input_width, channels, intermediate_ptr);
-        GatherColumns(context, col_span_size, col_starts.data(), col_weights.data(), intermediate_ptr, output_height,
-                      input_width, output_height, output_width, channels, out_ptr);
+    auto rowStartBase = row_starts.data();
+    auto rowWeightBase = row_weights.data();
+    for (int batchIdx = 0; batchIdx < batchCnt; ++batchIdx) {
+        uint32_t rowRet = GatherRows(context, row_span_size, rowStartBase, rowWeightBase, srcData, srcHeight, srcWidth,
+                                     dstHeight, srcWidth, channelCnt, midData);
+        if (rowRet != KERNEL_STATUS_OK) {
+            return rowRet;
+        }
+        uint32_t colRet = GatherColumns(context, col_span_size, col_starts.data(), col_weights.data(), midData,
+                                        dstHeight, srcWidth, dstHeight, dstWidth, channelCnt, dstData);
+        if (colRet != KERNEL_STATUS_OK) {
+            return colRet;
+        }
+        srcData += srcBatchOffset;
+        midData += midBatchOffset;
+        dstData += dstBatchOffset;
     }
     return KERNEL_STATUS_OK;
 }

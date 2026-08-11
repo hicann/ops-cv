@@ -51,7 +51,7 @@ using std::vector;
         printf("%s - ERROR - [XIR]: Generate input data failed\n", GetTime().c_str());                              \
         return FAILED;                                                                                              \
     }                                                                                                               \
-    placeholder##intputIndex.update_input_desc_rgb(placeholder##intputIndex##_desc);                                  \
+    placeholder##intputIndex.update_input_desc_rgb(placeholder##intputIndex##_desc);                                \
     input.push_back(tensor_placeholder##intputIndex);                                                               \
     graph.AddOp(placeholder##intputIndex);                                                                          \
     add1.set_input_##intputName(placeholder##intputIndex);                                                          \
@@ -116,6 +116,7 @@ int32_t GenOnesData(vector<int64_t> shapes, Tensor& input_tensor, TensorDesc& in
         *(pData + i) = value;
     }
     input_tensor = Tensor(input_tensor_desc, reinterpret_cast<uint8_t*>(pData), data_len);
+    delete[] pData;
     return SUCCESS;
 }
 

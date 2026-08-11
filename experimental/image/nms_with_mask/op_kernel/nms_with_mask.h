@@ -1,21 +1,11 @@
 /**
- * This file is part of the OpenBOAT project at Harbin Institute of Technology (HIT)
- * and is contributed to the CANN Open Software.
- *
- * Copyright (c) 2025 AISS Group, Harbin Institute of Technology (HIT).
- * All Rights Reserved.
- *
- * Authors (accounts):
- * - Shi Xiangyang <@shi-xiangyang225>
- * - Su Tonghua <@sutonghua>
- *
- * This program is free software: you can redistribute it and/or modify it.
- * Licensed under the CANN Open Software License Agreement Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * See the LICENSE file at the root of the repository for the full text of the License.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 /*!
@@ -121,7 +111,7 @@ template <typename T>
 __aicore__ inline void NMSWithMask<T>::CopyOut()
 {
     AscendC::LocalTensor<uint8_t> zLocal = outputQueueZ.DeQue<uint8_t>();
-    AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(scoresLength * sizeof(T)), 0, 0, 0};
+    AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(scoresLength * sizeof(uint8_t)), 0, 0, 0};
     AscendC::DataCopyPad(outputGMZ[0], zLocal, copyParams);
     outputQueueZ.FreeTensor(zLocal);
 }

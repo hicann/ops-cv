@@ -98,6 +98,7 @@ int32_t GenOnesDataFloat32(vector<int64_t> shapes, Tensor& input_tensor, TensorD
 
     uint32_t data_len = size * sizeof(float);
     input_tensor = Tensor(input_tensor_desc, reinterpret_cast<uint8_t*>(pData), data_len);
+    delete[] pData;
 
     return SUCCESS;
 }
