@@ -112,6 +112,17 @@ static ge::graphStatus InferShape4Upsample3dGrad(gert::InferShapeContext* contex
     return Upsample3dGradInferShapeImpl(context, grad_output_shape, y_shape);
 }
 
-IMPL_OP_INFERSHAPE(UpsampleNearest3dGrad).InferShape(InferShape4Upsample3dGrad);
+static ge::graphStatus InferDataType4Upsample3dGrad(gert::InferDataTypeContext* context)
+{
+    OP_LOGD(context, "Begin to do InferDataType4Upsample3dGrad");
+    auto grad_output_dtype = context->GetInputDataType(IN_X);
+    context->SetOutputDataType(OUT_Y, grad_output_dtype);
+    OP_LOGD(context, "End to do InferDataType4Upsample3dGrad");
+    return GRAPH_SUCCESS;
+}
+
+IMPL_OP_INFERSHAPE(UpsampleNearest3dGrad)
+    .InferShape(InferShape4Upsample3dGrad)
+    .InferDataType(InferDataType4Upsample3dGrad);
 
 } // namespace ops

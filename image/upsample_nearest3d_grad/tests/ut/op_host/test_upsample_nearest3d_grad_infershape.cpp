@@ -15,6 +15,8 @@
 #include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
+#include "op_infer_datatype_context_builder.h"
+
 class UpsampleNearest3dGradTest : public testing::Test {
 protected:
     static void SetUpTestCase() { std::cout << "UpsampleNearest3dGradTest SetUp" << std::endl; }
@@ -201,3 +203,69 @@ TEST_F(UpsampleNearest3dGradTest, UpsampleNearest3dGrad_infer_test1_failed)
 //     auto status = op.VerifyAllAttr(true);
 //     EXPECT_EQ(status, ge::GRAPH_SUCCESS);
 // }
+
+TEST_F(UpsampleNearest3dGradTest, UpsampleNearest3dGrad_infer_dtype_float16)
+{
+    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
+    ASSERT_NE(spaceRegistry, nullptr);
+    auto func = spaceRegistry->GetOpImpl("UpsampleNearest3dGrad")->infer_datatype;
+    ASSERT_NE(func, nullptr);
+
+    ge::DataType dtype = ge::DT_FLOAT16;
+
+    gert::OpInferDataTypeContextBuilder builder;
+    builder.OpType("UpsampleNearest3dGrad").OpName("UpsampleNearest3dGrad");
+    builder.IONum(1, 1);
+    builder.InputTensorDesc(0, dtype, ge::FORMAT_ND, ge::FORMAT_ND);
+    builder.OutputTensorDesc(0, ge::FORMAT_ND, ge::FORMAT_ND);
+    auto holder = builder.Build();
+
+    auto ctx = holder.GetContext();
+    ASSERT_NE(ctx, nullptr);
+    EXPECT_EQ(func(ctx), ge::GRAPH_SUCCESS);
+    EXPECT_EQ(ctx->GetOutputDataType(0), dtype);
+}
+
+TEST_F(UpsampleNearest3dGradTest, UpsampleNearest3dGrad_infer_dtype_float)
+{
+    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
+    ASSERT_NE(spaceRegistry, nullptr);
+    auto func = spaceRegistry->GetOpImpl("UpsampleNearest3dGrad")->infer_datatype;
+    ASSERT_NE(func, nullptr);
+
+    ge::DataType dtype = ge::DT_FLOAT;
+
+    gert::OpInferDataTypeContextBuilder builder;
+    builder.OpType("UpsampleNearest3dGrad").OpName("UpsampleNearest3dGrad");
+    builder.IONum(1, 1);
+    builder.InputTensorDesc(0, dtype, ge::FORMAT_ND, ge::FORMAT_ND);
+    builder.OutputTensorDesc(0, ge::FORMAT_ND, ge::FORMAT_ND);
+    auto holder = builder.Build();
+
+    auto ctx = holder.GetContext();
+    ASSERT_NE(ctx, nullptr);
+    EXPECT_EQ(func(ctx), ge::GRAPH_SUCCESS);
+    EXPECT_EQ(ctx->GetOutputDataType(0), dtype);
+}
+
+TEST_F(UpsampleNearest3dGradTest, UpsampleNearest3dGrad_infer_dtype_bf16)
+{
+    auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
+    ASSERT_NE(spaceRegistry, nullptr);
+    auto func = spaceRegistry->GetOpImpl("UpsampleNearest3dGrad")->infer_datatype;
+    ASSERT_NE(func, nullptr);
+
+    ge::DataType dtype = ge::DT_BF16;
+
+    gert::OpInferDataTypeContextBuilder builder;
+    builder.OpType("UpsampleNearest3dGrad").OpName("UpsampleNearest3dGrad");
+    builder.IONum(1, 1);
+    builder.InputTensorDesc(0, dtype, ge::FORMAT_ND, ge::FORMAT_ND);
+    builder.OutputTensorDesc(0, ge::FORMAT_ND, ge::FORMAT_ND);
+    auto holder = builder.Build();
+
+    auto ctx = holder.GetContext();
+    ASSERT_NE(ctx, nullptr);
+    EXPECT_EQ(func(ctx), ge::GRAPH_SUCCESS);
+    EXPECT_EQ(ctx->GetOutputDataType(0), dtype);
+}
