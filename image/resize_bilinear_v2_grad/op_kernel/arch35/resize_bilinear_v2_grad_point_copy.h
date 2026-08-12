@@ -186,8 +186,12 @@ __aicore__ inline void ResizeBilinearV2GradPointCopy<T_GRADS, T_OUT>::CalcTile()
     offsetData_.nStrideSrc = offsetData_.hStrideSrc * tilingData_->lenSrcH;
 
     if (tilingData_->alignCorners > 0) {
-        offsetData_.hScales = (tilingData_->lenSrcH - 1) / (tilingData_->lenDesH - 1);
-        offsetData_.wScales = (tilingData_->lenSrcW - 1) / (tilingData_->lenDesW - 1);
+        // When lenDesH/lenDesW == 1 there is a single output point, so the scale (source pixels per
+        // destination step) is unused for offset computation. Use 1 instead of computing
+        // (lenSrc-1)/(lenDes-1), which would divide by zero; 1 also keeps the derived DataCopy
+        // dstStride = (wScales-1)*... non-negative (dstStride is unsigned), unlike 0.
+        offsetData_.hScales = (tilingData_->lenDesH > 1) ? (tilingData_->lenSrcH - 1) / (tilingData_->lenDesH - 1) : 1;
+        offsetData_.wScales = (tilingData_->lenDesW > 1) ? (tilingData_->lenSrcW - 1) / (tilingData_->lenDesW - 1) : 1;
     } else {
         offsetData_.hScales = tilingData_->lenSrcH / tilingData_->lenDesH;
         offsetData_.wScales = tilingData_->lenSrcW / tilingData_->lenDesW;

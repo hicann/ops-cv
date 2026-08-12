@@ -279,3 +279,31 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case10
     std::vector<size_t> expectWorkspaces = {32};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Regression coverage for the divide-by-zero issue: alignCorners=true with output H==1 && W==1
+// must be routed to the PointCopy path (tiling key 30001) and tiling must succeed (no crash / no error).
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case11_point_copy_align_corners_desHW_1)
+{
+    optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBilinearV2Grad",
+        {
+            // grads (dest) NHWC: H==1, W==1 -> lenDesH==1 && lenDesW==1
+            {{{2, 1, 1, 200}, {2, 1, 1, 200}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+            // y (src) NHWC: H==4, W==5
+            {{{2, 4, 5, 200}, {2, 4, 5, 200}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+        },
+        {
+            {{{2, 4, 5, 200}, {2, 4, 5, 200}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+        },
+        {
+            gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        },
+        &compileInfo);
+    // Assert only success + PointCopy tiling key (30001); the exact tilingData bytes are not the
+    // point of this regression case, so use ExecuteTiling to avoid hardcoding the full data string.
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    ASSERT_EQ(tilingInfo.tilingKey, 30001); // TILING_KEY_POINT_COPY
+}
