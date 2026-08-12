@@ -40,6 +40,8 @@ namespace ge {
  *@par Third-party framework compatibility
  *Compatible with the TensorFlow operator ExtractGlimpseV2.
  */
+#ifndef OPS_PROTO_DEF_EXTRACTGLIMPSEV2
+#define OPS_PROTO_DEF_EXTRACTGLIMPSEV2
 REG_OP(ExtractGlimpseV2)
     .INPUT(input, TensorType({DT_FLOAT}))
     .INPUT(size, TensorType({DT_INT32}))
@@ -50,7 +52,7 @@ REG_OP(ExtractGlimpseV2)
     .ATTR(uniform_noise, Bool, true)
     .ATTR(noise, String, "uniform")
     .OP_END_FACTORY_REG(ExtractGlimpseV2)
-
+#endif
 } // namespace ge
 
 #endif // OPS_OP_PROTO_INC_EXTRACT_GLIMPSE_V2_H_

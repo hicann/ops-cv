@@ -378,6 +378,8 @@ REG_OP(DecodeBboxV2)
 * @par Third-party framework compatibility
 * Compatible with the TensorFlow operator Dilation2D.
 */
+#ifndef OPS_PROTO_DEF_DILATION2D
+#define OPS_PROTO_DEF_DILATION2D
 REG_OP(Dilation2D)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
     .INPUT(filter,
@@ -391,7 +393,7 @@ REG_OP(Dilation2D)
     .ATTR(ceil_mode, Bool, false)
     .ATTR(data_format, String, "NHWC")
     .OP_END_FACTORY_REG(Dilation2D)
-
+#endif
 /**
 * @brief Performs Dilation2DBackpropFilter on the input.
 
