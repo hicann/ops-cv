@@ -43,6 +43,8 @@ namespace ge {
 *@par Third-party framework compatibility
 *Compatible with the Caffe operator Crop.
 */
+#ifndef OPS_PROTO_DEF_CROP
+#define OPS_PROTO_DEF_CROP
 REG_OP(Crop)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_UINT32, DT_INT64,
                           DT_UINT64}))
@@ -53,6 +55,7 @@ REG_OP(Crop)
     .ATTR(axis, Int, 2)
     .REQUIRED_ATTR(offsets, ListInt)
     .OP_END_FACTORY_REG(Crop)
+#endif
 
 } // namespace ge
 
