@@ -32,6 +32,7 @@ static ge::graphStatus TilingPrepare4ResizeNearestNeighborV2(gert::TilingParseCo
 {
     OP_LOGD(context->GetNodeName(), "Start TilingPrepare4ResizeNearestNeighborV2.");
     auto compileInfo = context->GetCompiledInfo<ResizeNearestNeighborV2CompileInfo>();
+    OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
     auto platformInfo = context->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
