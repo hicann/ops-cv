@@ -16,7 +16,6 @@ import torch
 __spec__ = {
     "grid_unnormal": "GridUnnormalKernelSpec",
 }
-__golden__ = {"kernel": {"grid_unnormal": "grid_unnormal_golden"}}
 
 _TOL = {
     "float32": {"standard": "cross_check", "level": "L1"},
@@ -38,14 +37,16 @@ def _grid_unnormal_torch(grid, assist, align_corners):
     )
     grid_tensor = torch.from_numpy(grid).to(torch_dtype)
     assist_tensor = torch.from_numpy(assist).to(torch_dtype)
-    diff, position = _grid_unnormal_compute(grid_tensor, assist_tensor, align_corners)
+    diff, position = _grid_unnormal_golden_compute(
+        grid_tensor, assist_tensor, align_corners
+    )
     return [
         diff.cpu().numpy().astype(ori_dtype, copy=False),
         position.cpu().numpy(),
     ]
 
 
-def _grid_unnormal_compute(grid_tensor, assist_tensor, align_corners):
+def _prepare_grid_unnormal_inputs(grid_tensor, assist_tensor):
     out_dtype = grid_tensor.dtype
     compute_dtype = (
         torch.float32
@@ -54,6 +55,27 @@ def _grid_unnormal_compute(grid_tensor, assist_tensor, align_corners):
     )
     grid_compute = grid_tensor.to(compute_dtype)
     assist_compute = assist_tensor.to(compute_dtype)
+    return out_dtype, grid_compute, assist_compute
+
+
+def _grid_unnormal_golden_compute(grid_tensor, assist_tensor, align_corners):
+    out_dtype, grid_compute, assist_compute = _prepare_grid_unnormal_inputs(
+        grid_tensor, assist_tensor
+    )
+    if align_corners:
+        pos_base = (grid_compute + 1.0) * (assist_compute - 1.0) / 2.0
+    else:
+        pos_base = ((grid_compute + 1.0) * assist_compute - 1.0) / 2.0
+    floor = torch.floor(pos_base)
+    position = floor.to(torch.int32)
+    diff = (pos_base - floor).to(out_dtype)
+    return [diff, position]
+
+
+def _grid_unnormal_third_party_compute(grid_tensor, assist_tensor, align_corners):
+    out_dtype, grid_compute, assist_compute = _prepare_grid_unnormal_inputs(
+        grid_tensor, assist_tensor
+    )
     normalized = (grid_compute + 1.0) * 0.5
     if align_corners:
         pos_base = normalized * (assist_compute - 1.0)
@@ -80,12 +102,12 @@ class _GridUnnormalCompose:
             if isinstance(assist, torch.Tensor)
             else torch.from_numpy(np.asarray(assist))
         )
-        return _grid_unnormal_compute(grid_tensor, assist_tensor, self.align_corners)
+        return _grid_unnormal_third_party_compute(
+            grid_tensor, assist_tensor, self.align_corners
+        )
 
 
 class GridUnnormalKernelSpec:
-    """kernel + GEIR TestSpec entry. GridUnnormal has no aclnn/e2e path."""
-
     @staticmethod
     def golden(grid, assist, *, align_corners=False, **kwargs):
         return _grid_unnormal_torch(
@@ -94,22 +116,6 @@ class GridUnnormalKernelSpec:
 
     third_party = {"torch": _GridUnnormalCompose}
     tolerance = _TOL
-
-
-def grid_unnormal_golden(grid, assist, *, align_corners=False, **kwargs):
-    """
-    Golden for GridUnnormal（参数名/顺序对齐算子原型: grid, assist）。
-
-        t        = (grid + 1) * 0.5
-        pos_base = align_corners ? t * (assist - 1) : t * assist - 0.5
-        position = floor(pos_base)            (int32)
-        diff     = pos_base - floor(pos_base) (grid.dtype)
-
-    依据需求规格公式使用 PyTorch 基础算子拼接作为独立参考。
-    本轮 A5 规格要求 fp16/fp32 输入均提升到 fp32 计算，diff 回写 grid dtype。
-    """
-    align_corners = _normalize_attr_bool(align_corners)
-    return _grid_unnormal_torch(grid, assist, align_corners)
 
 
 # Not registered in __spec__:
