@@ -48,6 +48,8 @@ namespace ge {
  *@par Third-party framework compatibility
  *Compatible with the Yolo operator in darknet.
  */
+#ifndef OPS_PROTO_DEF_YOLO
+#define OPS_PROTO_DEF_YOLO
 REG_OP(Yolo)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OUTPUT(coord_data, TensorType({DT_FLOAT16, DT_FLOAT}))
@@ -61,6 +63,7 @@ REG_OP(Yolo)
     .ATTR(background, Bool, false)
     .ATTR(softmaxtree, Bool, false)
     .OP_END_FACTORY_REG(Yolo)
+#endif
 
 } // namespace ge
 

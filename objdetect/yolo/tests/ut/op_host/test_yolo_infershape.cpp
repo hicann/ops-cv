@@ -35,17 +35,17 @@ TEST_F(YoloInfershape, yolo_v3_fp32)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     std::vector<std::vector<int64_t>> expectOutputShape = {
-        {1, 12, 169},
-        {1, 507},
-        {1, 80, 507},
+        {1, 12, 192},
+        {1, 528},
+        {1, 80, 528},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
@@ -63,17 +63,17 @@ TEST_F(YoloInfershape, yolo_v2_fp16)
             {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(5)),
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(20)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V2")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(5)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(20)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V2")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     std::vector<std::vector<int64_t>> expectOutputShape = {
-        {1, 20, 169},
-        {1, 845},
-        {1, 20, 845},
+        {1, 20, 192},
+        {1, 864},
+        {1, 20, 864},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
@@ -91,17 +91,17 @@ TEST_F(YoloInfershape, yolo_batch2_fp32)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     std::vector<std::vector<int64_t>> expectOutputShape = {
-        {2, 12, 676},
-        {2, 2028},
-        {2, 80, 2028},
+        {2, 12, 704},
+        {2, 2048},
+        {2, 80, 2048},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
@@ -119,12 +119,12 @@ TEST_F(YoloInfershape, yolo_invalid_dim_num)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
@@ -142,13 +142,13 @@ TEST_F(YoloInfershape, yolo_invalid_coords)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
             gert::InfershapeContextPara::OpAttr("coords",
-                                                Ops::Math::AnyValue::CreateFrom<int64_t>(5)), // invalid coords
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+                                                Ops::Cv::AnyValue::CreateFrom<int64_t>(5)), // invalid coords
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
@@ -166,12 +166,12 @@ TEST_F(YoloInfershape, yolo_invalid_boxes_zero)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(0)), // invalid boxes
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)), // invalid boxes
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
@@ -189,12 +189,12 @@ TEST_F(YoloInfershape, yolo_invalid_classes_exceed)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(1025)), // > 1024
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(1025)), // > 1024
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
@@ -212,12 +212,12 @@ TEST_F(YoloInfershape, yolo_invalid_channel_mismatch)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::InfershapeContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::InfershapeContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::InfershapeContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::InfershapeContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::InfershapeContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }

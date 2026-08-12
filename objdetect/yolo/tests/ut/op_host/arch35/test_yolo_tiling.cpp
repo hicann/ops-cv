@@ -26,7 +26,7 @@ protected:
     static void TearDownTestCase() { std::cout << "YoloTiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
+std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
 
 constexpr size_t YOLO_SYS_WORKSPACE_SIZE = 16777216;
 
@@ -45,19 +45,20 @@ TEST_F(YoloTiling, yolo_v3_mode1_fp32)
             {{{1, 80, 507}, {1, 80, 507}}, ge::DT_FLOAT, ge::FORMAT_ND}, // output classes_prob
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         },
         &compileInfo,
+        "Ascend950",              // soc version
         64,                       // number of cores
         262144,                   // ubsize
         4096);                    // max tiling data size
     uint64_t expectTilingKey = 0; // YOLO_MODE_1
-    string expectTilingData = "12884901889 80 169 ";
+    string expectTilingData = "12884901889 80 169 192 528 ";
     std::vector<size_t> expectWorkspaces = {YOLO_SYS_WORKSPACE_SIZE};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -77,16 +78,16 @@ TEST_F(YoloTiling, yolo_v2_mode1_fp16)
             {{{1, 20, 845}, {1, 20, 845}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // output classes_prob
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(5)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(20)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V2")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(5)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(20)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V2")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 0; // YOLO_MODE_1
-    string expectTilingData = "21474836481 20 169 ";
+    string expectTilingData = "21474836481 20 169 192 864 ";
     std::vector<size_t> expectWorkspaces = {YOLO_SYS_WORKSPACE_SIZE};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -106,16 +107,16 @@ TEST_F(YoloTiling, yolo_v2_mode2_fp32)
             {{{1, 20, 845}, {1, 20, 845}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(5)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(20)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V2")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(true)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(5)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(20)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V2")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 1; // YOLO_MODE_2
-    string expectTilingData = "21474836481 20 169 ";
+    string expectTilingData = "21474836481 20 169 192 864 ";
     std::vector<size_t> expectWorkspaces = {YOLO_SYS_WORKSPACE_SIZE};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -135,16 +136,16 @@ TEST_F(YoloTiling, yolo_v2_mode3_fp16)
             {{{1, 20, 845}, {1, 20, 845}}, ge::DT_FLOAT16, ge::FORMAT_ND},
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(5)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(20)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V2")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(5)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(20)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V2")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 2; // YOLO_MODE_3
-    string expectTilingData = "21474836481 20 169 ";
+    string expectTilingData = "21474836481 20 169 192 864 ";
     std::vector<size_t> expectWorkspaces = {YOLO_SYS_WORKSPACE_SIZE};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -164,16 +165,16 @@ TEST_F(YoloTiling, yolo_v2_mode4_fp32)
             {{{1, 20, 845}, {1, 20, 845}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(5)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(20)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V2")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(true)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(5)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(20)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V2")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 3; // YOLO_MODE_4
-    string expectTilingData = "21474836481 20 169 ";
+    string expectTilingData = "21474836481 20 169 192 864 ";
     std::vector<size_t> expectWorkspaces = {YOLO_SYS_WORKSPACE_SIZE};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -193,14 +194,14 @@ TEST_F(YoloTiling, yolo_invalid_dim_num)
             {{{1, 80, 507}, {1, 80, 507}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }
 
@@ -219,13 +220,13 @@ TEST_F(YoloTiling, yolo_invalid_channel_mismatch)
             {{{1, 80, 507}, {1, 80, 507}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
-            gert::TilingContextPara::OpAttr("boxes", Ops::Math::AnyValue::CreateFrom<int64_t>(3)),
-            gert::TilingContextPara::OpAttr("coords", Ops::Math::AnyValue::CreateFrom<int64_t>(4)),
-            gert::TilingContextPara::OpAttr("classes", Ops::Math::AnyValue::CreateFrom<int64_t>(80)),
-            gert::TilingContextPara::OpAttr("yolo_version", Ops::Math::AnyValue::CreateFrom<std::string>("V3")),
-            gert::TilingContextPara::OpAttr("softmax", Ops::Math::AnyValue::CreateFrom<bool>(false)),
-            gert::TilingContextPara::OpAttr("background", Ops::Math::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::TilingContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::TilingContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::TilingContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::TilingContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }
