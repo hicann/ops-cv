@@ -45,6 +45,8 @@ namespace ge {
 *@li dbboxes: A 2D Tensor of type float16 or float32 with shape [4, N].
 *@li dgtboxes: A 2D Tensor of type float16 or float32 with shape [4, M].
 */
+#ifndef OPS_PROTO_DEF_GIOUGRAD
+#define OPS_PROTO_DEF_GIOUGRAD
 REG_OP(GIoUGrad)
     .INPUT(dy, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
@@ -55,6 +57,7 @@ REG_OP(GIoUGrad)
     .ATTR(is_cross, Bool, true)
     .ATTR(mode, String, "iou")
     .OP_END_FACTORY_REG(GIoUGrad)
+#endif
 
 } // namespace ge
 
