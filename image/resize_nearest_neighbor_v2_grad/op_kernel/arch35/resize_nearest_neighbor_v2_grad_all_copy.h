@@ -104,7 +104,7 @@ __aicore__ inline void ResizeNearestNeighborV2GradAllCopy<T_GRADS, T_OUT>::Proce
 {
     int64_t blockIdx = GetBlockIdx();
 
-    if (blockIdx > tilingData_->realCoreNum) {
+    if (blockIdx >= tilingData_->realCoreNum) {
         return;
     }
     if (blockIdx < tilingData_->splitBlockTailFactor) {
