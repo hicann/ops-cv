@@ -47,6 +47,10 @@ template <typename T>
 ge::graphStatus CopyData2Array(gert::TilingContext* context, const gert::Tensor* listTensor, int64_t listSize,
                                int64_t dataList[])
 {
+    if (listSize > MAX_DIM_NUM) {
+        OP_LOGE(context, "listSize %ld exceeds MAX_DIM_NUM %u.", listSize, MAX_DIM_NUM);
+        return ge::GRAPH_FAILED;
+    }
     const T* listDataPtr = listTensor->GetData<T>();
     if (listDataPtr == nullptr) {
         OP_LOGE(context, "listTensor->GetData<T>() is nullptr.");

@@ -62,3 +62,36 @@ TEST_F(Col2imTiling, col2im_tiling_test_float32_case1)
     std::vector<size_t> expectWorkspaces = {4294967295};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(Col2imTiling, col2im_tiling_test_invalid_output_size_len)
+{
+    int n = 8;
+    int c = 64;
+    int h_col = 22;
+    int w_col = 1;
+    int w_k = 5;
+    int h_k = 1;
+    int h = 20;
+    int w = 21;
+
+    gert::StorageShape gradOutShape = {{n, c, w_k * h_k, w_col * h_col}, {n, c, w_k * h_k, w_col * h_col}};
+    gert::StorageShape inputSizeShape = {{9}, {9}};
+    std::vector<int32_t> inputSizeValues(9, 1);
+    gert::StorageShape gradInShape = {{n, c, h, w}, {n, c, h, w}};
+    Col2imCompileInfo compileInfo = {40, 196608};
+    gert::TilingContextPara tilingContextPara(
+        "Col2im",
+        {
+            {gradOutShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, inputSizeValues.data()},
+        },
+        {
+            {gradInShape, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("kernel_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
+         gert::TilingContextPara::OpAttr("dilation", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 7})),
+         gert::TilingContextPara::OpAttr("padding", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
+         gert::TilingContextPara::OpAttr("stride", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 7}))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
