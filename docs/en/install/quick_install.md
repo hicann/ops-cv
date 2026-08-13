@@ -24,9 +24,9 @@ For developers without Ascend devices, you can directly use WebIDE development p
 > **Note**: The environment defaults to install latest commercial release CANN package. When downloading source code, pay attention to software compatibility. For more introduction about the development platform, please refer to [One-stop Operator Development Tool Platform Operation Guide](https://gitcode.com/org/cann/discussions/54).
 
 1. Enter the open source project, click the "`Cloud Development`" button, and log in with the authenticated Huawei Cloud account. If not registered or authenticated, please follow the page prompts to register and authenticate.
-    
+
    <img src="../figures/cloudIDE.png" alt="Cloud Platform"  width="750px" height="90px">
-    
+
 2. Follow the page prompts to create and start cloud development environment, click "`Connect>WebIDE`" to enter the operator one-stop development platform. The source code resources of the open source project are by default in the `/mnt/workspace` directory.
 
    <img src="../figures/webIDE.png" alt="Cloud Platform"  width="1000px" height="150px">

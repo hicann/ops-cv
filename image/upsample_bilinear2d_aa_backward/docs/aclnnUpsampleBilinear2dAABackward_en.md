@@ -15,7 +15,7 @@
 
 ## Function
 
-- API description: Performs backpropagation of [aclnnUpsampleBilinear2dAA](./aclnnUpsampleBilinear2dAA.md).
+- API description: Performs backpropagation of [aclnnUpsampleBilinear2dAA](../../upsample_bilinear2d_aa/docs/aclnnUpsampleBilinear2dAA_en.md).
 - The calculation formula is as follows: For a two-dimensional interpolation point (N, C, H, W), the interpolation I(N, C, H, W) can be expressed as:
   
   $$
@@ -211,7 +211,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 * **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
   
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -302,7 +302,7 @@ aclnnStatus aclnnUpsampleBilinear2dAABackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

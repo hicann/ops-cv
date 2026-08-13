@@ -75,7 +75,7 @@ aclnnStatus aclnnMrgbaCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">HWC(C=3), which meets the <a href="../../../docs/en/context/broadcast_relationship.md">broadcast relationship</a> with alpha.</td>
+      <td class="tg-0pky">HWC(C=3), which meets the <a href="../../../docs/en/context/Broadcast_Relationship.md">broadcast relationship</a> with alpha.</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -85,7 +85,7 @@ aclnnStatus aclnnMrgbaCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">HWC(C=1), which meets the <a href="../../../docs/en/context/broadcast_relationship.md">broadcast relationship</a> with rgb.</td>
+      <td class="tg-0pky">HWC(C=1), which meets the <a href="../../../docs/en/context/Broadcast_Relationship.md">broadcast relationship</a> with rgb.</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -122,7 +122,7 @@ aclnnStatus aclnnMrgbaCustom(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -195,7 +195,7 @@ aclnnStatus aclnnMrgbaCustom(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

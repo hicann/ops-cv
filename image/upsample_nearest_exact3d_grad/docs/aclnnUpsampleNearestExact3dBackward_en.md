@@ -15,7 +15,7 @@
 
 ## Function
 
-- Function: Performs backpropagation of [aclnnUpsampleNearestExact3d](./aclnnUpsampleNearestExact3d.md).
+- Function: Performs backpropagation of [aclnnUpsampleNearestExact3d](../../upsample_nearest_exact3d/docs/aclnnUpsampleNearestExact3d_en.md).
 - Formulas:
   
   $$
@@ -180,7 +180,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
   
@@ -280,7 +280,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

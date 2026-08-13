@@ -15,7 +15,7 @@
 
 ## Function
 
-- API description: Performs backpropagation of [aclnnUpsampleNearestExact1d](./aclnnUpsampleNearestExact1d.md). It is used to compute the points of the output gradient tensor and map them to the positions of the input gradient tensor. The output gradient values are accumulated to the input gradient tensor.
+- API description: Performs backpropagation of [aclnnUpsampleNearestExact1d](../../upsample_nearest/docs/aclnnUpsampleNearestExact1d_en.md). It is used to compute the points of the output gradient tensor and map them to the positions of the input gradient tensor. The output gradient values are accumulated to the input gradient tensor.
 - Formulas:
   
   $$
@@ -145,7 +145,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
   
@@ -229,7 +229,7 @@ aclnnStatus aclnnUpsampleNearestExact1dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

@@ -143,7 +143,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
     <tr>
       <td class="tg-0pky">aligned (bool)</td>
       <td class="tg-0pky">Input</td>
-      <td class="tg-0pky">If the value is false, the implementation of the <a href="./aclnnRoiAlign.md">aclnnRoiAlign</a> version is aligned.<br>If the value is true, the pixel offset of the box coordinate is -0.5 to better align the adjacent pixel indexes.</td>
+      <td class="tg-0pky">If the value is false, the implementation of the <a href="../../roi_align/docs/aclnnRoiAlign.md">aclnnRoiAlign</a> version is aligned.<br>If the value is true, the pixel offset of the box coordinate is -0.5 to better align the adjacent pixel indexes.</td>
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">BOOL</td>
       <td class="tg-0pky">-</td>
@@ -184,7 +184,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
   <table style="undefined;table-layout: fixed; width: 1148px"><colgroup>
@@ -259,7 +259,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

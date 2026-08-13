@@ -15,7 +15,7 @@
 
 ## Function
 
-- API description: Performs backpropagation of [aclnnUpsampleNearestExact2d](./aclnnUpsampleNearestExact2d.md).
+- API description: Performs backpropagation of [aclnnUpsampleNearestExact2d](../../upsample_nearest/docs/aclnnUpsampleNearestExact2d_en.md).
 - Formulas:
   
   $$
@@ -157,7 +157,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
   
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -242,7 +242,7 @@ aclnnStatus aclnnUpsampleNearestExact2dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

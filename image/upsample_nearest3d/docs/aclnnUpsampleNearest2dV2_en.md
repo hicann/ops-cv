@@ -15,7 +15,7 @@
 
 ## Function
 
-- API description: Applies the nearest neighbor interpolation algorithm to upsample the input signal composed of several input channels. If the input shape is **(N, C, H, W)**, the output shape is **(N, C, outputSize[0], outputSize[1])**. Compared with [aclnnUpsampleNearest2d](./aclnnUpsampleNearest2d.md), this API adds the input parameters **scalesH** and **scalesW**. You should select a proper API based on the actual situation.
+- API description: Applies the nearest neighbor interpolation algorithm to upsample the input signal composed of several input channels. If the input shape is **(N, C, H, W)**, the output shape is **(N, C, outputSize[0], outputSize[1])**. Compared with [aclnnUpsampleNearest2d](../../resize_nearest_neighbor_v2/docs/aclnnUpsampleNearest2d_en.md), this API adds the input parameters **scalesH** and **scalesW**. You should select a proper API based on the actual situation.
 
 - Formulas:
 
@@ -159,7 +159,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -238,7 +238,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

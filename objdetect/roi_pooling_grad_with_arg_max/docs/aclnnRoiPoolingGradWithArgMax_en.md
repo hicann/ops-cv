@@ -173,7 +173,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 
 - **Returns:**
   
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
   
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -274,7 +274,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 
 * **Return values:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

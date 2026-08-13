@@ -15,7 +15,7 @@
 
 ## Function
 
-- API description: Performs backpropagation of [aclnnUpsampleBicubic2d](./aclnnUpsampleBicubic2d.md). If the **shape** of the input tensor is **(N, C, H, W)**, then the **shape** of the output tensor is **(N, C, inputSize[2], inputSize[3])**.
+- API description: Performs backpropagation of [aclnnUpsampleBicubic2d](../../upsample_bicubic2d/docs/aclnnUpsampleBicubic2d_en.md). If the **shape** of the input tensor is **(N, C, H, W)**, then the **shape** of the output tensor is **(N, C, inputSize[2], inputSize[3])**.
 
 - Formula: For a two-dimensional interpolation point **$(N, C, h, w)$**, the interpolation **$gradInput(N, C, h, w)$** may be represented as:
   
@@ -210,7 +210,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
   
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -310,7 +310,7 @@ aclnnStatus aclnnUpsampleBicubic2dBackward(
 
 - **Returns:**
   
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

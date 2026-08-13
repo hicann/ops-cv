@@ -76,7 +76,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">HWC(C = 3). Must meet the <a href="../../../docs/en/context/broadcast_relationship.md">broadcast relationship</a> with alpha.</td>
+      <td class="tg-0pky">HWC(C = 3). Must meet the <a href="../../../docs/en/context/Broadcast_Relationship.md">broadcast relationship</a> with alpha.</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -86,7 +86,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0pky">-</td>
       <td class="tg-0pky">UINT8</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">HWC(C = 1). Must meet the <a href="../../../docs/en/context/broadcast_relationship.md">broadcast relationship</a> with rgb.</td>
+      <td class="tg-0pky">HWC(C = 1). Must meet the <a href="../../../docs/en/context/Broadcast_Relationship.md">broadcast relationship</a> with rgb.</td>
       <td class="tg-0pky">√</td>
     </tr>
     <tr>
@@ -96,7 +96,7 @@ aclnnStatus aclnnBlendImagesCustom(
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">UINT8</td>
       <td class="tg-0lax">ND</td>
-      <td class="tg-0lax">HWC(C = 3). Must meet the <a href="../../../docs/en/context/broadcast_relationship.md">broadcast relationship</a> with alpha.</td>
+      <td class="tg-0lax">HWC(C = 3). Must meet the <a href="../../../docs/en/context/Broadcast_Relationship.md">broadcast relationship</a> with alpha.</td>
       <td class="tg-0lax">√</td>
     </tr>
     <tr>
@@ -133,7 +133,7 @@ aclnnStatus aclnnBlendImagesCustom(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -206,7 +206,7 @@ aclnnStatus aclnnBlendImagesCustom(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

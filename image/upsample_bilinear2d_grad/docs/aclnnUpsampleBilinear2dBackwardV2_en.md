@@ -15,10 +15,10 @@
 
 ## Function
 
-- API description: Performs backpropagation of [aclnnUpsampleBilinear2d](./aclnnUpsampleBilinear2d.md).
+- API description: Performs backpropagation of [aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d_en.md).
 
-  - <term>Atlas A2 training products/Atlas A2 inference products</term>, <term>Atlas A3 training products/Atlas A3 inference products</term>, and Ascend 950PR/Ascend 950DT: Compared with [aclnnUpsampleBilinear2dBackward](./aclnnUpsampleBilinear2dBackward.md), this API supports scale-based computation and adds constraints on outputSize and scale. Select a proper API based on your requirements.
-  - <term>Atlas training products</term> and <term>Atlas inference products</term>: This API is the same as [aclnnUpsampleBilinear2dBackward](./aclnnUpsampleBilinear2dBackward.md).
+  - <term>Atlas A2 training products/Atlas A2 inference products</term>, <term>Atlas A3 training products/Atlas A3 inference products</term>, and Ascend 950PR/Ascend 950DT: Compared with [aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward_en.md), this API supports scale-based computation and adds constraints on outputSize and scale. Select a proper API based on your requirements.
+  - <term>Atlas training products</term> and <term>Atlas inference products</term>: This API is the same as [aclnnUpsampleBilinear2dBackward](../../resize_bilinear_v2_grad/docs/aclnnUpsampleBilinear2dBackward_en.md).
 
 - Formulas:
   - Core forward algorithm logic:
@@ -232,7 +232,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
   
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -329,7 +329,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 

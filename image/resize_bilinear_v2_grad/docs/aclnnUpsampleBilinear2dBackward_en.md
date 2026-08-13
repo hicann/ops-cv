@@ -15,7 +15,7 @@
 
 ## Function
 
-- API description: Performs backpropagation of [aclnnUpsampleBilinear2d](./aclnnUpsampleBilinear2d.md).
+- API description: Performs backpropagation of [aclnnUpsampleBilinear2d](../../upsample_bilinear2d/docs/aclnnUpsampleBilinear2d_en.md).
 - Formulas:
   - Core forward algorithm logic:
     1. Map each point of the target image back to the original image to obtain a coordinate with a decimal point.
@@ -231,7 +231,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
   
   The first-phase API implements input parameter validation. The following error codes may be returned.
 
@@ -331,7 +331,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackward(
 
 - **Returns:**
 
-  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_return_code.md).
+  `aclnnStatus`: status code. For details, see [aclnn Return Code](../../../docs/en/context/aclnn_Return_Code.md).
 
 ## Constraints
 
