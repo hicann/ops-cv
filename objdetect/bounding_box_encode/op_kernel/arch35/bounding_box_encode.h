@@ -41,6 +41,77 @@ struct BoxDeltaCalc {
         rw = gw / pw;
         rh = gh / ph;
     }
+
+    __aicore__ static inline float FixLnResult(float origInput, float npuLnResult)
+    {
+        if (origInput != origInput) {
+            return MakeNan();
+        }
+        if (origInput == 0.0f) {
+            return MakeNegInf();
+        }
+        if (origInput < 0.0f) {
+            return MakeNan();
+        }
+        if (npuLnResult != npuLnResult) {
+            return MakeNan();
+        }
+        float negInf = MakeNegInf();
+        if (npuLnResult == negInf && origInput > 0.0f) {
+            return SoftLnPositive(origInput);
+        }
+        return npuLnResult;
+    }
+
+    __aicore__ static inline float SoftLnPositive(float x)
+    {
+        if (x <= 0.0f) {
+            return MakeNegInf();
+        }
+        float m = x;
+        int e = 0;
+        if (m >= 2.0f) {
+            while (m >= 2.0f) {
+                m *= 0.5f;
+                e++;
+            }
+        } else if (m < 1.0f) {
+            while (m < 1.0f) {
+                m *= 2.0f;
+                e--;
+            }
+        }
+        float z = (m - 1.0f) / (m + 1.0f);
+        float z2 = z * z;
+        float z4 = z2 * z2;
+        float z6 = z4 * z2;
+        float z8 = z4 * z4;
+        float z10 = z6 * z4;
+        float poly = 1.0f + z2 * 0.33333334f + z4 * 0.2f + z6 * 0.14285715f + z8 * 0.11111111f + z10 * 0.09090909f;
+        float artanh_z = z * poly;
+        float ln_m = 2.0f * artanh_z;
+        return ln_m + static_cast<float>(e) * 0.69314718f;
+    }
+
+    __aicore__ static inline float MakeNegInf()
+    {
+        union {
+            uint32_t u;
+            float f;
+        } cvt;
+        cvt.u = 0xFF800000u;
+        return cvt.f;
+    }
+
+    __aicore__ static inline float MakeNan()
+    {
+        union {
+            uint32_t u;
+            float f;
+        } cvt;
+        cvt.u = 0x7FC00000u;
+        return cvt.f;
+    }
 };
 
 template <typename T>
@@ -226,8 +297,12 @@ __aicore__ inline void BoundingBoxEncode<T>::ComputeFp16Path(AscendC::LocalTenso
         int64_t base = b * 4;
         float v0 = (outFloat.GetValue(b * 2) - means0_) * invStds0_;
         float v1 = (outFloat.GetValue(b * 2 + 1) - means1_) * invStds1_;
-        float v2 = (buf2.GetValue(base + 2) - means2_) * invStds2_;
-        float v3 = (buf2.GetValue(base + 3) - means3_) * invStds3_;
+        float origRw = buf1.GetValue(base + 2);
+        float origRh = buf1.GetValue(base + 3);
+        float lnRw = BoxDeltaCalc::FixLnResult(origRw, buf2.GetValue(base + 2));
+        float lnRh = BoxDeltaCalc::FixLnResult(origRh, buf2.GetValue(base + 3));
+        float v2 = (lnRw - means2_) * invStds2_;
+        float v3 = (lnRh - means3_) * invStds3_;
         buf2.SetValue(base + 0, v0);
         buf2.SetValue(base + 1, v1);
         buf2.SetValue(base + 2, v2);
@@ -292,8 +367,12 @@ __aicore__ inline void BoundingBoxEncode<T>::ComputeFp32Path(AscendC::LocalTenso
         int64_t base = b * 4;
         float v0 = (buf1.GetValue(b * 2) - means0_) * invStds0_;
         float v1 = (buf1.GetValue(b * 2 + 1) - means1_) * invStds1_;
-        float v2 = (buf2.GetValue(base + 2) - means2_) * invStds2_;
-        float v3 = (buf2.GetValue(base + 3) - means3_) * invStds3_;
+        float origRw = aFp32.GetValue(base + 2);
+        float origRh = aFp32.GetValue(base + 3);
+        float lnRw = BoxDeltaCalc::FixLnResult(origRw, buf2.GetValue(base + 2));
+        float lnRh = BoxDeltaCalc::FixLnResult(origRh, buf2.GetValue(base + 3));
+        float v2 = (lnRw - means2_) * invStds2_;
+        float v3 = (lnRh - means3_) * invStds3_;
         aFp32.SetValue(base + 0, v0);
         aFp32.SetValue(base + 1, v1);
         aFp32.SetValue(base + 2, v2);
