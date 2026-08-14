@@ -85,9 +85,6 @@ fi
 
 if [ "${GE_ST_RT2}X" == "kirinx90X" ]; then
     if [ "${GIT_TARGET_BRANCH}" = "master" ]; then
-        wget -nv https://kiri-obs.obs.cn-north-4.myhuaweicloud.com/Cann%20Large%20Model%20Foundation%208.5.0.beta005/cann-bisheng-compiler_9.0.0_linux-x86_64.run
-        chmod +x *.run
-        sudo -u jenkins ./cann-bisheng-compiler*.run --full --quiet --install-path=/home/jenkins/Ascend
         LOG_DO bash build.sh --pkg --soc=kirinx90 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -j16
         DP_ASSERT_EQUAL "$?" "0" "Build ${REPOSITORY_NAME}"
     else
@@ -98,19 +95,13 @@ if [ "${GE_ST_RT2}X" == "kirinx90X" ]; then
     fi
 elif  [ "${GE_ST_RT2}X" == "kirinx9030X" ];then
     if [ "${GIT_TARGET_BRANCH}" = "master" ];then
-        wget -nv https://kiri-obs.obs.cn-north-4.myhuaweicloud.com/Cann%20Large%20Model%20Foundation%208.5.0.beta005/cann-bisheng-compiler_9.0.0_linux-x86_64.run
-        wget -nv https://ascend-ci.obs.cn-north-4.myhuaweicloud.com/asc-devkit/package/4481/cann-asc-devkit_linux-x86_64_ubuntu24.run
-        chmod +x *.run
-        sudo -u jenkins ./cann-bisheng-compiler*.run --full --quiet --install-path=/home/jenkins/Ascend
-        sudo chmod 755 /home/jenkins/Ascend
-        yes "y" | sudo bash cann-asc-devkit_linux-x86_64_ubuntu24.run --full --install-path=/home/jenkins/Ascend
         LOG_DO bash build.sh --pkg --soc=kirin9030 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -j16
         DP_ASSERT_EQUAL "$?" "0" "Build ${REPOSITORY_NAME}"
     else
         echo "not need build mobile_station"
         mkdir build_out
         touch build_out/cann-ops-cv-kirin9030_linux-x86_64.run
-        exit 0 
+        exit 0
     fi
 elif [ "${GE_ST_RT2}X" == "experimentalX" ]; then
     if [ "${GIT_TARGET_BRANCH}" = "master" ]; then
