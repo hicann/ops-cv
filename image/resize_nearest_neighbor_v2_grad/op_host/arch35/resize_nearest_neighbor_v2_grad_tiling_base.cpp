@@ -198,10 +198,10 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInOutDtypeFormat()
     auto gradsFormat = gradsDstcPtr->GetOriginFormat();
     auto gradsDtype = gradsDstcPtr->GetDataType();
 
-    auto yDstcPtr = context_->GetInputDesc(OUTPUT_IDX_Y);
-    OP_CHECK_NULL_WITH_CONTEXT(context_, gradsDstcPtr);
+    auto yDstcPtr = context_->GetOutputDesc(OUTPUT_IDX_Y);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, yDstcPtr);
     auto yFormat = yDstcPtr->GetOriginFormat();
-    auto yDtype = gradsDstcPtr->GetDataType();
+    auto yDtype = yDstcPtr->GetDataType();
     if (gradsDtype != yDtype) {
         std::string dtypeMsg = Ops::Base::ToString(gradsDtype) + " and " + Ops::Base::ToString(yDtype);
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads and y", dtypeMsg.c_str(),
