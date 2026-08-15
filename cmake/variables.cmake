@@ -215,6 +215,7 @@ set(AICPU_INCLUDE
   ${C_SEC_INCLUDE}
   ${NNOPBASE_INCLUDE_DIRS}
   ${HCCL_EXTERNAL_INCLUDE}
+  ${OPS_CV_DIR}/common/inc
   ${OPS_CV_DIR}/common/inc/op_api
   ${METADEF_INCLUDE_DIRS}
 )

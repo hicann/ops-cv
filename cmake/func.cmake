@@ -267,6 +267,7 @@ function(add_aicpu_host_kernel_modules host_target_name)
       ${host_target_name} PRIVATE
                     _FORTIFY_SOURCE=2
                     google=ascend_private
+                    OPS_CV_AICPU_HOST_KERNEL
       )
     target_compile_options(
       ${host_target_name} PRIVATE
@@ -530,15 +531,16 @@ function(add_tiling_sources tiling_dir disable_in_opp)
   endif()
 endfunction()
 
-# usage: add_all_modules_sources(OPTYPE ACLNNTYPE DEPENDENCIES COMPUTE_UNIT TILING_DIR DISABLE_IN_OPP)
+# usage: add_all_modules_sources(OPTYPE ACLNNTYPE DEPENDENCIES COMPUTE_UNIT TILING_DIR DISABLE_IN_OPP HOSTCPU)
 # ACLNNTYPE 支持类型aclnn/aclnn_inner/aclnn_exclude
 # OPTYPE 和 ACLNNTYPE 需一一对应
 # DEPENDENCIES 指定依赖的算子名称列表
 # COMPUTE_UNIT 设置支持芯片版本号，必须与TILING_DIR一一对应，示例：ascend910b ascend950
 # TILING_DIR 设置所支持芯片类型对应的tiling文件目录，必须与COMPUTE_UNIT一一对应，示例：arch32 arch35
 # DISABLE_IN_OPP 设置是否在opp包中编译tiling文件，布尔类型：TRUE，FALSE
+# HOSTCPU 设置是否编译host侧常量折叠OBJECT，布尔类型：TRUE，FALSE，仅在built-in包生效
 macro(add_all_modules_sources)
-  set(oneValueArgs DISABLE_IN_OPP)
+  set(oneValueArgs DISABLE_IN_OPP HOSTCPU)
   set(multiValueArgs OPTYPE ACLNNTYPE DEPENDENCIES COMPUTE_UNIT TILING_DIR)
 
   cmake_parse_arguments(MODULE "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -615,6 +617,17 @@ macro(add_all_modules_sources)
     if(AICPU_SRCS)
       add_aicpu_kernel_modules()
       target_sources(${OPHOST_NAME}_aicpu_obj PRIVATE ${AICPU_SRCS})
+    endif()
+  endif()
+
+  # Host-side constant folding: compile aicpu source as x86 OBJECT for libopconstant_folding_cv.so
+  # Only enabled when HOSTCPU TRUE is passed to add_all_modules_sources
+  if(MODULE_HOSTCPU AND BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG AND NOT ENABLE_CUSTOM)
+    file(GLOB AICPU_HOST_SRCS ${SOURCE_DIR}/op_kernel_aicpu/*_aicpu.cpp)
+    if(AICPU_HOST_SRCS AND NOT DISABLE_AICPU)
+      set(HOST_OBJ_NAME ${OP_NAME}_host_const_obj)
+      add_aicpu_host_kernel_modules(${HOST_OBJ_NAME})
+      target_sources(${HOST_OBJ_NAME} PRIVATE ${AICPU_HOST_SRCS})
     endif()
   endif()
 
