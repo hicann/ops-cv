@@ -220,7 +220,7 @@ static ge::graphStatus ThreeInterpolateTilingFunc(gert::TilingContext* context)
     ThreeInterpolateTilingData* tiling = context->GetTilingData<ThreeInterpolateTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(ThreeInterpolateTilingData), 0, sizeof(ThreeInterpolateTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     tiling->bs = bs;
     tiling->ns = ns;

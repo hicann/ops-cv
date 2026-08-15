@@ -54,7 +54,7 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
 
     coreNum = ascendcPlatform.GetCoreNumAiv();
     OP_CHECK_IF(coreNum == 0, OP_LOGE(context, "coreNum is 0"), return ge::GRAPH_FAILED);
-    
+
     return ge::GRAPH_SUCCESS;
 }
 
@@ -155,7 +155,7 @@ static ge::graphStatus SetTilingAndCoreSplit(gert::TilingContext* context, int32
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(UpsampleBicubic2dRegBaseTilingData), 0,
                          sizeof(UpsampleBicubic2dRegBaseTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     int64_t totalElements = static_cast<int64_t>(batchSize) * channels * outputHeight * outputWidth;
     tiling->totalElements = totalElements;

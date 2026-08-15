@@ -1,21 +1,11 @@
 /**
- * This file is part of the OpenBOAT project at Harbin Institute of Technology (HIT)
- * and is contributed to the CANN Open Software.
- *
- * Copyright (c) 2025 AISS Group, Harbin Institute of Technology (HIT).
- * All Rights Reserved.
- *
- * Authors (accounts):
- * - Shi Xiangyang <@shi-xiangyang225>
- * - Su Tonghua <@sutonghua>
- *
- * This program is free software: you can redistribute it and/or modify it.
- * Licensed under the CANN Open Software License Agreement Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * See the LICENSE file at the root of the repository for the full text of the License.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 /*!
@@ -132,7 +122,7 @@ static ge::graphStatus NMSWithMaskTilingFunc(gert::TilingContext* context)
     NMSWithMaskTilingData* tiling = context->GetTilingData<NMSWithMaskTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(NMSWithMaskTilingData), 0, sizeof(NMSWithMaskTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
     tiling->totalLength = totalIdx;
     tiling->iou_threshold = *context->GetAttrs()->GetAttrPointer<float>(ATTRPOS0);
     tiling->scores_threshold = *context->GetAttrs()->GetAttrPointer<float>(ATTRPOS1);

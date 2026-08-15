@@ -370,7 +370,7 @@ static ge::graphStatus ROIAlignGradTilingFunc(gert::TilingContext* context)
     ROIAlignGradTilingData* tiling = context->GetTilingData<ROIAlignGradTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(ROIAlignGradTilingData), 0, sizeof(ROIAlignGradTilingData)) != EOK,
-                OP_LOGE(context, "memset tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to memset tiling data"), return ge::GRAPH_FAILED);
 
     if (totalYdiffElements == 0) {
         return HandleEmptyTiling(context, ascendcPlatform, tiling, params);

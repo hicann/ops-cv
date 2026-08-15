@@ -42,7 +42,7 @@ const aclTensor* IouV2(const aclTensor* bBoxes, const aclTensor* gtBoxes, const 
     // 调用device的IouV2算子
     auto ret = ADD_TO_LAUNCHER_LIST_AICORE(IouV2, OP_INPUT(bBoxes, gtBoxes), OP_OUTPUT(out),
                                            OP_ATTR(mode, eps, aligned));
-    OP_LOGI("IouV2 ret:%d, out:%p\n", ret, out);
+    OP_LOGI("IouV2 ret:%d, out:%p", ret, out);
 
     return out;
 }

@@ -162,7 +162,7 @@ ge::graphStatus Tiling4ThreeInterpolateBackwardRegbase(gert::TilingContext* cont
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(ThreeInterpolateBackwardTilingData), 0,
                          sizeof(ThreeInterpolateBackwardTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
     tiling->needCoreNum = needCoreNum;
     tiling->b = b;
     tiling->c = c;

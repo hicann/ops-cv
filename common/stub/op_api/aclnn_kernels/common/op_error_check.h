@@ -72,9 +72,8 @@ static inline bool IsNullptr(const aclBoolArray* boolArr, const char* name)
 static inline bool IsNullptr(const aclFloatArray* floatArr, const char* name)
 {
     if (floatArr == nullptr) {
-        OP_LOGE(ACLNN_ERR_PARAM_NULLPTR, "Expected a value of type List[float] for argument %s but instead found type \
-            null.",
-                name);
+        OP_LOGE(ACLNN_ERR_PARAM_NULLPTR,
+                "Expected a value of type List[float] for argument %s but instead found type null.", name);
         return true;
     }
     return false;

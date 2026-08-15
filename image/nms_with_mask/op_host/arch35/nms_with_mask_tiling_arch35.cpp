@@ -72,7 +72,7 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckOutputShape()
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         selectedBoxesShape.GetDim(INDEX_ZERO) != boxesNum_,
-        OP_LOGE(tilingContext_, "Output selected_boxes' first dim must be  equal to  box_scores' first dim, got :%lu.",
+        OP_LOGE(tilingContext_, "Output selected_boxes' first dim must be equal to box_scores' first dim, got :%lu.",
                 selectedBoxesShape.GetDim(INDEX_ZERO)),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(selectedBoxesShape.GetDim(INDEX_ONE) != ELEMENT_NUM,

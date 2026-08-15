@@ -221,7 +221,7 @@ static ge::graphStatus CropTilingFunc(gert::TilingContext* context)
     CropTilingData* tiling = context->GetTilingData<CropTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(CropTilingData), 0, sizeof(CropTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     FillTilingData(tiling, needCoreNum, totalElements, rank, static_cast<int32_t>(axis), xStridesArr, yStridesArr,
                    offsetsArr, perCoreElements, tailElements);

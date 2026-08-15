@@ -181,7 +181,7 @@ inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext& ctx)
 {
     std::uint32_t result{ComputeAdjustSaturationKernel<T>(ctx)};
     if (result != KERNEL_STATUS_OK) {
-        KERNEL_LOG_ERROR("AdjustSaturation compute failed.");
+        KERNEL_LOG_ERROR("AdjustSaturation computation failed.");
     }
     return result;
 }

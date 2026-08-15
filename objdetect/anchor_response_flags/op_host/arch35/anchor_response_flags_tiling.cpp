@@ -130,7 +130,7 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context, int64_t need
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(
         memset_s(tiling, sizeof(AnchorResponseFlagsTilingData), 0, sizeof(AnchorResponseFlagsTilingData)) != EOK,
-        OP_LOGE(context, "memset tiling data error"), return ge::GRAPH_FAILED);
+        OP_LOGE(context, "Failed to memset tiling data"), return ge::GRAPH_FAILED);
 
     tiling->needCoreNum = static_cast<int32_t>(needCoreNum);
     tiling->n = static_cast<int32_t>(n);

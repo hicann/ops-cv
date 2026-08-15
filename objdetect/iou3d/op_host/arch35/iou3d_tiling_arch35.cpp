@@ -134,7 +134,7 @@ static ge::graphStatus Iou3DTilingFunc(gert::TilingContext* context)
     Iou3DTilingData* tiling = context->GetTilingData<Iou3DTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(Iou3DTilingData), 0, sizeof(Iou3DTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     tiling->batch = static_cast<uint32_t>(batch);
     tiling->numBboxes = static_cast<uint32_t>(numN);

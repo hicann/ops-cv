@@ -131,7 +131,7 @@ static ge::graphStatus GIoUGradTilingFunc(gert::TilingContext* context)
     GIoUGradTilingData* tiling = context->GetTilingData<GIoUGradTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(GIoUGradTilingData), 0, sizeof(GIoUGradTilingData)) != EOK,
-                OP_LOGE(context, "memset tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to memset tiling data"), return ge::GRAPH_FAILED);
     tiling->totalElements = N;
 
     // 7. Set block dim

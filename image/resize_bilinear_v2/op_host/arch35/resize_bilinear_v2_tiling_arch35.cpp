@@ -238,7 +238,7 @@ void ResizeBilinearV2AscendCTilingImpl::SetDimsByFormat()
         if (lenDesW_ > 1) {
             scaleW_ = static_cast<float>(lenSrcW_ - 1) / static_cast<float>(lenDesW_ - 1);
         }
-        OP_LOGI(context_->GetNodeName(), "compute scaleH is %f, scaleW  is %f", scaleH_, scaleW_);
+        OP_LOGI(context_->GetNodeName(), "compute scaleH is %f, scaleW is %f", scaleH_, scaleW_);
     }
 }
 

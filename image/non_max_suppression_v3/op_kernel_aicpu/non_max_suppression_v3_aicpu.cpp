@@ -262,7 +262,7 @@ uint32_t NonMaxSuppressionV3CpuKernel::Compute(CpuKernelContext& ctx)
         res = DoCompute<float, float>();
     }
 
-    KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "Compute failed.");
+    KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "Computation failed.");
 
     KERNEL_LOG_INFO("Compute end!!");
     return KERNEL_STATUS_OK;

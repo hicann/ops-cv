@@ -141,7 +141,7 @@ static bool CheckArray(const aclTensor* gradOutput, const aclIntArray* inputSize
         return false;
     }
     OP_CHECK(CheckArrayValue(kernelSize, dilation, padding, stride),
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "CheckArrayValue faild."), return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "CheckArrayValue failed."), return false);
     size_t inputPlane = gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE ?
                             gradOutput->GetViewShape().GetDim(1) :
                             gradOutput->GetViewShape().GetDim(0);

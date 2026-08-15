@@ -210,7 +210,7 @@ static ge::graphStatus AddExampleTilingFunc(gert::TilingContext* context)
 
     // 初始化tiling数据为0
     OP_CHECK_IF(memset_s(tiling, sizeof(AddExampleTilingData), 0, sizeof(AddExampleTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     // 优先做核切分，尽量用更多的核并行计算
     // 计算每个AI Core处理的元素数量

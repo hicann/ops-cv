@@ -94,7 +94,7 @@ static bool CheckFormatValid(const aclTensor* self, const aclTensor* out)
 
     OP_CHECK((out->GetStorageFormat() == op::Format::FORMAT_NCHW ||
               out->GetStorageFormat() == op::Format::FORMAT_NHWC || out->GetStorageFormat() == op::Format::FORMAT_ND),
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The format must be NCHW、NHWC or ND"), return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The format must be NCHW, NHWC or ND"), return false);
     return true;
 }
 

@@ -137,8 +137,8 @@ static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclT
     }
     if (gridShape.GetDim(SECOND_DIM) != outShape.GetDim(THIRD_DIM) ||
         gridShape.GetDim(THIRD_DIM) != outShape.GetDim(FOURTH_DIM)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect grid and out to have same H and W size, but got grid with shape [%s] \
-            and out with shape [%s]",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "expect grid and out to have same H and W size, but got grid with shape [%s] and out with shape [%s]",
                 op::ToString(gridShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }

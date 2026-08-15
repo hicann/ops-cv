@@ -314,8 +314,9 @@ int64_t ResizeNearestNeighborV2AscendCTilingImpl::CalcUnitWCountPerUB(int64_t un
     int64_t unitLocationBytes = Ops::Base::CeilAlign(static_cast<int64_t>(1 * GetSizeByDataType(ge::DT_FLOAT)),
                                                      ubBlockSize_);
     int64_t unitWTotalBytes = unitDesWBytes + unitSrcBytes + unitLocationBytes;
-    OP_LOGI(context_->GetNodeName(), "CalcUnitWCountPerUB: srcWFactor: %ld, srcHFactor: %ld, \
-            unitDesWBytes: %ld, unitSrcBytes: %ld, unitLocationBytes: %ld",
+    OP_LOGI(context_->GetNodeName(),
+            "CalcUnitWCountPerUB: srcWFactor: %ld, srcHFactor: %ld, unitDesWBytes: %ld, unitSrcBytes: %ld, "
+            "unitLocationBytes: %ld",
             procUnitSrcWCount, unitSrcHCount, unitDesWBytes, unitSrcBytes, unitLocationBytes);
     return Ops::Base::FloorDiv((ubSize_ - ubBlockSize_) / NUM_2, unitWTotalBytes);
 }
@@ -516,7 +517,7 @@ bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NCHW_Gather()
     int32_t dstWUb = lenDesWAlign_ * dtypeSize_ * NUM_2;
     int32_t srcWUb = lenSrcWAlign_ * dtypeSize_ * NUM_2;
     int32_t leastUb = idsUbSize + dstWUb + srcWUb + ubBlockSize_ * NUM_2;
-    OP_CHECK_IF(leastUb > ubSize_, OP_LOGI(context_->GetNodeName(), "ub is not enough"), return false);
+    OP_CHECK_IF(leastUb > ubSize_, OP_LOGI(context_->GetNodeName(), "ub is insufficient"), return false);
     return true;
 }
 
@@ -652,7 +653,7 @@ bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NHWC_UB2UB()
     OP_CHECK_IF((lenC_ * dtypeSize_ < MIN_C_SIZE) && (lenCAlign_ != lenC_),
                 OP_LOGI(context_->GetNodeName(), "c is not align and small"), return false);
     int64_t needUb = (lenSrcW_ + lenDesW_) * lenCAlign_ * dtypeSize_ * NUM_2;
-    OP_CHECK_IF(needUb > ubSize_, OP_LOGI(context_->GetNodeName(), "ub is not enough"), return false);
+    OP_CHECK_IF(needUb > ubSize_, OP_LOGI(context_->GetNodeName(), "ub is insufficient"), return false);
     int64_t xSize = xShape_.GetShapeSize();
     int64_t ySize = yShape_.GetShapeSize();
     OP_CHECK_IF(xSize >= UINT32_MAX || ySize >= UINT32_MAX,

@@ -155,7 +155,7 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
     BlendFaceBgPartTwoTilingData* tiling = context->GetTilingData<BlendFaceBgPartTwoTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(BlendFaceBgPartTwoTilingData), 0, sizeof(BlendFaceBgPartTwoTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
     tiling->epsilon = GetEpsilonAttr(context);
 
     // 5) 多核切分（每核至少 4KB，blockFormer 512 元素对齐）

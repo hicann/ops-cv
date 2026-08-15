@@ -168,7 +168,7 @@ static ge::graphStatus ComputeAndSetTiling(gert::TilingContext* context, const S
     auto* tiling = context->GetTilingData<ExtractGlimpseV2TilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(ExtractGlimpseV2TilingData), 0, sizeof(ExtractGlimpseV2TilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
     tiling->needCoreNum = needCoreNum;
     tiling->batchSize = info.batchSize;
     tiling->inputH = info.inputH;

@@ -223,7 +223,7 @@ static ge::graphStatus BoundingBoxEncodeTilingFunc(gert::TilingContext* context)
     BoundingBoxEncodeTilingData* tiling = context->GetTilingData<BoundingBoxEncodeTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(BoundingBoxEncodeTilingData), 0, sizeof(BoundingBoxEncodeTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     if (dim0 == 0) {
         context->SetBlockDim(1);

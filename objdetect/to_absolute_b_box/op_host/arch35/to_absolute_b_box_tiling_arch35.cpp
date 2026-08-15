@@ -117,7 +117,7 @@ static ge::graphStatus SetTilingDataAndConfig(gert::TilingContext* context, int6
     ToAbsoluteBBoxTilingData* tiling = context->GetTilingData<ToAbsoluteBBoxTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(ToAbsoluteBBoxTilingData), 0, sizeof(ToAbsoluteBBoxTilingData)) != EOK,
-                OP_LOGE(context, "memset tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to memset tiling data"), return ge::GRAPH_FAILED);
 
     tiling->dim0 = dim0;
     tiling->coreNum = static_cast<int32_t>(coreNum);

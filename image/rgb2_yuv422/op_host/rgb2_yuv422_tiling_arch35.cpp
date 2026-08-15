@@ -119,7 +119,7 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context, int32_t need
     Rgb2yuv422TilingData* tiling = context->GetTilingData<Rgb2yuv422TilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(Rgb2yuv422TilingData), 0, sizeof(Rgb2yuv422TilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     tiling->needCoreNum = needCoreNum;
     tiling->totalRows = totalRows;

@@ -34,32 +34,32 @@ constexpr float kNumber2 = 2;
 constexpr uint32_t kGridInedxOffset = 2;
 constexpr uint32_t kOutputNum = 1;
 
-#define STN_COMPUTE_CASE(DTYPE, TYPE, CTX)                                 \
-    case (DTYPE): {                                                        \
-        if (DoCompute<TYPE>(CTX) != KERNEL_STATUS_OK) {                    \
-            KERNEL_LOG_ERROR("SpatialTransformer kernel compute failed."); \
-            return static_cast<uint32_t>(KERNEL_STATUS_INNER_ERROR);       \
-        }                                                                  \
-        break;                                                             \
+#define STN_COMPUTE_CASE(DTYPE, TYPE, CTX)                                     \
+    case (DTYPE): {                                                            \
+        if (DoCompute<TYPE>(CTX) != KERNEL_STATUS_OK) {                        \
+            KERNEL_LOG_ERROR("SpatialTransformer kernel computation failed."); \
+            return static_cast<uint32_t>(KERNEL_STATUS_INNER_ERROR);           \
+        }                                                                      \
+        break;                                                                 \
     }
 
-#define STN_INNER_COMPUTE_CASE(DTYPE, TYPE, CTX)                           \
-    case (DTYPE): {                                                        \
-        uint32_t ret = static_cast<uint32_t>(KERNEL_STATUS_OK);            \
-        if (date_format_ == FORMAT_NCHW) {                                 \
-            ret = static_cast<uint32_t>(DoCompute4D<T, TYPE>());           \
-        } else if (date_format_ == FORMAT_NC1HWC0) {                       \
-            if (stn_ori_channel_ == 1) {                                   \
-                ret = static_cast<uint32_t>(DoCompute5D_C1<T, TYPE>());    \
-            } else {                                                       \
-                ret = static_cast<uint32_t>(DoCompute5D<T, TYPE>());       \
-            }                                                              \
-        }                                                                  \
-        if (ret != static_cast<uint32_t>(KERNEL_STATUS_OK)) {              \
-            KERNEL_LOG_ERROR("SpatialTransformer kernel compute failed."); \
-            return ret;                                                    \
-        }                                                                  \
-        break;                                                             \
+#define STN_INNER_COMPUTE_CASE(DTYPE, TYPE, CTX)                               \
+    case (DTYPE): {                                                            \
+        uint32_t ret = static_cast<uint32_t>(KERNEL_STATUS_OK);                \
+        if (date_format_ == FORMAT_NCHW) {                                     \
+            ret = static_cast<uint32_t>(DoCompute4D<T, TYPE>());               \
+        } else if (date_format_ == FORMAT_NC1HWC0) {                           \
+            if (stn_ori_channel_ == 1) {                                       \
+                ret = static_cast<uint32_t>(DoCompute5D_C1<T, TYPE>());        \
+            } else {                                                           \
+                ret = static_cast<uint32_t>(DoCompute5D<T, TYPE>());           \
+            }                                                                  \
+        }                                                                      \
+        if (ret != static_cast<uint32_t>(KERNEL_STATUS_OK)) {                  \
+            KERNEL_LOG_ERROR("SpatialTransformer kernel computation failed."); \
+            return ret;                                                        \
+        }                                                                      \
+        break;                                                                 \
     }
 } // namespace
 

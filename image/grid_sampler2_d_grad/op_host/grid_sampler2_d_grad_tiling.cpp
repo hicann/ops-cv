@@ -606,7 +606,7 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
                                                                                availableUb, deterministic);
     }
     OP_CHECK_IF(tilingData.get_ubFactorElement() <= 0,
-                OP_LOGE(tilingContext->GetNodeName(), "ub space is not enough, please check input."),
+                OP_LOGE(tilingContext->GetNodeName(), "ub space is insufficient, please check input."),
                 return ge::GRAPH_FAILED);
     // set tilingdata
     tilingContext->SetTilingKey(params.tilingKey);

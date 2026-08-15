@@ -128,8 +128,9 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, cons
     OP_CHECK_WRONG_DIMENSION(gradOutput, SPATIAL_DIM_NUM, return false);
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != gradOutputShape.GetDim(FIRST_DIM)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "expect input grid and gradOutput to have same batch size, but got input with \
-            shape [%s] grid with shape [%s] and gradOutput with shape [%s]",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "expect input grid and gradOutput to have same batch size, but got input with shape [%s] grid with "
+                "shape [%s] and gradOutput with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
                 op::ToString(gradOutputShape).GetString());
         return false;

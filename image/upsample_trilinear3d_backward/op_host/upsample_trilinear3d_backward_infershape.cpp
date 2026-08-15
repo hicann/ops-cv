@@ -84,7 +84,7 @@ static ge::graphStatus Upsample3dGradInferShapeImpl(gert::InferShapeContext* con
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
 
     const gert::ContinuousVector* input_size = attrs->GetAttrPointer<gert::ContinuousVector>(INDEX_INPUT_SIZE);
-    OP_CHECK_IF(input_size == nullptr, OP_LOGE(context->GetNodeName(), "Get attr::input_size faild!"),
+    OP_CHECK_IF(input_size == nullptr, OP_LOGE(context->GetNodeName(), "Get attr::input_size failed!"),
                 return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(input_size->GetSize() != SUPPORTED_DIM_NUM,

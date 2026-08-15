@@ -125,7 +125,7 @@ ge::graphStatus AippTiling::GetShapeAttrsInfo()
         OP_LOGI(context_->GetNodeName(), "aippConfigData is: %s", configData);
         aippCfg = parseAippConfig(configData);
     } else {
-        OP_LOGI(context_->GetNodeName(), "aippConfigPath is: %s", configData);
+        OP_LOGI(context_->GetNodeName(), "aippConfigPath is: %s", "config_path");
         if (parseAippCfgFromPath(configData, aippCfg) == ge::GRAPH_FAILED) {
             return ge::GRAPH_FAILED;
         }

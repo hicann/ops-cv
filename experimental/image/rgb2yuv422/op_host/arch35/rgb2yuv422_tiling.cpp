@@ -26,8 +26,6 @@
 
 namespace optiling {
 
-
-
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 constexpr int64_t PER_CORE_MIN = 1024;
@@ -55,37 +53,36 @@ static int64_t Product(const gert::Shape& shape, size_t begin, size_t end)
     return prod;
 }
 
-static ge::graphStatus GetShapeInfo(gert::TilingContext* context, const std::string& dataFormat,
-    int64_t& H, int64_t& W, int64_t& outerDims)
+static ge::graphStatus GetShapeInfo(gert::TilingContext* context, const std::string& dataFormat, int64_t& H, int64_t& W,
+                                    int64_t& outerDims)
 {
     auto inputShape = context->GetInputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputShape);
     auto storageShape = inputShape->GetStorageShape();
     size_t rank = storageShape.GetDimNum();
 
-    OP_CHECK_IF(rank < 3,
-        OP_LOGE(context, "Input must have at least 3 dimensions, got rank %zu", rank),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(rank < 3, OP_LOGE(context, "Input must have at least 3 dimensions, got rank %zu", rank),
+                return ge::GRAPH_FAILED);
 
     if (dataFormat == "NHWC") {
         OP_CHECK_IF(storageShape.GetDim(rank - 1) != 3,
-            OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 1)),
-            return ge::GRAPH_FAILED);
+                    OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 1)),
+                    return ge::GRAPH_FAILED);
         H = static_cast<int32_t>(storageShape.GetDim(rank - 3));
         W = static_cast<int32_t>(storageShape.GetDim(rank - 2));
         outerDims = Product(storageShape, 0, rank - 3);
     } else {
         if (rank == 3) {
             OP_CHECK_IF(storageShape.GetDim(0) != 3,
-                OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(0)),
-                return ge::GRAPH_FAILED);
+                        OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(0)),
+                        return ge::GRAPH_FAILED);
             H = static_cast<int32_t>(storageShape.GetDim(1));
             W = static_cast<int32_t>(storageShape.GetDim(2));
             outerDims = 1;
         } else {
             OP_CHECK_IF(storageShape.GetDim(rank - 3) != 3,
-                OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 3)),
-                return ge::GRAPH_FAILED);
+                        OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 3)),
+                        return ge::GRAPH_FAILED);
             H = static_cast<int32_t>(storageShape.GetDim(rank - 2));
             W = static_cast<int32_t>(storageShape.GetDim(rank - 1));
             outerDims = Product(storageShape, 0, rank - 3);
@@ -109,9 +106,8 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
 {
     uint64_t ubSize;
     int64_t maxCoreNum;
-    OP_CHECK_IF(
-        GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
 
     const char* dataFormat = "NHWC";
     auto attrs = context->GetAttrs();
@@ -120,17 +116,15 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
     }
 
     OP_CHECK_IF(strcmp(dataFormat, "NHWC") != 0 && strcmp(dataFormat, "NCHW") != 0,
-        OP_LOGE(context, "data_format must be 'NHWC' or 'NCHW', got '%s'", dataFormat),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "data_format must be 'NHWC' or 'NCHW', got '%s'", dataFormat),
+                return ge::GRAPH_FAILED);
 
     int64_t H, W, outerDims;
-    OP_CHECK_IF(
-        GetShapeInfo(context, dataFormat, H, W, outerDims) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetShapeInfo error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetShapeInfo(context, dataFormat, H, W, outerDims) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetShapeInfo error"), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        GetWorkspaceSize(context) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetWorkspaceSize error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
+                return ge::GRAPH_FAILED);
 
     int64_t totalRows = outerDims * H;
     int32_t pairsPerRow = (static_cast<int32_t>(W) + 1) / 2;
@@ -138,30 +132,27 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
     if (totalRows <= 0 || W <= 0) {
         Rgb2yuv422TilingData* tiling = context->GetTilingData<Rgb2yuv422TilingData>();
         OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-        OP_CHECK_IF(
-            memset_s(tiling, sizeof(Rgb2yuv422TilingData), 0, sizeof(Rgb2yuv422TilingData)) != EOK,
-            OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(memset_s(tiling, sizeof(Rgb2yuv422TilingData), 0, sizeof(Rgb2yuv422TilingData)) != EOK,
+                    OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
         tiling->needCoreNum = 1;
-        tiling->totalRows   = 0;
+        tiling->totalRows = 0;
         tiling->perCoreRows = 0;
-        tiling->W           = static_cast<int32_t>(W);
-        tiling->outerDims   = static_cast<int32_t>(outerDims);
-        tiling->dataFormat  = (std::string(dataFormat) == "NCHW") ? 1 : 0;
+        tiling->W = static_cast<int32_t>(W);
+        tiling->outerDims = static_cast<int32_t>(outerDims);
+        tiling->dataFormat = (std::string(dataFormat) == "NCHW") ? 1 : 0;
         tiling->pairsPerRow = pairsPerRow;
 
         context->SetBlockDim(1);
-        uint64_t tilingKey = (std::string(dataFormat) == "NCHW")
-            ? GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NCHW)
-            : GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NHWC);
+        uint64_t tilingKey = (std::string(dataFormat) == "NCHW") ? GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NCHW) :
+                                                                   GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NHWC);
         context->SetTilingKey(tilingKey);
 
         OP_CHECK_IF((ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE),
-            OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize),
-            return ge::GRAPH_FAILED);
+                    OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize),
+                    return ge::GRAPH_FAILED);
         auto res = context->SetLocalMemorySize(static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
-        OP_CHECK_IF((res != ge::GRAPH_SUCCESS),
-            OP_LOGE(context, "SetLocalMemorySize failed"), return ge::GRAPH_FAILED);
+        OP_CHECK_IF((res != ge::GRAPH_SUCCESS), OP_LOGE(context, "SetLocalMemorySize failed"), return ge::GRAPH_FAILED);
         return ge::GRAPH_SUCCESS;
     }
 
@@ -177,33 +168,31 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
 
     Rgb2yuv422TilingData* tiling = context->GetTilingData<Rgb2yuv422TilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-    OP_CHECK_IF(
-        memset_s(tiling, sizeof(Rgb2yuv422TilingData), 0, sizeof(Rgb2yuv422TilingData)) != EOK,
-        OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(memset_s(tiling, sizeof(Rgb2yuv422TilingData), 0, sizeof(Rgb2yuv422TilingData)) != EOK,
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     int32_t dataFmt = (std::string(dataFormat) == "NCHW") ? 1 : 0;
 
     tiling->needCoreNum = needCoreNum;
-    tiling->totalRows   = totalRows;
+    tiling->totalRows = totalRows;
     tiling->perCoreRows = perCoreRows;
-    tiling->W           = static_cast<int32_t>(W);
-    tiling->outerDims   = static_cast<int32_t>(outerDims);
-    tiling->dataFormat  = dataFmt;
+    tiling->W = static_cast<int32_t>(W);
+    tiling->outerDims = static_cast<int32_t>(outerDims);
+    tiling->dataFormat = dataFmt;
     tiling->pairsPerRow = pairsPerRow;
 
     context->SetBlockDim(needCoreNum);
-    uint64_t tilingKey = (dataFmt == 0) ? GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NHWC)
-                                        : GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NCHW);
+    uint64_t tilingKey = (dataFmt == 0) ? GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NHWC) :
+                                          GET_TPL_TILING_KEY(RGB2YUV422_TPL_SCH_MODE_NCHW);
     context->SetTilingKey(tilingKey);
 
     OP_CHECK_IF((ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE),
-        OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize), return ge::GRAPH_FAILED);
     auto res = context->SetLocalMemorySize(static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
     OP_CHECK_IF((res != ge::GRAPH_SUCCESS),
-        OP_LOGE(context, "SetLocalMemorySize failed, ubSize=%lu, DCACHE_SIZE=%u, STATIC_UB_ESTIMATE=%u",
-            ubSize, DCACHE_SIZE, STATIC_UB_ESTIMATE),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "SetLocalMemorySize failed, ubSize=%lu, DCACHE_SIZE=%u, STATIC_UB_ESTIMATE=%u", ubSize,
+                        DCACHE_SIZE, STATIC_UB_ESTIMATE),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -213,7 +202,5 @@ static ge::graphStatus TilingParseForRgb2yuv422([[maybe_unused]] gert::TilingPar
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(Rgb2yuv422)
-    .Tiling(Rgb2yuv422TilingFunc)
-    .TilingParse<Rgb2yuv422CompileInfo>(TilingParseForRgb2yuv422);
+IMPL_OP_OPTILING(Rgb2yuv422).Tiling(Rgb2yuv422TilingFunc).TilingParse<Rgb2yuv422CompileInfo>(TilingParseForRgb2yuv422);
 } // namespace optiling

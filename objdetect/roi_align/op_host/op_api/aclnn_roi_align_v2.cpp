@@ -60,7 +60,7 @@ static bool CheckFormatValid(const aclTensor* self, const aclTensor* boxes, cons
 {
     if (self->GetStorageFormat() != op::Format::FORMAT_NCHW || boxes->GetStorageFormat() != op::Format::FORMAT_ND ||
         out->GetStorageFormat() != op::Format::FORMAT_NCHW) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format error. self and out only support NCHW, boxes only support ND.");
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Invalid format. self and out only support NCHW, boxes only support ND.");
         return false;
     }
 

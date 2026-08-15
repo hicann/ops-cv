@@ -164,7 +164,7 @@ static ge::graphStatus Lut3DTilingFunc(gert::TilingContext* context)
     Lut3DTilingData* tiling = context->GetTilingData<Lut3DTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(Lut3DTilingData), 0, sizeof(Lut3DTilingData)) != EOK,
-                OP_LOGE(context, "set tiling data error"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
     tiling->totalPixels = totalPixels;
     tiling->lutN = static_cast<int32_t>(lutN);
 

@@ -25,14 +25,14 @@ const uint32_t kInputNum = 4;
 constexpr int64_t kParallelDataNums = 1024;
 const char* kScaleAndTranslate = "ScaleAndTranslate";
 
-#define SCALEANDTRANSLATE_COMPUTE_CASE(DTYPE, TYPE, CTX)                  \
-    case (DTYPE): {                                                       \
-        uint32_t result = ScaleAndTranslateCompute<TYPE>(CTX);            \
-        if (result != KERNEL_STATUS_OK) {                                 \
-            KERNEL_LOG_ERROR("ScaleAndTranslate kernel compute failed."); \
-            return result;                                                \
-        }                                                                 \
-        break;                                                            \
+#define SCALEANDTRANSLATE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+    case (DTYPE): {                                                           \
+        uint32_t result = ScaleAndTranslateCompute<TYPE>(CTX);                \
+        if (result != KERNEL_STATUS_OK) {                                     \
+            KERNEL_LOG_ERROR("ScaleAndTranslate kernel computation failed."); \
+            return result;                                                    \
+        }                                                                     \
+        break;                                                                \
     }
 
 #define SWITCH_PARALLEL(SHARD, end_num, ctx)                                     \
@@ -42,7 +42,7 @@ const char* kScaleAndTranslate = "ScaleAndTranslate";
         }                                                                        \
     } else {                                                                     \
         KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
-                            "ScaleAndTranslate #SHARD Compute failed.")          \
+                            "ScaleAndTranslate #SHARD computation failed.")      \
     }
 
 } // namespace
@@ -207,7 +207,7 @@ uint32_t ComputeSpansCore(CpuKernelContext& context, const Kernel& kernel, const
     } else {
         uint32_t parallelRet = CpuKernelUtils::ParallelFor(context, output_size, 1, shard_x);
         if (parallelRet != KERNEL_STATUS_OK) {
-            KERNEL_LOG_ERROR("ScaleAndTranslate shard_x Compute failed.");
+            KERNEL_LOG_ERROR("ScaleAndTranslate shard_x computation failed.");
             delete spans->starts;
             delete spans->weights;
             spans->starts = nullptr;
@@ -424,7 +424,7 @@ uint32_t GatherColumns(CpuKernelContext& context, int spanSize, const int32_t* s
     } else {
         uint32_t ret = CpuKernelUtils::ParallelFor(context, dstHeight, 1, shardColumn);
         if (ret != KERNEL_STATUS_OK) {
-            KERNEL_LOG_ERROR("ScaleAndTranslate shardColumn Compute failed.");
+            KERNEL_LOG_ERROR("ScaleAndTranslate shardColumn computation failed.");
             return ret;
         }
     }
@@ -470,7 +470,7 @@ uint32_t GatherRows(CpuKernelContext& context, int spanSize, const int32_t* star
     } else {
         uint32_t ret = CpuKernelUtils::ParallelFor(context, dstHeight, 1, shardRows);
         if (ret != KERNEL_STATUS_OK) {
-            KERNEL_LOG_ERROR("ScaleAndTranslate shardRows Compute failed.");
+            KERNEL_LOG_ERROR("ScaleAndTranslate shardRows computation failed.");
             return ret;
         }
     }

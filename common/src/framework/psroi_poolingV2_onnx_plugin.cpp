@@ -46,7 +46,7 @@ static Status ParseOnnxParamsPSROIPoolingV2(const ge::Operator& op_src, ge::Oper
     }
 
     if (attr_num != ATTR_NUM) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Node must have attr spatial_scale、output_dim、group_size");
+        OP_LOGE(GetOpName(op_dest).c_str(), "Node must have attr spatial_scale, output_dim, group_size");
         return FAILED;
     }
     op_dest.SetAttr("spatial_scale", spatial_scale);

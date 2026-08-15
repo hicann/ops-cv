@@ -140,7 +140,7 @@ ge::graphStatus TilingProcess(ThreeInterpolateBackwardTilingData& tiling_host, c
                              tiling_host.get_grad_x_move_block_size() + tiling_host.get_grad_y_move_block_size()) *
                             BLOCK_BYTE_SIZE;
     if (total_used_bytes > ub_platform_byte_size) {
-        OP_LOGD(context, "ub not enough.");
+        OP_LOGD(context, "ub insufficient.");
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -237,7 +237,7 @@ static ge::graphStatus Tiling4ThreeInterpolateBackward(gert::TilingContext* cont
     OP_CHECK_NULL_WITH_CONTEXT(context, grad_x_desc);
 
     const auto& grad_x_format = static_cast<ge::Format>(ge::GetPrimaryFormat(grad_x_desc->GetStorageFormat()));
-    OP_CHECK_IF(grad_x_format != ge::FORMAT_NC1HWC0, OP_LOGE(context, "input format error tiling failed."),
+    OP_CHECK_IF(grad_x_format != ge::FORMAT_NC1HWC0, OP_LOGE(context, "input format invalid, tiling failed."),
                 return ge::GRAPH_FAILED);
 
     auto idx_desc = context->GetInputDesc(INDEX_INPUT_IDX);

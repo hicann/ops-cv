@@ -26,8 +26,6 @@
 
 namespace optiling {
 
-
-
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 constexpr int64_t PER_CORE_MIN = 1024;
@@ -53,13 +51,12 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t& h, in
     auto storageShape = inputShape->GetStorageShape();
 
     OP_CHECK_IF(storageShape.GetDimNum() != 3,
-        OP_LOGE(context, "Input must be 3D (h, w, 4), got %zu dims", storageShape.GetDimNum()),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "Input must be 3D (h, w, 4), got %zu dims", storageShape.GetDimNum()),
+                return ge::GRAPH_FAILED);
 
     int64_t channels = storageShape.GetDim(2);
-    OP_CHECK_IF(channels != 4,
-        OP_LOGE(context, "Input channels must be 4, got %ld", channels),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(channels != 4, OP_LOGE(context, "Input channels must be 4, got %ld", channels),
+                return ge::GRAPH_FAILED);
 
     h = storageShape.GetDim(0);
     w = storageShape.GetDim(1);
@@ -84,21 +81,15 @@ static ge::graphStatus Yuv444ToYuv422TilingFunc(gert::TilingContext* context)
 {
     uint64_t ubSize;
     int64_t maxCoreNum;
-    OP_CHECK_IF(
-        GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetPlatformInfo error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
 
     int64_t h, w, totalPairs;
-    OP_CHECK_IF(
-        GetShapeInfo(context, h, w, totalPairs) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetShapeInfo error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetShapeInfo(context, h, w, totalPairs) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetShapeInfo error"),
+                return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(
-        GetWorkspaceSize(context) != ge::GRAPH_SUCCESS,
-        OP_LOGE(context, "GetWorkspaceSize error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
+                return ge::GRAPH_FAILED);
 
     int64_t perCorePairs = Ops::Base::CeilDiv(totalPairs, maxCoreNum);
     if (perCorePairs < PER_CORE_MIN) {
@@ -108,10 +99,8 @@ static ge::graphStatus Yuv444ToYuv422TilingFunc(gert::TilingContext* context)
 
     Yuv444ToYuv422TilingData* tiling = context->GetTilingData<Yuv444ToYuv422TilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-    OP_CHECK_IF(
-        memset_s(tiling, sizeof(Yuv444ToYuv422TilingData), 0, sizeof(Yuv444ToYuv422TilingData)) != EOK,
-        OP_LOGE(context, "set tiling data error"),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(memset_s(tiling, sizeof(Yuv444ToYuv422TilingData), 0, sizeof(Yuv444ToYuv422TilingData)) != EOK,
+                OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
     tiling->totalPairs = totalPairs;
     tiling->h = h;
@@ -122,13 +111,12 @@ static ge::graphStatus Yuv444ToYuv422TilingFunc(gert::TilingContext* context)
     context->SetTilingKey(GET_TPL_TILING_KEY(YUV444_TO_YUV422_TPL_SCH_MODE_0));
 
     OP_CHECK_IF((ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE),
-        OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "ubSize %lu <= DCACHE_SIZE + STATIC_UB_ESTIMATE", ubSize), return ge::GRAPH_FAILED);
     auto res = context->SetLocalMemorySize(static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
     OP_CHECK_IF((res != ge::GRAPH_SUCCESS),
-        OP_LOGE(context, "SetLocalMemorySize failed, ubSize=%lu, DCACHE_SIZE=%u, STATIC_UB_ESTIMATE=%u",
-            ubSize, DCACHE_SIZE, STATIC_UB_ESTIMATE),
-        return ge::GRAPH_FAILED);
+                OP_LOGE(context, "SetLocalMemorySize failed, ubSize=%lu, DCACHE_SIZE=%u, STATIC_UB_ESTIMATE=%u", ubSize,
+                        DCACHE_SIZE, STATIC_UB_ESTIMATE),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -138,5 +126,7 @@ static ge::graphStatus TilingParseForYuv444ToYuv422([[maybe_unused]] gert::Tilin
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(Yuv444ToYuv422).Tiling(Yuv444ToYuv422TilingFunc).TilingParse<Yuv444ToYuv422CompileInfo>(TilingParseForYuv444ToYuv422);
+IMPL_OP_OPTILING(Yuv444ToYuv422)
+    .Tiling(Yuv444ToYuv422TilingFunc)
+    .TilingParse<Yuv444ToYuv422CompileInfo>(TilingParseForYuv444ToYuv422);
 } // namespace optiling
