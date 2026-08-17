@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -8,149 +8,300 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+/*!
+ * \file test_crop_and_resize_infershape.cpp
+ * \brief Infershape UT for crop_and_resize operator (new-style framework)
+ *
+ * 输入顺序: x(0), boxes(1), box_index(2), crop_size(3)
+ * 值依赖: crop_size (input index 3)，数据类型 int32_t
+ * 输出 shape: [num_boxes, crop_height, crop_width, depth]
+ *   num_boxes = boxes.shape[0]
+ *   crop_height = crop_size 数据值[0]
+ *   crop_width = crop_size 数据值[1]
+ *   depth = x.shape[3]
+ */
+
 #include <gtest/gtest.h>
 #include <iostream>
-#include "op_proto_test_util.h"
-#include "image_ops.h"
+#include "infershape_context_faker.h"
+#include "infershape_case_executor.h"
 
-class CropAndResize : public testing::Test {
+class CropAndResizeInfershape : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "CropAndResize SetUp" << std::endl; }
+    static void SetUpTestCase() { std::cout << "CropAndResizeInfershape SetUp" << std::endl; }
 
-    static void TearDownTestCase() { std::cout << "CropAndResize TearDown" << std::endl; }
+    static void TearDownTestCase() { std::cout << "CropAndResizeInfershape TearDown" << std::endl; }
 };
 
-TEST_F(CropAndResize, CropAndResize_infershape_test01)
-{
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc(
-        "x", create_desc_with_ori({2, 3, 4, 2}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4, 2}, ge::FORMAT_NHWC));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("boxes", create_desc_with_ori({2, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {2, 4}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
+// ==================== 正常用例 (GRAPH_SUCCESS) ====================
 
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_SUCCESS);
-    auto output_desc = op.GetOutputDescByName("y");
-    EXPECT_EQ(output_desc.GetDataType(), ge::DT_FLOAT);
-    std::vector<int64_t> expected_output_shape = {2, -1, -1, 2};
-    EXPECT_EQ(output_desc.GetShape().GetDims(), expected_output_shape);
+// test01: fp16 x, fp32 boxes, crop_size=[14,14] → y={2,14,14,2}
+TEST_F(CropAndResizeInfershape, test01_normal_fp16)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            // x (index 0): 4D NHWC
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            // boxes (index 1): 2D, shape[1]==4
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // box_index (index 2): 1D
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            // crop_size (index 3): 值依赖, shape==(2,), values=[14,14]
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            // y (output 0): dtype=boxes.dtype=fp32
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 14, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_test02)
+// test03: crop_h=1 (最小 crop_h 边界) → y={2,1,14,2}
+TEST_F(CropAndResizeInfershape, test03_crop_h_eq_1)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc("x",
-                       create_desc_with_ori({2, 3, 4}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4}, ge::FORMAT_NHWC));
-    op.UpdateInputDesc("boxes", create_desc_with_ori({2, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {2, 4}, ge::FORMAT_ND));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_FAILED);
+    std::vector<int32_t> cropSizeValues = {1, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 1, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_test03)
+// test04: crop_w=1 (最小 crop_w 边界) → y={2,14,1,2}
+TEST_F(CropAndResizeInfershape, test04_crop_w_eq_1)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc(
-        "x", create_desc_with_ori({2, 3, 4, 2}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4, 2}, ge::FORMAT_NHWC));
-    op.UpdateInputDesc("boxes", create_desc_with_ori({2}, ge::DT_FLOAT, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_FAILED);
+    std::vector<int32_t> cropSizeValues = {14, 1};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 14, 1, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_test04)
+// test05: crop_h=16 (最大 crop 边界) → y={2,16,16,2}
+TEST_F(CropAndResizeInfershape, test05_crop_h_eq_16)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc(
-        "x", create_desc_with_ori({2, 3, 4, 2}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4, 2}, ge::FORMAT_NHWC));
-    op.UpdateInputDesc("boxes", create_desc_with_ori({2, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {2, 4}, ge::FORMAT_ND));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({}, ge::DT_INT32, ge::FORMAT_ND, {}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_FAILED);
+    std::vector<int32_t> cropSizeValues = {16, 16};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 16, 16, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_test05)
+// ==================== 失败用例 (GRAPH_FAILED) ====================
+
+// test06: x 为 3D (非 4D) → FAIL
+TEST_F(CropAndResizeInfershape, test06_x_not_4d)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc("boxes", create_desc_with_ori({2, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {2, 4}, ge::FORMAT_ND));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({1}, ge::DT_INT32, ge::FORMAT_ND, {1}, ge::FORMAT_ND));
-    op.UpdateInputDesc(
-        "x", create_desc_with_ori({2, 3, 4, 2}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4, 2}, ge::FORMAT_NHWC));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_FAILED);
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4}, {2, 3, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_test06)
+// test07: x 为 5D (非 4D) → FAIL
+TEST_F(CropAndResizeInfershape, test07_x_5d)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc(
-        "x", create_desc_with_ori({2, 3, 4, 2}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4, 2}, ge::FORMAT_NHWC));
-    op.UpdateInputDesc("boxes", create_desc_with_ori({2, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {2, 4}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2, 2}, ge::DT_INT32, ge::FORMAT_ND, {2, 2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_FAILED);
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2, 1}, {2, 3, 4, 2, 1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_test07)
+// test08: boxes.shape[1]!=4 → FAIL
+TEST_F(CropAndResizeInfershape, test08_boxes_dim1_ne_4)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc(
-        "x", create_desc_with_ori({3, 2, 3, 2}, ge::DT_FLOAT16, ge::FORMAT_HWCN, {3, 2, 3, 2}, ge::FORMAT_HWCN));
-    op.UpdateInputDesc("boxes", create_desc_with_ori({3, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {3, 4}, ge::FORMAT_ND));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({3}, ge::DT_INT32, ge::FORMAT_ND, {3}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_FAILED);
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 3}, {2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_shape_range_0)
+// test09: boxes 为 3D (非 2D) → FAIL
+TEST_F(CropAndResizeInfershape, test09_boxes_not_2d)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc("x", create_desc_shape_range({2, 3, 4, -1}, ge::DT_FLOAT16, ge::FORMAT_NHWC, {2, 3, 4, -1},
-                                                    ge::FORMAT_NHWC, {{2, 2}, {3, 3}, {4, 4}, {1, 9}}));
-
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-
-    op.UpdateInputDesc("boxes", create_desc_shape_range({-1, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {-1, 4}, ge::FORMAT_ND,
-                                                        {{3, 5}, {4, 4}}));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_SUCCESS);
-    auto output_desc = op.GetOutputDescByName("y");
-    EXPECT_EQ(output_desc.GetDataType(), ge::DT_FLOAT);
-    std::vector<int64_t> expected_output_shape = {-1, -1, -1, -1};
-    EXPECT_EQ(output_desc.GetShape().GetDims(), expected_output_shape);
-
-    std::vector<std::pair<int64_t, int64_t>> expected_output_shape_range = {{3, 5}, {0, -1}, {0, -1}, {1, 9}};
-    std::vector<std::pair<int64_t, int64_t>> output_shape_range;
-    output_desc.GetShapeRange(output_shape_range);
-    EXPECT_EQ(output_shape_range, expected_output_shape_range);
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4, 1}, {2, 4, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
-TEST_F(CropAndResize, CropAndResize_infershape_shape_range_1)
+// test10: crop_size shape=(1,) (长度!=2) → FAIL
+TEST_F(CropAndResizeInfershape, test10_crop_size_shape_ne_2)
 {
-    ge::op::CropAndResize op;
-    op.UpdateInputDesc("x", create_desc_shape_range({2, -1, 4, 2}, ge::DT_FLOAT16, ge::FORMAT_NCHW, {2, -1, 4, 2},
-                                                    ge::FORMAT_NCHW, {{2, 2}, {9, 15}, {4, 4}, {2, 2}}));
-    op.UpdateInputDesc("boxes", create_desc_shape_range({-1, 4}, ge::DT_FLOAT, ge::FORMAT_ND, {-1, 4}, ge::FORMAT_ND,
-                                                        {{3, 5}, {4, 4}}));
-    op.UpdateInputDesc("box_index", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    op.UpdateInputDesc("crop_size", create_desc_with_ori({2}, ge::DT_INT32, ge::FORMAT_ND, {2}, ge::FORMAT_ND));
-    auto ret = op.InferShapeAndType();
-    EXPECT_EQ(ret, ge::GRAPH_SUCCESS);
-    auto output_desc = op.GetOutputDescByName("y");
-    EXPECT_EQ(output_desc.GetDataType(), ge::DT_FLOAT);
-    std::vector<int64_t> expected_output_shape = {-1, -1, -1, -1};
-    EXPECT_EQ(output_desc.GetShape().GetDims(), expected_output_shape);
+    std::vector<int32_t> cropSizeValues = {14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{1}, {1}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
 
-    std::vector<std::pair<int64_t, int64_t>> expected_output_shape_range = {{3, 5}, {9, 15}, {0, -1}, {0, -1}};
-    std::vector<std::pair<int64_t, int64_t>> output_shape_range;
-    output_desc.GetShapeRange(output_shape_range);
-    EXPECT_EQ(output_shape_range, expected_output_shape_range);
+// test11: crop_size 为 2D (非 1D) → FAIL
+TEST_F(CropAndResizeInfershape, test11_crop_size_2d)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14, 14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2, 2}, {2, 2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// test12: crop_h=0 (<=0) → FAIL
+TEST_F(CropAndResizeInfershape, test12_crop_h_le_0)
+{
+    std::vector<int32_t> cropSizeValues = {0, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// test13: crop_w=0 (<=0) → FAIL
+TEST_F(CropAndResizeInfershape, test13_crop_w_le_0)
+{
+    std::vector<int32_t> cropSizeValues = {14, 0};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// test14: crop_h=17 (>16) → FAIL
+TEST_F(CropAndResizeInfershape, test14_crop_h_gt_16)
+{
+    std::vector<int32_t> cropSizeValues = {17, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// test15: crop_w=17 (>16) → FAIL
+TEST_F(CropAndResizeInfershape, test15_crop_w_gt_16)
+{
+    std::vector<int32_t> cropSizeValues = {14, 17};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }

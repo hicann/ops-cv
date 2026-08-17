@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef crop_and_resize_PROTO_H
-#define crop_and_resize_PROTO_H
+#ifndef CROP_AND_RESIZE_PROTO_H
+#define CROP_AND_RESIZE_PROTO_H
 
 #include "graph/operator.h"
 #include "graph/operator_reg.h"
