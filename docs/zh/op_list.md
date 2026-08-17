@@ -88,6 +88,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/dilation2_d_backprop_filter/README.md">dilation2_d_backprop_filter</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>形态学膨胀2D操作（Dilation2D）的反向传播，计算filter的梯度。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/extract_glimpse_v2/README.md">extract_glimpse_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
