@@ -208,6 +208,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/paste_sub_img/README.md">paste_sub_img</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>面向图像或特征图 patch 拼接场景的区域累加算子，从源图像按指定矩形子区域提取像素，经坐标缩放与平移量映射到目标画布对应位置执行逐元素累加，适用于图像拼接、超分辨率回填、滑窗推理特征图聚合等场景。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/rasterizer/README.md">rasterizer</a></td>
     <td>&check;</td>
     <td>&check;</td>
