@@ -23,26 +23,30 @@
 namespace ge {
 
 /**
- *@brief Computes gradients of Dilation2D filter (morphological dilation backprop).
- *@par Inputs:
- *Three inputs, including:
- * @li x: A 4D Tensor (N, H_in, W_in, C). Must be one of the following types: float16, float32.
- * @li filter: A 3D Tensor (filter_h, filter_w, C). Must be one of the following types: float16, float32.
- * @li out_backprop: A 4D Tensor (N, H_out, W_out, C). Must be one of the following types: float16, float32. \n
+* @brief Performs Dilation2DBackpropFilter on the input.
 
- *@par Outputs:
- *y: A 3D Tensor (filter_h, filter_w, C). Must be one of the following types: float16, float32.
- *@par Attributes:
- * @li strides: ListInt. Sliding stride, 4 elements, [1, stride_h, stride_w, 1] for NHWC.
- * @li rates: ListInt. Dilation rate, 4 elements, [1, rate_h, rate_w, 1] for NHWC.
- * @li padding_mode: String. Padding mode: "SAME" / "VALID" / "CALCULATED". Default: "SAME".
- * @li pads: ListInt. Explicit padding values [pad_top, pad_bottom, pad_left, pad_right]. Default: {0, 0, 0, 0}.
- * @li ceil_mode: Bool. Whether to use ceil for output size. Default: false.
- * @li data_format: String. Data format: "NHWC" / "NCHW". Default: "NHWC". \n
+* @par Inputs:
+* @li x: A tensor of shape is 4d, format is support NHWC.
+* @li filter: A tensor of shape is 3d, the type is same with x, and the c dimension is same with x.
+* @li out_backprop: Has the same type and format as input x and the c dimension is same with x. \n
 
- *@par Third-party framework compatibility
- *Compatible with the TensorFlow operator Dilation2DBackpropFilter.
- */
+* @par Attributes
+* @li strides: A required list of 4 ints, specifying the stride of the sliding window. The strides of the N and C
+dimension are 1.
+* @li rates: A required list of 4 ints, the rates of the N and C dimensions are 1.
+* @li padding_mode: A optional string. Defaults to "SAME", it support SAME and VALID.
+* @li pads: A optional list of 4 ints.
+* @li ceil_mode: An optional bool. Defaults to "false". Use ceil or floor to calculate the output size when
+padding_mode is "CALCULATED".
+* @li data_format: An optional string, specifying the data format of "rates" and "strides", either "NCHW" or "NHWC"
+(default). \n
+
+* @par Outputs:
+* y: The output tensor. Has the same type and format as input "filter" . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator Dilation2DBackpropFilter.
+*/
 REG_OP(Dilation2DBackpropFilter)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64, DT_UINT8, DT_INT16, DT_INT8, DT_UINT16}))
     .INPUT(filter,
