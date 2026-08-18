@@ -218,6 +218,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/points_in_polygons/README.md">points_in_polygons</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>判断给定二维点是否落在给定四边形内部，输出N×M的二值浮点矩阵，1.0表示在内、0.0表示在外。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/rasterizer/README.md">rasterizer</a></td>
     <td>&check;</td>
     <td>&check;</td>
