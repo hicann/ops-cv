@@ -113,6 +113,24 @@ static ge::graphStatus CheckTbeConstraints(gert::TilingContext* context, const C
                                   "FLOAT16/FLOAT");
         return ge::GRAPH_FAILED; // 约束7
     }
+    ge::DataType boxesDtype = context->GetInputDesc(IDX_BOXES)->GetDataType();
+    if (boxesDtype != ge::DT_FLOAT && boxesDtype != ge::DT_FLOAT16) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "boxes", Ops::Base::ToString(boxesDtype).c_str(),
+                                  "FLOAT16/FLOAT");
+        return ge::GRAPH_FAILED;
+    }
+    ge::DataType boxIndexDtype = context->GetInputDesc(IDX_BOX_INDEX)->GetDataType();
+    if (boxIndexDtype != ge::DT_INT32) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "box_index", Ops::Base::ToString(boxIndexDtype).c_str(),
+                                  "INT32");
+        return ge::GRAPH_FAILED;
+    }
+    ge::DataType cropSizeDtype = context->GetInputDesc(IDX_CROP_SIZE)->GetDataType();
+    if (cropSizeDtype != ge::DT_INT32) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "crop_size", Ops::Base::ToString(cropSizeDtype).c_str(),
+                                  "INT32");
+        return ge::GRAPH_FAILED;
+    }
     if (info.xDtype == ge::DT_FLOAT && hw > HW_FP32_MAX) {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "x", std::to_string(hw).c_str(),
                                               "float32 requires H*W <= " + std::to_string(HW_FP32_MAX));
@@ -138,7 +156,7 @@ static ge::graphStatus CheckSafetyConstraints(gert::TilingContext* context, cons
                                      (std::to_string(boxesShape.GetDimNum()) + "D").c_str(), "2D");
         return ge::GRAPH_FAILED;
     }
-    if (boxIndexShape.GetDimNum() < 1) {
+    if (boxIndexShape.GetDimNum() < BOX_INDEX_DIM) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "box_index",
                                      (std::to_string(boxIndexShape.GetDimNum()) + "D").c_str(), "1D");
         return ge::GRAPH_FAILED;
@@ -154,7 +172,7 @@ static ge::graphStatus CheckSafetyConstraints(gert::TilingContext* context, cons
                                   std::to_string(BOX_COORDS).c_str());
         return ge::GRAPH_FAILED; // 约束11
     }
-    if (cropSizeShape.GetDimNum() != 1 || cropSizeShape.GetDim(0) != CROP_SIZE_LEN) {
+    if (cropSizeShape.GetDimNum() != CROP_SIZE_DIM || cropSizeShape.GetDim(0) != CROP_SIZE_LEN) {
         OP_LOGE_FOR_INVALID_SHAPESIZE(context->GetNodeName(), "crop_size",
                                       std::to_string(cropSizeShape.GetDim(0)).c_str(),
                                       std::to_string(CROP_SIZE_LEN).c_str());
@@ -199,6 +217,16 @@ static ge::graphStatus ExtractInputInfo(gert::TilingContext* context, CropAndRes
     info.depth = static_cast<int32_t>(xShape.GetDim(3));
     info.numBoxes = static_cast<int32_t>(boxesShape.GetDim(0));
     info.xDtype = context->GetInputDesc(IDX_X)->GetDataType();
+
+    auto cropSizeShapePtr = context->GetInputShape(IDX_CROP_SIZE);
+    OP_CHECK_NULL_WITH_CONTEXT(context, cropSizeShapePtr);
+    auto cropSizeShape = cropSizeShapePtr->GetStorageShape();
+    if (cropSizeShape.GetDimNum() != CROP_SIZE_DIM || cropSizeShape.GetDim(0) != CROP_SIZE_LEN) {
+        OP_LOGE_FOR_INVALID_SHAPESIZE(context->GetNodeName(), "crop_size",
+                                      std::to_string(cropSizeShape.GetDim(0)).c_str(),
+                                      std::to_string(CROP_SIZE_LEN).c_str());
+        return ge::GRAPH_FAILED;
+    }
 
     const gert::Tensor* cropSizeTensor = context->GetInputTensor(IDX_CROP_SIZE);
     OP_CHECK_NULL_WITH_CONTEXT(context, cropSizeTensor);

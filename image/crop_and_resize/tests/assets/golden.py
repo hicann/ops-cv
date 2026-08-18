@@ -11,25 +11,7 @@
 
 """Golden for crop_and_resize, directly calling tf.image.crop_and_resize."""
 
-import numpy as np
 import tensorflow as tf
-
-
-def _tf_crop_and_resize_safe(
-    x_np, boxes_f32, box_index, crop_size, extrapolation_value, out_dtype
-):
-    """Call tf.image.crop_and_resize directly."""
-    y_tf = tf.image.crop_and_resize(
-        tf.constant(x_np),
-        tf.constant(boxes_f32),
-        tf.constant(np.asarray(box_index, dtype=np.int32)),
-        [int(crop_size[0]), int(crop_size[1])],
-        method="bilinear",
-        extrapolation_value=float(extrapolation_value),
-    )
-    # TF 输出始终为 float32，需转为与 kernel 输出一致的 dtype（out_dtype 取自 boxes dtype）
-    # 当 boxes=FP16 时 kernel 输出 FP16，需做 float32→FP16 截断以对齐精度对比
-    return y_tf.numpy().astype(out_dtype)
 
 
 class CropAndResizeComposeSpec:
@@ -70,23 +52,28 @@ class CropAndResizeComposeSpec:
                 f"Unsupported method: {method}, only bilinear is supported"
             )
 
-        boxes_np = np.asarray(boxes)
-        if boxes_np.dtype in (np.float16, np.float32):
-            out_dtype = boxes_np.dtype
-        else:
-            out_dtype = np.float32
-
-        x_np = np.asarray(x).astype(np.float32)
-        boxes_f32 = boxes_np.astype(np.float32)
-        result = _tf_crop_and_resize_safe(
-            x_np,
-            boxes_f32,
-            box_index,
-            crop_size,
-            extrapolation_value,
-            out_dtype,
+        boxes_tf_dtype = tf.dtypes.as_dtype(boxes.dtype)
+        out_dtype = (
+            boxes_tf_dtype if boxes_tf_dtype in (tf.float16, tf.float32) else tf.float32
         )
-        return result
+
+        x_tf = tf.cast(x, tf.float32)
+        boxes_tf = tf.cast(boxes, tf.float32)
+        box_index_tf = tf.cast(box_index, tf.int32)
+        crop_size_list = [int(crop_size[0]), int(crop_size[1])]
+        extrapolation_value_f = float(extrapolation_value)
+
+        y_tf = tf.image.crop_and_resize(
+            x_tf,
+            boxes_tf,
+            box_index_tf,
+            crop_size_list,
+            method="bilinear",
+            extrapolation_value=extrapolation_value_f,
+        )
+        # TF 输出始终为 float32，需转为与 kernel 输出一致的 dtype（out_dtype 取自 boxes dtype）
+        # 当 boxes=FP16 时 kernel 输出 FP16，需做 float32→FP16 截断以对齐精度对比
+        return tf.cast(y_tf, out_dtype).numpy()
 
     # -- third_party — dict multi-vendor --
     class ThirdPartyImpl:
@@ -105,32 +92,34 @@ class CropAndResizeComposeSpec:
                 raise ValueError(
                     f"Unsupported method: {method}, only bilinear is supported"
                 )
-            self.extrapolation_value = extrapolation_value
-            self.method = method
 
-            # dtype 判断和数据转换前移到 __init__（TTK _bind 会把输入 tensor 同时喂给 __init__ 和 __call__）
-            boxes_np = np.asarray(boxes)
-            if boxes_np.dtype in (np.float16, np.float32):
-                self.out_dtype = boxes_np.dtype
-            else:
-                self.out_dtype = np.float32
+            boxes_tf_dtype = tf.dtypes.as_dtype(boxes.dtype)
+            self.out_dtype = (
+                boxes_tf_dtype
+                if boxes_tf_dtype in (tf.float16, tf.float32)
+                else tf.float32
+            )
 
-            self.x_np = np.asarray(x).astype(np.float32)
-            self.boxes_f32 = boxes_np.astype(np.float32)
-            self.box_index = box_index
-            self.crop_size = crop_size
+            self.x_tf = tf.cast(x, tf.float32)
+            self.boxes_tf = tf.cast(boxes, tf.float32)
+            self.box_index_tf = box_index
+            self.crop_size_list = [int(crop_size[0]), int(crop_size[1])]
+            self.extrapolation_value = float(extrapolation_value)
 
         def __call__(
             self, x=None, boxes=None, box_index=None, crop_size=None, **kwargs
         ):
-            return _tf_crop_and_resize_safe(
-                self.x_np,
-                self.boxes_f32,
-                self.box_index,
-                self.crop_size,
-                self.extrapolation_value,
-                self.out_dtype,
+            y_tf = tf.image.crop_and_resize(
+                self.x_tf,
+                self.boxes_tf,
+                self.box_index_tf,
+                self.crop_size_list,
+                method="bilinear",
+                extrapolation_value=self.extrapolation_value,
             )
+            # TF 输出始终为 float32，需转为与 kernel 输出一致的 dtype（out_dtype 取自 boxes dtype）
+            # 当 boxes=FP16 时 kernel 输出 FP16，需做 float32→FP16 截断以对齐精度对比
+            return tf.cast(y_tf, self.out_dtype).numpy()
 
     third_party = {
         "tf": ThirdPartyImpl,

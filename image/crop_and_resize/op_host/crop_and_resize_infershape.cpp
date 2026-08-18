@@ -69,7 +69,7 @@ static ge::graphStatus InferShapeCropAndResize(gert::InferShapeContext* context)
     }
 
     // 约束12: crop_size.shape == (2,)
-    if (cropSizeShape->GetDimNum() != 1 || cropSizeShape->GetDim(0) != CROP_SIZE_LEN) {
+    if (cropSizeShape->GetDimNum() != CROP_SIZE_DIM || cropSizeShape->GetDim(0) != CROP_SIZE_LEN) {
         OP_LOGE_FOR_INVALID_SHAPESIZE(context->GetNodeName(), "crop_size",
                                       std::to_string(cropSizeShape->GetDim(0)).c_str(),
                                       std::to_string(CROP_SIZE_LEN).c_str());

@@ -50,6 +50,10 @@ constexpr int32_t NUM_BOXES_MAX = 4000;
 constexpr int64_t X_DIM = 4;
 // boxes 必须为 2D (num_boxes, 4)
 constexpr int64_t BOXES_DIM = 2;
+// box_index 必须为 1D (num_boxes,)
+constexpr int64_t BOX_INDEX_DIM = 1;
+// crop_size 必须为 1D (2,)
+constexpr int64_t CROP_SIZE_DIM = 1;
 
 // 输入索引（与 def.cpp/proto.h 输入顺序一致）
 constexpr int64_t IDX_X = 0;
