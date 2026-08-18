@@ -20,6 +20,8 @@
 #define TILING_KEY_SIMT_IDX64 10001
 #define TILING_KEY_SIMT_DETERMINE 20000
 #define TILING_KEY_SIMT_DETERMINE_IDX64 20001
+#define TILING_KEY_SIMT_DETERMINE_SPLITK 20002
+#define TILING_KEY_SIMT_DETERMINE_SPLITK_IDX64 20003
 #define TILING_KEY_ALL_COPY 30000
 
 using namespace AscendC;
@@ -99,23 +101,23 @@ extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(GM_ADDR grads, GM_A
         if (tilingData->format == 0) {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NCHW, true> op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             } else {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NCHW, false>
                     op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             }
         } else {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NHWC, true> op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             } else {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NHWC, false>
                     op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             }
         }
@@ -128,24 +130,82 @@ extern "C" __global__ __aicore__ void resize_bicubic_v2_grad(GM_ADDR grads, GM_A
         if (tilingData->format == 0) {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NCHW, true> op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             } else {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NCHW, false>
                     op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             }
         } else {
             if (tilingData->alignCorners > 0) {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NHWC, true> op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
             } else {
                 ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NHWC, false>
                     op;
-                op.Init(grads, y, tilingData);
+                op.Init(grads, y, workspace, tilingData);
                 op.Process();
+            }
+        }
+        return;
+    }
+
+    if (TILING_KEY_IS(TILING_KEY_SIMT_DETERMINE_SPLITK)) {
+        GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradSimtDetermineTilingData, tilingDataIn, tiling);
+        const ResizeBicubicV2GradSimtDetermineTilingData* __restrict__ tilingData = &tilingDataIn;
+        if (tilingData->format == 0) {
+            if (tilingData->alignCorners > 0) {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NCHW, true> op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            } else {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NCHW, false>
+                    op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            }
+        } else {
+            if (tilingData->alignCorners > 0) {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NHWC, true> op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            } else {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint32_t, int32_t, FORMAT_NHWC, false>
+                    op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            }
+        }
+        return;
+    }
+
+    if (TILING_KEY_IS(TILING_KEY_SIMT_DETERMINE_SPLITK_IDX64)) {
+        GET_TILING_DATA_WITH_STRUCT(ResizeBicubicV2GradSimtDetermineTilingData, tilingDataIn, tiling);
+        const ResizeBicubicV2GradSimtDetermineTilingData* __restrict__ tilingData = &tilingDataIn;
+        if (tilingData->format == 0) {
+            if (tilingData->alignCorners > 0) {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NCHW, true> op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            } else {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NCHW, false>
+                    op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            }
+        } else {
+            if (tilingData->alignCorners > 0) {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NHWC, true> op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
+            } else {
+                ResizeBicubicV2Grad::ResizeBicubicV2GradSimtDetermine<DTYPE_Y, uint64_t, int64_t, FORMAT_NHWC, false>
+                    op;
+                op.Init(grads, y, workspace, tilingData);
+                op.ProcessSplitK();
             }
         }
         return;

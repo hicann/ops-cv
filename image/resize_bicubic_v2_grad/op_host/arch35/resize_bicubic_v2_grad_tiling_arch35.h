@@ -68,6 +68,9 @@ struct ResizeBicubicV2GradCalculateInfo {
     int64_t coreTailFactor{0};
     int64_t ubFactor{0};
     int64_t isMatchDetermine{0};
+    int64_t splitK{0};
+    int64_t coresPerOutput{0};
+    int64_t segsPerOutput{0};
     float scaleH{0.0f};
     float scaleW{0.0f};
     float inverseScaleH{0.0f};
@@ -107,6 +110,10 @@ TILING_DATA_FIELD_DEF(float, scaleH);
 TILING_DATA_FIELD_DEF(float, scaleW);
 TILING_DATA_FIELD_DEF(float, inverseScaleH);
 TILING_DATA_FIELD_DEF(float, inverseScaleW);
+// split-K deterministic path (keys 20002 / 20003). For non-split keys these are 0/1 and unused.
+TILING_DATA_FIELD_DEF(int64_t, splitK);         // 1 = split-K over H gather domain enabled
+TILING_DATA_FIELD_DEF(int64_t, coresPerOutput); // cores assigned to each output element's H reduction
+TILING_DATA_FIELD_DEF(int64_t, segsPerOutput);  // total partial-sum segments per output = coresPerOutput * threadNum
 END_TILING_DATA_DEF;
 
 BEGIN_TILING_DATA_DEF(ResizeBicubicV2GradAllCopyTilingData)
@@ -119,6 +126,8 @@ END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad, ResizeBicubicV2GradSimtTilingData)
 REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad_20000, ResizeBicubicV2GradSimtDetermineTilingData)
 REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad_20001, ResizeBicubicV2GradSimtDetermineTilingData)
+REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad_20002, ResizeBicubicV2GradSimtDetermineTilingData)
+REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad_20003, ResizeBicubicV2GradSimtDetermineTilingData)
 REGISTER_TILING_DATA_CLASS(ResizeBicubicV2Grad_30000, ResizeBicubicV2GradAllCopyTilingData)
 
 class ResizeBicubicV2GradBaseTiling : public Ops::Cv::OpTiling::TilingBaseClass {

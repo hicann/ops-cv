@@ -24,7 +24,6 @@ constexpr size_t NUM_2 = 2;
 constexpr size_t NUM_3 = 3;
 constexpr size_t NUM_4 = 4;
 constexpr int64_t RSV_BLOCK_NUM = 8;
-constexpr size_t WORKSPACE_SIZE = 16 * 1024 * 1024;
 
 bool ResizeBicubicV2GradBaseTiling::IsCapable() { return true; }
 
@@ -294,9 +293,19 @@ uint64_t ResizeBicubicV2GradBaseTiling::GetTilingKey() const { return 0; }
 
 ge::graphStatus ResizeBicubicV2GradBaseTiling::GetWorkspaceSize()
 {
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
+    uint64_t sysWorkspaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
     size_t* workspaces = context_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, workspaces);
-    workspaces[0] = WORKSPACE_SIZE;
+    // split-K places its partial-sum buffer in the user workspace (after the system-reserved
+    // lib API region); request its bytes on top of the reserve. The kernel reaches the same
+    // region via GetUserWorkspace(). partials count = yShapeSize * segsPerOutput floats.
+    size_t workspaceSize = static_cast<size_t>(sysWorkspaceSize);
+    if (calcInfo_.splitK != 0) {
+        workspaceSize += static_cast<size_t>(calcInfo_.yShapeSize) * static_cast<size_t>(calcInfo_.segsPerOutput) *
+                         sizeof(float);
+    }
+    workspaces[0] = workspaceSize;
     context_->SetScheduleMode(1);
     return ge::GRAPH_SUCCESS;
 }

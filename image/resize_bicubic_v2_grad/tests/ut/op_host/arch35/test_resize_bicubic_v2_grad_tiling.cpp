@@ -43,7 +43,9 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_01)
         &compileInfo);
     uint64_t expectTilingKey = 30000;
     string expectTilingData = "64 48 0 32736 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
+    // 非 split-K 路径 workspace 即系统预留区 GetLibApiWorkSpaceSize()。该值由测试 faker 的
+    // 平台描述符决定, 本仓 ascend950 UT 环境下为 UINT32_MAX(4294967295), 与同仓 col2im 用例一致。
+    std::vector<size_t> expectWorkspaces = {4294967295};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -64,8 +66,9 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_02)
          gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
         &compileInfo);
     uint64_t expectTilingKey = 20000;
-    string expectTilingData = "3 113 32 225 32 0 1 64 169 32 4575657222465388544 4575657222482165760 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
+    // 尾部 3 个字段 (0 1 1) 为新增的 splitK/coresPerOutput/segsPerOutput, 非 split-K 场景取默认值。
+    string expectTilingData = "3 113 32 225 32 0 1 64 169 32 4575657222465388544 4575657222482165760 0 1 1 ";
+    std::vector<size_t> expectWorkspaces = {4294967295};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -87,7 +90,7 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_03)
         &compileInfo);
     uint64_t expectTilingKey = 30000;
     string expectTilingData = "64 134217728 0 32736 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
+    std::vector<size_t> expectWorkspaces = {4294967295};
 
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -194,4 +197,94 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_origin_ne_st
     ASSERT_TRUE(ExecuteTiling(paraBaseline, tilingInfoB));
     EXPECT_EQ(tilingInfoA.tilingKey, tilingInfoB.tilingKey);
     EXPECT_EQ(tilingInfoA.blockNum, tilingInfoB.blockNum);
+}
+
+// ---------------------------------------------------------------------------
+// issue-1 回归: 极端上采样反向下 (输出元素极少 + H gather 域 ~2^31) 必须走 split-K
+// 确定性并行路径 (tilingKey 20002/20003), 而非原 SimtDetermine(20000/20001) 单线程
+// 串扫巨大 H 域导致 vector core 看门狗超时。
+// 触发条件: yShapeSize < coreNum 且 lenDstH(=grads H, gather 域) >= 4096。
+// ---------------------------------------------------------------------------
+
+// Test 08 (issue-1 复现 shape): grads (1,1,2147483649,1) -> y (1,1,2,1)。
+// lenDstH = 2147483649 > INT32_MAX => 走 idx64 => 期望 tilingKey = 20003 (SPLITK_IDX64)。
+// coreNum=64, yShapeSize=2 => coresPerOutput = 64/2 = 32, useCoreNum(blockNum) = 2*32 = 64。
+// workspace 必须在系统预留区之外额外容纳 yShapeSize * segsPerOutput 个 float partial。
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_splitk_issue1_idx64)
+{
+    gert::StorageShape inputGradsShape = {{1, 1, 2147483649LL, 1}, {1, 1, 2147483649LL, 1}};
+    gert::StorageShape inputOriImageShape = {{1, 1, 2, 1}, {1, 1, 2, 1}};
+    gert::StorageShape outputShape = {{1, 1, 2, 1}, {1, 1, 2, 1}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.0f, 0.0f}))},
+        &compileInfo);
+
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    EXPECT_EQ(tilingInfo.tilingKey, 20003);
+    EXPECT_EQ(tilingInfo.blockNum, 64U);
+    // idx64 => threadNum=256, segsPerOutput = coresPerOutput(32) * 256 = 8192。
+    // 额外 partial 区 = yShapeSize(2) * 8192 * sizeof(float) = 65536 字节。
+    ASSERT_FALSE(tilingInfo.workspaceSizes.empty());
+    EXPECT_GE(tilingInfo.workspaceSizes[0], static_cast<int64_t>(2) * 8192 * 4);
+}
+
+// Test 09: 中等规模但同样欠并行的 split-K 场景, 索引可用 int32。
+// grads (1,1,8192,1) -> y (1,1,2,1): lenDstH=8192(>=4096) 且各维 <= INT32_MAX
+// => IsUseIdx32 = true => 期望 tilingKey = 20002 (SPLITK idx32)。
+// coresPerOutput = 64/2 = 32, threadNum=512, segsPerOutput = 32*512 = 16384, blockNum=64。
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_splitk_idx32)
+{
+    gert::StorageShape inputGradsShape = {{1, 1, 8192, 1}, {1, 1, 8192, 1}};
+    gert::StorageShape inputOriImageShape = {{1, 1, 2, 1}, {1, 1, 2, 1}};
+    gert::StorageShape outputShape = {{1, 1, 2, 1}, {1, 1, 2, 1}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.0f, 0.0f}))},
+        &compileInfo);
+
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    EXPECT_EQ(tilingInfo.tilingKey, 20002);
+    EXPECT_EQ(tilingInfo.blockNum, 64U);
+    ASSERT_FALSE(tilingInfo.workspaceSizes.empty());
+    EXPECT_GE(tilingInfo.workspaceSizes[0], static_cast<int64_t>(2) * 16384 * 4);
+}
+
+// Test 10 (阈值守卫, 无回归): 输出同样欠并行(yShapeSize=2<coreNum), 但 H gather 域
+// lenDstH=2000 < 4096 未达 split-K 阈值 => 必须保持原 SimtDetermine 路径。
+// 各维 <= INT32_MAX => tilingKey = 20000, blockNum = min(yShapeSize, coreNum) = 2。
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_splitk_threshold_guard)
+{
+    gert::StorageShape inputGradsShape = {{1, 1, 2000, 1}, {1, 1, 2000, 1}};
+    gert::StorageShape inputOriImageShape = {{1, 1, 2, 1}, {1, 1, 2, 1}};
+    gert::StorageShape outputShape = {{1, 1, 2, 1}, {1, 1, 2, 1}};
+
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBicubicV2Grad",
+        {{inputGradsShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputOriImageShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({0.0f, 0.0f}))},
+        &compileInfo);
+
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    EXPECT_EQ(tilingInfo.tilingKey, 20000);
+    EXPECT_EQ(tilingInfo.blockNum, 2U);
 }
