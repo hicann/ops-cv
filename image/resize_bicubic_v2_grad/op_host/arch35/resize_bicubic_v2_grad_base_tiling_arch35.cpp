@@ -68,15 +68,15 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetTensorInfo()
     auto gradsDescPtr = context_->GetInputDesc(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsDescPtr);
     inputInfo_.gradsDtype = gradsDescPtr->GetDataType();
-    inputInfo_.gradsFormat = gradsDescPtr->GetOriginFormat();
+    inputInfo_.gradsFormat = gradsDescPtr->GetFormat().GetStorageFormat();
 
     auto originalImageShapePtr = context_->GetInputShape(NUM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, originalImageShapePtr);
     inputInfo_.originalImageShape = Ops::Cv::OpTiling::EnsureNotScalar(originalImageShapePtr->GetOriginShape());
     auto originalImageDescPtr = context_->GetInputDesc(NUM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, originalImageDescPtr);
-    inputInfo_.originalImageDtype = originalImageDescPtr->GetDataType();
-    inputInfo_.originalImageFormat = originalImageDescPtr->GetOriginFormat();
+    inputInfo_.imageDtype = originalImageDescPtr->GetDataType();
+    inputInfo_.imageFormat = originalImageDescPtr->GetFormat().GetStorageFormat();
 
     auto yShapePtr = context_->GetOutputShape(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yShapePtr);
@@ -84,7 +84,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetTensorInfo()
     auto yDescPtr = context_->GetOutputDesc(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yDescPtr);
     inputInfo_.yDtype = yDescPtr->GetDataType();
-    inputInfo_.yFormat = yDescPtr->GetOriginFormat();
+    inputInfo_.yFormat = yDescPtr->GetFormat().GetStorageFormat();
 
     return ge::GRAPH_SUCCESS;
 }
@@ -98,9 +98,9 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckDtypeValid()
                                   "FLOAT, FLOAT16 and BFLOAT16"),
         return ge::GRAPH_FAILED);
 
-    if (inputInfo_.originalImageDtype != inputInfo_.gradsDtype || inputInfo_.yDtype != inputInfo_.gradsDtype) {
+    if (inputInfo_.imageDtype != inputInfo_.gradsDtype || inputInfo_.yDtype != inputInfo_.gradsDtype) {
         std::string dtypeMsg = Ops::Base::ToString(inputInfo_.gradsDtype) + ", " +
-                               Ops::Base::ToString(inputInfo_.originalImageDtype) + " and " +
+                               Ops::Base::ToString(inputInfo_.imageDtype) + " and " +
                                Ops::Base::ToString(inputInfo_.yDtype);
         std::string reasonMsg = "The dtypes of input grads, original_image and output y must be the same";
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads, original_image and y", dtypeMsg.c_str(),
@@ -130,10 +130,9 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckFormatValid()
                                            Ops::Base::ToString(inputInfo_.gradsFormat).c_str(), "NCHW, NHWC and ND"),
                 return ge::GRAPH_FAILED);
 
-    if (inputInfo_.originalImageFormat != inputInfo_.gradsFormat ||
-        inputInfo_.originalImageFormat != inputInfo_.yFormat) {
+    if (inputInfo_.imageFormat != inputInfo_.gradsFormat || inputInfo_.imageFormat != inputInfo_.yFormat) {
         std::string formatMsg = Ops::Base::ToString(inputInfo_.gradsFormat) + ", " +
-                                Ops::Base::ToString(inputInfo_.originalImageFormat) + " and " +
+                                Ops::Base::ToString(inputInfo_.imageFormat) + " and " +
                                 Ops::Base::ToString(inputInfo_.yFormat);
         std::string reasonMsg = "The formats of input grads, original_image and output y must be the same";
         OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(context_->GetNodeName(), "grads, original_image and y",

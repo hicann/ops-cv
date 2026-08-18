@@ -109,10 +109,10 @@ private:
     int64_t isDetermine_ = 0;
     int64_t tilingKey_ = 0;
     ge::DataType gradsDtype_ = ge::DT_MAX;
-    ge::DataType originalImageDtype_ = ge::DT_MAX;
+    ge::DataType imageDtype_ = ge::DT_MAX;
     ge::DataType yDtype_ = ge::DT_MAX;
     ge::Format gradsFormat_ = ge::FORMAT_MAX;
-    ge::Format originalImageFormat_ = ge::FORMAT_MAX;
+    ge::Format imageFormat_ = ge::FORMAT_MAX;
     ge::Format yFormat_ = ge::FORMAT_MAX;
     gert::Shape gradsShape_;
     gert::Shape originalImageShape_;

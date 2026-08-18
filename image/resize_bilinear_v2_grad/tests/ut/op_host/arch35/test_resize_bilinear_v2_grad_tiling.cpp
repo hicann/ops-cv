@@ -307,3 +307,57 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_case11
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
     ASSERT_EQ(tilingInfo.tilingKey, 30001); // TILING_KEY_POINT_COPY
 }
+
+// Regression for issue-17: origin format(ND) != storage format(NCHW).
+// 图优化后张量原始format被改写为ND, 运行时(storage)format为真实排布NCHW。
+// tiling 必须校验运行时(storage)format; 若回退为 GetOriginFormat 将拿到ND导致format校验失败, 本用例即失效。
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_origin_ne_storage_nchw)
+{
+    optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBilinearV2Grad",
+        {
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({2, 1, 2, 2}, {2, 1, 2, 2}), ge::DT_FLOAT,
+                                                       ge::FORMAT_ND, false, nullptr, ge::FORMAT_NCHW),
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({2, 1, 4, 4}, {2, 1, 4, 4}), ge::DT_FLOAT,
+                                                       ge::FORMAT_ND, false, nullptr, ge::FORMAT_NCHW),
+        },
+        {
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({2, 1, 4, 4}, {2, 1, 4, 4}), ge::DT_FLOAT,
+                                                       ge::FORMAT_ND, false, nullptr, ge::FORMAT_NCHW),
+        },
+        {
+            gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.5, 0.5})),
+        },
+        &compileInfo);
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Regression for issue-17: origin format(ND) != storage format(NHWC). 覆盖 NHWC 运行时format分支。
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_origin_ne_storage_nhwc)
+{
+    optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBilinearV2Grad",
+        {
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({2, 1, 2, 200}, {2, 1, 2, 200}), ge::DT_FLOAT,
+                                                       ge::FORMAT_ND, false, nullptr, ge::FORMAT_NHWC),
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({2, 1, 4, 200}, {2, 1, 4, 200}), ge::DT_FLOAT,
+                                                       ge::FORMAT_ND, false, nullptr, ge::FORMAT_NHWC),
+        },
+        {
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({2, 1, 4, 200}, {2, 1, 4, 200}), ge::DT_FLOAT,
+                                                       ge::FORMAT_ND, false, nullptr, ge::FORMAT_NHWC),
+        },
+        {
+            gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.5, 0.5})),
+        },
+        &compileInfo);
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

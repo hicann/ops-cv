@@ -151,3 +151,47 @@ TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_06)
     TilingInfo tilingInfo;
     EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
+
+// Test 07 (issue-17 回归): tiling 必须使用运行时(storage)format, 而非 origin format。
+// bicubic 的 CheckFormatValid 允许 ND 且把 ND 等同 NCHW 处理, 因此需用 NHWC 场景才能区分:
+//   A: origin=ND,   storage=NHWC  (模拟图优化后 ori 被改写为 ND)
+//   B: origin=NHWC, storage=NHWC  (基准)
+// 修复后 tiling 只读 storage format(NHWC), A 与 B 的 tilingKey/blockNum 必然一致;
+// 若回退为 GetOriginFormat, A 会按 origin=ND(等价NCHW) 误解 NHWC 形状的 H/W/C 轴,
+// 得到与 B 不同的 tiling 结果, 本用例(EXPECT_EQ)即失效。
+TEST_F(ResizeBicubicV2GradTilingTest, resize_bicubic_v2_grad_tiling_origin_ne_storage_nhwc)
+{
+    gert::StorageShape gradsShape = {{2, 4, 6, 64}, {2, 4, 6, 64}};
+    gert::StorageShape oriImageShape = {{2, 2, 3, 64}, {2, 2, 3, 64}};
+    gert::StorageShape yShape = {{2, 2, 3, 64}, {2, 2, 3, 64}};
+    ResizeBicubicV2GradCompileInfo compileInfo = {64, 200704, 32, 0};
+
+    // A: origin=ND, storage=NHWC
+    gert::TilingContextPara paraOriNd(
+        "ResizeBicubicV2Grad",
+        {gert::TilingContextPara::TensorDescription(gradsShape, ge::DT_FLOAT, ge::FORMAT_ND, false, nullptr,
+                                                    ge::FORMAT_NHWC),
+         gert::TilingContextPara::TensorDescription(oriImageShape, ge::DT_FLOAT, ge::FORMAT_ND, false, nullptr,
+                                                    ge::FORMAT_NHWC)},
+        {gert::TilingContextPara::TensorDescription(yShape, ge::DT_FLOAT, ge::FORMAT_ND, false, nullptr,
+                                                    ge::FORMAT_NHWC)},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+
+    // B: origin=NHWC, storage=NHWC (基准)
+    gert::TilingContextPara paraBaseline(
+        "ResizeBicubicV2Grad",
+        {{gradsShape, ge::DT_FLOAT, ge::FORMAT_NHWC}, {oriImageShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {{yShape, ge::DT_FLOAT, ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<vector<float>>({2.0f, 2.0f}))},
+        &compileInfo);
+
+    TilingInfo tilingInfoA;
+    TilingInfo tilingInfoB;
+    ASSERT_TRUE(ExecuteTiling(paraOriNd, tilingInfoA));
+    ASSERT_TRUE(ExecuteTiling(paraBaseline, tilingInfoB));
+    EXPECT_EQ(tilingInfoA.tilingKey, tilingInfoB.tilingKey);
+    EXPECT_EQ(tilingInfoA.blockNum, tilingInfoB.blockNum);
+}

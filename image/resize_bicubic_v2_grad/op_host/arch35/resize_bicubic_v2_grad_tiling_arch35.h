@@ -37,8 +37,8 @@ struct ResizeBicubicV2GradInputInfo {
     ge::DataType gradsDtype{ge::DT_MAX};
     ge::Format gradsFormat{ge::FORMAT_MAX};
     gert::Shape originalImageShape;
-    ge::DataType originalImageDtype{ge::DT_MAX};
-    ge::Format originalImageFormat{ge::FORMAT_MAX};
+    ge::DataType imageDtype{ge::DT_MAX};
+    ge::Format imageFormat{ge::FORMAT_MAX};
     gert::Shape yShape;
     ge::DataType yDtype{ge::DT_MAX};
     ge::Format yFormat{ge::FORMAT_MAX};

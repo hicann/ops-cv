@@ -297,6 +297,54 @@ TEST_F(ResizeNearestNeighborV2GradTiling, resize_nearest_neighbor_v2_grad_tiling
     EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
 
+// Test 15: origin format(ND) != storage format(NCHW)
+// 场景: 图优化后张量的原始format被改写为ND, 而运行时(storage)format为真实排布NCHW。
+// 覆盖 issue-17 修复: tiling 必须校验运行时(storage)format而非origin format。
+// 若回退为 GetOriginFormat, 将拿到 ND 导致 "NHWC or NCHW" 校验失败, 本用例即失效(EXPECT_TRUE 变 FALSE)。
+TEST_F(ResizeNearestNeighborV2GradTiling, resize_nearest_neighbor_v2_grad_tiling_origin_ne_storage_nchw)
+{
+    ResizeNearestNeighborV2GradCompileInfo compileInfo = {1, 253952};
+    int32_t sizeData[] = {4, 4};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeNearestNeighborV2Grad",
+        {gert::TilingContextPara::TensorDescription(gert::StorageShape({1, 1, 2, 2}, {1, 1, 2, 2}), ge::DT_FLOAT,
+                                                    ge::FORMAT_ND, false, nullptr, ge::FORMAT_NCHW),
+         gert::TilingContextPara::TensorDescription(gert::StorageShape({2}, {2}), ge::DT_INT32, ge::FORMAT_ND, true,
+                                                    sizeData)},
+        {gert::TilingContextPara::TensorDescription(gert::StorageShape({1, 1, 4, 4}, {1, 1, 4, 4}), ge::DT_FLOAT,
+                                                    ge::FORMAT_ND, false, nullptr, ge::FORMAT_NCHW)},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0}))},
+        &compileInfo, "Ascend950", 1, 253952);
+
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+// Test 16: origin format(ND) != storage format(NHWC)
+// 与 Test 15 同理, 覆盖 NHWC 运行时format分支。
+TEST_F(ResizeNearestNeighborV2GradTiling, resize_nearest_neighbor_v2_grad_tiling_origin_ne_storage_nhwc)
+{
+    ResizeNearestNeighborV2GradCompileInfo compileInfo = {1, 253952};
+    int32_t sizeData[] = {4, 4};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeNearestNeighborV2Grad",
+        {gert::TilingContextPara::TensorDescription(gert::StorageShape({1, 2, 2, 1}, {1, 2, 2, 1}), ge::DT_FLOAT,
+                                                    ge::FORMAT_ND, false, nullptr, ge::FORMAT_NHWC),
+         gert::TilingContextPara::TensorDescription(gert::StorageShape({2}, {2}), ge::DT_INT32, ge::FORMAT_ND, true,
+                                                    sizeData)},
+        {gert::TilingContextPara::TensorDescription(gert::StorageShape({1, 4, 4, 1}, {1, 4, 4, 1}), ge::DT_FLOAT,
+                                                    ge::FORMAT_ND, false, nullptr, ge::FORMAT_NHWC)},
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0}))},
+        &compileInfo, "Ascend950", 1, 253952);
+
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
 // Test 14: DETERMINE_HW with half_pixel=true
 // Coverage: DETERMINE_HW strategy with halfPixelCenters=TRUE tiling key
 TEST_F(ResizeNearestNeighborV2GradTiling, resize_nearest_neighbor_v2_grad_tiling_determine_hw_halfpixel)

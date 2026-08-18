@@ -195,12 +195,12 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInOutDtypeFormat()
 {
     auto gradsDstcPtr = context_->GetInputDesc(INPUT_IDX_GRADS);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsDstcPtr);
-    auto gradsFormat = gradsDstcPtr->GetOriginFormat();
+    auto gradsFormat = gradsDstcPtr->GetFormat().GetStorageFormat();
     auto gradsDtype = gradsDstcPtr->GetDataType();
 
     auto yDstcPtr = context_->GetOutputDesc(OUTPUT_IDX_Y);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yDstcPtr);
-    auto yFormat = yDstcPtr->GetOriginFormat();
+    auto yFormat = yDstcPtr->GetFormat().GetStorageFormat();
     auto yDtype = yDstcPtr->GetDataType();
     if (gradsDtype != yDtype) {
         std::string dtypeMsg = Ops::Base::ToString(gradsDtype) + " and " + Ops::Base::ToString(yDtype);

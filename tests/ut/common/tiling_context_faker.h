@@ -20,15 +20,25 @@ class TilingContextPara {
 public:
     class TensorDescription {
     public:
+        // format      : 原始format(origin format)
+        // storageFormat: 运行时format(storage format)，即图优化后张量真实的数据排布format。
+        //   默认取哨兵值 ge::FORMAT_END，表示运行时format与原始format相同(origin == storage)，
+        //   以保持存量用例行为完全不变；需要构造 origin != storage 的场景时显式传入 storageFormat。
         TensorDescription(const gert::StorageShape& shape, ge::DataType dtype, ge::Format format, bool isConst = false,
-                          void* constValue = nullptr)
-            : shape_(shape), dtype_(dtype), format_(format), isConst_(isConst), constValue_(constValue)
+                          void* constValue = nullptr, ge::Format storageFormat = ge::FORMAT_END)
+            : shape_(shape),
+              dtype_(dtype),
+              format_(format),
+              storageFormat_(storageFormat == ge::FORMAT_END ? format : storageFormat),
+              isConst_(isConst),
+              constValue_(constValue)
         {}
 
     public:
         gert::StorageShape shape_;
         ge::DataType dtype_ = ge::DT_FLOAT;
         ge::Format format_ = ge::FORMAT_ND;
+        ge::Format storageFormat_ = ge::FORMAT_ND;
         bool isConst_ = false;
         void* constValue_ = nullptr;
     };
