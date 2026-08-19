@@ -76,3 +76,35 @@ TEST_F(Rgb2yuv422Infershape, rgb2_yuv422_infershape_abnormal_shape_channel4)
                                                       });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
+
+// Unknown shape: all dims unknown (-1), channel check is skipped, output last dim is 2
+TEST_F(Rgb2yuv422Infershape, rgb2_yuv422_infershape_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("RGB2YUV422",
+                                                      {
+                                                          {{{-1, -1, -1}, {-1, -1, -1}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, -1, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), output set to unknown rank
+TEST_F(Rgb2yuv422Infershape, rgb2_yuv422_infershape_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("RGB2YUV422",
+                                                      {
+                                                          {{{-2}, {-2}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

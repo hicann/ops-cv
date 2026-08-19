@@ -136,6 +136,7 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context, int32_t need
 
 static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingRGB2YUV422");
     uint64_t ubSize;
     int64_t maxCoreNum;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,

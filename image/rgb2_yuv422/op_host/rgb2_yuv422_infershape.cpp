@@ -16,6 +16,7 @@
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "util/shape_util.h"
 
 using namespace ge;
 
@@ -28,6 +29,16 @@ static ge::graphStatus InferShapeRgb2yuv422(gert::InferShapeContext* context)
 
     const gert::Shape* xShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
+    OP_LOGD(context->GetNodeName(), "input x shape = %s", Ops::Base::ToString(*xShape).c_str());
+
+    // Unknown-rank input: output keeps unknown rank
+    if (Ops::Base::IsUnknownRank(*xShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as UnknownRank.");
+        gert::Shape* yShape = context->GetOutputShape(IDX_0);
+        OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
+        Ops::Base::SetUnknownRank(*yShape);
+        return GRAPH_SUCCESS;
+    }
 
     size_t rank = xShape->GetDimNum();
     if (rank < 3) {
@@ -36,8 +47,8 @@ static ge::graphStatus InferShapeRgb2yuv422(gert::InferShapeContext* context)
         return GRAPH_FAILED;
     }
 
-    // NHWC: channel must be 3 (last dim)
-    if (xShape->GetDim(rank - 1) != 3) {
+    // NHWC: channel must be 3 (last dim); unknown dim (-1) is allowed
+    if (xShape->GetDim(rank - 1) != UNKNOWN_DIM && xShape->GetDim(rank - 1) != 3) {
         OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "rgb",
                                                  std::to_string(xShape->GetDim(rank - 1)).c_str(),
                                                  "the last dim (channel) must be 3");
