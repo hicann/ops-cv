@@ -47,11 +47,9 @@ def img_warp_resize_golden(img, warp_index, **kwargs):
         lerp_x_data = warp_flat[batch_idx, 0, :]  # x_float (w方向)
         lerp_y_data = warp_flat[batch_idx, 1, :]  # y_float (h方向)
 
-        # floor via int32 truncation (matches kernel static_cast<int32_t>)
-        lerp_x_data_int = lerp_x_data.astype(np.int32)
-        lerp_y_data_int = lerp_y_data.astype(np.int32)
-        lerp_x = lerp_x_data - lerp_x_data_int.astype(np.float32)
-        lerp_y = lerp_y_data - lerp_y_data_int.astype(np.float32)
+        # Keep floor in float32 for negative and non-finite coordinates.
+        lerp_x = lerp_x_data - np.floor(lerp_x_data)
+        lerp_y = lerp_y_data - np.floor(lerp_y_data)
 
         for batch_c in range(np_c):
             top_left = img_flat[batch_idx, 0, batch_c, :]
@@ -59,12 +57,16 @@ def img_warp_resize_golden(img, warp_index, **kwargs):
             bottom_left = img_flat[batch_idx, 2, batch_c, :]
             bottom_right = img_flat[batch_idx, 3, batch_c, :]
 
-            # 水平方向双线性插值
-            top = (top_right - top_left) * lerp_x + top_left
-            bottom = (bottom_right - bottom_left) * lerp_x + bottom_left
-
-            # 垂直方向双线性插值
-            out = (bottom - top) * lerp_y + top
+            # Keep the TBE sub -> mul -> add order with float32 intermediates.
+            top_delta = top_right - top_left
+            top_product = top_delta * lerp_x
+            top = top_left + top_product
+            bottom_delta = bottom_right - bottom_left
+            bottom_product = bottom_delta * lerp_x
+            bottom = bottom_left + bottom_product
+            vertical_delta = bottom - top
+            vertical_product = vertical_delta * lerp_y
+            out = top + vertical_product
             output[batch_idx, batch_c, :] = out
 
     output = output.reshape([np_batch, np_c, np_h, np_w]).astype(image_dtype)

@@ -53,11 +53,16 @@ __simt_callee__ inline void BilinearInterpolate(__gm__ T* img, uint64_t imgBase,
         bottomLeft = img[imgBase + 2 * cornerStride + hw];
         bottomRight = img[imgBase + 3 * cornerStride + hw];
     }
-    // Horizontal interpolation (float32 precision)
-    float top = topLeft + (topRight - topLeft) * xLerp;
-    float bottom = bottomLeft + (bottomRight - bottomLeft) * xLerp;
-    // Vertical interpolation (float32 precision)
-    float result = top + (bottom - top) * yLerp;
+    // Keep the TBE sub -> mul -> add source order.
+    float topDelta = topRight - topLeft;
+    float topProduct = topDelta * xLerp;
+    float top = topLeft + topProduct;
+    float bottomDelta = bottomRight - bottomLeft;
+    float bottomProduct = bottomDelta * xLerp;
+    float bottom = bottomLeft + bottomProduct;
+    float verticalDelta = bottom - top;
+    float verticalProduct = verticalDelta * yLerp;
+    float result = top + verticalProduct;
     // Write back with dtype conversion
     if constexpr (sizeof(T) == 2) {
         warpImg[idx] = __float2half(result);
@@ -93,11 +98,9 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpIMGWarpResize
         uint64_t warpBase = static_cast<uint64_t>(n) * nStrideWarp;
         float xFloat = warpIndex[warpBase + hw];
         float yFloat = warpIndex[warpBase + static_cast<uint64_t>(imageArea) + hw];
-        // floor via int32 truncation (matches Golden astype(np.int32))
-        int32_t xInt = static_cast<int32_t>(xFloat);
-        int32_t yInt = static_cast<int32_t>(yFloat);
-        float xLerp = xFloat - static_cast<float>(xInt);
-        float yLerp = yFloat - static_cast<float>(yInt);
+        // Keep floor in float32 so negative and non-finite coordinates avoid int32 narrowing.
+        float xLerp = xFloat - floorf(xFloat);
+        float yLerp = yFloat - floorf(yFloat);
 
         // Read corners, interpolate, and write back
         uint64_t imgBase = static_cast<uint64_t>(n) * nStrideImg +
