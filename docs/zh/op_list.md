@@ -608,6 +608,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/bounding_box_decode/README.md">bounding_box_decode</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将模型输出的相对于先验框（或锚点）的偏移量与缩放参数，转换为原始图像中真实的绝对边界框坐标。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/batch_multi_class_non_max_suppression/README.md">batch_multi_class_non_max_suppression</a></td>
     <td>&check;</td>
     <td>&check;</td>
