@@ -38,6 +38,8 @@ namespace ge {
 * @par Attr
 * @li scale: A required float, scale of coordinates. \n
 */
+#ifndef OPS_PROTO_DEF_PASTESUBIMG
+#define OPS_PROTO_DEF_PASTESUBIMG
 REG_OP(PasteSubImg)
     .INPUT(patch_img, TensorType({DT_UINT8, DT_FLOAT16, DT_FLOAT32}))
     .INPUT(patch_coord, TensorType({DT_INT32}))
@@ -46,6 +48,7 @@ REG_OP(PasteSubImg)
     .OUTPUT(combine_img, TensorType({DT_UINT8, DT_FLOAT16, DT_FLOAT32}))
     .REQUIRED_ATTR(scale, Float)
     .OP_END_FACTORY_REG(PasteSubImg)
+#endif
 } // namespace ge
 
 #endif // OPS_OP_PROTO_INC_PASTE_SUB_IMG_H_
