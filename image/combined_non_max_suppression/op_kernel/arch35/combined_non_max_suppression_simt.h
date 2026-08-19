@@ -12,6 +12,7 @@
 #define COMBINED_NON_MAX_SUPPRESSION_SIMT_H_
 
 #include "kernel_operator.h"
+#include "c_api/cache_ctrl/cache_ctrl.h"
 #include "simt_api/asc_simt.h"
 #include "simt_api/common_functions.h"
 #include "simt_api/device_functions.h"
@@ -273,10 +274,6 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
                            int32_t maxOutputPerClass, int32_t outputSize, int32_t clipBoxes)
 {
     const uint32_t tid = threadIdx.x;
-    if (tid == 0) {
-        asc_dcci_entire((__gm__ void*)selectedScores);
-    }
-    asc_syncthreads();
 
     const int32_t candidateBase = batchIdx * numClasses * maxOutputPerClass;
     const int32_t taskBase = batchIdx * numClasses;
@@ -448,6 +445,7 @@ public:
         }
 
         SyncAll();
+        asc_dcci_entire_out();
         ProcessMerge(selectedScores, selectedIndices, selectedCounts, reduceScores, reduceIndices);
     }
 
