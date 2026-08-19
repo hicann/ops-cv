@@ -1,5 +1,7 @@
 # ops-cv
 
+简体中文 | [English](./README_en.md)
+
 ## 🔥Latest News
 
 - [2026/01] 新增[QuickStart](docs/QUICKSTART.md)，指导新手零基础入门算子项目部署（支持Docker环境）、算子开发和贡献流程。
@@ -46,8 +48,8 @@ ops-cv是[CANN](https://hiascend.com/software/cann) （Compute Architecture for 
 ├── build.sh                       # 项目工程编译脚本
 ├── cmake                          # 项目工程编译目录
 ├── CMakeLists.txt
-├── common                         # 项目公共头文件和公共源码                 
-├── docs                           # 项目文档介绍(zh为中文，en为英文) 
+├── common                         # 项目公共头文件和公共源码
+├── docs                           # 项目文档介绍(zh为中文，en为英文)
 ├── examples                       # 端到端算子开发和调用示例
 ├── experimental                   # 用户自定义算子存放目录
 ├── objdetect                      # objdetect类算子

@@ -1,5 +1,7 @@
 # ops-cv
 
+English | [简体中文](./README.md)
+
 ## 🔥Latest News
 
 - [2026/01] Added [QuickStart](docs/QUICKSTART.md) to guide beginners with zero foundation in operator project deployment (supporting Docker environment), operator development, and contribution process.
