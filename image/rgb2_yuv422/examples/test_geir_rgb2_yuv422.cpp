@@ -51,7 +51,7 @@ using std::vector;
         printf("%s - ERROR - [XIR]: Generate input data failed\n", GetTime().c_str());                              \
         return FAILED;                                                                                              \
     }                                                                                                               \
-    placeholder##intputIndex.update_input_desc_rgb(placeholder##intputIndex##_desc);                                \
+    placeholder##intputIndex.update_input_desc_x(placeholder##intputIndex##_desc);                                  \
     input.push_back(tensor_placeholder##intputIndex);                                                               \
     graph.AddOp(placeholder##intputIndex);                                                                          \
     add1.set_input_##intputName(placeholder##intputIndex);                                                          \
@@ -163,8 +163,9 @@ int main(int argc, char* argv[])
     std::vector<Operator> inputs{};
     std::vector<Operator> outputs{};
 
-    std::cout << argv[1] << std::endl;
-    char* endptr;
+    if (argc >= 2) {
+        std::cout << argv[1] << std::endl;
+    }
 
     DataType inDtype = DT_UINT8;
 

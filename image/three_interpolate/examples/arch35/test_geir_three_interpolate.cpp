@@ -215,12 +215,9 @@ int main(int argc, char* argv[])
     std::vector<Operator> inputs{};
     std::vector<Operator> outputs{};
 
-    if (argc < 2) {
-        printf("Usage: %s <dtype>\n", argv[0]);
-        return FAILED;
+    if (argc >= 2) {
+        std::cout << argv[1] << std::endl;
     }
-    std::cout << argv[1] << std::endl;
-    char* endptr;
 
     DataType inDtype = DT_FLOAT;
 

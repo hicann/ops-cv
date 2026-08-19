@@ -120,10 +120,11 @@ int main()
     auto c1 = (cs + c0 - 1) / c0;
 
     // 2. 构造输入与输出，需要根据API的接口自定义构造
-    std::vector<int64_t> gradXShape = {bs, cs, ns, 1}; // nchw
-    std::vector<int64_t> idxShape = {bs, ns, 3};       // nd
-    std::vector<int64_t> weightShape = {bs, ns, 3};    // nd
-    std::vector<int64_t> gradYShape = {bs, cs, ms, 1}; // nchw
+    // Ascend 950PR/Ascend 950DT：grad_x、grad_y以ND格式、3D shape传入，分别为（b, c, n）、（b, c, m）
+    std::vector<int64_t> gradXShape = {bs, cs, ns}; // nd
+    std::vector<int64_t> idxShape = {bs, ns, 3};    // nd
+    std::vector<int64_t> weightShape = {bs, ns, 3}; // nd
+    std::vector<int64_t> gradYShape = {bs, cs, ms}; // nd
 
     void* gradXDeviceAddr = nullptr;
     void* idxDeviceAddr = nullptr;
@@ -136,14 +137,14 @@ int main()
     aclTensor* gradY = nullptr;
 
     std::vector<float> gradXHostData = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    std::vector<uint32_t> idxHostData = {0, 3, 2, 3, 5, 1, 0, 3, 0, 0, 3, 5, 0, 4, 1};
+    std::vector<int32_t> idxHostData = {0, 3, 2, 3, 5, 1, 0, 3, 0, 0, 3, 5, 0, 4, 1};
     std::vector<float> weightHostData = {3.2081969,  -0.86573875, -1.0929844, 5.6045847, 5.328887,
                                          -2.0821328, 0.98572457,  9.612394,   2.216394,  1.8722068,
                                          4.2976365,  -7.019285,   -8.4070425, 1.0159919, -0.78814566};
-    std::vector<float> gradYHostData = {0};
+    std::vector<float> gradYHostData(bs * cs * ms, 0.0f);
 
     ret = CreateAclTensor(gradXHostData, gradXShape, &gradXDeviceAddr, aclDataType::ACL_FLOAT, &gradX,
-                          aclFormat::ACL_FORMAT_NCHW);
+                          aclFormat::ACL_FORMAT_ND);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
     ret = CreateAclTensor(idxHostData, idxShape, &idxDeviceAddr, aclDataType::ACL_INT32, &idx,
                           aclFormat::ACL_FORMAT_ND);
@@ -152,7 +153,7 @@ int main()
                           aclFormat::ACL_FORMAT_ND);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
     ret = CreateAclTensor(gradYHostData, gradYShape, &gradYDeviceAddr, aclDataType::ACL_FLOAT, &gradY,
-                          aclFormat::ACL_FORMAT_NCHW);
+                          aclFormat::ACL_FORMAT_ND);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     // 3. 调用CANN算子库API，需要修改为具体的Api名称

@@ -167,13 +167,13 @@ int CreateOppInGraph(const DtypeCombo& dt, const std::vector<int64_t>& gradShape
     Status ret = SUCCESS;
     auto add1 = op::ThreeInterpolateBackward("add1");
 
-    // 图输入 grad_x/grad_y 使用 FORMAT_NCHW 4D，由 FE 自动转换为算子要求的 NC1HWC0；
+    // 图输入 grad_x/grad_y 使用 FORMAT_ND 3D（Ascend 950 算子原生 ND）；
     // idx/weight 为 FORMAT_ND
-    ADD_INPUT(1, grad_x, dt.gradDt, gradShape, FORMAT_NCHW, 1);
+    ADD_INPUT(1, grad_x, dt.gradDt, gradShape, FORMAT_ND, 1);
     ADD_INPUT(2, idx, dt.idxDt, idxShape, FORMAT_ND, 0); // idx 填 0，保证 < m
     ADD_INPUT(3, weight, dt.weightDt, weightShape, FORMAT_ND, 1);
 
-    ADD_OUTPUT(1, grad_y, dt.gradDt, outShape, FORMAT_NCHW);
+    ADD_OUTPUT(1, grad_y, dt.gradDt, outShape, FORMAT_ND);
 
     add1.set_attr_m(m);
 
@@ -226,11 +226,11 @@ int main(int argc, char* argv[])
         for (const auto& tc : case_list) {
             std::string caseLabel = dt.name + "/" + tc.name + "/S";
 
-            // grad_x/grad_y: NCHW 4D (b, c, n|m, 1)；idx/weight: ND 3D (b, n, 3)
-            std::vector<int64_t> gradShape = {tc.b, tc.c, tc.n, 1};
+            // grad_x/grad_y: ND 3D (b, c, n|m)；idx/weight: ND 3D (b, n, 3)
+            std::vector<int64_t> gradShape = {tc.b, tc.c, tc.n};
             std::vector<int64_t> idxShape = {tc.b, tc.n, 3};
             std::vector<int64_t> weightShape = {tc.b, tc.n, 3};
-            std::vector<int64_t> outShape = {tc.b, tc.c, tc.m, 1};
+            std::vector<int64_t> outShape = {tc.b, tc.c, tc.m};
 
             std::string graphName = "graph_" + std::to_string(graph_id);
             Graph graph(graphName.c_str());
