@@ -28,9 +28,7 @@
 #include "array_ops.h"
 #include "ge_ir_build.h"
 
-#include "experiment_ops.h"
-#include "nn_other.h"
-#include "../op_graph/img_warp_resize_proto.h"
+#include "../../op_graph/img_warp_resize_proto.h"
 
 #define FAILED -1
 #define SUCCESS 0
@@ -210,11 +208,9 @@ int main(int argc, char* argv[])
     std::vector<Operator> inputs{};
     std::vector<Operator> outputs{};
 
-    if (argc < 2) {
-        printf("Usage: %s <param>\n", argv[0]);
-        return FAILED;
+    if (argc > 1) {
+        std::cout << argv[1] << std::endl;
     }
-    std::cout << argv[1] << std::endl;
     char* endptr;
 
     DataType inDtype = DT_FLOAT;
