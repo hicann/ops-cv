@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <map>
@@ -19,10 +20,10 @@
 #include "graph.h"
 #include "types.h"
 #include "tensor.h"
-#include "graph/error_codes.h"
+#include "ge_error_codes.h"
 #include "ge_api_types.h"
 #include "ge_api.h"
-#include "ops_proto_cv.h"
+#include "array_ops.h"
 #include "ge_ir_build.h"
 #include "../../op_graph/extract_glimpse_v2_proto.h"
 
@@ -147,7 +148,7 @@ int32_t GenOnesData(vector<int64_t> shapes, Tensor& input_tensor, TensorDesc& in
         size *= shapes[i];
     }
     uint32_t data_len = size * GetDataTypeSize(data_type);
-    int32_t* pData = new (std::nothrow) int32_t[data_len];
+    int32_t* pData = new (std::nothrow) int32_t[size];
     for (uint32_t i = 0; i < size; ++i) {
         *(pData + i) = value;
     }
@@ -171,6 +172,7 @@ int CreateOppInGraph(DataType inDtype, std::vector<ge::Tensor>& input, std::vect
     // 自定义代码：添加单算子定义到图中
     auto add1 = op::ExtractGlimpseV2("add1");
     add1.set_attr_uniform_noise(false);
+    add1.set_attr_noise("zero");
     std::vector<int64_t> inputShape = {1, 3, 3, 3};
     std::vector<int64_t> sizeShape = {2};
     std::vector<int64_t> offsetsShape = {1, 2};
@@ -285,11 +287,12 @@ int main(int argc, char* argv[])
     std::cout << "Warning message: " << warning_str << std::endl;
     printf("%s - INFO - [XIR]: Precision is ok\n", GetTime().c_str());
     printf("%s - INFO - [XIR]: Start to finalize ir graph session\n", GetTime().c_str());
+    delete session;
     ret = ge::GEFinalize();
     if (ret != SUCCESS) {
         printf("%s - INFO - [XIR]: Finalize ir graph session failed\n", GetTime().c_str());
         return FAILED;
     }
     printf("%s - INFO - [XIR]: Finalize ir graph session success\n", GetTime().c_str());
-    return SUCCESS;
+    _Exit(SUCCESS);
 }
