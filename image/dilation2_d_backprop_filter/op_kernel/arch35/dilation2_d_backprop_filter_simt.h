@@ -245,7 +245,7 @@ __aicore__ inline void LaunchComputeVf(const Dilation2DBackpropFilterTilingData*
     // v2.5: order depends on data_format
     //   NHWC: (depth, outW, outH) → decomposes idx into (b, h_out, w_out, d)
     //   NCHW: (outW, outH, depth) → decomposes idx into (b, d, h_out, w_out)
-    LocalMemAllocator<Hardware::UB> ubAlloc;
+    LocalMemAllocator<AscendC::Hardware::UB> ubAlloc;
     LocalTensor<uint64_t> ub = ubAlloc.Alloc<uint64_t>(8);
 
     uint64_t magic = 0;
