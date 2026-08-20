@@ -14,6 +14,7 @@ REPOSITORY_NAME="ops-cv"
 sudo update-alternatives --set gcc /usr/bin/gcc-14
 export PATH=/opt/buildtools/python-3.10.2/bin:$PATH
 gcc --version
+rm -rf /home/jenkins/opensource/json
 
 if [ -z "${ASCEND_3RD_LIB_PATH}" ]; then
     export ASCEND_3RD_LIB_PATH=/home/jenkins/opensource
@@ -49,6 +50,11 @@ DP_ASSERT_EQUAL()
 
 LOG_HEAD "UT ${REPOSITORY_NAME}."
 cd "${WORKSPACE}/" || exit
+non_skip_count=$(grep -vE '(\.md$)' "${WORKSPACE}/pr_filelist.txt" | grep -cv '^$')
+if [ "${non_skip_count}" -eq 0 ]; then
+    LOG_HEAD "pr_filelist.txt only contains .md files, skip ut"
+    exit 0
+fi
 
 if [ "${GIT_TARGET_BRANCH}x" = "masterx" ]; then
     pip3 install tensorflow

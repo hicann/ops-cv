@@ -23,6 +23,7 @@ else
     fi
 fi
 gcc --version
+rm -rf /home/jenkins/opensource/json
 
 if [ -z "${ASCEND_3RD_LIB_PATH}" ]; then
     export ASCEND_3RD_LIB_PATH=/home/jenkins/opensource
@@ -59,6 +60,15 @@ DP_ASSERT_EQUAL()
 LOG_HEAD "Build ${REPOSITORY_NAME}."
 cd "${WORKSPACE}/" || exit
 
+non_skip_count=$(grep -vE '(\.md$|^tests/)' "${WORKSPACE}/pr_filelist.txt" | grep -cv '^$')
+if [ "${non_skip_count}" -eq 0 ]; then
+    LOG_HEAD "pr_filelist.txt only contains .md or tests/ files, skip build"
+    mkdir -p build_out
+    touch build_out/skip_build.run
+    touch single.tar.gz
+    echo "api-check=continue" >> "${ATOMGIT_OUTPUT}"
+    exit 0
+fi
 if [[ "${task_name}" =~ Compile_Ascend_X86_ubuntu24 ]]; then
     sed -i "1i set(CMAKE_EXPORT_COMPILE_COMMANDS ON)" "CMakeLists.txt"
     echo "api-check=compile" >> "${ATOMGIT_OUTPUT}"
