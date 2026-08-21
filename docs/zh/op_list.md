@@ -738,6 +738,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/roi_pooling/README.md">roi_pooling</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>对输入特征图按ROI（Region of Interest）区域进行最大池化，输出固定尺寸的池化结果，用于目标检测等任务。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/roi_pooling_with_arg_max/README.md">roi_pooling_with_arg_max</a></td>
     <td>&check;</td>
     <td>&check;</td>
