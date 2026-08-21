@@ -1,12 +1,17 @@
 # ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
+
+# 默认 _GLIBCXX_USE_CXX11_ABI=0；目标可通过 set_target_properties(tgt PROPERTIES CANN_GLIBCXX_USE_CXX11_ABI 1) 覆盖为 1
+set(_CANN_ABI_GEN_EXPR
+    "$<$<COMPILE_LANGUAGE:CXX>:$<IF:$<BOOL:$<TARGET_PROPERTY:CANN_GLIBCXX_USE_CXX11_ABI>>,_GLIBCXX_USE_CXX11_ABI=$<TARGET_PROPERTY:CANN_GLIBCXX_USE_CXX11_ABI>,_GLIBCXX_USE_CXX11_ABI=0>>"
+)
 
 # intf_pub for c++11
 if(NOT TARGET intf_pub)
@@ -22,7 +27,7 @@ if(NOT TARGET intf_pub)
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++14>
   )
   target_compile_definitions(intf_pub INTERFACE
-    _GLIBCXX_USE_CXX11_ABI=0
+    ${_CANN_ABI_GEN_EXPR}
     $<$<CONFIG:Release>:CFG_BUILD_NDEBUG>
     $<$<CONFIG:Debug>:CFG_BUILD_DEBUG>
   )
@@ -54,7 +59,7 @@ if(NOT TARGET intf_pub_cxx14)
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++14>
   )
   target_compile_definitions(intf_pub_cxx14 INTERFACE
-    _GLIBCXX_USE_CXX11_ABI=0
+    ${_CANN_ABI_GEN_EXPR}
     $<$<CONFIG:Release>:CFG_BUILD_NDEBUG>
     $<$<CONFIG:Debug>:CFG_BUILD_DEBUG>
   )
@@ -86,7 +91,7 @@ if(NOT TARGET intf_pub_cxx17)
       $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
   )
   target_compile_definitions(intf_pub_cxx17 INTERFACE
-      _GLIBCXX_USE_CXX11_ABI=0
+      ${_CANN_ABI_GEN_EXPR}
       $<$<CONFIG:Release>:CFG_BUILD_NDEBUG>
       $<$<CONFIG:Debug>:CFG_BUILD_DEBUG>
   )

@@ -10,7 +10,6 @@
 
 if (BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
   if (NOT (UT_TEST_ALL OR OP_KERNEL_AICPU_UT))
-    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=1)
     set(CMAKE_CXX_COMPILER ${ASCEND_DIR}/toolkit/toolchain/hcc/bin/aarch64-target-linux-gnu-g++)
   endif()
 

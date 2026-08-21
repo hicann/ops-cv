@@ -206,6 +206,7 @@ function(add_aicpu_kernel_modules)
   message(STATUS "add_aicpu_kernel_modules")
   if(NOT TARGET ${OPHOST_NAME}_aicpu_obj)
     add_library(${OPHOST_NAME}_aicpu_obj OBJECT)
+    set_target_properties(${OPHOST_NAME}_aicpu_obj PROPERTIES CANN_GLIBCXX_USE_CXX11_ABI 1)
     target_include_directories(${OPHOST_NAME}_aicpu_obj PRIVATE ${AICPU_INCLUDE})
     target_compile_definitions(
       ${OPHOST_NAME}_aicpu_obj PRIVATE _FORTIFY_SOURCE=2 google=ascend_private
@@ -227,10 +228,11 @@ function(add_aicpu_cust_kernel_modules target_name)
   message(STATUS "add_aicpu_cust_kernel_modules for ${target_name}")
   if(NOT TARGET ${target_name})
     add_library(${target_name} OBJECT)
+    set_target_properties(${target_name} PROPERTIES CANN_GLIBCXX_USE_CXX11_ABI 1)
     target_include_directories(${target_name} PRIVATE ${AICPU_INCLUDE})
     target_compile_definitions(
       ${target_name} PRIVATE
-                    _FORTIFY_SOURCE=2 _GLIBCXX_USE_CXX11_ABI=1
+                    _FORTIFY_SOURCE=2
                     google=ascend_private
                     $<$<BOOL:${ENABLE_TEST}>:ASCEND_AICPU_UT>
       )
