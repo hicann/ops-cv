@@ -33,73 +33,81 @@ namespace ops {
 
 // 约束阈值常量和维度/索引常量来自 crop_and_resize_constraints.h
 
-static ge::graphStatus InferShapeCropAndResize(gert::InferShapeContext* context)
+// 校验输入 shape：维度数、空 tensor、boxes.shape[1]
+static ge::graphStatus ValidateInputShapes(gert::InferShapeContext* context, const gert::Shape* xShape,
+                                           const gert::Shape* boxesShape, const gert::Shape* cropSizeShape)
 {
-    OP_LOGD(context->GetNodeName(), "Begin to do InferShapeCropAndResize");
-
-    // 获取输入 shape
-    const gert::Shape* xShape = context->GetInputShape(IDX_X);
-    OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
-    const gert::Shape* boxesShape = context->GetInputShape(IDX_BOXES);
-    OP_CHECK_NULL_WITH_CONTEXT(context, boxesShape);
-    const gert::Shape* cropSizeShape = context->GetInputShape(IDX_CROP_SIZE);
-    OP_CHECK_NULL_WITH_CONTEXT(context, cropSizeShape);
-
-    // unknown rank 传播: x 或 boxes 为 -2 时，输出设为 unknown rank
-    if (Ops::Base::IsUnknownRank(*xShape) || Ops::Base::IsUnknownRank(*boxesShape)) {
-        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as UnknownRank");
-        gert::Shape* yShape = context->GetOutputShape(0);
-        OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
-        Ops::Base::SetUnknownRank(*yShape);
-        return GRAPH_SUCCESS;
-    }
-
-    // 约束1: x 必须为 4D
     if (xShape->GetDimNum() != X_DIM) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "x", (std::to_string(xShape->GetDimNum()) + "D").c_str(),
                                      "4D");
         return ge::GRAPH_FAILED;
     }
-
-    // 约束11: boxes.shape[1] == 4
-    if (boxesShape->GetDimNum() != BOXES_DIM || boxesShape->GetDim(1) != BOX_COORDS) {
+    for (size_t i = 0; i < xShape->GetDimNum(); i++) {
+        if (xShape->GetDim(i) == 0) {
+            OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "x",
+                                                  std::to_string(xShape->GetDim(i)).c_str(),
+                                                  ("x.shape[" + std::to_string(i) + "] must not be zero").c_str());
+            return ge::GRAPH_FAILED;
+        }
+    }
+    if (boxesShape->GetDimNum() != BOXES_DIM) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "boxes",
                                      (std::to_string(boxesShape->GetDimNum()) + "D").c_str(), "2D");
         return ge::GRAPH_FAILED;
     }
-
-    // 约束12: crop_size.shape == (2,)
-    if (cropSizeShape->GetDimNum() != CROP_SIZE_DIM || cropSizeShape->GetDim(0) != CROP_SIZE_LEN) {
-        OP_LOGE_FOR_INVALID_SHAPESIZE(context->GetNodeName(), "crop_size",
-                                      std::to_string(cropSizeShape->GetDim(0)).c_str(),
-                                      std::to_string(CROP_SIZE_LEN).c_str());
+    if (boxesShape->GetDim(1) != ge::UNKNOWN_DIM && boxesShape->GetDim(1) != BOX_COORDS) {
+        OP_LOGE_FOR_INVALID_SHAPESIZE_WITH_REASON(
+            context->GetNodeName(), "boxes", std::to_string(boxesShape->GetDim(1)).c_str(), "boxes.shape[1] must be 4");
         return ge::GRAPH_FAILED;
     }
+    if (boxesShape->GetDim(0) == 0) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "boxes",
+                                              std::to_string(boxesShape->GetDim(0)).c_str(),
+                                              "boxes.shape[0] must not be zero");
+        return ge::GRAPH_FAILED;
+    }
+    if (cropSizeShape->GetDimNum() != CROP_SIZE_DIM) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "crop_size",
+                                     (std::to_string(cropSizeShape->GetDimNum()) + "D").c_str(), "1D");
+        return ge::GRAPH_FAILED;
+    }
+    if (cropSizeShape->GetDim(0) != CROP_SIZE_LEN) {
+        OP_LOGE_FOR_INVALID_SHAPESIZE_WITH_REASON(context->GetNodeName(), "crop_size",
+                                                  std::to_string(cropSizeShape->GetDim(0)).c_str(),
+                                                  "crop_size.shape[0] must be 2");
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
+}
 
-    // 读取 crop_size 值（值依赖，input index = IDX_CROP_SIZE）
+// 读取 crop_size 值并校验 dtype 和范围
+static ge::graphStatus ReadCropSizeValue(gert::InferShapeContext* context, int64_t& cropHeight, int64_t& cropWidth)
+{
     const gert::Tensor* cropSizeTensor = context->GetInputTensor(IDX_CROP_SIZE);
     OP_CHECK_NULL_WITH_CONTEXT(context, cropSizeTensor);
 
-    int64_t cropHeight = ge::UNKNOWN_DIM;
-    int64_t cropWidth = ge::UNKNOWN_DIM;
+    ge::DataType cropSizeDtype = context->GetInputDesc(IDX_CROP_SIZE)->GetDataType();
+    if (cropSizeDtype != ge::DT_INT32) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "crop_size", Ops::Base::ToString(cropSizeDtype).c_str(),
+                                  "INT32");
+        return ge::GRAPH_FAILED;
+    }
 
-    // crop_size 非常量时（动态 shape），编译期无法获取具体值
-    // 设输出维度为 UNKNOWN_DIM，跳过约束检查，由 tiling 阶段兜底
+    cropHeight = ge::UNKNOWN_DIM;
+    cropWidth = ge::UNKNOWN_DIM;
+
     if (cropSizeTensor->GetAddr() != nullptr) {
         const int32_t* cropSizeData = cropSizeTensor->GetData<int32_t>();
         OP_CHECK_NULL_WITH_CONTEXT(context, cropSizeData);
         cropHeight = static_cast<int64_t>(cropSizeData[0]);
         cropWidth = static_cast<int64_t>(cropSizeData[1]);
 
-        // 约束4 前置: crop_height/crop_width 必须 > 0
         if (cropHeight <= 0 || cropWidth <= 0) {
             std::string valMsg = "[" + std::to_string(cropHeight) + ", " + std::to_string(cropWidth) + "]";
             OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "crop_size", valMsg.c_str(),
                                                   "crop_height and crop_width must be positive");
             return ge::GRAPH_FAILED;
         }
-
-        // 约束4: max(crop_h, crop_w) <= 16
         if (cropHeight > CROP_DIM_MAX || cropWidth > CROP_DIM_MAX) {
             std::string valMsg = "[" + std::to_string(cropHeight) + ", " + std::to_string(cropWidth) + "]";
             OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "crop_size", valMsg.c_str(),
@@ -109,16 +117,43 @@ static ge::graphStatus InferShapeCropAndResize(gert::InferShapeContext* context)
     } else {
         OP_LOGD(context->GetNodeName(), "crop_size is non-const tensor, set output dims to UNKNOWN_DIM");
     }
+    return ge::GRAPH_SUCCESS;
+}
 
-    // 设置输出 shape: [num_boxes, crop_height, crop_width, depth]
-    // unknown dim (-1) 通过 GetDim 直接传递到输出，无需特殊处理
+static ge::graphStatus InferShapeCropAndResize(gert::InferShapeContext* context)
+{
+    OP_LOGD(context->GetNodeName(), "Begin to do InferShapeCropAndResize");
+
+    const gert::Shape* xShape = context->GetInputShape(IDX_X);
+    OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
+    const gert::Shape* boxesShape = context->GetInputShape(IDX_BOXES);
+    OP_CHECK_NULL_WITH_CONTEXT(context, boxesShape);
+    const gert::Shape* cropSizeShape = context->GetInputShape(IDX_CROP_SIZE);
+    OP_CHECK_NULL_WITH_CONTEXT(context, cropSizeShape);
+
+    if (Ops::Base::IsUnknownRank(*xShape) || Ops::Base::IsUnknownRank(*boxesShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as UnknownRank");
+        gert::Shape* yShape = context->GetOutputShape(0);
+        OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
+        Ops::Base::SetUnknownRank(*yShape);
+        return GRAPH_SUCCESS;
+    }
+
+    OP_CHECK_IF(ValidateInputShapes(context, xShape, boxesShape, cropSizeShape) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "ValidateInputShapes failed"), return ge::GRAPH_FAILED);
+
+    int64_t cropHeight = ge::UNKNOWN_DIM;
+    int64_t cropWidth = ge::UNKNOWN_DIM;
+    OP_CHECK_IF(ReadCropSizeValue(context, cropHeight, cropWidth) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "ReadCropSizeValue failed"), return ge::GRAPH_FAILED);
+
     gert::Shape* yShape = context->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
     yShape->SetDimNum(X_DIM);
-    yShape->SetDim(0, boxesShape->GetDim(0)); // num_boxes（-1 时自然传递）
-    yShape->SetDim(1, cropHeight);            // crop_height
-    yShape->SetDim(2, cropWidth);             // crop_width
-    yShape->SetDim(3, xShape->GetDim(3));     // depth（-1 时自然传递）
+    yShape->SetDim(0, boxesShape->GetDim(0));
+    yShape->SetDim(1, cropHeight);
+    yShape->SetDim(2, cropWidth);
+    yShape->SetDim(3, xShape->GetDim(3));
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeCropAndResize");
     return GRAPH_SUCCESS;
