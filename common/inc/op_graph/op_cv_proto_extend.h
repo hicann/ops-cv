@@ -227,32 +227,6 @@ REG_OP(NonMaxSuppressionV4)
     .OP_END_FACTORY_REG(NonMaxSuppressionV4)
 
 /**
-*@brief Judges whether the bounding box is valid. It is a customized
-* FasterRcnn operator .
-
-*@par Inputs:
-* Two inputs, including:
-* @li bbox_tensor: Bounding box. A 2D Tensor of type float16 or float32 with shape (N, 4).
-* "N" indicates the number of bounding boxes, the value "4" indicates "x0",
-* "x1", "y0", and "y1".
-* @li img_metas: Valid boundary value of the image. A 1D Tensor of type float16 or float32
-* with shape (16,) \n
-
-*@par Outputs:
-*valid_tensor: A bool with shape (N, 1), specifying whether an input anchor is
-* in an image. "1" indicates valid, while "0" indicates invalid . \n
-
-*@attention Constraints:
-* 16 "img_metas" are input. The first three numbers (height, width, ratio) are
-* valid, specifying the valid boundary (heights x ratio, weights x ratio).
-*/
-REG_OP(CheckValid)
-    .INPUT(bbox_tensor, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .INPUT(img_metas, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(valid_tensor, TensorType({DT_INT8}))
-    .OP_END_FACTORY_REG(CheckValid)
-
-/**
 * @brief First calculate the minimum closure area of the two boxes, IoU,
 * The DIoU is obtained by combining the center distance and IoU. \n
 

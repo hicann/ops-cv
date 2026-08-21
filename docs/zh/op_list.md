@@ -816,5 +816,15 @@
     <td>AI Core</td>
     <td>完成带掩码非极大值抑制计算。</td>
   </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../objdetect/check_valid/README.md">check_valid</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>检查给定的边界框（Bounding Boxes）是否位于指定的原始图片有效边界内。</td>
+  </tr>
 </tbody>
 </table>
