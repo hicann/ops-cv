@@ -98,6 +98,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/dilation2_d_backprop_input/README.md">dilation2_d_backprop_input</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>Dilation2D形态学膨胀操作的输入梯度反向传播算子。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/extract_glimpse_v2/README.md">extract_glimpse_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -806,7 +816,7 @@
     <td>AI Core</td>
     <td>对YOLOv2/v3目标检测网络的检测特征图进行数据重组和激活处理，将原始卷积输出转换为检测框坐标、目标置信度和类别概率三个输出。</td>
   </tr>
-  <tr>
+   <tr>
     <td>image</td>
     <td><a href="../../image/nms_with_mask/README.md">nms_with_mask</a></td>
     <td>&check;</td>
@@ -815,7 +825,7 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>完成带掩码非极大值抑制计算。</td>
-  </tr>
+   </tr>
   <tr>
     <td>image</td>
     <td><a href="../../objdetect/check_valid/README.md">check_valid</a></td>
