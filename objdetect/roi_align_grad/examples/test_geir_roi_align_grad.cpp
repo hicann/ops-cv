@@ -188,7 +188,8 @@ int CreateOppInGraph(DataType inDtype, std::vector<ge::Tensor>& input, std::vect
     ADD_INPUT(1, ydiff, inDtype, ydiffShape);
     ADD_INPUT(2, rois, inDtype, roisShape);
 
-    ADD_OUTPUT(1, xdiff, inDtype, ({1, 3, 14, 14}));
+    std::vector<int64_t> xdiffShape = {1, 3, 14, 14};
+    ADD_OUTPUT(1, xdiff, inDtype, xdiffShape);
 
     outputs.push_back(add1);
     // 添加完毕
@@ -212,12 +213,6 @@ int main(int argc, char* argv[])
 
     std::vector<Operator> inputs{};
     std::vector<Operator> outputs{};
-
-    if (argc < 2) {
-        printf("Usage: %s <arg>\n", argv[0]);
-        return FAILED;
-    }
-    std::cout << argv[1] << std::endl;
 
     DataType inDtype = DT_FLOAT;
 
