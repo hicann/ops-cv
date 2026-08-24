@@ -111,7 +111,7 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor* grad_
     CHECK_RET(grad_x_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto idx_contiguous = l0op::Contiguous(idx, uniqueExecutor.get());
-    CHECK_RET(grad_x_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    CHECK_RET(idx_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
     auto weight_contiguous = l0op::Contiguous(weight, uniqueExecutor.get());
     CHECK_RET(weight_contiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
