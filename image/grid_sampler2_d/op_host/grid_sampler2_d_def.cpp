@@ -29,12 +29,11 @@ public:
             .UnknownShapeFormat({ge::FORMAT_NCHW, ge::FORMAT_NCHW})
             .AutoContiguous();
         // grid: (N, H_out, W_out, 2), dtype with x
-        // grid 最后一维是坐标通道(x,y)，NHWC 语义正确
         this->Input("grid")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_FLOAT})
-            .Format({ge::FORMAT_NHWC, ge::FORMAT_NHWC})
-            .UnknownShapeFormat({ge::FORMAT_NHWC, ge::FORMAT_NHWC})
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
             .AutoContiguous();
         // y: (N, C, H_out, W_out), dtype with x
         this->Output("y")
