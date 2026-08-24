@@ -50,6 +50,16 @@ public:
         this->AICore().AddConfig("ascend910_93");
         this->AICore().AddConfig("kirinx90");
         this->AICore().AddConfig("kirin9030");
+
+        OpAICoreConfig aicoreConfig;
+        aicoreConfig.DynamicCompileStaticFlag(true)
+            .DynamicFormatFlag(false)
+            .DynamicRankSupportFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .NeedCheckSupportFlag(false)
+            .PrecisionReduceFlag(true)
+            .ExtendCfgInfo("opFile.value", "stack_group_points_apt");
+        this->AICore().AddConfig("ascend950", aicoreConfig);
     }
 };
 

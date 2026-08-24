@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>
-#include "../../../op_host/stack_group_points_tiling.h"
+#include "../../../op_host/arch22/stack_group_points_tiling.h"
 #include "tiling_case_executor.h"
 #include "tiling_context_faker.h"
 

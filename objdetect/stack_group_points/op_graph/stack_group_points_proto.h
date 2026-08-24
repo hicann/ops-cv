@@ -33,6 +33,8 @@ namespace ge {
 * @par Third-party framework compatibility
 * Compatible with the MMCV operator GroupPoints(StackGroupPoints branch).
 */
+#ifndef OPS_PROTO_DEF_STACKGROUPPOINTS
+#define OPS_PROTO_DEF_STACKGROUPPOINTS
 REG_OP(StackGroupPoints)
     .INPUT(features, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(features_batch_cnt, TensorType({DT_INT32, DT_INT64}))
@@ -40,5 +42,6 @@ REG_OP(StackGroupPoints)
     .INPUT(indices_batch_cnt, TensorType({DT_INT32, DT_INT64}))
     .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OP_END_FACTORY_REG(StackGroupPoints)
+#endif
 } // namespace ge
 #endif // OPS_BUILT_IN_OP_PROTO_INC_EXPERIMENT_OPS_H_

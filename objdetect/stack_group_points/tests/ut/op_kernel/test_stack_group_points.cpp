@@ -21,7 +21,7 @@
 #endif
 
 #include <cstdint>
-#include "../../../op_host/stack_group_points_tiling.h"
+#include "../../../op_host/arch22/stack_group_points_tiling.h"
 
 using namespace std;
 extern "C" __global__ __aicore__ void stack_group_points(GM_ADDR features, GM_ADDR features_batch_cnt, GM_ADDR indices,

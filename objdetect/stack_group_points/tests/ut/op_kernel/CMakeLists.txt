@@ -10,7 +10,7 @@
 
 if (UT_TEST_ALL OR OP_KERNEL_UT)
 set(stack_group_points_tiling_files
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/stack_group_points_tiling.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/arch22/stack_group_points_tiling.cpp
     )
     # 使用AddOpTestCase
     # param1：算子名称，以kernel方式命名
