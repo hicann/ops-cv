@@ -37,7 +37,7 @@ public:
     __aicore__ inline void Init(GM_ADDR input, GM_ADDR rois, GM_ADDR output,
                                 const RoiAlignRotatedTilingData* tiling_data)
     {
-        ASSERT(GetBlockNum() != 0 && "block dim can not be zero!");
+        ASSERT(GetBlockNum() != 0 && "block dim can not be 0!");
 
         tileNum = tiling_data->tileNum;
         numBlocks = tiling_data->numBlocks;
@@ -89,7 +89,7 @@ public:
 
         uint32_t rois_buffer_size = rois_num_per_loop * sizeof(float);
 
-        ASSERT(tileNum != 0 && "tile num can not be zero!");
+        ASSERT(tileNum != 0 && "tile num can not be 0!");
 
         inputGM.SetGlobalBuffer((__gm__ float*)input, batch_size * channels * input_h * input_w);
         roisGM.SetGlobalBuffer((__gm__ float*)rois, (rois_num_aligned * rois_info_num));

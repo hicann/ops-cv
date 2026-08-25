@@ -125,7 +125,7 @@ ge::graphStatus TilingProcess(ThreeInterpolateBackwardTilingData& tiling_host, c
     tiling_host.set_c_move_num(tiling_host.get_c_move_num() >= tiling_host.get_c1() ? tiling_host.get_c1() :
                                                                                       tiling_host.get_c_move_num());
     if (tiling_host.get_c_move_num() == 0) {
-        OP_LOGD(context, "c_move_num is zero.");
+        OP_LOGD(context, "c_move_num is 0.");
         return ge::GRAPH_FAILED;
     }
 

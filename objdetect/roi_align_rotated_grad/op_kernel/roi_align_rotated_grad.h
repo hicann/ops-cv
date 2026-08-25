@@ -36,7 +36,7 @@ public:
     __aicore__ inline void Init(GM_ADDR grad_output, GM_ADDR rois, GM_ADDR grad_input,
                                 const RoiAlignRotatedGradTilingData* __restrict tiling_data)
     {
-        ASSERT(GetBlockNum() != 0 && "block dim can not be zero!");
+        ASSERT(GetBlockNum() != 0 && "block dim can not be 0!");
 
         coreRoisNums = tiling_data->coreRoisNums;
         coreRoisTail = tiling_data->coreRoisTail;

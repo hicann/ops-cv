@@ -644,7 +644,7 @@ bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NHWC_UB2UB()
                 OP_LOGI(context_->GetNodeName(), "It must be an enlarged scene"), return false);
     int64_t remainW = lenDesW_ % lenSrcW_;
     int64_t remainH = lenDesH_ % lenSrcH_;
-    OP_CHECK_IF((remainW != 0) || (remainH != 0), OP_LOGI(context_->GetNodeName(), "remainW and remainH must be zero"),
+    OP_CHECK_IF((remainW != 0) || (remainH != 0), OP_LOGI(context_->GetNodeName(), "remainW and remainH must be 0"),
                 return false);
     OP_CHECK_IF((originalScaleH_ != 0.0f) || (originalScaleW_ != 0.0f),
                 OP_LOGI(context_->GetNodeName(), "originalScaleH or originalScaleW is not 0.0f"), return false);
@@ -1063,7 +1063,7 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::Init()
     OP_LOGD(context_->GetNodeName(), "Enter ResizeNearestNeighborV2AscendCTilingImpl init.");
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
     coreNum_ = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_, "coreNum must greater than zero, but is %ld", coreNum_),
+    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %ld", coreNum_),
                 return ge::GRAPH_FAILED);
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);

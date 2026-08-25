@@ -124,7 +124,7 @@ public:
     __aicore__ inline void Init(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, const IouV2TilingData* tilingData,
                                 uint64_t tmpTensorBytes)
     {
-        ASSERT(GetBlockNum() != 0 && "Block dim can not be zero!");
+        ASSERT(GetBlockNum() != 0 && "Block dim can not be 0!");
         this->eps = tilingData->eps;
         this->totalLength = tilingData->gtBoxLength;
         this->tileLen = tilingData->tileLength;
@@ -198,7 +198,7 @@ public:
 
     __aicore__ inline void Init(GM_ADDR bboxes, GM_ADDR gtboxes, GM_ADDR overlap, const IouV2TilingData* tilingData)
     {
-        ASSERT(GetBlockNum() != 0 && "Block dim can not be zero!");
+        ASSERT(GetBlockNum() != 0 && "Block dim can not be 0!");
         this->eps = tilingData->eps;
         this->bBoxLength = tilingData->bBoxLength;
         this->gtBoxLength = tilingData->gtBoxLength;

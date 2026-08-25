@@ -793,7 +793,7 @@ ge::graphStatus ResizeBilinearV2AscendCTilingImpl::Init(const ResizeBilinearV2Co
     OP_LOGD(context_->GetNodeName(), "Enter ResizeBilinearV2AscendCTilingImpl init.");
     coreNum_ = compileInfo->core_num;
     ubSize_ = compileInfo->ubSize;
-    OP_CHECK_IF(coreNum_ <= 0 || ubSize_ <= 0, OP_LOGE(context_->GetNodeName(), "coreNum or ubSize is small than zero"),
+    OP_CHECK_IF(coreNum_ <= 0 || ubSize_ <= 0, OP_LOGE(context_->GetNodeName(), "coreNum or ubSize is small than 0"),
                 return ge::GRAPH_FAILED);
     ubBlockNum_ = Ops::Base::CeilDiv(ubSize_, ONE_BLOCK_SIZE) - RSV_BLOCK_NUM;
     OP_LOGI(context_->GetNodeName(), "coreNum_ is %ld, ubSize_ is %ld, ubBlockNum_ is %ld", coreNum_, ubSize_,

@@ -271,12 +271,12 @@ ge::graphStatus UpsampleBilinear2dAARegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNumAiv = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNumAiv <= 0, OP_LOGE(context_, "coreNum must greater than zero, but is %ld", coreNumAiv),
+    OP_CHECK_IF(coreNumAiv <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %ld", coreNumAiv),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNumAiv;
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than 0, but is %lu", ubSize),
                 return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubSize is %lu", coreNumAiv, ubSize);
     baseTiling_.ubSize = static_cast<int32_t>(ubSize);

@@ -83,7 +83,7 @@ static ge::graphStatus ValidateAndExtractDims(gert::TilingContext* context, int6
                 return ge::GRAPH_FAILED);
     // Validate no zero dimensions
     OP_CHECK_IF(N <= 0 || C <= 0 || H <= 0 || W <= 0,
-                OP_LOGE(context, "zero or negative dim: N=%ld C=%ld H=%ld W=%ld", N, C, H, W), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "0 or negative dim: N=%ld C=%ld H=%ld W=%ld", N, C, H, W), return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

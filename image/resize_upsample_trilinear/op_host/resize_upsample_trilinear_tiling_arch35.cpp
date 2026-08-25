@@ -159,7 +159,7 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNumAiv = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNumAiv <= 0, OP_LOGE(context_, "coreNum must greater than zero, but is %d", coreNumAiv),
+    OP_CHECK_IF(coreNumAiv <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %d", coreNumAiv),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNumAiv;
 
@@ -225,11 +225,11 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShape()
     OP_CHECK_IF((baseTiling_.lenN != outputShape.GetDim(CONST_0)) || (baseTiling_.lenC != outputShape.GetDim(CONST_1)),
                 OP_LOGE(context_, "The N and C dimensions of input and output must be same"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(!(baseTiling_.lenN > 0 && baseTiling_.lenC > 0),
-                OP_LOGE(context_, "N and C dimensions of input and output must be greater than zero"),
+                OP_LOGE(context_, "N and C dimensions of input and output must be greater than 0"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(!(baseTiling_.inD > 0 && baseTiling_.inH > 0 && baseTiling_.inW > 0 && baseTiling_.outD > 0 &&
                   baseTiling_.outH > 0 && baseTiling_.outW > 0),
-                OP_LOGE(context_, "D/H/W dimensions of input and output must be greater than zero"),
+                OP_LOGE(context_, "D/H/W dimensions of input and output must be greater than 0"),
                 return ge::GRAPH_FAILED);
 
     uint64_t uint32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());

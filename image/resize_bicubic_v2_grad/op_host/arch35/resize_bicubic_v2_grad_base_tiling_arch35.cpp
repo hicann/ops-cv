@@ -112,7 +112,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckDtypeValid()
     if (calcInfo_.gradsDtypeSize <= 0 || calcInfo_.yDtypeSize <= 0) {
         std::string dtypeMsg = Ops::Base::ToString(inputInfo_.gradsDtype) + " and " +
                                Ops::Base::ToString(inputInfo_.yDtype);
-        std::string reasonMsg = "The dtype sizes of input grads and output y must be greater than zero";
+        std::string reasonMsg = "The dtype sizes of input grads and output y must be greater than 0";
         OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context_->GetNodeName(), "grads and y", dtypeMsg.c_str(),
                                                reasonMsg.c_str());
         return ge::GRAPH_FAILED;
@@ -204,7 +204,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::CheckAxesValid()
     inputInfo_.lenDstW = inputInfo_.gradsShape.GetDim(formatIsNHWC ? NUM_2 : NUM_3);
 
     if (inputInfo_.lenN <= 0 || inputInfo_.lenC <= 0) {
-        std::string reasonMsg = "The N-dimension and C-dimension of grads and y must be greater than zero, "
+        std::string reasonMsg = "The N-dimension and C-dimension of grads and y must be greater than 0, "
                                 "where C is inferred from the 4D shape of grads based on its format "
                                 "(axis 1 for NCHW, axis 3 for NHWC), and N is the size of axis 0";
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeName(), "grads",

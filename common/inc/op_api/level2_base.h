@@ -314,7 +314,7 @@ static inline bool CheckPositiveValues(const aclIntArray* array, const char* arr
 {
     for (size_t i = 0; i < size; ++i) {
         if ((*array)[i] <= 0) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "%s[%zu] should be greater than zero, but got %ld.", arrayName, i,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "%s[%zu] should be greater than 0, but got %ld.", arrayName, i,
                     (*array)[i]);
             return false;
         }

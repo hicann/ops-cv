@@ -113,7 +113,7 @@ ge::graphStatus ValidateAndFill(gert::TilingContext* context, CombinedNonMaxSupp
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
     const int64_t taskCount = batch * classes;
     const int32_t usedCoreNum = static_cast<int32_t>(std::min<int64_t>(compileInfo->coreNum, taskCount));
-    OP_CHECK_IF(usedCoreNum <= 0, OP_LOGE(context, "used core num is zero"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(usedCoreNum <= 0, OP_LOGE(context, "used core num is 0"), return ge::GRAPH_FAILED);
 
     const uint64_t selectedCount = static_cast<uint64_t>(taskCount) * static_cast<uint64_t>(maxPerClass);
     uint64_t offset = 0;

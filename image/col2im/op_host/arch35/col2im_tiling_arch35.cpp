@@ -177,7 +177,7 @@ ge::graphStatus Col2imTiling::GetPlatformInfo()
     OP_CHECK_IF(totalCoreNum_ <= 0, OP_LOGE(context_, "Failed to core num."), return ge::GRAPH_FAILED);
     uint64_t ubSize;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than zero, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than 0, but is %lu", ubSize),
                 return ge::GRAPH_FAILED);
     auto localMemorySize = context_->SetLocalMemorySize(ubSize - DCACHE_SIZE);
     OP_LOGD(context_, "ubSize = %lu, localMemorySize = %d.", ubSize, localMemorySize);

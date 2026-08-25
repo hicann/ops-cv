@@ -63,7 +63,7 @@ static ge::graphStatus ParseMeansStds(gert::TilingContext* context, BoundingBoxE
     OP_CHECK_IF(means == nullptr || stds == nullptr, OP_LOGE(context, "means or stds data is null"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(stds[0] == 0.0f || stds[1] == 0.0f || stds[2] == 0.0f || stds[3] == 0.0f,
-                OP_LOGE(context, "stds element is 0, division by zero"), return ge::GRAPH_FAILED);
+                OP_LOGE(context, "stds element is 0, division by 0"), return ge::GRAPH_FAILED);
 
     tiling->means0 = means[0];
     tiling->means1 = means[1];

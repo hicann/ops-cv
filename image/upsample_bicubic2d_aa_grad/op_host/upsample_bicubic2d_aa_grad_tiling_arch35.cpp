@@ -318,12 +318,12 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNum = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than zero, but is %ld", coreNum),
+    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %ld", coreNum),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNum;
     uint64_t ubMemSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubMemSize);
-    OP_CHECK_IF(ubMemSize <= 0UL, OP_LOGE(context_, "ubMemSize must greater than zero, but is %lu", ubMemSize),
+    OP_CHECK_IF(ubMemSize <= 0UL, OP_LOGE(context_, "ubMemSize must greater than 0, but is %lu", ubMemSize),
                 return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubMemSize is %lu", coreNum, ubMemSize);
     baseTiling_.ubSize = static_cast<int32_t>(ubMemSize);

@@ -294,7 +294,7 @@ static ge::graphStatus TilingPrepare4ResizeLinear(gert::TilingParseContext* cont
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
-    OP_CHECK_IF((compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than zero"),
+    OP_CHECK_IF((compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than 0"),
                 return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }

@@ -98,15 +98,15 @@ static bool CheckArrayValue(const aclIntArray* kernelSize, const aclIntArray* di
                             const aclIntArray* stride)
 {
     OP_CHECK((*kernelSize)[0] > 0 && (*kernelSize)[1] > 0,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Kernel size must be greater than zero, but got kernelSize=(%ld,%ld).",
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Kernel size must be greater than 0, but got kernelSize=(%ld,%ld).",
                      (*kernelSize)[0], (*kernelSize)[1]),
              return false);
     OP_CHECK((*stride)[0] > 0 && (*stride)[1] > 0,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Stride must be greater than zero, but got stride=(%ld,%ld).",
-                     (*stride)[0], (*stride)[1]),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Stride must be greater than 0, but got stride=(%ld,%ld).", (*stride)[0],
+                     (*stride)[1]),
              return false);
     OP_CHECK((*dilation)[0] > 0 && (*dilation)[1] > 0,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Dilation must be greater than zero, but got dilation=(%ld,%ld).",
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Dilation must be greater than 0, but got dilation=(%ld,%ld).",
                      (*dilation)[0], (*dilation)[1]),
              return false);
     OP_CHECK((*padding)[0] >= 0 && (*padding)[1] >= 0,

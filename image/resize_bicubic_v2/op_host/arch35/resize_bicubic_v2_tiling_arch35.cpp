@@ -327,7 +327,7 @@ int64_t ResizeBicubicV2Tiling::FindBest2DTiling(int64_t lenM, int64_t lenN)
 
         int64_t mFactor = Ops::Base::CeilDiv(lenM, m);
         int64_t nFactor = Ops::Base::CeilDiv(lenN, n);
-        OP_CHECK_IF((nFactor == 0 || mFactor == 0), OP_LOGE("FindBest2DTiling", "nFactor or mFactor is zero"),
+        OP_CHECK_IF((nFactor == 0 || mFactor == 0), OP_LOGE("FindBest2DTiling", "nFactor or mFactor is 0"),
                     return ge::GRAPH_FAILED);
         int64_t delta = mFactor * nFactor;
         if (m * n == coreNum_) {
@@ -425,7 +425,7 @@ void ResizeBicubicV2Tiling::DoTilingPointCopy()
     // N H多核双切分
     int64_t np = FindBest2DTiling(lenN_, lenDesH_);
     nFactor_ = Ops::Base::CeilDiv(lenN_, np);
-    OP_CHECK_IF((np == 0), OP_LOGE("DoTilingPointCopy", "np is zero"), return);
+    OP_CHECK_IF((np == 0), OP_LOGE("DoTilingPointCopy", "np is 0"), return);
     int64_t hp = coreNum_ / np;
     hFactor_ = Ops::Base::CeilDiv(lenDesH_, hp);
 
@@ -438,7 +438,7 @@ void ResizeBicubicV2Tiling::DoTilingPointCopy()
     }
 
     realCoreNum_ = std::min(realCoreNum_, coreNum_);
-    OP_CHECK_IF((cFactor_ == 0), OP_LOGE("DoTilingPointCopy", "cFactor_ is zero"), return);
+    OP_CHECK_IF((cFactor_ == 0), OP_LOGE("DoTilingPointCopy", "cFactor_ is 0"), return);
     // UB切分
     int64_t wcLenAlign = Ops::Base::CeilAlign(wFactor_ * cFactor_, ONE_BLOCK_SIZE / xDtypeSize_);
     int64_t vol4AxisC = (ubBlockNum_ / DB_BUFF_NUM) * ONE_BLOCK_SIZE / xDtypeSize_;
@@ -687,7 +687,7 @@ static ge::graphStatus TilingPrepare4ResizeBicubicV2(gert::TilingParseContext* c
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
-    OP_CHECK_IF((compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than zero"),
+    OP_CHECK_IF((compileInfo->totalUbSize <= 0), OP_LOGE(context->GetNodeName(), "ubSize is small than 0"),
                 return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }

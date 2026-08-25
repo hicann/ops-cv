@@ -83,7 +83,7 @@ void ResizeLinearGradTiling::CalculateCoreNum(int64_t inputSize, int64_t& realCo
                                               int64_t& ubLoopSizeB, int64_t& blkProcessNum)
 {
     realCoreNum = (inputSize < (static_cast<int64_t>(coreNum_))) ? inputSize : coreNum_;
-    OP_CHECK_IF((realCoreNum == 0), OP_LOGE("CalculateCoreNum", "realCoreNum is zero"), return);
+    OP_CHECK_IF((realCoreNum == 0), OP_LOGE("CalculateCoreNum", "realCoreNum is 0"), return);
     ubLoopSizeT = Ops::Base::FloorDiv(inputSize, realCoreNum); // 后面的每个核处理的个数
     ubLoopSizeB = inputSize - ubLoopSizeT * realCoreNum;       // 前面的核个数
     blkProcessNum = ubLoopSizeT + 1;                           // 前面的核每个核处理个数
@@ -128,7 +128,7 @@ void ResizeLinearGradTiling::ComputeDesL1()
 void ResizeLinearGradTiling::ComputeDesL1AndIntScale()
 {
     // output_l == 1,奇整数的scale，所以输出的nc直接搬出到输入的某个L点即可，无确定性问题
-    OP_LOGI(context_->GetNodeName(), "enter lenDesL 1 and alignCorners_ is zero mode");
+    OP_LOGI(context_->GetNodeName(), "enter lenDesL 1 and alignCorners_ is 0 mode");
     schId_ = DIM_4;
     isDetermine_ = static_cast<uint64_t>(0);
     alignCorners_ = static_cast<uint64_t>(0);
@@ -462,17 +462,16 @@ static ge::graphStatus TilingPrepare4ResizeLinearGrad(gert::TilingParseContext* 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->totalCoreNum = static_cast<int32_t>(ascendcPlatform.GetCoreNumAiv());
     OP_CHECK_IF((compileInfo->totalCoreNum <= 0),
-                OP_LOGE(context->GetNodeName(), "coreNum is invalid, must greater than zero"), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "coreNum is invalid, must greater than 0"), return ge::GRAPH_FAILED);
 
     uint64_t ubSizePlatForm = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
     OP_CHECK_IF((compileInfo->totalUbSize <= 0),
-                OP_LOGE(context->GetNodeName(), "ubSize is invalid, must greater than zero"), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "ubSize is invalid, must greater than 0"), return ge::GRAPH_FAILED);
     compileInfo->blockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context));
     OP_CHECK_IF((compileInfo->blockSize <= 0),
-                OP_LOGE(context->GetNodeName(), "blockSize is invalid, must greater than zero"),
-                return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "blockSize is invalid, must greater than 0"), return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
