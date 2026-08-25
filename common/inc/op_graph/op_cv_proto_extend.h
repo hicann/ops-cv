@@ -725,33 +725,6 @@ REG_OP(RotatedBoxEncode)
     .OP_END_FACTORY_REG(RotatedBoxEncode)
 
 /**
-* @brief RotatedOverlaps . \n
-
-*@par Inputs:
-*@li boxes : data of grad increment, a 3D Tensor of type float32 with
-* shape (B, 5, N). "N" indicates the number of boxes, and the value
-* "5" refers to [x1, y1, x2, y2, theta] or [x, y, w, h, theta].
-* @li query_boxes: Bounding boxes, a 3D Tensor of type float32 with
-* shape (B, 5, K). "K" indicates the number of boxes, and the value
-* "5" refers to [x1, y1, x2, y2, theta] or [x, y, w, h, theta].
-
-* @par Attributes:
-* trans: An optional attr, true for 'xyxyt', false for 'xywht'.
-
-*@par Outputs:
-* overlaps: A 3D Tensor of type float32 with shape [B, N, K].
-
-*@attention Constraints:
-* In each batch, the invalid box cannot appear before the valid box.
-*/
-REG_OP(RotatedOverlaps)
-    .INPUT(boxes, TensorType({DT_FLOAT}))
-    .INPUT(query_boxes, TensorType({DT_FLOAT}))
-    .OUTPUT(overlaps, TensorType({DT_FLOAT}))
-    .ATTR(trans, Bool, false)
-    .OP_END_FACTORY_REG(RotatedOverlaps)
-
-/**
 *@brief Computes Fastrcnn RpnProposals function . \n
 
 *@par Inputs:

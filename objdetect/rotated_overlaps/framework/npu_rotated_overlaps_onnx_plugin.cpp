@@ -14,7 +14,7 @@
  */
 
 #include "onnx_common.h"
-#include "op_cv_proto_extend.h"
+#include "rotated_overlaps_proto.h"
 
 using namespace std;
 using namespace ge;

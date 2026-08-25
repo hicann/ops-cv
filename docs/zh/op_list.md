@@ -798,6 +798,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/rotated_overlaps/README.md">rotated_overlaps</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>计算两组二维旋转矩形框之间的交叠面积。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/stack_group_points/README.md">stack_group_points</a></td>
     <td>&check;</td>
     <td>&check;</td>

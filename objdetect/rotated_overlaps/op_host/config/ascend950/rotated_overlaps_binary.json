@@ -1,0 +1,18 @@
+{
+  "op_type": "RotatedOverlaps",
+  "op_list": [
+    {
+      "bin_filename": "RotatedOverlaps_float32",
+      "inputs": [
+        {"name": "boxes", "index": 0, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "query_boxes", "index": 1, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "outputs": [
+        {"name": "overlaps", "index": 0, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "attrs": [
+        {"name": "trans", "dtype": "bool", "value": null}
+      ]
+    }
+  ]
+}
