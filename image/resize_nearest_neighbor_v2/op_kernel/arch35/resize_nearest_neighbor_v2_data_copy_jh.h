@@ -22,7 +22,8 @@
 namespace ResizeNearestNeighborV2 {
 using namespace AscendC;
 
-template <typename T>
+// IdxType 决定输出位置 scalar 计算使用的类型：idxInt32 为 1 时为 int32_t，为 0 时为 int64_t。
+template <typename T, typename IdxType = int64_t>
 class TILING_KEY_DATA_COPY_NHWC_JH : public ResizeNearestNeighborV2Base<T> {
 public:
     __aicore__ inline TILING_KEY_DATA_COPY_NHWC_JH(){};
@@ -51,22 +52,31 @@ private:
     __aicore__ inline void ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail, int64_t hwTimes, int64_t hwTail);
 };
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(jhParams& loopParams, int64_t srcNOffset,
-                                                                       int64_t nBlockOffset, int64_t hwBlockOffset,
-                                                                       int64_t mode)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T, IdxType>::ComputeJhCutHw(jhParams& loopParams,
+                                                                                int64_t srcNOffset,
+                                                                                int64_t nBlockOffset,
+                                                                                int64_t hwBlockOffset, int64_t mode)
 {
     LocalTensor<T> inputUb = this->xQue_.template AllocTensor<T>();
     for (int64_t howo = 0; howo < loopParams.hwOnceLoop; howo++) {
-        int64_t ho = (hwBlockOffset + loopParams.hw * this->tilingData_->wcLoop + howo) / this->tilingData_->lenDesW;
-        int64_t wo = (hwBlockOffset + loopParams.hw * this->tilingData_->wcLoop + howo) % this->tilingData_->lenDesW;
-        int64_t h, w;
+        IdxType ho = static_cast<IdxType>((hwBlockOffset + loopParams.hw * this->tilingData_->wcLoop + howo) /
+                                          this->tilingData_->lenDesW);
+        IdxType wo = static_cast<IdxType>((hwBlockOffset + loopParams.hw * this->tilingData_->wcLoop + howo) %
+                                          this->tilingData_->lenDesW);
+        IdxType h, w;
         if (mode == 0) {
-            h = this->Min(this->Floor(static_cast<float>((ho + this->bias_) * this->hScale_)), this->srcHSize_ - 1);
-            w = this->Min(this->Floor(static_cast<float>((wo + this->bias_) * this->wScale_)), this->srcWSize_ - 1);
+            h = this->template MinT<IdxType>(
+                this->template FloorT<IdxType>(static_cast<float>((ho + this->bias_) * this->hScale_)),
+                static_cast<IdxType>(this->srcHSize_ - 1));
+            w = this->template MinT<IdxType>(
+                this->template FloorT<IdxType>(static_cast<float>((wo + this->bias_) * this->wScale_)),
+                static_cast<IdxType>(this->srcWSize_ - 1));
         } else {
-            h = this->Min(this->Round(static_cast<float>(ho * this->hScale_)), this->srcHSize_ - 1);
-            w = this->Min(this->Round(static_cast<float>(wo * this->wScale_)), this->srcWSize_ - 1);
+            h = this->template MinT<IdxType>(this->template RoundT<IdxType>(static_cast<float>(ho * this->hScale_)),
+                                             static_cast<IdxType>(this->srcHSize_ - 1));
+            w = this->template MinT<IdxType>(this->template RoundT<IdxType>(static_cast<float>(wo * this->wScale_)),
+                                             static_cast<IdxType>(this->srcWSize_ - 1));
         }
         int64_t inputOffset = srcNOffset + loopParams.no * this->tilingData_->lenCAlign + h * this->tilingData_->wcNum +
                               w * this->lenC_;
@@ -88,9 +98,9 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeJhCutHw(jhParams&
     this->xQue_.FreeTensor(outputUb);
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop(int64_t no, int64_t nLoopOnce,
-                                                                      processParams& params, int64_t mode)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T, IdxType>::ComputeHwLoop(int64_t no, int64_t nLoopOnce,
+                                                                               processParams& params, int64_t mode)
 {
     jhParams loopParams;
     for (int64_t hw = 0; hw < params.hwLoopTimes; hw++) {
@@ -107,8 +117,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeHwLoop(int64_t no
     ComputeJhCutHw(loopParams, params.srcNOffset, params.nOffset, params.hwOffset, mode);
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeSmallJhCut(processParams& params)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T, IdxType>::ComputeSmallJhCut(processParams& params)
 {
     int64_t mode = this->tilingData_->condition;
     for (int64_t no = 0; no < params.nLoopTimes; no++) {
@@ -117,9 +127,9 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ComputeSmallJhCut(proces
     ComputeHwLoop(params.nLoopTimes, params.nLoopTail, params, mode);
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail,
-                                                                       int64_t hwTimes, int64_t hwTail)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T, IdxType>::ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail,
+                                                                                int64_t hwTimes, int64_t hwTail)
 {
     processParams params;
     params.nLoopTimes = nLoopTimes;
@@ -145,8 +155,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::ProcessPreCore(int64_t n
     }
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T>::Process()
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_JH<T, IdxType>::Process()
 {
     if (this->blockIdx_ == this->tilingData_->realCoreNum - 1) {
         ProcessPreCore(this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast,

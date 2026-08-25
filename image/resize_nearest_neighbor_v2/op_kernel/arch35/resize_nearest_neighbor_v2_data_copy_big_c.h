@@ -23,7 +23,8 @@
 namespace ResizeNearestNeighborV2 {
 using namespace AscendC;
 
-template <typename T>
+// IdxType 决定输出位置 scalar 计算使用的类型：idxInt32 为 1 时为 int32_t，为 0 时为 int64_t。
+template <typename T, typename IdxType = int64_t>
 class TILING_KEY_DATA_COPY_NHWC_BIG_C : public ResizeNearestNeighborV2Base<T> {
 public:
     __aicore__ inline TILING_KEY_DATA_COPY_NHWC_BIG_C(){};
@@ -38,9 +39,9 @@ private:
     __aicore__ inline void ComputeLoopBigCHw(int64_t no, int64_t ho, int64_t wo, int64_t h, int64_t w);
 };
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeOnceBigC(int64_t onceC, int64_t inputOffset,
-                                                                           int64_t outputOffset)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::ComputeOnceBigC(int64_t onceC, int64_t inputOffset,
+                                                                                    int64_t outputOffset)
 {
     LocalTensor<T> inputUb = this->xQue_.template AllocTensor<T>();
     this->copyParams_.blockCount = 1;
@@ -55,9 +56,9 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeOnceBigC(int64
     this->xQue_.FreeTensor(outputUb);
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeC(int64_t no, int64_t ho, int64_t wo, int64_t h,
-                                                                    int64_t w)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::ComputeC(int64_t no, int64_t ho, int64_t wo,
+                                                                             int64_t h, int64_t w)
 {
     for (int64_t ci = 0; ci < this->tilingData_->wcLoopTimesBefore; ci++) {
         int64_t inputOffset = this->blockIdx_ * this->tilingData_->wcLoopTimesLast + no * this->tilingData_->hwcNum +
@@ -75,18 +76,20 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeC(int64_t no, 
     ComputeOnceBigC(this->tilingData_->wcLoopTailBefore, inputOffset, outputOffset);
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigC(int64_t lenN)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::ComputeBigC(int64_t lenN)
 {
     switch (this->tilingData_->condition) {
         case 0: {
             for (int64_t no = 0; no < this->tilingData_->lenN; no++) {
-                for (int64_t ho = 0; ho < this->tilingData_->lenDesH; ho++) {
-                    for (int64_t wo = 0; wo < this->tilingData_->lenDesW; wo++) {
-                        int64_t h = this->Min(this->Floor(static_cast<float>((ho + this->bias_) * this->hScale_)),
-                                              this->srcHSize_ - 1);
-                        int64_t w = this->Min(this->Floor(static_cast<float>((wo + this->bias_) * this->wScale_)),
-                                              this->srcWSize_ - 1);
+                for (IdxType ho = 0; ho < static_cast<IdxType>(this->tilingData_->lenDesH); ho++) {
+                    for (IdxType wo = 0; wo < static_cast<IdxType>(this->tilingData_->lenDesW); wo++) {
+                        IdxType h = this->template MinT<IdxType>(
+                            this->template FloorT<IdxType>(static_cast<float>((ho + this->bias_) * this->hScale_)),
+                            static_cast<IdxType>(this->srcHSize_ - 1));
+                        IdxType w = this->template MinT<IdxType>(
+                            this->template FloorT<IdxType>(static_cast<float>((wo + this->bias_) * this->wScale_)),
+                            static_cast<IdxType>(this->srcWSize_ - 1));
                         ComputeC(no, ho, wo, h, w);
                     }
                 }
@@ -95,10 +98,14 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigC(int64_t l
         }
         case 2: {
             for (int64_t no = 0; no < this->tilingData_->lenN; no++) {
-                for (int64_t ho = 0; ho < this->tilingData_->lenDesH; ho++) {
-                    for (int64_t wo = 0; wo < this->tilingData_->lenDesW; wo++) {
-                        int64_t h = this->Min(this->Round(static_cast<float>(ho * this->hScale_)), this->srcHSize_ - 1);
-                        int64_t w = this->Min(this->Round(static_cast<float>(wo * this->wScale_)), this->srcWSize_ - 1);
+                for (IdxType ho = 0; ho < static_cast<IdxType>(this->tilingData_->lenDesH); ho++) {
+                    for (IdxType wo = 0; wo < static_cast<IdxType>(this->tilingData_->lenDesW); wo++) {
+                        IdxType h = this->template MinT<IdxType>(
+                            this->template RoundT<IdxType>(static_cast<float>(ho * this->hScale_)),
+                            static_cast<IdxType>(this->srcHSize_ - 1));
+                        IdxType w = this->template MinT<IdxType>(
+                            this->template RoundT<IdxType>(static_cast<float>(wo * this->wScale_)),
+                            static_cast<IdxType>(this->srcWSize_ - 1));
                         ComputeC(no, ho, wo, h, w);
                     }
                 }
@@ -110,9 +117,9 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigC(int64_t l
     }
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeLoopBigCHw(int64_t no, int64_t ho, int64_t wo,
-                                                                             int64_t h, int64_t w)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::ComputeLoopBigCHw(int64_t no, int64_t ho,
+                                                                                      int64_t wo, int64_t h, int64_t w)
 {
     for (int64_t ci = 0; ci < this->tilingData_->wcLoopTimesBefore; ci++) {
         int64_t inputOffset = no * this->tilingData_->hwcNum + h * this->tilingData_->wcNum + w * this->lenC_ +
@@ -128,19 +135,23 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeLoopBigCHw(int
     ComputeOnceBigC(this->tilingData_->wcLoopTailBefore, inputOffset, outputOffset);
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigCHw(int64_t lenN, int64_t hwOnceLoop)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::ComputeBigCHw(int64_t lenN, int64_t hwOnceLoop)
 {
     switch (this->tilingData_->condition) {
         case 0: {
             for (int64_t no = 0; no < lenN; no++) {
-                for (int64_t howo = 0; howo < hwOnceLoop; howo++) {
-                    int64_t ho = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) /
-                                 this->tilingData_->lenDesW;
-                    int64_t wo = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) %
-                                 this->tilingData_->lenDesW;
-                    int64_t h = this->Min(this->Floor(static_cast<float>(ho * this->hScale_)), this->srcHSize_ - 1);
-                    int64_t w = this->Min(this->Floor(static_cast<float>(wo * this->wScale_)), this->srcWSize_ - 1);
+                for (IdxType howo = 0; howo < static_cast<IdxType>(hwOnceLoop); howo++) {
+                    IdxType ho = static_cast<IdxType>((this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) /
+                                                      this->tilingData_->lenDesW);
+                    IdxType wo = static_cast<IdxType>((this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) %
+                                                      this->tilingData_->lenDesW);
+                    IdxType h = this->template MinT<IdxType>(
+                        this->template FloorT<IdxType>(static_cast<float>(ho * this->hScale_)),
+                        static_cast<IdxType>(this->srcHSize_ - 1));
+                    IdxType w = this->template MinT<IdxType>(
+                        this->template FloorT<IdxType>(static_cast<float>(wo * this->wScale_)),
+                        static_cast<IdxType>(this->srcWSize_ - 1));
                     ComputeLoopBigCHw(no, ho, wo, h, w);
                 }
             }
@@ -148,13 +159,15 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigCHw(int64_t
         }
         case 2: {
             for (int64_t no = 0; no < lenN; no++) {
-                for (int64_t howo = 0; howo < hwOnceLoop; howo++) {
-                    int64_t ho = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) /
-                                 this->tilingData_->lenDesW;
-                    int64_t wo = (this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) %
-                                 this->tilingData_->lenDesW;
-                    int64_t h = this->Min(this->Round(float(ho) * this->hScale_), this->srcHSize_ - 1);
-                    int64_t w = this->Min(this->Round(float(wo) * this->wScale_), this->srcWSize_ - 1);
+                for (IdxType howo = 0; howo < static_cast<IdxType>(hwOnceLoop); howo++) {
+                    IdxType ho = static_cast<IdxType>((this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) /
+                                                      this->tilingData_->lenDesW);
+                    IdxType wo = static_cast<IdxType>((this->blockIdx_ * this->tilingData_->splitBlockFactor + howo) %
+                                                      this->tilingData_->lenDesW);
+                    IdxType h = this->template MinT<IdxType>(this->template RoundT<IdxType>(float(ho) * this->hScale_),
+                                                             static_cast<IdxType>(this->srcHSize_ - 1));
+                    IdxType w = this->template MinT<IdxType>(this->template RoundT<IdxType>(float(wo) * this->wScale_),
+                                                             static_cast<IdxType>(this->srcWSize_ - 1));
                     ComputeLoopBigCHw(no, ho, wo, h, w);
                 }
             }
@@ -165,8 +178,9 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ComputeBigCHw(int64_t
     }
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ProcessPreCore(int64_t nLoopTimes, int64_t nLoopTail)
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::ProcessPreCore(int64_t nLoopTimes,
+                                                                                   int64_t nLoopTail)
 {
     switch (this->tilingData_->switchParams) {
         case 1:
@@ -180,8 +194,8 @@ __aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::ProcessPreCore(int64_
     }
 }
 
-template <typename T>
-__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T>::Process()
+template <typename T, typename IdxType>
+__aicore__ inline void TILING_KEY_DATA_COPY_NHWC_BIG_C<T, IdxType>::Process()
 {
     if (this->blockIdx_ == this->tilingData_->realCoreNum - 1) {
         ProcessPreCore(this->tilingData_->nLoopTimesLast, this->tilingData_->nLoopTailLast);

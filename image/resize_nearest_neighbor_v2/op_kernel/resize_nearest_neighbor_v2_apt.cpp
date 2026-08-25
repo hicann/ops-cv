@@ -39,24 +39,43 @@ __global__ __aicore__ void resize_nearest_neighbor_v2(GM_ADDR x, GM_ADDR size, G
     GET_TILING_DATA(tilingData, tiling);
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
 
+    // idxInt32 决定 SIMD(schId 0/1/2) 输出位置 scalar 计算类型：为 1 用 int32_t，为 0 用 int64_t。
     if constexpr (schId == TPL_SCH_MODE_DATA_COPY_SMALL_C) {
-        ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_S_C<DTYPE_X> op;
-        op.Init(x, size, y, userWS, &tilingData);
-        op.Process();
+        if constexpr (idxInt32) {
+            ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_S_C<DTYPE_X, int32_t> op;
+            op.Init(x, size, y, userWS, &tilingData);
+            op.Process();
+        } else {
+            ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_S_C<DTYPE_X, int64_t> op;
+            op.Init(x, size, y, userWS, &tilingData);
+            op.Process();
+        }
         return;
     }
 
     if constexpr (schId == TPL_SCH_MODE_DATA_COPY_BIG_C) {
-        ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_BIG_C<DTYPE_X> op;
-        op.Init(x, size, y, userWS, &tilingData);
-        op.Process();
+        if constexpr (idxInt32) {
+            ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_BIG_C<DTYPE_X, int32_t> op;
+            op.Init(x, size, y, userWS, &tilingData);
+            op.Process();
+        } else {
+            ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_BIG_C<DTYPE_X, int64_t> op;
+            op.Init(x, size, y, userWS, &tilingData);
+            op.Process();
+        }
         return;
     }
 
     if constexpr (schId == TPL_SCH_MODE_DATA_COPY_AGGR_C) {
-        ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_JH<DTYPE_X> op;
-        op.Init(x, size, y, userWS, &tilingData);
-        op.Process();
+        if constexpr (idxInt32) {
+            ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_JH<DTYPE_X, int32_t> op;
+            op.Init(x, size, y, userWS, &tilingData);
+            op.Process();
+        } else {
+            ResizeNearestNeighborV2::TILING_KEY_DATA_COPY_NHWC_JH<DTYPE_X, int64_t> op;
+            op.Init(x, size, y, userWS, &tilingData);
+            op.Process();
+        }
         return;
     }
     if constexpr (schId == TPL_SCH_MODE_DATA_COPY_NOT_ALL_W_OUT) {

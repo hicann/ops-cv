@@ -49,6 +49,28 @@ protected:
     __aicore__ inline int32_t Round(float x) { return static_cast<int64_t>(static_cast<int32_t>(x + 0.5f)); }
 
     __aicore__ inline int64_t Min(int64_t a, int64_t b) { return (a < b) ? a : b; }
+
+    /*
+     * 模板化的 Floor/Round/Min：按 IdxType(int32_t 或 int64_t) 完成输出位置的 scalar 计算。
+     * idxInt32 为 1 时 IdxType=int32_t，避免 int64<->float 的软实现转换，提升 MTE2 并行度。
+     */
+    template <typename IdxType>
+    __aicore__ inline IdxType FloorT(float x)
+    {
+        return static_cast<IdxType>(static_cast<int32_t>(x));
+    }
+
+    template <typename IdxType>
+    __aicore__ inline IdxType RoundT(float x)
+    {
+        return static_cast<IdxType>(static_cast<int32_t>(x + 0.5f));
+    }
+
+    template <typename IdxType>
+    __aicore__ inline IdxType MinT(IdxType a, IdxType b)
+    {
+        return (a < b) ? a : b;
+    }
     /*
      * Init、Process
      */

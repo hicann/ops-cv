@@ -71,7 +71,7 @@
         ASCENDC_TPL_UINT_SEL(format, ASCENDC_TPL_UI_LIST, TPL_FORMAT_NHWC),                                        \
         ASCENDC_TPL_UINT_SEL(alignCorners, ASCENDC_TPL_UI_LIST, TPL_ALIGN_CORNERS_0),                              \
         ASCENDC_TPL_UINT_SEL(halfPixelCenters, ASCENDC_TPL_UI_LIST, TPL_HALF_PIXEL_CENTERS_0),                     \
-        ASCENDC_TPL_UINT_SEL(idxInt32, ASCENDC_TPL_UI_LIST, TPL_IDX_INT32_0)
+        ASCENDC_TPL_UINT_SEL(idxInt32, ASCENDC_TPL_UI_LIST, TPL_IDX_INT32_0, TPL_IDX_INT32_1)
 
 #define RESIZE_NEAREST_NEIGHBOR_V2_NHWC_TPL_KEY_SEL()                                          \
     ASCENDC_TPL_UINT_SEL(schId, ASCENDC_TPL_UI_LIST, TPL_SCH_MODE_DATA_COPY_ALL_W_OUT,         \

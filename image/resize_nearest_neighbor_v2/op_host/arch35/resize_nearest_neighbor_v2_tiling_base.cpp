@@ -694,7 +694,10 @@ void ResizeNearestNeighborV2AscendCTilingImpl::MatchTilingStrategyAndSetTilingKe
         format_ = ge::FORMAT_NHWC;
         alignCorners_ = static_cast<int64_t>(0);
         halfPixelCenters_ = static_cast<int64_t>(0);
-        idxUseInt32_ = static_cast<uint64_t>(0);
+        // schId 0/1/2 场景：输入或输出的 shape 乘积任一超过 int32 上限时用 int64 计算，否则用 int32 计算。
+        idxUseInt32_ = (xShape_.GetShapeSize() <= INT32_MAX && yShape_.GetShapeSize() <= INT32_MAX) ?
+                           static_cast<uint64_t>(1) :
+                           static_cast<uint64_t>(0);
     } else if (IsMatchTiling_NCHW_Gather()) {
         schId_ = SCHEDULE_ID_GATHER_ALL_HW;
         idxUseInt32_ = static_cast<uint64_t>(1);
