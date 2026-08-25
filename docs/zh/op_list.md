@@ -628,6 +628,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/rotated_box_decode/README.md">rotated_box_decode</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>旋转目标检测中的框回归解码算子，将网络预测的偏移量叠加到预设锚框上，还原出最终的旋转检测框。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/batch_multi_class_non_max_suppression/README.md">batch_multi_class_non_max_suppression</a></td>
     <td>&check;</td>
     <td>&check;</td>
