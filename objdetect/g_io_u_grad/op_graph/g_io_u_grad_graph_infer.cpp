@@ -34,7 +34,6 @@ static ge::graphStatus InferDataTypeGIoUGrad(gert::InferDataTypeContext* context
     ge::DataType dyDtype = context->GetInputDataType(IDX_DY);
     ge::DataType bboxesDtype = context->GetInputDataType(IDX_BBOXES);
     ge::DataType gtboxesDtype = context->GetInputDataType(IDX_GTBOXES);
-
     if (dyDtype != bboxesDtype || dyDtype != gtboxesDtype) {
         std::string dtypeMsg = std::to_string(static_cast<int>(dyDtype)) + ", " +
                                std::to_string(static_cast<int>(bboxesDtype)) + " and " +

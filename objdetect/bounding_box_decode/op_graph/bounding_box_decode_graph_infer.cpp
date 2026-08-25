@@ -24,7 +24,6 @@ static ge::graphStatus InferDataTypeForBoundingBoxDecode(gert::InferDataTypeCont
 {
     const ge::DataType anchorDtype = context->GetInputDataType(0);
     const ge::DataType deltasDtype = context->GetInputDataType(1);
-
     if (anchorDtype != deltasDtype) {
         return ge::GRAPH_FAILED;
     }

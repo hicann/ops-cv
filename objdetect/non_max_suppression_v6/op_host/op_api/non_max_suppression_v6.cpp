@@ -29,7 +29,7 @@ namespace l0op {
 OP_TYPE_REGISTER(NonMaxSuppressionV6);
 
 const aclTensor* NonMaxSuppressionV6(const aclTensor* boxes, const aclTensor* scores,
-                                     aclIntArray* maxOutputBoxesPerClass, aclFloatArray* iouThreshold,
+                                     aclIntArray* maxOutputBoxesPerClass, const aclFloatArray* iouThreshold,
                                      aclFloatArray* scoreThreshold, int centerPointBox, int maxBoxesSize,
                                      aclTensor* selectedIndices, aclOpExecutor* executor)
 {

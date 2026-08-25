@@ -23,6 +23,10 @@ using namespace AscendC;
 using namespace std;
 constexpr uint32_t BUFFER_NUM = 2;
 constexpr uint32_t INDEX_NUM = 2;
+constexpr uint32_t NUM2 = 2;
+constexpr uint32_t NUM3 = 3;
+constexpr uint32_t NUM4 = 4;
+constexpr uint32_t NUM5 = 5;
 constexpr int32_t aligned_byte_num = 8;
 constexpr int32_t aligned_data_num = 4;
 constexpr int32_t rois_info_num = 6;
@@ -190,13 +194,13 @@ private:
             int32_t pre_idx = GetBlockIdx() * rois_num_per_core + progress * rois_num_per_loop;
             DataCopy(RoisBatchIdx, roisGM[pre_idx], rois_num);
             DataCopy(RoisCenterX, roisGM[pre_idx + total_rois_num], rois_num);
-            DataCopy(RoisCenterY, roisGM[pre_idx + total_rois_num * 2],
+            DataCopy(RoisCenterY, roisGM[pre_idx + total_rois_num * NUM2],
                      rois_num); // RoisCenterY偏移量为pre_idx + total_rois_num * 2
-            DataCopy(RoisWidth, roisGM[pre_idx + total_rois_num * 3],
+            DataCopy(RoisWidth, roisGM[pre_idx + total_rois_num * NUM3],
                      rois_num); // RoisWidth偏移量为pre_idx + total_rois_num * 3
-            DataCopy(RoisHeight, roisGM[pre_idx + total_rois_num * 4],
+            DataCopy(RoisHeight, roisGM[pre_idx + total_rois_num * NUM4],
                      rois_num); // RoisHeight偏移量为pre_idx + total_rois_num * 4
-            DataCopy(RoisTheta, roisGM[pre_idx + total_rois_num * 5],
+            DataCopy(RoisTheta, roisGM[pre_idx + total_rois_num * NUM5],
                      rois_num); // RoisTheta偏移量为pre_idx + total_rois_num * 5
             PipeBarrier<PIPE_ALL>();
         } else {
@@ -204,13 +208,13 @@ private:
                               progress * rois_num_per_loop;
             DataCopy(RoisBatchIdx, roisGM[pre_idx], rois_num);
             DataCopy(RoisCenterX, roisGM[pre_idx + total_rois_num], rois_num);
-            DataCopy(RoisCenterY, roisGM[pre_idx + total_rois_num * 2],
+            DataCopy(RoisCenterY, roisGM[pre_idx + total_rois_num * NUM2],
                      rois_num); // RoisCenterY偏移量为pre_idx + total_rois_num * 2
-            DataCopy(RoisWidth, roisGM[pre_idx + total_rois_num * 3],
+            DataCopy(RoisWidth, roisGM[pre_idx + total_rois_num * NUM3],
                      rois_num); // RoisWidth偏移量为pre_idx + total_rois_num * 3
-            DataCopy(RoisHeight, roisGM[pre_idx + total_rois_num * 4],
+            DataCopy(RoisHeight, roisGM[pre_idx + total_rois_num * NUM4],
                      rois_num); // RoisHeight偏移量为pre_idx + total_rois_num * 4
-            DataCopy(RoisTheta, roisGM[pre_idx + total_rois_num * 5],
+            DataCopy(RoisTheta, roisGM[pre_idx + total_rois_num * NUM5],
                      rois_num); // RoisTheta偏移量为pre_idx + total_rois_num * 5
             PipeBarrier<PIPE_ALL>();
         }

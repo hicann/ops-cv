@@ -147,8 +147,8 @@ static bool CheckShape(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool i
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool trans, bool isCross,
-                               const char* mode, aclTensor* overlap, aclTensor* atanSub)
+static aclnnStatus CheckParams(const aclTensor* bBoxes, const aclTensor* gtBoxes, bool isCross, const char* mode,
+                               aclTensor* overlap, aclTensor* atanSub)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(bBoxes, gtBoxes, overlap, atanSub), ACLNN_ERR_PARAM_NULLPTR);
@@ -177,7 +177,7 @@ aclnnStatus aclnnCIoUGetWorkspaceSize(const aclTensor* bBoxes, const aclTensor* 
     // 固定写法，参数检查
     auto ret = CheckSocValid();
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
-    ret = CheckParams(bBoxes, gtBoxes, trans, isCross, mode, overlap, atanSub);
+    ret = CheckParams(bBoxes, gtBoxes, isCross, mode, overlap, atanSub);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     if (bBoxes->IsEmpty() || gtBoxes->IsEmpty()) {

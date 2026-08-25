@@ -35,6 +35,10 @@ static constexpr uint32_t BLOCK_SIZE = 32;
 static constexpr uint32_t ATTR_STR = 0;
 static constexpr uint32_t ATTR_FLOAT = 1;
 static constexpr uint32_t ATTR_BOOL = 2;
+static constexpr uint32_t F32_SIZE_36 = 36;
+static constexpr uint32_t F32_SIZE_38 = 38;
+static constexpr uint32_t BUFFER_NUMS9 = 9;
+static constexpr uint32_t BUFFER_NUMS8 = 8;
 
 template <typename T1, typename T2>
 inline T1 CeilDiv(T1 a, T2 b)
@@ -62,10 +66,10 @@ inline bool IsOutOfBound(uint64_t maxLen, uint64_t bBoxLen, uint64_t ubSize, boo
         bBoxLen = maxLen;
     }
     if (isFloat) {
-        return static_cast<uint64_t>(36) * maxLen * bBoxLen + BLOCK_SIZE * (maxLen + bBoxLen) >
+        return static_cast<uint64_t>(F32_SIZE_36) * maxLen * bBoxLen + BLOCK_SIZE * (maxLen + bBoxLen) >
                ubSize; // 36: 9个f32_size, 32: 8个f32_size
     } else {
-        return static_cast<uint64_t>(38) * maxLen * bBoxLen + BLOCK_SIZE * (maxLen + bBoxLen) >
+        return static_cast<uint64_t>(F32_SIZE_38) * maxLen * bBoxLen + BLOCK_SIZE * (maxLen + bBoxLen) >
                ubSize; // 38: 9个f32_size + 1个f16_size, 32: 8个f32_size
     }
 }
@@ -139,7 +143,7 @@ static ge::graphStatus Tiling4IouV2(gert::TilingContext* context)
     if (!aligned) {
         uint64_t validSubLen = bBoxLength >= gtBoxLength ? gtBoxLength :
                                                            bBoxLength; // bbox超出gtbox长度，就按照gtbox长度切分
-        totalDataSize = (gtBoxLength * validSubLen * 9 + (gtBoxLength + validSubLen) * 8) *
+        totalDataSize = (gtBoxLength * validSubLen * BUFFER_NUMS9 + (gtBoxLength + validSubLen) * BUFFER_NUMS8) *
                         FLOAT_SIZE; // 9: 输入输出的buffer个数，8：中间变量的buffer个数
         totalDataSize += (dataSize == FLOAT_SIZE ?
                               0 :
@@ -153,7 +157,7 @@ static ge::graphStatus Tiling4IouV2(gert::TilingContext* context)
     } else {
         // 对齐模式：bboxex: (4, n), gtboxes: (4, n), overlap: (n, 1), buffer: (n, 8), cast: (n, 4)
         uint64_t rowNum = dataSize == FLOAT_SIZE ? 17 : 21; // 对齐模式：float需要17个n，f16/bf16需要额外4个n用于cast
-        totalDataSize = gtBoxLength * rowNum * FLOAT_SIZE;  // gtBoxLength已经是32B对齐，totalDataSize也会是32B对齐
+        totalDataSize = gtBoxLength * rowNum * FLOAT_SIZE; // gtBoxLength已经是32B对齐，totalDataSize也会是32B对齐
         tempLoop = std::min(CeilDiv(totalDataSize, MIN_SIZE_PER_CORE), CeilDiv(gtBoxLength, alignBase));
         maxLength = ubSize / (rowNum * FLOAT_SIZE) / alignBase * alignBase;
     }

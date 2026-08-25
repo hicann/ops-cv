@@ -21,6 +21,11 @@ namespace IouV2 {
 using namespace AscendC;
 
 constexpr uint8_t POS_NUM = 4;
+constexpr uint8_t src1Pattern3 = 3;
+constexpr uint8_t src1Pattern4 = 4;
+constexpr uint8_t src1Pattern5 = 5;
+constexpr uint8_t src1Pattern6 = 6;
+constexpr uint32_t BLOCK_NUM = 8;
 
 // -------- Align 系列：CopyIn / CopyOut 复用 --------
 template <typename inType>
@@ -304,13 +309,13 @@ protected:
         WaitFlag<HardEvent::MTE2_V>(eventMTE2ToV);
         uint64_t rsvdCnt = 0;
         LocalTensor<float> tmpBuffer1 = tmpTensor1.Get<float>();
-        GatherMask(tmpBuffer1, boxLocal, 3, true, quadTotalLen, {1, 1, 8, 8},
+        GatherMask(tmpBuffer1, boxLocal, src1Pattern3, true, quadTotalLen, {1, 1, 8, 8},
                    rsvdCnt); // src1Pattern = 3，每四个元素取第一个
-        GatherMask(tmpBuffer1[totalLen], boxLocal, 4, true, quadTotalLen, {1, 1, 8, 8},
+        GatherMask(tmpBuffer1[totalLen], boxLocal, src1Pattern4, true, quadTotalLen, {1, 1, 8, 8},
                    rsvdCnt); // src1Pattern = 4，每四个元素取第二个
-        GatherMask(tmpBuffer1[doubleTotalLen], boxLocal, 5, true, quadTotalLen, {1, 1, 8, 8},
+        GatherMask(tmpBuffer1[doubleTotalLen], boxLocal, src1Pattern5, true, quadTotalLen, {1, 1, 8, 8},
                    rsvdCnt); // src1Pattern = 5，每四个元素取第三个
-        GatherMask(tmpBuffer1[tripTotalLen], boxLocal, 6, true, quadTotalLen, {1, 1, 8, 8},
+        GatherMask(tmpBuffer1[tripTotalLen], boxLocal, src1Pattern6, true, quadTotalLen, {1, 1, 8, 8},
                    rsvdCnt); // src1Pattern = 6，每四个元素取第四个
         inQue.FreeTensor(boxLocal);
         LocalTensor<float> tmpBuffer2 = tmpTensor2.Get<float>();
@@ -340,7 +345,7 @@ protected:
         uint8_t brcbRepTimes = tileLen / 2;
         BrcbRepeatParams gtBoxBrcbRepParams{gtBoxRepTimes, static_cast<uint16_t>(loopTileLen)};
         for (uint16_t repTime = 0; repTime < gtBoxRepTimes; ++repTime) {
-            Brcb(boxLocal[quadMulLen + repTime * 8], tmpBuffer2[quadLoopTileLen], brcbRepTimes,
+            Brcb(boxLocal[quadMulLen + repTime * BLOCK_NUM], tmpBuffer2[quadLoopTileLen], brcbRepTimes,
                  gtBoxBrcbRepParams); // 8个数组成一个block
         }
     }

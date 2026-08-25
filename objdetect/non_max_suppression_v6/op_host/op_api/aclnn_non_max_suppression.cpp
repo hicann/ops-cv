@@ -36,7 +36,7 @@ static constexpr size_t NUM_FOUR = 4;
 static constexpr int32_t MAX_VALID_OUTPUT = 700;
 
 // 检查入参是否为nullptr
-static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, aclFloatArray* iouThreshold,
+static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, const aclFloatArray* iouThreshold,
                          aclTensor* selectedIndices)
 {
     OP_CHECK_NULL(boxes, return false);
@@ -48,7 +48,7 @@ static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, aclFlo
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor* boxes, const aclTensor* scores, aclFloatArray* iouThreshold)
+static bool CheckDtypeValid(const aclTensor* boxes, const aclTensor* scores, const aclFloatArray* iouThreshold)
 {
     // 检查输入的数据类型是否在算子的支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(boxes, FLOAT_DTYPE_SUPPORT_LIST, return false);
@@ -100,7 +100,7 @@ static bool CheckAttr(const int centerPointBox)
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor* boxes, const aclTensor* scores, aclFloatArray* iouThreshold,
+static aclnnStatus CheckParams(const aclTensor* boxes, const aclTensor* scores, const aclFloatArray* iouThreshold,
                                aclTensor* selectedIndices, int centerPointBox)
 {
     // 1. 检查参数是否为空指针
@@ -122,10 +122,10 @@ static aclnnStatus CheckParams(const aclTensor* boxes, const aclTensor* scores, 
 }
 
 aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const aclTensor* scores,
-                                                   aclIntArray* maxOutputBoxesPerClass, aclFloatArray* iouThreshold,
-                                                   aclFloatArray* scoreThreshold, int centerPointBox,
-                                                   aclTensor* selectedIndices, uint64_t* workspaceSize,
-                                                   aclOpExecutor** executor)
+                                                   aclIntArray* maxOutputBoxesPerClass,
+                                                   const aclFloatArray* iouThreshold, aclFloatArray* scoreThreshold,
+                                                   int centerPointBox, aclTensor* selectedIndices,
+                                                   uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
     int64_t maxBoxesSize = 0;

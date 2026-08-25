@@ -24,7 +24,7 @@ const uint32_t INDEX_OUTPUT_GRAD_Y = 0u;
 const int32_t UNKNOW_DIM = -1;
 const size_t DIM_NUM_ND = 3;  // 950(arch35) ND 路径：(B, C, N)
 const size_t DIM_NUM_5HD = 5; // 910b/910_93 5HD 路径：(B, C1, N, 1, C0)
-enum DIM { DIM_0, DIM_1, DIM_2, DIM_3, DIM_4, DIM_5 };
+enum class DIM : size_t { DIM_0, DIM_1, DIM_2, DIM_3, DIM_4, DIM_5 };
 } // namespace
 
 namespace ops {
@@ -60,9 +60,9 @@ static graphStatus InferShape4ThreeInterpolateBackward(gert::InferShapeContext* 
                     return GRAPH_FAILED);
         // 校验 idx/weight shape：dimNum==3、idx shape == weight shape、idx == (B, N, 3)
         // （unknown rank 输入跳过；unknown dim 仅校验已知维度）
-        const gert::Shape* idx_shape = context->GetInputShape(DIM_1);
+        const gert::Shape* idx_shape = context->GetInputShape(static_cast<size_t>(DIM::DIM_1));
         OP_CHECK_NULL_WITH_CONTEXT(context, idx_shape);
-        const gert::Shape* weight_shape = context->GetInputShape(DIM_2);
+        const gert::Shape* weight_shape = context->GetInputShape(static_cast<size_t>(DIM::DIM_2));
         OP_CHECK_NULL_WITH_CONTEXT(context, weight_shape);
         if (!Ops::Base::IsUnknownRank(*idx_shape) && !Ops::Base::IsUnknownRank(*weight_shape)) {
             OP_CHECK_IF(idx_shape->GetDimNum() != DIM_NUM_ND,
@@ -83,11 +83,11 @@ static graphStatus InferShape4ThreeInterpolateBackward(gert::InferShapeContext* 
                                 "idx shape must equal weight shape"),
                             return GRAPH_FAILED);
             }
-            int64_t dimB = grad_x_shape->GetDim(DIM_0);
-            int64_t dimN = grad_x_shape->GetDim(DIM_2);
-            int64_t idxDim0 = idx_shape->GetDim(DIM_0);
-            int64_t idxDim1 = idx_shape->GetDim(DIM_1);
-            int64_t idxDim2 = idx_shape->GetDim(DIM_2);
+            int64_t dimB = grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_0));
+            int64_t dimN = grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_2));
+            int64_t idxDim0 = idx_shape->GetDim(static_cast<size_t>(DIM::DIM_0));
+            int64_t idxDim1 = idx_shape->GetDim(static_cast<size_t>(DIM::DIM_1));
+            int64_t idxDim2 = idx_shape->GetDim(static_cast<size_t>(DIM::DIM_2));
             OP_CHECK_IF(
                 (idxDim0 != UNKNOW_DIM && dimB != UNKNOW_DIM && idxDim0 != dimB) ||
                     (idxDim1 != UNKNOW_DIM && dimN != UNKNOW_DIM && idxDim1 != dimN) ||
@@ -97,11 +97,12 @@ static graphStatus InferShape4ThreeInterpolateBackward(gert::InferShapeContext* 
                 return GRAPH_FAILED);
         }
         grad_y_shape->SetDimNum(DIM_NUM_ND);
-        grad_y_shape->SetDim(DIM_0, grad_x_shape->GetDim(DIM_0));
-        grad_y_shape->SetDim(DIM_1, grad_x_shape->GetDim(DIM_1));
-        grad_y_shape->SetDim(DIM_2, *attr_m);
-        OP_LOGI(context, "Infershape ND B:%ld C:%ld M:%ld.", grad_y_shape->GetDim(DIM_0), grad_y_shape->GetDim(DIM_1),
-                grad_y_shape->GetDim(DIM_2));
+        grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_0), grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_0)));
+        grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_1), grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_1)));
+        grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_2), *attr_m);
+        OP_LOGI(context, "Infershape ND B:%ld C:%ld M:%ld.", grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_0)),
+                grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_1)),
+                grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_2)));
         return GRAPH_SUCCESS;
     }
 
@@ -109,20 +110,21 @@ static graphStatus InferShape4ThreeInterpolateBackward(gert::InferShapeContext* 
     auto attr_pointer = attrs->GetAttrPointer<uint32_t>(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, attr_pointer);
     auto ms = *attr_pointer;
-    uint32_t bs = grad_x_shape->GetDim(DIM_0);
-    uint32_t c1 = grad_x_shape->GetDim(DIM_1);
-    uint32_t c0 = grad_x_shape->GetDim(DIM_4);
+    uint32_t bs = grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_0));
+    uint32_t c1 = grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_1));
+    uint32_t c0 = grad_x_shape->GetDim(static_cast<size_t>(DIM::DIM_4));
 
     grad_y_shape->SetDimNum(DIM_NUM_5HD);
-    grad_y_shape->SetDim(DIM_0, bs);
-    grad_y_shape->SetDim(DIM_1, c1);
-    grad_y_shape->SetDim(DIM_2, ms);
-    grad_y_shape->SetDim(DIM_3, 1);
-    grad_y_shape->SetDim(DIM_4, c0);
+    grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_0), bs);
+    grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_1), c1);
+    grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_2), ms);
+    grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_3), 1);
+    grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_4), c0);
 
-    OP_LOGI(context, "Intershape N:%ld C1:%ld H:%ld W:%ld C0:%ld.", grad_y_shape->GetDim(DIM_0),
-            grad_y_shape->GetDim(DIM_1), grad_y_shape->GetDim(DIM_2), grad_y_shape->GetDim(DIM_3),
-            grad_y_shape->GetDim(DIM_4));
+    OP_LOGI(
+        context, "Intershape N:%ld C1:%ld H:%ld W:%ld C0:%ld.", grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_0)),
+        grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_1)), grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_2)),
+        grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_3)), grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_4)));
 
     return GRAPH_SUCCESS;
 }

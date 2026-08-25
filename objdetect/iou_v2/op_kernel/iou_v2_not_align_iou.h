@@ -50,7 +50,7 @@ public:
         Adds(boxLocal[this->quadMulLen], tmpBuffer1[this->doubleTotalLen], (float)0.0, this->loopTileLen, this->tileLen,
              {1, 1, dstRepStride, 0});
         for (uint16_t repTime = 0; repTime < gtBoxRepTimes; ++repTime) {
-            Brcb(boxLocal[this->pentaMulLen + repTime * 8], tmpBuffer1[this->totalLen1], bBoxRepTimes,
+            Brcb(boxLocal[this->pentaMulLen + repTime * BLOCK_NUM], tmpBuffer1[this->totalLen1], bBoxRepTimes,
                  gtBoxBrcbRepParams); // 8个数组成一个block
         }
         PipeBarrier<PIPE_V>();
