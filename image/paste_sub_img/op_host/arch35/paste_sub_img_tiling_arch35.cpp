@@ -276,7 +276,7 @@ static ge::graphStatus PasteSubImgTilingFunc(gert::TilingContext* context)
     const float* scalePtr = attrs->GetAttrPointer<float>(ATTR_IDX_SCALE);
     OP_CHECK_NULL_WITH_CONTEXT(context, scalePtr);
     float scale = *scalePtr;
-    OP_CHECK_IF(scale < SCALE_MIN || scale > SCALE_MAX, OP_LOGE(context, "scale must be in [0.0, 256.0]"),
+    OP_CHECK_IF(!(scale >= SCALE_MIN && scale <= SCALE_MAX), OP_LOGE(context, "scale must be in [0.0, 256.0]"),
                 return ge::GRAPH_FAILED);
 
     int64_t px1 = patchCoordArr[0], py1 = patchCoordArr[1];
@@ -291,6 +291,8 @@ static ge::graphStatus PasteSubImgTilingFunc(gert::TilingContext* context)
     int64_t combineW = combineSS.GetDim(DIM_W);
     int64_t combineC = combineSS.GetDim(DIM_C);
     OP_CHECK_IF(patchC != combineC, OP_LOGE(context, "C dimension must match"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(patchH <= 0 || patchW <= 0 || patchC <= 0 || combineH <= 0 || combineW <= 0 || combineC <= 0,
+                OP_LOGE(context, "tensor dimensions must be positive"), return ge::GRAPH_FAILED);
 
     CoordBudget coord{};
     ComputeCoordBudget(px1, py1, cx1, cy1, cx2, cy2, scale, patchH, patchW, patchC, combineH, combineW, coord);
