@@ -14,3 +14,70 @@
  */
 
 // ---------------IMGWarpOffsets Op start-------------------
+
+#include <gtest/gtest.h>
+
+#include "infershape_case_executor.h"
+#include "infershape_context_faker.h"
+
+namespace {
+void ExpectShape(const gert::StorageShape& imagesShape, const gert::StorageShape& offsetsShape,
+                 ge::graphStatus expectedStatus, const std::vector<std::vector<int64_t>>& expectedShapes = {})
+{
+    gert::InfershapeContextPara context(
+        "IMGWarpOffsets", {{imagesShape, ge::DT_FLOAT16, ge::FORMAT_ND}, {offsetsShape, ge::DT_INT32, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND}});
+    ExecuteTestCase(context, expectedStatus, expectedShapes);
+}
+} // namespace
+
+TEST(IMGWarpOffsetsInfershape, infers_static_shape)
+{
+    ExpectShape({{2, 8, 9, 3}, {2, 8, 9, 3}}, {{2, 4, 6, 7}, {2, 4, 6, 7}}, ge::GRAPH_SUCCESS, {{2, 4, 6, 7, 3}});
+}
+
+TEST(IMGWarpOffsetsInfershape, preserves_dynamic_dimensions)
+{
+    ExpectShape({{-1, 8, 9, -1}, {-1, 8, 9, -1}}, {{-1, 4, -1, 7}, {-1, 4, -1, 7}}, ge::GRAPH_SUCCESS,
+                {{-1, 4, -1, 7, -1}});
+}
+
+TEST(IMGWarpOffsetsInfershape, images_unknown_rank_skips_other_validation)
+{
+    ExpectShape({{-2}, {-2}}, {{2, 4, 6}, {2, 4, 6}}, ge::GRAPH_SUCCESS, {{-2}});
+}
+
+TEST(IMGWarpOffsetsInfershape, offsets_unknown_rank_skips_other_validation)
+{
+    ExpectShape({{2, 8, 9}, {2, 8, 9}}, {{-2}, {-2}}, ge::GRAPH_SUCCESS, {{-2}});
+}
+
+TEST(IMGWarpOffsetsInfershape, rejects_images_rank)
+{
+    ExpectShape({{2, 8, 3}, {2, 8, 3}}, {{2, 4, 6, 7}, {2, 4, 6, 7}}, ge::GRAPH_FAILED);
+}
+
+TEST(IMGWarpOffsetsInfershape, rejects_images_channel)
+{
+    ExpectShape({{2, 8, 9, 2}, {2, 8, 9, 2}}, {{2, 4, 6, 7}, {2, 4, 6, 7}}, ge::GRAPH_FAILED);
+}
+
+TEST(IMGWarpOffsetsInfershape, rejects_offsets_rank)
+{
+    ExpectShape({{2, 8, 9, 3}, {2, 8, 9, 3}}, {{2, 4, 6}, {2, 4, 6}}, ge::GRAPH_FAILED);
+}
+
+TEST(IMGWarpOffsetsInfershape, rejects_offsets_point_dimension)
+{
+    ExpectShape({{2, 8, 9, 3}, {2, 8, 9, 3}}, {{2, 5, 6, 7}, {2, 5, 6, 7}}, ge::GRAPH_FAILED);
+}
+
+TEST(IMGWarpOffsetsInfershape, rejects_known_batch_mismatch)
+{
+    ExpectShape({{2, 8, 9, 3}, {2, 8, 9, 3}}, {{3, 4, 6, 7}, {3, 4, 6, 7}}, ge::GRAPH_FAILED);
+}
+
+TEST(IMGWarpOffsetsInfershape, rejects_unknown_and_known_batch_mismatch)
+{
+    ExpectShape({{-1, 8, 9, 3}, {-1, 8, 9, 3}}, {{2, 4, 6, 7}, {2, 4, 6, 7}}, ge::GRAPH_FAILED);
+}

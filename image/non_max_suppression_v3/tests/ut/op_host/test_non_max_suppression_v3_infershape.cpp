@@ -14,3 +14,132 @@
  */
 
 // --------------- NonMaxSuppressionV3 Op start-------------------
+
+#include <gtest/gtest.h>
+
+#include "base/registry/op_impl_space_registry_v2.h"
+#include "infershape_case_executor.h"
+#include "infershape_context_faker.h"
+#include "op_infer_shape_range_context_builder.h"
+
+namespace {
+constexpr size_t kInputNum = 5U;
+constexpr size_t kOutputNum = 1U;
+constexpr size_t kMaxOutputSizeIndex = 2U;
+constexpr size_t kIouThresholdIndex = 3U;
+constexpr size_t kScoreThresholdIndex = 4U;
+constexpr size_t kSelectedIndicesIndex = 0U;
+
+void ExpectShape(const gert::StorageShape& boxesShape, const gert::StorageShape& scoresShape,
+                 ge::graphStatus expectedStatus, const std::vector<std::vector<int64_t>>& expectedShapes = {})
+{
+    gert::InfershapeContextPara context("NonMaxSuppressionV3",
+                                        {{boxesShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                         {scoresShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                         {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},
+                                         {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                         {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                        {{{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}});
+    ExecuteTestCase(context, expectedStatus, expectedShapes);
+}
+
+void ExpectMissingInput(size_t missingIndex)
+{
+    std::vector<gert::InfershapeContextPara::TensorDescription> inputs = {
+        {{{8, 4}, {8, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},         {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+    };
+    inputs.erase(inputs.begin() + missingIndex, inputs.end());
+    gert::InfershapeContextPara context("NonMaxSuppressionV3", inputs, {{{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+} // namespace
+
+TEST(NonMaxSuppressionV3Infershape, infers_static_shape)
+{
+    ExpectShape({{8, 4}, {8, 4}}, {{8}, {8}}, ge::GRAPH_SUCCESS, {{-1}});
+}
+
+TEST(NonMaxSuppressionV3Infershape, accepts_compatible_dynamic_dimensions)
+{
+    ExpectShape({{-1, 4}, {-1, 4}}, {{8}, {8}}, ge::GRAPH_SUCCESS, {{-1}});
+    ExpectShape({{8, -1}, {8, -1}}, {{-1}, {-1}}, ge::GRAPH_SUCCESS, {{-1}});
+}
+
+TEST(NonMaxSuppressionV3Infershape, accepts_unknown_rank_boxes)
+{
+    ExpectShape({{-2}, {-2}}, {{8}, {8}}, ge::GRAPH_SUCCESS, {{-1}});
+}
+
+TEST(NonMaxSuppressionV3Infershape, accepts_unknown_rank_scores)
+{
+    ExpectShape({{8, 4}, {8, 4}}, {{-2}, {-2}}, ge::GRAPH_SUCCESS, {{-1}});
+}
+
+TEST(NonMaxSuppressionV3Infershape, still_validates_scores_when_boxes_rank_is_unknown)
+{
+    ExpectShape({{-2}, {-2}}, {{8, 1}, {8, 1}}, ge::GRAPH_FAILED);
+}
+
+TEST(NonMaxSuppressionV3Infershape, rejects_boxes_rank)
+{
+    ExpectShape({{8, 4, 1}, {8, 4, 1}}, {{8}, {8}}, ge::GRAPH_FAILED);
+}
+
+TEST(NonMaxSuppressionV3Infershape, rejects_scores_rank)
+{
+    ExpectShape({{8, 4}, {8, 4}}, {{8, 1}, {8, 1}}, ge::GRAPH_FAILED);
+}
+
+TEST(NonMaxSuppressionV3Infershape, rejects_box_count_mismatch)
+{
+    ExpectShape({{8, 4}, {8, 4}}, {{7}, {7}}, ge::GRAPH_FAILED);
+}
+
+TEST(NonMaxSuppressionV3Infershape, rejects_box_coordinate_dimension)
+{
+    ExpectShape({{8, 5}, {8, 5}}, {{8}, {8}}, ge::GRAPH_FAILED);
+}
+
+TEST(NonMaxSuppressionV3Infershape, rejects_missing_scalar_inputs)
+{
+    for (const size_t missingIndex : {kMaxOutputSizeIndex, kIouThresholdIndex, kScoreThresholdIndex}) {
+        SCOPED_TRACE(missingIndex);
+        ExpectMissingInput(missingIndex);
+    }
+}
+
+TEST(NonMaxSuppressionV3Infershape, registers_selected_indices_shape_dependency)
+{
+    auto registry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
+    ASSERT_NE(registry, nullptr);
+    const auto* opImpl = registry->GetOpImpl("NonMaxSuppressionV3");
+    ASSERT_NE(opImpl, nullptr);
+    EXPECT_TRUE(opImpl->IsOutputShapeDependOnCompute());
+    EXPECT_TRUE(opImpl->IsOutputShapeDependOnCompute(kSelectedIndicesIndex));
+}
+
+TEST(NonMaxSuppressionV3Infershape, sets_selected_indices_shape_range)
+{
+    auto registry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
+    ASSERT_NE(registry, nullptr);
+    auto inferShapeRange = registry->GetOpImpl("NonMaxSuppressionV3")->infer_shape_range;
+    ASSERT_NE(inferShapeRange, nullptr);
+
+    gert::OpInferShapeRangeContextBuilder builder;
+    builder.OpType("NonMaxSuppressionV3").OpName("NonMaxSuppressionV3");
+    builder.IONum(kInputNum, kOutputNum);
+    builder.OutputTensorDesc(kSelectedIndicesIndex, ge::DT_INT32, ge::FORMAT_ND, ge::FORMAT_ND);
+    auto holder = builder.Build();
+    auto context = holder.GetContext();
+    ASSERT_NE(context, nullptr);
+    ASSERT_EQ(inferShapeRange(context), ge::GRAPH_SUCCESS);
+
+    const auto* selectedIndicesRange = context->GetOutputShapeRange(kSelectedIndicesIndex);
+    ASSERT_NE(selectedIndicesRange, nullptr);
+    EXPECT_EQ(selectedIndicesRange->GetMin()->GetDimNum(), 1U);
+    EXPECT_EQ(selectedIndicesRange->GetMin()->GetDim(0U), 0);
+    EXPECT_EQ(selectedIndicesRange->GetMax()->GetDimNum(), 1U);
+    EXPECT_EQ(selectedIndicesRange->GetMax()->GetDim(0U), ge::UNKNOWN_DIM);
+}
