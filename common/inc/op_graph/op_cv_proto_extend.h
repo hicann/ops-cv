@@ -262,31 +262,6 @@ REG_OP(DIoU)
     .OP_END_FACTORY_REG(DIoU)
 
 /**
- *@brief Computes decode bboxv2 function.
- *
- *@par Inputs:
- *Inputs include:
- * @li boxes: A Tensor. Must be float16 or float32. Supported format list ["ND"].
- * @li anchors: A Tensor. Must be float16 or float32. Supported format list ["ND"].
- *
- *@par Attributes:
- * @li scales: optional, listfloat. Default value is [1.0,1.0,1.0,1.0].
- * @li decode_clip: optional, float, threahold of decode process. Default value is 0.0
- * @li reversed_boxes: optional, bool. Default value is false.
- *
- *@par Outputs:
- * y: A Tensor. Must have the same type as box_predictions. Supported format list ["ND"].
- */
-REG_OP(DecodeBboxV2)
-    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .INPUT(anchors, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .ATTR(scales, ListFloat, {1.0, 1.0, 1.0, 1.0})
-    .ATTR(decode_clip, Float, 0.0)
-    .ATTR(reversed_box, Bool, false)
-    .OP_END_FACTORY_REG(DecodeBboxV2)
-
-/**
 * @brief Performs Dilation2D on the input .
 
 * @par Inputs:

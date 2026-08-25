@@ -846,5 +846,15 @@
     <td>AI Core</td>
     <td>检查给定的边界框（Bounding Boxes）是否位于指定的原始图片有效边界内。</td>
   </tr>
+  <tr>
+    <td>image</td>
+    <td><a href="../../objdetect/decode_bbox_v2/README.md">decode_bbox_v2</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将目标检测回归偏移量（boxes）结合锚框（anchors）解码为绝对坐标框（ymin, xmin, ymax, xmax）。</td>
+  </tr>
 </tbody>
 </table>
