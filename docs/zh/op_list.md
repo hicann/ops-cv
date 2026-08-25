@@ -718,6 +718,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/non_max_suppression_v7/README.md">non_max_suppression_v7</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>按batch和类别对候选框执行贪心非极大值抑制，输出被选中框的索引三元组。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/roi_align/README.md">roi_align</a></td>
     <td>&cross;</td>
     <td>&cross;</td>

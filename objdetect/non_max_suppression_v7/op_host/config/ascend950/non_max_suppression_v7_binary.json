@@ -1,0 +1,77 @@
+{
+  "op_type": "NonMaxSuppressionV7",
+  "op_list": [
+    {
+      "bin_filename": "NonMaxSuppressionV7_float16_float16",
+      "inputs": [
+        {"name": "boxes", "index": 0, "dtype": "float16", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "scores", "index": 1, "dtype": "float16", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "max_output_size", "index": 2, "dtype": "int32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "iou_threshold", "index": 3, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "score_threshold", "index": 4, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "index_id", "index": 5, "dtype": "float16", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "outputs": [
+        {"name": "selected_indices", "index": 0, "dtype": "int32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "attrs": [
+        {"name": "center_point_box", "dtype": "int", "value": 0},
+        {"name": "max_boxes_size", "dtype": "int", "value": 0}
+      ]
+    },
+    {
+      "bin_filename": "NonMaxSuppressionV7_float16_float32",
+      "inputs": [
+        {"name": "boxes", "index": 0, "dtype": "float16", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "scores", "index": 1, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "max_output_size", "index": 2, "dtype": "int32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "iou_threshold", "index": 3, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "score_threshold", "index": 4, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "index_id", "index": 5, "dtype": "float16", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "outputs": [
+        {"name": "selected_indices", "index": 0, "dtype": "int32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "attrs": [
+        {"name": "center_point_box", "dtype": "int", "value": 0},
+        {"name": "max_boxes_size", "dtype": "int", "value": 0}
+      ]
+    },
+    {
+      "bin_filename": "NonMaxSuppressionV7_float32_float16",
+      "inputs": [
+        {"name": "boxes", "index": 0, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "scores", "index": 1, "dtype": "float16", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "max_output_size", "index": 2, "dtype": "int32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "iou_threshold", "index": 3, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "score_threshold", "index": 4, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "index_id", "index": 5, "dtype": "float16", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "outputs": [
+        {"name": "selected_indices", "index": 0, "dtype": "int32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "attrs": [
+        {"name": "center_point_box", "dtype": "int", "value": 0},
+        {"name": "max_boxes_size", "dtype": "int", "value": 0}
+      ]
+    },
+    {
+      "bin_filename": "NonMaxSuppressionV7_float32_float32",
+      "inputs": [
+        {"name": "boxes", "index": 0, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "scores", "index": 1, "dtype": "float32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "max_output_size", "index": 2, "dtype": "int32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "iou_threshold", "index": 3, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "score_threshold", "index": 4, "dtype": "float32", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"},
+        {"name": "index_id", "index": 5, "dtype": "float16", "format": "ND", "paramType": "optional", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "outputs": [
+        {"name": "selected_indices", "index": 0, "dtype": "int32", "format": "ND", "paramType": "required", "shape": [-2], "format_match_mode": "FormatAgnostic"}
+      ],
+      "attrs": [
+        {"name": "center_point_box", "dtype": "int", "value": 0},
+        {"name": "max_boxes_size", "dtype": "int", "value": 0}
+      ]
+    }
+  ]
+}
