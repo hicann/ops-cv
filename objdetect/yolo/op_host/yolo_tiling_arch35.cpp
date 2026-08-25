@@ -102,6 +102,89 @@ static ge::graphStatus ExtractAndValidate(gert::TilingContext* context, int64_t&
     return ge::GRAPH_SUCCESS;
 }
 
+// Validate input and output dtypes: must be float16 or float32
+static ge::graphStatus ValidateDtype(gert::TilingContext* context)
+{
+    const char* opName = context->GetNodeName();
+    auto xDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, xDesc);
+    const ge::DataType xDataType = xDesc->GetDataType();
+    OP_CHECK_IF(
+        xDataType != ge::DT_FLOAT16 && xDataType != ge::DT_FLOAT,
+        OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(opName, "x", std::to_string(static_cast<int32_t>(xDataType)).c_str(),
+                                               "x dtype must be float16/float32"),
+        return ge::GRAPH_FAILED);
+
+    auto coordDataDesc = context->GetOutputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, coordDataDesc);
+    const ge::DataType coordDataType = coordDataDesc->GetDataType();
+    OP_CHECK_IF(coordDataType != ge::DT_FLOAT16 && coordDataType != ge::DT_FLOAT,
+                OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(opName, "coord_data",
+                                                       std::to_string(static_cast<int32_t>(coordDataType)).c_str(),
+                                                       "coord_data dtype must be float16/float32"),
+                return ge::GRAPH_FAILED);
+
+    auto objProbDesc = context->GetOutputDesc(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, objProbDesc);
+    const ge::DataType objProbDataType = objProbDesc->GetDataType();
+    OP_CHECK_IF(objProbDataType != ge::DT_FLOAT16 && objProbDataType != ge::DT_FLOAT,
+                OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(opName, "obj_prob",
+                                                       std::to_string(static_cast<int32_t>(objProbDataType)).c_str(),
+                                                       "obj_prob dtype must be float16/float32"),
+                return ge::GRAPH_FAILED);
+
+    auto classesProbDesc = context->GetOutputDesc(2);
+    OP_CHECK_NULL_WITH_CONTEXT(context, classesProbDesc);
+    const ge::DataType classesProbDataType = classesProbDesc->GetDataType();
+    OP_CHECK_IF(classesProbDataType != ge::DT_FLOAT16 && classesProbDataType != ge::DT_FLOAT,
+                OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+                    opName, "classes_prob", std::to_string(static_cast<int32_t>(classesProbDataType)).c_str(),
+                    "classes_prob dtype must be float16/float32"),
+                return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
+// Validate input and output storage formats: must be ND (kernel reads/writes linear ND layout)
+static ge::graphStatus ValidateFormat(gert::TilingContext* context)
+{
+    const char* opName = context->GetNodeName();
+    auto xDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, xDesc);
+    const ge::Format xFormat = xDesc->GetStorageFormat();
+    OP_CHECK_IF(xFormat != ge::FORMAT_ND,
+                OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(
+                    opName, "x", std::to_string(static_cast<int32_t>(xFormat)).c_str(), "x format must be ND"),
+                return ge::GRAPH_FAILED);
+
+    auto coordDataDesc = context->GetOutputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, coordDataDesc);
+    const ge::Format coordDataFormat = coordDataDesc->GetStorageFormat();
+    OP_CHECK_IF(coordDataFormat != ge::FORMAT_ND,
+                OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(opName, "coord_data",
+                                                        std::to_string(static_cast<int32_t>(coordDataFormat)).c_str(),
+                                                        "coord_data format must be ND"),
+                return ge::GRAPH_FAILED);
+
+    auto objProbDesc = context->GetOutputDesc(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, objProbDesc);
+    const ge::Format objProbFormat = objProbDesc->GetStorageFormat();
+    OP_CHECK_IF(objProbFormat != ge::FORMAT_ND,
+                OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(opName, "obj_prob",
+                                                        std::to_string(static_cast<int32_t>(objProbFormat)).c_str(),
+                                                        "obj_prob format must be ND"),
+                return ge::GRAPH_FAILED);
+
+    auto classesProbDesc = context->GetOutputDesc(2);
+    OP_CHECK_NULL_WITH_CONTEXT(context, classesProbDesc);
+    const ge::Format classesProbFormat = classesProbDesc->GetStorageFormat();
+    OP_CHECK_IF(classesProbFormat != ge::FORMAT_ND,
+                OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(opName, "classes_prob",
+                                                        std::to_string(static_cast<int32_t>(classesProbFormat)).c_str(),
+                                                        "classes_prob format must be ND"),
+                return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 // Determine yolo_mode from yolo_version, softmax, background attributes
 static int32_t DetermineYoloMode(gert::TilingContext* context)
 {
@@ -138,6 +221,11 @@ static ge::graphStatus YoloTilingFunc(gert::TilingContext* context)
     int64_t coreNum = 0;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,
                 OP_LOGE(context, "GetPlatformInfo error"), return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(ValidateDtype(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "ValidateDtype failed"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(ValidateFormat(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "ValidateFormat failed"),
+                return ge::GRAPH_FAILED);
 
     int64_t N = 0, HW = 0, boxes = 0, classes = 0;
     OP_CHECK_IF(ExtractAndValidate(context, N, HW, boxes, classes) != ge::GRAPH_SUCCESS,
