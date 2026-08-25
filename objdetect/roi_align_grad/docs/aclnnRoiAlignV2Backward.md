@@ -161,7 +161,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
-      <td class="tg-0pky">out（aclTensor*）</td>
+      <td class="tg-0pky">gradInput（aclTensor*）</td>
       <td class="tg-0pky">输出</td>
       <td class="tg-0pky">反向传播的输出。</td>
       <td class="tg-0pky">必须与gradOutput、boxes数据类型一致。</td>
@@ -420,7 +420,7 @@ int main() {
   void* workspaceAddr = nullptr;
   if (workspaceSize > 0) {
     ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
   }
   // 调用aclnnRoiAlignV2Backward第二段接口
   ret = aclnnRoiAlignV2Backward(workspaceAddr, workspaceSize, executor, stream);

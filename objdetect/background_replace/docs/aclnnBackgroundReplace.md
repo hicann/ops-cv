@@ -307,10 +307,10 @@ int main() {
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
 
   // 2. 构造输入与输出，需要根据API的接口自定义构造
-  std::vector<int64_t> bkgShape = {4, 2};
-  std::vector<int64_t> srcShape = {4, 2};
-  std::vector<int64_t> maskShape = {4, 2};
-  std::vector<int64_t> outShape = {4, 2};
+  std::vector<int64_t> bkgShape = {4, 2, 1};
+  std::vector<int64_t> srcShape = {4, 2, 1};
+  std::vector<int64_t> maskShape = {4, 2, 1};
+  std::vector<int64_t> outShape = {4, 2, 1};
   void* bkgDeviceAddr = nullptr;
   void* srcDeviceAddr = nullptr;
   void* maskDeviceAddr = nullptr;
@@ -319,8 +319,8 @@ int main() {
   aclTensor* src = nullptr;
   aclTensor* mask = nullptr;
   aclTensor* out = nullptr;
-  std::vector<uint8_t> bkgHostData = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-  std::vector<uint8_t> srcHostData = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+  std::vector<uint8_t> bkgHostData = {0, 1, 2, 3, 4, 5, 6, 7};
+  std::vector<uint8_t> srcHostData = {1, 2, 3, 4, 5, 6, 7, 8};
   std::vector<float> maskHostData = {1, 1, 1, 1, 1, 1, 1, 1};
   std::vector<uint8_t> outHostData = {0, 0, 0, 0, 0, 0, 0, 0};
   // 创建bkg aclTensor

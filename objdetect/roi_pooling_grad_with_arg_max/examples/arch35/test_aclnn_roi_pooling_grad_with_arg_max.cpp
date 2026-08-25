@@ -44,7 +44,7 @@ void PrintOutResult(std::vector<int64_t>& shape, void** deviceAddr)
                            size * sizeof(resultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return);
     for (int64_t i = 0; i < size; i++) {
-        LOG_PRINT("mean result[%ld] is: %f\n", i, resultData[i]);
+        LOG_PRINT("result[%ld] is: %f\n", i, resultData[i]);
     }
 }
 
@@ -96,7 +96,7 @@ int main()
     aclTensor* gradOutput = nullptr;
     void* gradOutputDeviceAddr = nullptr;
     std::vector<int64_t> gradOutputShape = {1, 32, 2, 2};
-    std::vector<float> gradOutputHostData(128, 1.0); // 2048：创建包含32*4*4*4=2048个元素的向量
+    std::vector<float> gradOutputHostData(128, 1.0); // 128：创建包含1*32*2*2=128个元素的向量
     ret = CreateAclTensor(gradOutputHostData, gradOutputShape, &gradOutputDeviceAddr, aclDataType::ACL_FLOAT,
                           &gradOutput);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
@@ -153,16 +153,16 @@ int main()
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
     LOG_PRINT("aclnnRoiPoolingGradWithArgMax run success.\n");
 
-    // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
+    // 7. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
     PrintOutResult(gradInputRefShape, &gradInputRefDeviceAddr);
 
-    // 7. 释放aclTensor，需要根据具体API的接口定义修改
+    // 8. 释放aclTensor，需要根据具体API的接口定义修改
     aclDestroyTensor(gradOutput);
     aclDestroyTensor(gradInputRef);
     aclDestroyTensor(rois);
     aclDestroyTensor(argmax);
 
-    // 8. 释放device资源
+    // 9. 释放device资源
     aclrtFree(gradOutputDeviceAddr);
     aclrtFree(gradInputRefDeviceAddr);
     aclrtFree(roisDeviceAddr);
@@ -173,7 +173,7 @@ int main()
     aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
 
-    // 9. acl去初始化
+    // 10. acl去初始化
     aclFinalize();
 
     return 0;

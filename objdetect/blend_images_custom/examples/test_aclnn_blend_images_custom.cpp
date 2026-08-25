@@ -36,12 +36,12 @@ int64_t GetShapeSize(const std::vector<int64_t>& shape)
 void PrintOutResult(std::vector<int64_t>& shape, void** deviceAddr)
 {
     auto size = GetShapeSize(shape);
-    std::vector<float> resultData(size, 0);
+    std::vector<uint8_t> resultData(size, 0);
     auto ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), *deviceAddr,
                            size * sizeof(resultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return);
     for (int64_t i = 0; i < size; i++) {
-        LOG_PRINT("mean result[%ld] is: %f\n", i, resultData[i]);
+        LOG_PRINT("result[%ld] is: %u\n", i, resultData[i]);
     }
 }
 
@@ -106,10 +106,10 @@ int main()
     aclTensor* frame = nullptr;
     aclTensor* out = nullptr;
 
-    std::vector<float> rgbHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
-    std::vector<float> alphaHostData = {255, 255, 255, 255};
-    std::vector<float> frameHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
-    std::vector<float> outHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+    std::vector<uint8_t> rgbHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+    std::vector<uint8_t> alphaHostData = {255, 255, 255, 255};
+    std::vector<uint8_t> frameHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+    std::vector<uint8_t> outHostData = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
 
     ret = CreateAclTensor(rgbHostData, rgbShape, &rgbDeviceAddr, aclDataType::ACL_UINT8, &rgb);
     CHECK_RET(ret == ACL_SUCCESS, return ret);

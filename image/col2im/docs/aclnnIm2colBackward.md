@@ -106,7 +106,7 @@ aclnnStatus aclnnIm2colBackward(
     <tr>
       <td>inputSize</td>
       <td>输入</td>
-      <td>输入张量的形状。</td>
+      <td>输入张量的空间尺寸，即[H, W]。</td>
       <td>值大于0。</td>
       <td>INT64</td>
       <td>-</td>
