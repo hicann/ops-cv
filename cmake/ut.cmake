@@ -368,6 +368,17 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
     string(REPLACE "," ";" tilingSrc "${tilingSrcFiles}")
 
     foreach(oriSocVersion ${supportedSocVersion})
+      # check if the case should be compiled according to soc
+      if(ASCEND_COMPUTE_UNIT)
+        string(TOLOWER "${oriSocVersion}" lowerSocVersion)
+        string(TOLOWER "${ASCEND_COMPUTE_UNIT}" lowerComputeUnit)
+        # map compute unit to full name (e.g. ascend910b -> ascend910B1)
+        find_value_by_key("${SHORT_NAME_LIST}" "${FULL_NAME_LIST}" "${ASCEND_COMPUTE_UNIT}" computeUnitLong)
+        string(TOLOWER "${computeUnitLong}" lowerComputeUnitLong)
+        if(NOT ("${lowerComputeUnitLong}" STREQUAL "${lowerSocVersion}" OR "${lowerComputeUnit}" STREQUAL "${lowerSocVersion}"))
+          continue()
+        endif()
+      endif()
       # standardize socVersion
       string(REPLACE "ascend" "Ascend" socVersion "${oriSocVersion}")
 
