@@ -841,43 +841,6 @@ REG_OP(YoloPreDetection)
     .ATTR(softmaxtree, Bool, false)
     .OP_END_FACTORY_REG(YoloPreDetection)
 
-/* ===== Merged from master (parallel proto migration): Yolo family ===== */
-
-/**
-*@brief Normalizes data. It is called Region on YOLO v2 and Yolo on YOLO v3 . \n
-
-*@par Inputs:
-*x: An NCHW tensor of type float16 or float32. The data is with shape (N,
-* boxes*(coords+obj+classes), H, W) . \n
-
-*@par Attributes:
-*@li boxes: An optional int32, specifying the number of anchor boxes. Defaults to "3".
-*@li coords: An int32, specifying the number of parameters required for locating an object. Defaults to "4".
-*@li classes: An int32, specifying the number of prediction classes. Defaults to "80".
-*@li yolo_version: A string, specifying the YOLO version, either "V2" or "V3". Defaults to "V3"
-*@li softmax: A bool, specifying whether to perform softmax. Defaults to "false".
-*@li background: A bool. Defaults to "false".
-*@li softmaxtree: A bool. Defaults to "false" . \n
-
-*@par Outputs:
-*@li coord_data: Specifies the coordinates of a detected box.
-*@li obj_prob: Specifies the confidence.
-*@li classes_prob: Specifies the prediction classes . \n
-*/
-REG_OP(Yolo)
-    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(coord_data, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(obj_prob, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(classes_prob, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .ATTR(boxes, Int, 3)
-    .ATTR(coords, Int, 4)
-    .ATTR(classes, Int, 80)
-    .ATTR(yolo_version, String, "V3")
-    .ATTR(softmax, Bool, false)
-    .ATTR(background, Bool, false)
-    .ATTR(softmaxtree, Bool, false)
-    .OP_END_FACTORY_REG(Yolo)
-
 /**
 *@brief Performs YOLO V5 detection . \n
 
