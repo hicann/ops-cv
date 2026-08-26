@@ -189,11 +189,10 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::CheckInputParams()
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputDesc);
     auto inputDtype = inputDesc->GetDataType();
     OP_CHECK_IF(inputDtypeList.count(inputDtype) == 0,
-                OP_LOGE(context_, "Input dtype is not support, but input dtype is %d", inputDtype),
-                return ge::GRAPH_FAILED);
+                OP_LOGE(context_, "Input dtype is not supported, but got %d", inputDtype), return ge::GRAPH_FAILED);
     auto inputFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(inputDesc->GetStorageFormat()));
     OP_CHECK_IF((inputFormat != ge::Format::FORMAT_ND && inputFormat != ge::Format::FORMAT_NCHW),
-                OP_LOGE(context_, "Input format is not support, but input format is %d", inputDtype),
+                OP_LOGE(context_, "Input format is not supported, but got %d", static_cast<int32_t>(inputFormat)),
                 return ge::GRAPH_FAILED);
     baseTiling_.dtypeSize = inputDtypeList.find(inputDtype)->second;
     int32_t ubBlockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context_));
@@ -201,10 +200,12 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::CheckInputParams()
     auto outDescPtr0 = context_->GetOutputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outDescPtr0);
     auto outDtype = outDescPtr0->GetDataType();
-    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(context_, "Input and output dtype must be same"),
+    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(context_, "Input and output dtype must be the same"),
                 return ge::GRAPH_FAILED);
     auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outDescPtr0->GetStorageFormat()));
-    OP_CHECK_IF(outFormat != inputFormat, OP_LOGE(context_, "Input and output format must be same"),
+    OP_CHECK_IF(outFormat != inputFormat,
+                OP_LOGE(context_, "Input and output format must be the same, but got %d and %d",
+                        static_cast<int32_t>(inputFormat), static_cast<int32_t>(outFormat)),
                 return ge::GRAPH_FAILED);
     auto gradInput = context_->GetOutputShape(0);
     auto gradOutput = context_->GetInputShape(0);
@@ -224,7 +225,7 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::CheckInputParams()
     baseTiling_.outW = outShape.GetDim(CONST_3);
     baseTiling_.inSize = inputSize;
     baseTiling_.outSize = outputSize;
-    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(context_, "not support empty input or output"),
+    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(context_, "empty input or output is not supported"),
                 ge::GRAPH_FAILED);
     int64_t int32Max = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
     baseTiling_.isInt32 = static_cast<uint64_t>((inputSize <= int32Max) && (outputSize <= int32Max));
@@ -324,12 +325,12 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto platformAscendc = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNum = platformAscendc.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %ld", coreNum),
+    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must be greater than 0, but got %ld", coreNum),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNum;
     uint64_t ubSize = 0;
     platformAscendc.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than 0, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must be greater than 0, but got %lu", ubSize),
                 return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubSize is %lu", coreNum, ubSize);
     baseTiling_.ubSize = static_cast<int32_t>(ubSize);
@@ -346,9 +347,9 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::Init()
 
 ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::DoTiling()
 {
-    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams is failed"),
+    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams failed"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes is failed"),
+    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes failed"),
                 return ge::GRAPH_FAILED);
     CalTilingData();
     FillTilingData();

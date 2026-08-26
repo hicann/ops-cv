@@ -267,7 +267,8 @@ bool UpsampleBicubic2dAATiling::CheckShapes() const
     OP_CHECK_IF(
         !(inputH > 0 && inputW > 0 && outH > 0 && outW > 0),
         OP_LOGE(tilingContext->GetNodeName(),
-                "Input and output sizes should greater than 0, but got input (H: %ld, W: %ld) output (H: %ld, W: %ld)",
+                "Input and output sizes should be greater than 0, but got input (H: %ld, W: %ld) output (H: %ld, "
+                "W: %ld)",
                 inputH, inputW, outH, outW),
         return false);
 

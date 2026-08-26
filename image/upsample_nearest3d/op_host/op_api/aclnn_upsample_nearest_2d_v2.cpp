@@ -94,7 +94,7 @@ static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize)
 
     auto selfShape = self->GetViewShape();
     if (selfShape.GetDimNum() != FOURDIMS) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input size equals to %ld, but got size %lu.", FOURDIMS,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input size to be %ld, but got %lu.", FOURDIMS,
                 selfShape.GetDimNum());
         return false;
     }

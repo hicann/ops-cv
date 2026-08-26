@@ -103,7 +103,7 @@ static bool CheckFormat(const aclTensor* self, const aclTensor* out)
 
     const op::DataType selfType = self->GetDataType();
     if ((selfFormat == op::Format::FORMAT_NCHW) && (selfType == op::DataType::DT_DOUBLE)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "When dtype is %s, only support NHWC format",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "When dtype is %s, only NHWC format is supported",
                 op::ToString(selfType).GetString());
         return false;
     }
@@ -127,7 +127,7 @@ static bool CheckScalesAndShapeValid(const aclTensor* self, const aclTensor* out
 static bool CheckScalesValid(const double weight, const double high)
 {
     if ((weight < 0) || (high < 0)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "w scales and h scales cannot be negative , w_scales [%f], h_scales [%f].",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "w scales and h scales cannot be negative, w_scales [%f], h_scales [%f].",
                 weight, high);
         return false;
     }

@@ -258,7 +258,9 @@ static ge::graphStatus PasteSubImgTilingFunc(gert::TilingContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, combineTensor);
     ge::DataType patchDtype = patchTensor->GetDataType();
     ge::DataType combineDtype = combineTensor->GetDataType();
-    OP_CHECK_IF(!IsComputeDtype(patchDtype) || !IsComputeDtype(combineDtype), OP_LOGE(context, "unsupported dtype"),
+    OP_CHECK_IF(!IsComputeDtype(patchDtype) || !IsComputeDtype(combineDtype),
+                OP_LOGE(context, "unsupported dtype, patch_img ge::DataType[%d], combine_img ge::DataType[%d]",
+                        static_cast<int32_t>(patchDtype), static_cast<int32_t>(combineDtype)),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(patchDtype != combineDtype, OP_LOGE(context, "patch_img and combine_img dtype must be the same"),
                 return ge::GRAPH_FAILED);

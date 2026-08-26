@@ -129,7 +129,7 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, cons
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != gradOutputShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input grid and gradOutput to have same batch size, but got input with shape [%s] grid with "
+                "expect input grid and gradOutput to have same batch size, but got input with shape [%s], grid with "
                 "shape [%s] and gradOutput with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
                 op::ToString(gradOutputShape).GetString());
@@ -137,16 +137,16 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, cons
     }
     if (inputC != gradOutputC) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input and gradOutput to have same channel size, but got input with shape \
-            [%s] and gradOutput with shape [%s]",
+                "expect input and gradOutput to have same channel size, but got input with shape [%s] "
+                "and gradOutput with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gradOutputShape).GetString());
         return false;
     }
     if (gridShape.GetDim(SECOND_DIM) != gradOutputD || gridShape.GetDim(THIRD_DIM) != gradOutputH ||
         gridShape.GetDim(FOURTH_DIM) != gradOutputW) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect grid and gradOutput to have same D, H and W size, but got grid with shape \
-            [%s] and gradOutput with shape [%s]",
+                "expect grid and gradOutput to have same D, H and W size, but got grid with shape [%s] "
+                "and gradOutput with shape [%s]",
                 op::ToString(gridShape).GetString(), op::ToString(gradOutputShape).GetString());
         return false;
     }
@@ -189,7 +189,7 @@ static bool CheckTranspose(const aclTensor* input, int64_t channel)
     aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
     if (retRts != ACL_ERROR_NONE) {
         deterministicValue = 0;
-        OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
+        OP_LOGD("Unable to get system param deterministic = %ld.", deterministicValue);
     }
     bool transposeArch = curArch != NpuArch::DAV_1001 && curArch != NpuArch::DAV_3510;
     bool regbaseTranspose = curArch == NpuArch::DAV_3510 && deterministicValue == 0 &&

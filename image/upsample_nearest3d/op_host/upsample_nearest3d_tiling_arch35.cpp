@@ -487,12 +487,12 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNum = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %d", coreNum),
+    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must be greater than 0, but got %d", coreNum),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNum;
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than 0, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must be greater than 0, but got %lu", ubSize),
                 return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubSize is %lu", coreNum, ubSize);
     baseTiling_.ubSize = static_cast<int32_t>(ubSize);
@@ -662,11 +662,11 @@ void UpsampleNearest3dRegbaseTiling::PrintSimdTilingData()
 
 ge::graphStatus UpsampleNearest3dRegbaseTiling::DoTiling()
 {
-    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams is failed"),
+    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputParams failed"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes is failed"),
+    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInputShapes failed"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInitTilingData() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInitTilingData is failed"),
+    OP_CHECK_IF(CheckInitTilingData() != ge::GRAPH_SUCCESS, OP_LOGE(context_, "CheckInitTilingData failed"),
                 return ge::GRAPH_FAILED);
 
     if (isSimd) {

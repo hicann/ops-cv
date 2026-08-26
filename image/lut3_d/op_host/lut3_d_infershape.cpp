@@ -46,7 +46,7 @@ static ge::graphStatus InferShapeLut3D(gert::InferShapeContext* context)
     const size_t imgDimNum = imgShape->GetDimNum();
     if (!imgUnknownRank) {
         OP_CHECK_IF(imgDimNum != 3 && imgDimNum != 4,
-                    OP_LOGE(context, "The dims(3 or 4 is expected) of img is incorrect"), return GRAPH_FAILED);
+                    OP_LOGE(context, "The dims of img must be 3 or 4, but got %zu", imgDimNum), return GRAPH_FAILED);
         const int64_t imgChannel = imgShape->GetDim(imgDimNum - 1);
         OP_CHECK_IF(imgChannel != ge::UNKNOWN_DIM && imgChannel != 3, OP_LOGE(context, "img last dim must be 3"),
                     return GRAPH_FAILED);
@@ -54,7 +54,8 @@ static ge::graphStatus InferShapeLut3D(gert::InferShapeContext* context)
 
     // Validate lut_table dims: 4D, last dim = 3, first 3 dims equal, N <= 20
     if (!lutUnknownRank) {
-        OP_CHECK_IF(lutShape->GetDimNum() != 4, OP_LOGE(context, "The dims(4 is expected) of lut_table is incorrect"),
+        OP_CHECK_IF(lutShape->GetDimNum() != 4,
+                    OP_LOGE(context, "The dims of lut_table must be 4, but got %zu", lutShape->GetDimNum()),
                     return GRAPH_FAILED);
         const int64_t lutDim0 = lutShape->GetDim(0);
         const int64_t lutDim1 = lutShape->GetDim(1);

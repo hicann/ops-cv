@@ -111,8 +111,12 @@ static ge::graphStatus ValidateShapes(gert::TilingContext* context, int64_t& tot
         return ge::GRAPH_FAILED;
     }
     if (lutShape.GetDim(0) != lutShape.GetDim(1) || lutShape.GetDim(1) != lutShape.GetDim(2)) {
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "lut_table dims", "not equal",
-                                              "dim[0], dim[1], dim[2] must be equal");
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+            context->GetNodeName(), "lut_table dims",
+            ("dim[0]=" + std::to_string(lutShape.GetDim(0)) + ", dim[1]=" + std::to_string(lutShape.GetDim(1)) +
+             ", dim[2]=" + std::to_string(lutShape.GetDim(2)))
+                .c_str(),
+            "dim[0], dim[1], dim[2] must be equal");
         return ge::GRAPH_FAILED;
     }
     lutN = lutShape.GetDim(0);

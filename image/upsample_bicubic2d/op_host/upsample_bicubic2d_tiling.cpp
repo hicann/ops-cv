@@ -205,7 +205,10 @@ ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
         dataType = srcDtype;
         dataTypeSize = GetDataTypeSize();
     }
-    OP_CHECK_IF(srcDtype != dataType, OP_LOGE(tilingContext->GetNodeName(), "srcDtype != dataType"),
+    OP_CHECK_IF(srcDtype != dataType,
+                OP_LOGE(tilingContext->GetNodeName(),
+                        "srcDtype and dataType must be the same, but got srcDtype[%d] and dataType[%d]",
+                        static_cast<int32_t>(srcDtype), static_cast<int32_t>(dataType)),
                 return ge::GRAPH_FAILED);
 
     auto src_shape = tilingContext->GetInputShape(0);
@@ -215,7 +218,7 @@ ge::graphStatus UpsampleBicubic2dTiling::RunBigKernelTiling()
 
     input_shape = src_shape->GetOriginShape();
 
-    OP_CHECK_IF(CheckShapes() == false, OP_LOGE(tilingContext->GetNodeName(), "CheckShapes() == false"),
+    OP_CHECK_IF(CheckShapes() == false, OP_LOGE(tilingContext->GetNodeName(), "CheckShapes failed"),
                 return ge::GRAPH_FAILED);
 
     tilingContext->SetTilingKey(1);
@@ -299,7 +302,8 @@ uint32_t UpsampleBicubic2dTiling::GetNeedCoreNum()
 bool UpsampleBicubic2dTiling::CheckShapes() const
 {
     if (input_shape.GetDimNum() != SHAPE_SIZE) {
-        OP_LOGE(tilingContext->GetNodeName(), "input_shape.GetDimNum() != SHAPE_SIZE");
+        OP_LOGE(tilingContext->GetNodeName(), "input shape dim num must be %zu, but got %zu",
+                static_cast<size_t>(SHAPE_SIZE), input_shape.GetDimNum());
         return false;
     }
 
@@ -310,7 +314,10 @@ bool UpsampleBicubic2dTiling::CheckShapes() const
     int64_t outW = outputSizeArray[W_INDEX - H_INDEX];
 
     if (!(inputH > 0 && inputW > 0 && outH > 0 && outW > 0)) {
-        OP_LOGE(tilingContext->GetNodeName(), "!(inputH > 0 && inputW > 0 && outH > 0 && outW > 0)");
+        OP_LOGE(tilingContext->GetNodeName(),
+                "Input and output sizes should be greater than 0, but got input (H: %ld, W: %ld) output (H: %ld, "
+                "W: %ld)",
+                inputH, inputW, outH, outW);
         return false;
     }
 

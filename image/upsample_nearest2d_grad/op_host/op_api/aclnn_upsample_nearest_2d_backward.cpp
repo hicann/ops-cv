@@ -91,7 +91,7 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
 
     OP_CHECK(inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, but got input (H: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (H: %ld,"
                      " W: %ld) output (H: %ld, W: %ld)",
                      inputH, inputW, outH, outW),
              return false);
@@ -133,14 +133,12 @@ static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, 
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_LIMIT, return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
+             return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
-             return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 4, but got %zu", inputSizeNum), return false);
     return true;
 }
 

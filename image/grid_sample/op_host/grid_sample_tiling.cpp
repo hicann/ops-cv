@@ -65,13 +65,17 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     if (xShape.GetDimNum() == DIM_NUM_5D) {
         dimension = 1;
         dimValue = gridShape.GetDim(DIM_4);
-        OP_CHECK_IF(dimValue != DIM_3, OP_LOGE(context_->GetNodeName(), "only support (N, D, H, W, 3) for grid"),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            dimValue != DIM_3,
+            OP_LOGE(context_->GetNodeName(), "grid only supports (N, D, H, W, 3), but the last dim is %ld", dimValue),
+            return ge::GRAPH_FAILED);
     } else {
         dimension = 0;
         dimValue = gridShape.GetDim(DIM_3);
-        OP_CHECK_IF(dimValue != DIM_2, OP_LOGE(context_->GetNodeName(), "only support (N, H, W, 2) for grid"),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            dimValue != DIM_2,
+            OP_LOGE(context_->GetNodeName(), "grid only supports (N, H, W, 2), but the last dim is %ld", dimValue),
+            return ge::GRAPH_FAILED);
     }
 
     auto compileInfo = reinterpret_cast<const GridSampleCompileInfo*>(context_->GetCompileInfo());
@@ -82,33 +86,33 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     bool is310P = gridSampleSocVersion == platform_ascendc::SocVersion::ASCEND310P;
 
     OP_CHECK_IF((is310P && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16),
-                OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32 or FLOAT16"),
+                OP_LOGE(context_->GetNodeName(), "x datatype only supports FLOAT32 or FLOAT16"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF((is310P && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16),
-                OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32 or FLOAT16"),
+                OP_LOGE(context_->GetNodeName(), "grid datatype only supports FLOAT32 or FLOAT16"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         (!regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
-        OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+        OP_LOGE(context_->GetNodeName(), "x datatype only supports FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF((!regBase && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 &&
                  gridDtype != ge::DT_BF16),
-                OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+                OP_LOGE(context_->GetNodeName(), "grid datatype only supports FLOAT32, FLOAT16, BFLOAT16"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         (regBase && dimension == 0 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
-        OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+        OP_LOGE(context_->GetNodeName(), "x datatype only supports FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF((regBase && dimension == 0 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 &&
                  gridDtype != ge::DT_BF16),
-                OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+                OP_LOGE(context_->GetNodeName(), "grid datatype only supports FLOAT32, FLOAT16, BFLOAT16"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF((dimension == 1 && xDtype != ge::DT_FLOAT && xDtype != ge::DT_FLOAT16 && xDtype != ge::DT_BF16),
-                OP_LOGE(context_->GetNodeName(), "x datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+                OP_LOGE(context_->GetNodeName(), "x datatype only supports FLOAT32, FLOAT16, BFLOAT16"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         (dimension == 1 && gridDtype != ge::DT_FLOAT && gridDtype != ge::DT_FLOAT16 && gridDtype != ge::DT_BF16),
-        OP_LOGE(context_->GetNodeName(), "grid datatype only support FLOAT32, FLOAT16, BFLOAT16"),
+        OP_LOGE(context_->GetNodeName(), "grid datatype only supports FLOAT32, FLOAT16, BFLOAT16"),
         return ge::GRAPH_FAILED);
 
     auto* attrs = context_->GetAttrs();
@@ -122,12 +126,12 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     } else if (strcmp(pInterpolationMode, "nearest") == 0) {
         interpolationMode = INTERPOLATION_MODE_NEAREST;
     } else {
-        OP_LOGE(context_->GetNodeName(), "interpolation_mode only support bilinear or nearest or bicubic.");
+        OP_LOGE(context_->GetNodeName(), "interpolation_mode only supports bilinear, nearest or bicubic.");
         return ge::GRAPH_FAILED;
     }
 
     OP_CHECK_IF(dimension == 1 && interpolationMode == INTERPOLATION_MODE_BICUBIC,
-                OP_LOGE(context_->GetNodeName(), "GridSampler3D interpolation_mode only support bilinear or nearest"),
+                OP_LOGE(context_->GetNodeName(), "GridSampler3D interpolation_mode only supports bilinear or nearest"),
                 return ge::GRAPH_FAILED);
 
     const char* pPaddingMode = attrs->GetAttrPointer<char>(1);
@@ -139,7 +143,7 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     } else if (strcmp(pPaddingMode, "reflection") == 0) {
         paddingMode = PADDING_MODE_REFLECTION;
     } else {
-        OP_LOGE(context_->GetNodeName(), "padding_mode only support zeros or border or reflection.");
+        OP_LOGE(context_->GetNodeName(), "padding_mode only supports zeros, border or reflection.");
         return ge::GRAPH_FAILED;
     }
 
@@ -189,19 +193,24 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
         }
 
         OP_CHECK_IF(inN < 1 || inC < 1 || inH < 1 || inW < 1 || outW < 1 || outH < 1,
-                    OP_LOGE(context_->GetNodeName(), "Invalid shape. Maybe empty tensor."), return ge::GRAPH_FAILED);
-        OP_CHECK_IF(inH * inW > static_cast<int64_t>(std::numeric_limits<int32_t>::max()),
-                    OP_LOGE(context_->GetNodeName(), "no support for H*W of x greater than int32 max value"),
+                    OP_LOGE(context_->GetNodeName(),
+                            "Invalid shape, every dim must be greater than 0, but got x[N=%ld, C=%ld, H=%ld, W=%ld] "
+                            "and out[H=%ld, W=%ld]",
+                            inN, inC, inH, inW, outH, outW),
                     return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            inH * inW > static_cast<int64_t>(std::numeric_limits<int32_t>::max()),
+            OP_LOGE(context_->GetNodeName(), "H*W of x must not be greater than INT32_MAX, but got %ld", inH * inW),
+            return ge::GRAPH_FAILED);
 
         const int32_t* pSchedulerMode = attrs->GetAttrPointer<int32_t>(4);
         OP_CHECK_NULL_WITH_CONTEXT(context_, pSchedulerMode);
         OP_LOGD(context_->GetNodeName(), "scheduler_mode is: %d", *pSchedulerMode);
         schedulerMode = *pSchedulerMode;
         OP_CHECK_IF(schedulerMode != 0 && schedulerMode != 1,
-                    OP_LOGE(context_->GetNodeName(), "scheduler_mode only support 0 or 1."), return ge::GRAPH_FAILED);
+                    OP_LOGE(context_->GetNodeName(), "scheduler_mode only supports 0 or 1."), return ge::GRAPH_FAILED);
         OP_CHECK_IF(!(*pChannelLast) && schedulerMode == 1,
-                    OP_LOGE(context_->GetNodeName(), "scheduler_mode support 1 only in the channel last scenario."),
+                    OP_LOGE(context_->GetNodeName(), "scheduler_mode supports 1 only in the channel last scenario."),
                     return ge::GRAPH_FAILED);
     } else {
         if (channelLast == 0) {
@@ -220,9 +229,14 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
         outW = gridShape.GetDim(DIM_3);
 
         OP_CHECK_IF(inN < 1 || inC < 1 || inD < 1 || inH < 1 || inW < 1 || outD < 1 || outW < 1 || outH < 1,
-                    OP_LOGE(context_->GetNodeName(), "Invalid shape. Maybe empty tensor."), return ge::GRAPH_FAILED);
+                    OP_LOGE(context_->GetNodeName(),
+                            "Invalid shape, every dim must be greater than 0, but got x[N=%ld, C=%ld, D=%ld, H=%ld, "
+                            "W=%ld] and out[D=%ld, H=%ld, W=%ld]",
+                            inN, inC, inD, inH, inW, outD, outH, outW),
+                    return ge::GRAPH_FAILED);
         OP_CHECK_IF(inH * inW * inD > static_cast<int64_t>(std::numeric_limits<int32_t>::max()),
-                    OP_LOGE(context_->GetNodeName(), "no support for D*H*W of x greater than int32 max value"),
+                    OP_LOGE(context_->GetNodeName(), "D*H*W of x must not be greater than INT32_MAX, but got %ld",
+                            inD * inH * inW),
                     return ge::GRAPH_FAILED);
 
         // 添加判断是否都为特例场景，若为特例场景schedulerMode为1，否则为默认值0

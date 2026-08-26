@@ -120,24 +120,23 @@ static bool CheckArray(const aclTensor* gradOutput, const aclIntArray* inputSize
                        const aclIntArray* dilation, const aclIntArray* padding, const aclIntArray* stride)
 {
     if (inputSize->Size() != ARRAY_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected inputSize equals to 2, but got size %lu.", inputSize->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected inputSize to be 2, but got %lu.", inputSize->Size());
         return false;
     }
     if (kernelSize->Size() != ARRAY_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected kernelSize equals to 2, but got size %lu.",
-                kernelSize->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected kernelSize to be 2, but got %lu.", kernelSize->Size());
         return false;
     }
     if (dilation->Size() != ARRAY_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected dilation equals to 2, but got size %lu.", dilation->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected dilation to be 2, but got %lu.", dilation->Size());
         return false;
     }
     if (padding->Size() != ARRAY_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected padding equals to 2, but got size %lu.", padding->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected padding to be 2, but got %lu.", padding->Size());
         return false;
     }
     if (stride->Size() != ARRAY_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected stride equals to 2, but got size %lu.", stride->Size());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected stride to be 2, but got %lu.", stride->Size());
         return false;
     }
     OP_CHECK(CheckArrayValue(kernelSize, dilation, padding, stride),

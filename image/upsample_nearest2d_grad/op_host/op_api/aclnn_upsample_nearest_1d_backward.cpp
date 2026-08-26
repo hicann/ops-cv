@@ -76,14 +76,12 @@ static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, 
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOut to be 3d Tensor, instead got: %zu", gradOutDimNum),
              return false);
 
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 1, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 1, but got %zu", outputSizeNum),
+             return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 3, but got size %zu", inputSizeNum),
-             return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 3, but got %zu", inputSizeNum), return false);
     return true;
 }
 
@@ -99,7 +97,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
 
     OP_CHECK(inputL > 0 && outL > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0,"
+                     "Input and output sizes should be greater than 0, "
                      "but got input (L: %ld) output (L: %ld)",
                      inputL, outL),
              return false);
@@ -123,7 +121,7 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
     int64_t outDimN = out->GetViewShape().GetDim(DIM_ZERO);
     int64_t outDimC = out->GetViewShape().GetDim(DIM_ONE);
     if ((outDimC != selfDimC) || (outDimN != selfDimN)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] are not equal.",
                 selfDimC, outDimC, selfDimN, outDimN);
         return false;
     }

@@ -79,10 +79,9 @@ static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize, con
 {
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 3, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 3, but got %zu", outputSizeNum),
+             return false);
 
     // out的shape应该等于推导后的shape
     op::Shape inputShape = self->GetViewShape();
@@ -123,7 +122,7 @@ static bool CheckInputElement(const aclTensor* self, const Scales& scale, const 
 
     OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, but got input (D: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (D: %ld,"
                      " H: %ld, W: %ld) output (D: %ld, H: %ld, W: %ld)",
                      inputD, inputH, inputW, outD, outH, outW),
              return false);

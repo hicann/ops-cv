@@ -122,16 +122,16 @@ static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclT
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != outShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input, grid and out to have same batch size, but got input with shape [%s] \
-            grid with shape [%s] and out with shape [%s]",
+                "expect input, grid and out to have same batch size, but got input with shape [%s], "
+                "grid with shape [%s] and out with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
                 op::ToString(outShape).GetString());
         return false;
     }
     if (inputShape.GetDim(SECOND_DIM) != outShape.GetDim(SECOND_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input and out to have same channel size, but got input with shape [%s] \
-            and out with shape [%s]",
+                "expect input and out to have same channel size, but got input with shape [%s] "
+                "and out with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
@@ -177,7 +177,7 @@ static aclnnStatus CheckParams(const aclTensor* input, const aclTensor* grid, in
 static bool CheckAiCpuSupport(int64_t interpolationMode)
 {
     if (interpolationMode == INTERPOLATION_MODE_BICUBIC_VALUE) {
-        OP_LOGD("interpolation mode bicubic is not support in AICPU.");
+        OP_LOGD("interpolation mode bicubic is not supported in AICPU.");
         return false;
     }
     return true;
@@ -187,7 +187,7 @@ static bool Check310PFullLoadSuppport(const aclTensor* input, int64_t interpolat
 {
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch != NpuArch::DAV_2002) {
-        OP_LOGD("FullLoad template does not support on this npuArch.");
+        OP_LOGD("FullLoad template is not supported on this npuArch.");
         return false;
     }
     if (input->GetStorageFormat() == op::Format::FORMAT_NHWC) {
@@ -253,11 +253,11 @@ static aclnnStatus paramsNotSupport(const aclTensor* input, int64_t interpolatio
 {
     std::string alignCornerStr = alignCorners ? "true" : "false";
     OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-            "The op info is not supported. Plsease check op info! DataType support list is %s, got data type is %s. \
-          interpolationMode support 0(bilinear) , 1(nearest) or 2(bicubic), got interpolationMode is %ld. \
-          paddingMode support 0(zeros) , 1(border) or 2(reflection), got paddingMode is %ld. \
-          alignCorners support false and true, got alignCorners is %s. \
-          Notice that when data type is double, no support interpolation mode is bicubic.",
+            "The op info is not supported. Please check op info! DataType support list is %s, got data type is %s. "
+            "interpolationMode supports 0(bilinear), 1(nearest) or 2(bicubic), got interpolationMode is %ld. "
+            "paddingMode supports 0(zeros), 1(border) or 2(reflection), got paddingMode is %ld. "
+            "alignCorners supports false and true, got alignCorners is %s. "
+            "Notice that when data type is double, interpolation mode bicubic is not supported.",
             op::ToString(DTYPE_SUPPORT_LIST).GetString(), op::ToString(input->GetDataType()).GetString(),
             interpolationMode, paddingMode, alignCornerStr.c_str());
     return ACLNN_ERR_PARAM_INVALID;
@@ -308,7 +308,7 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor* input, const acl
         bool channelLast = true;
         auto valuePerm = uniqueExecutor.get()->AllocIntArray(perm, 4);
         inputContiguous = l0op::Transpose(inputContiguous, valuePerm, uniqueExecutor.get());
-        OP_LOGD("Lanuch GridSample in AICore. Attrs: [%ld], [%ld], [%d], [%d], [%ld]", interpolationMode, paddingMode,
+        OP_LOGD("Launch GridSample in AICore. Attrs: [%ld], [%ld], [%d], [%d], [%ld]", interpolationMode, paddingMode,
                 alignCorners, channelLast, schedulerMode);
         gridSampler2DOut = l0op::GridSample(inputContiguous, gridContiguous, interpolationMode, paddingMode,
                                             alignCorners, channelLast, schedulerMode, uniqueExecutor.get());
@@ -323,7 +323,7 @@ aclnnStatus aclnnGridSampler2DGetWorkspaceSize(const aclTensor* input, const acl
         gridSampler2DOut = l0op::GridSample(inputContiguous, gridContiguous, interpolationMode, paddingMode,
                                             alignCorners, false, 0, uniqueExecutor.get());
     } else if (CheckAiCpuSupport(interpolationMode)) {
-        OP_LOGD("Lanuch GridSampler2D in AICPU. Attrs: [%ld], [%ld], [%d]", interpolationMode, paddingMode,
+        OP_LOGD("Launch GridSampler2D in AICPU. Attrs: [%ld], [%ld], [%d]", interpolationMode, paddingMode,
                 alignCorners);
         gridSampler2DOut = l0op::GridSampler2D(inputContiguous, gridContiguous, interpolationMode, paddingMode,
                                                alignCorners, uniqueExecutor.get());

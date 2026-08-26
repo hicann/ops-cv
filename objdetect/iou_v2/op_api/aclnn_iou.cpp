@@ -58,7 +58,7 @@ static bool CheckDtypeValid(const aclTensor* bBoxes, const aclTensor* gtBoxes, c
 
     if (bBoxes->GetStorageFormat() != Format::FORMAT_ND || gtBoxes->GetStorageFormat() != Format::FORMAT_ND ||
         overlap->GetStorageFormat() != Format::FORMAT_ND) {
-        OP_LOGI("input and output format should be ND.");
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input and output format should be ND.");
         return false;
     }
     return true;
@@ -72,11 +72,11 @@ static bool CheckAttr(const char* mode, float eps)
     }
     // 检查self和other能否做数据类型推导
     if (strcmp(mode, "iou") != 0 && strcmp(mode, "iof") != 0) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be [iou] or [iof], but get [%s].", mode);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be [iou] or [iof], but got [%s].", mode);
         return false;
     }
     if (eps < 0) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "eps should be greater than or equal to 0, but now is [%f].", eps);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "eps should be greater than or equal to 0, but got [%f].", eps);
         return false;
     }
     return true;

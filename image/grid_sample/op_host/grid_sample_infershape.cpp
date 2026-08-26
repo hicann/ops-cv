@@ -64,7 +64,7 @@ static ge::graphStatus InferGridSampleShape2D(const gert::InferShapeContext* con
     OP_LOGD(context->GetNodeName(), "channel_last attribute is :%d", *channelLast);
 
     int64_t nDim = xShape->GetDim(0U);
-    OP_CHECK_IF(nDim == 0, OP_LOGE(context->GetNodeName(), "no support for N is 0"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(nDim == 0, OP_LOGE(context->GetNodeName(), "N must not be 0."), return ge::GRAPH_FAILED);
     if (nDim < 0) {
         nDim = gridShape->GetDim(0U); // if N from input_x is -1, then use N value from input_grid
     }
@@ -73,7 +73,7 @@ static ge::graphStatus InferGridSampleShape2D(const gert::InferShapeContext* con
     if (*channelLast) {
         cDim = xShape->GetDim(X_IDX_CHANNEL);
     }
-    OP_CHECK_IF(cDim == 0, OP_LOGE(context->GetNodeName(), "no support for C is 0"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(cDim == 0, OP_LOGE(context->GetNodeName(), "C must not be 0."), return ge::GRAPH_FAILED);
 
     int64_t hDim = gridShape->GetDim(1U);
     int64_t wDim = gridShape->GetDim(GRID_DIM_IDX_W);
@@ -101,7 +101,7 @@ static ge::graphStatus InferGridSampleShape3D(const gert::InferShapeContext* con
     }
 
     int64_t nDim = xShape->GetDim(0U);
-    OP_CHECK_IF(nDim == 0, OP_LOGE(context->GetNodeName(), "no support for N is 0"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(nDim == 0, OP_LOGE(context->GetNodeName(), "N must not be 0."), return ge::GRAPH_FAILED);
     if (nDim < 0) {
         nDim = gridShape->GetDim(0U); // if N from input_x is -1, then use N value from input_grid
     }
@@ -113,7 +113,7 @@ static ge::graphStatus InferGridSampleShape3D(const gert::InferShapeContext* con
     if (channelLast) {
         cDim = xShape->GetDim(X_IDX_CHANNEL_3D);
     }
-    OP_CHECK_IF(cDim == 0, OP_LOGE(context->GetNodeName(), "no support for C is 0"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(cDim == 0, OP_LOGE(context->GetNodeName(), "C must not be 0."), return ge::GRAPH_FAILED);
 
     OP_LOGD(context->GetNodeName(), "cDim = %ld", cDim);
     OP_LOGD(context->GetNodeName(), "dDim = %ld", dDim);
@@ -155,7 +155,9 @@ static ge::graphStatus InferShape4GridSample(gert::InferShapeContext* context)
 
     OP_CHECK_IF((xShape->GetDimNum() != DIM_NUM_2D || gridShape->GetDimNum() != DIM_NUM_2D) &&
                     (xShape->GetDimNum() != DIM_NUM_3D || gridShape->GetDimNum() != DIM_NUM_3D),
-                OP_LOGE(context->GetNodeName(), "shape is invalid, only support rank is 4 or 5"),
+                OP_LOGE(context->GetNodeName(),
+                        "shape is invalid, only rank 4 or 5 is supported, but got x rank %zu, grid rank %zu",
+                        xShape->GetDimNum(), gridShape->GetDimNum()),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(xShape->GetDim(0U) != ge::UNKNOWN_DIM && gridShape->GetDim(0U) != ge::UNKNOWN_DIM &&
                     xShape->GetDim(0U) != gridShape->GetDim(0U),
@@ -258,9 +260,10 @@ static ge::graphStatus InferShapeRange4GridSample(gert::InferShapeRangeContext* 
     // if rank is known, it should be greater or equal 4
     // that is to say, GridSample op support 4-dim or 5-dim or n-dim ( n >= 4 )
     size_t xDimNum = xRange->GetMax()->GetDimNum();
-    OP_CHECK_IF(xDimNum == 2 || xDimNum == 3,
-                OP_LOGE(context->GetNodeName(), "x range invalid, only support unkown rank or rank is greater than 3"),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        xDimNum == 2 || xDimNum == 3,
+        OP_LOGE(context->GetNodeName(), "x range invalid, only unknown rank or rank greater than 3 is supported"),
+        return ge::GRAPH_FAILED);
     OP_CHECK_IF(xRange->GetMin()->GetDimNum() != xDimNum,
                 OP_LOGE(context->GetNodeName(), "min value of x range is invalid"), return ge::GRAPH_FAILED);
 
@@ -272,7 +275,7 @@ static ge::graphStatus InferShapeRange4GridSample(gert::InferShapeRangeContext* 
     size_t gridDimNum = gridRange->GetMax()->GetDimNum(); // the explanation is similar to xDimNum
     OP_CHECK_IF(
         gridDimNum == 2 || gridDimNum == 3,
-        OP_LOGE(context->GetNodeName(), "grid range invalid, only support unkown rank or rank is greater than 3"),
+        OP_LOGE(context->GetNodeName(), "grid range invalid, only unknown rank or rank greater than 3 is supported"),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(gridRange->GetMin()->GetDimNum() != gridDimNum,
                 OP_LOGE(context->GetNodeName(), "min value of grid range is invalid"), return ge::GRAPH_FAILED);

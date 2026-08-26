@@ -53,15 +53,19 @@ static ge::graphStatus CheckInputShape(gert::InferShapeContext* context, const g
                                                        "grid last dim must be 2"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(assistShape->GetDimNum() != gridShape->GetDimNum(),
-                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "assist", "rank is not equal to grid",
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "assist",
+                                                       ("assist rank=" + std::to_string(assistShape->GetDimNum()) +
+                                                        ", grid rank=" + std::to_string(gridShape->GetDimNum())),
                                                        "grid and assist rank must be equal"),
                 return ge::GRAPH_FAILED);
     for (size_t i = 0; i < gridShape->GetDimNum(); ++i) {
         const int64_t gridDim = gridShape->GetDim(i);
         const int64_t assistDim = assistShape->GetDim(i);
         OP_CHECK_IF(gridDim != ge::UNKNOWN_DIM && assistDim != ge::UNKNOWN_DIM && gridDim != assistDim,
-                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "grid and assist", "not equal",
-                                                           "known dims of grid and assist must be equal"),
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                        context->GetNodeName(), "grid and assist",
+                        ("grid dim=" + std::to_string(gridDim) + ", assist dim=" + std::to_string(assistDim)),
+                        "known dims of grid and assist must be equal"),
                     return ge::GRAPH_FAILED);
     }
     return ge::GRAPH_SUCCESS;

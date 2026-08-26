@@ -145,14 +145,12 @@ static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, 
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_LIMIT, return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 1, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 1, but got %zu", outputSizeNum),
+             return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 3, but got size %zu", inputSizeNum),
-             return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 3, but got %zu", inputSizeNum), return false);
     return true;
 }
 
@@ -168,7 +166,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
 
     OP_CHECK(inputH > 0 && outH > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, but got input (L: %ld),"
+                     "Input and output sizes should be greater than 0, but got input (L: %ld),"
                      " output (L: %ld)",
                      inputH, outH),
              return false);
@@ -196,7 +194,7 @@ static bool CheckNCValid(const aclTensor* gradOut, const aclTensor* out)
     outDimN = out->GetViewShape().GetDim(DIM_ZERO);
     outDimC = out->GetViewShape().GetDim(DIM_ONE);
     if ((selfDimN != outDimN) || (selfDimC != outDimC)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimN[%ld]/outDimN[%ld] or selfDimC[%ld]/outDimC[%ld] not equal .",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimN[%ld]/outDimN[%ld] or selfDimC[%ld]/outDimC[%ld] are not equal.",
                 selfDimN, outDimN, selfDimC, outDimC);
         return false;
     }
@@ -438,9 +436,9 @@ aclnnStatus aclnnUpsampleLinear1dBackwardGetWorkspaceSize(const aclTensor* gradO
             const float realScales_h = static_cast<float>(1.0);
             auto gradOutCast = l0op::Cast(gradOutContiguous, op::DataType::DT_FLOAT, uniqueExecutor.get());
             CHECK_RET(gradOutCast != nullptr, ACLNN_ERR_INNER_NULLPTR);
-            const aclTensor* upsampleOut = l0op::UpsampleBilinear2dGrad(
-                gradOutCast, outputSizeArray, originSizeArray, outContiguous, alignCorners,
-                realScales_h, realScales_w, uniqueExecutor.get());
+            const aclTensor* upsampleOut = l0op::UpsampleBilinear2dGrad(gradOutCast, outputSizeArray, originSizeArray,
+                                                                        outContiguous, alignCorners, realScales_h,
+                                                                        realScales_w, uniqueExecutor.get());
             CHECK_RET(upsampleOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
             auto outTransdata = l0op::TransData(upsampleOut, op::Format::FORMAT_NCHW, 0, uniqueExecutor.get());
             CHECK_RET(outTransdata != nullptr, ACLNN_ERR_INNER_NULLPTR);

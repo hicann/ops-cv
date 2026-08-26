@@ -56,12 +56,10 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* out, const 
     OP_CHECK_WRONG_DIMENSION(gradOutput, DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
     OP_CHECK(inputSizeNum == EXPECT_SIZE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 4, but got %zu", inputSizeNum), return false);
+    OP_CHECK(outputSizeNum == EXPECT_OUTPUTSIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
              return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_OUTPUTSIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
     return true;
 }
 
@@ -116,7 +114,7 @@ static bool CheckInputElement(const aclTensor* gradOutput, const aclIntArray* in
 
     OP_CHECK(outN > 0 && inputH > 0 && inputW > 0 && outC > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (N: %ld, C: %ld,"
                      " H: %ld, W: %ld) output (H: %ld, W: %ld)",
                      outN, outC, inputH, inputW, outH, outW),
              return false);
@@ -139,11 +137,11 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
     int64_t outDimN = out->GetViewShape().GetDim(DIM_ZERO);
     int64_t outDimC = out->GetViewShape().GetDim(DIM_ONE);
     if (format == op::Format::FORMAT_NHWC) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input and output format only support [NCHW, ND] format .");
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input and output format only supports [NCHW, ND] format.");
         return false;
     }
     if ((outDimC != selfDimC) || (outDimN != selfDimN)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] not equal .",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "selfDimC[%ld]/outDimC[%ld] or selfDimN[%ld]/outDimN[%ld] are not equal.",
                 selfDimC, outDimC, selfDimN, outDimN);
         return false;
     }

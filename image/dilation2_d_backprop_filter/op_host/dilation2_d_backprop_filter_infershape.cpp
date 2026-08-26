@@ -123,11 +123,17 @@ static ge::graphStatus InferShapeDilation2DBackpropFilter(gert::InferShapeContex
     const int64_t* stridesData = stridesVec->GetData();
     if (isNCHW) {
         OP_CHECK_IF(stridesData[0] != 1 || stridesData[1] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides", "strides[0] or strides[1] != 1", "1"),
+                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides",
+                                              ("strides[0]=" + std::to_string(stridesData[0]) +
+                                               ", strides[1]=" + std::to_string(stridesData[1])),
+                                              "1"),
                     return GRAPH_FAILED);
     } else {
         OP_CHECK_IF(stridesData[0] != 1 || stridesData[3] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides", "strides[0] or strides[3] != 1", "1"),
+                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides",
+                                              ("strides[0]=" + std::to_string(stridesData[0]) +
+                                               ", strides[3]=" + std::to_string(stridesData[3])),
+                                              "1"),
                     return GRAPH_FAILED);
     }
 
@@ -141,32 +147,44 @@ static ge::graphStatus InferShapeDilation2DBackpropFilter(gert::InferShapeContex
                 return GRAPH_FAILED);
     const int64_t* ratesData = ratesVec->GetData();
     if (isNCHW) {
-        OP_CHECK_IF(ratesData[0] != 1 || ratesData[1] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "rates", "rates[0] or rates[1] != 1", "1"),
-                    return GRAPH_FAILED);
+        OP_CHECK_IF(
+            ratesData[0] != 1 || ratesData[1] != 1,
+            OP_LOGE_FOR_INVALID_VALUE(
+                context->GetNodeName(), "rates",
+                ("rates[0]=" + std::to_string(ratesData[0]) + ", rates[1]=" + std::to_string(ratesData[1])), "1"),
+            return GRAPH_FAILED);
     } else {
-        OP_CHECK_IF(ratesData[0] != 1 || ratesData[3] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "rates", "rates[0] or rates[3] != 1", "1"),
-                    return GRAPH_FAILED);
+        OP_CHECK_IF(
+            ratesData[0] != 1 || ratesData[3] != 1,
+            OP_LOGE_FOR_INVALID_VALUE(
+                context->GetNodeName(), "rates",
+                ("rates[0]=" + std::to_string(ratesData[0]) + ", rates[3]=" + std::to_string(ratesData[3])), "1"),
+            return GRAPH_FAILED);
     }
 
     // Validate depth consistency based on data_format
     // NHWC: x.C(dim3) == filter.C(dim2) == out_bp.C(dim3)
     // NCHW: x.C(dim1) == filter.C(dim0) == out_bp.C(dim1)
     if (isNCHW) {
-        OP_CHECK_IF(BothKnownAndNotEqual(xShape->GetDim(1), filterShape->GetDim(0)) ||
-                        BothKnownAndNotEqual(xShape->GetDim(1), outBpShape->GetDim(1)),
-                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-                        context->GetNodeName(), "x, filter, out_backprop", "x.C, filter.C, out_bp.C",
-                        "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
-                    return GRAPH_FAILED);
+        OP_CHECK_IF(
+            BothKnownAndNotEqual(xShape->GetDim(1), filterShape->GetDim(0)) ||
+                BothKnownAndNotEqual(xShape->GetDim(1), outBpShape->GetDim(1)),
+            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                context->GetNodeName(), "x, filter, out_backprop",
+                ("x.C=" + std::to_string(xShape->GetDim(1)) + ", filter.C=" + std::to_string(filterShape->GetDim(0)) +
+                 ", out_bp.C=" + std::to_string(outBpShape->GetDim(1))),
+                "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
+            return GRAPH_FAILED);
     } else {
-        OP_CHECK_IF(BothKnownAndNotEqual(xShape->GetDim(3), filterShape->GetDim(2)) ||
-                        BothKnownAndNotEqual(xShape->GetDim(3), outBpShape->GetDim(3)),
-                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-                        context->GetNodeName(), "x, filter, out_backprop", "x.C, filter.C, out_bp.C",
-                        "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
-                    return GRAPH_FAILED);
+        OP_CHECK_IF(
+            BothKnownAndNotEqual(xShape->GetDim(3), filterShape->GetDim(2)) ||
+                BothKnownAndNotEqual(xShape->GetDim(3), outBpShape->GetDim(3)),
+            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                context->GetNodeName(), "x, filter, out_backprop",
+                ("x.C=" + std::to_string(xShape->GetDim(3)) + ", filter.C=" + std::to_string(filterShape->GetDim(2)) +
+                 ", out_bp.C=" + std::to_string(outBpShape->GetDim(3))),
+                "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
+            return GRAPH_FAILED);
     }
 
     // Output shape = filter shape (SE §5.5)

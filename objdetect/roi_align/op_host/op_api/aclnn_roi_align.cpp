@@ -122,7 +122,7 @@ static bool CheckAttr(const char* mode, int samplingRatio, float spatialScale)
         return false;
     }
     if (strcmp(mode, "avg") != 0 && strcmp(mode, "max") != 0) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be [avg] or [max], but get [%s]", mode);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be [avg] or [max], but got [%s]", mode);
         return false;
     }
     if (samplingRatio < 0) {

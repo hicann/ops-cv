@@ -137,7 +137,7 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckDtype()
     OP_CHECK_IF(
         this->inputDtype_ != ge::DT_BF16 && this->inputDtype_ != ge::DT_FLOAT16 && this->inputDtype_ != ge::DT_FLOAT,
         OP_LOGE(tilingContext_,
-                "Input box_scores dtype not supported, only support [DT_FLOAT, DT_FLOAT16, DT_BF16], got %s",
+                "Input box_scores dtype is not supported, only [DT_FLOAT, DT_FLOAT16, DT_BF16] are supported, got %s",
                 ge::TypeUtils::DataTypeToSerialString(this->inputDtype_).c_str()),
         return ge::GRAPH_FAILED);
     auto selectedBoxesDesc = tilingContext_->GetOutputDesc(INDEX_ZERO);
@@ -152,17 +152,19 @@ ge::graphStatus NMSWithMaskRegbaseTiling::CheckDtype()
     auto selectedIdxDesc = tilingContext_->GetOutputDesc(INDEX_ONE);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedIdxDesc);
     auto selectedIdxDtype = selectedIdxDesc->GetDataType();
-    OP_CHECK_IF(selectedIdxDtype != ge::DT_INT32,
-                OP_LOGE(tilingContext_, "Output selected_idx dtype not supported, only support DT_INT32, got %s",
-                        ge::TypeUtils::DataTypeToSerialString(selectedIdxDtype).c_str()),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        selectedIdxDtype != ge::DT_INT32,
+        OP_LOGE(tilingContext_, "Output selected_idx dtype is not supported, only [DT_INT32] is supported, got %s",
+                ge::TypeUtils::DataTypeToSerialString(selectedIdxDtype).c_str()),
+        return ge::GRAPH_FAILED);
     auto selectedMaskDesc = tilingContext_->GetOutputDesc(INDEX_TWO);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext_, selectedMaskDesc);
     auto selectedMaskDtype = selectedMaskDesc->GetDataType();
-    OP_CHECK_IF(selectedMaskDtype != ge::DT_UINT8,
-                OP_LOGE(tilingContext_, "Output selected_mask dtype not supported, only support [DT_UINT8], got %s",
-                        ge::TypeUtils::DataTypeToSerialString(selectedMaskDtype).c_str()),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        selectedMaskDtype != ge::DT_UINT8,
+        OP_LOGE(tilingContext_, "Output selected_mask dtype is not supported, only [DT_UINT8] is supported, got %s",
+                ge::TypeUtils::DataTypeToSerialString(selectedMaskDtype).c_str()),
+        return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

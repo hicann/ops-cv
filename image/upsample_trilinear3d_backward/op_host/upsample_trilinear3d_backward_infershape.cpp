@@ -41,7 +41,7 @@ static ge::graphStatus SetUpsample3dGradInferShape(const gert::InferShapeContext
     if (output_size->GetSize() != 0 && scales->GetSize() == 0) {
         OP_CHECK_IF(
             output_size->GetSize() != SUPPORTED_OUTPUT_DIM_NUM,
-            OP_LOGE(context->GetNodeName(), "attr::output_size dims must be 3, but get %zu", output_size->GetSize()),
+            OP_LOGE(context->GetNodeName(), "attr::output_size dims must be 3, but got %zu", output_size->GetSize()),
             return ge::GRAPH_FAILED);
 
         for (size_t i = 0; i < SUPPORTED_OUTPUT_DIM_NUM; i++) {
@@ -53,15 +53,15 @@ static ge::graphStatus SetUpsample3dGradInferShape(const gert::InferShapeContext
         }
     } else if (output_size->GetSize() == 0 && scales->GetSize() != 0) {
         OP_CHECK_IF(scales->GetSize() != SUPPORTED_OUTPUT_DIM_NUM,
-                    OP_LOGE(context->GetNodeName(), "attr::scales dims must be 3, but get %zu", scales->GetSize()),
+                    OP_LOGE(context->GetNodeName(), "attr::scales dims must be 3, but got %zu", scales->GetSize()),
                     return ge::GRAPH_FAILED);
 
         for (size_t i = 0; i < SUPPORTED_OUTPUT_DIM_NUM; i++) {
             int64_t tmp = int64_t(floor(input_size_data[i + NOT_CHANGE_DIM] * scales_data[i]));
             OP_CHECK_IF(tmp != grad_output_shape->GetDim(i + NOT_CHANGE_DIM),
                         OP_LOGE(context->GetNodeName(),
-                                "input_size[ %zu ]*scales[ %zu ](get %ld) != grad_output_size[ %zu ](get %ld).", i + 2,
-                                i, tmp, i + NOT_CHANGE_DIM, grad_output_shape->GetDim(i + NOT_CHANGE_DIM)),
+                                "input_size[%zu] * scales[%zu] (got %ld) != grad_output_size[%zu] (got %ld).", i + 2, i,
+                                tmp, i + NOT_CHANGE_DIM, grad_output_shape->GetDim(i + NOT_CHANGE_DIM)),
                         return ge::GRAPH_FAILED);
         }
     } else {
@@ -88,7 +88,7 @@ static ge::graphStatus Upsample3dGradInferShapeImpl(gert::InferShapeContext* con
                 return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(input_size->GetSize() != SUPPORTED_DIM_NUM,
-                OP_LOGE(context->GetNodeName(), "attr::input_size dims must be 5, but get %zu", input_size->GetSize()),
+                OP_LOGE(context->GetNodeName(), "attr::input_size dims must be 5, but got %zu", input_size->GetSize()),
                 return ge::GRAPH_FAILED);
 
     return SetUpsample3dGradInferShape(context, grad_output_shape, outy_shape, input_size);
@@ -104,7 +104,7 @@ static ge::graphStatus InferShape4Upsample3dGrad(gert::InferShapeContext* contex
 
     auto grad_output_dim = grad_output_shape->GetDimNum();
     OP_CHECK_IF(grad_output_dim != SUPPORTED_DIM_NUM,
-                OP_LOGE(context->GetNodeName(), "Expected dim of input x should be 5. but get %zu", grad_output_dim),
+                OP_LOGE(context->GetNodeName(), "Expected dim of input x should be 5. but got %zu", grad_output_dim),
                 return ge::GRAPH_FAILED);
 
     return Upsample3dGradInferShapeImpl(context, grad_output_shape, outy_shape);

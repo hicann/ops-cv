@@ -72,7 +72,7 @@ uint32_t ImageWarpOffsetsCpuKernel::DoCompute(const CpuKernelContext& ctx)
                             work_ret = KERNEL_STATUS_PARAM_INVALID;
                             string err_msg = ConcatString(
                                 kImageWarpOffsets, " op input[1] value[", i_n, "][", i_i, "][", i_h, "][", i_w, "]=[",
-                                input1(i_n, i_i, i_h, i_w), "] should < [", in_hxwxc, "], image size is [",
+                                input1(i_n, i_i, i_h, i_w), "] should be less than [", in_hxwxc, "], image size is [",
                                 input0_shape[1], " x ", input0_shape[2], " x ", input0_shape[3], "]");
                             KERNEL_LOG_ERROR("%s", err_msg.c_str());
                             return;
@@ -163,7 +163,7 @@ uint32_t ImageWarpOffsetsCpuKernel::CheckShapes(const CpuKernelContext& ctx) con
 
     if (shape_check) {
         KERNEL_LOG_ERROR("%s op input[0] shape[%s], input[1] shape[%s], output[0] "
-                         "shape[%s] is mismatch.",
+                         "shape[%s] is mismatched.",
                          kImageWarpOffsets, VectorToString(input0_shape).c_str(), VectorToString(input1_shape).c_str(),
                          VectorToString(output_shape).c_str());
         return KERNEL_STATUS_PARAM_INVALID;

@@ -137,8 +137,8 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, cons
     }
     if (inputShape.GetDim(SECOND_DIM) != gradOutputShape.GetDim(SECOND_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input and gradOutput to have same channel size, but got input with shape \
-            [%s] and gradOutput with shape [%s]",
+                "expect input and gradOutput to have same channel size, but got input with shape [%s] "
+                "and gradOutput with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gradOutputShape).GetString());
         return false;
     }
@@ -151,8 +151,8 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, cons
     if (gridShape.GetDim(SECOND_DIM) != gradOutputShape.GetDim(THIRD_DIM) ||
         gridShape.GetDim(THIRD_DIM) != gradOutputShape.GetDim(FOURTH_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect grid and gradOutput to have same H and W size, but got grid with shape \
-            [%s] and gradOutput with shape [%s]",
+                "expect grid and gradOutput to have same H and W size, but got grid with shape [%s] "
+                "and gradOutput with shape [%s]",
                 op::ToString(gridShape).GetString(), op::ToString(gradOutputShape).GetString());
         return false;
     }
@@ -181,7 +181,7 @@ static bool CheckDtypeAndChannelCanTranspose(const aclTensor* input, int64_t pad
     aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
     if (retRts != ACL_ERROR_NONE) {
         deterministicValue = 0;
-        OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
+        OP_LOGD("Unable to get system param deterministic = %ld.", deterministicValue);
     }
     bool regbaseTranspose = (curArch == NpuArch::DAV_3510) && input->GetDataType() == op::DataType::DT_FLOAT &&
                             deterministicValue == 0 &&

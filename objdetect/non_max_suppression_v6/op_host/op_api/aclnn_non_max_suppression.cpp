@@ -142,7 +142,7 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
         maxOutputSize = maxOutputBoxesPerClass->operator[](0);
     }
     if (maxOutputSize > MAX_VALID_OUTPUT) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "maxOutputBoxesPerClass[%ld] should < 700 ", maxOutputSize);
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "maxOutputBoxesPerClass[%ld] should be less than 700.", maxOutputSize);
         return ACLNN_ERR_PARAM_INVALID;
     }
 
@@ -151,7 +151,7 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
 
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch != NpuArch::DAV_2002) {
-        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "aclnnNonMaxSuppression is not supported %u npuArch",
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "aclnnNonMaxSuppression does not support npuArch %u",
                 static_cast<uint32_t>(curArch));
         return ACLNN_ERR_RUNTIME_ERROR;
     }

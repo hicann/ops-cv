@@ -94,10 +94,10 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetPlatformInfo()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     totalCoreNum_ = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(totalCoreNum_ <= NUM_ZERO, OP_LOGE(context_, "Failed to core num."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(totalCoreNum_ <= NUM_ZERO, OP_LOGE(context_, "Failed to get core num."), return ge::GRAPH_FAILED);
     uint64_t ubSize;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= NUM_ZERO, OP_LOGE(context_, "ubSize must greater than 0, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= NUM_ZERO, OP_LOGE(context_, "ubSize must be greater than 0, but got %lu", ubSize),
                 return ge::GRAPH_FAILED);
     auto localMemorySize = context_->SetLocalMemorySize(ubSize - DCACHE_SIZE);
     OP_LOGD(context_, "ubSize = %lu, localMemorySize = %d.", ubSize, localMemorySize);
@@ -149,7 +149,7 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetInputTensorInfo()
     auto& gradOutShape = gradOut->GetOriginShape();
     auto gradOutDimNum = gradOutShape.GetDimNum();
     OP_CHECK_IF(gradOutDimNum != DIM_NUM_4D,
-                OP_LOGE(context_, "The dim num of gradOut shoule be 4, but this is %ld.", gradOutDimNum),
+                OP_LOGE(context_, "The dim num of gradOut should be 4, but got %ld.", gradOutDimNum),
                 return ge::GRAPH_FAILED);
 
     // 获取所需处理的输入数据量totalLength、输出数据量yTotalLength以及height、width
@@ -166,7 +166,7 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::GetInputTensorInfo()
     auto& inputXShape = inputX->GetOriginShape();
     auto inputXDimNum = inputXShape.GetDimNum();
     OP_CHECK_IF(inputXDimNum != DIM_NUM_4D,
-                OP_LOGE(context_, "The dim num of inputX shoule be 4, but this is %ld.", inputXDimNum),
+                OP_LOGE(context_, "The dim num of inputX should be 4, but this is %ld.", inputXDimNum),
                 return ge::GRAPH_FAILED);
     height_ = inputXShape[H_DIM];
     width_ = inputXShape[W_DIM];

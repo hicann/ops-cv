@@ -119,7 +119,7 @@ ge::graphStatus Col2imTiling::SetAttrParams()
 
     const auto kernelSizePtr = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, kernelSizePtr);
-    OP_CHECK_IF(kernelSizePtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of kernelSize shoule be 2."),
+    OP_CHECK_IF(kernelSizePtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of kernelSize should be 2."),
                 return ge::GRAPH_FAILED);
     kernelSizeH_ = static_cast<int64_t>(
         (reinterpret_cast<const int64_t*>(kernelSizePtr->GetData()))[FIRST_IDX_IN_VECTOR]);
@@ -134,7 +134,7 @@ ge::graphStatus Col2imTiling::SetAttrParams()
 
     const auto dilationPtr = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, dilationPtr);
-    OP_CHECK_IF(dilationPtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of dilation shoule be 2."),
+    OP_CHECK_IF(dilationPtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of dilation should be 2."),
                 return ge::GRAPH_FAILED);
     dilationH_ = static_cast<int64_t>((reinterpret_cast<const int64_t*>(dilationPtr->GetData()))[FIRST_IDX_IN_VECTOR]);
     dilationW_ = static_cast<int64_t>((reinterpret_cast<const int64_t*>(dilationPtr->GetData()))[SECOND_IDX_IN_VECTOR]);
@@ -144,7 +144,7 @@ ge::graphStatus Col2imTiling::SetAttrParams()
                 return ge::GRAPH_FAILED);
     const auto paddingPtr = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_2);
     OP_CHECK_NULL_WITH_CONTEXT(context_, paddingPtr);
-    OP_CHECK_IF(paddingPtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of padding shoule be 2."),
+    OP_CHECK_IF(paddingPtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of padding should be 2."),
                 return ge::GRAPH_FAILED);
     paddingH_ = static_cast<int64_t>((reinterpret_cast<const int64_t*>(paddingPtr->GetData()))[FIRST_IDX_IN_VECTOR]);
     paddingW_ = static_cast<int64_t>((reinterpret_cast<const int64_t*>(paddingPtr->GetData()))[SECOND_IDX_IN_VECTOR]);
@@ -152,11 +152,11 @@ ge::graphStatus Col2imTiling::SetAttrParams()
                 OP_LOGE(context_, "paddingH must be greater or equal than 0, but this is %ld.", paddingH_),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(paddingW_ < 0,
-                OP_LOGE(context_, "paddingW must be greater or equal than 0, but this is %ld.", paddingW_),
+                OP_LOGE(context_, "paddingW must be greater than or equal to 0, but got %ld.", paddingW_),
                 return ge::GRAPH_FAILED);
     const auto stridePtr = attrs->GetAttrPointer<gert::ContinuousVector>(ATTR_3);
     OP_CHECK_NULL_WITH_CONTEXT(context_, stridePtr);
-    OP_CHECK_IF(stridePtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of stride shoule be 2."),
+    OP_CHECK_IF(stridePtr->GetSize() != DIM_NUM_2D, OP_LOGE(context_, "The dim of stride should be 2."),
                 return ge::GRAPH_FAILED);
     strideH_ = static_cast<int64_t>((reinterpret_cast<const int64_t*>(stridePtr->GetData()))[FIRST_IDX_IN_VECTOR]);
     strideW_ = static_cast<int64_t>((reinterpret_cast<const int64_t*>(stridePtr->GetData()))[SECOND_IDX_IN_VECTOR]);
@@ -174,10 +174,10 @@ ge::graphStatus Col2imTiling::GetPlatformInfo()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     totalCoreNum_ = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(totalCoreNum_ <= 0, OP_LOGE(context_, "Failed to core num."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(totalCoreNum_ <= 0, OP_LOGE(context_, "Failed to get core num."), return ge::GRAPH_FAILED);
     uint64_t ubSize;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must greater than 0, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(context_, "ubSize must be greater than 0, but got %lu", ubSize),
                 return ge::GRAPH_FAILED);
     auto localMemorySize = context_->SetLocalMemorySize(ubSize - DCACHE_SIZE);
     OP_LOGD(context_, "ubSize = %lu, localMemorySize = %d.", ubSize, localMemorySize);
@@ -231,7 +231,7 @@ ge::graphStatus Col2imTiling::GetInputTensorInfo()
     auto& gradOutShape = gradOut->GetOriginShape();
     auto gradOutDimNum = gradOutShape.GetDimNum();
     OP_CHECK_IF(gradOutDimNum != DIM_NUM_4D,
-                OP_LOGE(context_, "The dim num of gradOut shoule be 4, but this is %ld.", gradOutDimNum),
+                OP_LOGE(context_, "The dim num of gradOut should be 4, but got %ld.", gradOutDimNum),
                 return ge::GRAPH_FAILED);
 
     // 获取outputSize
@@ -258,12 +258,12 @@ ge::graphStatus Col2imTiling::GetInputTensorInfo()
     totalLength_ = 1;
     totalLength_ *= outputSizeH_ * outputSizeW_;
     OP_CHECK_IF(totalLength_ > INT32_MAX,
-                OP_LOGE(context_, "outputSizeH*outputSizeW must be less or equal than 2^31-1."),
+                OP_LOGE(context_, "outputSizeH*outputSizeW must be less than or equal to 2^31-1."),
                 return ge::GRAPH_FAILED);
     totalLength_ *= gradOutShape[N_DIM];
     totalLength_ *= gradOutShape[C_DIM];
     OP_CHECK_IF(totalLength_ > INT32_MAX,
-                OP_LOGE(context_, "N*C*outputSizeH*outputSizeW must be less or equal than 2^31-1."),
+                OP_LOGE(context_, "N*C*outputSizeH*outputSizeW must be less than or equal to 2^31-1."),
                 return ge::GRAPH_FAILED);
 
     colH_ = (outputSizeH_ + 2 * paddingH_ - dilationH_ * (kernelSizeH_ - 1) - 1) / strideH_ + 1;

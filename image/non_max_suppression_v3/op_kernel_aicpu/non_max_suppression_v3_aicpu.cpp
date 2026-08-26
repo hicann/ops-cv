@@ -72,7 +72,7 @@ uint32_t NonMaxSuppressionV3CpuKernel::GetInputAndCheck(const CpuKernelContext& 
                        "input:2 max_output_size failed.");
     max_output_size_ = *static_cast<int32_t*>(max_output_size_tensor->GetData());
     KERNEL_CHECK_FALSE((max_output_size_ >= 0), KERNEL_STATUS_PARAM_INVALID,
-                       "max_output_size must be non-negative, but are [%d]", max_output_size_);
+                       "max_output_size must be non-negative, but is [%d]", max_output_size_);
 
     // get iou_threshold : scalar
     iou_threshold_tensor_ = ctx.Input(kFourthInputIndex);
@@ -183,7 +183,7 @@ uint32_t NonMaxSuppressionV3CpuKernel::DoCompute()
     float similarity = 0.0f;
     Candidate next_candidate = {.box_index = 0, .score = static_cast<T>(0.0), .suppress_begin_index = 0};
     KERNEL_CHECK_FALSE(CheckFloatAddOverflow(static_cast<float>(offset_), 0.0f), KERNEL_STATUS_INNER_ERROR,
-                       "float over flow");
+                       "float overflow");
     float offset_cast = static_cast<float>(offset_);
     T original_score;
     int32_t indices_data_size = 0;

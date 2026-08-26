@@ -197,22 +197,22 @@ inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext& ctx)
     }
 
     if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-        KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
+        KERNEL_LOG_ERROR("The data type of the input [%s] needs to be the same as the output [%s].",
                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-        KERNEL_LOG_ERROR("The data size of the input [%llu] need be the same as the output [%llu].",
+        KERNEL_LOG_ERROR("The data size of the input [%llu] needs to be the same as the output [%llu].",
                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(1)->GetDataType() != aicpu::DataType::DT_FLOAT) {
-        KERNEL_LOG_ERROR("The data type of the input [%s] need be [%s].", DTypeStr(ctx.Input(1)->GetDataType()).c_str(),
-                         DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
+        KERNEL_LOG_ERROR("The data type of the input [%s] needs to be [%s].",
+                         DTypeStr(ctx.Input(1)->GetDataType()).c_str(), DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(1)->GetDataSize() != 4) {
-        KERNEL_LOG_ERROR("The data size of the input [%llu] need be [%llu].", ctx.Input(1)->GetDataSize(), 4);
+        KERNEL_LOG_ERROR("The data size of the input [%llu] needs to be [%llu].", ctx.Input(1)->GetDataSize(), 4);
         return KERNEL_STATUS_PARAM_INVALID;
     }
     return KERNEL_STATUS_OK;

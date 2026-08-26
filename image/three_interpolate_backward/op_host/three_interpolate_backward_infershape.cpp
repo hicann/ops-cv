@@ -122,7 +122,7 @@ static graphStatus InferShape4ThreeInterpolateBackward(gert::InferShapeContext* 
     grad_y_shape->SetDim(static_cast<size_t>(DIM::DIM_4), c0);
 
     OP_LOGI(
-        context, "Intershape N:%ld C1:%ld H:%ld W:%ld C0:%ld.", grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_0)),
+        context, "Infershape N:%ld C1:%ld H:%ld W:%ld C0:%ld.", grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_0)),
         grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_1)), grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_2)),
         grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_3)), grad_y_shape->GetDim(static_cast<size_t>(DIM::DIM_4)));
 

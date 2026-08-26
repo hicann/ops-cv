@@ -98,25 +98,24 @@ static bool CheckShape(const aclTensor* gradOut, const aclTensor* gradIn, const 
     if (IsRegBase()) {
         supportFormat = srcOriginFormat == op::Format::FORMAT_ND || srcOriginFormat == op::Format::FORMAT_NCHW ||
                         srcOriginFormat == op::Format::FORMAT_NHWC;
-        OP_CHECK(supportFormat, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only support NCHW, NHWC or ND"),
+        OP_CHECK(supportFormat, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only supports NCHW, NHWC or ND"),
                  return false);
         OP_CHECK(gradOut->GetStorageFormat() == gradIn->GetStorageFormat(),
-                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The gradOut and gradInput must have same format"), return false);
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The gradOut and gradInput must have the same format"), return false);
     } else {
         supportFormat = srcOriginFormat == op::Format::FORMAT_ND || srcOriginFormat == op::Format::FORMAT_NCHW;
-        OP_CHECK(supportFormat, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only support NCHW or ND"), return false);
+        OP_CHECK(supportFormat, OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input format only supports NCHW or ND"),
+                 return false);
     }
     size_t inputSizeNum = inputSize->Size();
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_LIMIT, return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 4, but got %zu", inputSizeNum), return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
              return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
 
     return true;
 }
@@ -172,7 +171,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
 
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
+                     "Size of H and W must be greater than 0, but got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
                      inputH, inputW, outputH, outputW),
              return false);
 
@@ -205,7 +204,7 @@ static bool CheckUplimit(const aclIntArray* outputSize, const aclIntArray* input
     int64_t inputW = (*inputSize)[DIM_THREE];
     OP_CHECK(N <= INT32_MAX && C <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld)", INT32_MAX,
+                     "GradInput sizes should not be greater than %d, but got gradInput(%ld, %ld, %ld, %ld)", INT32_MAX,
                      N, C, inputH, inputW),
              return false);
 
@@ -213,13 +212,13 @@ static bool CheckUplimit(const aclIntArray* outputSize, const aclIntArray* input
     int64_t outputW = (*outputSize)[DIM_ONE];
     OP_CHECK(outputH <= INT32_MAX && outputW <= INT32_MAX,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld)", INT32_MAX, N,
+                     "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld)", INT32_MAX, N,
                      C, outputH, outputW),
              return false);
 
     int64_t M = N * C * outputH;
     OP_CHECK(M <= INT32_MAX,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "N * C * outputSize_H should not be greater than %d, bug got %ld",
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "N * C * outputSize_H should not be greater than %d, but got %ld",
                      INT32_MAX, M),
              return false);
     return true;
@@ -418,12 +417,12 @@ aclnnStatus aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(const aclTensor* grad
         aclError retRts = aclrtCtxGetSysParamOpt(ACL_OPT_DETERMINISTIC, &deterministicValue);
         if (retRts != ACL_ERROR_NONE) {
             deterministicValue = 0;
-            OP_LOGD("Unable to get system param determinstic = %ld.", deterministicValue);
+            OP_LOGD("Unable to get system param deterministic = %ld.", deterministicValue);
         }
         OP_LOGD("deterministic is = %ld.", deterministicValue);
 
         if (deterministicValue == 1) {
-            OP_LOGW("not support deterministic");
+            OP_LOGW("deterministic mode is not supported");
         }
 
         // gradout transpose

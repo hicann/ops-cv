@@ -87,8 +87,7 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
 
     OP_CHECK(outputSizeNum == EXPECT_SIZE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected outputSize equals to 1, but got size %zu", outputSizeNum),
-             return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected outputSize to be 1, but got %zu", outputSizeNum), return false);
     int64_t outL = (*outputSize)[DIM_ZERO];
     int64_t batch = self->GetViewShape().GetDim(DIM_ZERO);
     int64_t channels = self->GetViewShape().GetDim(DIM_ONE);
@@ -101,7 +100,7 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
     }
     OP_CHECK(outL > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0,"
+                     "Input and output sizes should be greater than 0, "
                      "but got output (L: %ld)",
                      outL),
              return false);
@@ -109,7 +108,7 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
     for (size_t i = 0; i < outDimNum; ++i) {
         if (outShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                    "Expected out to have shape"
+                    "Expected out to have shape "
                     "size(%zu) = %ld but got out.size(%zu) = %ld",
                     i, fullOutputSize[i], i, outShape.GetDim(i));
             return false;
@@ -119,7 +118,7 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
     if (scale >= 0 && (!(IsRegBase()))) {
         const double odim = static_cast<double>(self->GetViewShape().GetDim(DIM_TWO)) * scale;
         if (static_cast<int64_t>(odim) != outL) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Scale conflicts with outputSize."
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Scale conflicts with outputSize. "
                                              "scale * input[2] should be equal to outputSize[0]");
             return false;
         }

@@ -68,7 +68,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclIntArray* outpu
 
     OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, bug got input (H: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (H: %ld,"
                      " W: %ld) output (H: %ld, W: %ld)",
                      inputH, inputW, outH, outW),
              return false);
@@ -113,13 +113,13 @@ static bool CheckUplimit(const aclTensor* gradOut)
     OP_CHECK(
         gradOutN <= INT32_MAX && gradOutC <= INT32_MAX && outD <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "GradOut sizes should not be greater than %d, bug got gradOut(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
+                "GradOut sizes should not be greater than %d, but got gradOut(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
                 gradOutN, gradOutC, outD, outH, outW),
         return false);
     OP_CHECK(
         inputN <= INT32_MAX && inputC <= INT32_MAX && inputD <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "GradInput sizes should not be greater than %d, bug got gradInput(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
+                "GradInput sizes should not be greater than %d, but got gradInput(%ld, %ld, %ld, %ld, %ld)", INT32_MAX,
                 inputN, inputC, inputD, inputH, inputW),
         return false);
     return true;

@@ -111,9 +111,9 @@ uint64_t AippTiling::GetTilingKey() const
 ge::graphStatus AippTiling::GetShapeAttrsInfo()
 {
     OP_LOGD(context_->GetNodeName(), "GetShapeAttrsInfo begin.");
-    OP_CHECK_IF(CheckInputDtype() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputDtype fail."),
+    OP_CHECK_IF(CheckInputDtype() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputDtype failed."),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInputFormat() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputFormat fail."),
+    OP_CHECK_IF(CheckInputFormat() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputFormat failed."),
                 return ge::GRAPH_FAILED);
 
     auto attrs = context_->GetAttrs();
@@ -140,7 +140,7 @@ ge::graphStatus AippTiling::GetShapeAttrsInfo()
         return ge::GRAPH_SUCCESS;
     } else {
         OP_CHECK_IF(ProcessStaticMode() != ge::GRAPH_SUCCESS,
-                    OP_LOGE(context_->GetNodeName(), "ProcessStaticMode fail."), return ge::GRAPH_FAILED);
+                    OP_LOGE(context_->GetNodeName(), "ProcessStaticMode failed."), return ge::GRAPH_FAILED);
     }
 
     OP_LOGD(context_->GetNodeName(), "GetShapeAttrsInfo end.");
@@ -371,28 +371,28 @@ ge::graphStatus AippTiling::CheckInputDtype()
 
 ge::graphStatus AippTiling::ProcessStaticMode()
 {
-    OP_CHECK_IF(SetImagesValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetImagesValue fail."),
+    OP_CHECK_IF(SetImagesValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetImagesValue failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(SetCropValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCropValue fail."),
+    OP_CHECK_IF(SetCropValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCropValue failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(SetCscValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCscValue fail."),
+    OP_CHECK_IF(SetCscValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetCscValue failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(SetDTCValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetDTCValue fail."),
+    OP_CHECK_IF(SetDTCValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetDTCValue failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(SetPaddingValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetPaddingValue fail."),
+    OP_CHECK_IF(SetPaddingValue() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "SetPaddingValue failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(CheckInputImage() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputImage fail."),
+    OP_CHECK_IF(CheckInputImage() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckInputImage failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(CheckCropSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckCropSize fail."),
+    OP_CHECK_IF(CheckCropSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckCropSize failed."),
                 return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(CheckPaddingSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckPaddingSize fail."),
+    OP_CHECK_IF(CheckPaddingSize() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "CheckPaddingSize failed."),
                 return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
@@ -467,7 +467,7 @@ ge::graphStatus AippTiling::SetPaddingValue()
         OP_CHECK_NULL_WITH_CONTEXT(context_, outputImages);
         OP_CHECK_IF(
             ValidPaddingValue(tilingData.paddingParam.padValue, outputImages->GetDataType()) != ge::GRAPH_SUCCESS,
-            OP_LOGE(context_->GetNodeName(), "PadValue is invalidate."), return ge::GRAPH_FAILED);
+            OP_LOGE(context_->GetNodeName(), "PadValue is invalid."), return ge::GRAPH_FAILED);
     } else {
         tilingData.paddingParam.padValue = 0;
     }

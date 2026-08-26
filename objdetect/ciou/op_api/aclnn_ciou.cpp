@@ -83,7 +83,7 @@ static bool CheckDtypeValid(const aclTensor* bBoxes, const aclTensor* gtBoxes, c
 
     OP_CHECK(bBoxes->GetStorageFormat() == Format::FORMAT_ND && gtBoxes->GetStorageFormat() == Format::FORMAT_ND &&
                  overlap->GetStorageFormat() == Format::FORMAT_ND && atanSub->GetStorageFormat() == Format::FORMAT_ND,
-             OP_LOGI("input and output format should be ND."), return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "input and output format should be ND."), return false);
     return true;
 }
 
@@ -95,10 +95,10 @@ static bool CheckAttr(bool isCross, const char* mode)
     }
     // 检查self和other能否做数据类型推导
     OP_CHECK(isCross == false,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "isCross should currently only support false, but get %d.", isCross),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "isCross should currently only support false, but got %d.", isCross),
              return false);
     OP_CHECK(strcmp(mode, "iou") == 0 || strcmp(mode, "iof") == 0,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be iou or iof, but get %s.", mode), return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "mode should be iou or iof, but got %s.", mode), return false);
     return true;
 }
 

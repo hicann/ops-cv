@@ -46,7 +46,7 @@ ge::graphStatus ResizeLinearInferShape(gert::InferShapeContext* context)
         const int32_t* sizeValue = sizeTensor->GetData<int32_t>();
         auto sizeNum = sizeTensor->GetShapeSize();
         OP_CHECK_IF(sizeNum != IN_SIZE_NUM,
-                    OP_LOGE(nodeName, "the element number of size should be 1, but is %ld", sizeNum),
+                    OP_LOGE(nodeName, "the element number of size should be 1, but got %ld", sizeNum),
                     return GRAPH_FAILED);
         outL = sizeValue[0];
         OP_CHECK_IF(outL <= 0, OP_LOGE(nodeName, "output size should be greater than 0"), return GRAPH_FAILED);
@@ -55,7 +55,8 @@ ge::graphStatus ResizeLinearInferShape(gert::InferShapeContext* context)
     if (Ops::Base::IsUnknownRank(*xShape)) {
         Ops::Base::SetUnknownShape(IN_X_DIMS, *yShape);
     } else {
-        OP_CHECK_IF(xShape->GetDimNum() != IN_X_DIMS, OP_LOGE(nodeName, "x shape only support 3D"),
+        OP_CHECK_IF(xShape->GetDimNum() != IN_X_DIMS,
+                    OP_LOGE(nodeName, "x shape only supports 3D, but got %zuD", xShape->GetDimNum()),
                     return GRAPH_FAILED);
         OP_CHECK_IF((xShape->GetDim(IDX_L) == 0) || (xShape->GetDim(IDX_L - 1) == 0),
                     OP_LOGE(nodeName, "input size should be greater than 0"), return GRAPH_FAILED);

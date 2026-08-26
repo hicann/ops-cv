@@ -49,7 +49,7 @@ uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64
     }
 
     if (data_size > input_data_size) {
-        KERNEL_LOG_ERROR("data_size[%ld] mast less than input_data_size[%ld]!", data_size, input_data_size);
+        KERNEL_LOG_ERROR("data_size[%ld] must be less than input_data_size[%ld].", data_size, input_data_size);
         return KERNEL_STATUS_INNER_ERROR;
     }
 

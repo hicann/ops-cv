@@ -44,7 +44,10 @@ static ge::graphStatus InferShape4GridSampler2DGrad(gert::InferShapeContext* con
     OP_CHECK_IF((xShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT ||
                  gridShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT ||
                  gradShape->GetDimNum() != GRID_SAMPLER2D_GRAD_SHAPE_LIMIT),
-                OP_LOGE(context->GetNodeName(), "shape is invalid, only support rank is 4."), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(),
+                        "shape is invalid, only rank 4 is supported, but got x rank %zu, grid rank %zu, grad rank %zu",
+                        xShape->GetDimNum(), gridShape->GetDimNum(), gradShape->GetDimNum()),
+                return ge::GRAPH_FAILED);
 
     gert::Shape* outDxShape = context->GetOutputShape(OUTPUT_DX_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context, outDxShape);

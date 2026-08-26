@@ -78,7 +78,7 @@ static bool ResizeInfershapeFor2D(const gert::InferShapeContext* context, const 
     OP_LOGD(context->GetNodeName(), "input x shape = %s", Ops::Base::ToString(*x_shape).c_str());
     OP_LOGD(context->GetNodeName(), "input x format = %s", Ops::Base::ToString(input_format).c_str());
     OP_CHECK_IF(input_format != FORMAT_NHWC && input_format != FORMAT_NCHW,
-                OP_LOGE(context->GetNodeName(), "input format only support [NHWC,NCHW], but is %s",
+                OP_LOGE(context->GetNodeName(), "input format only supports [NHWC, NCHW], but got %s",
                         Ops::Base::ToString(input_format).c_str()),
                 return false);
 
@@ -90,7 +90,7 @@ static bool ResizeInfershapeFor2D(const gert::InferShapeContext* context, const 
         constexpr size_t output_len = OUTPUT_DIM_NUM;
         const size_t input_dim_size = x_shape->GetDimNum();
         OP_CHECK_IF(input_dim_size != output_len,
-                    OP_LOGE(context->GetNodeName(), "input shape only support 4D, but is %s",
+                    OP_LOGE(context->GetNodeName(), "input shape only supports 4D, but got %s",
                             Ops::Base::ToString(*x_shape).c_str()),
                     return false);
 

@@ -66,7 +66,7 @@ uint32_t ScaleAndTranslateCpuKernel::Compute(CpuKernelContext& ctx)
         SCALEANDTRANSLATE_COMPUTE_CASE(DT_FLOAT, float, ctx)
         SCALEANDTRANSLATE_COMPUTE_CASE(DT_DOUBLE, double, ctx)
         default:
-            KERNEL_LOG_ERROR("ScaleAndTranslate kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+            KERNEL_LOG_ERROR("ScaleAndTranslate kernel data type [%s] is not supported.", DTypeStr(data_type).c_str());
             return KERNEL_STATUS_PARAM_INVALID;
     }
     return KERNEL_STATUS_OK;
@@ -84,7 +84,7 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(CpuKernelContext& ct
     KERNEL_CHECK_FALSE((input1_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
                        "The input1's dims=[%d] must be 1-dimensional", input1_shape->GetDims())
     KERNEL_CHECK_FALSE((input1_shape->NumElements() == 2), KERNEL_STATUS_PARAM_INVALID,
-                       "The input1's numelements=[%d] must have two elements", input1_shape->NumElements())
+                       "The number of elements of input1 must be 2, but got %ld", input1_shape->NumElements())
 
     DataType input1_type = ctx.Input(1)->GetDataType();
     DataType input2_type = ctx.Input(2)->GetDataType();
@@ -263,7 +263,7 @@ uint32_t ComputeSpans(CpuKernelContext& context, const SamplingKernelType kernel
                                     antialias, spans);
         }
         default:
-            KERNEL_LOG_ERROR("kernel_type kernel data type [%u] not support.", kernel_type);
+            KERNEL_LOG_ERROR("kernel_type kernel data type [%u] is not supported.", kernel_type);
             return KERNEL_STATUS_PARAM_INVALID;
     }
     return KERNEL_STATUS_OK;
@@ -307,7 +307,7 @@ static uint32_t ParseScaleAndTranslateParams(CpuKernelContext& ctx, ScaleAndTran
 
     KERNEL_CHECK_FALSE((p.output_height > 0 && p.output_width > 0), KERNEL_STATUS_PARAM_INVALID,
                        "output_height = [%d] and output_width = [%d] must be positive", p.output_height, p.output_width)
-    KERNEL_CHECK_FALSE((p.channels > 0), KERNEL_STATUS_PARAM_INVALID, "image_channel = [%d] must have at least one",
+    KERNEL_CHECK_FALSE((p.channels > 0), KERNEL_STATUS_PARAM_INVALID, "image_channel = [%d] must be at least 1",
                        p.channels)
     KERNEL_CHECK_FALSE((p.input_height > 0 && p.input_width > 0), KERNEL_STATUS_PARAM_INVALID,
                        "input_height = [%d] and input_width = [%d] must be of non-zero size", p.input_height,

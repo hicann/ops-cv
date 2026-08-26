@@ -215,7 +215,12 @@ static ge::graphStatus BoundingBoxEncodeTilingFunc(gert::TilingContext* context)
     ge::DataType dataType = inputDesc->GetDataType();
 
     const std::set<ge::DataType> supportedDtype = {ge::DT_FLOAT16, ge::DT_FLOAT};
-    OP_CHECK_IF(supportedDtype.count(dataType) == 0, OP_LOGE(context, "unsupported dtype"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(supportedDtype.count(dataType) == 0,
+                OP_LOGE(context,
+                        "unsupported dtype of input[0], ge::DataType[%d], only DT_FLOAT16 and DT_FLOAT are "
+                        "supported",
+                        static_cast<int32_t>(dataType)),
+                return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(CheckInputsConsistency(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CheckInputsConsistency error"),
                 return ge::GRAPH_FAILED);

@@ -57,8 +57,8 @@ uint32_t CropAndResizeMsCpuKernel::GetInputIndexX(const CpuKernelContext& ctx)
     auto image_width = x_shape_[2];
     KERNEL_CHECK_FALSE(
         (image_height > 0 && image_width > 0), KERNEL_STATUS_PARAM_INVALID,
-        "The value of image_height(shape[1] of input[0]): [%ld] and image_width(shape[2] of input[0]): [%ld] should > "
-        "0",
+        "The value of image_height(shape[1] of input[0]): [%ld] and image_width(shape[2] of input[0]): [%ld] "
+        "should be greater than 0",
         image_height, image_width);
 
     inputs_.push_back(xTensor);

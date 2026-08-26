@@ -126,7 +126,7 @@ static bool CheckShapeValid(const aclTensor* self, const aclIntArray* outputSize
              return false);
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Size of H and W must be greater than 0, bug got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
+                     "Size of H and W must be greater than 0, but got input (H: %ld, W: %ld), output (H: %ld, W: %ld)",
                      inputH, inputW, outputH, outputW),
              return false);
     auto outShape = out->GetViewShape();
@@ -140,12 +140,12 @@ static bool CheckShapeValid(const aclTensor* self, const aclIntArray* outputSize
     if (!IsRegBase()) {
         OP_CHECK(n <= INT32_MAX && c <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)", INT32_MAX, n,
+                         "Input sizes should not be greater than %d, but got input(%ld, %ld, %ld, %ld)", INT32_MAX, n,
                          c, inputH, inputW),
                  return false);
         OP_CHECK(
             outputH <= INT32_MAX && outputW <= INT32_MAX,
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Output sizes should not be greater than %d, but got outputSize[%ld, %ld]",
                     INT32_MAX, outputH, outputW),
             return false);
     }

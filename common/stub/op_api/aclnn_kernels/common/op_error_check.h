@@ -97,7 +97,7 @@ static inline bool CheckReduceOutShape(const aclTensor* inferOut, const aclTenso
     auto const& yShape = out->GetViewShape();
     if (xShape != yShape) {
         if (!(xShape.GetShapeSize() == 1 && yShape.GetShapeSize() == 1)) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The out tensor's shape[%s] is not equal with inferOut shape[%s].",
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The out tensor's shape[%s] is not equal to inferOut shape[%s].",
                     op::ToString(out->GetViewShape()).GetString(), op::ToString(inferOut->GetViewShape()).GetString());
             return false;
         }
@@ -127,7 +127,7 @@ static inline bool CheckNCDimValid(const aclTensor* self, const aclTensor* out)
         return false;
     }
     if ((selfDimN != outDimN) || (selfDimC != outDimC)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The selfDimN[%ld]/outDimN[%ld] or selfDimC[%ld]/outDimC[%ld] not equal .",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The selfDimN[%ld]/outDimN[%ld] or selfDimC[%ld]/outDimC[%ld] are not equal.",
                 selfDimN, outDimN, selfDimC, outDimC);
         return false;
     }

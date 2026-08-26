@@ -361,7 +361,7 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     } else if (strcmp(pInterpolationMode, "nearest") == 0) {
         params.interpolation = INTERPOLATION_MODE_NEAREST;
     } else {
-        OP_LOGE(tilingContext->GetNodeName(), "interpolation_mode only support bilinear or nearest.");
+        OP_LOGE(tilingContext->GetNodeName(), "interpolation_mode only supports bilinear or nearest.");
         return ge::GRAPH_FAILED;
     }
 
@@ -374,7 +374,7 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     } else if (strcmp(pPaddingMode, "reflection") == 0) {
         params.padding = PADDING_MODE_REFLECTION;
     } else {
-        OP_LOGE(tilingContext->GetNodeName(), "padding_mode only support zeros or border or reflection.");
+        OP_LOGE(tilingContext->GetNodeName(), "padding_mode only supports zeros, border or reflection.");
         return ge::GRAPH_FAILED;
     }
 

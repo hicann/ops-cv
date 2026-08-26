@@ -151,7 +151,7 @@ ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::CheckInputParams()
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, input);
     auto inputDtype = input->GetDataType();
     OP_CHECK_IF(inputDtypeList.count(inputDtype) == 0,
-                OP_LOGE(tilingContext, "Input dtype is not support, but input dtype is %d", inputDtype),
+                OP_LOGE(tilingContext, "Input dtype is not supported, but got %d", inputDtype),
                 return ge::GRAPH_FAILED);
     baseTiling.dtypeSize = inputDtypeList.find(inputDtype)->second;
     int32_t ubBlockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(tilingContext));
@@ -159,7 +159,7 @@ ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::CheckInputParams()
     auto outDescPtr0 = tilingContext->GetOutputDesc(0);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outDescPtr0);
     auto outDtype = outDescPtr0->GetDataType();
-    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(tilingContext, "Input and output dtype must be same"),
+    OP_CHECK_IF(outDtype != inputDtype, OP_LOGE(tilingContext, "Input and output dtype must be the same"),
                 return ge::GRAPH_FAILED);
     auto inputX = tilingContext->GetInputShape(0);
     auto outY = tilingContext->GetOutputShape(0);
@@ -178,7 +178,7 @@ ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::CheckInputParams()
     baseTiling.outH = outShape.GetDim(CONST_2);
     baseTiling.outW = outShape.GetDim(CONST_3);
     baseTiling.outSize = outputSize;
-    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(tilingContext, "Not support empty input or output"),
+    OP_CHECK_IF(inputSize == 0 || outputSize == 0, OP_LOGE(tilingContext, "Empty input or output is not supported"),
                 ge::GRAPH_FAILED);
     int64_t uint32Max = static_cast<int64_t>(std::numeric_limits<uint32_t>::max());
     int32_t isUint32 = static_cast<int32_t>((inputSize <= uint32Max) && (outputSize <= uint32Max));
@@ -280,12 +280,12 @@ ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNum = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum <= 0, OP_LOGE(tilingContext, "coreNum must greater than 0, but is %d", coreNum),
+    OP_CHECK_IF(coreNum <= 0, OP_LOGE(tilingContext, "coreNum must be greater than 0, but got %d", coreNum),
                 return ge::GRAPH_FAILED);
     baseTiling.coreNum = coreNum;
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(tilingContext, "UbSize must greater than 0, but is %lu", ubSize),
+    OP_CHECK_IF(ubSize <= 0UL, OP_LOGE(tilingContext, "ubSize must be greater than 0, but got %lu", ubSize),
                 return ge::GRAPH_FAILED);
     OP_LOGI(tilingContext, "coreNum is %ld, ubSize is %lu", coreNum, ubSize);
     baseTiling.ubSize = static_cast<int32_t>(ubSize);
@@ -302,9 +302,9 @@ ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::Init()
 
 ge::graphStatus UpsampleNearestExact2dGradRegbaseTiling::DoTiling()
 {
-    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(tilingContext, "CheckInputParams is failed"),
+    OP_CHECK_IF(CheckInputParams() != ge::GRAPH_SUCCESS, OP_LOGE(tilingContext, "CheckInputParams failed"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(tilingContext, "CheckInputShapes is failed"),
+    OP_CHECK_IF(CheckInputShapeAndAttr() != ge::GRAPH_SUCCESS, OP_LOGE(tilingContext, "CheckInputShapes failed"),
                 return ge::GRAPH_FAILED);
     CalTilingData();
     FillTilingData();

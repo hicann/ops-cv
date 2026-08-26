@@ -86,11 +86,11 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
 {
     uint64_t size = outputSize->Size();
     OP_CHECK(size > ZERO,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The size of outputSize should be greater than 0,but got %zu", size),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The size of outputSize should be greater than 0, but got %zu", size),
              return false);
     auto outShape = out->GetViewShape();
     if (self->GetViewShape().GetDimNum() != THREEDIMS) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input size equals to %zu, but got sizes %zu.", THREEDIMS,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input size to be %zu, but got %zu.", THREEDIMS,
                 self->GetViewShape().GetDimNum());
         return false;
     }
@@ -106,7 +106,7 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
     }
     if (outputSize->GetData()[ZERO] == ZERO) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "Input and output sizes should greater than %ld,"
+                "Input and output sizes should be greater than %ld, "
                 "but got output (W: %ld).",
                 ZERO, outputSize->GetData()[ZERO]);
         return false;

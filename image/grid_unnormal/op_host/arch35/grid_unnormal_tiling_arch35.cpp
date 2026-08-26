@@ -148,8 +148,11 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* context, GridUnnormalIn
     auto assistDesc = context->GetInputDesc(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, assistDesc);
     OP_CHECK_IF(gridDesc->GetDataType() != assistDesc->GetDataType(),
-                OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(context->GetNodeName(), "grid and assist", "not equal",
-                                                       "input dtypes must be equal"),
+                OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+                    context->GetNodeName(), "grid and assist",
+                    ("grid ge::DataType=" + std::to_string(static_cast<int32_t>(gridDesc->GetDataType())) +
+                     ", assist ge::DataType=" + std::to_string(static_cast<int32_t>(assistDesc->GetDataType()))),
+                    "input dtypes must be equal"),
                 return ge::GRAPH_FAILED);
 
     info.dtSize = GetDataTypeSize(gridDesc->GetDataType());

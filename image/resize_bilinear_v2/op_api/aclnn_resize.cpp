@@ -96,7 +96,10 @@ static bool CheckInputElement(const aclTensor* self, const aclFloatArray* scales
 
     if (selfShape.GetDim(dimBatch) != outShape.GetDim(dimBatch) ||
         selfShape.GetDim(dimChannel) != outShape.GetDim(dimChannel)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of batch or channel is not matched.");
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "The dim of batch or channel is not matched, self[N=%ld, C=%ld], out[N=%ld, C=%ld].",
+                selfShape.GetDim(dimBatch), selfShape.GetDim(dimChannel), outShape.GetDim(dimBatch),
+                outShape.GetDim(dimChannel));
         return false;
     }
 
@@ -106,7 +109,9 @@ static bool CheckInputElement(const aclTensor* self, const aclFloatArray* scales
         int64_t dstDimHeightMin = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(dimHeight)) *
                                                        (static_cast<double>((*scales)[dimHeight]) - EPSILON));
         if ((outShape.GetDim(dimHeight) < dstDimHeightMin) || (outShape.GetDim(dimHeight) > dstDimHeightMax)) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of height is not matched.");
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "The dim of height is not matched, out height[%ld] is out of range [%ld, %ld].",
+                    outShape.GetDim(dimHeight), dstDimHeightMin, dstDimHeightMax);
             return false;
         }
 
@@ -115,7 +120,9 @@ static bool CheckInputElement(const aclTensor* self, const aclFloatArray* scales
         int64_t dstDimWidthMin = static_cast<int64_t>(static_cast<double>(selfShape.GetDim(dimWidth)) *
                                                       (static_cast<double>((*scales)[dimWidth]) - EPSILON));
         if ((outShape.GetDim(dimWidth) < dstDimWidthMin) || (outShape.GetDim(dimWidth) > dstDimWidthMax)) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dim of width is not matched.");
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "The dim of width is not matched, out width[%ld] is out of range [%ld, %ld].",
+                    outShape.GetDim(dimWidth), dstDimWidthMin, dstDimWidthMax);
             return false;
         }
     }
@@ -215,7 +222,7 @@ static const aclTensor* CreateSizesRegBase(const aclTensor* self, const aclFloat
         return nullptr;
     }
     if (self->GetViewShape().GetDimNum() != size) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "dim num of self should equal with size of scales, self DimNum=%zu, size=%lu",
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "dim num of self should be equal to size of scales, self DimNum=%zu, size=%lu",
                 self->GetViewShape().GetDimNum(), size);
         return nullptr;
     }

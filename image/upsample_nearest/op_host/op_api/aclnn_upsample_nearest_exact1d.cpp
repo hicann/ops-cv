@@ -111,10 +111,9 @@ static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize)
 {
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 1, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 1, but got %zu", outputSizeNum),
+             return false);
 
     return true;
 }
@@ -129,7 +128,7 @@ static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSi
 
     OP_CHECK(outN > 0 && outC > 0 && inputL > 0 && outL > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, bug got input (N: %lld,"
+                     "Input and output sizes should be greater than 0, but got input (N: %lld,"
                      " C: %lld, L: %lld) output (N: %lld, C: %lld, L: %lld)",
                      outN, outC, inputL, outN, outC, outL),
              return false);

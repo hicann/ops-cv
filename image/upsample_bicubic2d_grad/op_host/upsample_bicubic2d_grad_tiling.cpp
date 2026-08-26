@@ -140,38 +140,38 @@ bool UpsampleBicubic2dGradTiling::GetMMTilingData(const gert::TilingContext* con
     InitPlatformInfo(compileInfoPtr, platformInfo);
     matmul_tiling::MatmulApiTiling matmul_h(platformInfo);
     auto ret = matmul_h.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dataType);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetAType fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetAType failed."), return false);
     ret = matmul_h.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dataType);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetBType fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetBType failed."), return false);
     ret = matmul_h.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dataType);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetCType fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetCType failed."), return false);
     ret = matmul_h.SetOrgShape(_Params.baseNH, _Params.outputW, NUM_FRACTAL, _Params.inputH);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetOrgShape fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetOrgShape failed."), return false);
     ret = matmul_h.SetShape(_Params.baseNH, _Params.outputW, NUM_FRACTAL);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h Set single shape fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h Set single shape failed."), return false);
     ret = matmul_h.SetBufferSpace(-1, -1, -1);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetBufferSpace fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h SetBufferSpace failed."), return false);
     ret = matmul_h.GetTiling(tilingData.MMParamH);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h GetTiling fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_h GetTiling failed."), return false);
     matmul_tiling::MatmulApiTiling matmul_w(platformInfo);
     ret = matmul_w.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dataType);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetAType fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetAType failed."), return false);
     ret = matmul_w.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dataType);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetBType fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetBType failed."), return false);
     ret = matmul_w.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dataType);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetCType fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetCType failed."), return false);
     int innerBatchW_ = _Params.innerBatchW;
     if (_Params.innerBatchW == 0) {
         innerBatchW_ = 1;
     }
     ret = matmul_w.SetOrgShape(innerBatchW_ * _Params.inputH, _Params.baseNW, _Params.inputW, NUM_FRACTAL);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetOrgShape fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetOrgShape failed."), return false);
     ret = matmul_w.SetShape(innerBatchW_ * _Params.inputH, _Params.baseNW, NUM_FRACTAL);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w Set single shape fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w Set single shape failed."), return false);
     ret = matmul_w.SetBufferSpace(-1, -1, -1);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetBufferSpace fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w SetBufferSpace failed."), return false);
     ret = matmul_w.GetTiling(tilingData.MMParamW);
-    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w GetTiling fail."), return false);
+    OP_CHECK_IF(ret == -1, OP_LOGE(context->GetNodeName(), "matmul_w GetTiling failed."), return false);
     return true;
 }
 uint32_t UpsampleBicubic2dGradTiling::GetNumPerBlock()
@@ -236,7 +236,7 @@ bool UpsampleBicubic2dGradTiling::GetTilingData(const gert::TilingContext* conte
 
     _Params.baseNH = NUM_FRACTAL * static_cast<uint64_t>(ceil(_Params.scalesH + THRESHOLD));
     _Params.baseNW = NUM_FRACTAL * static_cast<uint64_t>(ceil(_Params.scalesW + THRESHOLD));
-    OP_CHECK_IF(!GetClearTilingData(), OP_LOGE(context->GetNodeName(), "get clear tiling data fail."),
+    OP_CHECK_IF(!GetClearTilingData(), OP_LOGE(context->GetNodeName(), "get clear tiling data failed."),
                 return ge::GRAPH_FAILED);
     return GetMMTilingData(context);
 }
@@ -547,10 +547,10 @@ bool UpsampleBicubic2dGradTiling::SetLaunchInfoDC(gert::TilingContext* context)
 
 ge::graphStatus UpsampleBicubic2dGradTiling::runTiling(gert::TilingContext* context)
 {
-    OP_CHECK_IF(!GetPlatformInfo(context), OP_LOGE(context->GetNodeName(), "get platforminfo fail."),
+    OP_CHECK_IF(!GetPlatformInfo(context), OP_LOGE(context->GetNodeName(), "get platforminfo failed."),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(!GetCheckAttr(context), OP_LOGE(context->GetNodeName(), "check attr fail."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(!CheckInOutShapes(context), OP_LOGE(context->GetNodeName(), "check shape fail."),
+    OP_CHECK_IF(!GetCheckAttr(context), OP_LOGE(context->GetNodeName(), "check attr failed."), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!CheckInOutShapes(context), OP_LOGE(context->GetNodeName(), "check shape failed."),
                 return ge::GRAPH_FAILED);
     auto tempGetInputDesc = context->GetInputDesc(0);
     OP_CHECK_IF(tempGetInputDesc == nullptr, OP_LOGE(context->GetNodeName(), "inputDesc is nullptr."),
@@ -558,25 +558,25 @@ ge::graphStatus UpsampleBicubic2dGradTiling::runTiling(gert::TilingContext* cont
     _Params.dataType = tempGetInputDesc->GetDataType();
     OP_CHECK_IF(_Params.dataType != ge::DataType::DT_FLOAT && _Params.dataType != ge::DataType::DT_FLOAT16 &&
                     _Params.dataType != ge::DataType::DT_BF16,
-                OP_LOGE(context->GetNodeName(), "check dtype fail."), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "check dtype failed."), return ge::GRAPH_FAILED);
 
     if (IsDeterministicCalc(context)) {
-        OP_CHECK_IF(!GetTilingDataDC(context), OP_LOGE(context->GetNodeName(), "get tiling data fail."),
+        OP_CHECK_IF(!GetTilingDataDC(context), OP_LOGE(context->GetNodeName(), "get tiling data failed."),
                     return ge::GRAPH_FAILED);
         // tilingdata
-        OP_CHECK_IF(!SetTilingDataDC(context), OP_LOGE(context->GetNodeName(), "set tiling data fail."),
+        OP_CHECK_IF(!SetTilingDataDC(context), OP_LOGE(context->GetNodeName(), "set tiling data failed."),
                     return ge::GRAPH_FAILED);
         // launchinfo: tilingkey, workspace, blockdim
-        OP_CHECK_IF(!SetLaunchInfoDC(context), OP_LOGE(context->GetNodeName(), "set launchinfo fail."),
+        OP_CHECK_IF(!SetLaunchInfoDC(context), OP_LOGE(context->GetNodeName(), "set launchinfo failed."),
                     return ge::GRAPH_FAILED);
     } else {
-        OP_CHECK_IF(!GetTilingData(context), OP_LOGE(context->GetNodeName(), "get tiling data fail."),
+        OP_CHECK_IF(!GetTilingData(context), OP_LOGE(context->GetNodeName(), "get tiling data failed."),
                     return ge::GRAPH_FAILED);
         // tilingdata
-        OP_CHECK_IF(!SetTilingData(context), OP_LOGE(context->GetNodeName(), "set tiling data fail."),
+        OP_CHECK_IF(!SetTilingData(context), OP_LOGE(context->GetNodeName(), "set tiling data failed."),
                     return ge::GRAPH_FAILED);
         // launchinfo: tilingkey, workspace, blockdim
-        OP_CHECK_IF(!SetLaunchInfo(context), OP_LOGE(context->GetNodeName(), "set launchinfo fail."),
+        OP_CHECK_IF(!SetLaunchInfo(context), OP_LOGE(context->GetNodeName(), "set launchinfo failed."),
                     return ge::GRAPH_FAILED);
     }
 
@@ -599,7 +599,7 @@ ge::graphStatus TilingPrepareForUpsampleBicubic2dGrad(gert::TilingParseContext* 
 
     std::string val;
     platformInfoPtr->GetPlatformRes("AICoreintrinsicDtypeMap", "Intrinsic_fix_pipe_l0c2out", val);
-    OP_CHECK_IF(val.empty(), OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dGrad support only ASCEND910B for now"),
+    OP_CHECK_IF(val.empty(), OP_LOGE(context->GetNodeName(), "UpsampleBicubic2dGrad supports only ASCEND910B for now"),
                 return false);
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);

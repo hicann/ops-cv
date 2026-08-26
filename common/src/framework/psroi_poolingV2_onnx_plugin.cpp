@@ -56,7 +56,7 @@ static Status ParseOnnxParamsPSROIPoolingV2(const ge::Operator& op_src, ge::Oper
     if (ChangeFormatFromOnnx(op_dest, 0, ge::FORMAT_NCHW, true) != SUCCESS ||
         ChangeFormatFromOnnx(op_dest, 1, ge::FORMAT_NCHW, true) != SUCCESS ||
         ChangeFormatFromOnnx(op_dest, 0, ge::FORMAT_NCHW, false) != SUCCESS) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "ChangeFormatFromOnnx fail");
+        OP_LOGE(GetOpName(op_dest).c_str(), "ChangeFormatFromOnnx failed.");
         return FAILED;
     }
     return SUCCESS;

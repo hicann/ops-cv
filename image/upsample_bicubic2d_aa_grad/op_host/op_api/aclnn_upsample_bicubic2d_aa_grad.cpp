@@ -72,12 +72,10 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* out, const 
     size_t inputSizeNum = inputSize->Size();
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK(inputSizeNum == EXPECT_SIZE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 4, but got %zu", inputSizeNum), return false);
+    OP_CHECK(outputSizeNum == EXPECT_OUTPUTSIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
              return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_OUTPUTSIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
     return true;
 }
 
@@ -120,7 +118,7 @@ static bool CheckInputElement(const aclTensor* gradOutput, const aclIntArray* in
 
     OP_CHECK(outN > 0 && inputH > 0 && inputW > 0 && outC > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (N: %ld, C: %ld,"
                      " H: %ld, W: %ld) output (H: %ld, W: %ld)",
                      outN, outC, inputH, inputW, outH, outW),
              return false);
@@ -142,12 +140,12 @@ static bool CheckInputElement(const aclTensor* gradOutput, const aclIntArray* in
                  return false);
         OP_CHECK(outN <= INT32_MAX && outC <= INT32_MAX && outH <= INT32_MAX && outW <= INT32_MAX,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "GradOutput sizes should not be greater than %d, bug got gradOutput(%ld, %ld, %ld, %ld)",
+                         "GradOutput sizes should not be greater than %d, but got gradOutput(%ld, %ld, %ld, %ld)",
                          INT32_MAX, outN, outC, outH, outW),
                  return false);
         OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "InputSize should not be greater than %d, bug got inputSize[%ld, %ld, %ld, %ld]", INT32_MAX,
+                         "InputSize should not be greater than %d, but got inputSize[%ld, %ld, %ld, %ld]", INT32_MAX,
                          inputN, inputC, inputH, inputW),
                  return false);
     }

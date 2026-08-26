@@ -66,7 +66,8 @@ static ge::graphStatus InferShapeGridSampler2D(gert::InferShapeContext* context)
     const int64_t inputWidth = xShape->GetDim(W_DIM_INDEX);
     OP_CHECK_IF(
         (inputHeight != ge::UNKNOWN_DIM && inputHeight <= 0) || (inputWidth != ge::UNKNOWN_DIM && inputWidth <= 0),
-        OP_LOGE(context, "input H/W must be greater than 0"), return ge::GRAPH_FAILED);
+        OP_LOGE(context, "input H/W must be greater than 0, but got H[%ld] and W[%ld]", inputHeight, inputWidth),
+        return ge::GRAPH_FAILED);
 
     yShape->SetDimNum(DIM_NUM_2D);
     yShape->SetDim(N_DIM_INDEX, xBatch);

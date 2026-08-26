@@ -159,7 +159,7 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNumAiv = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNumAiv <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %d", coreNumAiv),
+    OP_CHECK_IF(coreNumAiv <= 0, OP_LOGE(context_, "coreNum must be greater than 0, but got %d", coreNumAiv),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNumAiv;
 
@@ -186,13 +186,12 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputDtype()
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputDesc);
     ge::DataType inputDtype = inputDesc->GetDataType();
     OP_CHECK_IF(!IsInputDtypeSupported(inputDtype),
-                OP_LOGE(context_, "input dtype is not support, but input dtype is %d", inputDtype),
-                return ge::GRAPH_FAILED);
+                OP_LOGE(context_, "input dtype is not supported, but got %d", inputDtype), return ge::GRAPH_FAILED);
     baseTiling_.inputDtype = inputDtype;
 
     auto outputDesc = context_->GetOutputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outputDesc);
-    OP_CHECK_IF(outputDesc->GetDataType() != inputDtype, OP_LOGE(context_, "input and output dtype must be same"),
+    OP_CHECK_IF(outputDesc->GetDataType() != inputDtype, OP_LOGE(context_, "input and output dtype must be the same"),
                 return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
@@ -210,7 +209,7 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShape()
 
     int64_t inputSize = inputShape.GetShapeSize();
     int64_t outputSize = outputShape.GetShapeSize();
-    OP_CHECK_IF(inputSize <= 0 || outputSize <= 0, OP_LOGE(context_, "not support empty input or output"),
+    OP_CHECK_IF(inputSize <= 0 || outputSize <= 0, OP_LOGE(context_, "empty input or output is not supported"),
                 return ge::GRAPH_FAILED);
     baseTiling_.lenN = inputShape.GetDim(CONST_0);
     baseTiling_.lenC = inputShape.GetDim(CONST_1);
@@ -223,7 +222,8 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShape()
     baseTiling_.outSize = outputSize;
 
     OP_CHECK_IF((baseTiling_.lenN != outputShape.GetDim(CONST_0)) || (baseTiling_.lenC != outputShape.GetDim(CONST_1)),
-                OP_LOGE(context_, "The N and C dimensions of input and output must be same"), return ge::GRAPH_FAILED);
+                OP_LOGE(context_, "The N and C dimensions of input and output must be the same"),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(!(baseTiling_.lenN > 0 && baseTiling_.lenC > 0),
                 OP_LOGE(context_, "N and C dimensions of input and output must be greater than 0"),
                 return ge::GRAPH_FAILED);
@@ -265,7 +265,7 @@ ge::graphStatus ResizeUpsampleTrilinearRegbaseTiling::CheckInputShapeAndAttr()
         const int64_t* outputSizeData = outputSizeAttr->GetData();
         OP_CHECK_IF((baseTiling_.outD != outputSizeData[CONST_0]) || (baseTiling_.outH != outputSizeData[CONST_1]) ||
                         (baseTiling_.outW != outputSizeData[CONST_2]),
-                    OP_LOGE(context_, "output D/H/W dimensions must be same as output_size attr"),
+                    OP_LOGE(context_, "output D/H/W dimensions must be the same as output_size attr"),
                     return ge::GRAPH_FAILED);
     }
 

@@ -50,7 +50,7 @@ static bool CheckInputElement(const aclTensor* gradOut, const aclTensor* gradInp
 
     OP_CHECK(inputD > 0 && inputH > 0 && inputW > 0 && outD > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, but got input (H: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (H: %ld,"
                      " W: %ld) output (H: %ld, W: %ld)",
                      inputH, inputW, outH, outW),
              return false);

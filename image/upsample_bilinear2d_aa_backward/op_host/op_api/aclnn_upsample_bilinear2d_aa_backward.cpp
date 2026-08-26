@@ -72,12 +72,10 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* out, const 
     OP_CHECK_WRONG_DIMENSION(gradOutput, DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
     OP_CHECK(inputSizeNum == EXPECT_INPUT_SIZE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 4, but got size %zu", inputSizeNum),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 4, but got %zu", inputSizeNum), return false);
+    OP_CHECK(outputSizeNum == EXPECT_OUTPUT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
              return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_OUTPUT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
     OP_CHECK(gradOutputFormat == op::Format::FORMAT_ND || gradOutputFormat == op::Format::FORMAT_NCHW,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input storage format only support NCHW, but got %s.",
                      op::ToString(gradOutputFormat).GetString()),
@@ -116,7 +114,7 @@ static bool CheckInputElement(const aclIntArray* outputSize, const aclIntArray* 
 
     OP_CHECK(inputN > 0 && inputC > 0 && inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, bug got input (N: %ld, C: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (N: %ld, C: %ld,"
                      " H: %ld, W: %ld) output (H: %ld, W: %ld)",
                      inputN, inputC, inputH, inputW, outH, outW),
              return false);
@@ -125,19 +123,19 @@ static bool CheckInputElement(const aclIntArray* outputSize, const aclIntArray* 
     if (curArch == NpuArch::DAV_2201) {
         OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "input sizes should not be greater than %d, bug got input (N: %ld, C: %ld, H: %ld, W: %ld)", 
+                         "input sizes should not be greater than %d, but got input (N: %ld, C: %ld, H: %ld, W: %ld)",
                          INT32_MAX, inputN, inputC, inputH, inputW),
                  return false);
         OP_CHECK(outH <= INT32_MAX && outW <= INT32_MAX,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "output sizes should not be greater than %d, bug got output (H: %ld, W: %ld)", 
-                         INT32_MAX, outH, outW),
+                         "output sizes should not be greater than %d, but got output (H: %ld, W: %ld)", INT32_MAX, outH,
+                         outW),
                  return false);
 
         int64_t M = inputN * inputC * outH;
         OP_CHECK(M <= INT32_MAX,
-                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "N * C * outputSize_H should not be greater than %d, bug got %ld", INT32_MAX, M),
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "N * C * outputSize_H should not be greater than %d, but got %ld",
+                         INT32_MAX, M),
                  return false);
 
         double realScalesH = ComputeBilinear2dAABackwardScales(inputH, outH, scalesH);

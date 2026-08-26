@@ -122,10 +122,9 @@ static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize)
 {
     size_t outputSizeNum = outputSize->Size();
     OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
+             return false);
 
     return true;
 }
@@ -151,12 +150,12 @@ static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSi
 
     OP_CHECK(inputH > 0 && inputW > 0 && outputH > 0 && outputW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, but got input ("
+                     "Input and output sizes should be greater than 0, but got input ("
                      "H: %ld, W: %ld) output (H: %ld, W: %ld)",
                      inputH, inputW, outputH, outputW),
              return false);
     if ((inputN != outputN) || (inputC != outputC)) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "inputN[%ld]/outputN[%ld] or inputC[%ld]/outputC[%ld] not equal .", inputN,
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "inputN[%ld]/outputN[%ld] or inputC[%ld]/outputC[%ld] are not equal.", inputN,
                 outputN, inputC, outputC);
         return false;
     }

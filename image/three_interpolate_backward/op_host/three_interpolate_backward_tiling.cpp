@@ -73,7 +73,7 @@ void TilingDebugPrint(gert::TilingContext* context, ThreeInterpolateBackwardTili
     OP_LOGD(context, "%s:%u.", "c_move_num", tiling_data.get_c_move_num());
     OP_LOGD(context, "%s:%u.", "c_last_loop_move_num", tiling_data.get_c_last_loop_move_num());
     OP_LOGD(context, "%s:%u.", "c_move_loop_times", tiling_data.get_c_move_loop_times());
-    OP_LOGD(context, "%s:%u.", "mulit_core_mode", tiling_data.get_mulit_core_mode());
+    OP_LOGD(context, "%s:%u.", "multi_core_mode", tiling_data.get_mulit_core_mode());
     OP_LOGD(context, "%s:%u.", "each_core_proc_batch_num", tiling_data.get_each_core_proc_batch_num());
     OP_LOGD(context, "%s:%u.", "core_proc_batch_padding_idx", tiling_data.get_core_proc_batch_padding_idx());
 }
@@ -213,7 +213,7 @@ ge::graphStatus TilingMainProcess(ThreeInterpolateBackwardTilingData& tiling_hos
 
         tiling_key = static_cast<uint64_t>(ThreeInterpolateBackwardTilingType::TILING_MODE_FP16_INT64);
     } else {
-        OP_LOGD(context, "ThreeInterpolateBackward data type not support.");
+        OP_LOGD(context, "ThreeInterpolateBackward data type is not supported.");
         return ge::GRAPH_FAILED;
     }
 
@@ -282,14 +282,14 @@ static ge::graphStatus TilingPrepare4ThreeInterpolateBackward(gert::TilingParseC
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->aicore_num = ascendcPlatform.GetCoreNumAiv();
     OP_CHECK_IF((compileInfo->aicore_num <= 0),
-                OP_LOGE(context, "TilingPrepare4ThreeInterpolateBackward fail to get core num."),
+                OP_LOGE(context, "TilingPrepare4ThreeInterpolateBackward failed to get core num."),
                 return ge::GRAPH_FAILED);
 
     uint64_t ub_platform_byte_size = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_platform_byte_size);
     compileInfo->ub_platform_byte_size = static_cast<int64_t>(ub_platform_byte_size);
     OP_CHECK_IF((compileInfo->ub_platform_byte_size <= 0),
-                OP_LOGE(context, "TilingPrepare4ThreeInterpolateBackward fail to get ub size."),
+                OP_LOGE(context, "TilingPrepare4ThreeInterpolateBackward failed to get ub size."),
                 return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;

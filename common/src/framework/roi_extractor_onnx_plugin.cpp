@@ -27,7 +27,7 @@ static Status VerifyRoiExtractorByNode(ge::Operator& op_dest, const ge::onnx::No
 
     uint32_t input_num = node->input_size();
     if (input_num < MIN_INPUT_NUM) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "input num must ge 2");
+        OP_LOGE(GetOpName(op_dest).c_str(), "input num must be greater than or equal to 2, but got %u", input_num);
         return FAILED;
     }
     op_dest.DynamicInputRegister("features", input_num - 1, false);

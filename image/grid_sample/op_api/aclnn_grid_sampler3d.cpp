@@ -148,8 +148,8 @@ static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclT
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != outShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input grid and out to have same batch size, but got input with shape [%s] \
-            grid with shape [%s] and out with shape [%s]",
+                "expect input grid and out to have same batch size, but got input with shape [%s], "
+                "grid with shape [%s] and out with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
                 op::ToString(outShape).GetString());
         return false;
@@ -159,8 +159,8 @@ static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclT
     const size_t channelIndex = inputFormat == op::Format::FORMAT_NDHWC ? FIFTH_DIM : SECOND_DIM;
     if (inputShape.GetDim(channelIndex) != outShape.GetDim(channelIndex)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input and out to have same channel size, but got input with shape [%s] \
-            and out with shape [%s]",
+                "expect input and out to have same channel size, but got input with shape [%s] "
+                "and out with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(outShape).GetString());
         return false;
     }
@@ -350,15 +350,14 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor* input, const acl
                                                uniqueExecutor.get());
     } else {
         std::string alignCornerStr = alignCorners ? "true" : "false";
-        OP_LOGE(
-            ACLNN_ERR_PARAM_INVALID,
-            "The op info is not supported. Plsease check op info! DataType support list is %s, got data type is %s. \
-            interpolationMode support 0(bilinear) , 1(nearest) or 2(bicubic), got interpolationMode is %ld. \
-            paddingMode support 0(zeros) , 1(border) or 2(reflection), got paddingMode is %ld. \
-            alignCorners support false and true, got alignCorners is %s. \
-            Notice that when data type is bfloat16, only support by ascend910B or ascend910_93.",
-            op::ToString(DTYPE_SUPPORT_LIST).GetString(), op::ToString(input->GetDataType()).GetString(),
-            interpolationMode, paddingMode, alignCornerStr.c_str());
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "The op info is not supported. Please check op info! DataType support list is %s, got data type is %s. "
+                "interpolationMode supports 0(bilinear), 1(nearest) or 2(bicubic), got interpolationMode is %ld. "
+                "paddingMode supports 0(zeros), 1(border) or 2(reflection), got paddingMode is %ld. "
+                "alignCorners supports false and true, got alignCorners is %s. "
+                "Notice that when data type is bfloat16, it is only supported by ascend910B or ascend910_93.",
+                op::ToString(DTYPE_SUPPORT_LIST).GetString(), op::ToString(input->GetDataType()).GetString(),
+                interpolationMode, paddingMode, alignCornerStr.c_str());
         return ACLNN_ERR_PARAM_INVALID;
     }
     CHECK_RET(gridSampler3DOut != nullptr, ACLNN_ERR_INNER_NULLPTR);

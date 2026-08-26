@@ -135,8 +135,8 @@ static ge::graphStatus RasterizerTilingFunc(gert::TilingContext* context)
     const gert::StorageShape* vShape = context->GetInputShape(IDX_0);
     const gert::StorageShape* fShape = context->GetInputShape(IDX_1);
 
-    OP_CHECK_IF(CheckParam(context, vShape, fShape) != ge::GRAPH_SUCCESS,
-                OP_LOGE(context, "CheckInputShapes is failed"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(CheckParam(context, vShape, fShape) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CheckInputShapes failed"),
+                return ge::GRAPH_FAILED);
 
     FillTilingData(context, vShape, fShape);
 

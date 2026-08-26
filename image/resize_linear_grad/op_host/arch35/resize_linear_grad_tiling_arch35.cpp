@@ -156,7 +156,7 @@ void ResizeLinearGradTiling::ComputeOther(bool oddScale, bool isIntScale)
     OP_LOGI(context_->GetNodeName(), "repeatNum is %ld", repeatNum);
     if (scaleL_ < LOWER_DETERMINE || repeatNum >= HIGH_DETERMINE) {
         OP_LOGI(context_->GetNodeName(),
-                "scaleL is small than LOWER_DETERMINE or repeatNum greater than HIGH_DETERMINE");
+                "scaleL is smaller than LOWER_DETERMINE or repeatNum is greater than HIGH_DETERMINE");
         isDetermine_ = static_cast<uint64_t>(1);
     }
     if (isDetermine_ == static_cast<uint64_t>(1)) {
@@ -368,7 +368,7 @@ ge::graphStatus ResizeLinearGradTiling::LinearComputeGrad()
     }
     isInt32_ = DIM_1;
     if (ySize_ > UINT32_MAX || xSize_ > UINT32_MAX) {
-        OP_LOGI(context_->GetNodeName(), "ySize or xSize is large than UINT32_MAX");
+        OP_LOGI(context_->GetNodeName(), "ySize or xSize is larger than UINT32_MAX");
         isInt32_ = DIM_0;
     }
     if (lenSrcLOrUb_ > INT32_MAX || lenDesL_ > INT32_MAX) {
@@ -462,16 +462,17 @@ static ge::graphStatus TilingPrepare4ResizeLinearGrad(gert::TilingParseContext* 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
     compileInfo->totalCoreNum = static_cast<int32_t>(ascendcPlatform.GetCoreNumAiv());
     OP_CHECK_IF((compileInfo->totalCoreNum <= 0),
-                OP_LOGE(context->GetNodeName(), "coreNum is invalid, must greater than 0"), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "coreNum is invalid, must be greater than 0"), return ge::GRAPH_FAILED);
 
     uint64_t ubSizePlatForm = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     compileInfo->totalUbSize = static_cast<int32_t>(ubSizePlatForm);
     OP_CHECK_IF((compileInfo->totalUbSize <= 0),
-                OP_LOGE(context->GetNodeName(), "ubSize is invalid, must greater than 0"), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "ubSize is invalid, must be greater than 0"), return ge::GRAPH_FAILED);
     compileInfo->blockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context));
     OP_CHECK_IF((compileInfo->blockSize <= 0),
-                OP_LOGE(context->GetNodeName(), "blockSize is invalid, must greater than 0"), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "blockSize is invalid, must be greater than 0"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

@@ -175,7 +175,8 @@ static ge::graphStatus SetupTilingKey(gert::TilingContext* context, int64_t tota
     } else if (dataType == ge::DT_FLOAT16) {
         schMode = ANCHOR_RESPONSE_FLAGS_SCH_MODE_1;
     } else {
-        OP_LOGE(context, "unsupported dtype");
+        OP_LOGE(context, "unsupported dtype of input[0], ge::DataType[%d], only DT_FLOAT and DT_FLOAT16 are supported",
+                static_cast<int32_t>(dataType));
         return ge::GRAPH_FAILED;
     }
 

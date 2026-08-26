@@ -122,7 +122,7 @@ static Status ParseOpToGraphNonMaxSuppression(const ge::Operator& op, Graph& gra
             .set_input_score_threshold(score_threshold)
             .set_attr_center_point_box(center_point_box);
     } else {
-        OP_LOGE(GetOpName(op).c_str(), "The input_size is error.");
+        OP_LOGE(GetOpName(op).c_str(), "The input_size is invalid.");
         return FAILED;
     }
 

@@ -61,10 +61,9 @@ static bool CheckShape(const aclTensor* x, const aclIntArray* outputSize, const 
 {
     OP_CHECK_WRONG_DIMENSION(x, DIM_LIMIT, return false);
     size_t outputSizeNum = outputSize->Size();
-    OP_CHECK(
-        outputSizeNum == EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 2, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
+             return false);
     auto inputShape = x->GetViewShape();
     auto outputShape = out->GetViewShape();
     int64_t inputN = inputShape.GetDim(DIM_ZERO);
@@ -79,7 +78,7 @@ static bool CheckShape(const aclTensor* x, const aclIntArray* outputSize, const 
     int64_t outW = (*outputSize)[DIM_ONE];
     OP_CHECK(inputH > 0 && inputW > 0 && outH > 0 && outW > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "Input and output sizes should greater than 0, but got input (H: %ld,"
+                     "Input and output sizes should be greater than 0, but got input (H: %ld,"
                      " W: %ld) output (H: %ld, W: %ld)",
                      inputH, inputW, outH, outW),
              return false);
@@ -95,7 +94,7 @@ static bool CheckShape(const aclTensor* x, const aclIntArray* outputSize, const 
              return false);
     OP_CHECK(outputH == outH && outputW == outW,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                     "OutputH and outH should be equal, outputW and outW should be equal, bug got output (H: %ld,"
+                     "OutputH and outH should be equal, outputW and outW should be equal, but got output (H: %ld,"
                      " W: %ld) out (H: %ld, W: %ld)",
                      outputH, outputW, outH, outW),
              return false);
@@ -111,12 +110,12 @@ static bool CheckShape(const aclTensor* x, const aclIntArray* outputSize, const 
     if (!IsRegBase()) {
         OP_CHECK(inputN <= INT32_MAX && inputC <= INT32_MAX && inputH <= INT32_MAX && inputW <= INT32_MAX,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                         "Input sizes should not be greater than %d, bug got input(%ld, %ld, %ld, %ld)", INT32_MAX,
+                         "Input sizes should not be greater than %d, but got input(%ld, %ld, %ld, %ld)", INT32_MAX,
                          inputN, inputC, inputH, inputW),
                  return false);
         OP_CHECK(
             outH <= INT32_MAX && outW <= INT32_MAX,
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Output sizes should not be greater than %d, bug got outputSize[%ld, %ld]",
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Output sizes should not be greater than %d, but got outputSize[%ld, %ld]",
                     INT32_MAX, outH, outW),
             return false);
     }
@@ -135,7 +134,7 @@ static bool CheckMaxScaleSupport(const aclTensor* x, const aclIntArray* outputSi
     const float realScalesW = scalesW > 0 ? static_cast<float>(1.0 / scalesW) : static_cast<float>(inputW) / outputW;
 
     OP_CHECK(realScalesH <= MAX_SUPPORT_SCALE && realScalesW <= MAX_SUPPORT_SCALE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Scales should less than 50, but got scalesH %f and scalesW %f.",
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Scales should be less than 50, but got scalesH %f and scalesW %f.",
                      realScalesH, realScalesW),
              return false);
     return true;

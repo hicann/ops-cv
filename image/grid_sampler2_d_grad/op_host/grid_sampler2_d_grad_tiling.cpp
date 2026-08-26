@@ -487,7 +487,7 @@ static size_t GetCurWorkspaceSize(gert::TilingContext* tilingContext, InputParam
 
 static ge::graphStatus GetBicubicTiling(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype)
 {
-    OP_LOGI(tilingContext->GetNodeName(), "strat to set bicubic TilingKey.");
+    OP_LOGI(tilingContext->GetNodeName(), "start to set bicubic TilingKey.");
     if (dtype == ge::DT_FLOAT && params.interpolation == BICUBIC) {
         if (params.regBaseSIMD) {
             params.tilingKey = SIMD_FLOAT_BICUBIC_TILING_KEY; // mode21: float, bicubic, regBaseSIMD
@@ -517,7 +517,7 @@ static ge::graphStatus GetBicubicTiling(gert::TilingContext* tilingContext, Inpu
 static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputParamsInfo& params, ge::DataType dtype,
                                     uint32_t coreNum)
 {
-    OP_LOGI(tilingContext->GetNodeName(), "strat to get input dims");
+    OP_LOGI(tilingContext->GetNodeName(), "start to get input dims");
     if (CheckInputInfo(tilingContext, params, dtype) != ge::GRAPH_SUCCESS) {
         OP_LOGW(tilingContext->GetNodeName(), "Check inputs info failed, please check inputs");
         return ge::GRAPH_FAILED;

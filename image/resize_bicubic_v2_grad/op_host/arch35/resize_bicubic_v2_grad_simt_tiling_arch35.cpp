@@ -45,9 +45,10 @@ void ResizeBicubicV2GradSimtTiling::PrintTilingData()
 {
     OP_LOGI(
         context_->GetNodeName(),
-        "ResizeBicubicV2Grad tilingData: lenC is %ld, lenSrcH is %ld, lenSrcW is %ld, lenDstH is %ld, lenDstW is %ld, \
-format is %ld, alignCorners is %ld, initYUseCoreNum is %ld, initYCoreFactor is %ld, initYCoreTailFactor is %ld, \
-useCoreNum is %ld, coreFactor is %ld, coreTailFactor is %ld, scaleH is %f, scaleW is %f",
+        "ResizeBicubicV2Grad tilingData: lenC is %ld, lenSrcH is %ld, lenSrcW is %ld, lenDstH is %ld, lenDstW is %ld, "
+        "format is %ld, alignCorners is %ld, initYUseCoreNum is %ld, initYCoreFactor is %ld, "
+        "initYCoreTailFactor is %ld, useCoreNum is %ld, coreFactor is %ld, coreTailFactor is %ld, "
+        "scaleH is %f, scaleW is %f",
         tilingData_.get_lenC(), tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(), tilingData_.get_lenDstH(),
         tilingData_.get_lenDstW(), tilingData_.get_format(), tilingData_.get_alignCorners(),
         tilingData_.get_initYUseCoreNum(), tilingData_.get_initYCoreFactor(), tilingData_.get_initYCoreTailFactor(),

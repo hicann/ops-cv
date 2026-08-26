@@ -198,7 +198,7 @@ public:
     RegisterNew& tiling(int32_t priority, int32_t soc_version)
     {
         auto tilingCases = TilingRegistryNew::GetInstance().RegisterOp(op_type_, soc_version);
-        OP_CHECK_IF(tilingCases == nullptr, OP_LOGE(op_type_, "Register op tiling failed, please the op name."),
+        OP_CHECK_IF(tilingCases == nullptr, OP_LOGE(op_type_, "Register op tiling failed, please check the op name."),
                     return *this);
         tilingCases->AddTiling<T>(priority);
         return *this;
@@ -209,8 +209,8 @@ public:
     {
         for (int32_t soc_version : soc_versions) {
             auto tilingCases = TilingRegistryNew::GetInstance().RegisterOp(op_type_, soc_version);
-            OP_CHECK_IF(tilingCases == nullptr, OP_LOGE(op_type_, "Register op tiling failed, please the op name."),
-                        return *this);
+            OP_CHECK_IF(tilingCases == nullptr,
+                        OP_LOGE(op_type_, "Register op tiling failed, please check the op name."), return *this);
             tilingCases->AddTiling<T>(priority);
         }
         return *this;
@@ -300,7 +300,7 @@ public:
     Register& tiling(int32_t priority)
     {
         auto tilingCases = TilingRegistry::GetInstance().RegisterOp(op_type_);
-        OP_CHECK_IF(tilingCases == nullptr, OP_LOGE(op_type_, "Register op tiling failed, please the op name."),
+        OP_CHECK_IF(tilingCases == nullptr, OP_LOGE(op_type_, "Register op tiling failed, please check the op name."),
                     return *this);
         tilingCases->AddTiling<T>(priority);
         return *this;

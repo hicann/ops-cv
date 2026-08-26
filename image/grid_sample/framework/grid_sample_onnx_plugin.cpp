@@ -26,7 +26,8 @@ static Status ParseParamsGridSample(const Message* op_src, ge::Operator& op_dest
     for (const auto& attr : node->attribute()) {
         if (attr.name() == "align_corners" && attr.i() != 0) {
             if (attr.i() > 1 || attr.i() < -1) {
-                OP_LOGE(GetOpName(op_dest).c_str(), "the value of align_corners out of range");
+                OP_LOGE(GetOpName(op_dest).c_str(), "the value of align_corners [%ld] is out of range [-1, 1]",
+                        attr.i());
             }
             align_corners = true;
         }
@@ -70,7 +71,8 @@ static Status ParseParamsGridSampleV2(const Message* op_src, ge::Operator& op_de
     for (const auto& attrv2 : node->attribute()) {
         if (attrv2.name() == "align_corners" && attrv2.i() != 0) {
             if (attrv2.i() > 1 || attrv2.i() < -1) {
-                OP_LOGE(GetOpName(op_dest).c_str(), "the value of align_corners out of range");
+                OP_LOGE(GetOpName(op_dest).c_str(), "the value of align_corners [%ld] is out of range [-1, 1]",
+                        attrv2.i());
             }
             align_corners = true;
         }
@@ -82,7 +84,8 @@ static Status ParseParamsGridSampleV2(const Message* op_src, ge::Operator& op_de
         }
         if (attrv2.name() == "channel_last" && attrv2.i() != 0) {
             if (attrv2.i() > 1 || attrv2.i() < 0) {
-                OP_LOGE(GetOpName(op_dest).c_str(), "the value of channel_last out of range");
+                OP_LOGE(GetOpName(op_dest).c_str(), "the value of channel_last [%ld] is out of range [0, 1]",
+                        attrv2.i());
             }
             channel_last = true;
         }

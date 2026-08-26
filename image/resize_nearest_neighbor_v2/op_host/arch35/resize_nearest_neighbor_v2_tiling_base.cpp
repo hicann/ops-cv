@@ -554,7 +554,7 @@ void ResizeNearestNeighborV2AscendCTilingImpl::DoTilingSmallC()
 
 int64_t ResizeNearestNeighborV2AscendCTilingImpl::CalTimes(int64_t a, int64_t b) const
 {
-    OP_CHECK_IF(b == 0, OP_LOGE(context_->GetNodeName(), "b = 0 is not support"), return -1);
+    OP_CHECK_IF(b == 0, OP_LOGE(context_->GetNodeName(), "b must not be 0."), return -1);
     int64_t c = a / b;
     if (a % b == 0) {
         c = c - 1;
@@ -903,14 +903,14 @@ void ResizeNearestNeighborV2AscendCTilingImpl::FillTilingData()
 void ResizeNearestNeighborV2AscendCTilingImpl::PrintTilingData()
 {
     OP_LOGI(context_->GetNodeName(),
-            "tilingData is realCoreNum:%ld, ubSize: %ld, alignCorners:%ld, halfPixelCenters:%ld, \
-            lenN:%ld, lenC:%ld, lenSrcH:%ld, lenSrcW:%ld, lenDesH:%ld, lenDesW:%ld, \
-            condition:%ld, switchParams:%ld, splitBlockFactor:%ld, splitBlockTailFactor: %ld, lenCAlign: %ld, \
-            hwcNum: %ld, dstHwcNum:%ld, wcNum:%ld, dstWcNum:%ld, nLoop: %ld, nLoopTimesBefore: %ld, \
-            nLoopTimesLast is %ld, nLoopTailLast: %ld, wcLoop: %ld, wcLoopTimesBefore: %ld, \
-            wcLoopTailBefore: %ld, wcLoopTimesLast: %ld, wcLoopTailLast: %ld, \
-            splitFactorDesH %ld, splitFactorTailDesW %ld, splitFactorDesW %ld, \
-            splitCountDesH: %ld, scaleW: %f, scaleH：%f",
+            "tilingData is realCoreNum:%ld, ubSize: %ld, alignCorners:%ld, halfPixelCenters:%ld, "
+            "lenN:%ld, lenC:%ld, lenSrcH:%ld, lenSrcW:%ld, lenDesH:%ld, lenDesW:%ld, "
+            "condition:%ld, switchParams:%ld, splitBlockFactor:%ld, splitBlockTailFactor: %ld, lenCAlign: %ld, "
+            "hwcNum: %ld, dstHwcNum:%ld, wcNum:%ld, dstWcNum:%ld, nLoop: %ld, nLoopTimesBefore: %ld, "
+            "nLoopTimesLast is %ld, nLoopTailLast: %ld, wcLoop: %ld, wcLoopTimesBefore: %ld, "
+            "wcLoopTailBefore: %ld, wcLoopTimesLast: %ld, wcLoopTailLast: %ld, "
+            "splitFactorDesH %ld, splitFactorTailDesW %ld, splitFactorDesW %ld, "
+            "splitCountDesH: %ld, scaleW: %f, scaleH: %f",
             tilingData_.get_realCoreNum(), tilingData_.get_ubSize(), tilingData_.get_alignCorners(),
             tilingData_.get_halfPixelCenters(), tilingData_.get_lenN(), tilingData_.get_lenC(),
             tilingData_.get_lenSrcH(), tilingData_.get_lenSrcW(), tilingData_.get_lenDesH(), tilingData_.get_lenDesW(),
@@ -1066,14 +1066,16 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::Init()
     OP_LOGD(context_->GetNodeName(), "Enter ResizeNearestNeighborV2AscendCTilingImpl init.");
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
     coreNum_ = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %ld", coreNum_),
+    OP_CHECK_IF(coreNum_ <= 0, OP_LOGE(context_, "coreNum must be greater than 0, but got %ld", coreNum_),
                 return ge::GRAPH_FAILED);
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
     ubBlockSize_ = Ops::Base::GetUbBlockSize(context_);
     OP_CHECK_IF(ubSize <= 0UL || ubBlockSize_ < 0,
-                OP_LOGE(context_, "ubSize and ubBlockSize must > 0, but ubSize is %lu, ubBlockSizeis %ld", ubSize,
-                        ubBlockSize_),
+                OP_LOGE(context_,
+                        "ubSize and ubBlockSize must be greater than 0, but ubSize is %lu, "
+                        "ubBlockSize is %ld",
+                        ubSize, ubBlockSize_),
                 return ge::GRAPH_FAILED);
     ubSize_ = static_cast<int64_t>(ubSize);
     OP_LOGI(context_->GetNodeName(), "coreNum_:%ld, ubSize_:%ld, ubBlockSize_:%ld", coreNum_, ubSize_, ubBlockSize_);

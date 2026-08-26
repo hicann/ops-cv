@@ -177,24 +177,36 @@ static ge::graphStatus GetAttrs(gert::TilingContext* context, DilBpFilterAttrs& 
     // NHWC: strides[0]==1, strides[3]==1; NCHW: strides[0]==1, strides[1]==1
     if (isNCHW) {
         OP_CHECK_IF(stridesData[0] != 1 || stridesData[1] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides", "strides[0] or strides[1] != 1", "1"),
+                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides",
+                                              ("strides[0]=" + std::to_string(stridesData[0]) +
+                                               ", strides[1]=" + std::to_string(stridesData[1])),
+                                              "1"),
                     return ge::GRAPH_FAILED);
     } else {
         OP_CHECK_IF(stridesData[0] != 1 || stridesData[3] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides", "strides[0] or strides[3] != 1", "1"),
+                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides",
+                                              ("strides[0]=" + std::to_string(stridesData[0]) +
+                                               ", strides[3]=" + std::to_string(stridesData[3])),
+                                              "1"),
                     return ge::GRAPH_FAILED);
     }
 
     // Validate rates N/C dims must be 1
     // NHWC: rates[0]==1, rates[3]==1; NCHW: rates[0]==1, rates[1]==1
     if (isNCHW) {
-        OP_CHECK_IF(ratesData[0] != 1 || ratesData[1] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "rates", "rates[0] or rates[1] != 1", "1"),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            ratesData[0] != 1 || ratesData[1] != 1,
+            OP_LOGE_FOR_INVALID_VALUE(
+                context->GetNodeName(), "rates",
+                ("rates[0]=" + std::to_string(ratesData[0]) + ", rates[1]=" + std::to_string(ratesData[1])), "1"),
+            return ge::GRAPH_FAILED);
     } else {
-        OP_CHECK_IF(ratesData[0] != 1 || ratesData[3] != 1,
-                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "rates", "rates[0] or rates[3] != 1", "1"),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            ratesData[0] != 1 || ratesData[3] != 1,
+            OP_LOGE_FOR_INVALID_VALUE(
+                context->GetNodeName(), "rates",
+                ("rates[0]=" + std::to_string(ratesData[0]) + ", rates[3]=" + std::to_string(ratesData[3])), "1"),
+            return ge::GRAPH_FAILED);
     }
 
     // Extract spatial strides and rates
@@ -346,13 +358,17 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
     if (isNCHW) {
         OP_CHECK_IF(depth != filterShape.GetDim(0) || depth != outBpShape.GetDim(1),
                     OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-                        context->GetNodeName(), "x, filter, out_backprop", "x.C, filter.C, out_bp.C",
+                        context->GetNodeName(), "x, filter, out_backprop",
+                        ("x.C=" + std::to_string(depth) + ", filter.C=" + std::to_string(filterShape.GetDim(0)) +
+                         ", out_bp.C=" + std::to_string(outBpShape.GetDim(1))),
                         "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
                     return ge::GRAPH_FAILED);
     } else {
         OP_CHECK_IF(depth != filterShape.GetDim(2) || depth != outBpShape.GetDim(3),
                     OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
-                        context->GetNodeName(), "x, filter, out_backprop", "x.C, filter.C, out_bp.C",
+                        context->GetNodeName(), "x, filter, out_backprop",
+                        ("x.C=" + std::to_string(depth) + ", filter.C=" + std::to_string(filterShape.GetDim(2)) +
+                         ", out_bp.C=" + std::to_string(outBpShape.GetDim(3))),
                         "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
                     return ge::GRAPH_FAILED);
     }

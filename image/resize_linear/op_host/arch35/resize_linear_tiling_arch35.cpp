@@ -181,7 +181,7 @@ float ResizeLinearTiling::ComputeScale(float scale, int64_t lenSrc, int64_t lenD
 
 ge::graphStatus ResizeLinearTiling::LinearCompute()
 {
-    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "input params is error"),
+    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "check input params failed"),
                 return ge::GRAPH_FAILED);
     // Get attrs: alignCorners
     auto attrs = context_->GetAttrs();
@@ -251,7 +251,7 @@ ge::graphStatus ResizeLinearTiling::SetTilingData()
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
 
     context_->SetBlockDim(realCoreNum_);
-    OP_LOGI(context_->GetNodeName(), "schId is %ld, isInt32 is %ld, isHalfPiex is %ld", schId_, isInt32_, isHalfPiex_);
+    OP_LOGI(context_->GetNodeName(), "schId is %ld, isInt32 is %ld, isHalfPixel is %ld", schId_, isInt32_, isHalfPiex_);
     const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, isInt32_, isHalfPiex_);
     context_->SetTilingKey(tilingKey);
 

@@ -229,7 +229,7 @@ static aclnnStatus CheckArrayDataAvgPoolBackWard(const aclIntArray* kernelSize, 
         auto halfKsize = (*kernelSize)[i] / 2;
         auto padSize = (*padding)[i];
         if (halfKsize < padSize) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "padding [%lu] data [%li] should less than kernelSize / 2 [%ld]", i,
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "padding [%lu] data [%li] should be less than kernelSize / 2 [%ld]", i,
                     padSize, halfKsize);
             return ACLNN_ERR_PARAM_INVALID;
         }
@@ -255,14 +255,12 @@ static bool CheckUpsampleShape(const aclTensor* gradOut, const aclIntArray* outp
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, UPSAMPLE_DIM_LIMIT, return false);
-    OP_CHECK(
-        outputSizeNum == UPSAMPLE_EXPECT_SIZE,
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected output_size equals to 3, but got size %zu", outputSizeNum),
-        return false);
+    OP_CHECK(outputSizeNum == UPSAMPLE_EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 3, but got %zu", outputSizeNum),
+             return false);
 
     OP_CHECK(inputSizeNum == UPSAMPLE_DIM_LIMIT,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "It is expected input_size equals to 5, but got size %zu", inputSizeNum),
-             return false);
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected input_size to be 5, but got %zu", inputSizeNum), return false);
     return true;
 }
 

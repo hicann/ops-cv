@@ -156,29 +156,29 @@ static float AreaPixelComputeScale(bool alignCorner, int64_t inputSize, int64_t 
 
 static bool CheckShapes(gert::TilingContext* context, int64_t w, int64_t h, int64_t d)
 {
-    OP_CHECK_IF(
-        !(w > 0 && h > 0 && d > 0),
-        OP_LOGE(context->GetNodeName(), "shape should bigger than 0, but got shape (D: %ld,H: %ld, W: %ld)", d, h, w),
-        return false);
+    OP_CHECK_IF(!(w > 0 && h > 0 && d > 0),
+                OP_LOGE(context->GetNodeName(), "shape should be bigger than 0, but got shape (D: %ld, H: %ld, W: %ld)",
+                        d, h, w),
+                return false);
     return true;
 }
 
 static bool CheckShapeMaxLimit(gert::TilingContext* context, UpsampleTrilinearTilingData& tiling)
 {
     OP_CHECK_IF(tiling.get_input_w() > INT32_MAX,
-                OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Input_w must less than 2147483647."),
+                OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Input_w must be less than 2147483647."),
                 return false);
     OP_CHECK_IF(tiling.get_output_d() > INT32_MAX,
-                OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_d must less than 2147483647."),
+                OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_d must be less than 2147483647."),
                 return false);
-    OP_CHECK_IF(
-        tiling.get_output_w() * tiling.get_output_h() > INT32_MAX,
-        OP_LOGE(context->GetNodeName(), "The shape exceeds the limit. Output_h * output_w must less than 2147483647."),
-        return false);
+    OP_CHECK_IF(tiling.get_output_w() * tiling.get_output_h() > INT32_MAX,
+                OP_LOGE(context->GetNodeName(),
+                        "The shape exceeds the limit. Output_h * output_w must be less than 2147483647."),
+                return false);
     OP_CHECK_IF(
         tiling.get_batches() * tiling.get_input_d() * tiling.get_input_h() > INT32_MAX,
         OP_LOGE(context->GetNodeName(),
-                "The shape exceeds the limit. Output_n * output_c * output_d * output_h must less than 2147483647."),
+                "The shape exceeds the limit. Output_n * output_c * output_d * output_h must be less than 2147483647."),
         return false);
     return true;
 }
@@ -187,8 +187,8 @@ static bool CheckScales(gert::TilingContext* context, float scalesW, float scale
 {
     OP_CHECK_IF((scalesW > MAX_SUPPORT_SCALE || scalesH > MAX_SUPPORT_SCALE || scalesD > MAX_SUPPORT_SCALE),
                 OP_LOGE(context->GetNodeName(),
-                        "Scales should less than 50, but got scale (scalesW: %f, scalesH: %f, scalesD: %f) ", scalesW,
-                        scalesH, scalesD),
+                        "Scales should be less than 50, but got scale (scalesW: %f, scalesH: %f, scalesD: %f) ",
+                        scalesW, scalesH, scalesD),
                 return false);
     return true;
 }

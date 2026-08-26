@@ -188,11 +188,10 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::CheckInputParams()
     OP_CHECK_NULL_WITH_CONTEXT(context_, input);
     auto inputDtype = input->GetDataType();
     OP_CHECK_IF(inputDtypeList.count(inputDtype) == 0,
-                OP_LOGE(context_, "Input dtype is not support, but input dtype is %d", inputDtype),
-                return ge::GRAPH_FAILED);
+                OP_LOGE(context_, "Input dtype is not supported, but got %d", inputDtype), return ge::GRAPH_FAILED);
     auto inputFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(input->GetStorageFormat()));
     OP_CHECK_IF((inputFormat != ge::Format::FORMAT_NCHW && inputFormat != ge::Format::FORMAT_ND),
-                OP_LOGE(context_, "Input format is not support, but input format is %d", inputDtype),
+                OP_LOGE(context_, "Input format is not supported, but got %d", static_cast<int32_t>(inputFormat)),
                 return ge::GRAPH_FAILED);
     baseTiling_.dtypeSize = inputDtypeList.find(inputDtype)->second;
     int32_t ubBlockSize = static_cast<int32_t>(Ops::Base::GetUbBlockSize(context_));
@@ -200,10 +199,12 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::CheckInputParams()
     auto outDescPtr0 = context_->GetOutputDesc(CONST_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, outDescPtr0);
     auto outputDtype = outDescPtr0->GetDataType();
-    OP_CHECK_IF(outputDtype != inputDtype, OP_LOGE(context_, "Input and output dtype must be same"),
+    OP_CHECK_IF(outputDtype != inputDtype, OP_LOGE(context_, "Input and output dtype must be the same"),
                 return ge::GRAPH_FAILED);
     auto outFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(outDescPtr0->GetStorageFormat()));
-    OP_CHECK_IF(outFormat != inputFormat, OP_LOGE(context_, "Input and output format must be same"),
+    OP_CHECK_IF(outFormat != inputFormat,
+                OP_LOGE(context_, "Input and output format must be the same, but got %d and %d",
+                        static_cast<int32_t>(inputFormat), static_cast<int32_t>(outFormat)),
                 return ge::GRAPH_FAILED);
     auto inputX = context_->GetInputShape(0);
     auto outY = context_->GetOutputShape(0);
@@ -318,12 +319,12 @@ ge::graphStatus UpsampleBicubic2dAAGradRegbaseTiling::Init()
     OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     int32_t coreNum = ascendcPlatform.GetCoreNumAiv();
-    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must greater than 0, but is %ld", coreNum),
+    OP_CHECK_IF(coreNum <= 0, OP_LOGE(context_, "coreNum must be greater than 0, but got %ld", coreNum),
                 return ge::GRAPH_FAILED);
     baseTiling_.coreNum = coreNum;
     uint64_t ubMemSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubMemSize);
-    OP_CHECK_IF(ubMemSize <= 0UL, OP_LOGE(context_, "ubMemSize must greater than 0, but is %lu", ubMemSize),
+    OP_CHECK_IF(ubMemSize <= 0UL, OP_LOGE(context_, "ubMemSize must be greater than 0, but is %lu", ubMemSize),
                 return ge::GRAPH_FAILED);
     OP_LOGI(context_, "coreNum is %ld, ubMemSize is %lu", coreNum, ubMemSize);
     baseTiling_.ubSize = static_cast<int32_t>(ubMemSize);

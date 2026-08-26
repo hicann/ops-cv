@@ -57,7 +57,8 @@ static ge::graphStatus CheckInputShapeValid(gert::InferShapeContext* context, co
             return ge::GRAPH_FAILED;
         }
         if (rois_shape->GetDim(DIM_ZERO) > BATCH_SIZE_MAX_LIMIT) {
-            OP_LOGE(context->GetNodeName(), "rois shape %s [0] exceed 1024.", Ops::Base::ToString(*rois_shape).c_str());
+            OP_LOGE(context->GetNodeName(), "the first dim of rois shape %s exceeds 1024.",
+                    Ops::Base::ToString(*rois_shape).c_str());
             return ge::GRAPH_FAILED;
         }
     }
@@ -72,7 +73,8 @@ static ge::graphStatus CheckInputShapeValid(gert::InferShapeContext* context, co
             return ge::GRAPH_FAILED;
         }
         if (x_shape->GetDim(DIM_ZERO) > BATCH_SIZE_MAX_LIMIT) {
-            OP_LOGE(context->GetNodeName(), "x shape %s [0] exceed 1024.", Ops::Base::ToString(*x_shape).c_str());
+            OP_LOGE(context->GetNodeName(), "the first dim of x shape %s exceeds 1024.",
+                    Ops::Base::ToString(*x_shape).c_str());
             return ge::GRAPH_FAILED;
         }
     }

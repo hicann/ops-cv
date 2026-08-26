@@ -498,7 +498,7 @@ void ResizeBicubicV2Tiling::ComputeKey()
         int32_t intScaleH = static_cast<int32_t>(scaleH_);
         int32_t intScaleW = static_cast<int32_t>(scaleW_);
         oddScales = (intScaleH % EVEN_FACTOR == 1) && (intScaleW % EVEN_FACTOR == 1);
-        OP_LOGI(context_->GetNodeName(), "oddScales is %d, intScaleL is %d, intScaleW is %d", oddScales, intScaleH,
+        OP_LOGI(context_->GetNodeName(), "oddScales is %d, intScaleH is %d, intScaleW is %d", oddScales, intScaleH,
                 intScaleW);
     }
     if (IsMatchAllCopy()) {
@@ -534,7 +534,7 @@ float ResizeBicubicV2Tiling::ComputeScale(float scale, int64_t lenSrc, int64_t l
 
 ge::graphStatus ResizeBicubicV2Tiling::Compute()
 {
-    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "input params is check failed"),
+    OP_CHECK_IF(CheckParams() != ge::GRAPH_SUCCESS, OP_LOGE(context_->GetNodeName(), "check input params failed"),
                 return ge::GRAPH_FAILED);
 
     // Get attrs: alignCorners
@@ -642,8 +642,8 @@ ge::graphStatus ResizeBicubicV2Tiling::SetTilingData()
     context_->GetRawTilingData()->SetDataSize(tilingData_.GetDataSize());
 
     context_->SetBlockDim(realCoreNum_);
-    OP_LOGI(context_->GetNodeName(), "schId is %ld, isInt32 is %ld, isHalfPiex is %ld, isNchw is %ld", schId_, isInt32_,
-            isHalfPiex_, isNchw_);
+    OP_LOGI(context_->GetNodeName(), "schId is %ld, isInt32 is %ld, isHalfPixel is %ld, isNchw is %ld", schId_,
+            isInt32_, isHalfPiex_, isNchw_);
     const uint64_t tilingKey = GET_TPL_TILING_KEY(schId_, isInt32_, isHalfPiex_, isNchw_);
     context_->SetTilingKey(tilingKey);
 
