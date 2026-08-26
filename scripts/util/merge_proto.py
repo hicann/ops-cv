@@ -28,14 +28,14 @@ OP_DEF_PATTERN = re.compile(
 
 
 def match_op_proto(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     match = OP_DEF_PATTERN.search(content)
 
     if match:
         op_name = match.group("opname")
-        op_def = match.group("opdef")
+        op_def = match.group(0)
         return op_name, op_def
     else:
         return None, None
@@ -43,7 +43,7 @@ def match_op_proto(file_path):
 
 # 收集op_cv_proto_extend.h中的原型定义，可能有多个，返回数组
 def match_op_proto_extend(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     matches = OP_DEF_PATTERN.finditer(content)
@@ -51,7 +51,7 @@ def match_op_proto_extend(file_path):
     results = []
     for match in matches:
         op_name = match.group("opname")
-        op_def = match.group("opdef")
+        op_def = match.group(0)
         results.append((op_name, op_def))
     return results
 
@@ -78,13 +78,13 @@ def merge_op_proto(protos_path, output_file):
 
 namespace ge{{
 
-{os.linesep.join([f'{op_def}{os.linesep}' for op_def in op_defs])}
+{os.linesep.join([f"{op_def}{os.linesep}" for op_def in op_defs])}
 }}  // namespace ge
 
 #endif // OP_CV_PROTO_H_
 """
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(merged_content)
 
     print(f"merged op cv proto file: {output_file}")
@@ -92,14 +92,14 @@ namespace ge{{
 
 def parse_args(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument("protos", nargs='+')
+    parser.add_argument("protos", nargs="+")
     parser.add_argument("--output-file", nargs=1, default=None)
     return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
     args = parse_args(sys.argv)
-    
+
     protos_path = args.protos[1:]
     output_file = args.output_file[0]
     merge_op_proto(protos_path, output_file)
