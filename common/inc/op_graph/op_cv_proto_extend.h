@@ -781,12 +781,15 @@ convert tensor dtype float16 to int16 . \n
 *@par Third-party framework compatibility
 *only for use by corresponding operators in HDRnet networks
 */
+#ifndef OPS_PROTO_DEF_TRANSARGB
+#define OPS_PROTO_DEF_TRANSARGB
 REG_OP(TransArgb)
     .INPUT(x, "T1")
     .OUTPUT(y, "T2")
     .DATATYPE(T1, TensorType({DT_FLOAT16}))
     .DATATYPE(T2, TensorType({DT_INT16}))
     .OP_END_FACTORY_REG(TransArgb)
+#endif
 
 /**
 *@brief Normalizes data. It is called Region on YOLO v2 and Yolo on YOLO v3 . \n
