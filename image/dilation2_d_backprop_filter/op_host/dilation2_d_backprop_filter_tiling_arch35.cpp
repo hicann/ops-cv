@@ -105,15 +105,15 @@ static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context, int32_t ne
 // Attribute struct and retrieval
 // ============================================================================
 struct DilBpFilterAttrs {
-    int32_t strideH = 0;
-    int32_t strideW = 0;
-    int32_t rateH = 0;
-    int32_t rateW = 0;
+    int64_t strideH = 0;
+    int64_t strideW = 0;
+    int64_t rateH = 0;
+    int64_t rateW = 0;
     std::string paddingMode;
-    int32_t padTop = 0;
-    int32_t padBottom = 0;
-    int32_t padLeft = 0;
-    int32_t padRight = 0;
+    int64_t padTop = 0;
+    int64_t padBottom = 0;
+    int64_t padLeft = 0;
+    int64_t padRight = 0;
     bool ceilMode = false;
     std::string dataFormat;
 };
@@ -200,15 +200,15 @@ static ge::graphStatus GetAttrs(gert::TilingContext* context, DilBpFilterAttrs& 
     // Extract spatial strides and rates
     // NHWC: [1, strideH, strideW, 1]; NCHW: [1, 1, strideH, strideW]
     if (isNCHW) {
-        attrs.strideH = static_cast<int32_t>(stridesData[2]);
-        attrs.strideW = static_cast<int32_t>(stridesData[3]);
-        attrs.rateH = static_cast<int32_t>(ratesData[2]);
-        attrs.rateW = static_cast<int32_t>(ratesData[3]);
+        attrs.strideH = stridesData[2];
+        attrs.strideW = stridesData[3];
+        attrs.rateH = ratesData[2];
+        attrs.rateW = ratesData[3];
     } else {
-        attrs.strideH = static_cast<int32_t>(stridesData[1]);
-        attrs.strideW = static_cast<int32_t>(stridesData[2]);
-        attrs.rateH = static_cast<int32_t>(ratesData[1]);
-        attrs.rateW = static_cast<int32_t>(ratesData[2]);
+        attrs.strideH = stridesData[1];
+        attrs.strideW = stridesData[2];
+        attrs.rateH = ratesData[1];
+        attrs.rateW = ratesData[2];
     }
 
     // Validate strides and rates ranges
@@ -228,10 +228,10 @@ static ge::graphStatus GetAttrs(gert::TilingContext* context, DilBpFilterAttrs& 
                 return ge::GRAPH_FAILED);
 
     // Extract pads (CALCULATED mode): [top, bottom, left, right]
-    attrs.padTop = static_cast<int32_t>(padsData[0]);
-    attrs.padBottom = static_cast<int32_t>(padsData[1]);
-    attrs.padLeft = static_cast<int32_t>(padsData[2]);
-    attrs.padRight = static_cast<int32_t>(padsData[3]);
+    attrs.padTop = padsData[0];
+    attrs.padBottom = padsData[1];
+    attrs.padLeft = padsData[2];
+    attrs.padRight = padsData[3];
 
     return ge::GRAPH_SUCCESS;
 }
@@ -239,19 +239,19 @@ static ge::graphStatus GetAttrs(gert::TilingContext* context, DilBpFilterAttrs& 
 // ============================================================================
 // Compute output dimensions and padding (MDE §3.2 step 3)
 // ============================================================================
-static void ComputeOutputDims(const DilBpFilterAttrs& attrs, int32_t inputH, int32_t inputW, int32_t filterH,
-                              int32_t filterW, int32_t& outH, int32_t& outW, int32_t& padTop, int32_t& padLeft)
+static void ComputeOutputDims(const DilBpFilterAttrs& attrs, int64_t inputH, int64_t inputW, int64_t filterH,
+                              int64_t filterW, int64_t& outH, int64_t& outW, int64_t& padTop, int64_t& padLeft)
 {
-    int32_t windowH = (filterH - 1) * attrs.rateH + 1;
-    int32_t windowW = (filterW - 1) * attrs.rateW + 1;
+    int64_t windowH = (filterH - 1) * attrs.rateH + 1;
+    int64_t windowW = (filterW - 1) * attrs.rateW + 1;
 
     if (attrs.paddingMode == "SAME") {
         outH = (inputH + attrs.strideH - 1) / attrs.strideH;
         outW = (inputW + attrs.strideW - 1) / attrs.strideW;
-        int32_t padRow = std::max((outH - 1) * attrs.strideH + windowH - inputH, 0);
-        int32_t padCol = std::max((outW - 1) * attrs.strideW + windowW - inputW, 0);
-        padTop = std::max(padRow / 2, 0);
-        padLeft = std::max(padCol / 2, 0);
+        int64_t padRow = std::max((outH - 1) * attrs.strideH + windowH - inputH, static_cast<int64_t>(0));
+        int64_t padCol = std::max((outW - 1) * attrs.strideW + windowW - inputW, static_cast<int64_t>(0));
+        padTop = std::max(padRow / 2, static_cast<int64_t>(0));
+        padLeft = std::max(padCol / 2, static_cast<int64_t>(0));
     } else if (attrs.paddingMode == "CALCULATED") {
         padTop = attrs.padTop;
         padLeft = attrs.padLeft;
@@ -270,8 +270,8 @@ static void ComputeOutputDims(const DilBpFilterAttrs& attrs, int32_t inputH, int
     }
 
     // Clamp to non-negative
-    outH = std::max(outH, 0);
-    outW = std::max(outW, 0);
+    outH = std::max(outH, static_cast<int64_t>(0));
+    outW = std::max(outW, static_cast<int64_t>(0));
 }
 
 // ============================================================================
@@ -324,39 +324,37 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
     // 5. Extract dimensions based on data_format
     // NHWC: x=[N,H,W,C], filter=[fH,fW,C], out_bp=[N,Ho,Wo,C]
     // NCHW: x=[N,C,H,W], filter=[C,fH,fW], out_bp=[N,C,Ho,Wo]
-    int32_t batch = 0, inputH = 0, inputW = 0, depth = 0;
-    int32_t filterH = 0, filterW = 0;
+    int64_t batch = 0, inputH = 0, inputW = 0, depth = 0;
+    int64_t filterH = 0, filterW = 0;
     if (isNCHW) {
-        batch = static_cast<int32_t>(xShape.GetDim(0));
-        depth = static_cast<int32_t>(xShape.GetDim(1));
-        inputH = static_cast<int32_t>(xShape.GetDim(2));
-        inputW = static_cast<int32_t>(xShape.GetDim(3));
-        filterH = static_cast<int32_t>(filterShape.GetDim(1));
-        filterW = static_cast<int32_t>(filterShape.GetDim(2));
+        batch = xShape.GetDim(0);
+        depth = xShape.GetDim(1);
+        inputH = xShape.GetDim(2);
+        inputW = xShape.GetDim(3);
+        filterH = filterShape.GetDim(1);
+        filterW = filterShape.GetDim(2);
     } else {
-        batch = static_cast<int32_t>(xShape.GetDim(0));
-        inputH = static_cast<int32_t>(xShape.GetDim(1));
-        inputW = static_cast<int32_t>(xShape.GetDim(2));
-        depth = static_cast<int32_t>(xShape.GetDim(3));
-        filterH = static_cast<int32_t>(filterShape.GetDim(0));
-        filterW = static_cast<int32_t>(filterShape.GetDim(1));
+        batch = xShape.GetDim(0);
+        inputH = xShape.GetDim(1);
+        inputW = xShape.GetDim(2);
+        depth = xShape.GetDim(3);
+        filterH = filterShape.GetDim(0);
+        filterW = filterShape.GetDim(1);
     }
 
     // Validate depth consistency based on data_format
     if (isNCHW) {
-        OP_CHECK_IF(
-            depth != static_cast<int32_t>(filterShape.GetDim(0)) || depth != static_cast<int32_t>(outBpShape.GetDim(1)),
-            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "x, filter, out_backprop",
-                                                   "x.C, filter.C, out_bp.C",
-                                                   "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(depth != filterShape.GetDim(0) || depth != outBpShape.GetDim(1),
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                        context->GetNodeName(), "x, filter, out_backprop", "x.C, filter.C, out_bp.C",
+                        "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
+                    return ge::GRAPH_FAILED);
     } else {
-        OP_CHECK_IF(
-            depth != static_cast<int32_t>(filterShape.GetDim(2)) || depth != static_cast<int32_t>(outBpShape.GetDim(3)),
-            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "x, filter, out_backprop",
-                                                   "x.C, filter.C, out_bp.C",
-                                                   "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
-            return ge::GRAPH_FAILED);
+        OP_CHECK_IF(depth != filterShape.GetDim(2) || depth != outBpShape.GetDim(3),
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                        context->GetNodeName(), "x, filter, out_backprop", "x.C, filter.C, out_bp.C",
+                        "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
+                    return ge::GRAPH_FAILED);
     }
 
     // Validate dtype: only DT_FLOAT is supported, all inputs/output must have the same dtype
@@ -396,14 +394,14 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
                 return ge::GRAPH_FAILED);
 
     // 6. Compute output dimensions and padding
-    int32_t outH = 0, outW = 0, padTop = 0, padLeft = 0;
+    int64_t outH = 0, outW = 0, padTop = 0, padLeft = 0;
     ComputeOutputDims(attrs, inputH, inputW, filterH, filterW, outH, outW, padTop, padLeft);
 
     // v2.3: For CALCULATED padding, kernel needs padded input H/W as boundary
     // (TF golden pads input with zeros, so padded regions are valid with value 0)
     // For SAME/VALID: padInputH = inputH (TF checks original input bounds only)
-    int32_t padInputH = inputH;
-    int32_t padInputW = inputW;
+    int64_t padInputH = inputH;
+    int64_t padInputW = inputW;
     if (attrs.paddingMode == "CALCULATED") {
         padInputH = inputH + attrs.padTop + attrs.padBottom;
         padInputW = inputW + attrs.padLeft + attrs.padRight;
@@ -412,19 +410,19 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
     // TTK round-1 fix: use out_backprop shape as authoritative outH/outW
     // (avoid INVALID_TILING when golden/op_tse uses different output dim formula)
     // NHWC: out_bp=[N,Ho,Wo,C]; NCHW: out_bp=[N,C,Ho,Wo]
-    int32_t outHActual = 0, outWActual = 0, batchActual = 0;
+    int64_t outHActual = 0, outWActual = 0, batchActual = 0;
     if (isNCHW) {
-        outHActual = static_cast<int32_t>(outBpShape.GetDim(2));
-        outWActual = static_cast<int32_t>(outBpShape.GetDim(3));
-        batchActual = static_cast<int32_t>(outBpShape.GetDim(0));
+        outHActual = outBpShape.GetDim(2);
+        outWActual = outBpShape.GetDim(3);
+        batchActual = outBpShape.GetDim(0);
     } else {
-        outHActual = static_cast<int32_t>(outBpShape.GetDim(1));
-        outWActual = static_cast<int32_t>(outBpShape.GetDim(2));
-        batchActual = static_cast<int32_t>(outBpShape.GetDim(0));
+        outHActual = outBpShape.GetDim(1);
+        outWActual = outBpShape.GetDim(2);
+        batchActual = outBpShape.GetDim(0);
     }
     if (outHActual <= 0 || outWActual <= 0 || batchActual <= 0) {
-        outH = std::max(outH, 0);
-        outW = std::max(outW, 0);
+        outH = std::max(outH, static_cast<int64_t>(0));
+        outW = std::max(outW, static_cast<int64_t>(0));
     } else {
         outH = outHActual;
         outW = outWActual;
@@ -432,8 +430,8 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
     }
 
     // 7. Compute element counts
-    int64_t totalElements = static_cast<int64_t>(batch) * outH * outW * depth;
-    int64_t filterSize = static_cast<int64_t>(filterH) * filterW * depth;
+    int64_t totalElements = batch * outH * outW * depth;
+    int64_t filterSize = filterH * filterW * depth;
 
     // Empty tensor handling
     if (filterSize == 0 || totalElements == 0) {

@@ -58,8 +58,7 @@ TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_valid)
         262144, // ubsize
         4096);  // max tiling data size
     uint64_t expectTilingKey = 0;
-    std::string expectTilingData = "4 4 1 32 12884901889 4294967299 8589934594 8589934594 4294967297 4294967297 0 "
-                                   "12884901891 0 ";
+    std::string expectTilingData = "4 4 1 32 1 3 3 1 2 2 2 2 1 1 1 1 0 0 3 3 0 ";
     // v2.2: workspace = userWorkspace(131200) + sysWorkspace(16777216)
     std::vector<size_t> expectWorkspaces = {16908416};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
@@ -94,8 +93,7 @@ TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_same)
         262144, // ubsize
         4096);  // max tiling data size
     uint64_t expectTilingKey = 0;
-    std::string expectTilingData = "8 18 1 32 17179869185 8589934596 12884901891 8589934594 8589934594 4294967297 0 "
-                                   "17179869188 0 ";
+    std::string expectTilingData = "8 18 1 32 1 4 4 2 3 3 2 2 2 2 1 1 0 0 4 4 0 ";
     // v2.2: workspace = userWorkspace(131200) + sysWorkspace(16777216)
     std::vector<size_t> expectWorkspaces = {16908416};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);

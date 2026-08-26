@@ -103,9 +103,9 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void ZeroOutSimt(int
 // ============================================================================
 template <typename T>
 __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void ComputeSimt(
-    int64_t totalElements, int32_t inputH, int32_t inputW, int32_t depth, int32_t filterH, int32_t filterW,
-    int32_t outH, int32_t outW, int32_t strideH, int32_t strideW, int32_t rateH, int32_t rateW, int32_t padTop,
-    int32_t padLeft, int32_t padInputH, int32_t padInputW, int32_t isNCHW, __ubuf__ uint64_t* uintdivUb, __gm__ T* xGm,
+    int64_t totalElements, int64_t inputH, int64_t inputW, int64_t depth, int64_t filterH, int64_t filterW,
+    int64_t outH, int64_t outW, int64_t strideH, int64_t strideW, int64_t rateH, int64_t rateW, int64_t padTop,
+    int64_t padLeft, int64_t padInputH, int64_t padInputW, int32_t isNCHW, __ubuf__ uint64_t* uintdivUb, __gm__ T* xGm,
     __gm__ T* filterGm, __gm__ T* outBackpropGm, __gm__ T* wsPerThread, int64_t perCoreBufElems, int32_t coreId)
 {
     // 1. Read UintDiv magic/shift from UB
@@ -187,28 +187,28 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void ComputeSimt(
         }
 
         // 3.2 Compute window start position
-        int32_t hBeg = static_cast<int32_t>(hOut) * strideH - padTop;
-        int32_t wBeg = static_cast<int32_t>(wOut) * strideW - padLeft;
+        int64_t hBeg = static_cast<int64_t>(hOut) * strideH - padTop;
+        int64_t wBeg = static_cast<int64_t>(wOut) * strideW - padLeft;
 
         // 3.3 argmax search in type T (align with golden same-type addition)
         T curVal = lowestVal;
-        int32_t hMax = 0;
-        int32_t wMax = 0;
+        int64_t hMax = 0;
+        int64_t wMax = 0;
 
         const int64_t xBase = static_cast<int64_t>(b) * inputBatchStride + static_cast<int64_t>(d) * xDepthStride;
         const int64_t filterBase = static_cast<int64_t>(d) * filterDepthStride;
 
-        for (int32_t h = 0; h < filterH; ++h) {
-            int32_t hIn = hBeg + h * rateH;
+        for (int64_t h = 0; h < filterH; ++h) {
+            int64_t hIn = hBeg + h * rateH;
             if (hIn >= 0 && hIn < padInputH) {
-                int64_t xRowOffset = xBase + static_cast<int64_t>(hIn) * xRowStride;
+                int64_t xRowOffset = xBase + hIn * xRowStride;
                 int64_t filterRowOffset = filterBase + static_cast<int64_t>(h) * filterRowStride;
-                for (int32_t w = 0; w < filterW; ++w) {
-                    int32_t wIn = wBeg + w * rateW;
+                for (int64_t w = 0; w < filterW; ++w) {
+                    int64_t wIn = wBeg + w * rateW;
                     if (wIn >= 0 && wIn < padInputW) {
                         T xVal;
                         if (hIn < inputH && wIn < inputW) {
-                            xVal = xGm[xRowOffset + static_cast<int64_t>(wIn) * xWStride];
+                            xVal = xGm[xRowOffset + wIn * xWStride];
                         } else {
                             xVal = static_cast<T>(0);
                         }
@@ -225,8 +225,7 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void ComputeSimt(
 
         // 3.4 Sequential accumulate to per-thread buffer (v2.2: no atomic_add)
         // yOffset uses format-dependent strides (same as filter strides)
-        int64_t yOffset = static_cast<int64_t>(hMax) * filterRowStride + static_cast<int64_t>(wMax) * filterWStride +
-                          static_cast<int64_t>(d) * filterDepthStride;
+        int64_t yOffset = hMax * filterRowStride + wMax * filterWStride + static_cast<int64_t>(d) * filterDepthStride;
         T grad = outBackpropGm[idx];
         wsPerThread[myBufBase + yOffset] += grad;
     }
@@ -384,7 +383,7 @@ __aicore__ inline void Process(const Dilation2DBackpropFilterTilingData* tilingD
     int32_t coreId = static_cast<int32_t>(GetBlockIdx());
 
     // ===== Empty tensor fast path =====
-    if (tilingData->totalElements == 0 || tilingData->filterSize == 0) {
+    if (tilingData->totalElements <= 0 || tilingData->filterSize <= 0) {
         asc_vf_call<ZeroOutSimt<T>>(dim3(THREAD_NUM), tilingData->filterSize, yGm);
         SetFlag<HardEvent::V_S>(0);
         WaitFlag<HardEvent::V_S>(0);
