@@ -638,6 +638,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/rotated_box_encode/README.md">rotated_box_encode</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将参考旋转框与ground-truth旋转框之间的几何偏差编码为5通道回归delta目标，用于旋转目标检测训练。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/batch_multi_class_non_max_suppression/README.md">batch_multi_class_non_max_suppression</a></td>
     <td>&check;</td>
     <td>&check;</td>
