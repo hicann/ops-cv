@@ -228,11 +228,9 @@ aclnnStatus aclnnGridSampler2DBackwardGetWorkspaceSize(const aclTensor* gradOutp
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 输出掩码校验
-    if (outputMask == nullptr) {
-        *workspaceSize = 0;
-        uniqueExecutor.ReleaseTo(executor);
-        return ACLNN_SUCCESS;
-    }
+    auto outputMaskRet = ACLNN_SUCCESS;
+    OP_CHECK_NULL(outputMask, outputMaskRet = ACLNN_ERR_PARAM_NULLPTR);
+    CHECK_RET(outputMaskRet == ACLNN_SUCCESS, outputMaskRet);
 
     // 固定写法，参数检查
     auto ret = CheckParams(gradOutput, input, grid, interpolationMode, paddingMode, inputGrad, gridGrad, outputMask);

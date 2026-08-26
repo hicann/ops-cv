@@ -129,8 +129,8 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* input, cons
     if (inputShape.GetDim(FIRST_DIM) != gridShape.GetDim(FIRST_DIM) ||
         inputShape.GetDim(FIRST_DIM) != gradOutputShape.GetDim(FIRST_DIM)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-                "expect input grid and gradOutput to have same batch size, but got input with \
-            shape [%s] grid with shape [%s] and gradOutput with shape [%s]",
+                "expect input grid and gradOutput to have same batch size, but got input with shape [%s] grid with "
+                "shape [%s] and gradOutput with shape [%s]",
                 op::ToString(inputShape).GetString(), op::ToString(gridShape).GetString(),
                 op::ToString(gradOutputShape).GetString());
         return false;
@@ -220,11 +220,9 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(const aclTensor* gradOutp
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 输出掩码校验
-    if (outputMask == nullptr) {
-        *workspaceSize = 0;
-        uniqueExecutor.ReleaseTo(executor);
-        return ACLNN_SUCCESS;
-    }
+    auto outputMaskRet = ACLNN_SUCCESS;
+    OP_CHECK_NULL(outputMask, outputMaskRet = ACLNN_ERR_PARAM_NULLPTR);
+    CHECK_RET(outputMaskRet == ACLNN_SUCCESS, outputMaskRet);
 
     // 固定写法，参数检查
     auto ret = CheckParams(gradOutput, input, grid, interpolationMode, paddingMode, inputGrad, gridGrad, outputMask);
