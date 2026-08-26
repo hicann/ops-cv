@@ -4,7 +4,7 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 |  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
@@ -17,11 +17,11 @@
 
 - 算子功能：对由多个输入通道组成的输入信号应用2D双三次上采样。如果输入Tensor x的shape为(N, C, H, W)，则输出Tensor out的shape为(N, C, outputSize[0], outputSize[1])。
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$out(N, C, h, w)$可以表示为：
-  
+
   $$
   {out(N, C, h, w)}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(h_i, w_j)}
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (self.dim(2)-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -29,7 +29,7 @@
   self.dim(2) / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (self.dim(3)-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -37,7 +37,7 @@
   self.dim(3) / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   其中：
   - aalignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
