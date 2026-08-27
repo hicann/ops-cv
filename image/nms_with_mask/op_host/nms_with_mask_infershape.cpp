@@ -21,25 +21,42 @@ using namespace ge;
 using namespace Ops::Base;
 namespace ops {
 // ---------------- NMSWithMask Op-------------------
+constexpr size_t INPUT_DIM_NUM = 2;
+constexpr int64_t BOX_SCORES_DIM_NUM = 5;
+constexpr size_t INPUT_BOX_SCORES_INDEX = 0;
+constexpr size_t BOX_SCORES_DIM_INDEX = 1;
+constexpr size_t BOXES_NUM_DIM_INDEX = 0;
+constexpr size_t SELECTED_BOXES_OUTPUT_INDEX = 0;
+constexpr size_t VECTOR_OUTPUT_DIM_NUM = 1;
+constexpr size_t OUTPUT_TENSOR_NUM = 3;
+
 static graphStatus InferShape4NMSWithMask(gert::InferShapeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do NMSWithMaskInferShape");
-    const gert::Shape* input_scores_shape = context->GetInputShape(0);
+    const gert::Shape* input_scores_shape = context->GetInputShape(INPUT_BOX_SCORES_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context, input_scores_shape);
+    if (!Ops::Base::IsUnknownRank(*input_scores_shape)) {
+        OP_CHECK_IF(input_scores_shape->GetDimNum() != INPUT_DIM_NUM,
+                    OP_LOGE(context, "Input box_scores shape only supports %zu-D, got %zu-D.", INPUT_DIM_NUM,
+                            input_scores_shape->GetDimNum()),
+                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(input_scores_shape->GetDim(BOX_SCORES_DIM_INDEX) != ge::UNKNOWN_DIM &&
+                        input_scores_shape->GetDim(BOX_SCORES_DIM_INDEX) != BOX_SCORES_DIM_NUM,
+                    OP_LOGE(context, "Input box_scores second dim must be %ld, got %ld.", BOX_SCORES_DIM_NUM,
+                            input_scores_shape->GetDim(BOX_SCORES_DIM_INDEX)),
+                    return ge::GRAPH_FAILED);
+    }
 
-    constexpr size_t output_num = 3;
-    for (size_t i = 0; i < output_num; i++) {
+    for (size_t i = 0; i < OUTPUT_TENSOR_NUM; i++) {
         gert::Shape* output_shape = context->GetOutputShape(i);
         OP_CHECK_NULL_WITH_CONTEXT(context, output_shape);
-        if (i == 0) {
-            constexpr int OUTPUT_DIM_NUM = 2;
-            output_shape->SetDimNum(OUTPUT_DIM_NUM);
-            output_shape->SetDim(0, input_scores_shape->GetDim(0));
-            constexpr int OUTPUT_DIM_VALUE = 5;
-            output_shape->SetDim(1, OUTPUT_DIM_VALUE);
+        if (i == SELECTED_BOXES_OUTPUT_INDEX) {
+            output_shape->SetDimNum(INPUT_DIM_NUM);
+            output_shape->SetDim(BOXES_NUM_DIM_INDEX, input_scores_shape->GetDim(BOXES_NUM_DIM_INDEX));
+            output_shape->SetDim(BOX_SCORES_DIM_INDEX, BOX_SCORES_DIM_NUM);
         } else {
-            output_shape->SetDimNum(1);
-            output_shape->SetDim(0, input_scores_shape->GetDim(0));
+            output_shape->SetDimNum(VECTOR_OUTPUT_DIM_NUM);
+            output_shape->SetDim(BOXES_NUM_DIM_INDEX, input_scores_shape->GetDim(BOXES_NUM_DIM_INDEX));
         }
     }
 

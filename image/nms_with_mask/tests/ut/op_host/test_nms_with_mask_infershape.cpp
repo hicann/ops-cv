@@ -36,3 +36,38 @@ TEST_F(NMSWithMaskInfershape, nms_with_mask_infershape_test_unknown_rank)
     std::vector<std::vector<int64_t>> expectOutputShape = {{-2, 5}, {-2}, {-2}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(NMSWithMaskInfershape, nms_with_mask_infershape_accepts_valid_box_scores_shape)
+{
+    gert::InfershapeContextPara infershapeContextPara("NMSWithMask",
+                                                      {{{{16, 5}, {16, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {{"iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5f)}});
+    std::vector<std::vector<int64_t>> expectOutputShape = {{16, 5}, {16}, {16}};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(NMSWithMaskInfershape, nms_with_mask_infershape_rejects_wrong_last_dim)
+{
+    gert::InfershapeContextPara infershapeContextPara("NMSWithMask",
+                                                      {{{{16, 4}, {16, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {{"iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5f)}});
+    std::vector<std::vector<int64_t>> expectOutputShape = {{16, 5}, {16}, {16}};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
+}
+
+TEST_F(NMSWithMaskInfershape, nms_with_mask_infershape_rejects_rank_one_box_scores)
+{
+    gert::InfershapeContextPara infershapeContextPara("NMSWithMask", {{{{16}, {16}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                                      {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                       {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {{"iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5f)}});
+    std::vector<std::vector<int64_t>> expectOutputShape = {{16, 5}, {16}, {16}};
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
+}

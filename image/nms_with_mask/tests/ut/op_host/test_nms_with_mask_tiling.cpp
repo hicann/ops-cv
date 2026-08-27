@@ -64,3 +64,42 @@ TEST_F(NMSWithMaskTiling, nms_with_mask_tiling_test_float32_case1)
     // expectWorkspaces[0] += totalWorkspaceBytes;
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectedTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(NMSWithMaskTiling, nms_with_mask_tiling_rejects_wrong_last_dim)
+{
+    const uint32_t boxesNum = 16;
+    const uint32_t wrongDim = 4;
+    gert::StorageShape box_scores = {{boxesNum, wrongDim}, {boxesNum, wrongDim}};
+    gert::StorageShape selected_boxes = {{boxesNum, 5}, {boxesNum, 5}};
+    gert::StorageShape selected_idx = {{boxesNum}, {boxesNum}};
+    gert::StorageShape selected_mask = {{boxesNum}, {boxesNum}};
+
+    optiling::NMSWithMaskCompileInfo compileInfo = {100, 48, 196608};
+    gert::TilingContextPara tilingContextPara(
+        "NMSWithMask", {{box_scores, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{selected_boxes, ge::DT_FLOAT, ge::FORMAT_ND},
+         {selected_idx, ge::DT_INT32, ge::FORMAT_ND},
+         {selected_mask, ge::DT_UINT8, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5))}, &compileInfo);
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(NMSWithMaskTiling, nms_with_mask_tiling_rejects_rank_one_box_scores)
+{
+    const uint32_t boxesNum = 16;
+    gert::StorageShape box_scores = {{boxesNum}, {boxesNum}};
+    gert::StorageShape selected_boxes = {{boxesNum, 5}, {boxesNum, 5}};
+    gert::StorageShape selected_idx = {{boxesNum}, {boxesNum}};
+    gert::StorageShape selected_mask = {{boxesNum}, {boxesNum}};
+
+    optiling::NMSWithMaskCompileInfo compileInfo = {100, 48, 196608};
+    gert::TilingContextPara tilingContextPara(
+        "NMSWithMask", {{box_scores, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{selected_boxes, ge::DT_FLOAT, ge::FORMAT_ND},
+         {selected_idx, ge::DT_INT32, ge::FORMAT_ND},
+         {selected_mask, ge::DT_UINT8, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("iou_threshold", Ops::Cv::AnyValue::CreateFrom<float>(0.5))}, &compileInfo);
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
