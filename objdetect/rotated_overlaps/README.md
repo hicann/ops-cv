@@ -70,9 +70,7 @@
 
 ## 约束说明
 
-- 数据类型：`boxes`、`query_boxes`和`overlaps`均必须为float32。
-- 数据格式：`boxes`、`query_boxes`和`overlaps`均必须为ND，输入必须为三维Tensor，且第二维必须为5。
-- 两个输入的batch维`B`必须一致，输出shape为`[B, N, K]`。
+- 两个输入的batch维`B`必须一致。
 - 首版实现要求`B`、`N`和`K`为正数，且`query_boxes.shape[2]`（K）不超过2000。
 - 输入框中存在非有限坐标或退化矩形时，该矩形框参与的配对输出为0。
 
