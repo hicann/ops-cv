@@ -23,9 +23,11 @@ using namespace AscendC;
 constexpr uint32_t kGatherThreadNum32 = 1024;
 constexpr uint32_t kGatherThreadNum64 = 512;
 constexpr uint32_t kMergeThreadNum = 256;
+constexpr uint32_t kMergeHeapCapacity = 512;
+constexpr uint32_t kClassPositionBits = 10;
+constexpr uint32_t kClassPositionMask = (1U << kClassPositionBits) - 1U;
 constexpr float kNoCandidate = -(__builtin_inff());
 constexpr float kMinPositive = 1.0e-12F;
-constexpr TopKConfig kMergeTopKConfig{TopKAlgo::RADIX_SELECT, TopKOrder::UNSET, true};
 
 template <bool Use32Bit>
 struct GatherIndexType {
@@ -121,23 +123,14 @@ __launch_bounds__(Use32Bit ? kGatherThreadNum32 : kGatherThreadNum64) inline voi
     }
 }
 
-// The cross-class candidates are already compacted in class-major order.  AIV
-// TopK produces their flattened positions; this SIMT epilogue turns those
-// positions into the irregular box/class output writes without scalar GM
-// gathers in the AIV pipeline.
+// Turn flattened class-result positions into the irregular box/class outputs.
 template <typename T>
 __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void GatherMergedOutput(
     const __gm__ float* classBoxes, const __gm__ float* mergeScores, const __gm__ int32_t* mergeIndices,
     __gm__ T* nmsedBoxes, __gm__ T* nmsedScores, __gm__ T* nmsedClasses, __gm__ int32_t* nmsedNum, uint64_t batchIndex,
-    uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize, uint64_t validOutputCount)
+    uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize)
 {
-    // The TopK input is already compacted by class counts, so thread zero can
-    // publish the exact output size while this existing SIMT epilogue starts.
-    // This replaces the former serial scan of mergeScores without adding a
-    // separate AIV-to-GM transfer.
-    if (threadIdx.x == 0) {
-        nmsedNum[batchIndex] = static_cast<int32_t>(validOutputCount);
-    }
+    const uint64_t validOutputCount = static_cast<uint64_t>(nmsedNum[batchIndex]);
     for (uint64_t outputIndex = static_cast<uint64_t>(threadIdx.x); outputIndex < maxTotalSize;
          outputIndex += static_cast<uint64_t>(blockDim.x)) {
         const uint64_t outputOffset = batchIndex * maxTotalSize + outputIndex;
@@ -164,6 +157,122 @@ __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void GatherMerg
             nmsedScores[outputOffset] = static_cast<T>(0);
             nmsedClasses[outputOffset] = static_cast<T>(0);
         }
+    }
+}
+
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline bool HeapEntryPrecedes(float lhsScore,
+                                                                                        int32_t lhsIndex,
+                                                                                        float rhsScore,
+                                                                                        int32_t rhsIndex)
+{
+    return lhsScore > rhsScore || (lhsScore == rhsScore && lhsIndex < rhsIndex);
+}
+
+__simt_callee__ __aicore__ __attribute__((always_inline)) inline void SiftClassHeap(__ubuf__ float* heapScores,
+                                                                                    __ubuf__ int32_t* heapIndices,
+                                                                                    uint64_t heapSize, uint64_t root)
+{
+    while (true) {
+        const uint64_t left = root * 2 + 1;
+        if (left >= heapSize) {
+            return;
+        }
+        uint64_t best = root;
+        if (HeapEntryPrecedes(heapScores[left], heapIndices[left], heapScores[best], heapIndices[best])) {
+            best = left;
+        }
+        const uint64_t right = left + 1;
+        if (right < heapSize &&
+            HeapEntryPrecedes(heapScores[right], heapIndices[right], heapScores[best], heapIndices[best])) {
+            best = right;
+        }
+        if (best == root) {
+            return;
+        }
+        const float score = heapScores[root];
+        heapScores[root] = heapScores[best];
+        heapScores[best] = score;
+        const int32_t index = heapIndices[root];
+        heapIndices[root] = heapIndices[best];
+        heapIndices[best] = index;
+        root = best;
+    }
+}
+
+// ProcessClass already leaves every class sorted. Merge their heads without
+// relying on TopK's value/index association.
+__simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void MergeClassOutput(
+    const __gm__ float* classScores, __gm__ float* classPositions, __gm__ float* mergeScores,
+    __gm__ int32_t* mergeIndices, __gm__ int32_t* nmsedNum, __ubuf__ float* heapScores, __ubuf__ int32_t* heapIndices,
+    uint64_t batchIndex, uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize)
+{
+    const uint64_t classBase = batchIndex * classesNum;
+    const uint64_t outputBase = batchIndex * maxTotalSize;
+    if (classesNum <= kMergeHeapCapacity) {
+        for (uint64_t classIndex = static_cast<uint64_t>(threadIdx.x); classIndex < classesNum;
+             classIndex += static_cast<uint64_t>(blockDim.x)) {
+            heapIndices[classIndex] = static_cast<int32_t>(classIndex << kClassPositionBits);
+            heapScores[classIndex] = classScores[(classBase + classIndex) * maxSizePerClass];
+        }
+        asc_syncthreads();
+        if (threadIdx.x != 0) {
+            return;
+        }
+        for (int64_t root = static_cast<int64_t>(classesNum / 2) - 1; root >= 0; --root) {
+            SiftClassHeap(heapScores, heapIndices, classesNum, static_cast<uint64_t>(root));
+        }
+        uint64_t validOutputCount = 0;
+        for (; validOutputCount < maxTotalSize && heapScores[0] != kNoCandidate; ++validOutputCount) {
+            const uint32_t packedIndex = static_cast<uint32_t>(heapIndices[0]);
+            const uint64_t classIndex = packedIndex >> kClassPositionBits;
+            const uint64_t classPosition = packedIndex & kClassPositionMask;
+            mergeScores[outputBase + validOutputCount] = heapScores[0];
+            mergeIndices[outputBase + validOutputCount] = static_cast<int32_t>(classIndex * maxSizePerClass +
+                                                                               classPosition);
+            const uint64_t nextPosition = classPosition + 1;
+            if (nextPosition < maxSizePerClass) {
+                heapIndices[0] += 1;
+                heapScores[0] = classScores[(classBase + classIndex) * maxSizePerClass + nextPosition];
+            } else {
+                heapScores[0] = kNoCandidate;
+            }
+            SiftClassHeap(heapScores, heapIndices, classesNum, 0);
+        }
+        nmsedNum[batchIndex] = static_cast<int32_t>(validOutputCount);
+        return;
+    }
+
+    // The fixed UB heap covers normal class counts. For larger shapes, reuse
+    // the no-longer-needed count array as per-class cursors.
+    if (threadIdx.x == 0) {
+        for (uint64_t classIndex = 0; classIndex < classesNum; ++classIndex) {
+            classPositions[classBase + classIndex] = 0.0F;
+        }
+        uint64_t validOutputCount = 0;
+        for (; validOutputCount < maxTotalSize; ++validOutputCount) {
+            int32_t bestClass = -1;
+            float bestScore = kNoCandidate;
+            for (uint64_t classIndex = 0; classIndex < classesNum; ++classIndex) {
+                const uint64_t position = static_cast<uint64_t>(classPositions[classBase + classIndex]);
+                const float score = position < maxSizePerClass ?
+                                        classScores[(classBase + classIndex) * maxSizePerClass + position] :
+                                        kNoCandidate;
+                if (bestClass < 0 || score > bestScore ||
+                    (score == bestScore && classIndex < static_cast<uint64_t>(bestClass))) {
+                    bestClass = static_cast<int32_t>(classIndex);
+                    bestScore = score;
+                }
+            }
+            if (bestScore == kNoCandidate) {
+                break;
+            }
+            const uint64_t position = static_cast<uint64_t>(classPositions[classBase + bestClass]);
+            mergeScores[outputBase + validOutputCount] = bestScore;
+            mergeIndices[outputBase + validOutputCount] = bestClass * static_cast<int32_t>(maxSizePerClass) +
+                                                          static_cast<int32_t>(position);
+            classPositions[classBase + bestClass] = static_cast<float>(position + 1);
+        }
+        nmsedNum[batchIndex] = static_cast<int32_t>(validOutputCount);
     }
 }
 
@@ -208,9 +317,6 @@ private:
     TBuf<QuePosition::VECCALC> compareMaskBuffer_;
     TBuf<QuePosition::VECCALC> mergeInputScoresBuffer_;
     TBuf<QuePosition::VECCALC> mergeInputIndicesBuffer_;
-    TBuf<QuePosition::VECCALC> mergeOutputScoresBuffer_;
-    TBuf<QuePosition::VECCALC> mergeOutputIndicesBuffer_;
-    TBuf<QuePosition::VECCALC> mergeTopKTempBuffer_;
 
     LocalTensor<float> scoreLocal_;
     LocalTensor<float> yMinLocal_;
@@ -226,9 +332,6 @@ private:
     LocalTensor<uint8_t> compareMaskLocal_;
     LocalTensor<float> mergeInputScoresLocal_;
     LocalTensor<int32_t> mergeInputIndicesLocal_;
-    LocalTensor<float> mergeOutputScoresLocal_;
-    LocalTensor<int32_t> mergeOutputIndicesLocal_;
-    LocalTensor<uint8_t> mergeTopKTempLocal_;
 
     GlobalTensor<T> clipWindowGm_;
     GlobalTensor<T> nmsedBoxesGm_;
@@ -311,6 +414,8 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::InitTileBuffer
 {
     const int64_t tileSize = tilingData_->tileSize;
     const int64_t floatBytes = tileSize * static_cast<int64_t>(sizeof(float));
+    pipe_.InitBuffer(mergeInputScoresBuffer_, kMergeHeapCapacity * static_cast<int64_t>(sizeof(float)));
+    pipe_.InitBuffer(mergeInputIndicesBuffer_, kMergeHeapCapacity * static_cast<int64_t>(sizeof(int32_t)));
     pipe_.InitBuffer(scoreBuffer_, floatBytes);
     pipe_.InitBuffer(yMinBuffer_, floatBytes);
     pipe_.InitBuffer(xMinBuffer_, floatBytes);
@@ -323,11 +428,6 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::InitTileBuffer
     pipe_.InitBuffer(reduceWorkBuffer_, tilingData_->reduceBufferSize * static_cast<int64_t>(sizeof(float)));
     pipe_.InitBuffer(reduceOutputBuffer_, 64);
     pipe_.InitBuffer(compareMaskBuffer_, tileSize * static_cast<int64_t>(sizeof(uint8_t)));
-    pipe_.InitBuffer(mergeInputScoresBuffer_, tilingData_->mergeInputSize * static_cast<int64_t>(sizeof(float)));
-    pipe_.InitBuffer(mergeInputIndicesBuffer_, tilingData_->mergeInputSize * static_cast<int64_t>(sizeof(int32_t)));
-    pipe_.InitBuffer(mergeOutputScoresBuffer_, tilingData_->mergeOutputSize * static_cast<int64_t>(sizeof(float)));
-    pipe_.InitBuffer(mergeOutputIndicesBuffer_, tilingData_->mergeOutputSize * static_cast<int64_t>(sizeof(int32_t)));
-    pipe_.InitBuffer(mergeTopKTempBuffer_, static_cast<int64_t>(tilingData_->topKTempBytes));
 
     scoreLocal_ = scoreBuffer_.Get<float>();
     yMinLocal_ = yMinBuffer_.Get<float>();
@@ -343,9 +443,6 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::InitTileBuffer
     compareMaskLocal_ = compareMaskBuffer_.Get<uint8_t>();
     mergeInputScoresLocal_ = mergeInputScoresBuffer_.Get<float>();
     mergeInputIndicesLocal_ = mergeInputIndicesBuffer_.Get<int32_t>();
-    mergeOutputScoresLocal_ = mergeOutputScoresBuffer_.Get<float>();
-    mergeOutputIndicesLocal_ = mergeOutputIndicesBuffer_.Get<int32_t>();
-    mergeTopKTempLocal_ = mergeTopKTempBuffer_.Get<uint8_t>();
 }
 
 template <typename T>
@@ -685,82 +782,14 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::StoreClassCoun
 template <typename T>
 __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::MergeBatch(int64_t batchIndex)
 {
-    const int64_t classResultBase = batchIndex * tilingData_->classesNum * tilingData_->maxSizePerClass;
-    const int64_t mergeInputCapacity = tilingData_->mergeInputSize;
-    int64_t selectedAcrossClasses = 0;
-    const int64_t batchTaskBase = batchIndex * tilingData_->classesNum;
-    for (int64_t classIndex = 0; classIndex < tilingData_->classesNum; ++classIndex) {
-        selectedAcrossClasses += static_cast<int64_t>(classCountsGm_.GetValue(batchTaskBase + classIndex));
-    }
-    const int64_t mergeOutputCount = selectedAcrossClasses < tilingData_->maxTotalSize ? selectedAcrossClasses :
-                                                                                         tilingData_->maxTotalSize;
-    const int64_t mergeActiveSize = tilingData_->mergeOutputSize;
-    int64_t activeCount = 0;
-    int64_t sourceOffset = 0;
-    while (mergeOutputCount > 0 && sourceOffset < tilingData_->mergeInputCount) {
-        // Start every round with a fully aligned sentinel fill.  The physical
-        // carry length is mergeActiveSize, while only mergeOutputCount entries
-        // are real TopK results.  Filling from offset zero avoids a vector
-        // write at an unaligned k boundary (for example k = 100).
-        Duplicate(mergeInputScoresLocal_, kNoCandidate, mergeInputCapacity);
-        if (activeCount > 0) {
-            // Existing candidates are from earlier class-major positions. Put
-            // them before the next chunk so TopK's stable tie handling keeps
-            // the original lower-index-first ordering.
-            Copy(mergeInputScoresLocal_, mergeOutputScoresLocal_, static_cast<uint32_t>(mergeOutputCount));
-            Copy(mergeInputIndicesLocal_, mergeOutputIndicesLocal_, static_cast<uint32_t>(mergeOutputCount));
-        }
-        const int64_t inputCapacityLeft = mergeInputCapacity - activeCount;
-        const int64_t sourceCountLeft = tilingData_->mergeInputCount - sourceOffset;
-        const int64_t chunkCount = inputCapacityLeft < sourceCountLeft ? inputCapacityLeft : sourceCountLeft;
-        const int64_t inputCount = activeCount + chunkCount;
-        // The DMA writes only the current chunk, after any vector copy/fill
-        // that touches the same local input buffers has completed.
-        const event_t eventVToMte2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE2));
-        SetFlag<HardEvent::V_MTE2>(eventVToMte2);
-        WaitFlag<HardEvent::V_MTE2>(eventVToMte2);
-        DataCopyExtParams copyInParams{1, static_cast<uint32_t>(chunkCount * static_cast<int64_t>(sizeof(float))), 0, 0,
-                                       0};
-        DataCopyPadExtParams<float> copyInPadParams{false, 0, 0, 0};
-        DataCopyPad(mergeInputScoresLocal_[activeCount], classScoresGm_[classResultBase + sourceOffset], copyInParams,
-                    copyInPadParams);
-        const event_t eventMte2V = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
-        SetFlag<HardEvent::MTE2_V>(eventMte2V);
-        WaitFlag<HardEvent::MTE2_V>(eventMte2V);
-        ArithProgression<int32_t>(mergeInputIndicesLocal_[activeCount], static_cast<int32_t>(sourceOffset), 1,
-                                  static_cast<int32_t>(chunkCount));
-        PipeBarrier<PIPE_V>();
-
-        TopKInfo topKInfo{1, static_cast<int32_t>(mergeInputCapacity), static_cast<int32_t>(inputCount)};
-        LocalTensor<bool> emptyFinishLocal;
-        TopK<float, true, false, false, TopKMode::TOPK_NORMAL, kMergeTopKConfig>(
-            mergeOutputScoresLocal_, mergeOutputIndicesLocal_, mergeInputScoresLocal_, mergeInputIndicesLocal_,
-            emptyFinishLocal, mergeTopKTempLocal_, static_cast<int32_t>(mergeOutputCount), tilingData_->mergeTopKTiling,
-            topKInfo, true);
-        PipeBarrier<PIPE_V>();
-        activeCount = mergeActiveSize;
-        sourceOffset += chunkCount;
-    }
-    const int64_t outputOffset = batchIndex * tilingData_->maxTotalSize;
-    PipeBarrier<PIPE_ALL>();
-    if (mergeOutputCount > 0) {
-        DataCopyExtParams copyOutParams{
-            1, static_cast<uint32_t>(mergeOutputCount * static_cast<int64_t>(sizeof(float))), 0, 0, 0};
-        DataCopyPad(mergeScoresGm_[outputOffset], mergeOutputScoresLocal_, copyOutParams);
-        DataCopyPad(mergeIndicesGm_[outputOffset], mergeOutputIndicesLocal_, copyOutParams);
-    }
-    // Never ask TopK to rank padded scores.  Materialize the unwritten tail
-    // directly in GM so the SIMT gather neither counts it nor reads its index.
-    for (int64_t tailOffset = mergeOutputCount; tailOffset < tilingData_->maxTotalSize;
-         tailOffset += tilingData_->tileSize) {
-        const int64_t tailCount = (tilingData_->maxTotalSize - tailOffset) < tilingData_->tileSize ?
-                                      (tilingData_->maxTotalSize - tailOffset) :
-                                      tilingData_->tileSize;
-        Duplicate(scoreLocal_, kNoCandidate, tailCount);
-        PipeBarrier<PIPE_ALL>();
-        CopyOut(mergeScoresGm_, outputOffset + tailOffset, scoreLocal_, tailCount);
-    }
-    PipeBarrier<PIPE_ALL>();
+    asc_vf_call<MergeClassOutput>(
+        dim3{kMergeThreadNum}, (__gm__ float*)classScoresGm_.GetPhyAddr(), (__gm__ float*)classCountsGm_.GetPhyAddr(),
+        (__gm__ float*)mergeScoresGm_.GetPhyAddr(), (__gm__ int32_t*)mergeIndicesGm_.GetPhyAddr(),
+        (__gm__ int32_t*)nmsedNumGm_.GetPhyAddr(),
+        reinterpret_cast<__ubuf__ float*>(mergeInputScoresLocal_.GetPhyAddr()),
+        reinterpret_cast<__ubuf__ int32_t*>(mergeInputIndicesLocal_.GetPhyAddr()), static_cast<uint64_t>(batchIndex),
+        static_cast<uint64_t>(tilingData_->classesNum), static_cast<uint64_t>(tilingData_->maxSizePerClass),
+        static_cast<uint64_t>(tilingData_->maxTotalSize));
 
     asc_vf_call<GatherMergedOutput<T>>(
         dim3{kMergeThreadNum}, (__gm__ float*)classBoxesGm_.GetPhyAddr(), (__gm__ float*)mergeScoresGm_.GetPhyAddr(),
@@ -768,7 +797,7 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::MergeBatch(int
         (__gm__ T*)nmsedScoresGm_.GetPhyAddr(), (__gm__ T*)nmsedClassesGm_.GetPhyAddr(),
         (__gm__ int32_t*)nmsedNumGm_.GetPhyAddr(), static_cast<uint64_t>(batchIndex),
         static_cast<uint64_t>(tilingData_->classesNum), static_cast<uint64_t>(tilingData_->maxSizePerClass),
-        static_cast<uint64_t>(tilingData_->maxTotalSize), static_cast<uint64_t>(mergeOutputCount));
+        static_cast<uint64_t>(tilingData_->maxTotalSize));
 }
 
 template <typename T>

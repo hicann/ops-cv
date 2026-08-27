@@ -319,7 +319,7 @@ ge::graphStatus BatchMultiClassNonMaxSuppressionTiling::SetTilingData()
     const int64_t mergeInputSize = std::min<int64_t>(
         kMergeTopKInputCapacity, (mergeInputCount + kTopKAlignment - 1) / kTopKAlignment * kTopKAlignment);
     const int64_t mergeOutputCount = std::min<int64_t>(maxTotalSize_, mergeInputCount);
-    const int64_t mergeOutputSize = (maxTotalSize_ + kTopKAlignment - 1) / kTopKAlignment * kTopKAlignment;
+    const int64_t mergeOutputSize = (mergeOutputCount + kTopKAlignment - 1) / kTopKAlignment * kTopKAlignment;
     OP_CHECK_IF(mergeInputSize < mergeOutputSize,
                 OP_LOGE(context_, "Cross-class TopK merge input capacity is smaller than its output size."),
                 return ge::GRAPH_FAILED);
