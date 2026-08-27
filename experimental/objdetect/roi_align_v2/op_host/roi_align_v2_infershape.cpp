@@ -1,24 +1,19 @@
 /**
- * This file is part of the OpenBOAT project at Harbin Institute of Technology (HIT)
- * and is contributed to the CANN Open Software.
- *
- * Copyright (c) 2025 AISS Group, Harbin Institute of Technology (HIT).
- * All Rights Reserved.
- *
- # Authors (accounts):
- # - Liu Jun <@kbryantttt>
- # - Tu Yuanhang <@TuYHAAAAAA>
- # - Zhou Jianhua<@LePenseur>
- # - Liang Yanglin <@liang-yanglin>
- # - Su Tonghua <@sutonghua>
- *
- * This program is free software: you can redistribute it and/or modify it.
- * Licensed under the CANN Open Software License Agreement Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * See the LICENSE file at the root of the repository for the full text of the License.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ *
+ * This file incorporates source contributed by the OpenBOAT project at Harbin Institute of Technology (HIT).
+ * Original contributors:
+ * - Liu Jun <@kbryantttt>
+ * - Tu Yuanhang <@TuYHAAAAAA>
+ * - Zhou Jianhua <@LePenseur>
+ * - Liang Yanglin <@liang-yanglin>
+ * - Su Tonghua <@sutonghua>
  */
 
 /*!
@@ -27,6 +22,7 @@
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "util/shape_util.h"
 
 using namespace ge;
 
@@ -39,9 +35,25 @@ static ge::graphStatus InferShapeRoiAlignV2(gert::InferShapeContext* context)
     const gert::Shape* features_shape = context->GetInputShape(0);
     const gert::Shape* rois_shape = context->GetInputShape(1);
     gert::Shape* output_shape = context->GetOutputShape(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, features_shape);
+    OP_CHECK_NULL_WITH_CONTEXT(context, rois_shape);
+    OP_CHECK_NULL_WITH_CONTEXT(context, output_shape);
 
-    uint32_t numRois = rois_shape->GetDim(0);
-    uint32_t channels = features_shape->GetDim(1);
+    if (Ops::Base::IsUnknownRank(*features_shape) || Ops::Base::IsUnknownRank(*rois_shape)) {
+        Ops::Base::SetUnknownRank(*output_shape);
+        return GRAPH_SUCCESS;
+    }
+    OP_CHECK_IF(features_shape->GetDimNum() != 4U,
+                OP_LOGE(context, "features dim num must be 4, but got %zu.", features_shape->GetDimNum()),
+                return GRAPH_FAILED);
+    OP_CHECK_IF(rois_shape->GetDimNum() != 2U,
+                OP_LOGE(context, "rois dim num must be 2, but got %zu.", rois_shape->GetDimNum()), return GRAPH_FAILED);
+    OP_CHECK_IF(rois_shape->GetDim(1) != ge::UNKNOWN_DIM && rois_shape->GetDim(1) != 5,
+                OP_LOGE(context, "rois second dimension must be 5, but got %ld.", rois_shape->GetDim(1)),
+                return GRAPH_FAILED);
+
+    int64_t numRois = rois_shape->GetDim(0);
+    int64_t channels = features_shape->GetDim(1);
 
     int32_t pooledHeight = 0;
     int32_t pooledWidth = 0;

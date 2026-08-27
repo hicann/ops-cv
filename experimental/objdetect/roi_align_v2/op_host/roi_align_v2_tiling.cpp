@@ -62,9 +62,12 @@ static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(RoiAlignV2TilingData), 0, sizeof(RoiAlignV2TilingData)) != EOK,
                 OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
-    auto features_shape = context->GetInputShape(0)->GetStorageShape();
-    auto rois_shape = context->GetInputShape(1)->GetStorageShape();
-
+    const auto* features_input = context->GetInputShape(0);
+    const auto* rois_input = context->GetInputShape(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, features_input);
+    OP_CHECK_NULL_WITH_CONTEXT(context, rois_input);
+    const auto features_shape = features_input->GetStorageShape();
+    const auto rois_shape = rois_input->GetStorageShape();
     uint32_t batch = features_shape.GetDim(0);
     uint32_t channels = features_shape.GetDim(1);
     uint32_t height = features_shape.GetDim(2);
