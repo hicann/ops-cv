@@ -346,6 +346,19 @@ stages:
               token: ${{secrets.GIT_TOKEN}}
           - name: 执行 Kirin PreSmoke_harmony-infer-chs-cv 测试
             run: bash .gitcode/scripts/kirin_smoke_chs.sh
+      PreSmoke_harmony-infer-cpro-cv:
+        name: PreSmoke_harmony-infer-cpro-cv
+        if: env.TARGET_BRANCH == 'master'
+        runs-on: [self-hosted, arch=x64, os=ubuntu, type=kirinx90]
+        steps:
+          - name: Checkout
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
+              token: ${{secrets.GIT_TOKEN}}
+          - name: 执行 Kirin PreSmoke_harmony-infer-cpro-cv 测试
+            run: bash .gitcode/scripts/kirin_smoke_cpro.sh
     pre:
     - type: auto
     fail-fast: false
