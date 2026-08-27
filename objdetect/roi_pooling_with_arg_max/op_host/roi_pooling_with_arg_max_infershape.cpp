@@ -41,6 +41,7 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_FOUR = 4;
 
 static constexpr int64_t BATCH_SIZE_MAX_LIMIT = 1024;
+static constexpr int64_t ROIS_COORDINATE_DIM = 5;
 
 static ge::graphStatus CheckInputShapeValid(gert::InferShapeContext* context, const gert::Shape* rois_shape,
                                             const gert::Shape* x_shape)
@@ -54,6 +55,12 @@ static ge::graphStatus CheckInputShapeValid(gert::InferShapeContext* context, co
         if (length_rois != static_cast<int64_t>(DIM_TWO)) {
             OP_LOGE(context->GetNodeName(), "rois shape %s dim number is not two.",
                     Ops::Base::ToString(*rois_shape).c_str());
+            return ge::GRAPH_FAILED;
+        }
+        const int64_t rois_dim1 = rois_shape->GetDim(DIM_ONE);
+        if (rois_dim1 != ge::UNKNOWN_DIM && rois_dim1 != ROIS_COORDINATE_DIM) {
+            OP_LOGE(context->GetNodeName(), "rois shape %s dim 1 is not %ld.", Ops::Base::ToString(*rois_shape).c_str(),
+                    ROIS_COORDINATE_DIM);
             return ge::GRAPH_FAILED;
         }
         if (rois_shape->GetDim(DIM_ZERO) > BATCH_SIZE_MAX_LIMIT) {

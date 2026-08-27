@@ -56,3 +56,49 @@ TEST_F(RoiPoolingWithArgMax, RoiPoolingWithArgMax_infershape_case_1)
     std::vector<std::vector<int64_t>> expectOutputShape = {{3, 8, 2, 2}, {3, 8, 2, 2}};
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(RoiPoolingWithArgMax, RoiPoolingWithArgMax_infershape_invalid_roi_width_rejected)
+{
+    for (const int64_t roiWidth : {4, 6}) {
+        gert::InfershapeContextPara infershapeContextPara(
+            "RoiPoolingWithArgMax",
+            {{{{2, 16, 25, 42}, {2, 16, 25, 42}}, ge::DT_FLOAT, ge::FORMAT_ND},
+             {{{2, roiWidth}, {2, roiWidth}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+            {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}},
+            {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+             gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+             gert::InfershapeContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+             gert::InfershapeContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+             gert::InfershapeContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(16))});
+        ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    }
+}
+
+TEST_F(RoiPoolingWithArgMax, RoiPoolingWithArgMax_infershape_unknown_rank_is_supported)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "RoiPoolingWithArgMax",
+        {{{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+         gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+         gert::InfershapeContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(16))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, {{-1, -1, 3, 3}, {-1, -1, 3, 3}});
+}
+
+TEST_F(RoiPoolingWithArgMax, RoiPoolingWithArgMax_infershape_unknown_dim_is_supported)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "RoiPoolingWithArgMax",
+        {{{{2, -1, 25, 42}, {2, -1, 25, 42}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, -1}, {2, -1}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}},
+        {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+         gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale_h", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale_w", Ops::Cv::AnyValue::CreateFrom<float>(1.0f)),
+         gert::InfershapeContextPara::OpAttr("pool_channel", Ops::Cv::AnyValue::CreateFrom<int64_t>(16))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, {{2, -1, 3, 3}, {2, -1, 3, 3}});
+}
