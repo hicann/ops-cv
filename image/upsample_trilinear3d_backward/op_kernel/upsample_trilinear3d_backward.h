@@ -21,7 +21,7 @@
 namespace UpsampleTrilinear3dBackward {
 using namespace AscendC;
 
-constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
+constexpr MatmulConfig MDL_CFG_TRILINEAR = GetMDLConfig(true, false, 0, false, false, false, true);
 
 constexpr int32_t BUFFER_NUM = 1;
 constexpr int8_t D_DIRECTION = 0;
@@ -38,19 +38,19 @@ public:
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_TRILINEAR>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_TRILINEAR>
         matmulH;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_TRILINEAR>
         matmulD;
 
     __aicore__ inline UpsampleTrilinear3dBackwardND(){};

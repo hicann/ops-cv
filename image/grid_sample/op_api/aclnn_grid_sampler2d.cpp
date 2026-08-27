@@ -12,8 +12,8 @@
 #include "opdev/format_utils.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
-#include "opdev/op_log.h"
 #include "opdev/shape_utils.h"
+#include "opdev/op_log.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 #include "aclnn_kernels/cast.h"
@@ -36,8 +36,8 @@ static const size_t SECOND_DIM = 1;
 static const size_t THIRD_DIM = 2;
 static const size_t FOURTH_DIM = 3;
 
-static const int64_t INTERPOLATION_MODE_MIN_VALUE = 0;
 static const int64_t INTERPOLATION_MODE_MAX_VALUE = 2;
+static const int64_t INTERPOLATION_MODE_MIN_VALUE = 0;
 static const int64_t INTERPOLATION_MODE_BILINEAR_VALUE = 0;
 static const int64_t INTERPOLATION_MODE_NEAREST_VALUE = 1;
 static const int64_t INTERPOLATION_MODE_BICUBIC_VALUE = 2;
@@ -55,8 +55,8 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataT
 static bool CheckNotNull(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
     OP_CHECK_NULL(input, return false);
-    OP_CHECK_NULL(grid, return false);
     OP_CHECK_NULL(out, return false);
+    OP_CHECK_NULL(grid, return false);
     return true;
 }
 

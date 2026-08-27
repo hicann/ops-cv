@@ -52,8 +52,8 @@ private:
                                                        LocalTensor<uint8_t> maskTmpYUb);
     __aicore__ inline void CoordinatesSelectTensor(LocalTensor<float> src0, LocalTensor<float> src1,
                                                    LocalTensor<float> coorUb, LocalTensor<uint8_t> maskUb);
-    __aicore__ inline void Clip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb);
     __aicore__ inline void BorderClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb);
+    __aicore__ inline void Clip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb);
     __aicore__ inline void ReflectClip(LocalTensor<float> iXFpUb, LocalTensor<float> iYFpUb);
     __aicore__ inline void ReflectCoordinatesGeneral(LocalTensor<float> iFpUb, LocalTensor<float> coorSubUb,
                                                      LocalTensor<float> extraFpUb, LocalTensor<float> fmodFpUb,
@@ -80,9 +80,9 @@ private:
     TQue<QuePosition::VECIN, 1> gridQueue_;
 
     TBuf<QuePosition::VECCALC> xBuf_;
-    TBuf<QuePosition::VECCALC> inputXYFPBuf_;
     TBuf<QuePosition::VECCALC> inputXIntBuf_;
     TBuf<QuePosition::VECCALC> inputYIntBuf_;
+    TBuf<QuePosition::VECCALC> inputXYFPBuf_;
     TBuf<QuePosition::VECCALC> inputXFpBuf_;
     TBuf<QuePosition::VECCALC> inputYFpBuf_;
     TBuf<QuePosition::VECCALC> weightBuf_;
@@ -128,8 +128,8 @@ private:
     int64_t inputW_ = 0;
     int64_t outputH_ = 0;
     int64_t outputW_ = 0;
-    int64_t interpolationMode_ = 0;
     int64_t paddingMode_ = 0;
+    int64_t interpolationMode_ = 0;
     int64_t alignCorners_ = 0;
     int64_t channelLast_ = 0;
     int64_t needCoreNum_ = 0;
@@ -166,8 +166,8 @@ __aicore__ inline void GridSampler2D<T>::ParseTilingData(const GridSampleTilingD
     inputW_ = tilingData->inW;
     outputH_ = tilingData->outH;
     outputW_ = tilingData->outW;
-    interpolationMode_ = tilingData->interpolationMode;
     paddingMode_ = tilingData->paddingMode;
+    interpolationMode_ = tilingData->interpolationMode;
     alignCorners_ = tilingData->alignCorners;
     channelLast_ = tilingData->channelLast;
     needCoreNum_ = tilingData->needCoreNum;

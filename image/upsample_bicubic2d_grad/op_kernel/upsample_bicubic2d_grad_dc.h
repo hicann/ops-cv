@@ -33,7 +33,7 @@ constexpr int32_t NUMBER_SIX = 6;
 
 constexpr int32_t DATA_BLOCK_BYTES = 32;
 constexpr int32_t ONE_K_BYTES = 1024;
-constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
+constexpr MatmulConfig MDL_CFG_BICUBIC_GRAD = GetMDLConfig(true, false, 0, false, false, false, true);
 
 template <typename T>
 class UpsampleBicubic2dGradDCND {
@@ -42,13 +42,13 @@ public:
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_BICUBIC_GRAD>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_BICUBIC_GRAD>
         matmulH;
     __aicore__ inline UpsampleBicubic2dGradDCND(){};
     __aicore__ inline void Init(GM_ADDR input, GM_ADDR output, GM_ADDR workspace,

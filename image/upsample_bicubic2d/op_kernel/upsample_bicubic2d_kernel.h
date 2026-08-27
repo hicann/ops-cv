@@ -22,7 +22,7 @@
 namespace UpsampleBicubic2d {
 using namespace AscendC;
 
-constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
+constexpr MatmulConfig MDL_CFG_BICUBIC = GetMDLConfig(true, false, 0, false, false, false, true);
 
 constexpr int32_t NO_BUFFER_NUM = 1;
 constexpr int32_t BUFFER_NUM = 1;
@@ -42,13 +42,13 @@ public:
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_BICUBIC>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_BICUBIC>
         matmulH;
 
     __aicore__ inline UpsampleBicubic2dND(){};

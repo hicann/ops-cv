@@ -22,7 +22,7 @@
 
 namespace UpSampleBilinear2dGrad {
 using namespace AscendC;
-constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
+constexpr MatmulConfig MDL_CFG_GRAD = GetMDLConfig(true, false, 0, false, false, false, true);
 constexpr int32_t NO_BUFFER_NUM = 1;
 constexpr int32_t BUFFER_NUM = 2;
 constexpr int64_t RESERVED_VALUE = 4;
@@ -35,13 +35,13 @@ public:
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_GRAD>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_GRAD>
         matmulH;
     __aicore__ inline UpSampleBilinear2dGradND(){};
     __aicore__ inline void calculateIntermediateTensorX(LocalTensor<float> centerTensor,

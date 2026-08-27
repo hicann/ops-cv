@@ -22,7 +22,7 @@
 namespace UpsampleBilinear2dAA {
 using namespace AscendC;
 
-constexpr MatmulConfig MDL_CFG = GetMDLConfig(true, false, 0, false, false, false, true);
+constexpr MatmulConfig MDL_CFG_AA = GetMDLConfig(true, false, 0, false, false, false, true);
 
 constexpr int32_t NO_BUFFER_NUM = 1;
 constexpr int32_t BUFFER_NUM = 1;
@@ -40,13 +40,13 @@ public:
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_AA>
         matmulW;
 
     matmul::Matmul<matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
                    matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>,
-                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG>
+                   matmul::MatmulType<TPosition::GM, CubeFormat::ND, T>, MDL_CFG_AA>
         matmulH;
 
     __aicore__ inline UpsampleBilinearAAND(){};
@@ -398,12 +398,12 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateIntermediateTensor(int6
 template <typename T>
 __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorW(int64_t xIndex, int64_t length, float invscale)
 {
-    LocalTensor<float> radioTensor = radioQueue_w.AllocTensor<float>();
+    LocalTensor<float> radioTensorLocal = radioQueue_w.AllocTensor<float>();
 
     xIndex = 0;
     singleCoreK = 0;
     // 计算横向系数矩阵
-    Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
+    Duplicate(radioTensorLocal, (float)0.0, radioTensorLocal.GetSize());
 
     event_t eventIDVToS = static_cast<event_t>(pipe.FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIDVToS);
@@ -427,27 +427,27 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorW(int64_t xI
                 int64_t yIndexValue = j + yIndexOffset;
                 singleCoreK = singleCoreK < yIndexValue + 1 ? yIndexValue + 1 : singleCoreK;
                 int64_t index = yIndexValue * slide_size + offset;
-                radioTensor.SetValue(index, weight);
+                radioTensorLocal.SetValue(index, weight);
             }
         }
     }
 
     if (dataType != 2) {
-        Cast(radioTensor.ReinterpretCast<T>(), radioTensor, RoundMode::CAST_RINT, radioTensor.GetSize());
-        radioQueue_w.EnQue(radioTensor);
+        Cast(radioTensorLocal.ReinterpretCast<T>(), radioTensorLocal, RoundMode::CAST_RINT, radioTensorLocal.GetSize());
+        radioQueue_w.EnQue(radioTensorLocal);
     } else {
-        radioQueue_w.EnQue(radioTensor);
+        radioQueue_w.EnQue(radioTensorLocal);
     }
 }
 
 template <typename T>
 __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorH(int64_t xIndex, int64_t length, float invscale)
 {
-    LocalTensor<float> radioTensor = radioQueue_h.AllocTensor<float>();
+    LocalTensor<float> radioTensorLocal = radioQueue_h.AllocTensor<float>();
 
     xIndex = 0;
     // 计算横向系数矩阵
-    Duplicate(radioTensor, (float)0.0, radioTensor.GetSize());
+    Duplicate(radioTensorLocal, (float)0.0, radioTensorLocal.GetSize());
     xMin = static_cast<int64_t>(xMinTensor.GetValue(xIndex));
     singleCoreK = xMinTensor.GetValue(xIndex + length - 1) - xMinTensor.GetValue(xIndex) +
                   xSizeTensor.GetValue(xIndex + length - 1);
@@ -468,16 +468,16 @@ __aicore__ inline void UpsampleBilinearAAND<T>::calculateRadioTensorH(int64_t xI
                 float weight = weightTensor.GetValue(j) / total_w;
                 int64_t yIndexValue = j + yIndexOffset;
                 int64_t index = yIndexValue + offset;
-                radioTensor.SetValue(index, weight);
+                radioTensorLocal.SetValue(index, weight);
             }
         }
     }
 
     if (dataType != 2) {
-        Cast(radioTensor.ReinterpretCast<T>(), radioTensor, RoundMode::CAST_RINT, radioTensor.GetSize());
-        radioQueue_h.EnQue(radioTensor);
+        Cast(radioTensorLocal.ReinterpretCast<T>(), radioTensorLocal, RoundMode::CAST_RINT, radioTensorLocal.GetSize());
+        radioQueue_h.EnQue(radioTensorLocal);
     } else {
-        radioQueue_h.EnQue(radioTensor);
+        radioQueue_h.EnQue(radioTensorLocal);
     }
 }
 

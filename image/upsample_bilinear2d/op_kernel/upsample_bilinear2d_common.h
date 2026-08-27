@@ -23,9 +23,9 @@ constexpr int32_t BUFFER_NUM = 1;
 constexpr uint32_t ADDR_ALIGN_SIZE = 128;
 
 template <typename T1>
-__aicore__ inline T1 Min(const T1 a, const T1 b)
+__aicore__ inline T1 Min(const T1 x, const T1 y)
 {
-    return a < b ? a : b;
+    return x < y ? x : y;
 };
 
 template <typename T1>
@@ -34,12 +34,12 @@ __aicore__ inline T1 Max(const T1 a, const T1 b)
     return a > b ? a : b;
 };
 
-__aicore__ inline float getCenterValue(const int64_t dstIdx, const float scale, const bool align_corners)
+__aicore__ inline float getCenterValue(const int64_t srcIdx, const float scale, const bool align_corners)
 {
     if (align_corners) {
-        return scale * dstIdx;
+        return scale * srcIdx;
     } else {
-        float rel = scale * (dstIdx + (float)0.5) - (float)0.5;
+        float rel = scale * (srcIdx + (float)0.5) - (float)0.5;
         return Max(rel, (float)0.0);
     }
 };
@@ -50,13 +50,13 @@ __aicore__ inline float getLambda(const float i_rel_idx, const int64_t i_min)
     return i_lambda;
 };
 
-__aicore__ inline bool FloatEqual(const float a, const float b)
+__aicore__ inline bool FloatEqual(const float m, const float n)
 {
     const float closeTo0 = 1e-6;
-    if (a > b) {
-        return a - b < closeTo0;
+    if (m > n) {
+        return m - n < closeTo0;
     } else {
-        return b - a < closeTo0;
+        return n - m < closeTo0;
     }
 };
 
