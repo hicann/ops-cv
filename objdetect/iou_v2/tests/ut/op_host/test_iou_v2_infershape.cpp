@@ -54,6 +54,58 @@ TEST_F(IouV2, IouV2_infershape_iou_true_case_1)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+TEST_F(IouV2, IouV2_infershape_rejects_invalid_coordinate_dim)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "IouV2", {{{{2, 3}, {2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{1, 3}, {1, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+         gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+TEST_F(IouV2, IouV2_infershape_rejects_invalid_rank)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "IouV2", {{{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+         gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+TEST_F(IouV2, IouV2_infershape_unknown_rank_is_propagated)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "IouV2", {{{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+         gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS);
+}
+
+TEST_F(IouV2, IouV2_infershape_unknown_dim_is_accepted)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "IouV2", {{{{-1, 4}, {-1, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>("iou")),
+         gert::InfershapeContextPara::OpAttr("eps", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, {{2, -1}});
+}
+
 // TEST_F(IouV2, IouV2_infershape_iof_false_case_2)
 // {
 //     ge::op::IouV2 op;

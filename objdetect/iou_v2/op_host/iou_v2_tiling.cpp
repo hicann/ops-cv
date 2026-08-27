@@ -91,12 +91,12 @@ inline uint32_t GetTilingKey(const gert::TilingContext* context, uint64_t& dataS
         dataSize = HALF_SIZE;
     }
     // 2.计算模式
-    const char* mode = context->GetAttrs()->GetStr(0);
+    const char* mode = context->GetAttrs()->GetStr(ATTR_STR);
     if (strcmp(mode, "iof") == 0) {
         tilingKey += MODE_IOF_KEY;
     }
     // 3.是否aligned
-    bool aligned = *context->GetAttrs()->GetBool(2);
+    bool aligned = *context->GetAttrs()->GetBool(ATTR_BOOL);
     if (aligned) {
         tilingKey += ALIGNED_KEY;
     } else {
@@ -107,21 +107,24 @@ inline uint32_t GetTilingKey(const gert::TilingContext* context, uint64_t& dataS
 
 static ge::graphStatus Tiling4IouV2(gert::TilingContext* context)
 {
-    if (context->GetAttrs()->GetStr(ATTR_STR) == nullptr || context->GetAttrs()->GetFloat(ATTR_FLOAT) == nullptr ||
-        context->GetAttrs()->GetBool(ATTR_BOOL) == nullptr) { // 2表示第三个参数
-        OP_LOGD("Tiling4IouV2: attrs have nullptr.");
+    auto attrs = context->GetAttrs();
+    auto bboxesShape = context->GetInputShape(0);
+    auto gtboxesShape = context->GetInputShape(1);
+    if (bboxesShape == nullptr || gtboxesShape == nullptr) {
+        OP_LOGD("Tiling4IouV2: input shapes have nullptr.");
         return ge::GRAPH_FAILED;
     }
+    const bool aligned = *attrs->GetBool(ATTR_BOOL);
     uint64_t dataSize = 0;
     context->SetTilingKey(GetTilingKey(context, dataSize));
 
     // 确定tiling参数
     IouV2TilingData tiling;
-    float eps = *context->GetAttrs()->GetFloat(1);
+    float eps = *attrs->GetFloat(ATTR_FLOAT);
     tiling.set_eps(eps);
 
-    uint64_t bBoxLength = context->GetInputShape(0)->GetStorageShape().GetShapeSize() / 4;
-    uint64_t gtBoxLength = context->GetInputShape(1)->GetStorageShape().GetShapeSize() / 4;
+    uint64_t bBoxLength = bboxesShape->GetStorageShape().GetShapeSize() / FLOAT_SIZE;
+    uint64_t gtBoxLength = gtboxesShape->GetStorageShape().GetShapeSize() / FLOAT_SIZE;
     tiling.set_bBoxLength(bBoxLength);
     tiling.set_gtBoxLength(gtBoxLength);
 
@@ -139,7 +142,6 @@ static ge::graphStatus Tiling4IouV2(gert::TilingContext* context)
     uint64_t totalDataSize;
     uint64_t tempLoop;
     uint64_t maxLength; // 单核单次最大循环长度
-    bool aligned = *context->GetAttrs()->GetBool(2);
     if (!aligned) {
         uint64_t validSubLen = bBoxLength >= gtBoxLength ? gtBoxLength :
                                                            bBoxLength; // bbox超出gtbox长度，就按照gtbox长度切分

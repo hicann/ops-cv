@@ -14,6 +14,7 @@
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "util/shape_util.h"
 
 using namespace ge;
 using namespace std;
@@ -24,6 +25,8 @@ const int64_t INPUT_INDEX_GTBOXES = 1;
 const int64_t OUTPUT_INDEX_OVERLAP = 0;
 const int64_t IOUS_DIM = 2;
 const int64_t ALIGNED_INFO_IDX = 2;
+const int64_t INPUT_DIM_NUM = 2;
+const int64_t BOX_COORDINATE_DIM = 4;
 } // namespace
 
 namespace ops {
@@ -35,18 +38,38 @@ static ge::graphStatus InferShapeForIouV2(gert::InferShapeContext* context)
 
     auto attrs = context->GetAttrs();
 
-    if (bboxesShape == nullptr || gtboxesShape == nullptr || attrs == nullptr) {
-        OP_LOGE(context, "Either bboxesShape, gtboxesShape, or attrs is nullptr");
+    if (overlapShape == nullptr || bboxesShape == nullptr || gtboxesShape == nullptr || attrs == nullptr) {
+        OP_LOGE(context, "Input, output shape, or attrs is nullptr");
         return ge::GRAPH_FAILED;
     }
     const bool* aligned = attrs->GetAttrPointer<bool>(ALIGNED_INFO_IDX);
+    if (aligned == nullptr) {
+        OP_LOGE(context, "aligned attr is nullptr");
+        return ge::GRAPH_FAILED;
+    }
+
+    if (Ops::Base::IsUnknownRank(*bboxesShape) || Ops::Base::IsUnknownRank(*gtboxesShape)) {
+        Ops::Base::SetUnknownRank(*overlapShape);
+        return ge::GRAPH_SUCCESS;
+    }
+    if (bboxesShape->GetDimNum() != INPUT_DIM_NUM || gtboxesShape->GetDimNum() != INPUT_DIM_NUM) {
+        OP_LOGE(context, "bboxes and gtboxes must be 2D tensors");
+        return ge::GRAPH_FAILED;
+    }
+    const int64_t coordinateDim = *aligned ? bboxesShape->GetDim(0) : bboxesShape->GetDim(1);
+    const int64_t gtCoordinateDim = *aligned ? gtboxesShape->GetDim(0) : gtboxesShape->GetDim(1);
+    if ((coordinateDim != ge::UNKNOWN_DIM && coordinateDim != BOX_COORDINATE_DIM) ||
+        (gtCoordinateDim != ge::UNKNOWN_DIM && gtCoordinateDim != BOX_COORDINATE_DIM)) {
+        OP_LOGE(context, "The coordinate dimension of bboxes and gtboxes must be 4");
+        return ge::GRAPH_FAILED;
+    }
 
     // update output shape.
     overlapShape->SetDimNum(IOUS_DIM); // the output dimensions are 2.
     if (*aligned) {
         int64_t const bboxesNum = bboxesShape->GetDim(1);
         int64_t const gtboxesNum = gtboxesShape->GetDim(1);
-        if (bboxesNum != gtboxesNum) {
+        if (bboxesNum != ge::UNKNOWN_DIM && gtboxesNum != ge::UNKNOWN_DIM && bboxesNum != gtboxesNum) {
             OP_LOGE(context, "Parameter aligned is true, the num of bboxes and gtboxes must be same.");
             return ge::GRAPH_FAILED;
         }
