@@ -167,6 +167,8 @@ round_prefer_ceil, floor, ceil. Only used by nearest interpolation.
 * Compatible with tensorflow ResizeNearestNeighborV2 operator.
 */
 
+#ifndef OPS_PROTO_DEF_RESIZE
+#define OPS_PROTO_DEF_RESIZE
 REG_OP(Resize)
     .INPUT(x, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
     .OPTIONAL_INPUT(roi, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
@@ -181,6 +183,7 @@ REG_OP(Resize)
     .ATTR(mode, String, "nearest")
     .ATTR(nearest_mode, String, "round_prefer_floor")
     .OP_END_FACTORY_REG(Resize)
+#endif
 
 /**
 *@brief Greedily selects a subset of bounding boxes in descending order of
