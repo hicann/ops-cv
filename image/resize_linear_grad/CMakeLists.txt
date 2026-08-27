@@ -24,4 +24,4 @@ set(SUPPORT_COMPUTE_UNIT "ascend950")
 
 set(SUPPORT_TILING_DIR "arch35")
 
-add_all_modules_sources(OPTYPE resize_linear_grad ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT} TILING_DIR ${SUPPORT_TILING_DIR} DISABLE_IN_OPP TRUE)
+add_all_modules_sources(OPTYPE resize_linear_grad ACLNNTYPE aclnn_exclude DEPENDENCIES upsample_bilinear2d_grad COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT} TILING_DIR ${SUPPORT_TILING_DIR} DISABLE_IN_OPP TRUE)
