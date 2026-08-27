@@ -89,10 +89,6 @@ static ge::graphStatus TilingForRoiAlignRotated(gert::TilingContext* context)
     }
 
     auto attrsPtr = context->GetAttrs();
-    if (attrsPtr == nullptr) {
-        return ge::GRAPH_FAILED;
-    }
-
     float spatial_scale = *(attrsPtr->GetAttrPointer<float>(SPATIAL_INDEX));
     int64_t sampling_ratio = *(attrsPtr->GetAttrPointer<int64_t>(SAMPLING_INDEX));
     int64_t pooled_height = *(attrsPtr->GetAttrPointer<int64_t>(PH_INDEX));

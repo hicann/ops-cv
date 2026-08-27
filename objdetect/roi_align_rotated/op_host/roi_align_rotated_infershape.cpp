@@ -65,6 +65,9 @@ static ge::graphStatus InferShape(gert::InferShapeContext* context)
 
     const int64_t* pooled_height = attrsPtr->GetAttrPointer<int64_t>(PH_INDEX);
     const int64_t* pooled_width = attrsPtr->GetAttrPointer<int64_t>(PW_INDEX);
+    if (pooled_height == nullptr || pooled_width == nullptr || *pooled_height <= 0 || *pooled_width <= 0) {
+        return ge::GRAPH_FAILED;
+    }
 
     auto output_shape_length = 4;
     output_shape->SetDimNum(output_shape_length);

@@ -44,6 +44,36 @@ TEST_F(RoiAlignRotated, RoiAlignRotated_infershape_case_0)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+TEST_F(RoiAlignRotated, RoiAlignRotated_infershape_invalid_pooled_h)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "RoiAlignRotated",
+        {{{{4, 8, 8, 1}, {4, 8, 8, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+         gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(RoiAlignRotated, RoiAlignRotated_infershape_invalid_pooled_w)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "RoiAlignRotated",
+        {{{{4, 8, 8, 1}, {4, 8, 8, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{6, 8}, {6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+         gert::InfershapeContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+         gert::InfershapeContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(1.0)),
+         gert::InfershapeContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(0))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
 // TEST_F(RoiAlignRotated, RoiAlignRotated_infershape_case_0)
 // {
 //   ge::op::RoiAlignRotated op;
