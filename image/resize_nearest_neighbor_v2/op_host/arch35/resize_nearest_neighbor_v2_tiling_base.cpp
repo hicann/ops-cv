@@ -501,7 +501,7 @@ bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NCHW_Gather()
     OP_CHECK_IF((originalScaleH_ != 0.0f) || (originalScaleW_ != 0.0f),
                 OP_LOGI(context_->GetNodeName(), "originalScaleH or originalScaleW is not 0.0f"), return false);
     OP_CHECK_IF((scaleH_ < REDUCE_SCALE_THRESHOLD) || (scaleW_ < REDUCE_SCALE_THRESHOLD),
-                OP_LOGI(context_->GetNodeName(), "originalScaleH or originalScaleW samll than 0.25"), return false);
+                OP_LOGI(context_->GetNodeName(), "originalScaleH or originalScaleW less than 0.25"), return false);
     int64_t xSize = xShape_.GetShapeSize();
     int64_t ySize = yShape_.GetShapeSize();
     OP_CHECK_IF(xSize >= UINT32_MAX || ySize >= UINT32_MAX,
@@ -639,7 +639,7 @@ bool ResizeNearestNeighborV2AscendCTilingImpl::IsMatchTiling_NHWC_UB2UB()
 {
     OP_CHECK_IF((format_ != ge::FORMAT_NHWC), OP_LOGI(context_->GetNodeName(), "format is not eligible"), return false);
     OP_CHECK_IF((alignCorners_ != 0) || (halfPixelCenters_ != 0),
-                OP_LOGI(context_->GetNodeName(), "alignCorners and halfPixelCenters not false"), return false);
+                OP_LOGI(context_->GetNodeName(), "alignCorners and halfPixelCenters are not false"), return false);
     OP_CHECK_IF((lenDesW_ <= lenSrcW_) || (lenDesH_ < lenSrcH_),
                 OP_LOGI(context_->GetNodeName(), "It must be an enlarged scene"), return false);
     int64_t remainW = lenDesW_ % lenSrcW_;

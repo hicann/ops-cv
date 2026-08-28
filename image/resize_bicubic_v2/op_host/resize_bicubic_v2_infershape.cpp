@@ -28,7 +28,7 @@ static constexpr int64_t IN_SIZE_NUM = 2;
 
 ge::graphStatus ResizeBicubicV2InferShape(gert::InferShapeContext* context)
 {
-    OP_LOGI(context->GetNodeName(), "Begin to do ResizeBicubicV2InferShape rt2.0");
+    OP_LOGI(context->GetNodeName(), "Begin to do ResizeBicubicV2InferShape runtime 2.0");
 
     auto nodeName = context->GetNodeName();
 
@@ -75,7 +75,7 @@ ge::graphStatus ResizeBicubicV2InferShape(gert::InferShapeContext* context)
     yShape->SetDim(hIdx, outH);
     yShape->SetDim(hIdx + 1, outW);
 
-    OP_LOGI(context->GetNodeName(), "End to do ResizeBicubicV2InferShape rt2.0");
+    OP_LOGI(context->GetNodeName(), "End to do ResizeBicubicV2InferShape runtime 2.0");
     return ge::GRAPH_SUCCESS;
 }
 

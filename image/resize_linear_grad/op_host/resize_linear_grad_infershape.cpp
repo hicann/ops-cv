@@ -27,7 +27,7 @@ static constexpr size_t IDX_L = 2;
 
 ge::graphStatus ResizeLinearGradInferShape(gert::InferShapeContext* context)
 {
-    OP_LOGI(context->GetNodeName(), "Begin to do ResizeLinearGradInferShape rt2.0");
+    OP_LOGI(context->GetNodeName(), "Begin to do ResizeLinearGradInferShape runtime 2.0");
 
     auto nodeName = context->GetNodeName();
 
@@ -47,7 +47,7 @@ ge::graphStatus ResizeLinearGradInferShape(gert::InferShapeContext* context)
         *yShape = *imageShape;
     }
 
-    OP_LOGI(context->GetNodeName(), "End to do ResizeLinearGradInferShape rt2.0");
+    OP_LOGI(context->GetNodeName(), "End to do ResizeLinearGradInferShape runtime 2.0");
     return ge::GRAPH_SUCCESS;
 }
 

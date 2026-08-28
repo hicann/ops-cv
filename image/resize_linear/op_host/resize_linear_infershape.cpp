@@ -28,7 +28,7 @@ static constexpr size_t IDX_L = 2;
 
 ge::graphStatus ResizeLinearInferShape(gert::InferShapeContext* context)
 {
-    OP_LOGI(context->GetNodeName(), "Begin to do ResizeLinearInferShape rt2.0");
+    OP_LOGI(context->GetNodeName(), "Begin to do ResizeLinearInferShape runtime 2.0");
 
     auto nodeName = context->GetNodeName();
 
@@ -65,7 +65,7 @@ ge::graphStatus ResizeLinearInferShape(gert::InferShapeContext* context)
 
     yShape->SetDim(IDX_L, outL);
 
-    OP_LOGI(context->GetNodeName(), "End to do ResizeLinearInferShape rt2.0");
+    OP_LOGI(context->GetNodeName(), "End to do ResizeLinearInferShape runtime 2.0");
     return ge::GRAPH_SUCCESS;
 }
 
