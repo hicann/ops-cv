@@ -14,6 +14,7 @@
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "util/shape_util.h"
 
 using namespace ge;
 using namespace std;
@@ -43,6 +44,9 @@ const uint32_t DIM_NUM_ZERO = 0;
 const uint32_t DIM_NUM_ONE = 1;
 const uint32_t DIM_NUM_TWO = 2;
 const uint32_t DIM_NUM_THREE = 3;
+const uint32_t INPUT_RANK = 4;
+const uint32_t ROIS_RANK = 2;
+const uint32_t OUTPUT_DIM_NUM = INPUT_RANK;
 } // namespace
 
 namespace ops {
@@ -54,9 +58,16 @@ static ge::graphStatus InferShape(gert::InferShapeContext* context)
     if (input_shape == nullptr || rois_shape == nullptr || output_shape == nullptr) {
         return ge::GRAPH_FAILED;
     }
+    if (Ops::Base::IsUnknownRank(*input_shape) || Ops::Base::IsUnknownRank(*rois_shape)) {
+        Ops::Base::SetUnknownRank(*output_shape);
+        return ge::GRAPH_SUCCESS;
+    }
+    if (input_shape->GetDimNum() != INPUT_RANK || rois_shape->GetDimNum() != ROIS_RANK) {
+        return ge::GRAPH_FAILED;
+    }
 
-    int32_t rois_num = rois_shape->GetDim(ROIS_NUM_INDEX);
-    int32_t channels = input_shape->GetDim(CHANNEL_INDEX);
+    int64_t rois_num = rois_shape->GetDim(ROIS_NUM_INDEX);
+    int64_t channels = input_shape->GetDim(CHANNEL_INDEX);
 
     auto attrsPtr = context->GetAttrs();
     if (attrsPtr == nullptr) {
@@ -69,7 +80,7 @@ static ge::graphStatus InferShape(gert::InferShapeContext* context)
         return ge::GRAPH_FAILED;
     }
 
-    auto output_shape_length = 4;
+    auto output_shape_length = OUTPUT_DIM_NUM;
     output_shape->SetDimNum(output_shape_length);
     output_shape->SetDim(DIM_NUM_ZERO, rois_num);
     output_shape->SetDim(DIM_NUM_ONE, *pooled_height); // 设置输出形状的第二个维度为pooled_height

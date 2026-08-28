@@ -76,7 +76,6 @@ static ge::graphStatus TilingForRoiAlignRotated(gert::TilingContext* context)
     if (inputTensorPtr == nullptr || RoisTensorPtr == nullptr) {
         return ge::GRAPH_FAILED;
     }
-
     uint32_t batch_size = inputTensorPtr->GetStorageShape().GetDim(BS_INDEX);
     uint32_t input_h = inputTensorPtr->GetStorageShape().GetDim(H_INDEX);
     uint32_t input_w = inputTensorPtr->GetStorageShape().GetDim(W_INDEX);
