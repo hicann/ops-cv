@@ -282,6 +282,28 @@ REG_OP(Empty)
     .ATTR(dtype, Int, DT_INT32)
     .ATTR(init, Bool, false)
     .OP_END_FACTORY_REG(Empty)
+
+/**
+*@brief Extracts a slice from a tensor. \n
+
+*@par Inputs:
+*Three inputs, including:
+*@li x: A tensor. \n
+*@li offsets: The starting location for the slice. Must be one of the following types: int32, int64.
+*@li size: The tensor shape. Must be one of the following types: int32, int64. \n
+
+*@par Outputs:
+*y: A tensor with the same type as "x". \n
+
+*@par Third-party framework compatibility
+*Compatible with the TensorFlow operator Slice.
+*/
+REG_OP(Slice)
+    .INPUT(x, TensorType({BasicType(), DT_HIFLOAT8, DT_FLOAT8_E5M2, DT_FLOAT8_E4M3FN}))
+    .INPUT(offsets, TensorType::IndexNumberType())
+    .INPUT(size, TensorType::IndexNumberType())
+    .OUTPUT(y, TensorType({BasicType(), DT_HIFLOAT8, DT_FLOAT8_E5M2, DT_FLOAT8_E4M3FN}))
+    .OP_END_FACTORY_REG(Slice)
 } // namespace ge
 
 #endif // CV_COMMON_STUB_OPS_H
