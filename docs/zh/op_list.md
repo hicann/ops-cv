@@ -118,6 +118,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/extract_image_patches/README.md">extract_image_patches</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>从输入图像中按指定ksizes、strides、rates和padding方式提取滑动局部块（patch），并将每个patch展平到通道维输出。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/grid_sample/README.md">grid_sample</a></td>
     <td>&check;</td>
     <td>&check;</td>
