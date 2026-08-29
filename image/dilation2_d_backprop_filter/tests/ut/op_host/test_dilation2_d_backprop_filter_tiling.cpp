@@ -57,10 +57,10 @@ TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_valid)
         64,     // number of cores
         262144, // ubsize
         4096);  // max tiling data size
-    uint64_t expectTilingKey = 0;
-    std::string expectTilingData = "4 4 1 32 1 3 3 1 2 2 2 2 1 1 1 1 0 0 3 3 0 ";
-    // v2.2: workspace = userWorkspace(131200) + sysWorkspace(16777216)
-    std::vector<size_t> expectWorkspaces = {16908416};
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "4 4 1 0 1 3 3 1 2 2 2 2 1 1 1 1 0 0 3 3 0 ";
+    // non-deterministic mode (default): workspace = sysWorkspace only (16777216)
+    std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
@@ -92,9 +92,9 @@ TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_same)
         64,     // number of cores
         262144, // ubsize
         4096);  // max tiling data size
-    uint64_t expectTilingKey = 0;
-    std::string expectTilingData = "8 18 1 32 1 4 4 2 3 3 2 2 2 2 1 1 0 0 4 4 0 ";
-    // v2.2: workspace = userWorkspace(131200) + sysWorkspace(16777216)
-    std::vector<size_t> expectWorkspaces = {16908416};
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "8 18 1 0 1 4 4 2 3 3 2 2 2 2 1 1 0 0 4 4 0 ";
+    // non-deterministic mode (default): workspace = sysWorkspace only (16777216)
+    std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

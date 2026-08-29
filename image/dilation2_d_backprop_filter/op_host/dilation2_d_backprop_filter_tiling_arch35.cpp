@@ -101,6 +101,17 @@ static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context, int32_t ne
     return ge::GRAPH_SUCCESS;
 }
 
+// Non-deterministic mode: system workspace only (no user workspace)
+static ge::graphStatus GetWorkspaceSizeNonDet(gert::TilingContext* context)
+{
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
+    uint64_t sysWorkspaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
+    size_t* currentWorkspace = context->GetWorkspaceSizes(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, currentWorkspace);
+    currentWorkspace[0] = static_cast<size_t>(sysWorkspaceSize);
+    return ge::GRAPH_SUCCESS;
+}
+
 // ============================================================================
 // Attribute struct and retrieval
 // ============================================================================
@@ -286,6 +297,94 @@ static void ComputeOutputDims(const DilBpFilterAttrs& attrs, int64_t inputH, int
     outW = std::max(outW, static_cast<int64_t>(0));
 }
 
+struct TilingCommonFields {
+    int64_t totalElements;
+    int64_t filterSize;
+    int32_t needCoreNum;
+    int64_t perCoreBufElems;
+    int64_t batch;
+    int64_t inputH;
+    int64_t inputW;
+    int64_t depth;
+    int64_t filterH;
+    int64_t filterW;
+    int64_t outH;
+    int64_t outW;
+    int64_t strideH;
+    int64_t strideW;
+    int64_t rateH;
+    int64_t rateW;
+    int64_t padTop;
+    int64_t padLeft;
+    int64_t padInputH;
+    int64_t padInputW;
+    bool isNCHW;
+    bool isDet;
+};
+
+// ========== DumpTilingData (DFX) ==========
+static void DumpTilingData(gert::TilingContext* context, const Dilation2DBackpropFilterTilingData* tiling, bool isDet)
+{
+    OP_LOGD(context,
+            "Dilation2DBackpropFilterTilingData: isDet=%d, totalElements=%ld, filterSize=%ld, "
+            "needCoreNum=%d, perCoreBufElems=%ld, batch=%ld, inputH=%ld, inputW=%ld, depth=%ld, "
+            "filterH=%ld, filterW=%ld, outH=%ld, outW=%ld, strideH=%ld, strideW=%ld, "
+            "rateH=%ld, rateW=%ld, padTop=%ld, padLeft=%ld, padInputH=%ld, padInputW=%ld, isNCHW=%d",
+            isDet, tiling->totalElements, tiling->filterSize, tiling->needCoreNum, tiling->perCoreBufElems,
+            tiling->batch, tiling->inputH, tiling->inputW, tiling->depth, tiling->filterH, tiling->filterW,
+            tiling->outH, tiling->outW, tiling->strideH, tiling->strideW, tiling->rateH, tiling->rateW, tiling->padTop,
+            tiling->padLeft, tiling->padInputH, tiling->padInputW, tiling->isNCHW);
+}
+
+// ============================================================================
+static ge::graphStatus FillTilingData(gert::TilingContext* context, const TilingCommonFields& f)
+{
+    auto* tiling = context->GetTilingData<Dilation2DBackpropFilterTilingData>();
+    OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
+    OP_CHECK_IF(memset_s(tiling, sizeof(Dilation2DBackpropFilterTilingData), 0,
+                         sizeof(Dilation2DBackpropFilterTilingData)) != EOK,
+                OP_LOGE(context, "memset_s tiling data error"), return ge::GRAPH_FAILED);
+
+    tiling->totalElements = f.totalElements;
+    tiling->filterSize = f.filterSize;
+    tiling->needCoreNum = f.needCoreNum;
+    tiling->perCoreBufElems = f.perCoreBufElems;
+    tiling->batch = f.batch;
+    tiling->inputH = f.inputH;
+    tiling->inputW = f.inputW;
+    tiling->depth = f.depth;
+    tiling->filterH = f.filterH;
+    tiling->filterW = f.filterW;
+    tiling->outH = f.outH;
+    tiling->outW = f.outW;
+    tiling->strideH = f.strideH;
+    tiling->strideW = f.strideW;
+    tiling->rateH = f.rateH;
+    tiling->rateW = f.rateW;
+    tiling->padTop = f.padTop;
+    tiling->padLeft = f.padLeft;
+    tiling->padInputH = f.padInputH;
+    tiling->padInputW = f.padInputW;
+    tiling->isNCHW = f.isNCHW ? 1 : 0;
+
+    if (f.isDet) {
+        OP_CHECK_IF(GetWorkspaceSize(context, f.needCoreNum, f.perCoreBufElems) != ge::GRAPH_SUCCESS,
+                    OP_LOGE(context, "GetWorkspaceSize error"), return ge::GRAPH_FAILED);
+        uint64_t tilingKey = GET_TPL_TILING_KEY(DILATION2D_BACKPROP_FILTER_MODE_DETERMINISTIC,
+                                                DILATION2D_BACKPROP_FILTER_MODE_NORMAL);
+        context->SetTilingKey(tilingKey);
+    } else {
+        OP_CHECK_IF(GetWorkspaceSizeNonDet(context) != ge::GRAPH_SUCCESS,
+                    OP_LOGE(context, "GetWorkspaceSizeNonDet error"), return ge::GRAPH_FAILED);
+        uint64_t tilingKey = GET_TPL_TILING_KEY(DILATION2D_BACKPROP_FILTER_MODE_NON_DETERMINISTIC,
+                                                DILATION2D_BACKPROP_FILTER_MODE_NORMAL);
+        context->SetTilingKey(tilingKey);
+    }
+
+    DumpTilingData(context, tiling, f.isDet);
+    return ge::GRAPH_SUCCESS;
+}
+
 // ============================================================================
 // Tiling main function
 // ============================================================================
@@ -451,41 +550,17 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
 
     // Empty tensor handling
     if (filterSize == 0 || totalElements == 0) {
-        Dilation2DBackpropFilterTilingData* tiling = context->GetTilingData<Dilation2DBackpropFilterTilingData>();
-        OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-        OP_CHECK_IF(memset_s(tiling, sizeof(Dilation2DBackpropFilterTilingData), 0,
-                             sizeof(Dilation2DBackpropFilterTilingData)) != EOK,
-                    OP_LOGE(context, "memset_s tiling data error"), return ge::GRAPH_FAILED);
-        tiling->totalElements = totalElements;
-        tiling->filterSize = filterSize;
-        tiling->needCoreNum = 1;
-        tiling->perCoreBufElems = 0; // empty tensor: no per-core buffer needed
-        tiling->batch = batch;
-        tiling->inputH = inputH;
-        tiling->inputW = inputW;
-        tiling->depth = depth;
-        tiling->filterH = filterH;
-        tiling->filterW = filterW;
-        tiling->outH = outH;
-        tiling->outW = outW;
-        tiling->strideH = attrs.strideH;
-        tiling->strideW = attrs.strideW;
-        tiling->rateH = attrs.rateH;
-        tiling->rateW = attrs.rateW;
-        tiling->padTop = padTop;
-        tiling->padLeft = padLeft;
-        tiling->padInputH = padInputH;
-        tiling->padInputW = padInputW;
-        tiling->isNCHW = isNCHW ? 1 : 0;
+        bool isDet = (context->GetDeterministic() == 1);
 
         context->SetBlockDim(1);
         context->SetScheduleMode(1);
 
-        OP_CHECK_IF(GetWorkspaceSize(context, 1, 0) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
+        TilingCommonFields fields = {totalElements, filterSize,    1,           0,           batch,  inputH,
+                                     inputW,        depth,         filterH,     filterW,     outH,   outW,
+                                     attrs.strideH, attrs.strideW, attrs.rateH, attrs.rateW, padTop, padLeft,
+                                     padInputH,     padInputW,     isNCHW,      isDet};
+        OP_CHECK_IF(FillTilingData(context, fields) != ge::GRAPH_SUCCESS, OP_LOGE(context, "FillTilingData error"),
                     return ge::GRAPH_FAILED);
-
-        uint64_t tilingKey = GET_TPL_TILING_KEY(DILATION2D_BACKPROP_FILTER_MODE_NORMAL);
-        context->SetTilingKey(tilingKey);
 
         OP_CHECK_IF(ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE, OP_LOGE(context, "ubSize too small"),
                     return ge::GRAPH_FAILED);
@@ -504,42 +579,20 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
     // v2.1: compute per-core buffer size (128B aligned in elements)
     int64_t perCoreBufElems = Ops::Base::CeilAlign(filterSize, WS_ALIGN_ELEMS);
 
-    // 9. Fill TilingData
-    Dilation2DBackpropFilterTilingData* tiling = context->GetTilingData<Dilation2DBackpropFilterTilingData>();
-    OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
-    OP_CHECK_IF(memset_s(tiling, sizeof(Dilation2DBackpropFilterTilingData), 0,
-                         sizeof(Dilation2DBackpropFilterTilingData)) != EOK,
-                OP_LOGE(context, "memset_s tiling data error"), return ge::GRAPH_FAILED);
+    // 9. Fill TilingData + Workspace + TilingKey (determinism switch)
+    bool isDet = (context->GetDeterministic() == 1);
 
-    tiling->totalElements = totalElements;
-    tiling->filterSize = filterSize;
-    tiling->needCoreNum = needCoreNum;
-    tiling->perCoreBufElems = perCoreBufElems;
-    tiling->batch = batch;
-    tiling->inputH = inputH;
-    tiling->inputW = inputW;
-    tiling->depth = depth;
-    tiling->filterH = filterH;
-    tiling->filterW = filterW;
-    tiling->outH = outH;
-    tiling->outW = outW;
-    tiling->strideH = attrs.strideH;
-    tiling->strideW = attrs.strideW;
-    tiling->rateH = attrs.rateH;
-    tiling->rateW = attrs.rateW;
-    tiling->padTop = padTop;
-    tiling->padLeft = padLeft;
-    tiling->padInputH = padInputH;
-    tiling->padInputW = padInputW;
-    tiling->isNCHW = isNCHW ? 1 : 0;
-
-    // 10. Set BlockDim and schedule mode (SyncAll for three-phase)
     context->SetBlockDim(static_cast<uint32_t>(needCoreNum));
     context->SetScheduleMode(1);
 
-    // 11. Workspace allocation (v2.1: user workspace for per-core buffer + system)
-    OP_CHECK_IF(GetWorkspaceSize(context, needCoreNum, perCoreBufElems) != ge::GRAPH_SUCCESS,
-                OP_LOGE(context, "GetWorkspaceSize error"), return ge::GRAPH_FAILED);
+    TilingCommonFields fields = {totalElements, filterSize,    needCoreNum, isDet ? perCoreBufElems : 0,
+                                 batch,         inputH,        inputW,      depth,
+                                 filterH,       filterW,       outH,        outW,
+                                 attrs.strideH, attrs.strideW, attrs.rateH, attrs.rateW,
+                                 padTop,        padLeft,       padInputH,   padInputW,
+                                 isNCHW,        isDet};
+    OP_CHECK_IF(FillTilingData(context, fields) != ge::GRAPH_SUCCESS, OP_LOGE(context, "FillTilingData error"),
+                return ge::GRAPH_FAILED);
 
     // 12. Set LocalMemorySize
     OP_CHECK_IF(ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE,
@@ -548,10 +601,6 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
     OP_CHECK_IF(res != ge::GRAPH_SUCCESS,
                 OP_LOGE(context, "SetLocalMemorySize failed, ubSize=%lu, DCACHE_SIZE=%u", ubSize, DCACHE_SIZE),
                 return ge::GRAPH_FAILED);
-
-    // 13. Set TilingKey (single mode, dtype via DTYPE_ macro)
-    uint64_t tilingKey = GET_TPL_TILING_KEY(DILATION2D_BACKPROP_FILTER_MODE_NORMAL);
-    context->SetTilingKey(tilingKey);
 
     return ge::GRAPH_SUCCESS;
 }
