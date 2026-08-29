@@ -21,6 +21,10 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       ${PKG_NAME}_op_infershape_ut
       CACHE STRING "op_infershape ut module name" FORCE
     )
+  set(OP_FRAMEWORK_MODULE_NAME
+      ${PKG_NAME}_op_framework_ut
+      CACHE STRING "op_framework ut module name" FORCE
+    )
   function(add_optiling_ut_modules OP_TILING_MODULE_NAME)
     # add optiling ut common object: cv_op_tiling_ut_common_obj
     add_library(${OP_TILING_MODULE_NAME}_common_obj OBJECT)
@@ -98,6 +102,26 @@ if(UT_TEST_ALL OR OP_HOST_UT)
       ${OP_INFERSHAPE_MODULE_NAME}_cases PRIVATE ${OP_INFERSHAPE_MODULE_NAME}_common_obj
                                                  ${OP_INFERSHAPE_MODULE_NAME}_cases_obj
       )
+  endfunction()
+
+  function(add_framework_ut_modules OP_FRAMEWORK_MODULE_NAME)
+    if(NOT TARGET ${OP_FRAMEWORK_MODULE_NAME}_cases_obj)
+      add_library(${OP_FRAMEWORK_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
+    endif()
+    target_include_directories(
+      ${OP_FRAMEWORK_MODULE_NAME}_cases_obj PRIVATE ${GTEST_INCLUDE} ${JSON_INCLUDE_DIR} ${ONNX_PLUGIN_COMMON_INCLUDE}
+                                                    ${OP_PROTO_INCLUDE} ${ASCEND_DIR}/pkg_inc ${ASCEND_DIR}/pkg_inc/base
+                                                    ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/proto
+      )
+    target_compile_options(${OP_FRAMEWORK_MODULE_NAME}_cases_obj PRIVATE -fno-access-control -Dgoogle=ascend_private
+                                                                         -Wno-shadow -Wno-unused-parameter)
+    target_link_libraries(
+      ${OP_FRAMEWORK_MODULE_NAME}_cases_obj PRIVATE $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+                                                   $<BUILD_INTERFACE:dlog_headers> GTest::gtest json
+      )
+
+    add_library(${OP_FRAMEWORK_MODULE_NAME}_cases STATIC)
+    target_link_libraries(${OP_FRAMEWORK_MODULE_NAME}_cases PRIVATE ${OP_FRAMEWORK_MODULE_NAME}_cases_obj)
   endfunction()
 endif()
 
@@ -301,6 +325,27 @@ if(UT_TEST_ALL
       endif()
       file(GLOB OPHOST_INFERSHAPE_CASES_SRC ${MODULE_DIR}/test_*_infershape.cpp)
       target_sources(${MODULE_UT_NAME}_cases_obj ${MODULE_MODE} ${OPHOST_INFERSHAPE_CASES_SRC})
+    endif()
+
+    if("${MODULE_UT_NAME}" STREQUAL "${OP_FRAMEWORK_MODULE_NAME}")
+      if(NOT TARGET ${MODULE_UT_NAME}_cases_obj)
+        add_library(${MODULE_UT_NAME}_cases_obj OBJECT)
+      endif()
+      # framework UT 位于 common/tests/ut/framework/，目录路径推导不出具体算子名
+      # （会得到 OP_NAME=common），因此按测试文件名逐文件过滤：test_<op_name>_onnx_plugin.cpp -> <op_name>
+      file(GLOB OPFRAMEWORK_CASES_SRC ${MODULE_DIR}/test_*_onnx_plugin.cpp)
+      set(OPFRAMEWORK_FILTERED_SRC "")
+      foreach(_src ${OPFRAMEWORK_CASES_SRC})
+        get_filename_component(_src_name ${_src} NAME_WE)
+        string(REGEX REPLACE "^test_(.*)_onnx_plugin$" "\\1" _op_name "${_src_name}")
+        list(FIND ASCEND_OP_NAME "${_op_name}" _idx)
+        # if "--ops" is not NULL, opName not include, jump over. if "--ops" is NULL, include all.
+        if(NOT "${ASCEND_OP_NAME}" STREQUAL "" AND _idx EQUAL -1)
+          continue()
+        endif()
+        list(APPEND OPFRAMEWORK_FILTERED_SRC ${_src})
+      endforeach()
+      target_sources(${MODULE_UT_NAME}_cases_obj ${MODULE_MODE} ${OPFRAMEWORK_FILTERED_SRC})
     endif()
 
     if("${MODULE_UT_NAME}" STREQUAL "${OP_API_MODULE_NAME}")

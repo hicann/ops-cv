@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,27 +12,44 @@
  * \file npu_nms_with_mask_onnx_plugin.cpp
  * \brief
  */
-#include "onnx_common.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
+#include "cv_plugin_util.h"
+#include "register/register.h"
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
-static Status ParseParamsNMSWithMask(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsNMSWithMask(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
+    float iou_threshold = 0.5;
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    if (attr.value("name", "") != "iou_threshold" || !attr.contains("f")) {
+                        continue;
+                    }
+                    std::string iou_threshold_str = attr["f"];
+                    if (StrToFloat(iou_threshold_str, iou_threshold) != SUCCESS) {
+                        OP_LOGE(GetOpName(op_dest).c_str(), "parse iou_threshold failed.");
+                        return FAILED;
+                    }
+                    break;
+                }
+            }
+        }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
         return FAILED;
     }
 
-    float iou_threshold = 0.5;
-    for (const auto& attr : node->attribute()) {
-        if (attr.name() == "iou_threshold" && attr.type() == ge::onnx::AttributeProto::FLOAT) {
-            iou_threshold = attr.f();
-        }
-    }
-
-    op_dest.SetAttr("name", node->name());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("iou_threshold", iou_threshold);
 
     return SUCCESS;
@@ -46,6 +63,6 @@ REGISTER_CUSTOM_OP("NMSWithMask")
                    ge::AscendString("ai.onnx::14::NPUNmsWithMask"), ge::AscendString("ai.onnx::15::NPUNmsWithMask"),
                    ge::AscendString("ai.onnx::16::NPUNmsWithMask"), ge::AscendString("ai.onnx::17::NPUNmsWithMask"),
                    ge::AscendString("ai.onnx::18::NPUNmsWithMask")})
-    .ParseParamsFn(ParseParamsNMSWithMask)
+    .ParseParamsByOperatorFn(ParseParamsNMSWithMask)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

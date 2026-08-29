@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,21 +13,11 @@
  * \brief
  */
 
-#include "onnx_common.h"
+#include "graph/operator.h"
+#include "register/register.h"
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
-
-static Status ParseParamsTransArgb(const Message* op_src, ge::Operator& op_dest)
-{
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
-    return SUCCESS;
-}
+static Status ParseParamsTransArgb(const ge::Operator& op_src, ge::Operator& op_dest) { return SUCCESS; }
 
 // register TransArgb op info to GE
 REGISTER_CUSTOM_OP("TransArgb")
@@ -38,6 +28,6 @@ REGISTER_CUSTOM_OP("TransArgb")
                    ge::AscendString("ai.onnx::14::TransArgb"), ge::AscendString("ai.onnx::15::TransArgb"),
                    ge::AscendString("ai.onnx::16::TransArgb"), ge::AscendString("ai.onnx::17::TransArgb"),
                    ge::AscendString("ai.onnx::18::TransArgb")})
-    .ParseParamsFn(ParseParamsTransArgb)
+    .ParseParamsByOperatorFn(ParseParamsTransArgb)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

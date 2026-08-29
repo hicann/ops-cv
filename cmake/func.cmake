@@ -759,6 +759,22 @@ endfunction()
 # check whether the compiled operators meet expectations
 # ######################################################################################################################
 function(check_compiled_ops)
+  # framework ONNX 插件（common/src/framework）可能没有独立算子实现目录，不走 image/objdetect
+  # 的目录扫描，故 COMPILED_OPS 不会含它们；但插件源码与 UT 仍存在，--ops=<插件算子> 应生效。
+  # 这里在比对前主动扫描 common/src/framework 的 *_onnx_plugin.cpp，从文件名提取算子名注入。
+  # 注意：本函数在 CMakeLists.txt 末尾调用，无论 ENABLE_EXPERIMENTAL 与否都会执行
+  # （experimental 模式下 common/src/framework 不被 add_subdirectory，宏注入路径不可达，必须在此注入）。
+  file(GLOB _fw_onnx_plugin_srcs ${OPS_CV_DIR}/common/src/framework/*_onnx_plugin.cpp)
+  foreach(_plugin_src ${_fw_onnx_plugin_srcs})
+    get_filename_component(_plugin_name ${_plugin_src} NAME_WE)
+    string(REGEX REPLACE "_onnx_plugin$" "" _op_name "${_plugin_name}")
+    if(_op_name AND NOT _op_name IN_LIST COMPILED_OPS)
+      set(COMPILED_OPS
+          ${COMPILED_OPS} ${_op_name}
+          CACHE STRING "Compiled Ops" FORCE)
+    endif()
+  endforeach()
+
   message(STATUS "Ops for this compilation contains: ${COMPILED_OPS}")
   if(COMPILED_OPS STREQUAL "")
     message(FATAL_ERROR "Specified ops not found in this depository, please check --ops parameter")
