@@ -308,6 +308,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/resize_grad/README.md">resize_grad</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>计算Resize正向算子的反向梯度，按linear或cubic插值权重累加回原始分辨率。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/resize_linear/README.md">resize_linear</a></td>
     <td>&check;</td>
     <td>&check;</td>
