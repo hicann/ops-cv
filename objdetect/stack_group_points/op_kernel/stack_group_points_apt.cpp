@@ -15,7 +15,7 @@
 
 #include "kernel_tiling/kernel_tiling.h"
 #include "kernel_operator.h"
-#include "./arch35/stack_group_points.h"
+#include "./arch35/stack_group_points_kernel.h"
 #include "./arch35/stack_group_points_tiling_data.h"
 #include "./arch35/stack_group_points_tiling_key.h"
 
