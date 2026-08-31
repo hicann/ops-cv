@@ -329,7 +329,7 @@ if(UT_TEST_ALL
 
     if("${MODULE_UT_NAME}" STREQUAL "${OP_FRAMEWORK_MODULE_NAME}")
       if(NOT TARGET ${MODULE_UT_NAME}_cases_obj)
-        add_library(${MODULE_UT_NAME}_cases_obj OBJECT)
+        add_library(${MODULE_UT_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
       endif()
       # framework UT 位于 common/tests/ut/framework/，目录路径推导不出具体算子名
       # （会得到 OP_NAME=common），因此按测试文件名逐文件过滤：test_<op_name>_onnx_plugin.cpp -> <op_name>
