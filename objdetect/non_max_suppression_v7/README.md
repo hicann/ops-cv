@@ -118,6 +118,8 @@
 
 - max_output_size、iou_threshold和score_threshold为标量或shape为(1,)的张量；index_id为(B, C, N, 3)或(B, C, N, 4)的张量。
 
+- 当前不支持GE IR动态Rank场景（输入Shape声明为`[-2]`）。
+
 ## 调用说明
 
 |调用方式|调用样例|说明|
