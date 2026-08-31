@@ -48,6 +48,16 @@
   </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/col2_im_v2/README.md">col2_im_v2</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将滑动局部块重排组合为批处理图像张量（Col2Im，kernel_size/output_size 为 const tensor 输入）。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../image/col2im/README.md">col2im</a></td>
     <td>&check;</td>
     <td>&check;</td>

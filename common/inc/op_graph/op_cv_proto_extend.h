@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -18,37 +18,6 @@
 #include "graph/operator_reg.h"
 
 namespace ge {
-/**
-* @brief Performs Col2ImV2 for each batch entry. \n
-
-* @par Inputs:
-* @li x: The Col Tensor. 3-D, shape: `(n, c*kernel_h*kernel_w, ho*wo)`.
-where ho/wo is do = (output_d + 2*padding_d - dilation_d*(kernel_d - 1) - 1)//stride_d + 1.
-* @li output_size: The img shape Tensor. 1-D, shape:`(2)`, value: (output_h, output_w).
-* @li kernel_shape: The kernel size Tensor. 1-D , value: `(kernel_h, kernel_w)`, the shape of kernel in convolution.  \n
-
-* @par Outputs:
-* y: The img Tensor. 4-D, shape: `(n, c, output_h, output_w)`. \n
-
-* @par Attributes:
-
-* @li dilation: ListInt, value: `(dilation_h, dilation_w)`, the dilation in convolution.
-* @li padding: ListInt, value: `(padding_h, padding_w)`, the dilation in convolution.
-* @li stride:  ListInt, value: `(stride_h, stride_w)`, the dilation in convolution.  \n
-
-* @par Third-party framework compatibility
-* Compatible with ONNX Col2Im operator.
-*/
-REG_OP(Col2ImV2)
-    .INPUT(x, TensorType({DT_FLOAT, DT_FLOAT16}))
-    .INPUT(output_size, TensorType({DT_INT32, DT_INT32}))
-    .INPUT(kernel_size, TensorType({DT_INT32, DT_INT32}))
-    .OUTPUT(y, TensorType({DT_FLOAT, DT_FLOAT16}))
-    .REQUIRED_ATTR(dilation, ListInt)
-    .REQUIRED_ATTR(padding, ListInt)
-    .REQUIRED_ATTR(stride, ListInt)
-    .OP_END_FACTORY_REG(Col2ImV2)
-
 /**
 * @brief First calculate the minimum closure area of the two boxes, IoU,
 * the proportion of the closed area that does not belong to the two boxes in the closure area,
