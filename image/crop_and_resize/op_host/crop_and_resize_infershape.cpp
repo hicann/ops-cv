@@ -108,12 +108,9 @@ static ge::graphStatus ReadCropSizeValue(gert::InferShapeContext* context, int64
                                                   "crop_height and crop_width must be positive");
             return ge::GRAPH_FAILED;
         }
-        if (cropHeight > CROP_DIM_MAX || cropWidth > CROP_DIM_MAX) {
-            std::string valMsg = "[" + std::to_string(cropHeight) + ", " + std::to_string(cropWidth) + "]";
-            OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "crop_size", valMsg.c_str(),
-                                                  "max(crop_h, crop_w) must be <= " + std::to_string(CROP_DIM_MAX));
-            return ge::GRAPH_FAILED;
-        }
+        // 注：crop<=16 上限不在此检查。该上限是 AiCore tiling 约束而非算子语义，
+        // 由 def.cpp 的 CheckIfAICoreSupported 在引擎分配阶段拒绝并 fallback 到 AiCpu；
+        // 此处拦截会导致 AiCpu 路径（可正确计算 crop>16）也无法通过。
     } else {
         OP_LOGD(context->GetNodeName(), "crop_size is non-const tensor, set output dims to UNKNOWN_DIM");
     }

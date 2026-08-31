@@ -270,7 +270,8 @@ TEST_F(CropAndResizeInfershape, test13_crop_w_le_0)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
-// test14: crop_h=17 (>16) → FAIL
+// test14: crop_h=17 (>16) → SUCCESS：crop<=16 上限属 AiCore tiling 约束，
+// 已从 infershape 移至 def.cpp CheckIfAICoreSupported 引擎路由层拦截（AiCpu 可承接）
 TEST_F(CropAndResizeInfershape, test14_crop_h_gt_16)
 {
     std::vector<int32_t> cropSizeValues = {17, 14};
@@ -285,10 +286,13 @@ TEST_F(CropAndResizeInfershape, test14_crop_h_gt_16)
         {
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         });
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 17, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-// test15: crop_w=17 (>16) → FAIL
+// test15: crop_w=17 (>16) → SUCCESS：同 test14，约束归引擎路由层
 TEST_F(CropAndResizeInfershape, test15_crop_w_gt_16)
 {
     std::vector<int32_t> cropSizeValues = {14, 17};
@@ -303,5 +307,8 @@ TEST_F(CropAndResizeInfershape, test15_crop_w_gt_16)
         {
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         });
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 14, 17, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

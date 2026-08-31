@@ -31,3 +31,10 @@ set(SUPPORT_TILING_DIR "arch35")
 
 add_all_modules_sources(OPTYPE crop_and_resize ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT}
                         TILING_DIR ${SUPPORT_TILING_DIR})
+
+# def.cpp 编入 tiling 库：注册宏在 OP_TILING_LIB 下向 V1 注册表 OpCheckFuncRegistry 登记
+# check_supported 回调 CheckIfAICoreSupported，FE 引擎分配阶段查询；缺失则
+# needCheckSupport 为 true 时所有输入含合规均被误拒 fallback AiCpu，已实测，勿删
+if (TARGET ${OPHOST_NAME}_tiling_obj)
+    target_sources(${OPHOST_NAME}_tiling_obj PRIVATE op_host/crop_and_resize_def.cpp)
+endif()
