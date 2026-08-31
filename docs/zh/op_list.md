@@ -878,6 +878,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/deformable_roi_pool/README.md">deformable_roi_pool</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>可变形感兴趣区域池化，从特征图中提取每个ROI位置的池化特征，支持通过offset对采样点进行可变形偏移。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/yolo/README.md">yolo</a></td>
     <td>&check;</td>
     <td>&check;</td>

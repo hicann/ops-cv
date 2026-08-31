@@ -254,6 +254,7 @@
     {"name":"ResizeBicubicV2Grad", "compute_units": ["ascend950"], "auto_sync": false, "impl_mode": "", "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"Col2im", "compute_units": ["ascend950"], "auto_sync": false, "impl_mode": "", "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
     {"name":"RoiPoolingGradWithArgMax", "compute_units": ["ascend950"], "auto_sync": false, "impl_mode": "", "compile_options": {"ascend950": ["-mllvm -cce-aicore-dcci-before-kernel-end=false"]}},
+    {"name":"DeformableRoiPool", "compute_units":["ascend950"], "auto_sync":false, "compile_options":{"ascend950":["--cce-prec-div=true"]}, "impl_mode":""},
     {"name":"ResizeBilinearV2Grad", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : "" },
     {"name":"ResizeBilinearV2", "compute_units": ["ascend950", "mc62"], "auto_sync" : false, "compile_options": {"mc62": ["--cce-no-dcache-flush"]}, "impl_mode" : ""},
     {"name":"RoiPoolingWithArgmax", "compute_units": ["ascend950"], "auto_sync" : false, "impl_mode" : ""},
