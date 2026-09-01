@@ -385,27 +385,6 @@ REG_OP(ImageProjectiveTransformV2)
     .OP_END_FACTORY_REG(ImageProjectiveTransformV2)
 
 /**
- *@brief Computes Normalize bbox function.
- *
- *@par Inputs:
- *Inputs include:
- * @li boxes: A Tensor. Must be float16 or float32.
- * @li shape_hw: A Tensor. Must be int32.
- *
- *@par Attributes:
- * reversed_box: optional, bool. Defaults to "False"
- *
- *@par Outputs:
- * y: A Tensor. Must have the same type and shape as boxes.
- */
-REG_OP(NormalizeBBox)
-    .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .INPUT(shape_hw, TensorType({DT_INT32}))
-    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .ATTR(reversed_box, Bool, false)
-    .OP_END_FACTORY_REG(NormalizeBBox)
-
-/**
 *@brief Calculate the resize_d function. \n
 
 *@par Inputs:
