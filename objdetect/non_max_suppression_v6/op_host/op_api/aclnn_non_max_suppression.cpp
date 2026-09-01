@@ -36,14 +36,15 @@ static constexpr size_t NUM_FOUR = 4;
 static constexpr int32_t MAX_VALID_OUTPUT = 700;
 
 // 检查入参是否为nullptr
-static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, const aclFloatArray* iouThreshold,
-                         aclTensor* selectedIndices)
+static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, aclIntArray* maxOutputBoxesPerClass,
+                         const aclFloatArray* iouThreshold, aclTensor* selectedIndices)
 {
     OP_CHECK_NULL(boxes, return false);
     OP_CHECK_NULL(scores, return false);
     if (iouThreshold->Size() <= 0) {
         return false;
     }
+    OP_CHECK_NULL(maxOutputBoxesPerClass, return false);
     OP_CHECK_NULL(selectedIndices, return false);
     return true;
 }
@@ -100,11 +101,12 @@ static bool CheckAttr(const int centerPointBox)
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor* boxes, const aclTensor* scores, const aclFloatArray* iouThreshold,
-                               aclTensor* selectedIndices, int centerPointBox)
+static aclnnStatus CheckParams(const aclTensor* boxes, const aclTensor* scores, aclIntArray* maxOutputBoxesPerClass,
+                               const aclFloatArray* iouThreshold, aclTensor* selectedIndices, int centerPointBox)
 {
     // 1. 检查参数是否为空指针
-    CHECK_RET(CheckNotNull(boxes, scores, iouThreshold, selectedIndices), ACLNN_ERR_PARAM_NULLPTR);
+    CHECK_RET(CheckNotNull(boxes, scores, maxOutputBoxesPerClass, iouThreshold, selectedIndices),
+              ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查输入的数据类型是否在API支持的数据类型范围之内、且满足约束，需要根据api定义校验
     CHECK_RET(CheckDtypeValid(boxes, scores, iouThreshold), ACLNN_ERR_PARAM_INVALID);
@@ -137,6 +139,9 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
+    auto ret = CheckParams(boxes, scores, maxOutputBoxesPerClass, iouThreshold, selectedIndices, centerPointBox);
+    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+
     int64_t maxOutputSize = 0;
     if (maxOutputBoxesPerClass->Size() > 0) {
         maxOutputSize = maxOutputBoxesPerClass->operator[](0);
@@ -145,9 +150,6 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "maxOutputBoxesPerClass[%ld] should be less than 700.", maxOutputSize);
         return ACLNN_ERR_PARAM_INVALID;
     }
-
-    auto ret = CheckParams(boxes, scores, iouThreshold, selectedIndices, centerPointBox);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
     if (curArch != NpuArch::DAV_2002) {
