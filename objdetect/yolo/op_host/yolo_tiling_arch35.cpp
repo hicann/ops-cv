@@ -216,6 +216,7 @@ static int32_t DetermineYoloMode(gert::TilingContext* context)
 
 static ge::graphStatus YoloTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingYolo");
     const char* opName = context->GetNodeName();
     uint64_t ubSize = 0;
     int64_t coreNum = 0;

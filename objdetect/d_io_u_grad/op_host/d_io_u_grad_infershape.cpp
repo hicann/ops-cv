@@ -12,6 +12,7 @@
 
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -38,6 +39,14 @@ static ge::graphStatus InferShapeDIoUGrad(gert::InferShapeContext* context)
     gert::Shape* dgtboxesShape = context->GetOutputShape(IDX_DGTBOXES);
     OP_CHECK_NULL_WITH_CONTEXT(context, dgtboxesShape);
 
+    if (Ops::Base::IsUnknownRank(*dyShape) || Ops::Base::IsUnknownRank(*bboxesShape) ||
+        Ops::Base::IsUnknownRank(*gtboxesShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set outputs as UnknownRank.");
+        Ops::Base::SetUnknownRank(*dbboxesShape);
+        Ops::Base::SetUnknownRank(*dgtboxesShape);
+        return GRAPH_SUCCESS;
+    }
+
     if (dyShape->GetDimNum() != 1) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "dy", std::to_string(dyShape->GetDimNum()).c_str(), "1");
         return GRAPH_FAILED;
@@ -48,7 +57,7 @@ static ge::graphStatus InferShapeDIoUGrad(gert::InferShapeContext* context)
                                      "2");
         return GRAPH_FAILED;
     }
-    if (bboxesShape->GetDim(0) != 4) {
+    if (bboxesShape->GetDim(0) != ge::UNKNOWN_DIM && bboxesShape->GetDim(0) != 4) {
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "bboxes",
                                               std::to_string(bboxesShape->GetDim(0)).c_str(), "dim[0] must be 4");
         return GRAPH_FAILED;
@@ -59,7 +68,7 @@ static ge::graphStatus InferShapeDIoUGrad(gert::InferShapeContext* context)
                                      std::to_string(gtboxesShape->GetDimNum()).c_str(), "2");
         return GRAPH_FAILED;
     }
-    if (gtboxesShape->GetDim(0) != 4) {
+    if (gtboxesShape->GetDim(0) != ge::UNKNOWN_DIM && gtboxesShape->GetDim(0) != 4) {
         OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context->GetNodeName(), "gtboxes",
                                               std::to_string(gtboxesShape->GetDim(0)).c_str(), "dim[0] must be 4");
         return GRAPH_FAILED;

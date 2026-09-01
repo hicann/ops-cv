@@ -15,33 +15,25 @@
 #include "infershape_context_faker.h"
 #include "infershape_case_executor.h"
 
-class ExtractGlimpseV2Infershape : public testing::Test
-{
+class ExtractGlimpseV2Infershape : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ExtractGlimpseV2Infershape SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ExtractGlimpseV2Infershape SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ExtractGlimpseV2Infershape TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ExtractGlimpseV2Infershape TearDown" << std::endl; }
 };
 
 TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_test1)
 {
     int32_t sizeData1[2] = {2, 2};
-    gert::InfershapeContextPara infershapeContextPara(
-        "ExtractGlimpseV2",
-        {
-            {{{1, 3, 3, 3}, {1, 3, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData1},
-            {{{1, 2}, {1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
-        },
-        {
-            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
-        });
+    gert::InfershapeContextPara infershapeContextPara("ExtractGlimpseV2",
+                                                      {
+                                                          {{{1, 3, 3, 3}, {1, 3, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData1},
+                                                          {{{1, 2}, {1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {1, 2, 2, 3},
     };
@@ -63,6 +55,122 @@ TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_test2)
         });
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {15, 2, 9, 16},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown shape: dims values unknown (-1), H/W from const size, N/C pass through as -1
+TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_unknown_shape_test)
+{
+    int32_t sizeData[2] = {5, 7};
+    gert::InfershapeContextPara infershapeContextPara(
+        "ExtractGlimpseV2",
+        {
+            {{{-1, -1, -1, -1}, {-1, -1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData},
+            {{{-1, -1}, {-1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 5, 7, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), output is 4D with unknown N/C, H/W from const size
+TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_unknown_rank_test)
+{
+    int32_t sizeData[2] = {3, 4};
+    gert::InfershapeContextPara infershapeContextPara("ExtractGlimpseV2",
+                                                      {
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData},
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 3, 4, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed unknown: -1 and known dims in origin shape, H/W from const size, N/C pass through
+TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_mixed_unknown_shape_test)
+{
+    int32_t sizeData[2] = {2, 2};
+    gert::InfershapeContextPara infershapeContextPara(
+        "ExtractGlimpseV2",
+        {
+            {{{-1, 3, 3, -1}, {-1, 3, 3, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData},
+            {{{-1, 2}, {-1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 2, 2, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed unknown: -1 origin dims with unknown rank range (-2), infershape sees origin dims
+TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_mixed_unknown_rank_test)
+{
+    int32_t sizeData[2] = {3, 4};
+    gert::InfershapeContextPara infershapeContextPara("ExtractGlimpseV2",
+                                                      {
+                                                          {{{-1, 5, 5, 3}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData},
+                                                          {{{-1, 2}, {-1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 3, 4, 3},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed partial unknown: input batch -1 vs offsets batch known, batch check skipped, N passes through as -1
+TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_mixed_partial_batch_test)
+{
+    int32_t sizeData[2] = {2, 3};
+    gert::InfershapeContextPara infershapeContextPara("ExtractGlimpseV2",
+                                                      {
+                                                          {{{-1, 5, 5, 3}, {-1, 5, 5, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData},
+                                                          {{{4, 2}, {4, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 2, 3, 3},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed multi-input: input partial unknown (-1 dims), offsets unknown rank ({-2}), output 4D with unknown N/C
+TEST_F(ExtractGlimpseV2Infershape, extract_glimpse_v2_infershape_mixed_offsets_unknown_rank_test)
+{
+    int32_t sizeData[2] = {3, 4};
+    gert::InfershapeContextPara infershapeContextPara("ExtractGlimpseV2",
+                                                      {
+                                                          {{{2, 5, 5, 3}, {2, 5, 5, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, sizeData},
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 3, 4, -1},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

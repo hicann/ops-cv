@@ -15,6 +15,7 @@
 
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -34,6 +35,17 @@ static ge::graphStatus InferShapeYolo(gert::InferShapeContext* context)
     // Get input shape
     const gert::Shape* xShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
+
+    // Unknown-rank input: spatial size unknown, set all outputs as UnknownRank
+    if (Ops::Base::IsUnknownRank(*xShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set outputs as UnknownRank.");
+        for (int64_t i = 0; i <= IDX_2; i++) {
+            gert::Shape* outShape = context->GetOutputShape(i);
+            OP_CHECK_NULL_WITH_CONTEXT(context, outShape);
+            Ops::Base::SetUnknownRank(*outShape);
+        }
+        return GRAPH_SUCCESS;
+    }
 
     // Get attributes
     auto attrs = context->GetAttrs();
@@ -62,19 +74,22 @@ static ge::graphStatus InferShapeYolo(gert::InferShapeContext* context)
     int64_t W = xShape->GetDim(IDX_3);
 
     // Validate batch dimension (SE requires N >= 1, no empty tensor)
-    OP_CHECK_IF(N <= 0, OP_LOGE(context, "Yolo: N must be >= 1, got N=%ld", N), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(N != ge::UNKNOWN_DIM && N <= 0, OP_LOGE(context, "Yolo: N must be >= 1, got N=%ld", N),
+                return ge::GRAPH_FAILED);
 
     // Validate spatial dimensions
-    OP_CHECK_IF(H <= 0 || W <= 0, OP_LOGE(context, "Yolo: H and W must be > 0, got H=%ld, W=%ld", H, W),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF((H != ge::UNKNOWN_DIM && H <= 0) || (W != ge::UNKNOWN_DIM && W <= 0),
+                OP_LOGE(context, "Yolo: H and W must be > 0, got H=%ld, W=%ld", H, W), return ge::GRAPH_FAILED);
 
     // Validate channel consistency
     int64_t expectedC = boxes * (coords + 1 + classes);
-    OP_CHECK_IF(C != expectedC,
+    OP_CHECK_IF(C != ge::UNKNOWN_DIM && C != expectedC,
                 OP_LOGE(context, "Yolo: input channel C=%ld, expected boxes*(coords+1+classes)=%ld", C, expectedC),
                 return ge::GRAPH_FAILED);
 
-    int64_t HW = H * W;
+    // H/W unknown: dims derived from H*W stay unknown
+    const bool hwKnown = (H != ge::UNKNOWN_DIM && W != ge::UNKNOWN_DIM);
+    int64_t HW = hwKnown ? H * W : ge::UNKNOWN_DIM;
 
     // Set coord_data shape: (N, boxes*coords, H*W)
     gert::Shape* coordShape = context->GetOutputShape(IDX_0);
@@ -82,14 +97,14 @@ static ge::graphStatus InferShapeYolo(gert::InferShapeContext* context)
     coordShape->SetDimNum(3);
     coordShape->SetDim(IDX_0, N);
     coordShape->SetDim(IDX_1, boxes * coords);
-    coordShape->SetDim(IDX_2, CeilX(HW * 2 + 32, 32) / 2);
+    coordShape->SetDim(IDX_2, hwKnown ? CeilX(HW * 2 + 32, 32) / 2 : ge::UNKNOWN_DIM);
 
     // Set obj_prob shape: (N, boxes*H*W)
     gert::Shape* objShape = context->GetOutputShape(IDX_1);
     OP_CHECK_NULL_WITH_CONTEXT(context, objShape);
     objShape->SetDimNum(2);
     objShape->SetDim(IDX_0, N);
-    objShape->SetDim(IDX_1, CeilX(boxes * HW * 2 + 32, 32) / 2);
+    objShape->SetDim(IDX_1, hwKnown ? CeilX(boxes * HW * 2 + 32, 32) / 2 : ge::UNKNOWN_DIM);
 
     // Set classes_prob shape: (N, classes, boxes*H*W)
     gert::Shape* clsShape = context->GetOutputShape(IDX_2);
@@ -97,7 +112,7 @@ static ge::graphStatus InferShapeYolo(gert::InferShapeContext* context)
     clsShape->SetDimNum(3);
     clsShape->SetDim(IDX_0, N);
     clsShape->SetDim(IDX_1, classes);
-    clsShape->SetDim(IDX_2, CeilX(boxes * HW * 2 + 32, 32) / 2);
+    clsShape->SetDim(IDX_2, hwKnown ? CeilX(boxes * HW * 2 + 32, 32) / 2 : ge::UNKNOWN_DIM);
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeYolo");
     return GRAPH_SUCCESS;

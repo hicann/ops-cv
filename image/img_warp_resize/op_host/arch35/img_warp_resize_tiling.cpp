@@ -116,6 +116,7 @@ static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 
 static ge::graphStatus IMGWarpResizeTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingIMGWarpResize");
     uint64_t ubSize;
     int64_t coreNum;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,

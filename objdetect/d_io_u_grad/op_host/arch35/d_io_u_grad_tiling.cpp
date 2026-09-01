@@ -68,6 +68,7 @@ static ge::graphStatus ValidateInputDtypes(gert::TilingContext* context)
 
 static ge::graphStatus DIoUGradTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingDIoUGrad");
     OP_CHECK_IF(ValidateInputDtypes(context) != ge::GRAPH_SUCCESS,
                 OP_LOGE(context, "DIoUGrad: input dtype validation failed"), return ge::GRAPH_FAILED);
 

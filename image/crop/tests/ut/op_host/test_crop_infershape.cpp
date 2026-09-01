@@ -110,3 +110,113 @@ TEST_F(CropInfershape, crop_infershape_test4_int32)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// Unknown shape: dims values unknown (-1), output dims inferred as -1
+TEST_F(CropInfershape, crop_infershape_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{-1, -1, -1, -1}, {-1, -1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1, -1, -1, -1}, {-1, -1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({3})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, -1, -1, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), output set to unknown rank
+TEST_F(CropInfershape, crop_infershape_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed unknown: -1 and known dims in origin shape, output keeps mixed dims
+TEST_F(CropInfershape, crop_infershape_mixed_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{-1, 4, 8, 8}, {-1, 4, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1, 4, 5, 5}, {-1, 4, 5, 5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 4, 5, 5},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed unknown: -1 origin dims with unknown rank range (-2), infershape sees origin dims
+TEST_F(CropInfershape, crop_infershape_mixed_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{-1, 4, 8, 8}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1, 4, 5, 5}, {-1, 4, 5, 5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 4, 5, 5},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed multi-input: x partial unknown (-1 dims), size unknown rank ({-2}), output set to unknown rank
+TEST_F(CropInfershape, crop_infershape_mixed_partial_x_unknown_rank_size_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{-1, 4, 8, 8}, {-1, 4, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(2)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

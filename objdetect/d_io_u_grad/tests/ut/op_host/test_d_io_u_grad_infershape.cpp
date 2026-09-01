@@ -126,3 +126,104 @@ TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_neg_dtype_mismatch)
                                                       });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
+
+// Unknown shape: dims values unknown (-1), outputs copy input shapes (unknown dims pass through)
+TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("DIoUGrad",
+                                                      {
+                                                          {{{-1}, {-1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{4, -1}, {4, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{4, -1}, {4, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {4, -1},
+        {4, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), outputs set to unknown rank
+TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("DIoUGrad",
+                                                      {
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed unknown: -1 and known dims in origin shape, outputs copy mixed input shapes
+TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_mixed_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("DIoUGrad",
+                                                      {
+                                                          {{{-1}, {-1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-1, 100}, {-1, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{4, -1}, {4, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 100},
+        {4, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed unknown: -1 origin dims with unknown rank range (-2), infershape sees origin dims
+TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_mixed_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("DIoUGrad",
+                                                      {
+                                                          {{{100}, {100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-1, 100}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 100},
+        {4, 100},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed multi-input: dy partial unknown (-1), bboxes unknown rank ({-2}), gtboxes known,
+// outputs set to unknown rank
+TEST_F(DIoUGradInfershape, d_io_u_grad_infershape_mixed_bboxes_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("DIoUGrad",
+                                                      {
+                                                          {{{-1}, {-1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{4, 100}, {4, 100}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

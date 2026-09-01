@@ -61,6 +61,25 @@ TEST_F(ThreeInterpolateInfershape, three_interpolate_infershape_test2)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+TEST_F(ThreeInterpolateInfershape, three_interpolate_mixed_unknown_rank_idx)
+{
+    // Mixed multi-input: features/weight known with partial -1, idx unknown rank (-2),
+    // output falls back to 3D unknown shape (-1, -1, -1)
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, -1, 3}, {2, -1, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-2}, {-2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, -1, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
 TEST_F(ThreeInterpolateInfershape, three_interpolate_infershape_abnormal_dtype_features)
 {
     gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",

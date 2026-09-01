@@ -170,7 +170,27 @@ TEST_F(IMGWarpResizeInfershape, img_warp_resize_unknownrank_both)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-// 用例8: 失败场景 - N 不一致（均为已知值）
+// 用例9: 混合部分未知场景 - img N/W=-1，warp_index N/W 为已知值
+// img [-1, 4, 3, 8, -1], warp_index [2, 2, 8, 16]
+// N/W 一致性校验因任一侧 -1 跳过，输出 [-1, 3, 8, -1]
+TEST_F(IMGWarpResizeInfershape, img_warp_resize_mixed_partial_unknown)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "IMGWarpResize",
+        {
+            {{{-1, 4, 3, 8, -1}, {-1, 4, 3, 8, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2, 2, 8, 16}, {2, 2, 8, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 3, 8, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// 用例10: 失败场景 - N 不一致（均为已知值）
 // img [2, 4, 3, 8, 8], warp_index [1, 2, 8, 8]
 // 期望 GRAPH_FAILED
 TEST_F(IMGWarpResizeInfershape, img_warp_resize_n_mismatch_fail)

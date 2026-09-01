@@ -16,18 +16,11 @@
 #include "infershape_case_executor.h"
 #include "any_value.h"
 
-class AnchorResponseFlagsInfershape : public testing::Test
-{
+class AnchorResponseFlagsInfershape : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AnchorResponseFlagsInfershape SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AnchorResponseFlagsInfershape SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AnchorResponseFlagsInfershape TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AnchorResponseFlagsInfershape TearDown" << std::endl; }
 };
 
 // Test case 1: float32 input, YOLOv3 large target layer
@@ -35,19 +28,17 @@ TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_test1)
 {
     std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
         gert::InfershapeContextPara::OpAttr("featmap_size",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
-        gert::InfershapeContextPara::OpAttr("strides",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
-        gert::InfershapeContextPara::OpAttr("num_base_anchors",
-            Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
     };
     gert::InfershapeContextPara infershapeContextPara(
         "AnchorResponseFlags",
         {
-            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},  // gt_bboxes input
+            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
         },
         {
-            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},  // flags output (shape to be inferred)
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
         },
         attrs);
     // Expected output shape: feat_h * feat_w * num_base_anchors = 60 * 60 * 9 = 32400
@@ -62,24 +53,147 @@ TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_test2)
 {
     std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
         gert::InfershapeContextPara::OpAttr("featmap_size",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{10, 10})),
-        gert::InfershapeContextPara::OpAttr("strides",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{32, 32})),
-        gert::InfershapeContextPara::OpAttr("num_base_anchors",
-            Ops::Cv::AnyValue::CreateFrom(int64_t(3))),
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{10, 10})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{32, 32})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(3))),
     };
     gert::InfershapeContextPara infershapeContextPara(
         "AnchorResponseFlags",
         {
-            {{{200, 4}, {200, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},  // gt_bboxes input
+            {{{200, 4}, {200, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // gt_bboxes input
         },
         {
-            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},  // flags output (shape to be inferred)
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
         },
         attrs);
     // Expected output shape: 10 * 10 * 3 = 300
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {300},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 3: unknown shape input (dims known count but values unknown), output depends only on attrs
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_unknown_shape_test)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{2, 4}, {-1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input with unknown dims
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    // Expected output shape: 60 * 60 * 9 = 32400 (attr-derived only)
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {32400},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 5: mixed unknown (-1 and known dim) in origin shape, output depends only on attrs
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_mixed_unknown_shape_test)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{-1, 4}, {-1, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input with mixed known/unknown dims
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    // Expected output shape: 60 * 60 * 9 = 32400 (attr-derived only)
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {32400},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 6: mixed -1 origin shape with unknown rank range (-2), output depends only on attrs
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_mixed_unknown_rank_test)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{10, 10})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{32, 32})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(3))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{-1, 4}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input: -1 origin dims, unknown rank range
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    // Expected output shape: 10 * 10 * 3 = 300 (attr-derived only)
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {300},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 4: unknown rank input ({-2}), output depends only on attrs
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_unknown_rank_test)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{10, 10})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{32, 32})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(3))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input with unknown rank
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    // Expected output shape: 10 * 10 * 3 = 300 (attr-derived only)
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {300},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 7: mixed partial unknown (dim1=-1 skips ==4 check), output depends only on attrs
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_mixed_partial_dim_test)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{3, -1}, {3, -1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input: dim1 unknown
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    // Expected output shape: 60 * 60 * 9 = 32400 (attr-derived only)
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {32400},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

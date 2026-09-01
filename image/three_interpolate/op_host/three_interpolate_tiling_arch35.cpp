@@ -41,6 +41,7 @@ struct ThreeInterpolateCompileInfo {};
 
 static ge::graphStatus ThreeInterpolateTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingThreeInterpolate");
     fe::PlatFormInfos* platformInfoPtr = context->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);

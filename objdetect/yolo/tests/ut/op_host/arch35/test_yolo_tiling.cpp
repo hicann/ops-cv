@@ -26,7 +26,7 @@ protected:
     static void TearDownTestCase() { std::cout << "YoloTiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
+static std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
 
 constexpr size_t YOLO_SYS_WORKSPACE_SIZE = 16777216;
 

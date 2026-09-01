@@ -221,3 +221,91 @@ TEST_F(YoloInfershape, yolo_invalid_channel_mismatch)
         });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
+
+// Unknown shape: dims values unknown (-1), HW-dependent output dims stay unknown
+TEST_F(YoloInfershape, yolo_infershape_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Yolo",
+        {
+            {{{-1, -1, -1, -1}, {-1, -1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 12, -1},
+        {-1, -1},
+        {-1, 80, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), outputs set to unknown rank
+TEST_F(YoloInfershape, yolo_infershape_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Yolo",
+        {
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+        {-2},
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed partial unknown: N=-1 with known C/H/W, C check still enforced,
+// N passes through as -1 while HW-derived dims are computed from known H/W
+TEST_F(YoloInfershape, yolo_infershape_mixed_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Yolo",
+        {
+            {{{-1, 255, 13, 13}, {-1, 255, 13, 13}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("boxes", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("coords", Ops::Cv::AnyValue::CreateFrom<int64_t>(4)),
+            gert::InfershapeContextPara::OpAttr("classes", Ops::Cv::AnyValue::CreateFrom<int64_t>(80)),
+            gert::InfershapeContextPara::OpAttr("yolo_version", Ops::Cv::AnyValue::CreateFrom<std::string>("V3")),
+            gert::InfershapeContextPara::OpAttr("softmax", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("background", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 12, 192},
+        {-1, 528},
+        {-1, 80, 528},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

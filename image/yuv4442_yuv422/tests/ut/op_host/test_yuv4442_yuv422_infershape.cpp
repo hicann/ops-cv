@@ -93,3 +93,51 @@ TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_abnormal_shape_channel
                                                       });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
+
+// Unknown shape: dims values unknown (-1), output (H, W, 2) with unknown dims passing through
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{-1, -1, -1}, {-1, -1, -1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, -1, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), output set to unknown rank
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed partial unknown: H=-1 with known W and channel, channel check passes, output keeps known dims
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_mixed_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{-1, 8, 4}, {-1, 8, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 8, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

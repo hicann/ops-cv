@@ -26,7 +26,7 @@ protected:
     static void TearDownTestCase() { std::cout << "Yuv4442yuv422Tiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
+static std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
 
 TEST_F(Yuv4442yuv422Tiling, yuv4442_yuv422_0)
 {

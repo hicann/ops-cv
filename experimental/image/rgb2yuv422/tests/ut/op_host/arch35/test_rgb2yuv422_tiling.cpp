@@ -21,18 +21,12 @@ using namespace ge;
 
 class Rgb2yuv422Tiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Rgb2yuv422Tiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Rgb2yuv422Tiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Rgb2yuv422Tiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Rgb2yuv422Tiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
+static std::map<std::string, std::string> soc_versions_infos = {{"Short_SoC_version", "Ascend950"}};
 
 TEST_F(Rgb2yuv422Tiling, rgb2yuv422_uint8_nhwc)
 {
@@ -49,8 +43,7 @@ TEST_F(Rgb2yuv422Tiling, rgb2yuv422_uint8_nhwc)
         {
             gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
         },
-        &compileInfo,
-        64, 262144, 4096);
+        &compileInfo, 64, 262144, 4096);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "1 4 34359738372 1 4 ";
     std::vector<size_t> expectWorkspaces = {16777216};

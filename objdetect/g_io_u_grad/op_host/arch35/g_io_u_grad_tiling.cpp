@@ -70,6 +70,7 @@ static ge::graphStatus ValidateDtypes(gert::TilingContext* context)
 
 static ge::graphStatus GIoUGradTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingGIoUGrad");
     OP_CHECK_IF(ValidateDtypes(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "ValidateDtypes failed"),
                 return ge::GRAPH_FAILED);
 

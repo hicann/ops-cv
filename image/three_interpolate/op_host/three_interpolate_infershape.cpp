@@ -32,6 +32,7 @@ static constexpr int64_t NEIGHBOR_NUM = 3;
 
 static ge::graphStatus InferShape4ThreeInterpolate(gert::InferShapeContext* context)
 {
+    OP_LOGD(context->GetNodeName(), "Enter InferShapeThreeInterpolate");
     const gert::Shape* featuresShape = context->GetInputShape(IDX_FEATURES);
     OP_CHECK_NULL_WITH_CONTEXT(context, featuresShape);
 

@@ -207,6 +207,7 @@ static ge::graphStatus SetupMemoryAndWorkspace(gert::TilingContext* context, uin
 
 static ge::graphStatus ExtractGlimpseV2TilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingExtractGlimpseV2");
     if (ValidateInputDataTypes(context) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }

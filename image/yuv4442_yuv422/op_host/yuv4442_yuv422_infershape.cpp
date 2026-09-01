@@ -16,6 +16,7 @@
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -29,6 +30,15 @@ static ge::graphStatus InferShapeYuv4442yuv422(gert::InferShapeContext* context)
     const gert::Shape* xShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
 
+    // Unknown-rank input: set output as UnknownRank
+    if (Ops::Base::IsUnknownRank(*xShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as UnknownRank.");
+        gert::Shape* yShape = context->GetOutputShape(IDX_0);
+        OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
+        Ops::Base::SetUnknownRank(*yShape);
+        return GRAPH_SUCCESS;
+    }
+
     auto xDimNum = xShape->GetDimNum();
     if (xDimNum != 3) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "x", std::to_string(xDimNum).c_str(), "3");
@@ -36,7 +46,7 @@ static ge::graphStatus InferShapeYuv4442yuv422(gert::InferShapeContext* context)
     }
 
     int64_t channels = xShape->GetDim(2);
-    if (channels != 4) {
+    if (channels != ge::UNKNOWN_DIM && channels != 4) {
         OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "x", std::to_string(channels).c_str(),
                                                  "the last dim (channel) must be 4");
         return GRAPH_FAILED;

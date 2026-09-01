@@ -192,6 +192,7 @@ static ge::graphStatus SetupTilingKey(gert::TilingContext* context, int64_t tota
 
 static ge::graphStatus AnchorResponseFlagsTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingAnchorResponseFlags");
     // 1. Get platform info
     auto platformInfoPtr = context->GetPlatformInfo();
     OP_CHECK_NULL_WITH_CONTEXT(context, platformInfoPtr);

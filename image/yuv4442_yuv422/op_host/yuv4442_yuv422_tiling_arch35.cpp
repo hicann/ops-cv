@@ -125,6 +125,7 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context, int64_t tota
 
 static ge::graphStatus Yuv4442yuv422TilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingYUV4442YUV422");
     uint64_t ubSize;
     int64_t maxCoreNum;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, maxCoreNum) != ge::GRAPH_SUCCESS,

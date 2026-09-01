@@ -26,7 +26,7 @@ protected:
     static void TearDownTestCase() { std::cout << "IMGWarpResizeTiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
+static std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend950"}};
 
 TEST_F(IMGWarpResizeTiling, img_warp_resize_fp32)
 {

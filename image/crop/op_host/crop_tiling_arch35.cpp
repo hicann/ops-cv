@@ -166,6 +166,7 @@ static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 
 static ge::graphStatus CropTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingCrop");
     uint64_t ubSize;
     int64_t coreNum;
     OP_CHECK_IF(GetPlatformInfo(context, ubSize, coreNum) != ge::GRAPH_SUCCESS,

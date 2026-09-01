@@ -17,6 +17,7 @@
 
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -48,18 +49,21 @@ static ge::graphStatus ValidateInputShapes(gert::InferShapeContext* context, con
                                      (std::to_string(OFFSETS_REQUIRED_RANK) + "D").c_str());
         return ge::GRAPH_FAILED;
     }
-    if (offsetsShape->GetDim(1) != OFFSETS_COORD_DIM) {
+    if (offsetsShape->GetDim(1) != ge::UNKNOWN_DIM && offsetsShape->GetDim(1) != OFFSETS_COORD_DIM) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "offsets", std::to_string(offsetsShape->GetDim(1)).c_str(),
                                      std::to_string(OFFSETS_COORD_DIM).c_str());
         return ge::GRAPH_FAILED;
     }
-    if (inputShape->GetDim(0) != offsetsShape->GetDim(0)) {
+    // batch 一致性校验：任一侧维度值未知(-1)时跳过该维校验
+    if (inputShape->GetDim(0) != ge::UNKNOWN_DIM && offsetsShape->GetDim(0) != ge::UNKNOWN_DIM &&
+        inputShape->GetDim(0) != offsetsShape->GetDim(0)) {
         std::string dimMsg = std::to_string(inputShape->GetDim(0)) + " and " + std::to_string(offsetsShape->GetDim(0));
         OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "input and offsets", dimMsg.c_str(),
                                                   "batch size of input and offsets must be equal");
         return ge::GRAPH_FAILED;
     }
-    if (sizeShape->GetDimNum() != SIZE_REQUIRED_RANK || sizeShape->GetDim(0) != SIZE_ELEMENT_COUNT) {
+    if (sizeShape->GetDimNum() != SIZE_REQUIRED_RANK ||
+        (sizeShape->GetDim(0) != ge::UNKNOWN_DIM && sizeShape->GetDim(0) != SIZE_ELEMENT_COUNT)) {
         OP_LOGE_FOR_INVALID_SHAPESIZE(
             context->GetNodeName(), "size", (std::to_string(sizeShape->GetDimNum()) + "D").c_str(),
             (std::to_string(SIZE_REQUIRED_RANK) + "D with " + std::to_string(SIZE_ELEMENT_COUNT) + " elements")
@@ -98,12 +102,36 @@ static ge::graphStatus SetOutputShapeAndDtype(gert::InferShapeContext* context, 
 
 static ge::graphStatus InferShapeExtractGlimpseV2(gert::InferShapeContext* context)
 {
+    OP_LOGD(context->GetNodeName(), "Enter InferShapeExtractGlimpseV2");
     const gert::Shape* inputShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputShape);
     const gert::Shape* sizeShape = context->GetInputShape(IDX_1);
     OP_CHECK_NULL_WITH_CONTEXT(context, sizeShape);
     const gert::Shape* offsetsShape = context->GetInputShape(IDX_2);
     OP_CHECK_NULL_WITH_CONTEXT(context, offsetsShape);
+
+    // Unknown-rank input: output rank is fixed 4D (NHWC), N/C unknown, H/W from const size
+    if (Ops::Base::IsUnknownRank(*inputShape) || Ops::Base::IsUnknownRank(*sizeShape) ||
+        Ops::Base::IsUnknownRank(*offsetsShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as 4D with unknown N/C.");
+        int64_t glimpseH = 0;
+        int64_t glimpseW = 0;
+        if (ReadSizeData(context, glimpseH, glimpseW) != ge::GRAPH_SUCCESS) {
+            return ge::GRAPH_FAILED;
+        }
+        gert::Shape* outShape = context->GetOutputShape(IDX_0);
+        OP_CHECK_NULL_WITH_CONTEXT(context, outShape);
+        outShape->SetDimNum(OUTPUT_RANK);
+        outShape->SetDim(0, ge::UNKNOWN_DIM);
+        outShape->SetDim(IDX_1, glimpseH);
+        outShape->SetDim(IDX_2, glimpseW);
+        outShape->SetDim(IDX_3, ge::UNKNOWN_DIM);
+        auto* mutableOutDesc = context->GetComputeNodeInfo()->MutableOutputTdInfo(0);
+        OP_CHECK_NULL_WITH_CONTEXT(context, mutableOutDesc);
+        mutableOutDesc->SetDataType(context->GetInputDesc(0)->GetDataType());
+        return ge::GRAPH_SUCCESS;
+    }
+
     if (ValidateInputShapes(context, inputShape, sizeShape, offsetsShape) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
@@ -115,8 +143,6 @@ static ge::graphStatus InferShapeExtractGlimpseV2(gert::InferShapeContext* conte
     return SetOutputShapeAndDtype(context, inputShape, glimpseH, glimpseW);
 }
 
-IMPL_OP_INFERSHAPE(ExtractGlimpseV2)
-    .InferShape(InferShapeExtractGlimpseV2)
-    .InputsDataDependency({1});
+IMPL_OP_INFERSHAPE(ExtractGlimpseV2).InferShape(InferShapeExtractGlimpseV2).InputsDataDependency({1});
 
 } // namespace ops

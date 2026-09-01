@@ -17,6 +17,7 @@
 
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -55,9 +56,14 @@ static ge::graphStatus InferShapeAnchorResponseFlags(gert::InferShapeContext* co
     // Validate input shape
     const gert::Shape* inputShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputShape);
-    OP_CHECK_IF(inputShape->GetDimNum() != 2, OP_LOGE(context, "gt_bboxes must be 2D"), return GRAPH_FAILED);
-    OP_CHECK_IF(inputShape->GetDim(1) != 4, OP_LOGE(context, "gt_bboxes second dimension must be 4"),
-                return GRAPH_FAILED);
+    // Unknown-rank ([-2]) and unknown-dim (-1) cases are skipped to support dynamic shape.
+    // The output shape only depends on attrs and can still be fully inferred.
+    if (!Ops::Base::IsUnknownRank(*inputShape)) {
+        OP_CHECK_IF(inputShape->GetDimNum() != 2, OP_LOGE(context, "gt_bboxes must be 2D"), return GRAPH_FAILED);
+        const int64_t dim1 = inputShape->GetDim(1);
+        OP_CHECK_IF(dim1 != ge::UNKNOWN_DIM && dim1 != 4, OP_LOGE(context, "gt_bboxes second dimension must be 4"),
+                    return GRAPH_FAILED);
+    }
 
     // Compute output shape: [featH * featW * numBaseAnchors]
     int64_t featH = featmapSizeData[0];

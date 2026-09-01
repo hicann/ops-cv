@@ -350,6 +350,7 @@ static void FillTilingData(ROIAlignGradTilingData* tiling, const RoiAlignGradTil
 
 static ge::graphStatus ROIAlignGradTilingFunc(gert::TilingContext* context)
 {
+    OP_LOGD(context, "Enter TilingROIAlignGrad");
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     RoiAlignGradTilingParams params;
 

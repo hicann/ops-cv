@@ -74,3 +74,81 @@ TEST_F(ROIAlignGradInfershape, roi_align_grad_infershape_test2)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// Unknown shape: input dims unknown (-1), output fully determined by xdiff_shape attr
+TEST_F(ROIAlignGradInfershape, roi_align_grad_infershape_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "ROIAlignGrad",
+        {
+            {{{-1, -1, -1, -1}, {-1, -1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1, -1}, {-1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            OpAttr("xdiff_shape", AV::CreateFrom(std::vector<int64_t>{1, 3, 50, 50})),
+            OpAttr("pooled_width", AV::CreateFrom(int64_t(7))),
+            OpAttr("pooled_height", AV::CreateFrom(int64_t(7))),
+            OpAttr("spatial_scale", AV::CreateFrom(float(1.0))),
+            OpAttr("sample_num", AV::CreateFrom(int64_t(2))),
+            OpAttr("roi_end_mode", AV::CreateFrom(int64_t(1))),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 3, 50, 50},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Unknown rank: input rank unknown ({-2}), output fully determined by xdiff_shape attr
+TEST_F(ROIAlignGradInfershape, roi_align_grad_infershape_unknown_rank_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "ROIAlignGrad",
+        {
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            OpAttr("xdiff_shape", AV::CreateFrom(std::vector<int64_t>{2, 4, 20, 30})),
+            OpAttr("pooled_width", AV::CreateFrom(int64_t(7))),
+            OpAttr("pooled_height", AV::CreateFrom(int64_t(7))),
+            OpAttr("spatial_scale", AV::CreateFrom(float(1.0))),
+            OpAttr("sample_num", AV::CreateFrom(int64_t(2))),
+            OpAttr("roi_end_mode", AV::CreateFrom(int64_t(1))),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 4, 20, 30},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Mixed partial unknown: y_grad/rois with -1 dims, output fully determined by xdiff_shape attr
+TEST_F(ROIAlignGradInfershape, roi_align_grad_infershape_mixed_unknown_shape_test)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "ROIAlignGrad",
+        {
+            {{{-1, 3, 7, -1}, {-1, 3, 7, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1, 5}, {-1, 5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            OpAttr("xdiff_shape", AV::CreateFrom(std::vector<int64_t>{1, 3, 50, 50})),
+            OpAttr("pooled_width", AV::CreateFrom(int64_t(7))),
+            OpAttr("pooled_height", AV::CreateFrom(int64_t(7))),
+            OpAttr("spatial_scale", AV::CreateFrom(float(1.0))),
+            OpAttr("sample_num", AV::CreateFrom(int64_t(2))),
+            OpAttr("roi_end_mode", AV::CreateFrom(int64_t(1))),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 3, 50, 50},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

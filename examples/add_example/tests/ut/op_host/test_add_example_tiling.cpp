@@ -24,7 +24,7 @@ protected:
     static void TearDownTestCase() { std::cout << "AddExampleTiling TearDown" << std::endl; }
 };
 
-std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend910B"}};
+static std::map<std::string, std::string> soc_version_infos = {{"Short_SoC_version", "Ascend910B"}};
 
 TEST_F(AddExampleTiling, add_example_0)
 {
