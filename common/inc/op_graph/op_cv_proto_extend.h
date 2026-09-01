@@ -885,7 +885,8 @@ gt_bboxes and bboxes, shape (k, n).
  * assigned_gt_inds_pos: A tensor. Support float16/float32, shape (n, ).
  *   The final assigned ground truth indices for positive bboxes, used for gradient computation. \n
  */
-
+#ifndef OPS_PROTO_DEF_GRIDASSIGNPOSITIVE
+#define OPS_PROTO_DEF_GRIDASSIGNPOSITIVE
 REG_OP(GridAssignPositive)
     .INPUT(assigned_gt_inds, TensorType({DT_FLOAT, DT_FLOAT16}))
     .INPUT(overlaps, TensorType({DT_FLOAT, DT_FLOAT16}))
@@ -900,6 +901,7 @@ REG_OP(GridAssignPositive)
     .REQUIRED_ATTR(min_pos_iou, Float)
     .REQUIRED_ATTR(gt_max_assign_all, Bool)
     .OP_END_FACTORY_REG(GridAssignPositive)
+#endif
 
 /**
 * @brief Performs non-maximum suppression (NMS) on the rotated boxes according
