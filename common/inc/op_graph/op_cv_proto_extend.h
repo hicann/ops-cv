@@ -746,6 +746,8 @@ REG_OP(YoloPreDetection)
 *@li box_out: A tensor of type float16 or float32, describing the information of each output box.
 *@li box_out_num: A tensor of type int32, specifying the number of output boxes . \n
 */
+#ifndef OPS_PROTO_DEF_YOLOV5DETECTIONOUTPUT
+#define OPS_PROTO_DEF_YOLOV5DETECTIONOUTPUT
 REG_OP(YoloV5DetectionOutput)
     .DYNAMIC_INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))
     .REQUIRED_ATTR(biases, ListFloat)
@@ -765,6 +767,7 @@ REG_OP(YoloV5DetectionOutput)
     .OUTPUT(box_out, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OUTPUT(box_out_num, TensorType({DT_INT32}))
     .OP_END_FACTORY_REG(YoloV5DetectionOutput)
+#endif
 
 /**
 *@brief Performs YOLO V3 detection output V2 . \n
@@ -791,6 +794,8 @@ REG_OP(YoloV5DetectionOutput)
 *@li box_out: A tensor of type float16 or float32, describing the information of each output box.
 *@li box_out_num: A tensor of type int32, specifying the number of output boxes . \n
 */
+#ifndef OPS_PROTO_DEF_YOLOV3DETECTIONOUTPUTV2
+#define OPS_PROTO_DEF_YOLOV3DETECTIONOUTPUTV2
 REG_OP(YoloV3DetectionOutputV2)
     .DYNAMIC_INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))
     .REQUIRED_ATTR(biases, ListFloat)
@@ -809,6 +814,7 @@ REG_OP(YoloV3DetectionOutputV2)
     .OUTPUT(box_out, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OUTPUT(box_out_num, TensorType({DT_INT32}))
     .OP_END_FACTORY_REG(YoloV3DetectionOutputV2)
+#endif
 
 /**
 *@brief Generates bounding boxes based on "anchor_boxes" and "gt_bboxes" . \n
@@ -825,6 +831,8 @@ REG_OP(YoloV3DetectionOutputV2)
 *encoded_bboxes: Bboxes generated based on "anchor_boxes" and "gt_bboxes". Have the
 * same format and type as "anchor_boxes".
 */
+#ifndef OPS_PROTO_DEF_YOLOBOXESENCODE
+#define OPS_PROTO_DEF_YOLOBOXESENCODE
 REG_OP(YoloBoxesEncode)
     .INPUT(anchor_boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
     .INPUT(gt_bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
@@ -832,6 +840,7 @@ REG_OP(YoloBoxesEncode)
     .ATTR(performance_mode, String, "high_precision")
     .OUTPUT(encoded_bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
     .OP_END_FACTORY_REG(YoloBoxesEncode)
+#endif
 
 /**
 *@brief Performs Position Sensitive PS ROI Pooling Grad. \n
