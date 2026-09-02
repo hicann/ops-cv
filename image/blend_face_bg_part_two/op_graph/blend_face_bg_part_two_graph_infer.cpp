@@ -12,25 +12,108 @@
 
 /*!
  * \file blend_face_bg_part_two_graph_infer.cpp
- * \brief BlendFaceBgPartTwo operator graph infer datatype resource
+ * \brief BlendFaceBgPartTwo operator graph infer + verify
  *
+ * VerifyFunc: GEIR 通路图编译阶段防线（早于 InferShape/Tiling），校验
+ *   rank=3、空 tensor、四输入 shape 一致性、四输入 dtype 一致性、epsilon>=0。
  */
 
 #include "register/op_impl_registry.h"
+#include "graph/operator_reg.h"
+#include "graph/types.h"
+#include "graph/tensor.h"
 #include "log/log.h"
+#include "blend_face_bg_part_two_proto.h"
 
 namespace ops {
 using namespace ge;
 
-static constexpr size_t kOutputFusedIdx = 0;
+static constexpr size_t kExpectRank = 3;
+static constexpr float DEFAULT_EPSILON = 1e-12f;
+
+static graphStatus Verify4BlendFaceBgPartTwo(Operator& op)
+{
+    // ---- 1) dtype 校验 ----
+    TensorDesc accFaceDesc = op.GetInputDesc("acc_face");
+    TensorDesc accMaskDesc = op.GetInputDesc("acc_mask");
+    TensorDesc maxMaskDesc = op.GetInputDesc("max_mask");
+    TensorDesc bgImgDesc = op.GetInputDesc("bg_img");
+
+    DataType accFaceDt = accFaceDesc.GetDataType();
+    DataType accMaskDt = accMaskDesc.GetDataType();
+    DataType maxMaskDt = maxMaskDesc.GetDataType();
+    DataType bgImgDt = bgImgDesc.GetDataType();
+
+    if (accFaceDt != DT_FLOAT || accMaskDt != DT_FLOAT || maxMaskDt != DT_FLOAT) {
+        OP_LOGE("BlendFaceBgPartTwo",
+                "acc_face/acc_mask/max_mask must be FLOAT, got acc_face=%d acc_mask=%d max_mask=%d",
+                static_cast<int>(accFaceDt), static_cast<int>(accMaskDt), static_cast<int>(maxMaskDt));
+        return GRAPH_FAILED;
+    }
+    if (bgImgDt != DT_FLOAT && bgImgDt != DT_UINT8) {
+        OP_LOGE("BlendFaceBgPartTwo", "bg_img must be FLOAT or UINT8, got=%d", static_cast<int>(bgImgDt));
+        return GRAPH_FAILED;
+    }
+
+    // ---- 2) rank=3 校验 ----
+    Shape accFaceShape = accFaceDesc.GetShape();
+    size_t rank = accFaceShape.GetDimNum();
+    if (rank != kExpectRank) {
+        OP_LOGE("BlendFaceBgPartTwo", "acc_face rank must be 3 (H,W,C), got rank=%zu", rank);
+        return GRAPH_FAILED;
+    }
+
+    // ---- 3) 空 tensor 拦截（任意 dim==0） ----
+    for (size_t d = 0; d < rank; ++d) {
+        if (accFaceShape.GetDim(d) == 0) {
+            OP_LOGE("BlendFaceBgPartTwo", "acc_face dim[%zu]=0, empty tensor is not supported", d);
+            return GRAPH_FAILED;
+        }
+    }
+
+    // ---- 4) 四输入 shape 一致性校验（逐维） ----
+    Shape accMaskShape = accMaskDesc.GetShape();
+    Shape maxMaskShape = maxMaskDesc.GetShape();
+    Shape bgImgShape = bgImgDesc.GetShape();
+
+    const Shape* otherShapes[] = {&accMaskShape, &maxMaskShape, &bgImgShape};
+    const char* otherNames[] = {"acc_mask", "max_mask", "bg_img"};
+    for (size_t i = 0; i < 3; ++i) {
+        if (otherShapes[i]->GetDimNum() != rank) {
+            OP_LOGE("BlendFaceBgPartTwo", "%s rank=%zu must equal acc_face rank=%zu", otherNames[i],
+                    otherShapes[i]->GetDimNum(), rank);
+            return GRAPH_FAILED;
+        }
+        for (size_t d = 0; d < rank; ++d) {
+            if (otherShapes[i]->GetDim(d) != accFaceShape.GetDim(d)) {
+                OP_LOGE("BlendFaceBgPartTwo", "%s dim[%zu]=%ld must equal acc_face dim[%zu]=%ld", otherNames[i], d,
+                        otherShapes[i]->GetDim(d), d, accFaceShape.GetDim(d));
+                return GRAPH_FAILED;
+            }
+        }
+    }
+
+    // ---- 5) epsilon 属性值域校验（>=0） ----
+    float32_t epsilon = DEFAULT_EPSILON;
+    (void)op.GetAttr("epsilon", epsilon);
+    if (epsilon < 0.0f) {
+        OP_LOGE("BlendFaceBgPartTwo", "epsilon must be >= 0, got=%f", epsilon);
+        return GRAPH_FAILED;
+    }
+
+    OP_LOGD("BlendFaceBgPartTwo", "VerifyFunc passed: rank=3, shapes consistent, dtype valid, epsilon=%f", epsilon);
+    return GRAPH_SUCCESS;
+}
+
+// 注册 VerifyFunc（图编译阶段调用，早于 InferShape 和 Tiling）
+VERIFY_FUNC_REG(BlendFaceBgPartTwo, Verify4BlendFaceBgPartTwo);
 
 // 输出 dtype 固定 float32（不随 bg_img dtype 变化）
+static constexpr size_t kOutputFusedIdx = 0;
 static ge::graphStatus InferDataType4BlendFaceBgPartTwo(gert::InferDataTypeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferDataType4BlendFaceBgPartTwo");
-
     context->SetOutputDataType(kOutputFusedIdx, ge::DT_FLOAT);
-
     OP_LOGD(context->GetNodeName(), "End to do InferDataType4BlendFaceBgPartTwo");
     return GRAPH_SUCCESS;
 }

@@ -53,6 +53,7 @@ constexpr int64_t BUFFER_NUM_DB = 2;
 constexpr int64_t BUFFER_DIVISOR_FP32 = BUFFER_NUM_DB * (4 * FP32_BYTES + FP32_BYTES);                // 40
 constexpr int64_t BUFFER_DIVISOR_UINT8 = BUFFER_NUM_DB * (3 * FP32_BYTES + UINT8_BYTES + FP32_BYTES); // 34
 constexpr float DEFAULT_EPSILON = 1.0e-12f;
+constexpr size_t kExpectRank = 3; // (H,W,C)
 } // namespace
 
 static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t* ubSize, int64_t* coreNum)
@@ -89,6 +90,78 @@ static ge::graphStatus GetWorkspaceSize(gert::TilingContext* context)
 static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context)
 {
     OP_LOGI(context->GetNodeName(), "Enter BlendFaceBgPartTwoTilingFunc");
+
+    // 0) 拦截防线（前置至平台信息之前，确保 tiling 被调用时第一时间拦截）
+    //    GEIR 通路中 CANN 框架不调用自定义 InferShape/VerifyFunc，tiling 是唯一算子侧防线。
+    //    框架会将所有输入的 storage_shape 归一化为 acc_face shape，
+    //    导致 GetStorageShape() 无法检测 shape 不一致；此处改用 GetOriginShape() 获取
+    //    用户构建图时指定的原始 shape 进行校验。
+    auto accFaceShape = context->GetInputShape(kInputAccFaceIdx);
+    OP_CHECK_NULL_WITH_CONTEXT(context, accFaceShape);
+    const auto& accFaceOrigin = accFaceShape->GetOriginShape();
+
+    // 0.0) dtype 校验（四输入 dtype 必须符合约束）
+    //   acc_face / acc_mask / max_mask 恒 DT_FLOAT
+    //   bg_img ∈ {DT_FLOAT, DT_UINT8}
+    {
+        const size_t kDtypeIdxes[] = {kInputAccFaceIdx, kInputAccMaskIdx, kInputMaxMaskIdx, kInputBgImgIdx};
+        const char* kDtypeNames[] = {"acc_face", "acc_mask", "max_mask", "bg_img"};
+        for (size_t i = 0; i < 4; ++i) {
+            auto desc = context->GetInputDesc(kDtypeIdxes[i]);
+            OP_CHECK_NULL_WITH_CONTEXT(context, desc);
+            ge::DataType dt = desc->GetDataType();
+            if (i < 3) {
+                OP_CHECK_IF(dt != ge::DT_FLOAT,
+                            OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s dtype must be FLOAT, got=%d",
+                                    kDtypeNames[i], static_cast<int>(dt)),
+                            return ge::GRAPH_FAILED);
+            } else {
+                OP_CHECK_IF(
+                    dt != ge::DT_FLOAT && dt != ge::DT_UINT8,
+                    OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s dtype must be FLOAT or UINT8, got=%d",
+                            kDtypeNames[i], static_cast<int>(dt)),
+                    return ge::GRAPH_FAILED);
+            }
+        }
+    }
+
+    // 0.1) rank=3 校验
+    OP_CHECK_IF(accFaceOrigin.GetDimNum() != kExpectRank,
+                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: acc_face rank must be 3 (H,W,C), got rank=%zu",
+                        accFaceOrigin.GetDimNum()),
+                return ge::GRAPH_FAILED);
+
+    // 0.2) 空 tensor 拦截（逐维检查 origin shape，任意 dim==0 即拒绝）
+    for (size_t d = 0; d < accFaceOrigin.GetDimNum(); ++d) {
+        OP_CHECK_IF(accFaceOrigin.GetDim(d) == 0,
+                    OP_LOGE(context->GetNodeName(),
+                            "BlendFaceBgPartTwo: acc_face origin dim[%zu]=0, empty tensor is not supported", d),
+                    return ge::GRAPH_FAILED);
+    }
+
+    // 0.3) 四输入 shape 一致性校验（逐维比较 origin shape，防框架 storage shape 归一化绕过）
+    {
+        const size_t kOtherIdxes[] = {kInputAccMaskIdx, kInputMaxMaskIdx, kInputBgImgIdx};
+        const char* kOtherNames[] = {"acc_mask", "max_mask", "bg_img"};
+        for (size_t i = 0; i < 3; ++i) {
+            auto otherShape = context->GetInputShape(kOtherIdxes[i]);
+            OP_CHECK_NULL_WITH_CONTEXT(context, otherShape);
+            const auto& otherOrigin = otherShape->GetOriginShape();
+            OP_CHECK_IF(
+                otherOrigin.GetDimNum() != accFaceOrigin.GetDimNum(),
+                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s origin rank=%zu must equal acc_face rank=%zu",
+                        kOtherNames[i], otherOrigin.GetDimNum(), accFaceOrigin.GetDimNum()),
+                return ge::GRAPH_FAILED);
+            for (size_t d = 0; d < accFaceOrigin.GetDimNum(); ++d) {
+                OP_CHECK_IF(otherOrigin.GetDim(d) != accFaceOrigin.GetDim(d),
+                            OP_LOGE(context->GetNodeName(),
+                                    "BlendFaceBgPartTwo: %s origin dim[%zu]=%ld must equal acc_face dim[%zu]=%ld",
+                                    kOtherNames[i], d, otherOrigin.GetDim(d), d, accFaceOrigin.GetDim(d)),
+                            return ge::GRAPH_FAILED);
+            }
+        }
+    }
+
     // 1) 平台运行信息（核数 / UB，运行时获取，禁止硬编码）
     uint64_t ubSize = 0;
     int64_t availableCoreNum = 0;
@@ -99,38 +172,8 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
     auto accFace = context->GetInputShape(kInputAccFaceIdx);
     OP_CHECK_NULL_WITH_CONTEXT(context, accFace);
     int64_t dim0 = accFace->GetStorageShape().GetShapeSize();
-    // DEBUG: 用 LOGE 确认 tiling 被调用且 shape 值可见
-    OP_LOGE(context->GetNodeName(), "[DBG] TILING ENTERED: acc_face StorageShape.GetShapeSize()=%ld", dim0);
-    {
-        const size_t kDbgIdxes[] = {kInputAccMaskIdx, kInputMaxMaskIdx, kInputBgImgIdx};
-        const char* kDbgNames[] = {"acc_mask", "max_mask", "bg_img"};
-        for (size_t i = 0; i < 3; ++i) {
-            auto s = context->GetInputShape(kDbgIdxes[i]);
-            if (s) {
-                OP_LOGE(context->GetNodeName(), "[DBG] %s StorageShape.GetShapeSize()=%ld", kDbgNames[i],
-                        s->GetStorageShape().GetShapeSize());
-            }
-        }
-    }
 
-    // 2.1) 校验其余三输入总元素数与 acc_face 一致
-    // （geir 路径 CANN 内置 InferShape 不做 shape 一致性校验，tiling 是唯一防线）
-    {
-        const size_t kOtherIdxes[] = {kInputAccMaskIdx, kInputMaxMaskIdx, kInputBgImgIdx};
-        const char* kOtherNames[] = {"acc_mask", "max_mask", "bg_img"};
-        for (size_t i = 0; i < 3; ++i) {
-            auto otherShape = context->GetInputShape(kOtherIdxes[i]);
-            OP_CHECK_NULL_WITH_CONTEXT(context, otherShape);
-            int64_t otherElem = otherShape->GetStorageShape().GetShapeSize();
-            OP_CHECK_IF(
-                otherElem != dim0,
-                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s element count=%ld must equal acc_face=%ld",
-                        kOtherNames[i], otherElem, dim0),
-                return ge::GRAPH_FAILED);
-        }
-    }
-
-    // 2.2) bg_img dtype：据此选择 TilingKey 分支参数（bufferDivisor / minDtypeBits）
+    // 2.1) bg_img dtype：据此选择 TilingKey 分支参数（bufferDivisor / minDtypeBits）
     auto bgImgDesc = context->GetInputDesc(kInputBgImgIdx);
     OP_CHECK_NULL_WITH_CONTEXT(context, bgImgDesc);
     ge::DataType bgDtype = bgImgDesc->GetDataType();
@@ -140,12 +183,11 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
     int64_t minDtypeBits = isBgUint8 ? (UINT8_BYTES * 8) : (FP32_BYTES * 8);
     int64_t bufferDivisor = isBgUint8 ? BUFFER_DIVISOR_UINT8 : BUFFER_DIVISOR_FP32;
 
-    // 2.3) 空 Tensor 拦截（提前至 GetWorkspaceSize 之前，避免以 dim0=0 进入 workspace 计算）
-    if (dim0 <= 0) {
-        OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: acc_face element count=%ld, empty tensor is not supported",
-                dim0);
-        return ge::GRAPH_FAILED;
-    }
+    // 2.2) epsilon 值域校验（必须 >= 0）
+    float epsilonVal = GetEpsilonAttr(context);
+    OP_CHECK_IF(epsilonVal < 0.0f,
+                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: epsilon must be >= 0, got=%f", epsilonVal),
+                return ge::GRAPH_FAILED);
 
     // 3) workspace（即使为 0 也须声明 slot）
     OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),

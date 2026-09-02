@@ -179,7 +179,8 @@ int main(int argc, char* argv[])
     const vector<int64_t> shape = {4, 4, 3};
 
     printf("%s - INFO - [XIR]: Start to initialize ge\n", GetTime().c_str());
-    std::map<AscendString, AscendString> global_options = {{"ge.exec.deviceId", "0"}, {"ge.graphRunMode", "1"}};
+    std::map<AscendString, AscendString> global_options = {
+        {"ge.exec.deviceId", "0"}, {"ge.graphRunMode", "1"}, {"ge.jit_compile", "0"}};
     Status ret = ge::GEInitialize(global_options);
     if (ret != SUCCESS) {
         printf("%s - ERROR - [XIR]: Initialize ge failed\n", GetTime().c_str());
