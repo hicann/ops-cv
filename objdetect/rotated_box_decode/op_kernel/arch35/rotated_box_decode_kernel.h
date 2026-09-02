@@ -63,6 +63,35 @@ constexpr AscendC::Reg::CastTrait rbdCastF32ToB16 = {AscendC::Reg::RegLayout::ZE
 // ---------------------------------------------------------------------------
 __aicore__ inline int64_t MinI64(int64_t a, int64_t b) { return (a < b) ? a : b; }
 
+// Lightweight correctly-rounded fp32 division (Markstein error compensation).
+// The default Reg::Div (vdiv intrinsic) is NOT correctly rounded (≤1 ULP off).
+//   q0 = vdiv(d, w)            ≤1 ULP approximation
+//   r  = d - q0·w              EXACT residual (vmula fused multiply-add)
+//   e  = vdiv(r, w)            small correction term
+//   q  = q0 + e                correctly-rounded quotient (ties aside, ~2^-24)
+// Used for Δ' = deltas/weight (bit-matches torch true_divide; a 1-ULP argument
+// error is amplified by exp() by |Δ'w| up to ~50×) and for the atan argument
+// reductions. Assumes finite d and normal w (input ranges guarantee this).
+__simd_callee__ inline void RbdDivIeee(AscendC::Reg::RegTensor<float>& q, AscendC::Reg::RegTensor<float>& d,
+                                       AscendC::Reg::RegTensor<float>& w, AscendC::Reg::MaskReg& mask)
+{
+    AscendC::Reg::RegTensor<float> q0, r, e, negW;
+    AscendC::Reg::MaskReg nanMask;
+    AscendC::Reg::Div(q0, d, w, mask);
+    AscendC::Reg::Muls(negW, w, -1.0f, mask);
+    r = d;
+    AscendC::Reg::MulAddDst(r, q0, negW, mask); // r = d - q0*w, exact via FMA
+    AscendC::Reg::Div(e, r, w, mask);
+    AscendC::Reg::Add(q, q0, e, mask);
+    // Non-finite guard (standard Markstein NaN-fallback): for d=±inf the exact
+    // residual is inf−inf=NaN, which would poison q (verified regression:
+    // deltas=+inf input produced all-NaN output; golden expects Rx/Ry=±inf,
+    // thetaT=90). Where q is NaN, fall back to q0 — vdiv already yields the
+    // IEEE result for inf/0·x/0/0 edge cases (inf, ±inf, 0, NaN).
+    AscendC::Reg::Compare<float, AscendC::CMPMODE::NE>(nanMask, q, q, mask);
+    AscendC::Reg::Select<float>(q, q0, q, nanMask);
+}
+
 // ===========================================================================
 // __simd_callee__ transcendental helpers (DESIGN §10.9.2)
 //   Called from within the __simd_vf__ body; operate on RegTensor<float>.
@@ -322,15 +351,15 @@ __simd_callee__ inline void TanImpl(AscendC::Reg::RegTensor<float>& dst, AscendC
 //      Uses Min to select correct branch — avoids branch divergence, improves precision.
 //   3. Apply sign: dst = sign(x) · atan(|x|).
 //
-// FIX vs upstream CANN: all branches use 7-term Taylor (F0..F6 =
-// x - x³/3 + x⁵/5 - x⁷/7 + x⁹/9 - x¹¹/11 + x¹³/13) instead of the upstream
-// 5-term (F0..F4). The 5-term truncation error at |x| near tan(π/8)=0.4142
-// is ~x¹¹/11 ≈ 5e-6 (76 ULP at scale 0.39), which propagates through
-// θ_t = atan(tan(θ_a)+Δ't) to ~2.6e-4° abs error in the angle output —
+// FIX vs upstream CANN: all branches use 9-term Taylor (F0..F8 =
+// x - x³/3 + x⁵/5 - x⁷/7 + x⁹/9 - x¹¹/11 + x¹³/13 - x¹⁵/15 + x¹⁷/17) instead
+// of the upstream 5-term (F0..F4). The 5-term truncation error at |x| near
+// tan(π/8)=0.4142 is ~x¹¹/11 ≈ 5e-6 (76 ULP at scale 0.39), which propagates
+// through θ_t = atan(tan(θ_a)+Δ't) to ~2.6e-4° abs error in the angle output —
 // exceeding DESIGN §4.3 atol=1e-5 and inflating stat_rel_err mare to 2.8+
-// on near-zero golden θ_t. The 7-term truncation error is ~x¹⁵/15 ≈ 1e-7
-// (< 2 ULP), reducing the angle abs error to ~3e-6° and mare by ~40×.
-// Branch 4 already used 7-term; branches 1-3 are upgraded here.
+// on near-zero golden θ_t. The 9-term truncation error is ~x¹⁹/19 ≈ 3e-9
+// (< 0.1 ULP, below the fp32 rounding floor). The odd (9-term) count is also
+// REQUIRED by the Min() branch selection — see the F7/F8 note below.
 //   For inf: clip→10000, atan(10000)≈π/2·sign → ±π/2 (matches torch.atan(±inf)).
 //   For NaN: propagates through clip/Min/Mul → NaN (matches torch.atan(NaN)).
 __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, AscendC::Reg::RegTensor<float>& src,
@@ -338,10 +367,20 @@ __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, Ascend
 {
     constexpr float PI_BY_4 = 0.78539816339744830961566084581988f;
     constexpr float PI_BY_8 = 0.39269908169872415480783042290994f;
+    constexpr float THREE_PI_BY_8 = 1.1780972450961724f; // fp32(3π/8), single rounding
     constexpr float TAN_PI_BY_8 = 0.4142135623730950f;
     constexpr float MAX_INPUT = 10000.0f;
     constexpr float MIN_INPUT = -10000.0f;
-    // Taylor coefficients: atan(x) = x - x³/3 + x⁵/5 - x⁷/7 + x⁹/9
+    // Taylor coefficients: atan(x) = x - x³/3 + ... + x¹³/13 - x¹⁵/15 + x¹⁷/17
+    // The Taylor MUST end on a POSITIVE term (F8, odd term count = 9): the branch
+    // combination uses Min() and relies on every branch's partial sum being an
+    // OVERESTIMATE of atan (alternating-series tail < 0), and on out-of-range
+    // arguments (|x|>1) diverging to +large so Min discards them. An 8-term
+    // partial (ending -x¹⁵/15) turns NEGATIVE for |x|>1 and UNDERESTIMATES on
+    // (0.414,1) — Min then selects the wrong branch (verified regression:
+    // L1_340/286/232 mere 300-1600). With 9 terms the truncation at the branch
+    // boundary |x|→tan(π/8)=0.4142 is x¹⁹/19 ≈ 0.09 ULP (the 7-term's x¹⁵/15
+    // ≈ 3.5 ULP dominated the cross_check thetaT error on L1_159).
     constexpr float F0 = 1.0f;
     constexpr float F1 = -0.3333333333333333f;
     constexpr float F2 = 0.2f;
@@ -349,6 +388,8 @@ __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, Ascend
     constexpr float F4 = 0.1111111111111111f;
     constexpr float F5 = -0.09090909090909091f;
     constexpr float F6 = 0.07692307692307693f;
+    constexpr float F7 = -0.06666666666666667f;
+    constexpr float F8 = 0.058823529411764705f;
 
     AscendC::Reg::RegTensor<float> clipReg, absReg, tmp, tmp2, x2, taylor4, taylor6;
     AscendC::Reg::RegTensor<float> signReg, denom;
@@ -361,24 +402,29 @@ __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, Ascend
     // x² (reused by all Taylor branches)
     AscendC::Reg::Mul(x2, absReg, absReg, mask);
 
-    // --- Branch 1: x ∈ (0, tan(π/8)) → atan(x) via 7-term Taylor ---
-    // 7-term (F0..F6 = x - x³/3 + x⁵/5 - x⁷/7 + x⁹/9 - x¹¹/11 + x¹³/13)
-    // replaces original 5-term: truncation error at |x|=0.411 (near tan(π/8))
-    // drops from ~76 ULP (5-term, x¹¹/11 ≈ 5e-6) to ~2 ULP (7-term, x¹⁵/15 ≈ 1e-7).
-    // OVERFLOW GUARD: for |x| > 1, x²>1 causes the Horner accumulation of x¹³
-    // to exceed fp32 max (3.4e38) at |x|≈2500, producing +Inf. Since Min
+    // --- Branch 1: x ∈ (0, tan(π/8)) → atan(x) via 9-term Taylor ---
+    // 9-term (F0..F8 = x - x³/3 + x⁵/5 - x⁷/7 + x⁹/9 - x¹¹/11 + x¹³/13
+    // - x¹⁵/15 + x¹⁷/17) replaces original 5-term: truncation error at
+    // |x|=0.411 (near tan(π/8)) drops from ~76 ULP (5-term, x¹¹/11 ≈ 5e-6)
+    // to ~0.1 ULP (9-term, x¹⁹/19 ≈ 2e-9).
+    // OVERFLOW GUARD: for |x| > 1, x²>1 causes the Horner accumulation of x¹⁷
+    // to exceed fp32 max (3.4e38) at |x|≈300, producing +Inf. Since Min
     // operates on UNSIGNED (positive) values (sign applied after), +Inf is
     // always ≥ the correct branch, so Min would still pick the correct branch.
     // However, for robustness clip absReg to 2.0 for branch 1 only — at |x|=2
-    // the 7-term Taylor gives ~488 (well above π/2≈1.57, so Min still selects
-    // the correct branch), and no intermediate exceeds ~244 (far below fp32
+    // the 9-term Taylor gives ~6014 (well above π/2≈1.57, so Min still selects
+    // the correct branch), and no intermediate exceeds ~3007 (far below fp32
     // max). For |x|<tan(π/8)=0.414 (branch 1's valid range), |x|<2 so the clip
     // is a no-op and accuracy is unaffected. Uses separate x2_clipped to
     // preserve the unclipped x2 for branches 2-4.
     AscendC::Reg::RegTensor<float> absRegClipped, x2_clipped;
     AscendC::Reg::Mins(absRegClipped, absReg, 2.0f, mask);
     AscendC::Reg::Mul(x2_clipped, absRegClipped, absRegClipped, mask);
-    AscendC::Reg::Duplicate<float>(taylor4, F6);
+    AscendC::Reg::Duplicate<float>(taylor4, F8);
+    AscendC::Reg::Mul(tmp, taylor4, x2_clipped, mask);
+    AscendC::Reg::Adds(taylor4, tmp, F7, mask);
+    AscendC::Reg::Mul(tmp, taylor4, x2_clipped, mask);
+    AscendC::Reg::Adds(taylor4, tmp, F6, mask);
     AscendC::Reg::Mul(tmp, taylor4, x2_clipped, mask);
     AscendC::Reg::Adds(taylor4, tmp, F5, mask);
     AscendC::Reg::Mul(tmp, taylor4, x2_clipped, mask);
@@ -400,7 +446,11 @@ __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, Ascend
     AscendC::Reg::Div(tmp2, tmp2, tmp, mask);
     AscendC::Reg::Abs(tmp2, tmp2, mask);
     AscendC::Reg::Mul(denom, tmp2, tmp2, mask);
-    AscendC::Reg::Duplicate<float>(taylor6, F6);
+    AscendC::Reg::Duplicate<float>(taylor6, F8);
+    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
+    AscendC::Reg::Adds(taylor6, tmp, F7, mask);
+    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
+    AscendC::Reg::Adds(taylor6, tmp, F6, mask);
     AscendC::Reg::Mul(tmp, taylor6, denom, mask);
     AscendC::Reg::Adds(taylor6, tmp, F5, mask);
     AscendC::Reg::Mul(tmp, taylor6, denom, mask);
@@ -420,10 +470,14 @@ __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, Ascend
     // --- Branch 3: x ∈ (tan(π/4), ∞) → π/4 + atan((|x|-1)/(|x|+1)) ---
     AscendC::Reg::Adds(tmp, absReg, 1.0f, mask);
     AscendC::Reg::Adds(tmp2, absReg, -1.0f, mask);
-    AscendC::Reg::Div(tmp2, tmp2, tmp, mask);
+    RbdDivIeee(tmp2, tmp2, tmp, mask); // correctly-rounded r3 (arg-chain accuracy)
     AscendC::Reg::Abs(tmp2, tmp2, mask);
     AscendC::Reg::Mul(denom, tmp2, tmp2, mask);
-    AscendC::Reg::Duplicate<float>(taylor6, F6);
+    AscendC::Reg::Duplicate<float>(taylor6, F8);
+    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
+    AscendC::Reg::Adds(taylor6, tmp, F7, mask);
+    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
+    AscendC::Reg::Adds(taylor6, tmp, F6, mask);
     AscendC::Reg::Mul(tmp, taylor6, denom, mask);
     AscendC::Reg::Adds(taylor6, tmp, F5, mask);
     AscendC::Reg::Mul(tmp, taylor6, denom, mask);
@@ -440,29 +494,37 @@ __simd_callee__ inline void AtanImpl(AscendC::Reg::RegTensor<float>& dst, Ascend
     AscendC::Reg::Adds(taylor6, taylor6, PI_BY_4, mask);
     AscendC::Reg::Min(taylor4, taylor4, taylor6, mask);
 
-    // --- Branch 4: x ∈ (tan(π/4), ∞) finer — π/4+π/8+atan(transform) ---
+    // --- Branch 4: x ∈ (tan(π/4), ∞) finer — 3π/8 + atan(transform) ---
+    // FMA Horner (vmula/MulAddDst: 1 rounding per step instead of 2) — this
+    // branch wins for |x| > ~2.4 (e.g. tanSum ∈ [-20,-4] cases) where the
+    // Horner rounding noise dominated the thetaT cross_check error.
     AscendC::Reg::Muls(tmp, tmp2, TAN_PI_BY_8, mask);
     AscendC::Reg::Adds(tmp, tmp, 1.0f, mask);
     AscendC::Reg::Adds(tmp2, tmp2, -TAN_PI_BY_8, mask);
-    AscendC::Reg::Div(tmp2, tmp2, tmp, mask);
+    RbdDivIeee(tmp2, tmp2, tmp, mask); // correctly-rounded r4 (arg-chain accuracy)
     AscendC::Reg::Abs(tmp2, tmp2, mask);
     AscendC::Reg::Mul(denom, tmp2, tmp2, mask);
+    AscendC::Reg::Duplicate<float>(taylor6, F8);
+    AscendC::Reg::Duplicate<float>(tmp, F7);
+    AscendC::Reg::MulAddDst(tmp, taylor6, denom, mask); // tmp = F7 + taylor6*denom (FMA, 1 rounding)
     AscendC::Reg::Duplicate<float>(taylor6, F6);
-    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
-    AscendC::Reg::Adds(taylor6, tmp, F5, mask);
-    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
-    AscendC::Reg::Adds(taylor6, tmp, F4, mask);
-    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
-    AscendC::Reg::Adds(taylor6, tmp, F3, mask);
-    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
-    AscendC::Reg::Adds(taylor6, tmp, F2, mask);
-    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
-    AscendC::Reg::Adds(taylor6, tmp, F1, mask);
-    AscendC::Reg::Mul(tmp, taylor6, denom, mask);
-    AscendC::Reg::Adds(taylor6, tmp, F0, mask);
+    AscendC::Reg::MulAddDst(taylor6, tmp, denom, mask); // taylor6 = F6 + tmp*denom (FMA, 1 rounding)
+    AscendC::Reg::Duplicate<float>(tmp, F5);
+    AscendC::Reg::MulAddDst(tmp, taylor6, denom, mask); // tmp = F5 + taylor6*denom (FMA, 1 rounding)
+    AscendC::Reg::Duplicate<float>(taylor6, F4);
+    AscendC::Reg::MulAddDst(taylor6, tmp, denom, mask); // taylor6 = F4 + tmp*denom (FMA, 1 rounding)
+    AscendC::Reg::Duplicate<float>(tmp, F3);
+    AscendC::Reg::MulAddDst(tmp, taylor6, denom, mask); // tmp = F3 + taylor6*denom (FMA, 1 rounding)
+    AscendC::Reg::Duplicate<float>(taylor6, F2);
+    AscendC::Reg::MulAddDst(taylor6, tmp, denom, mask); // taylor6 = F2 + tmp*denom (FMA, 1 rounding)
+    AscendC::Reg::Duplicate<float>(tmp, F1);
+    AscendC::Reg::MulAddDst(tmp, taylor6, denom, mask); // tmp = F1 + taylor6*denom (FMA, 1 rounding)
+    AscendC::Reg::Duplicate<float>(taylor6, F0);
+    AscendC::Reg::MulAddDst(taylor6, tmp, denom, mask); // taylor6 = F0 + tmp*denom (FMA, 1 rounding)
     AscendC::Reg::Mul(taylor6, taylor6, tmp2, mask);
-    AscendC::Reg::Adds(taylor6, taylor6, PI_BY_8, mask);
-    AscendC::Reg::Adds(taylor6, taylor6, PI_BY_4, mask);
+    // Single fused constant 3π/8 (one rounding) instead of +π/8 then +π/4 (two
+    // roundings) — saves ~0.5 ULP on the branch-4 result.
+    AscendC::Reg::Adds(taylor6, taylor6, THREE_PI_BY_8, mask);
     AscendC::Reg::Min(taylor4, taylor4, taylor6, mask);
 
     // --- Asymptotic path for large |x| (> 100): atan(x) = sign(x)·(π/2 - atan(1/|x|)) ---
@@ -528,8 +590,13 @@ __simd_vf__ inline void RotatedBoxDecodeComputeVF(__ubuf__ T* yView, __ubuf__ T*
     constexpr uint32_t VL = AscendC::GetVecLen() / sizeof(float);
     uint32_t remaining = static_cast<uint32_t>(boxCount);
     uint16_t repeatNum = static_cast<uint16_t>((boxCount + static_cast<int64_t>(VL) - 1) / static_cast<int64_t>(VL));
-    constexpr float RBD_DEG2RAD = 3.14159265358979323846f / 180.0f;
-    constexpr float RBD_RAD2DEG = 180.0f / 3.14159265358979323846f;
+    // Use decimal literals so the compiler rounds directly to the correctly-
+    // rounded fp32 constant — torch casts the double-precision constants to
+    // fp32: angle * (math.pi/180) and rad * (180/math.pi).
+    // `180.0f / 3.14159265f` computes to 0x42652ee0 (1 ULP BELOW the correct
+    // 0x42652ee1), systematically biasing thetaT by -1 ULP vs torch.
+    constexpr float RBD_DEG2RAD = 0.017453292519943295f; // fp32(pi/180) = 0x3c8efa35
+    constexpr float RBD_RAD2DEG = 57.29577951308232f;    // fp32(180/pi) = 0x42652ee1
 
     for (uint16_t i = 0; i < repeatNum; ++i) {
         AscendC::Reg::MaskReg mask = AscendC::Reg::UpdateMask<float>(remaining);
@@ -601,17 +668,23 @@ __simd_vf__ inline void RotatedBoxDecodeComputeVF(__ubuf__ T* yView, __ubuf__ T*
         // (catastrophic cancellation in out_lx = t_cx − t_w/2), amplifies the
         // stat_rel_err mare past the threshold even though mere stays at the fp32
         // precision floor.
+        // Correctly-rounded division (RbdDivIeee) bit-matches the golden's
+        // `deltas / weight` (torch true_divide). The default Reg::Div (vdiv) is
+        // ≤1 ULP off; that argument error is AMPLIFIED by exp() by |Δ'w| (up to
+        // ~50×) and propagated through tan→atan, blowing up cross_check
+        // mare/mere/rmse ratios vs the third party (whose CUDA division is
+        // IEEE-exact like the CPU golden).
         AscendC::Reg::RegTensor<float> dpX, dpY, dpW, dpH, dpT, wReg;
         AscendC::Reg::Duplicate<float>(wReg, w0);
-        AscendC::Reg::Div(dpX, dDx, wReg, mask);
+        RbdDivIeee(dpX, dDx, wReg, mask);
         AscendC::Reg::Duplicate<float>(wReg, w1);
-        AscendC::Reg::Div(dpY, dDy, wReg, mask);
+        RbdDivIeee(dpY, dDy, wReg, mask);
         AscendC::Reg::Duplicate<float>(wReg, w2);
-        AscendC::Reg::Div(dpW, dDw, wReg, mask);
+        RbdDivIeee(dpW, dDw, wReg, mask);
         AscendC::Reg::Duplicate<float>(wReg, w3);
-        AscendC::Reg::Div(dpH, dDh, wReg, mask);
+        RbdDivIeee(dpH, dDh, wReg, mask);
         AscendC::Reg::Duplicate<float>(wReg, w4);
-        AscendC::Reg::Div(dpT, dDt, wReg, mask);
+        RbdDivIeee(dpT, dDt, wReg, mask);
 
         // ===== VF3: decode center (t_cx = a_cx + Δ'x·a_w) =====
         AscendC::Reg::RegTensor<float> tCx, tCy, tmp;
