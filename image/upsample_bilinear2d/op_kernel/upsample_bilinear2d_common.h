@@ -46,8 +46,8 @@ __aicore__ inline float getCenterValue(const int64_t srcIdx, const float scale, 
 
 __aicore__ inline float getLambda(const float i_rel_idx, const int64_t i_min)
 {
-    float i_lambda = Min(Max(static_cast<float>(i_rel_idx - i_min), (float)0.0), (float)1.0);
-    return i_lambda;
+    float lambdaVal = Min(Max(static_cast<float>(i_rel_idx - i_min), (float)0.0), (float)1.0);
+    return lambdaVal;
 };
 
 __aicore__ inline bool FloatEqual(const float m, const float n)

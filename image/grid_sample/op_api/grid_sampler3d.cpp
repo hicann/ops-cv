@@ -9,8 +9,8 @@
  */
 
 #include "grid_sampler3d.h"
-#include "opdev/make_op_executor.h"
 #include "opdev/aicpu/aicpu_task.h"
+#include "opdev/make_op_executor.h"
 #include "opdev/op_def.h"
 #include "opdev/op_dfx.h"
 #include "opdev/op_executor.h"
@@ -35,9 +35,9 @@ static const string PADDING_ZEROS = "zeros";
 static const string PADDING_BORDER = "border";
 static const string PADDING_REFLECTION = "reflection";
 
-inline const string& GetInterpolationModeStr(int64_t interpolationMode)
+inline const string& GetInterpolationModeStr(int64_t interpolationModeVal)
 {
-    if (interpolationMode == 0) {
+    if (interpolationModeVal == 0) {
         return INTERPOLATION_BILINEAR;
     }
     return INTERPOLATION_NEAREST;

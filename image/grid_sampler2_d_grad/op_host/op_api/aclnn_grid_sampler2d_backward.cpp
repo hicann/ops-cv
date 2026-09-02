@@ -34,8 +34,8 @@ extern "C" {
 
 static const size_t FIRST_DIM = 0;
 static const size_t SECOND_DIM = 1;
-static const size_t THIRD_DIM = 2;
 static const size_t FOURTH_DIM = 3;
+static const size_t THIRD_DIM = 2;
 
 static const int64_t INTERPOLATION_MODE_MIN_VALUE = 0;
 static const int64_t INTERPOLATION_MODE_MAX_VALUE = 2;
@@ -89,17 +89,17 @@ static bool CheckDtypeValid(const aclTensor* gradOutput, const aclTensor* input,
     return true;
 }
 
-static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
+static bool CheckAttrValid(int64_t interpolationModeVal, int64_t paddingModeVal)
 {
     // 检查interpolationMode 、paddingMode是否在支持范围内
-    if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
+    if (interpolationModeVal < INTERPOLATION_MODE_MIN_VALUE || interpolationModeVal > INTERPOLATION_MODE_MAX_VALUE) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationModeVal,
                 INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
         return false;
     }
 
-    if (paddingMode < PADDING_MODE_MIN_VALUE || paddingMode > PADDING_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
+    if (paddingModeVal < PADDING_MODE_MIN_VALUE || paddingModeVal > PADDING_MODE_MAX_VALUE) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingModeVal,
                 PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
         return false;
     }

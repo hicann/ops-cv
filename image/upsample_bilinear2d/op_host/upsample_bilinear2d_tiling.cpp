@@ -301,17 +301,17 @@ bool UpsampleBilinear2dTiling::getWorkSpace(const uint32_t needCoreNum)
         return false;
     }
     // 中间tensor
-    uint64_t intermediate_matrix_size = output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] *
-                                        dataTypeSize;
-    intermediate_matrix_size = (intermediate_matrix_size + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
+    uint64_t intermediateMatrixSize = output_shapes[0] * output_shapes[1] * input_shapes[2] * output_shapes[3] *
+                                      dataTypeSize;
+    intermediateMatrixSize = (intermediateMatrixSize + ADDR_ALIGN_SIZE - 1) / ADDR_ALIGN_SIZE * ADDR_ALIGN_SIZE;
     // 每个核的系数矩阵，每个核申请两个workspace空间，避免相互覆盖
     int64_t singleCoreK = singleCoreK_w > singleCoreK_h ? singleCoreK_w : singleCoreK_h;
     int64_t slide_size = std::max(slide_size_w, slide_size_h);
     uint32_t radioMatrixWorkspaceSize = slide_size * singleCoreK * dataTypeSize;
-    workspaces[0] = intermediate_matrix_size + radioMatrixWorkspaceSize * needCoreNum + WORK_SPACE_SIZE;
+    workspaces[0] = intermediateMatrixSize + radioMatrixWorkspaceSize * needCoreNum + WORK_SPACE_SIZE;
     tilingData.set_radio_matrix_size_w(slide_size_w * singleCoreK_w);
     tilingData.set_radio_matrix_size_h(slide_size_h * singleCoreK_h);
-    tilingData.set_intermediate_matrix_size(intermediate_matrix_size);
+    tilingData.set_intermediate_matrix_size(intermediateMatrixSize);
     return true;
 }
 

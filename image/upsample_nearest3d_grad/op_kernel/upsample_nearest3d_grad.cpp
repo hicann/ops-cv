@@ -21,7 +21,7 @@ extern "C" __global__ __aicore__ void upsample_nearest3d_grad(GM_ADDR x, GM_ADDR
 {
     GET_TILING_DATA(tilingData, tiling);
     const UpsampleNearest3dGradTilingData* __restrict tiling_data = &tilingData;
-    const TCubeTiling* __restrict matmulTilingWTiling = &(tiling_data->matmulTilingW);
+    const TCubeTiling* __restrict matmulTilingW = &(tiling_data->matmulTilingW);
     const TCubeTiling* __restrict matmulTilingHTiling = &(tiling_data->matmulTilingH);
     const TCubeTiling* __restrict matmulTilingDTiling = &(tiling_data->matmulTilingD);
 
@@ -30,10 +30,10 @@ extern "C" __global__ __aicore__ void upsample_nearest3d_grad(GM_ADDR x, GM_ADDR
         return;
     }
 
-#define INIT_AND_PROCESS                                                                           \
-    REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH, \
-                      matmulTilingHTiling, op.matmulD, matmulTilingDTiling);                       \
-    op.Init(x, y, false, userWS, &tilingData);                                                     \
+#define INIT_AND_PROCESS                                                                                          \
+    REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingHTiling, \
+                      op.matmulD, matmulTilingDTiling);                                                           \
+    op.Init(x, y, false, userWS, &tilingData);                                                                    \
     op.Process()
 
     if (TILING_KEY_IS(1)) {

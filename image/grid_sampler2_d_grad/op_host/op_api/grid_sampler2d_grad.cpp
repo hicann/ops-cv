@@ -46,12 +46,12 @@ inline const string& GetInterpolationModeStr(int64_t interpolationMode)
     return INTERPOLATION_BICUBIC;
 }
 
-inline const string& GetPaddingModeStr(int64_t paddingMode)
+inline const string& GetPaddingModeStr(int64_t paddingModeType)
 {
-    if (paddingMode == 0) {
+    if (paddingModeType == 0) {
         return PADDING_ZEROS;
     }
-    if (paddingMode == 1) {
+    if (paddingModeType == 1) {
         return PADDING_BORDER;
     }
     return PADDING_REFLECTION;

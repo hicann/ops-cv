@@ -110,10 +110,10 @@ private:
 
 void UpsampleBilinearAATiling::setScale()
 {
-    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
 
-    realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[0], *align_corners, scale_h);
-    realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[1], *align_corners, scale_w);
+    realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), outputSizeArray[0], *align_corners, scale_h);
+    realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), outputSizeArray[1], *align_corners, scale_w);
 
     tilingData.set_scale_h(realScale_h);
     tilingData.set_scale_w(realScale_w);
@@ -157,11 +157,11 @@ inline float UpsampleBilinearAATiling::compute_scale_value(int64_t input_size, i
 
 inline bool UpsampleBilinearAATiling::CheckScales(const gert::TilingContext* context, float scales_w, float scales_h)
 {
-    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
     int64_t inputH = input_shape.GetDim(H_INDEX);
     int64_t inputW = input_shape.GetDim(W_INDEX);
-    int64_t outputH = output_size_array[0];
-    int64_t outputW = output_size_array[1];
+    int64_t outputH = outputSizeArray[0];
+    int64_t outputW = outputSizeArray[1];
     float tmpScalesH = scales_h > 0 ? scales_h : static_cast<float>(inputH / outputH);
     float tmpScalesW = scales_w > 0 ? scales_w : static_cast<float>(inputW / outputW);
     OP_CHECK_IF(
@@ -334,12 +334,12 @@ bool UpsampleBilinearAATiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBilinearAATiling::getShapes()
 {
-    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
         if (i > C_INDEX) {
-            output_shapes[i] = output_size_array[i - H_INDEX];
+            output_shapes[i] = outputSizeArray[i - H_INDEX];
         }
     }
     tilingData.set_input_shapes(input_shapes);

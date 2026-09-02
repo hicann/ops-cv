@@ -58,10 +58,10 @@ static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 
-static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+static bool CheckNotNull(const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize,
                          const aclTensor* gradInput)
 {
-    OP_CHECK_NULL(gradOut, return false);
+    OP_CHECK_NULL(gradOutput, return false);
     OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(inputSize, return false);
     OP_CHECK_NULL(gradInput, return false);
@@ -77,7 +77,7 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
     int64_t inputH = (*inputSize)[DIM_TWO];
     int64_t inputW = (*inputSize)[DIM_THREE];
     auto gradOutShape = gradOut->GetViewShape();
-    size_t dimNum = gradOutShape.GetDimNum();
+    size_t shapeDim = gradOutShape.GetDimNum();
     FVector<int64_t> fullOutSize = {batch, channels, outH, outW};
 
     if (gradOut->GetStorageFormat() == op::Format::FORMAT_NHWC) {
@@ -96,7 +96,7 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
                      inputH, inputW, outH, outW),
              return false);
 
-    for (size_t i = 0; i < dimNum; ++i) {
+    for (size_t i = 0; i < shapeDim; ++i) {
         if (gradOutShape.GetDim(i) != fullOutSize[i]) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                     "Expected grad_output to have the same shape as output;"
@@ -110,8 +110,8 @@ bool CheckInputElements(const aclTensor* gradOut, const aclIntArray* outputSize,
 
 static const std::initializer_list<DataType>& GetDtypeSupportList()
 {
-    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if (curArch == NpuArch::DAV_2201 || IsRegBase(curArch)) {
+    auto npuArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (npuArch == NpuArch::DAV_2201 || IsRegBase(npuArch)) {
         return ASCEND910B_DTYPE_DTYPE_SUPPORT_LIST;
     } else {
         return ASCEND910_DTYPE_DTYPE_SUPPORT_LIST;
@@ -130,11 +130,11 @@ static bool CheckDtypeValid(const aclTensor* gradOut, const aclTensor* gradInput
 
 static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize)
 {
-    size_t outputSizeNum = outputSize->Size();
+    size_t outputSizeCount = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_LIMIT, return false);
-    OP_CHECK(outputSizeNum == EXPECT_SIZE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
+    OP_CHECK(outputSizeCount == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeCount),
              return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
@@ -166,8 +166,8 @@ static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outp
 static bool isAiCoreSupport(const aclTensor* gradOutContiguous, const aclIntArray* inputSize, double scalesH,
                             double scalesW)
 {
-    auto curArch = GetCurrentPlatformInfo().GetCurNpuArch();
-    if (curArch != NpuArch::DAV_2201) {
+    auto npuArch = GetCurrentPlatformInfo().GetCurNpuArch();
+    if (npuArch != NpuArch::DAV_2201) {
         return false;
     }
     if (scalesH <= 0 || scalesW <= 0) {

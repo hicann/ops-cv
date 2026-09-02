@@ -162,10 +162,10 @@ ge::graphStatus UpsampleBicubic2dAAGradTiling::Init() const { return ge::GRAPH_S
 void UpsampleBicubic2dAAGradTiling::setScale()
 {
     if (dim == H_INDEX) {
-        const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+        const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
 
-        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[H_INDEX], scale_h);
-        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[W_INDEX], scale_w);
+        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), outputSizeArray[H_INDEX], scale_h);
+        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), outputSizeArray[W_INDEX], scale_w);
         if (FloatEqual(realScale_w, 1.0)) {
             needExpandW = false;
         }
@@ -411,12 +411,12 @@ void UpsampleBicubic2dAAGradTiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBicubic2dAAGradTiling::getOutputShape()
 {
-    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
         if (i > 1) {
-            output_shapes[i] = output_size_array[i];
+            output_shapes[i] = outputSizeArray[i];
         }
     }
     tilingData.set_input_shapes(input_shapes);

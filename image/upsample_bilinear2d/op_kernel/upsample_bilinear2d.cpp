@@ -22,8 +22,8 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(GM_ADDR input, GM_ADDR
     GET_TILING_DATA(tilingData, tiling);
 
     const UpsampleBilinear2dTilingData* __restrict tiling_data = &tilingData;
-    const TCubeTiling* __restrict matmulTilingWTiling = &(tiling_data->matmulTiling_w);
-    const TCubeTiling* __restrict matmulTilingHTiling = &(tiling_data->matmulTiling_h);
+    const TCubeTiling* __restrict matmulTilingW = &(tiling_data->matmulTiling_w);
+    const TCubeTiling* __restrict matmulTilingH = &(tiling_data->matmulTiling_h);
 
     // foreach(vector) not need workspace
     GM_ADDR userWS = GetUserWorkspace(workspace);
@@ -34,16 +34,14 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(GM_ADDR input, GM_ADDR
     if (TILING_KEY_IS(1)) {
         if (tiling_data->dataType == 1) {
             UpsampleBilinear2dND<half> op;
-            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH,
-                              matmulTilingHTiling);
+            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
         }
         if (tiling_data->dataType == 2) {
 #if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
             UpsampleBilinear2dND<float> op;
-            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH,
-                              matmulTilingHTiling);
+            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
 #endif
@@ -51,8 +49,7 @@ extern "C" __global__ __aicore__ void upsample_bilinear2d(GM_ADDR input, GM_ADDR
         if (tiling_data->dataType == 3) {
 #if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
             UpsampleBilinear2dND<bfloat16_t> op;
-            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingWTiling, op.matmulH,
-                              matmulTilingHTiling);
+            REGIST_MATMUL_OBJ(&op.pipe, GetSysWorkSpacePtr(), op.matmulW, matmulTilingW, op.matmulH, matmulTilingH);
             op.Init(input, output, userWS, &tilingData);
             op.Process();
 #endif

@@ -64,7 +64,7 @@ private:
     void SetScale();
     inline float ComputeScaleValue(int64_t inSize, int64_t outSize, const float scale) const;
     inline bool GetNeedResize(int64_t inSize, int64_t outSize, const float scale) const;
-    void GetWorkSpace(int64_t needCoreNum);
+    void GetWorkSpace(int64_t neededCoreNum);
     void GetShapes();
     void GetSlideSize();
     uint8_t GetDataTypeVal() const;
@@ -114,9 +114,9 @@ private:
     int64_t gradOutputShapes[3] = {0};
     int64_t gradInputShapes[3] = {0};
 
-    int64_t eachCoreSlideNums[3] = {0, 0, 0};
-    int64_t remainders[3] = {0, 0, 0};
-    int64_t tailStartSlideNums[3] = {0, 0, 0};
+    int64_t eachCoreSlideNumArray[3] = {0, 0, 0};
+    int64_t remainderArray[3] = {0, 0, 0};
+    int64_t tailStartSlideNumArray[3] = {0, 0, 0};
     int64_t groupCoreNums[3] = {0, 0, 0};
     int64_t inputRows[3] = {0, 0, 0};
     int64_t tailAvergingRows[3] = {0, 0, 0};
@@ -138,13 +138,13 @@ private:
     UpsampleNearest3dGradTilingData tilingData;
 };
 
-inline bool FloatEqual(float a, float b)
+inline bool FloatEqual(float p, float q)
 {
     float closeTo0 = float(1e-6);
-    if (a > b) {
-        return a - b < closeTo0;
+    if (p > q) {
+        return p - q < closeTo0;
     } else {
-        return b - a < closeTo0;
+        return q - p < closeTo0;
     }
 };
 
@@ -159,23 +159,23 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
         return Tiling4UpsampleNearest3dGradRegbase(tilingContext);
     }
     // 获取输入矩阵
-    auto srcTensor = tilingContext->GetInputTensor(0);
-    if (srcTensor == nullptr) {
+    auto srcInputTensor = tilingContext->GetInputTensor(0);
+    if (srcInputTensor == nullptr) {
         return ge::GRAPH_FAILED;
     }
 
     // 获取输入的参数
-    const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
-    if (attrs == nullptr) {
+    const gert::RuntimeAttrs* tilingAttrs = tilingContext->GetAttrs();
+    if (tilingAttrs == nullptr) {
         return ge::GRAPH_FAILED;
     }
 
     size_t idx = 0;
-    inputSizeAttr = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    inputSizeAttr = tilingAttrs->GetAttrPointer<gert::ContinuousVector>(idx++);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, inputSizeAttr);
-    outputSizeAttr = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    outputSizeAttr = tilingAttrs->GetAttrPointer<gert::ContinuousVector>(idx++);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outputSizeAttr);
-    scalesAttr = attrs->GetAttrPointer<gert::ContinuousVector>(idx++);
+    scalesAttr = tilingAttrs->GetAttrPointer<gert::ContinuousVector>(idx++);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scalesAttr);
     const float* scalesArray = reinterpret_cast<const float*>(scalesAttr->GetData());
     scaleD = scalesArray[D_INDEX];
@@ -204,9 +204,9 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
     // 数据分核
     auto compileInfo = reinterpret_cast<const UpsampleNearest3dGradCompileInfo*>(tilingContext->GetCompileInfo());
     int64_t coreNumPlatform = compileInfo->coreNum;
-    int64_t needCoreNum = GetNeedCoreNum(coreNumPlatform);
-    GetWorkSpace(needCoreNum);
-    tilingContext->SetBlockDim(needCoreNum);
+    int64_t neededCoreNum = GetNeedCoreNum(coreNumPlatform);
+    GetWorkSpace(neededCoreNum);
+    tilingContext->SetBlockDim(neededCoreNum);
     tilingContext->SetTilingKey(1);
 
     FillTilingData();
@@ -331,9 +331,9 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNum(int64_t coreNumPlatform)
     int64_t tensorSizeMapping = Max(tensorSizeMappingW, tensorSizeMappingH, tensorSizeMappingD);
     tilingData.set_tensorSizeMapping(tensorSizeMapping);
 
-    int64_t needCoreNum = Max(needCoreNumW, needCoreNumH, needCoreNumD);
-    needCoreNum = needCoreNum < 1 ? 1 : needCoreNum;
-    return needCoreNum;
+    int64_t neededCoreNum = Max(needCoreNumW, needCoreNumH, needCoreNumD);
+    neededCoreNum = neededCoreNum < 1 ? 1 : neededCoreNum;
+    return neededCoreNum;
 }
 
 int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumW(int64_t coreNumPlatform)
@@ -353,18 +353,18 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumW(int64_t coreNumPlatform)
         groupCoreNum = std::min(groupCoreNum, CeilA2B(inputRows[W_INDEX], tailAvergingRow));
     }
 
-    int64_t needCoreNum = coreNumPlatform;
+    int64_t neededCoreNum = coreNumPlatform;
     if (eachCoreSlideNum == 0 && remainder > 0) {
-        needCoreNum = remainder * groupCoreNum;
+        neededCoreNum = remainder * groupCoreNum;
     }
 
-    eachCoreSlideNums[W_INDEX] = eachCoreSlideNum;
-    remainders[W_INDEX] = remainder;
-    tailStartSlideNums[W_INDEX] = eachCoreSlideNum * coreNumPlatform;
+    eachCoreSlideNumArray[W_INDEX] = eachCoreSlideNum;
+    remainderArray[W_INDEX] = remainder;
+    tailStartSlideNumArray[W_INDEX] = eachCoreSlideNum * coreNumPlatform;
     groupCoreNums[W_INDEX] = groupCoreNum;
     tailAvergingRows[W_INDEX] = tailAvergingRow;
-    needCoreNums[W_INDEX] = needCoreNum;
-    return needCoreNum;
+    needCoreNums[W_INDEX] = neededCoreNum;
+    return neededCoreNum;
 }
 
 int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumH(int64_t coreNumPlatform)
@@ -388,18 +388,18 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumH(int64_t coreNumPlatform)
         groupCoreNum = std::min(groupCoreNum, CeilA2B(inputRows[H_INDEX], tailAvergingRow));
     }
 
-    int64_t needCoreNum = coreNumPlatform;
+    int64_t neededCoreNum = coreNumPlatform;
     if (eachCoreSlideNum == 0 && remainder > 0) {
-        needCoreNum = remainder * groupCoreNum;
+        neededCoreNum = remainder * groupCoreNum;
     }
 
-    eachCoreSlideNums[H_INDEX] = eachCoreSlideNum;
-    remainders[H_INDEX] = remainder;
-    tailStartSlideNums[H_INDEX] = eachCoreSlideNum * coreNumPlatform;
+    eachCoreSlideNumArray[H_INDEX] = eachCoreSlideNum;
+    remainderArray[H_INDEX] = remainder;
+    tailStartSlideNumArray[H_INDEX] = eachCoreSlideNum * coreNumPlatform;
     groupCoreNums[H_INDEX] = groupCoreNum;
     tailAvergingRows[H_INDEX] = tailAvergingRow;
-    needCoreNums[H_INDEX] = needCoreNum;
-    return needCoreNum;
+    needCoreNums[H_INDEX] = neededCoreNum;
+    return neededCoreNum;
 }
 
 int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumD(int64_t coreNumPlatform)
@@ -423,21 +423,21 @@ int64_t UpsampleNearest3dGradTiling::GetNeedCoreNumD(int64_t coreNumPlatform)
         groupCoreNum = std::min(groupCoreNum, CeilA2B(inputRows[D_INDEX], tailAvergingRow));
     }
 
-    int64_t needCoreNum = coreNumPlatform;
+    int64_t neededCoreNum = coreNumPlatform;
     if (eachCoreSlideNum == 0 && remainder > 0) {
-        needCoreNum = remainder * groupCoreNum;
+        neededCoreNum = remainder * groupCoreNum;
     }
 
-    eachCoreSlideNums[D_INDEX] = eachCoreSlideNum;
-    remainders[D_INDEX] = remainder;
-    tailStartSlideNums[D_INDEX] = eachCoreSlideNum * coreNumPlatform;
+    eachCoreSlideNumArray[D_INDEX] = eachCoreSlideNum;
+    remainderArray[D_INDEX] = remainder;
+    tailStartSlideNumArray[D_INDEX] = eachCoreSlideNum * coreNumPlatform;
     groupCoreNums[D_INDEX] = groupCoreNum;
     tailAvergingRows[D_INDEX] = tailAvergingRow;
-    needCoreNums[D_INDEX] = needCoreNum;
-    return needCoreNum;
+    needCoreNums[D_INDEX] = neededCoreNum;
+    return neededCoreNum;
 }
 
-void UpsampleNearest3dGradTiling::GetWorkSpace(int64_t needCoreNum)
+void UpsampleNearest3dGradTiling::GetWorkSpace(int64_t neededCoreNum)
 {
     uint8_t size = 32 / dataTypeSize;
     // 中间矩阵预留GM空间
@@ -462,7 +462,8 @@ void UpsampleNearest3dGradTiling::GetWorkSpace(int64_t needCoreNum)
     tilingData.set_radioMatrixSize(radioMatrixSize);
 
     size_t* workspaces = tilingContext->GetWorkspaceSizes(1);
-    workspaces[0] = (intermediateMatrixSizeW + intermediateMatrixSizeH + radioMatrixSize * needCoreNum) * dataTypeSize +
+    workspaces[0] = (intermediateMatrixSizeW + intermediateMatrixSizeH + radioMatrixSize * neededCoreNum) *
+                        dataTypeSize +
                     WORK_SPACE_SIZE;
 }
 
@@ -512,9 +513,9 @@ void UpsampleNearest3dGradTiling::GetTCubeTilingD()
 
 void UpsampleNearest3dGradTiling::FillTilingData()
 {
-    tilingData.set_eachCoreSlideNums(eachCoreSlideNums);
-    tilingData.set_remainders(remainders);
-    tilingData.set_tailStartSlideNums(tailStartSlideNums);
+    tilingData.set_eachCoreSlideNums(eachCoreSlideNumArray);
+    tilingData.set_remainders(remainderArray);
+    tilingData.set_tailStartSlideNums(tailStartSlideNumArray);
     tilingData.set_groupCoreNums(groupCoreNums);
     tilingData.set_inputRows(inputRows);
     tilingData.set_tailAvergingRows(tailAvergingRows);

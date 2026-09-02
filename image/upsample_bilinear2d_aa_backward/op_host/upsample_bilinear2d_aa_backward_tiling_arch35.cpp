@@ -117,7 +117,6 @@ void UpsampleBilinear2dAABackwardRegbaseTiling::CalTilingData()
 {
     bool isDataCopy = baseTiling_.outH == baseTiling_.inH && baseTiling_.outW == baseTiling_.inW &&
                       std::abs(baseTiling_.scaleH - 1.0f) < 1e-6f && std::abs(baseTiling_.scaleW - 1.0f) < 1e-6f;
-
     if (isDataCopy) {
         OP_LOGI(context_, "enter datacopy");
         baseTiling_.schId = 0; // 纯copy模板

@@ -31,8 +31,8 @@ extern "C" {
 #endif
 
 static const size_t FIRST_DIM = 0;
-static const size_t SECOND_DIM = 1;
 static const size_t THIRD_DIM = 2;
+static const size_t SECOND_DIM = 1;
 static const size_t FOURTH_DIM = 3;
 static const size_t FIFTH_DIM = 4;
 
@@ -65,7 +65,7 @@ static bool CheckNotNull(const aclTensor* input, const aclTensor* grid, const ac
     return true;
 }
 
-static bool CheckRegBaseSuppport(const aclTensor* input, int64_t interpolationMode)
+static bool CheckRegBaseSuppport(const aclTensor* input, int64_t interpolationModeVal)
 {
     if (input->GetDataType() != op::DataType::DT_FLOAT && input->GetDataType() != op::DataType::DT_FLOAT16 &&
         input->GetDataType() != op::DataType::DT_BF16) {
@@ -74,7 +74,7 @@ static bool CheckRegBaseSuppport(const aclTensor* input, int64_t interpolationMo
         return false;
     }
     bool isRegBaseArchFlag = IsRegBase();
-    if (isRegBaseArchFlag && interpolationMode == INTERPOLATION_MODE_MIN_VALUE) {
+    if (isRegBaseArchFlag && interpolationModeVal == INTERPOLATION_MODE_MIN_VALUE) {
         return true;
     }
     return false;
@@ -83,8 +83,8 @@ static bool CheckRegBaseSuppport(const aclTensor* input, int64_t interpolationMo
 static bool CheckDtypeValid(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
     // 检查input、grid、out的数据类型是否一致
-    OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(out, input->GetDataType(), return false);
+    OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
 
     // 检查input的数据类型是否在算子的支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(input, DTYPE_SUPPORT_LIST, return false);
@@ -137,8 +137,8 @@ static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
 
 static bool CheckShape(const aclTensor* input, const aclTensor* grid, const aclTensor* out)
 {
-    const auto& inputShape = input->GetViewShape();
     const auto& gridShape = grid->GetViewShape();
+    const auto& inputShape = input->GetViewShape();
     const auto& outShape = out->GetViewShape();
 
     OP_CHECK_WRONG_DIMENSION(input, VOLUMETRIC_DIM_NUM, return false);

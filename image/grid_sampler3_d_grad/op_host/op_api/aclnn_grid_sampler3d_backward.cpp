@@ -31,8 +31,8 @@ using namespace op;
 extern "C" {
 #endif
 
-static const size_t FIRST_DIM = 0;
 static const size_t SECOND_DIM = 1;
+static const size_t FIRST_DIM = 0;
 static const size_t THIRD_DIM = 2;
 static const size_t FOURTH_DIM = 3;
 static const size_t FIFTH_DIM = 4;
@@ -60,8 +60,8 @@ static bool CheckDtypeValid(const aclTensor* gradOutput, const aclTensor* input,
                             const aclTensor* inputGrad, const aclTensor* gridGrad)
 {
     // 检查输入输出数据类型是否一致
-    OP_CHECK_DTYPE_NOT_MATCH(gradOutput, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(grid, input->GetDataType(), return false);
+    OP_CHECK_DTYPE_NOT_MATCH(gradOutput, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(inputGrad, input->GetDataType(), return false);
     OP_CHECK_DTYPE_NOT_MATCH(gridGrad, input->GetDataType(), return false);
 
@@ -70,17 +70,17 @@ static bool CheckDtypeValid(const aclTensor* gradOutput, const aclTensor* input,
     return true;
 }
 
-static bool CheckAttrValid(int64_t interpolationMode, int64_t paddingMode)
+static bool CheckAttrValid(int64_t interpolationModeVal, int64_t paddingModeVal)
 {
     // 检查interpolationMode 、paddingMode是否在支持范围内
-    if (paddingMode < PADDING_MODE_MIN_VALUE || paddingMode > PADDING_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingMode,
+    if (paddingModeVal < PADDING_MODE_MIN_VALUE || paddingModeVal > PADDING_MODE_MAX_VALUE) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "paddingMode %ld should be in range [%ld, %ld].", paddingModeVal,
                 PADDING_MODE_MIN_VALUE, PADDING_MODE_MAX_VALUE);
         return false;
     }
 
-    if (interpolationMode < INTERPOLATION_MODE_MIN_VALUE || interpolationMode > INTERPOLATION_MODE_MAX_VALUE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationMode,
+    if (interpolationModeVal < INTERPOLATION_MODE_MIN_VALUE || interpolationModeVal > INTERPOLATION_MODE_MAX_VALUE) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "interpolationMode %ld should be in range [%ld, %ld].", interpolationModeVal,
                 INTERPOLATION_MODE_MIN_VALUE, INTERPOLATION_MODE_MAX_VALUE);
         return false;
     }
@@ -166,7 +166,6 @@ static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclTensor* inp
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull2In1Out(gradOutput, input, grid, inputGrad, gridGrad), ACLNN_ERR_PARAM_NULLPTR);
-
     // 2. 检查输入、输出的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
     CHECK_RET(CheckDtypeValid(gradOutput, input, grid, inputGrad, gridGrad), ACLNN_ERR_PARAM_INVALID);
 

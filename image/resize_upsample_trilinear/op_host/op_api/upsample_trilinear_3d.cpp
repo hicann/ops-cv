@@ -66,7 +66,7 @@ static const aclTensor* CastBackFromFp32(const aclTensor* out, op::DataType data
 static const aclTensor* UpsampleTrilinear3dA950AiCore(const aclTensor* self, const aclIntArray* outputSize,
                                                       bool alignCorners, float scalesD, float scalesH, float scalesW,
                                                       const op::Shape& outShape, aclOpExecutor* executor,
-                                                      aclTensor* directOut)
+                                                      const aclTensor* directOut)
 {
     auto dataType = self->GetDataType();
     const aclTensor* out = directOut == nullptr ? executor->AllocTensor(outShape, dataType, self->GetStorageFormat()) :

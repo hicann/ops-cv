@@ -56,9 +56,9 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_310P = {op::
 static bool CheckIOSizesIsSame(const aclTensor* gradOutput, const aclIntArray* inputSize)
 {
     auto gradOutShape = gradOutput->GetViewShape();
-    size_t dimNum = gradOutShape.GetDimNum();
+    size_t dimCount = gradOutShape.GetDimNum();
 
-    for (size_t i = 0; i < dimNum; ++i) {
+    for (size_t i = 0; i < dimCount; ++i) {
         if (gradOutShape.GetDim(i) != (*inputSize)[i]) {
             return false;
         }
@@ -85,7 +85,7 @@ bool CheckInputsElement(const aclTensor* gradOut, const aclIntArray* outputSize,
     int64_t inputH = (*inputSize)[DIM_TWO];
     int64_t inputW = (*inputSize)[DIM_THREE];
     auto gradOutShape = gradOut->GetViewShape();
-    size_t dimNum = gradOutShape.GetDimNum();
+    size_t dimCount = gradOutShape.GetDimNum();
     FVector<int64_t> fullOutputSize = {batch, channel, outH, outW};
 
     if (gradOut->GetStorageFormat() == op::Format::FORMAT_NHWC) {
@@ -104,7 +104,7 @@ bool CheckInputsElement(const aclTensor* gradOut, const aclIntArray* outputSize,
                      inputH, inputW, outH, outW),
              return false);
 
-    for (size_t i = 0; i < dimNum; ++i) {
+    for (size_t i = 0; i < dimCount; ++i) {
         if (gradOutShape.GetDim(i) != fullOutputSize[i]) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                     "Expected gradOutput to have the same shape as output;"
@@ -239,9 +239,9 @@ static bool CheckMinScale(const aclTensor* gradOutput, const aclIntArray* inputS
     return true;
 }
 
-static bool Check_scales(const int64_t input_size, const int64_t output_size, const double scale)
+static bool Check_scales(const int64_t inputSize, const int64_t outputSize, const double scaleVal)
 {
-    if (output_size != static_cast<int64_t>(floor(input_size * scale))) {
+    if (outputSize != static_cast<int64_t>(floor(inputSize * scaleVal))) {
         return false;
     }
     return true;

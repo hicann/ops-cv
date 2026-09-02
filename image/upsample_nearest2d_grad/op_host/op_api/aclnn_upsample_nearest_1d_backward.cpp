@@ -39,7 +39,7 @@ static constexpr size_t DIM_LIMIT = 3;
 static constexpr size_t DIM_ZERO = 0;
 static constexpr size_t DIM_ONE = 1;
 static constexpr size_t DIM_TWO = 2;
-// outputSizeNum 的维度限制为1
+// outputSizeCount 的维度限制为1
 static constexpr int64_t EXPECT_SIZE = 1;
 // 浮点数-1和0
 static constexpr float FLOAT_NEGONE = -1.0f;
@@ -50,34 +50,34 @@ static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST = {op::DataT
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT, op::DataType::DT_BF16};
 
-static bool CheckNotNull(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+static bool CheckNotNull(const aclTensor* gradOutTensor, const aclIntArray* outputSize, const aclIntArray* inputSize,
                          const aclTensor* gradInput)
 {
-    OP_CHECK_NULL(gradOut, return false);
+    OP_CHECK_NULL(gradOutTensor, return false);
     OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(inputSize, return false);
     OP_CHECK_NULL(gradInput, return false);
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor* gradOut, const aclTensor* out)
+static bool CheckDtypeValid(const aclTensor* gradOutTensor, const aclTensor* out)
 {
-    OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
-    OP_CHECK_DTYPE_NOT_MATCH(gradOut, out->GetDataType(), return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(gradOutTensor, DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_MATCH(gradOutTensor, out->GetDataType(), return false);
     return true;
 }
 
 static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize)
 {
     size_t gradOutDimNum = gradOut->GetViewShape().GetDimNum();
-    size_t outputSizeNum = outputSize->Size();
+    size_t outputSizeCount = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK(gradOutDimNum == DIM_LIMIT,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOut to be 3d Tensor, instead got: %zu", gradOutDimNum),
              return false);
 
-    OP_CHECK(outputSizeNum == EXPECT_SIZE,
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 1, but got %zu", outputSizeNum),
+    OP_CHECK(outputSizeCount == EXPECT_SIZE,
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 1, but got %zu", outputSizeCount),
              return false);
 
     OP_CHECK(inputSizeNum == DIM_LIMIT,
@@ -128,23 +128,23 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
     return true;
 }
 
-static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
-                               const aclTensor* out)
+static aclnnStatus CheckParams(const aclTensor* gradOutTensor, const aclIntArray* outputSize,
+                               const aclIntArray* inputSize, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
-    CHECK_RET(CheckNotNull(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
+    CHECK_RET(CheckNotNull(gradOutTensor, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查shape
-    CHECK_RET(CheckShape(gradOut, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckShape(gradOutTensor, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
 
     // 3. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
-    CHECK_RET(CheckDtypeValid(gradOut, out), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckDtypeValid(gradOutTensor, out), ACLNN_ERR_PARAM_INVALID);
 
     // 4. 校验gradOut的shape是否与输出的output的shape一致
-    CHECK_RET(CheckInputElement(gradOut, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckInputElement(gradOutTensor, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
 
     // 5.检查gradOut和gradIn N/C轴的大小是否一致
-    CHECK_RET(CheckNCDimEqual(gradOut, out), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckNCDimEqual(gradOutTensor, out), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }
@@ -179,14 +179,14 @@ static const aclTensor* View3dAs4d(const aclTensor* input, bool ifAiCpu, aclOpEx
 {
     // NCL -> contigious -> unsqueeze(2) -> reformat -> NCHW
     // contigious
-    auto contiguousInput = l0op::Contiguous(input, executor);
-    CHECK_RET(contiguousInput != nullptr, nullptr);
+    auto inputContiguous = l0op::Contiguous(input, executor);
+    CHECK_RET(inputContiguous != nullptr, nullptr);
 
     // unsqeeze(2)
     const int64_t appendDim[] = {2};
     aclIntArray* dimUnsqueeze = executor->AllocIntArray(appendDim, 1);
     CHECK_RET(dimUnsqueeze != nullptr, nullptr);
-    auto unsqueezedInput = l0op::UnsqueezeNd(contiguousInput, dimUnsqueeze, executor);
+    auto unsqueezedInput = l0op::UnsqueezeNd(inputContiguous, dimUnsqueeze, executor);
     CHECK_RET(unsqueezedInput != nullptr, nullptr);
 
     // reformat

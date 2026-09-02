@@ -78,7 +78,7 @@ private:
     void getTCubeTiling_h();
 
     template <typename T1, typename T2>
-    inline T1 CeilA2B(T1 a, T2 b) const;
+    inline T1 CeilA2B(T1 x, T2 y) const;
 
     template <typename T1>
     inline int32_t Ceil(T1 x) const;
@@ -122,13 +122,13 @@ private:
     int32_t singleCoreK_h = 0;
 };
 
-inline bool FloatEqual(const float a, const float b)
+inline bool FloatEqual(const float x, const float y)
 {
     const float closeTo0 = float(1e-6);
-    if (a > b) {
-        return a - b < closeTo0;
+    if (x > y) {
+        return x - y < closeTo0;
     } else {
-        return b - a < closeTo0;
+        return y - x < closeTo0;
     }
 };
 
@@ -203,8 +203,8 @@ void UpsampleBilinear2dGradTiling::setSingleCoreK()
 
 ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
 {
-    auto srcTensor = tilingContext->GetInputTensor(0);
-    if (srcTensor == nullptr) {
+    auto inputTensorGrad = tilingContext->GetInputTensor(0);
+    if (inputTensorGrad == nullptr) {
         return ge::GRAPH_FAILED;
     }
 
@@ -299,7 +299,7 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNumH(const uint32_t coreNumPla
         groupCoreNum = std::min(groupCoreNum, CeilA2B(inputBatch, tailAvergingBatch));
     }
 
-    uint32_t needCoreNum_h = 0;
+    uint32_t neededCoreNumH = 0;
 
     int64_t tailStartSlideNum = eachCoreSlideNum * coreNumPlatform;
     for (uint32_t coreIndex = 0; coreIndex < coreNumPlatform; coreIndex++) {
@@ -322,18 +322,18 @@ uint32_t UpsampleBilinear2dGradTiling::GetNeedCoreNumH(const uint32_t coreNumPla
                 tailBatchStartList_h[coreIndex] = coreIndexInGroup * tailAvergingBatch;
                 tailBatchEndList_h[coreIndex] = std::min(tailBatchStartList_h[coreIndex] + tailAvergingBatch,
                                                          static_cast<int64_t>(inputBatch));
-                needCoreNum_h++;
+                neededCoreNumH++;
             }
         }
     }
 
     if (eachCoreSlideNum > 0) {
-        needCoreNum_h = coreNumPlatform;
+        neededCoreNumH = coreNumPlatform;
     }
 
-    tilingData.set_need_core_num_h(needCoreNum_h);
+    tilingData.set_need_core_num_h(neededCoreNumH);
 
-    return needCoreNum_h;
+    return neededCoreNumH;
 }
 
 void UpsampleBilinear2dGradTiling::getTCubeTiling_h()
@@ -406,12 +406,12 @@ void UpsampleBilinear2dGradTiling::getSlideSize()
 }
 
 template <typename T1, typename T2>
-inline auto UpsampleBilinear2dGradTiling::CeilA2B(T1 a, T2 b) const -> T1
+inline auto UpsampleBilinear2dGradTiling::CeilA2B(T1 x, T2 y) const -> T1
 {
-    if (b != 0) {
-        return (a + b - 1) / b;
+    if (y != 0) {
+        return (x + y - 1) / y;
     } else {
-        return a;
+        return x;
     }
 }
 

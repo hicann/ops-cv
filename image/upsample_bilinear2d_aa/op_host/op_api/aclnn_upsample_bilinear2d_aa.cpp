@@ -42,31 +42,31 @@ static constexpr size_t DIM_FOUR = 4;
 static constexpr size_t EXPECT_SIZE = 2;
 static constexpr double MAX_SUPPORT_SCALE = 50.0;
 
-static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
+static bool CheckNotNull(const aclTensor* inputTensor, const aclIntArray* outputSize, const aclTensor* out)
 {
-    OP_CHECK_NULL(self, return false);
+    OP_CHECK_NULL(inputTensor, return false);
     OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(out, return false);
     return true;
 }
 
-static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
+static bool CheckDtypeValid(const aclTensor* inputTensor, const aclTensor* out)
 {
-    OP_CHECK_DTYPE_NOT_SUPPORT(self, DTYPE_SUPPORT_LIST, return false);
-    OP_CHECK_DTYPE_NOT_MATCH(self, out->GetDataType(), return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(inputTensor, DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_MATCH(inputTensor, out->GetDataType(), return false);
     return true;
 }
 
-static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclIntArray* outputSize)
+static bool CheckShape(const aclTensor* inputTensor, const aclTensor* out, const aclIntArray* outputSize)
 {
-    const op::Format selfFormat = self->GetStorageFormat();
+    const op::Format selfFormat = inputTensor->GetStorageFormat();
     if (selfFormat != out->GetStorageFormat()) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format of input and output should be equal, self [%s], out [%s].",
                 op::ToString(selfFormat).GetString(), op::ToString(out->GetStorageFormat()).GetString());
         return false;
     }
     size_t outputSizeNum = outputSize->Size();
-    OP_CHECK_WRONG_DIMENSION(self, DIM_LIMIT, return false);
+    OP_CHECK_WRONG_DIMENSION(inputTensor, DIM_LIMIT, return false);
     OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
     OP_CHECK(outputSizeNum == EXPECT_SIZE,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 2, but got %zu", outputSizeNum),
@@ -78,19 +78,19 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
     return true;
 }
 
-static bool CheckScalesValid(const double weight, const double high)
+static bool CheckScalesValid(const double scaleW, const double scaleH)
 {
-    if ((weight < 0) || (high < 0)) {
+    if ((scaleW < 0) || (scaleH < 0)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scales_w and scales_h cannot be negative , scales_w [%f], scales_h [%f].",
-                weight, high);
+                scaleW, scaleH);
         return false;
     }
     return true;
 }
 
-static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSize)
+static bool CheckInputElement(const aclTensor* inputTensor, const aclIntArray* outputSize)
 {
-    auto selfShape = self->GetViewShape();
+    auto selfShape = inputTensor->GetViewShape();
     int64_t outN = 0;
     int64_t outC = 0;
     int64_t inputH = 0;

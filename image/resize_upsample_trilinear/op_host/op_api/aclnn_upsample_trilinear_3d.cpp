@@ -44,8 +44,8 @@ static constexpr float MAX_SUPPORT_SCALE = 50.0;
 
 static bool CheckNotNull(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
-    OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(outputSize, return false);
+    OP_CHECK_NULL(self, return false);
     OP_CHECK_NULL(out, return false);
     return true;
 }
@@ -120,7 +120,6 @@ static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSi
                      " H: %ld, W: %ld) output (D: %ld, H: %ld, W: %ld)",
                      inputD, inputH, inputW, outD, outH, outW),
              return false);
-
     OP_CHECK(outC > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Non-empty 5D data tensor expected but got a tensor with sizes %s.",
                      op::ToString(self->GetViewShape()).GetString()),
@@ -242,7 +241,8 @@ const aclTensor* upsampleTrilinear3dCompute(const aclTensor* selfContiguous, con
 {
     if (selfContiguous->GetStorageFormat() == op::Format::FORMAT_NDHWC) {
         const int64_t permuteNCDHWList[] = {DIM_ZERO, DIM_FOUR, DIM_ONE, DIM_TWO, DIM_THREE};
-        auto permuteNCDHWArray = executor->AllocIntArray(permuteNCDHWList, UPSAMPLE_DIM_LIMIT);
+        auto permuteNCDHWArray = executor->AllocIntArray(permuteNCDHWList,
+                                                         sizeof(permuteNCDHWList) / sizeof(permuteNCDHWList[0]));
         CHECK_RET(permuteNCDHWArray != nullptr, nullptr);
 
         auto selfTranspose = l0op::Transpose(selfContiguous, permuteNCDHWArray, executor);
@@ -252,7 +252,8 @@ const aclTensor* upsampleTrilinear3dCompute(const aclTensor* selfContiguous, con
                                                                     castScales, scaleW, scaleH, scaleD, executor);
         CHECK_RET(selfUpsampleTrilinear != nullptr, nullptr);
         const int64_t permuteNDHWCList[] = {DIM_ZERO, DIM_TWO, DIM_THREE, DIM_FOUR, DIM_ONE};
-        auto permuteNDHWCArray = executor->AllocIntArray(permuteNDHWCList, UPSAMPLE_DIM_LIMIT);
+        auto permuteNDHWCArray = executor->AllocIntArray(permuteNDHWCList,
+                                                         sizeof(permuteNDHWCList) / sizeof(permuteNDHWCList[0]));
         CHECK_RET(permuteNDHWCArray != nullptr, nullptr);
 
         return l0op::Transpose(selfUpsampleTrilinear, permuteNDHWCArray, executor);
@@ -273,7 +274,8 @@ static aclnnStatus Run310pNdhwc(const aclTensor* selfContiguous, const aclIntArr
                                 float scaleH, float scaleD, aclTensor* out, aclOpExecutor* executor)
 {
     const int64_t permuteDHWNCList[] = {DIM_ONE, DIM_TWO, DIM_THREE, DIM_ZERO, DIM_FOUR};
-    auto permuteDHWNCArray = executor->AllocIntArray(permuteDHWNCList, UPSAMPLE_DIM_LIMIT);
+    auto permuteDHWNCArray = executor->AllocIntArray(permuteDHWNCList,
+                                                     sizeof(permuteDHWNCList) / sizeof(permuteDHWNCList[0]));
     CHECK_RET(permuteDHWNCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto selfTranspose = l0op::Transpose(selfContiguous, permuteDHWNCArray, executor);
     CHECK_RET(selfTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -281,7 +283,8 @@ static aclnnStatus Run310pNdhwc(const aclTensor* selfContiguous, const aclIntArr
                                                                 castScales, scaleW, scaleH, scaleD, executor);
     CHECK_RET(selfUpsampleTrilinear != nullptr, ACLNN_ERR_INNER_NULLPTR);
     const int64_t permuteNDHWList[] = {DIM_THREE, DIM_ZERO, DIM_ONE, DIM_TWO, DIM_FOUR};
-    auto permuteNDHWCArray = executor->AllocIntArray(permuteNDHWList, UPSAMPLE_DIM_LIMIT);
+    auto permuteNDHWCArray = executor->AllocIntArray(permuteNDHWList,
+                                                     sizeof(permuteNDHWList) / sizeof(permuteNDHWList[0]));
     CHECK_RET(permuteNDHWCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNDHWCArray, executor);
     auto viewCopyResult = l0op::ViewCopy(result, out, executor);
@@ -295,7 +298,8 @@ static aclnnStatus Run310pNcdhw(const aclTensor* selfContiguous, const aclIntArr
                                 float scaleH, float scaleD, aclTensor* out, aclOpExecutor* executor)
 {
     const int64_t permuteHWNCList[] = {DIM_TWO, DIM_THREE, DIM_FOUR, DIM_ZERO, DIM_ONE};
-    auto permuteHWNCArray = executor->AllocIntArray(permuteHWNCList, UPSAMPLE_DIM_LIMIT);
+    auto permuteHWNCArray = executor->AllocIntArray(permuteHWNCList,
+                                                    sizeof(permuteHWNCList) / sizeof(permuteHWNCList[0]));
     CHECK_RET(permuteHWNCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto selfTranspose = l0op::Transpose(selfContiguous, permuteHWNCArray, executor);
     CHECK_RET(selfTranspose != nullptr, ACLNN_ERR_INNER_NULLPTR);
@@ -303,7 +307,8 @@ static aclnnStatus Run310pNcdhw(const aclTensor* selfContiguous, const aclIntArr
                                                                 castScales, scaleW, scaleH, scaleD, executor);
     CHECK_RET(selfUpsampleTrilinear != nullptr, ACLNN_ERR_INNER_NULLPTR);
     const int64_t permuteNDHWList[] = {DIM_THREE, DIM_FOUR, DIM_ZERO, DIM_ONE, DIM_TWO};
-    auto permuteNCDHWArray = executor->AllocIntArray(permuteNDHWList, UPSAMPLE_DIM_LIMIT);
+    auto permuteNCDHWArray = executor->AllocIntArray(permuteNDHWList,
+                                                     sizeof(permuteNDHWList) / sizeof(permuteNDHWList[0]));
     CHECK_RET(permuteNCDHWArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNCDHWArray, executor);
     auto viewCopyResult = l0op::ViewCopy(result, out, executor);
