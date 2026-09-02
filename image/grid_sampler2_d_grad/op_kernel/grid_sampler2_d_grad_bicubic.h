@@ -10,216 +10,13 @@
 
 /*!
  * \file grid_sampler2_d_grad_bicubic.h
- * \brief GridSampler2D backward with bicubic interpolation mode
+ * \brief
  */
+
 #ifndef GRID_SAMPLER_2D_GRAD_BICUBIC_H_
 #define GRID_SAMPLER_2D_GRAD_BICUBIC_H_
 
-#include "kernel_operator.h"
-
-using namespace AscendC;
-
-constexpr static int32_t BUFFER_NUM_ONE = 1;
-
-template <typename T, typename GridSamplerGradTilingData>
-class GridSampler2DGradBicubic {
-public:
-    __aicore__ inline GridSampler2DGradBicubic(){};
-    __aicore__ inline void Init(const GridSamplerGradTilingData& __restrict tilingData,
-                                GM_ADDR inputTensors[INPUT_NUM + OUTPUT_NUM + 1]);
-    __aicore__ inline void InitBuffer(TPipe* inputPipe);
-    __aicore__ inline void InitBicubicLocalTensor();
-    __aicore__ inline void CopyOut(const int32_t offset, const int32_t calCount);
-    __aicore__ inline void CopyIn(const int64_t offset, const int32_t calCount, const int32_t inputIndex);
-    __aicore__ inline void Process();
-    __aicore__ inline void Compute(const int32_t computeCount, const int64_t curGridPointIndex);
-
-    // cubic convolution functions
-    __aicore__ inline void CubicConvolution1(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void CubicConvolution2(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void CubicConvolution1Grad(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void CubicConvolution2Grad(LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount);
-    __aicore__ inline void GetCubicUpsampleCoefficients(LocalTensor<T> coeffTx0, LocalTensor<T> coeffTx1,
-                                                        LocalTensor<T> coeffTx2, LocalTensor<T> coeffTx3,
-                                                        LocalTensor<T> coeffTy0, LocalTensor<T> coeffTy1,
-                                                        LocalTensor<T> coeffTy2, LocalTensor<T> coeffTy3,
-                                                        LocalTensor<T> cubicTx, LocalTensor<T> cubicTy,
-                                                        const int32_t calCount);
-
-    // coordinate and index functions (reuse from bilinear)
-    __aicore__ inline void ComputeSourceIndexSetGrad(LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size,
-                                                     const int32_t calCount);
-    __aicore__ inline T ReflectCoordinatesCommon(T coord, int32_t size_val, bool align_corners_flag);
-    __aicore__ inline void DupValue();
-
-    template <typename T1, typename T2>
-    __aicore__ inline T1 CeilDiv(T1 a, T2 b)
-    {
-        return (a + b - 1) / b;
-    };
-    template <typename T1, typename T2>
-    __aicore__ inline T1 CeilAlign(T1 a, T2 b)
-    {
-        return (a + b - 1) / b * b;
-    };
-
-private:
-    TPipe* pipe;
-    TQue<QuePosition::VECIN, BUFFER_NUM_ONE> dataInQueue[INPUT_NUM];
-    TQue<QuePosition::VECOUT, BUFFER_NUM_ONE> dataOutQueue[OUTPUT_NUM];
-
-    // coordinate buffers
-    TBuf<TPosition::VECCALC> xCoordinateBuf;
-    TBuf<TPosition::VECCALC> yCoordinateBuf;
-    TBuf<TPosition::VECCALC> xGradInBuf;
-    TBuf<TPosition::VECCALC> yGradInBuf;
-
-    // 4x4 neighborhood float coordinates: ixNw, ixNe, ixSw, ixSe, iyNw, iyNe, iySw, iySe
-    TBuf<TPosition::VECCALC> ixNwBuf;
-    TBuf<TPosition::VECCALC> iyNwBuf;
-    TBuf<TPosition::VECCALC> ixNeBuf;
-    TBuf<TPosition::VECCALC> iyNeBuf;
-    TBuf<TPosition::VECCALC> ixSwBuf;
-    TBuf<TPosition::VECCALC> iySwBuf;
-    TBuf<TPosition::VECCALC> ixSeBuf;
-    TBuf<TPosition::VECCALC> iySeBuf;
-
-    // integer coordinates
-    TBuf<TPosition::VECCALC> ixNwIntBuf;
-    TBuf<TPosition::VECCALC> iyNwIntBuf;
-    TBuf<TPosition::VECCALC> ixNeIntBuf;
-    TBuf<TPosition::VECCALC> iyNeIntBuf;
-    TBuf<TPosition::VECCALC> ixSwIntBuf;
-    TBuf<TPosition::VECCALC> iySwIntBuf;
-    TBuf<TPosition::VECCALC> ixSeIntBuf;
-    TBuf<TPosition::VECCALC> iySeIntBuf;
-
-    // cubic coefficients
-    TBuf<TPosition::VECCALC> coeffTx0Buf;
-    TBuf<TPosition::VECCALC> coeffTx1Buf;
-    TBuf<TPosition::VECCALC> coeffTx2Buf;
-    TBuf<TPosition::VECCALC> coeffTx3Buf;
-    TBuf<TPosition::VECCALC> coeffTy0Buf;
-    TBuf<TPosition::VECCALC> coeffTy1Buf;
-    TBuf<TPosition::VECCALC> coeffTy2Buf;
-    TBuf<TPosition::VECCALC> coeffTy3Buf;
-
-    // weight buffer for bicubic
-    TBuf<TPosition::VECCALC> weightBuf;
-
-    // temporary buffers
-    TBuf<TPosition::VECCALC> tmp1Buf;
-    TBuf<TPosition::VECCALC> tmp2Buf;
-    TBuf<TPosition::VECCALC> tmp5Buf;
-    TBuf<TPosition::VECCALC> tmp6Buf;
-    TBuf<TPosition::VECCALC> tmp7Buf;
-    TBuf<TPosition::VECCALC> tmp8Buf;
-    TBuf<TPosition::VECCALC> tmp9Buf;
-
-    // mask buffers
-    TBuf<TPosition::VECCALC> mask1Buf;
-    TBuf<TPosition::VECCALC> mask2Buf;
-    TBuf<TPosition::VECCALC> mask3Buf;
-
-    // select and dup buffers
-    TBuf<TPosition::VECCALC> dupOneBuf;
-    TBuf<TPosition::VECCALC> selBuf1;
-    TBuf<TPosition::VECCALC> selBuf2;
-    TBuf<TPosition::VECCALC> selBuf3;
-    TBuf<TPosition::VECCALC> selBuf4;
-
-    // compute index buffers
-    TBuf<TPosition::VECCALC> computeIndexBuf1;
-    TBuf<TPosition::VECCALC> computeIndexBuf2;
-    TBuf<TPosition::VECCALC> computeIndexBuf3;
-    TBuf<TPosition::VECCALC> computeIndexBuf4;
-    TBuf<TPosition::VECCALC> computeIndexBuf5;
-    TBuf<TPosition::VECCALC> computeIndexBuf6;
-    TBuf<TPosition::VECCALC> computeIndexBuf7;
-    TBuf<TPosition::VECCALC> computeIndexBuf8;
-    TBuf<TPosition::VECCALC> computeIndexBuf9;
-
-    // gix/giy accumulation buffers
-    TBuf<TPosition::VECCALC> gixBuf;
-    TBuf<TPosition::VECCALC> giyBuf;
-    TBuf<TPosition::VECCALC> sumXBuf;
-    TBuf<TPosition::VECCALC> sumYBuf;
-    TBuf<TPosition::VECCALC> clipLimitBuf;
-
-    // temporary buffer for inner loop (inputX only - for MTE2 direction)
-    TBuf<TPosition::VECCALC> inputXLocalBuf;
-
-    GlobalTensor<T> inputGm[INPUT_NUM + OUTPUT_NUM];
-
-    uint32_t batch = 0;
-    uint32_t pNumPerCore = 0;
-    uint32_t tailPNum = 0;
-    int32_t channel = 0;
-    int32_t alignChannel = 0;
-    int32_t height = 0;
-    int32_t width = 0;
-    T fheight = 0;
-    T fwidth = 0;
-    uint32_t blockNum = 0;
-    uint32_t ubFactorElement = 0;
-    uint32_t interpolation = 0;
-    uint32_t padding = 0;
-    uint32_t alignCorners = 0;
-    uint32_t gridH = 0;
-    uint32_t gridW = 0;
-    uint32_t outH = 0;
-    uint32_t outW = 0;
-    uint32_t perBlockCount = 0;
-    uint32_t blockIdx = 0;
-    uint32_t dataCount = 0;
-    uint32_t batchOffset = 0;
-    uint32_t baseOffset = 0;
-    uint32_t alignBufferNum = 0;
-    uint32_t xStrideC = 0;
-    uint32_t dxStrideN = 0;
-    uint32_t dxStrideC = 0;
-    int32_t dxStrideH = 0;
-    uint32_t dxStrideW = 0;
-    uint32_t gradStrideC = 0;
-    uint32_t gradStrideH = 0;
-    uint32_t gradStrideW = 0;
-    uint32_t maskSize = 0;
-    uint32_t maskNum = 0;
-    int32_t inputStrideH = 0;
-    uint32_t inputStrideW = 0;
-    uint32_t inputStrideN = 0;
-    int64_t pointIndex = 0;
-    int64_t baseGradGmOffset = 0;
-    int64_t gradGmOffset = 0;
-    int64_t baseGmOffset = 0;
-    int32_t pointOffset = 0;
-    int64_t xGmOffset = 0;
-    int32_t ncOffset = 0;
-    int32_t group = 0;
-    uint32_t isDeterministic = 0;
-    uint32_t tailBNum = 0;
-    T gix = static_cast<T>(0);
-    T giy = static_cast<T>(0);
-
-    LocalTensor<uint8_t> mask1Tensor;
-    LocalTensor<uint8_t> mask2Tensor;
-    LocalTensor<uint8_t> mask3Tensor;
-    LocalTensor<uint16_t> int8ToInt16Mask1;
-    LocalTensor<uint16_t> int8ToInt16Mask2;
-    LocalTensor<T> dupOneTensor;
-    LocalTensor<T> selTensor1;
-    LocalTensor<T> selTensor2;
-    LocalTensor<T> selTensor3;
-    LocalTensor<T> selTensor4;
-    LocalTensor<T> tmp1Tensor;
-    LocalTensor<T> tmp2Tensor;
-    LocalTensor<int32_t> tmpIndex;
-    LocalTensor<T> gixLocalTensor;
-    LocalTensor<T> giyLocalTensor;
-    LocalTensor<T> sumX;
-    LocalTensor<T> sumY;
-    LocalTensor<T> clipLimit;
-};
+#include "grid_sampler2_d_grad_bicubic_base.h"
 
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::Init(
@@ -267,7 +64,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::I
     inputGm[DX_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DX_INPUT_INDEX]));
     inputGm[DGRID_INPUT_INDEX].SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputTensors[DGRID_INPUT_INDEX]));
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::InitBuffer(TPipe* inputPipe)
 {
@@ -359,7 +155,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::I
     // temporary buffer for inner loop (inputX only - for MTE2 direction)
     pipe->InitBuffer(inputXLocalBuf, alignChannel * sizeof(T));
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::InitBicubicLocalTensor()
 {
@@ -378,9 +173,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::I
     sumY = sumYBuf.Get<T>(alignChannel);
     clipLimit = clipLimitBuf.Get<T>(ubFactorElement);
 }
-
-// CubicConvolution1: f(x) = (A+2)*|x|^3 - (A+3)*|x|^2 + 1, A=-0.75
-// => 1.25*x^3 - 2.25*x^2 + 1.0
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::CubicConvolution1(LocalTensor<T> coeff,
                                                                                                  LocalTensor<T> x,
@@ -400,9 +192,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     Adds(coeff, coeff, static_cast<T>(1.0), calCount);
     PipeBarrier<PIPE_V>();
 }
-
-// CubicConvolution2: f(x) = A*|x|^3 - 5A*|x|^2 + 8A*|x| - 4A, A=-0.75
-// => -0.75*x^3 + 3.75*x^2 - 6.0*x + 3.0
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::CubicConvolution2(LocalTensor<T> coeff,
                                                                                                  LocalTensor<T> x,
@@ -426,9 +215,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     Adds(coeff, coeff, gama, calCount);
     PipeBarrier<PIPE_V>();
 }
-
-// CubicConvolution1Grad: f'(x) = 3*(A+2)*x^2 - 2*(A+3)*x, A=-0.75
-// => 3.75*x^2 - 4.5*x
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::CubicConvolution1Grad(
     LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount)
@@ -443,9 +229,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     Mul(coeff, coeff, x, calCount);
     PipeBarrier<PIPE_V>();
 }
-
-// CubicConvolution2Grad: f'(x) = 3*A*x^2 - 10*A*x + 8*A, A=-0.75
-// => -2.25*x^2 + 7.5*x - 6.0
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::CubicConvolution2Grad(
     LocalTensor<T> coeff, LocalTensor<T> x, const int32_t calCount)
@@ -463,8 +246,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     Adds(coeff, coeff, gama, calCount);
     PipeBarrier<PIPE_V>();
 }
-
-// GetCubicUpsampleCoefficients: compute 8 cubic interpolation coefficients
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::GetCubicUpsampleCoefficients(
     LocalTensor<T> coeffTx0, LocalTensor<T> coeffTx1, LocalTensor<T> coeffTx2, LocalTensor<T> coeffTx3,
@@ -504,8 +285,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::G
     CubicConvolution1(coeffTy2, cubicTy2, calCount);
     CubicConvolution2(coeffTy3, cubicTy3, calCount);
 }
-
-// ComputeSourceIndexSetGrad: same as bilinear
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::ComputeSourceIndexSetGrad(
     LocalTensor<T> dataTensor, LocalTensor<T> dupTensor, const T size, const int32_t calCount)
@@ -546,8 +325,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
         PipeBarrier<PIPE_V>();
     }
 }
-
-// Helper function for reflection computation (matches PyTorch's reflect_coordinates)
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline T GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::ReflectCoordinatesCommon(
     T coord, int32_t size_val, bool align_corners_flag)
@@ -576,7 +353,6 @@ __aicore__ inline T GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::Refl
         return span - extra + min;
     }
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::DupValue()
 {
@@ -584,7 +360,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::D
     Duplicate<T>(sumX, 0, alignChannel);
     Duplicate<T>(sumY, 0, alignChannel);
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::CopyIn(const int64_t offset,
                                                                                       const int32_t calCount,
@@ -600,7 +375,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     DataCopyPad(dataLocal, inputGm[inputIndex][offset], copyParams, padParams);
     dataInQueue[inputIndex].EnQue(dataLocal);
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::CopyOut(const int32_t offset,
                                                                                        const int32_t calCount)
@@ -611,7 +385,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     DataCopyPad(inputGm[DGRID_INPUT_INDEX][offset], dstLocal, copyParams);
     dataOutQueue[1].FreeTensor(dstLocal);
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::Compute(const int32_t computeCount,
                                                                                        const int64_t curGridPointIndex)
@@ -963,7 +736,6 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::C
     dataOutQueue[GRID_GRAD_OUTPUT_INDEX].EnQue(dstLocal);
     dataInQueue[GRID_INPUT_INDEX].FreeTensor(inputCoordinate);
 }
-
 template <typename T, typename GridSamplerGradTilingData>
 __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::Process()
 {
@@ -1005,4 +777,5 @@ __aicore__ inline void GridSampler2DGradBicubic<T, GridSamplerGradTilingData>::P
         CopyOut(gridGmOffset, actualComputNum);
     }
 }
+
 #endif // GRID_SAMPLER_2D_GRAD_BICUBIC_H_
