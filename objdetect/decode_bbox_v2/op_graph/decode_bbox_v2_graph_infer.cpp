@@ -24,7 +24,6 @@ static ge::graphStatus InferDataTypeForDecodeBboxV2(gert::InferDataTypeContext* 
 {
     const ge::DataType boxesDtype = context->GetInputDataType(0);
     const ge::DataType anchorsDtype = context->GetInputDataType(1);
-
     if (boxesDtype != anchorsDtype) {
         return ge::GRAPH_FAILED;
     }

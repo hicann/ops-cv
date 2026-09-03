@@ -50,25 +50,6 @@
 using namespace ge;
 
 namespace ops {
-
-// ---------------------------------------------------------------------------
-// InferDataTypeForRotatedBoxDecode(context) — data type inference callback
-//
-// For RotatedBoxDecode (y = x * scale + bias), the output dtype is the same as
-// the first input's (x's) dtype. This is correct because the operator is
-// element-wise and does not change the data type.
-//
-// Parameters:
-//   context — InferDataTypeContext that provides access to input dtypes
-//             and allows setting output dtypes
-//
-// Returns:
-//   ge::graphStatus — ge::GRAPH_SUCCESS on success
-//
-// To create FooBar: rename to InferDataTypeForFooBar.
-//   For most element-wise ops, output dtype = input[0] dtype is correct.
-//   For ops that change dtype (e.g., Cast), set different output type(s).
-// ---------------------------------------------------------------------------
 static ge::graphStatus InferDataTypeForRotatedBoxDecode(gert::InferDataTypeContext* context)
 {
     // anchor_box and deltas must share the same data type; reject on mismatch.

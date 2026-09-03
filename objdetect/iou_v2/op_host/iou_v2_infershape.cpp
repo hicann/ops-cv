@@ -66,21 +66,16 @@ static ge::graphStatus InferShapeForIouV2(gert::InferShapeContext* context)
 
     // update output shape.
     overlapShape->SetDimNum(IOUS_DIM); // the output dimensions are 2.
-    if (*aligned) {
-        int64_t const bboxesNum = bboxesShape->GetDim(1);
-        int64_t const gtboxesNum = gtboxesShape->GetDim(1);
-        if (bboxesNum != ge::UNKNOWN_DIM && gtboxesNum != ge::UNKNOWN_DIM && bboxesNum != gtboxesNum) {
-            OP_LOGE(context, "Parameter aligned is true, the num of bboxes and gtboxes must be same.");
-            return ge::GRAPH_FAILED;
-        }
-        overlapShape->SetDim(0, gtboxesNum);
-        overlapShape->SetDim(1, 1);
-    } else {
-        int64_t const bboxesNum = bboxesShape->GetDim(0);
-        int64_t const gtboxesNum = gtboxesShape->GetDim(0);
-        overlapShape->SetDim(0, gtboxesNum);
-        overlapShape->SetDim(1, bboxesNum);
+    const int64_t bboxesNum = *aligned ? bboxesShape->GetDim(1) : bboxesShape->GetDim(0);
+    const int64_t gtboxesNum = *aligned ? gtboxesShape->GetDim(1) : gtboxesShape->GetDim(0);
+    const int64_t outputDim1 = *aligned ? 1 : bboxesNum;
+    if (*aligned && bboxesNum != ge::UNKNOWN_DIM && gtboxesNum != ge::UNKNOWN_DIM && bboxesNum != gtboxesNum) {
+        OP_LOGE(context, "Parameter aligned is true, the num of bboxes and gtboxes must be same.");
+        return ge::GRAPH_FAILED;
     }
+
+    overlapShape->SetDim(0, gtboxesNum);
+    overlapShape->SetDim(1, outputDim1);
     return ge::GRAPH_SUCCESS;
 }
 static ge::graphStatus InferDataTypeForIouV2(gert::InferDataTypeContext* context)
