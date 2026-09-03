@@ -130,11 +130,9 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
                                                    uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     OP_CHECK_COMM_INPUT(workspaceSize, executor);
-    int64_t maxBoxesSize = 0;
-    L2_DFX_PHASE_1(
-        aclnnNonMaxSuppression,
-        DFX_IN(boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox, maxBoxesSize),
-        DFX_OUT(selectedIndices));
+    L2_DFX_PHASE_1(aclnnNonMaxSuppression,
+                   DFX_IN(boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox),
+                   DFX_OUT(selectedIndices));
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
@@ -158,7 +156,7 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
         return ACLNN_ERR_RUNTIME_ERROR;
     }
 
-    maxBoxesSize = maxOutputSize * scores->GetViewShape().GetDim(0) * scores->GetViewShape().GetDim(1);
+    int64_t maxBoxesSize = maxOutputSize * scores->GetViewShape().GetDim(0) * scores->GetViewShape().GetDim(1);
     auto boxesContigous = l0op::Contiguous(boxes, uniqueExecutor.get());
     auto scoresContigous = l0op::Contiguous(scores, uniqueExecutor.get());
 
