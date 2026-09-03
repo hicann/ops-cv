@@ -110,7 +110,7 @@ private:
 
 void UpsampleBilinearAATiling::setScale()
 {
-    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = static_cast<const int64_t*>(output_size->GetData());
 
     realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), outputSizeArray[0], *align_corners, scale_h);
     realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), outputSizeArray[1], *align_corners, scale_w);
@@ -157,7 +157,7 @@ inline float UpsampleBilinearAATiling::compute_scale_value(int64_t input_size, i
 
 inline bool UpsampleBilinearAATiling::CheckScales(const gert::TilingContext* context, float scales_w, float scales_h)
 {
-    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = static_cast<const int64_t*>(output_size->GetData());
     int64_t inputH = input_shape.GetDim(H_INDEX);
     int64_t inputW = input_shape.GetDim(W_INDEX);
     int64_t outputH = outputSizeArray[0];
@@ -334,7 +334,7 @@ bool UpsampleBilinearAATiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBilinearAATiling::getShapes()
 {
-    const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* outputSizeArray = static_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
