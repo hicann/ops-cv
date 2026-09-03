@@ -14,10 +14,20 @@
 #include <iostream>
 #include "infershape_context_faker.h"
 #include "infershape_case_executor.h"
+#include "platform/platform_info.h"
 
 class ThreeInterpolateInfershape : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "ThreeInterpolateInfershape SetUp" << std::endl; }
+    static void SetUpTestCase()
+    {
+        fe::PlatformInfoManager::Instance().InitializePlatformInfo();
+        fe::PlatformInfo platformInfo;
+        fe::OptionalInfo optionalInfo;
+        fe::PlatformInfoManager::Instance().GetPlatformInfo("Ascend950DT_950x", platformInfo, optionalInfo);
+        optionalInfo.soc_version = "Ascend950DT_950x";
+        fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(optionalInfo);
+        std::cout << "ThreeInterpolateInfershape SetUp" << std::endl;
+    }
 
     static void TearDownTestCase() { std::cout << "ThreeInterpolateInfershape TearDown" << std::endl; }
 };
@@ -292,6 +302,98 @@ TEST_F(ThreeInterpolateInfershape, three_interpolate_partial_unknown_dim)
                                                       });
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {2, 2, 3},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+class ThreeInterpolateInfershape910B : public testing::Test {
+protected:
+    static void SetUpTestCase()
+    {
+        fe::PlatformInfoManager::Instance().InitializePlatformInfo();
+        fe::PlatformInfo platformInfo;
+        fe::OptionalInfo optionalInfo;
+        fe::PlatformInfoManager::Instance().GetPlatformInfo("Ascend910B1", platformInfo, optionalInfo);
+        optionalInfo.soc_version = "Ascend910B1";
+        fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(optionalInfo);
+        std::cout << "ThreeInterpolateInfershape910B SetUp" << std::endl;
+    }
+
+    static void TearDownTestCase() { std::cout << "ThreeInterpolateInfershape910B TearDown" << std::endl; }
+};
+
+TEST_F(ThreeInterpolateInfershape910B, three_interpolate_910b_infershape_test1)
+{
+    // runtime2.0 分支：features: (2, 4, 3) float32, idx: (2, 2, 3) int32
+    // output: (bs=2, ns=2, cs=3)
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 3},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(ThreeInterpolateInfershape910B, three_interpolate_910b_infershape_test2)
+{
+    // runtime2.0 分支：features: (8, 128, 128) float16, idx: (8, 512, 3) int64
+    // output: (bs=8, ns=512, cs=128)
+    gert::InfershapeContextPara infershapeContextPara(
+        "ThreeInterpolate",
+        {
+            {{{8, 128, 128}, {8, 128, 128}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{8, 512, 3}, {8, 512, 3}}, ge::DT_INT64, ge::FORMAT_ND},
+            {{{8, 512, 3}, {8, 512, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {8, 512, 128},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(ThreeInterpolateInfershape910B, three_interpolate_910b_unknown_rank_features)
+{
+    // runtime2.0 分支：features unknown rank (-2,)，输出 3D unknown shape (-1, -1, -1)
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, -1, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(ThreeInterpolateInfershape910B, three_interpolate_910b_unknown_dim_features)
+{
+    // runtime2.0 分支：features batch 为 -1 时直接透传（不回溯 idx 的已知 batch）
+    // output: (bs=-1, ns=2, cs=3)
+    gert::InfershapeContextPara infershapeContextPara("ThreeInterpolate",
+                                                      {
+                                                          {{{-1, 4, 3}, {-1, 4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                          {{{2, 2, 3}, {2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 2, 3},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

@@ -1,1 +1,0 @@
-add_modules_sources(OPTYPE three_interpolate ACLNNTYPE aclnn_exclude)

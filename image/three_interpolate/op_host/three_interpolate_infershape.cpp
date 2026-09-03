@@ -17,6 +17,7 @@
 
 #include "register/op_impl_registry.h"
 #include "op_common/op_host/util/shape_util.h"
+#include "platform/platform_info.h"
 #include "log/log.h"
 
 using namespace ge;
@@ -30,7 +31,7 @@ static constexpr int32_t UNKNOW_DIM = -1;
 static constexpr size_t DIM_NUM = 3;
 static constexpr int64_t NEIGHBOR_NUM = 3;
 
-static ge::graphStatus InferShape4ThreeInterpolate(gert::InferShapeContext* context)
+static ge::graphStatus InferShape4ThreeInterpolateSupport(gert::InferShapeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Enter InferShapeThreeInterpolate");
     const gert::Shape* featuresShape = context->GetInputShape(IDX_FEATURES);
@@ -148,8 +149,49 @@ static ge::graphStatus InferShape4ThreeInterpolate(gert::InferShapeContext* cont
     yShape->SetDim(1, ns);
     yShape->SetDim(2, cs);
 
-    OP_LOGI(context->GetNodeName(), "InferShape4ThreeInterpolate success, output shape:%s",
+    OP_LOGI(context->GetNodeName(), "InferShape4ThreeInterpolateSupport success, output shape:%s",
             Ops::Base::ToString(*yShape).c_str());
+    return GRAPH_SUCCESS;
+}
+
+static ge::graphStatus InferShape4ThreeInterpolate(gert::InferShapeContext* context)
+{
+    fe::PlatformInfo platformInfo;
+    fe::OptionalInfo optionalInfo;
+    OP_CHECK_IF((fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platformInfo, optionalInfo) !=
+                 ge::GRAPH_SUCCESS),
+                OP_LOGE(context->GetNodeName(), "Cannot get platform info!"), return ge::GRAPH_FAILED);
+    OP_LOGI(context->GetNodeName(), "soc version is %s", platformInfo.str_info.short_soc_version.c_str());
+    if (platformInfo.str_info.short_soc_version == "Ascend950") {
+        return InferShape4ThreeInterpolateSupport(context);
+    }
+
+    OP_LOGI(context->GetNodeName(), "runtime2.0 ThreeInterpolate infershape running.");
+    const gert::Shape* featuresShape = context->GetInputShape(IDX_FEATURES);
+    OP_CHECK_NULL_WITH_CONTEXT(context, featuresShape);
+
+    gert::Shape* yShape = context->GetOutputShape(IDX_OUTPUT);
+    OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
+
+    if (Ops::Base::IsUnknownRank(*featuresShape)) {
+        OP_LOGI(context->GetNodeName(), "features is unknown rank, set output to 3D unknown shape (-1, -1, -1)");
+        Ops::Base::SetUnknownShape(DIM_NUM, *yShape);
+        return GRAPH_SUCCESS;
+    }
+
+    const gert::Shape* idxShape = context->GetInputShape(IDX_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, idxShape);
+
+    auto bs = featuresShape->GetDim(0);
+    auto cs = featuresShape->GetDim(2);
+    auto ns = idxShape->GetDim(1);
+
+    OP_LOGI(context->GetNodeName(), "InferShape4ThreeInterpolate input bs:%ld cs:%ld ns:%ld.", bs, cs, ns);
+
+    yShape->SetDimNum(DIM_NUM);
+    yShape->SetDim(0, bs);
+    yShape->SetDim(1, ns);
+    yShape->SetDim(2, cs);
     return GRAPH_SUCCESS;
 }
 
