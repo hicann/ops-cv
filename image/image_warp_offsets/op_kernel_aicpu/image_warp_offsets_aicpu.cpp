@@ -10,6 +10,7 @@
 
 #include "image_warp_offsets_aicpu.h"
 
+#include <atomic>
 #include <cmath>
 
 #include "securec.h"
@@ -58,7 +59,8 @@ uint32_t ImageWarpOffsetsCpuKernel::DoCompute(const CpuKernelContext& ctx)
     int64_t out_wxc = output_shape[3] * output_shape[4];
     int64_t out_hxwxc = output_shape[2] * out_wxc;
     int64_t in_hxwxc = input0_shape[1] * input0_shape[2] * input0_shape[3];
-    uint32_t work_ret = KERNEL_STATUS_OK;
+    // work_ret is shared by every ParallelFor worker, so it must be atomic.
+    std::atomic<uint32_t> work_ret(KERNEL_STATUS_OK);
     auto work = [&output_shape, &out_hxwxc, &in_hxwxc, &work_ret, &input0_shape, &input1, input0_data, output_data,
                  input1_data](int64_t start, int64_t end) {
         int64_t input_offset = 0;
@@ -69,7 +71,7 @@ uint32_t ImageWarpOffsetsCpuKernel::DoCompute(const CpuKernelContext& ctx)
                 for (int64_t i_h = start; i_h < end; ++i_h) {
                     for (int64_t i_w = 0; i_w < output_shape[3]; ++i_w) {
                         if (input1(i_n, i_i, i_h, i_w) >= static_cast<TIndex>(in_hxwxc)) {
-                            work_ret = KERNEL_STATUS_PARAM_INVALID;
+                            work_ret.store(KERNEL_STATUS_PARAM_INVALID, std::memory_order_relaxed);
                             string err_msg = ConcatString(
                                 kImageWarpOffsets, " op input[1] value[", i_n, "][", i_i, "][", i_h, "][", i_w, "]=[",
                                 input1(i_n, i_i, i_h, i_w), "] should be less than [", in_hxwxc, "], image size is [",
@@ -97,8 +99,8 @@ uint32_t ImageWarpOffsetsCpuKernel::DoCompute(const CpuKernelContext& ctx)
         return ret;
     }
 
-    if (work_ret != KERNEL_STATUS_OK) {
-        return work_ret;
+    if (work_ret.load(std::memory_order_relaxed) != KERNEL_STATUS_OK) {
+        return work_ret.load(std::memory_order_relaxed);
     }
     KERNEL_LOG_DEBUG("%s op success.", kImageWarpOffsets);
     return KERNEL_STATUS_OK;
