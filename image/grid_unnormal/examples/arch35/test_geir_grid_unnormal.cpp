@@ -37,7 +37,7 @@
 #include "ge_api.h"
 #include "array_ops.h"
 #include "ge_ir_build.h"
-#include "op_graph/op_cv_proto_extend.h"
+#include "../../op_graph/grid_unnormal_proto.h"
 
 #define FAILED -1
 #define SUCCESS 0

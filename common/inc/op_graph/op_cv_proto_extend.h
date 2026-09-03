@@ -327,30 +327,6 @@ REG_OP(GenerateBoundingBoxProposals)
     .OP_END_FACTORY_REG(GenerateBoundingBoxProposals)
 
 /**
-*@brief This operation unnormalize input Grid, which is usually gennerated by affine_grid.
-
-*@par Inputs:
-*@li grid: flow field grid, 4-D Tensor with shape `[batch, height, width, 2]`.
- Must be one of the following types: float16, float32.
-*@li assist: Assist matrix, a 4-D tensor with the same shape and dtype as `grid`.
-
-*@par Attributes:
-*align_corners: An optional bool. If "true", the centers of the corner
- pixels of the input and output tensors are aligned. Defaults to "false" .
-
-*@par Outputs:
-*@li diff: Returns 4-D Tensor with the same shape and dtype as `grid`.
-*@li position: Returns 4-D Tensor with the same shape as `grid`.
-*/
-REG_OP(GridUnnormal)
-    .INPUT(grid, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .INPUT(assist, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(diff, TensorType({DT_FLOAT16, DT_FLOAT}))
-    .OUTPUT(position, TensorType({DT_INT32}))
-    .ATTR(align_corners, Bool, false)
-    .OP_END_FACTORY_REG(GridUnnormal)
-
-/**
 * @brief image to transforms. \n
 
 * @par Inputs:

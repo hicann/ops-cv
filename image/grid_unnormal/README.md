@@ -51,4 +51,4 @@
 
 | 调用方式 | 调用样例 | 说明 |
 |---|---|---|
-| 图模式调用 | [test_geir_grid_unnormal](examples/arch35/test_geir_grid_unnormal.cpp) | 通过[算子IR](../../common/inc/op_graph/op_cv_proto_extend.h)构图方式调用GridUnnormal算子。 |
+| 图模式调用 | [test_geir_grid_unnormal](examples/arch35/test_geir_grid_unnormal.cpp) | 通过本目录的[算子原型](op_graph/grid_unnormal_proto.h)构图方式调用GridUnnormal算子。 |
