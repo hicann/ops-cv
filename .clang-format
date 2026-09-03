@@ -47,7 +47,7 @@ AllowAllParametersOfDeclarationOnNextLine: true
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
 
- # 宏语句定义
+# 宏语句定义
 StatementMacros:
   - OP_END_FACTORY_REG
 
