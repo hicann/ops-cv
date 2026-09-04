@@ -21,6 +21,6 @@ namespace l0op {
 const aclTensor* NonMaxSuppressionV6(const aclTensor* boxes, const aclTensor* scores,
                                      aclIntArray* maxOutputBoxesPerClass, const aclFloatArray* iouThreshold,
                                      aclFloatArray* scoreThreshold, int centerPointBox, int maxBoxesSize,
-                                     aclTensor* selectedIndices, aclOpExecutor* executor);
+                                     const aclTensor* selectedIndices, aclOpExecutor* executor);
 }
 #endif // PTA_NPU_OP_API_INC_LEVEL0_OP_NON_MAX_SUPPRESSION_V6_OP_H_

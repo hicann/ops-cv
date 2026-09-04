@@ -62,6 +62,9 @@ objdetect@ops-cv:
                 - ops/ops-cv/image/col2im/op_kernel/
                 - ops/ops-cv/image/col2im/examples/
                 - ops/ops-cv/image/col2im/tests/
+                - ops/ops-cv/image/three_interpolate_backward/op_host/three_interpolate_backward_def.cpp
+                - ops/ops-cv/image/three_interpolate_backward/op_host/three_interpolate_backward_tiling_arch35.cpp
+                - ops/ops-cv/image/three_interpolate_backward/op_host/three_interpolate_backward_infershape.cpp
                 - ops/ops-cv/image/three_interpolate_backward/examples/
                 - ops/ops-cv/image/three_interpolate_backward/tests/
                 - ops/ops-cv/objdetect/anchor_response_flags/op_host/

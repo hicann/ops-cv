@@ -31,7 +31,7 @@ OP_TYPE_REGISTER(NonMaxSuppressionV6);
 const aclTensor* NonMaxSuppressionV6(const aclTensor* boxes, const aclTensor* scores,
                                      aclIntArray* maxOutputBoxesPerClass, const aclFloatArray* iouThreshold,
                                      aclFloatArray* scoreThreshold, int centerPointBox, int maxBoxesSize,
-                                     aclTensor* selectedIndices, aclOpExecutor* executor)
+                                     const aclTensor* selectedIndices, aclOpExecutor* executor)
 {
     L0_DFX(NonMaxSuppressionV6, boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox,
            maxBoxesSize);

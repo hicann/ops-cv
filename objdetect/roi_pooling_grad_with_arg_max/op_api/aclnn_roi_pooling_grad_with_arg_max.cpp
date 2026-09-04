@@ -102,24 +102,13 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* rois, const
                        const aclTensor* gradInputRef, int64_t pooledH, int64_t pooledW)
 {
     OP_LOGD("CheckShape start");
-    if (gradOutput->GetViewShape().GetDimNum() != DIM_FOUR) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOutput dim [%zu] to be 4 but check failed.",
-                gradOutput->GetViewShape().GetDimNum());
-        return false;
-    }
-    if (rois->GetViewShape().GetDimNum() != ROIS_DIM) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected rois dim [%zu] to be 2 but check failed.",
-                rois->GetViewShape().GetDimNum());
-        return false;
-    }
-    if (argmax->GetViewShape().GetDimNum() != DIM_FOUR) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected argmax dim [%zu] to be 4 but check failed.",
-                argmax->GetViewShape().GetDimNum());
-        return false;
-    }
-    if (gradInputRef->GetViewShape().GetDimNum() != DIM_FOUR) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected out dim [%zu] to be 4 but check failed.",
-                gradInputRef->GetViewShape().GetDimNum());
+    if (gradOutput->GetViewShape().GetDimNum() != DIM_FOUR || rois->GetViewShape().GetDimNum() != ROIS_DIM ||
+        argmax->GetViewShape().GetDimNum() != DIM_FOUR || gradInputRef->GetViewShape().GetDimNum() != DIM_FOUR) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Expected gradOutput dim [%zu] to be 4, Expected rois dim [%zu] to be 2,Expected argmax dim [%zu] to "
+                "be 4, Expected out dim [%zu] to be 4 but check failed.",
+                gradOutput->GetViewShape().GetDimNum(), rois->GetViewShape().GetDimNum(),
+                argmax->GetViewShape().GetDimNum(), gradInputRef->GetViewShape().GetDimNum());
         return false;
     }
 

@@ -321,12 +321,9 @@ private:
     {
         int32_t roi_bin_grid_h = RoiBinGridH.GetValue(roi_idx);
         int32_t roi_bin_grid_w = RoiBinGridW.GetValue(roi_idx);
-        float bin_size_h = BinSizeH.GetValue(roi_idx);
-        float bin_size_w = BinSizeW.GetValue(roi_idx);
-        float grid_h = GridHTensor.GetValue(roi_idx);
-        float grid_w = GridWTensor.GetValue(roi_idx);
-        float roi_start_h = RoiStartH.GetValue(roi_idx);
-        float roi_start_w = RoiStartW.GetValue(roi_idx);
+        float bin_size_h = BinSizeH.GetValue(roi_idx), bin_size_w = BinSizeW.GetValue(roi_idx);
+        float grid_h = GridHTensor.GetValue(roi_idx), grid_w = GridWTensor.GetValue(roi_idx);
+        float roi_start_h = RoiStartH.GetValue(roi_idx), roi_start_w = RoiStartW.GetValue(roi_idx);
         float sin_theta = RoiSinTheta.GetValue(roi_idx);
         float cos_theta = RoiCosTheta.GetValue(roi_idx);
         float count = CountTensor.GetValue(roi_idx);
@@ -335,11 +332,8 @@ private:
         for (int32_t index = output_index; index < (output_index + pooled_height * pooled_width); index++) {
             Duplicate(OutputValue, zero_value, channels_aligned);
 
-            int32_t pw = index / pooled_width;
-            int32_t ph = index / pooled_width / pooled_height;
-            pw = index - pw * pooled_width;
-            ph = (index / pooled_width) - ph * pooled_height;
-
+            int32_t pw = index % pooled_width;
+            int32_t ph = (index / pooled_width) % pooled_height;
             for (uint32_t iy = 0; iy < roi_bin_grid_h; iy++) {
                 const float yy = roi_start_h + ph * bin_size_h + (iy + .5f) * grid_h;
                 for (int ix = 0; ix < roi_bin_grid_w; ix++) {
