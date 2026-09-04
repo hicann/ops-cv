@@ -74,6 +74,7 @@ struct CaseConfig {
     vector<int64_t> cropSize;   // const 值
     vector<int64_t> expectOutShape;
     bool expectAiCpuFallback;
+    ge::Format xFormat; // 数据排布：ND/NHWC 语义用 FORMAT_NHWC，NCHW 用 FORMAT_NCHW（x/y 同排布）
 };
 
 int32_t GenTensorByDesc(const TensorDesc& desc, int64_t elemNum, Tensor& tensor, uint8_t fillValue)
@@ -92,8 +93,8 @@ int32_t BuildCaseGraph(const CaseConfig& cs, Graph& graph, std::vector<ge::Tenso
     Status ret = SUCCESS;
     auto opNode = op::CropAndResize("crop_and_resize_" + cs.name);
 
-    // x: Data 输入
-    TensorDesc xDesc = TensorDesc(ge::Shape(cs.xShape), FORMAT_NHWC, cs.xDtype);
+    // x: Data 输入（format 由用例指定：NHWC 或 NCHW）
+    TensorDesc xDesc = TensorDesc(ge::Shape(cs.xShape), cs.xFormat, cs.xDtype);
     xDesc.SetPlacement(ge::kPlacementHost);
     auto xData = op::Data("x_" + cs.name).set_attr_index(0);
     Tensor xTensor;
@@ -152,8 +153,8 @@ int32_t BuildCaseGraph(const CaseConfig& cs, Graph& graph, std::vector<ge::Tenso
     opNode.set_input_crop_size(cropSizeConst);
     opNode.update_input_desc_crop_size(cropSizeDesc);
 
-    // 输出 desc
-    TensorDesc yDesc = TensorDesc(ge::Shape(cs.expectOutShape), FORMAT_NHWC, DT_FLOAT);
+    // 输出 desc（与输入同排布：NCHW 进 NCHW 出）
+    TensorDesc yDesc = TensorDesc(ge::Shape(cs.expectOutShape), cs.xFormat, DT_FLOAT);
     opNode.update_output_desc_y(yDesc);
 
     graph.SetInputs(inputs).SetOutputs({opNode});
@@ -223,20 +224,29 @@ int main(int argc, char* argv[])
     }
     printf("%s - INFO - [XIR]: Create ir session using build options success\n", GetTime().c_str());
 
-    // 用例集：原 uint8 冒烟用例（AiCpu 路由）+ check 引擎路由专项
+    // 用例集：原 uint8 冒烟用例（AiCpu 路由）+ check 引擎路由专项 + NCHW 排布专项
     std::vector<CaseConfig> cases = {
         // 原冒烟用例：uint8 x（AiCpu 承接）
-        {"smoke_uint8", DT_UINT8, {2, 2, 2, 2}, {2, 4}, {2, 2}, {2, 2, 2, 2}, true},
+        {"smoke_uint8", DT_UINT8, {2, 2, 2, 2}, {2, 4}, {2, 2}, {2, 2, 2, 2}, true, FORMAT_NHWC},
         // 违规组：AiCore 约束不满足，需 fallback AiCpu 才能执行成功
-        {"x_dtype_double", DT_DOUBLE, {2, 8, 8, 64}, {64, 4}, {4, 4}, {64, 4, 4, 64}, true},
-        {"depth_lt_256", DT_FLOAT, {2, 128, 128, 64}, {64, 4}, {8, 8}, {64, 8, 8, 64}, true},
-        {"num_boxes_lt_50", DT_FLOAT, {2, 128, 128, 256}, {32, 4}, {8, 8}, {32, 8, 8, 256}, true},
-        {"crop_gt_16", DT_FLOAT, {2, 128, 128, 256}, {64, 4}, {17, 17}, {64, 17, 17, 256}, true},
-        {"fp32_hw_gt_32765", DT_FLOAT, {2, 181, 182, 256}, {64, 4}, {8, 8}, {64, 8, 8, 256}, true},
+        {"x_dtype_double", DT_DOUBLE, {2, 8, 8, 64}, {64, 4}, {4, 4}, {64, 4, 4, 64}, true, FORMAT_NHWC},
+        {"depth_lt_256", DT_FLOAT, {2, 128, 128, 64}, {64, 4}, {8, 8}, {64, 8, 8, 64}, true, FORMAT_NHWC},
+        {"num_boxes_lt_50", DT_FLOAT, {2, 128, 128, 256}, {32, 4}, {8, 8}, {32, 8, 8, 256}, true, FORMAT_NHWC},
+        {"crop_gt_16", DT_FLOAT, {2, 128, 128, 256}, {64, 4}, {17, 17}, {64, 17, 17, 256}, true, FORMAT_NHWC},
+        {"fp32_hw_gt_32765", DT_FLOAT, {2, 181, 182, 256}, {64, 4}, {8, 8}, {64, 8, 8, 256}, true, FORMAT_NHWC},
         // 合规组：AiCore 直行（含边界值防误伤）
-        {"valid_fp32", DT_FLOAT, {2, 128, 128, 256}, {64, 4}, {8, 8}, {64, 8, 8, 256}, false},
-        {"boundary_crop_16", DT_FLOAT, {2, 128, 128, 256}, {64, 4}, {16, 16}, {64, 16, 16, 256}, false},
-        {"boundary_num_boxes_51", DT_FLOAT, {2, 128, 128, 256}, {51, 4}, {8, 8}, {51, 8, 8, 256}, false},
+        {"valid_fp32", DT_FLOAT, {2, 128, 128, 256}, {64, 4}, {8, 8}, {64, 8, 8, 256}, false, FORMAT_NHWC},
+        {"boundary_crop_16", DT_FLOAT, {2, 128, 128, 256}, {64, 4}, {16, 16}, {64, 16, 16, 256}, false, FORMAT_NHWC},
+        {"boundary_num_boxes_51", DT_FLOAT, {2, 128, 128, 256}, {51, 4}, {8, 8}, {51, 8, 8, 256}, false, FORMAT_NHWC},
+        // NCHW 组：x=(N,C,H,W)，输出 [num_boxes, C, crop_h, crop_w]（NCHW 进 NCHW 出；
+        // 输出 shape 断言验证 infershape NCHW 分支，图模式下 FE 插 Transpose 做 round-trip）
+        {"nchw_valid_fp32", DT_FLOAT, {2, 256, 17, 31}, {62, 4}, {4, 4}, {62, 256, 4, 4}, false, FORMAT_NCHW},
+        {"nchw_valid_fp16", DT_FLOAT16, {2, 1024, 5, 9}, {64, 4}, {4, 4}, {64, 1024, 4, 4}, false, FORMAT_NCHW},
+        {"nchw_boundary_c_2048", DT_FLOAT, {2, 2048, 5, 9}, {64, 4}, {8, 8}, {64, 2048, 8, 8}, false, FORMAT_NCHW},
+        // dims 解析交叉：NCHW 下 C=dim1=256/H=21/W=37；若被误按 NHWC 解析则 C=37<256 会走 AiCpu 且输出 shape 错
+        {"nchw_dims_cross", DT_FLOAT, {3, 256, 21, 37}, {75, 4}, {7, 7}, {75, 256, 7, 7}, false, FORMAT_NCHW},
+        // NCHW + AiCore dtype 违规（double）：fallback AiCpu；验证 Transpose round-trip 下 AiCpu 路径输出 shape 仍正确
+        {"nchw_fp64_fallback", DT_DOUBLE, {2, 256, 17, 31}, {62, 4}, {4, 4}, {62, 256, 4, 4}, true, FORMAT_NCHW},
     };
 
     int failed = 0;

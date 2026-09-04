@@ -46,6 +46,7 @@ struct CropAndResizeInputInfo {
     int32_t cropWidth = 0;
     float extrapolationValue = 0.0f;
     ge::DataType xDtype = ge::DT_UNDEFINED;
+    bool isNchw = false; // x format 是否为 NCHW：决定 dims→H/W/C 解析来源与 TilingKey 分流
 };
 
 static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& ubSize, int64_t& coreNum,
@@ -108,10 +109,12 @@ static ge::graphStatus CheckTbeConstraints(gert::TilingContext* context, const C
         return ge::GRAPH_FAILED; // 约束2
     }
     if (info.depth < DEPTH_MIN || info.depth > DEPTH_MAX) {
-        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
-            context->GetNodeName(), "x", std::to_string(info.depth).c_str(),
-            ("depth (x.shape[3]) must be in [" + std::to_string(DEPTH_MIN) + ", " + std::to_string(DEPTH_MAX) + "]")
-                .c_str());
+        // depth 来源 dim 随 format 变化：NCHW 为 x.shape[1]，ND/NHWC 为 x.shape[3]（与 def.cpp depthDesc 对齐）
+        std::string depthDesc = info.isNchw ? "x.shape[1]" : "x.shape[3]";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "x", std::to_string(info.depth).c_str(),
+                                              ("depth (" + depthDesc + ") must be in [" + std::to_string(DEPTH_MIN) +
+                                               ", " + std::to_string(DEPTH_MAX) + "]")
+                                                  .c_str());
         return ge::GRAPH_FAILED; // 约束3
     }
     if (info.cropHeight > CROP_DIM_MAX || info.cropWidth > CROP_DIM_MAX) {
@@ -177,7 +180,7 @@ static ge::graphStatus TilingParseForCropAndResize([[maybe_unused]] gert::Tiling
     return ge::GRAPH_SUCCESS;
 }
 
-// 提取输入 shape + crop_size 值 + dtype
+// 提取输入 format + shape + crop_size 值 + dtype
 static ge::graphStatus ExtractInputInfo(gert::TilingContext* context, CropAndResizeInputInfo& info)
 {
     auto xShapePtr = context->GetInputShape(IDX_X);
@@ -186,15 +189,34 @@ static ge::graphStatus ExtractInputInfo(gert::TilingContext* context, CropAndRes
     OP_CHECK_NULL_WITH_CONTEXT(context, boxesShapePtr);
     auto xShape = xShapePtr->GetStorageShape();
     auto boxesShape = boxesShapePtr->GetStorageShape();
+
+    // 读 x format，非 ND/NHWC/NCHW 拒绝（防御性兜底，与 infershape 拦截集合一致）
+    auto xDescPtr = context->GetInputDesc(IDX_X);
+    OP_CHECK_NULL_WITH_CONTEXT(context, xDescPtr);
+    ge::Format xFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(xDescPtr->GetStorageFormat()));
+    OP_CHECK_IF(xFormat != ge::FORMAT_NCHW && xFormat != ge::FORMAT_NHWC && xFormat != ge::FORMAT_ND,
+                OP_LOGE_FOR_INVALID_FORMAT(context->GetNodeName(), "x", Ops::Base::ToString(xFormat).c_str(),
+                                           "NCHW, NHWC and ND"),
+                return ge::GRAPH_FAILED);
+    info.isNchw = (xFormat == ge::FORMAT_NCHW);
+
     if (xShape.GetDimNum() != X_DIM) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "x", (std::to_string(xShape.GetDimNum()) + "D").c_str(),
                                      "4D");
         return ge::GRAPH_FAILED;
     }
     info.batch = xShape.GetDim(0);
-    info.imageHeight = xShape.GetDim(1);
-    info.imageWidth = xShape.GetDim(2);
-    info.depth = xShape.GetDim(3);
+    if (info.isNchw) {
+        // NCHW: x = (N, C, H, W)（对齐 TBE check_supported 双分支解析）
+        info.depth = xShape.GetDim(1);       // C
+        info.imageHeight = xShape.GetDim(2); // H
+        info.imageWidth = xShape.GetDim(3);  // W
+    } else {
+        // ND/NHWC: x = (N, H, W, C)（现状解析，零回归）
+        info.imageHeight = xShape.GetDim(1); // H
+        info.imageWidth = xShape.GetDim(2);  // W
+        info.depth = xShape.GetDim(3);       // C
+    }
     if (boxesShape.GetDimNum() != BOXES_DIM) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "boxes",
                                      (std::to_string(boxesShape.GetDimNum()) + "D").c_str(), "2D");
@@ -288,7 +310,11 @@ static ge::graphStatus ComputeAndSetTiling(gert::TilingContext* context, const C
     OP_CHECK_IF(ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE, OP_LOGE(context, "ubSize too small"),
                 return ge::GRAPH_FAILED);
     context->SetLocalMemorySize(static_cast<uint32_t>(ubSize - DCACHE_SIZE - STATIC_UB_ESTIMATE));
-    context->SetTilingKey(GET_TPL_TILING_KEY(CROP_AND_RESIZE_MODE_BILINEAR));
+    // layout 经 TilingKey 编码为 kernel 模板参数（NHWC 值 0 与原单值模式二进制兼容，ND/NHWC 路径零回归）
+    // 三目结果显式 uint64_t 承接，避免花括号初始化列表 narrowing 报错
+    uint64_t schMode = info.isNchw ? static_cast<uint64_t>(CROP_AND_RESIZE_MODE_BILINEAR_NCHW) :
+                                     static_cast<uint64_t>(CROP_AND_RESIZE_MODE_BILINEAR_NHWC);
+    context->SetTilingKey(GET_TPL_TILING_KEY(schMode));
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, currentWorkspace);
     int64_t userWorkspaceSize = 0;

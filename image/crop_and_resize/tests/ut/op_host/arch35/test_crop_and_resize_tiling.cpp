@@ -28,9 +28,10 @@ protected:
 };
 
 static gert::TilingContextPara::TensorDescription MkTd(std::initializer_list<int64_t> shape, ge::DataType dtype,
-                                                       bool isConst = false, const void* constValue = nullptr)
+                                                       bool isConst = false, const void* constValue = nullptr,
+                                                       ge::Format format = ge::FORMAT_ND)
 {
-    return gert::TilingContextPara::TensorDescription(gert::StorageShape(shape, shape), dtype, ge::FORMAT_ND, isConst,
+    return gert::TilingContextPara::TensorDescription(gert::StorageShape(shape, shape), dtype, format, isConst,
                                                       const_cast<void*>(constValue));
 }
 
@@ -41,11 +42,11 @@ static gert::TilingContextPara BuildPara(std::initializer_list<int64_t> xShape,
                                          std::initializer_list<int64_t> cropSizeShape, const int32_t* cropSizeData,
                                          ge::DataType xDtype, ge::DataType boxesDtype, ge::DataType yDtype,
                                          float extrapolationValue = 0.0f, uint64_t coreNum = 64,
-                                         uint64_t ubSize = 262144)
+                                         uint64_t ubSize = 262144, ge::Format xFormat = ge::FORMAT_ND)
 {
     static CropAndResizeUtCompileInfo compileInfo;
     std::vector<gert::TilingContextPara::TensorDescription> inputs = {
-        MkTd(xShape, xDtype),                                                            // x
+        MkTd(xShape, xDtype, false, nullptr, xFormat),                                   // x
         MkTd(boxesShape, boxesDtype),                                                    // boxes
         MkTd(boxIndexShape, ge::DT_INT32),                                               // box_index
         MkTd(cropSizeShape, ge::DT_INT32, true, static_cast<const void*>(cropSizeData)), // crop_size (value dependency)
@@ -64,10 +65,10 @@ static gert::TilingContextPara BuildPara(std::initializer_list<int64_t> xShape,
 
 // 正例公共校验：x=[2,4,4,256], boxes=[64,4], crop_size={8,8}
 //   totalPositions = 64*8*8 = 4096; coreNum=64 -> perCore=1024 -> needCore=4
-//   tilingKey = CROP_AND_RESIZE_MODE_BILINEAR(0)
+//   tilingKey = CROP_AND_RESIZE_MODE_BILINEAR_NHWC(0)
 static void CheckPositiveTiling(const TilingInfo& info)
 {
-    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR);
+    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR_NHWC);
     EXPECT_EQ(info.blockNum, 4u);
     ASSERT_EQ(info.workspaceSizes.size(), 1u);
     EXPECT_GE(info.workspaceSizes[0], 0);
@@ -212,7 +213,7 @@ TEST_F(CropAndResizeTiling, crop_and_resize_tiling_crop_h_eq_1)
     auto para = BuildPara({2, 4, 4, 256}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT);
     TilingInfo info;
     ASSERT_TRUE(ExecuteTiling(para, info));
-    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR);
+    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR_NHWC);
     const CropAndResizeTilingData* td = reinterpret_cast<const CropAndResizeTilingData*>(info.tilingData.get());
     EXPECT_EQ(td->cropHeight, 1);
     EXPECT_EQ(td->cropWidth, 8);
@@ -226,7 +227,7 @@ TEST_F(CropAndResizeTiling, crop_and_resize_tiling_crop_w_eq_1)
     auto para = BuildPara({2, 4, 4, 256}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT);
     TilingInfo info;
     ASSERT_TRUE(ExecuteTiling(para, info));
-    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR);
+    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR_NHWC);
     const CropAndResizeTilingData* td = reinterpret_cast<const CropAndResizeTilingData*>(info.tilingData.get());
     EXPECT_EQ(td->cropHeight, 8);
     EXPECT_EQ(td->cropWidth, 1);
@@ -281,5 +282,59 @@ TEST_F(CropAndResizeTiling, crop_and_resize_tiling_crop_w_le_0)
 {
     int32_t cropSize[2] = {8, 0};
     auto para = BuildPara({2, 4, 4, 256}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+// ===== 正例：NCHW x=(N,C,H,W)=(2,256,4,4)，dims 按正确 dim 解析 + NCHW TilingKey；若误按 NHWC 解析则 C=4 违反
+// [256,2048] 直接失败 =====
+TEST_F(CropAndResizeTiling, crop_and_resize_tiling_nchw_fp16_fp32)
+{
+    int32_t cropSize[2] = {8, 8};
+    auto para = BuildPara({2, 256, 4, 4}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT,
+                          0.0f, 64, 262144, ge::FORMAT_NCHW);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR_NCHW);
+    EXPECT_EQ(info.blockNum, 4u);
+    const CropAndResizeTilingData* td = reinterpret_cast<const CropAndResizeTilingData*>(info.tilingData.get());
+    EXPECT_EQ(td->depth, 256);     // C 来自 x.shape[1]（NCHW dims[1]）
+    EXPECT_EQ(td->imageHeight, 4); // H 来自 x.shape[2]
+    EXPECT_EQ(td->imageWidth, 4);  // W 来自 x.shape[3]
+    EXPECT_EQ(td->batch, 2);
+    EXPECT_EQ(td->totalPositions, 4096); // 64*8*8，与 layout 无关
+}
+
+// ===== 负例：NCHW depth 约束在 dim1 生效（C=x.shape[1]=255 < 256）=====
+TEST_F(CropAndResizeTiling, crop_and_resize_tiling_nchw_depth_lt_256)
+{
+    int32_t cropSize[2] = {8, 8};
+    auto para = BuildPara({2, 255, 4, 4}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT,
+                          0.0f, 64, 262144, ge::FORMAT_NCHW);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+// ===== 负例：非法 format（HWCN 非 ND/NHWC/NCHW，ExtractInputInfo 新增拦截分支）=====
+TEST_F(CropAndResizeTiling, crop_and_resize_tiling_invalid_format)
+{
+    int32_t cropSize[2] = {8, 8};
+    auto para = BuildPara({2, 256, 4, 4}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_FLOAT,
+                          0.0f, 64, 262144, ge::FORMAT_HWCN);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+// ===== 负例：x 含 -1（动态维）。check_supported 已前置 fallback AiCpu，此为 AiCore 认领后
+// tiling 阶段的兜底校验（all-dims-positive 拒绝；N/H/W/C 各维 -1 均走此分支，取 H=-1 代表）=====
+TEST_F(CropAndResizeTiling, crop_and_resize_tiling_x_dim_unknown)
+{
+    int32_t cropSize[2] = {8, 8};
+    auto para = BuildPara({2, -1, 4, 256}, {64, 4}, {64}, {2}, cropSize, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+// ===== 负例：num_boxes=-1（boxes.shape[0] 动态），tiling 兜底拒绝（区间检查分支）=====
+TEST_F(CropAndResizeTiling, crop_and_resize_tiling_num_boxes_unknown)
+{
+    int32_t cropSize[2] = {8, 8};
+    auto para = BuildPara({2, 4, 4, 256}, {-1, 4}, {64}, {2}, cropSize, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT);
     ExecuteTestCase(para, ge::GRAPH_FAILED);
 }

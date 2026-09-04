@@ -312,3 +312,107 @@ TEST_F(CropAndResizeInfershape, test15_crop_w_gt_16)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// test16: NCHW x (N,C,H,W)={2,2,3,4}, crop_size=[14,14] → y={2,2,14,14}（C=x.shape[1] 在 dim1，数据不转置）
+TEST_F(CropAndResizeInfershape, test16_nchw_normal_fp16)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            // x (index 0): 4D NCHW (N,C,H,W)；boxes(1) 2D shape[1]==4；box_index(2) 1D；crop_size(3) 值依赖 [14,14]
+            {{{2, 2, 3, 4}, {2, 2, 3, 4}}, ge::DT_FLOAT16, ge::FORMAT_NCHW},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            // y (output 0): dtype=boxes.dtype=fp32
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 14, 14},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// test17: NCHW C 维未知 (-1) → y={2,-1,14,14}（UNKNOWN_DIM 透传，动态编译兜底）
+TEST_F(CropAndResizeInfershape, test17_nchw_unknown_dim_c)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, -1, 3, 4}, {2, -1, 3, 4}}, ge::DT_FLOAT16, ge::FORMAT_NCHW},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, -1, 14, 14},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// test18: NCHW crop_h=1（中心点坐标路径）→ y={2,2,1,14}
+TEST_F(CropAndResizeInfershape, test18_nchw_crop_eq_1)
+{
+    std::vector<int32_t> cropSizeValues = {1, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 2, 3, 4}, {2, 2, 3, 4}}, ge::DT_FLOAT16, ge::FORMAT_NCHW},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 1, 14},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// test19: 非法 format（NC1HWC0 不被 GetPrimaryFormat 归一化，ND/NHWC/NCHW 之外拒绝）→ FAIL
+TEST_F(CropAndResizeInfershape, test19_nchw_invalid_format)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 2, 3, 4}, {2, 2, 3, 4}}, ge::DT_FLOAT16, ge::FORMAT_NC1HWC0},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// test20: NHWC format 透传（回归保护）: x=(N,H,W,C)={2,3,4,2} → y={2,14,14,2}（C=x.shape[3] 在 dim3）
+TEST_F(CropAndResizeInfershape, test20_nhwc_format_passthrough)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_NHWC},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 14, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

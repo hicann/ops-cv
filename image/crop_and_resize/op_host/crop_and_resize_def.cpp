@@ -10,44 +10,38 @@
 
 /*!
  * \file crop_and_resize_def.cpp
- * \brief Operator definition for crop_and_resize operator
+ * \brief Operator definition of crop_and_resize
  *
- * 4 dtype combinations (aligned with TBE op_select_format):
- *   #0: x=FP32, boxes=FP32, box_index=INT32, crop_size=INT32, y=FP32
- *   #1: x=FP16, boxes=FP32, box_index=INT32, crop_size=INT32, y=FP32
- *   #2: x=FP16, boxes=FP16, box_index=INT32, crop_size=INT32, y=FP16
- *   #3: x=FP32, boxes=FP16, box_index=INT32, crop_size=INT32, y=FP16
+ * 4 dtype combinations:
+ *   #0: x=FP32, boxes=FP32, y=FP32
+ *   #1: x=FP16, boxes=FP32, y=FP32
+ *   #2: x=FP16, boxes=FP16, y=FP16
+ *   #3: x=FP32, boxes=FP16, y=FP16
+ * box_index/crop_size=INT32。所有候选 format=ND，NHWC/NCHW 输入均由 ND 候选
+ * 承接，format 由 infershape/tiling/check 按实际 desc format 分支解析。
  *
  * 构建注意：本文件注释会被构建脚本按行抓取拼接进 shell 命令，
  * 注释中勿出现注册宏名与未闭合括号（否则 CMake configure 报语法错误）。
  */
 
 #include "register/op_def_registry.h"
+#include "graph/utils/type_utils.h"
 #include "crop_and_resize_constraints.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
 namespace ops {
 
-// check_supported 回调（V1，ge::Operator）：引擎分配阶段拒绝违反 AiCore tiling 约束的
-// 输入，GE 轮询 fallback 到 AiCpu 实现（性能路由，非错误）。
-// 经 NeedCheckSupportFlag true + SetCheckSupport 注册；注册登记由 op_def_registry.h 中
-// 的注册宏在 TILING 编译单元内自动完成（需 CMakeLists 将本文件编入 tiling_obj）。
-// 值依赖：crop_size 为 const 时经 GetInputConstData 读前驱 Constant 节点 weights
-// （图编译期可用，实测 check 期可读），据此完成 crop 值校验（正值、<=16、面积上限）
-// 并提前路由 AiCpu；非 const 时读不到值，该项由 tiling 阶段 CheckTbeConstraints 兜底。
-// 动态 shape -1 放行，由 DynamicCompileStatic 编译期兜底。
-// 结构：约束判定拆为纯数据函数 CheckCropAndResizeConstraints（与 ge::Operator 适配
-// 解耦，便于独立审查与后续扩展测试），FE 回调 CheckIfAICoreSupported 仅做取值适配。
 struct CropAndResizeCheckInput {
     ge::DataType xDtype = ge::DT_UNDEFINED;
     ge::DataType boxesDtype = ge::DT_UNDEFINED;
     ge::DataType boxIndexDtype = ge::DT_UNDEFINED;
-    // unknown rank([-2]) 统一表示：dims 清空 + 标志位置 true（由读取处归一化）
-    std::vector<int64_t> xDims;     // 空 = x 为 unknown rank([-2])
-    std::vector<int64_t> boxesDims; // 空 = boxes 为 unknown rank([-2])
-    bool boxesUnknownRank = false;  // boxes unknown rank 标志（与 boxesDims 空等价，供放行判定直读）
+    // x 实际 format（GetPrimaryFormat 归一化）：NCHW → dims=(N,C,H,W)；ND/NHWC → dims=(N,H,W,C)
+    ge::Format xFormat = ge::FORMAT_ND;
+    std::vector<int64_t> xDims;     // 空 = x 为 unknown rank([-2])，由读取处归一化
+    std::vector<int64_t> boxesDims; // 空 = boxes 为 unknown rank([-2])，由读取处归一化
     // box_index 不携带 dims（无 shape 约束），仅保留 unknown rank 标志
     bool boxIndexUnknownRank = false;
     std::string method; // 空 = 属性缺省或读取失败，均按默认 bilinear 处理
@@ -62,6 +56,18 @@ static bool CheckCropAndResizeConstraints(const CropAndResizeCheckInput& in, std
         rejectDetail = detail;
         return false;
     };
+
+    // 动态 shape 一律 fallback AiCpu（对齐 TBE check_supported）：x/boxes 任一维为
+    // -1，或任一输入为 -2 时拒绝认领。AiCpu kernel 运行时读取全部 shape/值，天然
+    // 支持动态。box_index 仅拦 -2（tiling 需读其 shape），boxCoords 动态不检查
+    // （均对齐 TBE）。
+    auto hasUnknownDim = [](const std::vector<int64_t>& dims) {
+        return std::find(dims.begin(), dims.end(), ge::UNKNOWN_DIM) != dims.end();
+    };
+    if (in.xDims.empty() || in.boxesDims.empty() || in.boxIndexUnknownRank || hasUnknownDim(in.xDims) ||
+        in.boxesDims[0] == ge::UNKNOWN_DIM) {
+        return rejected("dynamic shape (-1/-2) is not supported by aicore, fallback to aicpu");
+    }
 
     // dtype：x/boxes 限 f32/f16，box_index 限 int32（AiCpu 侧 x 共收 9 种 dtype，
     // 其中 f64/uint8/int8/uint16/int16/int32/int64 这 7 种仅 AiCpu 可承接，故此处拒绝即 fallback）
@@ -80,27 +86,34 @@ static bool CheckCropAndResizeConstraints(const CropAndResizeCheckInput& in, std
         return rejected("method=" + in.method + ", only bilinear");
     }
 
-    // unknown rank([-2]) 放行 AiCore 交动态编译（与 infershape 的 unknown rank
-    // 传播一致）；若在此按 rank 判定拒绝，AiCore 认领后无 fallback 且整图编译失败。
-    // x/boxes/box_index 任一为 -2 即触发
-    if (in.xDims.empty() || in.boxesUnknownRank || in.boxIndexUnknownRank) {
-        return true;
-    }
-
-    // x shape: 4D (N,H,W,C)
+    // x shape: 4D。dims 按 xFormat 分支解析（对齐 TBE）：NCHW → C=dims[1],H=dims[2],W=dims[3]；ND/NHWC →
+    // H=dims[1],W=dims[2],C=dims[3]
     if (in.xDims.size() != static_cast<size_t>(X_DIM)) {
         return rejected("x must be 4D (N,H,W,C)");
     }
-    int64_t h = in.xDims[1];
-    int64_t w = in.xDims[2];
-    int64_t c = in.xDims[3];
-    if (c != ge::UNKNOWN_DIM && (c < DEPTH_MIN || c > DEPTH_MAX)) {
-        return rejected("depth (x.shape[3]) must be in [" + std::to_string(DEPTH_MIN) + ", " +
+    int64_t h = 0;
+    int64_t w = 0;
+    int64_t c = 0;
+    std::string depthDesc; // depth 所在 dim 位置，随 format 变化
+    if (in.xFormat == ge::FORMAT_NCHW) {
+        c = in.xDims[1];
+        h = in.xDims[2];
+        w = in.xDims[3];
+        depthDesc = "x.shape[1]";
+    } else if (in.xFormat == ge::FORMAT_ND || in.xFormat == ge::FORMAT_NHWC) {
+        h = in.xDims[1];
+        w = in.xDims[2];
+        c = in.xDims[3];
+        depthDesc = "x.shape[3]";
+    } else {
+        return rejected("x format must be ND/NHWC/NCHW, got " + ge::TypeUtils::FormatToSerialString(in.xFormat));
+    }
+    if (c < DEPTH_MIN || c > DEPTH_MAX) {
+        return rejected("depth (" + depthDesc + ") must be in [" + std::to_string(DEPTH_MIN) + ", " +
                         std::to_string(DEPTH_MAX) + "], got " + std::to_string(c));
     }
-    // h/w 非 UNKNOWN 且为正才检查 H*W 上限（0/负维对 AiCpu 同样非法，
-    // 由 tiling 阶段 all-dims-positive 拒绝，此处不重复拦）
-    if (h != ge::UNKNOWN_DIM && w != ge::UNKNOWN_DIM && h > 0 && w > 0) {
+    // h/w 为 0/负维时对 AiCpu 同样非法，由 tiling 阶段 all-dims-positive 拒绝，此处不重复拦
+    if (h > 0 && w > 0) {
         int64_t hw = h * w;
         int64_t hwMax = (in.xDtype == ge::DT_FLOAT) ? HW_FP32_MAX : HW_MAX;
         if (hw > hwMax) {
@@ -113,7 +126,7 @@ static bool CheckCropAndResizeConstraints(const CropAndResizeCheckInput& in, std
         return rejected("boxes must be 2D (num_boxes, 4)");
     }
     int64_t numBoxes = in.boxesDims[0];
-    if (numBoxes != ge::UNKNOWN_DIM && (numBoxes <= NUM_BOXES_MIN || numBoxes > NUM_BOXES_MAX)) {
+    if (numBoxes <= NUM_BOXES_MIN || numBoxes > NUM_BOXES_MAX) {
         return rejected("num_boxes (boxes.shape[0]) must be in (" + std::to_string(NUM_BOXES_MIN) + ", " +
                         std::to_string(NUM_BOXES_MAX) + "], got " + std::to_string(numBoxes) +
                         ", performance is better on aicpu outside this range");
@@ -157,21 +170,14 @@ static ge::graphStatus CheckIfAICoreSupported(const ge::Operator& op, ge::Ascend
     in.xDtype = xDesc.GetDataType();
     in.boxesDtype = boxesDesc.GetDataType();
     in.boxIndexDtype = boxIndexDesc.GetDataType();
+    // x format：V1 TensorDesc::GetFormat 直接返回 ge::Format，GetPrimaryFormat 剥离 sub-format 位
+    in.xFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(xDesc.GetFormat()));
     in.boxIndexUnknownRank = IsUnknownRank(boxIndexDesc);
     std::vector<int64_t> xDims = xDesc.GetShape().GetDims();
     std::vector<int64_t> boxesDims = boxesDesc.GetShape().GetDims();
-    // unknown rank([-2]) 归一化：dims 清空 + 标志位置位（见结构体注释）
-    if (IsUnknownRank(xDesc)) {
-        in.xDims.clear();
-    } else {
-        in.xDims = std::move(xDims);
-    }
-    in.boxesUnknownRank = IsUnknownRank(boxesDesc);
-    if (in.boxesUnknownRank) {
-        in.boxesDims.clear();
-    } else {
-        in.boxesDims = std::move(boxesDims);
-    }
+    // unknown rank([-2]) 归一化：dims 清空（见结构体注释）
+    in.xDims = IsUnknownRank(xDesc) ? std::vector<int64_t>{} : std::move(xDims);
+    in.boxesDims = IsUnknownRank(boxesDesc) ? std::vector<int64_t>{} : std::move(boxesDims);
     (void)op.GetAttr("method", in.method);
     // crop_size 值（V1 独有能力：const 时经 GetInputConstData 读前驱 Constant 节点 weights）
     ge::Tensor cropTensor;
@@ -185,7 +191,10 @@ static ge::graphStatus CheckIfAICoreSupported(const ge::Operator& op, ge::Ascend
 
     std::string rejectDetail;
     if (!CheckCropAndResizeConstraints(in, rejectDetail)) {
-        // reason 带性能路由语义，提示该拒绝为路由行为而非错误
+        // reason 带性能路由语义，提示该拒绝为路由行为而非错误。
+        // dynamicCompileStatic=True（对齐库上惯例，如 reverse_sequence/dynamic_stitch）：
+        // 拒绝后 FE 继续轮询 AiCpu；若 AiCpu 也拒绝（如动态 + boxes=FP16），
+        // GE 运行时编译（jit）模式下仍可按实参动态编译 AiCore 兜底。
         std::string json = "{\"isSupported\": \"False\", \"dynamicCompileStatic\": \"True\", \"reason\": "
                            "\"AiCore path of CropAndResize on ascend950 does not support this input (" +
                            rejectDetail + "), performance/compatibility is better on AiCpu, fallback expected.\"}";
@@ -201,7 +210,8 @@ class CropAndResize : public OpDef {
 public:
     explicit CropAndResize(const char* name) : OpDef(name)
     {
-        // 输入 x: 4D (N, H, W, C), float16/float32
+        // 输入 x: 4D (N, H, W, C) ND/NHWC 或 (N, C, H, W) NCHW；NCHW 由 ND 候选承接（format
+        // 由下游 infershape/tiling/check 按实际 desc format 分支解析，避免 FE 动态 shape 候选推导插转置）
         this->Input("x")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT})
@@ -227,7 +237,7 @@ public:
             .AutoContiguous();
 
         // 输入 crop_size: 1D (2,), int32
-        // ValueDepend(OPTIONAL): infershape/tiling 需读取 crop_size 值（与 MDE §3.3 一致）
+        // ValueDepend(OPTIONAL): infershape/tiling 需读取 crop_size 值
         this->Input("crop_size")
             .ParamType(REQUIRED)
             .DataType({ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32})
@@ -236,7 +246,7 @@ public:
             .ValueDepend(OPTIONAL)
             .AutoContiguous();
 
-        // 输出 y: 4D (num_boxes, crop_h, crop_w, C), dtype = boxes dtype
+        // 输出 y: (num_boxes, crop_h, crop_w, C) ND/NHWC 或 (num_boxes, C, crop_h, crop_w) NCHW
         this->Output("y")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_FLOAT16})
@@ -247,7 +257,7 @@ public:
         // 属性: extrapolation_value (Float, 默认 0)
         this->Attr("extrapolation_value").AttrType(OPTIONAL).Float(0);
 
-        // 属性: method (String, 默认 "bilinear", 本次仅支持 bilinear)
+        // 属性: method (String, 默认 "bilinear", 仅支持 bilinear)
         this->Attr("method").AttrType(OPTIONAL).String("bilinear");
 
         OpAICoreConfig aicoreConfig;
@@ -255,9 +265,8 @@ public:
             .DynamicFormatFlag(false)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
-            // true: 引擎分配阶段回调 CheckIfAICoreSupported —— 见上方实现，V1 版，
-            // 可读 desc/dtype/attrs/crop_size const 值。tiling 约束不满足时 AIcoreEngine
-            // 拒绝并 fallback 到 AiCpu
+            // true: 引擎分配阶段回调 CheckIfAICoreSupported，违反约束时拒绝并
+            // fallback 到 AiCpu
             .NeedCheckSupportFlag(true)
             .PrecisionReduceFlag(true)
             .ExtendCfgInfo("opFile.value", "crop_and_resize_apt");

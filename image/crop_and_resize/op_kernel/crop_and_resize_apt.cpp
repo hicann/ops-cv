@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * This program is free software: you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -11,9 +11,7 @@
 /*!
  * \file crop_and_resize_apt.cpp
  * \brief Kernel entry for crop_and_resize operator
- *
- * Single template parameter:
- *   schMode (uint32_t): scene mode (0 = bilinear)
+ * schMode (uint32_t): 0 = bilinear ND/NHWC layout, 1 = bilinear NCHW layout.
  * dtype is auto-instantiated via DTYPE_ macros (DTYPE_X, DTYPE_BOXES, DTYPE_Y).
  */
 
@@ -28,11 +26,14 @@ __global__ __aicore__ void crop_and_resize(GM_ADDR x, GM_ADDR boxes, GM_ADDR box
     REGISTER_TILING_DEFAULT(CropAndResizeTilingData);
     GET_TILING_DATA_WITH_STRUCT(CropAndResizeTilingData, tilingData, tiling);
 
-    if constexpr (schMode == CROP_AND_RESIZE_MODE_BILINEAR) {
-        // DTYPE_ 宏自动实例化所有 dtype 组合
-        // DTYPE_X -> x 的 dtype (half/float)
-        // DTYPE_BOXES -> boxes 的 dtype (half/float)
-        // DTYPE_Y -> y 的 dtype (= boxes dtype)
-        NsCropAndResize::Process<DTYPE_X, DTYPE_BOXES, DTYPE_Y>(x, boxes, box_index, crop_size, y, &tilingData);
+    if constexpr (schMode == CROP_AND_RESIZE_MODE_BILINEAR_NHWC) {
+        // DTYPE_ 宏自动实例化所有 dtype 组合（DTYPE_X/DTYPE_BOXES/DTYPE_Y）；ND/NHWC 语义合并为 NHWC
+        // 模式（schMode=0，二进制兼容）
+        NsCropAndResize::Process<DTYPE_X, DTYPE_BOXES, DTYPE_Y, NsCropAndResize::LAYOUT_NHWC>(
+            x, boxes, box_index, crop_size, y, &tilingData);
+    } else if constexpr (schMode == CROP_AND_RESIZE_MODE_BILINEAR_NCHW) {
+        // NCHW 模式（schMode=1）：x/y 按 (N,C,H,W) 排布寻址，数据不转置
+        NsCropAndResize::Process<DTYPE_X, DTYPE_BOXES, DTYPE_Y, NsCropAndResize::LAYOUT_NCHW>(
+            x, boxes, box_index, crop_size, y, &tilingData);
     }
 }

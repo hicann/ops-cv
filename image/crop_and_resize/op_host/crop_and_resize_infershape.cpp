@@ -12,11 +12,9 @@
  * \file crop_and_resize_infershape.cpp
  * \brief InferShape implementation for crop_and_resize operator
  *
- * Output shape: [num_boxes, crop_height, crop_width, depth]
- *   num_boxes = boxes.shape[0]
- *   crop_height = crop_size[0] (value dependency)
- *   crop_width = crop_size[1] (value dependency)
- *   depth = x.shape[3]
+ * Output shape:
+ *   ND/NHWC x: [num_boxes, crop_height, crop_width, depth], depth = x.shape[3]
+ *   NCHW x:    [num_boxes, depth, crop_height, crop_width], depth = x.shape[1]
  * Output dtype = boxes dtype (handled by def.cpp DataType config)
  */
 
@@ -136,6 +134,15 @@ static ge::graphStatus InferShapeCropAndResize(gert::InferShapeContext* context)
         return GRAPH_SUCCESS;
     }
 
+    // 读 x format 并校验（ND/NHWC/NCHW 三分支持，其余拒绝）。调用链对齐 resize_bicubic_v2_infershape.cpp L40-44
+    auto xDesc = context->GetInputDesc(IDX_X);
+    OP_CHECK_NULL_WITH_CONTEXT(context, xDesc);
+    ge::Format xFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(xDesc->GetFormat().GetStorageFormat()));
+    OP_CHECK_IF(
+        xFormat != ge::FORMAT_ND && xFormat != ge::FORMAT_NHWC && xFormat != ge::FORMAT_NCHW,
+        OP_LOGE_FOR_INVALID_FORMAT(context->GetNodeName(), "x", Ops::Base::ToString(xFormat).c_str(), "ND/NHWC/NCHW"),
+        return ge::GRAPH_FAILED);
+
     OP_CHECK_IF(ValidateInputShapes(context, xShape, boxesShape, cropSizeShape) != ge::GRAPH_SUCCESS,
                 OP_LOGE(context, "ValidateInputShapes failed"), return ge::GRAPH_FAILED);
 
@@ -147,10 +154,18 @@ static ge::graphStatus InferShapeCropAndResize(gert::InferShapeContext* context)
     gert::Shape* yShape = context->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
     yShape->SetDimNum(X_DIM);
-    yShape->SetDim(0, boxesShape->GetDim(0));
-    yShape->SetDim(1, cropHeight);
-    yShape->SetDim(2, cropWidth);
-    yShape->SetDim(3, xShape->GetDim(3));
+    yShape->SetDim(0, boxesShape->GetDim(0)); // num_boxes（两分支相同）
+    if (xFormat == ge::FORMAT_NCHW) {
+        // NCHW: y = [num_boxes, C, crop_h, crop_w]（对齐 TBE image_ops.cc L253-257，数据不转置）
+        yShape->SetDim(1, xShape->GetDim(1)); // C = x.shape[1]
+        yShape->SetDim(2, cropHeight);
+        yShape->SetDim(3, cropWidth);
+    } else {
+        // ND/NHWC: y = [num_boxes, crop_h, crop_w, C]（现状排布，零回归）
+        yShape->SetDim(1, cropHeight);
+        yShape->SetDim(2, cropWidth);
+        yShape->SetDim(3, xShape->GetDim(3)); // C = x.shape[3]
+    }
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeCropAndResize");
     return GRAPH_SUCCESS;
