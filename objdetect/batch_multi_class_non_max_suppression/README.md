@@ -46,7 +46,7 @@ $$
     <tr>
       <td>boxes</td>
       <td>输入</td>
-      <td>候选框，坐标格式为[y_min, x_min, y_max, x_max]。transpose_box为false时shape为[B,N,q,4]，为true时shape为[B,q,4,N]；q为1或C。</td>
+      <td>候选框，坐标格式为[y_min, x_min, y_max, x_max]，shape为[B,N,q,4]；q为1或C。</td>
       <td>FLOAT16、FLOAT</td>
       <td>ND</td>
     </tr>
@@ -109,7 +109,7 @@ $$
     <tr>
       <td>transpose_box</td>
       <td>属性</td>
-      <td>是否按[B,q,4,N]解释boxes，默认为false。</td>
+      <td>是否在算子前插入Transpose，当前仅支持false，默认为false。</td>
       <td>BOOL</td>
       <td>-</td>
     </tr>
@@ -147,6 +147,7 @@ $$
 
 - 仅支持 ND format、float16/float32 的 boxes 和 scores；三个浮点输出与 boxes dtype 保持一致。
 - boxes 为 4 维、scores 为 3 维，B、N、C、q 必须为正；q 必须为 1 或 C。
+- `transpose_box` 当前仅支持 `false`，与 910B/910C 的公开接口约束保持一致。
 - `clip_window` 的形状必须为 `[B,4]`，`num_valid_boxes` 的形状必须为 `[B]`。
 - 当前 Ascend950 tiling 只接受具体的正 shape，不支持动态 rank 和未知维度。
 - `image_size` 为图模式原型兼容属性，当前通用 NMS 路径不读取该属性；旧平台 `norm_class` 专用语义不在本实现范围内。
