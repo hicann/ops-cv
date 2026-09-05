@@ -183,6 +183,7 @@ get_simulator_chip_version() {
     ascend310p) echo "dav_2002" ;;
     ascend310b) echo "dav_3002" ;;
     ascend950) echo "dav_3510" ;;
+    ascend350) echo "dav_3510" ;;
     *)
       echo "[ERROR] Unsupported soc version for simulator: $soc" >&2
       return 1
