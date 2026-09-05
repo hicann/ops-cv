@@ -47,7 +47,9 @@
 - batch与num_classes的乘积不能超过`INT32_MAX`。
 - `max_output_size_per_class`和`max_total_size`必须为标量，取值范围均为[1, 1000]。
 - `iou_threshold`和`score_threshold`必须为标量，`iou_threshold`取值范围为[0, 1]。
+- `max_output_size_per_class`、`max_total_size`、`iou_threshold`和`score_threshold`为值依赖输入，输入值必须在编译期已知；其中前两者的值参与输出Shape推导，后两者的值参与NMS计算。
 - 候选框坐标顺序为(y1, x1, y2, x2)，支持反向坐标；计算IoU时会分别取坐标端点的最小值和最大值。
+- 当前不支持GE IR动态Shape和动态Rank场景（输入Shape声明分别为`[-1]`和`[-2]`）。
 
 ## 调用说明
 
