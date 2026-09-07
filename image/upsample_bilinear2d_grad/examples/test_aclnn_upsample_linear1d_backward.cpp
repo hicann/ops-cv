@@ -109,7 +109,7 @@ int main()
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
     // 调用aclnnUpsampleLinear1dBackward第一段接口
-    ret = aclnnUpsampleLinear1dBackwardGetWorkspaceSize(self, outputSize, inputSize, true, 1.1, out, &workspaceSize,
+    ret = aclnnUpsampleLinear1dBackwardGetWorkspaceSize(self, outputSize, inputSize, true, 0.5, out, &workspaceSize,
                                                         &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleLinear1dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);

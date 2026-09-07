@@ -346,7 +346,7 @@ int main()
 
     aclFloatArray* scales = nullptr;
     scales = aclCreateFloatArray(scalesData.data(), scalesData.size());
-    CHECK_RET(scales != nullptr, return 0);
+    CHECK_RET(scales != nullptr, return ACL_ERROR_INTERNAL_ERROR);
 
     // 3. 调用CANN算子库API，需要修改为具体的API
     uint64_t workspaceSize = 0;
@@ -359,7 +359,7 @@ int main()
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
         printf("workspaceSize: %ld\n", workspaceSize);
     }
     // 调用aclnnResize第二段接口

@@ -416,7 +416,7 @@ int main()
     aclTensor* out = nullptr;
     std::vector<float> selfHostData = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     const size_t kSize25 = 25U;
-    std::vector<float> outHostData = {kSize25, 0};
+    std::vector<float> outHostData(kSize25, 0);
     const size_t kSize5 = 5U;
     std::vector<int64_t> outputSizeData = {kSize5, 5};
     bool alignCorners = false;
@@ -432,7 +432,7 @@ int main()
     const aclIntArray* outputSize = aclCreateIntArray(outputSizeData.data(), outputSizeData.size());
     CHECK_RET(outputSize != nullptr, return ret);
 
-    // 3. 调用CANN算子库API，需要修改为具体的Api名称
+    // 3. 调用CANN算子库API，需要修改为具体的API名称
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
     // 调用aclnnUpsampleBicubic2dAA第一段接口
