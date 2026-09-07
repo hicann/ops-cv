@@ -33,6 +33,22 @@ function(kernel_src_copy)
           find "${SRC_DIR}" -mindepth 1 -maxdepth 1 -exec cp -r {} "${KNCPY_DST_DIR}/${OP_NAME}" \;
         VERBATIM
         )
+      # pypto-pro ops (marked by enable_pypto_kernel): stage the configure-time generated artifacts
+      # (*_tiling.h / *_tilingkey.h / *_pypto_infer.cpp) next to the copied op_kernel sources, so they
+      # travel with the kernel source both in tbe/ascendc and in the installed package.
+      foreach(PYPTO_GEN_SRC ${${OP_NAME}_pypto_gen_dirs})
+        if(PYPTO_GEN_SRC AND EXISTS ${PYPTO_GEN_SRC})
+          add_custom_command(
+            TARGET ${OP_NAME}_src_copy
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${PYPTO_GEN_SRC} ${KNCPY_DST_DIR}/${OP_NAME}
+            VERBATIM
+            )
+          if(ENABLE_PACKAGE)
+            install(DIRECTORY ${PYPTO_GEN_SRC}/ DESTINATION ${IMPL_INSTALL_DIR}/${OP_NAME})
+          endif()
+        endif()
+      endforeach()
       add_dependencies(${KNCPY_TARGET} ${OP_NAME}_src_copy)
       if(ENABLE_PACKAGE)
         install(DIRECTORY ${SRC_DIR}/ DESTINATION ${IMPL_INSTALL_DIR}/${OP_NAME})
@@ -120,6 +136,20 @@ function(add_ops_impl_target)
   set(oneValueArgs TARGET OPS_INFO_DIR IMPL_DIR OUT_DIR INSTALL_DIR DEPENDS)
   cmake_parse_arguments(OPIMPL "" "${oneValueArgs}" "OPS_BATCH;OPS_ITERATE" ${ARGN})
 
+  # pypto-pro ops (marked by enable_pypto_kernel, global property PYPTO_ENABLED_OPS keyed by op_file):
+  # forward so ascendc_impl_build.py emits the pypto wrapper variant (calls pypto_compile_op).
+  # Comma-joined so it stays a single argv token.
+  get_property(_pypto_adapt_ops GLOBAL PROPERTY PYPTO_ENABLED_OPS)
+  set(PYPTO_ADAPT_OPS_OPTION "")
+  set(PYPTO_OPS_ENV "")
+  if(_pypto_adapt_ops)
+    list(JOIN _pypto_adapt_ops "," _pypto_adapt_ops_str)
+    set(PYPTO_ADAPT_OPS_OPTION --pypto-ops ${_pypto_adapt_ops_str})
+    # gen_compile_option.sh calls write_scripts() directly rather than through the CLI, so it reads the
+    # same list from PYPTO_OPS.
+    set(PYPTO_OPS_ENV export PYPTO_OPS=${_pypto_adapt_ops_str} &&)
+  endif()
+
   add_custom_command(
     OUTPUT ${OPIMPL_OUT_DIR}/.impl_timestamp
     COMMAND
@@ -127,7 +157,7 @@ function(add_ops_impl_target)
     COMMAND
       ${ASCEND_PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/util/ascendc_impl_build.py \"\" \"${OPIMPL_OPS_BATCH}\"
       \"${OPIMPL_OPS_ITERATE}\" ${OPIMPL_IMPL_DIR} ${OPIMPL_OUT_DIR}/dynamic ${ASCEND_AUTOGEN_PATH} --opsinfo-dir
-      ${OPIMPL_OPS_INFO_DIR} ${OPIMPL_OPS_INFO_DIR}/inner ${OPIMPL_OPS_INFO_DIR}/exc
+      ${OPIMPL_OPS_INFO_DIR} ${OPIMPL_OPS_INFO_DIR}/inner ${OPIMPL_OPS_INFO_DIR}/exc ${PYPTO_ADAPT_OPS_OPTION}
     COMMAND
       rm -rf ${OPIMPL_OUT_DIR}/.impl_timestamp
     COMMAND
@@ -154,7 +184,7 @@ function(add_ops_impl_target)
     set(cur_op_pairs ${${compute_unit_op_cache}})
     add_custom_command(OUTPUT ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp
       COMMAND mkdir -m 700 -p ${OPIMPL_OUT_DIR}/${compute_unit}
-      COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/util/gen_compile_option.sh ${cur_op_pairs}
+      COMMAND ${PYPTO_OPS_ENV} bash ${CMAKE_SOURCE_DIR}/scripts/util/gen_compile_option.sh ${cur_op_pairs}
       COMMAND rm -rf ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp
       COMMAND touch ${OPIMPL_OUT_DIR}/${compute_unit}/.gen_timestamp
       DEPENDS merge_ini_${compute_unit} ${OPIMPL_OUT_DIR}/.impl_timestamp
@@ -364,6 +394,11 @@ function(prepare_compile_from_config)
   # add Environment Variable Configurations of python & ccache
   set(_ASCENDC_ENV_VAR)
   list(APPEND _ASCENDC_ENV_VAR export HI_PYTHON=${ASCEND_PYTHON_EXECUTABLE} &&)
+  # pypto-pro ops: pin the codegen arch to the soc being built (pypto_compile_op defaults to a5).
+  pypto_jit_arch_env("${CONFCMP_COMPUTE_UNIT}" _pypto_arch_env)
+  if(_pypto_arch_env)
+    list(APPEND _ASCENDC_ENV_VAR ${_pypto_arch_env})
+  endif()
   # whether need judging CMAKE_C_COMPILER_LAUNCHER
   if("${CMAKE_CXX_COMPILER_LAUNCHER}" MATCHES "ccache$")
     list(APPEND _ASCENDC_ENV_VAR export ASCENDC_CCACHE_EXECUTABLE=${CMAKE_CXX_COMPILER_LAUNCHER} &&)
@@ -414,6 +449,18 @@ function(prepare_compile_from_config)
     COMMAND
       cp ${CONFCMP_OP_PYTHON_DIR}/${CONFCMP_OP_NAME}*.py ${CONFCMP_OUT_DIR}/src
     )
+  # pypto-pro ops: the generated artifacts live in the configure-time gen dir, not in the op's
+  # op_kernel source dir copied above, so stage them into the binary src dir as well.
+  foreach(PYPTO_GEN_SRC ${${CONFCMP_OP_NAME}_pypto_gen_dirs})
+    if(PYPTO_GEN_SRC AND EXISTS ${PYPTO_GEN_SRC})
+      add_custom_command(
+        TARGET ${CONFCMP_TARGET}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PYPTO_GEN_SRC} ${CONFCMP_OUT_DIR}/src
+        VERBATIM
+        )
+    endif()
+  endforeach()
   add_dependencies(prepare_binary_compile_${CONFCMP_COMPUTE_UNIT} config_compile_${CONFCMP_COMPUTE_UNIT}_${CONFCMP_OP_NAME} ${CONFCMP_TARGET})
 
   if(ENABLE_PACKAGE)
@@ -458,6 +505,11 @@ function(compile_from_config)
   message(STATUS "start to compile unit: ${CONFCMP_COMPUTE_UNIT}")
   set(_ASCENDC_ENV_VAR)
   list(APPEND _ASCENDC_ENV_VAR export HI_PYTHON=${ASCEND_PYTHON_EXECUTABLE} &&)
+  # pypto-pro ops: pin the codegen arch to the soc being built (pypto_compile_op defaults to a5).
+  pypto_jit_arch_env("${CONFCMP_COMPUTE_UNIT}" _pypto_arch_env)
+  if(_pypto_arch_env)
+    list(APPEND _ASCENDC_ENV_VAR ${_pypto_arch_env})
+  endif()
   if(CCACHE_PROGRAM)
     list(APPEND _ASCENDC_ENV_VAR export ASCENDC_CCACHE_EXECUTABLE=${CCACHE_PROGRAM} &&)
   endif()

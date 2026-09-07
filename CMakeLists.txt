@@ -158,7 +158,8 @@ if(ENABLE_TEST)
   add_subdirectory(tests/ut)
 endif()
 
-if("add_example" IN_LIST ASCEND_OP_NAME OR "add_example_aicpu" IN_LIST ASCEND_OP_NAME)
+if("add_example" IN_LIST ASCEND_OP_NAME OR "add_example_aicpu" IN_LIST ASCEND_OP_NAME
+   OR "add_example_pypto" IN_LIST ASCEND_OP_NAME)
   add_subdirectory(examples)
 endif()
 
