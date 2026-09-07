@@ -116,7 +116,7 @@ aclnnStatus aclnnUpsampleBilinear2dBackwardV2GetWorkspaceSize(
 ```Cpp
 aclnnStatus aclnnUpsampleBilinear2dBackwardV2(
   void*          workspace,
-  uint64_t       workspace_size,
+  uint64_t       workspaceSize,
   aclOpExecutor* executor,
   aclrtStream    stream)
 ```

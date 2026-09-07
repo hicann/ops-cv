@@ -33,15 +33,36 @@
   - 具体计算逻辑：
 
     $$
-    d_{src} = min(floor(d_{dst} / scalesD),  self\_D - 1), \quad scalesD = outputSize[0] / self\_D
+    scaleD =\begin{cases}
+    scalesD & scalesD>0\&scalesH>0\&scalesW>0\\
+    outputSize[0] / self\_D &  Otherwise\\
+    \end{cases}
     $$
 
     $$
-    h_{src} = min(floor(h_{dst}  / scalesH),  self\_H - 1), \quad scalesH = outputSize[1] / self\_H
+    scaleH =\begin{cases}
+    scalesH & scalesD>0\&scalesH>0\&scalesW>0\\
+    outputSize[1] / self\_H &  Otherwise\\
+    \end{cases}
     $$
 
     $$
-    w_{src} = min(floor(w_{dst}  / scalesW),  self\_W - 1), \quad scalesW = outputSize[2] / self\_W
+    scaleW =\begin{cases}
+    scalesW & scalesD>0\&scalesH>0\&scalesW>0\\
+    outputSize[2] / self\_W &  Otherwise\\
+    \end{cases}
+    $$
+
+    $$
+    d_{src} = min(floor(d_{dst} / scaleD),  self\_D - 1)
+    $$
+
+    $$
+    h_{src} = min(floor(h_{dst}  / scaleH),  self\_H - 1)
+    $$
+
+    $$
+    w_{src} = min(floor(w_{dst}  / scaleW),  self\_W - 1)
     $$
 
     $$
@@ -287,7 +308,7 @@ aclnnStatus aclnnUpsampleNearest3d(
 
 ## 约束说明
 
-- 参数self、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+- 当输入scalesD、scalesH、scalesW的取值均大于0时，参数self、outputSize、scalesD需要满足如下约束：
 
   $$
   outputSize\_D = floor(self\_D * scalesD)

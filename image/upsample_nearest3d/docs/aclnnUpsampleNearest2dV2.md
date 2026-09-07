@@ -30,11 +30,25 @@
 - 计算公式：
 
   $$
-  h_{src} = min(floor(h_{dst} * scalesH),  H - 1), \quad scalesH = outputSize[0] / self\_H
+  scaleH =\begin{cases}
+  scalesH & scalesH>0\&scalesW>0\\
+  outputSize[0] / self\_H &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  w_{src} = min(floor(w_{dst} * scalesW),  W - 1), \quad scalesW = outputSize[1] / self\_W
+  scaleW =\begin{cases}
+  scalesW & scalesH>0\&scalesW>0\\
+  outputSize[1] / self\_W &  Otherwise\\
+  \end{cases}
+  $$
+
+  $$
+  h_{src} = min(floor(h_{dst} * scaleH),  H - 1)
+  $$
+
+  $$
+  w_{src} = min(floor(w_{dst} * scaleW),  W - 1)
   $$
 
   $$
@@ -254,7 +268,7 @@ aclnnStatus aclnnUpsampleNearest2dV2(
 
 ## 约束说明
 
-- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+- 当输入scalesH、scalesW的取值均大于0时，参数self、outputSize、scalesH、scalesW需要满足如下约束：
 
   $$
   outputSize\_H = floor(self\_H * scalesH)

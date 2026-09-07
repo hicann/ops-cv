@@ -29,7 +29,14 @@
 - 计算公式：
 
   $$
-  l_{src} = min(floor((l_{dst} + 0.5) / scales),  L - 1), \quad scales = outputSize[0] / L
+  scale =\begin{cases}
+  outputSize[0] / L &  scales≤0\\
+  scales & scales>0\\
+  \end{cases}
+  $$
+
+  $$
+  l_{src} = min(floor((l_{dst} + 0.5) / scale),  L - 1)
   $$
 
   $$
@@ -256,7 +263,7 @@ aclnnStatus aclnnUpsampleNearestExact1d(
     - C代表输入和输出的C轴。
     - dtype代表输入张量的数据类型。
 <!-- end id8 -->
-- 参数self、outputSize、scales需要满足如下约束：
+- 当输入scales的取值大于0时，参数self、outputSize、scales需要满足如下约束：
 
   $$
   outputSize = floor(self\_L * scales)

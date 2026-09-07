@@ -30,7 +30,14 @@
 - 计算公式：
 
   $$
-  out(N, C, l) = self(N, C, min(floor(l * scaleL),  L-1)), \quad scaleL = outputSize[0] / self\_L
+  scale =\begin{cases}
+  outputSize[0] / self\_L &  scaleL≤0\\
+  scaleL & scaleL>0\\
+  \end{cases}
+  $$
+
+  $$
+  out(N, C, l) = self(N, C, min(floor(l / scale),  L-1))
   $$
 
 ## 函数原型
@@ -236,7 +243,7 @@ aclnnStatus aclnnUpsampleNearest1dV2(
 
 ## 约束说明
 
-- 参数self、outputSize、scaleL需要满足如下约束：
+- 当输入scaleL取值大于0时，参数self、outputSize、scaleL需要满足如下约束：
 
   $$
   outputSize = floor(self\_L * scaleL)

@@ -29,11 +29,25 @@
 - 计算公式：
 
   $$
-  h_{src} = min(floor((h_{dst} + 0.5) / scalesH),  H - 1), \quad scalesH = outputSize[0] / H
+  scaleH =\begin{cases}
+  outputSize[0] / H &  scalesH≤0\\
+  scalesH & scalesH>0\\
+  \end{cases}
   $$
 
   $$
-  w_{src} = min(floor((w_{dst} + 0.5) / scalesW),  W - 1), \quad scalesW = outputSize[1] / W
+  scaleW =\begin{cases}
+  outputSize[1] / W &  scalesW≤0\\
+  scalesW & scalesW>0\\
+  \end{cases}
+  $$
+
+  $$
+  h_{src} = min(floor((h_{dst} + 0.5) / scaleH),  H - 1)
+  $$
+
+  $$
+  w_{src} = min(floor((w_{dst} + 0.5) / scaleW),  W - 1)
   $$
 
   $$
@@ -276,11 +290,13 @@ aclnnStatus aclnnUpsampleNearestExact2d(
     - C代表输入和输出的C轴。
     - dtype代表输入张量的数据类型。
 <!-- end id8 -->
-- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+- 当输入scalesH取值大于0时，参数self、outputSize、scalesH需要满足如下约束：
 
   $$
   outputSize\_H = floor(self\_H * scalesH)
   $$
+
+- 当输入scalesW的取值大于0时，参数self、outputSize、scalesW需要满足如下约束：
 
   $$
   outputSize\_W = floor(self\_W * scalesW)

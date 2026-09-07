@@ -25,27 +25,33 @@
   其中：
 
   $$
-  scalesH = outputSize[0]/inputSize[2]
+  scaleH =\begin{cases}
+  outputSize[0]/inputSize[2] &  scalesH≤0\\
+  scalesH & scalesH>0\\
+  \end{cases}
   $$
 
   $$
-  scalesW = outputSize[1]/inputSize[3]
+  scaleW =\begin{cases}
+  outputSize[1]/inputSize[3] &  scalesW≤0\\
+  scalesW & scalesW>0\\
+  \end{cases}
   $$
 
   $$
-  srcH = Min(ceil(scalesH * H), outputSize[0])
+  srcH = Min(ceil(scaleH * H), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(ceil(scalesH * (H + 1)), outputSize[0])
+  srcHUp = Min(ceil(scaleH * (H + 1)), outputSize[0])
   $$
 
   $$
-  srcW = Min(ceil(scalesW * W), outputSize[1])
+  srcW = Min(ceil(scaleW * W), outputSize[1])
   $$
 
   $$
-  srcWUp = Min(ceil(scalesW * (W + 1)), outputSize[1])
+  srcWUp = Min(ceil(scaleW * (W + 1)), outputSize[1])
   $$
 
 ## 参数说明
@@ -90,14 +96,14 @@
     <tr>
       <td>scales_h</td>
       <td>可选属性</td>
-      <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scales_h`。</li><li>默认值为空。</li></ul></td>
+      <td><ul><li>表示输出`grad_input`的height维度乘数，对应公式中的`scalesH`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>scales_w</td>
       <td>可选属性</td>
-      <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scales_w`。</li><li>默认值为空。</li></ul></td>
+      <td><ul><li>表示输出`grad_input`的width维度乘数，对应公式中的`scalesW`。</li><li>默认值为空。</li></ul></td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>

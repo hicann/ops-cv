@@ -67,7 +67,7 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(
 ```Cpp
 aclnnStatus aclnnUpsampleNearest1dBackward(
   void          *workspace,
-  uint64_t       workspaceSize,
+  uint64_t       workspace_size,
   aclOpExecutor *executor,
   aclrtStream    stream)
 ```
@@ -247,7 +247,7 @@ aclnnStatus aclnnUpsampleNearest1dBackward(
       <td>在Device侧申请的workspace内存地址。</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspace_size</td>
       <td>输入</td>
       <td>在Device侧申请的workspace大小，由第一段接口aclnnUpsampleNearest1dBackwardGetWorkspaceSize获取。</td>
     </tr>

@@ -379,7 +379,7 @@ aclnnStatus aclnnUpsampleTrilinear3d(
     - dtype代表输入张量的数据类型。
   - N \* C \* self_D \* self_H < 2^31
   - out_W * out_H < 2^31
-- 参数self、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+- 当输入scalesD、scalesH、scalesW取值均大于0时，参数self、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
 
   $$
   outputSize\_D = floor(self\_D * scalesD)

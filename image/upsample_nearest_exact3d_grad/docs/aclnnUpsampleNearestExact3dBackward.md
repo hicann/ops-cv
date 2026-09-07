@@ -37,39 +37,48 @@
   其中：
 
   $$
-  scalesD = outputSize[0]/inputSize[2]
+  scaleD =\begin{cases}
+  scalesD & scalesD>0\&scalesH>0\&scalesW>0\\
+  outputSize[0]/inputSize[2] &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  scalesH = outputSize[1]/inputSize[3]
+  scaleH =\begin{cases}
+  scalesH & scalesD>0\&scalesH>0\&scalesW>0\\
+  outputSize[1]/inputSize[3] &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  scalesW = outputSize[2]/inputSize[4]
+  scaleW =\begin{cases}
+  scalesW & scalesD>0\&scalesH>0\&scalesW>0\\
+  outputSize[2]/inputSize[4] &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  srcD = Min(ceil(scalesD * D - 0.5), outputSize[0])
+  srcD = Min(ceil(scaleD * D - 0.5), outputSize[0])
   $$
 
   $$
-  srcDUp = Min(ceil(scalesD * (D + 1) - 0.5), outputSize[0])
+  srcDUp = Min(ceil(scaleD * (D + 1) - 0.5), outputSize[0])
   $$
 
   $$
-  srcH = Min(ceil(scalesH * H - 0.5), outputSize[1])
+  srcH = Min(ceil(scaleH * H - 0.5), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(ceil(scalesH * (H + 1) - 0.5), outputSize[1])
+  srcHUp = Min(ceil(scaleH * (H + 1) - 0.5), outputSize[1])
   $$
 
   $$
-  srcW = Min(ceil(scalesW * W - 0.5), outputSize[2])
+  srcW = Min(ceil(scaleW * W - 0.5), outputSize[2])
   $$
 
   $$
-  srcWUp = Min(ceil(scalesW * (W + 1) - 0.5), outputSize[2])
+  srcWUp = Min(ceil(scaleW * (W + 1) - 0.5), outputSize[2])
   $$
 
 ## 函数原型
@@ -352,7 +361,7 @@ aclnnStatus aclnnUpsampleNearestExact3dBackward(
   outputSize\_W / 输出shape的宽度W <=50
   $$
 
-- 参数inputSize、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+- 当输入scalesD、scalesH、scalesW的取值均大于0时，参数inputSize、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
 
   $$
   outputSize\_D = floor(inputSize\_D * scalesD)

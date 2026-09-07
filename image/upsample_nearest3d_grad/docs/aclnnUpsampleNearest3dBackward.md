@@ -37,39 +37,48 @@
   其中：
 
   $$
-  scalesD = outputSize[0]/inputSize[2]
+  scaleD =\begin{cases}
+  scalesD & scalesD>0\&scalesH>0\&scalesW>0\\
+  outputSize[0]/inputSize[2] &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  scalesH = outputSize[1]/inputSize[3]
+  scaleH =\begin{cases}
+  scalesH & scalesD>0\&scalesH>0\&scalesW>0\\
+  outputSize[1]/inputSize[3] &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  scalesW = outputSize[2]/inputSize[4]
+  scaleW =\begin{cases}
+  scalesW & scalesD>0\&scalesH>0\&scalesW>0\\
+  outputSize[2]/inputSize[4] &  Otherwise\\
+  \end{cases}
   $$
 
   $$
-  srcD = Min(ceil(scalesD * D), outputSize[0])
+  srcD = Min(ceil(scaleD * D), outputSize[0])
   $$
 
   $$
-  srcDUp = Min(ceil(scalesD * (D + 1)), outputSize[0])
+  srcDUp = Min(ceil(scaleD * (D + 1)), outputSize[0])
   $$
 
   $$
-  srcH = Min(ceil(scalesH * H), outputSize[1])
+  srcH = Min(ceil(scaleH * H), outputSize[1])
   $$
 
   $$
-  srcHUp = Min(ceil(scalesH * (H + 1)), outputSize[1])
+  srcHUp = Min(ceil(scaleH * (H + 1)), outputSize[1])
   $$
 
   $$
-  srcW = Min(ceil(scalesW * W), outputSize[2])
+  srcW = Min(ceil(scaleW * W), outputSize[2])
   $$
 
   $$
-  srcWUp = Min(ceil(scalesW * (W + 1)), outputSize[2])
+  srcWUp = Min(ceil(scaleW * (W + 1)), outputSize[2])
   $$
 
 ## 函数原型
@@ -333,7 +342,7 @@ aclnnStatus aclnnUpsampleNearest3dBackward(
   - N \* C \* gradOut_D \* gradOut_H < 2^31
   - gradInput_W * gradInput_H < 2^31
 - 参数gradOut、gradInput的数据格式不为NCDHW或NDHWC时，输入其他数据格式默认按NCDHW处理。
-- 参数inputSize、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
+- 当输入scalesD、scalesH、scalesW的取值均大于0时，参数inputSize、outputSize、scalesD、scalesH、scalesW需要满足如下约束：
 
   $$
   outputSize\_D = floor(inputSize\_D * scalesD)

@@ -38,27 +38,33 @@
   其中：
 
   $$
-  scalesH = outputSize[0]/inputSize[2]
+  scaleH =\begin{cases}
+  outputSize[0]/inputSize[2] &  scalesH≤0\\
+  scalesH & scalesH>0\\
+  \end{cases}
   $$
 
   $$
-  scalesW = outputSize[1]/inputSize[3]
+  scaleW =\begin{cases}
+  outputSize[1]/inputSize[3] &  scalesW≤0\\
+  scalesW & scalesW>0\\
+  \end{cases}
   $$
 
   $$
-  srcH = Min(ceil(scalesH * H), outputSize[0])
+  srcH = Min(ceil(scaleH * H), outputSize[0])
   $$
 
   $$
-  srcHUp = Min(ceil(scalesH * (H + 1)), outputSize[0])
+  srcHUp = Min(ceil(scaleH * (H + 1)), outputSize[0])
   $$
 
   $$
-  srcW = Min(ceil(scalesW * W), outputSize[1])
+  srcW = Min(ceil(scaleW * W), outputSize[1])
   $$
 
   $$
-  srcWUp = Min(ceil(scalesW * (W + 1)), outputSize[1])
+  srcWUp = Min(ceil(scaleW * (W + 1)), outputSize[1])
   $$
 
 ## 函数原型
@@ -294,11 +300,13 @@ aclnnStatus aclnnUpsampleNearest2dBackward(
 
 ## 约束说明
 
-- 参数inputSize、outputSize、scalesH、scalesW需要满足如下约束：
+- 当输入scalesH的取值大于0时，参数inputSize、outputSize、scalesH需要满足如下约束：
 
   $$
   outputSize\_H = floor(inputSize\_H * scalesH)
   $$
+
+- 当输入scalesW的取值大于0时，参数inputSize、outputSize、scalesW需要满足如下约束：
 
   $$
   outputSize\_W = floor(inputSize\_W * scalesW)

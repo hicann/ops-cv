@@ -330,11 +330,13 @@ aclnnStatus aclnnUpsampleBicubic2d(
     - C代表输入和输出的C轴。
     - dtype代表输入张量的数据类型。
   - N \* C \* self_H < 2^31
-- 参数self、outputSize、scalesH、scalesW需要满足如下约束：
+- 当输入scalesH取值大于0时，参数self、outputSize、scalesH需要满足如下约束：
 
   $$
   outputSize\_H = floor(self\_H * scalesH)
   $$
+
+- 当输入scalesW取值大于0时，参数self、outputSize、scalesW需要满足如下约束：
 
   $$
   outputSize\_W = floor(self\_W * scalesW)
