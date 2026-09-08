@@ -16,6 +16,8 @@
  *
  * Output xdiff shape is derived from the xdiff_shape attribute (B, C, H, W).
  */
+#include <string>
+
 #include "register/op_impl_registry.h"
 #include "log/log.h"
 
@@ -37,11 +39,11 @@ static ge::graphStatus InferShapeROIAlignGrad(gert::InferShapeContext* context)
 
     size_t shapeSize = xdiffShapeVec->GetSize();
     OP_CHECK_IF(shapeSize != 4,
-                OP_LOGE_WITH_INVALID_ATTR_SIZE(context->GetNodeName(), "xdiff_shape",
-                                               std::to_string(shapeSize).c_str(), "4"),
+                OP_LOGE_FOR_INVALID_LISTSIZE(context->GetNodeName(), "xdiff_shape", std::to_string(shapeSize), "4"),
                 return GRAPH_FAILED);
 
     const int64_t* shapeData = xdiffShapeVec->GetData();
+    OP_CHECK_NULL_WITH_CONTEXT(context, shapeData);
     int64_t B = shapeData[0];
     int64_t C = shapeData[1];
     int64_t H = shapeData[2];
@@ -49,9 +51,7 @@ static ge::graphStatus InferShapeROIAlignGrad(gert::InferShapeContext* context)
     OP_CHECK_IF(B <= 0 || C <= 0 || H <= 0 || W <= 0,
                 OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
                     context->GetNodeName(), "xdiff_shape",
-                    (std::to_string(B) + ", " + std::to_string(C) + ", " + std::to_string(H) + ", " +
-                     std::to_string(W))
-                        .c_str(),
+                    std::to_string(B) + ", " + std::to_string(C) + ", " + std::to_string(H) + ", " + std::to_string(W),
                     "xdiff_shape elements must be positive"),
                 return GRAPH_FAILED);
 
