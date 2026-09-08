@@ -12,33 +12,37 @@
 #include "register/op_impl_registry.h"
 
 namespace {
-constexpr int64_t kBoxesIndex = 0;
 constexpr int64_t kScoresIndex = 1;
 constexpr int64_t kNmsedBoxesIndex = 0;
 constexpr int64_t kNmsedScoresIndex = 1;
 constexpr int64_t kNmsedClassesIndex = 2;
 constexpr int64_t kNmsedNumIndex = 3;
 constexpr int64_t kMaxTotalSizeAttrIndex = 3;
+constexpr int64_t kTransposeBoxAttrIndex = 5;
 } // namespace
 
 namespace ops {
 static ge::graphStatus InferShapeForBatchMultiClassNonMaxSuppression(gert::InferShapeContext* context)
 {
-    const gert::Shape* boxesShape = context->GetInputShape(kBoxesIndex);
     const gert::Shape* scoresShape = context->GetInputShape(kScoresIndex);
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
-    OP_CHECK_NULL_WITH_CONTEXT(context, boxesShape);
     OP_CHECK_NULL_WITH_CONTEXT(context, scoresShape);
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-
-    OP_CHECK_IF(boxesShape->GetDimNum() != 4 || scoresShape->GetDimNum() != 3,
-                OP_LOGE(context, "boxes must be rank 4 and scores must be rank 3."), return ge::GRAPH_FAILED);
-    const int64_t batch = boxesShape->GetDim(0);
-    const int64_t scoresBatch = scoresShape->GetDim(0);
+    OP_CHECK_IF(scoresShape->GetDimNum() == 0, OP_LOGE(context, "scores shape is empty."), return ge::GRAPH_FAILED);
     const int64_t* maxTotalSize = attrs->GetAttrPointer<int64_t>(kMaxTotalSizeAttrIndex);
     OP_CHECK_NULL_WITH_CONTEXT(context, maxTotalSize);
-    OP_CHECK_IF(batch <= 0 || scoresBatch != batch || *maxTotalSize <= 0,
-                OP_LOGE(context, "Invalid batch dimension or max_total_size."), return ge::GRAPH_FAILED);
+    const bool* transposeBoxAttr = attrs->GetAttrPointer<bool>(kTransposeBoxAttrIndex);
+    const bool transposeBox = transposeBoxAttr != nullptr && *transposeBoxAttr;
+
+    // Match the legacy GE inference, including its conservative unknown-batch
+    // rule. The fusion pass uses transpose_box for both input and output layouts.
+    int64_t batch = scoresShape->GetDim(0);
+    for (size_t dim = 0; dim < scoresShape->GetDimNum(); ++dim) {
+        if (scoresShape->GetDim(dim) < 0) {
+            batch = ge::UNKNOWN_DIM;
+            break;
+        }
+    }
 
     gert::Shape* nmsedBoxesShape = context->GetOutputShape(kNmsedBoxesIndex);
     gert::Shape* nmsedScoresShape = context->GetOutputShape(kNmsedScoresIndex);
@@ -49,26 +53,37 @@ static ge::graphStatus InferShapeForBatchMultiClassNonMaxSuppression(gert::Infer
     OP_CHECK_NULL_WITH_CONTEXT(context, nmsedClassesShape);
     OP_CHECK_NULL_WITH_CONTEXT(context, nmsedNumShape);
 
-    nmsedBoxesShape->SetDimNum(3);
-    nmsedBoxesShape->SetDim(0, batch);
-    nmsedBoxesShape->SetDim(1, *maxTotalSize);
-    nmsedBoxesShape->SetDim(2, 4);
+    constexpr int64_t kBoxCoordinateCount = 4;
+    constexpr int64_t kPaddedCountStride = 8;
+    constexpr size_t kBoxesOutputRank = 3;
+    constexpr size_t kMatrixOutputRank = 2;
+    constexpr size_t kVectorOutputRank = 1;
+    constexpr size_t kBatchAxis = 0;
+    constexpr size_t kFirstInnerAxis = 1;
+    constexpr size_t kSecondInnerAxis = 2;
+    nmsedBoxesShape->SetDimNum(kBoxesOutputRank);
+    nmsedBoxesShape->SetDim(kBatchAxis, batch);
+    nmsedBoxesShape->SetDim(kFirstInnerAxis, transposeBox ? kBoxCoordinateCount : *maxTotalSize);
+    nmsedBoxesShape->SetDim(kSecondInnerAxis, transposeBox ? *maxTotalSize : kBoxCoordinateCount);
     for (gert::Shape* output : {nmsedScoresShape, nmsedClassesShape}) {
-        output->SetDimNum(2);
-        output->SetDim(0, batch);
-        output->SetDim(1, *maxTotalSize);
+        output->SetDimNum(kMatrixOutputRank);
+        output->SetDim(kBatchAxis, batch);
+        output->SetDim(kFirstInnerAxis, *maxTotalSize);
     }
-    nmsedNumShape->SetDimNum(1);
-    nmsedNumShape->SetDim(0, batch);
+    nmsedNumShape->SetDimNum(transposeBox ? kMatrixOutputRank : kVectorOutputRank);
+    nmsedNumShape->SetDim(kBatchAxis, batch);
+    if (transposeBox) {
+        nmsedNumShape->SetDim(kFirstInnerAxis, kPaddedCountStride);
+    }
     return ge::GRAPH_SUCCESS;
 }
 
 static ge::graphStatus InferDataTypeForBatchMultiClassNonMaxSuppression(gert::InferDataTypeContext* context)
 {
-    const ge::DataType boxesType = context->GetInputDataType(kBoxesIndex);
-    context->SetOutputDataType(kNmsedBoxesIndex, boxesType);
-    context->SetOutputDataType(kNmsedScoresIndex, boxesType);
-    context->SetOutputDataType(kNmsedClassesIndex, boxesType);
+    const ge::DataType scoresType = context->GetInputDataType(kScoresIndex);
+    context->SetOutputDataType(kNmsedBoxesIndex, scoresType);
+    context->SetOutputDataType(kNmsedScoresIndex, scoresType);
+    context->SetOutputDataType(kNmsedClassesIndex, scoresType);
     context->SetOutputDataType(kNmsedNumIndex, ge::DT_INT32);
     return ge::GRAPH_SUCCESS;
 }

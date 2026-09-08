@@ -14,8 +14,6 @@
 namespace {
 constexpr int64_t INPUT_BOXES = 0;
 constexpr int64_t OUTPUT_SELECTED_INDICES = 0;
-constexpr int64_t BOX_RANK = 2;
-constexpr int64_t BOX_COORDS = 4;
 constexpr int64_t OUTPUT_RANK = 1;
 } // namespace
 
@@ -29,15 +27,8 @@ static ge::graphStatus InferShapeForSortedNMS(gert::InferShapeContext* context)
         return ge::GRAPH_FAILED;
     }
 
-    if (boxesShape->GetDimNum() != BOX_RANK) {
-        OP_LOGE(context, "boxes rank must be 2");
-        return ge::GRAPH_FAILED;
-    }
-    if (boxesShape->GetDim(1) != ge::UNKNOWN_DIM && boxesShape->GetDim(1) != BOX_COORDS) {
-        OP_LOGE(context, "boxes second dim must be 4");
-        return ge::GRAPH_FAILED;
-    }
-
+    // Shape inference does not require a known input rank. Concrete input
+    // constraints belong to tiling, as in the legacy runtime callback.
     selectedShape->SetDimNum(OUTPUT_RANK);
     selectedShape->SetDim(0, ge::UNKNOWN_DIM);
     return ge::GRAPH_SUCCESS;
@@ -50,17 +41,14 @@ static ge::graphStatus InferShapeRangeForSortedNMS(gert::InferShapeRangeContext*
     auto boxesRange = context->GetInputShapeRange(INPUT_BOXES);
     auto selectedRange = context->GetOutputShapeRange(OUTPUT_SELECTED_INDICES);
     OP_CHECK_NULL_WITH_CONTEXT(context, boxesRange);
-    OP_CHECK_NULL_WITH_CONTEXT(context, boxesRange->GetMin());
     OP_CHECK_NULL_WITH_CONTEXT(context, boxesRange->GetMax());
     OP_CHECK_NULL_WITH_CONTEXT(context, selectedRange);
     OP_CHECK_NULL_WITH_CONTEXT(context, selectedRange->GetMin());
     OP_CHECK_NULL_WITH_CONTEXT(context, selectedRange->GetMax());
 
-    OP_CHECK_IF(boxesRange->GetMin()->GetDimNum() != BOX_RANK || boxesRange->GetMax()->GetDimNum() != BOX_RANK,
-                OP_LOGE(context, "boxes shape range rank must be 2"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(boxesRange->GetMax()->GetDimNum() == 0,
+                OP_LOGE(context, "boxes shape range must contain a first dimension"), return ge::GRAPH_FAILED);
     const int64_t maxBoxesNum = boxesRange->GetMax()->GetDim(0);
-    OP_CHECK_IF(maxBoxesNum < 0, OP_LOGE(context, "boxes shape range first dim must be known"),
-                return ge::GRAPH_FAILED);
 
     selectedRange->GetMin()->SetDimNum(OUTPUT_RANK);
     selectedRange->GetMin()->SetDim(0, 0);
