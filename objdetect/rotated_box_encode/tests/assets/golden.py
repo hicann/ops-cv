@@ -31,14 +31,19 @@ def _compute(a, g, weight):
 
     wx, wy, ww, wh, wa_w = weight
 
+    # log1p 与 tan-difference 恒等式：与 kernel C7/C8/S3 数值稳定的等价形式
+    # （ln(wg)-ln(wa) = log1p((wg-wa)/wa)，tan(θg)-tan(θa) = sin(Δθ)/(cosθg·cosθa)），
+    # 消除 wg≈wa / θg≈θa 时的灾难性抵消，近零输出仍保持相对精度。
     dx = (cxg - cxa) / wa * wx
     dy = (cyg - cya) / ha * wy
-    dw = (torch.log(wg) - torch.log(wa)) * ww
-    dh = (torch.log(hg) - torch.log(ha)) * wh
+    dw = torch.log1p((wg - wa) / wa) * ww
+    dh = torch.log1p((hg - ha) / ha) * wh
 
     aang_rad = aang * (np.pi / 180.0)
     gang_rad = gang * (np.pi / 180.0)
-    dtheta = (torch.tan(gang_rad) - torch.tan(aang_rad)) * wa_w
+    dtheta = (
+        torch.sin(gang_rad - aang_rad) / (torch.cos(gang_rad) * torch.cos(aang_rad))
+    ) * wa_w
 
     return torch.stack([dx, dy, dw, dh, dtheta], dim=1)
 
@@ -57,11 +62,15 @@ class RotatedBoxEncodeTestSpec:
             return [np.empty_like(anchor_box)]
 
         B, C, N = anchor_box.shape
-        a = torch.from_numpy(
-            anchor_box.astype(np.float32).permute(0, 2, 1).reshape(B * N, C)
+        a = (
+            torch.from_numpy(anchor_box.astype(np.float32))
+            .permute(0, 2, 1)
+            .reshape(B * N, C)
         )
-        g = torch.from_numpy(
-            gt_box.astype(np.float32).permute(0, 2, 1).reshape(B * N, C)
+        g = (
+            torch.from_numpy(gt_box.astype(np.float32))
+            .permute(0, 2, 1)
+            .reshape(B * N, C)
         )
         w = [float(v) for v in weight]
 
