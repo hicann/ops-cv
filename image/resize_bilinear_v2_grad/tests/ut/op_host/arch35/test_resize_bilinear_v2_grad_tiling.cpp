@@ -361,3 +361,49 @@ TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_regbase_tiling_origin
     TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
+
+// Regression: GE 转排布场景下 origin format/shape(NCHW轴序) 与 storage format/shape(NHWC轴序) 同时不一致。
+// GE 图优化为算子选择 NHWC 排布执行时, origin 侧保留构图语义(NCHW 轴序), storage 侧为运行时真实排布
+// (NHWC 轴序)。tiling 的 format 与 shape 必须同源(均取 storage): 若 format 读 storage 而 shape 读 origin,
+// CheckAxesValid 将按 NHWC 规则解析 NCHW 轴序 shape, lenC/lenSrcH/lenDesW 等维度全部取错轴。
+// 场景取自 ResizeBilinearV2Grad_fp16_fuzz_add_0000 用例的 geir 复现参数。
+TEST_F(ResizeBilinearV2GradTiling, resize_bilinear_v2_grad_tiling_transpose_nhwc_shape_sync)
+{
+    optiling::ResizeBilinearV2GradCompileInfo compileInfo = {64, 245760};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeBilinearV2Grad",
+        {
+            // grads: origin [12,3,8459,1](NCHW轴序) / storage [12,8459,1,3](NHWC轴序)
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({12, 3, 8459, 1}, {12, 8459, 1, 3}),
+                                                       ge::DT_FLOAT16, ge::FORMAT_NCHW, false, nullptr,
+                                                       ge::FORMAT_NHWC),
+            // original_image: origin [12,3,1,1] / storage [12,1,1,3]
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({12, 3, 1, 1}, {12, 1, 1, 3}), ge::DT_FLOAT16,
+                                                       ge::FORMAT_NCHW, false, nullptr, ge::FORMAT_NHWC),
+        },
+        {
+            // y: origin [12,3,1,1] / storage [12,1,1,3]
+            gert::TilingContextPara::TensorDescription(gert::StorageShape({12, 3, 1, 1}, {12, 1, 1, 3}), ge::DT_FLOAT16,
+                                                       ge::FORMAT_NCHW, false, nullptr, ge::FORMAT_NHWC),
+        },
+        {
+            gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("half_pixel_centers", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr(
+                "scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.000103788271925272f, 1.0f})),
+        },
+        &compileInfo);
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    // 按 storage(NHWC) 轴序解析: lenN=12, lenC=3, lenSrcH=1, lenSrcW=1, lenDesH=8459, lenDesW=1
+    ASSERT_EQ(tilingInfo.tilingKey, 10013); // TILING_KEY_SIMT_NHWC_DETERMINE_SCALES
+    ASSERT_GE(tilingInfo.tilingDataSize, sizeof(int64_t) * 10);
+    const int64_t* fields = reinterpret_cast<const int64_t*>(tilingInfo.tilingData.get());
+    EXPECT_EQ(fields[0], 10013); // tilingKey
+    EXPECT_EQ(fields[4], 12);    // lenN
+    EXPECT_EQ(fields[5], 3);     // lenC
+    EXPECT_EQ(fields[6], 1);     // lenSrcH
+    EXPECT_EQ(fields[7], 1);     // lenSrcW
+    EXPECT_EQ(fields[8], 8459);  // lenDesH
+    EXPECT_EQ(fields[9], 1);     // lenDesW
+}

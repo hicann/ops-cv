@@ -83,7 +83,7 @@ ge::graphStatus ResizeBilinearV2GradTilingAscendC::GetTensorInfo()
 {
     auto gradsShapePtr = context_->GetInputShape(INPUT_GRADS_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsShapePtr);
-    gradsShape_ = Ops::Cv::OpTiling::EnsureNotScalar(gradsShapePtr->GetOriginShape());
+    gradsShape_ = Ops::Cv::OpTiling::EnsureNotScalar(gradsShapePtr->GetStorageShape());
     auto gradsDescPtr = context_->GetInputDesc(INPUT_GRADS_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsDescPtr);
     gradsDtype_ = gradsDescPtr->GetDataType();
@@ -91,7 +91,7 @@ ge::graphStatus ResizeBilinearV2GradTilingAscendC::GetTensorInfo()
 
     auto originalImageShapePtr = context_->GetInputShape(INPUT_ORIGINAL_IMAGE_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, originalImageShapePtr);
-    originalImageShape_ = Ops::Cv::OpTiling::EnsureNotScalar(originalImageShapePtr->GetOriginShape());
+    originalImageShape_ = Ops::Cv::OpTiling::EnsureNotScalar(originalImageShapePtr->GetStorageShape());
     auto originalImageDescPtr = context_->GetInputDesc(INPUT_ORIGINAL_IMAGE_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, originalImageDescPtr);
     imageDtype_ = originalImageDescPtr->GetDataType();
@@ -99,7 +99,7 @@ ge::graphStatus ResizeBilinearV2GradTilingAscendC::GetTensorInfo()
 
     auto yShapePtr = context_->GetOutputShape(OUTPUT_Y_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yShapePtr);
-    yShape_ = Ops::Cv::OpTiling::EnsureNotScalar(yShapePtr->GetOriginShape());
+    yShape_ = Ops::Cv::OpTiling::EnsureNotScalar(yShapePtr->GetStorageShape());
     auto yDescPtr = context_->GetOutputDesc(OUTPUT_Y_IDX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yDescPtr);
     yDtype_ = yDescPtr->GetDataType();

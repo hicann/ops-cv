@@ -160,15 +160,17 @@ ge::graphStatus ResizeNearestNeighborV2GradTiling::GetPlatformInfo(
 
 ge::graphStatus ResizeNearestNeighborV2GradTiling::CheckInOutShape()
 {
+    // Shape 与 format 同源：均取运行时(storage)语义，避免 GE 转排布后按 NHWC 规则解析
+    // NCHW 轴序 origin shape 导致维度取错轴（详见 resize_bilinear_v2_grad 同类修复）。
     auto gradsShapePtr = context_->GetInputShape(INPUT_IDX_GRADS);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsShapePtr);
-    gradsShape_ = Ops::Cv::OpTiling::EnsureNotScalar(gradsShapePtr->GetOriginShape());
+    gradsShape_ = Ops::Cv::OpTiling::EnsureNotScalar(gradsShapePtr->GetStorageShape());
     auto gradsShapeSize = gradsShape_.GetShapeSize();
     auto gradsDims = gradsShape_.GetDimNum();
 
     auto yShapePtr = context_->GetOutputShape(OUTPUT_IDX_Y);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yShapePtr);
-    yShape_ = Ops::Cv::OpTiling::EnsureNotScalar(yShapePtr->GetOriginShape());
+    yShape_ = Ops::Cv::OpTiling::EnsureNotScalar(yShapePtr->GetStorageShape());
     auto yShapeSize = yShape_.GetShapeSize();
     auto yDims = yShape_.GetDimNum();
 
