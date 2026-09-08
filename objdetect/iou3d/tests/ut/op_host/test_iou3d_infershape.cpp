@@ -56,6 +56,23 @@ TEST_F(Iou3DInfershape, iou3d_infershape_dynamic)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+// 正例：channel 自身为未知维时，图编译阶段保留动态信息，运行时实际值由 Tiling 校验为 7。
+TEST_F(Iou3DInfershape, iou3d_infershape_dynamic_channel)
+{
+    gert::InfershapeContextPara infershapeContextPara("Iou3D",
+                                                      {
+                                                          {{{-1, -1, -1}, {-1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-1, -1, -1}, {-1, -1, -1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, -1, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
 // 正例：大 K（D5 对标 mmcv 已移除 K<=2000 上限，K=4096 应成功）
 TEST_F(Iou3DInfershape, iou3d_infershape_large_k)
 {

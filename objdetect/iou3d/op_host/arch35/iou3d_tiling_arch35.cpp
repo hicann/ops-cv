@@ -29,6 +29,8 @@
 #include "lib/math/cos_tiling.h"
 #include "../../op_kernel/arch35/iou3d_tiling_data.h"
 
+#include <limits>
+
 namespace optiling {
 
 using Ops::Base::CeilAlign;
@@ -79,6 +81,14 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t* batch
     *numN = bShape.GetDim(2);
     *numK = gShape.GetDim(2);
 
+    constexpr int64_t MAX_TILING_DIM = static_cast<int64_t>(std::numeric_limits<uint32_t>::max());
+    OP_CHECK_IF(*batch < 0 || *numN < 0 || *numK < 0,
+                OP_LOGE(context, "Iou3D: B/N/K must be non-negative, got %ld/%ld/%ld", *batch, *numN, *numK),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(*batch > MAX_TILING_DIM || *numN > MAX_TILING_DIM || *numK > MAX_TILING_DIM,
+                OP_LOGE(context, "Iou3D: B/N/K exceed uint32 tiling range, got %ld/%ld/%ld", *batch, *numN, *numK),
+                return ge::GRAPH_FAILED);
+
     // channel==7 校验
     OP_CHECK_IF(bShape.GetDim(1) != IOU3D_DOF || gShape.GetDim(1) != IOU3D_DOF,
                 OP_LOGE(context, "Iou3D: channel dim must be 7 (7-DoF), got bboxes=%ld, gtboxes=%ld", bShape.GetDim(1),
@@ -94,12 +104,19 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t* batch
 
     // dtype 校验（float32）。dtype 由 def 文件驱动展开 kernel 变体，此处仅运行时友好报错，
     // 不再编码进 tiling_key（避免与 def 的 DataType 声明重复编码 dtype 维度）。
-    auto inputDesc = context->GetInputDesc(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
-    ge::DataType dataType = inputDesc->GetDataType();
-    OP_CHECK_IF(dataType != ge::DT_FLOAT,
-                OP_LOGE(context, "Iou3D: only float32 supported, got dtype=%d", static_cast<int>(dataType)),
+    auto bboxesDesc = context->GetInputDesc(0);
+    auto gtboxesDesc = context->GetInputDesc(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, bboxesDesc);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesDesc);
+    OP_CHECK_IF(bboxesDesc->GetDataType() != ge::DT_FLOAT || gtboxesDesc->GetDataType() != ge::DT_FLOAT,
+                OP_LOGE(context, "Iou3D: bboxes/gtboxes must both be float32, got dtype=%d/%d",
+                        static_cast<int>(bboxesDesc->GetDataType()), static_cast<int>(gtboxesDesc->GetDataType())),
                 return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        bboxesDesc->GetStorageFormat() != ge::FORMAT_ND || gtboxesDesc->GetStorageFormat() != ge::FORMAT_ND,
+        OP_LOGE(context, "Iou3D: bboxes/gtboxes must both use ND storage format, got %d/%d",
+                static_cast<int>(bboxesDesc->GetStorageFormat()), static_cast<int>(gtboxesDesc->GetStorageFormat())),
+        return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -152,8 +169,18 @@ static ge::graphStatus Iou3DTilingFunc(gert::TilingContext* context)
     }
 
     // 多核切分：总 (b,i,j) 对数按核均分，每核负责不相交子集
-    const int64_t totalPairs = batch * numN * numK;
+    constexpr int64_t MAX_I64 = std::numeric_limits<int64_t>::max();
+    OP_CHECK_IF(numN != 0 && batch > MAX_I64 / numN,
+                OP_LOGE(context, "Iou3D: B*N overflows int64, got B=%ld N=%ld", batch, numN), return ge::GRAPH_FAILED);
+    const int64_t batchNumN = batch * numN;
+    OP_CHECK_IF(numK != 0 && batchNumN > MAX_I64 / numK,
+                OP_LOGE(context, "Iou3D: B*N*K overflows int64, got B=%ld N=%ld K=%ld", batch, numN, numK),
+                return ge::GRAPH_FAILED);
+    const int64_t totalPairs = batchNumN * numK;
     const int64_t pairsPerCore = CeilDiv(totalPairs, coreNum);
+    OP_CHECK_IF(pairsPerCore > static_cast<int64_t>(std::numeric_limits<uint32_t>::max()),
+                OP_LOGE(context, "Iou3D: pairsPerCore exceeds uint32 tiling range, got %ld", pairsPerCore),
+                return ge::GRAPH_FAILED);
     const int64_t usedCoreNum = CeilDiv(totalPairs, pairsPerCore);
 
     tiling->coreNum = static_cast<uint32_t>(usedCoreNum);

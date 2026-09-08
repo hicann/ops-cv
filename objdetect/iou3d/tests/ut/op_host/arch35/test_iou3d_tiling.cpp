@@ -42,13 +42,18 @@ static Iou3DCompileInfo g_iou3dCompileInfo;
 // 构造一个 Iou3D 的 TilingContextPara（无 attr，float32/ND，Ascend950）。
 // bboxes[B,7,N] + gtboxes[B,7,K] -> iou[B,N,K]。gert::StorageShape 只接受 initializer_list，故显式传维。
 gert::TilingContextPara MakePara(int64_t batch, int64_t numN, int64_t channelB, int64_t batchG, int64_t numK,
-                                 int64_t channelG, ge::DataType dtype = ge::DT_FLOAT)
+                                 int64_t channelG, ge::DataType bboxesDtype = ge::DT_FLOAT,
+                                 ge::DataType gtboxesDtype = ge::DT_UNDEFINED, ge::Format bboxesFormat = ge::FORMAT_ND,
+                                 ge::Format gtboxesFormat = ge::FORMAT_ND)
 {
+    if (gtboxesDtype == ge::DT_UNDEFINED) {
+        gtboxesDtype = bboxesDtype;
+    }
     return gert::TilingContextPara(
         "Iou3D",
         {
-            {gert::StorageShape({batch, channelB, numN}, {batch, channelB, numN}), dtype, ge::FORMAT_ND},
-            {gert::StorageShape({batchG, channelG, numK}, {batchG, channelG, numK}), dtype, ge::FORMAT_ND},
+            {gert::StorageShape({batch, channelB, numN}, {batch, channelB, numN}), bboxesDtype, bboxesFormat},
+            {gert::StorageShape({batchG, channelG, numK}, {batchG, channelG, numK}), gtboxesDtype, gtboxesFormat},
         },
         {
             {gert::StorageShape({batch, numN, numK}, {batch, numN, numK}), ge::DT_FLOAT, ge::FORMAT_ND},
@@ -170,6 +175,38 @@ TEST_F(Iou3DTiling, iou3d_tiling_neg_batch_mismatch)
 TEST_F(Iou3DTiling, iou3d_tiling_neg_dtype_fp16)
 {
     auto para = MakeParaBNK(1, 4, 4, ge::DT_FLOAT16);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(para, info));
+}
+
+// 反例：仅 gtboxes 为 float16，同样必须拒绝，不能只检查 input0。
+TEST_F(Iou3DTiling, iou3d_tiling_neg_gtboxes_dtype_fp16)
+{
+    auto para = MakePara(1, 4, 7, 1, 4, 7, ge::DT_FLOAT, ge::DT_FLOAT16);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(para, info));
+}
+
+// 反例：Iou3D 只接受 ND；NCHW 不能在进入 Kernel 前被静默归一化。
+TEST_F(Iou3DTiling, iou3d_tiling_neg_format_nchw)
+{
+    auto para = MakePara(1, 4, 7, 1, 4, 7, ge::DT_FLOAT, ge::DT_FLOAT, ge::FORMAT_NCHW, ge::FORMAT_ND);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(para, info));
+}
+
+// 反例：TilingData 的 B/N/K 为 uint32_t，超范围维度必须在窄化前拒绝。
+TEST_F(Iou3DTiling, iou3d_tiling_neg_dimension_exceeds_uint32)
+{
+    auto para = MakeParaBNK(1, 4, static_cast<int64_t>(UINT32_MAX) + 1);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(para, info));
+}
+
+// 反例：即使每个维度可由 uint32_t 表示，每核 pair 数也必须能写入 TilingData。
+TEST_F(Iou3DTiling, iou3d_tiling_neg_pairs_per_core_exceeds_uint32)
+{
+    auto para = MakeParaBNK(static_cast<int64_t>(UINT32_MAX), 64, 65);
     TilingInfo info;
     EXPECT_FALSE(ExecuteTiling(para, info));
 }

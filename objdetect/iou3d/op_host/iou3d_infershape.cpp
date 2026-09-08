@@ -18,6 +18,7 @@
 
 #include "register/op_impl_registry.h"
 #include "exe_graph/runtime/infer_shape_context.h"
+#include "graph/operator_reg.h"
 #include "op_common/log/log.h"
 
 using namespace ge;
@@ -50,7 +51,7 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
     // channel 维度必须为 7（7-DoF）
     const int64_t bboxesChannel = bboxesShape->GetDim(1);
     const int64_t gtboxesChannel = gtboxesShape->GetDim(1);
-    OP_CHECK_IF(bboxesChannel != 7 || gtboxesChannel != 7,
+    OP_CHECK_IF((bboxesChannel >= 0 && bboxesChannel != 7) || (gtboxesChannel >= 0 && gtboxesChannel != 7),
                 OP_LOGE(context, "Iou3D: channel dimension must be 7, got bboxes=%ld, gtboxes=%ld", bboxesChannel,
                         gtboxesChannel),
                 return ge::GRAPH_FAILED);
@@ -62,7 +63,7 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
     // batch 一致性校验
     const int64_t gtboxesBatch = gtboxesShape->GetDim(0);
     OP_CHECK_IF(
-        batch != gtboxesBatch,
+        batch >= 0 && gtboxesBatch >= 0 && batch != gtboxesBatch,
         OP_LOGE(context, "Iou3D: batch dimension must be consistent, got bboxes=%ld, gtboxes=%ld", batch, gtboxesBatch),
         return ge::GRAPH_FAILED);
 
@@ -78,5 +79,64 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
 }
 
 IMPL_OP_INFERSHAPE(Iou3D).InferShape(InferShape4Iou3D);
+
+// GE V1 图构建链不会桥接到上面的 gert InferShape。注册同语义的 V1
+// InferShapeAndType，覆盖 canndev 中只校验 batch 的历史实现，使 dtype、format、
+// rank、channel 和 batch 在进入 Tiling/Kernel 前完成校验。
+static ge::graphStatus InferShapeAndTypeForIou3D(ge::Operator& op)
+{
+    const ge::TensorDesc bboxesDesc = op.GetInputDesc("bboxes");
+    const ge::TensorDesc gtboxesDesc = op.GetInputDesc("gtboxes");
+
+    if (bboxesDesc.GetDataType() != ge::DT_FLOAT || gtboxesDesc.GetDataType() != ge::DT_FLOAT) {
+        OP_LOGE("Iou3D", "bboxes and gtboxes must both be float32");
+        return ge::GRAPH_FAILED;
+    }
+
+    if (bboxesDesc.GetFormat() != ge::FORMAT_ND || gtboxesDesc.GetFormat() != ge::FORMAT_ND) {
+        OP_LOGE("Iou3D", "bboxes and gtboxes must both use ND format");
+        return ge::GRAPH_FAILED;
+    }
+
+    const ge::Shape bboxesShape = bboxesDesc.GetShape();
+    const ge::Shape gtboxesShape = gtboxesDesc.GetShape();
+    const bool bboxesUnknownRank = (bboxesShape.GetDims() == ge::UNKNOWN_RANK);
+    const bool gtboxesUnknownRank = (gtboxesShape.GetDims() == ge::UNKNOWN_RANK);
+
+    ge::TensorDesc outputDesc = op.GetOutputDesc("iou");
+    outputDesc.SetDataType(ge::DT_FLOAT);
+    outputDesc.SetFormat(ge::FORMAT_ND);
+    outputDesc.SetOriginFormat(ge::FORMAT_ND);
+
+    if (bboxesUnknownRank || gtboxesUnknownRank) {
+        outputDesc.SetShape(ge::Shape(ge::UNKNOWN_RANK));
+        outputDesc.SetOriginShape(ge::Shape(ge::UNKNOWN_RANK));
+        return op.UpdateOutputDesc("iou", outputDesc);
+    }
+
+    const std::vector<int64_t> bboxesDims = bboxesShape.GetDims();
+    const std::vector<int64_t> gtboxesDims = gtboxesShape.GetDims();
+    if (bboxesDims.size() != 3U || gtboxesDims.size() != 3U) {
+        OP_LOGE("Iou3D", "bboxes and gtboxes must both be rank-3");
+        return ge::GRAPH_FAILED;
+    }
+
+    if ((bboxesDims[1] >= 0 && bboxesDims[1] != 7) || (gtboxesDims[1] >= 0 && gtboxesDims[1] != 7)) {
+        OP_LOGE("Iou3D", "channel dimension must be 7");
+        return ge::GRAPH_FAILED;
+    }
+
+    if (bboxesDims[0] >= 0 && gtboxesDims[0] >= 0 && bboxesDims[0] != gtboxesDims[0]) {
+        OP_LOGE("Iou3D", "bboxes and gtboxes must have the same batch dimension");
+        return ge::GRAPH_FAILED;
+    }
+
+    const ge::Shape outputShape({bboxesDims[0], bboxesDims[2], gtboxesDims[2]});
+    outputDesc.SetShape(outputShape);
+    outputDesc.SetOriginShape(outputShape);
+    return op.UpdateOutputDesc("iou", outputDesc);
+}
+
+COMMON_INFER_FUNC_REG(Iou3D, InferShapeAndTypeForIou3D);
 
 } // namespace ops

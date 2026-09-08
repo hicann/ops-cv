@@ -34,7 +34,7 @@
 struct Iou3DTilingData {
     uint32_t batch = 0;        // B
     uint32_t numBboxes = 0;    // N（预测框数）
-    uint32_t numGtboxes = 0;   // K（真值框数，D5 对标 mmcv 已移除上限）
+    uint32_t numGtboxes = 0;   // K（无 2000 特例；Host 仅校验通用整数位宽边界）
     uint32_t coreNum = 0;      // 参与计算的核数
     uint32_t pairsPerCore = 0; // 每核负责的 (b,i,j) 对数（向上取整分配）
     uint32_t tileLen = 0;      // 单批处理的 (i,j) 对数（UB 批大小）

@@ -14,7 +14,7 @@
  *
  * 3D 旋转框 IoU：BEV 旋转矩形交集面积 × Z 轴重叠高度 / 并集体积。
  *   inputs : bboxes  [B, 7, N]  (float32)   —— 预测框（7-DoF: x,y,z,w,h,d,theta）
- *            gtboxes [B, 7, K]  (float32)   —— 真值框（K <= 2000）
+ *            gtboxes [B, 7, K]  (float32)   —— 真值框
  *   output : iou     [B, N, K]  (float32)
  * 目标芯片：Ascend950PR / Ascend950DT（arch35 / DAV_3510）。
  */
@@ -43,6 +43,10 @@ public:
             .Format({ge::FORMAT_ND})
             .UnknownShapeFormat({ge::FORMAT_ND})
             .AutoContiguous();
+
+        // Iou3D 的 [B, 7, N/K] 是固定 ND 逻辑布局，禁止 GE 将 NCHW 等格式
+        // 归一化后再进入算子，确保非法 format 在图构建阶段被拒绝。
+        this->FormatMatchMode(FormatCheckOption::STRICT);
 
         // 目标平台：仅 Ascend950（arch35 / DAV_3510）
         OpAICoreConfig aiCoreConfig;

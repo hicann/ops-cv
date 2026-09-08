@@ -27,8 +27,8 @@ set(SUPPORT_COMPUTE_UNIT "ascend950")
 set(SUPPORT_TILING_DIR "arch35")
 # 目录名 iou3d（用户裁决保留，不改为 OpType 框架 snake_case 形式 iou3_d）。
 # OPTYPE=iou3d 为本地文件命名域（仅用于 GLOB op_host/iou3d_def*.cpp + opFile.value=iou3d 的 src 路径解析），
-# 与算子原型 OpType=Iou3D、aclnn 接口 aclnnIou3D、kernel 入口符号 iou3_d(=optype_snake(Iou3D)) 解耦：
+# 与算子原型 OpType=Iou3D、kernel 入口符号 iou3_d(=optype_snake(Iou3D)) 解耦：
 #   - 二进制配置走 checked-in op_host/config/ascend950/iou3d_binary.json（op_type:Iou3D），绕过 generate_bin_scripts
 #     的 convert_to_camel('iou3d')='Iou3d'≠'Iou3D' round-trip 缺陷（该 gen 路径仅在无 checked-in json 时启用）。
-# aclnn_exclude：使用自定义 aclnn 接口（op_api/aclnn_iou3d，对外接口名 aclnnIou3D），与本仓 ciou/iou_v2/roi_pooling_* 一致
+# aclnn_exclude：Iou3D 当前仅提供 GEIR 通路，没有 op_api/ACLNN 接口。
 add_all_modules_sources(OPTYPE iou3d ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT} TILING_DIR ${SUPPORT_TILING_DIR} DISABLE_IN_OPP TRUE)
