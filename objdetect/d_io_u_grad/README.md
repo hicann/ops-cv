@@ -13,14 +13,14 @@
 
 ## 功能说明
 
-- 算子功能：计算Distance-IoU (DIoU)损失函数的反向梯度。DIoUGrad是目标检测中DIoU Loss的反向传播算子，计算上游梯度dy对预测框bboxes和真实框gtboxes的梯度。
+- 算子功能：计算Distance-IoU (DIoU)度量的反向梯度。DIoUGrad是目标检测中DIoU算子的反向传播算子，计算上游梯度dy对预测框bboxes和真实框gtboxes的梯度。
 
 - 计算公式：
 
-  DIoU前向损失：
+  DIoU前向度量：
 
   $$
-  L_{DIoU} = 1 - IoU + \frac{\rho^2}{c^2}
+  DIoU = IoU - \frac{\rho^2}{c^2}
   $$
 
   其中：
@@ -31,11 +31,11 @@
   反向梯度：
 
   $$
-  \frac{\partial L_{DIoU}}{\partial B} = f(dy, IoU, \rho^2, c^2)
+  \frac{\partial (IoU - \rho^2/c^2)}{\partial B} = f(dy, IoU, \rho^2, c^2)
   $$
 
   $$
-  \frac{\partial L_{DIoU}}{\partial B_{gt}} = f(dy, IoU, \rho^2, c^2)
+  \frac{\partial (IoU - \rho^2/c^2)}{\partial B_{gt}} = f(dy, IoU, \rho^2, c^2)
   $$
 
 ## 参数说明

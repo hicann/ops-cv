@@ -108,15 +108,20 @@ __simt_vf__ __aicore__ __launch_bounds__(Use32Bit ? 1024 : 512) inline void DIoU
         float rhoY = cy - cgy;
         float rho2 = rhoX * rhoX + rhoY * rhoY;
 
-        float dunion = -dyVal * inter / (unionVal * unionVal);
-        float dinter = dyVal / unionVal - dunion;
+        bool overlap = (interW > 0.0f) && (interH > 0.0f);
+        float dunion = 0.0f;
+        float dinter = 0.0f;
+        if (overlap) {
+            dunion = -dyVal * (inter / unionVal / unionVal);
+            dinter = dyVal / unionVal - dunion;
+        }
         float drho2 = -dyVal / c2;
-        float dc2 = dyVal * rho2 / (c2 * c2);
+        float dc2 = dyVal * (rho2 / c2 / c2);
 
         float dbx1 = 0.0f, dby1 = 0.0f, dbx2 = 0.0f, dby2 = 0.0f;
         float dgx1 = 0.0f, dgy1 = 0.0f, dgx2 = 0.0f, dgy2 = 0.0f;
 
-        if (interW > 0.0f) {
+        if (overlap) {
             float gradX = dinter * interH;
             if (bx2 < gx2) {
                 dbx2 += gradX;
@@ -135,7 +140,7 @@ __simt_vf__ __aicore__ __launch_bounds__(Use32Bit ? 1024 : 512) inline void DIoU
                 dgx1 -= gradX * HALF;
             }
         }
-        if (interH > 0.0f) {
+        if (overlap) {
             float gradY = dinter * interW;
             if (by2 < gy2) {
                 dby2 += gradY;

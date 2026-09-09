@@ -20,8 +20,10 @@ __golden__ = {
 }
 
 
-def d_io_u_grad_golden(dy, bboxes, gtboxes, *, trans=True, is_cross=False, mode="iou", **kwargs):
-    '''
+def d_io_u_grad_golden(
+    dy, bboxes, gtboxes, *, trans=True, is_cross=False, mode="iou", **kwargs
+):
+    """
     Golden function for d_io_u_grad.
     All the parameters (names and order) follow @d_io_u_grad_def.cpp without outputs.
     All the input Tensors are numpy.ndarray.
@@ -39,19 +41,19 @@ def d_io_u_grad_golden(dy, bboxes, gtboxes, *, trans=True, is_cross=False, mode=
     Returns:
         dbboxes: shape [4, N], gradient for bboxes
         dgtboxes: shape [4, M], gradient for gtboxes
-    '''
+    """
     import torch
     import torchvision.ops
 
     # Handle bfloat16/float16: convert to float32 for torch.from_numpy
     orig_dtype = dy.dtype
-    if dy.dtype.name in ('bfloat16', 'float16'):
+    if dy.dtype.name in ("bfloat16", "float16"):
         dy = dy.astype(np.float32)
         bboxes = bboxes.astype(np.float32)
         gtboxes = gtboxes.astype(np.float32)
 
     # Convert [4, N] to [N, 4] for torchvision (requires [N, 4] xyxy format)
-    bboxes_t = torch.from_numpy(bboxes.T.copy()).requires_grad_(True)   # [N, 4]
+    bboxes_t = torch.from_numpy(bboxes.T.copy()).requires_grad_(True)  # [N, 4]
     gtboxes_t = torch.from_numpy(gtboxes.T.copy()).requires_grad_(True)  # [M, 4]
 
     # If xywh format, convert to xyxy
@@ -59,24 +61,30 @@ def d_io_u_grad_golden(dy, bboxes, gtboxes, *, trans=True, is_cross=False, mode=
         x, y, w, h = bboxes_t[:, 0], bboxes_t[:, 1], bboxes_t[:, 2], bboxes_t[:, 3]
         bboxes_xyxy = torch.stack([x - w / 2, y - h / 2, x + w / 2, y + h / 2], dim=-1)
 
-        xg, yg, wg, hg = gtboxes_t[:, 0], gtboxes_t[:, 1], gtboxes_t[:, 2], gtboxes_t[:, 3]
-        gtboxes_xyxy = torch.stack([xg - wg / 2, yg - hg / 2, xg + wg / 2, yg + hg / 2], dim=-1)
+        xg, yg, wg, hg = (
+            gtboxes_t[:, 0],
+            gtboxes_t[:, 1],
+            gtboxes_t[:, 2],
+            gtboxes_t[:, 3],
+        )
+        gtboxes_xyxy = torch.stack(
+            [xg - wg / 2, yg - hg / 2, xg + wg / 2, yg + hg / 2], dim=-1
+        )
     else:
         bboxes_xyxy = bboxes_t
         gtboxes_xyxy = gtboxes_t
 
-    # Use torchvision's built-in DIoU loss for forward computation
-    # distance_box_iou_loss computes IoU + rho^2/c^2, returns [N] per-box loss
+    # DIoU loss: 1 - iou + rho^2/c^2; seed with -dy to get the metric gradient
+    # iou - rho^2/c^2 that DIoUGrad computes.
     loss = torchvision.ops.distance_box_iou_loss(
-        bboxes_xyxy, gtboxes_xyxy, reduction='none'
+        bboxes_xyxy, gtboxes_xyxy, reduction="none", eps=1e-9
     )  # shape: [N]
 
-    # Backward: apply upstream gradient dy through autograd
-    dy_tensor = torch.from_numpy(dy.copy())
+    dy_tensor = -torch.from_numpy(dy.copy())
     loss.backward(gradient=dy_tensor)
 
     # Get gradients and transpose back to [4, N] format
-    dbboxes = bboxes_t.grad.T.numpy().astype(orig_dtype, copy=False)    # [4, N]
+    dbboxes = bboxes_t.grad.T.numpy().astype(orig_dtype, copy=False)  # [4, N]
     dgtboxes = gtboxes_t.grad.T.numpy().astype(orig_dtype, copy=False)  # [4, M]
 
     return dbboxes, dgtboxes
