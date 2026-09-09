@@ -24,10 +24,16 @@
 #include "utils/kernel_util.h"
 
 namespace {
-const std::uint32_t kAdjustSaturationInputNum{2u};
-const std::uint32_t kAdjustSaturationOutputNum{1u};
-const char* kAdjustSaturation{"AdjustSaturation"};
-const std::int64_t kAdjustSaturationParallelNum{64 * 1024};
+constexpr std::uint32_t kAdjustSaturationInputNum{2u};
+constexpr std::uint32_t kAdjustSaturationOutputNum{1u};
+constexpr const char* kAdjustSaturation{"AdjustSaturation"};
+constexpr std::int64_t kAdjustSaturationParallelNum{64 * 1024};
+constexpr std::int64_t kAdjustSaturationEmptyImageCount{0};
+constexpr std::uint32_t kAdjustSaturationMinRank{3U};
+constexpr std::int64_t kAdjustSaturationRgbChannelCount{3};
+constexpr std::int64_t kAdjustSaturationReservedCoreCount{2L};
+constexpr std::int64_t kAdjustSaturationMinCoreCount{1L};
+constexpr std::uint64_t kAdjustSaturationFactorDataSize{sizeof(std::float_t)};
 } // namespace
 
 namespace aicpu {
@@ -168,9 +174,13 @@ inline std::uint32_t ComputeAdjustSaturationKernel(const CpuKernelContext& ctx)
     auto saturationFactor{static_cast<std::float_t*>(ctx.Input(1)->GetData())};
     auto output{static_cast<Rgb<T>*>(ctx.Output(0)->GetData())};
     auto adjustFunc = [&](Rgb<T> image) { return ScalarAdjustSaturation(image, saturationFactor[0]); };
-    std::int64_t total{ctx.Input(0)->NumElements() / 3};
+    std::int64_t total{ctx.Input(0)->NumElements() / kAdjustSaturationRgbChannelCount};
+    if (total == kAdjustSaturationEmptyImageCount) {
+        return KERNEL_STATUS_OK;
+    }
     auto cores{aicpu::CpuKernelUtils::GetCPUNum(ctx)};
-    std::int64_t perUnitSize{total / std::min(std::max(1L, cores - 2L), total)};
+    std::int64_t perUnitSize{
+        total / std::min(std::max(kAdjustSaturationMinCoreCount, cores - kAdjustSaturationReservedCoreCount), total)};
     return ParallelForAdjustSaturation(ctx, total, perUnitSize, [&](std::int64_t begin, std::int64_t end) {
         std::transform(input + begin, input + end, output + begin, adjustFunc);
     });
@@ -190,9 +200,9 @@ inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext& ctx)
 {
     auto inputShape = ctx.Input(0)->GetTensorShape();
     auto inputDims = inputShape->GetDimSizes();
-    if (inputDims.back() != 3) {
-        KERNEL_LOG_ERROR("The last dimension of input images and output y shape [%s] must be 3.",
-                         VectorToString(inputDims).c_str());
+    if (inputDims.size() < kAdjustSaturationMinRank || inputDims.back() != kAdjustSaturationRgbChannelCount) {
+        KERNEL_LOG_ERROR("The last dimension of input images and output y shape [%s] must be %lld.",
+                         VectorToString(inputDims).c_str(), kAdjustSaturationRgbChannelCount);
         return KERNEL_STATUS_PARAM_INVALID;
     }
 
@@ -211,8 +221,9 @@ inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext& ctx)
                          DTypeStr(ctx.Input(1)->GetDataType()).c_str(), DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
-    if (ctx.Input(1)->GetDataSize() != 4) {
-        KERNEL_LOG_ERROR("The data size of the input [%llu] needs to be [%llu].", ctx.Input(1)->GetDataSize(), 4);
+    if (ctx.Input(1)->GetDataSize() != kAdjustSaturationFactorDataSize) {
+        KERNEL_LOG_ERROR("The data size of the input [%llu] needs to be [%llu].", ctx.Input(1)->GetDataSize(),
+                         kAdjustSaturationFactorDataSize);
         return KERNEL_STATUS_PARAM_INVALID;
     }
     return KERNEL_STATUS_OK;

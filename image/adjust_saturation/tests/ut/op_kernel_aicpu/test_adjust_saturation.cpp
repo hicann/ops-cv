@@ -23,6 +23,20 @@
 using namespace std;
 using namespace aicpu;
 
+namespace {
+constexpr int64_t kRgbChannelCount{3};
+constexpr int64_t kEmptyDimension{0};
+constexpr int64_t kImageHeight{2};
+constexpr int64_t kInvalidChannelCount{2};
+constexpr int64_t kScalarDimension{1};
+constexpr int kTestBufferElements{1};
+constexpr int kInvalidImageElements{8};
+constexpr float kTestSaturationFactor{0.5F};
+constexpr float kTestInputValue{1.0F};
+constexpr float kTestZeroValue{0.0F};
+
+} // namespace
+
 class TEST_ADJUST_SATURATION_UT : public testing::Test {
 protected:
     std::float_t* float_null_{nullptr};
@@ -108,6 +122,22 @@ TEST_F(TEST_ADJUST_SATURATION_UT, DATA_TYPE_DT_FLOAT16)
     EXPECT_EQ(compare, true);
 }
 
+TEST_F(TEST_ADJUST_SATURATION_UT, EMPTY_IMAGE_IS_SAFE)
+{
+    float input[kTestBufferElements] = {kTestZeroValue};
+    float delta[kTestBufferElements] = {kTestSaturationFactor};
+    float output[kTestBufferElements] = {kTestZeroValue};
+
+    vector<vector<int64_t>> shapes = {{kEmptyDimension, kImageHeight, kRgbChannelCount},
+                                      {kScalarDimension},
+                                      {kEmptyDimension, kImageHeight, kRgbChannelCount}};
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<void*> datas = {input, delta, output};
+
+    CREATE_NODEDEF(shapes, data_types, datas);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
+}
+
 // ===== Exception test cases =====
 TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_SHAPE_EXCEPTION)
 {
@@ -125,11 +155,41 @@ TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_SHAPE_EXCEPTION)
 
 TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_LAST_DIM_EXCEPTION)
 {
-    float input[8] = {1.0f};
-    float delta[1] = {0.5f};
-    float output[8] = {0.0f};
+    float input[kInvalidImageElements] = {kTestInputValue};
+    float delta[kTestBufferElements] = {kTestSaturationFactor};
+    float output[kInvalidImageElements] = {kTestZeroValue};
 
-    vector<vector<int64_t>> shapes = {{2, 2, 2}, {1}, {2, 2, 2}};
+    vector<vector<int64_t>> shapes = {{kImageHeight, kImageHeight, kInvalidChannelCount},
+                                      {kScalarDimension},
+                                      {kImageHeight, kImageHeight, kInvalidChannelCount}};
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<void*> datas = {input, delta, output};
+
+    CREATE_NODEDEF(shapes, data_types, datas);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_RANK_EXCEPTION)
+{
+    float input[kTestBufferElements] = {kTestInputValue};
+    float delta[kTestBufferElements] = {kTestSaturationFactor};
+    float output[kTestBufferElements] = {kTestZeroValue};
+
+    vector<vector<int64_t>> shapes = {{}, {kScalarDimension}, {}};
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<void*> datas = {input, delta, output};
+
+    CREATE_NODEDEF(shapes, data_types, datas);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+
+TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_ONE_DIMENSION_EXCEPTION)
+{
+    float input[kRgbChannelCount] = {kTestInputValue};
+    float delta[kTestBufferElements] = {kTestSaturationFactor};
+    float output[kRgbChannelCount] = {kTestZeroValue};
+
+    vector<vector<int64_t>> shapes = {{kRgbChannelCount}, {kScalarDimension}, {kRgbChannelCount}};
     vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
     vector<void*> datas = {input, delta, output};
 
