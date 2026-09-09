@@ -12,10 +12,14 @@
  * \file rotated_overlaps_kernel.h
  * \brief Pair-parallel SIMT and vector fallback implementations of RotatedOverlaps.
  *
- * A core owns complete [b, n, :] output rows.  A query tile is processed as
- * vector lanes: no output address has more than one writer and the geometric
- * path never reads a lane back through Scalar/GetValue.  For every lane we
- * create the fixed set of convex-intersection candidates:
+ * The SIMT path distributes flattened [b, n, m] pairs with a grid-stride loop.
+ * Each thread handles a pair: validity/axis-aligned/disjoint fast paths precede
+ * smaller-first compensated polygon clipping and area accumulation.
+ *
+ * The vector fallback distributes contiguous tile-task ranges to cores, not
+ * complete rows. A task vectorizes queries (contiguous output) or boxes
+ * (strided output), broadcasting the other box. Each output has one writer.
+ * Only this fallback constructs the fixed candidate set per vector lane:
  *
  *   - four A vertices inside B;
  *   - four B vertices inside A;
@@ -61,6 +65,20 @@ constexpr float kDegreesToRadiansLow = 1.3519960498364902e-10F;
 constexpr float kHalf = 0.5F;
 constexpr float kMaxFinite = 3.402823466e38F;
 constexpr float kInvalidKey = 10.0F;
+// Geometric margins, not area tolerances. With round-to-nearest float32 u=2^-24,
+// 2^-19=32u reserves headroom over a first-order 16u budget for endpoint
+// centers/extents, bound accumulation and comparison arithmetic. Magnitude-sum
+// scales avoid cancellation; the local-frame bound retains endpoint low parts
+// until final float evaluation. This budget assumes finite, normal arithmetic,
+// not a universal bound for overflowing or subnormal intermediates.
+// The looser 2^-10 margin includes coarse trigonometry/conversion error under
+// the assumptions in DefinitelyDisjoint. The 3600-degree cutoff limits that
+// budget; it is not an input validity limit. Only strict padded bounds classify
+// pairs; non-finite scales or subnormal margins cannot establish rejection.
+constexpr float kBoundPaddingFactor = 0.0000019073486328125F; // 2^-19 = 32 * float32 u
+constexpr float kCoarsePaddingFactor = 0.0009765625F;         // 2^-10
+constexpr float kCoarseAngleLimit = 3600.0F;                  // relative angle is bounded by 7200 degrees
+constexpr float kMinNormal = 1.1754943508222875e-38F;
 
 enum FloatVectorSlot : uint32_t {
     kQx = 0U,
@@ -136,6 +154,11 @@ struct PairBox {
     bool valid;
 };
 
+struct FloatExpansion {
+    float high;
+    float low;
+};
+
 template <bool Trans>
 __simt_callee__ inline void LoadPairBox(__gm__ float* source, uint64_t sourceLength, uint64_t batch,
                                         uint64_t sourceIndex, PairBox& box)
@@ -180,22 +203,50 @@ __simt_callee__ inline void TwoSum(float first, float second, float& sum, float&
     error = firstError + secondError;
 }
 
-__simt_callee__ inline float DegreesToRadians(float degrees)
+__simt_callee__ inline FloatExpansion RenormalizeExpansion(float high, float low)
 {
-    const float product = degrees * kDegreesToRadians;
-    const float productError = fmaf(degrees, kDegreesToRadians, -product);
-    return product + fmaf(degrees, kDegreesToRadiansLow, productError);
+    FloatExpansion result;
+    TwoSum(high, low, result.high, result.low);
+    return result;
 }
 
-__simt_callee__ inline float AngleDifferenceToRadians(float first, float second)
+__simt_callee__ inline FloatExpansion AddExpansions(const FloatExpansion& first, const FloatExpansion& second)
 {
-    float differenceHigh = 0.0F;
-    float differenceLow = 0.0F;
-    TwoSum(first, -second, differenceHigh, differenceLow);
-    const float product = differenceHigh * kDegreesToRadians;
-    const float productError = fmaf(differenceHigh, kDegreesToRadians, -product);
-    const float highCorrection = fmaf(differenceHigh, kDegreesToRadiansLow, productError);
-    return product + fmaf(differenceLow, kDegreesToRadians, highCorrection);
+    float high = 0.0F;
+    float error = 0.0F;
+    TwoSum(first.high, second.high, high, error);
+    return RenormalizeExpansion(high, error + (first.low + second.low));
+}
+
+__simt_callee__ inline FloatExpansion NegateExpansion(const FloatExpansion& value) { return {-value.high, -value.low}; }
+
+__simt_callee__ inline FloatExpansion SubtractExpansions(const FloatExpansion& first, const FloatExpansion& second)
+{
+    return AddExpansions(first, NegateExpansion(second));
+}
+
+__simt_callee__ inline FloatExpansion MultiplyExpansion(const FloatExpansion& value, float factor)
+{
+    const float product = value.high * factor;
+    const float productError = fmaf(value.high, factor, -product);
+    return RenormalizeExpansion(product, productError + value.low * factor);
+}
+
+__simt_callee__ inline float EvaluateExpansion(const FloatExpansion& value) { return value.high + value.low; }
+
+__simt_callee__ inline FloatExpansion EndpointCenter(float lower, float upper)
+{
+    float sum = 0.0F;
+    float error = 0.0F;
+    TwoSum(lower, upper, sum, error);
+    return {sum * kHalf, error * kHalf};
+}
+
+__simt_callee__ inline FloatExpansion EndpointExtent(float lower, float upper)
+{
+    FloatExpansion result;
+    TwoSum(upper, -lower, result.high, result.low);
+    return result;
 }
 
 __simt_callee__ inline bool ExpansionLess(float firstHigh, float firstLow, float secondHigh, float secondLow)
@@ -265,176 +316,291 @@ __simt_callee__ inline float AxisAlignedIntersectionArea(const PairBox& first, c
     return overlapX > 0.0F && overlapY > 0.0F ? overlapX * overlapY : 0.0F;
 }
 
-__simt_callee__ inline float Cross(float firstX, float firstY, float secondX, float secondY)
+__simt_callee__ inline FloatExpansion MultiplyExpansions(const FloatExpansion& a, const FloatExpansion& b)
 {
-    return firstX * secondY - firstY * secondX;
+    const float high = a.high * b.high;
+    const float low = fmaf(a.high, b.high, -high) + (a.high * b.low + a.low * b.high);
+    return RenormalizeExpansion(high, low);
 }
 
-__simt_callee__ inline void BuildAxisAlignedCorners(const PairBox& box, float cornersX[kCornerCount],
-                                                    float cornersY[kCornerCount])
+__simt_callee__ inline FloatExpansion DivideExpansions(const FloatExpansion& a, const FloatExpansion& b)
 {
-    const float halfWidth = box.width * kHalf;
-    const float halfHeight = box.height * kHalf;
-    for (uint32_t corner = 0U; corner < kCornerCount; ++corner) {
-        cornersX[corner] = (corner == 0U || corner == 3U) ? -halfWidth : halfWidth;
-        cornersY[corner] = corner < 2U ? -halfHeight : halfHeight;
+    const float quotient = a.high / b.high;
+    const FloatExpansion residual = SubtractExpansions(a, MultiplyExpansion(b, quotient));
+    return RenormalizeExpansion(quotient, (residual.high + residual.low) / b.high);
+}
+
+__simt_callee__ inline void ExpandedSinCos(float degrees, FloatExpansion& sine, FloatExpansion& cosine)
+{
+    // Reduce in degrees before conversion; preserve the radian conversion
+    // residual and evaluate on [-pi/4, pi/4] with compensated arithmetic.
+    float reduced = fabsf(degrees);
+    float period = 360.0F;
+    while (period <= reduced * 0.5F) {
+        period *= 2.0F;
     }
-}
-
-__simt_callee__ inline void BuildRelativeCorners(const PairBox& box, float relativeCenterX, float relativeCenterY,
-                                                 float relativeRadians, float cornersX[kCornerCount],
-                                                 float cornersY[kCornerCount])
-{
-    float sine = 0.0F;
-    float cosine = 0.0F;
-    sincosf(relativeRadians, &sine, &cosine);
-    const float halfWidth = box.width * kHalf;
-    const float halfHeight = box.height * kHalf;
-    for (uint32_t corner = 0U; corner < kCornerCount; ++corner) {
-        const float offsetX = (corner == 0U || corner == 3U) ? -halfWidth : halfWidth;
-        const float offsetY = corner < 2U ? -halfHeight : halfHeight;
-        cornersX[corner] = relativeCenterX + offsetX * cosine - offsetY * sine;
-        cornersY[corner] = relativeCenterY + offsetX * sine + offsetY * cosine;
-    }
-}
-
-__simt_callee__ inline bool BoxesAreDisjoint(const float firstX[kCornerCount], const float firstY[kCornerCount],
-                                             const float secondX[kCornerCount], const float secondY[kCornerCount])
-{
-    float firstMinX = firstX[0];
-    float firstMaxX = firstX[0];
-    float firstMinY = firstY[0];
-    float firstMaxY = firstY[0];
-    float secondMinX = secondX[0];
-    float secondMaxX = secondX[0];
-    float secondMinY = secondY[0];
-    float secondMaxY = secondY[0];
-    for (uint32_t corner = 1U; corner < kCornerCount; ++corner) {
-        firstMinX = fminf(firstMinX, firstX[corner]);
-        firstMaxX = fmaxf(firstMaxX, firstX[corner]);
-        firstMinY = fminf(firstMinY, firstY[corner]);
-        firstMaxY = fmaxf(firstMaxY, firstY[corner]);
-        secondMinX = fminf(secondMinX, secondX[corner]);
-        secondMaxX = fmaxf(secondMaxX, secondX[corner]);
-        secondMinY = fminf(secondMinY, secondY[corner]);
-        secondMaxY = fmaxf(secondMaxY, secondY[corner]);
-    }
-    return firstMaxX < secondMinX || secondMaxX < firstMinX || firstMaxY < secondMinY || secondMaxY < firstMinY;
-}
-
-__simt_callee__ inline bool IsInsideClipEdge(float pointX, float pointY, float edgeStartX, float edgeStartY,
-                                             float edgeEndX, float edgeEndY)
-{
-    return Cross(edgeEndX - edgeStartX, edgeEndY - edgeStartY, pointX - edgeStartX, pointY - edgeStartY) >= 0.0F;
-}
-
-__simt_callee__ inline void IntersectClipEdge(float startX, float startY, float endX, float endY, float edgeStartX,
-                                              float edgeStartY, float edgeEndX, float edgeEndY, float& resultX,
-                                              float& resultY)
-{
-    const float directionX = endX - startX;
-    const float directionY = endY - startY;
-    const float clipDirectionX = edgeEndX - edgeStartX;
-    const float clipDirectionY = edgeEndY - edgeStartY;
-    const float denominator = Cross(directionX, directionY, clipDirectionX, clipDirectionY);
-    if (denominator == 0.0F) {
-        resultX = endX;
-        resultY = endY;
-        return;
-    }
-    const float ratio = Cross(edgeStartX - startX, edgeStartY - startY, clipDirectionX, clipDirectionY) / denominator;
-    resultX = startX + ratio * directionX;
-    resultY = startY + ratio * directionY;
-}
-
-__simt_callee__ inline float ClipIntersectionArea(const float subjectX[kCornerCount],
-                                                  const float subjectY[kCornerCount], const float clipX[kCornerCount],
-                                                  const float clipY[kCornerCount])
-{
-    constexpr uint32_t kMaxIntersectionCorners = 8U;
-    float polygonX[kMaxIntersectionCorners];
-    float polygonY[kMaxIntersectionCorners];
-    float clippedX[kMaxIntersectionCorners];
-    float clippedY[kMaxIntersectionCorners];
-    uint32_t polygonCount = kCornerCount;
-    for (uint32_t corner = 0U; corner < kCornerCount; ++corner) {
-        polygonX[corner] = subjectX[corner];
-        polygonY[corner] = subjectY[corner];
-    }
-
-    for (uint32_t edge = 0U; edge < kCornerCount && polygonCount != 0U; ++edge) {
-        const uint32_t edgeNext = (edge + 1U) % kCornerCount;
-        const float edgeStartX = clipX[edge];
-        const float edgeStartY = clipY[edge];
-        const float edgeEndX = clipX[edgeNext];
-        const float edgeEndY = clipY[edgeNext];
-        uint32_t clippedCount = 0U;
-        float previousX = polygonX[polygonCount - 1U];
-        float previousY = polygonY[polygonCount - 1U];
-        bool previousInside = IsInsideClipEdge(previousX, previousY, edgeStartX, edgeStartY, edgeEndX, edgeEndY);
-        for (uint32_t current = 0U; current < polygonCount; ++current) {
-            const float currentX = polygonX[current];
-            const float currentY = polygonY[current];
-            const bool currentInside = IsInsideClipEdge(currentX, currentY, edgeStartX, edgeStartY, edgeEndX, edgeEndY);
-            if (currentInside != previousInside && clippedCount < kMaxIntersectionCorners) {
-                IntersectClipEdge(previousX, previousY, currentX, currentY, edgeStartX, edgeStartY, edgeEndX, edgeEndY,
-                                  clippedX[clippedCount], clippedY[clippedCount]);
-                ++clippedCount;
-            }
-            if (currentInside && clippedCount < kMaxIntersectionCorners) {
-                clippedX[clippedCount] = currentX;
-                clippedY[clippedCount] = currentY;
-                ++clippedCount;
-            }
-            previousX = currentX;
-            previousY = currentY;
-            previousInside = currentInside;
+    while (period >= 360.0F) {
+        if (reduced >= period) {
+            reduced -= period;
         }
-        polygonCount = clippedCount;
-        for (uint32_t corner = 0U; corner < polygonCount; ++corner) {
-            polygonX[corner] = clippedX[corner];
-            polygonY[corner] = clippedY[corner];
+        period *= 0.5F;
+    }
+    if (degrees < 0.0F) {
+        reduced = -reduced;
+    }
+    const int quadrant = static_cast<int>(floorf(reduced / 90.0F + 0.5F));
+    const float remainder = reduced - static_cast<float>(quadrant) * 90.0F;
+    const FloatExpansion radians = MultiplyExpansion({kDegreesToRadians, kDegreesToRadiansLow}, remainder);
+    // Split Taylor coefficients preserve the low part without performing
+    // compensated division for every term of every box pair. For k=1..8,
+    // sin: (-1)^k/(2k+1)!, cos: (-1)^k/(2k)!, Horner in radians squared.
+    // Generate c by binary64 division of the signed unit by the integer
+    // factorial, then high=RN32(c), low=RN32(c-double(high)); RN32 is float32
+    // round-to-nearest, ties-to-even. The subtraction is performed in binary64.
+    // On |x|<=pi/4, alternating-series truncation is bounded by the next term:
+    // sin: (pi/4)^19/19! ~= 8.35e-20; cos: (pi/4)^18/18! ~= 2.02e-18.
+    // These are truncation bounds only; coefficient, conversion and Horner
+    // rounding errors are separate, including the initial binary64 rounding.
+    constexpr FloatExpansion sinCoefficients[8] = {
+        {-0.1666666716337204F, 4.9670538793122887e-09F},      {0.0083333337679505348F, -4.3461720333759502e-10F},
+        {-0.00019841270113829523F, 2.7255968749334558e-12F},  {2.7557318844628753e-06F, 3.7935712242972291e-14F},
+        {-2.5052107943679403e-08F, -4.4176230446483665e-16F}, {1.6059044372074283e-10F, -5.3525265115627256e-18F},
+        {-7.6471636098127127e-13F, -1.2200710471178288e-20F}, {2.8114573589663704e-15F, -1.0462084739763658e-22F}};
+    constexpr FloatExpansion cosCoefficients[8] = {{-0.5F, 0.0F},
+                                                   {0.041666667908430099F, -1.2417634698280722e-09F},
+                                                   {-0.0013888889225199819F, 3.3631094437103215e-11F},
+                                                   {2.4801587642286904e-05F, -3.4069960936668198e-13F},
+                                                   {-2.755731998149713e-07F, 7.5751122090511949e-15F},
+                                                   {2.0876755879584152e-09F, 1.1082839809204342e-16F},
+                                                   {-1.147074536050896e-11F, -2.3722076892312381e-19F},
+                                                   {4.7794772561329454e-14F, 7.6254440444864298e-22F}};
+    const FloatExpansion square = MultiplyExpansions(radians, radians);
+    FloatExpansion sinPolynomial = sinCoefficients[7];
+    FloatExpansion cosPolynomial = cosCoefficients[7];
+#pragma unroll
+    for (int term = 6; term >= 0; --term) {
+        sinPolynomial = AddExpansions(MultiplyExpansions(sinPolynomial, square), sinCoefficients[term]);
+        cosPolynomial = AddExpansions(MultiplyExpansions(cosPolynomial, square), cosCoefficients[term]);
+    }
+    sine = MultiplyExpansions(radians, AddExpansions({1.0F, 0.0F}, MultiplyExpansions(square, sinPolynomial)));
+    cosine = AddExpansions({1.0F, 0.0F}, MultiplyExpansions(square, cosPolynomial));
+    const FloatExpansion sinReduced = sine;
+    const FloatExpansion cosReduced = cosine;
+    const int turn = (quadrant % 4 + 4) % 4;
+    if (turn == 1) {
+        sine = cosReduced;
+        cosine = NegateExpansion(sinReduced);
+    } else if (turn == 2) {
+        sine = NegateExpansion(sinReduced);
+        cosine = NegateExpansion(cosReduced);
+    } else if (turn == 3) {
+        sine = NegateExpansion(cosReduced);
+        cosine = sinReduced;
+    }
+}
+
+struct ExpandedPoint {
+    FloatExpansion x;
+    FloatExpansion y;
+};
+
+// Clipping a convex quadrilateral by four half-planes adds at most four
+// vertices. Eight slots suffice even at intermediate stages. Keeping the
+// high/low fields in flat arrays keeps the two polygon buffers at 256 B per
+// thread, avoiding the stack overflow from oversized point arrays.
+constexpr uint32_t kIntersectionCapacity = 8U;
+
+__simt_callee__ inline ExpandedPoint LoadExpandedPoint(const float* coordinates, uint32_t index)
+{
+    return {{coordinates[index], coordinates[kIntersectionCapacity + index]},
+            {coordinates[2U * kIntersectionCapacity + index], coordinates[3U * kIntersectionCapacity + index]}};
+}
+
+__simt_callee__ inline void StoreExpandedPoint(float* coordinates, uint32_t index, const ExpandedPoint& point)
+{
+    coordinates[index] = point.x.high;
+    coordinates[kIntersectionCapacity + index] = point.x.low;
+    coordinates[2U * kIntersectionCapacity + index] = point.y.high;
+    coordinates[3U * kIntersectionCapacity + index] = point.y.low;
+}
+
+__simt_callee__ inline bool ExpansionNonnegative(const FloatExpansion& value)
+{
+    return value.high > 0.0F || (value.high == 0.0F && value.low >= 0.0F);
+}
+
+__simt_callee__ inline bool DefinitelyDisjoint(const PairBox& first, const PairBox& second)
+{
+    // Every rotation fits inside a square of half extent (width + height)/2.
+    // Inflate for rounded endpoint centers/extents as well as this bound's
+    // arithmetic. Overflow/underflow and near-contact fall through to clipping.
+    const float radius = 0.5F * (first.width + first.height + second.width + second.height);
+    const float scale = fabsf(first.centerX) + fabsf(first.centerY) + fabsf(second.centerX) + fabsf(second.centerY) +
+                        radius;
+    const float padding = scale * kBoundPaddingFactor;
+    const float limit = radius + padding;
+    if (isfinite(limit) && padding >= kMinNormal &&
+        (fabsf(first.centerX - second.centerX) > limit || fabsf(first.centerY - second.centerY) > limit)) {
+        return true;
+    }
+    // Rejection only, never an area approximation. Individual angles within
+    // +/-3600 degrees give relative angles within +/-7200 (40*pi radians).
+    // With u=2^-24, subtraction and degree conversion contribute approximately
+    // 3*u*40*pi < 2.25e-5 radians. The budget assumes sincosf absolute error
+    // <=2^-16 per component on this range; this is a design assumption, not a
+    // vendor API guarantee. Conversion plus sincosf error is then <3.8e-5;
+    // four projection contributions plus 32u arithmetic allowance total
+    // <1.6e-4*scale, below 2^-10*scale. Revalidate for new math implementations.
+    // Outside the angle range, with a non-finite scale/subnormal margin, or
+    // near contact, this bound cannot safely decide: return false so the caller
+    // uses compensated geometry (including its precise local-frame bounds).
+    if (!isfinite(scale) || fabsf(first.theta) > kCoarseAngleLimit || fabsf(second.theta) > kCoarseAngleLimit) {
+        return false;
+    }
+    const float coarsePadding = scale * kCoarsePaddingFactor;
+    if (coarsePadding < kMinNormal) {
+        return false;
+    }
+    float clipSin, clipCos, relativeSin, relativeCos;
+    sincosf(second.theta * kDegreesToRadians, &clipSin, &clipCos);
+    sincosf((first.theta - second.theta) * kDegreesToRadians, &relativeSin, &relativeCos);
+    const float dx = first.centerX - second.centerX;
+    const float dy = first.centerY - second.centerY;
+    const float alignedX = fmaf(dy, clipSin, dx * clipCos);
+    const float alignedY = fmaf(-dx, clipSin, dy * clipCos);
+    const float extentX = 0.5F * (fabsf(relativeCos) * first.width + fabsf(relativeSin) * first.height);
+    const float extentY = 0.5F * (fabsf(relativeSin) * first.width + fabsf(relativeCos) * first.height);
+    return fabsf(alignedX) > extentX + 0.5F * second.width + coarsePadding ||
+           fabsf(alignedY) > extentY + 0.5F * second.height + coarsePadding;
+}
+
+template <bool Trans>
+__simt_callee__ inline float PreciseIntersectionArea(const PairBox& subject, const PairBox& clip)
+{
+    FloatExpansion subjectSin, subjectCos, clipSin, clipCos;
+    ExpandedSinCos(subject.theta, subjectSin, subjectCos);
+    ExpandedSinCos(clip.theta, clipSin, clipCos);
+    const FloatExpansion sine = SubtractExpansions(MultiplyExpansions(subjectSin, clipCos),
+                                                   MultiplyExpansions(subjectCos, clipSin));
+    const FloatExpansion cosine = AddExpansions(MultiplyExpansions(subjectCos, clipCos),
+                                                MultiplyExpansions(subjectSin, clipSin));
+    FloatExpansion dx, dy, width, height, clipWidth, clipHeight;
+    if constexpr (Trans) {
+        dx = SubtractExpansions(EndpointCenter(subject.lowerX, subject.upperX),
+                                EndpointCenter(clip.lowerX, clip.upperX));
+        dy = SubtractExpansions(EndpointCenter(subject.lowerY, subject.upperY),
+                                EndpointCenter(clip.lowerY, clip.upperY));
+        width = EndpointExtent(subject.lowerX, subject.upperX);
+        height = EndpointExtent(subject.lowerY, subject.upperY);
+        clipWidth = EndpointExtent(clip.lowerX, clip.upperX);
+        clipHeight = EndpointExtent(clip.lowerY, clip.upperY);
+    } else {
+        dx = SubtractExpansions({subject.centerX, 0.0F}, {clip.centerX, 0.0F});
+        dy = SubtractExpansions({subject.centerY, 0.0F}, {clip.centerY, 0.0F});
+        width = {subject.width, 0.0F};
+        height = {subject.height, 0.0F};
+        clipWidth = {clip.width, 0.0F};
+        clipHeight = {clip.height, 0.0F};
+    }
+    const FloatExpansion centerX = AddExpansions(MultiplyExpansions(dx, clipCos), MultiplyExpansions(dy, clipSin));
+    const FloatExpansion centerY = SubtractExpansions(MultiplyExpansions(dy, clipCos), MultiplyExpansions(dx, clipSin));
+    constexpr uint32_t capacity = kIntersectionCapacity;
+    float polygon[capacity * 4U];
+    float output[capacity * 4U];
+    float minX = kMaxFinite;
+    float minY = kMaxFinite;
+    float maxX = -kMaxFinite;
+    float maxY = -kMaxFinite;
+    for (uint32_t i = 0; i < 4; ++i) {
+        const FloatExpansion x = MultiplyExpansion(width, (i == 0 || i == 3) ? -0.5F : 0.5F);
+        const FloatExpansion y = MultiplyExpansion(height, i < 2 ? -0.5F : 0.5F);
+        ExpandedPoint point;
+        point.x = AddExpansions(centerX,
+                                SubtractExpansions(MultiplyExpansions(x, cosine), MultiplyExpansions(y, sine)));
+        point.y = AddExpansions(centerY, AddExpansions(MultiplyExpansions(x, sine), MultiplyExpansions(y, cosine)));
+        StoreExpandedPoint(polygon, i, point);
+        minX = fminf(minX, EvaluateExpansion(point.x));
+        maxX = fmaxf(maxX, EvaluateExpansion(point.x));
+        minY = fminf(minY, EvaluateExpansion(point.y));
+        maxY = fmaxf(maxY, EvaluateExpansion(point.y));
+    }
+    const float halfClipWidth = 0.5F * EvaluateExpansion(clipWidth);
+    const float halfClipHeight = 0.5F * EvaluateExpansion(clipHeight);
+    const float boundScale = fabsf(EvaluateExpansion(centerX)) + fabsf(EvaluateExpansion(centerY)) +
+                             EvaluateExpansion(width) + EvaluateExpansion(height) + halfClipWidth + halfClipHeight;
+    const float boundPadding = boundScale * kBoundPaddingFactor;
+    // Only classify well-separated bounds. Near-contact and non-finite bounds
+    // retain the compensated clipping path; no small intersection is zeroed.
+    if (isfinite(boundScale) && boundPadding >= kMinNormal) {
+        if (minX > halfClipWidth + boundPadding || maxX < -halfClipWidth - boundPadding ||
+            minY > halfClipHeight + boundPadding || maxY < -halfClipHeight - boundPadding) {
+            return 0.0F;
+        }
+        if (minX > -halfClipWidth + boundPadding && maxX < halfClipWidth - boundPadding &&
+            minY > -halfClipHeight + boundPadding && maxY < halfClipHeight - boundPadding) {
+            return EvaluateExpansion(MultiplyExpansions(width, height));
         }
     }
-
-    if (polygonCount < 3U) {
+    uint32_t count = 4;
+    for (uint32_t edge = 0; edge < 4 && count != 0; ++edge) {
+        const bool xAxis = edge < 2;
+        const bool lower = (edge % 2) == 0;
+        const FloatExpansion bound = MultiplyExpansion(xAxis ? clipWidth : clipHeight, lower ? -0.5F : 0.5F);
+        ExpandedPoint previous = LoadExpandedPoint(polygon, count - 1);
+        FloatExpansion previousDistance = SubtractExpansions(xAxis ? previous.x : previous.y, bound);
+        if (!lower) {
+            previousDistance = NegateExpansion(previousDistance);
+        }
+        bool previousInside = ExpansionNonnegative(previousDistance);
+        uint32_t outputCount = 0;
+        for (uint32_t i = 0; i < count; ++i) {
+            const ExpandedPoint current = LoadExpandedPoint(polygon, i);
+            FloatExpansion distance = SubtractExpansions(xAxis ? current.x : current.y, bound);
+            if (!lower) {
+                distance = NegateExpansion(distance);
+            }
+            const bool inside = ExpansionNonnegative(distance);
+            if (inside != previousInside && outputCount < capacity) {
+                const FloatExpansion ratio = DivideExpansions(previousDistance,
+                                                              SubtractExpansions(previousDistance, distance));
+                ExpandedPoint intersection;
+                intersection.x = xAxis ?
+                                     bound :
+                                     AddExpansions(previous.x, MultiplyExpansions(
+                                                                   ratio, SubtractExpansions(current.x, previous.x)));
+                intersection.y = xAxis ?
+                                     AddExpansions(previous.y, MultiplyExpansions(
+                                                                   ratio, SubtractExpansions(current.y, previous.y))) :
+                                     bound;
+                StoreExpandedPoint(output, outputCount++, intersection);
+            }
+            if (inside && outputCount < capacity) {
+                StoreExpandedPoint(output, outputCount++, current);
+            }
+            previous = current;
+            previousDistance = distance;
+            previousInside = inside;
+        }
+        count = outputCount;
+        for (uint32_t i = 0; i < count; ++i) {
+            StoreExpandedPoint(polygon, i, LoadExpandedPoint(output, i));
+        }
+    }
+    if (count < 3) {
         return 0.0F;
     }
-    float doubledArea = 0.0F;
-    const float originX = polygonX[0];
-    const float originY = polygonY[0];
-    for (uint32_t corner = 1U; corner + 1U < polygonCount; ++corner) {
-        doubledArea += Cross(polygonX[corner] - originX, polygonY[corner] - originY, polygonX[corner + 1U] - originX,
-                             polygonY[corner + 1U] - originY);
+    FloatExpansion area = {0.0F, 0.0F};
+    for (uint32_t i = 1; i + 1 < count; ++i) {
+        const ExpandedPoint origin = LoadExpandedPoint(polygon, 0);
+        const ExpandedPoint first = LoadExpandedPoint(polygon, i);
+        const ExpandedPoint second = LoadExpandedPoint(polygon, i + 1);
+        const FloatExpansion ax = SubtractExpansions(first.x, origin.x);
+        const FloatExpansion ay = SubtractExpansions(first.y, origin.y);
+        const FloatExpansion bx = SubtractExpansions(second.x, origin.x);
+        const FloatExpansion by = SubtractExpansions(second.y, origin.y);
+        area = AddExpansions(area, SubtractExpansions(MultiplyExpansions(ax, by), MultiplyExpansions(ay, bx)));
     }
-    return fabsf(doubledArea) * kHalf;
-}
-
-__simt_callee__ inline float RotatedIntersectionArea(const PairBox& subject, const PairBox& clip)
-{
-    const float relativeClipX = clip.centerX - subject.centerX;
-    const float relativeClipY = clip.centerY - subject.centerY;
-    if (!isfinite(relativeClipX) || !isfinite(relativeClipY)) {
-        return 0.0F;
-    }
-
-    float subjectCornersX[kCornerCount];
-    float subjectCornersY[kCornerCount];
-    float clipCornersX[kCornerCount];
-    float clipCornersY[kCornerCount];
-    float clipSine = 0.0F;
-    float clipCosine = 0.0F;
-    sincosf(DegreesToRadians(clip.theta), &clipSine, &clipCosine);
-    const float relativeSubjectX = -relativeClipX;
-    const float relativeSubjectY = -relativeClipY;
-    const float alignedSubjectX = fmaf(relativeSubjectY, clipSine, relativeSubjectX * clipCosine);
-    const float alignedSubjectY = fmaf(-relativeSubjectX, clipSine, relativeSubjectY * clipCosine);
-    BuildRelativeCorners(subject, alignedSubjectX, alignedSubjectY, AngleDifferenceToRadians(subject.theta, clip.theta),
-                         subjectCornersX, subjectCornersY);
-    BuildAxisAlignedCorners(clip, clipCornersX, clipCornersY);
-    return BoxesAreDisjoint(subjectCornersX, subjectCornersY, clipCornersX, clipCornersY) ?
-               0.0F :
-               ClipIntersectionArea(subjectCornersX, subjectCornersY, clipCornersX, clipCornersY);
+    return fabsf(EvaluateExpansion(MultiplyExpansion(area, 0.5F)));
 }
 
 template <bool Trans, typename IndexT>
@@ -465,13 +631,18 @@ __simt_vf__ __aicore__ __launch_bounds__(kRotatedOverlapsSimtThreadNum) inline v
             continue;
         }
 
+        if (DefinitelyDisjoint(box, query)) {
+            overlaps[pairIndex] = 0.0F;
+            continue;
+        }
+
         // Clipping the smaller rectangle against the larger one reduces the
         // coordinate/cancellation error of narrow intersection polygons and
         // usually reduces the number of intermediate vertices as well.
         const float boxArea = box.width * box.height;
         const float queryArea = query.width * query.height;
-        overlaps[pairIndex] = boxArea <= queryArea ? RotatedIntersectionArea(box, query) :
-                                                     RotatedIntersectionArea(query, box);
+        const bool boxIsSmaller = boxArea <= queryArea;
+        overlaps[pairIndex] = PreciseIntersectionArea<Trans>(boxIsSmaller ? box : query, boxIsSmaller ? query : box);
     }
 }
 

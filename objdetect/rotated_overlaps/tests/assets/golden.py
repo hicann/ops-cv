@@ -64,7 +64,10 @@ def _normalise_boxes(values, trans):
 def _corners(fields):
     """Construct four counter-clockwise corners for every rotated box."""
     center_x, center_y, width, height, theta, _ = fields
-    radians = torch.deg2rad(theta)
+    # Reduce the represented input in degrees before multiplying by pi/180.
+    # fmod also preserves tiny negative angles (positive remainder may round
+    # them to 360). Direct conversion loses phase for large finite inputs.
+    radians = torch.deg2rad(torch.fmod(theta, 360.0))
     cosine = torch.cos(radians)
     sine = torch.sin(radians)
     half_width = width * 0.5
@@ -90,74 +93,67 @@ def _cross(lhs, rhs):
     return lhs[..., 0] * rhs[..., 1] - lhs[..., 1] * rhs[..., 0]
 
 
-def _points_inside(points, rectangles):
-    """Test each candidate point against all four CCW rectangle edges."""
-    starts = rectangles
-    ends = torch.roll(rectangles, shifts=-1, dims=-2)
-    edges = ends - starts
-    relative = points.unsqueeze(-2) - starts.unsqueeze(-3)
-    crosses = (
-        edges[..., 0].unsqueeze(-2) * relative[..., 1]
-        - edges[..., 1].unsqueeze(-2) * relative[..., 0]
+def _clipped_pair_area(first, second, valid):
+    """Clip convex polygons without dividing by nearly parallel edge pairs.
+
+    A crossing is computed only when consecutive signed distances have
+    opposite signs. Its denominator is then a sum of magnitudes, avoiding
+    the cancellation in the former 16 edge-pair intersection candidates.
+    """
+    # Start with the smaller rectangle. Clipping a near-float32-max rectangle
+    # down to a small contained one subtracts huge, almost equal coordinates
+    # and can lose the entire intersection even with float64 arithmetic.
+    first_area = _cross(first[:, 1] - first[:, 0], first[:, 3] - first[:, 0]).abs()
+    second_area = _cross(second[:, 1] - second[:, 0], second[:, 3] - second[:, 0]).abs()
+    swap = (first_area > second_area).unsqueeze(-1).unsqueeze(-1)
+    first, second = torch.where(swap, second, first), torch.where(swap, first, second)
+    capacity = 16
+    slots = torch.arange(capacity, device=first.device).unsqueeze(0)
+    polygon = torch.zeros(
+        (first.shape[0], capacity, 2), dtype=first.dtype, device=first.device
     )
-    return (crosses >= 0.0).all(dim=-1)
-
-
-def _edge_intersections(first, second):
-    """Return the 16 edge-pair intersection candidates and valid flags."""
-    first_start = first.unsqueeze(-2)
-    first_vector = (torch.roll(first, shifts=-1, dims=-2) - first).unsqueeze(-2)
-    second_start = second.unsqueeze(-3)
-    second_vector = (torch.roll(second, shifts=-1, dims=-2) - second).unsqueeze(-3)
-    relative = second_start - first_start
-    denominator = _cross(first_vector, second_vector)
-    nonzero = denominator != 0.0
-    safe_denominator = torch.where(nonzero, denominator, torch.ones_like(denominator))
-    first_ratio = _cross(relative, second_vector) / safe_denominator
-    second_ratio = _cross(relative, first_vector) / safe_denominator
-    valid = (
-        nonzero
-        & (first_ratio >= 0.0)
-        & (first_ratio <= 1.0)
-        & (second_ratio >= 0.0)
-        & (second_ratio <= 1.0)
+    polygon[:, :4] = first
+    count = torch.where(valid, 4, 0)
+    for edge_index in range(4):
+        active = slots < count.unsqueeze(-1)
+        previous_index = torch.where(slots == 0, count.unsqueeze(-1) - 1, slots - 1)
+        previous = torch.gather(
+            polygon, 1, previous_index.clamp_min(0).unsqueeze(-1).expand(-1, -1, 2)
+        )
+        start = second[:, edge_index].unsqueeze(1)
+        edge = (second[:, (edge_index + 1) % 4] - second[:, edge_index]).unsqueeze(1)
+        # Signed-distance scale cancels in the crossing ratio. Normalising
+        # the edge avoids overflow in float32 for very large valid boxes.
+        scale = edge.abs().amax(dim=-1, keepdim=True)
+        edge = edge / torch.where(scale > 0, scale, torch.ones_like(scale))
+        distance = _cross(edge, polygon - start)
+        previous_distance = _cross(edge, previous - start)
+        inside = distance >= 0
+        crossing = active & (inside != (previous_distance >= 0))
+        denominator = torch.where(
+            crossing, previous_distance - distance, torch.ones_like(distance)
+        )
+        ratio = torch.where(
+            crossing, previous_distance / denominator, torch.zeros_like(distance)
+        )
+        intersection = previous + ratio.unsqueeze(-1) * (polygon - previous)
+        candidates = torch.stack((intersection, polygon), dim=2).flatten(1, 2)
+        keep = torch.stack((crossing, active & inside), dim=2).flatten(1, 2)
+        positions = keep.to(torch.int64).cumsum(dim=1) - 1
+        count = keep.sum(dim=1)
+        polygon = torch.zeros_like(polygon).scatter_add(
+            1,
+            positions.clamp(0, capacity - 1).unsqueeze(-1).expand(-1, -1, 2),
+            torch.where(keep.unsqueeze(-1), candidates, torch.zeros_like(candidates)),
+        )
+    active = slots < count.unsqueeze(-1)
+    following_index = torch.where(slots + 1 < count.unsqueeze(-1), slots + 1, 0)
+    relative = polygon - polygon[:, :1]
+    following = torch.gather(
+        relative, 1, following_index.unsqueeze(-1).expand(-1, -1, 2)
     )
-    points = first_start + first_ratio.unsqueeze(-1) * first_vector
-    return points.flatten(start_dim=-3, end_dim=-2), valid.flatten(start_dim=-2)
-
-
-def _intersection_area(first, second, pair_valid):
-    """Calculate every pair area from 24 independently generated candidates."""
-    first_pairs = first.unsqueeze(2).expand(-1, -1, second.shape[1], -1, -1)
-    second_pairs = second.unsqueeze(1).expand(-1, first.shape[1], -1, -1, -1)
-    first_inside = _points_inside(first_pairs, second_pairs)
-    second_inside = _points_inside(second_pairs, first_pairs)
-    intersections, intersection_valid = _edge_intersections(first_pairs, second_pairs)
-    candidates = torch.cat((first_pairs, second_pairs, intersections), dim=-2)
-    candidate_valid = torch.cat(
-        (first_inside, second_inside, intersection_valid), dim=-1
-    ) & pair_valid.unsqueeze(-1)
-
-    masked_candidates = torch.where(
-        candidate_valid.unsqueeze(-1), candidates, torch.zeros_like(candidates)
-    )
-    candidate_count = candidate_valid.sum(dim=-1)
-    center = masked_candidates.sum(dim=-2) / candidate_count.clamp_min(1).unsqueeze(-1)
-    relative = candidates - center.unsqueeze(-2)
-    angle = torch.atan2(relative[..., 1], relative[..., 0])
-    angle = torch.where(candidate_valid, angle, torch.full_like(angle, 4.0))
-    order = torch.argsort(angle, dim=-1)
-    ordered = torch.gather(candidates, -2, order.unsqueeze(-1).expand(*order.shape, 2))
-    ordered_valid = torch.gather(candidate_valid, -1, order)
-    first_point = ordered[..., :1, :]
-    ordered = torch.where(ordered_valid.unsqueeze(-1), ordered, first_point)
-    ordered = ordered - center.unsqueeze(-2)
-    following = torch.roll(ordered, shifts=-1, dims=-2)
-    doubled_area = _cross(ordered, following).sum(dim=-1).abs()
-    area = doubled_area * 0.5
-    return torch.where(
-        pair_valid & (candidate_count >= 3), area, torch.zeros_like(area)
-    )
+    area = torch.where(active, _cross(relative, following), 0).sum(dim=1).abs() * 0.5
+    return torch.where(valid & (count >= 3), area, 0)
 
 
 def _rotated_overlaps_torch(boxes, query_boxes, trans=False):
@@ -167,10 +163,29 @@ def _rotated_overlaps_torch(boxes, query_boxes, trans=False):
         raise ValueError("boxes and query_boxes batch dimensions must match")
     first_fields = _normalise_boxes(boxes, trans)
     second_fields = _normalise_boxes(query_boxes, trans)
-    pair_valid = first_fields[-1].unsqueeze(2) & second_fields[-1].unsqueeze(1)
-    return _intersection_area(
-        _corners(first_fields), _corners(second_fields), pair_valid
+    first = _corners(first_fields)
+    second = _corners(second_fields)
+    batch, num_boxes, num_queries = boxes.shape[0], boxes.shape[2], query_boxes.shape[2]
+    result = torch.empty(
+        (batch, num_boxes, num_queries), dtype=boxes.dtype, device=boxes.device
     )
+    # Bound temporary geometry storage even for multi-million-pair cases.
+    flat = result.reshape(-1)
+    for begin in range(0, flat.numel(), 4096):
+        indices = torch.arange(
+            begin, min(begin + 4096, flat.numel()), device=boxes.device
+        )
+        batches = indices // (num_boxes * num_queries)
+        box_indices = (indices // num_queries) % num_boxes
+        query_indices = indices % num_queries
+        valid = (
+            first_fields[-1][batches, box_indices]
+            & second_fields[-1][batches, query_indices]
+        )
+        flat[begin : begin + indices.numel()] = _clipped_pair_area(
+            first[batches, box_indices], second[batches, query_indices], valid
+        )
+    return result
 
 
 KERNEL_OUTPUT_TOLERANCE = {"float32": {"standard": "cross_check", "level": "L1"}}
@@ -260,7 +275,34 @@ __spec__ = {"rotated_overlaps": "RotatedOverlapsTestSpec"}
 
 
 def _self_test():
+    for angle in (
+        1.0e20,
+        -1.0e20,
+        torch.finfo(torch.float32).max,
+        -torch.finfo(torch.float32).max,
+        360.0,
+        -360.0,
+        -1.0e-20,
+    ):
+        for trans in (False, True):
+            values = (-2, -1, 2, 1, angle) if trans else (0, 0, 4, 2, angle)
+            query = (-1, -1, 3, 1, 0) if trans else (1, 0, 4, 2, 0)
+            # All external inputs are float32; float64 is reference arithmetic.
+            first = torch.tensor(values, dtype=torch.float32).reshape(1, 5, 1)
+            second = torch.tensor(query, dtype=torch.float32).reshape(1, 5, 1)
+            reduced = first.clone()
+            reduced[:, 4] = torch.fmod(reduced[:, 4], 360.0)
+            for dtype in (torch.float32, torch.float64):
+                torch.testing.assert_close(
+                    _rotated_overlaps_torch(first.to(dtype), second.to(dtype), trans),
+                    _rotated_overlaps_torch(reduced.to(dtype), second.to(dtype), trans),
+                    rtol=0,
+                    atol=0,
+                )
     cases = (
+        # The former near-parallel edge-pair division returned 84.91 here,
+        # exceeding the contained square's area (30.25).
+        ((8.0, 8.0, 5.5, 74.78156, 135.0), (-8.0, -8.0, 5.5, 5.5, -135.0), 30.25),
         ((0.0, 0.0, 2.0, 2.0, 0.0), (0.0, 0.0, 2.0, 2.0, 0.0), 4.0),
         ((0.0, 0.0, 2.0, 2.0, 0.0), (10.0, 10.0, 2.0, 2.0, 0.0), 0.0),
         ((0.0, 0.0, 2.0, 2.0, 0.0), (0.0, 0.0, 2.0, 2.0, 45.0), 3.3137085),
@@ -286,6 +328,57 @@ def _self_test():
         queries = torch.tensor(second, dtype=torch.float64).reshape(1, 5, 1)
         actual = float(_rotated_overlaps_torch(boxes, queries)[0, 0, 0])
         torch.testing.assert_close(actual, expected, rtol=1.0e-6, atol=1.0e-12)
+    for angle in (0.0, 45.0, 90.0, 135.0, -135.0, 179.999):
+        first = torch.tensor(
+            (8.0, 8.0, 100.0, 100.0, angle), dtype=torch.float64
+        ).reshape(1, 5, 1)
+        second = torch.tensor(
+            (8.0, 8.0, 5.5, 5.5, angle + 90), dtype=torch.float64
+        ).reshape(1, 5, 1)
+        for a, b in ((first, second), (second, first)):
+            torch.testing.assert_close(
+                _rotated_overlaps_torch(a, b),
+                torch.full((1, 1, 1), 30.25, dtype=torch.float64),
+                rtol=1.0e-12,
+                atol=1.0e-12,
+            )
+
+    # A narrow xyxyt intersection from L1_019, independently checked with
+    # polygon geometry. Start with the actual float32 endpoint values.
+    first = (
+        torch.tensor(
+            (-0.2423699647, -0.2500007749, 0.2603048384, 0.2549992204, 1.2994835377),
+            dtype=torch.float32,
+        )
+        .reshape(1, 5, 1)
+        .to(torch.float64)
+    )
+    second = (
+        torch.tensor(
+            (-21.5855388641, -2.9623384476, 5.5855388641, 18.9623374939, -135.0),
+            dtype=torch.float32,
+        )
+        .reshape(1, 5, 1)
+        .to(torch.float64)
+    )
+    for a, b in ((first, second), (second, first)):
+        torch.testing.assert_close(
+            float(_rotated_overlaps_torch(a, b, trans=True)[0, 0, 0]),
+            6.253878989896318e-8,
+            rtol=1.0e-8,
+            atol=1.0e-15,
+        )
+
+    for dtype in (torch.float32, torch.float64):
+        large = torch.tensor((0, 0, 1.7e38, 1.7e38, 135), dtype=dtype).reshape(1, 5, 1)
+        small = torch.tensor((2, -2, 2, 3, 15), dtype=dtype).reshape(1, 5, 1)
+        for a, b in ((large, small), (small, large)):
+            torch.testing.assert_close(
+                float(_rotated_overlaps_torch(a, b)[0, 0, 0]),
+                6.0,
+                rtol=1.0e-6,
+                atol=1.0e-7,
+            )
 
 
 if __name__ == "__main__":
