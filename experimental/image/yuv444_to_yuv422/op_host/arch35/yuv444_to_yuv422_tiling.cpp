@@ -88,14 +88,16 @@ static ge::graphStatus Yuv444ToYuv422TilingFunc(gert::TilingContext* context)
     OP_CHECK_IF(GetShapeInfo(context, h, w, totalPairs) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetShapeInfo error"),
                 return ge::GRAPH_FAILED);
 
+    int64_t totalPairsAll = totalPairs + ((w & 1) != 0 ? h : 0);
+
     OP_CHECK_IF(GetWorkspaceSize(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "GetWorkspaceSize error"),
                 return ge::GRAPH_FAILED);
 
-    int64_t perCorePairs = Ops::Base::CeilDiv(totalPairs, maxCoreNum);
+    int64_t perCorePairs = Ops::Base::CeilDiv(totalPairsAll, maxCoreNum);
     if (perCorePairs < PER_CORE_MIN) {
         perCorePairs = PER_CORE_MIN;
     }
-    int64_t needCoreNum = Ops::Base::CeilDiv(totalPairs, perCorePairs);
+    int64_t needCoreNum = Ops::Base::CeilDiv(totalPairsAll, perCorePairs);
 
     Yuv444ToYuv422TilingData* tiling = context->GetTilingData<Yuv444ToYuv422TilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);

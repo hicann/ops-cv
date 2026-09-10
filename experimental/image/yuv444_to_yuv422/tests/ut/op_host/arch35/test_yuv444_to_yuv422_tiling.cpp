@@ -39,7 +39,7 @@ TEST_F(Yuv444ToYuv422Tiling, yuv444_to_yuv422_0)
                                               {
                                                   {{{2, 4, 2}, {2, 4, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
                                               },
-                                              {}, &compileInfo, 64, 262144, 4096);
+                                              {}, &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "4 2 4 1 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -57,9 +57,27 @@ TEST_F(Yuv444ToYuv422Tiling, yuv444_to_yuv422_1)
                                               {
                                                   {{{720, 1280, 2}, {720, 1280, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
                                               },
-                                              {}, &compileInfo, 64, 262144, 4096);
+                                              {}, &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "460800 720 1280 64 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(Yuv444ToYuv422Tiling, yuv444_to_yuv422_width_one)
+{
+    struct Yuv444ToYuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("Yuv444ToYuv422",
+                                              {
+                                                  {{{2, 1, 4}, {2, 1, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{2, 1, 2}, {2, 1, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 64, 262144, 4096);
+    uint64_t expectTilingKey = 0;
+    string expectTilingData = "0 2 1 1 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

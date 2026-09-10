@@ -34,21 +34,12 @@ template <typename IDX_T>
 static constexpr uint32_t THREADS = (sizeof(IDX_T) == 4) ? 1024u : 512u;
 
 template <typename InputT, typename OutputT, typename INDEX_T, typename MAGIC_T>
-__simt_vf__ __aicore__ __launch_bounds__(THREADS<INDEX_T>)
-inline void OpYuv444ToYuv422SimtKernel(
-    INDEX_T totalPairsAll,
-    INDEX_T totalPairsNormal,
-    INDEX_T wPairs,
-    INDEX_T w,
-    MAGIC_T magic,
-    MAGIC_T shift,
-    __gm__ InputT* input,
-    __gm__ OutputT* output)
+__simt_vf__ __aicore__ __launch_bounds__(THREADS<INDEX_T>) inline void OpYuv444ToYuv422SimtKernel(
+    INDEX_T totalPairsAll, INDEX_T totalPairsNormal, INDEX_T wPairs, INDEX_T w, MAGIC_T magic, MAGIC_T shift,
+    __gm__ InputT* input, __gm__ OutputT* output)
 {
-    for (INDEX_T pairIdx = static_cast<INDEX_T>(blockIdx.x * blockDim.x + threadIdx.x);
-         pairIdx < totalPairsAll;
-         pairIdx += static_cast<INDEX_T>(blockDim.x * gridDim.x))
-    {
+    for (INDEX_T pairIdx = static_cast<INDEX_T>(blockIdx.x * blockDim.x + threadIdx.x); pairIdx < totalPairsAll;
+         pairIdx += static_cast<INDEX_T>(blockDim.x * gridDim.x)) {
         if (pairIdx < totalPairsNormal) {
             INDEX_T row = Simt::UintDiv<MAGIC_T>(static_cast<MAGIC_T>(pairIdx), magic, shift);
             INDEX_T colPair = pairIdx - row * wPairs;
@@ -106,39 +97,47 @@ inline void OpYuv444ToYuv422SimtKernel(
 }
 
 template <typename InputT, typename OutputT>
-__aicore__ inline void Process(GM_ADDR input, GM_ADDR output,
-                                const Yuv444ToYuv422TilingData* tilingData)
+__aicore__ inline void Process(GM_ADDR input, GM_ADDR output, const Yuv444ToYuv422TilingData* tilingData)
 {
     int64_t w = tilingData->w;
     int64_t wPairs = w / 2;
     int64_t totalPairsNormal = tilingData->totalPairs;
     bool isOdd = ((w & 1) != 0);
     int64_t totalPairsAll = totalPairsNormal + (isOdd ? tilingData->h : 0);
-    if (totalPairsAll <= 0 || wPairs <= 0) {
+    if (totalPairsAll <= 0) {
         return;
     }
 
     __gm__ InputT* inputGm = (__gm__ InputT*)input;
     __gm__ OutputT* outputGm = (__gm__ OutputT*)output;
 
+    if (wPairs <= 0) {
+        if (totalPairsAll <= static_cast<int64_t>(INT32_MAX)) {
+            asc_vf_call<OpYuv444ToYuv422SimtKernel<InputT, OutputT, uint32_t, uint32_t>>(
+                dim3(THREADS<uint32_t>), static_cast<uint32_t>(totalPairsAll), 0, 0, static_cast<uint32_t>(w), 0, 0,
+                inputGm, outputGm);
+        } else {
+            asc_vf_call<OpYuv444ToYuv422SimtKernel<InputT, OutputT, uint64_t, uint64_t>>(
+                dim3(THREADS<uint64_t>), static_cast<uint64_t>(totalPairsAll), 0, 0, static_cast<uint64_t>(w), 0, 0,
+                inputGm, outputGm);
+        }
+        return;
+    }
+
     if (totalPairsAll <= static_cast<int64_t>(INT32_MAX)) {
         uint32_t magic = 0;
         uint32_t shiftVal = 0;
         GetUintDivMagicAndShift(magic, shiftVal, static_cast<uint32_t>(wPairs));
         asc_vf_call<OpYuv444ToYuv422SimtKernel<InputT, OutputT, uint32_t, uint32_t>>(
-            dim3(THREADS<uint32_t>),
-            static_cast<uint32_t>(totalPairsAll), static_cast<uint32_t>(totalPairsNormal),
-            static_cast<uint32_t>(wPairs), static_cast<uint32_t>(w),
-            magic, shiftVal, inputGm, outputGm);
+            dim3(THREADS<uint32_t>), static_cast<uint32_t>(totalPairsAll), static_cast<uint32_t>(totalPairsNormal),
+            static_cast<uint32_t>(wPairs), static_cast<uint32_t>(w), magic, shiftVal, inputGm, outputGm);
     } else {
         uint64_t magic = 0;
         uint64_t shiftVal = 0;
         GetUintDivMagicAndShift(magic, shiftVal, static_cast<uint64_t>(wPairs));
         asc_vf_call<OpYuv444ToYuv422SimtKernel<InputT, OutputT, uint64_t, uint64_t>>(
-            dim3(THREADS<uint64_t>),
-            static_cast<uint64_t>(totalPairsAll), static_cast<uint64_t>(totalPairsNormal),
-            static_cast<uint64_t>(wPairs), static_cast<uint64_t>(w),
-            magic, shiftVal, inputGm, outputGm);
+            dim3(THREADS<uint64_t>), static_cast<uint64_t>(totalPairsAll), static_cast<uint64_t>(totalPairsNormal),
+            static_cast<uint64_t>(wPairs), static_cast<uint64_t>(w), magic, shiftVal, inputGm, outputGm);
     }
 }
 
