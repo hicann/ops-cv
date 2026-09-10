@@ -85,7 +85,7 @@ aclnnStatus aclnnRgb2yuv422(
 |--------|----------|------|----------|----------|----------|------|-------------|
 | x | 输入 | RGB 图像张量 | NHWC: [..., H, W, 3]; NCHW: [..., 3, H, W] | uint8, float16, float32 | ND | ≥3 | 支持 |
 | dataFormat | 输入 | 数据格式 | "NHWC" 或 "NCHW" | const char* | - | - | - |
-| y | 输出 | YUV422 输出张量 | NHWC: [..., H, W, 2]; NCHW: [..., 2, H, W] | 与输入一致 | ND | ≥3 | 支持 |
+| y | 输出 | YUV422 输出张量 | NHWC: [..., H, W, 2]; NCHW: [..., 2, H, W] | 与输入一致 | ND | ≥3 | - |
 | workspaceSize | 输出 | workspace 大小 | 返回0 | uint64_t* | - | - | - |
 | executor | 输出 | op 执行器 | - | - | - | - | - |
 
