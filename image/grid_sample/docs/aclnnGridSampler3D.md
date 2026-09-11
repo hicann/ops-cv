@@ -116,17 +116,17 @@
       其中：
 
       $$
-      W_{out} = min(round(x'),  W - 1)\\
+      W_{out} = min(round(x'),  W_{in} - 1)\\
       W_{out} = max(round(x'),  0)
       $$
 
       $$
-      H_{out} = min(round(y'),  H - 1)\\
+      H_{out} = min(round(y'),  H_{in} - 1)\\
       H_{out} = max(round(y'),  0)
       $$
 
       $$
-      D_{out} = min(round(z'),  D- 1)\\
+      D_{out} = min(round(z'),  D_{in} - 1)\\
       D_{out} = max(round(z'),  0)
       $$
 
