@@ -25,8 +25,6 @@
 #include "tiling/platform/platform_ascendc.h"
 // op_def_registry.h — IMPL_OP_OPTILING macro for tiling registration.
 #include "register/op_def_registry.h"
-// Own header — declares optiling::TilingFunc.
-#include "bounding_box_decode_tiling_arch35.h"
 
 namespace optiling {
 
@@ -38,7 +36,7 @@ namespace optiling {
 //   kIsEmpty TPL parameter removed (Task 41 fix): the BOOL TPL parameter
 //   caused the framework's NnopbaseExecutorDoTiling to fail allocating the
 //   tiling data buffer in aclnn e2e mode (chicken-and-egg: tilingKey encodes
-//   the BOOL value but is set by TilingFunc, which needs the buffer first).
+//   the BOOL value but is set by BoundingBoxDecodeTilingFunc, which needs the buffer first).
 //   Now the kernel handles empty tensors via runtime check (td.dim0 == 0).
 // (T=FP32=0) → 0   (fp32, handles both normal and empty)
 // (T=FP16=1) → 1   (fp16, handles both normal and empty)
@@ -274,7 +272,7 @@ static void FillTilingData(gert::TilingContext* ctx, BoundingBoxDecodeTilingData
 }
 
 // =========================================================================
-// §9.9 TilingFunc — entry point
+// §9.9 BoundingBoxDecodeTilingFunc — entry point
 //
 // Workflow:
 //   1. Get TilingData buffer (GetTilingData<T> sets data size = sizeof(T)).
@@ -283,7 +281,7 @@ static void FillTilingData(gert::TilingContext* ctx, BoundingBoxDecodeTilingData
 //   4. FillTilingData (§9.7) — empty/normal fork + attr passthrough.
 //   5. Set workspace = 0 (no cross-core partial merge, §9.6).
 // =========================================================================
-ge::graphStatus TilingFunc(gert::TilingContext* context)
+static ge::graphStatus BoundingBoxDecodeTilingFunc(gert::TilingContext* context)
 {
     // 1. TilingData buffer
     BoundingBoxDecodeTilingData* td = context->GetTilingData<BoundingBoxDecodeTilingData>();
@@ -331,12 +329,15 @@ ge::graphStatus TilingFunc(gert::TilingContext* context)
     return ge::GRAPH_SUCCESS;
 }
 
-// =============================================================================
-// §9.8 Host-side registration — IMPL_OP_OPTILING
-//   .Tiling(TilingFunc): registers the runtime tiling callback.
-//   Platform info is queried live via GetPlatformInfo() + PlatformAscendC
-//   (broadcast_tiling pattern), so no TilingParse/CompileInfo cache is required.
-// =============================================================================
-IMPL_OP_OPTILING(BoundingBoxDecode).Tiling(TilingFunc);
+static ge::graphStatus TilingParseForBoundingBoxDecode([[maybe_unused]] gert::TilingParseContext* context)
+{
+    return ge::GRAPH_SUCCESS;
+}
+
+struct BoundingBoxDecodeCompileInfo {};
+
+IMPL_OP_OPTILING(BoundingBoxDecode)
+    .Tiling(BoundingBoxDecodeTilingFunc)
+    .TilingParse<BoundingBoxDecodeCompileInfo>(TilingParseForBoundingBoxDecode);
 
 } // namespace optiling

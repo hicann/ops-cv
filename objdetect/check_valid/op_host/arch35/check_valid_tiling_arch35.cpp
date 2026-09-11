@@ -19,11 +19,10 @@
 #include "graph/types.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "register/op_def_registry.h"
-#include "check_valid_tiling_arch35.h"
 
 namespace optiling {
 
-ge::graphStatus CheckValidTilingFunc(gert::TilingContext* context)
+static ge::graphStatus CheckValidTilingFunc(gert::TilingContext* context)
 {
     int64_t availableCores = 1;
     int64_t ubAvailable = 0;
@@ -143,6 +142,16 @@ ge::graphStatus CheckValidTilingFunc(gert::TilingContext* context)
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(CheckValid).Tiling(CheckValidTilingFunc).TilingInputsDataDependency({1});
+static ge::graphStatus TilingParseForCheckValid([[maybe_unused]] gert::TilingParseContext* context)
+{
+    return ge::GRAPH_SUCCESS;
+}
+
+struct CheckValidCompileInfo {};
+
+IMPL_OP_OPTILING(CheckValid)
+    .Tiling(CheckValidTilingFunc)
+    .TilingParse<CheckValidCompileInfo>(TilingParseForCheckValid)
+    .TilingInputsDataDependency({1});
 
 } // namespace optiling
