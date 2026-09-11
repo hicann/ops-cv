@@ -287,6 +287,17 @@ ge::graphStatus TilingFuncDecodeBboxV2(gert::TilingContext* context)
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(DecodeBboxV2).Tiling(TilingFuncDecodeBboxV2);
+// Empty TilingParse placeholder: occupies the TilingParse slot so the framework's
+// DefaultImpl registration (AutoTilingParser, requires compileInfo["_pattern"])
+static ge::graphStatus TilingParseForDecodeBboxV2([[maybe_unused]] gert::TilingParseContext* context)
+{
+    return ge::GRAPH_SUCCESS;
+}
+
+struct DecodeBboxV2CompileInfo {};
+
+IMPL_OP_OPTILING(DecodeBboxV2)
+    .Tiling(TilingFuncDecodeBboxV2)
+    .TilingParse<DecodeBboxV2CompileInfo>(TilingParseForDecodeBboxV2);
 
 } // namespace optiling
