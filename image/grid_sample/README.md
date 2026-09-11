@@ -113,17 +113,17 @@
           其中：
 
           $$
-          W_{out} = min(round(x'),  W - 1)\\
+          W_{out} = min(round(x'),  W_{in} - 1)\\
           W_{out} = max(round(x'),  0)
           $$
 
           $$
-          H_{out} = min(round(y'),  H - 1)\\
+          H_{out} = min(round(y'),  H_{in} - 1)\\
           H_{out} = max(round(y'),  0)
           $$
 
           $$
-          D_{out} = min(round(z'),  D - 1)\\
+          D_{out} = min(round(z'),  D_{in} - 1)\\
           D_{out} = max(round(z'),  0)
           $$
 
@@ -171,7 +171,7 @@
         - interpolationMode=0，表示取(x, y)周围四个坐标的加权平均值。
 
           $$
-          output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{2}\sum_{j=0}^{2}{w(i, j)} * {f    (x', y')}
+          output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{1}\sum_{j=0}^{1}{w(i, j)} * {f(x', y')}
           $$
 
           其中：
@@ -205,19 +205,19 @@
           其中：
 
           $$
-          W_{out} = min(round(x'),  W - 1)\\
+          W_{out} = min(round(x'),  W_{in} - 1)\\
           W_{out} = max(round(x'),  0)
           $$
 
           $$
-          H_{out} = min(round(y'),  H - 1)\\
+          H_{out} = min(round(y'),  H_{in} - 1)\\
           H_{out} = max(round(y'),  0)
           $$
 
         - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。
 
           $$
-          {output(N, C, H_{out}, W_{out})}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f    (x', y')}
+          {output(N, C, H_{out}, W_{out})}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(x', y')}
           $$
 
           其中：
