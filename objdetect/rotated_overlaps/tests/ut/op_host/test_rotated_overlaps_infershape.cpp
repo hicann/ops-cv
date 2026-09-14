@@ -67,6 +67,48 @@ TEST(RotatedOverlapsInferShape, rejects_rank_not_three)
     ExecuteTestCase(context, ge::GRAPH_FAILED);
 }
 
+TEST(RotatedOverlapsInferShape, rejects_both_rank_one)
+{
+    auto context = MakeContext({5}, {5});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(RotatedOverlapsInferShape, rejects_rank_one_boxes)
+{
+    auto context = MakeContext({5}, {1, 5, 3});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(RotatedOverlapsInferShape, rejects_rank_one_queries)
+{
+    auto context = MakeContext({1, 5, 3}, {5});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(RotatedOverlapsInferShape, rejects_rank_one_unknown_dimension)
+{
+    auto context = MakeContext({-1}, {-1});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(RotatedOverlapsInferShape, unknown_rank_boxes)
+{
+    auto context = MakeContext({-2}, {1, 5, 3});
+    ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{-2}});
+}
+
+TEST(RotatedOverlapsInferShape, unknown_rank_queries)
+{
+    auto context = MakeContext({1, 5, 3}, {-2});
+    ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{-2}});
+}
+
+TEST(RotatedOverlapsInferShape, both_unknown_rank)
+{
+    auto context = MakeContext({-2}, {-2});
+    ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{-2}});
+}
+
 TEST(RotatedOverlapsInferShape, rejects_channel_not_five)
 {
     auto context = MakeContext({2, 4, 7}, {2, 5, 3});
