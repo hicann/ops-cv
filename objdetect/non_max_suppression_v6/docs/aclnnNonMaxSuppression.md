@@ -98,7 +98,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0pky">boxes（aclTensor*）</td>
       <td class="tg-0pky">输入</td>
       <td class="tg-0pky">输入tensor。</td>
-      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">每个batch的框数量（spatial_dimension）上限为50000。</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">[num_batches, spatial_dimension, 4]</td>
@@ -108,7 +108,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0pky">scores（aclTensor*）</td>
       <td class="tg-0pky">输入</td>
       <td class="tg-0pky">输入tensor。</td>
-      <td class="tg-0pky">-</td>
+      <td class="tg-0pky">每个batch的框数量（spatial_dimension）上限为50000。</td>
       <td class="tg-0pky">FLOAT、FLOAT16</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">[num_batches, num_classes, spatial_dimension]</td>
@@ -118,7 +118,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0lax">maxOutputBoxesPerClass（aclIntArray*）</td>
       <td class="tg-0lax">输入</td>
       <td class="tg-0lax">表示每个批次每个类别选择的最大框数。</td>
-      <td class="tg-0lax">数值上限为700。</td>
+      <td class="tg-0lax">数值须大于0，上限为700。</td>
       <td class="tg-0lax">INT32</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">-</td>
@@ -214,8 +214,8 @@ aclnnStatus aclnnNonMaxSuppression(
       <td>传入的boxes、scores、selectedIndices是空指针。</td>
     </tr>
     <tr>
-      <td rowspan="7">ACLNN_ERR_PARAM_INVALID</td>
-      <td rowspan="7">161002</td>
+      <td rowspan="8">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="8">161002</td>
       <td>boxes、scores和maxOutputBoxesPerClass的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
@@ -232,6 +232,9 @@ aclnnStatus aclnnNonMaxSuppression(
     </tr>
     <tr>
       <td>boxes第2维必须等于4。</td>
+    </tr>
+    <tr>
+      <td>每个batch的框数量（spatial_dimension）超过50000。</td>
     </tr>
     <tr>
       <td>iouThreshold、scoreThreshold、centerPointBox、maxOutputBoxesPerClass数值不在支持的范围内。</td>
@@ -284,7 +287,8 @@ aclnnStatus aclnnNonMaxSuppression(
 
 ## 约束说明
 
-- 参数maxOutputBoxesPerClass上限为700。输入参数boxes和scores的数据类型要求保持一致。
+- 参数maxOutputBoxesPerClass必须大于0，上限为700。输入参数boxes和scores的数据类型要求保持一致。
+- 每个batch的框数量（boxes的spatial_dimension / scores的spatial_dimension）上限为50000。
 - 在FLOAT16场景下，算子进行排序和计算对比标杆可能会引入计算误差。
 - 确定性计算：
   - aclnnNonMaxSuppression默认确定性实现。

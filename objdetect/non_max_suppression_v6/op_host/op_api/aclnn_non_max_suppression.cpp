@@ -34,6 +34,7 @@ static const std::initializer_list<op::DataType> FLOAT_DTYPE_SUPPORT_LIST = {op:
 static constexpr size_t DIM_TWO = 2;
 static constexpr size_t NUM_FOUR = 4;
 static constexpr int32_t MAX_VALID_OUTPUT = 700;
+static constexpr int64_t MAX_BOXES_NUM_PER_BATCH = 50000;
 
 // 检查入参是否为nullptr
 static bool CheckNotNull(const aclTensor* boxes, const aclTensor* scores, aclIntArray* maxOutputBoxesPerClass,
@@ -87,6 +88,12 @@ static bool CheckShape(const aclTensor* boxes, const aclTensor* scores)
     }
     if (boxesShape.GetDim(DIM_TWO) != NUM_FOUR) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes shape dim1 [%ld] should be 4", boxesShape.GetDim(DIM_TWO));
+        return false;
+    }
+    // 每个 batch 的框数量（boxes/scores 的 spatial_dimension）上限为 50000
+    if (boxesShape.GetDim(1) > MAX_BOXES_NUM_PER_BATCH) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "boxes num per batch [%ld] should be less than or equal to %ld.",
+                boxesShape.GetDim(1), MAX_BOXES_NUM_PER_BATCH);
         return false;
     }
     return true;
@@ -144,8 +151,10 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(const aclTensor* boxes, const
     if (maxOutputBoxesPerClass->Size() > 0) {
         maxOutputSize = maxOutputBoxesPerClass->operator[](0);
     }
-    if (maxOutputSize > MAX_VALID_OUTPUT) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "maxOutputBoxesPerClass[%ld] should be less than 700.", maxOutputSize);
+    if (maxOutputSize <= 0 || maxOutputSize > MAX_VALID_OUTPUT) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "maxOutputBoxesPerClass[%ld] should be greater than 0 and less than or equal to %d.", maxOutputSize,
+                MAX_VALID_OUTPUT);
         return ACLNN_ERR_PARAM_INVALID;
     }
 
