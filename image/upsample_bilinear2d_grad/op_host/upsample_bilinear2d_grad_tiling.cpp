@@ -52,6 +52,9 @@ constexpr int32_t RESERVED_VALUE = 4;
 constexpr int32_t EIGHT_VALUE = 8;
 constexpr uint8_t SCHEDULE_MODE = 1;
 
+constexpr int32_t INPUT_SIZE_NUM = 2;
+constexpr int32_t OUTPUT_SIZE_NUM = 4;
+
 class UpsampleBilinear2dGradTiling {
 public:
     explicit UpsampleBilinear2dGradTiling(gert::TilingContext* context) : tilingContext(context) {};
@@ -218,6 +221,16 @@ ge::graphStatus UpsampleBilinear2dGradTiling::RunBigKernelTiling()
                 return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(1);
     OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+                return ge::GRAPH_FAILED);
+    int64_t inputSizeNum = static_cast<int64_t>(input_size->GetSize());
+    OP_CHECK_IF(inputSizeNum != INPUT_SIZE_NUM,
+                OP_LOGE(tilingContext->GetNodeName(), "the num of input_size is %ld, invalid, must be %d", inputSizeNum,
+                        INPUT_SIZE_NUM),
+                return ge::GRAPH_FAILED);
+    int64_t outputSizeNum = static_cast<int64_t>(output_size->GetSize());
+    OP_CHECK_IF(outputSizeNum != OUTPUT_SIZE_NUM,
+                OP_LOGE(tilingContext->GetNodeName(), "the num of output_size is %ld, invalid, must be %d",
+                        outputSizeNum, OUTPUT_SIZE_NUM),
                 return ge::GRAPH_FAILED);
 
     align_corners = attrs->GetAttrPointer<bool>(H_INDEX);
