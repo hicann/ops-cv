@@ -53,6 +53,7 @@ constexpr uint32_t BYTE_LEN_FOUR = 4;
 constexpr uint32_t BYTE_LEN_TWO = 2;
 
 constexpr uint32_t DIM_LEN = 4;
+constexpr uint32_t OUTPUT_SIZE_NUM = 2;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
 
 constexpr float MAX_SUPPORT_SCALE = 50.0f;
@@ -197,6 +198,11 @@ ge::graphStatus UpsampleBilinearAATiling::RunBigKernelTiling(gert::TilingContext
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(tilingContext->GetNodeName(), "attrs == nullptr"), return ge::GRAPH_FAILED);
     output_size = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
     OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+                return ge::GRAPH_FAILED);
+    int64_t outputSizeNum = static_cast<int64_t>(output_size->GetSize());
+    OP_CHECK_IF(outputSizeNum != OUTPUT_SIZE_NUM,
+                OP_LOGE(tilingContext->GetNodeName(), "the num of output_size is %ld, invalid, must be %u",
+                        outputSizeNum, OUTPUT_SIZE_NUM),
                 return ge::GRAPH_FAILED);
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
     OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
