@@ -129,9 +129,10 @@ def combined_non_max_suppression_golden(
         min(max_total, max_per_class * num_classes) if pad_per_class else max_total
     )
 
-    nmsed_boxes = np.zeros((batch_size, output_size, 4), dtype=np.float32)
-    nmsed_scores = np.zeros((batch_size, output_size), dtype=np.float32)
-    nmsed_classes = np.zeros((batch_size, output_size), dtype=np.float32)
+    output_dtype = np.asarray(boxes).dtype
+    nmsed_boxes = np.zeros((batch_size, output_size, 4), dtype=output_dtype)
+    nmsed_scores = np.zeros((batch_size, output_size), dtype=output_dtype)
+    nmsed_classes = np.zeros((batch_size, output_size), dtype=output_dtype)
     valid_detections = np.zeros((batch_size,), dtype=np.int32)
 
     for batch in range(batch_size):

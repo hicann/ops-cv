@@ -13,6 +13,9 @@
 
 #include <cstdint>
 
+// Separate per-core SIMT suppression masks on 512-byte GM boundaries to isolate cached writes.
+constexpr uint64_t CNMS_GM_ALIGN_BYTES = 512;
+
 struct CombinedNonMaxSuppressionTilingData {
     int32_t batchSize;
     int32_t numBoxes;

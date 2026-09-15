@@ -32,7 +32,7 @@ extern "C" __global__ __aicore__ void combined_non_max_suppression(GM_ADDR boxes
     REGISTER_TILING_DEFAULT(CombinedNonMaxSuppressionTilingData);
     GET_TILING_DATA_WITH_STRUCT(CombinedNonMaxSuppressionTilingData, tilingData, tiling);
     AscendC::TPipe pipe;
-    CombinedNonMaxSuppressionOps::CombinedNonMaxSuppressionKernel op;
+    CombinedNonMaxSuppressionOps::CombinedNonMaxSuppressionKernel<DTYPE_BOXES> op;
     op.Init(boxes, scores, nmsedBoxes, nmsedScores, nmsedClasses, validDetections, userWorkspace, &tilingData, &pipe);
     op.Process();
 }
