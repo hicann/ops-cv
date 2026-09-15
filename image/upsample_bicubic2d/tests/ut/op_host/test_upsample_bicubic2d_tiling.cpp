@@ -172,3 +172,21 @@ TEST_F(UpsampleBicubic2dTiling, upsample_bicubic2d_tiling_004)
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleBicubic2dTiling, upsample_bicubic2d_output_size_extra_element_should_fail)
+{
+    gert::StorageShape input_shape = {{1, 1, 4, 4}, {1, 1, 4, 4}};
+    gert::StorageShape out_shape = {{1, 1, 8, 8}, {1, 1, 8, 8}};
+    UpsampleBicubic2dCompileInfo compileInfo = {1, 220};
+    std::vector<int64_t> output_size = {8, 8, 99};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2d", {{input_shape, ge::DT_FLOAT, ge::FORMAT_ND}}, {{out_shape, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
