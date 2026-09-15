@@ -46,6 +46,10 @@ ge::graphStatus GridSampleTiling::GetShapeAttrsInfo()
     auto gridXDesc = context_->GetInputDesc(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gridXDesc);
     auto gridDtype = gridXDesc->GetDataType();
+    OP_CHECK_IF(xDtype != gridDtype,
+                OP_LOGE(context_->GetNodeName(), "x and grid datatype must be the same, got x=%d, grid=%d",
+                        static_cast<int>(xDtype), static_cast<int>(gridDtype)),
+                return ge::GRAPH_FAILED);
     auto xShape = Ops::Cv::OpTiling::EnsureNotScalar(inputX->GetStorageShape());
     auto inputGrid = context_->GetInputShape(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, inputGrid);
