@@ -69,3 +69,9 @@ TEST_F(GaussianBlurInfershapeTest, rejects_unsupported_shape_dtype_and_attribute
     auto invalidBorder = MakeContext({16, 16, 3}, ge::DT_FLOAT, {3, 3}, 3);
     ExecuteTestCase(invalidBorder, ge::GRAPH_FAILED, {{}});
 }
+
+TEST_F(GaussianBlurInfershapeTest, rejects_dim_exceeding_uint32_max)
+{
+    auto exceedUint32 = MakeContext({static_cast<int64_t>(UINT32_MAX) + 1, 48}, ge::DT_FLOAT, {3, 3}, 1);
+    ExecuteTestCase(exceedUint32, ge::GRAPH_FAILED, {{}});
+}

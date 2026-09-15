@@ -34,8 +34,8 @@ static ge::graphStatus InferShapeGaussianBlur(gert::InferShapeContext* context)
     OP_CHECK_IF(inputShape->GetDimNum() < 2U || inputShape->GetDimNum() > 3U,
                 OP_LOGE(context, "GaussianBlur only supports rank 2/3 ND tensors."), return ge::GRAPH_FAILED);
     for (size_t i = 0; i < inputShape->GetDimNum(); ++i) {
-        OP_CHECK_IF(inputShape->GetDim(i) <= 0, OP_LOGE(context, "GaussianBlur does not support empty tensors."),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(inputShape->GetDim(i) <= 0 || inputShape->GetDim(i) > static_cast<int64_t>(UINT32_MAX),
+                    OP_LOGE(context, "GaussianBlur does not support empty tensors."), return ge::GRAPH_FAILED);
     }
 
     auto attrs = context->GetAttrs();

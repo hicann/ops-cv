@@ -103,6 +103,8 @@ uint32_t NonMaxSuppressionV3CpuKernel::GetInputAndCheck(const CpuKernelContext& 
         KERNEL_LOG_ERROR("The dtype of input[3]iou_threshold must be float16 or float32.");
         return KERNEL_STATUS_PARAM_INVALID;
     }
+    KERNEL_CHECK_FALSE((score_threshold_tensor_->GetDataType() == threshold_dtype_), KERNEL_STATUS_PARAM_INVALID,
+                       "The dtype of iou_threshold and score_threshold must be the same.");
 
     KERNEL_LOG_INFO("GetInputAndCheck end.");
     return KERNEL_STATUS_OK;

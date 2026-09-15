@@ -15,30 +15,22 @@
 #include "infershape_context_faker.h"
 #include "infershape_case_executor.h"
 
-class Yuv444ToYuv422Infershape : public testing::Test
-{
+class Yuv444ToYuv422Infershape : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Yuv444ToYuv422Infershape SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Yuv444ToYuv422Infershape SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Yuv444ToYuv422Infershape TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Yuv444ToYuv422Infershape TearDown" << std::endl; }
 };
 
 TEST_F(Yuv444ToYuv422Infershape, yuv444_to_yuv422_infershape_test1)
 {
-    gert::InfershapeContextPara infershapeContextPara(
-        "Yuv444ToYuv422",
-        {
-            {{{2, 4, 4}, {2, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-        },
-        {
-            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
-        });
+    gert::InfershapeContextPara infershapeContextPara("Yuv444ToYuv422",
+                                                      {
+                                                          {{{2, 4, 4}, {2, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {2, 4, 2},
     };
@@ -59,4 +51,46 @@ TEST_F(Yuv444ToYuv422Infershape, yuv444_to_yuv422_infershape_test2)
         {720, 1280, 2},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(Yuv444ToYuv422Infershape, yuv444_to_yuv422_infershape_unknown_rank)
+{
+    gert::InfershapeContextPara infershapeContextPara("Yuv444ToYuv422",
+                                                      {
+                                                          {{{-2}, {-2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(Yuv444ToYuv422Infershape, yuv444_to_yuv422_infershape_unknown_channel)
+{
+    gert::InfershapeContextPara infershapeContextPara("Yuv444ToYuv422",
+                                                      {
+                                                          {{{2, 4, -1}, {2, 4, -1}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 4, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(Yuv444ToYuv422Infershape, yuv444_to_yuv422_infershape_invalid_channel)
+{
+    gert::InfershapeContextPara infershapeContextPara("Yuv444ToYuv422",
+                                                      {
+                                                          {{{2, 4, 3}, {2, 4, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {{}});
 }

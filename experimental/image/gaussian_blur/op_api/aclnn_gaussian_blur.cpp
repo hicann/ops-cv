@@ -102,7 +102,7 @@ static bool HasPositiveDims(const aclTensor* tensor)
 {
     const auto shape = tensor->GetViewShape();
     for (size_t i = 0; i < shape.GetDimNum(); ++i) {
-        if (shape.GetDim(i) <= 0) {
+        if (shape.GetDim(i) <= 0 || shape.GetDim(i) > static_cast<int64_t>(UINT32_MAX)) {
             return false;
         }
     }

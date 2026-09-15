@@ -16,6 +16,7 @@
  */
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -29,23 +30,31 @@ static ge::graphStatus InferShapeYuv444ToYuv422(gert::InferShapeContext* context
     const gert::Shape* xShape = context->GetInputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
 
+    if (Ops::Base::IsUnknownRank(*xShape)) {
+        OP_LOGD(context->GetNodeName(), "input is UnknownRank, set output as UnknownRank.");
+        gert::Shape* yShape = context->GetOutputShape(IDX_0);
+        OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
+        Ops::Base::SetUnknownRank(*yShape);
+        return GRAPH_SUCCESS;
+    }
+
     auto xDimNum = xShape->GetDimNum();
-    OP_CHECK_IF(xDimNum != 3,
-        OP_LOGE(context, "Input must be 3D (h, w, 4), got %zu dims", xDimNum),
-        return GRAPH_FAILED);
+    OP_CHECK_IF(xDimNum != 3, OP_LOGE(context, "Input must be 3D (h, w, 4), got %zu dims", xDimNum),
+                return GRAPH_FAILED);
 
     int64_t channels = xShape->GetDim(2);
-    OP_CHECK_IF(channels != 4,
-        OP_LOGE(context, "Input channels must be 4, got %ld", channels),
-        return GRAPH_FAILED);
+    if (channels != ge::UNKNOWN_DIM && channels != 4) {
+        OP_LOGE(context, "Input channels must be 4, got %ld", channels);
+        return GRAPH_FAILED;
+    }
 
     gert::Shape* yShape = context->GetOutputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
 
     yShape->SetDimNum(3);
-    yShape->SetDim(0, xShape->GetDim(0));  // h
-    yShape->SetDim(1, xShape->GetDim(1));  // w
-    yShape->SetDim(2, 2);                   // YUV422 fixed 2 channels
+    yShape->SetDim(0, xShape->GetDim(0)); // h
+    yShape->SetDim(1, xShape->GetDim(1)); // w
+    yShape->SetDim(2, 2);                 // YUV422 fixed 2 channels
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeYuv444ToYuv422");
     return GRAPH_SUCCESS;
