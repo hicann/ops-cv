@@ -34,8 +34,6 @@ ops-cv是[CANN](https://www.hiascend.com/cann)（Compute Architecture for Neural
 git clone -b ${tag_version} https://gitcode.com/cann/ops-cv.git
 ```
 
-> 说明：若环境中已存在配套分支源码，**可跳过本步骤**，例如CANNLab默认已提供最新版本CANN对应的源码。
-
 ## 📖学习教程
 
 - [快速入门](docs/QUICKSTART.md)：从零开始快速体验项目核心基础能力，涵盖源码编译、算子调用、开发与调试等操作。
