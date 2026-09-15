@@ -908,6 +908,16 @@
    </tr>
   <tr>
     <td>image</td>
+    <td><a href="../../image/img_raw_decode_post_handle/README.md">img_raw_decode_post_handle</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>将YUV格式的4通道图像数据转换为RAW Bayer格式输出，同时进行伽马校正和黑电平补偿，支持binning和quad两种Bayer排列模式。</td>
+  </tr>
+  <tr>
+    <td>image</td>
     <td><a href="../../objdetect/check_valid/README.md">check_valid</a></td>
     <td>&check;</td>
     <td>&check;</td>
