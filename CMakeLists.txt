@@ -106,6 +106,7 @@ if(ENABLE_TEST)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "cmake build type")
 else ()
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "cmake build type")
+  set(CMAKE_SKIP_RPATH ON)
 endif()
 
 # Cmake Compile配置
