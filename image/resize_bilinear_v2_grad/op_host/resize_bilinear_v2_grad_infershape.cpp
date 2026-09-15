@@ -30,6 +30,8 @@ static ge::graphStatus InferShape4ResizeBilinearV2Grad(gert::InferShapeContext* 
     OP_CHECK_NULL_WITH_CONTEXT(context, original_image_shape);
     gert::Shape* y_shape = context->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, y_shape);
+    OP_CHECK_IF(grad_shape->GetDimNum() != 4 || original_image_shape->GetDimNum() != 4,
+                OP_LOGE(context->GetNodeName(), "Input rank must be 4."), return GRAPH_FAILED);
 
     auto image_desc = context->GetInputDesc(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, image_desc);
