@@ -95,10 +95,11 @@ static ge::graphStatus InferGridSampleShape3D(const gert::InferShapeContext* con
 
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-    bool channelLast = false;
-    if (format == FORMAT_NDHWC) {
-        channelLast = true;
-    }
+    const bool* channelLastAttr = attrs->GetAttrPointer<bool>(ATTR_IDX_CHANNEL_LAST);
+    OP_CHECK_NULL_WITH_CONTEXT(context, channelLastAttr);
+    // ND inputs use channel_last to describe the layout; retain legacy NDHWC format handling.
+    const bool channelLast = *channelLastAttr || format == FORMAT_NDHWC;
+    OP_LOGD(context->GetNodeName(), "channel_last attribute is :%d", *channelLastAttr);
 
     int64_t nDim = xShape->GetDim(0U);
     OP_CHECK_IF(nDim == 0, OP_LOGE(context->GetNodeName(), "N must not be 0."), return ge::GRAPH_FAILED);
