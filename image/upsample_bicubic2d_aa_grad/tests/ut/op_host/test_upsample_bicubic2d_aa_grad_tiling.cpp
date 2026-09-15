@@ -123,3 +123,93 @@ TEST_F(UpsampleBicubic2dAAGradTiling, upsample_bicubic2d_aa_grad_tiling_003)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleBicubic2dAAGradTiling, non_regbase_short_input_size_should_fail)
+{
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 24;
+    } compile_info;
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAAGrad", {{{{1, 1, 6, 10}, {1, 1, 6, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 3, 4}, {1, 1, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({6, 10})),
+         gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleBicubic2dAAGradTiling, non_regbase_short_output_size_should_fail)
+{
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 24;
+    } compile_info;
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAAGrad", {{{{1, 1, 6, 10}, {1, 1, 6, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 3, 4}, {1, 1, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({6})),
+         gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1, 3, 4})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleBicubic2dAAGradTiling, non_regbase_output_size_mismatch_should_fail)
+{
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 24;
+    } compile_info;
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAAGrad", {{{{1, 1, 6, 10}, {1, 1, 6, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 3, 4}, {1, 1, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({7, 11})),
+         gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1, 3, 4})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleBicubic2dAAGradTiling, regbase_short_attributes_should_fail)
+{
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 0;
+    } compile_info;
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAAGrad", {{{{1, 1, 6, 10}, {1, 1, 6, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 3, 4}, {1, 1, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({6})),
+         gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleBicubic2dAAGradTiling, regbase_output_size_mismatch_should_fail)
+{
+    struct UpsampleBicubic2dAAGradCompileInfo {
+        uint32_t coreNum = 0;
+    } compile_info;
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAAGrad", {{{{1, 1, 6, 10}, {1, 1, 6, 10}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 3, 4}, {1, 1, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({7, 11})),
+         gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<vector<int64_t>>({1, 1, 3, 4})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}

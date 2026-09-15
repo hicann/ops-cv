@@ -67,8 +67,8 @@ constexpr int8_t C_INDEX = 1;
 constexpr int8_t H_INDEX = 2;
 constexpr int8_t W_INDEX = 3;
 
-constexpr int8_t INSIZE_INDEX = 0;
-constexpr int8_t OUTSIZE_INDEX = 1;
+constexpr int8_t INSIZE_INDEX = 1;
+constexpr int8_t OUTSIZE_INDEX = 0;
 constexpr int8_t ALIGN_INDEX = 2;
 constexpr int8_t SCALEX_INDEX = 3;
 constexpr int8_t SCALEY_INDEX = 4;
@@ -162,10 +162,10 @@ ge::graphStatus UpsampleBicubic2dAAGradTiling::Init() const { return ge::GRAPH_S
 void UpsampleBicubic2dAAGradTiling::setScale()
 {
     if (dim == H_INDEX) {
-        const int64_t* outputSizeArray = static_cast<const int64_t*>(output_size->GetData());
+        const int64_t* inputSizeArray = static_cast<const int64_t*>(input_size->GetData());
 
-        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), outputSizeArray[H_INDEX], scale_h);
-        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), outputSizeArray[W_INDEX], scale_w);
+        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), inputSizeArray[H_INDEX], scale_h);
+        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), inputSizeArray[W_INDEX], scale_w);
         if (FloatEqual(realScale_w, 1.0)) {
             needExpandW = false;
         }
@@ -235,6 +235,28 @@ ge::graphStatus UpsampleBicubic2dAAGradTiling::RunBigKernelTiling()
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_INDEX);
     scale_h = attrs->GetAttrPointer<float>(SCALEX_INDEX);
     scale_w = attrs->GetAttrPointer<float>(SCALEY_INDEX);
+    OP_CHECK_IF(input_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "input_size == nullptr"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(output_size == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size == nullptr"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(align_corners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "align_corners == nullptr"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_h == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_h == nullptr"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(scale_w == nullptr, OP_LOGE(tilingContext->GetNodeName(), "scale_w == nullptr"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        output_size->GetSize() != 2,
+        OP_LOGE(tilingContext->GetNodeName(), "output_size length is %zu, invalid, must be 2", output_size->GetSize()),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        input_size->GetSize() != SHAPE_SIZE,
+        OP_LOGE(tilingContext->GetNodeName(), "input_size length is %zu, invalid, must be 4", input_size->GetSize()),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(output_size->GetData() == nullptr, OP_LOGE(tilingContext->GetNodeName(), "output_size data == nullptr"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(input_size->GetData() == nullptr, OP_LOGE(tilingContext->GetNodeName(), "input_size data == nullptr"),
+                return ge::GRAPH_FAILED);
 
     auto tempTensor = tilingContext->GetInputDesc(TEMP_INDEX);
     if (tempTensor == nullptr) {
@@ -251,8 +273,27 @@ ge::graphStatus UpsampleBicubic2dAAGradTiling::RunBigKernelTiling()
     }
 
     auto src_shape = tilingContext->GetInputShape(0);
+    OP_CHECK_IF(src_shape == nullptr, OP_LOGE(tilingContext->GetNodeName(), "src_shape == nullptr"),
+                return ge::GRAPH_FAILED);
+    auto dst_shape = tilingContext->GetOutputShape(0);
+    OP_CHECK_IF(dst_shape == nullptr, OP_LOGE(tilingContext->GetNodeName(), "dst_shape == nullptr"),
+                return ge::GRAPH_FAILED);
+    const auto& srcStorageShape = src_shape->GetStorageShape();
+    const auto& dstStorageShape = dst_shape->GetStorageShape();
+    OP_CHECK_IF(srcStorageShape.GetDimNum() != SHAPE_SIZE || dstStorageShape.GetDimNum() != SHAPE_SIZE,
+                OP_LOGE(tilingContext->GetNodeName(), "input and output shapes must be 4D"), return ge::GRAPH_FAILED);
     dim = src_shape->GetStorageShape().GetDimNum() - H_INDEX;
     input_shape = src_shape->GetOriginShape();
+    const int64_t* outputSizeArray = static_cast<const int64_t*>(output_size->GetData());
+    const int64_t* inputSizeArray = static_cast<const int64_t*>(input_size->GetData());
+    OP_CHECK_IF(input_shape.GetDim(H_INDEX) != outputSizeArray[0] || input_shape.GetDim(W_INDEX) != outputSizeArray[1],
+                OP_LOGE(tilingContext->GetNodeName(), "output_size does not match grad_output shape"),
+                return ge::GRAPH_FAILED);
+    for (int8_t i = 0; i < SHAPE_SIZE; ++i) {
+        OP_CHECK_IF(dstStorageShape.GetDim(i) != inputSizeArray[i],
+                    OP_LOGE(tilingContext->GetNodeName(), "input_size does not match grad_input shape"),
+                    return ge::GRAPH_FAILED);
+    }
 
     auto compileInfo = reinterpret_cast<const UpsampleBicubic2dAAGradCompileInfo*>(tilingContext->GetCompileInfo());
     uint32_t coreNumPlatform = 0;
@@ -411,13 +452,10 @@ void UpsampleBicubic2dAAGradTiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleBicubic2dAAGradTiling::getOutputShape()
 {
-    const int64_t* outputSizeArray = static_cast<const int64_t*>(output_size->GetData());
+    const int64_t* inputSizeArray = static_cast<const int64_t*>(input_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
-        output_shapes[i] = input_shape.GetDim(i);
-        if (i > 1) {
-            output_shapes[i] = outputSizeArray[i];
-        }
+        output_shapes[i] = inputSizeArray[i];
     }
     tilingData.set_input_shapes(input_shapes);
     tilingData.set_output_shapes(output_shapes);
