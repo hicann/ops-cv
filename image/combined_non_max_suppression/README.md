@@ -49,6 +49,7 @@
 - `max_output_size_per_class`和`max_total_size`必须为标量，取值范围均为[1, 1000]。
 - `iou_threshold`和`score_threshold`必须为标量。
 - Ascend 950的`iou_threshold`支持0和正数，不支持负数、NaN和无穷大。
+- Ascend 950的`iou_threshold > 1`时不进行IoU抑制，但`score_threshold`分数过滤以及`max_output_size_per_class`和`max_total_size`的输出数量限制仍然生效。
 - `max_output_size_per_class`、`max_total_size`、`iou_threshold`和`score_threshold`为值依赖输入，输入值必须在编译期已知；其中前两者的值参与输出Shape推导，后两者的值参与NMS计算。
 - 候选框坐标顺序为(y1, x1, y2, x2)，支持反向坐标；计算IoU时会分别取坐标端点的最小值和最大值。
 - 当前不支持GE IR动态Shape和动态Rank场景（输入Shape声明分别为`[-1]`和`[-2]`）。
