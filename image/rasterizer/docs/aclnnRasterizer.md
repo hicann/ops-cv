@@ -448,6 +448,7 @@ int main()
     auto ret = Init(deviceId, &stream);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
 
+    // 2. 构造输入与输出，需要根据API的接口自定义构造
     std::vector<int64_t> vShape = {3, 4};
     std::vector<int64_t> fShape = {1, 3};
     std::vector<int64_t> dShape = {10, 10};
