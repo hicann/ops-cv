@@ -61,9 +61,11 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetPlatformInfo()
 
 ge::graphStatus ResizeBicubicV2GradBaseTiling::GetTensorInfo()
 {
+    // Shape 与 format 同源：均取运行时(storage)语义，避免 GE 转排布后按 NHWC 规则解析
+    // NCHW 轴序 origin shape 导致维度取错轴（详见 resize_bilinear_v2_grad 同类修复）。
     auto gradsShapePtr = context_->GetInputShape(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsShapePtr);
-    inputInfo_.gradsShape = Ops::Cv::OpTiling::EnsureNotScalar(gradsShapePtr->GetOriginShape());
+    inputInfo_.gradsShape = Ops::Cv::OpTiling::EnsureNotScalar(gradsShapePtr->GetStorageShape());
     auto gradsDescPtr = context_->GetInputDesc(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, gradsDescPtr);
     inputInfo_.gradsDtype = gradsDescPtr->GetDataType();
@@ -71,7 +73,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetTensorInfo()
 
     auto originalImageShapePtr = context_->GetInputShape(NUM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, originalImageShapePtr);
-    inputInfo_.originalImageShape = Ops::Cv::OpTiling::EnsureNotScalar(originalImageShapePtr->GetOriginShape());
+    inputInfo_.originalImageShape = Ops::Cv::OpTiling::EnsureNotScalar(originalImageShapePtr->GetStorageShape());
     auto originalImageDescPtr = context_->GetInputDesc(NUM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, originalImageDescPtr);
     inputInfo_.imageDtype = originalImageDescPtr->GetDataType();
@@ -79,7 +81,7 @@ ge::graphStatus ResizeBicubicV2GradBaseTiling::GetTensorInfo()
 
     auto yShapePtr = context_->GetOutputShape(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yShapePtr);
-    inputInfo_.yShape = Ops::Cv::OpTiling::EnsureNotScalar(yShapePtr->GetOriginShape());
+    inputInfo_.yShape = Ops::Cv::OpTiling::EnsureNotScalar(yShapePtr->GetStorageShape());
     auto yDescPtr = context_->GetOutputDesc(NUM_0);
     OP_CHECK_NULL_WITH_CONTEXT(context_, yDescPtr);
     inputInfo_.yDtype = yDescPtr->GetDataType();
