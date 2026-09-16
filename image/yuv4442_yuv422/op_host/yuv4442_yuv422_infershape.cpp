@@ -60,12 +60,20 @@ static ge::graphStatus InferShapeYuv4442yuv422(gert::InferShapeContext* context)
         return GRAPH_FAILED;
     }
 
+    int64_t height = xShape->GetDim(0);
+    int64_t width = xShape->GetDim(1);
+    if ((height < 0 && height != ge::UNKNOWN_DIM) || (width < 0 && width != ge::UNKNOWN_DIM)) {
+        OP_LOGE(context->GetNodeName(), "the H/W dims of x must be non-negative or unknown(-1), but got H=%ld, W=%ld",
+                height, width);
+        return GRAPH_FAILED;
+    }
+
     gert::Shape* yShape = context->GetOutputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
 
     yShape->SetDimNum(3);
-    yShape->SetDim(0, xShape->GetDim(0));
-    yShape->SetDim(1, xShape->GetDim(1));
+    yShape->SetDim(0, height);
+    yShape->SetDim(1, width);
     yShape->SetDim(2, 2);
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeYuv4442yuv422");

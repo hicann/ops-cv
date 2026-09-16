@@ -15,6 +15,8 @@
  * \brief Tiling implementation for YUV444 to YUV422 conversion
  */
 
+#include <limits>
+
 #include "log/log.h"
 #include "platform/platform_ascendc.h"
 #include "util/math_util.h"
@@ -75,8 +77,17 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t& h, in
 
     h = storageShape.GetDim(0);
     w = storageShape.GetDim(1);
+    if (h < 0 || w < 0) {
+        OP_LOGE(context, "the H/W dims of x must be non-negative in tiling, but got H=%ld, W=%ld", h, w);
+        return ge::GRAPH_FAILED;
+    }
 
-    totalPairs = h * (w / 2);
+    int64_t wPairs = w / 2;
+    if (wPairs > 0 && h > std::numeric_limits<int64_t>::max() / wPairs) {
+        OP_LOGE(context, "totalPairs overflow: H=%ld, W=%ld, wPairs=%ld", h, w, wPairs);
+        return ge::GRAPH_FAILED;
+    }
+    totalPairs = h * wPairs;
 
     return ge::GRAPH_SUCCESS;
 }

@@ -141,3 +141,60 @@ TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_mixed_unknown_shape_te
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// Concrete negative H is invalid (only -1 unknown sentinel passes through), infershape must fail
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_abnormal_negative_height)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{-3, 4, 4}, {-3, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Concrete negative W is invalid, infershape must fail
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_abnormal_negative_width)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{2, -3, 4}, {2, -3, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Zero H/W keep existing behavior: pass through with GRAPH_SUCCESS
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_zero_height)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{0, 4, 4}, {0, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {0, 4, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(Yuv4442yuv422Infershape, yuv4442_yuv422_infershape_zero_width)
+{
+    gert::InfershapeContextPara infershapeContextPara("YUV4442YUV422",
+                                                      {
+                                                          {{{2, 0, 4}, {2, 0, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 0, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
