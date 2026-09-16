@@ -25,6 +25,8 @@
         printf(message, ##__VA_ARGS__); \
     } while (0)
 
+constexpr double SCALES = 0.5;
+
 int64_t GetShapeSize(const std::vector<int64_t>& shape)
 {
     int64_t shapeSize = 1;
@@ -109,7 +111,7 @@ int main()
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
     // 调用aclnnUpsampleLinear1dBackward第一段接口
-    ret = aclnnUpsampleLinear1dBackwardGetWorkspaceSize(self, outputSize, inputSize, true, 0.5, out, &workspaceSize,
+    ret = aclnnUpsampleLinear1dBackwardGetWorkspaceSize(self, outputSize, inputSize, true, SCALES, out, &workspaceSize,
                                                         &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleLinear1dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
