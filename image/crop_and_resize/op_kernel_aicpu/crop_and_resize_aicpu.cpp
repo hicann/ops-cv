@@ -99,6 +99,9 @@ uint32_t CropAndResizeMsCpuKernel::GetInputCropSize(const CpuKernelContext& ctx)
     // input_3: crop_size
     Tensor* cropSizeTensor = ctx.Input(kInputIndexCropSize);
     KERNEL_CHECK_NULLPTR(cropSizeTensor, KERNEL_STATUS_PARAM_INVALID, "Get input:[3] failed");
+    KERNEL_CHECK_FALSE(cropSizeTensor->GetDataType() == DT_INT32, KERNEL_STATUS_PARAM_INVALID,
+                       "Invalid crop_size dtype: [%d], should be [DT_INT32]",
+                       static_cast<int>(cropSizeTensor->GetDataType()));
     std::shared_ptr<TensorShape> crop_size_shape = cropSizeTensor->GetTensorShape();
     crop_size_shape_ = crop_size_shape->GetDimSizes();
     static uint32_t shape_num_2 = 2;

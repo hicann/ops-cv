@@ -19,6 +19,7 @@
 #undef private
 #undef protected
 #include <fstream>
+#include <limits>
 #include "Eigen/Core"
 
 using namespace std;
@@ -388,6 +389,73 @@ TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_CropSizeInvalid)
     EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
     uint32_t ret = CpuKernelRegister::Instance().RunCpuKernel(ctx);
     EXPECT_EQ(ret, KERNEL_STATUS_PARAM_INVALID);
+}
+
+TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_CropSizeDtypeInvalid)
+{
+    constexpr int BATCH_SIZE = 1;
+    constexpr int NUM_BOXES = 1;
+    constexpr int IMAGE_HEIGHT = 1;
+    constexpr int IMAGE_WIDTH = 1;
+    constexpr int CHANNELS = 3;
+
+    float inputs[BATCH_SIZE][IMAGE_HEIGHT][IMAGE_WIDTH][CHANNELS] = {{{{1.0f, 2.0f, 3.0f}}}};
+    float boxes[NUM_BOXES][4] = {{0.0f, 0.0f, 1.0f, 1.0f}};
+    int32_t box_index[NUM_BOXES] = {0};
+    // The smallest positive float has the raw int32 bit pattern 1. Without the
+    // dtype check, the old kernel interpreted this as a valid 1x1 crop.
+    float crop_size[2] = {std::numeric_limits<float>::denorm_min(), std::numeric_limits<float>::denorm_min()};
+    float y[NUM_BOXES][1][1][CHANNELS] = {0};
+
+    auto nodeDef = CpuKernelUtils::CreateNodeDef();
+    nodeDef->SetOpType("CropAndResize");
+
+    auto method = CpuKernelUtils::CreateAttrValue();
+    method->SetString("bilinear");
+    nodeDef->AddAttrs("method", method.get());
+
+    auto extrapolation_value = CpuKernelUtils::CreateAttrValue();
+    extrapolation_value->SetFloat(0);
+    nodeDef->AddAttrs("extrapolation_value", extrapolation_value.get());
+
+    auto inputTensor0 = nodeDef->AddInputs();
+    auto aicpuShape0 = inputTensor0->GetTensorShape();
+    aicpuShape0->SetDimSizes({BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS});
+    inputTensor0->SetDataType(DT_FLOAT);
+    inputTensor0->SetData(inputs);
+    inputTensor0->SetDataSize(sizeof(inputs));
+
+    auto inputTensor1 = nodeDef->AddInputs();
+    auto aicpuShape1 = inputTensor1->GetTensorShape();
+    aicpuShape1->SetDimSizes({NUM_BOXES, 4});
+    inputTensor1->SetDataType(DT_FLOAT);
+    inputTensor1->SetData(boxes);
+    inputTensor1->SetDataSize(sizeof(boxes));
+
+    auto inputTensor2 = nodeDef->AddInputs();
+    auto aicpuShape2 = inputTensor2->GetTensorShape();
+    aicpuShape2->SetDimSizes({NUM_BOXES});
+    inputTensor2->SetDataType(DT_INT32);
+    inputTensor2->SetData(box_index);
+    inputTensor2->SetDataSize(sizeof(box_index));
+
+    auto inputTensor3 = nodeDef->AddInputs();
+    auto aicpuShape3 = inputTensor3->GetTensorShape();
+    aicpuShape3->SetDimSizes({2});
+    inputTensor3->SetDataType(DT_FLOAT);
+    inputTensor3->SetData(crop_size);
+    inputTensor3->SetDataSize(sizeof(crop_size));
+
+    auto outputTensor1 = nodeDef->AddOutputs();
+    auto aicpuShape4 = outputTensor1->GetTensorShape();
+    aicpuShape4->SetDimSizes({NUM_BOXES, 1, 1, CHANNELS});
+    outputTensor1->SetDataType(DT_FLOAT);
+    outputTensor1->SetData(y);
+    outputTensor1->SetDataSize(sizeof(y));
+
+    CpuKernelContext ctx(DEVICE);
+    EXPECT_EQ(ctx.Init(nodeDef.get()), KERNEL_STATUS_OK);
+    EXPECT_EQ(CpuKernelRegister::Instance().RunCpuKernel(ctx), KERNEL_STATUS_PARAM_INVALID);
 }
 
 TEST_F(TEST_CropAndResize_UTest, CropAndResizeKernel_BoxIndexInvalid)
