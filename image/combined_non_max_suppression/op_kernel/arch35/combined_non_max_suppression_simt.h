@@ -51,7 +51,8 @@ __simt_callee__ __aicore__ inline bool IsBetter(float lhsScore, int32_t lhsIndex
     return lhsScore > rhsScore || (lhsScore == rhsScore && lhsIndex >= 0 && (rhsIndex < 0 || lhsIndex < rhsIndex));
 }
 
-__simt_callee__ __aicore__ inline float CalcIou(__gm__ const float* boxes, int64_t lhsOffset, int64_t rhsOffset)
+template <typename T>
+__simt_callee__ __aicore__ inline float CalcIou(__gm__ const T* boxes, int64_t lhsOffset, int64_t rhsOffset)
 {
     const float lhsYMin = MinFloat(boxes[lhsOffset], boxes[lhsOffset + 2]);
     const float lhsXMin = MinFloat(boxes[lhsOffset + 1], boxes[lhsOffset + 3]);
@@ -93,8 +94,9 @@ __simt_callee__ __aicore__ inline float CalcIouUb(__ubuf__ const float* boxes, i
 
 // Like Sort's non-last-axis gather path, this VF is only responsible for
 // staging strided GM data. The iterative NMS hot loop below operates on UB.
+template <typename T>
 __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
-    void LoadTaskHotData(__gm__ const float* boxes, __gm__ const float* scores, __ubuf__ float* boxesUb,
+    void LoadTaskHotData(__gm__ const T* boxes, __gm__ const T* scores, __ubuf__ float* boxesUb,
                          __ubuf__ float* scoresUb, int32_t batchIdx, int32_t classIdx, int32_t numBoxes,
                          int32_t boxClasses, int32_t numClasses)
 {
@@ -179,25 +181,25 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
     }
 }
 
+template <typename T>
 __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
-    void SelectClassNms(__gm__ const float* boxes, __gm__ const float* scores, __gm__ float* selectedScores,
-                        __gm__ int32_t* selectedIndices, __gm__ int32_t* selectedCounts, __gm__ uint8_t* suppressed,
+    void SelectClassNms(__gm__ const T* boxes, __gm__ const T* scores, __ubuf__ float* selectedScores,
+                        __ubuf__ int32_t* selectedIndices, __ubuf__ int32_t* selectedCounts, __gm__ uint8_t* suppressed,
                         __ubuf__ float* reduceScores, __ubuf__ int32_t* reduceIndices, int32_t batchIdx,
-                        int32_t classIdx, int32_t taskIdx, int32_t numBoxes, int32_t boxClasses, int32_t numClasses,
+                        int32_t classIdx, int32_t numBoxes, int32_t boxClasses, int32_t numClasses,
                         int32_t maxOutputPerClass, float iouThreshold, float scoreThreshold)
 {
     const uint32_t tid = threadIdx.x;
-    const int32_t selectedBase = taskIdx * maxOutputPerClass;
-    for (int32_t index = static_cast<int32_t>(tid); index < numBoxes; index += static_cast<int32_t>(blockDim.x)) {
+    for (uint32_t index = tid; index < static_cast<uint32_t>(numBoxes); index += blockDim.x) {
         suppressed[index] = 0;
     }
     for (int32_t index = static_cast<int32_t>(tid); index < maxOutputPerClass;
          index += static_cast<int32_t>(blockDim.x)) {
-        selectedScores[selectedBase + index] = NEG_INF;
-        selectedIndices[selectedBase + index] = -1;
+        selectedScores[index] = NEG_INF;
+        selectedIndices[index] = -1;
     }
     if (tid == 0) {
-        selectedCounts[taskIdx] = 0;
+        selectedCounts[0] = 0;
     }
     asc_syncthreads();
 
@@ -206,8 +208,7 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
     for (int32_t outputIndex = 0; outputIndex < maxOutputPerClass; ++outputIndex) {
         float localBestScore = NEG_INF;
         int32_t localBestIndex = -1;
-        for (int32_t anchor = static_cast<int32_t>(tid); anchor < numBoxes;
-             anchor += static_cast<int32_t>(blockDim.x)) {
+        for (uint32_t anchor = tid; anchor < static_cast<uint32_t>(numBoxes); anchor += blockDim.x) {
             if (suppressed[anchor] != 0) {
                 continue;
             }
@@ -236,18 +237,17 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
             break;
         }
         if (tid == 0) {
-            selectedScores[selectedBase + outputIndex] = reduceScores[0];
-            selectedIndices[selectedBase + outputIndex] = bestIndex;
+            selectedScores[outputIndex] = reduceScores[0];
+            selectedIndices[outputIndex] = bestIndex;
             selectedCount = outputIndex + 1;
-            selectedCounts[taskIdx] = selectedCount;
+            selectedCounts[0] = selectedCount;
         }
         asc_syncthreads();
 
         const int64_t bestBoxOffset = ((static_cast<int64_t>(batchIdx) * numBoxes + bestIndex) * boxClasses +
                                        boxClass) *
                                       4;
-        for (int32_t anchor = static_cast<int32_t>(tid); anchor < numBoxes;
-             anchor += static_cast<int32_t>(blockDim.x)) {
+        for (uint32_t anchor = tid; anchor < static_cast<uint32_t>(numBoxes); anchor += blockDim.x) {
             if (suppressed[anchor] != 0) {
                 continue;
             }
@@ -263,10 +263,11 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
 
 __simt_callee__ __aicore__ inline float ClipCoordinate(float value) { return MinFloat(MaxFloat(value, 0.0F), 1.0F); }
 
+template <typename T>
 __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
-    void MergeBatchResults(__gm__ const float* boxes, __gm__ const float* selectedScores,
+    void MergeBatchResults(__gm__ const T* boxes, __gm__ const float* selectedScores,
                            __gm__ const int32_t* selectedIndices, __gm__ const int32_t* selectedCounts,
-                           __ubuf__ float* nmsedBoxes, __ubuf__ float* nmsedScores, __ubuf__ float* nmsedClasses,
+                           __ubuf__ T* nmsedBoxes, __ubuf__ T* nmsedScores, __ubuf__ T* nmsedClasses,
                            __ubuf__ int32_t* validDetections, __ubuf__ float* reduceScores,
                            __ubuf__ int32_t* reduceIndices, __ubuf__ int32_t* classCursors,
                            __ubuf__ int32_t* classCounts, __ubuf__ float* headScores, __ubuf__ int32_t* headIndices,
@@ -372,17 +373,18 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
     }
 }
 
+template <typename T>
 class CombinedNonMaxSuppressionKernel {
 public:
     __aicore__ inline void Init(GM_ADDR boxes, GM_ADDR scores, GM_ADDR nmsedBoxes, GM_ADDR nmsedScores,
                                 GM_ADDR nmsedClasses, GM_ADDR validDetections, GM_ADDR workspace,
                                 const CombinedNonMaxSuppressionTilingData* tiling, TPipe* pipe)
     {
-        boxes_ = reinterpret_cast<__gm__ float*>(boxes);
-        scores_ = reinterpret_cast<__gm__ float*>(scores);
-        nmsedBoxes_ = reinterpret_cast<__gm__ float*>(nmsedBoxes);
-        nmsedScores_ = reinterpret_cast<__gm__ float*>(nmsedScores);
-        nmsedClasses_ = reinterpret_cast<__gm__ float*>(nmsedClasses);
+        boxes_ = reinterpret_cast<__gm__ T*>(boxes);
+        scores_ = reinterpret_cast<__gm__ T*>(scores);
+        nmsedBoxes_ = reinterpret_cast<__gm__ T*>(nmsedBoxes);
+        nmsedScores_ = reinterpret_cast<__gm__ T*>(nmsedScores);
+        nmsedClasses_ = reinterpret_cast<__gm__ T*>(nmsedClasses);
         validDetections_ = reinterpret_cast<__gm__ int32_t*>(validDetections);
         workspace_ = reinterpret_cast<__gm__ uint8_t*>(workspace);
         tiling_ = tiling;
@@ -401,11 +403,9 @@ public:
         pipe_->InitBuffer(selectedCountBuffer_, UB_ALIGN_BYTES);
         pipe_->InitBuffer(mergeStateBuffer_, AlignUbBytes(MAX_NUM_CLASSES * 4U * sizeof(int32_t)));
         pipe_->InitBuffer(outputBoxesBuffer_,
-                          AlignUbBytes(static_cast<uint32_t>(tiling_->outputSize) * 4U * sizeof(float)));
-        pipe_->InitBuffer(outputScoresBuffer_,
-                          AlignUbBytes(static_cast<uint32_t>(tiling_->outputSize) * sizeof(float)));
-        pipe_->InitBuffer(outputClassesBuffer_,
-                          AlignUbBytes(static_cast<uint32_t>(tiling_->outputSize) * sizeof(float)));
+                          AlignUbBytes(static_cast<uint32_t>(tiling_->outputSize) * 4U * sizeof(T)));
+        pipe_->InitBuffer(outputScoresBuffer_, AlignUbBytes(static_cast<uint32_t>(tiling_->outputSize) * sizeof(T)));
+        pipe_->InitBuffer(outputClassesBuffer_, AlignUbBytes(static_cast<uint32_t>(tiling_->outputSize) * sizeof(T)));
         pipe_->InitBuffer(validDetectionsBuffer_, UB_ALIGN_BYTES);
         eventVToMte3_ = static_cast<event_t>(pipe_->FetchEventID(HardEvent::V_MTE3));
         eventMte3ToV_ = static_cast<event_t>(pipe_->FetchEventID(HardEvent::MTE3_V));
@@ -422,7 +422,9 @@ public:
                                                                             tiling_->selectedIndicesOffset);
         __gm__ int32_t* selectedCounts = reinterpret_cast<__gm__ int32_t*>(workspace_ + tiling_->selectedCountsOffset);
         __gm__ uint8_t* suppressed = workspace_ + tiling_->suppressedOffset +
-                                     static_cast<uint64_t>(coreIdx_) * static_cast<uint64_t>(tiling_->numBoxes);
+                                     static_cast<uint64_t>(coreIdx_) *
+                                         ((static_cast<uint64_t>(tiling_->numBoxes) + CNMS_GM_ALIGN_BYTES - 1) /
+                                          CNMS_GM_ALIGN_BYTES * CNMS_GM_ALIGN_BYTES);
 
         const int64_t taskCount = static_cast<int64_t>(tiling_->batchSize) * static_cast<int64_t>(tiling_->numClasses);
         const uint32_t selectThreadNum = GetSimtThreadNum(tiling_->numBoxes);
@@ -430,18 +432,8 @@ public:
             const int32_t currentTaskIdx = static_cast<int32_t>(taskIdx);
             const int32_t batchIdx = currentTaskIdx / tiling_->numClasses;
             const int32_t classIdx = currentTaskIdx - batchIdx * tiling_->numClasses;
-            if (useHotUb_) {
-                ProcessHotUbTask(selectedScores, selectedIndices, selectedCounts, reduceScores, reduceIndices,
-                                 selectThreadNum, batchIdx, classIdx, currentTaskIdx);
-            } else {
-                // Very large inputs do not fit in UB as a whole. They use the
-                // explicitly reserved SIMT data cache while retaining the same
-                // bounded UB reduction scratch.
-                asc_vf_call<SelectClassNms>(dim3(selectThreadNum), boxes_, scores_, selectedScores, selectedIndices,
-                                            selectedCounts, suppressed, reduceScores, reduceIndices, batchIdx, classIdx,
-                                            currentTaskIdx, tiling_->numBoxes, tiling_->boxClasses, tiling_->numClasses,
-                                            tiling_->maxOutputPerClass, tiling_->iouThreshold, tiling_->scoreThreshold);
-            }
+            ProcessClassTask(selectedScores, selectedIndices, selectedCounts, suppressed, reduceScores, reduceIndices,
+                             selectThreadNum, batchIdx, classIdx, currentTaskIdx);
         }
 
         SyncAll();
@@ -463,10 +455,11 @@ private:
         WaitFlag<HardEvent::MTE3_V>(eventMte3ToV_);
     }
 
-    __aicore__ inline void ProcessHotUbTask(__gm__ float* selectedScores, __gm__ int32_t* selectedIndices,
-                                            __gm__ int32_t* selectedCounts, __ubuf__ float* reduceScores,
-                                            __ubuf__ int32_t* reduceIndices, uint32_t selectThreadNum, int32_t batchIdx,
-                                            int32_t classIdx, int32_t taskIdx)
+    __aicore__ inline void ProcessClassTask(__gm__ float* selectedScores, __gm__ int32_t* selectedIndices,
+                                            __gm__ int32_t* selectedCounts, __gm__ uint8_t* suppressed,
+                                            __ubuf__ float* reduceScores, __ubuf__ int32_t* reduceIndices,
+                                            uint32_t selectThreadNum, int32_t batchIdx, int32_t classIdx,
+                                            int32_t taskIdx)
     {
         LocalTensor<float> boxesLocal = hotBoxesBuffer_.Get<float>();
         LocalTensor<float> scoresLocal = hotScoresBuffer_.Get<float>();
@@ -475,18 +468,31 @@ private:
         LocalTensor<int32_t> selectedIndicesLocal = selectedIndicesBuffer_.Get<int32_t>();
         LocalTensor<int32_t> selectedCountLocal = selectedCountBuffer_.Get<int32_t>();
 
-        asc_vf_call<LoadTaskHotData>(dim3(selectThreadNum), boxes_, scores_,
-                                     reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
-                                     reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()), batchIdx, classIdx,
-                                     tiling_->numBoxes, tiling_->boxClasses, tiling_->numClasses);
-        asc_vf_call<SelectClassNmsUb>(dim3(selectThreadNum), reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
-                                      reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()),
-                                      reinterpret_cast<__ubuf__ float*>(selectedScoresLocal.GetPhyAddr()),
-                                      reinterpret_cast<__ubuf__ int32_t*>(selectedIndicesLocal.GetPhyAddr()),
-                                      reinterpret_cast<__ubuf__ int32_t*>(selectedCountLocal.GetPhyAddr()),
-                                      reinterpret_cast<__ubuf__ uint8_t*>(suppressedLocal.GetPhyAddr()), reduceScores,
-                                      reduceIndices, tiling_->numBoxes, tiling_->maxOutputPerClass,
-                                      tiling_->iouThreshold, tiling_->scoreThreshold);
+        if (useHotUb_) {
+            asc_vf_call<LoadTaskHotData<T>>(dim3(selectThreadNum), boxes_, scores_,
+                                            reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
+                                            reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()), batchIdx,
+                                            classIdx, tiling_->numBoxes, tiling_->boxClasses, tiling_->numClasses);
+            asc_vf_call<SelectClassNmsUb>(
+                dim3(selectThreadNum), reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ float*>(selectedScoresLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ int32_t*>(selectedIndicesLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ int32_t*>(selectedCountLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ uint8_t*>(suppressedLocal.GetPhyAddr()), reduceScores, reduceIndices,
+                tiling_->numBoxes, tiling_->maxOutputPerClass, tiling_->iouThreshold, tiling_->scoreThreshold);
+        } else {
+            // Keep per-task results in UB and use MTE3 for exact-byte writes.
+            // Cached SIMT GM stores from different cores can share a cache line
+            // and overwrite another task's scores, indices or count.
+            asc_vf_call<SelectClassNms<T>>(dim3(selectThreadNum), boxes_, scores_,
+                                           reinterpret_cast<__ubuf__ float*>(selectedScoresLocal.GetPhyAddr()),
+                                           reinterpret_cast<__ubuf__ int32_t*>(selectedIndicesLocal.GetPhyAddr()),
+                                           reinterpret_cast<__ubuf__ int32_t*>(selectedCountLocal.GetPhyAddr()),
+                                           suppressed, reduceScores, reduceIndices, batchIdx, classIdx,
+                                           tiling_->numBoxes, tiling_->boxClasses, tiling_->numClasses,
+                                           tiling_->maxOutputPerClass, tiling_->iouThreshold, tiling_->scoreThreshold);
+        }
 
         GlobalTensor<float> selectedScoresGm;
         GlobalTensor<int32_t> selectedIndicesGm;
@@ -516,14 +522,14 @@ private:
         __ubuf__ int32_t* classCounts = classCursors + MAX_NUM_CLASSES;
         __ubuf__ float* headScores = reinterpret_cast<__ubuf__ float*>(classCounts + MAX_NUM_CLASSES);
         __ubuf__ int32_t* headIndices = reinterpret_cast<__ubuf__ int32_t*>(headScores + MAX_NUM_CLASSES);
-        LocalTensor<float> outputBoxesLocal = outputBoxesBuffer_.Get<float>();
-        LocalTensor<float> outputScoresLocal = outputScoresBuffer_.Get<float>();
-        LocalTensor<float> outputClassesLocal = outputClassesBuffer_.Get<float>();
+        LocalTensor<T> outputBoxesLocal = outputBoxesBuffer_.Get<T>();
+        LocalTensor<T> outputScoresLocal = outputScoresBuffer_.Get<T>();
+        LocalTensor<T> outputClassesLocal = outputClassesBuffer_.Get<T>();
         LocalTensor<int32_t> validDetectionsLocal = validDetectionsBuffer_.Get<int32_t>();
 
-        GlobalTensor<float> nmsedBoxesGm;
-        GlobalTensor<float> nmsedScoresGm;
-        GlobalTensor<float> nmsedClassesGm;
+        GlobalTensor<T> nmsedBoxesGm;
+        GlobalTensor<T> nmsedScoresGm;
+        GlobalTensor<T> nmsedClassesGm;
         GlobalTensor<int32_t> validDetectionsGm;
         nmsedBoxesGm.SetGlobalBuffer(nmsedBoxes_);
         nmsedScoresGm.SetGlobalBuffer(nmsedScores_);
@@ -532,20 +538,20 @@ private:
 
         const uint32_t mergeThreadNum = GetSimtThreadNum(tiling_->numClasses);
         for (int32_t batchIdx = coreIdx_; batchIdx < tiling_->batchSize; batchIdx += tiling_->usedCoreNum) {
-            asc_vf_call<MergeBatchResults>(
+            asc_vf_call<MergeBatchResults<T>>(
                 dim3(mergeThreadNum), boxes_, selectedScores, selectedIndices, selectedCounts,
-                reinterpret_cast<__ubuf__ float*>(outputBoxesLocal.GetPhyAddr()),
-                reinterpret_cast<__ubuf__ float*>(outputScoresLocal.GetPhyAddr()),
-                reinterpret_cast<__ubuf__ float*>(outputClassesLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ T*>(outputBoxesLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ T*>(outputScoresLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ T*>(outputClassesLocal.GetPhyAddr()),
                 reinterpret_cast<__ubuf__ int32_t*>(validDetectionsLocal.GetPhyAddr()), reduceScores, reduceIndices,
                 classCursors, classCounts, headScores, headIndices, batchIdx, tiling_->numBoxes, tiling_->boxClasses,
                 tiling_->numClasses, tiling_->maxOutputPerClass, tiling_->outputSize, tiling_->clipBoxes);
 
             const int64_t outputBase = static_cast<int64_t>(batchIdx) * tiling_->outputSize;
-            const DataCopyExtParams boxesCopyParams{1, static_cast<uint32_t>(tiling_->outputSize * 4 * sizeof(float)),
-                                                    0, 0, 0};
-            const DataCopyExtParams vectorCopyParams{1, static_cast<uint32_t>(tiling_->outputSize * sizeof(float)), 0,
-                                                     0, 0};
+            const DataCopyExtParams boxesCopyParams{1, static_cast<uint32_t>(tiling_->outputSize * 4 * sizeof(T)), 0, 0,
+                                                    0};
+            const DataCopyExtParams vectorCopyParams{1, static_cast<uint32_t>(tiling_->outputSize * sizeof(T)), 0, 0,
+                                                     0};
             const DataCopyExtParams validCopyParams{1, sizeof(int32_t), 0, 0, 0};
             WaitVToMte3();
             DataCopyPad(nmsedBoxesGm[outputBase * 4], outputBoxesLocal, boxesCopyParams);
@@ -556,11 +562,11 @@ private:
         }
     }
 
-    __gm__ float* boxes_ = nullptr;
-    __gm__ float* scores_ = nullptr;
-    __gm__ float* nmsedBoxes_ = nullptr;
-    __gm__ float* nmsedScores_ = nullptr;
-    __gm__ float* nmsedClasses_ = nullptr;
+    __gm__ T* boxes_ = nullptr;
+    __gm__ T* scores_ = nullptr;
+    __gm__ T* nmsedBoxes_ = nullptr;
+    __gm__ T* nmsedScores_ = nullptr;
+    __gm__ T* nmsedClasses_ = nullptr;
     __gm__ int32_t* validDetections_ = nullptr;
     __gm__ uint8_t* workspace_ = nullptr;
     const CombinedNonMaxSuppressionTilingData* tiling_ = nullptr;

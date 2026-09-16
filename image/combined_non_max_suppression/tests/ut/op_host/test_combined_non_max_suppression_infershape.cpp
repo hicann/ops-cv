@@ -68,6 +68,17 @@ TEST(CombinedNonMaxSuppressionInfershape, ClassSpecificBoxesWithPerClassPadding)
     ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{1, 6, 4}, {1, 6}, {1, 6}, {1}});
 }
 
+TEST(CombinedNonMaxSuppressionInfershape, AcceptsLargeBoxCounts)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    for (int64_t numBoxes : {200000, 200001, 1000000}) {
+        SCOPED_TRACE(numBoxes);
+        auto context = MakeContext({1, numBoxes, 1, 4}, {1, numBoxes, 2}, &maxPerClass, &maxTotal, false);
+        ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{1, 4, 4}, {1, 4}, {1, 4}, {1}});
+    }
+}
+
 TEST(CombinedNonMaxSuppressionInfershape, RejectsInvalidBoxClassDimension)
 {
     int32_t maxPerClass = 2;

@@ -94,21 +94,42 @@ TEST(CombinedNonMaxSuppressionTiling, BuildsWorkspaceForSharedBoxes)
     EXPECT_EQ(tiling->selectedScoresOffset, 0U);
     EXPECT_EQ(tiling->selectedIndicesOffset, 64U);
     EXPECT_EQ(tiling->selectedCountsOffset, 128U);
-    EXPECT_EQ(tiling->suppressedOffset, 160U);
+    EXPECT_EQ(tiling->suppressedOffset, 512U);
     ASSERT_EQ(info.workspaceSizes.size(), 1U);
-    EXPECT_EQ(info.workspaceSizes[0], static_cast<int64_t>(compileInfo.sysWorkspaceSize + 192U));
+    EXPECT_EQ(info.workspaceSizes[0], static_cast<int64_t>(compileInfo.sysWorkspaceSize + 2560U));
 }
 
-TEST(CombinedNonMaxSuppressionTiling, RejectsIouThresholdOutsideUnitInterval)
+TEST(CombinedNonMaxSuppressionTiling, AcceptsFiniteNonnegativeIouThreshold)
 {
     int32_t maxPerClass = 2;
     int32_t maxTotal = 4;
-    float iouThreshold = 1.1F;
     float scoreThreshold = 0.0F;
     CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
-    auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
-                               &scoreThreshold, &compileInfo);
-    ExecuteTestCase(context, ge::GRAPH_FAILED);
+    for (float iouThreshold : {0.0F, 1.0F, 1.1F, std::numeric_limits<float>::max()}) {
+        SCOPED_TRACE(iouThreshold);
+        auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
+                                   &scoreThreshold, &compileInfo);
+        TilingInfo info;
+        ASSERT_TRUE(ExecuteTiling(context, info));
+        ASSERT_EQ(info.tilingDataSize, sizeof(CombinedNonMaxSuppressionTilingData));
+        const auto* tiling = reinterpret_cast<const CombinedNonMaxSuppressionTilingData*>(info.tilingData.get());
+        EXPECT_FLOAT_EQ(tiling->iouThreshold, iouThreshold);
+    }
+}
+
+TEST(CombinedNonMaxSuppressionTiling, RejectsNegativeOrNonfiniteIouThreshold)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    float scoreThreshold = 0.0F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    for (float iouThreshold : {-0.5F, -1.0F, -2.0F, -std::numeric_limits<float>::infinity(),
+                               std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN()}) {
+        SCOPED_TRACE(iouThreshold);
+        auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
+                                   &scoreThreshold, &compileInfo);
+        ExecuteTestCase(context, ge::GRAPH_FAILED);
+    }
 }
 
 TEST(CombinedNonMaxSuppressionTiling, RejectsMismatchedClassSpecificBoxes)
@@ -131,6 +152,42 @@ TEST(CombinedNonMaxSuppressionTiling, RejectsOutputShapeLargerThanMaxTotal)
     float scoreThreshold = 0.0F;
     CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
     auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 5, 4}, &maxPerClass, &maxTotal, &iouThreshold,
+                               &scoreThreshold, &compileInfo);
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(CombinedNonMaxSuppressionTiling, AcceptsLargeBoxCounts)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    float iouThreshold = 0.5F;
+    float scoreThreshold = 0.0F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    for (int64_t numBoxes :
+         {int64_t{200000}, int64_t{200001}, int64_t{1000000}, int64_t{std::numeric_limits<int32_t>::max()}}) {
+        SCOPED_TRACE(numBoxes);
+        auto context = MakeContext({1, numBoxes, 1, 4}, {1, numBoxes, 2}, {1, 4, 4}, &maxPerClass, &maxTotal,
+                                   &iouThreshold, &scoreThreshold, &compileInfo);
+        TilingInfo info;
+        ASSERT_TRUE(ExecuteTiling(context, info));
+        const auto* tiling = reinterpret_cast<const CombinedNonMaxSuppressionTilingData*>(info.tilingData.get());
+        EXPECT_EQ(tiling->numBoxes, numBoxes);
+        const uint64_t stride = (static_cast<uint64_t>(numBoxes) + CNMS_GM_ALIGN_BYTES - 1) / CNMS_GM_ALIGN_BYTES *
+                                CNMS_GM_ALIGN_BYTES;
+        ASSERT_EQ(info.workspaceSizes.size(), 1U);
+        EXPECT_EQ(info.workspaceSizes[0], compileInfo.sysWorkspaceSize + tiling->suppressedOffset + 2 * stride);
+    }
+}
+
+TEST(CombinedNonMaxSuppressionTiling, RejectsBoxCountOutsideInt32Range)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    float iouThreshold = 0.5F;
+    float scoreThreshold = 0.0F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    const int64_t numBoxes = int64_t{std::numeric_limits<int32_t>::max()} + 1;
+    auto context = MakeContext({1, numBoxes, 1, 4}, {1, numBoxes, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
                                &scoreThreshold, &compileInfo);
     ExecuteTestCase(context, ge::GRAPH_FAILED);
 }

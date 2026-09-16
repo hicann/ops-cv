@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include "log/log.h"
@@ -27,7 +28,6 @@ constexpr int32_t SCORE_THRESHOLD_INDEX = 5;
 constexpr int32_t ATTR_CLIP_BOXES_INDEX = 1;
 constexpr int32_t MAX_OUTPUT_SIZE = 1000;
 constexpr int32_t MAX_CLASSES = 200;
-constexpr int32_t MAX_NUM_BOXES = 200000;
 constexpr uint64_t ALIGN_BYTES = 32;
 constexpr uint32_t WORKSPACE_COUNT = 1;
 constexpr int32_t SCHEDULE_MODE = 1;
@@ -71,13 +71,16 @@ ge::graphStatus ValidateAndFill(gert::TilingContext* context, CombinedNonMaxSupp
     const int64_t classes = scores.GetDim(2);
     OP_CHECK_IF(batch <= 0 || numBoxes <= 0 || classes <= 0, OP_LOGE(context, "input dimensions must be positive"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(numBoxes > MAX_NUM_BOXES || classes > MAX_CLASSES,
-                OP_LOGE(context, "num_boxes must be <= %d and num_classes must be <= %d", MAX_NUM_BOXES, MAX_CLASSES),
+    OP_CHECK_IF(classes > MAX_CLASSES, OP_LOGE(context, "num_classes must be <= %d", MAX_CLASSES),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(boxes.GetDim(3) != 4 || scores.GetDim(0) != batch || scores.GetDim(1) != numBoxes,
                 OP_LOGE(context, "invalid boxes/scores shape relationship"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(boxClasses != 1 && boxClasses != classes,
                 OP_LOGE(context, "boxes q dimension must be 1 or num_classes"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(numBoxes > std::numeric_limits<int32_t>::max(), OP_LOGE(context, "num_boxes exceeds int32 range"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(numBoxes > std::numeric_limits<int64_t>::max() / batch / boxClasses / 4,
+                OP_LOGE(context, "boxes element count exceeds int64 range"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(batch > std::numeric_limits<int32_t>::max(), OP_LOGE(context, "batch exceeds int32 range"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(batch > std::numeric_limits<int32_t>::max() / classes,
@@ -97,8 +100,8 @@ ge::graphStatus ValidateAndFill(gert::TilingContext* context, CombinedNonMaxSupp
                 OP_LOGE(context, "failed to read score_threshold"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(maxPerClass <= 0 || maxPerClass > MAX_OUTPUT_SIZE || maxTotal <= 0 || maxTotal > MAX_OUTPUT_SIZE,
                 OP_LOGE(context, "max output sizes must be in [1, %d]", MAX_OUTPUT_SIZE), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(iouThreshold < 0.0F || iouThreshold > 1.0F, OP_LOGE(context, "iou_threshold must be in [0, 1]"),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!std::isfinite(iouThreshold) || iouThreshold < 0.0F,
+                OP_LOGE(context, "iou_threshold must be finite and nonnegative"), return ge::GRAPH_FAILED);
 
     const gert::StorageShape* outputStorage = context->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, outputStorage);
@@ -123,8 +126,11 @@ ge::graphStatus ValidateAndFill(gert::TilingContext* context, CombinedNonMaxSupp
     offset = AlignUp(offset + selectedCount * sizeof(int32_t));
     tiling.selectedCountsOffset = offset;
     offset = AlignUp(offset + static_cast<uint64_t>(taskCount) * sizeof(int32_t));
+    offset = (offset + CNMS_GM_ALIGN_BYTES - 1) / CNMS_GM_ALIGN_BYTES * CNMS_GM_ALIGN_BYTES;
     tiling.suppressedOffset = offset;
-    offset = AlignUp(offset + static_cast<uint64_t>(usedCoreNum) * static_cast<uint64_t>(numBoxes));
+    const uint64_t suppressedStride = (static_cast<uint64_t>(numBoxes) + CNMS_GM_ALIGN_BYTES - 1) /
+                                      CNMS_GM_ALIGN_BYTES * CNMS_GM_ALIGN_BYTES;
+    offset += static_cast<uint64_t>(usedCoreNum) * suppressedStride;
     userWorkspaceSize = offset;
 
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
@@ -202,7 +208,7 @@ ge::graphStatus CombinedNonMaxSuppressionTilingParse(gert::TilingParseContext* c
 } // namespace
 
 IMPL_OP_OPTILING(CombinedNonMaxSuppression)
-    .InputsDataDependency({MAX_PER_CLASS_INDEX, MAX_TOTAL_INDEX, IOU_THRESHOLD_INDEX, SCORE_THRESHOLD_INDEX})
+    .TilingInputsDataDependency({MAX_PER_CLASS_INDEX, MAX_TOTAL_INDEX, IOU_THRESHOLD_INDEX, SCORE_THRESHOLD_INDEX})
     .Tiling(CombinedNonMaxSuppressionTiling)
     .TilingParse<CombinedNonMaxSuppressionCompileInfo>(CombinedNonMaxSuppressionTilingParse);
 

@@ -27,7 +27,6 @@ constexpr int32_t OUTPUT_VECTOR_RANK = 2;
 constexpr int32_t OUTPUT_VALID_RANK = 1;
 constexpr int32_t MAX_OUTPUT_SIZE = 1000;
 constexpr int32_t MAX_CLASSES = 200;
-constexpr int32_t MAX_NUM_BOXES = 200000;
 
 template <typename T>
 ge::graphStatus ReadScalar(gert::InferShapeContext* context, int32_t index, T& value)
@@ -57,8 +56,7 @@ ge::graphStatus InferShapeCombinedNonMaxSuppression(gert::InferShapeContext* con
     const int64_t classes = scoresShape->GetDim(2);
     OP_CHECK_IF(batch <= 0 || numBoxes <= 0 || classes <= 0,
                 OP_LOGE(context, "boxes and scores dimensions must be positive"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(numBoxes > MAX_NUM_BOXES || classes > MAX_CLASSES,
-                OP_LOGE(context, "num_boxes must be <= %d and num_classes must be <= %d", MAX_NUM_BOXES, MAX_CLASSES),
+    OP_CHECK_IF(classes > MAX_CLASSES, OP_LOGE(context, "num_classes must be <= %d", MAX_CLASSES),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(boxesShape->GetDim(3) != BOX_COORDS, OP_LOGE(context, "boxes last dimension must be 4"),
                 return ge::GRAPH_FAILED);

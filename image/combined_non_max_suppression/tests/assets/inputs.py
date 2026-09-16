@@ -58,8 +58,10 @@ def combined_non_max_suppression_inputs(
         raise ValueError("boxes and scores batch/num_boxes dimensions must match")
     if box_classes not in (1, num_classes):
         raise ValueError("the q dimension of boxes must be 1 or num_classes")
-    if num_boxes > 200000 or num_classes > 200:
-        raise ValueError("num_boxes must be <= 200000 and num_classes must be <= 200")
+    if num_classes > 200:
+        raise ValueError("num_classes must be <= 200")
+    if num_boxes > np.iinfo(np.int32).max:
+        raise ValueError("num_boxes exceeds int32 range")
 
     max_per_class = int(
         _scalar_value(max_output_size_per_class, "max_output_size_per_class")
@@ -72,7 +74,7 @@ def combined_non_max_suppression_inputs(
         raise ValueError("max_output_size_per_class must be in [1, 1000]")
     if not 1 <= max_total <= 1000:
         raise ValueError("max_total_size must be in [1, 1000]")
-    if not np.isfinite(iou) or not 0.0 <= iou <= 1.0:
+    if not np.isfinite(iou) or not 0.0 <= iou:
         raise ValueError("iou_threshold must be finite and in [0, 1]")
 
     return (
