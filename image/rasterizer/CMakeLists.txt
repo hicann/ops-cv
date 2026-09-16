@@ -8,8 +8,6 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
-add_all_modules_sources(OPTYPE rasterizer ACLNNTYPE aclnn)
-
 file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
 if(NOT ENABLE_TEST AND NOT BENCHMARK)
     list(REMOVE_ITEM CURRENT_DIRS tests)
@@ -19,3 +17,15 @@ foreach(SUB_DIR ${CURRENT_DIRS})
         add_subdirectory(${SUB_DIR})
     endif()
 endforeach()
+
+# Keep the existing Host tiling implementation for 910B/910_93 and select the
+# dedicated arch35 implementation only for Ascend 950. Keeping both sources in
+# architecture directories prevents duplicate IMPL_OP_OPTILING registration.
+set(SUPPORT_COMPUTE_UNIT "ascend910b" "ascend910_93" "ascend950")
+set(SUPPORT_TILING_DIR "arch22" "arch22" "arch35")
+add_all_modules_sources(
+    OPTYPE rasterizer
+    ACLNNTYPE aclnn
+    COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT}
+    TILING_DIR ${SUPPORT_TILING_DIR}
+)

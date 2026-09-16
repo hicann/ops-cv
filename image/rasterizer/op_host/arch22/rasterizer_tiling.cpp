@@ -17,7 +17,7 @@
 #include "util/math_util.h"
 #include "op_host/tiling_util.h"
 #include "op_host/tiling_templates_registry.h"
-#include "rasterizer_tiling.h"
+#include "../rasterizer_tiling.h"
 
 namespace optiling {
 

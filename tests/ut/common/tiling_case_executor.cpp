@@ -131,6 +131,11 @@
     auto tilingContext = contextHolder.GetContext();                                                                                                                                                                                         \
     tilingContext->GetPlatformInfo()->SetPlatformRes("SoCInfo", socInfos);                                                                                                                                                                   \
     tilingContext->GetPlatformInfo()->SetPlatformRes("AICoreSpec", aicoreSpec);                                                                                                                                                              \
+    map<string, string> vectorCoreSpec;                                                                                                                                                                                                      \
+    vectorCoreSpec["ubblock_size"] = "32";                                                                                                                                                                                                   \
+    vectorCoreSpec["vec_calc_size"] = "128";                                                                                                                                                                                                 \
+    vectorCoreSpec["vector_reg_width"] = "256";                                                                                                                                                                                              \
+    tilingContext->GetPlatformInfo()->SetPlatformRes("VectorCoreSpec", vectorCoreSpec);                                                                                                                                                      \
     tilingContext->GetPlatformInfo()->SetCoreNumByCoreType("AICore");                                                                                                                                                                        \
     tilingContext->GetPlatformInfo()->SetPlatformRes("AICoreintrinsicDtypeMap", intrinsics);                                                                                                                                                 \
     tilingContext->GetPlatformInfo()->SetPlatformRes("version", socversions);                                                                                                                                                                \
@@ -192,6 +197,8 @@ static void GetPlatFormInfos(const char* compileInfoStr, map<string, string>& so
                                           {"bt_size", "BT_SIZE"},
                                           {"load3d_constraints", "load3d_constraints"}};
     aicoreSpec["cube_freq"] = "cube_freq";
+    aicoreSpec["vec_calc_size"] = "128";
+    aicoreSpec["vector_reg_width"] = "256";
     for (auto& t : aicoreSpecKeys) {
         if (compileInfoJson.contains("hardware_info") && compileInfoJson["hardware_info"].contains(t.second)) {
             if (t.second == "load3d_constraints") {

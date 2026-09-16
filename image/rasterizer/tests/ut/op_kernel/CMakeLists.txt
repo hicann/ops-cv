@@ -15,7 +15,7 @@ if (UT_TEST_ALL OR OP_KERNEL_UT)
     #         )
     # 算子自己的tiling文件路径
     set(rasterizer_tiling_files
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/rasterizer_tiling.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/arch22/rasterizer_tiling.cpp
         # ${elewise_common_tiling_files}
         )
     # 使用AddOpTestCase
