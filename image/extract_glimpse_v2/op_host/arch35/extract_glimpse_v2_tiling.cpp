@@ -39,6 +39,9 @@ constexpr uint32_t WORKSPACE_COUNT = 1;
 constexpr uint32_t INPUT_IDX = 0;
 constexpr uint32_t SIZE_IDX = 1;
 constexpr uint32_t OFFSETS_IDX = 2;
+constexpr size_t INPUT_REQUIRED_RANK = 4;
+constexpr size_t OFFSETS_REQUIRED_RANK = 2;
+constexpr int64_t OFFSETS_COORD_DIM = 2;
 
 struct ExtractGlimpseV2CompileInfo {};
 
@@ -95,10 +98,34 @@ static ge::graphStatus GetPlatformAndShapeInfo(gert::TilingContext* context, Sha
 
     auto inputShape = context->GetInputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, inputShape);
-    int64_t batchSize = inputShape->GetShape().GetDim(0);
-    int64_t inputH = inputShape->GetShape().GetDim(1);
-    int64_t inputW = inputShape->GetShape().GetDim(2);
-    int64_t channels = inputShape->GetShape().GetDim(3);
+    const auto& inputDims = inputShape->GetShape();
+    OP_CHECK_IF(inputDims.GetDimNum() != INPUT_REQUIRED_RANK,
+                OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "input", std::to_string(inputDims.GetDimNum()),
+                                             std::to_string(INPUT_REQUIRED_RANK)),
+                return ge::GRAPH_FAILED);
+
+    auto offsetsShape = context->GetInputShape(OFFSETS_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context, offsetsShape);
+    const auto& offsetsDims = offsetsShape->GetShape();
+    OP_CHECK_IF(offsetsDims.GetDimNum() != OFFSETS_REQUIRED_RANK,
+                OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "offsets", std::to_string(offsetsDims.GetDimNum()),
+                                             std::to_string(OFFSETS_REQUIRED_RANK)),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(offsetsDims.GetDim(1) != OFFSETS_COORD_DIM,
+                OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "offsets", std::to_string(offsetsDims.GetDim(1)),
+                                             std::to_string(OFFSETS_COORD_DIM)),
+                return ge::GRAPH_FAILED);
+    if (inputDims.GetDim(0) != offsetsDims.GetDim(0)) {
+        std::string dimMsg = std::to_string(inputDims.GetDim(0)) + " and " + std::to_string(offsetsDims.GetDim(0));
+        OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(context->GetNodeName(), "input and offsets", dimMsg.c_str(),
+                                                  "batch size of input and offsets must be equal");
+        return ge::GRAPH_FAILED;
+    }
+
+    int64_t batchSize = inputDims.GetDim(0);
+    int64_t inputH = inputDims.GetDim(1);
+    int64_t inputW = inputDims.GetDim(2);
+    int64_t channels = inputDims.GetDim(3);
 
     auto outputShape = context->GetOutputShape(0);
     OP_CHECK_NULL_WITH_CONTEXT(context, outputShape);
