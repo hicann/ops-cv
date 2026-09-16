@@ -127,6 +127,20 @@ TEST_F(PointsInPolygonsInfershape, infershape_rejects_points_rank_one)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
+// 非法输入: polygons 为 rank 1 → GRAPH_FAILED
+TEST_F(PointsInPolygonsInfershape, infershape_rejects_polygons_rank_one)
+{
+    gert::InfershapeContextPara infershapeContextPara("PointsInPolygons",
+                                                      {
+                                                          {{{4, 2}, {4, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
 // 非法输入: points 坐标维不为 2 → GRAPH_FAILED
 TEST_F(PointsInPolygonsInfershape, infershape_rejects_points_coordinate_dim)
 {
@@ -148,6 +162,20 @@ TEST_F(PointsInPolygonsInfershape, infershape_rejects_polygon_coordinate_dim)
                                                       {
                                                           {{{4, 2}, {4, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                           {{{7, 2}, {7, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 未知 N 时 polygons 顶点维不为 8 → GRAPH_FAILED
+TEST_F(PointsInPolygonsInfershape, infershape_rejects_polygon_coordinate_dim_with_unknown_n)
+{
+    gert::InfershapeContextPara infershapeContextPara("PointsInPolygons",
+                                                      {
+                                                          {{{-1, 2}, {-1, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{7, 4}, {7, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
                                                       },
                                                       {
                                                           {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
