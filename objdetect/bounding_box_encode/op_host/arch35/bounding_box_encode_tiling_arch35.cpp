@@ -230,13 +230,13 @@ static ge::graphStatus BoundingBoxEncodeTilingFunc(gert::TilingContext* context)
     OP_CHECK_IF(memset_s(tiling, sizeof(BoundingBoxEncodeTilingData), 0, sizeof(BoundingBoxEncodeTilingData)) != EOK,
                 OP_LOGE(context, "Failed to set tiling data"), return ge::GRAPH_FAILED);
 
+    OP_CHECK_IF(ParseMeansStds(context, tiling) != ge::GRAPH_SUCCESS, OP_LOGE(context, "ParseMeansStds error"),
+                return ge::GRAPH_FAILED);
+
     if (dim0 == 0) {
         context->SetBlockDim(1);
         return ge::GRAPH_SUCCESS;
     }
-
-    OP_CHECK_IF(ParseMeansStds(context, tiling) != ge::GRAPH_SUCCESS, OP_LOGE(context, "ParseMeansStds error"),
-                return ge::GRAPH_FAILED);
 
     int64_t usedCoreNum = 0;
     OP_CHECK_IF(CalcUbSizing(context, tiling, dim0, dataType, ubSize, coreNum, &usedCoreNum) != ge::GRAPH_SUCCESS,
