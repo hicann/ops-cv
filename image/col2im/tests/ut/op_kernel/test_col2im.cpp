@@ -72,9 +72,49 @@ TEST_F(col2im_test, test_col2im_950_fp16)
     tilingData->colH = 2;
     tilingData->colW = 1;
 
+    // 已知值输入：gradOut [C*kH*kW=4, colL=2]（flat 索引见 kernel 的 gradOutIdx 公式），
+    // 期望 gradIn[0,0] = gradOut[3] + gradOut[6] = 4.0 + 7.0 = 11.0
+    // （hIm,wIm=(1,1)：贡献点 (hk=0,wk=1,hg=1,wg=0) 与 (hk=1,wk=1,hg=0,wg=0)，
+    //  与 col2im_simt.h 的 wGradOutStart/End 与 dilation 整除判定逐行核对）
+    {
+        float* g = reinterpret_cast<float*>(gradOut);
+        for (int i = 0; i < 8; i++) {
+            g[i] = static_cast<float>(i + 1);
+        }
+    }
+    memset(gradIn, 0xA5, gradInByteSize);
+
+    // 已知值输入：gradOut [C*kH*kW=4, colL=2]（flat 索引见 kernel 的 gradOutIdx 公式），
+    // 期望 gradIn[0,0] = gradOut[3] + gradOut[6] = 4.0 + 7.0 = 11.0
+    // （hIm,wIm=(1,1)：贡献点 (hk=0,wk=1,hg=1,wg=0) 与 (hk=1,wk=1,hg=0,wg=0)，
+    //  与 col2im_simt.h 的 wGradOutStart/End 与 dilation 整除判定逐行核对）
+    {
+        float* g = reinterpret_cast<float*>(gradOut);
+        for (int i = 0; i < 8; i++) {
+            g[i] = static_cast<float>(i + 1);
+        }
+    }
+    memset(gradIn, 0xA5, gradInByteSize);
+
     ICPU_SET_TILING_KEY(0);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(col2im<0>, numBlocks, gradOut, outputSize, gradIn, workspace, tiling);
+
+    // 校验：outputSize=[1,1]+pad=1+stride=(1,2)+kernel=2x2 下，col2im 为两贡献点累加
+    {
+        const float* out = reinterpret_cast<const float*>(gradIn);
+        const float expected = 11.0f;
+        ASSERT_EQ(0, memcmp(&out[0], &expected, sizeof(float)))
+            << "col2im output: got " << out[0] << ", expected " << expected;
+    }
+
+    // 校验：outputSize=[1,1]+pad=1+stride=(1,2)+kernel=2x2 下，col2im 为两贡献点累加
+    {
+        const float* out = reinterpret_cast<const float*>(gradIn);
+        const float expected = 11.0f;
+        ASSERT_EQ(0, memcmp(&out[0], &expected, sizeof(float)))
+            << "col2im output: got " << out[0] << ", expected " << expected;
+    }
 
     AscendC::GmFree(gradOut);
     AscendC::GmFree(outputSize);
