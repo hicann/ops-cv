@@ -132,3 +132,20 @@ TEST_F(UpsampleBilinear2dAATiling, upsample_bilinear2d_aa_tiling_004)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleBilinear2dAATiling, upsample_bilinear2d_aa_output_size_extra_element_should_fail)
+{
+    UpsampleBilinear2dAACompileInfo compileInfo = {1};
+    std::vector<int64_t> output_size = {8, 8, 99};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAA", {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
