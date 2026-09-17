@@ -156,7 +156,10 @@ static ge::graphStatus GetAttrs(gert::TilingContext* context, DilBpFilterAttrs& 
     const char* paddingModePtr = runtimeAttrs->GetStr(2);
     OP_CHECK_NULL_WITH_CONTEXT(context, paddingModePtr);
     attrs.paddingMode = std::string(paddingModePtr);
-
+    OP_CHECK_IF(attrs.paddingMode != "SAME" && attrs.paddingMode != "VALID" && attrs.paddingMode != "CALCULATED",
+                OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "padding_mode", attrs.paddingMode.c_str(),
+                                          "SAME, VALID or CALCULATED"),
+                return ge::GRAPH_FAILED);
     // Attr 3: pads (ListInt, 4 elements)
     const auto* padsVec = runtimeAttrs->GetListInt(3);
     OP_CHECK_NULL_WITH_CONTEXT(context, padsVec);

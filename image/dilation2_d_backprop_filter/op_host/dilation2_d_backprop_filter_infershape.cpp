@@ -111,7 +111,13 @@ static ge::graphStatus InferShapeDilation2DBackpropFilter(gert::InferShapeContex
                                   dataFormatPtr != nullptr ? dataFormatPtr : "null", "NHWC or NCHW"),
         return GRAPH_FAILED);
     bool isNCHW = (dataFormatPtr != nullptr && std::string(dataFormatPtr) == "NCHW");
-
+    const char* paddingModePtr = attrs->GetStr(2);
+    OP_CHECK_IF(
+        paddingModePtr == nullptr || (std::string(paddingModePtr) != "SAME" && std::string(paddingModePtr) != "VALID" &&
+                                      std::string(paddingModePtr) != "CALCULATED"),
+        OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "padding_mode",
+                                  paddingModePtr != nullptr ? paddingModePtr : "null", "SAME, VALID or CALCULATED"),
+        return GRAPH_FAILED);
     // Validate strides N/C dims must be 1
     // NHWC: strides[0]==1, strides[3]==1; NCHW: strides[0]==1, strides[1]==1
     const auto* stridesVec = attrs->GetListInt(0);
