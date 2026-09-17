@@ -432,6 +432,8 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckAttrs()
     OP_CHECK_NULL_WITH_CONTEXT(context_, scaleWPtr);
     float scaleW = *scaleWPtr;
     OP_LOGI(context_, "scaleD %f, scaleH %f, scaleW %f", scaleD, scaleH, scaleW);
+    OP_CHECK_IF(!std::isfinite(scaleD) || !std::isfinite(scaleH) || !std::isfinite(scaleW),
+                OP_LOGE(context_, "scale_d, scale_h and scale_w must be finite."), return ge::GRAPH_FAILED);
     int64_t outSizeNum = outputSize->GetSize();
     OP_CHECK_IF(outSizeNum > 0 && (outSizeNum != CONST_3),
                 OP_LOGE_FOR_INVALID_LISTSIZE(context_->GetNodeName(), "output_size", std::to_string(outSizeNum).c_str(),

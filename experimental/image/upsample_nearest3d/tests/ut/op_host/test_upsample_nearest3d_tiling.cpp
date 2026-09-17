@@ -9,6 +9,7 @@
  */
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <gtest/gtest.h>
 
@@ -321,4 +322,31 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_006)
     string expectTilingData = "37500 4 2 80 30 2 60 200 200 0 4474776592541461163 1008981770 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_regbase_rejects_nonfinite_scales)
+{
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    const float posInf = std::numeric_limits<float>::infinity();
+    const float negInf = -std::numeric_limits<float>::infinity();
+    const std::vector<float> invalidValues = {nan, posInf, negInf};
+    UpsampleNearest3dCompileInfo compileInfo = {64, 192 * 1024};
+
+    auto makeContext = [&](float scaleD, float scaleH, float scaleW) {
+        return gert::TilingContextPara(
+            "UpsampleNearest3d", {{{{1, 1, 2, 3, 4}, {1, 1, 2, 3, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+            {{{{1, 1, 4, 6, 8}, {1, 1, 4, 6, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+            {gert::TilingContextPara::OpAttr("output_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({4, 6, 8})),
+             gert::TilingContextPara::OpAttr("scale_d", Ops::Cv::AnyValue::CreateFrom<float>(scaleD)),
+             gert::TilingContextPara::OpAttr("scale_h", Ops::Cv::AnyValue::CreateFrom<float>(scaleH)),
+             gert::TilingContextPara::OpAttr("scale_w", Ops::Cv::AnyValue::CreateFrom<float>(scaleW))},
+            &compileInfo, "Ascend950");
+    };
+
+    for (const float invalidValue : invalidValues) {
+        ExecuteTestCase(makeContext(invalidValue, 0.0f, 0.0f), ge::GRAPH_FAILED);
+        ExecuteTestCase(makeContext(0.0f, invalidValue, 0.0f), ge::GRAPH_FAILED);
+        ExecuteTestCase(makeContext(0.0f, 0.0f, invalidValue), ge::GRAPH_FAILED);
+    }
 }
