@@ -190,6 +190,8 @@ MultiCoreSplit ComputeMultiCoreSplit(int64_t dim0, int64_t elemBytes, int64_t av
     coreNum = std::max(coreNum, int64_t(1));
     int64_t blockFormer = CeilAlign(CeilDiv(dim0, coreNum), kElemAlignFactor);
     int64_t blockNum = CeilDiv(dim0, blockFormer);
+    // 512 对齐可能使实际块数少于估算核数（fp32 尤其），clamp 到实际块数消除空转核；
+    coreNum = std::min(coreNum, blockNum);
     return {static_cast<int32_t>(coreNum), blockFormer, blockNum};
 }
 
