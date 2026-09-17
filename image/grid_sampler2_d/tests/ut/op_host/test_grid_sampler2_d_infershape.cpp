@@ -110,3 +110,45 @@ TEST_F(GridSampler2DInfershape, grid_sampler2_d_infershape_mixed_unknown_rank_te
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(GridSampler2DInfershape, grid_sampler2_d_infershape_empty_grid_height_test)
+{
+    gert::InfershapeContextPara infershapeContextPara("GridSampler2D",
+                                                      {
+                                                          {{{1, 2, 8, 8}, {1, 2, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{1, 0, 5, 2}, {1, 0, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {1, 2, 0, 5},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+TEST_F(GridSampler2DInfershape, grid_sampler2_d_infershape_negative_grid_height_rejected)
+{
+    gert::InfershapeContextPara infershapeContextPara("GridSampler2D",
+                                                      {
+                                                          {{{1, 2, 8, 8}, {1, 2, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{1, -3, 5, 2}, {1, -3, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(GridSampler2DInfershape, grid_sampler2_d_infershape_negative_grid_width_rejected)
+{
+    gert::InfershapeContextPara infershapeContextPara("GridSampler2D",
+                                                      {
+                                                          {{{1, 2, 8, 8}, {1, 2, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{1, 3, -5, 2}, {1, 3, -5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}

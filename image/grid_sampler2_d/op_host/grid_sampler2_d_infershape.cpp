@@ -69,11 +69,18 @@ static ge::graphStatus InferShapeGridSampler2D(gert::InferShapeContext* context)
         OP_LOGE(context, "input H/W must be greater than 0, but got H[%ld] and W[%ld]", inputHeight, inputWidth),
         return ge::GRAPH_FAILED);
 
+    const int64_t gridHeight = gridShape->GetDim(GRID_H_DIM_INDEX);
+    const int64_t gridWidth = gridShape->GetDim(GRID_W_DIM_INDEX);
+    OP_CHECK_IF(
+        (gridHeight != ge::UNKNOWN_DIM && gridHeight < 0) || (gridWidth != ge::UNKNOWN_DIM && gridWidth < 0),
+        OP_LOGE(context, "grid H/W must be non-negative or unknown, got H[%ld] and W[%ld]", gridHeight, gridWidth),
+        return ge::GRAPH_FAILED);
+
     yShape->SetDimNum(DIM_NUM_2D);
     yShape->SetDim(N_DIM_INDEX, xBatch);
     yShape->SetDim(C_DIM_INDEX, xShape->GetDim(C_DIM_INDEX));
-    yShape->SetDim(H_DIM_INDEX, gridShape->GetDim(GRID_H_DIM_INDEX));
-    yShape->SetDim(W_DIM_INDEX, gridShape->GetDim(GRID_W_DIM_INDEX));
+    yShape->SetDim(H_DIM_INDEX, gridHeight);
+    yShape->SetDim(W_DIM_INDEX, gridWidth);
 
     OP_LOGD(context->GetNodeName(), "End to do InferShapeGridSampler2D");
     return ge::GRAPH_SUCCESS;
