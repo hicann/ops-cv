@@ -22,15 +22,9 @@ using namespace ge;
 
 class AnchorResponseFlagsTiling : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AnchorResponseFlagsTiling SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AnchorResponseFlagsTiling SetUp" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AnchorResponseFlagsTiling TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AnchorResponseFlagsTiling TearDown" << std::endl; }
 };
 
 // Test case 1: float32 input, YOLOv3 large target (60x60x9=32400 anchors)
@@ -39,12 +33,9 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float32)
     struct AnchorResponseFlagsCompileInfo {
     } compileInfo;
     std::vector<gert::TilingContextPara::OpAttr> attrs = {
-        gert::TilingContextPara::OpAttr("featmap_size",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
-        gert::TilingContextPara::OpAttr("strides",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
-        gert::TilingContextPara::OpAttr("num_base_anchors",
-            Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+        gert::TilingContextPara::OpAttr("featmap_size", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::TilingContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::TilingContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
     };
     gert::TilingContextPara tilingContextPara(
         "AnchorResponseFlags",
@@ -54,8 +45,7 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float32)
         {
             {{{32400}, {32400}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output
         },
-        attrs,
-        &compileInfo,
+        attrs, &compileInfo,
         "Ascend950", // socVersion
         48,          // number of cores
         262144,      // ubsize
@@ -63,13 +53,16 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float32)
     // TilingKey: schMode=0 (float32), is32Bit=1 (32400 <= INT32_MAX)
     // Encoding: is32Bit * numSchModes + schMode = 1*2 + 0 = 2
     uint64_t expectTilingKey = 2;
+    // Direct scatter: needCoreNum = CeilDiv(32400, 1024) = 32
     // TilingData is read as uint64 words (little-endian, pairs of int32):
-    // uint64[0] = needCoreNum(4) | n(100)<<32 = 4 + 100*2^32 = 429496729604
+    // uint64[0] = needCoreNum(32) | n(100)<<32 = 32 + 100*2^32 = 429496729632
     // uint64[1] = featH(60) | featW(60)<<32 = 60 + 60*2^32 = 257698037820
     // uint64[2] = strideH(2) | strideW(2)<<32 = 2 + 2*2^32 = 8589934594
-    // uint64[3] = numBaseAnchors(9) | padding(0)<<32 = 9
+    // uint64[3] = numBaseAnchors(9) | reserved(0)<<32 = 9
     // uint64[4] = totalAnchors(32400) = 32400
-    string expectTilingData = "429496729604 257698037820 8589934594 9 32400 ";
+    // uint64[5] = perCoreBytes(1024) = 1024
+    string expectTilingData = "429496729632 257698037820 8589934594 9 32400 1024 ";
+    // Workspace: system workspace only (direct scatter needs no user workspace)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -80,12 +73,9 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float16)
     struct AnchorResponseFlagsCompileInfo {
     } compileInfo;
     std::vector<gert::TilingContextPara::OpAttr> attrs = {
-        gert::TilingContextPara::OpAttr("featmap_size",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{10, 10})),
-        gert::TilingContextPara::OpAttr("strides",
-            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{32, 32})),
-        gert::TilingContextPara::OpAttr("num_base_anchors",
-            Ops::Cv::AnyValue::CreateFrom(int64_t(3))),
+        gert::TilingContextPara::OpAttr("featmap_size", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{10, 10})),
+        gert::TilingContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{32, 32})),
+        gert::TilingContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(3))),
     };
     gert::TilingContextPara tilingContextPara(
         "AnchorResponseFlags",
@@ -95,8 +85,7 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float16)
         {
             {{{300}, {300}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output
         },
-        attrs,
-        &compileInfo,
+        attrs, &compileInfo,
         "Ascend950", // socVersion
         48,          // number of cores
         262144,      // ubsize
@@ -104,13 +93,16 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float16)
     // TilingKey: schMode=1 (float16), is32Bit=1 (300 <= INT32_MAX)
     // Encoding: is32Bit * numSchModes + schMode = 1*2 + 1 = 3
     uint64_t expectTilingKey = 3;
+    // Direct scatter: needCoreNum = CeilDiv(300, 1024) = 1
     // TilingData (uint64 words):
     // uint64[0] = needCoreNum(1) | n(200)<<32 = 1 + 200*2^32 = 858993459201
     // uint64[1] = featH(10) | featW(10)<<32 = 10 + 10*2^32 = 42949672970
     // uint64[2] = strideH(32) | strideW(32)<<32 = 32 + 32*2^32 = 137438953504
-    // uint64[3] = numBaseAnchors(3) | padding(0)<<32 = 3
+    // uint64[3] = numBaseAnchors(3) | reserved(0)<<32 = 3
     // uint64[4] = totalAnchors(300) = 300
-    string expectTilingData = "858993459201 42949672970 137438953504 3 300 ";
+    // uint64[5] = perCoreBytes(1024) = 1024
+    string expectTilingData = "858993459201 42949672970 137438953504 3 300 1024 ";
+    // Workspace: system workspace only (direct scatter needs no user workspace)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

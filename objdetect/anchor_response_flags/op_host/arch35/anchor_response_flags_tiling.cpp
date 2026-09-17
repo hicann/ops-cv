@@ -26,6 +26,7 @@
 namespace optiling {
 
 constexpr int64_t PER_CORE_MIN = 1024;
+constexpr int64_t CORE_PARTITION_ALIGN = 256;
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 
@@ -106,25 +107,25 @@ static ge::graphStatus ValidateDtype(gert::TilingContext* context)
 }
 
 // 5. Compute tiling parameters
-// 6. Core count calculation (gather algorithm iterates over featHW)
-static void ComputeTilingParams(int32_t featH, int32_t featW, int32_t numBaseAnchors, int64_t coreNum, int64_t& featHW,
-                                int64_t& totalAnchors, int64_t& perCoreElements, int64_t& needCoreNum)
+// 6. Core count calculation (direct scatter partitions output bytes across cores)
+static void ComputeTilingParams(int32_t featH, int32_t featW, int32_t numBaseAnchors, int64_t coreNum,
+                                int64_t& totalAnchors, int64_t& perCoreBytes, int64_t& needCoreNum)
 {
-    featHW = static_cast<int64_t>(featH) * featW;
+    int64_t featHW = static_cast<int64_t>(featH) * featW;
     totalAnchors = featHW * numBaseAnchors;
 
-    perCoreElements = Ops::Base::CeilDiv(featHW, coreNum);
-    if (perCoreElements < PER_CORE_MIN) {
-        perCoreElements = PER_CORE_MIN;
+    perCoreBytes = Ops::Base::CeilDiv(totalAnchors, coreNum);
+    if (perCoreBytes < PER_CORE_MIN) {
+        perCoreBytes = PER_CORE_MIN;
     }
-    perCoreElements = ((perCoreElements + 31) / 32) * 32;
-    needCoreNum = Ops::Base::CeilDiv(featHW, perCoreElements);
+    perCoreBytes = Ops::Base::CeilDiv(perCoreBytes, CORE_PARTITION_ALIGN) * CORE_PARTITION_ALIGN;
+    needCoreNum = (totalAnchors > 0) ? Ops::Base::CeilDiv(totalAnchors, perCoreBytes) : 1;
 }
 
 // 7. Set tiling data
 static ge::graphStatus FillTilingData(gert::TilingContext* context, int64_t needCoreNum, int64_t n, int32_t featH,
                                       int32_t featW, int32_t strideH, int32_t strideW, int32_t numBaseAnchors,
-                                      int64_t totalAnchors)
+                                      int64_t totalAnchors, int64_t perCoreBytes)
 {
     AnchorResponseFlagsTilingData* tiling = context->GetTilingData<AnchorResponseFlagsTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
@@ -140,6 +141,7 @@ static ge::graphStatus FillTilingData(gert::TilingContext* context, int64_t need
     tiling->strideW = strideW;
     tiling->numBaseAnchors = numBaseAnchors;
     tiling->totalAnchors = totalAnchors;
+    tiling->perCoreBytes = perCoreBytes;
 
     return ge::GRAPH_SUCCESS;
 }
@@ -225,20 +227,20 @@ static ge::graphStatus AnchorResponseFlagsTilingFunc(gert::TilingContext* contex
         return ret;
     }
 
-    int64_t featHW = 0;
     int64_t totalAnchors = 0;
-    int64_t perCoreElements = 0;
+    int64_t perCoreBytes = 0;
     int64_t needCoreNum = 0;
-    ComputeTilingParams(featH, featW, numBaseAnchors, coreNum, featHW, totalAnchors, perCoreElements, needCoreNum);
+    ComputeTilingParams(featH, featW, numBaseAnchors, coreNum, totalAnchors, perCoreBytes, needCoreNum);
 
-    ret = FillTilingData(context, needCoreNum, n, featH, featW, strideH, strideW, numBaseAnchors, totalAnchors);
+    ret = FillTilingData(context, needCoreNum, n, featH, featW, strideH, strideW, numBaseAnchors, totalAnchors,
+                         perCoreBytes);
     if (ret != ge::GRAPH_SUCCESS) {
         return ret;
     }
 
     // 8. Set block dim and schedule mode
     context->SetBlockDim(static_cast<uint32_t>(needCoreNum));
-    context->SetScheduleMode(1); // Enable SyncAll support (required by MDE §1.2)
+    context->SetScheduleMode(1); // SIMT schedule mode
 
     ret = SetupMemAndWorkspace(context, ascendcPlatform, ubSize);
     if (ret != ge::GRAPH_SUCCESS) {

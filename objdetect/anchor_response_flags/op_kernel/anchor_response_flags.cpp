@@ -20,22 +20,17 @@
 using namespace AscendC;
 
 template <uint32_t schMode, uint32_t is32Bit>
-__global__ __aicore__ void anchor_response_flags(
-    GM_ADDR gtBboxes, GM_ADDR flags, GM_ADDR workspace, GM_ADDR tiling)
+__global__ __aicore__ void anchor_response_flags(GM_ADDR gtBboxes, GM_ADDR flags, GM_ADDR workspace, GM_ADDR tiling)
 {
     REGISTER_TILING_DEFAULT(AnchorResponseFlagsTilingData);
     GET_TILING_DATA_WITH_STRUCT(AnchorResponseFlagsTilingData, tilingData, tiling);
 
     constexpr bool USE_32 = (is32Bit != 0);
 
-    if constexpr (schMode == static_cast<uint32_t>(
-            ANCHOR_RESPONSE_FLAGS_SCH_MODE_0)) {
-        NsAnchorResponseFlags::ProcessGather<float>(
-            gtBboxes, flags, &tilingData, USE_32);
+    if constexpr (schMode == static_cast<uint32_t>(ANCHOR_RESPONSE_FLAGS_SCH_MODE_0)) {
+        NsAnchorResponseFlags::ProcessDirect<float>(gtBboxes, flags, workspace, &tilingData, USE_32);
     }
-    if constexpr (schMode == static_cast<uint32_t>(
-            ANCHOR_RESPONSE_FLAGS_SCH_MODE_1)) {
-        NsAnchorResponseFlags::ProcessGather<half>(
-            gtBboxes, flags, &tilingData, USE_32);
+    if constexpr (schMode == static_cast<uint32_t>(ANCHOR_RESPONSE_FLAGS_SCH_MODE_1)) {
+        NsAnchorResponseFlags::ProcessDirect<half>(gtBboxes, flags, workspace, &tilingData, USE_32);
     }
 }

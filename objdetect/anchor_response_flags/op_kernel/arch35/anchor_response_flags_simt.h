@@ -14,15 +14,26 @@
  * \file anchor_response_flags_simt.h
  * \brief SIMT kernel implementation for anchor_response_flags operator
  *
- * Gather algorithm:
- *   Each thread processes one output grid position (featH * featW total),
- *   checks all N bboxes to determine if any maps to this position.
- *   Writes flag (0 or 1) for all numBaseAnchors at this position.
+ * Direct-scatter algorithm (O(needCoreNum * N + totalAnchors), no bitmap, no
+ * atomics, no user workspace):
+ *   The output is partitioned into 256B-aligned exclusive byte ranges, one
+ *   per core (perCoreBytes from tiling). Each core runs a single VF kernel:
+ *     1. Zero my range (block-strided byte stores)
+ *     2. asc_syncthreads() — orders zeros before ones within this core
+ *     3. Scan all N bboxes (block-strided); positions whose A-byte run
+ *        intersects my range get 1s, clipped to my range. A per-thread
+ *        lastIdx dedup absorbs degenerate inputs where consecutive bboxes
+ *        hit one cell (e.g. constant-valued functional test data).
  *
- * Advantages over scatter:
- *   - No write conflicts (each output element written by exactly one thread)
- *   - Deterministic results (no cache coherence issues)
- *   - No SyncAll/DCCI needed
+ * Correctness on per-core write-back DCache (no cross-core coherence):
+ *   - Every output byte belongs to exactly one core (256B-aligned ranges,
+ *     so no cache line is ever written by two cores)
+ *   - Zero and one for a byte are issued by threads of the same core,
+ *     ordered by asc_syncthreads; same-value races within the core are benign
+ *   - gt_bboxes is read-only; concurrent reads are always safe
+ *   - No cross-core data flow => no SyncAll / DCCI / atomics needed
+ *
+ * Semantics (nan/inf -> 0, floor, clamp) match the golden exactly.
  */
 
 #ifndef __ANCHOR_RESPONSE_FLAGS_SIMT_H__
@@ -33,6 +44,8 @@
 #include "simt_api/common_functions.h"
 #include "simt_api/math_functions.h"
 #include "simt_api/asc_fp16.h"
+#include "simt_api/cpp/kernel_simt_common_intf.h"
+#include "simt_api/device_sync_functions.h"
 #include "anchor_response_flags_tiling_data.h"
 #include "anchor_response_flags_tiling_key.h"
 
@@ -43,100 +56,108 @@ using namespace AscendC;
 template <typename IDX_T>
 static constexpr uint32_t THREADS = (sizeof(IDX_T) == 4) ? 1024 : 512;
 
-__simt_callee__ __aicore__ inline float ReadAsFloat(float val)
-{
-    return val;
-}
+__simt_callee__ __aicore__ inline float ReadAsFloat(float val) { return val; }
 
-__simt_callee__ __aicore__ inline float ReadAsFloat(half val)
-{
-    return __half2float(val);
-}
+__simt_callee__ __aicore__ inline float ReadAsFloat(half val) { return __half2float(val); }
 
-__simt_callee__ __aicore__ inline int32_t SafeGridCoord(float center, int32_t stride,
-                                                          int32_t featSize)
+__simt_callee__ __aicore__ inline int32_t SafeGridCoord(float center, int32_t stride, int32_t featSize)
 {
     if (isnan(center) || isinf(center)) {
         return 0;
     }
     float fgrid = floorf(center / static_cast<float>(stride));
-    if (fgrid <= 0.0f) { return 0; }
-    if (fgrid >= static_cast<float>(featSize)) { return featSize - 1; }
+    if (fgrid <= 0.0f) {
+        return 0;
+    }
+    if (fgrid >= static_cast<float>(featSize)) {
+        return featSize - 1;
+    }
     return static_cast<int32_t>(fgrid);
 }
 
+/*!
+ * \brief Single-kernel direct scatter: zero my range, sync, scatter 1s
+ */
 template <typename T, typename IDX_T>
-__simt_vf__ __aicore__ __launch_bounds__(THREADS<IDX_T>)
-inline void OpGatherCheckKernel(
-    int32_t n, int32_t featH, int32_t featW,
-    int32_t strideH, int32_t strideW, int32_t numBaseAnchors,
-    IDX_T featW_magic, IDX_T featW_shift,
-    __gm__ T* gtBboxes, __gm__ uint8_t* flags)
+__simt_vf__ __aicore__ __launch_bounds__(THREADS<IDX_T>) inline void OpDirectScatterKernel(
+    int32_t n, int32_t featH, int32_t featW, int32_t strideH, int32_t strideW, int32_t numBaseAnchors,
+    IDX_T totalAnchors, IDX_T perCoreBytes, __gm__ T* gtBboxes, __gm__ uint8_t* flags)
 {
-    IDX_T featHW = static_cast<IDX_T>(featH) * featW;
+    IDX_T byteStart = static_cast<IDX_T>(Simt::GetBlockIdx()) * perCoreBytes;
+    if (byteStart >= totalAnchors) {
+        return;
+    }
+    IDX_T byteEnd = byteStart + perCoreBytes;
+    if (byteEnd > totalAnchors) {
+        byteEnd = totalAnchors;
+    }
+    IDX_T tid = static_cast<IDX_T>(Simt::GetThreadIdx());
+    IDX_T tStride = static_cast<IDX_T>(THREADS<IDX_T>);
 
-    for (IDX_T idx = static_cast<IDX_T>(blockIdx.x * blockDim.x + threadIdx.x);
-         idx < featHW;
-         idx += static_cast<IDX_T>(blockDim.x * gridDim.x)) {
-        IDX_T gridY = Simt::UintDiv(idx, featW_magic, featW_shift);
-        IDX_T gridX = idx - gridY * static_cast<IDX_T>(featW);
+    // 1. zero my exclusive byte range (warp-consecutive byte stores)
+    for (IDX_T k = byteStart + tid; k < byteEnd; k += tStride) {
+        flags[k] = 0;
+    }
 
-        uint8_t flag = 0;
-        for (int32_t i = 0; i < n; i++) {
-            float x1 = ReadAsFloat(gtBboxes[i * 4 + 0]);
-            float y1 = ReadAsFloat(gtBboxes[i * 4 + 1]);
-            float x2 = ReadAsFloat(gtBboxes[i * 4 + 2]);
-            float y2 = ReadAsFloat(gtBboxes[i * 4 + 3]);
+    // 2. order zeros before ones within this core
+    asc_syncthreads();
 
-            float cx = (x1 + x2) * 0.5f;
-            float cy = (y1 + y2) * 0.5f;
+    // 3. scan all bboxes, scatter 1s into my range (clipped at range edges)
+    IDX_T anchors = static_cast<IDX_T>(numBaseAnchors);
+    IDX_T lastIdx = static_cast<IDX_T>(-1);
+    for (IDX_T i = tid; i < static_cast<IDX_T>(n); i += tStride) {
+        int64_t base = static_cast<int64_t>(i) * 4;
+        float x1 = ReadAsFloat(gtBboxes[base + 0]);
+        float y1 = ReadAsFloat(gtBboxes[base + 1]);
+        float x2 = ReadAsFloat(gtBboxes[base + 2]);
+        float y2 = ReadAsFloat(gtBboxes[base + 3]);
 
-            int32_t bx = SafeGridCoord(cx, strideH, featW);
-            int32_t by = SafeGridCoord(cy, strideW, featH);
+        float cx = (x1 + x2) * 0.5f;
+        float cy = (y1 + y2) * 0.5f;
 
-            if (static_cast<IDX_T>(bx) == gridX && static_cast<IDX_T>(by) == gridY) {
-                flag = 1;
-                break;
-            }
+        int32_t bx = SafeGridCoord(cx, strideH, featW);
+        int32_t by = SafeGridCoord(cy, strideW, featH);
+
+        IDX_T gridIdx = static_cast<IDX_T>(by) * static_cast<IDX_T>(featW) + static_cast<IDX_T>(bx);
+        if (gridIdx == lastIdx) {
+            continue;
         }
-
-        IDX_T baseOffset = idx * static_cast<IDX_T>(numBaseAnchors);
-        for (int32_t j = 0; j < numBaseAnchors; j++) {
-            flags[baseOffset + j] = flag;
+        IDX_T runStart = gridIdx * anchors;
+        if (runStart >= byteEnd || runStart + anchors <= byteStart) {
+            continue;
         }
+        IDX_T s = runStart > byteStart ? runStart : byteStart;
+        IDX_T e = runStart + anchors < byteEnd ? runStart + anchors : byteEnd;
+        for (IDX_T k = s; k < e; k++) {
+            flags[k] = 1;
+        }
+        lastIdx = gridIdx;
     }
 }
 
 template <typename T>
-__aicore__ inline void ProcessGather(GM_ADDR gtBboxes, GM_ADDR flags,
-                                      const AnchorResponseFlagsTilingData* tilingData,
-                                      bool use32Bit)
+__aicore__ inline void ProcessDirect(GM_ADDR gtBboxes, GM_ADDR flags, GM_ADDR workspace,
+                                     const AnchorResponseFlagsTilingData* tilingData, bool use32Bit)
 {
+    (void)workspace; // direct scatter needs no user workspace
     __gm__ T* gtBboxesGm = (__gm__ T*)gtBboxes;
     __gm__ uint8_t* flagsGm = (__gm__ uint8_t*)flags;
 
-    int32_t featW = tilingData->featW;
+    int64_t totalAnchors = tilingData->totalAnchors;
+    if (totalAnchors <= 0) {
+        return;
+    }
 
     if (use32Bit) {
-        uint32_t magic = 0;
-        uint32_t shift = 0;
-        GetUintDivMagicAndShift(magic, shift, static_cast<uint32_t>(featW));
-        asc_vf_call<OpGatherCheckKernel<T, uint32_t>>(
-            dim3(THREADS<uint32_t>),
-            tilingData->n, tilingData->featH, tilingData->featW,
-            tilingData->strideH, tilingData->strideW, tilingData->numBaseAnchors,
-            magic, shift,
-            gtBboxesGm, flagsGm);
+        asc_vf_call<OpDirectScatterKernel<T, uint32_t>>(
+            dim3(THREADS<uint32_t>), tilingData->n, tilingData->featH, tilingData->featW, tilingData->strideH,
+            tilingData->strideW, tilingData->numBaseAnchors, static_cast<uint32_t>(totalAnchors),
+            static_cast<uint32_t>(tilingData->perCoreBytes), gtBboxesGm, flagsGm);
     } else {
-        uint64_t magic = 0;
-        uint64_t shift = 0;
-        GetUintDivMagicAndShift(magic, shift, static_cast<uint64_t>(featW));
-        asc_vf_call<OpGatherCheckKernel<T, uint64_t>>(
-            dim3(THREADS<uint64_t>),
-            tilingData->n, tilingData->featH, tilingData->featW,
-            tilingData->strideH, tilingData->strideW, tilingData->numBaseAnchors,
-            magic, shift,
-            gtBboxesGm, flagsGm);
+        asc_vf_call<OpDirectScatterKernel<T, uint64_t>>(
+            dim3(THREADS<uint64_t>), tilingData->n, tilingData->featH, tilingData->featW, tilingData->strideH,
+            tilingData->strideW, tilingData->numBaseAnchors, static_cast<uint64_t>(totalAnchors),
+            static_cast<uint64_t>(tilingData->perCoreBytes), gtBboxesGm, flagsGm);
     }
 }
 

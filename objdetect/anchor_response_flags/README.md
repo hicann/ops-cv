@@ -94,7 +94,7 @@ $$
     <tr>
       <td>num_base_anchors</td>
       <td>属性</td>
-      <td>每个网格位置的锚框数量，正整数。</td>
+      <td>每个网格位置的锚框数量。</td>
       <td>Int</td>
       <td>-</td>
     </tr>

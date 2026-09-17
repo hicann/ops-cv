@@ -19,14 +19,16 @@
 #define __ANCHOR_RESPONSE_FLAGS_TILING_DATA_H__
 
 struct AnchorResponseFlagsTilingData {
-    int32_t needCoreNum;        // actual number of cores used
-    int32_t n;                  // number of gt_bboxes (N)
-    int32_t featH;              // feature map height
-    int32_t featW;              // feature map width
-    int32_t strideH;            // vertical stride
-    int32_t strideW;            // horizontal stride
-    int32_t numBaseAnchors;     // number of base anchors per grid position
-    int64_t totalAnchors;       // total anchors = featH * featW * numBaseAnchors
+    int32_t needCoreNum;    // actual number of cores used
+    int32_t n;              // number of gt_bboxes (N)
+    int32_t featH;          // feature map height
+    int32_t featW;          // feature map width
+    int32_t strideH;        // vertical stride
+    int32_t strideW;        // horizontal stride
+    int32_t numBaseAnchors; // number of base anchors per grid position
+    int32_t reserved;       // 8-byte alignment padding
+    int64_t totalAnchors;   // total anchors = featH * featW * numBaseAnchors
+    int64_t perCoreBytes;   // 256B-aligned output bytes per core
 };
 
 #endif // __ANCHOR_RESPONSE_FLAGS_TILING_DATA_H__
