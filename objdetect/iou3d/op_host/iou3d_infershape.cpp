@@ -67,6 +67,13 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
         OP_LOGE(context, "Iou3D: batch dimension must be consistent, got bboxes=%ld, gtboxes=%ld", batch, gtboxesBatch),
         return ge::GRAPH_FAILED);
 
+    // 具体维度必须非负；仅保留 -1 作为动态维。其他负值不能传播到输出 shape。
+    OP_CHECK_IF((batch < 0 && batch != ge::UNKNOWN_DIM) || (gtboxesBatch < 0 && gtboxesBatch != ge::UNKNOWN_DIM) ||
+                    (numN < 0 && numN != ge::UNKNOWN_DIM) || (numK < 0 && numK != ge::UNKNOWN_DIM),
+                OP_LOGE(context, "Iou3D: B/N/K must be non-negative or UNKNOWN_DIM, got B=%ld/%ld, N=%ld, K=%ld", batch,
+                        gtboxesBatch, numN, numK),
+                return ge::GRAPH_FAILED);
+
     // D5 对标 mmcv：移除 K≤2000 上限（mmcv 无 K 限制）。逐对计算的 UB/Sort32 缓冲仅按
     //   tileLen 与固定 32 元素多边形排序规模分配，与 K 无耦合，任意 K 成立。
 
@@ -128,6 +135,15 @@ static ge::graphStatus InferShapeAndTypeForIou3D(ge::Operator& op)
 
     if (bboxesDims[0] >= 0 && gtboxesDims[0] >= 0 && bboxesDims[0] != gtboxesDims[0]) {
         OP_LOGE("Iou3D", "bboxes and gtboxes must have the same batch dimension");
+        return ge::GRAPH_FAILED;
+    }
+
+    // 具体维度必须非负；-1 是唯一合法的未知维标记，-2 仅用于 unknown-rank。
+    if ((bboxesDims[0] < 0 && bboxesDims[0] != ge::UNKNOWN_DIM) ||
+        (gtboxesDims[0] < 0 && gtboxesDims[0] != ge::UNKNOWN_DIM) ||
+        (bboxesDims[2] < 0 && bboxesDims[2] != ge::UNKNOWN_DIM) ||
+        (gtboxesDims[2] < 0 && gtboxesDims[2] != ge::UNKNOWN_DIM)) {
+        OP_LOGE("Iou3D", "B/N/K must be non-negative or UNKNOWN_DIM");
         return ge::GRAPH_FAILED;
     }
 

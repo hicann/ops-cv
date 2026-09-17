@@ -210,3 +210,19 @@ TEST_F(Iou3DTiling, iou3d_tiling_neg_pairs_per_core_exceeds_uint32)
     TilingInfo info;
     EXPECT_FALSE(ExecuteTiling(para, info));
 }
+
+// 反例：具体负 N 必须在生成 TilingData 前拒绝。
+TEST_F(Iou3DTiling, iou3d_tiling_neg_n)
+{
+    auto para = MakeParaBNK(1, -3, 4);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(para, info));
+}
+
+// 反例：具体负 K 必须在生成 TilingData 前拒绝。
+TEST_F(Iou3DTiling, iou3d_tiling_neg_k)
+{
+    auto para = MakeParaBNK(1, 4, -3);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(para, info));
+}

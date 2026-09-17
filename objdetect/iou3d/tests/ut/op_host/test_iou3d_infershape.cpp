@@ -146,3 +146,45 @@ TEST_F(Iou3DInfershape, iou3d_infershape_neg_batch_mismatch)
                                                       });
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
+
+// 反例：具体负 N 不是 unknown dimension，InferShape 必须拒绝。
+TEST_F(Iou3DInfershape, iou3d_infershape_negative_n_rejected)
+{
+    gert::InfershapeContextPara infershapeContextPara("Iou3D",
+                                                      {
+                                                          {{{1, 7, -3}, {1, 7, -3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{1, 7, 4}, {1, 7, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 反例：具体负 K 不是 unknown dimension，InferShape 必须拒绝。
+TEST_F(Iou3DInfershape, iou3d_infershape_negative_k_rejected)
+{
+    gert::InfershapeContextPara infershapeContextPara("Iou3D",
+                                                      {
+                                                          {{{1, 7, 4}, {1, 7, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{1, 7, -3}, {1, 7, -3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 反例：gtboxes 的具体负 B 不是 unknown dimension，InferShape 必须拒绝。
+TEST_F(Iou3DInfershape, iou3d_infershape_negative_gtboxes_batch_rejected)
+{
+    gert::InfershapeContextPara infershapeContextPara("Iou3D",
+                                                      {
+                                                          {{{1, 7, 4}, {1, 7, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{-3, 7, 5}, {-3, 7, 5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
