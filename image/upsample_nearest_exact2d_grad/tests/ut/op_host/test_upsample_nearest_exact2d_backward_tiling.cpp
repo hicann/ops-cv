@@ -273,3 +273,19 @@ TEST_F(UpsampleNearestExact2dGradTiling, upsample_upsample_nearest_exact2d_grad_
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleNearestExact2dGradTiling, upsample_nearest_exact2d_grad_input_size_short_should_fail)
+{
+    optiling::UpsampleNearestExact2dGradCompileInfo compileInfo = {1};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearestExact2dGrad", {{{{1, 1, 2, 2}, {1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 1, 1}, {1, 1, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 2})),
+         gert::TilingContextPara::OpAttr("input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 2})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(1)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(1))},
+        &compileInfo, socVersion, 20, 192 * 1024, 10240);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

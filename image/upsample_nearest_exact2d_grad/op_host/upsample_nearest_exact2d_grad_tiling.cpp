@@ -122,9 +122,9 @@ private:
 void UpsampleNearestExact2dGradTiling::setScale()
 {
     if (dim == H_INDEX) {
-        const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
-        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[H_INDEX], scale_h);
-        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[W_INDEX], scale_w);
+        const int64_t* input_size_array = reinterpret_cast<const int64_t*>(input_size->GetData());
+        realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), input_size_array[H_INDEX], scale_h);
+        realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), input_size_array[W_INDEX], scale_w);
 
         tilingData.set_scale_h(realScale_h);
         tilingData.set_scale_w(realScale_w);
@@ -144,10 +144,14 @@ ge::graphStatus UpsampleNearestExact2dGradTiling::getAttrs()
         return ge::GRAPH_FAILED;
     }
 
-    input_size = attrs->GetAttrPointer<gert::ContinuousVector>(0);
-    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, input_size);
-    output_size = attrs->GetAttrPointer<gert::ContinuousVector>(1);
+    output_size = attrs->GetAttrPointer<gert::ContinuousVector>(0);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, output_size);
+    input_size = attrs->GetAttrPointer<gert::ContinuousVector>(1);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, input_size);
+    int64_t inputSizeNum = input_size->GetSize();
+    OP_CHECK_IF(inputSizeNum != SHAPE_SIZE,
+                OP_LOGE(tilingContext, "the num of inputSize is %ld, invalid, must be 4", inputSizeNum),
+                return ge::GRAPH_FAILED);
     scale_h = attrs->GetAttrPointer<float>(H_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scale_h);
     scale_w = attrs->GetAttrPointer<float>(W_INDEX);
@@ -352,12 +356,12 @@ void UpsampleNearestExact2dGradTiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleNearestExact2dGradTiling::getOutputShape()
 {
-    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* input_size_array = reinterpret_cast<const int64_t*>(input_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
         if (i > 1) {
-            output_shapes[i] = output_size_array[i];
+            output_shapes[i] = input_size_array[i];
         }
     }
     tilingData.set_input_shapes(input_shapes);
