@@ -24,6 +24,7 @@ static constexpr size_t INPUT_IDX_OUTPUT_SIZE = 1;
 static constexpr size_t INPUT_IDX_KERNEL_SIZE = 2;
 static constexpr size_t OUTPUT_IDX_Y = 0;
 static constexpr size_t X_RANK = 3;
+static constexpr size_t SIZE_TENSOR_RANK = 1;
 static constexpr size_t SIZE_TENSOR_LEN = 2;
 static constexpr size_t DIM_N = 0;
 static constexpr size_t DIM_C = 1;
@@ -44,6 +45,15 @@ static ge::graphStatus GetSizeValue(gert::InferShapeContext* context, size_t idx
                 return ge::GRAPH_FAILED);
     sizeH = valueShape[0];
     sizeW = valueShape[1];
+    return ge::GRAPH_SUCCESS;
+}
+
+static ge::graphStatus ValidateSizeShape(gert::InferShapeContext* context, const gert::Shape* shape, const char* name)
+{
+    OP_CHECK_IF(shape->GetDimNum() != SIZE_TENSOR_RANK || shape->GetDim(0) != SIZE_TENSOR_LEN,
+                OP_LOGE_FOR_INVALID_SHAPESIZE(context->GetNodeName(), name, Ops::Base::ToString(*shape).c_str(),
+                                              "1D with 2 elements"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -88,6 +98,12 @@ static ge::graphStatus InferShape4Col2ImV2(gert::InferShapeContext* context)
                 OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "x",
                                              (std::to_string(xShape->GetDimNum()) + "D").c_str(), "3D"),
                 return ge::GRAPH_FAILED);
+
+    // output_size and kernel_size must be rank-1 tensors with two elements.
+    OP_CHECK_IF(ValidateSizeShape(context, outputSizeShape, "output_size") != ge::GRAPH_SUCCESS,
+                OP_LOGE(context->GetNodeName(), "Invalid output_size shape"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(ValidateSizeShape(context, kernelSizeShape, "kernel_size") != ge::GRAPH_SUCCESS,
+                OP_LOGE(context->GetNodeName(), "Invalid kernel_size shape"), return ge::GRAPH_FAILED);
 
     // 4. 读取 const tensor 值
     int64_t outH = 0;

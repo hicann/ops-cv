@@ -110,3 +110,37 @@ TEST_F(Col2ImV2Infershape, col2_im_v2_infershape_test4_unknown_rank)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(Col2ImV2Infershape, col2_im_v2_infershape_output_size_rank_two)
+{
+    int32_t outputSizeVal[2] = {16, 16};
+    int32_t kernelSizeVal[2] = {2, 2};
+    gert::InfershapeContextPara infershapeContextPara(
+        "Col2ImV2",
+        {
+            {{{2, 16, 64}, {2, 16, 64}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{1, 2}, {1, 2}}, ge::DT_INT32, ge::FORMAT_ND, true, outputSizeVal},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, kernelSizeVal},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(Col2ImV2Infershape, col2_im_v2_infershape_kernel_size_rank_two)
+{
+    int32_t outputSizeVal[2] = {16, 16};
+    int32_t kernelSizeVal[2] = {2, 2};
+    gert::InfershapeContextPara infershapeContextPara(
+        "Col2ImV2",
+        {
+            {{{2, 16, 64}, {2, 16, 64}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, outputSizeVal},
+            {{{1, 2}, {1, 2}}, ge::DT_INT32, ge::FORMAT_ND, true, kernelSizeVal},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
