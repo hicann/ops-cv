@@ -268,3 +268,76 @@ TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_tiling_009)
     std::vector<size_t> expectWorkspaces = {34594816};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_output_size_valid_control)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 1;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAA", {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_output_size_extra_element_should_fail)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 1;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAA", {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 99})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_output_size_short_should_fail)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 1;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAA", {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(UpsampleBicubic2dAATiling, upsample_bicubic2d_aa_output_size_empty_should_fail)
+{
+    struct UpsampleBicubic2dAACompileInfo {
+        uint32_t totalCoreNum = 1;
+    } compile_info;
+
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBicubic2dAA", {{{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compile_info);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

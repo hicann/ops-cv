@@ -184,6 +184,12 @@ ge::graphStatus UpsampleBicubic2dAATiling::RunBigKernelTiling(gert::TilingContex
     outputSizeVevtor = attrs->GetAttrPointer<gert::ContinuousVector>(0);
     OP_CHECK_IF(outputSizeVevtor == nullptr, OP_LOGE(tilingContext->GetNodeName(), "outputSizeVevtor == nullptr"),
                 return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputSizeVevtor->GetSize() != BUFFER_LEN,
+                OP_LOGE(tilingContext->GetNodeName(), "outputSizeVevtor must contain %u elements, but got %zu",
+                        BUFFER_LEN, outputSizeVevtor->GetSize()),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(outputSizeVevtor->GetData() == nullptr,
+                OP_LOGE(tilingContext->GetNodeName(), "outputSizeVevtor data == nullptr"), return ge::GRAPH_FAILED);
     alignCorners = attrs->GetAttrPointer<bool>(1);
     OP_CHECK_IF(alignCorners == nullptr, OP_LOGE(tilingContext->GetNodeName(), "alignCorners == nullptr"),
                 return ge::GRAPH_FAILED);
