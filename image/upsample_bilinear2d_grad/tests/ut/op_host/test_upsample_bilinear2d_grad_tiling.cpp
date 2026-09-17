@@ -27,6 +27,54 @@ protected:
     static void TearDownTestCase() { std::cout << "UpsampleBilinear2dGrad Tiling TearDown" << std::endl; }
 };
 
+TEST_F(UpsampleBilinear2dGradTiling, rejects_short_output_size)
+{
+    UpsampleBilinear2dGradCompileInfo compileInfo = {48};
+    std::vector<int64_t> output_size = {6};
+    std::vector<int64_t> input_size = {2, 3, 2, 3};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dGrad",
+        {
+            {{{2, 3, 6, 7}, {2, 3, 6, 7}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{2, 3, 2, 3}, {2, 3, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleBilinear2dGradTiling, rejects_short_input_size)
+{
+    UpsampleBilinear2dGradCompileInfo compileInfo = {48};
+    std::vector<int64_t> output_size = {6, 7};
+    std::vector<int64_t> input_size = {1, 1, 2};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dGrad",
+        {
+            {{{1, 1, 6, 7}, {1, 1, 6, 7}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 2, 3}, {1, 1, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0)}},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
+
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
 TEST_F(UpsampleBilinear2dGradTiling, upsample_bilinear2d_grad_tiling_001)
 {
     UpsampleBilinear2dGradCompileInfo compileInfo = {48};
