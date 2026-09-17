@@ -81,6 +81,10 @@ ge::graphStatus RoiPoolingGradWithArgMaxTiling::SetAttrParams()
     const auto poolChannelPtr = attrs->GetAttrPointer<int64_t>(ATTR_4);
     OP_CHECK_NULL_WITH_CONTEXT(context_, poolChannelPtr);
     poolChannel_ = static_cast<int64_t>(*poolChannelPtr);
+    OP_CHECK_IF(
+        pooledH_ <= 0 || pooledW_ <= 0,
+        OP_LOGE(context_, "pooledH and pooledW must be greater than 0, but got %ld and %ld.", pooledH_, pooledW_),
+        return ge::GRAPH_FAILED);
     OP_CHECK_IF(poolChannel_ <= NUM_ZERO,
                 OP_LOGE(context_, "poolChannel must be greater than 0, but this is %ld.", poolChannel_),
                 return ge::GRAPH_FAILED);
