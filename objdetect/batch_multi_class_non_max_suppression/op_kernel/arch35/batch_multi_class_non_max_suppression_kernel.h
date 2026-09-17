@@ -20,6 +20,9 @@
 namespace BatchMultiClassNonMaxSuppressionOp {
 using namespace AscendC;
 
+constexpr int64_t kBoxCoordinateCount = 4;
+constexpr int64_t kPaddedCountStride = 8;
+constexpr int64_t kUnpaddedCountStride = 1;
 constexpr uint32_t kGatherThreadNum32 = 1024;
 constexpr uint32_t kGatherThreadNum64 = 512;
 constexpr uint32_t kMergeThreadNum = 256;
@@ -42,9 +45,8 @@ struct GatherIndexType<true> {
 template <bool Use32Bit>
 using GatherIndex = typename GatherIndexType<Use32Bit>::type;
 
-// Scores are strided by class and boxes can be either [B, N, q, 4] or
-// [B, q, 4, N].  This is an irregular GM access pattern, so use the 950 SIMT
-// unit to compact one (batch, class) task into five contiguous FP32 arrays.
+// Fused inputs use scores [B, C, N] and boxes [B, q, 4, N].
+// Use the 950 SIMT unit to compact one (batch, class) task into five contiguous FP32 arrays.
 // Subsequent score reduction and IoU work is entirely vectorized on UB tiles.
 template <typename T, bool Use32Bit>
 __simt_vf__ __aicore__
@@ -66,7 +68,7 @@ __launch_bounds__(Use32Bit ? kGatherThreadNum32 : kGatherThreadNum64) inline voi
     }
     for (IndexT boxIndex = static_cast<IndexT>(threadIdx.x); boxIndex < boxesNum;
          boxIndex += static_cast<IndexT>(blockDim.x)) {
-        const IndexT scoreOffset = (batchIndex * boxesNum + boxIndex) * classesNum + classIndex;
+        const IndexT scoreOffset = (batchIndex * classesNum + classIndex) * boxesNum + boxIndex;
         stageScores[boxIndex] = boxIndex < validBoxes ? static_cast<float>(scores[scoreOffset]) : kNoCandidate;
         // Each [B, q, 4, N] field is contiguous. Their bases are computed
         // by AIV before the SIMT launch, so this path only needs a per-box
@@ -128,9 +130,16 @@ template <typename T>
 __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void GatherMergedOutput(
     const __gm__ float* classBoxes, const __gm__ float* mergeScores, const __gm__ int32_t* mergeIndices,
     __gm__ T* nmsedBoxes, __gm__ T* nmsedScores, __gm__ T* nmsedClasses, __gm__ int32_t* nmsedNum, uint64_t batchIndex,
-    uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize)
+    uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize, bool transposeBox)
 {
-    const uint64_t validOutputCount = static_cast<uint64_t>(nmsedNum[batchIndex]);
+    constexpr uint64_t kXMinCoordinate = 1;
+    constexpr uint64_t kYMaxCoordinate = 2;
+    constexpr uint64_t kXMaxCoordinate = 3;
+    const uint64_t countOffset = batchIndex * (transposeBox ? kPaddedCountStride : kUnpaddedCountStride);
+    const uint64_t validOutputCount = static_cast<uint64_t>(nmsedNum[countOffset]);
+    if (transposeBox && threadIdx.x < kPaddedCountStride - kUnpaddedCountStride) {
+        nmsedNum[countOffset + threadIdx.x + 1] = 0;
+    }
     for (uint64_t outputIndex = static_cast<uint64_t>(threadIdx.x); outputIndex < maxTotalSize;
          outputIndex += static_cast<uint64_t>(blockDim.x)) {
         const uint64_t outputOffset = batchIndex * maxTotalSize + outputIndex;
@@ -140,20 +149,29 @@ __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void GatherMerg
             const uint64_t classIndex = flatIndex / maxSizePerClass;
             const uint64_t classPosition = flatIndex % maxSizePerClass;
             const uint64_t candidateOffset = (batchIndex * classesNum + classIndex) * maxSizePerClass + classPosition;
-            const uint64_t boxOffset = candidateOffset * 4;
-            const uint64_t outputBoxOffset = outputOffset * 4;
+            const uint64_t boxOffset = candidateOffset * kBoxCoordinateCount;
+            const uint64_t outputBoxOffset = transposeBox ?
+                                                 batchIndex * maxTotalSize * kBoxCoordinateCount + outputIndex :
+                                                 outputOffset * kBoxCoordinateCount;
+            const uint64_t coordinateStride = transposeBox ? maxTotalSize : 1;
             nmsedBoxes[outputBoxOffset] = static_cast<T>(classBoxes[boxOffset]);
-            nmsedBoxes[outputBoxOffset + 1] = static_cast<T>(classBoxes[boxOffset + 1]);
-            nmsedBoxes[outputBoxOffset + 2] = static_cast<T>(classBoxes[boxOffset + 2]);
-            nmsedBoxes[outputBoxOffset + 3] = static_cast<T>(classBoxes[boxOffset + 3]);
+            nmsedBoxes[outputBoxOffset + kXMinCoordinate * coordinateStride] = static_cast<T>(
+                classBoxes[boxOffset + kXMinCoordinate]);
+            nmsedBoxes[outputBoxOffset + kYMaxCoordinate * coordinateStride] = static_cast<T>(
+                classBoxes[boxOffset + kYMaxCoordinate]);
+            nmsedBoxes[outputBoxOffset + kXMaxCoordinate * coordinateStride] = static_cast<T>(
+                classBoxes[boxOffset + kXMaxCoordinate]);
             nmsedScores[outputOffset] = static_cast<T>(score);
             nmsedClasses[outputOffset] = static_cast<T>(classIndex);
         } else {
-            const uint64_t outputBoxOffset = outputOffset * 4;
+            const uint64_t outputBoxOffset = transposeBox ?
+                                                 batchIndex * maxTotalSize * kBoxCoordinateCount + outputIndex :
+                                                 outputOffset * kBoxCoordinateCount;
+            const uint64_t coordinateStride = transposeBox ? maxTotalSize : 1;
             nmsedBoxes[outputBoxOffset] = static_cast<T>(0);
-            nmsedBoxes[outputBoxOffset + 1] = static_cast<T>(0);
-            nmsedBoxes[outputBoxOffset + 2] = static_cast<T>(0);
-            nmsedBoxes[outputBoxOffset + 3] = static_cast<T>(0);
+            nmsedBoxes[outputBoxOffset + kXMinCoordinate * coordinateStride] = static_cast<T>(0);
+            nmsedBoxes[outputBoxOffset + kYMaxCoordinate * coordinateStride] = static_cast<T>(0);
+            nmsedBoxes[outputBoxOffset + kXMaxCoordinate * coordinateStride] = static_cast<T>(0);
             nmsedScores[outputOffset] = static_cast<T>(0);
             nmsedClasses[outputOffset] = static_cast<T>(0);
         }
@@ -204,7 +222,7 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SiftClassH
 __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void MergeClassOutput(
     const __gm__ float* classScores, __gm__ float* classPositions, __gm__ float* mergeScores,
     __gm__ int32_t* mergeIndices, __gm__ int32_t* nmsedNum, __ubuf__ float* heapScores, __ubuf__ int32_t* heapIndices,
-    uint64_t batchIndex, uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize)
+    uint64_t batchIndex, uint64_t classesNum, uint64_t maxSizePerClass, uint64_t maxTotalSize, bool transposeBox)
 {
     const uint64_t classBase = batchIndex * classesNum;
     const uint64_t outputBase = batchIndex * maxTotalSize;
@@ -238,7 +256,8 @@ __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void MergeClass
             }
             SiftClassHeap(heapScores, heapIndices, classesNum, 0);
         }
-        nmsedNum[batchIndex] = static_cast<int32_t>(validOutputCount);
+        nmsedNum[batchIndex * (transposeBox ? kPaddedCountStride : kUnpaddedCountStride)] = static_cast<int32_t>(
+            validOutputCount);
         return;
     }
 
@@ -272,7 +291,8 @@ __simt_vf__ __aicore__ __launch_bounds__(kMergeThreadNum) inline void MergeClass
                                                           static_cast<int32_t>(position);
             classPositions[classBase + bestClass] = static_cast<float>(position + 1);
         }
-        nmsedNum[batchIndex] = static_cast<int32_t>(validOutputCount);
+        nmsedNum[batchIndex * (transposeBox ? kPaddedCountStride : kUnpaddedCountStride)] = static_cast<int32_t>(
+            validOutputCount);
     }
 }
 
@@ -389,7 +409,9 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::Init(
     nmsedBoxesGm_.SetGlobalBuffer((__gm__ T*)nmsedBoxes, resultElements * 4);
     nmsedScoresGm_.SetGlobalBuffer((__gm__ T*)nmsedScores, resultElements);
     nmsedClassesGm_.SetGlobalBuffer((__gm__ T*)nmsedClasses, resultElements);
-    nmsedNumGm_.SetGlobalBuffer((__gm__ int32_t*)nmsedNum, tilingData_->batch);
+    nmsedNumGm_.SetGlobalBuffer(
+        (__gm__ int32_t*)nmsedNum,
+        tilingData_->batch * (tilingData_->transposeBox != 0U ? kPaddedCountStride : kUnpaddedCountStride));
     InitWorkspace();
     InitTileBuffers();
 }
@@ -789,7 +811,7 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::MergeBatch(int
         reinterpret_cast<__ubuf__ float*>(mergeInputScoresLocal_.GetPhyAddr()),
         reinterpret_cast<__ubuf__ int32_t*>(mergeInputIndicesLocal_.GetPhyAddr()), static_cast<uint64_t>(batchIndex),
         static_cast<uint64_t>(tilingData_->classesNum), static_cast<uint64_t>(tilingData_->maxSizePerClass),
-        static_cast<uint64_t>(tilingData_->maxTotalSize));
+        static_cast<uint64_t>(tilingData_->maxTotalSize), tilingData_->transposeBox != 0U);
 
     asc_vf_call<GatherMergedOutput<T>>(
         dim3{kMergeThreadNum}, (__gm__ float*)classBoxesGm_.GetPhyAddr(), (__gm__ float*)mergeScoresGm_.GetPhyAddr(),
@@ -797,7 +819,7 @@ __aicore__ inline void BatchMultiClassNonMaxSuppressionKernel<T>::MergeBatch(int
         (__gm__ T*)nmsedScoresGm_.GetPhyAddr(), (__gm__ T*)nmsedClassesGm_.GetPhyAddr(),
         (__gm__ int32_t*)nmsedNumGm_.GetPhyAddr(), static_cast<uint64_t>(batchIndex),
         static_cast<uint64_t>(tilingData_->classesNum), static_cast<uint64_t>(tilingData_->maxSizePerClass),
-        static_cast<uint64_t>(tilingData_->maxTotalSize));
+        static_cast<uint64_t>(tilingData_->maxTotalSize), tilingData_->transposeBox != 0U);
 }
 
 template <typename T>

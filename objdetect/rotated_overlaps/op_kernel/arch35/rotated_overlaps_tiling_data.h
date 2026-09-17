@@ -19,7 +19,8 @@
 constexpr uint32_t kRotatedOverlapsFloatVectorCount = 153U;
 constexpr uint32_t kRotatedOverlapsMaskReserveBytes = 256U;
 constexpr uint32_t kRotatedOverlapsControlReserveBytes = 1024U;
-constexpr uint32_t kRotatedOverlapsSimtThreadNum = 256U;
+// Compensated clipping keeps two-part coordinates in per-thread local memory.
+constexpr uint32_t kRotatedOverlapsSimtThreadNum = 64U;
 constexpr uint32_t kRotatedOverlapsSimtDataCacheReserveBytes = 32U * 1024U;
 
 struct RotatedOverlapsTilingData {

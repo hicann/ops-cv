@@ -156,8 +156,12 @@ ge::graphStatus ParseRequiredInputsAndAttrs(gert::TilingContext* context, Parsed
         OP_CHECK_IF(boxesShape.GetDim(3) != 4, OP_LOGE(context, "boxes last dimension must be 4."),
                     return ge::GRAPH_FAILED);
     }
-    params.classesNum = scoresShape.GetDim(2);
-    OP_CHECK_IF(scoresShape.GetDim(0) != params.batch || scoresShape.GetDim(1) != params.boxesNum ||
+    constexpr size_t kScoresFirstInnerAxis = 1;
+    constexpr size_t kScoresSecondInnerAxis = 2;
+    const size_t scoresClassAxis = params.transposeBox ? kScoresFirstInnerAxis : kScoresSecondInnerAxis;
+    const size_t scoresBoxesAxis = params.transposeBox ? kScoresSecondInnerAxis : kScoresFirstInnerAxis;
+    params.classesNum = scoresShape.GetDim(scoresClassAxis);
+    OP_CHECK_IF(scoresShape.GetDim(0) != params.batch || scoresShape.GetDim(scoresBoxesAxis) != params.boxesNum ||
                     (params.boxClassesNum != 1 && params.boxClassesNum != params.classesNum),
                 OP_LOGE(context, "boxes and scores shapes are incompatible."), return ge::GRAPH_FAILED);
     OP_CHECK_IF(params.batch > std::numeric_limits<int64_t>::max() / params.classesNum,
@@ -227,6 +231,14 @@ ge::graphStatus ValidateOptionalInputs(gert::TilingContext* context, ParsedTilin
 
 ge::graphStatus ValidateOutputContract(gert::TilingContext* context, const ParsedTilingParams& params)
 {
+    constexpr int64_t kBoxCoordinateCount = 4;
+    constexpr int64_t kPaddedCountStride = 8;
+    constexpr size_t kBoxesOutputRank = 3;
+    constexpr size_t kMatrixOutputRank = 2;
+    constexpr size_t kVectorOutputRank = 1;
+    constexpr size_t kBatchAxis = 0;
+    constexpr size_t kFirstInnerAxis = 1;
+    constexpr size_t kSecondInnerAxis = 2;
     const gert::StorageShape* outputBoxes = context->GetOutputShape(kNmsedBoxesIndex);
     const gert::StorageShape* outputScores = context->GetOutputShape(kNmsedScoresIndex);
     const gert::StorageShape* outputClasses = context->GetOutputShape(kNmsedClassesIndex);
@@ -239,13 +251,21 @@ ge::graphStatus ValidateOutputContract(gert::TilingContext* context, const Parse
     const gert::Shape& outputScoresShape = outputScores->GetStorageShape();
     const gert::Shape& outputClassesShape = outputClasses->GetStorageShape();
     const gert::Shape& outputNumShape = outputNum->GetStorageShape();
-    OP_CHECK_IF(outputBoxesShape.GetDimNum() != 3 || outputBoxesShape.GetDim(0) != params.batch ||
-                    outputBoxesShape.GetDim(1) != params.maxTotalSize || outputBoxesShape.GetDim(2) != 4 ||
-                    outputScoresShape.GetDimNum() != 2 || outputScoresShape.GetDim(0) != params.batch ||
-                    outputScoresShape.GetDim(1) != params.maxTotalSize || outputClassesShape.GetDimNum() != 2 ||
-                    outputClassesShape.GetDim(0) != params.batch ||
-                    outputClassesShape.GetDim(1) != params.maxTotalSize || outputNumShape.GetDimNum() != 1 ||
-                    outputNumShape.GetDim(0) != params.batch,
+    OP_CHECK_IF(outputBoxesShape.GetDimNum() != kBoxesOutputRank ||
+                    outputBoxesShape.GetDim(kBatchAxis) != params.batch ||
+                    outputBoxesShape.GetDim(kFirstInnerAxis) !=
+                        (params.transposeBox ? kBoxCoordinateCount : params.maxTotalSize) ||
+                    outputBoxesShape.GetDim(kSecondInnerAxis) !=
+                        (params.transposeBox ? params.maxTotalSize : kBoxCoordinateCount) ||
+                    outputScoresShape.GetDimNum() != kMatrixOutputRank ||
+                    outputScoresShape.GetDim(kBatchAxis) != params.batch ||
+                    outputScoresShape.GetDim(kFirstInnerAxis) != params.maxTotalSize ||
+                    outputClassesShape.GetDimNum() != kMatrixOutputRank ||
+                    outputClassesShape.GetDim(kBatchAxis) != params.batch ||
+                    outputClassesShape.GetDim(kFirstInnerAxis) != params.maxTotalSize ||
+                    outputNumShape.GetDimNum() != (params.transposeBox ? kMatrixOutputRank : kVectorOutputRank) ||
+                    outputNumShape.GetDim(kBatchAxis) != params.batch ||
+                    (params.transposeBox && outputNumShape.GetDim(kFirstInnerAxis) != kPaddedCountStride),
                 OP_LOGE(context, "Output shapes do not match BatchMultiClassNonMaxSuppression contract."),
                 return ge::GRAPH_FAILED);
     const auto* outputBoxesDesc = context->GetOutputDesc(kNmsedBoxesIndex);
