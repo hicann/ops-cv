@@ -136,3 +136,63 @@ TEST_F(ResizeNearestNeighborV2InfershapeTest, resize_nearest_neighbor_v2_infersh
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(ResizeNearestNeighborV2InfershapeTest, resize_nearest_neighbor_v2_infershape_zero_size_rejected)
+{
+    gert::StorageShape inputXShape = {{1, 2, 3, 32}, {1, 2, 3, 32}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
+    gert::StorageShape outputShape = {{1, 2, 0, 8}, {1, 2, 0, 8}};
+    int size_value[2] = {0, 8};
+
+    gert::InfershapeContextPara infershapeContextPara(
+        "ResizeNearestNeighborV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
+
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ResizeNearestNeighborV2InfershapeTest, resize_nearest_neighbor_v2_infershape_zero_width_rejected)
+{
+    gert::StorageShape inputXShape = {{1, 2, 3, 32}, {1, 2, 3, 32}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
+    gert::StorageShape outputShape = {{1, 2, 8, 0}, {1, 2, 8, 0}};
+    int size_value[2] = {8, 0};
+
+    gert::InfershapeContextPara infershapeContextPara(
+        "ResizeNearestNeighborV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
+
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ResizeNearestNeighborV2InfershapeTest, resize_nearest_neighbor_v2_infershape_negative_height_rejected)
+{
+    gert::StorageShape inputXShape = {{1, 2, 3, 32}, {1, 2, 3, 32}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
+    gert::StorageShape outputShape = {{1, 2, -1, 8}, {1, 2, -1, 8}};
+    int size_value[2] = {-1, 8};
+
+    gert::InfershapeContextPara infershapeContextPara(
+        "ResizeNearestNeighborV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
+
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(ResizeNearestNeighborV2InfershapeTest, resize_nearest_neighbor_v2_infershape_negative_width_rejected)
+{
+    gert::StorageShape inputXShape = {{1, 2, 3, 32}, {1, 2, 3, 32}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
+    gert::StorageShape outputShape = {{1, 2, 8, -1}, {1, 2, 8, -1}};
+    int size_value[2] = {8, -1};
+
+    gert::InfershapeContextPara infershapeContextPara(
+        "ResizeNearestNeighborV2",
+        {{inputXShape, ge::DT_FLOAT, ge::FORMAT_NCHW}, {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+        {{outputShape, ge::DT_FLOAT, ge::FORMAT_NCHW}});
+
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}

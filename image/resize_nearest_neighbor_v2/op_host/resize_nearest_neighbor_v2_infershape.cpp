@@ -46,6 +46,11 @@ static bool GetSizeValueFor2D(const gert::InferShapeContext* context, const gert
     out_size.output_h = static_cast<int64_t>(size_value[0]);
     out_size.output_w = static_cast<int64_t>(size_value[1]);
 
+    OP_CHECK_IF(out_size.output_h <= 0 || out_size.output_w <= 0,
+                OP_LOGE(context->GetNodeName(), "The size values must be greater than 0, but are [%ld, %ld]",
+                        out_size.output_h, out_size.output_w),
+                return false);
+
     return true;
 }
 
