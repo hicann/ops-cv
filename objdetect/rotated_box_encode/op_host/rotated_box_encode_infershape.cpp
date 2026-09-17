@@ -24,18 +24,28 @@ using namespace ge;
 
 namespace ops {
 
-// InferShapeForRotatedBoxEncode: GE shape inference callback (interface stub).
-//   Per proto.md §4: y.shape = anchor_box.shape (identity, no broadcast).
+// InferShapeForRotatedBoxEncode: GE shape inference callback.
+//   Per proto.md §4: both inputs and the output are identical 3-D (B, 5, N)
+//   tensors; broadcasting is not supported.
 static ge::graphStatus InferShapeForRotatedBoxEncode(gert::InferShapeContext* context)
 {
-    // 接口桩：y.shape = anchor_box.shape（proto.md §4 恒等映射）。
     const gert::Shape* anchorShape = context->GetInputShape(0);
+    const gert::Shape* gtShape = context->GetInputShape(1);
     gert::Shape* yShape = context->GetOutputShape(0);
-    if (anchorShape == nullptr || yShape == nullptr) {
+    if (anchorShape == nullptr || gtShape == nullptr || yShape == nullptr) {
         return GRAPH_FAILED;
     }
-    yShape->SetDimNum(anchorShape->GetDimNum());
-    for (size_t i = 0; i < anchorShape->GetDimNum(); ++i) {
+    if (anchorShape->GetDimNum() != 3 || gtShape->GetDimNum() != 3 || anchorShape->GetDim(1) != 5 ||
+        gtShape->GetDim(1) != 5) {
+        return GRAPH_FAILED;
+    }
+    for (size_t i = 0; i < 3; ++i) {
+        if (anchorShape->GetDim(i) != gtShape->GetDim(i)) {
+            return GRAPH_FAILED;
+        }
+    }
+    yShape->SetDimNum(3);
+    for (size_t i = 0; i < 3; ++i) {
         yShape->SetDim(i, anchorShape->GetDim(i));
     }
     return GRAPH_SUCCESS;

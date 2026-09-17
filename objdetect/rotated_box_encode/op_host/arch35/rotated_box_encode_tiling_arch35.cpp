@@ -174,27 +174,6 @@ ge::graphStatus TilingRotatedBoxEncode(gert::TilingContext* ctx)
     const auto& originShape = anchorShape->GetOriginShape();
     int64_t rank = static_cast<int64_t>(originShape.GetDimNum());
 
-    auto setupEmptyTiling = [ctx](ge::DataType dt) {
-        auto* td = ctx->GetTilingData<RotatedBoxEncodeTilingData>();
-        if (td != nullptr) {
-            std::memset(td, 0, sizeof(*td));
-            td->dim0 = 0;
-            td->N = 0;
-            td->coreNum = 0;
-        }
-        if (dt == ge::DT_FLOAT16) {
-            ctx->SetTilingKey(GET_TPL_TILING_KEY(ROTATED_BOX_ENCODE_DTYPE_FP16));
-        } else {
-            ctx->SetTilingKey(GET_TPL_TILING_KEY(ROTATED_BOX_ENCODE_DTYPE_FP32));
-        }
-        ctx->SetBlockDim(1);
-        size_t* ws = ctx->GetWorkspaceSizes(1);
-        if (ws != nullptr) {
-            ws[0] = 0;
-        }
-        return ge::GRAPH_SUCCESS;
-    };
-
     const auto* anchorTensor = ctx->GetInputTensor(0);
     const auto* gtTensor = ctx->GetInputTensor(1);
     if (anchorTensor == nullptr || gtTensor == nullptr) {
@@ -217,9 +196,6 @@ ge::graphStatus TilingRotatedBoxEncode(gert::TilingContext* ctx)
     }
 
     if (rank != MAX_RANK || originShape.GetDim(1) != BOX_CHANNELS) {
-        if (isProductionContext) {
-            return setupEmptyTiling(inDtype0);
-        }
         return ge::GRAPH_FAILED;
     }
     int64_t B = originShape.GetDim(0);
@@ -249,9 +225,6 @@ ge::graphStatus TilingRotatedBoxEncode(gert::TilingContext* ctx)
         }
     }
     if (shapeMismatch) {
-        if (isProductionContext) {
-            return setupEmptyTiling(inDtype0);
-        }
         return ge::GRAPH_FAILED;
     }
 
