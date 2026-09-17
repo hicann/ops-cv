@@ -127,6 +127,12 @@ uint32_t NonMaxSuppressionV3CpuKernel::GetInputAndCheck(const CpuKernelContext& 
     KERNEL_CHECK_FALSE((score_threshold_tensor_->GetDataType() == threshold_dtype_), KERNEL_STATUS_PARAM_INVALID,
                        "The dtype of iou_threshold and score_threshold must be the same.");
 
+    const auto score_threshold_dtype = static_cast<DataType>(score_threshold_tensor_->GetDataType());
+    if (threshold_dtype_ != score_threshold_dtype) {
+        KERNEL_LOG_ERROR("The dtypes of input[3]iou_threshold and input[4]score_threshold must be the same.");
+        return KERNEL_STATUS_PARAM_INVALID;
+    }
+
     KERNEL_LOG_INFO("GetInputAndCheck end.");
     return KERNEL_STATUS_OK;
 }
