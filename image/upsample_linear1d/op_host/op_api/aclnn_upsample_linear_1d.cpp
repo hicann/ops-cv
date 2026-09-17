@@ -79,6 +79,13 @@ static bool CheckDtypeValid(const aclTensor* self, const aclTensor* out)
     return true;
 }
 
+static bool CheckScale(const double scale)
+{
+    OP_CHECK(std::isfinite(scale), OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scale must be finite, but got %f", scale),
+             return false);
+    return true;
+}
+
 static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclIntArray* outputSize, const double scale)
 {
     size_t outDimNum = out->GetViewShape().GetDimNum();
@@ -115,7 +122,7 @@ static bool CheckShape(const aclTensor* self, const aclTensor* out, const aclInt
         }
     }
     // 在scale合法的情况下，判断scale和outputSize是否冲突
-    if (scale >= 0 && (!(IsRegBase()))) {
+    if (scale >= 0) {
         const double odim = static_cast<double>(self->GetViewShape().GetDim(DIM_TWO)) * scale;
         if (static_cast<int64_t>(odim) != outL) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Scale conflicts with outputSize. "
@@ -131,6 +138,8 @@ static aclnnStatus CheckParams(const aclTensor* selfRef, const aclTensor* out, c
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(selfRef, out, outputSize), ACLNN_ERR_PARAM_NULLPTR);
+
+    CHECK_RET(CheckScale(scale), ACLNN_ERR_PARAM_INVALID);
 
     CHECK_RET(CheckShape(selfRef, out, outputSize, scale), ACLNN_ERR_PARAM_INVALID);
 

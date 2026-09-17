@@ -13,6 +13,7 @@
  * \brief resize_linear_tiling_arch35
  */
 #include "resize_linear_tiling_arch35.h"
+#include <cmath>
 #include "image/resize_linear/op_kernel/arch35/resize_linear_tiling_key.h"
 
 namespace optiling {
@@ -195,6 +196,8 @@ ge::graphStatus ResizeLinearTiling::LinearCompute()
 
     OP_CHECK_NULL_WITH_CONTEXT(context_, scale);
     scaleL_ = *scale;
+    OP_CHECK_IF(!std::isfinite(scaleL_), OP_LOGE(context_->GetNodeName(), "scale must be finite, but got %f", scaleL_),
+                return ge::GRAPH_FAILED);
     OP_LOGI(context_->GetNodeName(), "ori scaleL is %f, alignCorners is %d", scaleL_, alignCorners_);
     realCoreNum_ = (ySize_ < coreNum_) ? ySize_ : coreNum_;
     blkProcessNum_ = Ops::Base::FloorDiv(ySize_, realCoreNum_);

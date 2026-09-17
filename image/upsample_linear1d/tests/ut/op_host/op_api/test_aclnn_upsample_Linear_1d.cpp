@@ -9,6 +9,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <limits>
 #include "../../../../op_host/op_api/aclnn_upsample_linear_1d.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
@@ -187,6 +188,37 @@ TEST_F(l2_upsamplelinear1d_test, l2_upsamplelinear1d_test_scale_output_size_conf
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_upsamplelinear1d_test, l2_upsamplelinear1d_test_regbase_scale_output_size_conflict)
+{
+    auto selfDesc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto outDesc = TensorDesc({1, 1, 3}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto sizeDesc = IntArrayDesc({3});
+    const double_t scales_h = 2.0;
+    bool align_corners = false;
+    SetPlatformSocVersion(SocVersion::ASCEND950);
+    auto ut = OP_API_UT(aclnnUpsampleLinear1d, INPUT(selfDesc, sizeDesc, align_corners, scales_h), OUTPUT(outDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
+}
+
+TEST_F(l2_upsamplelinear1d_test, l2_upsamplelinear1d_test_regbase_scale_nonfinite)
+{
+    auto selfDesc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto outDesc = TensorDesc({1, 1, 4}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto sizeDesc = IntArrayDesc({4});
+    bool align_corners = false;
+    SetPlatformSocVersion(SocVersion::ASCEND950);
+    for (const double scale : {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity(),
+                               -std::numeric_limits<double>::infinity()}) {
+        auto ut = OP_API_UT(aclnnUpsampleLinear1d, INPUT(selfDesc, sizeDesc, align_corners, scale), OUTPUT(outDesc));
+        uint64_t workspaceSize = 0;
+        EXPECT_EQ(ut.TestGetWorkspaceSize(&workspaceSize), ACLNN_ERR_PARAM_INVALID) << scale;
+    }
+    SetPlatformSocVersion(SocVersion::ASCEND910B);
 }
 
 // scale using default value

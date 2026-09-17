@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <vector>
 #include <gtest/gtest.h>
 
@@ -213,4 +214,26 @@ TEST_F(ResizeLinearTilingTest, resize_linear_tiling_07)
         &compileInfo);
     TilingInfo tilingInfo;
     EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(ResizeLinearTilingTest, resize_linear_tiling_nonfinite_scale)
+{
+    for (const float scale : {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity(),
+                              -std::numeric_limits<float>::infinity()}) {
+        gert::StorageShape inputXShape = {{1, 3, 2}, {1, 3, 2}};
+        gert::StorageShape inputSizeShape = {{1}, {1}};
+        gert::StorageShape outputShape = {{1, 3, 4}, {1, 3, 4}};
+        int size_value[1] = {4};
+        ResizeLinearCompileInfo compileInfo = {64, 200704};
+        gert::TilingContextPara tilingContextPara(
+            "ResizeLinear",
+            {{inputXShape, ge::DT_FLOAT, ge::FORMAT_ND},
+             {inputSizeShape, ge::DT_INT32, ge::FORMAT_ND, true, size_value}},
+            {{outputShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+            {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+             gert::TilingContextPara::OpAttr("scale", Ops::Cv::AnyValue::CreateFrom<float>(scale))},
+            &compileInfo);
+        TilingInfo tilingInfo;
+        EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo)) << scale;
+    }
 }
