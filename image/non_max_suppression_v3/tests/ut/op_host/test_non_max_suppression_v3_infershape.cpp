@@ -16,6 +16,7 @@
 // --------------- NonMaxSuppressionV3 Op start-------------------
 
 #include <gtest/gtest.h>
+#include <vector>
 
 #include "base/registry/op_impl_space_registry_v2.h"
 #include "infershape_case_executor.h"
@@ -29,6 +30,18 @@ constexpr size_t kMaxOutputSizeIndex = 2U;
 constexpr size_t kIouThresholdIndex = 3U;
 constexpr size_t kScoreThresholdIndex = 4U;
 constexpr size_t kSelectedIndicesIndex = 0U;
+
+gert::StorageShape MakeStorageShape(const std::vector<int64_t>& dims)
+{
+    gert::StorageShape shape;
+    shape.MutableOriginShape().SetDimNum(dims.size());
+    shape.MutableStorageShape().SetDimNum(dims.size());
+    for (size_t i = 0; i < dims.size(); ++i) {
+        shape.MutableOriginShape().SetDim(i, dims[i]);
+        shape.MutableStorageShape().SetDim(i, dims[i]);
+    }
+    return shape;
+}
 
 void ExpectShape(const gert::StorageShape& boxesShape, const gert::StorageShape& scoresShape,
                  ge::graphStatus expectedStatus, const std::vector<std::vector<int64_t>>& expectedShapes = {})
@@ -53,6 +66,24 @@ void ExpectMissingInput(size_t missingIndex)
     inputs.erase(inputs.begin() + missingIndex, inputs.end());
     gert::InfershapeContextPara context("NonMaxSuppressionV3", inputs, {{{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}});
     ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+void ExpectControlShapes(const std::vector<int64_t>& maxOutputSizeShape, const std::vector<int64_t>& iouThresholdShape,
+                         const std::vector<int64_t>& scoreThresholdShape, ge::graphStatus expectedStatus)
+{
+    const auto boxesShape = MakeStorageShape({8, 4});
+    const auto scoresShape = MakeStorageShape({8});
+    const auto maxShape = MakeStorageShape(maxOutputSizeShape);
+    const auto iouShape = MakeStorageShape(iouThresholdShape);
+    const auto scoreShape = MakeStorageShape(scoreThresholdShape);
+    gert::InfershapeContextPara context("NonMaxSuppressionV3",
+                                        {{boxesShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                         {scoresShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                         {maxShape, ge::DT_INT32, ge::FORMAT_ND},
+                                         {iouShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                         {scoreShape, ge::DT_FLOAT, ge::FORMAT_ND}},
+                                        {{{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}});
+    ExecuteTestCase(context, expectedStatus);
 }
 } // namespace
 
@@ -108,6 +139,18 @@ TEST(NonMaxSuppressionV3Infershape, rejects_missing_scalar_inputs)
         SCOPED_TRACE(missingIndex);
         ExpectMissingInput(missingIndex);
     }
+}
+
+TEST(NonMaxSuppressionV3Infershape, accepts_single_element_control_inputs)
+{
+    ExpectControlShapes({1}, {1}, {1}, ge::GRAPH_SUCCESS);
+}
+
+TEST(NonMaxSuppressionV3Infershape, rejects_multi_element_control_inputs)
+{
+    ExpectControlShapes({2}, {}, {}, ge::GRAPH_FAILED);
+    ExpectControlShapes({}, {2}, {}, ge::GRAPH_FAILED);
+    ExpectControlShapes({}, {}, {2}, ge::GRAPH_FAILED);
 }
 
 TEST(NonMaxSuppressionV3Infershape, registers_selected_indices_shape_dependency)

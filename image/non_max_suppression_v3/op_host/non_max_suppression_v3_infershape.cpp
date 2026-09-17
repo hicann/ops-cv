@@ -35,6 +35,14 @@ bool IsRankInvalid(const gert::Shape& shape, size_t expectedRank)
     return !Ops::Base::IsUnknownRank(shape) && shape.GetDimNum() != expectedRank;
 }
 
+bool IsScalarOrSingleElement(const gert::Shape& shape)
+{
+    if (Ops::Base::IsUnknownRank(shape) || shape.IsScalar()) {
+        return true;
+    }
+    return shape.GetDimNum() == 1U && (shape.GetDim(0U) == 1 || shape.GetDim(0U) == ge::UNKNOWN_DIM);
+}
+
 int64_t GetDimOrUnknown(const gert::Shape& shape, size_t index)
 {
     return Ops::Base::IsUnknownRank(shape) ? ge::UNKNOWN_DIM : shape.GetDim(index);
@@ -62,6 +70,14 @@ static ge::graphStatus InferShapeForNonMaxSuppressionV3(gert::InferShapeContext*
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(IsRankInvalid(*scoresShape, kScoresRank),
                 OP_LOGE(context, "scores must be rank 1, but got %zu", scoresShape->GetDimNum()),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!IsScalarOrSingleElement(*maxOutputSizeShape),
+                OP_LOGE(context, "max_output_size must be a scalar or a single-element tensor"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!IsScalarOrSingleElement(*iouThresholdShape),
+                OP_LOGE(context, "iou_threshold must be a scalar or a single-element tensor"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!IsScalarOrSingleElement(*scoreThresholdShape),
+                OP_LOGE(context, "score_threshold must be a scalar or a single-element tensor"),
                 return ge::GRAPH_FAILED);
 
     const int64_t boxesNum = GetDimOrUnknown(*boxesShape, 0U);

@@ -24,6 +24,12 @@
 namespace {
 const char* const kNonMaxSuppressionV3 = "NonMaxSuppressionV3";
 constexpr uint32_t Two = 2;
+
+bool IsScalarOrSingleElement(const aicpu::TensorShape& shape)
+{
+    const int32_t rank = shape.GetDims();
+    return rank == 0 || (rank == 1 && shape.GetDimSize(0) == 1);
+}
 } // namespace
 
 namespace aicpu {
@@ -70,6 +76,11 @@ uint32_t NonMaxSuppressionV3CpuKernel::GetInputAndCheck(const CpuKernelContext& 
     KERNEL_CHECK_FALSE((max_output_size_tensor != nullptr), KERNEL_STATUS_PARAM_INVALID,
                        "GetInputAndCheck: get "
                        "input:2 max_output_size failed.");
+    auto max_output_size_shape = max_output_size_tensor->GetTensorShape();
+    KERNEL_CHECK_FALSE((max_output_size_shape != nullptr), KERNEL_STATUS_PARAM_INVALID,
+                       "The max_output_size_shape couldn't be null.");
+    KERNEL_CHECK_FALSE(IsScalarOrSingleElement(*max_output_size_shape), KERNEL_STATUS_PARAM_INVALID,
+                       "The input dim size of max_output_size must be scalar or have one element.");
     max_output_size_ = *static_cast<int32_t*>(max_output_size_tensor->GetData());
     KERNEL_CHECK_FALSE((max_output_size_ >= 0), KERNEL_STATUS_PARAM_INVALID,
                        "max_output_size must be non-negative, but is [%d]", max_output_size_);
@@ -79,12 +90,22 @@ uint32_t NonMaxSuppressionV3CpuKernel::GetInputAndCheck(const CpuKernelContext& 
     KERNEL_CHECK_FALSE((iou_threshold_tensor_ != nullptr), KERNEL_STATUS_PARAM_INVALID,
                        "GetInputAndCheck: get "
                        "input:3 iou_threshold failed.");
+    auto iou_threshold_shape = iou_threshold_tensor_->GetTensorShape();
+    KERNEL_CHECK_FALSE((iou_threshold_shape != nullptr), KERNEL_STATUS_PARAM_INVALID,
+                       "The iou_threshold_shape couldn't be null.");
+    KERNEL_CHECK_FALSE(IsScalarOrSingleElement(*iou_threshold_shape), KERNEL_STATUS_PARAM_INVALID,
+                       "The input dim size of iou_threshold must be scalar or have one element.");
 
     // get score_threshold: scalar
     score_threshold_tensor_ = ctx.Input(kFifthInputIndex);
     KERNEL_CHECK_FALSE((score_threshold_tensor_ != nullptr), KERNEL_STATUS_PARAM_INVALID,
                        "GetInputAndCheck: get "
                        "input:4 score_threshold failed.");
+    auto score_threshold_shape = score_threshold_tensor_->GetTensorShape();
+    KERNEL_CHECK_FALSE((score_threshold_shape != nullptr), KERNEL_STATUS_PARAM_INVALID,
+                       "The score_threshold_shape couldn't be null.");
+    KERNEL_CHECK_FALSE(IsScalarOrSingleElement(*score_threshold_shape), KERNEL_STATUS_PARAM_INVALID,
+                       "The input dim size of score_threshold must be scalar or have one element.");
 
     // get output tensors
     output_indices_ = ctx.Output(kFirstOutputIndex);

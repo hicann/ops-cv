@@ -28,7 +28,43 @@ using namespace aicpu;
 
 namespace {
 uint64_t result_summary[4] = {0};
+
+uint32_t RunControlShapeCase(const vector<int64_t>& max_shape, const vector<int64_t>& iou_shape,
+                             const vector<int64_t>& score_shape)
+{
+    vector<float> boxes = {0.0F, 0.0F, 1.0F, 1.0F, 10.0F, 10.0F, 11.0F, 11.0F};
+    vector<float> scores = {0.8F, 0.6F};
+    int32_t max_output_size_scalar = 2;
+    int32_t max_output_size[2] = {2, 999};
+    float iou_threshold_scalar = 0.5F;
+    float iou_threshold[2] = {0.5F, -1.0F};
+    float score_threshold_scalar = 0.75F;
+    float score_threshold[2] = {0.75F, 100.0F};
+    vector<void*> datas = {
+        (void*)boxes.data(),
+        (void*)scores.data(),
+        (void*)(max_shape.empty() ? static_cast<void*>(&max_output_size_scalar) : static_cast<void*>(max_output_size)),
+        (void*)(iou_shape.empty() ? static_cast<void*>(&iou_threshold_scalar) : static_cast<void*>(iou_threshold)),
+        (void*)(score_shape.empty() ? static_cast<void*>(&score_threshold_scalar) :
+                                      static_cast<void*>(score_threshold)),
+        (void*)result_summary};
+
+    auto node_def = CpuKernelUtils::CpuKernelUtils::CreateNodeDef();
+    NodeDefBuilder(node_def.get(), "NonMaxSuppressionV3", "NonMaxSuppressionV3")
+        .Input({"boxes", DT_FLOAT, {2, 4}, datas[0]})
+        .Input({"scores", DT_FLOAT, {2}, datas[1]})
+        .Input({"max_output_size", DT_INT32, max_shape, datas[2]})
+        .Input({"iou_threshold", DT_FLOAT, iou_shape, datas[3]})
+        .Input({"score_threshold", DT_FLOAT, score_shape, datas[4]})
+        .Output({"selected_indices", DT_UINT64, {-1}, datas[5]});
+    CpuKernelContext context(HOST);
+    const uint32_t init_ret = context.Init(node_def.get());
+    if (init_ret != KERNEL_STATUS_OK) {
+        return init_ret;
+    }
+    return CpuKernelRegister::Instance().RunCpuKernel(context);
 }
+} // namespace
 
 class TEST_NON_MAX_SUPPRESSION_V3_UT : public testing::Test {};
 
@@ -154,6 +190,13 @@ ADD_CASE(Eigen::half, DT_FLOAT16)
 ADD_CASE(float, DT_FLOAT)
 ADD_NULL_CASE(float, DT_FLOAT)
 ADD_MEMCOPY_CASE_INVALID_PTR(float, DT_FLOAT)
+
+TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, TestNonMaxSuppressionV3_RejectsNonScalarControlInputs)
+{
+    EXPECT_EQ(RunControlShapeCase({2}, {1}, {1}), KERNEL_STATUS_PARAM_INVALID);
+    EXPECT_EQ(RunControlShapeCase({1}, {2}, {1}), KERNEL_STATUS_PARAM_INVALID);
+    EXPECT_EQ(RunControlShapeCase({1}, {1}, {2}), KERNEL_STATUS_PARAM_INVALID);
+}
 
 TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, TestNonMaxSuppressionV3noattr)
 {
