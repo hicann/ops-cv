@@ -52,9 +52,9 @@ static constexpr int32_t kOutBackpropIdx = 2;
 
 // ========== 解析后的属性 ==========
 struct ParsedAttrs {
-    int32_t strides[4] = {1, 1, 1, 1};
-    int32_t rates[4] = {1, 1, 1, 1};
-    int32_t pads[4] = {0, 0, 0, 0};
+    int64_t strides[4] = {1, 1, 1, 1};
+    int64_t rates[4] = {1, 1, 1, 1};
+    int64_t pads[4] = {0, 0, 0, 0};
     std::string paddingMode = "SAME";
     std::string dataFormat = "NHWC";
     bool ceilMode = false;
@@ -143,7 +143,7 @@ static ge::graphStatus ValidateAttr(gert::TilingContext* context, ParsedAttrs& p
     auto stridesData = stridesVec->GetData();
     OP_CHECK_NULL_WITH_CONTEXT(context, stridesData);
     for (size_t i = 0; i < ATTR_LIST_LEN; i++) {
-        parsed.strides[i] = static_cast<int32_t>(stridesData[i]);
+        parsed.strides[i] = stridesData[i];
     }
     // SE §6.3 单参数约束: rates 长度=4
     auto ratesVec = runtimeAttrs->GetListInt(1);
@@ -155,7 +155,7 @@ static ge::graphStatus ValidateAttr(gert::TilingContext* context, ParsedAttrs& p
     auto ratesData = ratesVec->GetData();
     OP_CHECK_NULL_WITH_CONTEXT(context, ratesData);
     for (size_t i = 0; i < ATTR_LIST_LEN; i++) {
-        parsed.rates[i] = static_cast<int32_t>(ratesData[i]);
+        parsed.rates[i] = ratesData[i];
     }
     // SE §6.3 单参数约束: padding_mode ∈ {SAME, VALID, CALCULATED}
     const char* padModeStr = runtimeAttrs->GetStr(2);
@@ -175,7 +175,7 @@ static ge::graphStatus ValidateAttr(gert::TilingContext* context, ParsedAttrs& p
     auto padsData = padsVec->GetData();
     OP_CHECK_NULL_WITH_CONTEXT(context, padsData);
     for (size_t i = 0; i < ATTR_LIST_LEN; i++) {
-        parsed.pads[i] = static_cast<int32_t>(padsData[i]);
+        parsed.pads[i] = padsData[i];
     }
     // SE §6.3 单参数约束: ceil_mode
     const bool* ceilModePtr = runtimeAttrs->GetBool(4);

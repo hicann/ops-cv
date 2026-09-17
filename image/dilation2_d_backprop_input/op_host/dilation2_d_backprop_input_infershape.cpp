@@ -35,9 +35,9 @@ static constexpr size_t ATTR_LIST_LEN = 4;
 
 // 解析后的属性
 struct InfershapeAttrs {
-    int32_t strides[4] = {1, 1, 1, 1};
-    int32_t rates[4] = {1, 1, 1, 1};
-    int32_t pads[4] = {0, 0, 0, 0};
+    int64_t strides[4] = {1, 1, 1, 1};
+    int64_t rates[4] = {1, 1, 1, 1};
+    int64_t pads[4] = {0, 0, 0, 0};
     std::string paddingMode = "SAME";
     std::string dataFormat = "NHWC";
     bool ceilMode = false;
@@ -83,7 +83,7 @@ static ge::graphStatus ValidateStridesRates(const gert::RuntimeAttrs* attrs, Inf
                 OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "strides", "H/W must be > 0", "positive"),
                 return GRAPH_FAILED);
     for (size_t i = 0; i < ATTR_LIST_LEN; i++) {
-        parsed.strides[i] = static_cast<int32_t>(stridesData[i]);
+        parsed.strides[i] = stridesData[i];
     }
 
     const auto* ratesVec = attrs->GetListInt(1);
@@ -100,7 +100,7 @@ static ge::graphStatus ValidateStridesRates(const gert::RuntimeAttrs* attrs, Inf
                 OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "rates", "H/W must be > 0", "positive"),
                 return GRAPH_FAILED);
     for (size_t i = 0; i < ATTR_LIST_LEN; i++) {
-        parsed.rates[i] = static_cast<int32_t>(ratesData[i]);
+        parsed.rates[i] = ratesData[i];
     }
     return GRAPH_SUCCESS;
 }
@@ -126,7 +126,7 @@ static ge::graphStatus ValidatePaddingAttrs(const gert::RuntimeAttrs* attrs, Inf
     const int64_t* padsData = padsVec->GetData();
     OP_CHECK_NULL_WITH_CONTEXT(context, padsData);
     for (size_t i = 0; i < ATTR_LIST_LEN; i++) {
-        parsed.pads[i] = static_cast<int32_t>(padsData[i]);
+        parsed.pads[i] = padsData[i];
     }
 
     const bool* ceilModePtr = attrs->GetBool(4);
