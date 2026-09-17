@@ -1,17 +1,17 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <iostream>
 #include <vector>
 #include "acl/acl.h"
-#include "aclnnop/aclnn_upsample_bilinear_2d_backward_v2.h"
+#include "aclnnop/aclnn_upsample_bicubic_2d_backward.h"
 
 #define CHECK_RET(cond, return_expr) \
     do {                             \
@@ -80,13 +80,13 @@ int main()
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
 
     // 2. 构造输入与输出，需要根据API的接口自定义构造
-    std::vector<int64_t> selfShape = {1, 1, 6, 6};
+    std::vector<int64_t> selfShape = {1, 1, 2, 2};
     std::vector<int64_t> outShape = {1, 1, 3, 3};
     void* selfDeviceAddr = nullptr;
     void* outDeviceAddr = nullptr;
     aclTensor* self = nullptr;
     aclTensor* out = nullptr;
-    std::vector<float> selfHostData(36, 1);
+    std::vector<float> selfHostData = {1, 2, 3, 4.1};
     std::vector<float> outHostData = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // 创建self aclTensor
@@ -97,7 +97,7 @@ int main()
     ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT, &out);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
-    std::vector<int64_t> outArraySize = {6, 6};
+    std::vector<int64_t> outArraySize = {2, 2};
     const aclIntArray* outputSize = aclCreateIntArray(outArraySize.data(), outArraySize.size());
     CHECK_RET(outputSize != nullptr, return ACL_ERROR_INTERNAL_ERROR);
 
@@ -105,14 +105,15 @@ int main()
     const aclIntArray* inputSize = aclCreateIntArray(inputArraySize.data(), inputArraySize.size());
     CHECK_RET(inputSize != nullptr, return ACL_ERROR_INTERNAL_ERROR);
 
-    // 3. 调用CANN算子库API，需要修改为具体的API名称
+    // 3. 调用CANN算子库API，需要修改为具体的Api名称
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
-    // 调用aclnnUpsampleBilinear2dBackwardV2第一段接口
-    ret = aclnnUpsampleBilinear2dBackwardV2GetWorkspaceSize(self, outputSize, inputSize, 1, 2, 2, out, &workspaceSize,
-                                                            &executor);
-    CHECK_RET(ret == ACL_SUCCESS,
-              LOG_PRINT("aclnnUpsampleBilinear2dBackwardV2GetWorkspaceSize failed. ERROR: %d\n", ret);
+    const double scalesH = 1.1;
+    const double scalesW = 1.1;
+    // 调用aclnnUpsampleBicubic2dBackward第一段接口
+    ret = aclnnUpsampleBicubic2dBackwardGetWorkspaceSize(self, outputSize, inputSize, 1, scalesH, scalesW, out,
+                                                         &workspaceSize, &executor);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBicubic2dBackwardGetWorkspaceSize failed. ERROR: %d\n", ret);
               return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
     void* workspaceAddr = nullptr;
@@ -120,9 +121,9 @@ int main()
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
-    // 调用aclnnUpsampleBilinear2dBackwardV2第二段接口
-    ret = aclnnUpsampleBilinear2dBackwardV2(workspaceAddr, workspaceSize, executor, stream);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBilinear2dBackwardV2 failed. ERROR: %d\n", ret); return ret);
+    // 调用aclnnUpsampleBicubic2dBackward第二段接口
+    ret = aclnnUpsampleBicubic2dBackward(workspaceAddr, workspaceSize, executor, stream);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnUpsampleBicubic2dBackward failed. ERROR: %d\n", ret); return ret);
 
     // 4. （固定写法）同步等待任务执行结束
     ret = aclrtSynchronizeStream(stream);
@@ -138,7 +139,7 @@ int main()
         LOG_PRINT("result[%ld] is: %f\n", i, resultData[i]);
     }
 
-    // 6. 释放aclTensor和aclScalar，需要根据具体API的接口定义修改
+    // 6. 释放aclTensor，需要根据具体API的接口定义修改
     aclDestroyTensor(self);
     aclDestroyTensor(out);
     aclDestroyIntArray(outputSize);

@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 #include "acl/acl.h"
-#include "aclnnop/aclnn_grid_sampler3d.h"
+#include "aclnnop/aclnn_grid_sampler2d.h"
 
 #define CHECK_RET(cond, return_expr) \
     do {                             \
@@ -54,7 +54,7 @@ int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& 
     // 调用aclrtMalloc申请device侧内存
     auto ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
-    // 调用aclrtMemcpy将host侧数据拷贝到device侧内存上
+    // 调用aclrtMemcpy将host侧数据复制到device侧内存上
     ret = aclrtMemcpy(*deviceAddr, size, hostData.data(), size, ACL_MEMCPY_HOST_TO_DEVICE);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMemcpy failed. ERROR: %d\n", ret); return ret);
 
@@ -65,7 +65,7 @@ int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& 
     }
 
     // 调用aclCreateTensor接口创建aclTensor
-    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_NCDHW,
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, strides.data(), 0, aclFormat::ACL_FORMAT_ND,
                               shape.data(), shape.size(), *deviceAddr);
     return 0;
 }
@@ -83,9 +83,9 @@ int main()
     int64_t interpolationMode = 0;
     int64_t paddingMode = 0;
     bool alignCorners = false;
-    std::vector<int64_t> inputShape = {1, 1, 1, 3, 3};
-    std::vector<int64_t> gridShape = {1, 1, 2, 2, 3};
-    std::vector<int64_t> outShape = {1, 1, 1, 2, 2};
+    std::vector<int64_t> inputShape = {1, 1, 5, 8};
+    std::vector<int64_t> gridShape = {1, 3, 3, 2};
+    std::vector<int64_t> outShape = {1, 1, 3, 3};
     void* inputDeviceAddr = nullptr;
     void* gridDeviceAddr = nullptr;
     void* outDeviceAddr = nullptr;
@@ -93,9 +93,10 @@ int main()
     aclTensor* grid = nullptr;
     aclTensor* out = nullptr;
 
-    std::vector<float> inputHostData = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::vector<float> gridHostData = {-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0};
-    std::vector<float> outHostData = {0, 0, 0, 0};
+    std::vector<float> inputHostData = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                                        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
+    std::vector<float> gridHostData = {-1, -1, 0, -1, 1, -1, -1, 0, 0, 0, 1, 0, -1, 1, 0, 1, 1, 1};
+    std::vector<float> outHostData = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // 创建input aclTensor
     ret = CreateAclTensor(inputHostData, inputShape, &inputDeviceAddr, aclDataType::ACL_FLOAT, &input);
@@ -110,30 +111,39 @@ int main()
     // 3. 调用CANN算子库API，需要修改为具体的Api名称
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor;
-    // 调用aclnnGridSampler3D第一段接口
-    ret = aclnnGridSampler3DGetWorkspaceSize(input, grid, interpolationMode, paddingMode, alignCorners, out,
+    // 调用aclnnGridSampler2D第一段接口
+    ret = aclnnGridSampler2DGetWorkspaceSize(input, grid, interpolationMode, paddingMode, alignCorners, out,
                                              &workspaceSize, &executor);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler3DGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler2DGetWorkspaceSize failed. ERROR: %d.\n[ERROR msg]%s", ret,
+                                            aclGetRecentErrMsg());
+              return ret);
     // 根据第一段接口计算出的workspaceSize申请device内存
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
+        CHECK_RET(ret == ACL_SUCCESS,
+                  LOG_PRINT("allocate workspace failed. ERROR: %d.\n[ERROR msg]%s", ret, aclGetRecentErrMsg());
+                  return ret);
     }
-    // 调用aclnnGridSampler3D第二段接口
-    ret = aclnnGridSampler3D(workspaceAddr, workspaceSize, executor, stream);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnGridSampler3D failed. ERROR: %d\n", ret); return ret);
+    // 调用aclnnGridSampler2D第二段接口
+    ret = aclnnGridSampler2D(workspaceAddr, workspaceSize, executor, stream);
+    CHECK_RET(ret == ACL_SUCCESS,
+              LOG_PRINT("aclnnGridSampler2D failed. ERROR: %d.\n[ERROR msg]%s", ret, aclGetRecentErrMsg());
+              return ret);
 
     // 4. （固定写法）同步等待任务执行结束
     ret = aclrtSynchronizeStream(stream);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
+    CHECK_RET(ret == ACL_SUCCESS,
+              LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d.\n[ERROR msg]%s", ret, aclGetRecentErrMsg());
+              return ret);
 
-    // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
+    // 5. 获取输出的值，将device侧内存上的结果复制至host侧，需要根据具体API的接口定义修改
     auto size = GetShapeSize(outShape);
     std::vector<float> resultData(size, 0);
     ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), outDeviceAddr,
                       size * sizeof(resultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy resultData from device to host failed. ERROR: %d\n", ret);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy resultData from device to host failed. ERROR: %d.\n[ERROR msg]%s",
+                                            ret, aclGetRecentErrMsg());
               return ret);
     for (int64_t i = 0; i < size; i++) {
         LOG_PRINT("resultData[%ld] is: %f\n", i, resultData[i]);
@@ -144,7 +154,7 @@ int main()
     aclDestroyTensor(grid);
     aclDestroyTensor(out);
 
-    // 7. 释放device资源，需要根据具体API的接口定义修改
+    // 7. 释放Device资源，需要根据具体API的接口定义修改
     aclrtFree(inputDeviceAddr);
     aclrtFree(gridDeviceAddr);
     aclrtFree(outDeviceAddr);
@@ -154,5 +164,6 @@ int main()
     aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
     aclFinalize();
+
     return 0;
 }
