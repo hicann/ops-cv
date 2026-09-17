@@ -118,6 +118,9 @@ ge::graphStatus ResizeBicubicV2Tiling::GetInputSize()
     auto size = context_->GetInputShape(DIM_1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, size);
     gert::Shape sizeShape = size->GetStorageShape();
+    OP_CHECK_IF(sizeShape.GetDimNum() != 1,
+                OP_LOGE(context_->GetNodeName(), "size must be 1D, but rank is %zu", sizeShape.GetDimNum()),
+                return ge::GRAPH_FAILED);
     int32_t sizeElms = sizeShape.GetShapeSize();
     OP_CHECK_IF(sizeElms != DIM_2,
                 OP_LOGE_FOR_INVALID_SHAPESIZE(context_->GetNodeName(), "size", std::to_string(sizeElms).c_str(),

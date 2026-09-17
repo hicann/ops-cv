@@ -30,7 +30,7 @@ protected:
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_01)
 {
     gert::StorageShape inputXShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
     int size_value[2] = {32, 32};
 
@@ -53,7 +53,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_01)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_02)
 {
     gert::StorageShape inputXShape = {{1, 225, 225, 128}, {1, 225, 225, 128}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 113, 113, 128}, {1, 113, 113, 128}};
     int size_value[2] = {113, 113};
 
@@ -77,7 +77,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_02)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_03)
 {
     gert::StorageShape inputXShape = {{1, 3, 16, 16}, {1, 3, 16, 16}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
     int size_value[2] = {32, 32};
 
@@ -98,7 +98,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_03)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_04)
 {
     gert::StorageShape inputXShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 3, 64, 64}, {1, 3, 64, 64}};
     int size_value[2] = {64, 64};
 
@@ -119,7 +119,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_04)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_05)
 {
     gert::StorageShape inputXShape = {{1, 16, 16, 64}, {1, 16, 16, 64}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 32, 32, 64}, {1, 32, 32, 64}};
     int size_value[2] = {32, 32};
 
@@ -140,7 +140,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_05)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_06)
 {
     gert::StorageShape inputXShape = {{1, 3, 64, 64}, {1, 3, 64, 64}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 3, 20, 20}, {1, 3, 20, 20}};
     int size_value[2] = {20, 20};
 
@@ -169,7 +169,7 @@ static inline int64_t GetIsInt32FromTilingKey(int64_t tilingKey) { return (tilin
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_07_nhwc_single_dim_h)
 {
     gert::StorageShape inputXShape = {{1, 16, 16, 64}, {1, 16, 16, 64}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 32, 16, 64}, {1, 32, 16, 64}}; // H:16->32, W:16 不变
     int size_value[2] = {32, 16};
 
@@ -191,7 +191,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_07_nhwc_single_dim_h)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_08_nhwc_single_dim_w)
 {
     gert::StorageShape inputXShape = {{1, 16, 16, 64}, {1, 16, 16, 64}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 16, 32, 64}, {1, 16, 32, 64}}; // W:16->32, H:16 不变
     int size_value[2] = {16, 32};
 
@@ -217,7 +217,7 @@ TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_08_nhwc_single_dim_w)
 TEST_F(ResizeBicubicV2TilingTest, resize_bicubic_v2_tiling_09_int32_overflow_coarse)
 {
     gert::StorageShape inputXShape = {{1, 1, 2147483648, 1}, {1, 1, 2147483648, 1}}; // lenSrcH = 2147483648 > INT32_MAX
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{1, 1, 70, 83}, {1, 1, 70, 83}};
     int size_value[2] = {70, 83};
 

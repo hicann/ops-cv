@@ -25,7 +25,7 @@ protected:
 TEST_F(ResizeBicubicV2InfershapeTest, resize_bicubic_v2_infershape_test_01)
 {
     gert::StorageShape inputXShape = {{1, 3, 32, 32}, {1, 3, 32, 32}};
-    gert::StorageShape inputSizeShape = {{1, 2}, {1, 2}};
+    gert::StorageShape inputSizeShape = {{2}, {2}};
     gert::StorageShape outputShape = {{
                                           -2,
                                       },
