@@ -69,7 +69,7 @@ public:
 
 private:
     void setScale();
-    void get_scale_from_out();
+    ge::graphStatus get_scale_from_out();
     inline float compute_scale_value(const int64_t inputSize, const int64_t outputSize, const bool alignCorners,
                                      const float scale) const;
     bool getWorkSpace(const uint32_t needCoreNum);
@@ -129,14 +129,37 @@ void UpsampleBilinear2dTiling::setScale()
     tilingData.set_scale_w(realScale_w);
 }
 
-void UpsampleBilinear2dTiling::get_scale_from_out()
+ge::graphStatus UpsampleBilinear2dTiling::get_scale_from_out()
 {
     const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
+    if (attrs == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     align_corners = attrs->GetAttrPointer<bool>(ALIGN_CORNERS_ATTR);
+    if (align_corners == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     const gert::ContinuousVector* scalesAttr = attrs->GetAttrPointer<gert::ContinuousVector>(SCALES_ATTR);
+    scale_h = 0.0f;
+    scale_w = 0.0f;
+    if (scalesAttr == nullptr) {
+        return ge::GRAPH_SUCCESS;
+    }
+    const size_t scalesSize = scalesAttr->GetSize();
+    OP_CHECK_IF(
+        scalesSize != 0 && scalesSize != NUM_TWO,
+        OP_LOGE(tilingContext->GetNodeName(), "scales must be empty or contain 2 elements, but got %zu", scalesSize),
+        return ge::GRAPH_FAILED);
+    if (scalesSize == 0) {
+        return ge::GRAPH_SUCCESS;
+    }
     const float* scalesArray = reinterpret_cast<const float*>(scalesAttr->GetData());
+    if (scalesArray == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     scale_h = scalesArray[DIM_ZERO];
     scale_w = scalesArray[DIM_ONE];
+    return ge::GRAPH_SUCCESS;
 }
 
 inline float UpsampleBilinear2dTiling::compute_scale_value(const int64_t inputSize, const int64_t outputSize,
@@ -183,7 +206,9 @@ ge::graphStatus UpsampleBilinear2dTiling::RunBigKernelTiling()
     if (srcTensor == nullptr) {
         return ge::GRAPH_FAILED;
     }
-    get_scale_from_out();
+    if (get_scale_from_out() != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
 
     auto temp = tilingContext->GetInputDesc(0);
     if (temp == nullptr) {

@@ -47,6 +47,46 @@ TEST_F(UpsampleBilinear2dTiling, upsample_bilinear2d_tiling_001)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
+TEST_F(UpsampleBilinear2dTiling, upsample_bilinear2d_scales_empty_uses_output_size)
+{
+    optiling::UpsampleBilinear2dCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2d",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    EXPECT_EQ(tilingInfo.tilingKey, 1);
+    EXPECT_GT(tilingInfo.blockNum, 0);
+}
+
+TEST_F(UpsampleBilinear2dTiling, upsample_bilinear2d_scales_one_element_rejected)
+{
+    optiling::UpsampleBilinear2dCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2d",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({2}))},
+        &compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
 TEST_F(UpsampleBilinear2dTiling, upsample_bilinear2d_tiling_002)
 {
     optiling::UpsampleBilinear2dCompileInfo compileInfo = {1};
