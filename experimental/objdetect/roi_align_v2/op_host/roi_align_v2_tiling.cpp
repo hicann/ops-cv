@@ -13,6 +13,8 @@
  * \brief
  */
 
+#include <limits>
+
 #include "log/log.h"
 #include "util/math_util.h"
 #include "op_host/tiling_util.h"
@@ -24,6 +26,8 @@
 namespace optiling {
 
 using namespace Ops::Cv::OpTiling;
+
+static constexpr int64_t MAX_POOLED_SIZE = std::numeric_limits<int32_t>::max();
 
 struct RoiAlignV2CompileInfo {};
 
@@ -84,12 +88,19 @@ static ge::graphStatus RoiAlignV2TilingFunc(gert::TilingContext* context)
     if (attrs != nullptr) {
         const int64_t* pooledHeightAttr = attrs->GetInt(0);
         if (pooledHeightAttr != nullptr) {
+            OP_CHECK_IF(
+                *pooledHeightAttr > MAX_POOLED_SIZE,
+                OP_LOGE(context, "pooled_height[%ld] exceeds INT32_MAX[%ld]", *pooledHeightAttr, MAX_POOLED_SIZE),
+                return ge::GRAPH_FAILED);
             pooledHeight = static_cast<int32_t>(*pooledHeightAttr);
         }
     }
     if (attrs != nullptr) {
         const int64_t* pooledWidthAttr = attrs->GetInt(1);
         if (pooledWidthAttr != nullptr) {
+            OP_CHECK_IF(*pooledWidthAttr > MAX_POOLED_SIZE,
+                        OP_LOGE(context, "pooled_width[%ld] exceeds INT32_MAX[%ld]", *pooledWidthAttr, MAX_POOLED_SIZE),
+                        return ge::GRAPH_FAILED);
             pooledWidth = static_cast<int32_t>(*pooledWidthAttr);
         }
     }

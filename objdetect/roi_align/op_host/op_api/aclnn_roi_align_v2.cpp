@@ -8,6 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <limits>
+
 #include "aclnn_roi_align_v2.h"
 #include "roi_align.h"
 #include "aclnn_kernels/contiguous.h"
@@ -36,6 +38,7 @@ static constexpr size_t DIM_TWO = 2;
 static constexpr size_t DIM_THREE = 3;
 static constexpr size_t DIM_FOUR = 4;
 static constexpr size_t DIM_FIVE = 5;
+static constexpr int64_t MAX_POOLED_SIZE = std::numeric_limits<int32_t>::max();
 
 static const std::initializer_list<DataType> FLOAT_DTYPE_SUPPORT_LIST = {DataType::DT_FLOAT, DataType::DT_FLOAT16};
 
@@ -64,6 +67,16 @@ static bool CheckFormatValid(const aclTensor* self, const aclTensor* boxes, cons
         return false;
     }
 
+    return true;
+}
+
+static bool CheckPooledSizeValid(int64_t pooledHeight, int64_t pooledWidth)
+{
+    if (pooledHeight > MAX_POOLED_SIZE || pooledWidth > MAX_POOLED_SIZE) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "pooledHeight [%ld] and pooledWidth [%ld] must not exceed INT32_MAX [%ld]",
+                pooledHeight, pooledWidth, MAX_POOLED_SIZE);
+        return false;
+    }
     return true;
 }
 
@@ -136,10 +149,13 @@ static aclnnStatus CheckParams(const aclTensor* self, const aclTensor* boxes, co
     // 3. 检查输入、输出的数据格式是否支持
     CHECK_RET(CheckFormatValid(self, boxes, out), ACLNN_ERR_PARAM_INVALID);
 
-    // 4. 检查输入tensor的shape
+    // 4. 检查池化尺寸是否能安全传递给 int32 表示的执行链路
+    CHECK_RET(CheckPooledSizeValid(pooledHeight, pooledWidth), ACLNN_ERR_PARAM_INVALID);
+
+    // 5. 检查输入tensor的shape
     CHECK_RET(CheckShape(self, boxes, out, pooledHeight, pooledWidth), ACLNN_ERR_PARAM_INVALID);
 
-    // 5. 检查属性
+    // 6. 检查属性
     CHECK_RET(CheckAttr(samplingRatio, spatialScale), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;

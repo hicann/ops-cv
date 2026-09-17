@@ -20,6 +20,8 @@
  * \file roi_align_infershape.cpp
  * \brief
  */
+#include <limits>
+
 #include "register/op_impl_registry.h"
 #include "log/log.h"
 #include "util/shape_util.h"
@@ -27,6 +29,8 @@
 using namespace ge;
 
 namespace ops {
+
+static constexpr int64_t MAX_POOLED_SIZE = std::numeric_limits<int32_t>::max();
 
 static ge::graphStatus InferShapeRoiAlignV2(gert::InferShapeContext* context)
 {
@@ -62,10 +66,16 @@ static ge::graphStatus InferShapeRoiAlignV2(gert::InferShapeContext* context)
     if (attrs != nullptr) {
         const int64_t* heighthAttr = attrs->GetInt(0);
         if (heighthAttr != nullptr) {
+            OP_CHECK_IF(*heighthAttr > MAX_POOLED_SIZE,
+                        OP_LOGE(context, "pooled_height[%ld] exceeds INT32_MAX[%ld]", *heighthAttr, MAX_POOLED_SIZE),
+                        return GRAPH_FAILED);
             pooledHeight = static_cast<int32_t>(*heighthAttr);
         }
         const int64_t* widthAttr = attrs->GetInt(1);
         if (widthAttr != nullptr) {
+            OP_CHECK_IF(*widthAttr > MAX_POOLED_SIZE,
+                        OP_LOGE(context, "pooled_width[%ld] exceeds INT32_MAX[%ld]", *widthAttr, MAX_POOLED_SIZE),
+                        return GRAPH_FAILED);
             pooledWidth = static_cast<int32_t>(*widthAttr);
         }
     }
