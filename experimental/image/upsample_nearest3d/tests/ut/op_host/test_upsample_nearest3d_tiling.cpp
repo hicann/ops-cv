@@ -66,6 +66,31 @@ void ExecuteUint8TilingCase(const char* opType, const std::vector<int64_t>& inpu
         << "unexpected UINT8 tiling key: " << tilingInfo.tilingKey;
     blockDim = tilingInfo.blockNum;
 }
+
+gert::TilingContextPara MakeArch35ShapeCase(const std::vector<int64_t>& inputShape,
+                                            const std::vector<int64_t>& outputShape,
+                                            const std::vector<int64_t>& outputSize,
+                                            UpsampleNearest3dCompileInfo& compileInfo)
+{
+    const gert::TilingContextPara::TensorDescription inputDesc(MakeStorageShape(inputShape), ge::DT_FLOAT,
+                                                               ge::FORMAT_ND);
+    const gert::TilingContextPara::TensorDescription outputDesc(MakeStorageShape(outputShape), ge::DT_FLOAT,
+                                                                ge::FORMAT_ND);
+    return gert::TilingContextPara(
+        "UpsampleNearest3d", {inputDesc}, {outputDesc},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom(outputSize)),
+         gert::TilingContextPara::OpAttr("scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)),
+         gert::TilingContextPara::OpAttr("scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)),
+         gert::TilingContextPara::OpAttr("scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0f))},
+        &compileInfo, "Ascend950");
+}
+
+void ExpectArch35Rejected(const std::vector<int64_t>& inputShape, const std::vector<int64_t>& outputShape,
+                          const std::vector<int64_t>& outputSize, UpsampleNearest3dCompileInfo& compileInfo)
+{
+    auto tilingContextPara = MakeArch35ShapeCase(inputShape, outputShape, outputSize, compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
 } // namespace
 
 TEST_F(UpsampleNearest3dTiling, Ascend910B_uint8_common_when_group_parallelism_is_insufficient)
@@ -119,6 +144,51 @@ TEST_F(UpsampleNearest3dTiling, Ascend910B_uint8_common_with_large_output_row_co
     ExecuteUint8TilingCase("UpsampleNearest3d", {1, 1, 1, 1, 32}, {1, 1, 255, 257, 32}, {255, 257, 32}, compileInfo,
                            {UINT8_COMMON_KEY}, blockDim);
     EXPECT_EQ(255 * 257, 65535);
+}
+
+TEST_F(UpsampleNearest3dTiling, Arch35_positive_spatial_shape_is_accepted)
+{
+    UpsampleNearest3dCompileInfo compileInfo = {64};
+    auto tilingContextPara = MakeArch35ShapeCase({2, 2, 4, 5, 6}, {2, 2, 8, 8, 7}, {8, 8, 7}, compileInfo);
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(UpsampleNearest3dTiling, Arch35_zero_spatial_shape_is_rejected)
+{
+    UpsampleNearest3dCompileInfo compileInfo = {64};
+    ExpectArch35Rejected({2, 2, 4, 5, 6}, {2, 2, 0, 8, 7}, {0, 8, 7}, compileInfo);
+}
+
+TEST_F(UpsampleNearest3dTiling, Arch35_negative_output_dimensions_are_rejected)
+{
+    for (size_t axis = 0; axis < 3; ++axis) {
+        const std::vector<int64_t> outputSize = {8, 8, 7};
+        std::vector<int64_t> outputShape = {2, 2, 8, 8, 7};
+        outputShape[axis + 2] = -3;
+        UpsampleNearest3dCompileInfo compileInfo = {64};
+        ExpectArch35Rejected({2, 2, 4, 5, 6}, outputShape, outputSize, compileInfo);
+    }
+}
+
+TEST_F(UpsampleNearest3dTiling, Arch35_negative_input_dimensions_are_rejected)
+{
+    for (size_t axis = 2; axis < 5; ++axis) {
+        std::vector<int64_t> inputShape = {2, 2, 4, 5, 6};
+        inputShape[axis] = -3;
+        UpsampleNearest3dCompileInfo compileInfo = {64};
+        ExpectArch35Rejected(inputShape, {2, 2, 8, 8, 7}, {8, 8, 7}, compileInfo);
+    }
+}
+
+TEST_F(UpsampleNearest3dTiling, Arch35_non_positive_output_size_is_rejected)
+{
+    for (size_t axis = 0; axis < 3; ++axis) {
+        std::vector<int64_t> outputSize = {8, 8, 7};
+        outputSize[axis] = axis == 0 ? 0 : -1;
+        UpsampleNearest3dCompileInfo compileInfo = {64};
+        ExpectArch35Rejected({2, 2, 4, 5, 6}, {2, 2, 8, 8, 7}, outputSize, compileInfo);
+    }
 }
 
 TEST_F(UpsampleNearest3dTiling, Ascend910B_upsample_nearest3d_tiling_001)

@@ -306,8 +306,6 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckShapes()
                                                   "The shapes of input x and output y must be 5D");
         return ge::GRAPH_FAILED;
     }
-    int64_t inputSize = inputShape_.GetShapeSize();
-    int64_t outputSize = outShape_.GetShapeSize();
     baseTiling_.dimN = inputShape_.GetDim(CONST_0);
     baseTiling_.dimC = inputShape_.GetDim(CONST_1);
     baseTiling_.inD = inputShape_.GetDim(CONST_2);
@@ -316,13 +314,31 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckShapes()
     baseTiling_.outD = outShape_.GetDim(CONST_2);
     baseTiling_.outH = outShape_.GetDim(CONST_3);
     baseTiling_.outW = outShape_.GetDim(CONST_4);
-    baseTiling_.outSize = outputSize;
+
+    const std::string shapeMsg = Ops::Base::ToString(inputShape_) + " and " + Ops::Base::ToString(outShape_);
+    const auto isInvalidConcreteDim = [](int64_t dim) { return dim < 0 && dim != ge::UNKNOWN_DIM; };
+    OP_CHECK_IF(isInvalidConcreteDim(baseTiling_.dimN) || isInvalidConcreteDim(baseTiling_.dimC) ||
+                    isInvalidConcreteDim(baseTiling_.inD) || isInvalidConcreteDim(baseTiling_.inH) ||
+                    isInvalidConcreteDim(baseTiling_.inW) || isInvalidConcreteDim(outShape_.GetDim(CONST_0)) ||
+                    isInvalidConcreteDim(outShape_.GetDim(CONST_1)) || isInvalidConcreteDim(baseTiling_.outD) ||
+                    isInvalidConcreteDim(baseTiling_.outH) || isInvalidConcreteDim(baseTiling_.outW),
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(),
+                                                       "The dimensions of input x and output y must be non-negative, "
+                                                       "except for UNKNOWN_DIM"),
+                return ge::GRAPH_FAILED);
+
+    int64_t inputSize = inputShape_.GetShapeSize();
+    int64_t outputSize = outShape_.GetShapeSize();
     if (inputSize == 0 || outputSize == 0) {
-        std::string shapeMsg = Ops::Base::ToString(inputShape_) + " and " + Ops::Base::ToString(outShape_);
         OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(),
                                                "Input x and output y cannot be empty tensors");
         return ge::GRAPH_FAILED;
     }
+    OP_CHECK_IF(inputSize < 0 || outputSize < 0,
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context_->GetNodeName(), "x and y", shapeMsg.c_str(),
+                                                       "The shape sizes of input x and output y must be positive"),
+                return ge::GRAPH_FAILED);
+    baseTiling_.outSize = outputSize;
     int64_t uint32Max = static_cast<int64_t>(std::numeric_limits<uint32_t>::max());
     int64_t int32Max = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
     int32_t isUint32 = static_cast<int32_t>((inputSize <= uint32Max) && (outputSize <= uint32Max) &&
@@ -430,6 +446,12 @@ ge::graphStatus UpsampleNearest3dRegbaseTiling::GetAndCheckAttrs()
         outH = outData[CONST_1];
         outW = outData[CONST_2];
     }
+    const std::string outputSizeMsg = "(" + std::to_string(outD) + ", " + std::to_string(outH) + ", " +
+                                      std::to_string(outW) + ")";
+    OP_CHECK_IF(outD <= 0 || outH <= 0 || outW <= 0,
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "output_size", outputSizeMsg.c_str(),
+                                                      "Each value of output_size must be greater than zero"),
+                return ge::GRAPH_FAILED);
     if ((baseTiling_.outD != outD) || (baseTiling_.outH != outH) || (baseTiling_.outW != outW)) {
         std::string reasonMsg = "The D/H/W-dimensions of output y must be the same as the value (" +
                                 std::to_string(outD) + ", " + std::to_string(outH) + ", " + std::to_string(outW) +
