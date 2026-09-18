@@ -122,7 +122,7 @@ private:
 void UpsampleNearestExact2dGradTiling::setScale()
 {
     if (dim == H_INDEX) {
-        const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+        const int64_t* output_size_array = static_cast<const int64_t*>(output_size->GetData());
         realScale_h = compute_scale_value(input_shape.GetDim(H_INDEX), output_size_array[H_INDEX], scale_h);
         realScale_w = compute_scale_value(input_shape.GetDim(W_INDEX), output_size_array[W_INDEX], scale_w);
 
@@ -352,7 +352,7 @@ void UpsampleNearestExact2dGradTiling::getWorkSpace(uint32_t needCoreNum)
 
 void UpsampleNearestExact2dGradTiling::getOutputShape()
 {
-    const int64_t* output_size_array = reinterpret_cast<const int64_t*>(output_size->GetData());
+    const int64_t* output_size_array = static_cast<const int64_t*>(output_size->GetData());
     for (int8_t i = 0; i < SHAPE_SIZE; i++) {
         input_shapes[i] = input_shape.GetDim(i);
         output_shapes[i] = input_shape.GetDim(i);
