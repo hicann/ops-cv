@@ -87,7 +87,7 @@ int main()
     aclTensor* input = nullptr;
     aclTensor* out = nullptr;
     std::vector<float> inputHostData = {0, 1, 2, 3, 4, 5, 6, 7};
-    std::vector<float> outHostData(32, 0);
+    std::vector<float> outHostData(static_cast<size_t>(GetShapeSize(outShape)), 0);
     std::vector<int64_t> outputSize = {4, 2};
     std::vector<int64_t> inputSize = {1, 1, 8, 4};
     double scalesH = 0.5;
