@@ -39,7 +39,6 @@ constexpr size_t H_DIM_IDX_NCHW = 2;
 constexpr size_t H_DIM_IDX_NHWC = 1;
 constexpr size_t W_DIM_IDX_NCHW = 3;
 constexpr size_t W_DIM_IDX_NHWC = 2;
-constexpr size_t WORKSPACE_SIZE = 16 * 1024 * 1024;
 constexpr uint64_t SCHEDULE_ID_DATA_COPY_SMALL_C = 0;
 constexpr uint64_t SCHEDULE_ID_DATA_COPY_BIG_C = 1;
 constexpr uint64_t SCHEDULE_ID_DATA_COPY_JH_C = 2;
@@ -1126,9 +1125,12 @@ ge::graphStatus ResizeNearestNeighborV2AscendCTilingImpl::DoTiling()
             static_cast<int64_t>(schId_), static_cast<int64_t>(format_), static_cast<int64_t>(alignCorners_),
             static_cast<int64_t>(halfPixelCenters_), static_cast<int64_t>(idxUseInt32_));
     context_->SetTilingKey(tilingKey);
-
     size_t* workspaces = context_->GetWorkspaceSizes(1);
-    workspaces[0] = WORKSPACE_SIZE;
+    auto platformInfo = context_->GetPlatformInfo();
+    OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfo);
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
+    workspaces[0] = ascendcPlatform.GetLibApiWorkSpaceSize();
+
     OP_LOGD(context_->GetNodeName(), "Exit ResizeNearestNeighborV2AscendCTilingImpl DoTiling.");
     return ge::GRAPH_SUCCESS;
 }
