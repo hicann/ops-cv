@@ -100,10 +100,6 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/deformable_roi_pool/op_kernel/
                 - ops/ops-cv/objdetect/deformable_roi_pool/examples/
                 - ops/ops-cv/objdetect/deformable_roi_pool/tests/
-                - ops/ops-cv/objdetect/g_io_u_grad/op_host/
-                - ops/ops-cv/objdetect/g_io_u_grad/op_kernel/
-                - ops/ops-cv/objdetect/g_io_u_grad/examples/
-                - ops/ops-cv/objdetect/g_io_u_grad/tests/
                 - ops/ops-cv/objdetect/iou_v2/examples/
                 - ops/ops-cv/objdetect/iou_v2/tests/
                 - ops/ops-cv/objdetect/iou3d/op_host/
@@ -164,10 +160,6 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/yolo/op_kernel/
                 - ops/ops-cv/objdetect/yolo/examples/
                 - ops/ops-cv/objdetect/yolo/tests/
-                - ops/ops-cv/objdetect/yolox_bounding_box_decode/op_host/
-                - ops/ops-cv/objdetect/yolox_bounding_box_decode/op_kernel/
-                - ops/ops-cv/objdetect/yolox_bounding_box_decode/examples/
-                - ops/ops-cv/objdetect/yolox_bounding_box_decode/tests/
             non_delivery: null
             open_source: null
 

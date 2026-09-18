@@ -134,6 +134,53 @@ REG_OP(RotatedIou)
     .ATTR(e_threshold, Float, 0)
     .OP_END_FACTORY_REG(RotatedIou)
 
+#ifndef OPS_PROTO_DEF_EXTRACTIMAGEPATCHES
+#define OPS_PROTO_DEF_EXTRACTIMAGEPATCHES
+/**
+* @brief Extract "patches" from "images" and stacks them in the "depth"
+* dimension of the output . \n
+* @par Inputs:
+* x: A Tensor with shape [batch, depth, in_rows, in_cols] or [batch, depth1, in_rows, in_cols, depth0].
+* Support dtype: [float16, float32, bfloat16, int8, uint8]
+* Support format: When x dtype is in [float16, float32, bfloat16], format support: [NCHW, NC1HWC0].
+* When x dtype is in [int8, uint8], format support: [NC1HWC0].
+* @par Attributes:
+* @li ksizes: A required list or tuple. The size of the sliding window for each
+* dimension of images.
+* @li strides: A required list or tuple. How far the centers of two consecutive
+* patches are in the images. Must be: [1, stride_rows, stride_cols, 1].
+* @li rates: A required list or tuple. Must be: [1, rate_rows, rate_cols, 1].
+* This is the input stride, specifying how far two consecutive patch
+* samples are in the input. Equivalent to extracting patches
+* with patch_sizes_eff = patch_sizes + (patch_sizes - 1) *
+* (rates - 1), followed by subsampling them spatially by a factor of rates.
+* This is equivalent to rate in dilated (a.k.a. Atrous) convolutions.
+* @li padding: A required string. The type of padding algorithm to use,
+  support "SAME" or "VALID". \n
+
+* @par Outputs:
+* y: A Tensor with shape [batch, out_rows, out_cols, ksize_rows *
+* ksize_cols * depth] containing image patches with size ksize_rows x ksize_cols
+* x depth vectorized in the "depth" dimension. Note "out_rows" and "out_cols"
+* are the dimensions of the output patches . Support dtype: [float16, float32, bfloat16, int8, uint8],
+* Support format: [NHWC] \n
+
+* @attention Constraints:
+* "ksizes", "strides" and "rates" are lists of integers . \n
+
+* @par Third-party framework compatibility
+* Compatible with the TensorFlow operator ExtractImagePatches.
+*/
+REG_OP(ExtractImagePatches)
+    .INPUT(x, TensorType::RealNumberType())
+    .OUTPUT(y, TensorType::RealNumberType())
+    .REQUIRED_ATTR(ksizes, ListInt)
+    .REQUIRED_ATTR(strides, ListInt)
+    .REQUIRED_ATTR(rates, ListInt)
+    .REQUIRED_ATTR(padding, String)
+    .OP_END_FACTORY_REG(ExtractImagePatches)
+#endif
+
 /**
 * @brief Resize the input tensor. \n
 currently, only support resize image tensor using nearest neighbor and linear interpolation.
@@ -241,6 +288,31 @@ REG_OP(NonMaxSuppressionV4)
     .OUTPUT(valid_outputs, TensorType({DT_INT32}))
     .ATTR(pad_to_max_output_size, Bool, false)
     .OP_END_FACTORY_REG(NonMaxSuppressionV4)
+
+#ifndef OPS_PROTO_DEF_IMGWARPRESIZE
+#define OPS_PROTO_DEF_IMGWARPRESIZE
+/**
+*@brief Resizes "images" with "offset" using bilinear interpolation. \n
+
+*@par Inputs:
+*@li img: input image, A 5-D tensor of shape `[n, 4, c, h, w]`,
+and 4 mean input[(h_top, w_left), (h_top, w_right), (h_bottom, w_left),
+(h_bottom, w_right)]. Must be one of the following types: float16, float32.
+The format support ND.
+*@li warp_index: the resize offset A 4-D float tensor of shape `[n, 2, h, w]`,
+2 means (x, y) for resize point. The format support ND. Must be the type float32.
+
+*@par Outputs:
+*warp_img: A Tensor after ResizeBilinear, A 4-D tensor of shape `[n, c, h, w]`.
+The format support ND. Must be one of the following types: float16, float32.
+Must has the same type as "img". \n
+*/
+REG_OP(IMGWarpResize)
+    .INPUT(img, TensorType({DT_FLOAT16, DT_FLOAT32}))
+    .INPUT(warp_index, TensorType({DT_FLOAT32}))
+    .OUTPUT(warp_img, TensorType({DT_FLOAT16, DT_FLOAT32}))
+    .OP_END_FACTORY_REG(IMGWarpResize)
+#endif
 
 /**
 * @brief First calculate the minimum closure area of the two boxes, IoU,
@@ -588,6 +660,20 @@ REG_OP(ResizeGradD)
     .ATTR(data_format, String, "NCHW")
     .OP_END_FACTORY_REG(ResizeGradD)
 
+#ifndef OPS_PROTO_DEF_GIOUGRAD
+#define OPS_PROTO_DEF_GIOUGRAD
+REG_OP(GIoUGrad)
+    .INPUT(dy, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(gtboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(dbboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(dgtboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .ATTR(trans, Bool, false)
+    .ATTR(is_cross, Bool, true)
+    .ATTR(mode, String, "iou")
+    .OP_END_FACTORY_REG(GIoUGrad)
+#endif
+
 /**
 * @brief Resize images to size using trilinear interpolation . \n
 
@@ -782,6 +868,31 @@ REG_OP(YoloPreDetection)
     .ATTR(background, Bool, false)
     .ATTR(softmaxtree, Bool, false)
     .OP_END_FACTORY_REG(YoloPreDetection)
+
+#ifndef OPS_PROTO_DEF_YOLOXBOUNDINGBOXDECODE
+#define OPS_PROTO_DEF_YOLOXBOUNDINGBOXDECODE
+/**
+* @brief Generates bounding boxes based on "priors" and "bboxes".
+* It is a customized yolox operator . \n
+
+* @par Inputs:
+* Two inputs, including:
+* @li priors: prior sample boxes of origin image
+* A 2D Tensor of type float32 or float16 with shape (N, 4).
+* "N" indicates the number of boxes, and the value "4" refers to "x0", "x1", "y0", and "y1".
+* @li bboxes_input: bboxes predicted by the model. A 2D Tensor of type float32 or float16 with shape (B, N, 4).
+* "B" indicates the batch_size, N indicates the number of boxes, 4 indicates "dx", "dy", "dw", and "dh" . \n
+
+* @par Outputs:
+* bboxes_output: Bboxes generated based on "priors" and "bboxes_input". Have the same format
+* and type as "bboxes_input".
+*/
+REG_OP(YoloxBoundingBoxDecode)
+    .INPUT(priors, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .INPUT(bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OUTPUT(decoded_bboxes, TensorType({DT_FLOAT16, DT_FLOAT}))
+    .OP_END_FACTORY_REG(YoloxBoundingBoxDecode)
+#endif
 
 /**
 *@brief Performs YOLO V5 detection . \n

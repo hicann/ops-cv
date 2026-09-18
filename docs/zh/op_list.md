@@ -108,16 +108,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/extract_image_patches/README.md">extract_image_patches</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>从输入图像中按指定ksizes、strides、rates和padding方式提取滑动局部块（patch），并将每个patch展平到通道维输出。</td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/grid_sample/README.md">grid_sample</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -185,16 +175,6 @@
     <td>&cross;</td>
     <td>AI Core</td>
     <td>对输入图像施加射影变换，根据变换矩阵将输出图像中的每个像素映射回输入图像中对应的坐标，再通过插值计算输出像素值。</td>
-  </tr>
-  <tr>
-    <td>image</td>
-    <td><a href="../../image/img_warp_resize/README.md">img_warp_resize</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>图像双线性插值采样算子，用于 OCR 场景中的图像变形缩放。接收预处理好的四角像素值和浮点坐标，通过双线性插值计算输出像素值。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -698,16 +678,6 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/g_io_u_grad/README.md">g_io_u_grad</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>AI Core</td>
-    <td>计算Generalized-IoU (GIoU)损失函数的反向梯度。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
     <td><a href="../../objdetect/iou3d/README.md">iou3d</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -855,16 +825,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>对YOLOv2/v3目标检测网络的检测特征图进行数据重组和激活处理，将原始卷积输出转换为检测框坐标、目标置信度和类别概率三个输出。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/yolox_bounding_box_decode/README.md">yolox_bounding_box_decode</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>根据YOLOX解码公式，将模型预测的边界框偏移量与先验框解码为左上角和右下角坐标。</td>
   </tr>
    <tr>
     <td>image</td>

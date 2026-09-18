@@ -593,6 +593,5 @@
     {"name":"Rasterizer", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false, "impl_mode" : ""},
     {"name":"ExtractGlimpseV2", "compute_units": ["ascend950"], "auto_sync": false},
     {"name":"RoiAlignV2", "compute_units": ["ascend910b"], "auto_sync":false, "impl_mode" : ""},
-    {"name":"DIoUGrad", "compute_units": ["ascend950"], "auto_sync": false},
-    {"name":"GIoUGrad", "compute_units": ["ascend950"], "auto_sync": false}
+    {"name":"DIoUGrad", "compute_units": ["ascend950"], "auto_sync": false}
 ]
