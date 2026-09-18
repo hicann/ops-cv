@@ -1356,6 +1356,10 @@ private:
             AscendC::WaitFlag<AscendC::HardEvent::S_MTE3>(0);
             AscendC::DataCopyExtParams baryCopy{1, static_cast<uint32_t>(count * 3U * sizeof(float)), 0, 0, 0};
             AscendC::DataCopyPad(barycentricGm_[3U * (tileStart + base)], staging, baryCopy);
+            // DataCopyPad is asynchronous on MTE3. Wait before the scalar pipe
+            // repacks or releases the shared staging buffer.
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_S>(0);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_S>(0);
         }
         faceQueue_.FreeTensor(stagingI);
     }
@@ -1650,12 +1654,19 @@ public:
     __aicore__ inline void Init(GM_ADDR v, GM_ADDR f, GM_ADDR findices, GM_ADDR barycentric, GM_ADDR workspace,
                                 const RasterizerTilingData* tilingData)
     {
+        initialized_ = false;
+        if (tilingData == nullptr || workspace == nullptr) {
+            return;
+        }
+        GM_ADDR userWorkspace = AscendC::GetUserWorkspace(workspace);
+        if (userWorkspace == nullptr) {
+            return;
+        }
         tiling_ = tilingData;
         vGm_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(v));
         fGm_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(f));
         findicesGm_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(findices));
         barycentricGm_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(barycentric));
-        GM_ADDR userWorkspace = workspace - tiling_->systemWorkspaceBytes;
         workspaceF_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(userWorkspace));
         workspaceI_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(userWorkspace));
         tileLen_ = static_cast<uint32_t>(tiling_->pixelTileLen);
@@ -1672,10 +1683,14 @@ public:
         pipe_.InitBuffer(srcB1Buf_, planeBytes);
         pipe_.InitBuffer(srcB2Buf_, planeBytes);
         pipe_.InitBuffer(faceValidityBuf_, kFaceValidityScratchBytes);
+        initialized_ = true;
     }
 
     __aicore__ inline void Process()
     {
+        if (!initialized_) {
+            return;
+        }
         const uint32_t blockIdx = AscendC::GetBlockIdx();
         const uint32_t quotient = tiling_->numFaces / tiling_->activeCoreNum;
         const uint32_t remainder = tiling_->numFaces % tiling_->activeCoreNum;
@@ -1985,6 +2000,10 @@ private:
             AscendC::WaitFlag<AscendC::HardEvent::S_MTE3>(0);
             const AscendC::DataCopyExtParams baryCopy{1, static_cast<uint32_t>(count * 3U * sizeof(float)), 0, 0, 0};
             AscendC::DataCopyPad(barycentricGm_[3U * (tileStart + base)], staging, baryCopy);
+            // DataCopyPad is asynchronous on MTE3. Wait before the scalar pipe
+            // repacks or releases the shared staging buffer.
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_S>(0);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_S>(0);
         }
         faceQueue_.FreeTensor(stagingI);
         AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(0);
@@ -2008,6 +2027,7 @@ private:
 
     AscendC::TPipe pipe_;
     const RasterizerTilingData* tiling_ = nullptr;
+    bool initialized_ = false;
     AscendC::GlobalTensor<float> vGm_;
     AscendC::GlobalTensor<int32_t> fGm_;
     AscendC::GlobalTensor<int32_t> findicesGm_;
