@@ -38,6 +38,10 @@ namespace ge {
 * @par Outputs:
 * overlaps: A 3D Tensor of type float32 with shape [B, N, K].
 
+* @par Dynamic Shape:
+* Supports GE IR dynamic shape. Runtime tiling uses the instantiated concrete
+* shape.
+
 * @attention Constraints:
 * In each batch, invalid boxes cannot appear before valid boxes.
 */

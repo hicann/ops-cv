@@ -19,28 +19,7 @@ uses independent PyTorch small-op composition instead of NumPy geometry.
 
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
-
 import torch
-
-
-def _load_inputs_plugin():
-    input_path = Path(__file__).with_name("inputs.py")
-    spec = importlib.util.spec_from_file_location(
-        "rotated_overlaps_test_inputs", input_path
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.rotated_overlaps_inputs
-
-
-_rotated_overlaps_inputs_impl = _load_inputs_plugin()
-
-
-def rotated_overlaps_inputs(*args, **kwargs):
-    """Expose a source-defined input hook so TTK plugin discovery can find it."""
-    return _rotated_overlaps_inputs_impl(*args, **kwargs)
 
 
 def _normalise_boxes(values, trans):
@@ -266,10 +245,6 @@ class RotatedOverlapsOnnxTestSpec:
 __golden__ = {
     "kernel": {"rotated_overlaps": "rotated_overlaps_kernel_golden"},
     "geir": {"rotated_overlaps": "rotated_overlaps_geir_golden"},
-}
-__input__ = {
-    "kernel": {"rotated_overlaps": "rotated_overlaps_inputs"},
-    "geir": {"rotated_overlaps": "rotated_overlaps_inputs"},
 }
 __spec__ = {"rotated_overlaps": "RotatedOverlapsTestSpec"}
 

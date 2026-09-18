@@ -169,23 +169,44 @@ def _to_torch(arr):
     return torch.from_numpy(numpy.asarray(arr))
 
 
-def _numpy_iou_matrix(boxes_a, boxes_b):
-    """Compute IoU matrix between two sets of boxes [N,4] and [M,4] in yxyx format."""
-    n = boxes_a.shape[0]
-    m = boxes_b.shape[0]
-    if n == 0 or m == 0:
-        return numpy.zeros((n, m), dtype=numpy.float64)
-    iy_min = numpy.maximum(boxes_a[:, 0:1], boxes_b[:, 0:1].T)
-    ix_min = numpy.maximum(boxes_a[:, 1:2], boxes_b[:, 1:2].T)
-    iy_max = numpy.minimum(boxes_a[:, 2:3], boxes_b[:, 2:3].T)
-    ix_max = numpy.minimum(boxes_a[:, 3:4], boxes_b[:, 3:4].T)
-    inter_h = numpy.clip(iy_max - iy_min, 0, None)
-    inter_w = numpy.clip(ix_max - ix_min, 0, None)
-    inter_area = inter_h * inter_w
-    area_a = (boxes_a[:, 2] - boxes_a[:, 0]) * (boxes_a[:, 3] - boxes_a[:, 1])
-    area_b = (boxes_b[:, 2] - boxes_b[:, 0]) * (boxes_b[:, 3] - boxes_b[:, 1])
-    union_area = numpy.clip(area_a[:, None] + area_b[None, :] - inter_area, 1e-12, None)
-    return inter_area / union_area
+def _valid_count(counts, batch_index, batch_size):
+    """Read logical count from either [B] or fusion-internal [B,8] storage."""
+    values = _to_numpy(counts)
+    if values.ndim >= 2 and values.shape[0] == batch_size:
+        return int(values[batch_index].reshape(-1)[0])
+    return int(values.reshape(-1)[batch_index])
+
+
+def _maximum_match_count(allowed_pairs):
+    """Return the maximum one-to-one match count for a boolean pair matrix."""
+    row_count, column_count = allowed_pairs.shape
+    if row_count == 0 or column_count == 0:
+        return 0
+    column_owner = numpy.full(column_count, -1, dtype=numpy.int64)
+
+    def augment(row, visited):
+        for column in numpy.flatnonzero(allowed_pairs[row]):
+            if visited[column]:
+                continue
+            visited[column] = True
+            owner = int(column_owner[column])
+            if owner == -1 or augment(owner, visited):
+                column_owner[column] = row
+                return True
+        return False
+
+    matched = 0
+    for row in range(row_count):
+        if augment(row, numpy.zeros(column_count, dtype=numpy.bool_)):
+            matched += 1
+    return matched
+
+
+def _comparison_tolerance(*arrays):
+    """Use the precision thresholds carried by the TTK case matrix."""
+    if any(_to_numpy(value).dtype == numpy.float16 for value in arrays):
+        return 1e-2, 1e-2
+    return 1e-4, 1e-4
 
 
 class BatchMultiClassNonMaxSuppressionTestSpec:
@@ -200,8 +221,12 @@ class BatchMultiClassNonMaxSuppressionTestSpec:
         max_total_size=100,
         change_coordinate_frame=False,
         transpose_box=False,
+        *args,
         **kwargs,
     ):
+        # XPU server appends metadata such as input_formats positionally when
+        # invoking a third-party golden.  It is not an operator attribute and
+        # must not affect the reference computation.
         is_torch_input = isinstance(boxes, torch.Tensor)
         results = _golden_impl(
             _to_torch(boxes),
@@ -238,8 +263,8 @@ class BatchMultiClassNonMaxSuppressionTestSpec:
 
         batch_size = npu_boxes.shape[0]
         for b in range(batch_size):
-            n_cnt = int(npu_num.flatten()[b])
-            g_cnt = int(golden_num.flatten()[b])
+            n_cnt = _valid_count(npu_num, b, batch_size)
+            g_cnt = _valid_count(golden_num, b, batch_size)
 
             if n_cnt > 1:
                 n_order = numpy.argsort(
@@ -258,40 +283,55 @@ class BatchMultiClassNonMaxSuppressionTestSpec:
                 golden_classes[b, :g_cnt] = golden_classes[b, g_order]
 
     def compare(*outputs, **kwargs):
-        """IoU-based matching comparison for NMS outputs.
+        """Strict, order-independent comparison for valid NMS detections.
 
         Layout: func(*npu_outputs, *golden_outputs)
         Returns list[dict], one per output (boxes, scores, classes, num).
         """
-        npu_boxes = _to_numpy(outputs[0]).astype(numpy.float64)
-        npu_scores = _to_numpy(outputs[1]).astype(numpy.float64)
+        npu_boxes_raw = _to_numpy(outputs[0])
+        npu_scores_raw = _to_numpy(outputs[1])
+        golden_boxes_raw = _to_numpy(outputs[4])
+        golden_scores_raw = _to_numpy(outputs[5])
+        rtol, atol = _comparison_tolerance(
+            npu_boxes_raw, npu_scores_raw, golden_boxes_raw, golden_scores_raw
+        )
+        npu_boxes = npu_boxes_raw.astype(numpy.float64)
+        npu_scores = npu_scores_raw.astype(numpy.float64)
         npu_classes = _to_numpy(outputs[2]).astype(numpy.float64)
-        npu_num = _to_numpy(outputs[3]).flatten()
-        golden_boxes = _to_numpy(outputs[4]).astype(numpy.float64)
-        golden_scores = _to_numpy(outputs[5]).astype(numpy.float64)
+        npu_num = _to_numpy(outputs[3])
+        golden_boxes = golden_boxes_raw.astype(numpy.float64)
+        golden_scores = golden_scores_raw.astype(numpy.float64)
         golden_classes = _to_numpy(outputs[6]).astype(numpy.float64)
-        golden_num = _to_numpy(outputs[7]).flatten()
+        golden_num = _to_numpy(outputs[7])
 
         batch_size = npu_boxes.shape[0]
-        iou_match_threshold = 0.5
-        score_rtol = 0.05
-
-        total_npu_det = 0
-        total_golden_det = 0
-        total_matched = 0
-        total_score_close = 0
-        total_class_match = 0
-        total_box_iou_sum = 0.0
-        num_diff_sum = 0
+        counts_equal = golden_boxes.shape[0] == batch_size
+        counts_in_range = counts_equal
+        total_npu = 0
+        total_golden = 0
+        total_box_matches = 0
+        total_tuple_matches = 0
+        count_mismatches = []
 
         for b in range(batch_size):
-            n_cnt = int(npu_num[b])
-            g_cnt = int(golden_num[b])
-            total_npu_det += n_cnt
-            total_golden_det += g_cnt
-            num_diff_sum += abs(n_cnt - g_cnt)
+            n_cnt = _valid_count(npu_num, b, batch_size)
+            g_cnt = _valid_count(golden_num, b, batch_size)
+            total_npu += max(n_cnt, 0)
+            total_golden += max(g_cnt, 0)
+            if n_cnt != g_cnt:
+                counts_equal = False
+                count_mismatches.append(f"batch {b}: npu={n_cnt}, golden={g_cnt}")
 
-            if n_cnt == 0 and g_cnt == 0:
+            n_capacity = min(
+                npu_boxes.shape[1], npu_scores.shape[1], npu_classes.shape[1]
+            )
+            g_capacity = min(
+                golden_boxes.shape[1],
+                golden_scores.shape[1],
+                golden_classes.shape[1],
+            )
+            if n_cnt < 0 or g_cnt < 0 or n_cnt > n_capacity or g_cnt > g_capacity:
+                counts_in_range = False
                 continue
             if n_cnt == 0 or g_cnt == 0:
                 continue
@@ -303,92 +343,74 @@ class BatchMultiClassNonMaxSuppressionTestSpec:
             n_classes_b = npu_classes[b, :n_cnt]
             g_classes_b = golden_classes[b, :g_cnt]
 
-            iou_mat = _numpy_iou_matrix(n_boxes, g_boxes)
-            # A single geometric box may legitimately be retained by several
-            # classes.  Pure IoU ordering then pairs identical boxes
-            # arbitrarily and can report an otherwise exact result as having
-            # wrong scores/classes.  Prefer semantic agreement before IoU.
+            box_close = numpy.all(
+                numpy.isclose(
+                    n_boxes[:, None, :],
+                    g_boxes[None, :, :],
+                    rtol=rtol,
+                    atol=atol,
+                    equal_nan=False,
+                ),
+                axis=2,
+            )
             class_equal = n_classes_b[:, None] == g_classes_b[None, :]
             score_close = numpy.isclose(
-                n_scores_b[:, None], g_scores_b[None, :], rtol=score_rtol, atol=1e-3
+                n_scores_b[:, None],
+                g_scores_b[None, :],
+                rtol=rtol,
+                atol=atol,
+                equal_nan=False,
             )
-            matched_n = set()
-            matched_g = set()
-            pairs = []
-            flat_order = numpy.lexsort(
-                (
-                    numpy.arange(iou_mat.size),
-                    -iou_mat.flatten(),
-                    -score_close.astype(numpy.int8).flatten(),
-                    -class_equal.astype(numpy.int8).flatten(),
-                )
+            total_box_matches += _maximum_match_count(box_close)
+            total_tuple_matches += _maximum_match_count(
+                box_close & class_equal & score_close
             )
-            for idx in flat_order:
-                ni = int(idx // g_cnt)
-                gi = int(idx % g_cnt)
-                if iou_mat[ni, gi] < iou_match_threshold:
-                    continue
-                if ni in matched_n or gi in matched_g:
-                    continue
-                matched_n.add(ni)
-                matched_g.add(gi)
-                pairs.append((ni, gi, iou_mat[ni, gi]))
 
-            total_matched += len(pairs)
-            for ni, gi, iou_val in pairs:
-                total_box_iou_sum += iou_val
-                if numpy.isclose(
-                    n_scores_b[ni], g_scores_b[gi], rtol=score_rtol, atol=1e-3
-                ):
-                    total_score_close += 1
-                if n_classes_b[ni] == g_classes_b[gi]:
-                    total_class_match += 1
-
-        max_det = max(total_npu_det, total_golden_det, 1)
-        if total_npu_det == 0 and total_golden_det == 0:
-            # Empty detection sets are equivalent; treating the absence of
-            # pairs as a 0% match creates a false negative for valid inputs.
-            match_rate = 100.0
-            avg_iou = 1.0
-            score_rate = 100.0
-            class_rate = 100.0
-        else:
-            match_rate = total_matched / max_det * 100.0
-            avg_iou = total_box_iou_sum / max(total_matched, 1)
-            score_rate = total_score_close / max(total_matched, 1) * 100.0
-            class_rate = total_class_match / max(total_matched, 1) * 100.0
-        num_accuracy = max(0.0, 100.0 - num_diff_sum / max(batch_size, 1) * 10)
+        expected = total_golden
+        denominator = max(expected, total_npu, 1)
+        box_rate = total_box_matches / denominator * 100.0
+        tuple_rate = total_tuple_matches / denominator * 100.0
+        box_pass = counts_equal and counts_in_range and total_box_matches == expected
+        tuple_pass = (
+            counts_equal and counts_in_range and total_tuple_matches == expected
+        )
+        count_pass = counts_equal and counts_in_range
 
         boxes_result = {
-            "pass": match_rate >= 70.0 and avg_iou >= 0.8,
-            "precision": round(match_rate, 2),
-            "error_info": f"match_rate={match_rate:.1f}% avg_iou={avg_iou:.3f} "
-            f"npu_det={total_npu_det} golden_det={total_golden_det} matched={total_matched}",
+            "pass": box_pass,
+            "precision": round(box_rate, 2),
+            "error_info": f"box_matches={total_box_matches}/{expected} "
+            f"npu_det={total_npu} rtol={rtol} atol={atol}",
             "metrics": {
-                "match_rate": match_rate,
-                "avg_iou": avg_iou,
-                "total_npu_det": total_npu_det,
-                "total_golden_det": total_golden_det,
-                "total_matched": total_matched,
+                "box_match_rate": box_rate,
+                "total_npu_det": total_npu,
+                "total_golden_det": total_golden,
+                "total_box_matches": total_box_matches,
             },
         }
         scores_result = {
-            "pass": score_rate >= 80.0,
-            "precision": round(score_rate, 2),
-            "error_info": f"score_close={total_score_close}/{total_matched}",
-            "metrics": {"score_match_rate": score_rate},
+            "pass": tuple_pass,
+            "precision": round(tuple_rate, 2),
+            "error_info": f"complete_detection_matches={total_tuple_matches}/{expected}",
+            "metrics": {"complete_detection_match_rate": tuple_rate},
         }
         classes_result = {
-            "pass": class_rate >= 80.0,
-            "precision": round(class_rate, 2),
-            "error_info": f"class_match={total_class_match}/{total_matched}",
-            "metrics": {"class_match_rate": class_rate},
+            "pass": tuple_pass,
+            "precision": round(tuple_rate, 2),
+            "error_info": f"complete_detection_matches={total_tuple_matches}/{expected}",
+            "metrics": {"complete_detection_match_rate": tuple_rate},
         }
         num_result = {
-            "pass": num_accuracy >= 50.0,
-            "precision": round(num_accuracy, 2),
-            "error_info": f"num_diff_sum={num_diff_sum} over {batch_size} batches",
-            "metrics": {"num_diff_sum": int(num_diff_sum), "batch_size": batch_size},
+            "pass": count_pass,
+            "precision": 100.0 if count_pass else 0.0,
+            "error_info": "; ".join(count_mismatches)
+            if count_mismatches
+            else f"counts_equal={counts_equal} counts_in_range={counts_in_range}",
+            "metrics": {
+                "counts_equal": counts_equal,
+                "counts_in_range": counts_in_range,
+                "batch_size": batch_size,
+            },
         }
         return [boxes_result, scores_result, classes_result, num_result]
 

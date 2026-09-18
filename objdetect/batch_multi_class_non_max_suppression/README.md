@@ -74,14 +74,14 @@ $$
     <tr>
       <td>score_threshold</td>
       <td>属性</td>
-      <td>分数阈值，仅保留严格大于该值的候选框；必须为有限值。</td>
+      <td>分数阈值，仅保留严格大于该值的候选框。不限制为有限值：-inf会关闭对有限分数的阈值过滤，+inf或NaN会过滤全部候选框。</td>
       <td>FLOAT</td>
       <td>-</td>
     </tr>
     <tr>
       <td>iou_threshold</td>
       <td>属性</td>
-      <td>IoU抑制阈值；必须为[0,1]内的有限值。</td>
+      <td>IoU抑制阈值，IoU严格大于该值时抑制。不限制为有限值或[0,1]：大于等于1、+inf或NaN不会触发抑制，小于0或-inf会抑制每个类别中最高分框之后的候选框。</td>
       <td>FLOAT</td>
       <td>-</td>
     </tr>
@@ -147,9 +147,9 @@ $$
 
 - 仅支持 ND format、float16/float32 的 boxes 和 scores；三个浮点输出与 boxes dtype 保持一致。
 - boxes 为 4 维、scores 为 3 维，B、N、C、q 必须为正；q 必须为 1 或 C。
-- `transpose_box` 当前仅支持 `false`，与 910B/910C 的公开接口约束保持一致。
+- `transpose_box` 公开接口当前仅支持 `false`，与<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>的公开接口约束保持一致；图融合产生的内部节点仍使用 `true` 布局。
 - `clip_window` 的形状必须为 `[B,4]`，`num_valid_boxes` 的形状必须为 `[B]`。
-- 当前 Ascend950 tiling 只接受具体的正 shape，不支持动态 rank 和未知维度。
+- 支持GE IR动态Shape；运行时tiling接收实例化后的具体正Shape。
 - `image_size` 为图模式原型兼容属性，当前通用 NMS 路径不读取该属性；旧平台 `norm_class` 专用语义不在本实现范围内。
 - 相同分数的相对顺序不是公共接口承诺；调用方应以 `nmsed_num` 确定有效输出范围。
 

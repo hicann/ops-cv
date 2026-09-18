@@ -12,7 +12,6 @@
 #include "objdetect/batch_multi_class_non_max_suppression/op_kernel/arch35/batch_multi_class_non_max_suppression_tiling_key.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <securec.h>
@@ -134,10 +133,6 @@ ge::graphStatus ParseRequiredInputsAndAttrs(gert::TilingContext* context, Parsed
     OP_CHECK_NULL_WITH_CONTEXT(context, maxTotalSize);
     OP_CHECK_NULL_WITH_CONTEXT(context, changeCoordinateFrame);
     OP_CHECK_NULL_WITH_CONTEXT(context, transposeBox);
-    OP_CHECK_IF(!std::isfinite(*scoreThreshold) || !std::isfinite(*iouThreshold) || *iouThreshold < 0.0F ||
-                    *iouThreshold > 1.0F,
-                OP_LOGE(context, "score_threshold must be finite and iou_threshold must be finite in [0, 1]."),
-                return ge::GRAPH_FAILED);
     OP_CHECK_IF(*maxSizePerClass <= 0 || *maxSizePerClass > kMaxOutputSize || *maxTotalSize <= 0 ||
                     *maxTotalSize > kMaxOutputSize,
                 OP_LOGE(context, "max_size_per_class and max_total_size must be in [1, %ld].", kMaxOutputSize),

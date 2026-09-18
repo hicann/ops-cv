@@ -8,6 +8,11 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include "infershape_case_executor.h"
@@ -54,6 +59,63 @@ TEST(RotatedOverlapsInferShape, dynamic_shape)
     auto context = MakeContext({-1, 5, -1}, {-1, 5, -1});
     ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{-1, -1, -1}});
 }
+
+struct DynamicShapeGeneralizationCase {
+    std::vector<int64_t> boxes;
+    std::vector<int64_t> queries;
+    std::vector<int64_t> expected;
+};
+
+std::vector<DynamicShapeGeneralizationCase> MakeDynamicShapeGeneralizationCases()
+{
+    constexpr std::array<std::array<int64_t, 2>, 7> kBatchPairs = {
+        {{{-1, -1}}, {{-1, 1}}, {{-1, 8}}, {{1, -1}}, {{8, -1}}, {{1, 1}}, {{8, 8}}}};
+    constexpr std::array<int64_t, 2> kChannels = {-1, 5};
+    constexpr std::array<int64_t, 5> kBoxCounts = {-1, 1, 7, 128, 4096};
+    constexpr std::array<int64_t, 5> kQueryCounts = {-1, 1, 31, 512, 2000};
+
+    std::vector<DynamicShapeGeneralizationCase> candidates;
+    for (const auto& batches : kBatchPairs) {
+        for (const int64_t boxChannel : kChannels) {
+            for (const int64_t queryChannel : kChannels) {
+                for (const int64_t boxCount : kBoxCounts) {
+                    for (const int64_t queryCount : kQueryCounts) {
+                        const bool hasUnknownDimension = batches[0] == -1 || batches[1] == -1 || boxChannel == -1 ||
+                                                         queryChannel == -1 || boxCount == -1 || queryCount == -1;
+                        if (hasUnknownDimension) {
+                            candidates.push_back({{batches[0], boxChannel, boxCount},
+                                                  {batches[1], queryChannel, queryCount},
+                                                  {batches[0], boxCount, queryCount}});
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    constexpr size_t kDynamicDimensionCaseCount = 97;
+    std::vector<DynamicShapeGeneralizationCase> cases;
+    cases.reserve(100);
+    for (size_t index = 0; index < kDynamicDimensionCaseCount; ++index) {
+        cases.push_back(candidates[index * candidates.size() / kDynamicDimensionCaseCount]);
+    }
+    cases.push_back({{-2}, {-2}, {-2}});
+    cases.push_back({{-2}, {-1, 5, 31}, {-2}});
+    cases.push_back({{8, -1, -1}, {-2}, {-2}});
+    return cases;
+}
+
+class RotatedOverlapsDynamicShapeGeneralization : public testing::TestWithParam<DynamicShapeGeneralizationCase> {};
+
+TEST_P(RotatedOverlapsDynamicShapeGeneralization, propagates_known_and_unknown_dimensions)
+{
+    const auto& testCase = GetParam();
+    auto context = MakeContext(testCase.boxes, testCase.queries);
+    ExecuteTestCase(context, ge::GRAPH_SUCCESS, {testCase.expected});
+}
+
+INSTANTIATE_TEST_SUITE_P(DynamicShapeAndRank, RotatedOverlapsDynamicShapeGeneralization,
+                         testing::ValuesIn(MakeDynamicShapeGeneralizationCases()));
 
 TEST(RotatedOverlapsInferShape, preserves_old_proto_regression_shape)
 {

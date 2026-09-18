@@ -22,8 +22,8 @@ namespace ge {
  * @brief Selects high-scoring bounding boxes independently for each class and suppresses boxes with excessive IoU.
  *
  * @par Inputs:
- * @li boxes: A float16 or float32 tensor. When transpose_box is false, its shape is [B, N, q, 4]; when true, its
- * shape is [B, q, 4, N]. B is the batch size, N is the number of boxes, and q is 1 or the number of classes.
+ * @li boxes: A float16 or float32 tensor of shape [B, N, q, 4]. B is the batch size, N is the number of boxes, and
+ * q is 1 or the number of classes.
  * @li scores: A float16 or float32 tensor of shape [B, N, C], where C is the number of classes. Its type must equal
  * the type of boxes.
  * @li clip_window: An optional float16 or float32 tensor of shape [B, 4]. Its type must equal the type of boxes.
@@ -31,11 +31,11 @@ namespace ge {
  *
  * @par Attributes:
  * @li score_threshold: A required float, the score filtering threshold.
- * @li iou_threshold: A required float in [0, 1], the IoU suppression threshold.
+ * @li iou_threshold: A required float, the IoU suppression threshold.
  * @li max_size_per_class: A required int, the maximum selected boxes per class.
  * @li max_total_size: A required int, the maximum selected boxes per batch.
  * @li change_coordinate_frame: An optional bool. When true, clip_window must be provided. Defaults to false.
- * @li transpose_box: An optional bool indicating the layout of boxes. Defaults to false.
+ * @li transpose_box: An optional bool that currently must be false. Defaults to false.
  * @li image_size: An optional list of int values reserved for graph compatibility.
  *
  * @par Outputs:
