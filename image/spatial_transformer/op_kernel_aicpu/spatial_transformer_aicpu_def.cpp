@@ -43,6 +43,7 @@ public:
         this->Attr("default_theta").AttrType(OPTIONAL).ListFloat();
         this->Attr("align_corners").AttrType(OPTIONAL).Bool(false);
         this->Attr("use_default_theta").AttrType(OPTIONAL).ListInt();
+        this->AICPU().ExtendCfgInfo(OP_INFO_OPS_FLAG.c_str(), OPEN_OPS_FLAG.c_str());
         this->AICPU().ExtendCfgInfo(OP_INFO_FORMAT_AGNOSTIC.c_str(), TRUE_FORMAT_AGNOSTIC.c_str());
     }
 };

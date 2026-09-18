@@ -15,6 +15,7 @@
 #include <string>
 #include <securec.h>
 
+#include "aicpu/cv_aicpu_register.h"
 #include "cpu_kernel.h"
 
 namespace {
@@ -509,5 +510,5 @@ uint32_t SpatialTransformerCpuKernel::Compute(CpuKernelContext& ctx)
     return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-REGISTER_CPU_KERNEL(kSpatialTransformer, SpatialTransformerCpuKernel);
+OPS_CV_REGISTER_CPU_KERNELV2(kSpatialTransformer, SpatialTransformerCpuKernel);
 } // namespace aicpu

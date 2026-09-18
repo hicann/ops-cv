@@ -24,4 +24,4 @@ foreach(SUB_DIR ${CURRENT_DIRS})
   endif()
 endforeach()
 
-add_all_modules_sources(OPTYPE spatial_transformer ACLNNTYPE aclnn_exclude)
+add_all_modules_sources(OPTYPE spatial_transformer ACLNNTYPE aclnn_exclude HOSTCPU TRUE)
