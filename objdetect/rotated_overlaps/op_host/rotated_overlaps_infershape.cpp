@@ -12,6 +12,7 @@
 #include <limits>
 
 #include "log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 #include "register/op_impl_registry.h"
 
 namespace {
@@ -51,8 +52,8 @@ static ge::graphStatus InferShapeForRotatedOverlaps(gert::InferShapeContext* con
     OP_CHECK_NULL_WITH_CONTEXT(context, queryBoxesShape);
     OP_CHECK_NULL_WITH_CONTEXT(context, outputShape);
 
-    if (boxesShape->GetDimNum() == ge::UNKNOWN_RANK.size() || queryBoxesShape->GetDimNum() == ge::UNKNOWN_RANK.size()) {
-        outputShape->SetDimNum(ge::UNKNOWN_RANK.size());
+    if (Ops::Base::IsUnknownRank(*boxesShape) || Ops::Base::IsUnknownRank(*queryBoxesShape)) {
+        Ops::Base::SetUnknownRank(*outputShape);
         return ge::GRAPH_SUCCESS;
     }
     OP_CHECK_IF(boxesShape->GetDimNum() != 3 || queryBoxesShape->GetDimNum() != 3,

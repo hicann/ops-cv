@@ -68,9 +68,10 @@ void ExpectLegacyShape(const gert::StorageShape& boxes, const gert::StorageShape
 }
 } // namespace
 
-TEST(BatchMultiClassNonMaxSuppressionInfershape, derives_legacy_transposed_outputs)
+TEST(BatchMultiClassNonMaxSuppressionInfershape, derives_legacy_transposed_outputs_for_fused_internal_node)
 {
-    // The old fusion path provides scores as [B,C,N], with transposed boxes and padded counts.
+    // The public verifier rejects transpose_box=true, but the GE fusion pass
+    // sets it on the transformed internal node after transposing the inputs.
     ExpectLegacyShape({{2, 1, 4, 8}, {2, 1, 4, 8}}, {{2, 3, 8}, {2, 3, 8}}, true, 2);
 }
 

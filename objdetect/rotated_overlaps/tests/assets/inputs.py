@@ -23,7 +23,10 @@ import hashlib
 
 import numpy as np
 
-__input__ = {"kernel": {"rotated_overlaps": "rotated_overlaps_inputs"}}
+__input__ = {
+    "kernel": {"rotated_overlaps": "rotated_overlaps_inputs"},
+    "geir": {"rotated_overlaps": "rotated_overlaps_inputs"},
+}
 
 
 def _to_numpy(value):
