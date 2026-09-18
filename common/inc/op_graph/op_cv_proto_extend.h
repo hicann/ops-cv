@@ -994,6 +994,17 @@ REG_OP(RotatedNMS)
     .REQUIRED_ATTR(iou_threshold, Float)
     .ATTR(is_angle, Bool, true)
     .OP_END_FACTORY_REG(RotatedNMS)
+#ifndef OPS_PROTO_DEF_ANCHORRESPONSEFLAGS
+#define OPS_PROTO_DEF_ANCHORRESPONSEFLAGS
+REG_OP(AnchorResponseFlags)
+    .INPUT(gt_bboxes, TensorType({DT_FLOAT, DT_FLOAT16}))
+    .OUTPUT(flags, TensorType({DT_UINT8}))
+    .REQUIRED_ATTR(featmap_size, ListInt)
+    .REQUIRED_ATTR(strides, ListInt)
+    .REQUIRED_ATTR(num_base_anchors, Int)
+    .OP_END_FACTORY_REG(AnchorResponseFlags)
+#endif
+
 } // namespace ge
 
 #endif
