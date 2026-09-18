@@ -147,7 +147,7 @@
       <td>boxes</td>
       <td>输入</td>
       <td>二维Tensor，其shape为(num_boxes, 4)。第i行指定了box_index[i]在图像中一个框的位置，并且使用归一化坐标[y1, x1, y2, x2]进行表示。归一化后的y坐标值通过y*(image_height - 1)映射到图像坐标系中，因此归一化图像的高度[0, 1]区间会被映射到原始图像高度的[0，image_height - 1]区间。我们允许y1 > y2, 在这种情况下，采样的裁剪区域会是原始图像的上下翻转版。宽度维度的处理方式相似，归一化坐标值超出[0, 1]范围时，使用extrapolation_value外插值进行补齐。</td>
-      <td>FLOAT、FLOAT16</td>
+      <td>FLOAT</td>
       <td>ND</td>
     </tr>
     <tr>
@@ -182,29 +182,14 @@
       <td>y</td>
       <td>输出</td>
       <td>返回一个四维Tensor，shape大小为(num_boxes, crop_height, crop_width, depth)。对应计算公式描述中的`输出y`。</td>
-      <td>FLOAT、FLOAT16</td>
+      <td>FLOAT</td>
       <td>NHWC</td>
     </tr>
   </tbody></table>
 
 ## 约束说明
 
-本算子提供 **AiCore** 与 **AiCpu** 两种实现。图模式下由 GE 引擎分配自动路由：输入满足 AiCore 约束时优先由 AiCore 执行；不满足 AiCore 约束时自动 fallback 到 AiCpu 执行。
-
-**AiCore 实现约束：**
-
-- 数据类型：x 仅支持 FLOAT16/FLOAT；boxes 支持 FLOAT/FLOAT16（y 数据类型与 boxes 一致）。
-- 输入 shape 需为静态；动态 shape 由 AiCpu 执行。
-- method 仅支持 bilinear。
-- crop_height、crop_width 均不超过 16，且 crop_height × crop_width ≤ 32765。
-- num_boxes（boxes.shape[0]）必须满足 50 < num_boxes ≤ 4000。
-- depth（通道数，x.shape[3]）必须满足 256 ≤ depth ≤ 2048。
-- image_height × image_width ≤ 65530（x 为 FLOAT16 时）/ 32765（x 为 FLOAT 时）。
-
-**AiCpu 实现能力：**
-
-- 数据类型：x 支持 UINT8/INT8/UINT16/INT16/INT32/INT64/FLOAT16/FLOAT/DOUBLE；boxes 仅支持 FLOAT；y 为 FLOAT。
-- method 支持 bilinear/nearest/bilinear_v2。
+无
 
 ## 调用说明
 

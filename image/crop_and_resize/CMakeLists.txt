@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------
-# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -17,24 +17,11 @@ if(SKIP_FLAG)
 endif()
 
 file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
-if(NOT ENABLE_TEST AND NOT BENCHMARK)
-    list(REMOVE_ITEM CURRENT_DIRS tests)
-endif()
+list(REMOVE_ITEM CURRENT_DIRS tests)
 foreach(SUB_DIR ${CURRENT_DIRS})
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}/CMakeLists.txt")
-        add_subdirectory(${SUB_DIR})
-    endif()
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}/CMakeLists.txt")
+    add_subdirectory(${SUB_DIR})
+  endif()
 endforeach()
 
-set(SUPPORT_COMPUTE_UNIT "ascend950")
-set(SUPPORT_TILING_DIR "arch35")
-
-add_all_modules_sources(OPTYPE crop_and_resize ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT}
-                        TILING_DIR ${SUPPORT_TILING_DIR})
-
-# def.cpp 编入 tiling 库：注册宏在 OP_TILING_LIB 下向 V1 注册表 OpCheckFuncRegistry 登记
-# check_supported 回调 CheckIfAICoreSupported，FE 引擎分配阶段查询；缺失则
-# needCheckSupport 为 true 时所有输入含合规均被误拒 fallback AiCpu，已实测，勿删
-if (TARGET ${OPHOST_NAME}_tiling_obj)
-    target_sources(${OPHOST_NAME}_tiling_obj PRIVATE op_host/crop_and_resize_def.cpp)
-endif()
+add_all_modules_sources(OPTYPE crop_and_resize ACLNNTYPE aclnn_exclude)
