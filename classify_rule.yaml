@@ -79,9 +79,6 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/bounding_box_decode/op_kernel/
                 - ops/ops-cv/objdetect/bounding_box_decode/examples/
                 - ops/ops-cv/objdetect/bounding_box_decode/tests/
-                - ops/ops-cv/objdetect/bounding_box_encode/op_host/
-                - ops/ops-cv/objdetect/bounding_box_encode/op_kernel/
-                - ops/ops-cv/objdetect/bounding_box_encode/examples/
                 - ops/ops-cv/objdetect/check_valid/op_host/
                 - ops/ops-cv/objdetect/check_valid/op_kernel/
                 - ops/ops-cv/objdetect/check_valid/examples/
@@ -153,9 +150,6 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/stack_group_points/op_kernel/stack_group_points_apt.cpp
                 - ops/ops-cv/objdetect/stack_group_points/examples/
                 - ops/ops-cv/objdetect/stack_group_points/tests/
-                - ops/ops-cv/objdetect/to_absolute_b_box/op_host/
-                - ops/ops-cv/objdetect/to_absolute_b_box/op_kernel/
-                - ops/ops-cv/objdetect/to_absolute_b_box/examples/
                 - ops/ops-cv/objdetect/yolo/op_host/
                 - ops/ops-cv/objdetect/yolo/op_kernel/
                 - ops/ops-cv/objdetect/yolo/examples/

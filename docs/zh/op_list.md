@@ -547,16 +547,6 @@
     <td>将 YUV444 格式图像数据转换为 YUV422 格式。</td>
   </tr>
   <tr>
-    <td>image</td>
-    <td><a href="../../image/blend_face_bg_part_two/README.md">blend_face_bg_part_two</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>完成人脸融合背景第二阶段的归一化与Alpha合成计算，支持uint8/float32背景图输入。</td>
-  </tr>
-  <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
     <td>&check;</td>
@@ -585,16 +575,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>将输入的新的背景图片与已有图片进行融合，通过掩码的方式将背景替换为新的背景。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/bounding_box_encode/README.md">bounding_box_encode</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>计算锚框与真实边界框之间的编码偏移量，生成目标检测回归目标。</td>
   </tr>
   <tr>
     <td>objdetect</td>
@@ -635,16 +615,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>对每个batch、每个类别的候选框执行贪心非极大值抑制，再从所有类别的保留结果中按分数选择检测框。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/to_absolute_b_box/README.md">to_absolute_b_box</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将归一化边界框坐标按图像高宽转换为绝对像素坐标，用于目标检测推理后处理。</td>
   </tr>
   <tr>
     <td>objdetect</td>
