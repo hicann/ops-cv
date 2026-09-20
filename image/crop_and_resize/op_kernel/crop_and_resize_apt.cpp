@@ -11,8 +11,8 @@
 /*!
  * \file crop_and_resize_apt.cpp
  * \brief Kernel entry for crop_and_resize operator
- * schMode (uint32_t): 0 = bilinear ND/NHWC layout, 1 = bilinear NCHW layout.
- * dtype is auto-instantiated via DTYPE_ macros (DTYPE_X, DTYPE_BOXES, DTYPE_Y).
+ * 场景模式 schMode（uint32_t）：0 = bilinear ND/NHWC 排布，1 = bilinear NCHW 排布。
+ * dtype 经 DTYPE_ 宏自动实例化（DTYPE_X、DTYPE_BOXES、DTYPE_Y）。
  */
 
 #include "kernel_tiling/kernel_tiling.h"

@@ -27,7 +27,10 @@
 namespace optiling {
 
 // tiling 专属常量（非约束阈值，不与 def/infershape 共享）
-constexpr int64_t PER_CORE_MIN = 1024;
+// warp 级并行：并行域为每 warp 1 个输出位置（kernel 内 lane 分摊通道维，d ≡ laneId mod 32），
+// 每核 warp 位置数下限 32：uint32 路径恰好占满 1 个 block
+// （1024 线程 = 32 warp，与 kernel 侧 WARP_LANES=32 对应）
+constexpr int64_t WARP_PER_CORE_MIN = 32;
 constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 
@@ -279,12 +282,14 @@ static ge::graphStatus ComputeAndSetTiling(gert::TilingContext* context, const C
 {
     // info.numBoxes 为 int64_t，info.cropHeight/cropWidth 为 int32_t，
     // int64_t * int32_t 运算时 int32_t 隐式提升为 int64_t，结果为 int64_t，无溢出风险
+    // warp 级并行域换算：totalPositions 即 warp 位置总数（每 warp 处理一个输出位置），
+    // 两步法：先按物理核均分得到每核 warp 位置数（下限 WARP_PER_CORE_MIN），再反推实际核数
     int64_t totalPositions = info.numBoxes * info.cropHeight * info.cropWidth;
-    int64_t perCorePositions = Ops::Base::CeilDiv(totalPositions, coreNum);
-    if (perCorePositions < PER_CORE_MIN) {
-        perCorePositions = PER_CORE_MIN;
+    int64_t perCoreWarps = Ops::Base::CeilDiv(totalPositions, coreNum);
+    if (perCoreWarps < WARP_PER_CORE_MIN) {
+        perCoreWarps = WARP_PER_CORE_MIN;
     }
-    int64_t needCoreNum = Ops::Base::CeilDiv(totalPositions, perCorePositions);
+    int64_t needCoreNum = Ops::Base::CeilDiv(totalPositions, perCoreWarps);
 
     CropAndResizeTilingData* tiling = context->GetTilingData<CropAndResizeTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);

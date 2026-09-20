@@ -12,16 +12,19 @@
  * \file crop_and_resize_simt.h
  * \brief SIMT kernel implementation for crop_and_resize operator
  *
- * Grid-Stride over (b, cy, cx) positions, each position loops C channels.
- * All intermediate computation uses float32 for precision alignment with TF.
- * Layout (NHWC/NCHW) is a compile-time template parameter encoded in TilingKey schMode.
+ * 并行策略：以 warp 为粒度对 (b, cy, cx) 输出位置做 Grid-Stride 遍历，每个 warp 负责一个输出位置；
+ * warp 内 32 个 lane 分摊 C 个通道（lane 依次处理 d = laneId, laneId+32, ...），相邻 lane 访问相邻
+ * 通道，形成合并访存（coalesced）。位置级计算（box 读取 / NaN 检查 / 坐标映射 / 越界判定）由 warp
+ * 内所有 lane 在 SIMT 锁步下以相同输入冗余执行，因此结果位级一致。每个 (pos, d) 的浮点计算序列与
+ * 线程逐位置（thread-per-position）版本完全相同（仅任务重划分）。数据排布（NHWC/NCHW）是编译期
+ * 模板参数，经 TilingKey schMode 编码。
  *
  * 索引位宽模板化 IDX_T(uint32_t/uint64_t)，数据量 <= INT32_MAX 走 32 位高效路径。
  * __launch_bounds__ 按 IDX_T 位宽模板化，uint32 路径开 1024 线程，uint64 路径开 512 线程。
  *
  * 标量参数通过 UB 传递，解决 VF 标量参数过多问题。
  *
- * 精度对齐方案（与 TF image.crop_and_resize bit-exact）：
+ * 精度对齐方案（与 TF image.crop_and_resize bit-exact，中间计算统一使用 float32）：
  *   1. volatile — 阻止 NPU 编译器将 a*b+c 收缩为 fma(a,b,c)（单舍入），
  *      匹配 TF Eigen tensor 的 separate mul+add（双舍入）。
  *      -ffp-contract=off 和 #pragma clang fp contract(off) 在 NPU 编译器上均不可靠，
@@ -29,6 +32,9 @@
  *   2. DsDiv — fmaf 修正除法残差，消除 NPU 与 numpy 除法的 1-ULP 坐标差异，
  *      使 OOB 判定完全一致。
  *   3. IEEE 754 自然传播 — 不使用 t==0 guard，0*Inf=NaN 自然传播匹配 TF。
+ *   4. FTZ 对齐 — x86 golden（TF）编译启用 Flush-To-Zero/DAZ：次正规运算结果/输入被冲刷为 +0，
+ *      NPU VF 硬件按 IEEE 渐进下溢保留次正规，满量程输入（|x|≈3.4e38）下与 golden 分叉，
+ *      经 Ftz() 冲刷对齐；完整语义、全部应用位置与例外详见 Ftz 定义处注释。
  */
 
 #ifndef CROP_AND_RESIZE_SIMT_H_
@@ -50,6 +56,9 @@ using namespace AscendC;
 // 线程数模板：uint32 路径开 1024 线程，uint64 路径开 512 线程
 template <typename IDX_T>
 static constexpr uint32_t THREADS = (sizeof(IDX_T) == sizeof(uint32_t)) ? 1024 : 512;
+
+// warp 内 lane 数：warp 处理一个输出位置，lane 分摊通道维（d ≡ laneId mod 32），相邻 lane 读相邻通道
+static constexpr uint32_t WARP_LANES = 32;
 
 // UB 参数布局（scalar 端写入，VF 端读取，解决 VF 标量参数过多问题）
 static constexpr uint32_t UB_OFF_BATCH = 0;
@@ -120,7 +129,20 @@ struct InterpGeometry {
     int64_t bottomRowOff;
     int64_t leftColOff;
     int64_t rightColOff;
-    int64_t chStride; // 通道步长：NCHW = H*W（d 迭代跨步）；NHWC = 1（编译期折叠，寻址退化为 +d）
+    int64_t channelInStride; // 输入图读侧通道步长（与输出写侧 PosLevelResult::channelOutStride 对称：in=读输入 /
+                             // out=写输出）：NCHW = H*W（d 迭代跨步）；NHWC = 1（编译期折叠，寻址退化为 +d）
+};
+
+// 位置级计算结果：填充路径（box_index 越界 / boxes NaN/Inf / 映射坐标 NaN / OOB）时 isFill 为 true 且
+// fillVal 有效；正常路径时 outBase/channelOutStride/ig 有效，由通道级计算消费。
+// 步长命名对称：ig.channelInStride=输入图读侧步长（ComputeInterpGeometry
+// 算），channelOutStride=输出写侧步长（ComputeOutLayout 算）
+struct PosLevelResult {
+    bool isFill;
+    float fillVal;
+    int64_t outBase;
+    int64_t channelOutStride;
+    InterpGeometry ig;
 };
 
 // dtype 转换
@@ -193,7 +215,27 @@ __simt_callee__ inline float DsDiv(float a, float b)
 // 将整数索引 clamp 到 [0, hi] 范围
 __simt_callee__ inline int32_t ClampInt32(int32_t val, int32_t hi) { return min(hi, max(val, 0)); }
 
-// 计算插值几何参数：邻居索引 + 权重 + 地址偏移（layout 编译期特化寻址步长）
+constexpr float kF32MinNormal = 1.17549435e-38f; // 2^-126，float32 最小正规数（FLT_MIN）
+
+// Ftz: 次正规数冲刷（Flush-To-Zero / Denormals-Are-Zero），对齐 x86 golden 的浮点语义。
+// TF golden 运行在 x86 上（-ffast-math 类编译同时启用 FTZ 与 DAZ）：运算结果为次正规
+// （|v| < 2^-126 且非 0）时被冲刷为 +0（FTZ），次正规输入参与运算前同样被冲刷为 +0（DAZ）；
+// NPU VF 硬件按 IEEE 754 渐进下溢保留次正规，满量程输入（|x|≈3.4e38）下插值乘积/加和
+// 下溢进次正规域，导致与 golden 分叉。经 dump 实测验证（215 用例 bit 全对齐）：
+//   - FTZ 输出冲刷：覆盖插值链路全部乘/除/加结果（BilinearSampleChannel 的
+//     prod0/prod1/prod2/row0/row1/返回值、MapCoordinate 的 boxDiff/num/scale/prod/base/coord）；
+//   - DAZ 输入冲刷：外部输入（x 像素、boxes 坐标）加载后冲刷（内部中间量已被输出 FTZ
+//     冲刷，无需重复 DAZ）；
+//   - 减法输出在权重 ∈ [0,1) 的 lerp 段不显式冲刷（乘积 <= |diff|，下游乘法 Ftz 兜底）；
+//     MapCoordinate 的 boxDiff 因下游 imgSizeMinus1 可放大（>1）而显式冲刷；
+//   - DsDiv 内部不冲刷（其 fmaf 修正依赖完整精度，除法输出在调用处冲刷）；
+//   - NaN/Inf/±0 恒等返回（比较条件不命中），NaN/Inf 传播路径零触碰；
+//   - 正规数恒等返回：真实业务像素值域（±1e4 级）下插值结果远大于 2^-126，Ftz 为 no-op。
+__simt_callee__ inline float Ftz(float v) { return (v != 0.0f && fabsf(v) < kF32MinNormal) ? 0.0f : v; }
+
+// 计算插值几何参数：邻居索引 + 权重 + 地址偏移（layout 编译期特化寻址步长）。
+// 读侧函数：负责输入图 x 的全部寻址信息，含输入通道步长 channelInStride；
+// 输出写侧对应 ComputeOutLayout（输出基址 outBase + 输出通道步长 channelOutStride），读写各算一次。
 template <Layout LAYOUT>
 __simt_callee__ inline InterpGeometry ComputeInterpGeometry(float inY, float inX, int32_t boxIdx,
                                                             const ScalarParams& params, const Geometry& geom)
@@ -213,15 +255,15 @@ __simt_callee__ inline InterpGeometry ComputeInterpGeometry(float inY, float inX
         ig.bottomRowOff = static_cast<int64_t>(ig.bottomY) * params.imageWidth;
         ig.leftColOff = static_cast<int64_t>(ig.leftX);
         ig.rightColOff = static_cast<int64_t>(ig.rightX);
-        ig.chStride = static_cast<int64_t>(params.imageHeight) * params.imageWidth;
+        ig.channelInStride = static_cast<int64_t>(params.imageHeight) * params.imageWidth;
     } else {
-        // NHWC（现状）: x=(N,H,W,C)，行偏移=row*W*C、列偏移=col*C、通道步长=1
+        // NHWC: x=(N,H,W,C)，行偏移=row*W*C、列偏移=col*C、通道步长=1
         int32_t depth = params.depth;
         ig.topRowOff = static_cast<int64_t>(ig.topY) * params.imageWidth * depth;
         ig.bottomRowOff = static_cast<int64_t>(ig.bottomY) * params.imageWidth * depth;
         ig.leftColOff = static_cast<int64_t>(ig.leftX) * depth;
         ig.rightColOff = static_cast<int64_t>(ig.rightX) * depth;
-        ig.chStride = 1;
+        ig.channelInStride = 1;
     }
     return ig;
 }
@@ -231,23 +273,31 @@ __simt_callee__ inline InterpGeometry ComputeInterpGeometry(float inY, float inX
 template <typename T_X, Layout LAYOUT>
 __simt_callee__ inline float BilinearSampleChannel(const __gm__ T_X* xGm, const InterpGeometry& ig, int32_t d)
 {
-    int64_t chOff = (LAYOUT == LAYOUT_NCHW) ? static_cast<int64_t>(d) * ig.chStride : static_cast<int64_t>(d);
-    float v00 = CastToFloat(xGm[ig.imgBase + ig.topRowOff + ig.leftColOff + chOff]);
-    float v01 = CastToFloat(xGm[ig.imgBase + ig.topRowOff + ig.rightColOff + chOff]);
-    float v10 = CastToFloat(xGm[ig.imgBase + ig.bottomRowOff + ig.leftColOff + chOff]);
-    float v11 = CastToFloat(xGm[ig.imgBase + ig.bottomRowOff + ig.rightColOff + chOff]);
+    int64_t chOff = (LAYOUT == LAYOUT_NCHW) ? static_cast<int64_t>(d) * ig.channelInStride : static_cast<int64_t>(d);
+    // DAZ：外部输入像素参与运算前冲刷次正规（x86 -ffast-math 的 DAZ 语义，dump 实测 bit 对齐验证）；
+    // fp16 次正规输入转 fp32 后落入正规域，Ftz 恒等
+    float v00 = Ftz(CastToFloat(xGm[ig.imgBase + ig.topRowOff + ig.leftColOff + chOff]));
+    float v01 = Ftz(CastToFloat(xGm[ig.imgBase + ig.topRowOff + ig.rightColOff + chOff]));
+    float v10 = Ftz(CastToFloat(xGm[ig.imgBase + ig.bottomRowOff + ig.leftColOff + chOff]));
+    float v11 = Ftz(CastToFloat(xGm[ig.imgBase + ig.bottomRowOff + ig.rightColOff + chOff]));
 
+    // volatile 防护段逐行保留（乘法结果物化经 Ftz 冲刷，volatile 写/读链不变，FMA 仍被阻止）。
+    // x86 FTZ 为全引擎语义：乘/除/加运算结果为次正规时均被冲刷为 +0（实测 14 用例：
+    // golden=0 vs NPU=5.588e-39，即加法结果次正规未被冲刷导致的分叉）。
+    // 因此除 prod0/prod1/prod2（乘法）外，row0/row1/返回值（加法）结果同样经 Ftz 冲刷；
+    // 减法（diff0/diff1/diff2）不显式冲刷：wx1/wy1 ∈ [0,1)，乘积 <= |diff|，
+    // 减法次正规残差由下游乘法 Ftz 兜底冲刷，结果等价。
     volatile float diff0 = v01 - v00;
-    volatile float prod0 = ig.wx1 * diff0;
-    float row0 = v00 + prod0;
+    volatile float prod0 = Ftz(ig.wx1 * diff0);
+    float row0 = Ftz(v00 + prod0);
 
     volatile float diff1 = v11 - v10;
-    volatile float prod1 = ig.wx1 * diff1;
-    float row1 = v10 + prod1;
+    volatile float prod1 = Ftz(ig.wx1 * diff1);
+    float row1 = Ftz(v10 + prod1);
 
     volatile float diff2 = row1 - row0;
-    volatile float prod2 = ig.wy1 * diff2;
-    return row0 + prod2;
+    volatile float prod2 = Ftz(ig.wy1 * diff2);
+    return Ftz(row0 + prod2);
 }
 
 // 坐标映射：将 crop 坐标映射到原图坐标
@@ -255,21 +305,30 @@ __simt_callee__ inline float BilinearSampleChannel(const __gm__ T_X* xGm, const 
 //   if cropSize > 1: scale = (boxEnd - boxStart) * (imgSize-1) / (cropSize-1)
 //                    coord = boxStart * (imgSize-1) + cropIdx * scale
 //   else:             coord = 0.5 * (boxStart + boxEnd) * (imgSize-1)
-// DsDiv 修正 NPU plain division 与 x86 的 1-ULP 差异，匹配 TF 除法结果。
+// DsDiv 修正 NPU plain division 与 x86 的 1-ULP 差异，匹配 TF 除法结果；
+// DsDiv 结果在调用处经 Ftz 冲刷（除法结果为次正规时对齐 x86 FTZ），DsDiv 内部不冲刷。
+// x86 FTZ/DAZ 全引擎语义：boxStart/boxEnd 入口 DAZ（外部输入冲刷）；
+// boxDiff/num/scale/prod/base/coord 各步运算输出为次正规时冲刷 +0
+// （boxDiff/num/base 显式冲刷：下游 imgSizeMinus1 > 1 可放大次正规，无法由下游兜底）。
 // volatile 阻止 FMA contraction。
 __simt_callee__ inline float MapCoordinate(float boxStart, float boxEnd, int32_t cropIdx, int32_t cropSize,
                                            float imgSizeMinus1)
 {
+    // DAZ：box 坐标为外部输入，参与运算前冲刷次正规（NaN/Inf 恒等，入口检测不受影响）
+    float bs = Ftz(boxStart);
+    float be = Ftz(boxEnd);
     if (cropSize > 1) {
-        volatile float boxDiff = boxEnd - boxStart;
-        volatile float num = boxDiff * imgSizeMinus1;
-        volatile float scale = DsDiv(num, static_cast<float>(cropSize - 1));
-        volatile float prod = static_cast<float>(cropIdx) * scale;
-        volatile float base = boxStart * imgSizeMinus1;
-        volatile float coord = base + prod;
+        volatile float boxDiff = Ftz(be - bs);
+        volatile float num = Ftz(boxDiff * imgSizeMinus1);
+        volatile float scale = Ftz(DsDiv(num, static_cast<float>(cropSize - 1)));
+        volatile float prod = Ftz(static_cast<float>(cropIdx) * scale);
+        volatile float base = Ftz(bs * imgSizeMinus1);
+        volatile float coord = Ftz(base + prod);
         return coord;
     } else {
-        float sum = boxStart + boxEnd;
+        // midpoint 分支：bs/be 已 DAZ（各自 ∈ {0} ∪ [FLT_MIN, +∞)，任意符号），|sum| >= FLT_MIN 或 = 0，
+        // 结果域不会次正规，无需 FTZ（x86 对应运算在该输入域下同样不触发冲刷）
+        float sum = bs + be;
         float coord = MIDPOINT_WEIGHT * sum * imgSizeMinus1;
         return coord;
     }
@@ -300,13 +359,17 @@ __simt_callee__ inline Geometry ComputeGeometry(const ScalarParams& params)
     return geom;
 }
 
-// 统一填充：所有通道写同一个值（box_index 越界 / boxes NaN/Inf / 映射坐标 NaN / OOB 的整通道填充路径）
-// channelOutStride 仅 NCHW 使用（= cropH*cropW，由调用方传入）；NHWC 实例三元编译期折叠为 off=d，参数值不参与寻址
+// 统一填充（warp lane 分摊）：所有通道写同一个值，覆盖 4 条整通道填充路径
+// （box_index 越界 / boxes NaN/Inf / 映射坐标 NaN / OOB）。lane 处理 d ≡ laneId (mod 32)。
+// 填充值与 dtype 转换序列与线程串行版本一致，仅写序不同：
+// 各 (outBase, d) 输出地址唯一互不重叠，写序变化不影响最终内存状态。
+// channelOutStride 仅 NCHW 使用（= cropH*cropW，由调用方传入）；
+// NHWC 实例三元编译期折叠为 off=d，参数值不参与寻址
 template <typename T_Y, Layout LAYOUT>
-__simt_callee__ inline void FillAllChannels(int32_t depth, int64_t outBase, int64_t channelOutStride, float val,
-                                            __gm__ T_Y* yGm)
+__simt_callee__ inline void FillAllChannelsStrided(int32_t depth, int32_t laneId, int64_t outBase,
+                                                   int64_t channelOutStride, float val, __gm__ T_Y* yGm)
 {
-    for (int32_t d = 0; d < depth; d++) {
+    for (int32_t d = laneId; d < depth; d += static_cast<int32_t>(WARP_LANES)) {
         int64_t off = (LAYOUT == LAYOUT_NCHW) ? static_cast<int64_t>(d) * channelOutStride : static_cast<int64_t>(d);
         yGm[outBase + off] = CastFromFloat<T_Y>(val);
     }
@@ -326,33 +389,45 @@ __aicore__ inline ScalarParams MakeScalarParams(const CropAndResizeTilingData* t
     return params;
 }
 
-// 处理单个输出位置 (box, crop_y, crop_x)：读 box -> NaN 检测 -> 坐标映射 -> OOB 检查 -> 双线性插值。
-// 输出基址编译期特化：NHWC = b*cropHWC+cy*cropW*C+cx*C（步长 d）；NCHW = b*cropHWC+cy*cropW+cx（步长 d*cropHW）
-template <typename T_X, typename T_BOXES, typename T_Y, typename IDX_T, Layout LAYOUT>
-__simt_callee__ inline void ProcessOnePosition(IDX_T b, IDX_T cy, IDX_T cx, const ScalarParams& params,
-                                               const Geometry& geom, GmPointers<T_X, T_BOXES, T_Y> gms)
+// 输出布局（基址 outBase + 写侧通道步长 channelOutStride），编译期特化。
+// 写侧函数：负责输出 y 的全部寻址信息，与读侧 ComputeInterpGeometry（含 channelInStride）配对，
+// 读写两个通道步长各算一次、位置对称（in=读输入 / out=写输出）。
+// NHWC = b*cropHWC+cy*cropW*C+cx*C（步长 d）；NCHW = b*cropHWC+cy*cropW+cx（步长 d*cropHW）
+template <typename IDX_T, Layout LAYOUT>
+__simt_callee__ inline void ComputeOutLayout(IDX_T b, IDX_T cy, IDX_T cx, const ScalarParams& params,
+                                             const Geometry& geom, int64_t& outBase, int64_t& channelOutStride)
 {
-    int32_t depth = params.depth;
-    // 输出通道步长：NCHW = cropH*cropW；NHWC = 1（初始化占位，三元编译期折叠为 d，不参与寻址）
-    int64_t channelOutStride = 1;
-    int64_t outBase;
     if constexpr (LAYOUT == LAYOUT_NCHW) {
         // NCHW: y=(b,C,cy,cx)，outBase = b*cropHWC + cy*cropW + cx，d 循环写 outBase + d*cropH*cropW
         channelOutStride = static_cast<int64_t>(params.cropHeight) * params.cropWidth;
         outBase = static_cast<int64_t>(b) * geom.cropHWC + static_cast<int64_t>(cy) * params.cropWidth +
                   static_cast<int64_t>(cx);
     } else {
-        // NHWC（现状）: y=(b,cy,cx,C)，outBase = b*cropHWC + cy*cropW*C + cx*C，d 循环写 outBase + d
+        // NHWC: y=(b,cy,cx,C)，outBase = b*cropHWC + cy*cropW*C + cx*C，d 循环写 outBase + d
         int64_t batchOff = static_cast<int64_t>(b) * geom.cropHWC;
-        int64_t rowOff = static_cast<int64_t>(cy) * params.cropWidth * depth;
-        outBase = batchOff + rowOff + static_cast<int64_t>(cx) * depth;
+        int64_t rowOff = static_cast<int64_t>(cy) * params.cropWidth * params.depth;
+        outBase = batchOff + rowOff + static_cast<int64_t>(cx) * params.depth;
+        channelOutStride = 1; // 初始化占位，三元编译期折叠为 d，不参与寻址
     }
+}
+
+// 位置级计算：读 box -> NaN 检测 -> 坐标映射 -> OOB 检查 -> 插值几何。
+// warp 并行下同一 warp 的 32 个 lane 以相同输入冗余执行本函数（SIMT 锁步），结果位级一致。
+template <typename T_X, typename T_BOXES, typename T_Y, typename IDX_T, Layout LAYOUT>
+__simt_callee__ inline PosLevelResult ComputePosLevel(IDX_T b, IDX_T cy, IDX_T cx, const ScalarParams& params,
+                                                      const Geometry& geom, GmPointers<T_X, T_BOXES, T_Y> gms)
+{
+    PosLevelResult posResult;
+    posResult.isFill = false;
+    posResult.fillVal = 0.0f;
+    ComputeOutLayout<IDX_T, LAYOUT>(b, cy, cx, params, geom, posResult.outBase, posResult.channelOutStride);
 
     // box_index 越界：防御性填充 0（TF 会抛 InvalidArgumentError，测试用例应避免越界）
     int32_t boxIdx = gms.boxIndexGm[static_cast<int64_t>(b)];
     if (boxIdx < 0 || boxIdx >= params.batch) {
-        FillAllChannels<T_Y, LAYOUT>(depth, outBase, channelOutStride, 0.0f, gms.yGm);
-        return;
+        posResult.isFill = true;
+        posResult.fillVal = 0.0f;
+        return posResult;
     }
 
     // 读取 box 归一化坐标 [y1, x1, y2, x2]（范围 0~1）
@@ -363,46 +438,69 @@ __simt_callee__ inline void ProcessOnePosition(IDX_T b, IDX_T cy, IDX_T cx, cons
     float y2 = CastToFloat(gms.boxesGm[boxOffset + 2]);
     float x2 = CastToFloat(gms.boxesGm[boxOffset + 3]);
 
-    // NaN/Inf 检测：boxes 含 NaN 或 Inf 时输出 NaN（与 TF 行为一致）
+    // NaN/Inf 检测：boxes 含 NaN 或 Inf 时输出 NaN（与 TF 行为一致）。
     // NaN 会导致 floor(NaN) 产生未定义索引；Inf 经 MapCoordinate 会产生 NaN（Inf-Inf=NaN），
     // 且 NaN bypass OOB 检查后 static_cast<int32_t>(NaN) 为 UB，需提前拦截。
     // isnan()/isinf() 在 __simt_callee__ 中可靠工作。
     if (isnan(y1) || isnan(x1) || isnan(y2) || isnan(x2) || isinf(y1) || isinf(x1) || isinf(y2) || isinf(x2)) {
-        FillAllChannels<T_Y, LAYOUT>(depth, outBase, channelOutStride, MakeNan(), gms.yGm);
-        return;
+        posResult.isFill = true;
+        posResult.fillVal = MakeNan();
+        return posResult;
     }
 
     // 坐标映射：crop 坐标 -> 原图坐标
     float inY = MapCoordinate(y1, y2, static_cast<int32_t>(cy), params.cropHeight, geom.imgHMinus1);
     float inX = MapCoordinate(x1, x2, static_cast<int32_t>(cx), params.cropWidth, geom.imgWMinus1);
 
-    // OOB 检查：严格 < 0 和 > size-1，与 TF crop_and_resize_op 一致。
-    // 纵深防御：MapCoordinate 可能在极端浮点输入下产生 NaN，NaN 比较为 false 会 bypass OOB 检查，
+    // NaN 纵深防御：MapCoordinate 极端浮点输入可产生 NaN，NaN 比较为 false 会 bypass OOB 检查，
     // 导致后续 static_cast<int32_t>(floorf(NaN)) 为 UB，因此在此再次拦截。
     if (isnan(inY) || isnan(inX)) {
-        FillAllChannels<T_Y, LAYOUT>(depth, outBase, channelOutStride, MakeNan(), gms.yGm);
-        return;
+        posResult.isFill = true;
+        posResult.fillVal = MakeNan();
+        return posResult;
     }
+    // OOB 检查：严格 < 0 和 > size-1，与 TF crop_and_resize_op 一致。
     if (inY < 0.0f || inY > geom.imgHMinus1 || inX < 0.0f || inX > geom.imgWMinus1) {
-        FillAllChannels<T_Y, LAYOUT>(depth, outBase, channelOutStride, params.extrapolationValue, gms.yGm);
-        return;
+        posResult.isFill = true;
+        posResult.fillVal = params.extrapolationValue;
+        return posResult;
     }
 
     // 邻居索引 + 权重 + 偏移计算（layout 编译期特化）
-    InterpGeometry ig = ComputeInterpGeometry<LAYOUT>(inY, inX, boxIdx, params, geom);
+    posResult.ig = ComputeInterpGeometry<LAYOUT>(inY, inX, boxIdx, params, geom);
+    return posResult;
+}
 
-// 逐通道双线性插值（展开 4 次以提升 ILP，常见 depth=3 时全部展开）
+// 处理单个输出位置的 warp 级实现：位置级计算由 warp 内 32 lane 以相同输入锁步冗余执行；
+// 通道级计算 lane 分摊（lane 处理 d ≡ laneId mod 32），相邻 lane 读相邻通道实现 coalesced 访存。
+// 每个 (pos, d) 的浮点运算序列与线程串行版本完全一致（bit-exact，详见文件头）。
+template <typename T_X, typename T_BOXES, typename T_Y, typename IDX_T, Layout LAYOUT>
+__simt_callee__ inline void ProcessOnePositionWarp(IDX_T b, IDX_T cy, IDX_T cx, IDX_T laneId,
+                                                   const ScalarParams& params, const Geometry& geom,
+                                                   GmPointers<T_X, T_BOXES, T_Y> gms)
+{
+    PosLevelResult pr = ComputePosLevel<T_X, T_BOXES, T_Y, IDX_T, LAYOUT>(b, cy, cx, params, geom, gms);
+    if (pr.isFill) {
+        // 填充路径：lane 分摊写整通道
+        FillAllChannelsStrided<T_Y, LAYOUT>(params.depth, static_cast<int32_t>(laneId), pr.outBase, pr.channelOutStride,
+                                            pr.fillVal, gms.yGm);
+        return;
+    }
+
+// 逐通道双线性插值：lane 分摊 d ≡ laneId (mod 32)（展开 4 次提升 ILP）
 #pragma unroll 4
-    for (int32_t d = 0; d < depth; d++) {
-        float result = BilinearSampleChannel<T_X, LAYOUT>(gms.xGm, ig, d);
+    for (int32_t d = static_cast<int32_t>(laneId); d < params.depth; d += static_cast<int32_t>(WARP_LANES)) {
+        float result = BilinearSampleChannel<T_X, LAYOUT>(gms.xGm, pr.ig, d);
         // 输出通道偏移：NCHW = d*cropH*cropW；NHWC = d（编译期折叠）
-        int64_t outOff = (LAYOUT == LAYOUT_NCHW) ? static_cast<int64_t>(d) * channelOutStride : static_cast<int64_t>(d);
-        gms.yGm[outBase + outOff] = CastFromFloat<T_Y>(result);
+        int64_t outOff = (LAYOUT == LAYOUT_NCHW) ? static_cast<int64_t>(d) * pr.channelOutStride :
+                                                   static_cast<int64_t>(d);
+        gms.yGm[pr.outBase + outOff] = CastFromFloat<T_Y>(result);
     }
 }
 
-// VF 核心计算：Grid-Stride 循环遍历输出位置
-// 每个线程处理一个 (box, crop_y, crop_x) 位置，循环 depth 个通道。
+// VF 核心计算：Grid-Stride 循环以 warp 粒度遍历输出位置
+// 每个 warp 处理一个 (box, crop_y, crop_x) 位置：位置级计算 32 lane 锁步冗余执行，
+// 通道维 lane 分摊（d ≡ laneId mod 32），相邻 lane 读相邻通道实现 coalesced 访存。
 // 标量参数通过 UB 传递，避免 VF 标量参数过多导致传递不可靠。
 template <typename T_X, typename T_BOXES, typename T_Y, typename IDX_T, Layout LAYOUT>
 __simt_vf__ __aicore__ __launch_bounds__(THREADS<IDX_T>) inline void OpCropAndResizeSimtKernel(
@@ -421,13 +519,19 @@ __simt_vf__ __aicore__ __launch_bounds__(THREADS<IDX_T>) inline void OpCropAndRe
         return;
     }
 
-    for (IDX_T pos = static_cast<IDX_T>(blockIdx.x) * static_cast<IDX_T>(blockDim.x) + static_cast<IDX_T>(threadIdx.x);
-         pos < totalPositions; pos += static_cast<IDX_T>(blockDim.x) * static_cast<IDX_T>(gridDim.x)) {
+    // warp 分解：全局线程 id -> (warpId, laneId)。线程总数 = THREADS × 核数，1024/512 均为 32 的倍数，
+    // warpStride 为全局 warp 槽位数，grid-stride 兜底保证任意 totalPositions 正确
+    IDX_T tid = static_cast<IDX_T>(blockIdx.x) * static_cast<IDX_T>(blockDim.x) + static_cast<IDX_T>(threadIdx.x);
+    IDX_T laneId = tid % static_cast<IDX_T>(WARP_LANES);
+    IDX_T warpId = tid / static_cast<IDX_T>(WARP_LANES);
+    IDX_T warpStride = static_cast<IDX_T>(blockDim.x) * static_cast<IDX_T>(gridDim.x) / static_cast<IDX_T>(WARP_LANES);
+
+    for (IDX_T pos = warpId; pos < totalPositions; pos += warpStride) {
         IDX_T b = pos / cropHW;
         IDX_T rem = pos - b * cropHW;
         IDX_T cy = rem / cropWidthT;
         IDX_T cx = rem - cy * cropWidthT;
-        ProcessOnePosition<T_X, T_BOXES, T_Y, IDX_T, LAYOUT>(b, cy, cx, params, geom, gms);
+        ProcessOnePositionWarp<T_X, T_BOXES, T_Y, IDX_T, LAYOUT>(b, cy, cx, laneId, params, geom, gms);
     }
 }
 

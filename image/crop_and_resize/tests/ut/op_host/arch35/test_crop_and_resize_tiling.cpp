@@ -64,12 +64,15 @@ static gert::TilingContextPara BuildPara(std::initializer_list<int64_t> xShape,
 }
 
 // 正例公共校验：x=[2,4,4,256], boxes=[64,4], crop_size={8,8}
-//   totalPositions = 64*8*8 = 4096; coreNum=64 -> perCore=1024 -> needCore=4
+//   P0 warp 级并行语义：totalPositions = 64*8*8 = 4096（每 warp 1 个输出位置）
+//   推导：coreNum=64 -> perCoreWarps = CeilDiv(4096,64) = 64（>= WARP_PER_CORE_MIN=32，不触发下限钳）
+//         -> needCore = CeilDiv(4096,64) = 64
 //   tilingKey = CROP_AND_RESIZE_MODE_BILINEAR_NHWC(0)
 static void CheckPositiveTiling(const TilingInfo& info)
 {
     EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR_NHWC);
-    EXPECT_EQ(info.blockNum, 4u);
+    // tp=4096 -> perCoreWarps=CeilDiv(4096,64)=64 -> needCore=CeilDiv(4096,64)=64
+    EXPECT_EQ(info.blockNum, 64u);
     ASSERT_EQ(info.workspaceSizes.size(), 1u);
     EXPECT_GE(info.workspaceSizes[0], 0);
     ASSERT_GE(info.tilingDataSize, sizeof(CropAndResizeTilingData));
@@ -295,7 +298,8 @@ TEST_F(CropAndResizeTiling, crop_and_resize_tiling_nchw_fp16_fp32)
     TilingInfo info;
     ASSERT_TRUE(ExecuteTiling(para, info));
     EXPECT_EQ(info.tilingKey, CROP_AND_RESIZE_MODE_BILINEAR_NCHW);
-    EXPECT_EQ(info.blockNum, 4u);
+    // tp=64*8*8=4096 -> perCoreWarps=CeilDiv(4096,64)=64 -> needCore=CeilDiv(4096,64)=64（核数与 layout 无关）
+    EXPECT_EQ(info.blockNum, 64u);
     const CropAndResizeTilingData* td = reinterpret_cast<const CropAndResizeTilingData*>(info.tilingData.get());
     EXPECT_EQ(td->depth, 256);     // C 来自 x.shape[1]（NCHW dims[1]）
     EXPECT_EQ(td->imageHeight, 4); // H 来自 x.shape[2]

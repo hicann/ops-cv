@@ -12,9 +12,9 @@
  * \file crop_and_resize_tiling_key.h
  * \brief Tiling key declare for crop_and_resize operator
  *
- * Single template parameter:
- *   schMode (UINT 2-bit): 0 = ..._NHWC (bilinear, ND/NHWC layout), 1 = ..._NCHW (bilinear, NCHW layout)
- * dtype is NOT encoded in TilingKey; DTYPE_ macros auto-instantiate all dtype combinations.
+ * 单模板参数：
+ *   schMode（UINT 2-bit）：0 = ..._NHWC（bilinear，ND/NHWC 排布），1 = ..._NCHW（bilinear，NCHW 排布）
+ * dtype 不编码进 TilingKey；DTYPE_ 宏自动实例化所有 dtype 组合。
  */
 
 #ifndef CROP_AND_RESIZE_TILING_KEY_H_
