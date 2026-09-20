@@ -7,13 +7,16 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-#ifndef PTA_NPU_OP_API_INC_LEVEL0_OP_THREE_INTERPOLATE_BACKWARD_OP_H_
-#define PTA_NPU_OP_API_INC_LEVEL0_OP_THREE_INTERPOLATE_BACKWARD_OP_H_
+
+#ifndef OP_API_INC_LEVEL0_ROI_ALIGN_GRAD_H_
+#define OP_API_INC_LEVEL0_ROI_ALIGN_GRAD_H_
 
 #include "opdev/op_executor.h"
 
 namespace l0op {
-const aclTensor* ThreeInterpolateBackward(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight, int m,
-                                          aclOpExecutor* executor);
-}
-#endif // PTA_NPU_OP_API_INC_LEVEL0_OP_THREE_INTERPOLATE_BACKWARD_OP_H_
+const aclTensor* ROIAlignGrad(const aclTensor* gradOutput, const aclTensor* boxes, const aclIntArray* inputShape,
+                              int64_t pooledHeight, int64_t pooledWidth, float spatialScale, int64_t samplingRatio,
+                              int64_t roiEndMode, aclOpExecutor* executor);
+} // namespace l0op
+
+#endif // OP_API_INC_LEVEL0_ROI_ALIGN_GRAD_H_

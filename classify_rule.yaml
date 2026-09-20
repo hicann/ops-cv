@@ -63,7 +63,6 @@ objdetect@ops-cv:
                 - ops/ops-cv/image/col2im/examples/
                 - ops/ops-cv/image/col2im/tests/
                 - ops/ops-cv/image/three_interpolate_backward/op_host/three_interpolate_backward_def.cpp
-                - ops/ops-cv/image/three_interpolate_backward/op_host/three_interpolate_backward_tiling_arch35.cpp
                 - ops/ops-cv/image/three_interpolate_backward/op_host/three_interpolate_backward_infershape.cpp
                 - ops/ops-cv/image/three_interpolate_backward/examples/
                 - ops/ops-cv/image/three_interpolate_backward/tests/
@@ -93,10 +92,6 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/decode_bbox_v2/op_kernel/
                 - ops/ops-cv/objdetect/decode_bbox_v2/examples/
                 - ops/ops-cv/objdetect/decode_bbox_v2/tests/
-                - ops/ops-cv/objdetect/deformable_roi_pool/op_host/
-                - ops/ops-cv/objdetect/deformable_roi_pool/op_kernel/
-                - ops/ops-cv/objdetect/deformable_roi_pool/examples/
-                - ops/ops-cv/objdetect/deformable_roi_pool/tests/
                 - ops/ops-cv/objdetect/iou_v2/examples/
                 - ops/ops-cv/objdetect/iou_v2/tests/
                 - ops/ops-cv/objdetect/iou3d/op_host/
@@ -145,15 +140,8 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/sorted_nms/op_kernel/
                 - ops/ops-cv/objdetect/sorted_nms/examples/
                 - ops/ops-cv/objdetect/sorted_nms/tests/
-                - ops/ops-cv/objdetect/stack_group_points/op_host/arch35/
-                - ops/ops-cv/objdetect/stack_group_points/op_kernel/arch35/
-                - ops/ops-cv/objdetect/stack_group_points/op_kernel/stack_group_points_apt.cpp
                 - ops/ops-cv/objdetect/stack_group_points/examples/
                 - ops/ops-cv/objdetect/stack_group_points/tests/
-                - ops/ops-cv/objdetect/yolo/op_host/
-                - ops/ops-cv/objdetect/yolo/op_kernel/
-                - ops/ops-cv/objdetect/yolo/examples/
-                - ops/ops-cv/objdetect/yolo/tests/
             non_delivery: null
             open_source: null
 
@@ -207,18 +195,5 @@ conv_forward_ascendc@ops-cv:
       test_code:
         - ops/ops-cv/image/aipp/examples/
         - ops/ops-cv/image/aipp/tests/
-      non_delivery: null
-      open_source: null
-
-VC8@ops-cv:
-  src:
-    release:
-      style:
-        - ops/ops-cv/image/image_projective_transform/
-      opensource_style: null
-      kernel_style: null
-    unrelease:
-      test_code:
-        - ops/ops-cv/image/image_projective_transform/tests/
       non_delivery: null
       open_source: null

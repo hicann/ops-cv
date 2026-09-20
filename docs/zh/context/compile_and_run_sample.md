@@ -36,7 +36,7 @@
 
     # 设置可执行文件名（如opapi_test），并指定待运行算子文件*.cpp所在目录
     add_executable(opapi_test
-                   test_grid_sampler2_d.cpp)
+                   test_aclnn_upsample_nearest3d.cpp)
 
     # 设置ASCEND_PATH（CANN软件包目录，请根据实际路径修改）和INCLUDE_BASE_DIR（头文件目录）
     if(NOT "$ENV{ASCEND_CUSTOM_PATH}" STREQUAL "")

@@ -14,7 +14,7 @@
  */
 
 #include "onnx_common.h"
-#include "col2_im_v2_proto.h"
+#include "op_cv_proto_extend.h"
 
 using namespace ge;
 namespace {

@@ -48,16 +48,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/col2_im_v2/README.md">col2_im_v2</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将滑动局部块重排组合为批处理图像张量（Col2Im，kernel_size/output_size 为 const tensor 输入）。</td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/col2im/README.md">col2im</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -85,16 +75,6 @@
     <td>&check;</td>
     <td>AI CPU</td>
     <td>从输入图像中提取多个裁剪区域，并将它们统一调整为指定大小，支持双线性插值和最近邻插值。</td>
-  </tr>
-  <tr>
-    <td>image</td>
-    <td><a href="../../image/extract_glimpse_v2/README.md">extract_glimpse_v2</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>从批量输入图像中提取指定位置和大小的子图像（glimpse）。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -148,16 +128,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/image_projective_transform/README.md">image_projective_transform</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&cross;</td>
-    <td>AI Core</td>
-    <td>对输入图像施加射影变换，根据变换矩阵将输出图像中的每个像素映射回输入图像中对应的坐标，再通过插值计算输出像素值。</td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/non_max_suppression_v3/README.md">non_max_suppression_v3</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -198,16 +168,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/rgb2_yuv422/README.md">rgb2_yuv422</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将 RGB 图像转换为 YUV422 (YUYV 打包格式) 色彩空间。</td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/resize_bicubic_v2/README.md">resize_bicubic_v2</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -245,16 +205,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>ResizeBilinearV2的反向传播。</td>
-  </tr>
-  <tr>
-    <td>image</td>
-    <td><a href="../../image/resize_grad/README.md">resize_grad</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>计算Resize正向算子的反向梯度，按linear或cubic插值权重累加回原始分辨率。</td>
   </tr>
   <tr>
     <td>image</td>
@@ -316,16 +266,6 @@
       <td>AI CPU</td>
       <td>按给定输出尺寸、缩放因子和平移量对输入图像执行二维重采样。</td>
     </tr>
-   <tr>
-    <td>image</td>
-    <td><a href="../../image/three_interpolate/README.md">three_interpolate</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>根据features、idx、weight进行3个最近邻加权特征插值得到y。</td>
-  </tr>
   <tr>
     <td>image</td>
     <td><a href="../../image/three_interpolate_backward/README.md">three_interpolate_backward</a></td>
@@ -517,16 +457,6 @@
     <td>用于对输入图像或特征图进行几何变换等操作。</td>
   </tr>
   <tr>
-    <td>image</td>
-    <td><a href="../../image/yuv4442_yuv422/README.md">yuv4442_yuv422</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将 YUV444 格式图像数据转换为 YUV422 格式。</td>
-  </tr>
-  <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/mrgba_custom/README.md">mrgba_custom</a></td>
     <td>&check;</td>
@@ -669,12 +599,12 @@
   <tr>
     <td>objdetect</td>
     <td><a href="../../objdetect/roi_align_grad/README.md">roi_align_grad</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&cross;</td>
     <td>&check;</td>
     <td>&cross;</td>
     <td>AI Core</td>
-    <td>用于从非均匀尺寸的特征图中提取固定尺寸的ROI（Region of Interest）特征。</td>
+    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
   </tr>
   <tr>
     <td>objdetect</td>
@@ -745,26 +675,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>在已按分数降序排列的候选框序列上，按照交并比阈值贪心选择非抑制框，输出被选中框在原始候选框中的索引。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/deformable_roi_pool/README.md">deformable_roi_pool</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>可变形感兴趣区域池化，从特征图中提取每个ROI位置的池化特征，支持通过offset对采样点进行可变形偏移。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/yolo/README.md">yolo</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>对YOLOv2/v3目标检测网络的检测特征图进行数据重组和激活处理，将原始卷积输出转换为检测框坐标、目标置信度和类别概率三个输出。</td>
   </tr>
    <tr>
     <td>image</td>
