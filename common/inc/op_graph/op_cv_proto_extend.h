@@ -487,6 +487,45 @@ REG_OP(GenerateBoundingBoxProposals)
     .OP_END_FACTORY_REG(GenerateBoundingBoxProposals)
 
 /**
+*@brief This operation samples input x by using interpolation based on flow
+*field grid, which is usually gennerated by affine_grid. The grid of shape
+*[N, H, W, 2] is the concatenation of (x, y) coordinates with shape [N, H, W]
+*each, where x is indexing the 4th dimension (in width dimension) of input
+*data x and y is indexng the 3rd dimention (in height dimension), finally
+*results is the interpolation value of 4 nearest corner points. The output
+*tensor shape will be [N, C, H, W].
+
+*@par Inputs:
+*@li x: 4-D Tensor with shape `[batch, channels, height, width]`. Must be one
+*of the following types: float16, float, double.
+*@li grid: flow field grid, 4-D Tensor with shape `[batch, height, width, 2]`
+*and has same dtype as `x`. \n
+
+*@par Attributes:
+*@li interpolation_mode: An optional string specifying the interpolation
+*method, either 'bilinear', 'nearest' and 'bicubic'. Defaults to
+*"bilinear".
+*@li padding_mode: An optional string specifying the pad method, either
+*"zeros", "border", or "reflection". Defaults to "zeros".
+*@li align_corners: An optional bool. If "true", the centers of the corner
+*pixels of the input and output tensors are aligned. Defaults to "false" . \n
+
+*@par Outputs:
+*y: Returns 4-D Tensor with the same dtype as `x`. \n
+
+*@par Third-party framework compatibility
+*Compatible with pytorch GridSampler2D operator.
+*/
+REG_OP(GridSampler2D)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(grid, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .ATTR(interpolation_mode, String, "bilinear")
+    .ATTR(padding_mode, String, "zeros")
+    .ATTR(align_corners, Bool, false)
+    .OP_END_FACTORY_REG(GridSampler2D)
+
+/**
 * @brief image to transforms. \n
 
 * @par Inputs:
@@ -519,6 +558,27 @@ REG_OP(ImageProjectiveTransformV2)
     .ATTR(fill_mode, String, "CONSTANT")
     .OUTPUT(transformed_images, TensorType({DT_UINT8, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
     .OP_END_FACTORY_REG(ImageProjectiveTransformV2)
+
+/**
+* @brief LUT3D
+* Find the corresponding optimal pixel value for the pixel values in the input img. \n
+*
+* @par Inputs:
+* Two inputs, including:
+* @li img: A 3D or 4D Tensor of type uint8 or float32, with shape [H,W,C] or [N,H,W,C] respectively.
+* The format of the tensor is ND. The range of values for elements within the tensor is [0, 255].
+* @li lut_table: A 4D Tensor of the same type as "img", with shape [lut_table_n, lut_table_n, lut_table_n, 3].
+* The format of the tensor is ND. The value of lut_table_n is limited to 17. \n
+
+* @par Outputs:
+* lut_img: A 3D or 4D Tensor of type uint8 or float32. Has the same shape as "img" .
+* The format of the tensor is ND. \n
+*/
+REG_OP(LUT3D)
+    .INPUT(img, TensorType({DT_UINT8, DT_FLOAT}))
+    .INPUT(lut_table, TensorType({DT_UINT8, DT_FLOAT}))
+    .OUTPUT(lut_img, TensorType({DT_FLOAT}))
+    .OP_END_FACTORY_REG(LUT3D)
 
 /**
 *@brief Calculate the resize_d function. \n
