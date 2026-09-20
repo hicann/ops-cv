@@ -22,7 +22,7 @@
 #include "acl/acl_rt.h"
 #include "aclnn/aclnn_base.h"
 #include "op_api/aclnn_check.h"
-#include "op_api/level2_base.h"
+#include "op_api/level2_base_cv.h"
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"

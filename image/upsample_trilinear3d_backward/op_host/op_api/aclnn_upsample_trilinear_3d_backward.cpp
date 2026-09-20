@@ -22,7 +22,7 @@
 #include "opdev/op_dfx.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
-#include "op_api/level2_base.h"
+#include "op_api/level2_base_cv.h"
 #include "aclnn_upsample_trilinear_3d_backward.h"
 #include "op_api/aclnn_check.h"
 

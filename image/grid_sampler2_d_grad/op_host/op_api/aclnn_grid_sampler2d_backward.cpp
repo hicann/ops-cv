@@ -24,7 +24,7 @@
 #include "opdev/shape_utils.h"
 #include "opdev/tensor_view_utils.h"
 #include "aclnn_kernels/cast.h"
-#include "op_api/level2_base.h"
+#include "op_api/level2_base_cv.h"
 #include "op_api/aclnn_check.h"
 
 using namespace op;

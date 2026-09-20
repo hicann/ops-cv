@@ -9,14 +9,14 @@
  */
 
 /*!
- * \file op_api_def.h
+ * \file op_api_def_cv.h
  * \brief
  */
 
-#ifndef CV_COMMON_OP_API_DEF_H
-#define CV_COMMON_OP_API_DEF_H
+#ifndef OP_API_DEF_CV_H_
+#define OP_API_DEF_CV_H_
 
 namespace op {
 constexpr size_t MAX_SUPPORT_DIMS_NUMS = 8;
 } // namespace op
-#endif // CV_COMMON_OP_API_DEF_H
+#endif // OP_API_DEF_CV_H_
