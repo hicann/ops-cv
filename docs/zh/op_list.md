@@ -838,6 +838,16 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/rotated_feature_align_grad/README.md">rotated_feature_align_grad</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>RotatedFeatureAlign的反向传播，根据输出特征梯度与各像素旋转框信息，将采样点双线性插值梯度回传至输入特征。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/stack_group_points/README.md">stack_group_points</a></td>
     <td>&check;</td>
     <td>&check;</td>
