@@ -15,11 +15,26 @@
 
 #include "register/op_impl_registry.h"
 #include "log/log.h"
+#include "grid_unnormal_proto.h"
+
+namespace ge {
+IMPLEMT_VERIFIER(GridUnnormal, VerifyGridUnnormal)
+{
+    const DataType gridDtype = op.GetInputDesc(0).GetDataType();
+    const DataType assistDtype = op.GetInputDesc(1).GetDataType();
+    if (gridDtype != assistDtype) {
+        return GRAPH_FAILED;
+    }
+    return GRAPH_SUCCESS;
+}
+VERIFY_FUNC_REG(GridUnnormal, VerifyGridUnnormal);
+} // namespace ge
 
 namespace ops {
 using namespace ge;
 
 static constexpr int64_t kInputGridIdx = 0;
+static constexpr int64_t kInputAssistIdx = 1;
 static constexpr int64_t kOutputDiffIdx = 0;
 static constexpr int64_t kOutputPosIdx = 1;
 
@@ -27,8 +42,14 @@ static ge::graphStatus InferDataTypeGridUnnormal(gert::InferDataTypeContext* con
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferDataTypeGridUnnormal");
 
-    ge::DataType inputDtype = context->GetInputDataType(kInputGridIdx);
-    context->SetOutputDataType(kOutputDiffIdx, inputDtype);
+    const ge::DataType gridDtype = context->GetInputDataType(kInputGridIdx);
+    const ge::DataType assistDtype = context->GetInputDataType(kInputAssistIdx);
+    if (gridDtype != assistDtype) {
+        OP_LOGE(context->GetNodeName(), "grid and assist must have the same dtype, grid=%d, assist=%d",
+                static_cast<int32_t>(gridDtype), static_cast<int32_t>(assistDtype));
+        return GRAPH_FAILED;
+    }
+    context->SetOutputDataType(kOutputDiffIdx, gridDtype);
     context->SetOutputDataType(kOutputPosIdx, ge::DT_INT32);
 
     OP_LOGD(context->GetNodeName(), "End to do InferDataTypeGridUnnormal");

@@ -63,6 +63,8 @@ public:
         totalNum_ = td->totalNum;
         perCoreNum_ = td->perCoreNum;
         ubFactor_ = td->ubFactor;
+        ioBufferBytes_ = td->ioBufferBytes;
+        posBufferBytes_ = td->posBufferBytes;
         alignCorners_ = (td->alignCorners != 0);
 
         const int64_t blockIdx = static_cast<int64_t>(GetBlockIdx());
@@ -81,10 +83,10 @@ public:
         diffGm_.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(diff));
         posGm_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(position));
 
-        pipe_.InitBuffer(inQueGrid_, kBufNum, ubFactor_ * sizeof(T));
-        pipe_.InitBuffer(inQueAssist_, kBufNum, ubFactor_ * sizeof(T));
-        pipe_.InitBuffer(outQueDiff_, kBufNum, ubFactor_ * sizeof(T));
-        pipe_.InitBuffer(outQuePos_, kBufNum, ubFactor_ * sizeof(int32_t));
+        pipe_.InitBuffer(inQueGrid_, kBufNum, ioBufferBytes_);
+        pipe_.InitBuffer(inQueAssist_, kBufNum, ioBufferBytes_);
+        pipe_.InitBuffer(outQueDiff_, kBufNum, ioBufferBytes_);
+        pipe_.InitBuffer(outQuePos_, kBufNum, posBufferBytes_);
     }
 
     __aicore__ inline void Process()
@@ -159,7 +161,7 @@ private:
                 ops::LoadOneTensorForDtypeT<T>(gridUb, gReg, mask, off);
                 ops::LoadOneTensorForDtypeT<T>(assistUb, aReg, mask, off);
 
-                // t = (grid + 1) * 0.5
+                // t = (grid + 1) * 0.5; keep the documented FP32 rounding point.
                 Adds(gReg, gReg, 1.0f, mask);
                 Muls(gReg, gReg, 0.5f, mask);
                 if constexpr (AlignCorners) {
@@ -224,6 +226,8 @@ private:
     int64_t totalNum_ = 0;
     int64_t perCoreNum_ = 0;
     int64_t ubFactor_ = 0;
+    int64_t ioBufferBytes_ = 0;
+    int64_t posBufferBytes_ = 0;
     int64_t coreStart_ = 0;
     int64_t coreLen_ = 0;
     bool alignCorners_ = false;

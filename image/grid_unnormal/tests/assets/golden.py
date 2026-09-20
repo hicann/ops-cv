@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 # ----------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
@@ -10,11 +9,16 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ----------------------------------------------------------------------------
 
+from typing import ClassVar
+
 import numpy as np
 import torch
 
 __spec__ = {
     "grid_unnormal": "GridUnnormalKernelSpec",
+}
+__golden__ = {
+    "kernel": {"grid_unnormal": "grid_unnormal_golden"},
 }
 
 _TOL = {
@@ -28,6 +32,24 @@ def _normalize_attr_bool(value):
     if isinstance(value, str):
         return value.strip().lower() in ("true", "1", "yes")
     return bool(value)
+
+
+def _validate_grid_unnormal_inputs(grid, assist):
+    """Enforce the spec contract and prevent accidental broadcasting."""
+    grid_shape = tuple(grid.shape)
+    assist_shape = tuple(assist.shape)
+    if len(grid_shape) != 4 or grid_shape[-1] != 2:
+        raise ValueError("grid must be rank-4 with last dimension 2")
+    if assist_shape != grid_shape:
+        raise ValueError("assist must have the same shape as grid")
+    if np.dtype(grid.dtype) != np.dtype(assist.dtype):
+        raise TypeError("grid and assist must have identical dtype")
+    if np.dtype(grid.dtype) not in (
+        np.dtype(np.float16),
+        np.dtype(np.float32),
+        np.dtype(np.float64),
+    ):
+        raise TypeError("grid and assist dtype must be float16, float32, or float64")
 
 
 def _grid_unnormal_torch(grid, assist, align_corners):
@@ -102,20 +124,72 @@ class _GridUnnormalCompose:
             if isinstance(assist, torch.Tensor)
             else torch.from_numpy(np.asarray(assist))
         )
+        if grid_tensor.ndim != 4 or grid_tensor.shape[-1] != 2:
+            raise ValueError("grid must be rank-4 with last dimension 2")
+        if tuple(assist_tensor.shape) != tuple(grid_tensor.shape):
+            raise ValueError("assist must have the same shape as grid")
+        if assist_tensor.dtype != grid_tensor.dtype:
+            raise TypeError("grid and assist must have identical dtype")
+        if grid_tensor.dtype not in (torch.float16, torch.float32):
+            raise TypeError("grid and assist dtype must be float16 or float32")
         return _grid_unnormal_third_party_compute(
             grid_tensor, assist_tensor, self.align_corners
         )
 
 
+class _GridUnnormalTfCompose:
+    def __init__(self, align_corners=False, **kwargs):
+        self.align_corners = _normalize_attr_bool(align_corners)
+
+    def __call__(self, grid, assist, **kwargs):
+        import tensorflow as tf
+
+        grid_tensor = tf.convert_to_tensor(grid)
+        assist_tensor = tf.convert_to_tensor(assist)
+        if grid_tensor.shape.rank != 4 or grid_tensor.shape[-1] != 2:
+            raise ValueError("grid must be rank-4 with last dimension 2")
+        if assist_tensor.shape != grid_tensor.shape:
+            raise ValueError("assist must have the same shape as grid")
+        if assist_tensor.dtype != grid_tensor.dtype:
+            raise TypeError("grid and assist must have identical dtype")
+        out_dtype = grid_tensor.dtype
+        if out_dtype not in (tf.float16, tf.float32):
+            raise TypeError("grid and assist dtype must be float16 or float32")
+        compute_dtype = (
+            tf.float32 if out_dtype in (tf.float16, tf.bfloat16) else out_dtype
+        )
+        grid_compute = tf.cast(grid_tensor, compute_dtype)
+        assist_compute = tf.cast(assist_tensor, compute_dtype)
+        normalized = (grid_compute + 1.0) * 0.5
+        if self.align_corners:
+            pos_base = normalized * (assist_compute - 1.0)
+        else:
+            pos_base = normalized * assist_compute - 0.5
+        floor = tf.floor(pos_base)
+        return [tf.cast(pos_base - floor, out_dtype), tf.cast(floor, tf.int32)]
+
+
 class GridUnnormalKernelSpec:
     @staticmethod
     def golden(grid, assist, *, align_corners=False, **kwargs):
+        grid_array = np.asarray(grid)
+        assist_array = np.asarray(assist)
+        _validate_grid_unnormal_inputs(grid_array, assist_array)
         return _grid_unnormal_torch(
-            np.asarray(grid), np.asarray(assist), _normalize_attr_bool(align_corners)
+            grid_array, assist_array, _normalize_attr_bool(align_corners)
         )
 
-    third_party = {"torch": _GridUnnormalCompose}
+    third_party: ClassVar = {
+        "torch": _GridUnnormalCompose,
+        "tf": _GridUnnormalTfCompose,
+    }
     tolerance = _TOL
+
+
+def grid_unnormal_golden(grid, assist, align_corners=False, **kwargs):
+    return GridUnnormalKernelSpec.golden(
+        grid, assist, align_corners=align_corners, **kwargs
+    )
 
 
 # Not registered in __spec__:

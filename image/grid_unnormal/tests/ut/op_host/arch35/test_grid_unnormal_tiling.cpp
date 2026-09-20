@@ -32,6 +32,43 @@ const GridUnnormalTilingData* GetTilingData(const TilingInfo& info)
     return reinterpret_cast<const GridUnnormalTilingData*>(info.tilingData.get());
 }
 
+gert::StorageShape MakeStorageShape(const std::vector<int64_t>& dims)
+{
+    gert::StorageShape shape;
+    shape.MutableOriginShape().SetDimNum(dims.size());
+    shape.MutableStorageShape().SetDimNum(dims.size());
+    for (size_t i = 0; i < dims.size(); ++i) {
+        shape.MutableOriginShape().SetDim(i, dims[i]);
+        shape.MutableStorageShape().SetDim(i, dims[i]);
+    }
+    return shape;
+}
+
+void ExpectEmptyTiling(const std::vector<int64_t>& shape)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    const gert::StorageShape storageShape = MakeStorageShape(shape);
+    const std::vector<gert::TilingContextPara::TensorDescription> inputs = {
+        {storageShape, ge::DT_FLOAT, ge::FORMAT_ND},
+        {storageShape, ge::DT_FLOAT, ge::FORMAT_ND},
+    };
+    const std::vector<gert::TilingContextPara::TensorDescription> outputs = {
+        {storageShape, ge::DT_FLOAT, ge::FORMAT_ND},
+        {storageShape, ge::DT_INT32, ge::FORMAT_ND},
+    };
+    gert::TilingContextPara tilingContextPara("GridUnnormal", inputs, outputs, {}, &compileInfo, "Ascend950", 48,
+                                              262144, 4096);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, info));
+    ASSERT_EQ(info.blockNum, 1U);
+    const auto* td = GetTilingData(info);
+    ASSERT_NE(td, nullptr);
+    EXPECT_EQ(td->totalNum, 0);
+    EXPECT_EQ(td->perCoreNum, 0);
+    EXPECT_EQ(td->alignCorners, 0);
+}
+
 // fp32, align_corners=false, 小 shape → tiling success
 TEST_F(GridUnnormalTiling, tiling_fp32_align_false)
 {
@@ -94,29 +131,13 @@ TEST_F(GridUnnormalTiling, tiling_fp16_align_true)
     EXPECT_EQ(td->alignCorners, 1);
 }
 
-TEST_F(GridUnnormalTiling, tiling_empty_tensor)
-{
-    struct GridUnnormalCompileInfo {
-    } compileInfo;
-    gert::TilingContextPara tilingContextPara("GridUnnormal",
-                                              {
-                                                  {{{0, 6, 5, 2}, {0, 6, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                  {{{0, 6, 5, 2}, {0, 6, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                              },
-                                              {
-                                                  {{{0, 6, 5, 2}, {0, 6, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
-                                                  {{{0, 6, 5, 2}, {0, 6, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
-                                              },
-                                              {}, &compileInfo, "Ascend950", 48, 262144, 4096);
-    TilingInfo info;
-    bool ok = ExecuteTiling(tilingContextPara, info);
-    ASSERT_TRUE(ok);
-    ASSERT_EQ(info.blockNum, 1U);
-    const auto* td = GetTilingData(info);
-    ASSERT_NE(td, nullptr);
-    EXPECT_EQ(td->totalNum, 0);
-    EXPECT_EQ(td->perCoreNum, 0);
-}
+TEST_F(GridUnnormalTiling, tiling_empty_tensor) { ExpectEmptyTiling({0, 6, 5, 2}); }
+
+TEST_F(GridUnnormalTiling, tiling_empty_tensor_middle_axis) { ExpectEmptyTiling({1, 0, 5, 2}); }
+
+TEST_F(GridUnnormalTiling, tiling_empty_tensor_third_axis) { ExpectEmptyTiling({1, 6, 0, 2}); }
+
+TEST_F(GridUnnormalTiling, tiling_empty_tensor_multiple_axes) { ExpectEmptyTiling({0, 0, 5, 2}); }
 
 TEST_F(GridUnnormalTiling, tiling_rejects_non_4d_grid)
 {
@@ -172,6 +193,96 @@ TEST_F(GridUnnormalTiling, tiling_rejects_mismatched_input_shapes)
     EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
 }
 
+TEST_F(GridUnnormalTiling, tiling_rejects_mismatched_input_dtypes)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
+TEST_F(GridUnnormalTiling, tiling_rejects_unsupported_input_dtype)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {{{1, 6, 5, 2}, {1, 6, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
+TEST_F(GridUnnormalTiling, tiling_rejects_negative_dimension)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{1, -1, 5, 2}, {1, -1, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, -1, 5, 2}, {1, -1, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{1, -1, 5, 2}, {1, -1, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, -1, 5, 2}, {1, -1, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
+TEST_F(GridUnnormalTiling, tiling_rejects_even_negative_dimensions)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{-1, -1, 5, 2}, {-1, -1, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{-1, -1, 5, 2}, {-1, -1, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{-1, -1, 5, 2}, {-1, -1, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{-1, -1, 5, 2}, {-1, -1, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
+TEST_F(GridUnnormalTiling, tiling_rejects_unknown_rank_dimensions)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{-2, -2, 5, 2}, {-2, -2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{-2, -2, 5, 2}, {-2, -2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{-2, -2, 5, 2}, {-2, -2, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{-2, -2, 5, 2}, {-2, -2, 5, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
 TEST_F(GridUnnormalTiling, tiling_rejects_insufficient_ub)
 {
     struct GridUnnormalCompileInfo {
@@ -186,6 +297,42 @@ TEST_F(GridUnnormalTiling, tiling_rejects_insufficient_ub)
                                                   {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_INT32, ge::FORMAT_ND},
                                               },
                                               {}, &compileInfo, "Ascend950", 48, 8192, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
+TEST_F(GridUnnormalTiling, tiling_rejects_zero_core_count)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 0, 262144, 4096);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
+}
+
+TEST_F(GridUnnormalTiling, tiling_rejects_zero_ub)
+{
+    struct GridUnnormalCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara("GridUnnormal",
+                                              {
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {{{1, 4, 8, 2}, {1, 4, 8, 2}}, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", 48, 0, 4096);
     TilingInfo info;
     EXPECT_FALSE(ExecuteTiling(tilingContextPara, info));
 }

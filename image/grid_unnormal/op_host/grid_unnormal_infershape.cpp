@@ -92,12 +92,19 @@ static ge::graphStatus InferShape4GridUnnormal(gert::InferShapeContext* context)
 
 static ge::graphStatus InferDtype4GridUnnormal(gert::InferDataTypeContext* context)
 {
-    OP_CHECK_IF(
-        context->SetOutputDataType(kOutputDiffIdx, context->GetInputDataType(kInputGridIdx)) != ge::GRAPH_SUCCESS,
-        OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), "diff",
-                                              std::to_string(context->GetInputDataType(kInputGridIdx)).c_str(),
-                                              "SetOutputDataType failed"),
-        return ge::GRAPH_FAILED);
+    const ge::DataType gridDtype = context->GetInputDataType(kInputGridIdx);
+    const ge::DataType assistDtype = context->GetInputDataType(kInputAssistIdx);
+    OP_CHECK_IF(gridDtype != assistDtype,
+                OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(
+                    context->GetNodeName(), "grid and assist",
+                    ("grid ge::DataType=" + std::to_string(static_cast<int32_t>(gridDtype)) +
+                     ", assist ge::DataType=" + std::to_string(static_cast<int32_t>(assistDtype))),
+                    "input dtypes must be equal"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(context->SetOutputDataType(kOutputDiffIdx, gridDtype) != ge::GRAPH_SUCCESS,
+                OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), "diff", std::to_string(gridDtype).c_str(),
+                                                      "SetOutputDataType failed"),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(context->SetOutputDataType(kOutputPosIdx, ge::DT_INT32) != ge::GRAPH_SUCCESS,
                 OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), "position",
                                                       std::to_string(ge::DT_INT32).c_str(), "SetOutputDataType failed"),

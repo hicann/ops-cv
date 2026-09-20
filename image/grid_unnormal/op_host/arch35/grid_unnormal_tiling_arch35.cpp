@@ -89,6 +89,12 @@ static ge::graphStatus CheckGridShape(gert::TilingContext* context, const gert::
                 OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "grid", "last dim is not 2",
                                                        "grid last dim must be 2"),
                 return ge::GRAPH_FAILED);
+    for (size_t i = 0; i < gridShape.GetDimNum(); ++i) {
+        OP_CHECK_IF(gridShape.GetDim(i) < 0,
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "grid", "dimension is negative",
+                                                           "grid dimensions must be concrete and non-negative"),
+                    return ge::GRAPH_FAILED);
+    }
     OP_CHECK_IF(!IsSameShape(gridShape, assistShape),
                 OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "grid and assist", "not equal",
                                                        "storage shapes must be equal"),
@@ -178,11 +184,13 @@ static ge::graphStatus CalcUbFactor(gert::TilingContext* context, uint64_t ubSiz
 }
 
 static ge::graphStatus FillEmptyTiling(gert::TilingContext* context, GridUnnormalTilingData* td, int64_t ubFactor,
-                                       int32_t alignCorners)
+                                       int64_t dtSize, int32_t alignCorners)
 {
     td->totalNum = 0;
     td->perCoreNum = 0;
     td->ubFactor = ubFactor;
+    td->ioBufferBytes = ubFactor * dtSize;
+    td->posBufferBytes = ubFactor * static_cast<int64_t>(sizeof(int32_t));
     td->alignCorners = alignCorners;
     OP_CHECK_IF(context->SetBlockDim(1) != ge::GRAPH_SUCCESS,
                 OP_LOGE_WITHOUT_REPORT(context->GetNodeName(), "SetBlockDim failed for empty tensor, blockDim=1"),
@@ -191,7 +199,7 @@ static ge::graphStatus FillEmptyTiling(gert::TilingContext* context, GridUnnorma
 }
 
 static ge::graphStatus FillNormalTiling(gert::TilingContext* context, GridUnnormalTilingData* td, int64_t total,
-                                        int64_t coreNum, int64_t ubFactor, int32_t alignCorners)
+                                        int64_t coreNum, int64_t ubFactor, int64_t dtSize, int32_t alignCorners)
 {
     int64_t perCore = total / coreNum + (total % coreNum != 0); // 无溢出向上取整均分
     int64_t usedCores = total / perCore + (total % perCore != 0);
@@ -199,6 +207,8 @@ static ge::graphStatus FillNormalTiling(gert::TilingContext* context, GridUnnorm
     td->totalNum = total;
     td->perCoreNum = perCore;
     td->ubFactor = ubFactor;
+    td->ioBufferBytes = ubFactor * dtSize;
+    td->posBufferBytes = ubFactor * static_cast<int64_t>(sizeof(int32_t));
     td->alignCorners = alignCorners;
     OP_CHECK_IF(context->SetBlockDim(static_cast<uint32_t>(usedCores)) != ge::GRAPH_SUCCESS,
                 OP_LOGE_WITHOUT_REPORT(context->GetNodeName(), "SetBlockDim failed, blockDim=%s",
@@ -227,9 +237,9 @@ static ge::graphStatus GridUnnormalTilingFunc(gert::TilingContext* context)
     size_t* ws = context->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, ws);
     ws[0] = 0U;
-    return (inputInfo.total <= 0) ?
-               FillEmptyTiling(context, td, ubFactor, alignCorners) :
-               FillNormalTiling(context, td, inputInfo.total, platformInfo.coreNum, ubFactor, alignCorners);
+    return (inputInfo.total <= 0) ? FillEmptyTiling(context, td, ubFactor, inputInfo.dtSize, alignCorners) :
+                                    FillNormalTiling(context, td, inputInfo.total, platformInfo.coreNum, ubFactor,
+                                                     inputInfo.dtSize, alignCorners);
 }
 
 static ge::graphStatus TilingParseForGridUnnormal([[maybe_unused]] gert::TilingParseContext* context)

@@ -30,11 +30,11 @@
 
 | 参数名 | 输入/输出/属性 | 描述 | 数据类型 | 数据格式 |
 |---|---|---|---|---|
-| `grid` | 输入 | 归一化采样坐标。支持4D静态shape、动态shape和编译期未知rank；rank确定时必须为4且末维为2；支持总元素数为0的空Tensor。 | `float16`、`float32` | ND |
-| `assist` | 输入 | 每元素对应的输入尺寸辅助值。必须与`grid`shape、dtype完全一致，不支持广播；rank确定时必须为4且末维为2。 | `float16`、`float32` | ND |
-| `diff` | 输出 | `pos_base`的小数部分，shape与`grid`一致，dtype与`grid`一致。 | `float16`、`float32` | ND |
-| `position` | 输出 | `pos_base`的下取整结果，shape与`grid`一致。 | `int32` | ND |
-| `align_corners` | 属性 | 可选属性，默认`false`。为`true`时按`t * (assist - 1)`计算；为`false`时按`t * assist - 0.5`计算。 | `bool` | - |
+| `grid` | 输入 | 归一化采样坐标。支持4D静态shape、动态shape和编译期未知rank；rank确定时必须为4且末维为2；支持总元素数为0的空Tensor。 | `FLOAT16`、`FLOAT` | ND |
+| `assist` | 输入 | 每元素对应的输入尺寸辅助值。必须与`grid`shape、dtype完全一致，不支持广播；rank确定时必须为4且末维为2。 | `FLOAT16`、`FLOAT` | ND |
+| `diff` | 输出 | `pos_base`的小数部分，shape与`grid`一致，dtype与`grid`一致。 | `FLOAT16`、`FLOAT` | ND |
+| `position` | 输出 | `pos_base`的下取整结果，shape与`grid`一致。 | `INT32` | ND |
+| `align_corners` | 属性 | 可选属性，默认`false`。为`true`时按`t * (assist - 1)`计算；为`false`时按`t * assist - 0.5`计算。 | `BOOL` | - |
 
 ## 约束说明
 

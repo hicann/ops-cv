@@ -26,10 +26,12 @@
 #include <cstdint>
 
 struct GridUnnormalTilingData {
-    int64_t totalNum = 0;     // 总元素数 = prod(grid.shape)
-    int64_t perCoreNum = 0;   // 主核每核元素数（向上取整分核）
-    int64_t ubFactor = 0;     // 单次 UB tile 元素数（64 元素寄存器读宽对齐）
-    int32_t alignCorners = 0; // 0/1，坐标反归一化公式分支
+    int64_t totalNum = 0;       // 总元素数 = prod(grid.shape)
+    int64_t perCoreNum = 0;     // 主核每核元素数（向上取整分核）
+    int64_t ubFactor = 0;       // 单次 UB tile 元素数（64 元素寄存器读宽对齐）
+    int64_t ioBufferBytes = 0;  // grid/assist/diff 单个队列的 UB 字节数，由 host 统一计算
+    int64_t posBufferBytes = 0; // position 单个队列的 UB 字节数，由 host 统一计算
+    int32_t alignCorners = 0;   // 0/1，坐标反归一化公式分支
 };
 
 #endif // GRID_UNNORMAL_TILING_DATA_H_

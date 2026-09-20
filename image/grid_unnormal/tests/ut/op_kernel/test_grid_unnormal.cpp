@@ -61,11 +61,13 @@ private:
 const std::string GridUnnormalKernelTest::dataPath = std::string(GRID_UNNORMAL_UT_DATA_DIR);
 
 namespace {
-void FillTiling(GridUnnormalTilingData* td, int64_t total, int64_t blockDim, int32_t alignCorners)
+void FillTiling(GridUnnormalTilingData* td, int64_t total, int64_t blockDim, int64_t dtSize, int32_t alignCorners)
 {
     td->totalNum = total;
     td->perCoreNum = (total == 0) ? 0 : (total / blockDim + (total % blockDim != 0));
     td->ubFactor = 64; // 64 元素 tile，覆盖多轮与尾块场景
+    td->ioBufferBytes = td->ubFactor * dtSize;
+    td->posBufferBytes = td->ubFactor * static_cast<int64_t>(sizeof(int32_t));
     td->alignCorners = alignCorners;
 }
 
@@ -83,7 +85,8 @@ void RunKernel(int64_t total, int64_t blockDim, int32_t alignCorners, size_t tBy
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(32);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(GridUnnormalTilingData));
 
-    FillTiling(reinterpret_cast<GridUnnormalTilingData*>(tiling), total, blockDim, alignCorners);
+    FillTiling(reinterpret_cast<GridUnnormalTilingData*>(tiling), total, blockDim, static_cast<int64_t>(sizeof(T)),
+               alignCorners);
 
     ICPU_SET_TILING_KEY(0);
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
