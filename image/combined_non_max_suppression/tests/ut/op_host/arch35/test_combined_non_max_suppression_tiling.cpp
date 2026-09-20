@@ -99,6 +99,25 @@ TEST(CombinedNonMaxSuppressionTiling, BuildsWorkspaceForSharedBoxes)
     EXPECT_EQ(info.workspaceSizes[0], static_cast<int64_t>(compileInfo.sysWorkspaceSize + 2560U));
 }
 
+TEST(CombinedNonMaxSuppressionTiling, CapsClassCandidatesWithoutChangingOutputShape)
+{
+    int32_t maxPerClass = 984;
+    int32_t maxTotal = 1000;
+    float iouThreshold = 0.5F;
+    float scoreThreshold = 0.5F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    for (int32_t outputSize : {1, 8, 1000}) {
+        auto context = MakeContext({1, 13, 1, 4}, {1, 13, 3}, {1, outputSize, 4}, &maxPerClass, &maxTotal,
+                                   &iouThreshold, &scoreThreshold, &compileInfo);
+        TilingInfo info;
+        ASSERT_TRUE(ExecuteTiling(context, info));
+        const auto* tiling = reinterpret_cast<const CombinedNonMaxSuppressionTilingData*>(info.tilingData.get());
+        EXPECT_EQ(tiling->maxOutputPerClass, outputSize < 13 ? outputSize : 13);
+        EXPECT_EQ(tiling->outputSize, outputSize);
+        EXPECT_EQ(tiling->maxTotalSize, 1000);
+    }
+}
+
 TEST(CombinedNonMaxSuppressionTiling, AcceptsFiniteNonnegativeIouThreshold)
 {
     int32_t maxPerClass = 2;
