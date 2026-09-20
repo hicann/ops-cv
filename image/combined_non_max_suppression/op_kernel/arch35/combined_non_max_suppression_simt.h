@@ -16,6 +16,7 @@
 #include "simt_api/asc_simt.h"
 #include "simt_api/common_functions.h"
 #include "simt_api/device_functions.h"
+#include "simt_api/device_warp_functions.h"
 #include "combined_non_max_suppression_tiling_data.h"
 
 namespace CombinedNonMaxSuppressionOps {
@@ -24,7 +25,7 @@ using namespace AscendC;
 constexpr uint32_t THREAD_NUM = 1024;
 constexpr uint32_t MIN_THREAD_NUM = 32;
 constexpr uint32_t MAX_NUM_CLASSES = 200;
-constexpr uint32_t HOT_UB_MAX_BOXES = 4096;
+constexpr uint32_t HOT_UB_MAX_BOXES = 8704;
 constexpr uint32_t UB_ALIGN_BYTES = 32;
 constexpr float NEG_INF = -3.402823466e+38F;
 
@@ -49,6 +50,48 @@ __simt_callee__ __aicore__ inline float MaxFloat(float a, float b) { return a > 
 __simt_callee__ __aicore__ inline bool IsBetter(float lhsScore, int32_t lhsIndex, float rhsScore, int32_t rhsIndex)
 {
     return lhsScore > rhsScore || (lhsScore == rhsScore && lhsIndex >= 0 && (rhsIndex < 0 || lhsIndex < rhsIndex));
+}
+
+// Preserve the score/index total order while reducing inside registers first.
+__simt_callee__ __aicore__ inline void WarpArgMax(float& score, int32_t& index)
+{
+    for (uint32_t offset = warpSize / 2; offset > 0; offset >>= 1) {
+        const float otherScore = asc_shfl_down(score, offset);
+        const int32_t otherIndex = asc_shfl_down(index, offset);
+        if (IsBetter(otherScore, otherIndex, score, index)) {
+            score = otherScore;
+            index = otherIndex;
+        }
+    }
+}
+
+// All callers launch complete warps (32..1024 threads). Only warp winners
+// cross UB; two block barriers replace the per-level shared-memory barriers.
+__simt_callee__ __aicore__ inline void BlockArgMax(float score, int32_t index, __ubuf__ float* reduceScores,
+                                                   __ubuf__ int32_t* reduceIndices)
+{
+    const uint32_t tid = threadIdx.x;
+    const uint32_t lane = tid % warpSize;
+    const uint32_t warp = tid / warpSize;
+    WarpArgMax(score, index);
+    if (lane == 0) {
+        reduceScores[warp] = score;
+        reduceIndices[warp] = index;
+    }
+    asc_syncthreads();
+    if (blockDim.x > warpSize) {
+        if (warp == 0) {
+            const uint32_t warpCount = blockDim.x / warpSize;
+            score = lane < warpCount ? reduceScores[lane] : NEG_INF;
+            index = lane < warpCount ? reduceIndices[lane] : -1;
+            WarpArgMax(score, index);
+            if (lane == 0) {
+                reduceScores[0] = score;
+                reduceIndices[0] = index;
+            }
+        }
+        asc_syncthreads();
+    }
 }
 
 template <typename T>
@@ -98,13 +141,17 @@ template <typename T>
 __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
     void LoadTaskHotData(__gm__ const T* boxes, __gm__ const T* scores, __ubuf__ float* boxesUb,
                          __ubuf__ float* scoresUb, int32_t batchIdx, int32_t classIdx, int32_t numBoxes,
-                         int32_t boxClasses, int32_t numClasses)
+                         int32_t boxClasses, int32_t numClasses, float scoreThreshold)
 {
     const int32_t boxClass = boxClasses == 1 ? 0 : classIdx;
     for (int32_t anchor = static_cast<int32_t>(threadIdx.x); anchor < numBoxes;
          anchor += static_cast<int32_t>(blockDim.x)) {
         const int64_t scoreOffset = (static_cast<int64_t>(batchIdx) * numBoxes + anchor) * numClasses + classIdx;
         scoresUb[anchor] = scores[scoreOffset];
+        // Ineligible scores never enter NMS: avoid staging their strided boxes.
+        if (!(scoresUb[anchor] > scoreThreshold)) {
+            continue;
+        }
         const int64_t boxOffset = ((static_cast<int64_t>(batchIdx) * numBoxes + anchor) * boxClasses + boxClass) * 4;
         const int32_t ubOffset = anchor * 4;
         boxesUb[ubOffset] = boxes[boxOffset];
@@ -122,7 +169,7 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
 {
     const uint32_t tid = threadIdx.x;
     for (int32_t index = static_cast<int32_t>(tid); index < numBoxes; index += static_cast<int32_t>(blockDim.x)) {
-        suppressed[index] = 0;
+        suppressed[index] = scores[index] > scoreThreshold ? 0 : 1;
     }
     for (int32_t index = static_cast<int32_t>(tid); index < maxOutputPerClass;
          index += static_cast<int32_t>(blockDim.x)) {
@@ -145,18 +192,7 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
                 localBestIndex = anchor;
             }
         }
-        reduceScores[tid] = localBestScore;
-        reduceIndices[tid] = localBestIndex;
-        asc_syncthreads();
-
-        for (uint32_t stride = static_cast<uint32_t>(blockDim.x) / 2; stride > 0; stride >>= 1) {
-            if (tid < stride && IsBetter(reduceScores[tid + stride], reduceIndices[tid + stride], reduceScores[tid],
-                                         reduceIndices[tid])) {
-                reduceScores[tid] = reduceScores[tid + stride];
-                reduceIndices[tid] = reduceIndices[tid + stride];
-            }
-            asc_syncthreads();
-        }
+        BlockArgMax(localBestScore, localBestIndex, reduceScores, reduceIndices);
 
         const int32_t bestIndex = reduceIndices[0];
         if (bestIndex < 0) {
@@ -169,6 +205,10 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
         }
         asc_syncthreads();
 
+        // No later selection consumes suppression after the last output.
+        if (outputIndex + 1 == maxOutputPerClass) {
+            break;
+        }
         const int32_t bestBoxOffset = bestIndex * 4;
         for (int32_t anchor = static_cast<int32_t>(tid); anchor < numBoxes;
              anchor += static_cast<int32_t>(blockDim.x)) {
@@ -219,18 +259,7 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
                 localBestIndex = anchor;
             }
         }
-        reduceScores[tid] = localBestScore;
-        reduceIndices[tid] = localBestIndex;
-        asc_syncthreads();
-
-        for (uint32_t stride = static_cast<uint32_t>(blockDim.x) / 2; stride > 0; stride >>= 1) {
-            if (tid < stride && IsBetter(reduceScores[tid + stride], reduceIndices[tid + stride], reduceScores[tid],
-                                         reduceIndices[tid])) {
-                reduceScores[tid] = reduceScores[tid + stride];
-                reduceIndices[tid] = reduceIndices[tid + stride];
-            }
-            asc_syncthreads();
-        }
+        BlockArgMax(localBestScore, localBestIndex, reduceScores, reduceIndices);
 
         const int32_t bestIndex = reduceIndices[0];
         if (bestIndex < 0) {
@@ -244,6 +273,9 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
         }
         asc_syncthreads();
 
+        if (outputIndex + 1 == maxOutputPerClass) {
+            break;
+        }
         const int64_t bestBoxOffset = ((static_cast<int64_t>(batchIdx) * numBoxes + bestIndex) * boxClasses +
                                        boxClass) *
                                       4;
@@ -323,18 +355,7 @@ __simt_vf__ LAUNCH_BOUND(THREAD_NUM) __aicore__
                 localBestIndex = candidate;
             }
         }
-        reduceScores[tid] = localBestScore;
-        reduceIndices[tid] = localBestIndex;
-        asc_syncthreads();
-
-        for (uint32_t stride = static_cast<uint32_t>(blockDim.x) / 2; stride > 0; stride >>= 1) {
-            if (tid < stride && IsBetter(reduceScores[tid + stride], reduceIndices[tid + stride], reduceScores[tid],
-                                         reduceIndices[tid])) {
-                reduceScores[tid] = reduceScores[tid + stride];
-                reduceIndices[tid] = reduceIndices[tid + stride];
-            }
-            asc_syncthreads();
-        }
+        BlockArgMax(localBestScore, localBestIndex, reduceScores, reduceIndices);
 
         const int32_t bestCandidate = reduceIndices[0];
         if (bestCandidate < 0 || reduceScores[0] == NEG_INF) {
@@ -469,10 +490,10 @@ private:
         LocalTensor<int32_t> selectedCountLocal = selectedCountBuffer_.Get<int32_t>();
 
         if (useHotUb_) {
-            asc_vf_call<LoadTaskHotData<T>>(dim3(selectThreadNum), boxes_, scores_,
-                                            reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
-                                            reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()), batchIdx,
-                                            classIdx, tiling_->numBoxes, tiling_->boxClasses, tiling_->numClasses);
+            asc_vf_call<LoadTaskHotData<T>>(
+                dim3(selectThreadNum), boxes_, scores_, reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
+                reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()), batchIdx, classIdx, tiling_->numBoxes,
+                tiling_->boxClasses, tiling_->numClasses, tiling_->scoreThreshold);
             asc_vf_call<SelectClassNmsUb>(
                 dim3(selectThreadNum), reinterpret_cast<__ubuf__ float*>(boxesLocal.GetPhyAddr()),
                 reinterpret_cast<__ubuf__ float*>(scoresLocal.GetPhyAddr()),

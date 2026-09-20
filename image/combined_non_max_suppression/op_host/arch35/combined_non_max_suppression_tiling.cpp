@@ -33,7 +33,7 @@ constexpr uint32_t WORKSPACE_COUNT = 1;
 constexpr int32_t SCHEDULE_MODE = 1;
 constexpr uint64_t SIMT_UB_RESERVE = 32 * 1024;
 constexpr uint64_t FALLBACK_LOCAL_MEMORY_SIZE = 64 * 1024;
-constexpr int32_t HOT_UB_MAX_BOXES = 4096;
+constexpr int32_t HOT_UB_MAX_BOXES = 8704;
 
 struct CombinedNonMaxSuppressionCompileInfo {
     int32_t coreNum = 0;
@@ -111,6 +111,10 @@ ge::graphStatus ValidateAndFill(gert::TilingContext* context, CombinedNonMaxSupp
     const int64_t outputSize = output.GetDim(1);
     OP_CHECK_IF(outputSize <= 0 || outputSize > maxTotal,
                 OP_LOGE(context, "output_size must be in [1, max_total_size]"), return ge::GRAPH_FAILED);
+
+    // A class cannot contribute more than outputSize candidates to the final merge.
+    // Preserve its ordered prefix, including the existing deterministic tie break.
+    maxPerClass = std::min(maxPerClass, static_cast<int32_t>(std::min(numBoxes, outputSize)));
 
     const auto* compileInfo = context->GetCompileInfo<CombinedNonMaxSuppressionCompileInfo>();
     OP_CHECK_NULL_WITH_CONTEXT(context, compileInfo);
