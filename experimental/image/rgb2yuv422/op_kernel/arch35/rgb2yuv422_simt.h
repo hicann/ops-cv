@@ -73,19 +73,13 @@ __simt_callee__ inline float CastBack<float>(float val)
 }
 
 template <typename T, int32_t Df, typename IDX_T>
-__simt_vf__ __aicore__ __launch_bounds__(THREADS<T>)
-inline void Rgb2yuv422SimtKernel(
-    IDX_T totalPairs, IDX_T totalRows, IDX_T pairsPerRow,
-    IDX_T W, IDX_T H,
-    IDX_T magicRow, IDX_T shiftRow,
-    IDX_T magicH, IDX_T shiftH,
-    IDX_T outerDims,
-    __gm__ T* input, __gm__ T* output)
+__simt_vf__ __aicore__ __launch_bounds__(THREADS<T>) inline void Rgb2yuv422SimtKernel(
+    IDX_T totalPairs, IDX_T totalRows, IDX_T pairsPerRow, IDX_T W, IDX_T H, IDX_T magicRow, IDX_T shiftRow,
+    IDX_T magicH, IDX_T shiftH, IDX_T outerDims, __gm__ T* input, __gm__ T* output)
 {
-    for (IDX_T pairIdx = static_cast<IDX_T>(blockIdx.x) * static_cast<IDX_T>(THREADS<T>) + static_cast<IDX_T>(threadIdx.x);
-         pairIdx < totalPairs;
-         pairIdx += static_cast<IDX_T>(gridDim.x) * static_cast<IDX_T>(THREADS<T>))
-    {
+    for (IDX_T pairIdx =
+             static_cast<IDX_T>(blockIdx.x) * static_cast<IDX_T>(THREADS<T>) + static_cast<IDX_T>(threadIdx.x);
+         pairIdx < totalPairs; pairIdx += static_cast<IDX_T>(gridDim.x) * static_cast<IDX_T>(THREADS<T>)) {
         IDX_T b_h = Simt::UintDiv<IDX_T>(pairIdx, magicRow, shiftRow);
         IDX_T pair = pairIdx - b_h * pairsPerRow;
 
@@ -107,7 +101,9 @@ inline void Rgb2yuv422SimtKernel(
                 g1 = input[base1 + 1];
                 bVal1 = input[base1 + 2];
             } else {
-                r1 = 0; g1 = 0; bVal1 = 0;
+                r1 = 0;
+                g1 = 0;
+                bVal1 = 0;
             }
         } else {
             IDX_T base0 = b * static_cast<IDX_T>(3) * H * W + h * W + w0;
@@ -121,7 +117,9 @@ inline void Rgb2yuv422SimtKernel(
                 g1 = input[base1 + H * W];
                 bVal1 = input[base1 + static_cast<IDX_T>(2) * H * W];
             } else {
-                r1 = 0; g1 = 0; bVal1 = 0;
+                r1 = 0;
+                g1 = 0;
+                bVal1 = 0;
             }
         }
 
@@ -157,14 +155,13 @@ inline void Rgb2yuv422SimtKernel(
 }
 
 template <typename T, int32_t Df>
-__aicore__ inline void Process(GM_ADDR input, GM_ADDR output,
-                                const Rgb2yuv422TilingData* tilingData)
+__aicore__ inline void Process(GM_ADDR input, GM_ADDR output, const Rgb2yuv422TilingData* tilingData)
 {
     int32_t needCoreNum = tilingData->needCoreNum;
-    int64_t totalRows   = tilingData->totalRows;
+    int64_t totalRows = tilingData->totalRows;
     int32_t perCoreRows = tilingData->perCoreRows;
-    int32_t W           = tilingData->W;
-    int32_t outerDims   = tilingData->outerDims;
+    int32_t W = tilingData->W;
+    int32_t outerDims = tilingData->outerDims;
     int32_t pairsPerRow = tilingData->pairsPerRow;
 
     int32_t H = static_cast<int32_t>(totalRows / outerDims);
@@ -173,17 +170,21 @@ __aicore__ inline void Process(GM_ADDR input, GM_ADDR output,
         return;
     }
 
-    __gm__ T* inputGm  = reinterpret_cast<__gm__ T*>(input);
+    __gm__ T* inputGm = reinterpret_cast<__gm__ T*>(input);
     __gm__ T* outputGm = reinterpret_cast<__gm__ T*>(output);
 
     int64_t totalPairs = totalRows * static_cast<int64_t>(pairsPerRow);
 
-    bool use32Bit = (totalPairs <= static_cast<int64_t>(UINT32_MAX)) &&
-                    (totalRows <= static_cast<int64_t>(UINT32_MAX)) &&
-                    (static_cast<int64_t>(pairsPerRow) <= static_cast<int64_t>(UINT32_MAX)) &&
-                    (static_cast<int64_t>(W) <= static_cast<int64_t>(UINT32_MAX)) &&
-                    (static_cast<int64_t>(H) <= static_cast<int64_t>(UINT32_MAX)) &&
-                    (static_cast<int64_t>(outerDims) <= static_cast<int64_t>(UINT32_MAX));
+    // The kernel computes flattened element offsets in IDX_T (e.g. NHWC input base
+    // (b*H*W + h*W + w0) * 3), so the 32-bit path additionally requires the total
+    // element count of the 3-channel input and the 2-channel output to fit in uint32_t.
+    // Division-based bounds keep the check itself overflow-free.
+    const int64_t maxU32 = static_cast<int64_t>(UINT32_MAX);
+    bool use32Bit = (totalPairs <= maxU32) && (totalRows <= maxU32) && (static_cast<int64_t>(pairsPerRow) <= maxU32) &&
+                    (static_cast<int64_t>(W) <= maxU32) && (static_cast<int64_t>(H) <= maxU32) &&
+                    (static_cast<int64_t>(outerDims) <= maxU32) &&
+                    (totalRows <= maxU32 / (static_cast<int64_t>(W) * 3)) &&
+                    (totalRows <= maxU32 / (static_cast<int64_t>(W) * 2));
 
     if (use32Bit) {
         uint32_t magicRow = 0, shiftRow = 0;
@@ -192,13 +193,9 @@ __aicore__ inline void Process(GM_ADDR input, GM_ADDR output,
         GetUintDivMagicAndShift(magicH, shiftH, static_cast<uint32_t>(H));
 
         asc_vf_call<Rgb2yuv422SimtKernel<T, Df, uint32_t>>(
-            dim3(THREADS<T>),
-            static_cast<uint32_t>(totalPairs), static_cast<uint32_t>(totalRows),
-            static_cast<uint32_t>(pairsPerRow), static_cast<uint32_t>(W),
-            static_cast<uint32_t>(H),
-            magicRow, shiftRow, magicH, shiftH,
-            static_cast<uint32_t>(outerDims),
-            inputGm, outputGm);
+            dim3(THREADS<T>), static_cast<uint32_t>(totalPairs), static_cast<uint32_t>(totalRows),
+            static_cast<uint32_t>(pairsPerRow), static_cast<uint32_t>(W), static_cast<uint32_t>(H), magicRow, shiftRow,
+            magicH, shiftH, static_cast<uint32_t>(outerDims), inputGm, outputGm);
     } else {
         uint64_t magicRow = 0, shiftRow = 0;
         uint64_t magicH = 0, shiftH = 0;
@@ -206,13 +203,9 @@ __aicore__ inline void Process(GM_ADDR input, GM_ADDR output,
         GetUintDivMagicAndShift(magicH, shiftH, static_cast<uint64_t>(H));
 
         asc_vf_call<Rgb2yuv422SimtKernel<T, Df, uint64_t>>(
-            dim3(THREADS<T>),
-            static_cast<uint64_t>(totalPairs), static_cast<uint64_t>(totalRows),
-            static_cast<uint64_t>(pairsPerRow), static_cast<uint64_t>(W),
-            static_cast<uint64_t>(H),
-            magicRow, shiftRow, magicH, shiftH,
-            static_cast<uint64_t>(outerDims),
-            inputGm, outputGm);
+            dim3(THREADS<T>), static_cast<uint64_t>(totalPairs), static_cast<uint64_t>(totalRows),
+            static_cast<uint64_t>(pairsPerRow), static_cast<uint64_t>(W), static_cast<uint64_t>(H), magicRow, shiftRow,
+            magicH, shiftH, static_cast<uint64_t>(outerDims), inputGm, outputGm);
     }
 }
 

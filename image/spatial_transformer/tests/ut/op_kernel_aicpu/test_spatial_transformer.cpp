@@ -37,7 +37,21 @@ class TEST_SPATIAL_TRANSFORMER_UT : public testing::Test {};
         .Attr("stn_ori_channel", stn_ori_channel)                                                            \
         .Attr("use_default_theta", use_default_theta)                                                        \
         .Attr("default_theta", default_theta);
-
+namespace {
+constexpr uint64_t kRankValidationBufferSize = 1 * 1 * 2 * 3 * 16;
+void RunRankValidationCase(const vector<vector<int64_t>>& shapes, Format format)
+{
+    vector<DataType> data_types = {DT_INT8, DT_FLOAT16, DT_INT8};
+    int8_t input_x[kRankValidationBufferSize] = {-39, -47, -37, 4, -70, -47};
+    Eigen::half input_theta[2] = {Eigen::half(-1), Eigen::half(-2)};
+    int8_t output[kRankValidationBufferSize] = {0};
+    vector<void*> datas = {(void*)input_x, (void*)input_theta, (void*)output};
+    vector<int64_t> use_default_theta = {1, 0, 1, 0, 1, 1};
+    vector<float> default_theta = {1.0f, 0.0f, 1.5f, 0.0f};
+    CREATE_NODEDEF(shapes, data_types, datas, format, 1, use_default_theta, default_theta);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+} // namespace
 TEST_F(TEST_SPATIAL_TRANSFORMER_UT, 4D_SUCC)
 {
     vector<DataType> data_types = {DT_INT8, DT_FLOAT16, DT_INT8};
@@ -186,4 +200,33 @@ TEST_F(TEST_SPATIAL_TRANSFORMER_UT, OUTPUT_FORMAT_MISMATCH_FAIL)
         .Attr("default_theta", default_theta);
 
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, NCHW_RANK_3_FAIL)
+{
+    RunRankValidationCase({{1, 1, 6}, {2}, {1, 1, 2, 3}}, FORMAT_NCHW);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, NCHW_RANK_5_FAIL)
+{
+    RunRankValidationCase({{1, 1, 2, 3, 1}, {2}, {1, 1, 2, 3}}, FORMAT_NCHW);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, NCHW_OUTPUT_RANK_3_FAIL)
+{
+    RunRankValidationCase({{1, 1, 2, 3}, {2}, {1, 1, 6}}, FORMAT_NCHW);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, NCHW_OUTPUT_RANK_5_FAIL)
+{
+    RunRankValidationCase({{1, 1, 2, 3}, {2}, {1, 1, 2, 3, 1}}, FORMAT_NCHW);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, NC1HWC0_RANK_4_FAIL)
+{
+    RunRankValidationCase({{1, 1, 2, 3}, {2}, {1, 1, 2, 3, 16}}, FORMAT_NC1HWC0);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, NC1HWC0_OUTPUT_RANK_4_FAIL)
+{
+    RunRankValidationCase({{1, 1, 2, 3, 16}, {2}, {1, 1, 2, 3}}, FORMAT_NC1HWC0);
 }

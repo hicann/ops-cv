@@ -23,6 +23,7 @@
 #include "op_host/tiling_templates_registry.h"
 #include "experimental/image/rgb2yuv422/op_kernel/arch35/rgb2yuv422_tiling_data.h"
 #include "experimental/image/rgb2yuv422/op_kernel/arch35/rgb2yuv422_tiling_key.h"
+#include <limits>
 
 namespace optiling {
 
@@ -68,26 +69,30 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, const std::str
         OP_CHECK_IF(storageShape.GetDim(rank - 1) != 3,
                     OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 1)),
                     return ge::GRAPH_FAILED);
-        H = static_cast<int32_t>(storageShape.GetDim(rank - 3));
-        W = static_cast<int32_t>(storageShape.GetDim(rank - 2));
+        H = storageShape.GetDim(rank - 3);
+        W = storageShape.GetDim(rank - 2);
         outerDims = Product(storageShape, 0, rank - 3);
     } else {
         if (rank == 3) {
             OP_CHECK_IF(storageShape.GetDim(0) != 3,
                         OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(0)),
                         return ge::GRAPH_FAILED);
-            H = static_cast<int32_t>(storageShape.GetDim(1));
-            W = static_cast<int32_t>(storageShape.GetDim(2));
+            H = storageShape.GetDim(1);
+            W = storageShape.GetDim(2);
             outerDims = 1;
         } else {
             OP_CHECK_IF(storageShape.GetDim(rank - 3) != 3,
                         OP_LOGE(context, "Input channel dimension must be 3, got %ld", storageShape.GetDim(rank - 3)),
                         return ge::GRAPH_FAILED);
-            H = static_cast<int32_t>(storageShape.GetDim(rank - 2));
-            W = static_cast<int32_t>(storageShape.GetDim(rank - 1));
+            H = storageShape.GetDim(rank - 2);
+            W = storageShape.GetDim(rank - 1);
             outerDims = Product(storageShape, 0, rank - 3);
         }
     }
+    constexpr int64_t maxInt32Value = std::numeric_limits<int32_t>::max();
+    OP_CHECK_IF(H > maxInt32Value || W > maxInt32Value || outerDims > maxInt32Value,
+                OP_LOGE(context, "Input dims exceed int32 range, got H %ld, W %ld, outerDims %ld", H, W, outerDims),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -127,7 +132,8 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
                 return ge::GRAPH_FAILED);
 
     int64_t totalRows = outerDims * H;
-    int32_t pairsPerRow = (static_cast<int32_t>(W) + 1) / 2;
+    // W + 1 may exceed int32 range at the legal boundary W == INT32_MAX, so compute in int64 first.
+    int32_t pairsPerRow = static_cast<int32_t>((W + 1) / 2);
 
     if (totalRows <= 0 || W <= 0) {
         Rgb2yuv422TilingData* tiling = context->GetTilingData<Rgb2yuv422TilingData>();

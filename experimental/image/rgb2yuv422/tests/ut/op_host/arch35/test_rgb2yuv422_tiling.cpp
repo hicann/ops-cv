@@ -43,7 +43,7 @@ TEST_F(Rgb2yuv422Tiling, rgb2yuv422_uint8_nhwc)
         {
             gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
         },
-        &compileInfo, 64, 262144, 4096);
+        &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 0;
     string expectTilingData = "1 4 34359738372 1 4 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -65,7 +65,7 @@ TEST_F(Rgb2yuv422Tiling, rgb2yuv422_float32_nhwc)
         {
             gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
         },
-        &compileInfo);
+        &compileInfo, "Ascend950");
     uint64_t expectTilingKey = 0;
     string expectTilingData = "1 4 68719476740 1 8 ";
     std::vector<size_t> expectWorkspaces = {16777216};
@@ -87,9 +87,71 @@ TEST_F(Rgb2yuv422Tiling, rgb2yuv422_float16_nchw_3d)
         {
             gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NCHW")),
         },
-        &compileInfo);
+        &compileInfo, "Ascend950");
     uint64_t expectTilingKey = 1;
     string expectTilingData = "1 4 34359738372 4294967297 4 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(Rgb2yuv422Tiling, rgb2yuv422_w_int32_max_nhwc)
+{
+    struct Rgb2yuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Rgb2yuv422",
+        {
+            {{{1, 2147483647, 3}, {1, 2147483647, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 2147483647, 2}, {1, 2147483647, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    uint64_t expectTilingKey = 0;
+    // needCoreNum=1, totalRows=1, perCoreRows=1 | W=2147483647 << 32, outerDims=1 | dataFormat=0 << 32,
+    // pairsPerRow=1073741824
+    string expectTilingData = "1 1 9223372032559808513 1 1073741824 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(Rgb2yuv422Tiling, rgb2yuv422_w_exceeds_int32_nhwc_rejected)
+{
+    struct Rgb2yuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Rgb2yuv422",
+        {
+            {{{4, 2147483649, 3}, {4, 2147483649, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+        },
+        {
+            {{{4, 2147483649, 2}, {4, 2147483649, 2}}, ge::DT_UINT8, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(Rgb2yuv422Tiling, rgb2yuv422_h_exceeds_int32_nchw_rejected)
+{
+    struct Rgb2yuv422CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Rgb2yuv422",
+        {
+            {{{1, 3, 2147483649, 8}, {1, 3, 2147483649, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 3, 2147483649, 4}, {1, 3, 2147483649, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NCHW")),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }

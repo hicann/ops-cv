@@ -26,6 +26,8 @@ constexpr int32_t kDimSizeIndex1 = 1;
 constexpr int32_t kDimSizeIndex2 = 2;
 constexpr int32_t kDimSizeIndex3 = 3;
 constexpr int32_t kDimSizeIndex4 = 4;
+constexpr int32_t kNchwRank = 4;
+constexpr int32_t kNc1hwc0Rank = 5;
 constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
 constexpr size_t kIndex4 = 4;
@@ -109,6 +111,10 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
     }
 
     if (date_format_ == FORMAT_NCHW) {
+        KERNEL_CHECK_FALSE((input_shape->GetDims() == kNchwRank && output_shape->GetDims() == kNchwRank),
+                           KERNEL_STATUS_PARAM_INVALID,
+                           "[%s] NCHW input x and output y must both be 4D, got x[%d]D y[%d]D.", kSpatialTransformer,
+                           input_shape->GetDims(), output_shape->GetDims());
         input_n_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex0));
         input_c_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex1));
         input_h_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex2));
@@ -116,6 +122,10 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
         output_h_ = static_cast<int32_t>(output_shape->GetDimSize(kDimSizeIndex2));
         output_w_ = static_cast<int32_t>(output_shape->GetDimSize(kDimSizeIndex3));
     } else if (date_format_ == FORMAT_NC1HWC0) {
+        KERNEL_CHECK_FALSE((input_shape->GetDims() == kNc1hwc0Rank && output_shape->GetDims() == kNc1hwc0Rank),
+                           KERNEL_STATUS_PARAM_INVALID,
+                           "[%s] NC1HWC0 input x and output y must both be 5D, got x[%d]D y[%d]D.", kSpatialTransformer,
+                           input_shape->GetDims(), output_shape->GetDims());
         input_n_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex0));
         input_c1_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex1));
         input_h_ = static_cast<int32_t>(input_shape->GetDimSize(kDimSizeIndex2));

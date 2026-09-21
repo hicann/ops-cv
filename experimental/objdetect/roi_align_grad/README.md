@@ -12,7 +12,7 @@
 - 计算公式：
   - 输入节点：
     - y_diff (shape[K,C,pooled_height,pooled_width], FLOAT32) - 反向传播的输入梯度，K 为 roi 个数。
-    - rois (shape[K,5], FLOAT32) - 感兴趣区域坐标 (image_id, x1, y1, x2, y2)。
+    - rois (shape[K,M], M >= 5, FLOAT32) - 感兴趣区域坐标的前五列为 (image_id, x1, y1, x2, y2)。
   - 计算节点：
     - Step1: 依据 `spatial_scale` 将 roi 坐标映射到输入特征图尺度；`roi_end_mode` 为 2 时坐标偏移 -0.5 使相邻像素索引更好对齐。
     - Step2: 对每个输出网格 (pooled_height × pooled_width)，按 `sample_num` 在 bin 内均匀采样，计算双线性插值的 4 个邻点坐标与权重。
@@ -48,7 +48,7 @@
     <tr>
       <td>rois</td>
       <td>输入</td>
-      <td>感兴趣区域坐标 [K,5]，5 代表 (image_id, x1, y1, x2, y2)。</td>
+      <td>感兴趣区域坐标 [K,M]，M >= 5，前五列为 (image_id, x1, y1, x2, y2)。</td>
       <td>FLOAT32</td>
       <td>ND</td>
     </tr>
@@ -106,7 +106,7 @@
 ## 约束说明
 
 - 目前只支持 float32 输入。
-- rois 第 1 维固定为 5，且第 0 维需与 y_diff 第 0 维（K）保持一致。
+- rois 必须为二维，第二维至少为 5，且第 0 维需与 y_diff 第 0 维（K）保持一致。
 - image_id 取值范围 [0, B)，B 为 xdiff_shape 的第一个值。
 
 ## 调用说明
