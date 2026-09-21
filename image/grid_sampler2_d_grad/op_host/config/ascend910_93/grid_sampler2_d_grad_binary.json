@@ -2,7 +2,7 @@
   "op_type": "GridSampler2DGrad",
   "op_list": [
     {
-      "bin_filename": "GridSamplerGrad_fp16_json",
+      "bin_filename": "GridSampler2DGrad_fp16",
       "inputs": [
         {
           "name": "grad",
@@ -76,7 +76,7 @@
       ]
     },
     {
-      "bin_filename": "GridSamplerGrad_bf16_json",
+      "bin_filename": "GridSampler2DGrad_bf16",
       "inputs": [
         {
           "name": "grad",
@@ -150,7 +150,7 @@
       ]
     },
     {
-      "bin_filename": "GridSamplerGrad_fp32_json",
+      "bin_filename": "GridSampler2DGrad_fp32",
       "inputs": [
         {
           "name": "grad",
