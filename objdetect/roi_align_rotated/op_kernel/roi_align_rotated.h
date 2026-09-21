@@ -87,7 +87,7 @@ public:
             loopCount = 1;
             rois_num_per_loop = rois_num_per_core;
         } else {
-            loopCount = (rois_num_per_core - rois_num_per_loop_limit) / rois_num_per_loop_limit + 1;
+            loopCount = (rois_num_per_core + rois_num_per_loop_limit - 1) / rois_num_per_loop_limit;
             rois_num_per_loop = rois_num_per_loop_limit;
         }
 
@@ -96,7 +96,7 @@ public:
         ASSERT(tileNum != 0 && "tile num can not be 0!");
 
         inputGM.SetGlobalBuffer((__gm__ float*)input, batch_size * channels * input_h * input_w);
-        roisGM.SetGlobalBuffer((__gm__ float*)rois, (rois_num_aligned * rois_info_num));
+        roisGM.SetGlobalBuffer((__gm__ float*)rois, (total_rois_num * rois_info_num));
         outputGM.SetGlobalBuffer((__gm__ float*)output, (total_rois_num * channels * pooled_height * pooled_width));
 
         pipe.InitBuffer(RoisQueueBatchIdx, BUFFER_NUM, rois_buffer_size);
@@ -168,8 +168,12 @@ public:
             }
 
             for (uint32_t i = 0; i < loopCount; i++) {
-                RoisCopyIn(i, rois_num_per_loop);
-                Compute(i, rois_num_per_loop);
+                uint32_t loop_rois_num = GetLoopRoisNum(i);
+                if (loop_rois_num == 0) {
+                    break;
+                }
+                RoisCopyIn(i, loop_rois_num);
+                Compute(i, loop_rois_num);
             }
 
             OutputValueBuffer.FreeTensor<float>(OutputValue);
@@ -180,6 +184,48 @@ public:
     }
 
 private:
+    __aicore__ inline uint32_t AlignRoisNum(uint32_t n)
+    {
+        return ((n + aligned_byte_num - 1) / aligned_byte_num) * aligned_byte_num;
+    }
+
+    __aicore__ inline uint32_t GetLoopRoisNum(uint32_t progress)
+    {
+        uint32_t processed = progress * rois_num_per_loop;
+        uint32_t remain_core = (rois_num_per_core > processed) ? (rois_num_per_core - processed) : 0;
+        uint32_t start;
+        if (GetBlockIdx() < Lcore_num) {
+            start = GetBlockIdx() * rois_num_per_core + processed;
+        } else {
+            start = Lcore_num * rois_num_per_Lcore + (GetBlockIdx() - Lcore_num) * rois_num_per_core + processed;
+        }
+        uint32_t remain_global = (total_rois_num > start) ? (total_rois_num - start) : 0;
+        uint32_t n = remain_core;
+        if (n > remain_global) {
+            n = remain_global;
+        }
+        if (n > rois_num_per_loop) {
+            n = rois_num_per_loop;
+        }
+        return n;
+    }
+
+    __aicore__ inline void CopyRoiField(LocalTensor<float> dst, uint32_t gm_offset, uint32_t copy_count)
+    {
+        if (copy_count == 0) {
+            return;
+        }
+        uint32_t aligned_count = AlignRoisNum(copy_count);
+#if __CCE_AICORE__ == 200
+        DataCopy(dst, roisGM[gm_offset], aligned_count);
+#else
+        uint32_t right_pad = aligned_count - copy_count;
+        DataCopyExtParams copy_params{1, static_cast<uint32_t>(copy_count * sizeof(float)), 0, 0, 0};
+        DataCopyPadExtParams<float> pad_params{right_pad > 0, 0, static_cast<uint8_t>(right_pad), 0.0f};
+        DataCopyPad(dst, roisGM[gm_offset], copy_params, pad_params);
+#endif
+    }
+
     __aicore__ inline void RoisCopyIn(uint32_t progress, int32_t rois_num)
     {
         LocalTensor<float> RoisBatchIdx = RoisQueueBatchIdx.AllocTensor<float>();
@@ -190,34 +236,21 @@ private:
         LocalTensor<float> RoisTheta = RoisQueueTheta.AllocTensor<float>();
         PipeBarrier<PIPE_ALL>();
 
+        int32_t pre_idx;
         if (GetBlockIdx() < Lcore_num) {
-            int32_t pre_idx = GetBlockIdx() * rois_num_per_core + progress * rois_num_per_loop;
-            DataCopy(RoisBatchIdx, roisGM[pre_idx], rois_num);
-            DataCopy(RoisCenterX, roisGM[pre_idx + total_rois_num], rois_num);
-            DataCopy(RoisCenterY, roisGM[pre_idx + total_rois_num * NUM2],
-                     rois_num); // RoisCenterY偏移量为pre_idx + total_rois_num * 2
-            DataCopy(RoisWidth, roisGM[pre_idx + total_rois_num * NUM3],
-                     rois_num); // RoisWidth偏移量为pre_idx + total_rois_num * 3
-            DataCopy(RoisHeight, roisGM[pre_idx + total_rois_num * NUM4],
-                     rois_num); // RoisHeight偏移量为pre_idx + total_rois_num * 4
-            DataCopy(RoisTheta, roisGM[pre_idx + total_rois_num * NUM5],
-                     rois_num); // RoisTheta偏移量为pre_idx + total_rois_num * 5
-            PipeBarrier<PIPE_ALL>();
+            pre_idx = GetBlockIdx() * rois_num_per_core + progress * rois_num_per_loop;
         } else {
-            int32_t pre_idx = Lcore_num * rois_num_per_Lcore + (GetBlockIdx() - Lcore_num) * rois_num_per_core +
-                              progress * rois_num_per_loop;
-            DataCopy(RoisBatchIdx, roisGM[pre_idx], rois_num);
-            DataCopy(RoisCenterX, roisGM[pre_idx + total_rois_num], rois_num);
-            DataCopy(RoisCenterY, roisGM[pre_idx + total_rois_num * NUM2],
-                     rois_num); // RoisCenterY偏移量为pre_idx + total_rois_num * 2
-            DataCopy(RoisWidth, roisGM[pre_idx + total_rois_num * NUM3],
-                     rois_num); // RoisWidth偏移量为pre_idx + total_rois_num * 3
-            DataCopy(RoisHeight, roisGM[pre_idx + total_rois_num * NUM4],
-                     rois_num); // RoisHeight偏移量为pre_idx + total_rois_num * 4
-            DataCopy(RoisTheta, roisGM[pre_idx + total_rois_num * NUM5],
-                     rois_num); // RoisTheta偏移量为pre_idx + total_rois_num * 5
-            PipeBarrier<PIPE_ALL>();
+            pre_idx = Lcore_num * rois_num_per_Lcore + (GetBlockIdx() - Lcore_num) * rois_num_per_core +
+                      progress * rois_num_per_loop;
         }
+        uint32_t copy_count = static_cast<uint32_t>(rois_num);
+        CopyRoiField(RoisBatchIdx, pre_idx, copy_count);
+        CopyRoiField(RoisCenterX, pre_idx + total_rois_num, copy_count);
+        CopyRoiField(RoisCenterY, pre_idx + total_rois_num * NUM2, copy_count);
+        CopyRoiField(RoisWidth, pre_idx + total_rois_num * NUM3, copy_count);
+        CopyRoiField(RoisHeight, pre_idx + total_rois_num * NUM4, copy_count);
+        CopyRoiField(RoisTheta, pre_idx + total_rois_num * NUM5, copy_count);
+        PipeBarrier<PIPE_ALL>();
 
         RoisQueueBatchIdx.EnQue<float>(RoisBatchIdx);
         RoisQueueCenterX.EnQue<float>(RoisCenterX);
@@ -237,48 +270,49 @@ private:
         LocalTensor<float> RoisHeight = RoisQueueHeight.DeQue<float>();
         LocalTensor<float> RoisTheta = RoisQueueTheta.DeQue<float>();
 
-        Muls(RoisCenterX, RoisCenterX, spatial_scale, rois_num);
-        Muls(RoisCenterY, RoisCenterY, spatial_scale, rois_num);
-        Muls(RoisWidth, RoisWidth, spatial_scale, rois_num);
-        Muls(RoisHeight, RoisHeight, spatial_scale, rois_num);
+        uint32_t vec_num = AlignRoisNum(static_cast<uint32_t>(rois_num));
+        Muls(RoisCenterX, RoisCenterX, spatial_scale, vec_num);
+        Muls(RoisCenterY, RoisCenterY, spatial_scale, vec_num);
+        Muls(RoisWidth, RoisWidth, spatial_scale, vec_num);
+        Muls(RoisHeight, RoisHeight, spatial_scale, vec_num);
         PipeBarrier<PIPE_V>();
 
-        Adds(RoisCenterX, RoisCenterX, offset, rois_num);
-        Adds(RoisCenterY, RoisCenterY, offset, rois_num);
+        Adds(RoisCenterX, RoisCenterX, offset, vec_num);
+        Adds(RoisCenterY, RoisCenterY, offset, vec_num);
 
         if (!aligned) {
-            Maxs(RoisWidth, RoisWidth, one_value, rois_num);
-            Maxs(RoisHeight, RoisHeight, one_value, rois_num);
+            Maxs(RoisWidth, RoisWidth, one_value, vec_num);
+            Maxs(RoisHeight, RoisHeight, one_value, vec_num);
         }
 
         if (clockwise) {
-            Muls(RoisTheta, RoisTheta, negative_one_value, rois_num);
+            Muls(RoisTheta, RoisTheta, negative_one_value, vec_num);
         }
         PipeBarrier<PIPE_V>();
 
-        Muls(RoiStartH, RoisHeight, half_value, rois_num);
-        Muls(RoiStartW, RoisWidth, half_value, rois_num);
-        Div(BinSizeH, RoisHeight, Ph, rois_num);
-        Div(BinSizeW, RoisWidth, Pw, rois_num);
+        Muls(RoiStartH, RoisHeight, half_value, vec_num);
+        Muls(RoiStartW, RoisWidth, half_value, vec_num);
+        Div(BinSizeH, RoisHeight, Ph, vec_num);
+        Div(BinSizeW, RoisWidth, Pw, vec_num);
         Sin(RoiSinTheta, RoisTheta);
         Cos(RoiCosTheta, RoisTheta);
         PipeBarrier<PIPE_V>();
 
         if (sampling_ratio > 0) {
-            RoiBinGridH.SetSize(rois_num);
-            Duplicate(RoiBinGridH, static_cast<float>(sampling_ratio), rois_num);
-            Duplicate(RoiBinGridW, static_cast<float>(sampling_ratio), rois_num);
+            RoiBinGridH.SetSize(vec_num);
+            Duplicate(RoiBinGridH, static_cast<float>(sampling_ratio), vec_num);
+            Duplicate(RoiBinGridW, static_cast<float>(sampling_ratio), vec_num);
             PipeBarrier<PIPE_V>();
         } else {
-            Ceil(RoiBinGridH, BinSizeH, rois_num);
-            Ceil(RoiBinGridW, BinSizeW, rois_num);
+            Ceil(RoiBinGridH, BinSizeH, vec_num);
+            Ceil(RoiBinGridW, BinSizeW, vec_num);
             PipeBarrier<PIPE_V>();
         }
 
-        Div(GridHTensor, BinSizeH, RoiBinGridH, rois_num);
-        Div(GridWTensor, BinSizeW, RoiBinGridW, rois_num);
-        Mul(GridMulTensor, RoiBinGridW, RoiBinGridH, rois_num);
-        Maxs(CountTensor, GridMulTensor, one_value, rois_num);
+        Div(GridHTensor, BinSizeH, RoiBinGridH, vec_num);
+        Div(GridWTensor, BinSizeW, RoiBinGridW, vec_num);
+        Mul(GridMulTensor, RoiBinGridW, RoiBinGridH, vec_num);
+        Maxs(CountTensor, GridMulTensor, one_value, vec_num);
         PipeBarrier<PIPE_V>();
 
         int32_t output_index = ComputeOutputIndex(progress);

@@ -24,6 +24,8 @@
 #include <iostream>
 #include <string>
 #include <cstdint>
+#include <cstring>
+#include <cmath>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
 #include "data_utils.h"
@@ -99,4 +101,107 @@ TEST_F(roi_align_rotated_test, test_case_0)
     AscendC::GmFree(workspace);
     AscendC::GmFree(tiling);
 }
+
+static void FillRoisNCHW6R(float* rois, uint32_t rois_num)
+{
+    for (uint32_t i = 0; i < rois_num; ++i) {
+        rois[0 * rois_num + i] = 0.0f;
+        rois[1 * rois_num + i] = 4.0f;
+        rois[2 * rois_num + i] = 4.0f;
+        rois[3 * rois_num + i] = 4.0f;
+        rois[4 * rois_num + i] = 4.0f;
+        rois[5 * rois_num + i] = 0.0f;
+    }
+}
+
+static void FillOnes(float* ptr, size_t n)
+{
+    for (size_t i = 0; i < n; ++i) {
+        ptr[i] = 1.0f;
+    }
+}
+
+static void RunRoiAlignRotatedKernel(uint32_t rois_num, uint32_t rois_num_aligned, uint32_t tail_num,
+                                     uint32_t rois_num_per_lcore, uint32_t lcore_num, uint32_t num_blocks,
+                                     uint64_t ub_total_size, int32_t pooled_h, int32_t pooled_w)
+{
+    const uint32_t batch = 1;
+    const uint32_t channels = 8;
+    const uint32_t input_h = 8;
+    const uint32_t input_w = 8;
+    size_t inputByteSize = batch * input_h * input_w * channels * sizeof(float);
+    size_t roisByteSize = 6UL * rois_num * sizeof(float);
+    size_t outputByteSize = static_cast<size_t>(rois_num) * pooled_h * pooled_w * channels * sizeof(float);
+    size_t tiling_data_size = sizeof(RoiAlignRotatedTilingData);
+
+    uint8_t* input = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* rois = (uint8_t*)AscendC::GmAlloc(roisByteSize);
+    uint8_t* output = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(1024 * 16 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tiling_data_size);
+    ASSERT_NE(input, nullptr);
+    ASSERT_NE(rois, nullptr);
+    ASSERT_NE(output, nullptr);
+
+    std::memset(output, 0, outputByteSize);
+    FillOnes(reinterpret_cast<float*>(input), inputByteSize / sizeof(float));
+    FillRoisNCHW6R(reinterpret_cast<float*>(rois), rois_num);
+
+    RoiAlignRotatedTilingData* tilingData = reinterpret_cast<RoiAlignRotatedTilingData*>(tiling);
+    std::memset(tiling, 0, tiling_data_size);
+    tilingData->aligned = 0;
+    tilingData->clockwise = 0;
+    tilingData->numBlocks = num_blocks;
+    tilingData->rois_num_per_Lcore = rois_num_per_lcore;
+    tilingData->rois_num_per_Score = 0;
+    tilingData->Lcore_num = lcore_num;
+    tilingData->Score_num = 0;
+    tilingData->input_buffer_size = 32;
+    tilingData->tileNum = 8;
+    tilingData->batch_size = batch;
+    tilingData->channels = channels;
+    tilingData->channels_aligned = channels;
+    tilingData->input_h = input_h;
+    tilingData->input_w = input_w;
+    tilingData->rois_num_aligned = rois_num_aligned;
+    tilingData->tail_num = tail_num;
+    tilingData->spatial_scale = 1;
+    tilingData->sampling_ratio = 1;
+    tilingData->pooled_height = pooled_h;
+    tilingData->pooled_width = pooled_w;
+    tilingData->ub_total_size = ub_total_size;
+
+    ICPU_SET_TILING_KEY(1);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(roi_align_rotated, num_blocks, input, rois, output, workspace, tiling);
+
+    const float* out = reinterpret_cast<const float*>(output);
+    const size_t per_roi = static_cast<size_t>(pooled_h) * pooled_w * channels;
+    ASSERT_GT(per_roi, 0U);
+    EXPECT_GT(std::fabs(out[0]), 1e-6f);
+    EXPECT_GT(std::fabs(out[(rois_num - 1) * per_roi]), 1e-6f);
+
+    AscendC::GmFree(input);
+    AscendC::GmFree(rois);
+    AscendC::GmFree(output);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+TEST_F(roi_align_rotated_test, test_case_rois_num_1_tight_gm)
+{
+    RunRoiAlignRotatedKernel(1, 8, 7, 8, 1, 1, 196608, 1, 1);
+}
+
+TEST_F(roi_align_rotated_test, test_case_rois_num_7_tight_gm)
+{
+    RunRoiAlignRotatedKernel(7, 8, 1, 8, 1, 1, 196608, 1, 1);
+}
+
+TEST_F(roi_align_rotated_test, test_case_rois_num_9_tight_gm)
+{
+    RunRoiAlignRotatedKernel(9, 16, 7, 8, 2, 2, 196608, 1, 1);
+}
+
+TEST_F(roi_align_rotated_test, test_case_multi_loop_tail) { RunRoiAlignRotatedKernel(24, 24, 0, 24, 1, 1, 3072, 1, 1); }
 #endif // !defined(__NPU_ARCH__) || __NPU_ARCH__ != 3510

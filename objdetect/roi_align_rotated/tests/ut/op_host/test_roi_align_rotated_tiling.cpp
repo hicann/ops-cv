@@ -54,11 +54,58 @@ TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_0)
                               "4539628424389459968 8589934593 2 262144 ";
     std::vector<size_t> expectWorkspaces = {0};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
-    // blockDim 启动配置断言（ExecuteTestCase 只钉 tilingRet/workspace/key/data 四项，不含
-    // SetBlockDim 输出；公共 executor 不可改——本地二次执行补断言）。
-    // 48 核 + rois_num=8：rois_num_per_Score=0 → block_dim = 48 - Score_num(47) = 1（收缩路径），
-    // 与 tiling data 内 numBlocks 字段独立（data 字段与启动配置是两个输出，须分别钉底）
     TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
     EXPECT_EQ(tilingInfo.blockNum, 1U);
+}
+
+static gert::TilingContextPara MakeRoiAlignRotatedTilingPara(uint32_t rois_num, int64_t pooled_h, int64_t pooled_w)
+{
+    static optiling::RoiAlignRotatedCompileInfo compileInfo = {48, 196608};
+    int64_t r = static_cast<int64_t>(rois_num);
+    return gert::TilingContextPara(
+        "RoiAlignRotated",
+        {{{{1, 8, 8, 8}, {1, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}, {{{6, r}, {6, r}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{r, pooled_h, pooled_w, 8}, {r, pooled_h, pooled_w, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {
+            gert::TilingContextPara::OpAttr("pooled_h", Ops::Cv::AnyValue::CreateFrom<int64_t>(pooled_h)),
+            gert::TilingContextPara::OpAttr("pooled_w", Ops::Cv::AnyValue::CreateFrom<int64_t>(pooled_w)),
+            gert::TilingContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(0.5)),
+            gert::TilingContextPara::OpAttr("sampling_ratio", Ops::Cv::AnyValue::CreateFrom<int64_t>(1)),
+            gert::TilingContextPara::OpAttr("aligned", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("clockwise", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        },
+        &compileInfo, "Ascend910b", 48, 196608);
+}
+
+TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_rois_num_1)
+{
+    auto para = MakeRoiAlignRotatedTilingPara(1, 2, 2);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.blockNum, 1U);
+}
+
+TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_rois_num_7)
+{
+    auto para = MakeRoiAlignRotatedTilingPara(7, 2, 2);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.blockNum, 1U);
+}
+
+TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_rois_num_9)
+{
+    auto para = MakeRoiAlignRotatedTilingPara(9, 2, 2);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.blockNum, 2U);
+}
+
+TEST_F(TilingForRoiAlignRotated, roi_align_rotated_tiling_rois_num_49153)
+{
+    auto para = MakeRoiAlignRotatedTilingPara(49153, 2, 2);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.blockNum, 48U);
 }
