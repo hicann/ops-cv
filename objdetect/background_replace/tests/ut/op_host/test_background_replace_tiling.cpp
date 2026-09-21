@@ -11,6 +11,9 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
+#include <cstdint>
+#include <cstring>
+#include <limits>
 #include "../../../op_host/background_replace_tiling.h"
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
@@ -129,4 +132,56 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_fp16_noequal_case
     string expectTilingData = "900 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+static gert::TilingContextPara MakeBackgroundReplaceTilingPara(int64_t bh, int64_t bw, int64_t bc, int64_t mh,
+                                                               int64_t mw, int64_t mc, ge::DataType dtype)
+{
+    static BackgroundReplaceCompileInfo compileInfo = {40, 196608};
+    gert::StorageShape bkgShape = {{bh, bw, bc}, {bh, bw, bc}};
+    gert::StorageShape srcShape = {{bh, bw, bc}, {bh, bw, bc}};
+    gert::StorageShape maskShape = {{mh, mw, mc}, {mh, mw, mc}};
+    gert::StorageShape outShape = {{bh, bw, bc}, {bh, bw, bc}};
+    return gert::TilingContextPara(
+        "BackgroundReplace",
+        {{bkgShape, dtype, ge::FORMAT_ND}, {srcShape, dtype, ge::FORMAT_ND}, {maskShape, dtype, ge::FORMAT_ND}},
+        {{outShape, dtype, ge::FORMAT_ND}}, {}, &compileInfo);
+}
+
+static uint32_t ReadTilingSize(const TilingInfo& info)
+{
+    uint32_t size = 0;
+    EXPECT_GE(info.tilingDataSize, sizeof(uint32_t));
+    std::memcpy(&size, info.tilingData.get(), sizeof(uint32_t));
+    return size;
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_tiling_uint32_max_kept)
+{
+    auto para = MakeBackgroundReplaceTilingPara(65535, 65537, 1, 65535, 65537, 1, ge::DT_FLOAT16);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.tilingKey, 1);
+    EXPECT_EQ(ReadTilingSize(info), std::numeric_limits<uint32_t>::max());
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_tiling_size_overflow_rejected)
+{
+    auto para = MakeBackgroundReplaceTilingPara(65536, 65536, 1, 65536, 65536, 1, ge::DT_FLOAT16);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_tiling_c3_not_wrapped)
+{
+    auto para = MakeBackgroundReplaceTilingPara(2147483648, 1, 3, 2147483648, 1, 1, ge::DT_FLOAT16);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    EXPECT_EQ(info.tilingKey, 3);
+    EXPECT_EQ(ReadTilingSize(info), 2147483648U);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_tiling_size_overflow_offset_rejected)
+{
+    auto para = MakeBackgroundReplaceTilingPara(65536, 65537, 1, 65536, 65537, 1, ge::DT_FLOAT16);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
 }

@@ -19,6 +19,7 @@
 #include "tiling/tiling_api.h"
 #include "util/math_util.h"
 #include "background_replace_tiling.h"
+#include <limits>
 
 namespace optiling {
 
@@ -34,20 +35,24 @@ static ge::graphStatus TilingBackgroundReplace(gert::TilingContext* context)
     TilingDataBackgroundReplace tiling;
     auto tensorBkg = context->GetInputTensor(0);
     auto tensorMask = context->GetInputTensor(2);
-    uint32_t maskLength = tensorMask->GetShapeSize();
-    uint32_t bkgLength = tensorBkg->GetShapeSize();
+    int64_t maskSize = tensorMask->GetShapeSize();
+    int64_t bkgSize = tensorBkg->GetShapeSize();
+    if (maskSize < 0 || bkgSize < 0 || maskSize > static_cast<int64_t>(std::numeric_limits<uint32_t>::max())) {
+        OP_LOGE("BackgroundReplace", "mask or background shape size is invalid.");
+        return ge::GRAPH_FAILED;
+    }
     auto bkgDataType = tensorBkg->GetDataType();
     uint64_t tiling_key = 0;
-    if (maskLength == bkgLength && bkgDataType == ge::DT_FLOAT16) {
+    if (maskSize == bkgSize && bkgDataType == ge::DT_FLOAT16) {
         tiling_key = TILING_KEY_HALF_C1;
-    } else if (maskLength == bkgLength && bkgDataType == ge::DT_UINT8) {
+    } else if (maskSize == bkgSize && bkgDataType == ge::DT_UINT8) {
         tiling_key = TILING_KEY_UINT8_C1;
-    } else if (maskLength != bkgLength && bkgDataType == ge::DT_FLOAT16) {
+    } else if (maskSize != bkgSize && bkgDataType == ge::DT_FLOAT16) {
         tiling_key = TILING_KEY_HALF_C3;
-    } else if (maskLength != bkgLength && bkgDataType == ge::DT_UINT8) {
+    } else if (maskSize != bkgSize && bkgDataType == ge::DT_UINT8) {
         tiling_key = TILING_KEY_UINT8_C3;
     }
-    tiling.set_size(maskLength);
+    tiling.set_size(static_cast<uint32_t>(maskSize));
     context->SetTilingKey(tiling_key);
     context->SetBlockDim(ASCEND_310P_BLOCK_DIM);
     tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
