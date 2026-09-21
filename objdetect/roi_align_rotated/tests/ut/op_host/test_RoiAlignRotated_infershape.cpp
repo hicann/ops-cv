@@ -15,13 +15,25 @@
  */
 #include <gtest/gtest.h>
 #include <iostream>
+#include "platform/platform_info.h"
 #include "infershape_context_faker.h"
 #include "infershape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
 class RoiAlignRotated : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "RoiAlignRotated Proto Test SetUp" << std::endl; }
+    static void SetUpTestCase()
+    {
+        // infershape 走 soc 分发（fe::PlatformInfoManager 单例进程内共享，three_interpolate UT 先例）：
+        // 本套件为arch22 cv 契约用例，初始化为 ascend910b，确保路由到老芯片推导分支
+        fe::PlatformInfoManager::Instance().InitializePlatformInfo();
+        fe::PlatformInfo platformInfo;
+        fe::OptionalInfo optionalInfo;
+        fe::PlatformInfoManager::Instance().GetPlatformInfo("Ascend910B1", platformInfo, optionalInfo);
+        optionalInfo.soc_version = "Ascend910B1";
+        fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(optionalInfo);
+        std::cout << "RoiAlignRotated Proto Test SetUp" << std::endl;
+    }
 
     static void TearDownTestCase() { std::cout << "RoiAlignRotated Proto Test TearDown" << std::endl; }
 };

@@ -8,15 +8,16 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 /*!
- * \file roi_align_rotated_tiling.h
+ * \file roi_align_rotated_tiling_arch22.h
  * \brief
  *
  *
  *
  *
  */
-#ifndef ROI_ALIGN_ROTATED_TILING_H
-#define ROI_ALIGN_ROTATED_TILING_H
+#ifndef ROI_ALIGN_ROTATED_TILING_ARCH22_H
+#define ROI_ALIGN_ROTATED_TILING_ARCH22_H
+#include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
 #include "tiling/tiling_api.h"
 
@@ -52,5 +53,6 @@ TILING_DATA_FIELD_DEF(uint64_t, ub_total_size);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(RoiAlignRotated, RoiAlignRotatedTilingData)
+
 } // namespace optiling
 #endif

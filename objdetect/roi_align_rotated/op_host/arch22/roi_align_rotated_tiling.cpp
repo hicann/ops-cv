@@ -9,10 +9,10 @@
  */
 
 /*!
- * \file roi_align_rotated_tiling.cc
- * \brief
+ * \file roi_align_rotated_tiling.cpp
+ * \brief roi_align_rotated tiling
  */
-#include "roi_align_rotated_tiling.h"
+#include "roi_align_rotated_tiling_arch22.h"
 #include <cmath>
 #include "register/op_impl_registry.h"
 #include "tiling/platform/platform_ascendc.h"

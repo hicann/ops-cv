@@ -10,7 +10,13 @@
 
 file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
 if(UT_TEST_ALL OR OP_HOST_UT)
-    add_modules_ut_sources(UT_NAME ${OP_TILING_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    # tiling 用例按构建 soc 选目录：与 op_host/arch22|arch35 的 TILING_DIR 选编一一对应，
+    # 保证用例与链接进 UT 的 tiling 实现同侧（tiling 注册经 IMPL_OP_OPTILING 全局表解析）
+    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950")
+        add_modules_ut_sources(UT_NAME ${OP_TILING_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR}/arch35)
+    else()
+        add_modules_ut_sources(UT_NAME ${OP_TILING_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
     add_modules_ut_sources(UT_NAME ${OP_INFERSHAPE_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 

@@ -15,6 +15,7 @@
 #include "register/op_impl_registry.h"
 #include "log/log.h"
 #include "util/shape_util.h"
+#include "platform/platform_info.h"
 
 using namespace ge;
 using namespace std;
@@ -50,6 +51,8 @@ const uint32_t OUTPUT_DIM_NUM = INPUT_RANK;
 } // namespace
 
 namespace ops {
+ge::graphStatus InferShapeRoiAlignRotatedRegbase(gert::InferShapeContext* context);
+
 static ge::graphStatus InferShape(gert::InferShapeContext* context)
 {
     auto input_shape = context->GetInputShape(INPUT_INDEX);
@@ -61,6 +64,15 @@ static ge::graphStatus InferShape(gert::InferShapeContext* context)
     if (Ops::Base::IsUnknownRank(*input_shape) || Ops::Base::IsUnknownRank(*rois_shape)) {
         Ops::Base::SetUnknownRank(*output_shape);
         return ge::GRAPH_SUCCESS;
+    }
+    // ascend950（arch35）regbase 芯片分发到 NCHW 推导；
+    fe::PlatformInfo platformInfo;
+    fe::OptionalInfo optionalInfo;
+    OP_CHECK_IF((fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platformInfo, optionalInfo) !=
+                 ge::GRAPH_SUCCESS),
+                OP_LOGE(context, "Cannot get platform info!"), return ge::GRAPH_FAILED);
+    if (platformInfo.str_info.short_soc_version == "Ascend950") {
+        return InferShapeRoiAlignRotatedRegbase(context);
     }
     if (input_shape->GetDimNum() != INPUT_RANK || rois_shape->GetDimNum() != ROIS_RANK) {
         return ge::GRAPH_FAILED;
@@ -96,5 +108,5 @@ static ge::graphStatus InferDataTypeRoiAlignRotated(gert::InferDataTypeContext* 
     return GRAPH_SUCCESS;
 }
 
-IMPL_OP_INFERSHAPE(RoiAlignRotated).InferShape(InferShape).InferDataType(InferDataTypeRoiAlignRotated);
+IMPL_OP_INFERSHAPE(RoiAlignRotated).InferShape(InferShape);
 } // namespace ops

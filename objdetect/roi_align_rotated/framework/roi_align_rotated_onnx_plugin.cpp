@@ -10,10 +10,16 @@
 
 /*!
  * \file roi_align_rotated_onnx_plugin.cpp
- * \brief
+ * \brief RoiAlignRotated ONNX 适配（mmdeploy/ai.onnx::RoiAlignRotated）。
+ *        平台感知建图：ascend950 上算子为 mmcv 原生布局（x NCHW、rois (R,6) 行主序、
+ *        y (R,C,pooled_h,pooled_w)），ONNX 输入直连免转置；其余芯片为 NHWC/(6,R)
+ *        （mmcv NPU 适配器调用约定），插 Transpose 适配。
  */
 
+#include <string>
+
 #include "onnx_common.h"
+#include "platform/platform_info.h"
 #include "roi_align_rotated_proto.h"
 
 namespace domi {
@@ -35,6 +41,22 @@ static Status SetRoiAlignRotatedByNode(ge::Operator& op_dest, const NodeProto* n
     op_dest.DynamicInputRegister("x", input_size);
     op_dest.DynamicOutputRegister("y", output_size);
     return SUCCESS;
+}
+
+// ascend950（regbase）平台识别
+static bool IsRegbasePlatform()
+{
+    fe::PlatformInfo platformInfo;
+    fe::OptionalInfo optionalInfo;
+    if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platformInfo, optionalInfo) !=
+        ge::GRAPH_SUCCESS) {
+        OP_LOGE("RoiAlignRotated", "Get platform info failed, fallback to legacy transposed path.");
+        return false;
+    }
+    const bool isRegbase = (platformInfo.str_info.short_soc_version == "Ascend950");
+    OP_LOGD("RoiAlignRotated", "IsRegbasePlatform check: short_soc_version=%s, is_regbase=%d.",
+            platformInfo.str_info.short_soc_version.c_str(), isRegbase);
+    return isRegbase;
 }
 } // namespace
 
@@ -122,6 +144,26 @@ Status ParseOpToGraphRoiAlignRotated(const ge::Operator& op, ge::Graph& graph)
     auto data0 = ge::op::Data((ori_name + "_data0").c_str()).set_attr_index(0);
     auto data1 = ge::op::Data((ori_name + "_data1").c_str()).set_attr_index(1);
 
+    std::vector<ge::Operator> inputs{data0, data1};
+    std::vector<std::pair<ge::Operator, std::vector<size_t>>> outputs;
+
+    if (IsRegbasePlatform()) {
+        // ascend950：ONNX 原生布局（x NCHW、rois (R,6) 行主序、y (R,C,ph,pw)）即算子契约，直连免转置
+        auto roi_align_rotated = ge::op::RoiAlignRotated((ori_name + "_RoiAlignRotated_0").c_str())
+                                     .set_input_x(data0)
+                                     .set_input_rois(data1)
+                                     .set_attr_pooled_h(pooled_h)
+                                     .set_attr_pooled_w(pooled_w)
+                                     .set_attr_spatial_scale(spatial_scale)
+                                     .set_attr_sampling_ratio(sampling_ratio)
+                                     .set_attr_aligned(aligned)
+                                     .set_attr_clockwise(clockwise);
+        outputs.emplace_back(roi_align_rotated, std::vector<size_t>{0});
+        graph.SetInputs(inputs).SetOutputs(outputs);
+        return SUCCESS;
+    }
+
+    // 其余芯片：算子契约为 NHWC/(6,R)（mmcv NPU 适配器调用约定），插 Transpose 适配
     std::vector<int32_t> perm_boxes = {0, 2, 3, 1};
     auto tensor_perm_boxes = Vec2Tensor(perm_boxes, {4}, ge::DT_INT32);
     auto const_perm_boxes = ge::op::Const((ori_name + "_Const_0").c_str()).set_attr_value(tensor_perm_boxes);
@@ -152,8 +194,6 @@ Status ParseOpToGraphRoiAlignRotated(const ge::Operator& op, ge::Graph& graph)
                                    .set_input_x(roi_align_rotated)
                                    .set_input_perm(const_perm_out_boxes);
 
-    std::vector<ge::Operator> inputs{data0, data1};
-    std::vector<std::pair<ge::Operator, std::vector<size_t>>> outputs;
     outputs.emplace_back(transpose_out_boxes, std::vector<size_t>{0});
 
     graph.SetInputs(inputs).SetOutputs(outputs);
