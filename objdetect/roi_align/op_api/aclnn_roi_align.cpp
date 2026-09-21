@@ -23,6 +23,7 @@
 #include "opdev/make_op_executor.h"
 #include "opdev/platform.h"
 #include "aclnn_kernels/common/op_error_check.h"
+#include "op_api/aclnn_check.h"
 
 using namespace op;
 
@@ -210,10 +211,6 @@ aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor* self, const aclTensor
     auto batchIndicesContiguous = l0op::Contiguous(batchIndices, uniqueExecutor.get());
     CHECK_RET(batchIndicesContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 将self转为私有格式NC1HWC0
-    auto selfTransData = l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0, uniqueExecutor.get());
-    CHECK_RET(selfTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
-
     // 将batchIndices补充成2维[num_rois, 1]
     int64_t batchIndicesNewShape[2] = {batchIndices->GetViewShape().GetDim(0), 1};        // 2: dim num
     auto batchIndicesSize = uniqueExecutor.get()->AllocIntArray(batchIndicesNewShape, 2); // 2: dim num
@@ -232,18 +229,41 @@ aclnnStatus aclnnRoiAlignGetWorkspaceSize(const aclTensor* self, const aclTensor
     auto roisConcat = l0op::ConcatD(tensorList, 1, rois->GetDataType(), uniqueExecutor.get());
     CHECK_RET(roisConcat != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 进行计算
-    auto roiAlignOut = l0op::ROIAlign(selfTransData, roisConcat, batchIndicesContiguous, spatialScale, outputHeight,
-                                      outputWidth, samplingRatio, mode, uniqueExecutor.get());
-    CHECK_RET(roiAlignOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    // Ascend950 SIMT kernel直接处理ND/NCHW格式，无需TransData到NC1HWC0
+    const aclTensor* selfForCompute = nullptr;
+    const aclTensor* roiAlignOut = nullptr;
+    if (IsRegBase()) {
+        // Ascend950: 直接使用连续tensor，无需格式转换
+        selfForCompute = selfContiguous;
 
-    // 将roiAlignOut的私有格式数据转为NCHW
-    auto outTransData = l0op::TransDataSpecial(roiAlignOut, out->GetOriginalFormat(), 0, uniqueExecutor.get());
-    CHECK_RET(outTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        // 进行计算
+        roiAlignOut = l0op::ROIAlign(selfForCompute, roisConcat, batchIndicesContiguous, spatialScale, outputHeight,
+                                     outputWidth, samplingRatio, mode, uniqueExecutor.get());
+        CHECK_RET(roiAlignOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
-    auto viewCopyResult = l0op::ViewCopy(outTransData, out, uniqueExecutor.get());
-    CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
+        auto viewCopyResult = l0op::ViewCopy(roiAlignOut, out, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    } else {
+        // 老平台: 转为NC1HWC0格式
+        auto selfTransData = l0op::TransDataSpecial(selfContiguous, op::Format::FORMAT_NC1HWC0, 0,
+                                                    uniqueExecutor.get());
+        CHECK_RET(selfTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        selfForCompute = selfTransData;
+
+        // 进行计算
+        roiAlignOut = l0op::ROIAlign(selfForCompute, roisConcat, batchIndicesContiguous, spatialScale, outputHeight,
+                                     outputWidth, samplingRatio, mode, uniqueExecutor.get());
+        CHECK_RET(roiAlignOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        // 将roiAlignOut的私有格式数据转为NCHW
+        auto outTransData = l0op::TransDataSpecial(roiAlignOut, out->GetOriginalFormat(), 0, uniqueExecutor.get());
+        CHECK_RET(outTransData != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        // 固定写法，将计算结果拷贝到输出out上，out可能是非连续的tensor
+        auto viewCopyResult = l0op::ViewCopy(outTransData, out, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
 
     // 固定写法，获取计算过程中需要使用的workspace大小
     *workspaceSize = uniqueExecutor->GetWorkspaceSize();

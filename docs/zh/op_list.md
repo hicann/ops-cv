@@ -784,7 +784,7 @@
     <td>&check;</td>
     <td>&check;</td>
     <td>AI Core</td>
-    <td>该算子暂无Ascend C代码实现，欢迎开发者补充贡献，贡献方式参考<a href="../../CONTRIBUTING.md">贡献指南</a>。</td>
+    <td>用于从特征图中提取感兴趣区域(ROI)的特征，通过双线性插值和池化生成固定大小的输出特征图。</td>
   </tr>
   <tr>
     <td>objdetect</td>
