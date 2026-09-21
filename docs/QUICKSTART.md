@@ -55,8 +55,8 @@ bash build.sh --pkg --soc=${soc_version} --ops=add_example -j16
 
 产品名对应的${soc_version}取值如下，请按实际场景传参。
 
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：取值为ascend910b
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：取值为ascend910_93
+- Atlas A2系列产品：取值为ascend910b
+- Atlas A3系列产品：取值为ascend910_93
 - 950系列产品：取值为ascend950
 
 若提示如下信息，说明编译成功。
@@ -92,6 +92,7 @@ export LD_LIBRARY_PATH=${ASCEND_HOME_PATH}/opp/vendors/custom_cv/op_api/lib:${LD
 ```bash
 bash build.sh --run_example add_example eager cust --vendor_name=custom --soc=${soc_version}
 ```
+
 > **注意**：运行样例时需确保`--soc`参数与编译算子包时使用的`--soc`取值一致，否则可能报`error 161001`（如`aclnnXxxGetWorkspaceSize failed`）。如遇此错误，请回到[第2节](#2编译addexample算子)核对`--soc`取值后重新编译安装。
 
 预期输出：打印算子`AddExample`的加法计算结果，表明算子已成功部署并正确执行。

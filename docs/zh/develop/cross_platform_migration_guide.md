@@ -4,13 +4,13 @@
 
 ## 一、硬件架构及规格参数对比
 
-### Atlas A2 系列硬件架构
+### Atlas A2系列硬件架构
 
 <div align="center">
   <img src="../figures/atlas_a2_hardware_arch.png" width="900" alt="Atlas A2硬件架构" />
 </div>
 
-### Ascend 950 系列硬件架构
+### Ascend 950系列硬件架构
 
 <div align="center">
   <img src="../figures/ascend950_hardware_arch.png" width="900" alt="Ascend 950硬件架构" />
@@ -382,7 +382,7 @@ Ascend 950引入集合通信加速器CCU1.0，降低了访存需求，减少了�
 
 在aclnn两段式接口中的第二段接口中，为算子执行器aclOpExecutor指定集合通信类型。
 
-以[MatmulAllReduce](https://gitcode.com/cann/ops-transformer/tree/master/mc2/matmul_all_reduce)算子迁移适配为例：
+以[MatmulAllReduce](https://gitcode.com/cann/ops-transformer/tree/9.2.0/mc2/matmul_all_reduce)算子迁移适配为例：
 设置NnopbaseSetHcclServerType枚举值，A2为NNOPBASE_HCCL_SERVER_AICPU，950为NNOPBASE_HCCL_SERVER_TYPE_CCU。
 
 ```CPP
@@ -406,7 +406,7 @@ aclnnStatus aclnnMatmulAllReduce(
 1. 用于资源计算与申请，涉及附属流相关信息的CalcParamFunc回调接口中，为GE的上下文context区分附属流的集合通信类型。
 2. 用于设置主流/附属流上自定义任务、参数定制的GenerateTask回调接口中，区分两套GE的KernelLaunch接口，分别调用AICPU通信或CCU通信的创建及定制流程。
 
-静态图GE侧创建通信task的任务类型，A2为aicpu kfc server + kfc_stream；950为ccu server + ccu_stream。涉及代码文件：[matmul_all_reduce_gen_task.cpp](https://gitcode.com/cann/ops-transformer/blob/master/mc2/matmul_all_reduce/op_graph/matmul_all_reduce_gen_task.cpp)
+静态图GE侧创建通信task的任务类型，A2为aicpu kfc server + kfc_stream；950为ccu server + ccu_stream。涉及代码文件：[matmul_all_reduce_gen_task.cpp](https://gitcode.com/cann/ops-transformer/blob/9.2.0/mc2/matmul_all_reduce/op_graph/matmul_all_reduce_gen_task.cpp)
 
 ```CPP
 // ...
@@ -422,7 +422,7 @@ ge::Status MatmulAllReduceCalcParamFunc(gert::ExeResGenerationContext *context)
 // ...
 ```
 
-静态图GenTask调用接口有区别，流程有差异。涉及代码文件：[matmul_all_reduce_gen_task.cpp](https://gitcode.com/cann/ops-transformer/blob/master/mc2/matmul_all_reduce/op_graph/matmul_all_reduce_gen_task.cpp)
+静态图GenTask调用接口有区别，流程有差异。涉及代码文件：[matmul_all_reduce_gen_task.cpp](https://gitcode.com/cann/ops-transformer/blob/9.2.0/mc2/matmul_all_reduce/op_graph/matmul_all_reduce_gen_task.cpp)
 
 ```CPP
 // ...

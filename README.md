@@ -16,10 +16,10 @@
 ## 🔥Latest News
 
 - [2026/01] 新增[QuickStart](docs/QUICKSTART.md)，指导新手零基础入门算子项目部署（支持Docker环境）、算子开发和贡献流程。
-- [2025/12] 开源算子支持Ascend 950PR/Ascend 950DT/KirinX90，可以通过[NPU Simulator](docs/zh/debug/npu_sim.md)仿真工具开发调试；优化指南类文档，聚焦[算子开发指南](docs/zh/develop/aicore_develop_guide.md)，明确最小交付件和关键示例代码，针对Ascend/samples仓算子提供迁移本项目的指导；新增onnx算子插件支持。
+- [2025/12] 开源算子支持Ascend 950PR&950DT系列产品/Kirin X90处理器系列产品，可以通过[NPU Simulator](docs/zh/debug/npu_sim.md)仿真工具开发调试；优化指南类文档，聚焦[算子开发指南](docs/zh/develop/aicore_develop_guide.md)，明确最小交付件和关键示例代码，针对Ascend/samples仓算子提供迁移本项目的指导；新增onnx算子插件支持。
 - [2025/11] [three_interpolate_backward](image/three_interpolate_backward/docs/aclnnThreeInterpolateBackward.md)算子新增确定性计算特性；新增[opgen](docs/zh/develop/aicore_develop_guide.md#工程创建)支持自动生成算子工程。
 - [2025/10] 新增experimental目录，完善[贡献指南](CONTRIBUTING.md)，支持开发者调试并贡献自定义算子。
-- [2025/09] ops-cv项目首次上线，开源算子支持Atlas A2/A3系列产品。
+- [2025/09] ops-cv项目首次上线，开源算子支持Atlas A2系列产品/Atlas A3系列产品。
 
 ## 🚀概述
 
@@ -62,7 +62,8 @@ git clone -b ${tag_version} https://gitcode.com/cann/ops-cv.git
 - [许可证](LICENSE)
 - [所属SIG](https://gitcode.com/cann/community/tree/master/CANN/sigs/ops-basic)
 
------
+---
+
 PS：本项目功能和文档正在持续更新和完善中，欢迎您关注最新版本。
 
 - **问题反馈**：通过GitCode[【Issues】](https://gitcode.com/cann/ops-cv/issues)提交问题。

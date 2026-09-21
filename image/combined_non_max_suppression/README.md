@@ -4,12 +4,12 @@
 
 | 产品 | 是否支持 |
 |:--|:--:|
-| <term>Ascend 950PR/Ascend 950DT</term> | √ |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term> | √ |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> | √ |
-| <term>Atlas 200I/500 A2 推理产品</term> | × |
-| <term>Atlas 推理系列产品</term> | × |
-| <term>Atlas 训练系列产品</term> | × |
+| <term>Ascend 950PR&950DT系列产品</term> | √ |
+| <term>Atlas A3系列产品</term> | √ |
+| <term>Atlas A2系列产品</term> | √ |
+| <term>Atlas 200I/500 A2推理产品</term> | × |
+| <term>Atlas推理系列产品</term> | × |
+| <term>Atlas训练系列产品</term> | × |
 
 ## 功能说明
 
@@ -30,7 +30,7 @@
 | scores | 输入 | 候选框分数，shape为(batch, num_boxes, num_classes)。 | FLOAT16、FLOAT32 | ND |
 | max_output_size_per_class | 输入 | 每个类别最多保留的候选框数量，取值范围为[1, 1000]。 | INT32 | ND |
 | max_total_size | 输入 | 每个batch最多输出的候选框数量，取值范围为[1, 1000]。 | INT32 | ND |
-| iou_threshold | 输入 | IoU抑制阈值，Ascend 950支持0和正数。 | FLOAT32 | ND |
+| iou_threshold | 输入 | IoU抑制阈值。 | FLOAT32 | ND |
 | score_threshold | 输入 | 分数阈值，仅保留分数严格大于该值的候选框。 | FLOAT32 | ND |
 | pad_per_class | 可选属性 | 是否按类别填充输出。为true时，output_size为min(max_total_size, max_output_size_per_class * num_classes)；默认为false。 | BOOL | - |
 | clip_boxes | 可选属性 | 是否将输出候选框坐标裁剪到[0, 1]；默认为true。 | BOOL | - |
@@ -48,8 +48,9 @@
 - num_boxes不能超过`INT32_MAX`；batch与num_classes的乘积不能超过`INT32_MAX`；boxes的元素总数不能超过`INT64_MAX`。
 - `max_output_size_per_class`和`max_total_size`必须为标量，取值范围均为[1, 1000]。
 - `iou_threshold`和`score_threshold`必须为标量。
-- Ascend 950的`iou_threshold`支持0和正数，不支持负数、NaN和无穷大。
-- Ascend 950的`iou_threshold > 1`时不进行IoU抑制，但`score_threshold`分数过滤以及`max_output_size_per_class`和`max_total_size`的输出数量限制仍然生效。
+- <term>Ascend 950PR&950DT系列产品</term>：
+  - `iou_threshold`支持0和正数，不支持负数、NaN和无穷大。
+  - `iou_threshold > 1`时不进行IoU抑制，但`score_threshold`分数过滤以及`max_output_size_per_class`和`max_total_size`的输出数量限制仍然生效。
 - `max_output_size_per_class`、`max_total_size`、`iou_threshold`和`score_threshold`为值依赖输入，输入值必须在编译期已知；其中前两者的值参与输出Shape推导，后两者的值参与NMS计算。
 - 候选框坐标顺序为(y1, x1, y2, x2)，支持反向坐标；计算IoU时会分别取坐标端点的最小值和最大值。
 - 当前不支持GE IR动态Shape和动态Rank场景（输入Shape声明分别为`[-1]`和`[-2]`）。

@@ -9,7 +9,7 @@
 ops-cv算子首个Beta版本v8.5.0-beta.1现已发布。
 本版本引入了多项新增特性、问题修复及性能改进，目前仍处于测试阶段。
 我们诚挚欢迎社区反馈，以进一步提升ops-cv的稳定性和功能完备性。
-使用方式请参阅[官方文档](https://gitcode.com/cann/ops-cv/blob/master/README.md)。
+使用方式请参阅[官方文档](https://gitcode.com/cann/ops-cv/blob/9.2.0/README.md)。
 
 ### 🔗 版本地址
 
@@ -42,7 +42,7 @@ ops-cv算子首个Beta版本v8.5.0-beta.1现已发布。
 
 - 【工程能力】cv类onnx算子插件支持。([#97](https://gitcode.com/cann/ops-cv/pull/97))
 - 【工程能力】增加编译选项oom、asan、mssanitizer、build-type等工程级稳定性与可调试性能力。([#62](https://gitcode.com/cann/ops-cv/pull/62)、[#70](https://gitcode.com/cann/ops-cv/pull/70)、[#80](https://gitcode.com/cann/ops-cv/pull/80))
-- 【算子实现】图像采样与处理算子新增对KirinX90支持。([#105](https://gitcode.com/cann/ops-cv/pull/105)、[#125](https://gitcode.com/cann/ops-cv/pull/125))
+- 【算子实现】图像采样与处理算子新增对Kirin X90处理器系列产品支持。([#105](https://gitcode.com/cann/ops-cv/pull/105)、[#125](https://gitcode.com/cann/ops-cv/pull/125))
 - 【算子实现】three_interpolate_backward算子新增确定性计算特性。([#39](https://gitcode.com/cann/ops-cv/pull/39))
 - 【资料优化】增加QUICK_START，离线编译模式，aicore/aicpu/graph模式下开发指南完善。([#40](https://gitcode.com/cann/ops-cv/pull/40)、[#156](https://gitcode.com/cann/ops-cv/pull/156))
 - 【资料优化】优化贡献指南中新算子贡献流程。([#57](https://gitcode.com/cann/ops-cv/pull/57))

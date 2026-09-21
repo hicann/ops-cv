@@ -4,18 +4,19 @@
 
 | 产品 | 是否支持 |
 | :--- | :---: |
-| <term>Ascend 950PR/Ascend 950DT</term> | √ |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term> | √ |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> | √ |
-| <term>Atlas 200I/500 A2 推理产品</term> | × |
-| <term>Atlas 推理系列产品</term> | × |
-| <term>Atlas 训练系列产品</term> | × |
+| <term>Ascend 950PR&950DT系列产品</term> | √ |
+| <term>Atlas A3系列产品</term> | √ |
+| <term>Atlas A2系列产品</term> | √ |
+| <term>Atlas 200I/500 A2推理产品</term> | × |
+| <term>Atlas推理系列产品</term> | × |
+| <term>Atlas训练系列产品</term> | × |
 
 ## 功能说明
 
 RotatedBoxDecode 是旋转目标检测中的框回归解码算子，将网络预测的偏移量（deltas）叠加到预设锚框（anchor_box）上，还原出最终的旋转检测框。
 
 输入为角点格式 `[lx, ly, rx, ry, angle]`（角度单位为度），计算分六步：
+
 1. **锚框角点转中心**：由 `(lx, ly, rx, ry)` 算 `(cx, cy, w, h)`，宽高夹下限 1
 2. **delta 归一化**：deltas 五通道分别除以 weight
 3. **解中心**：`t_cx = a_cx + Δx·a_w`，`t_cy = a_cy + Δy·a_h`

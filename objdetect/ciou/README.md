@@ -4,12 +4,12 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT</term>                             |    √     |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    ×     |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
-| <term>Atlas 推理系列产品</term>                             |    ×     |
-| <term>Atlas 训练系列产品</term>                              |    ×     |
+| <term>Ascend 950PR&950DT系列产品</term>                             |    √     |
+| <term>Atlas A3系列产品</term>     |    ×     |
+| <term>Atlas A2系列产品</term> |    ×     |
+| <term>Atlas 200I/500 A2推理产品</term>                      |    ×     |
+| <term>Atlas推理系列产品</term>                             |    ×     |
+| <term>Atlas训练系列产品</term>                              |    ×     |
 
 ## 功能说明
 
@@ -97,7 +97,7 @@ $$
       <td>ND</td>
     </tr>
   </tbody></table>
-  
+
 ## 约束说明
 
 - 若输入格式为[x0, y0, x1, y1]，(x0, y0)和(x1, y1)分别表示矩形框的左上角和右下角，需满足x1 > x0, y1 > y0。

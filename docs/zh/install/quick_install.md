@@ -14,7 +14,7 @@
 |  安装方式  |  使用说明  |  使用场景  |
 | ----- | ------ | ------ |
 |  CANNLab  | 一站式开发平台，提供在线直接运行的昇腾环境，无需手动安装。<br>当前可提供单机算力，**默认安装最新版本CANN包**。 | 适用于没有昇腾设备的开发者。|
-|  Docker  | Docker镜像是一种高效部署方式，已预集成CANN包和必备依赖。<br>当前适用于Atlas A2、A3系列产品，OS支持ubuntu22.04、openeuler24.03。**默认安装最新版本CANN包**。 |适用有昇腾设备，需要快速搭建环境的开发者。|
+|  Docker  | Docker镜像是一种高效部署方式，已预集成CANN包和必备依赖。<br>当前适用于Atlas A2系列产品、Atlas A3系列产品，OS支持ubuntu22.04、openeuler24.03。**默认安装最新版本CANN包**。 |适用有昇腾设备，需要快速搭建环境的开发者。|
 |  手动安装  | 手动安装CANN包和基础依赖，灵活性高。 |适用有昇腾设备，想体验手动安装CANN包或体验最新master分支能力的开发者。|
 
 ### 方式1：CANNLab
@@ -58,6 +58,7 @@
       # 以cann:9.1.0-beta.1版本为例
       docker pull swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.1.0-beta.1-910b-ubuntu22.04-py3.12-devel
       ```
+
       > **说明**：镜像标签格式为`<CANN版本>-<芯片系列>-<操作系统>-<Python版本>-devel`。带`-devel`后缀的镜像为算子开发镜像，内含算子开发编译依赖。
 3. **运行Docker**
 
@@ -127,7 +128,9 @@
         - \$\{install\_path\}：表示指定安装路径，ops包需与toolkit包安装在相同路径，root用户默认安装在`/usr/local/Ascend`目录。
 
 - **场景2：体验已发布版本能力或基于已发布版本进行开发**
- 请参考《[CANN快速安装](https://www.hiascend.com/cann/download)》，选择版本（仅支持CANN 8.5.0及后续版本），并根据产品系列、CPU架构、操作系统等下载对应包，最后参考页面提供的命令完成安装。
+
+  请参考《[CANN快速安装](https://www.hiascend.com/cann/download)》，选择版本（仅支持CANN 8.5.0及后续版本），并根据产品系列、CPU架构、操作系统等下载对应包，最后参考页面提供的命令完成安装。
+
 #### 安装基础依赖
 
   本项目基础依赖如下，注意满足版本号要求。

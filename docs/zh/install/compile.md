@@ -54,7 +54,7 @@
     # bash build.sh --pkg --experimental --soc=ascend910b --ops=grid_sample -j16
     ```
 
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2 训练系列产品/Atlas A2 推理系列产品使用"ascend910b"（默认），Atlas A3 训练系列产品/Atlas A3 推理系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR&950DT系列产品使用"ascend950"。
     - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
     - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"grid_sample,iou_v2,..."，多算子之间用英文逗号","分隔。
     - --experimental（可选）：表示编译用户保存在experimental贡献目录下的算子。
@@ -101,7 +101,7 @@
     # bash build.sh --pkg --experimental --soc=${soc_version} [-j${n}]
     ```
 
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2 训练系列产品/Atlas A2 推理系列产品使用"ascend910b"（默认），Atlas A3 训练系列产品/Atlas A3 推理系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR&950DT系列产品使用"ascend950"。
     - --experimental（可选）：表示编译用户保存在experimental目录下的算子。
     - -j（可选）：指定编译线程数，加快编译速度。
 
@@ -131,7 +131,7 @@
 
 ### ops-cv静态库
 
-> 说明：静态库仅支持Atlas A2、Atlas A3系列产品、Ascend950PR/Ascend 950DT产品。experimental算子暂不支持使用静态库。
+> 说明：静态库仅支持Atlas A2系列产品、Atlas A3系列产品、Ascend 950PR&950DT系列产品。experimental算子暂不支持使用静态库。
 
 1. **编译ops-cv静态库**
 
@@ -141,7 +141,7 @@
     bash build.sh --pkg --static --soc=${soc_version} [-j${n}]
     ```
 
-    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend950PR/Ascend 950DT产品使用"ascend950"。
+    - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR&950DT系列产品使用"ascend950"。
     - -j（可选）：指定编译线程数，加快编译速度。
     若提示如下信息，说明编译并压缩成功。
 

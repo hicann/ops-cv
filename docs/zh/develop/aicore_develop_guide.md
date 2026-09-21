@@ -13,7 +13,7 @@
 - 基础知识：请先学习Ascend C编程语言，了解基本语法和原理，参考[《Ascend C算子开发》](https://hiascend.com/document/redirect/CannCommunityOpdevAscendC)熟悉硬件架构、算子Tiling/Kernel等概念。
 - 开发API：算子开发过程中使用到的接口请参考[《Ascend C算子开发接口》](https://hiascend.com/document/redirect/CannCommunityAscendCApi)、[《基础数据结构和接口》](https://hiascend.com/document/redirect/CannCommunitybasicopapi)。
 - 算子工程迁移：针对[Ascend/samples](https://gitee.com/ascend/samples/tree/master)仓已贡献的算子，请参考[附录 > 算子工程迁移](#算子工程迁移)完成存量算子往本项目工程迁移。
-- 算子跨平台迁移：针对涉及多平台算子实现迁移的场景，例如将Atlas A2上已实现的算子功能迁移到Ascend 950平台，请参考[附录 > 算子跨平台迁移](#算子跨平台迁移)完成适配。
+- 算子跨平台迁移：针对涉及多平台算子实现迁移的场景，例如将Atlas A2系列产品上已实现的算子功能迁移到Ascend 950PR&950DT系列产品，请参考[附录 > 算子跨平台迁移](#算子跨平台迁移)完成适配。
 
 ### 开发流程
 
@@ -425,7 +425,7 @@ __aicore__ inline void AddExample<T>::Process()
    bash build.sh --pkg --soc=${soc_version} --vendor_name=${vendor_name} --ops=${op_list} [--experimental] [-j${n}]
    ```
 
-   - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR/Ascend 950DT产品使用"ascend950"。
+   - --soc：\$\{soc\_version\}表示NPU型号。Atlas A2系列产品使用"ascend910b"（默认），Atlas A3系列产品使用"ascend910_93"，Ascend 950PR&950DT系列产品使用"ascend950"。
    - --vendor_name（可选）：\$\{vendor\_name\}表示构建的自定义算子包名，默认名为custom。
    - --ops（可选）：\$\{op\_list\}表示待编译算子，不指定时默认编译所有算子。格式形如"--ops=add_example"。
    - --experimental（可选）：若编译的算子为贡献算子，需配置--experimental。
@@ -1070,6 +1070,6 @@ template<int D_T_X, int D_T_Y, int D_T_Z, int TILE_NUM, int IS_SPLIT>
 
 ### 算子跨平台迁移
 
-完成算子代码开发后，如需实现多平台间（如Atlas A2/A3等）的算子代码迁移，需考虑硬件结构差异引发的软件实现变更。
+完成算子代码开发后，如需实现多平台间（如Atlas A2系列产品/Atlas A3系列产品等）的算子代码迁移，需考虑硬件结构差异引发的软件实现变更。
 
 您可以参考[算子跨平台迁移指导](./cross_platform_migration_guide.md)，该文档提供了常见的适配要点与方法论，并提供相关算子的适配样例。

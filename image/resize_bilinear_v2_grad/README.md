@@ -4,12 +4,12 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品</term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     √    |
+|  <term>Ascend 950PR&950DT系列产品</term>   |     √    |
+|  <term>Atlas A3系列产品</term>   |     √    |
+|  <term>Atlas A2系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2推理产品</term>    |     ×    |
+|  <term>Atlas推理系列产品</term>    |     √    |
+|  <term>Atlas训练系列产品</term>    |     √    |
 
 ## 功能说明
 
@@ -20,7 +20,7 @@
   假设$grads$中已知四个点$Q_{11}(x_1, y_1), Q_{12}(x_1, y_2), Q_{21}(x_2, y_1), Q_{22}(x_2, y_2)$。
 
   假设$grads$在输出图中的位置是 $(h', w')$，它映射回原图的浮点坐标为 $(pos\_h, pos\_w)$。则偏移量定义为：
-  
+
   $$
   d_h = pos\_h - x_1
   $$
@@ -28,29 +28,29 @@
   $$
   d_w = pos\_w - y_1
   $$
-  
+
   对应的梯度累加公式如下：
 
   左上点$Q_{11}$：
-  
+
   $$
   y(N, C, x_1, y_1) += grads(N, C, h', w') \cdot (1 - d_h) \cdot (1 - d_w)
   $$
 
   右上点$Q_{12}$：
-  
+
   $$
   y(N, C, x_1, y_2) += grads(N, C, h', w') \cdot (1 - d_h) \cdot d_w
   $$
 
   左下点$Q_{21}$：
-  
+
   $$
   y(N, C, x_2, y_1) += grads(N, C, h', w') \cdot d_h \cdot (1 - d_w)
   $$
 
   右下点$Q_{22}$：
-  
+
   $$
   y(N, C, x_2, y_2) += grads(N, C, h', w') \cdot d_h \cdot d_w
   $$
