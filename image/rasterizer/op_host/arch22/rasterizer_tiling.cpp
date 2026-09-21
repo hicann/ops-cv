@@ -36,8 +36,8 @@ static constexpr uint32_t IDX_1 = 1;
 static constexpr uint32_t IDX_2 = 2;
 static constexpr uint32_t IDX_3 = 3;
 
-static constexpr uint32_t MAX_SHAPE_VALUE = 4096;
-static constexpr uint32_t MIN_SHAPE_VALUE = 0;
+static constexpr int64_t MAX_SHAPE_VALUE = 4096;
+static constexpr int64_t MIN_SHAPE_VALUE = 1;
 
 static ge::graphStatus CheckParam(gert::TilingContext* context, const gert::StorageShape* vShape,
                                   const gert::StorageShape* fShape)
@@ -47,9 +47,9 @@ static ge::graphStatus CheckParam(gert::TilingContext* context, const gert::Stor
 
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-    const uint32_t* width = attrs->GetAttrPointer<uint32_t>(IDX_0);
-    const uint32_t* height = attrs->GetAttrPointer<uint32_t>(IDX_1);
-    const uint32_t* useDepthPrior = attrs->GetAttrPointer<uint32_t>(IDX_3);
+    const int64_t* width = attrs->GetAttrPointer<int64_t>(IDX_0);
+    const int64_t* height = attrs->GetAttrPointer<int64_t>(IDX_1);
+    const int64_t* useDepthPrior = attrs->GetAttrPointer<int64_t>(IDX_3);
     OP_CHECK_NULL_WITH_CONTEXT(context, vShape);
     OP_CHECK_NULL_WITH_CONTEXT(context, fShape);
     OP_CHECK_NULL_WITH_CONTEXT(context, findicesShape);
@@ -73,10 +73,10 @@ static ge::graphStatus CheckParam(gert::TilingContext* context, const gert::Stor
     OP_CHECK_IF(vShape->GetStorageShape().GetDim(IDX_1) != DIM_VAL4,
                 OP_LOGE(context, "dim1 of v should be 4, please check"), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(*height > MAX_SHAPE_VALUE || *width > MAX_SHAPE_VALUE || *height == MIN_SHAPE_VALUE ||
-                    *width == MIN_SHAPE_VALUE,
-                OP_LOGE(context, "height/width should be no greater than 4096 and greater than 0, please check"),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        *height > MAX_SHAPE_VALUE || *width > MAX_SHAPE_VALUE || *height < MIN_SHAPE_VALUE || *width < MIN_SHAPE_VALUE,
+        OP_LOGE(context, "height/width should be no greater than 4096 and greater than 0, please check"),
+        return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(
         findicesShape->GetStorageShape().GetDim(IDX_0) != baryShape->GetStorageShape().GetDim(IDX_0) ||
@@ -97,19 +97,19 @@ void FillTilingData(gert::TilingContext* context, const gert::StorageShape* vSha
     uint32_t numVertices = vShape->GetStorageShape().GetDim(IDX_0);
 
     auto attrs = context->GetAttrs();
-    const uint32_t* width = attrs->GetAttrPointer<uint32_t>(IDX_0);
-    const uint32_t* height = attrs->GetAttrPointer<uint32_t>(IDX_1);
+    const int64_t* width = attrs->GetAttrPointer<int64_t>(IDX_0);
+    const int64_t* height = attrs->GetAttrPointer<int64_t>(IDX_1);
     const float* occlusionTruncation = attrs->GetAttrPointer<float>(IDX_2);
-    const uint32_t* useDepthPrior = attrs->GetAttrPointer<uint32_t>(IDX_3);
+    const int64_t* useDepthPrior = attrs->GetAttrPointer<int64_t>(IDX_3);
 
     RasterizerTilingData tiling;
 
     tiling.set_numFaces(numFaces);
     tiling.set_numVertices(numVertices);
-    tiling.set_height(*height);
-    tiling.set_width(*width);
+    tiling.set_height(static_cast<uint32_t>(*height));
+    tiling.set_width(static_cast<uint32_t>(*width));
     tiling.set_occlusionTruncation(*occlusionTruncation);
-    tiling.set_useDepthPrior(*useDepthPrior);
+    tiling.set_useDepthPrior(static_cast<uint32_t>(*useDepthPrior));
 
     tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
     context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());
