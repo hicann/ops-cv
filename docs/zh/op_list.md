@@ -728,6 +728,26 @@
   </tr>
   <tr>
     <td>objdetect</td>
+    <td><a href="../../objdetect/deformable_roi_pool/README.md">deformable_roi_pool</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>可变形感兴趣区域池化，从特征图中提取每个ROI位置的池化特征，支持通过offset对采样点进行可变形偏移。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
+    <td><a href="../../objdetect/deformable_roi_pool_grad/README.md">deformable_roi_pool_grad</a></td>
+    <td>&check;</td>
+    <td>&check;</td>
+    <td>&cross;</td>
+    <td>&check;</td>
+    <td>AI Core</td>
+    <td>计算可变形 ROI 池化对 feature_map 和 offset 的反向梯度。</td>
+  </tr>
+  <tr>
+    <td>objdetect</td>
     <td><a href="../../objdetect/g_io_u_grad/README.md">g_io_u_grad</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -885,16 +905,6 @@
     <td>&check;</td>
     <td>AI Core</td>
     <td>在目标检测网络中生成锚框的响应标志。根据真值框的中心点位置，确定哪些锚框网格位置负责检测目标，并生成对应的标志位。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/deformable_roi_pool/README.md">deformable_roi_pool</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>可变形感兴趣区域池化，从特征图中提取每个ROI位置的池化特征，支持通过offset对采样点进行可变形偏移。</td>
   </tr>
   <tr>
     <td>objdetect</td>

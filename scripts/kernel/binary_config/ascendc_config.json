@@ -14,6 +14,7 @@
     {"name":"ApplyTopKTopPWithSorted", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
     {"name":"DequantRopeQuantKvcache", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : false},
     {"name":"DequantBias", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
+    {"name":"DeformableRoiPoolGrad", "compute_units": ["ascend950"], "auto_sync": false, "compile_options": {"ascend950": ["--cce-use-fast-math=false"]}, "impl_mode": ""},
     {"name":"MultiHeadAttentionScore", "compute_units": ["ascend910b"], "auto_sync" : false},
     {"name":"ApplyCamePart4", "compute_units": ["ascend910b", "ascend910_93"], "auto_sync" : true},
     {"name":"Cast", "compute_units": ["ascend950", "mc62"], "auto_sync" : false, "compile_options": {"mc62": ["--cce-no-dcache-flush"]}, "impl_mode" : ""},
