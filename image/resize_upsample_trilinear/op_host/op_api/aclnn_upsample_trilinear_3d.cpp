@@ -93,6 +93,11 @@ static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize)
 
 static bool CheckInputElement(const aclTensor* self, const aclIntArray* outputSize, const aclTensor* out)
 {
+    OP_CHECK(
+        self->GetStorageFormat() == out->GetStorageFormat(),
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input storage format %s should be equal to output storage format %s.",
+                op::ToString(self->GetStorageFormat()).GetString(), op::ToString(out->GetStorageFormat()).GetString()),
+        return false);
     auto selfShape = self->GetViewShape();
     int64_t inputN = selfShape.GetDim(DIM_ZERO);
     int64_t outC = 0;
