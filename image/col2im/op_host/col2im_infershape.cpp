@@ -85,6 +85,11 @@ static ge::graphStatus InferShape4Col2im(gert::InferShapeContext* context)
         return GRAPH_SUCCESS;
     }
 
+    OP_CHECK_IF(
+        output_size_shape->GetDimNum() != 1,
+        OP_LOGE(context->GetNodeName(), "output_size must be 1D, but got rank %zu.", output_size_shape->GetDimNum()),
+        return ge::GRAPH_FAILED);
+
     auto x_shape_size = x_shape->GetDimNum();
     OP_CHECK_IF((x_shape_size != 4),
                 OP_LOGE(context->GetNodeName(), "x's dim length should be 4, but got %s.",

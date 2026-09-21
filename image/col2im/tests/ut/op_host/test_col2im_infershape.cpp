@@ -118,3 +118,32 @@ TEST_F(Col2im, col2im_infershape_IsUnknownRank)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(Col2im, col2im_infershape_invalid_output_size_rank)
+{
+    int n = 8;
+    int c = 64;
+    int h_col = 22;
+    int w_col = 1;
+    int w_k = 5;
+    int h_k = 1;
+    int h = 20;
+    int w = 21;
+
+    std::vector<int32_t> inputSizeValues = {h, w};
+    gert::InfershapeContextPara infershapeContextPara(
+        "Col2im",
+        {
+            {{{n, c, w_k * h_k, w_col * h_col}, {n, c, w_k * h_k, w_col * h_col}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{1, 2}, {1, 2}}, ge::DT_INT32, ge::FORMAT_ND, true, inputSizeValues.data()},
+        },
+        {
+            {{{n, c, h, w}, {n, c, h, w}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {gert::InfershapeContextPara::OpAttr("kernel_size",
+                                             Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
+         gert::InfershapeContextPara::OpAttr("dilation", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 7})),
+         gert::InfershapeContextPara::OpAttr("padding", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 5})),
+         gert::InfershapeContextPara::OpAttr("stride", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 7}))});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
