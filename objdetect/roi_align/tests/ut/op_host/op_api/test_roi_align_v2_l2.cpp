@@ -9,6 +9,7 @@
  */
 #include <vector>
 #include <array>
+#include <limits>
 #include "gtest/gtest.h"
 
 #include "../../../../op_api/aclnn_roi_align_v2.h"
@@ -343,4 +344,41 @@ TEST_F(l2_roi_align_v2_test, case_float16)
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 
     ut.TestPrecision();
+}
+
+namespace {
+
+aclnnStatus RunSpatialScaleCase(float spatialScale)
+{
+    auto self = TensorDesc({1, 1, 6, 6}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto boxes = TensorDesc({0, 5}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto out = TensorDesc({0, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCHW);
+
+    auto ut = OP_API_UT(aclnnRoiAlignV2, INPUT(self, boxes, 3, 3, spatialScale, 2, false), OUTPUT(out));
+    uint64_t workspaceSize = 0;
+    return ut.TestGetWorkspaceSize(&workspaceSize);
+}
+
+} // namespace
+
+TEST_F(l2_roi_align_v2_test, case_spatial_scale_positive_finite) { EXPECT_EQ(RunSpatialScaleCase(1.0f), ACL_SUCCESS); }
+
+TEST_F(l2_roi_align_v2_test, case_spatial_scale_smallest_positive_normal)
+{
+    EXPECT_EQ(RunSpatialScaleCase(std::numeric_limits<float>::min()), ACL_SUCCESS);
+}
+
+TEST_F(l2_roi_align_v2_test, case_spatial_scale_nan)
+{
+    EXPECT_EQ(RunSpatialScaleCase(std::numeric_limits<float>::quiet_NaN()), ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_roi_align_v2_test, case_spatial_scale_positive_infinity)
+{
+    EXPECT_EQ(RunSpatialScaleCase(std::numeric_limits<float>::infinity()), ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_roi_align_v2_test, case_spatial_scale_negative_infinity)
+{
+    EXPECT_EQ(RunSpatialScaleCase(-std::numeric_limits<float>::infinity()), ACLNN_ERR_PARAM_INVALID);
 }

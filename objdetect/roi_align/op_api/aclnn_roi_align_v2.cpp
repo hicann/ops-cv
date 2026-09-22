@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <cmath>
 #include <limits>
 
 #include "aclnn_roi_align_v2.h"
@@ -130,8 +131,8 @@ static bool CheckAttr(int64_t samplingRatio, float spatialScale)
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "samplingRatio [%ld] should be greater than or equal to 0", samplingRatio);
         return false;
     }
-    if (spatialScale <= std::numeric_limits<float>::min()) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "spatialScale [%f] should be greater than 0", spatialScale);
+    if (!std::isfinite(spatialScale) || spatialScale <= 0.0f) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "spatialScale [%f] should be finite and greater than 0", spatialScale);
         return false;
     }
     return true;
