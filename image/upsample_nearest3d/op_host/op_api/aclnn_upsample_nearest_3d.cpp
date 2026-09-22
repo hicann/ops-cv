@@ -21,7 +21,7 @@
 #include "opdev/op_log.h"
 #include "opdev/make_op_executor.h"
 #include "opdev/tensor_view_utils.h"
-#include "op_api/level2_base.h"
+#include "op_api/level2_base_cv.h"
 #include "op_api/aclnn_check.h"
 #include "aclnn_upsample_nearest_3d.h"
 
