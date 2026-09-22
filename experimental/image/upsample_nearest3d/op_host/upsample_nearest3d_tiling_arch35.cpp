@@ -24,9 +24,7 @@
 #include "experimental/image/upsample_nearest3d/op_kernel/arch35/upsample_nearest3d_tiling_data.h"
 #include "experimental/image/upsample_nearest3d/op_kernel/arch35/upsample_nearest3d_tiling_key.h"
 
-namespace optiling {
-using namespace Ops::Cv::OpTiling;
-
+namespace {
 constexpr int32_t CONST_0 = 0;
 constexpr int32_t CONST_1 = 1;
 constexpr int32_t CONST_2 = 2;
@@ -91,6 +89,12 @@ struct BaseTilingData {
 
 static const std::map<ge::DataType, int32_t> inputDtypeList = {
     {ge::DT_DOUBLE, 8}, {ge::DT_UINT8, 1}, {ge::DT_FLOAT, 4}, {ge::DT_FLOAT16, 2}, {ge::DT_BF16, 2}};
+
+} // namespace
+
+namespace optiling {
+using namespace Ops::Cv::OpTiling;
+
 class UpsampleNearest3dRegbaseTiling {
 public:
     explicit UpsampleNearest3dRegbaseTiling(gert::TilingContext* context) : context_(context) {};
