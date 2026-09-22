@@ -20,6 +20,7 @@
 #include "exe_graph/runtime/infer_shape_context.h"
 #include "graph/operator_reg.h"
 #include "op_common/log/log.h"
+#include "op_common/op_host/util/shape_util.h"
 
 using namespace ge;
 
@@ -37,7 +38,7 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, iouShape);
 
     // 处理 unknownRank 场景：输入 rank 未知时，输出也设为 unknownRank
-    if (bboxesShape->GetDimNum() == ge::UNKNOWN_RANK.size() || gtboxesShape->GetDimNum() == ge::UNKNOWN_RANK.size()) {
+    if (Ops::Base::IsUnknownRank(*bboxesShape) || Ops::Base::IsUnknownRank(*gtboxesShape)) {
         iouShape->SetDimNum(ge::UNKNOWN_RANK.size());
         return ge::GRAPH_SUCCESS;
     }

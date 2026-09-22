@@ -133,6 +133,34 @@ TEST_F(Iou3DInfershape, iou3d_infershape_neg_rank_not_3)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
 }
 
+// 反例：普通 rank-1（bboxes/gtboxes 维数均为 1）不得被误判为 unknown-rank -> FAILED
+TEST_F(Iou3DInfershape, iou3d_infershape_neg_rank1_not_unknown_rank)
+{
+    gert::InfershapeContextPara infershapeContextPara("Iou3D",
+                                                      {
+                                                          {{{7}, {7}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{7}, {7}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 反例：单个 rank-1 输入也不得被误判为 unknown-rank -> FAILED
+TEST_F(Iou3DInfershape, iou3d_infershape_neg_rank1_bboxes)
+{
+    gert::InfershapeContextPara infershapeContextPara("Iou3D",
+                                                      {
+                                                          {{{7}, {7}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                          {{{2, 7, 16}, {2, 7, 16}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      },
+                                                      {
+                                                          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
 // 反例：batch 不一致（bboxes B=2, gtboxes B=3）-> FAILED
 TEST_F(Iou3DInfershape, iou3d_infershape_neg_batch_mismatch)
 {
