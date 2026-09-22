@@ -234,11 +234,11 @@ static ge::graphStatus InferShapeDilation2DBackpropInput(gert::InferShapeContext
     gert::Shape* yShape = context->GetOutputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, yShape);
 
-    // Unknown rank (-2) 或空 shape: 任意输入 unknown rank → 输出 unknown rank
+    // Unknown rank (-2): 任意输入 unknown rank → 输出 unknown rank
+    // rank-0 标量是已知形状，不属于 unknown rank，落入后续 rank 契约检查
     if (Ops::Base::IsUnknownRank(*xShape) || Ops::Base::IsUnknownRank(*filterShape) ||
-        Ops::Base::IsUnknownRank(*outBpShape) || xShape->GetDimNum() == 0 || filterShape->GetDimNum() == 0 ||
-        outBpShape->GetDimNum() == 0) {
-        OP_LOGI(context->GetNodeName(), "input is unknown rank or empty, set output to unknown rank");
+        Ops::Base::IsUnknownRank(*outBpShape)) {
+        OP_LOGI(context->GetNodeName(), "input is unknown rank, set output to unknown rank");
         Ops::Base::SetUnknownRank(*yShape);
         return GRAPH_SUCCESS;
     }

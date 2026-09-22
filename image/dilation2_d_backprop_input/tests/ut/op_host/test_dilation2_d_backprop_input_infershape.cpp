@@ -130,3 +130,169 @@ TEST_F(Dilation2DBackpropInputInfershape, dilation2_d_backprop_input_infershape_
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// Test case 4: scalar x (rank-0) — InferShape must reject with GRAPH_FAILED
+// x=[] (rank-0 scalar), filter=(2,2,1), out_backprop=(1,2,2,1)
+TEST_F(Dilation2DBackpropInputInfershape, dilation2_d_backprop_input_infershape_scalar_x)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropInput",
+        {
+            // x: rank-0 scalar, float32
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 2, 2, 1), float32
+            {{{1, 2, 2, 1}, {1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            // y: empty shape (to be inferred = x shape)
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 5: scalar filter (rank-0) — InferShape must reject with GRAPH_FAILED
+// x=(1,3,3,1), filter=[] (rank-0 scalar), out_backprop=(1,2,2,1)
+TEST_F(Dilation2DBackpropInputInfershape, dilation2_d_backprop_input_infershape_scalar_filter)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropInput",
+        {
+            // x: shape (1, 3, 3, 1), float32
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: rank-0 scalar, float32
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 2, 2, 1), float32
+            {{{1, 2, 2, 1}, {1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            // y: empty shape (to be inferred = x shape)
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 6: scalar out_backprop (rank-0) — InferShape must reject with GRAPH_FAILED
+// x=(1,3,3,1), filter=(2,2,1), out_backprop=[] (rank-0 scalar)
+TEST_F(Dilation2DBackpropInputInfershape, dilation2_d_backprop_input_infershape_scalar_out_backprop)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropInput",
+        {
+            // x: shape (1, 3, 3, 1), float32
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: rank-0 scalar, float32
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            // y: empty shape (to be inferred = x shape)
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 7: x unknown rank (-2) — output unknown rank, GRAPH_SUCCESS
+// x=unknown rank, filter=(2,2,1), out_backprop=(1,2,2,1)
+TEST_F(Dilation2DBackpropInputInfershape, dilation2_d_backprop_input_infershape_unknown_rank)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropInput",
+        {
+            // x: unknown rank (-2), float32
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 2, 2, 1), float32
+            {{{1, 2, 2, 1}, {1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            // y: empty shape (to be inferred as unknown rank)
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 8: empty tensor (N=0) — rank contract still holds, y.shape = x.shape = (0, 3, 3, 1)
+// x=(0,3,3,1), filter=(2,2,1), out_backprop=(0,2,2,1)
+TEST_F(Dilation2DBackpropInputInfershape, dilation2_d_backprop_input_infershape_empty_tensor)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropInput",
+        {
+            // x: shape (0, 3, 3, 1), float32 — empty tensor, N=0
+            {{{0, 3, 3, 1}, {0, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (0, 2, 2, 1), float32
+            {{{0, 2, 2, 1}, {0, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            // y: empty shape (to be inferred = x shape)
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {0, 3, 3, 1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
