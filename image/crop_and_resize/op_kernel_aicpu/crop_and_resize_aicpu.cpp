@@ -9,6 +9,7 @@
  */
 
 #include "crop_and_resize_aicpu.h"
+#include "aicpu/cv_aicpu_register.h"
 
 namespace {
 const char* const kCropAndResize = "CropAndResize";
@@ -170,5 +171,5 @@ uint32_t CropAndResizeMsCpuKernel::Compute(CpuKernelContext& ctx)
     return calls[x_dtype_](inputs_, outputs_, x_shape_, boxes_shape_, method_, extrapolation_value_, ctx);
 }
 
-REGISTER_CPU_KERNEL(kCropAndResize, CropAndResizeMsCpuKernel);
+OPS_CV_REGISTER_CPU_KERNELV2(kCropAndResize, CropAndResizeMsCpuKernel);
 } //  namespace aicpu

@@ -30,7 +30,7 @@ set(SUPPORT_COMPUTE_UNIT "ascend950")
 set(SUPPORT_TILING_DIR "arch35")
 
 add_all_modules_sources(OPTYPE crop_and_resize ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT}
-                        TILING_DIR ${SUPPORT_TILING_DIR})
+                        TILING_DIR ${SUPPORT_TILING_DIR} HOSTCPU TRUE)
 
 # def.cpp 编入 tiling 库：注册宏在 OP_TILING_LIB 下向 V1 注册表 OpCheckFuncRegistry 登记
 # check_supported 回调 CheckIfAICoreSupported，FE 引擎分配阶段查询；缺失则
