@@ -28,6 +28,37 @@ struct GridSampler3DGradCompileInfo {
     bool regBase{false};
 };
 
+struct GridSampler3DGradUsedCoreBoundaryCase {
+    const char* name;
+    uint32_t batch;
+    uint32_t gridD;
+    uint32_t gridH;
+    uint32_t gridW;
+    uint32_t expectedPNumPerCore;
+    uint32_t expectedTailPNum;
+};
+
+static gert::TilingContextPara MakeGridSampler3DGradUsedCoreBoundaryContext(
+    const GridSampler3DGradUsedCoreBoundaryCase& testCase, GridSampler3DGradCompileInfo* compileInfo)
+{
+    gert::StorageShape grad = {{testCase.batch, testCase.gridD, testCase.gridH, testCase.gridW, 1},
+                               {testCase.batch, testCase.gridD, testCase.gridH, testCase.gridW, 1}};
+    gert::StorageShape x = {{testCase.batch, 1, 1, 1, 1}, {testCase.batch, 1, 1, 1, 1}};
+    gert::StorageShape grid = {{testCase.batch, testCase.gridD, testCase.gridH, testCase.gridW, 3},
+                               {testCase.batch, testCase.gridD, testCase.gridH, testCase.gridW, 3}};
+    gert::StorageShape dx = {{testCase.batch, 1, 1, 1, 1}, {testCase.batch, 1, 1, 1, 1}};
+    gert::StorageShape dgrid = {{testCase.batch, testCase.gridD, testCase.gridH, testCase.gridW, 3},
+                                {testCase.batch, testCase.gridD, testCase.gridH, testCase.gridW, 3}};
+    return gert::TilingContextPara(
+        "GridSampler3DGrad",
+        {{grad, ge::DT_FLOAT, ge::FORMAT_ND}, {x, ge::DT_FLOAT, ge::FORMAT_ND}, {grid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{dx, ge::DT_FLOAT, ge::FORMAT_ND}, {dgrid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("nearest")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        compileInfo);
+}
+
 TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_float32_case1)
 {
     gert::StorageShape grad = {{2, 8, 8, 8, 3}, {2, 8, 8, 8, 3}};
@@ -344,4 +375,27 @@ TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_bfloat16_case1)
                               "6597069766688 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_used_core_uint32_boundaries)
+{
+    GridSampler3DGradCompileInfo compileInfo = {48, 196608, false};
+    const std::vector<GridSampler3DGradUsedCoreBoundaryCase> testCases = {
+        {"uint32_max", 1, 1, 65535, 65537, 89478485, 15},
+        {"exact_uint32_wrap", 2, 1, 32768, 65536, 89478485, 16},
+        {"just_over_uint32", 1, 1, 65536, 65537, 89479850, 32},
+    };
+
+    for (const auto& testCase : testCases) {
+        SCOPED_TRACE(testCase.name);
+        auto tilingContextPara = MakeGridSampler3DGradUsedCoreBoundaryContext(testCase, &compileInfo);
+        TilingInfo tilingInfo;
+        ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+        ASSERT_EQ(tilingInfo.blockNum, compileInfo.coreNum);
+        ASSERT_GE(tilingInfo.tilingDataSize, 14U * sizeof(uint32_t));
+        const auto* tilingData = reinterpret_cast<const uint32_t*>(tilingInfo.tilingData.get());
+        EXPECT_EQ(tilingData[11], compileInfo.coreNum);
+        EXPECT_EQ(tilingData[12], testCase.expectedPNumPerCore);
+        EXPECT_EQ(tilingData[13], testCase.expectedTailPNum);
+    }
 }

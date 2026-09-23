@@ -191,7 +191,7 @@ void GridSampler3DGradTiling<TilingData>::GetUsedCore()
         }
         return;
     } else if (isDeterministic == 0) {
-        uint64_t mulNDHW = static_cast<uint64_t>(batch * gridD * gridH * gridW);
+        uint64_t mulNDHW = static_cast<uint64_t>(batch) * gridD * gridH * gridW;
         if (mulNDHW <= coreNum) {
             usedCoreNum = mulNDHW;
             pNumPerCore = static_cast<uint32_t>(1);
