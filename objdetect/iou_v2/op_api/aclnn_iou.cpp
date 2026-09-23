@@ -97,6 +97,10 @@ static bool CheckShape(const aclTensor* bBoxes, const aclTensor* gtBoxes, const 
             bBoxes->GetViewShape().GetDim(0) == gtBoxes->GetViewShape().GetDim(0),
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "bBoxes shape dim0 and gtBoxes shape dim0 should be equal when aligned."),
             return false);
+        OP_CHECK(
+            overlap->GetViewShape().GetDim(0) == bBoxes->GetViewShape().GetDim(0),
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "overlap shape dim0 should be equal to bBoxes shape dim0 when aligned."),
+            return false);
         OP_CHECK(overlap->GetViewShape().GetDim(1) == 1,
                  OP_LOGE(ACLNN_ERR_PARAM_INVALID, "overlap shape dim1 should be 1 when aligned."), return false);
     }
