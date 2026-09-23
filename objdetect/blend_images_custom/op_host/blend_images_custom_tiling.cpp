@@ -22,6 +22,7 @@
 using namespace optiling;
 
 static constexpr uint32_t ASCEND_310P_BLOCK_DIM = 8;
+static constexpr size_t ALPHA_INDEX = 1;
 
 static ge::graphStatus Tiling4BlendImagesCustom(gert::TilingContext* context)
 {
@@ -29,7 +30,10 @@ static ge::graphStatus Tiling4BlendImagesCustom(gert::TilingContext* context)
         return ge::GRAPH_FAILED;
     }
     OP_LOGD(context->GetNodeName(), "Tiling4BlendImagesCustom running begin");
-    auto tensorAlpha = context->GetInputTensor(1);
+    auto tensorAlpha = context->GetInputTensor(ALPHA_INDEX);
+    if (tensorAlpha == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     uint32_t totalAlphaLength = tensorAlpha->GetShapeSize();
     TilingDataBlendImages tiling_host;
     tiling_host.set_totalAlphaLength(totalAlphaLength);

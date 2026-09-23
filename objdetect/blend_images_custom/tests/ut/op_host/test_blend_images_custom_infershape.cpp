@@ -51,3 +51,51 @@ TEST_F(BlendImagesCustom, BlendImagesCustom_infershape_case_1)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+TEST_F(BlendImagesCustom, BlendImagesCustom_shape_contract_rejects_mismatched_hw)
+{
+    gert::InfershapeContextPara infershapeContextPara("BlendImagesCustom",
+                                                      {{{{480, 640, 3}, {480, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 1}, {480, 640, 1}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{479, 640, 3}, {479, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+TEST_F(BlendImagesCustom, BlendImagesCustom_shape_contract_rejects_invalid_channels)
+{
+    gert::InfershapeContextPara infershapeContextPara("BlendImagesCustom",
+                                                      {{{{480, 640, 4}, {480, 640, 4}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 1}, {480, 640, 1}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 3}, {480, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+TEST_F(BlendImagesCustom, BlendImagesCustom_shape_contract_rejects_alpha_channel)
+{
+    gert::InfershapeContextPara infershapeContextPara("BlendImagesCustom",
+                                                      {{{{480, 640, 3}, {480, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 3}, {480, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 3}, {480, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+TEST_F(BlendImagesCustom, BlendImagesCustom_shape_contract_rejects_frame_channel)
+{
+    gert::InfershapeContextPara infershapeContextPara("BlendImagesCustom",
+                                                      {{{{480, 640, 3}, {480, 640, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 1}, {480, 640, 1}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                       {{{480, 640, 4}, {480, 640, 4}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                                      {
+                                                          {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                                      });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
