@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <vector>
 #include <gtest/gtest.h>
 #include "../../../op_host/upsample_bilinear2d_aa_backward_tiling.h"
@@ -103,4 +104,73 @@ TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tilin
                               "4611686019484352512 1073741824 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tiling_scale_nan)
+{
+    UpsampleBilinear2dAABackwardCompileInfo compileInfo = {48};
+    std::vector<int64_t> output_size = {128, 128};
+    std::vector<int64_t> input_size = {1, 1, 256, 256};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAABackward",
+        {
+            {{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 256, 256}, {1, 1, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(std::numeric_limits<float>::quiet_NaN())},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)}},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tiling_scale_infinity)
+{
+    UpsampleBilinear2dAABackwardCompileInfo compileInfo = {48};
+    std::vector<int64_t> output_size = {128, 128};
+    std::vector<int64_t> input_size = {1, 1, 256, 256};
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAABackward",
+        {
+            {{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 256, 256}, {1, 1, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(std::numeric_limits<float>::infinity())}},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+TEST_F(UpsampleBilinear2dAABackwardTiling, upsample_bilinear2d_aa_backward_tiling_scale_negative_infinity)
+{
+    UpsampleBilinear2dAABackwardCompileInfo compileInfo = {48};
+    std::vector<int64_t> output_size = {128, 128};
+    std::vector<int64_t> input_size = {1, 1, 256, 256};
+    string socVersion = "Ascend910b";
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleBilinear2dAABackward",
+        {
+            {{{1, 1, 128, 128}, {1, 1, 128, 128}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 256, 256}, {1, 1, 256, 256}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {{"output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(output_size)},
+         {"input_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>(input_size)},
+         {"align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(false)},
+         {"scales_h", Ops::Cv::AnyValue::CreateFrom<float>(-std::numeric_limits<float>::infinity())},
+         {"scales_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)}},
+        &compileInfo, socVersion, 48, 192 * 1024, 8192);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
 }

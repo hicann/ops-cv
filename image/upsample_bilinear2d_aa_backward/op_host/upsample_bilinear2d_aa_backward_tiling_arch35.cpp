@@ -255,6 +255,10 @@ ge::graphStatus UpsampleBilinear2dAABackwardRegbaseTiling::CheckInputShapeAndAtt
     const float* scaleWPtr = attrs->GetAttrPointer<float>(CONST_4);
     OP_CHECK_IF(scaleWPtr == nullptr, OP_LOGE(context_, "scaleWPtr is nullptr"), return ge::GRAPH_FAILED);
     float originalScaleW = *scaleWPtr;
+    OP_CHECK_IF(!std::isfinite(originalScaleH) || !std::isfinite(originalScaleW),
+                OP_LOGE(context_, "scales_h and scales_w must be finite, scales_h %f, scales_w %f", originalScaleH,
+                        originalScaleW),
+                return ge::GRAPH_FAILED);
     OP_LOGI(context_, "alignCorners %ld, originalScaleH %f, originalScaleW %f", baseTiling_.alignCorners,
             originalScaleH, originalScaleW);
     int64_t outSizeNum = outputSize->GetSize();

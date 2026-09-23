@@ -13,6 +13,8 @@
  * \brief
  */
 
+#include <cmath>
+
 #include "log/log.h"
 #include "op_host/tiling_util.h"
 #include "upsample_bilinear2d_aa_backward_tiling.h"
@@ -197,6 +199,10 @@ float UpsampleBilinear2dAABackwardTiling::ComputeScales(int64_t inSize, int64_t 
 
 bool UpsampleBilinear2dAABackwardTiling::CheckScales() const
 {
+    OP_CHECK_IF(!std::isfinite(*scaleH) || !std::isfinite(*scaleW),
+                OP_LOGE(tilingContext->GetNodeName(), "scaleH and scaleW must be finite, scaleH [%f], scaleW [%f].",
+                        *scaleH, *scaleW),
+                return false);
     const int64_t* inputSizeArray = static_cast<const int64_t*>(inputSize->GetData());
     float scalesH = ComputeScales(inputSizeArray[H_INDEX], inputShape.GetDim(H_INDEX), scaleH);
     float scalesW = ComputeScales(inputSizeArray[W_INDEX], inputShape.GetDim(W_INDEX), scaleW);

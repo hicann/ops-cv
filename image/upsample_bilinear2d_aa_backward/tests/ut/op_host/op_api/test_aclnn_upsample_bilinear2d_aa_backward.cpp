@@ -9,6 +9,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <limits>
 #include "../../../../op_host/op_api/aclnn_upsample_bilinear2d_aa_backward.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
@@ -233,6 +234,63 @@ TEST_F(l2_upsample_bilinear2d_aa_backward_test, l2_upsample_bilinear2d_aa_backwa
     auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
     bool align_corners = false;
     const double_t scales_h = 0.0;
+    const double_t scales_w = 0.0;
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2dAABackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// NaN scale
+TEST_F(l2_upsample_bilinear2d_aa_backward_test, l2_upsample_bilinear2d_aa_backward_test_scale_nan)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5, 5}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5, 5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    bool align_corners = false;
+    const double_t scales_h = std::numeric_limits<double_t>::quiet_NaN();
+    const double_t scales_w = 0.0;
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2dAABackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// Infinity scale
+TEST_F(l2_upsample_bilinear2d_aa_backward_test, l2_upsample_bilinear2d_aa_backward_test_scale_infinity)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5, 5}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5, 5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    bool align_corners = false;
+    const double_t scales_h = 0.0;
+    const double_t scales_w = std::numeric_limits<double_t>::infinity();
+
+    auto ut = OP_API_UT(aclnnUpsampleBilinear2dAABackward,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// Negative infinity scale
+TEST_F(l2_upsample_bilinear2d_aa_backward_test, l2_upsample_bilinear2d_aa_backward_test_scale_negative_infinity)
+{
+    auto gradOutput_desc = TensorDesc({1, 1, 5, 5}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto out_desc = TensorDesc({1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{5, 5});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{1, 1, 3, 3});
+    bool align_corners = false;
+    const double_t scales_h = -std::numeric_limits<double_t>::infinity();
     const double_t scales_w = 0.0;
 
     auto ut = OP_API_UT(aclnnUpsampleBilinear2dAABackward,

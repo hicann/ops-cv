@@ -8,6 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <cmath>
+
 #include "upsample_bilinear2d_aa_backward.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transpose.h"
@@ -85,6 +87,11 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* out, const 
 
 static bool CheckScalesValid(const double weight, const double high)
 {
+    if (!std::isfinite(weight) || !std::isfinite(high)) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scales_w and scales_h must be finite, scales_w [%f], scales_h [%f].", weight,
+                high);
+        return false;
+    }
     if ((high < 0) || (weight < 0)) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scales_w and scales_h cannot be negative , scales_w [%f], scales_h [%f].",
                 weight, high);
