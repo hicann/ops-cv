@@ -24,10 +24,19 @@ namespace ops {
 using namespace ge;
 
 static constexpr int64_t IDX_0 = 0;
+static constexpr int64_t IDX_1 = 1;
 
 static ge::graphStatus InferDataTypeLut3D(gert::InferDataTypeContext* context)
 {
     OP_LOGD(context->GetNodeName(), "Begin to do InferDataTypeLut3D");
+
+    const ge::DataType imgDtype = context->GetInputDataType(IDX_0);
+    const ge::DataType lutDtype = context->GetInputDataType(IDX_1);
+    if (imgDtype != lutDtype) {
+        OP_LOGE(context->GetNodeName(), "img.dtype (%d) and lut_table.dtype (%d) must be the same",
+                static_cast<int>(imgDtype), static_cast<int>(lutDtype));
+        return GRAPH_FAILED;
+    }
 
     // Output dtype is always float32
     context->SetOutputDataType(IDX_0, DT_FLOAT);

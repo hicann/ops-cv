@@ -39,6 +39,16 @@ static ge::graphStatus InferShapeLut3D(gert::InferShapeContext* context)
     gert::Shape* outShape = context->GetOutputShape(IDX_0);
     OP_CHECK_NULL_WITH_CONTEXT(context, outShape);
 
+    const auto* imgDesc = context->GetInputDesc(IDX_0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, imgDesc);
+    const auto* lutDesc = context->GetInputDesc(IDX_1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, lutDesc);
+    if (imgDesc->GetDataType() != lutDesc->GetDataType()) {
+        OP_LOGE(context, "img.dtype (%d) and lut_table.dtype (%d) must be the same",
+                static_cast<int>(imgDesc->GetDataType()), static_cast<int>(lutDesc->GetDataType()));
+        return GRAPH_FAILED;
+    }
+
     const bool imgUnknownRank = Ops::Base::IsUnknownRank(*imgShape);
     const bool lutUnknownRank = Ops::Base::IsUnknownRank(*lutShape);
 

@@ -42,6 +42,20 @@ TEST(Lut3DInferShape, PreservesUnknownImageDimensions)
     ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{2, 32, 32, -1}});
 }
 
+TEST(Lut3DInferShape, RejectsMismatchedImageAndLutDtypes)
+{
+    gert::InfershapeContextPara context("LUT3D",
+                                        {
+                                            {{{2, 32, 32, 3}, {2, 32, 32, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                            {{{17, 17, 17, 3}, {17, 17, 17, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                        },
+                                        {
+                                            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                        });
+
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
 TEST(Lut3DInferShape, RejectsConflictingKnownLutDimensionsAroundUnknownDimension)
 {
     gert::InfershapeContextPara context("LUT3D",
