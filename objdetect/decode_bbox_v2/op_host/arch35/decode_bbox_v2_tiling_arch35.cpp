@@ -113,6 +113,10 @@ ge::graphStatus CheckInputs(gert::TilingContext* ctx, int64_t& dim0, bool& rever
     if (scalesVec != nullptr) {
         const float* data = scalesVec->GetData();
         for (int64_t i = 0; i < kScalesLen; i++) {
+            if (data[i] == 0.0f) {
+                OP_LOGE(nodeName, "scales[%ld] must be non-zero, got %f", i, data[i]);
+                return ge::GRAPH_FAILED;
+            }
             scales[i] = data[i];
         }
     } else {

@@ -83,7 +83,7 @@ x维度同理。fp16输入时中间`exp`及乘加计算在fp32域进行后回cas
 <tr>
 <td>scales</td>
 <td>可选属性</td>
-<td>缩放因子，长度4，默认[1.0, 1.0, 1.0, 1.0]。</td>
+<td>缩放因子，长度4，各元素必须非零，默认[1.0, 1.0, 1.0, 1.0]。</td>
 <td>FLOAT</td>
 <td>-</td>
 </tr>
@@ -108,7 +108,7 @@ x维度同理。fp16输入时中间`exp`及乘加计算在fp32域进行后回cas
 
 - boxes与anchors的shape必须完全一致，无广播。
 - boxes与anchors的dtype必须一致。
-- scales长度必须为4。
+- scales长度必须为4，且各元素必须非零。
 - decode_clip范围为[0.0, 10.0]。
 - 输入仅支持ND数据格式。
 

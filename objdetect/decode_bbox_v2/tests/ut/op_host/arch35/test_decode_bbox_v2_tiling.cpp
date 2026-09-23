@@ -227,3 +227,26 @@ TEST_F(DecodeBboxV2Tiling, dbv2_invalid_dtype_int64)
         &compileInfo, "Ascend950", 64, 262144, 4096);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }
+
+TEST_F(DecodeBboxV2Tiling, dbv2_invalid_zero_scale)
+{
+    struct DecodeBboxV2CompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "DecodeBboxV2",
+        {
+            {{{8, 4}, {8, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{8, 4}, {8, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{8, 4}, {8, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::TilingContextPara::OpAttr(
+                "scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({1.0f, 1.0f, 0.0f, 1.0f})),
+            gert::TilingContextPara::OpAttr("decode_clip", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)),
+            gert::TilingContextPara::OpAttr("reversed_box", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+        },
+        &compileInfo, "Ascend950", 64, 262144, 4096);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
