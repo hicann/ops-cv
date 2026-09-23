@@ -4,12 +4,12 @@
 
 | 产品 | 是否支持 |
 | :--- | :---: |
-| <term>Ascend 950PR/Ascend 950DT</term> | √ |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term> | √ |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> | √ |
-| <term>Atlas 200I/500 A2 推理产品</term> | × |
-| <term>Atlas 推理系列产品</term> | × |
-| <term>Atlas 训练系列产品</term> | × |
+| <term>Ascend 950PR&950DT系列产品</term> | √ |
+| <term>Atlas A3系列产品</term> | √ |
+| <term>Atlas A2系列产品</term> | √ |
+| <term>Atlas 200I/500 A2推理产品</term> | × |
+| <term>Atlas推理系列产品</term> | × |
+| <term>Atlas训练系列产品</term> | × |
 
 ## 功能说明
 
@@ -147,7 +147,7 @@ $$
 
 - 仅支持 ND format、float16/float32 的 boxes 和 scores；三个浮点输出与 boxes dtype 保持一致。
 - boxes 为 4 维、scores 为 3 维，B、N、C、q 必须为正；q 必须为 1 或 C。
-- `transpose_box` 公开接口当前仅支持 `false`，与<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>的公开接口约束保持一致；图融合产生的内部节点仍使用 `true` 布局。
+- `transpose_box` 公开接口当前仅支持 `false`，与<term>Atlas A2系列产品</term>的公开接口约束保持一致；图融合产生的内部节点仍使用 `true` 布局。
 - `clip_window` 的形状必须为 `[B,4]`，`num_valid_boxes` 的形状必须为 `[B]`。
 - 支持GE IR动态Shape；运行时tiling接收实例化后的具体正Shape。
 - `image_size` 为图模式原型兼容属性，当前通用 NMS 路径不读取该属性；旧平台 `norm_class` 专用语义不在本实现范围内。

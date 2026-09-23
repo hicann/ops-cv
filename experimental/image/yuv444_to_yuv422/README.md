@@ -10,12 +10,12 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT</term>                     |     √    |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>    |    ×     |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>    |    ×     |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
-| <term>Atlas 推理系列产品</term>                               |    ×     |
-| <term>Atlas 训练系列产品</term>                               |    ×     |
+| <term>Ascend 950PR&950DT系列产品</term>                     |     √    |
+| <term>Atlas A3系列产品</term>    |    ×     |
+| <term>Atlas A2系列产品</term>    |    ×     |
+| <term>Atlas 200I/500 A2推理产品</term>                      |    ×     |
+| <term>Atlas推理系列产品</term>                               |    ×     |
+| <term>Atlas训练系列产品</term>                               |    ×     |
 
 ## 功能说明
 
@@ -75,5 +75,5 @@ $$
 - 输入必须为 3 维张量，第三维固定为 4（YUV444 的 4 通道打包格式）。
 - 输出为 3 维张量，前两个维度与输入相同，第三维固定为 2（YUV422 的 2 通道打包格式）。
 - 仅支持 float16 输入、uint8 输出。
-- 仅支持 Ascend 950PR/Ascend 950DT。
+- 仅支持 Ascend 950PR&950DT系列产品。
 - 输入输出要求连续存储（ND layout）。

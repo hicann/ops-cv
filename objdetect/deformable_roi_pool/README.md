@@ -4,12 +4,12 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT</term>                     |     √    |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>    |    √     |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>    |    √     |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
-| <term>Atlas 推理系列产品</term>                               |    ×     |
-| <term>Atlas 训练系列产品</term>                               |    ×     |
+| <term>Ascend 950PR&950DT系列产品</term>                     |     √    |
+| <term>Atlas A3系列产品</term>    |    √     |
+| <term>Atlas A2系列产品</term>    |    √     |
+| <term>Atlas 200I/500 A2推理产品</term>                      |    ×     |
+| <term>Atlas推理系列产品</term>                               |    ×     |
+| <term>Atlas训练系列产品</term>                               |    ×     |
 
 ## 功能说明
 
@@ -22,6 +22,7 @@ y(n, c, ph, pw) = \frac{1}{N_{bin}} \sum_{iy=0}^{H_{bin}-1} \sum_{ix=0}^{W_{bin}
 $$
 
 其中：
+
 - $n$ 为 ROI 索引，$c$ 为通道索引，$(ph, pw)$ 为输出空间位置。
 - $idx_n$ 为第 $n$ 个 ROI 的 batch 索引（$rois[n, 0]$）。
 - $H_{bin}$ 和 $W_{bin}$ 为每个 bin 内的采样点数（由 $sampling\_ratio$ 或 bin 大小自适应确定）。
@@ -30,6 +31,7 @@ $$
   $start_w = roi\_start_w + pw \cdot bin\_size_w + offset(n, 0, ph, pw) \cdot \gamma \cdot roi\_width$。
 
 核心步骤：
+
 1. ROI 坐标变换：$roi\_start = roi \cdot spatial\_scale - 0.5$。
 2. Bin 大小：$bin\_size_h = roi\_height / pooled\_h$，$bin\_size_w = roi\_width / pooled\_w$。
 3. 采样点数：$sampling\_ratio > 0$ 时取该值，否则自适应为 $\lceil bin\_size \rceil$。

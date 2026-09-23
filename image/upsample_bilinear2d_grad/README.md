@@ -4,12 +4,12 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
-|  <term>Atlas 推理系列产品</term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Ascend 950PR&950DT系列产品</term>   |     ×    |
+|  <term>Atlas A3系列产品</term>   |     √    |
+|  <term>Atlas A2系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2推理产品</term>    |     √    |
+|  <term>Atlas推理系列产品</term>    |     √    |
+|  <term>Atlas训练系列产品</term>    |     ×    |
 
 ## 功能说明
 
@@ -71,7 +71,7 @@
       $$
 
     - 假设：正向插值的输出图像out $(x, y)$受原图像input $(x_i, y_j)$影响，则有：
-  
+
       $$
       gradInput(x_i,y_j) += gradOutput(x,y) * lambda(x_i,y_j)* lambdb(x_i,y_j)
       $$
@@ -145,7 +145,7 @@
     </tr>
   </tbody></table>
 
-<term>Atlas 推理系列产品</term>、<term>Atlas 200I/500 A2 推理产品</term>：输入和输出的数据类型不支持BFLOAT16。
+<term>Atlas推理系列产品</term>、<term>Atlas 200I/500 A2推理产品</term>：输入和输出的数据类型不支持BFLOAT16。
 
 ## 约束说明
 
@@ -155,5 +155,5 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_upsample_bilinear2d_grad](examples/test_aclnn_upsample_bilinear2d_grad.cpp) | 通过[aclnnUpsampleBilinear2dBackwardV2](docs/aclnnUpsampleBilinear2dBackwardV2.md)接口方式调用UpsampleBilinear2dGrad算子。 |
+| aclnn接口  | [test_aclnn_upsample_bilinear2d_backward_v2](examples/test_aclnn_upsample_bilinear2d_backward_v2.cpp) | 通过[aclnnUpsampleBilinear2dBackwardV2](docs/aclnnUpsampleBilinear2dBackwardV2.md)接口方式调用UpsampleBilinear2dGrad算子。 |
 | aclnn接口  | [test_aclnn_upsample_linear1d_backward](examples/test_aclnn_upsample_linear1d_backward.cpp) | 通过[aclnnUpsampleLinear1dBackward](docs/aclnnUpsampleLinear1dBackward.md)接口方式调用UpsampleBilinear2dGrad算子。 |

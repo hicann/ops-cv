@@ -4,18 +4,18 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品</term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Ascend 950PR&950DT系列产品</term>   |     √    |
+|  <term>Atlas A3系列产品</term>   |     √    |
+|  <term>Atlas A2系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2推理产品</term>    |     ×    |
+|  <term>Atlas推理系列产品</term>    |     ×    |
+|  <term>Atlas训练系列产品</term>    |     ×    |
 
 ## 功能说明
 
 - 算子功能：从批处理输入张量中提取滑动局部块，将滑动局部块数组合并为一个大张量。
 - 计算公式：
-  
+
   考虑一个形状为$(N,C,∗)$的批处理input张量，其中$N$是批处理维度，$C$是通道维度，而$∗$表示任意空间维度。
 
   此操作将input空间维度内的每个滑动kernel_size大小的块展平为形状是$(N,C×\prod(kernel_size),L)$的3-D output张量的列（即最后一维）。

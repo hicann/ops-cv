@@ -4,23 +4,23 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     √    |
-|  <term>Atlas 推理系列产品</term>    |     √    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Ascend 950PR&950DT系列产品</term>   |     ×    |
+|  <term>Atlas A3系列产品</term>   |     √    |
+|  <term>Atlas A2系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2推理产品</term>    |     √    |
+|  <term>Atlas推理系列产品</term>    |     √    |
+|  <term>Atlas训练系列产品</term>    |     ×    |
 
 ## 功能说明
 
 - 算子功能：[UpsampleBicubic2d](../upsample_bicubic2d/README.md)的反向传播。如果输入张量的shape为(N, C, H, W)，则输出张量的shape为(N, C, inputSize[2], inputSize[3])。
 
 - 计算公式：对于一个二维插值点$(N, C, h, w)$，插值$gradInput(N, C, h, w)$可以表示为：
-  
+
   $$
   {gradInput(N, C, h, w)}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(h_i, w_j)}
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -28,7 +28,7 @@
   inputSize[2] / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (inputSize[3]-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -36,7 +36,7 @@
   inputSize[3] / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   其中：
   - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
   - i和j是$W(i, j)$的索引变量。
@@ -118,4 +118,4 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| aclnn接口  | [test_aclnn_upsample_bicubic2d_grad](examples/test_aclnn_upsample_bicubic2d_grad.cpp) | 通过[aclnnUpsampleBicubic2dBackward](docs/aclnnUpsampleBicubic2dBackward.md)接口方式调用UpsampleBicubic2dGrad算子。 |
+| aclnn接口  | [test_aclnn_upsample_bicubic2d_backward](examples/test_aclnn_upsample_bicubic2d_backward.cpp) | 通过[aclnnUpsampleBicubic2dBackward](docs/aclnnUpsampleBicubic2dBackward.md)接口方式调用UpsampleBicubic2dGrad算子。 |

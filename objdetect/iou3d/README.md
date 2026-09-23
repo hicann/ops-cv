@@ -4,12 +4,12 @@
 
 | 产品 | 是否支持 |
 | :----------------------------------------- | :------:|
-| <term>Ascend 950PR/Ascend 950DT</term> | √ |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term> | √ |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> | √ |
-| <term>Atlas 200I/500 A2 推理产品</term> | √ |
-| <term>Atlas 推理系列产品</term> | √ |
-| <term>Atlas 训练系列产品</term> | √ |
+| <term>Ascend 950PR&950DT系列产品</term> | √ |
+| <term>Atlas A3系列产品</term> | √ |
+| <term>Atlas A2系列产品</term> | √ |
+| <term>Atlas 200I/500 A2推理产品</term> | √ |
+| <term>Atlas推理系列产品</term> | √ |
+| <term>Atlas训练系列产品</term> | √ |
 
 ## 功能说明
 
@@ -75,10 +75,12 @@
 
 - 数据类型：`bboxes`、`gtboxes`、`iou`均必须为float32。
 - channel固定为7：`bboxes.shape[1]`与`gtboxes.shape[1]`必须等于7（7-DoF），否则拒绝。
-- K上限：Ascend 950新增实现不再限制`K <= 2000`，但B、N、K均必须不超过`uint32_t`范围，且每核处理的pair数不能超过`uint32_t`范围；其他支持产品沿用历史实现，要求`K <= 2000`。
+- K上限：
+  - <term>Ascend 950PR&950DT系列产品</term>：新增实现不再限制`K <= 2000`，但B、N、K均必须不超过`uint32_t`范围，且每核处理的pair数不能超过`uint32_t`范围。
+  - 其他支持产品沿用历史实现，要求`K <= 2000`。
 - 无效框排序：同一batch内无效框（`w * h * d = 0`）不能排在有效框之前。
 - 不支持Broadcast；两个输入必须是独立的rank-3 ND Tensor，仅batch维B要求相同。
-- Ascend 950图模式支持动态Shape（-1未知维）和动态Rank（-2未知秩）。
+- <term>Ascend 950PR&950DT系列产品</term>：图模式支持动态Shape（-1未知维）和动态Rank（-2未知秩）。
 
 ## 调用说明
 

@@ -4,23 +4,23 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
-|  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
-|  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
-|  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
-|  <term>Atlas 推理系列产品</term>    |     ×    |
-|  <term>Atlas 训练系列产品</term>    |     ×    |
+|  <term>Ascend 950PR&950DT系列产品</term>   |     √    |
+|  <term>Atlas A3系列产品</term>   |     √    |
+|  <term>Atlas A2系列产品</term>     |     √    |
+|  <term>Atlas 200I/500 A2推理产品</term>    |     ×    |
+|  <term>Atlas推理系列产品</term>    |     ×    |
+|  <term>Atlas训练系列产品</term>    |     ×    |
 
 ## 功能说明
 
 - 算子功能：[UpsampleBilinear2dAA](../upsample_bilinear2d_aa/README.md)的反向传播。
 
 - 计算公式：对于一个二维插值点$(N, C, H, W)$，插值$I(N, C, H, W)$可以表示为：
-  
+
   $$
   {I(N, C, H, W)} = \sum_{i=0}^{kW}\sum_{j=0}^{kH}{w(i) * w(j)} * {f(h_i, w_j)}/\sum_{i=0}^{kW}w(i)/\sum_{j=0}^{kH}w(j)
   $$
-  
+
   $$
   scaleH =\begin{cases}
   (inputSize[2]-1) / (outputSize[0]-1) & alignCorners=true \\
@@ -28,7 +28,7 @@
   inputSize[2] / outputSize[0] & otherwise
   \end{cases}
   $$
-  
+
   $$
   scaleW =\begin{cases}
   (inputSize[3]-1) / (outputSize[1]-1) & alignCorners=true \\
@@ -36,7 +36,7 @@
   inputSize[3] / outputSize[1] & otherwise
   \end{cases}
   $$
-  
+
   - 其中：
     - alignCorners为true，表示输入和输出张量的角像素点对齐；alignCorners为false，表示输入和输出张量的边像素点对齐。
     - $kW$、$kH$分别表示W方向和H方向影响插值点大小的点的数量
@@ -59,7 +59,7 @@
       $$
 
   - 假设：正向插值的输出图像out $(h, w)$受原图像input $(h_i, w_j)$影响，则有：
-  
+
     $$
     gradInput(h_i,w_j) += gradOutput(h,w) * w(i) * w(j)
     $$
