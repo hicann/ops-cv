@@ -241,8 +241,11 @@ __simd_vf__ inline void BoxClipVF(__ubuf__ T* outCh, __ubuf__ float* gwIn, __ubu
         AscendC::Reg::Muls<float>(tmp, gw, halfSign, mask);
         AscendC::Reg::Add<float>(tmp, gx, tmp, mask);
         AscendC::Reg::Adds<float>(tmp, tmp, offset, mask);
-        AscendC::Reg::Max<float>(tmp, tmp, loReg, mask);
-        AscendC::Reg::Min<float>(out, tmp, hiReg, mask);
+        // min-then-max 与 CANN 内置 tbe clamp_result 的 vmin→vmax 顺序一致：
+        // 正常输入等价 clamp(x, clipLo, clipHi)；退化 clipHi<clipLo 时收敛到 clipLo，
+        // 保持 clipped_non_negative 不变量（max-then-min 会输出 clipLo 以下的负值）。
+        AscendC::Reg::Min<float>(tmp, tmp, hiReg, mask);
+        AscendC::Reg::Max<float>(out, tmp, loReg, mask);
         // NaN→0: extreme anchor_box (±3.4e38) causes Inf-Inf=NaN in coordinate
         // computation. Max/Min propagate NaN on NPU. Replace NaN with clipLo (0)
         // to satisfy clipped_non_negative invariant (DESIGN §4.3).
@@ -341,10 +344,12 @@ private:
         AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(0);
 
         // ===== Compute: x-chain (ch0,ch2) then y-chain (ch1,ch3) =====
+        // clip 上界为 max_shape-1（最后有效像素），与 CANN 内置 BoundingBoxDecode
+        // (tbe clamp_result: 0<=x<=max_shape[1]-1) 及 CheckValid(x<=W*r-1) 语义闭合
         ProcessAxis(boxCount, 0, 2, td_->stds[0], td_->stds[2], td_->means[0], td_->means[2],
-                    static_cast<float>(td_->maxShapeW));
+                    static_cast<float>(td_->maxShapeW) - 1.0f);
         ProcessAxis(boxCount, 1, 3, td_->stds[1], td_->stds[3], td_->means[1], td_->means[3],
-                    static_cast<float>(td_->maxShapeH));
+                    static_cast<float>(td_->maxShapeH) - 1.0f);
 
         // ===== CopyOut: 2D stride scatter, 4 channels → GM [N,4] =====
         AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(0);

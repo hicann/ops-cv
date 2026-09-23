@@ -30,10 +30,10 @@ gw = pw \times \exp(dw),\quad gx = pcx + pw \times dx
 $$
 
 $$
-x1_{out} = \mathrm{clip}(gx - gw \times 0.5 + 0.5,\ 0,\ W)
+x1_{out} = \mathrm{clip}(gx - gw \times 0.5 + 0.5,\ 0,\ W - 1)
 $$
 
-y维度（y1、y2）同理，裁剪上界为H。fp16输入时中间`exp`及乘加计算在fp32域进行后回cast到fp16。
+y维度（y1、y2）同理，裁剪上界为H-1。裁剪上界取最后有效像素`W-1`/`H-1`，输出坐标域为`[0, W-1]`/`[0, H-1]`。fp16输入时中间`exp`及乘加计算在fp32域进行后回cast到fp16。
 
 ## 参数说明
 

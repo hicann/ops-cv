@@ -37,6 +37,9 @@ class BoundingBoxDecodeTestSpec:
         stds = [float(v) for v in stds]
         max_h = float(max_shape[0])
         max_w = float(max_shape[1])
+        # 裁剪到 [0, W-1]/[0, H-1]（最后有效像素），与 CANN 内置版及 CheckValid 契约一致
+        clip_h = max_h - 1.0
+        clip_w = max_w - 1.0
 
         a = torch.from_numpy(anchor_box.astype(np.float32))
         d = torch.from_numpy(deltas.astype(np.float32))
@@ -64,14 +67,14 @@ class BoundingBoxDecodeTestSpec:
         ox2 = gx + gw * 0.5 - 0.5
         oy2 = gy + gh * 0.5 - 0.5
 
-        ox1 = torch.nan_to_num(ox1, nan=0.0, posinf=max_w, neginf=0.0)
-        oy1 = torch.nan_to_num(oy1, nan=0.0, posinf=max_h, neginf=0.0)
-        ox2 = torch.nan_to_num(ox2, nan=0.0, posinf=max_w, neginf=0.0)
-        oy2 = torch.nan_to_num(oy2, nan=0.0, posinf=max_h, neginf=0.0)
-        ox1 = torch.clamp(ox1, 0.0, max_w)
-        oy1 = torch.clamp(oy1, 0.0, max_h)
-        ox2 = torch.clamp(ox2, 0.0, max_w)
-        oy2 = torch.clamp(oy2, 0.0, max_h)
+        ox1 = torch.nan_to_num(ox1, nan=0.0, posinf=clip_w, neginf=0.0)
+        oy1 = torch.nan_to_num(oy1, nan=0.0, posinf=clip_h, neginf=0.0)
+        ox2 = torch.nan_to_num(ox2, nan=0.0, posinf=clip_w, neginf=0.0)
+        oy2 = torch.nan_to_num(oy2, nan=0.0, posinf=clip_h, neginf=0.0)
+        ox1 = torch.clamp(ox1, 0.0, clip_w)
+        oy1 = torch.clamp(oy1, 0.0, clip_h)
+        ox2 = torch.clamp(ox2, 0.0, clip_w)
+        oy2 = torch.clamp(oy2, 0.0, clip_h)
 
         boxes = torch.stack([ox1, oy1, ox2, oy2], dim=1)
         return [boxes.numpy().astype(x_dtype)]
@@ -90,6 +93,8 @@ class BoundingBoxDecodeTestSpec:
         ):
             self.max_h = float(max_shape[0])
             self.max_w = float(max_shape[1])
+            self.clip_h = self.max_h - 1.0
+            self.clip_w = self.max_w - 1.0
             self.means = [float(v) for v in means]
             self.stds = [float(v) for v in stds]
 
@@ -120,14 +125,14 @@ class BoundingBoxDecodeTestSpec:
             ox2 = gx + gw * 0.5 - 0.5
             oy2 = gy + gh * 0.5 - 0.5
 
-            ox1 = torch.nan_to_num(ox1, nan=0.0, posinf=self.max_w, neginf=0.0)
-            oy1 = torch.nan_to_num(oy1, nan=0.0, posinf=self.max_h, neginf=0.0)
-            ox2 = torch.nan_to_num(ox2, nan=0.0, posinf=self.max_w, neginf=0.0)
-            oy2 = torch.nan_to_num(oy2, nan=0.0, posinf=self.max_h, neginf=0.0)
-            ox1 = torch.clamp(ox1, 0.0, self.max_w)
-            oy1 = torch.clamp(oy1, 0.0, self.max_h)
-            ox2 = torch.clamp(ox2, 0.0, self.max_w)
-            oy2 = torch.clamp(oy2, 0.0, self.max_h)
+            ox1 = torch.nan_to_num(ox1, nan=0.0, posinf=self.clip_w, neginf=0.0)
+            oy1 = torch.nan_to_num(oy1, nan=0.0, posinf=self.clip_h, neginf=0.0)
+            ox2 = torch.nan_to_num(ox2, nan=0.0, posinf=self.clip_w, neginf=0.0)
+            oy2 = torch.nan_to_num(oy2, nan=0.0, posinf=self.clip_h, neginf=0.0)
+            ox1 = torch.clamp(ox1, 0.0, self.clip_w)
+            oy1 = torch.clamp(oy1, 0.0, self.clip_h)
+            ox2 = torch.clamp(ox2, 0.0, self.clip_w)
+            oy2 = torch.clamp(oy2, 0.0, self.clip_h)
 
             boxes = torch.stack([ox1, oy1, ox2, oy2], dim=1)
             return [boxes.to(anchor_box.dtype)]

@@ -31,10 +31,10 @@ struct BoundingBoxDecodeTilingData {
     int64_t ubLoopOfTailBlock;   // 尾 block 的 UB 循环次数 = CeilDiv(blockTail, ubFormer)
     int64_t ubTailOfTailBlock;   // 尾 block 尾部 box 数 = blockTail - (ubLoopOfTailBlock-1)×ubFormer
     // —— 属性标量（aclnn 传入，kernel Compute 消费）——
-    float means[4];    // deltas 反标准化均值 m0..m3（spec.yaml attributes.means，默认 0）
-    float stds[4];     // deltas 反标准化标准差 s0..s3（各元素 ≠ 0，Host 校验保证；默认 1）
-    int64_t maxShapeH; // max_shape[0] = H，y 维度 (y1_out/y2_out) 裁剪上界
-    int64_t maxShapeW; // max_shape[1] = W，x 维度 (x1_out/x2_out) 裁剪上界
+    float means[4]; // deltas 反标准化均值 m0..m3（spec.yaml attributes.means，默认 0）
+    float stds[4];  // deltas 反标准化标准差 s0..s3（各元素 ≠ 0，Host 校验保证；默认 1）
+    int64_t maxShapeH; // max_shape[0] = H，原样透传；kernel 内实际裁剪上界为 maxShapeH-1（最后有效像素）
+    int64_t maxShapeW; // max_shape[1] = W，原样透传；kernel 内实际裁剪上界为 maxShapeW-1（最后有效像素）
     // 注：wh_ratio_clip 不参与核心公式（§1.3），不进 TilingData
     // 注：IS_EMPTY 不进 TilingData（属 TilingKey 模板参数，§6）
     // 注：empty 路径（IS_EMPTY=true）kernel 短路，上述计算字段填 0 不被消费
