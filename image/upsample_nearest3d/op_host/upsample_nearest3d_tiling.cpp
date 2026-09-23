@@ -82,6 +82,13 @@ ge::graphStatus UpsampleNearest3dTiling::RunBigKernelTiling(gert::TilingContext*
     scaleD = attrs->GetAttrPointer<float>(idx++);
     scaleH = attrs->GetAttrPointer<float>(idx++);
     scaleW = attrs->GetAttrPointer<float>(idx++);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outputSize);
+
+    size_t outputSizeNum = outputSize->GetSize();
+    if (outputSizeNum != DIM) {
+        OP_LOGE(tilingContext->GetNodeName(), "output_size length must be %zu, but got %zu.", DIM, outputSizeNum);
+        return ge::GRAPH_FAILED;
+    }
 
     // 获取数据类型
     auto temp = tilingContext->GetInputDesc(0);

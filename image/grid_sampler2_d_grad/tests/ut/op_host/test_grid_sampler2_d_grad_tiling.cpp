@@ -360,6 +360,26 @@ TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_bfloat16_case4)
     std::vector<size_t> expectWorkspaces = {16777220};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_dtype_mismatch_case5)
+{
+    GridSampler2DGradCompileInfo compileInfo = {48, 196608, false};
+    gert::StorageShape grad = {{2, 8, 8, 3}, {2, 8, 8, 3}};
+    gert::StorageShape x = {{2, 16, 16, 3}, {2, 16, 16, 3}};
+    gert::StorageShape grid = {{2, 8, 8, 2}, {2, 8, 8, 2}};
+    gert::StorageShape dx = {{2, 16, 16, 3}, {2, 16, 16, 3}};
+    gert::StorageShape dgrid = {{2, 8, 8, 2}, {2, 8, 8, 2}};
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler2DGrad",
+        {{grad, ge::DT_FLOAT16, ge::FORMAT_ND}, {x, ge::DT_FLOAT, ge::FORMAT_ND}, {grid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{dx, ge::DT_FLOAT, ge::FORMAT_ND}, {dgrid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
 // TEST_F(GridSampler2DGradTiling, grid_sampler_grad_tiling_test_float32_case5)
 // {
 //     gert::StorageShape grad = {{2, 8, 8, 3}, {2, 8, 8, 3}};

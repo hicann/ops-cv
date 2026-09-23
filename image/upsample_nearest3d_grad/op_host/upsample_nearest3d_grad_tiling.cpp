@@ -36,6 +36,8 @@ constexpr float ZERO_FLOAT = 0.0f;
 constexpr float ONE_FLOAT = 1.0f;
 
 constexpr uint8_t RESERVED_LENGTH = 5;
+constexpr size_t RESERVED_LENGTH_INPUT_SIZE = 5;
+constexpr size_t RESERVED_LENGTH_SCALES = 3;
 
 constexpr uint8_t HALF_TYPE = 1;
 constexpr uint8_t FLOAT_TYPE = 2;
@@ -173,10 +175,20 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
     size_t idx = 0;
     inputSizeAttr = tilingAttrs->GetAttrPointer<gert::ContinuousVector>(idx++);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, inputSizeAttr);
+    size_t inputSizeNum = inputSizeAttr->GetSize();
+    OP_CHECK_IF(inputSizeNum != RESERVED_LENGTH_INPUT_SIZE,
+                OP_LOGE(tilingContext->GetNodeName(), "input_size length must be %zu, but got %zu.",
+                        RESERVED_LENGTH_INPUT_SIZE, inputSizeNum),
+                return ge::GRAPH_FAILED);
     outputSizeAttr = tilingAttrs->GetAttrPointer<gert::ContinuousVector>(idx++);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outputSizeAttr);
     scalesAttr = tilingAttrs->GetAttrPointer<gert::ContinuousVector>(idx++);
     OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scalesAttr);
+    size_t scalesNum = scalesAttr->GetSize();
+    OP_CHECK_IF(scalesNum != RESERVED_LENGTH_SCALES,
+                OP_LOGE(tilingContext->GetNodeName(), "scales length must be %zu, but got %zu.", RESERVED_LENGTH_SCALES,
+                        scalesNum),
+                return ge::GRAPH_FAILED);
     const float* scalesArray = reinterpret_cast<const float*>(scalesAttr->GetData());
     scaleD = scalesArray[D_INDEX];
     scaleH = scalesArray[H_INDEX];

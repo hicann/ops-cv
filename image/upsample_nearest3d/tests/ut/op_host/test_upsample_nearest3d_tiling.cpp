@@ -160,3 +160,17 @@ TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_006)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleNearest3dTiling, upsample_nearest3d_tiling_007)
+{
+    UpsampleNearest3dCompileInfo compileInfo = {48};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest3d", {{{{2, 2, 4, 5, 6}, {2, 2, 4, 5, 6}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 2, 8, 8, 7}, {2, 2, 8, 8, 7}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8})),
+         gert::TilingContextPara::OpAttr("scale_d", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scale_h", Ops::Cv::AnyValue::CreateFrom<float>(0.0)),
+         gert::TilingContextPara::OpAttr("scale_w", Ops::Cv::AnyValue::CreateFrom<float>(0.0))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}

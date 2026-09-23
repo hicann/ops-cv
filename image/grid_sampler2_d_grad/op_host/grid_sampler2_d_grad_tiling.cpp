@@ -39,6 +39,8 @@ constexpr int CAST_DIVIDE_UB_NUM = 3;
 constexpr int32_t GRAD_INPUT_INDEX = 0;
 constexpr int32_t X_INPUT_INDEX = 1;
 constexpr int32_t GRID_INPUT_INDEX = 2;
+constexpr int32_t DX_INDEX = 0;
+constexpr int32_t DGRID_INDEX = 1;
 constexpr int32_t DTYPE_SIZE_32 = 4;
 constexpr int32_t DTYPE_SIZE_16 = 2;
 constexpr uint8_t SCHEDULE_MODE = 1;
@@ -581,7 +583,32 @@ static ge::graphStatus Tiling4GridSampler2DGrad(gert::TilingContext* tilingConte
     uint32_t coreNum = 0;
 
     OP_LOGI(tilingContext->GetNodeName(), "ubSizePlatForm:%lu, coreNum:%u", ubSizePlatForm, coreNum);
-    ge::DataType inputDatatype = tilingContext->GetInputDesc(0)->GetDataType();
+    auto gradDesc = tilingContext->GetInputDesc(GRAD_INPUT_INDEX);
+    auto xDesc = tilingContext->GetInputDesc(X_INPUT_INDEX);
+    auto gridDesc = tilingContext->GetInputDesc(GRID_INPUT_INDEX);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, gradDesc);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, xDesc);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, gridDesc);
+    ge::DataType inputDatatype = gradDesc->GetDataType();
+    ge::DataType xDatatype = xDesc->GetDataType();
+    ge::DataType gridDatatype = gridDesc->GetDataType();
+    OP_CHECK_IF(inputDatatype != xDatatype || inputDatatype != gridDatatype,
+                OP_LOGE(tilingContext->GetNodeName(), "dtype of grad [%d], x [%d], grid [%d] must be the same.",
+                        static_cast<int32_t>(inputDatatype), static_cast<int32_t>(xDatatype),
+                        static_cast<int32_t>(gridDatatype)),
+                return ge::GRAPH_FAILED);
+    auto dxDesc = tilingContext->GetOutputDesc(DX_INDEX);
+    auto dgridDesc = tilingContext->GetOutputDesc(DGRID_INDEX);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, dxDesc);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, dgridDesc);
+    ge::DataType dxDatatype = dxDesc->GetDataType();
+    ge::DataType dgridDatatype = dgridDesc->GetDataType();
+    OP_CHECK_IF(
+        dxDatatype != inputDatatype || dgridDatatype != gridDatatype,
+        OP_LOGE(tilingContext->GetNodeName(), "output dtype mismatch: dx [%d] vs grad [%d], dgrid [%d] vs grid [%d].",
+                static_cast<int32_t>(dxDatatype), static_cast<int32_t>(inputDatatype),
+                static_cast<int32_t>(dgridDatatype), static_cast<int32_t>(gridDatatype)),
+        return ge::GRAPH_FAILED);
     if (inputDatatype != ge::DT_FLOAT && !compileInfo->regBase) {
         coreNum = 1;
     } else {
