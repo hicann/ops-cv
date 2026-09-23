@@ -328,7 +328,7 @@ aclnnStatus aclnnGridSampler2DBackward(
     <tr>
       <td>grid（aclTensor*）</td>
       <td>输入</td>
-      <td>表示采用像素位置的张量，对应公式描述中的`grid`。</td>
+      <td>表示采样像素位置的张量，对应公式描述中的`grid`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据类型与`input`保持一致。</li><li>`grid`和`gradOutput`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</li><li>支持shape为(N, <em style='font-size: 14px'>H</em><em style='font-size: 8px'>out</em>, <em style='font-size: 14px'>W</em><em style='font-size: 8px'>out</em>, 2)。</li></ul></td>
       <td>BFLOAT16、FLOAT16、FLOAT32、DOUBLE</td>
       <td>ND</td>

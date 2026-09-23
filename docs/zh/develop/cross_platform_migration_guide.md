@@ -27,7 +27,7 @@
     <th style="width:37.5%;">Ascend 950</th>
   </tr>
   <tr>
-    <td rowspan="4">AICore</td>
+    <td rowspan="4">AI Core</td>
     <td>核数</td>
     <td>24</td>
     <td>32</td>
@@ -166,7 +166,7 @@ TBuf<QuePosition::VECCALC> indexBuf_;
 
 // SIMD: 逐行处理，显式搬运和同步
 for (int64_t j = 0; j < rows; j++) {
-    INDICES_T index = GetIndex(yIdx, indiceEndIdx);  // 标量读取索引
+    INDICES_T index = GetIndex(yIdx, indicesEndIdx);  // 标量读取索引
     int64_t xIndex = index * tilingData_->innerSize;
     DataCopyPad(xLocal[j * colsAlign], xGm[offset], dataCopyExtParams, dataCopyPadExtParams); // 批量连续数搬入
 }
@@ -363,7 +363,7 @@ __aicore__ inline void CrossCoreWaitFlag(uint16_t flagId)
 
 #### 核间同步信号量匹配
 
-`CrossCoreSetFlag`和`CrossCoreWaitFlag`是核间同步信号量接口，广泛用于多核间的数据依赖与协同控制。本质上以"信号量"的方式实现不同AICore之间的数据处理阶段解耦与有序推进，常用于流水线控制、双缓冲切换、跨核协作等场景。
+`CrossCoreSetFlag`和`CrossCoreWaitFlag`是核间同步信号量接口，广泛用于多核间的数据依赖与协同控制。本质上以"信号量"的方式实现不同AI Core之间的数据处理阶段解耦与有序推进，常用于流水线控制、双缓冲切换、跨核协作等场景。
 
 - `CrossCoreSetFlag`：当前核（或线程）在完成某个阶段的数据处理后，主动设置指定的flag信号，告知依赖方（一般是其它核或下游流水线阶段）本阶段已完成，可以继续执行后续流程。
 - `CrossCoreWaitFlag`：当前核（或线程）需等待某个flag信号被设置（即依赖的数据或事件完成），检测flag后才会继续向下执行。

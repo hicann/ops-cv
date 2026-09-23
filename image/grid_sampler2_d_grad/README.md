@@ -272,7 +272,7 @@
     <tr>
       <td>grid</td>
       <td>输入</td>
-      <td>表示采用像素位置的张量，对应公式描述中的`grid`。shape仅支持四维，且需满足`grid`和`grad`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</td>
+      <td>表示采样像素位置的张量，对应公式描述中的`grid`。shape仅支持四维，且需满足`grid`和`grad`的N轴、H轴、W轴的值保持一致，`grid`最后一维的值等于2。</td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
       <td>ND</td>
     </tr>
