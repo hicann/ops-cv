@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <limits>
 #include "infershape_context_faker.h"
 #include "infershape_case_executor.h"
 
@@ -217,6 +218,236 @@ TEST_F(CropInfershape, crop_infershape_mixed_partial_x_unknown_rank_size_test)
         });
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {-2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// 合法边界: offset+size=x 恰好不越界, 应成功
+TEST_F(CropInfershape, crop_infershape_legal_boundary)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{5}, {5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({3})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {5},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// 普通越界: 7+2=9 > 8, 应失败
+TEST_F(CropInfershape, crop_infershape_ordinary_oob_reject)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({7})),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// INT64_MAX 溢出: 旧校验 offset+size 溢出被绕过, 应失败
+TEST_F(CropInfershape, crop_infershape_offset_size_overflow_should_reject)
+{
+    const int64_t maxInt64 = std::numeric_limits<int64_t>::max();
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({maxInt64})),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// INT64_MIN 负 offset, 应失败
+TEST_F(CropInfershape, crop_infershape_int64min_negative_offset_reject)
+{
+    const int64_t minInt64 = std::numeric_limits<int64_t>::min();
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({minInt64})),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 负 offset, 应失败
+TEST_F(CropInfershape, crop_infershape_negative_offset_reject)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({-1})),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 空裁剪: size=0, offset+size=x 恰好合法, 应成功
+TEST_F(CropInfershape, crop_infershape_empty_crop_success)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{0}, {0}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {0},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// axis=3 末维单维裁剪, 应成功
+TEST_F(CropInfershape, crop_infershape_axis_last_dim_crop)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{4, 4, 8, 8}, {4, 4, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{4, 4, 8, 5}, {4, 4, 8, 5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(3)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {4, 4, 8, 5},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// axis 越界 (5 > rank=1), 应失败
+TEST_F(CropInfershape, crop_infershape_axis_oob_reject)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(5)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1})),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 负 axis 归正: axis=-2 -> 2, 应成功
+TEST_F(CropInfershape, crop_infershape_negative_axis_normalize)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{4, 4, 8, 8}, {4, 4, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{4, 4, 5, 5}, {4, 4, 5, 5}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(-2)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {4, 4, 5, 5},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// offsets 长度不匹配 (2 个 offset, 应为 1), 应失败
+TEST_F(CropInfershape, crop_infershape_offsets_len_mismatch_reject)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2})),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// UNKNOWN 维度 + INT64_MAX offset: 应跳过边界校验, 成功
+TEST_F(CropInfershape, crop_infershape_unknown_dim_with_extreme_offset_success)
+{
+    const int64_t maxInt64 = std::numeric_limits<int64_t>::max();
+    gert::InfershapeContextPara infershapeContextPara(
+        "Crop",
+        {
+            {{{-1}, {-1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1}, {-1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::InfershapeContextPara::OpAttr("offsets",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({maxInt64})),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1},
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }

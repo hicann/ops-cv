@@ -120,11 +120,12 @@ static ge::graphStatus ComputeOutputShape(gert::TilingContext* context, const in
         } else {
             // axis 及之后维度：output = size，需校验 offset+size <= x 且 offset >= 0
             yShape[i] = sizeShape[i];
-            OP_CHECK_IF(offsetsArr[i] + sizeShape[i] > xShape[i],
+            OP_CHECK_IF(offsetsArr[i] < 0, OP_LOGE(context, "Crop: dim %d offset=%ld < 0", i, offsetsArr[i]),
+                        return ge::GRAPH_FAILED);
+            // 无溢出等价判断：offset > xDim 单值比较；offset<=xDim 时 xDim-offset 非负无溢出
+            OP_CHECK_IF(offsetsArr[i] > xShape[i] || sizeShape[i] > xShape[i] - offsetsArr[i],
                         OP_LOGE(context, "Crop: dim %d offset=%ld + size=%ld > x=%ld", i, offsetsArr[i], sizeShape[i],
                                 xShape[i]),
-                        return ge::GRAPH_FAILED);
-            OP_CHECK_IF(offsetsArr[i] < 0, OP_LOGE(context, "Crop: dim %d offset=%ld < 0", i, offsetsArr[i]),
                         return ge::GRAPH_FAILED);
         }
     }

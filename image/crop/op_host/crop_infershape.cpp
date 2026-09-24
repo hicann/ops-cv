@@ -60,15 +60,16 @@ static ge::graphStatus ComputeCropOutputShape(gert::InferShapeContext* context, 
             // axis 及之后：output 维度 = size 维度，校验 offset+size<=x 且 offset>=0
             yShape->SetDim(i, sizeDim);
             int64_t offset = (offsetsLen == 1) ? offsetsData[0] : offsetsData[i - static_cast<size_t>(axis)];
-            if (xDim != ge::UNKNOWN_DIM && sizeDim != ge::UNKNOWN_DIM && offset >= 0) {
-                if (offset + sizeDim > xDim) {
-                    OP_LOGE(context, "Crop: dim %zu offset=%ld + size=%ld > x=%ld", i, offset, sizeDim, xDim);
-                    return GRAPH_FAILED;
-                }
-            }
             if (offset < 0) {
                 OP_LOGE(context, "Crop: dim %zu offset=%ld < 0", i, offset);
                 return GRAPH_FAILED;
+            }
+            if (xDim != ge::UNKNOWN_DIM && sizeDim != ge::UNKNOWN_DIM) {
+                // 无溢出等价判断：offset > xDim 单值比较；offset<=xDim 时 xDim-offset 非负无溢出
+                if (offset > xDim || sizeDim > xDim - offset) {
+                    OP_LOGE(context, "Crop: dim %zu offset=%ld + size=%ld > x=%ld", i, offset, sizeDim, xDim);
+                    return GRAPH_FAILED;
+                }
             }
         }
     }

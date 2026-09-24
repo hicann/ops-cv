@@ -16,6 +16,7 @@
  */
 
 #include <iostream>
+#include <limits>
 #include <gtest/gtest.h>
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
@@ -170,4 +171,77 @@ TEST_F(CropTiling, crop_tiling_case2_single_offset)
     EXPECT_EQ(tilingData->tailBlockFactor, 216);
     // baseOffset = 0*300 + 0*100 + 3*10 + 3*1 = 33
     EXPECT_EQ(tilingData->baseOffset, 33);
+}
+
+// 普通越界: 7+2=9 > 8, tiling 应失败
+TEST_F(CropTiling, crop_tiling_ordinary_oob_reject)
+{
+    struct CropCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // size
+        },
+        {
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::TilingContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({7})),
+        },
+        &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo tilingInfo;
+    bool tilingOk = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_FALSE(tilingOk);
+}
+
+// INT64_MAX 溢出: 旧校验 offset+size 溢出被绕过, 应失败
+TEST_F(CropTiling, crop_tiling_offset_size_overflow_should_reject)
+{
+    struct CropCompileInfo {
+    } compileInfo;
+    const int64_t maxInt64 = std::numeric_limits<int64_t>::max();
+    gert::TilingContextPara tilingContextPara(
+        "Crop",
+        {
+            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // size
+        },
+        {
+            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::TilingContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({maxInt64})),
+        },
+        &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo tilingInfo;
+    bool tilingOk = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_FALSE(tilingOk);
+}
+
+// 负 offset 应失败
+TEST_F(CropTiling, crop_tiling_negative_offset_reject)
+{
+    struct CropCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Crop",
+        {
+            {{{8}, {8}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // size
+        },
+        {
+            {{{2}, {2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("axis", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+            gert::TilingContextPara::OpAttr("offsets", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({-1})),
+        },
+        &compileInfo, "Ascend950", 48, 262144, 4096);
+    TilingInfo tilingInfo;
+    bool tilingOk = ExecuteTiling(tilingContextPara, tilingInfo);
+    EXPECT_FALSE(tilingOk);
 }
