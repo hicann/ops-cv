@@ -303,7 +303,7 @@ aclnnStatus aclnnRoiPoolingGradWithArgMax(
 - 确定性计算：
 
   <!-- npu="A3,910b" id7 -->
-  - <term>Atlas A2系列产品、Atlas A3系列产品</term>：aclnnRoiPoolingGradWithArgMax默认确定性实现。
+  - <term>Atlas A2系列产品</term>、<term>Atlas A3系列产品</term>：aclnnRoiPoolingGradWithArgMax默认确定性实现。
   <!-- end id7 -->
   <!-- npu="950" id8 -->
   - <term>Ascend 950PR&950DT系列产品</term>：aclnnRoiPoolingGradWithArgMax默认非确定性实现，不支持开启。
