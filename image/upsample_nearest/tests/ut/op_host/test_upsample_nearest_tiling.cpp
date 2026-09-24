@@ -186,3 +186,79 @@ TEST_F(UpsampleNearestTiling, upsample_nearest2d_tiling_uint8_common)
     std::vector<size_t> expectWorkspaces = {33554432};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_output_size_empty_should_fail)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_output_size_short_should_fail)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleNearestTiling, upsample_nearest2d_output_size_long_should_fail)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 1, 4, 4}, {1, 1, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 1, 8, 8}, {1, 1, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 8})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(UpsampleNearestTiling, upsample_nearest1d_output_size_len2_should_fail)
+{
+    optiling::UpsampleNearestCompileInfo compileInfo = {1};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest",
+        {
+            {{{1, 8, 4}, {1, 8, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{1, 16, 4}, {1, 16, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({16, 16})),
+         gert::TilingContextPara::OpAttr("scales_h", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("scales_w", Ops::Cv::AnyValue::CreateFrom<float>(2)),
+         gert::TilingContextPara::OpAttr("exact_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}

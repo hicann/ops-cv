@@ -15,6 +15,7 @@
 
 #include "register/op_impl_registry.h"
 #include "register/tilingdata_base.h"
+#include "log/log.h"
 #include "tiling/tiling_api.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "upsample_nearest_tiling.h"
@@ -56,6 +57,8 @@ constexpr uint32_t BYTE_LEN_1 = 1;
 
 constexpr uint32_t NHWC_DIM_SIZE = 4;
 constexpr uint32_t NLC_DIM_SIZE = 3;
+constexpr size_t OUTPUT_SIZE_LEN_2D = 2;
+constexpr size_t OUTPUT_SIZE_LEN_1D = 1;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
 constexpr uint32_t COMMON_TILING_KEY = 1000;
 constexpr uint32_t SMALL_CW_TILING_KEY = 1001;
@@ -131,14 +134,26 @@ ge::graphStatus UpsampleNearestTiling::ParseInputAttrs()
         return ge::GRAPH_FAILED;
     }
     auto srcShape = tilingContext->GetInputShape(0);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, srcShape);
     dim = srcShape->GetStorageShape().GetDimNum();
 
     auto inputShape = srcShape->GetOriginShape();
 
     const gert::ContinuousVector* outputSizeAttr = attrs->GetAttrPointer<gert::ContinuousVector>(OUTPUT_SIZE_ATTR);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outputSizeAttr);
+    const size_t outputSizeNum = outputSizeAttr->GetSize();
+    const size_t expectOutputSizeNum = dim == NLC_DIM_SIZE ? OUTPUT_SIZE_LEN_1D : OUTPUT_SIZE_LEN_2D;
+    OP_CHECK_IF(
+        outputSizeNum != expectOutputSizeNum,
+        OP_LOGE(tilingContext->GetNodeName(), "output_size length must be %zu when input dim is %u, but got %zu.",
+                expectOutputSizeNum, static_cast<uint32_t>(dim), outputSizeNum),
+        return ge::GRAPH_FAILED);
     const int64_t* outputSizeArray = reinterpret_cast<const int64_t*>(outputSizeAttr->GetData());
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, outputSizeArray);
 
-    exactMode = *(attrs->GetAttrPointer<bool>(EXACT_ATTR));
+    const bool* exactModeAttr = attrs->GetAttrPointer<bool>(EXACT_ATTR);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, exactModeAttr);
+    exactMode = *exactModeAttr;
 
     for (int8_t i = 0; i < dim; i++) {
         inputShapes[i] = inputShape.GetDim(i);
@@ -146,8 +161,12 @@ ge::graphStatus UpsampleNearestTiling::ParseInputAttrs()
     }
     inputFormat = static_cast<ge::Format>(GetPrimaryFormat(tilingContext->GetInputDesc(0)->GetStorageFormat()));
     if (dim == NHWC_DIM_SIZE) {
-        const float scaleH = *(attrs->GetAttrPointer<float>(SCALE_H_ATTR));
-        const float scaleW = *(attrs->GetAttrPointer<float>(SCALE_W_ATTR));
+        const float* scaleHAttr = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
+        const float* scaleWAttr = attrs->GetAttrPointer<float>(SCALE_W_ATTR);
+        OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scaleHAttr);
+        OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scaleWAttr);
+        const float scaleH = *scaleHAttr;
+        const float scaleW = *scaleWAttr;
         if (inputFormat == ge::Format::FORMAT_NCHW) {
             outputShapes[NCHW_H_INDEX] = outputSizeArray[OUT_H_INDEX];
             outputShapes[NCHW_W_INDEX] = outputSizeArray[OUT_W_INDEX];
@@ -166,7 +185,9 @@ ge::graphStatus UpsampleNearestTiling::ParseInputAttrs()
         outputShapes[NHWC_H_INDEX] = 1;
         outputShapes[NHWC_W_INDEX] = outputSizeArray[OUT_L_INDEX];
         outputShapes[NHWC_C_INDEX] = inputShapes[NLC_C_INDEX];
-        const float scaleL = *(attrs->GetAttrPointer<float>(SCALE_H_ATTR));
+        const float* scaleLAttr = attrs->GetAttrPointer<float>(SCALE_H_ATTR);
+        OP_CHECK_NULL_WITH_CONTEXT(tilingContext, scaleLAttr);
+        const float scaleL = *scaleLAttr;
         realScaleH = 1.0;
         realScaleW = ComputeScaleValue(inputShapes[NHWC_W_INDEX], outputShapes[NHWC_W_INDEX], scaleL);
     } else {

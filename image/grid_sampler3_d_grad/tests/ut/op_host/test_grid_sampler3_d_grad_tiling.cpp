@@ -259,7 +259,7 @@ TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_float32_case9)
     uint64_t expectTilingKey = 1;
     string expectTilingData = "12884901889 68719476752 8589934608 8589934594 1 34359738369 1 6597069766688 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
-    ExecuteTestCase(tilingContextPara, 0, expectTilingKey, expectTilingData, expectWorkspaces);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
 TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_float32_case10)
@@ -281,7 +281,7 @@ TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_float32_case10)
     uint64_t expectTilingKey = 1;
     string expectTilingData = "12884901889 68719476752 8589934595 8589934594 1 34359738369 1 6597069766688 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
-    ExecuteTestCase(tilingContextPara, 0, expectTilingKey, expectTilingData, expectWorkspaces);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
 TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_float32_case11)
@@ -398,4 +398,61 @@ TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_test_used_core_uint3
         EXPECT_EQ(tilingData[12], testCase.expectedPNumPerCore);
         EXPECT_EQ(tilingData[13], testCase.expectedTailPNum);
     }
+}
+
+TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_n_mismatch_should_fail)
+{
+    gert::StorageShape grad = {{3, 8, 8, 8, 3}, {3, 8, 8, 8, 3}};
+    gert::StorageShape x = {{2, 16, 16, 16, 3}, {2, 16, 16, 16, 3}};
+    gert::StorageShape grid = {{2, 8, 8, 8, 3}, {2, 8, 8, 8, 3}};
+    gert::StorageShape dx = {{2, 16, 16, 16, 3}, {2, 16, 16, 16, 3}};
+    gert::StorageShape dgrid = {{2, 8, 8, 8, 3}, {2, 8, 8, 8, 3}};
+    GridSampler3DGradCompileInfo compileInfo = {48, 196608, false};
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler3DGrad",
+        {{grad, ge::DT_FLOAT, ge::FORMAT_ND}, {x, ge::DT_FLOAT, ge::FORMAT_ND}, {grid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{dx, ge::DT_FLOAT, ge::FORMAT_ND}, {dgrid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_c_mismatch_should_fail)
+{
+    gert::StorageShape grad = {{2, 8, 8, 8, 4}, {2, 8, 8, 8, 4}};
+    gert::StorageShape x = {{2, 16, 16, 16, 3}, {2, 16, 16, 16, 3}};
+    gert::StorageShape grid = {{2, 8, 8, 8, 3}, {2, 8, 8, 8, 3}};
+    gert::StorageShape dx = {{2, 16, 16, 16, 3}, {2, 16, 16, 16, 3}};
+    gert::StorageShape dgrid = {{2, 8, 8, 8, 3}, {2, 8, 8, 8, 3}};
+    GridSampler3DGradCompileInfo compileInfo = {48, 196608, false};
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler3DGrad",
+        {{grad, ge::DT_FLOAT, ge::FORMAT_ND}, {x, ge::DT_FLOAT, ge::FORMAT_ND}, {grid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{dx, ge::DT_FLOAT, ge::FORMAT_ND}, {dgrid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(GridSampler3DGradTiling, grid_sampler3_d_grad_tiling_grid_last_dim_not3_should_fail)
+{
+    gert::StorageShape grad = {{2, 8, 8, 8, 3}, {2, 8, 8, 8, 3}};
+    gert::StorageShape x = {{2, 16, 16, 16, 3}, {2, 16, 16, 16, 3}};
+    gert::StorageShape grid = {{2, 8, 8, 8, 2}, {2, 8, 8, 8, 2}};
+    gert::StorageShape dx = {{2, 16, 16, 16, 3}, {2, 16, 16, 16, 3}};
+    gert::StorageShape dgrid = {{2, 8, 8, 8, 2}, {2, 8, 8, 8, 2}};
+    GridSampler3DGradCompileInfo compileInfo = {48, 196608, false};
+    gert::TilingContextPara tilingContextPara(
+        "GridSampler3DGrad",
+        {{grad, ge::DT_FLOAT, ge::FORMAT_ND}, {x, ge::DT_FLOAT, ge::FORMAT_ND}, {grid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{dx, ge::DT_FLOAT, ge::FORMAT_ND}, {dgrid, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<string>("bilinear")),
+         gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<string>("zeros")),
+         gert::TilingContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom<bool>(true))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }

@@ -292,9 +292,6 @@ static ge::graphStatus CheckShapes(gert::TilingContext* tilingContext, InputPara
                                    const gert::StorageShape* gradShape, const gert::StorageShape* xShape,
                                    const gert::StorageShape* gridShape)
 {
-    OP_CHECK_IF((gradShape == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get gradShape Failed."), return false);
-    OP_CHECK_IF((xShape == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get xShape Failed."), return false);
-    OP_CHECK_IF((gridShape == nullptr), OP_LOGE(tilingContext->GetNodeName(), "Get gridShape Failed."), return false);
     if (xShape->GetStorageShape().GetDimNum() != CHECK_DIM_NUM) {
         OP_LOGE(tilingContext->GetNodeName(), "input dim is not 5, please check input");
         return ge::GRAPH_FAILED;
@@ -320,6 +317,32 @@ static ge::graphStatus CheckShapes(gert::TilingContext* tilingContext, InputPara
         OP_LOGE(tilingContext->GetNodeName(), "Please check grad's dims and grid's dims");
         return ge::GRAPH_FAILED;
     }
+
+    // grad、x、grid 的 N 必须一致
+    const uint32_t gradN = gradShape->GetStorageShape().GetDim(DIM_INDEX0);
+    const uint32_t xN = xShape->GetStorageShape().GetDim(DIM_INDEX0);
+    const uint32_t gridN = gridShape->GetStorageShape().GetDim(DIM_INDEX0);
+    if (gradN != xN || gradN != gridN) {
+        OP_LOGE(tilingContext->GetNodeName(),
+                "expect grad, x and grid to have same N, but got grad N(%u), x N(%u), grid N(%u)", gradN, xN, gridN);
+        return ge::GRAPH_FAILED;
+    }
+
+    // grad 与 x 的 C 必须一致，与 GetInputInfo 中 x 的 C 维解析条件保持一致
+    const uint32_t gradC = gradShape->GetStorageShape().GetDim(
+        params.regBase && format == ge::FORMAT_NCDHW ? DIM_INDEX1 : DIM_INDEX4);
+    if (gradC != params.channel) {
+        OP_LOGE(tilingContext->GetNodeName(), "expect grad and x to have same C, but got grad C(%u), x C(%u)", gradC,
+                params.channel);
+        return ge::GRAPH_FAILED;
+    }
+
+    // grid 最后一维必须为 3，表示输入像素位置信息 (x, y, z)
+    const uint32_t gridLastDim = gridShape->GetStorageShape().GetDim(DIM_INDEX4);
+    if (gridLastDim != GRID_LAST_NUM) {
+        OP_LOGE(tilingContext->GetNodeName(), "grid last dim must be 3, but got %u", gridLastDim);
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -329,6 +352,17 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     const gert::StorageShape* gradShape = tilingContext->GetInputShape(GRAD_INPUT_INDEX);
     const gert::StorageShape* xShape = tilingContext->GetInputShape(X_INPUT_INDEX);
     const gert::StorageShape* gridShape = tilingContext->GetInputShape(GRID_INPUT_INDEX);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, gradShape);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, xShape);
+    OP_CHECK_NULL_WITH_CONTEXT(tilingContext, gridShape);
+    OP_CHECK_IF(gradShape->GetStorageShape().GetDimNum() != CHECK_DIM_NUM,
+                OP_LOGE(tilingContext->GetNodeName(), "grad dim is not 5, please check input"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(xShape->GetStorageShape().GetDimNum() != CHECK_DIM_NUM,
+                OP_LOGE(tilingContext->GetNodeName(), "x dim is not 5, please check input"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(gridShape->GetStorageShape().GetDimNum() != CHECK_DIM_NUM,
+                OP_LOGE(tilingContext->GetNodeName(), "grid dim is not 5, please check input"),
+                return ge::GRAPH_FAILED);
 
     auto input = tilingContext->GetInputTensor(DIM_INDEX0);
     auto format = input->GetFormat().GetStorageFormat();
@@ -351,7 +385,8 @@ static ge::graphStatus GetInputInfo(gert::TilingContext* tilingContext, InputPar
     params.gridH = gridShape->GetStorageShape().GetDim(DIM_INDEX2);
     params.gridW = gridShape->GetStorageShape().GetDim(DIM_INDEX3);
 
-    CheckShapes(tilingContext, params, gradShape, xShape, gridShape);
+    OP_CHECK_IF(CheckShapes(tilingContext, params, gradShape, xShape, gridShape) != ge::GRAPH_SUCCESS,
+                OP_LOGE(tilingContext->GetNodeName(), "Failed to check input shapes."), return ge::GRAPH_FAILED);
 
     const gert::RuntimeAttrs* attrs = tilingContext->GetAttrs();
     const char* pInterpolationMode = attrs->GetAttrPointer<char>(static_cast<std::uint32_t>(INTERPOLATION_MODE_INDEX));

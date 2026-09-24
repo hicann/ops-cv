@@ -51,10 +51,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test01)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
@@ -112,10 +112,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test02)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
@@ -173,10 +173,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test03)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
@@ -234,10 +234,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test04)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
@@ -295,10 +295,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test05)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
@@ -356,10 +356,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test06)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
@@ -417,10 +417,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test07)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
@@ -478,10 +478,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test08)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
@@ -539,10 +539,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test09)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
@@ -600,10 +600,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test10)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 1}, {2, 1, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 1, 1, 2, 2}, {2, 1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 1}, {2, 2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("bilinear")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("zeros")),
@@ -661,10 +661,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test11)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 800}, {2, 1, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 800}, {2, 1, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 800}, {2, 2, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 800}, {2, 2, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 800, 1, 2, 2}, {2, 800, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 800}, {2, 2, 2, 2, 800}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("border")),
@@ -722,10 +722,10 @@ TEST_F(grid_sampler3_d_grad_test, test_case_fp32_test12)
     Tiling4GridSampler3DGradCompileInfo compileInfo = {48, 196608};
     gert::TilingContextPara tilingContextPara(
         "GridSampler3DGrad",
-        {{{{2, 1, 2, 2, 500}, {2, 1, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
-         {{{2, 1, 2, 2, 500}, {2, 1, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 500}, {2, 2, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2, 2, 2, 2, 500}, {2, 2, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
-        {{{{2, 500, 1, 2, 2}, {2, 500, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        {{{{2, 2, 2, 2, 500}, {2, 2, 2, 2, 500}}, ge::DT_FLOAT, ge::FORMAT_ND},
          {{{2, 2, 2, 2, 3}, {2, 2, 2, 2, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}},
         {gert::TilingContextPara::OpAttr("interpolation_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("nearest")),
          gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("reflection")),
