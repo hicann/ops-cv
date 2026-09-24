@@ -136,3 +136,33 @@ TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_006)
         &compileInfo);
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }
+
+// input_size 的 N 维与 grad_output 的 N 维不一致,应返回 GRAPH_FAILED
+TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_007)
+{
+    UpsampleNearest3dGradCompileInfo compileInfo = {48};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest3dGrad", {{{{2, 3, 8, 8, 8}, {2, 3, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{4, 3, 4, 4, 4}, {4, 3, 4, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({4, 3, 4, 4, 4})),
+         gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 8})),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0, 0.0}))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// input_size 的 C 维与 grad_output 的 C 维不一致,应返回 GRAPH_FAILED
+TEST_F(UpsampleNearest3dGradTiling, upsample_nearest3d_grad_tiling_008)
+{
+    UpsampleNearest3dGradCompileInfo compileInfo = {48};
+    gert::TilingContextPara tilingContextPara(
+        "UpsampleNearest3dGrad", {{{{2, 3, 8, 8, 8}, {2, 3, 8, 8, 8}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{2, 5, 4, 4, 4}, {2, 5, 4, 4, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("input_size",
+                                         Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({2, 5, 4, 4, 4})),
+         gert::TilingContextPara::OpAttr("output_size", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({8, 8, 8})),
+         gert::TilingContextPara::OpAttr("scales", Ops::Cv::AnyValue::CreateFrom<std::vector<float>>({0.0, 0.0, 0.0}))},
+        &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}

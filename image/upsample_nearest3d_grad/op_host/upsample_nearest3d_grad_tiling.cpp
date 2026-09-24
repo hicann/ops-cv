@@ -67,7 +67,7 @@ private:
     inline float ComputeScaleValue(int64_t inSize, int64_t outSize, const float scale) const;
     inline bool GetNeedResize(int64_t inSize, int64_t outSize, const float scale) const;
     void GetWorkSpace(int64_t neededCoreNum);
-    void GetShapes();
+    ge::graphStatus GetShapes();
     void GetSlideSize();
     uint8_t GetDataTypeVal() const;
     uint8_t GetDataTypeSize() const;
@@ -206,7 +206,9 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
     auto srcShape = tilingContext->GetInputShape(0);
     gradOutputShape = srcShape->GetOriginShape();
 
-    GetShapes();
+    if (GetShapes() != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
     if (CheckScales() == false) {
         return ge::GRAPH_FAILED;
     }
@@ -225,9 +227,21 @@ ge::graphStatus UpsampleNearest3dGradTiling::RunBigKernelTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-void UpsampleNearest3dGradTiling::GetShapes()
+ge::graphStatus UpsampleNearest3dGradTiling::GetShapes()
 {
     const int64_t* inputSizeArray = reinterpret_cast<const int64_t*>(inputSizeAttr->GetData());
+
+    // grad_output 的 N/C 维须与 input_size 一致
+    OP_CHECK_IF(
+        inputSizeArray[0] != gradOutputShape.GetDim(0),
+        OP_LOGE(tilingContext->GetNodeName(), "attr::input_size[0](get %ld) != input::grad_output N dim(get %ld).",
+                inputSizeArray[0], gradOutputShape.GetDim(0)),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        inputSizeArray[1] != gradOutputShape.GetDim(1),
+        OP_LOGE(tilingContext->GetNodeName(), "attr::input_size[1](get %ld) != input::grad_output C dim(get %ld).",
+                inputSizeArray[1], gradOutputShape.GetDim(1)),
+        return ge::GRAPH_FAILED);
 
     batches = inputSizeArray[0] * inputSizeArray[1];
     for (int8_t i = 0; i < DIM; i++) {
@@ -237,6 +251,7 @@ void UpsampleNearest3dGradTiling::GetShapes()
     tilingData.set_batches(batches);
     tilingData.set_gradInputShapes(gradInputShapes);
     tilingData.set_gradOutputShapes(gradOutputShapes);
+    return ge::GRAPH_SUCCESS;
 }
 
 bool UpsampleNearest3dGradTiling::CheckScales() const
