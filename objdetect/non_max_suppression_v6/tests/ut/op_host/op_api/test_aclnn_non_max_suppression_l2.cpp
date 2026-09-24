@@ -83,6 +83,76 @@ TEST_F(l2_non_max_suppression_v6_test, case_boxes_nullptr_3)
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
 }
 
+TEST_F(l2_non_max_suppression_v6_test, case_iou_threshold_nullptr)
+{
+    auto boxes = TensorDesc({1, 6, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto scores = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto maxOutputBoxesPerClass = IntArrayDesc(vector<int64_t>{1});
+    auto scoreThreshold = FloatArrayDesc(vector<float>{1});
+    auto out = TensorDesc({3, 3}, ACL_INT64, ACL_FORMAT_ND);
+    auto centerPointBox = 0;
+
+    auto ut = OP_API_UT(aclnnNonMaxSuppression,
+                        INPUT(boxes, scores, maxOutputBoxesPerClass, nullptr, scoreThreshold, centerPointBox),
+                        OUTPUT(out));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
+}
+
+TEST_F(l2_non_max_suppression_v6_test, case_score_threshold_nullptr)
+{
+    auto boxes = TensorDesc({1, 6, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto scores = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto maxOutputBoxesPerClass = IntArrayDesc(vector<int64_t>{1});
+    auto iouThreshold = FloatArrayDesc(vector<float>{1});
+    auto out = TensorDesc({3, 3}, ACL_INT64, ACL_FORMAT_ND);
+    auto centerPointBox = 0;
+
+    auto ut = OP_API_UT(aclnnNonMaxSuppression,
+                        INPUT(boxes, scores, maxOutputBoxesPerClass, iouThreshold, nullptr, centerPointBox),
+                        OUTPUT(out));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_NULLPTR);
+}
+
+TEST_F(l2_non_max_suppression_v6_test, case_iou_threshold_empty)
+{
+    auto boxes = TensorDesc({1, 6, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto scores = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto maxOutputBoxesPerClass = IntArrayDesc(vector<int64_t>{1});
+    auto iouThreshold = FloatArrayDesc(vector<float>{});
+    auto scoreThreshold = FloatArrayDesc(vector<float>{1});
+    auto out = TensorDesc({3, 3}, ACL_INT64, ACL_FORMAT_ND);
+    auto centerPointBox = 0;
+
+    auto ut = OP_API_UT(aclnnNonMaxSuppression,
+                        INPUT(boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox),
+                        OUTPUT(out));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_non_max_suppression_v6_test, case_score_threshold_empty)
+{
+    auto boxes = TensorDesc({1, 6, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto scores = TensorDesc({1, 1, 6}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto maxOutputBoxesPerClass = IntArrayDesc(vector<int64_t>{1});
+    auto iouThreshold = FloatArrayDesc(vector<float>{1});
+    auto scoreThreshold = FloatArrayDesc(vector<float>{});
+    auto out = TensorDesc({3, 3}, ACL_INT64, ACL_FORMAT_ND);
+    auto centerPointBox = 0;
+
+    auto ut = OP_API_UT(aclnnNonMaxSuppression,
+                        INPUT(boxes, scores, maxOutputBoxesPerClass, iouThreshold, scoreThreshold, centerPointBox),
+                        OUTPUT(out));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
 // 检查输入和输出的 type是否在算子的支持列表内
 TEST_F(l2_non_max_suppression_v6_test, case_invalid_type_1)
 {
