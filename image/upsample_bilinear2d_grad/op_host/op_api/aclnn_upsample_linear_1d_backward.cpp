@@ -92,8 +92,7 @@ static bool CheckDtypeValid(const aclTensor* gradOut, const aclTensor* out, cons
     }
     if (IsRegBase(curArch)) {
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST_REGBASE, return false);
-    }
-    if (CheckIOSizesIsSame(gradOut, inputSize)) {
+    } else {
         OP_CHECK_DTYPE_NOT_SUPPORT(gradOut, DTYPE_SUPPORT_LIST, return false);
     }
     OP_CHECK_DTYPE_NOT_MATCH(out, gradOut->GetDataType(), return false);
@@ -140,11 +139,13 @@ static bool CheckShapeValid(const aclTensor* gradOut, const aclIntArray* outputS
     return true;
 }
 
-static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize)
+static bool CheckShape(const aclTensor* gradOut, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                       const aclTensor* out)
 {
     size_t outputSizeNum = outputSize->Size();
     size_t inputSizeNum = inputSize->Size();
     OP_CHECK_WRONG_DIMENSION(gradOut, DIM_LIMIT, return false);
+    OP_CHECK_WRONG_DIMENSION(out, DIM_LIMIT, return false);
     OP_CHECK(outputSizeNum == EXPECT_SIZE,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected output_size to be 1, but got %zu", outputSizeNum),
              return false);
@@ -236,7 +237,7 @@ static aclnnStatus CheckParams(const aclTensor* gradOut, const aclIntArray* outp
     if (IsRegBase(curArch)) {
         CHECK_RET(CheckShapeValid(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_INVALID);
     } else {
-        CHECK_RET(CheckShape(gradOut, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
+        CHECK_RET(CheckShape(gradOut, outputSize, inputSize, out), ACLNN_ERR_PARAM_INVALID);
     }
 
     // 3. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
