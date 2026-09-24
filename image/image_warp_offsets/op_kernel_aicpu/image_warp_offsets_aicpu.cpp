@@ -70,16 +70,17 @@ uint32_t ImageWarpOffsetsCpuKernel::DoCompute(const CpuKernelContext& ctx)
                 int64_t out_index = 0;
                 for (int64_t i_h = start; i_h < end; ++i_h) {
                     for (int64_t i_w = 0; i_w < output_shape[3]; ++i_w) {
-                        if (input1(i_n, i_i, i_h, i_w) >= static_cast<TIndex>(in_hxwxc)) {
+                        const TIndex index_value = input1(i_n, i_i, i_h, i_w);
+                        if ((index_value < 0) || (index_value >= in_hxwxc)) {
                             work_ret.store(KERNEL_STATUS_PARAM_INVALID, std::memory_order_relaxed);
                             string err_msg = ConcatString(
                                 kImageWarpOffsets, " op input[1] value[", i_n, "][", i_i, "][", i_h, "][", i_w, "]=[",
-                                input1(i_n, i_i, i_h, i_w), "] should be less than [", in_hxwxc, "], image size is [",
+                                index_value, "] should be in range [0, ", in_hxwxc, "), image size is [",
                                 input0_shape[1], " x ", input0_shape[2], " x ", input0_shape[3], "]");
                             KERNEL_LOG_ERROR("%s", err_msg.c_str());
                             return;
                         }
-                        int64_t in_index = static_cast<int64_t>(input1(i_n, i_i, i_h, i_w));
+                        int64_t in_index = static_cast<int64_t>(index_value);
                         auto in = input0_data + input_offset + in_index;
                         auto out = output_data + output_offset + out_index;
                         out[0] = in[0];
