@@ -85,6 +85,14 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(CpuKernelContext& ct
                        "The input1's dims=[%d] must be 1-dimensional", input1_shape->GetDims())
     KERNEL_CHECK_FALSE((input1_shape->NumElements() == 2), KERNEL_STATUS_PARAM_INVALID,
                        "The number of elements of input1 must be 2, but got %ld", input1_shape->NumElements())
+    KERNEL_CHECK_FALSE((input2_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
+                       "The input2's dims=[%d] must be 1-dimensional", input2_shape->GetDims())
+    KERNEL_CHECK_FALSE((input2_shape->NumElements() == 2), KERNEL_STATUS_PARAM_INVALID,
+                       "The number of elements of input2 must be 2, but got %ld", input2_shape->NumElements())
+    KERNEL_CHECK_FALSE((input3_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
+                       "The input3's dims=[%d] must be 1-dimensional", input3_shape->GetDims())
+    KERNEL_CHECK_FALSE((input3_shape->NumElements() == 2), KERNEL_STATUS_PARAM_INVALID,
+                       "The number of elements of input3 must be 2, but got %ld", input3_shape->NumElements())
 
     DataType input1_type = ctx.Input(1)->GetDataType();
     DataType input2_type = ctx.Input(2)->GetDataType();

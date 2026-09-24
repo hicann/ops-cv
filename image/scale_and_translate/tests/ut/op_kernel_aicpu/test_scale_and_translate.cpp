@@ -67,6 +67,35 @@ void SetCheckerboardImageInput(int64_t batch_size, int64_t num_row_squares, int6
         .Attr("kernel_type", std::string(kernel_type_str))                    \
         .Attr("antialias", (bool)(antialias));
 
+namespace {
+void RunParameterShapeValidationCase(const vector<int64_t>& scale_shape, const vector<int64_t>& translation_shape)
+{
+    vector<DataType> data_types = {DT_FLOAT, DT_INT32, DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<vector<int64_t>> shapes = {{1, 2, 3, 1}, {2}, scale_shape, translation_shape, {1, 4, 6, 1}};
+    float image_data[6] = {138.568253f, 70.984192f, 108.251984f, 215.417908f, 1.203308f, 31.000126f};
+    int32_t size_data[2] = {4, 6};
+    float scale_data[2] = {1.0f, 1.0f};
+    float translate_data[2] = {0.0f, 0.0f};
+    float output[24] = {0};
+    vector<void*> datas = {(void*)image_data, (void*)size_data, (void*)scale_data, (void*)translate_data,
+                           (void*)output};
+    CREATE_NODEDEF(shapes, data_types, datas, "box", true);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+} // namespace
+
+TEST_F(TEST_SCALEANDTRANSLATE_UT, SCALE_RANK_FAIL) { RunParameterShapeValidationCase({1, 2}, {2}); }
+
+TEST_F(TEST_SCALEANDTRANSLATE_UT, SCALE_ELEMENT_COUNT_FAIL) { RunParameterShapeValidationCase({1}, {2}); }
+
+TEST_F(TEST_SCALEANDTRANSLATE_UT, EMPTY_SCALE_FAIL) { RunParameterShapeValidationCase({0}, {2}); }
+
+TEST_F(TEST_SCALEANDTRANSLATE_UT, TRANSLATION_RANK_FAIL) { RunParameterShapeValidationCase({2}, {1, 2}); }
+
+TEST_F(TEST_SCALEANDTRANSLATE_UT, TRANSLATION_ELEMENT_COUNT_FAIL) { RunParameterShapeValidationCase({2}, {1}); }
+
+TEST_F(TEST_SCALEANDTRANSLATE_UT, EMPTY_TRANSLATION_FAIL) { RunParameterShapeValidationCase({2}, {0}); }
+
 TEST_F(TEST_SCALEANDTRANSLATE_UT, DATA_TYPE_FLOAT_BOX_SUCC)
 {
     vector<DataType> data_types = {DT_FLOAT, DT_INT32, DT_FLOAT, DT_FLOAT, DT_FLOAT};
