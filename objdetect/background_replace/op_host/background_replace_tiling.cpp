@@ -34,7 +34,13 @@ static ge::graphStatus TilingBackgroundReplace(gert::TilingContext* context)
 {
     TilingDataBackgroundReplace tiling;
     auto tensorBkg = context->GetInputTensor(0);
+    auto tensorSrc = context->GetInputTensor(1);
     auto tensorMask = context->GetInputTensor(2);
+    auto outDesc = context->GetOutputDesc(0);
+    if (tensorBkg == nullptr || tensorSrc == nullptr || tensorMask == nullptr || outDesc == nullptr) {
+        OP_LOGE("BackgroundReplace", "bkg, src, mask or out tensor is null.");
+        return ge::GRAPH_FAILED;
+    }
     int64_t maskSize = tensorMask->GetShapeSize();
     int64_t bkgSize = tensorBkg->GetShapeSize();
     if (maskSize < 0 || bkgSize < 0 || maskSize > static_cast<int64_t>(std::numeric_limits<uint32_t>::max())) {
@@ -42,6 +48,10 @@ static ge::graphStatus TilingBackgroundReplace(gert::TilingContext* context)
         return ge::GRAPH_FAILED;
     }
     auto bkgDataType = tensorBkg->GetDataType();
+    if (tensorSrc->GetDataType() != bkgDataType || outDesc->GetDataType() != bkgDataType) {
+        OP_LOGE("BackgroundReplace", "bkg, src and out dtype must be the same.");
+        return ge::GRAPH_FAILED;
+    }
     uint64_t tiling_key = 0;
     if (maskSize == bkgSize && bkgDataType == ge::DT_FLOAT16) {
         tiling_key = TILING_KEY_HALF_C1;

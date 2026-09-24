@@ -185,3 +185,53 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_size_overflow_offset_r
     auto para = MakeBackgroundReplaceTilingPara(65536, 65537, 1, 65536, 65537, 1, ge::DT_FLOAT16);
     ExecuteTestCase(para, ge::GRAPH_FAILED);
 }
+
+static gert::TilingContextPara MakeBackgroundReplaceTilingParaDtypes(int64_t bh, int64_t bw, int64_t bc, int64_t mh,
+                                                                     int64_t mw, int64_t mc, ge::DataType bkgDt,
+                                                                     ge::DataType srcDt, ge::DataType maskDt,
+                                                                     ge::DataType outDt)
+{
+    static BackgroundReplaceCompileInfo compileInfo = {40, 196608};
+    gert::StorageShape bkgShape = {{bh, bw, bc}, {bh, bw, bc}};
+    gert::StorageShape srcShape = {{bh, bw, bc}, {bh, bw, bc}};
+    gert::StorageShape maskShape = {{mh, mw, mc}, {mh, mw, mc}};
+    gert::StorageShape outShape = {{bh, bw, bc}, {bh, bw, bc}};
+    return gert::TilingContextPara(
+        "BackgroundReplace",
+        {{bkgShape, bkgDt, ge::FORMAT_ND}, {srcShape, srcDt, ge::FORMAT_ND}, {maskShape, maskDt, ge::FORMAT_ND}},
+        {{outShape, outDt, ge::FORMAT_ND}}, {}, &compileInfo);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_dtype_contract_matching_is_accepted)
+{
+    auto para = MakeBackgroundReplaceTilingParaDtypes(4, 2, 3, 4, 2, 1, ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16,
+                                                      ge::DT_FLOAT16);
+    uint64_t expectTilingKey = 3;
+    string expectTilingData = "8 ";
+    std::vector<size_t> expectWorkspaces = {4294967295};
+    ExecuteTestCase(para, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_dtype_contract_uint8_c3_is_accepted)
+{
+    auto para = MakeBackgroundReplaceTilingParaDtypes(4, 2, 3, 4, 2, 1, ge::DT_UINT8, ge::DT_UINT8, ge::DT_UINT8,
+                                                      ge::DT_UINT8);
+    uint64_t expectTilingKey = 4;
+    string expectTilingData = "8 ";
+    std::vector<size_t> expectWorkspaces = {4294967295};
+    ExecuteTestCase(para, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_dtype_contract_rejects_src_mismatch)
+{
+    auto para = MakeBackgroundReplaceTilingParaDtypes(4, 2, 3, 4, 2, 1, ge::DT_FLOAT16, ge::DT_UINT8, ge::DT_FLOAT16,
+                                                      ge::DT_FLOAT16);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_dtype_contract_rejects_out_mismatch)
+{
+    auto para = MakeBackgroundReplaceTilingParaDtypes(4, 2, 3, 4, 2, 1, ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16,
+                                                      ge::DT_UINT8);
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
