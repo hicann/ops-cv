@@ -45,9 +45,11 @@ static constexpr size_t DIM_THREE = 3;
 static constexpr size_t EXPECT_INPUT_SIZE = 4;
 static constexpr size_t EXPECT_OUTPUT_SIZE = 2;
 
-static bool CheckNotNull(const aclTensor* gradOutput, const aclIntArray* inputSize, const aclTensor* out)
+static bool CheckNotNull(const aclTensor* gradOutput, const aclIntArray* outputSize, const aclIntArray* inputSize,
+                         const aclTensor* out)
 {
     OP_CHECK_NULL(gradOutput, return false);
+    OP_CHECK_NULL(outputSize, return false);
     OP_CHECK_NULL(inputSize, return false);
     OP_CHECK_NULL(out, return false);
     return true;
@@ -159,7 +161,7 @@ static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclIntArray* o
                                double scalesH, double scalesW, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
-    CHECK_RET(CheckNotNull(gradOutput, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
+    CHECK_RET(CheckNotNull(gradOutput, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查输入的数据类型是否在API支持的数据类型范围之内
     CHECK_RET(CheckDtypeValid(gradOutput, out), ACLNN_ERR_PARAM_INVALID);
