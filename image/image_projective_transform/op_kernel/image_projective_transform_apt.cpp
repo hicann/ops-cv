@@ -25,34 +25,30 @@ __global__ __aicore__ void image_projective_transform(GM_ADDR images, GM_ADDR tr
     REGISTER_TILING_DEFAULT(ImageProjectiveTransformTilingData);
     GET_TILING_DATA_WITH_STRUCT(ImageProjectiveTransformTilingData, tilingData, tiling);
 
-    // Use tiling data as primary source (host-side tiling validates
-    // output_shape has >= 2 elements before storing hOut/wOut).
-    // Only read from GM when tiling data values are non-positive,
-    // which indicates the host-side could not resolve output_shape.
+    // The host side resolves and validates output_shape before writing tiling data.
+    // Empty output tensors launch a no-op block and must not fall back to input size.
+    if (tilingData.totalPixels == 0) {
+        return;
+    }
+
     int32_t actualHOut = tilingData.hOut;
     int32_t actualWOut = tilingData.wOut;
-    if (actualHOut <= 0 || actualWOut <= 0)
-    {
-        if (output_shape != nullptr)
-        {
+    if (actualHOut <= 0 || actualWOut <= 0) {
+        if (output_shape != nullptr) {
             __gm__ int32_t* outputShapeGm = (__gm__ int32_t*)output_shape;
             actualHOut = outputShapeGm[0];
             actualWOut = outputShapeGm[1];
         }
-        if (actualHOut <= 0 || actualWOut <= 0)
-        {
+        if (actualHOut <= 0 || actualWOut <= 0) {
             actualHOut = tilingData.hIn;
             actualWOut = tilingData.wIn;
         }
     }
 
-    if constexpr (interpMode == IPT_TPL_BILINEAR)
-    {
+    if constexpr (interpMode == IPT_TPL_BILINEAR) {
         NsImageProjectiveTransform::Process<DTYPE_IMAGES, IPT_TPL_BILINEAR>(images, transforms, transformed_images,
                                                                             &tilingData, actualHOut, actualWOut);
-    }
-    else
-    {
+    } else {
         NsImageProjectiveTransform::Process<DTYPE_IMAGES, IPT_TPL_NEAREST>(images, transforms, transformed_images,
                                                                            &tilingData, actualHOut, actualWOut);
     }

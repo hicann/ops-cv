@@ -73,6 +73,38 @@ TEST_F(ImageProjectiveTransformInfershape, output_shape_const_zero_preserves_emp
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+TEST_F(ImageProjectiveTransformInfershape, output_shape_const_two_zero_preserves_empty_dimension)
+{
+    int64_t N = 2;
+    int64_t HIn = 4;
+    int64_t WIn = 5;
+    int64_t C = 3;
+    std::vector<int32_t> outputShapeData = {2, 0};
+    gert::InfershapeContextPara infershapeContextPara(
+        "ImageProjectiveTransform",
+        {{{{N, HIn, WIn, C}, {N, HIn, WIn, C}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+         {{{N, 8}, {N, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, outputShapeData.data()}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_NHWC}});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, {{N, 2, 0, C}});
+}
+
+TEST_F(ImageProjectiveTransformInfershape, output_shape_const_negative_is_rejected)
+{
+    int64_t N = 2;
+    int64_t HIn = 4;
+    int64_t WIn = 5;
+    int64_t C = 3;
+    std::vector<int32_t> outputShapeData = {-1, 3};
+    gert::InfershapeContextPara infershapeContextPara(
+        "ImageProjectiveTransform",
+        {{{{N, HIn, WIn, C}, {N, HIn, WIn, C}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+         {{{N, 8}, {N, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, outputShapeData.data()}},
+        {{{{}, {}}, ge::DT_FLOAT, ge::FORMAT_NHWC}});
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
 TEST_F(ImageProjectiveTransformInfershape, dynamic_batch_dim)
 {
     int64_t HIn = 4;

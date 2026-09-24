@@ -66,7 +66,7 @@ static ge::graphStatus CheckInputDtypes(gert::TilingContext* context)
 }
 
 // Validate that transforms is 2-D (N, 8) with N matching images batch, and
-// output_shape is 1-D with at least 2 elements. infershape performs the same
+// output_shape is 1-D with exactly 2 elements. infershape performs the same
 // checks but may not run in all graph modes; tiling is the guaranteed gate.
 // imagesN is passed as int64_t to avoid truncating huge batch sizes (>INT32_MAX)
 // that would silently skip the batch-equality check via int32_t overflow.
@@ -160,7 +160,8 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
     return ge::GRAPH_SUCCESS;
 }
 
-static void ResolveOutputShape(gert::TilingContext* context, int32_t HIn, int32_t WIn, int32_t& HOut, int32_t& WOut)
+static ge::graphStatus ResolveOutputShape(gert::TilingContext* context, int32_t HIn, int32_t WIn, int32_t& HOut,
+                                          int32_t& WOut)
 {
     const auto* outputShapeTensor = context->GetInputTensor(2);
     if (outputShapeTensor != nullptr) {
@@ -168,28 +169,34 @@ static void ResolveOutputShape(gert::TilingContext* context, int32_t HIn, int32_
         if (outputShapeData != nullptr && outputShapeTensor->GetShapeSize() >= 2) {
             HOut = outputShapeData[0];
             WOut = outputShapeData[1];
+            if (HOut < 0 || WOut < 0) {
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "output_shape",
+                    ("[" + std::to_string(HOut) + ", " + std::to_string(WOut) + "]").c_str(),
+                    "output_shape values must be non-negative");
+                return ge::GRAPH_FAILED;
+            }
+            return ge::GRAPH_SUCCESS;
         }
     }
 
-    if (HOut <= 0 || WOut <= 0) {
-        const auto* outShape = context->GetOutputShape(0);
-        if (outShape != nullptr) {
-            auto outStorageShape = outShape->GetStorageShape();
-            if (outStorageShape.GetDimNum() >= 3) {
-                int64_t dim1 = outStorageShape.GetDim(1);
-                int64_t dim2 = outStorageShape.GetDim(2);
-                if (dim1 > 0 && dim2 > 0) {
-                    HOut = static_cast<int32_t>(dim1);
-                    WOut = static_cast<int32_t>(dim2);
-                }
+    const auto* outShape = context->GetOutputShape(0);
+    if (outShape != nullptr) {
+        auto outStorageShape = outShape->GetStorageShape();
+        if (outStorageShape.GetDimNum() >= 3) {
+            int64_t dim1 = outStorageShape.GetDim(1);
+            int64_t dim2 = outStorageShape.GetDim(2);
+            if (dim1 >= 0 && dim2 >= 0) {
+                HOut = static_cast<int32_t>(dim1);
+                WOut = static_cast<int32_t>(dim2);
+                return ge::GRAPH_SUCCESS;
             }
         }
     }
 
-    if (HOut <= 0 || WOut <= 0) {
-        HOut = HIn;
-        WOut = WIn;
-    }
+    HOut = HIn;
+    WOut = WIn;
+    return ge::GRAPH_SUCCESS;
 }
 
 static int32_t ParseInterpMode(gert::TilingContext* context)
@@ -313,7 +320,9 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
 
     int32_t HOut = 0;
     int32_t WOut = 0;
-    ResolveOutputShape(context, HIn, WIn, HOut, WOut);
+    if (ResolveOutputShape(context, HIn, WIn, HOut, WOut) != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
 
     int32_t interpMode = ParseInterpMode(context);
 
@@ -322,14 +331,15 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
 
     int32_t needCoreNum = ComputeNeedCoreNum(totalPixels, coreNum);
 
-    if (totalPixels == 0) {
-        context->SetBlockDim(1);
-        return ge::GRAPH_SUCCESS;
-    }
-
     if (PopulateTilingData(context, needCoreNum, totalPixels, spatialSize, N, HIn, WIn, HOut, WOut, C) !=
         ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
+    }
+
+    if (totalPixels == 0) {
+        context->SetBlockDim(1);
+        context->SetTilingKey(GET_TPL_TILING_KEY(static_cast<uint64_t>(interpMode)));
+        return ge::GRAPH_SUCCESS;
     }
 
     context->SetBlockDim(needCoreNum);

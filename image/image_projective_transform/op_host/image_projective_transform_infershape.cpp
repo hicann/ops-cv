@@ -78,6 +78,19 @@ static ge::graphStatus ValidateOutputShape(gert::InferShapeContext* context)
                                               "output_shape must have exactly 2 elements [H, W]");
         return GRAPH_FAILED;
     }
+
+    const gert::Tensor* outputShapeTensor = context->GetInputTensor(IDX_OUTPUT_SHAPE);
+    if (outputShapeTensor != nullptr) {
+        const int32_t* outputShapeData = outputShapeTensor->GetData<int32_t>();
+        if (outputShapeData != nullptr && outputShapeTensor->GetShapeSize() >= OUTPUT_SHAPE_SIZE &&
+            (outputShapeData[0] < 0 || outputShapeData[1] < 0)) {
+            const std::string outputShapeValue = "[" + std::to_string(outputShapeData[0]) + ", " +
+                                                 std::to_string(outputShapeData[1]) + "]";
+            OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "output_shape", outputShapeValue.c_str(),
+                                                  "output_shape values must be non-negative");
+            return GRAPH_FAILED;
+        }
+    }
     return GRAPH_SUCCESS;
 }
 

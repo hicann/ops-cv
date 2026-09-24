@@ -168,3 +168,66 @@ TEST_F(ImageProjectiveTransformTiling, image_projective_transform_tiling_test_in
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey,
                     "1 16 17179869185 17179869188 12884901892 16 ", expectWorkspaces);
 }
+
+namespace {
+
+gert::TilingContextPara MakeOutputShapeContractCase(const std::vector<int32_t>& outputShapeData,
+                                                    const std::vector<int64_t>& outputShape)
+{
+    static ImageProjectiveTransformCompileInfo compileInfo = {};
+    const int64_t N = 1;
+    const int64_t HIn = 4;
+    const int64_t WIn = 4;
+    const int64_t C = 3;
+    return gert::TilingContextPara(
+        "ImageProjectiveTransform",
+        {{{{N, HIn, WIn, C}, {N, HIn, WIn, C}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+         {{{N, 8}, {N, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, const_cast<int32_t*>(outputShapeData.data())}},
+        {{{{outputShape[0], outputShape[1], outputShape[2], outputShape[3]},
+           {outputShape[0], outputShape[1], outputShape[2], outputShape[3]}},
+          ge::DT_FLOAT,
+          ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("interpolation", Ops::Cv::AnyValue::CreateFrom<string>("BILINEAR")),
+         gert::TilingContextPara::OpAttr("fill_mode", Ops::Cv::AnyValue::CreateFrom<string>("CONSTANT"))},
+        &compileInfo, "Ascend950");
+}
+
+} // namespace
+
+TEST_F(ImageProjectiveTransformTiling, output_shape_zero_preserves_empty_output)
+{
+    std::vector<int32_t> outputShapeData = {0, 3};
+    auto para = MakeOutputShapeContractCase(outputShapeData, {1, 0, 3, 3});
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    ASSERT_EQ(info.blockNum, 1);
+    ASSERT_NE(info.tilingData, nullptr);
+    const auto* data = reinterpret_cast<const ImageProjectiveTransformTilingData*>(info.tilingData.get());
+    EXPECT_EQ(data->hOut, 0);
+    EXPECT_EQ(data->wOut, 3);
+    EXPECT_EQ(data->totalPixels, 0);
+    EXPECT_EQ(data->spatialSize, 0);
+}
+
+TEST_F(ImageProjectiveTransformTiling, output_shape_width_zero_preserves_empty_output)
+{
+    std::vector<int32_t> outputShapeData = {2, 0};
+    auto para = MakeOutputShapeContractCase(outputShapeData, {1, 2, 0, 3});
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(para, info));
+    ASSERT_EQ(info.blockNum, 1);
+    ASSERT_NE(info.tilingData, nullptr);
+    const auto* data = reinterpret_cast<const ImageProjectiveTransformTilingData*>(info.tilingData.get());
+    EXPECT_EQ(data->hOut, 2);
+    EXPECT_EQ(data->wOut, 0);
+    EXPECT_EQ(data->totalPixels, 0);
+    EXPECT_EQ(data->spatialSize, 0);
+}
+
+TEST_F(ImageProjectiveTransformTiling, output_shape_negative_is_rejected)
+{
+    std::vector<int32_t> outputShapeData = {-1, 3};
+    auto para = MakeOutputShapeContractCase(outputShapeData, {1, -1, 3, 3});
+    ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
