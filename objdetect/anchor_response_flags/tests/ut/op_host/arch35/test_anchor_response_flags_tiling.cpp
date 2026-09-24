@@ -106,3 +106,82 @@ TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_float16)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Test case 3: featmap_size with negative element, must be rejected before int32 narrowing
+TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_negative_featmap_size)
+{
+    struct AnchorResponseFlagsCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        gert::TilingContextPara::OpAttr("featmap_size", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{-1, 60})),
+        gert::TilingContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::TilingContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::TilingContextPara tilingContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{32400}, {32400}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output
+        },
+        attrs, &compileInfo,
+        "Ascend950", // socVersion
+        48,          // number of cores
+        262144,      // ubsize
+        4096);       // max tiling data size
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+// Test case 4: featmap_size with zero element, must be rejected
+TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_zero_featmap_size)
+{
+    struct AnchorResponseFlagsCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        gert::TilingContextPara::OpAttr("featmap_size", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{0, 60})),
+        gert::TilingContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::TilingContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::TilingContextPara tilingContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{32400}, {32400}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output
+        },
+        attrs, &compileInfo,
+        "Ascend950", // socVersion
+        48,          // number of cores
+        262144,      // ubsize
+        4096);       // max tiling data size
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}
+
+// Test case 5: featmap_size element exceeds INT32_MAX, must be rejected before int32 narrowing
+TEST_F(AnchorResponseFlagsTiling, anchor_response_flags_featmap_size_exceeds_int32)
+{
+    struct AnchorResponseFlagsCompileInfo {
+    } compileInfo;
+    std::vector<gert::TilingContextPara::OpAttr> attrs = {
+        gert::TilingContextPara::OpAttr("featmap_size",
+                                        Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2147483648, 1})),
+        gert::TilingContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::TilingContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(1))),
+    };
+    gert::TilingContextPara tilingContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{2147483648}, {2147483648}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output
+        },
+        attrs, &compileInfo,
+        "Ascend950", // socVersion
+        48,          // number of cores
+        262144,      // ubsize
+        4096);       // max tiling data size
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, 0, "", {});
+}

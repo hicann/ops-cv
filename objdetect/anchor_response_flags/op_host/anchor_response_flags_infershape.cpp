@@ -18,6 +18,8 @@
 #include "register/op_impl_registry.h"
 #include "log/log.h"
 #include "op_common/op_host/util/shape_util.h"
+#include <cstdint>
+#include <limits>
 
 using namespace ge;
 
@@ -38,6 +40,9 @@ static ge::graphStatus InferShapeAnchorResponseFlags(gert::InferShapeContext* co
     OP_CHECK_IF(featmapSizeAttr->GetSize() != 2, OP_LOGE(context, "featmap_size must have exactly 2 elements"),
                 return GRAPH_FAILED);
     auto featmapSizeData = featmapSizeAttr->GetData();
+    OP_CHECK_IF(featmapSizeData[0] <= 0 || featmapSizeData[0] > std::numeric_limits<int32_t>::max() ||
+                    featmapSizeData[1] <= 0 || featmapSizeData[1] > std::numeric_limits<int32_t>::max(),
+                OP_LOGE(context, "featmap_size elements must be in [1, INT32_MAX]"), return GRAPH_FAILED);
 
     // Validate strides (index 1)
     auto stridesAttr = attrs->GetListInt(1);

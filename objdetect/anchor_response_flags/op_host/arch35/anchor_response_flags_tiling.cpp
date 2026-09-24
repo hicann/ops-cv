@@ -57,6 +57,9 @@ static ge::graphStatus GetAndValidateAttrs(gert::TilingContext* context, int32_t
 
     OP_CHECK_IF(featmapSizeLen != 2, OP_LOGE(context, "featmap_size must have exactly 2 elements"),
                 return ge::GRAPH_FAILED);
+    OP_CHECK_IF(featmapSizeData[0] <= 0 || featmapSizeData[0] > static_cast<int64_t>(INT32_MAX) ||
+                    featmapSizeData[1] <= 0 || featmapSizeData[1] > static_cast<int64_t>(INT32_MAX),
+                OP_LOGE(context, "featmap_size elements must be in [1, INT32_MAX]"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(stridesLen != 2, OP_LOGE(context, "strides must have exactly 2 elements"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(stridesData[0] <= 0 || stridesData[1] <= 0, OP_LOGE(context, "strides must be positive"),
                 return ge::GRAPH_FAILED);

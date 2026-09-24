@@ -104,11 +104,12 @@ $$
 
 1. 输入 gt_bboxes 必须为 2D tensor，第二维必须为 4。
 2. featmap_size 和 strides 必须为长度为 2 的列表。
-3. strides 中的值必须为正整数（不包含 0）。
-4. num_base_anchors 不能为负数。
-5. 输出 dtype 固定为 uint8，不随输入 dtype 变化。
-6. 当 gt_bboxes 为空（N=0）时，输出全零 tensor。
-7. 中心点映射后超出特征图范围时，grid 索引会被裁剪到有效范围内。
+3. featmap_size 中的值必须为正整数（不包含 0），且不超过 INT32_MAX。
+4. strides 中的值必须为正整数（不包含 0）。
+5. num_base_anchors 不能为负数。
+6. 输出 dtype 固定为 uint8，不随输入 dtype 变化。
+7. 当 gt_bboxes 为空（N=0）时，输出全零 tensor。
+8. 中心点映射后超出特征图范围时，grid 索引会被裁剪到有效范围内。
 
 ## 调用说明
 
