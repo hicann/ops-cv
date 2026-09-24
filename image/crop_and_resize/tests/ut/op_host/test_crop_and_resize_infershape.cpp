@@ -416,3 +416,190 @@ TEST_F(CropAndResizeInfershape, test20_nhwc_format_passthrough)
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// ==================== 形状一致性与边界约束 ====================
+
+// boxes/box_index 一致性检查: boxes.shape[0]=5 != box_index.shape[0]=3 → FAIL
+TEST_F(CropAndResizeInfershape, boxes_boxindex_mismatch)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{5, 4}, {5, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{3}, {3}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// box_index 非 1D（dim0 巧合匹配也拒）→ FAIL
+TEST_F(CropAndResizeInfershape, box_index_not_1d)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{5, 4}, {5, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{5, 3}, {5, 3}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// 一致性检查 UNKNOWN_DIM 豁免: boxes.shape[0]=-1 + box_index.shape[0]=-1 → SUCCESS
+TEST_F(CropAndResizeInfershape, boxes_boxindex_unknown_exempt)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{-1, 4}, {-1, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{-1}, {-1}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 14, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// 一致性检查通过: boxes.shape[0]=5 == box_index.shape[0]=5 → SUCCESS
+TEST_F(CropAndResizeInfershape, boxes_boxindex_match)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{5, 4}, {5, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{5}, {5}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {5, 14, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// boxes.shape[0]=0 + box_index.shape[0]=0（0==0 一致性通过）→ SUCCESS，空输出 shape=(0,4,4,3)
+TEST_F(CropAndResizeInfershape, boxes_num_0_empty_output)
+{
+    std::vector<int32_t> cropSizeValues = {4, 4};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{1, 8, 8, 3}, {1, 8, 8, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{0, 4}, {0, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{0}, {0}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {0, 4, 4, 3},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// boxes.shape[0]=0 但 box_index.shape[0]=5 → 一致性 FAIL（0 != 5）
+TEST_F(CropAndResizeInfershape, boxes_num_0_boxindex_mismatch)
+{
+    std::vector<int32_t> cropSizeValues = {4, 4};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{1, 8, 8, 3}, {1, 8, 8, 3}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{0, 4}, {0, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{5}, {5}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// crop_size.shape[0]=-1（动态 shape 声明）→ SUCCESS，输出 H/W 维 = UNKNOWN_DIM（不读值）
+TEST_F(CropAndResizeInfershape, crop_size_unknown_dim)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{2, 4}, {2, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{-1}, {-1}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, -1, -1, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// ==================== unknown rank 入口归一化（v1 WithRank 范式） ====================
+
+// x unknown rank (-2)：归一化 [-1,-1,-1,-1]，正常推导输出 C 维=-1（维度级未知替代整体 unknown rank）
+TEST_F(CropAndResizeInfershape, x_unknown_rank_normalized)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            // x (index 0): unknown rank (-2)
+            {{{-2}, {-2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            // boxes (index 1): 2D 静态
+            {{{5, 4}, {5, 4}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{5}, {5}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {5, 14, 14, -1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// boxes unknown rank (-2)：归一化 [-1,-1]，正常推导输出 N 维=-1，box_index 一致性 -1 豁免
+TEST_F(CropAndResizeInfershape, boxes_unknown_rank_normalized)
+{
+    std::vector<int32_t> cropSizeValues = {14, 14};
+    gert::InfershapeContextPara infershapeContextPara(
+        "CropAndResize",
+        {
+            {{{2, 3, 4, 2}, {2, 3, 4, 2}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            // boxes (index 1): unknown rank (-2)
+            {{{-2}, {-2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, cropSizeValues.data()},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {-1, 14, 14, 2},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
