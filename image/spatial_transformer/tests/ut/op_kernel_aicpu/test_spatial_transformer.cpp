@@ -51,7 +51,39 @@ void RunRankValidationCase(const vector<vector<int64_t>>& shapes, Format format)
     CREATE_NODEDEF(shapes, data_types, datas, format, 1, use_default_theta, default_theta);
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
+
+void RunThetaAttrValidationCase(const vector<int64_t>& use_default_theta, const vector<float>& default_theta,
+                                uint32_t expected_status)
+{
+    vector<DataType> data_types = {DT_INT8, DT_FLOAT16, DT_INT8};
+    vector<vector<int64_t>> shapes = {{1, 1, 2, 3}, {6}, {1, 1, 2, 3}};
+    int8_t input_x[6] = {-39, -47, -37, 4, -70, -47};
+    Eigen::half input_theta[6] = {Eigen::half(1), Eigen::half(0), Eigen::half(0),
+                                  Eigen::half(0), Eigen::half(1), Eigen::half(0)};
+    int8_t output[6] = {0};
+    vector<void*> datas = {(void*)input_x, (void*)input_theta, (void*)output};
+    CREATE_NODEDEF(shapes, data_types, datas, FORMAT_NCHW, 1, use_default_theta, default_theta);
+    RUN_KERNEL(node_def, HOST, expected_status);
+}
 } // namespace
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, EMPTY_THETA_ATTRS_SUCC) { RunThetaAttrValidationCase({}, {}, KERNEL_STATUS_OK); }
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, USE_DEFAULT_THETA_LENGTH_FAIL)
+{
+    RunThetaAttrValidationCase({0}, {}, KERNEL_STATUS_PARAM_INVALID);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, USE_DEFAULT_THETA_VALUE_FAIL)
+{
+    RunThetaAttrValidationCase({0, 0, 0, 0, 0, 2}, {}, KERNEL_STATUS_PARAM_INVALID);
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, DEFAULT_THETA_LENGTH_FAIL)
+{
+    RunThetaAttrValidationCase({1, 0, 1, 0, 0, 0}, {1.0f}, KERNEL_STATUS_PARAM_INVALID);
+}
+
 TEST_F(TEST_SPATIAL_TRANSFORMER_UT, 4D_SUCC)
 {
     vector<DataType> data_types = {DT_INT8, DT_FLOAT16, DT_INT8};

@@ -174,6 +174,23 @@ KernelStatus SpatialTransformerCpuKernel::GetAttrs(const CpuKernelContext& ctx)
     KERNEL_CHECK_NULLPTR(theta_valid_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr use_default_theta fail.",
                          kSpatialTransformer);
     theta_valid_ = theta_valid_ptr->GetListInt();
+    if (theta_valid_.empty()) {
+        theta_valid_.assign(kTotalThetaNumber, 0);
+    }
+    KERNEL_CHECK_FALSE(theta_valid_.size() == kTotalThetaNumber, KERNEL_STATUS_PARAM_INVALID,
+                       "[%s] use_default_theta must contain %u elements, but got %zu.", kSpatialTransformer,
+                       kTotalThetaNumber, theta_valid_.size());
+
+    size_t default_theta_count = 0;
+    for (size_t i = 0; i < theta_valid_.size(); ++i) {
+        KERNEL_CHECK_FALSE(theta_valid_[i] == 0 || theta_valid_[i] == 1, KERNEL_STATUS_PARAM_INVALID,
+                           "[%s] use_default_theta[%zu] must be 0 or 1, but got %ld.", kSpatialTransformer, i,
+                           theta_valid_[i]);
+        default_theta_count += static_cast<size_t>(theta_valid_[i]);
+    }
+    KERNEL_CHECK_FALSE(theta_.size() >= default_theta_count, KERNEL_STATUS_PARAM_INVALID,
+                       "[%s] default_theta needs at least %zu elements, but got %zu.", kSpatialTransformer,
+                       default_theta_count, theta_.size());
 
     // get stn original channel
     AttrValue* ori_channel_ptr = ctx.GetAttr("stn_ori_channel");
