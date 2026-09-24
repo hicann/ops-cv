@@ -594,7 +594,7 @@ REG_OP(Iou3D)
 
 *@attention Constraints:
 *@li The operator will not be enhanced in the future.
-*@li For Ascend 910D AI Processors, replace it with ResizeLinear and ResizeBicubicV2 operators.
+*@li For Ascend 950PR&950DT products, replace it with ResizeLinear and ResizeBicubicV2 operators.
 */
 REG_OP(ResizeD)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT}))

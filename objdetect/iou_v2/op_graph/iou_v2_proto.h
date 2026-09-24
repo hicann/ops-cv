@@ -32,15 +32,15 @@ namespace ge {
 * the value "4" refers to "x0", "x1", "y0", and "y1" . \n
 
 * @par Attributes:
-* @li those attribute is valid only for Ascend910B AI Processors and later products.
+* @li those attribute is valid only for Atlas A2 products and later products.
 * @li mode: Computation mode, a character string with the value range of [iou, iof].
 * default value is iou .
 * @li eps: An optional float, prevent division by 0, default value is 1.0 .
 * The value can only choose one of those values: [0, 0.01, 1] when Soc Version is : \n
-* Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component. \n
-* Atlas A3 Training Series Product/Atlas A3 Inference Series Product. \n
-* Atlas Training Series Product. \n
-* Atlas Inference Series Product. \n
+* Atlas A2 products. \n
+* Atlas A3 products. \n
+* Atlas training products. \n
+* Atlas inference products. \n
 * @li aligned: A bool value, if aligned is true, calculate the ious between each aligned pair of bboxes and gtboxes.
 * default value is false . \n
 * @par Outputs:
