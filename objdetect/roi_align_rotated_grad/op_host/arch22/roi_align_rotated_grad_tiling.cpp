@@ -12,7 +12,7 @@
  * \file roi_align_rotated_grad_tiling.cpp
  * \brief
  */
-#include "roi_align_rotated_grad_tiling.h"
+#include "roi_align_rotated_grad_tiling_arch22.h"
 #include <cmath>
 #include "register/op_impl_registry.h"
 #include "tiling/platform/platform_ascendc.h"

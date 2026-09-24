@@ -10,8 +10,14 @@
 
 /*!
  * \file test_roi_align_rotated_grad.cpp
- * \brief
+ * \brief arch22（vector AscendC kernel）CPU 仿真用例
  */
+
+// ascend950（arch35/3510）构建下本用例不适用（老 kernel 为 vector AscendC 实现，且与 arch35
+// 同名 tiling 结构隔离），3510 环境 TU 编译为空——与 test_roi_align_rotated_grad_950.cpp 的
+// 正向守卫对称，防 ut.cmake 用例 glob 混编。
+#if !defined(__NPU_ARCH__) || __NPU_ARCH__ != 3510
+
 #include <array>
 #include <vector>
 #include <iostream>
@@ -21,7 +27,7 @@
 #include "tikicpulib.h"
 #include "data_utils.h"
 #include <cstdint>
-#include "../../../op_host/roi_align_rotated_grad_tiling.h"
+#include "../../../op_host/arch22/roi_align_rotated_grad_tiling_arch22.h"
 
 using namespace std;
 
@@ -87,3 +93,5 @@ TEST_F(roi_align_rotated_grad_test, test_case_0)
     AscendC::GmFree(workspace);
     AscendC::GmFree(tiling);
 }
+
+#endif // !defined(__NPU_ARCH__) || __NPU_ARCH__ != 3510

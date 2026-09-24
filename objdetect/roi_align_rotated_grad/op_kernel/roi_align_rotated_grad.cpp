@@ -12,6 +12,10 @@
  * \file roi_align_rotated_grad.cpp
  * \brief
  */
+// ascend950（arch35/3510）使用 op_kernel/roi_align_rotated_grad_apt.cpp 入口（SIMT 实现），
+// 本 vector kernel 不参与 950 构建；kernel UT 的 950 目标仍会 glob 本文件，为与 arch35 同名
+// tiling 结构（RoiAlignRotatedGradTilingData）隔离，3510 环境整个 TU 编译为空。
+#if !defined(__NPU_ARCH__) || __NPU_ARCH__ != 3510
 #include "roi_align_rotated_grad.h"
 
 extern "C" __global__ __aicore__ void roi_align_rotated_grad(GM_ADDR grad_output, GM_ADDR rois, GM_ADDR grad_input,
@@ -25,3 +29,4 @@ extern "C" __global__ __aicore__ void roi_align_rotated_grad(GM_ADDR grad_output
     op.Init(grad_output, rois, grad_input, tilingDevice);
     op.Process();
 }
+#endif

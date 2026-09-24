@@ -17,7 +17,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
-#include "../../../op_host/roi_align_rotated_grad_tiling.h"
+#include "../../../op_host/arch22/roi_align_rotated_grad_tiling_arch22.h"
 #include "tiling_case_executor.h"
 #include "tiling_context_faker.h"
 #include "platform/platform_infos_def.h"

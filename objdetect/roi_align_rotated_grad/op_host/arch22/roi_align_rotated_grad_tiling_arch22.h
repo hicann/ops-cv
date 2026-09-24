@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file roi_align_rotated_grad_tiling.h
+ * \file roi_align_rotated_grad_tiling_arch22.h
  * \brief
  *
  *
@@ -19,8 +19,8 @@
  *
  *
  */
-#ifndef ROI_ALIGN_ROTATED_GRAD_TILING_H
-#define ROI_ALIGN_ROTATED_GRAD_TILING_H
+#ifndef ROI_ALIGN_ROTATED_GRAD_TILING_ARCH22_H
+#define ROI_ALIGN_ROTATED_GRAD_TILING_ARCH22_H
 #include "register/tilingdata_base.h"
 
 namespace optiling {

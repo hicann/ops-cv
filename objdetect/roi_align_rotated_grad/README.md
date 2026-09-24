@@ -4,7 +4,7 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR&950DT系列产品</term>   |     ×    |
+|  <term>Ascend 950PR&950DT系列产品</term>   |     √    |
 |  <term>Atlas A3系列产品</term>   |     √    |
 |  <term>Atlas A2系列产品</term>     |     √    |
 |  <term>Atlas 200I/500 A2推理产品</term>    |     ×    |
@@ -107,8 +107,15 @@
 
 ## 约束说明
 
-* 输入x_grad的shape必须为[N,C,pooled_h,pooled_w]的Tensor。C的取值在[0, 1024]之间，pooled_h、pooled_w的取值在[0, 1024]之间。
-* rois的shape必须为[n, 6]的Tensor。
+- 输入x_grad为4维(N, pooled_h, pooled_w, C)，通道数C取值范围[0, 1024]，pooled_h、pooled_w取值范围[0, 1024]。
+- 输入rois为2维(6, N)，第0维固定为6（字段数），第1维N为ROI数量且必须等于x_grad.dim(0)。
+- x_grad.dim(1)必须等于属性pooled_h，x_grad.dim(2)必须等于属性pooled_w。
+- x_grad.dim(3)必须等于y_grad_shape[3]（通道数一致）。
+- 属性y_grad_shape长度必须为4，各元素为非负整数，语义为[B, H, W, C]。
+- 属性pooled_h、pooled_w必须大于0；sampling_ratio必须大于等于0。
+- rois第0行batch_ind必须为整数值且落在[0, y_grad_shape[0])内，kernel按截断取整（向零取整）解释该值，越界属未定义行为；第5行angle为弧度值。
+- 输出y_grad为梯度累加值，可正可负，无值域裁剪；未被ROI覆盖的位置为0。
+- 算子为精度敏感算子，禁止框架降精度处理，仅支持float32单一数据类型组合。
 
 ## 调用说明
 
