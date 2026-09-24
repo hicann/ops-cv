@@ -95,12 +95,12 @@ $$
 ## 约束说明
 
 - anchor_box、deltas、y 三者 shape 完全相同，dtype 相同。
-- 必须 3D，shape[1] 必须为 5，shape[0] > 0，shape[2] > 0。
+- 必须 3D，shape[1] 必须为 5，shape[0] ≥ 0，shape[2] ≥ 0。
 - weight 长度必须为 5，各元素不能为 0（否则产生 inf/NaN，kernel 不校验）。
 - 数据布局为 ND，不支持其他布局。
 - tiling 在编译期计算，不支持动态 shape。
 - FLOAT16 计算时升 FLOAT32，结果降回 FLOAT16。
-- 不支持空 Tensor（各维度长度须 ≥ 1）。
+- 支持空 Tensor（B=0 或 N=0）。
 
 ## 调用说明
 
