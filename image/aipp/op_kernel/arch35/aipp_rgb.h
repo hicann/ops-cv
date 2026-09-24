@@ -44,13 +44,13 @@ __aicore__ inline void AippRgb<T, DataType>::Init(const AippTilingData& tilingDa
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     void SimtComputeRgb(__gm__ uint8_t* rgbGM, __gm__ T* outputGM, AippTilingData tD, const __gm__ uint8_t* gmParams,
-                        uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
+                        uint32_t blockId, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
     float padValue = tD.paddingParam.padValue;
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockId * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
         if (dynamicTilingKey != 0) {

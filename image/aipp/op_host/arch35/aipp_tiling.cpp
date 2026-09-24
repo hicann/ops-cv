@@ -46,7 +46,8 @@ inline static bool StringToNum(const std::string& str, T& number)
 {
     std::istringstream iss(str);
     if (iss >> number) {
-        return true;
+        iss >> std::ws;
+        return iss.eof();
     }
     return false;
 }
@@ -189,6 +190,9 @@ ge::graphStatus AippTiling::CheckInputFormat()
     tilingData.outputSizeW = tilingData.outputFormat == NCHW_FORMAT_INDEX ?
                                  outputStorageShape.GetDim(NCHW_IMAGE_W_DIM) :
                                  outputStorageShape.GetDim(NHWC_IMAGE_W_DIM);
+    tilingData.outputChannelNum = static_cast<uint8_t>(tilingData.outputFormat == NCHW_FORMAT_INDEX ?
+                                                           outputStorageShape.GetDim(NCHW_IMAGE_C_DIM) :
+                                                           outputStorageShape.GetDim(NHWC_IMAGE_CHANNEL_DIM));
 
     return ge::GRAPH_SUCCESS;
 }
@@ -216,6 +220,14 @@ ge::graphStatus AippTiling::CheckAippCfg()
         if (aippCfg.find(AIPP_INPUT_FORMAT) == aippCfg.end()) {
             std::string reasonMsg = "The AIPP operator configuration file does not contain configuration item " +
                                     AIPP_INPUT_FORMAT;
+            OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
+            return ge::GRAPH_FAILED;
+        }
+    }
+    if (aippMode == AIPP_MODE_DYNAMIC) {
+        if (aippCfg.find(AIPP_MAX_SRC_IMAGE_SIZE) == aippCfg.end()) {
+            std::string reasonMsg = "The AIPP operator configuration file does not contain configuration item " +
+                                    AIPP_MAX_SRC_IMAGE_SIZE;
             OP_LOGE_FOR_FILE_PARSE(context_->GetNodeType(), configStr.c_str(), reasonMsg.c_str());
             return ge::GRAPH_FAILED;
         }
@@ -324,9 +336,10 @@ ge::graphStatus AippTiling::CheckInputImage()
         stringstream errorCheckLog;
         errorCheckLog << "When input_format is YUV420SP_U8, ";
         errorCheckLog << "input image size should be bigger than N * src_image_size_w * src_image_size_h * 1.5";
-        OP_CHECK_IF((inputImageSize * CONST_VALUE_TWO <
-                     tilingData.batchNum * tilingData.inputSizeW * tilingData.inputSizeH * CONST_VALUE_THREE),
-                    OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            (inputImageSize * CONST_VALUE_TWO < static_cast<int64_t>(tilingData.batchNum) * tilingData.inputSizeW *
+                                                    tilingData.inputSizeH * CONST_VALUE_THREE),
+            OP_LOGE(context_->GetNodeName(), "%s", errorCheckLog.str().c_str()), return ge::GRAPH_FAILED);
     } else if (tilingData.imageFormat == IMAGE_FORMAT_MAP.at(IMAGE_FORMAT_YUV400_U8)) {
         if (CheckInputImageHWC(tilingData.inputSizeH, tilingData.inputSizeW, IMAGE_FORMAT_YUV400_U8_SIZE_LIMIT) ==
             ge::GRAPH_FAILED) {
@@ -599,6 +612,8 @@ ge::graphStatus AippTiling::GetWorkspaceSize()
 ge::graphStatus AippTiling::DoOpTiling()
 {
     SetGrayFlag();
+    OP_CHECK_IF(CheckOutputChannel() != ge::GRAPH_SUCCESS,
+                OP_LOGE(context_->GetNodeName(), "CheckOutputChannel failed."), return ge::GRAPH_FAILED);
     SwapChannelForCSC();
     PrintTilingData();
     return ge::GRAPH_SUCCESS;
@@ -650,6 +665,33 @@ void AippTiling::SetGrayFlag()
             isGray = true;
         }
     }
+}
+
+ge::graphStatus AippTiling::CheckOutputChannel()
+{
+    auto outputShapePtr = context_->GetOutputShape(OUTPUT_FEATURES_IDX);
+    OP_CHECK_NULL_WITH_CONTEXT(context_, outputShapePtr);
+    auto outputStorageShape = outputShapePtr->GetStorageShape();
+    int64_t outputChannelNum = tilingData.outputFormat == NCHW_FORMAT_INDEX ?
+                                   outputStorageShape.GetDim(NCHW_IMAGE_C_DIM) :
+                                   outputStorageShape.GetDim(NHWC_IMAGE_CHANNEL_DIM);
+
+    const bool isDynamicAipp = (aippCfg.at(AIPP_MODE) == AIPP_MODE_DYNAMIC);
+    const bool allowSingleChannel = isGray || isDynamicAipp;
+    const bool isChannelValid = allowSingleChannel ? (outputChannelNum == OUTPUT_CHANNEL_ONE ||
+                                                      outputChannelNum == OUTPUT_CHANNEL_THREE) :
+                                                     (outputChannelNum == OUTPUT_CHANNEL_THREE);
+    if (!isChannelValid) {
+        std::string reasonMsg =
+            allowSingleChannel ?
+                "When the CSC matrix converts images to grayscale or the dynamic AIPP mode is used, "
+                "the channel of the output must be 1 or 3" :
+                "When the CSC matrix does not convert images to grayscale, the channel of the output must be 3";
+        OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(context_->GetNodeType(), "features",
+                                              Ops::Base::ToString(outputStorageShape).c_str(), reasonMsg.c_str());
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
 }
 
 ge::graphStatus AippTiling::SetCropValue()
@@ -891,7 +933,8 @@ ge::graphStatus AippTiling::SetDTCValue()
 
 void AippTiling::SetSySTilingData()
 {
-    int64_t totalNum = tilingData.batchNum * tilingData.channelNum * tilingData.inputSizeH * tilingData.inputSizeW;
+    int64_t totalNum = static_cast<int64_t>(tilingData.batchNum) * tilingData.channelNum * tilingData.inputSizeH *
+                       tilingData.inputSizeW;
     int64_t numBlocks = CeilDiv(totalNum, MAX_THREAD_NUM);
     auto compileInfo = reinterpret_cast<const AippCompileInfo*>(context_->GetCompileInfo());
     int32_t coreNums = compileInfo->coreNum;
@@ -909,7 +952,8 @@ void AippTiling::PrintTilingData() const
     stringstream ss;
     ss << "imageFormat: " << static_cast<int>(tilingData.imageFormat)
        << ", outputFormat: " << static_cast<int>(tilingData.outputFormat) << ", batchNum: " << tilingData.batchNum
-       << ", channelNum: " << tilingData.channelNum << ", rbuvSwapSwitch: " << tilingData.cscParam.rbuvSwapSwitch
+       << ", channelNum: " << tilingData.channelNum << ", outputChannelNum: " << tilingData.outputChannelNum
+       << ", rbuvSwapSwitch: " << tilingData.cscParam.rbuvSwapSwitch
        << ", axSwapSwitch: " << tilingData.cscParam.axSwapSwitch << ", inputSizeW: " << tilingData.inputSizeW
        << ", inputSizeH: " << tilingData.inputSizeH << ", cropSwitch: " << tilingData.cropParam.cropSwitch
        << ", cropStartPosH: " << tilingData.cropParam.cropStartPosH

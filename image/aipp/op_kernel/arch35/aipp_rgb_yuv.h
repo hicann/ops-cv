@@ -45,13 +45,13 @@ __aicore__ inline void AippRgbYuv<T, DataType>::Init(const AippTilingData& tilin
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     void SimtComputeRgb2Yuv(__gm__ uint8_t* rgbGM, __gm__ T* yuvGM, AippTilingData tD, const __gm__ uint8_t* gmParams,
-                            uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
+                            uint32_t blockId, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     float padValue = tD.paddingParam.padValue;
     uint32_t outputSizeW = tD.outputSizeW;
     uint32_t outputSizeH = tD.outputSizeH;
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockId * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
         if (dynamicTilingKey != 0) {

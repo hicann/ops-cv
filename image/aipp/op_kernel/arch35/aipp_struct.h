@@ -73,6 +73,9 @@ struct PaddingParam {
     float padValue = 0.0f;
 };
 
+constexpr uint8_t OUTPUT_CHANNEL_ONE = 1;
+constexpr uint8_t OUTPUT_CHANNEL_THREE = 3;
+
 struct AippTilingData {
     uint8_t imageFormat = 0;
     uint8_t outputFormat = 0;
@@ -85,6 +88,7 @@ struct AippTilingData {
     uint32_t outputSizeH = 0;
 
     uint8_t srcChannelOffset = 0;
+    uint8_t outputChannelNum = 0;
 
     CscParam cscParam;
     CropParam cropParam;

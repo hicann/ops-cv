@@ -89,17 +89,17 @@ template <typename T, typename DataType>
 __simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Pixel(__gm__ uint8_t* inputGM,
                                                                               __gm__ T* outputGM, DataType dstYIdx,
                                                                               DataType dstUIdx, DataType dstVIdx,
-                                                                              uint32_t nIdx, uint32_t croodH,
+                                                                              DataType nIdx, uint32_t croodH,
                                                                               uint32_t croodW, const AippTilingData& tD)
 {
-    const uint32_t yuvPlaneSize = tD.inputSizeH * tD.inputSizeW * 3 / 2;
+    const uint64_t yuvPlaneSize = static_cast<uint64_t>(tD.inputSizeH) * tD.inputSizeW * DIGIT_3 / DIGIT_2;
 
-    uint32_t srcYIdx = nIdx * yuvPlaneSize + (tD.cropParam.cropStartPosH + croodH) * tD.inputSizeW +
-                       (tD.cropParam.cropStartPosW + croodW);
-    uint32_t srcUIdx = nIdx * yuvPlaneSize + tD.inputSizeH * tD.inputSizeW +
+    uint64_t srcYIdx = static_cast<uint64_t>(nIdx) * yuvPlaneSize +
+                       (tD.cropParam.cropStartPosH + croodH) * tD.inputSizeW + (tD.cropParam.cropStartPosW + croodW);
+    uint64_t srcUIdx = static_cast<uint64_t>(nIdx) * yuvPlaneSize + tD.inputSizeH * tD.inputSizeW +
                        ((tD.cropParam.cropStartPosH + (croodH & ~1u)) >> 1) * tD.inputSizeW +
                        (tD.cropParam.cropStartPosW + (croodW & ~1u));
-    uint32_t srcVIdx = srcUIdx + 1;
+    uint64_t srcVIdx = srcUIdx + 1;
 
     RgbPack<uint8_t> dstYuv;
     ApplyCscMatrix(dstYuv, inputGM[srcYIdx], inputGM[srcUIdx], inputGM[srcVIdx], tD.cscParam);
@@ -161,13 +161,13 @@ __simt_callee__ __attribute__((always_inline)) inline void ProcessYuv444Block(
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     void SimtComputeYuv420ToYuv444(__gm__ uint8_t* inputGM, __gm__ T* outputGM, AippTilingData tD,
-                                   const __gm__ uint8_t* gmParams, uint32_t blockIdx, uint32_t blockNum,
+                                   const __gm__ uint8_t* gmParams, uint32_t blockId, uint32_t blockNum,
                                    uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     const uint32_t outputSizeH = tD.outputSizeH;
     const uint32_t outputSizeW = tD.outputSizeW;
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockId * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         // 1. Decode idx → 2x2-block coordinate (nIdx, hIdx, wIdx)
         CoordPack<DataType> coord;
         coord.nIdx = idx / ((outputSizeH >> 1) * (outputSizeW >> 1));

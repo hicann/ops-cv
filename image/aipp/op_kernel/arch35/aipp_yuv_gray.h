@@ -49,7 +49,7 @@ __aicore__ inline void AippYuvGray<T, DataType>::Init(const AippTilingData& tili
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     void SimtComputeYuvGray(__gm__ uint8_t* yuvGM, __gm__ T* outputGM, AippTilingData tD,
-                            const __gm__ uint8_t* gmParams, uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize,
+                            const __gm__ uint8_t* gmParams, uint32_t blockId, uint32_t blockNum, uint64_t batchSize,
                             uint8_t dynamicTilingKey)
 {
     uint32_t outputSizeH = tD.outputSizeH;
@@ -57,16 +57,32 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     float padValue = tD.paddingParam.padValue;
     bool isYuv400 = (tD.imageFormat == IMAGE_FORMAT_YUV400_U8);
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockId * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
-        RgbPack<DataType> dstGrayIdx;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
         if (dynamicTilingKey != 0) {
             UpdateDynamicBatchPara(coord, tD, gmParams);
         }
 
-        RgbComputeDstIdx(dstGrayIdx, coord, tD);
         bool isPadding = IsPixelInPadding(coord.hIdx, coord.wIdx, tD);
+
+        if (tD.outputChannelNum == OUTPUT_CHANNEL_ONE) {
+            DataType dstIdx;
+            GrayComputeDstIdx(dstIdx, coord, tD);
+            if (isPadding) {
+                AssignPadValue(outputGM[dstIdx], padValue);
+            } else {
+                DataType srcIdx;
+                YuvComputeSrcIdx(srcIdx, coord, tD, isYuv400);
+                RgbPack<uint8_t> result;
+                ApplyCscMatrix(result, yuvGM[srcIdx], 0, 0, tD.cscParam);
+                DataConversion(outputGM[dstIdx], result.r, tD.dtcParam, CHANNEL_NUM_0);
+            }
+            continue;
+        }
+
+        RgbPack<DataType> dstGrayIdx;
+        RgbComputeDstIdx(dstGrayIdx, coord, tD);
 
         if (isPadding) {
             AssignPadValue(outputGM[dstGrayIdx.r], padValue);
@@ -74,15 +90,7 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
             AssignPadValue(outputGM[dstGrayIdx.b], padValue);
         } else {
             DataType srcIdx;
-            if (isYuv400) {
-                srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW +
-                         (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
-                         tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
-            } else {
-                srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW * DIGIT_3 / DIGIT_2 +
-                         (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
-                         tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
-            }
+            YuvComputeSrcIdx(srcIdx, coord, tD, isYuv400);
             RgbPack<uint8_t> result;
             ApplyCscMatrix(result, yuvGM[srcIdx], 0, 0, tD.cscParam);
             DataConversion(outputGM[dstGrayIdx.r], result.r, tD.dtcParam, CHANNEL_NUM_0);

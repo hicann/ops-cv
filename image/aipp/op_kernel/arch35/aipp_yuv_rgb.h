@@ -98,15 +98,16 @@ __simt_callee__ __attribute__((always_inline)) inline void ComputeYuvRgbDstIdx(R
 template <typename T, typename DataType>
 __simt_callee__ __attribute__((always_inline)) inline void ProcessYuvRgbPixel(__gm__ uint8_t* yuvGM, __gm__ T* outputGM,
                                                                               const RgbPack<DataType> dstIdx,
-                                                                              uint32_t nIdx, uint32_t croodH,
+                                                                              DataType nIdx, uint32_t croodH,
                                                                               uint32_t croodW, const AippTilingData& tD)
 {
-    uint32_t srcYIdx = nIdx * tD.inputSizeH * tD.inputSizeW * 3 / 2 +
+    const uint64_t yuvPlaneSize = static_cast<uint64_t>(tD.inputSizeH) * tD.inputSizeW * DIGIT_3 / DIGIT_2;
+    uint64_t srcYIdx = static_cast<uint64_t>(nIdx) * yuvPlaneSize +
                        (tD.cropParam.cropStartPosH + croodH) * tD.inputSizeW + (tD.cropParam.cropStartPosW + croodW);
-    uint32_t srcUIdx = nIdx * tD.inputSizeH * tD.inputSizeW * 3 / 2 + tD.inputSizeH * tD.inputSizeW +
+    uint64_t srcUIdx = static_cast<uint64_t>(nIdx) * yuvPlaneSize + tD.inputSizeH * tD.inputSizeW +
                        ((tD.cropParam.cropStartPosH + (croodH & ~1)) >> 1) * tD.inputSizeW +
                        (tD.cropParam.cropStartPosW + (croodW & ~1));
-    uint32_t srcVIdx = srcUIdx + 1;
+    uint64_t srcVIdx = srcUIdx + 1;
     RgbPack<uint8_t> dstRgb;
     ApplyCscMatrix(dstRgb, yuvGM[srcYIdx], yuvGM[srcUIdx], yuvGM[srcVIdx], tD.cscParam);
 
@@ -142,12 +143,12 @@ __simt_callee__ __attribute__((always_inline)) inline void ProcessYuvRgbBlock(
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     void SimtComputeYuvRgb(__gm__ uint8_t* yuvGM, __gm__ T* outputGM, AippTilingData tD, const __gm__ uint8_t* gmParams,
-                           uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
+                           uint32_t blockId, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockId * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         coord.nIdx = idx / ((outputSizeH >> 1) * (outputSizeW >> 1));
         DataType newIdx = idx - coord.nIdx * ((outputSizeH >> 1) * (outputSizeW >> 1));
@@ -185,7 +186,7 @@ __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
 template <typename T, typename DataType>
 __aicore__ inline void AippYuvRgb<T, DataType>::Process(GM_ADDR x, GM_ADDR y)
 {
-    uint64_t batchSize = this->tilingData_.batchNum * ((this->tilingData_.outputSizeH) >> 1) *
+    uint64_t batchSize = static_cast<uint64_t>(this->tilingData_.batchNum) * ((this->tilingData_.outputSizeH) >> 1) *
                          ((this->tilingData_.outputSizeW) >> 1);
 
     asc_vf_call<Aipp_Kernel::SimtComputeYuvRgb<T, DataType>>(dim3(this->blockDimX_), (__gm__ uint8_t*)x, (__gm__ T*)y,

@@ -250,6 +250,7 @@ void CompareAippTilingData(const Aipp_Kernel::AippTilingData& actual, const Aipp
     EXPECT_EQ(actual.inputSizeW, expected.inputSizeW);
     EXPECT_EQ(actual.outputSizeH, expected.outputSizeH);
     EXPECT_EQ(actual.outputSizeW, expected.outputSizeW);
+    EXPECT_EQ(actual.outputChannelNum, expected.outputChannelNum);
     EXPECT_EQ(actual.srcChannelOffset, expected.srcChannelOffset);
 
     // CscParam
@@ -355,6 +356,7 @@ TEST_F(AippTiling, aipp_tiling_test_0)
         .outputSizeW = 224,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -426,6 +428,7 @@ TEST_F(AippTiling, aipp_tiling_test_1)
         .outputSizeW = 224,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -490,6 +493,7 @@ TEST_F(AippTiling, aipp_tiling_test_2)
         .outputSizeW = 224,
         .outputSizeH = 224,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -554,6 +558,7 @@ TEST_F(AippTiling, aipp_tiling_test_3)
         .outputSizeW = 256,
         .outputSizeH = 224,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -618,6 +623,7 @@ TEST_F(AippTiling, aipp_tiling_test_4)
         .outputSizeW = 256,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 1,
                      .axSwapSwitch = 0,
@@ -751,6 +757,7 @@ TEST_F(AippTiling, aipp_tiling_test_9)
         .outputSizeW = 224,
         .outputSizeH = 224,
         .srcChannelOffset = 1,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 1,
                      .axSwapSwitch = 1,
@@ -850,6 +857,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_1)
         .outputSizeW = 244,
         .outputSizeH = 244,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -914,6 +922,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_2)
         .outputSizeW = 244,
         .outputSizeH = 224,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -978,6 +987,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_3)
         .outputSizeW = 276,
         .outputSizeH = 256,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1042,6 +1052,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_4)
         .outputSizeW = 244,
         .outputSizeH = 234,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1106,6 +1117,7 @@ TEST_F(AippTiling, aipp_tiling_padding_test_5)
         .outputSizeW = 288,
         .outputSizeH = 288,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1188,10 +1200,10 @@ TEST_F(AippTiling, aipp_tiling_padding_test_8)
     gert::TilingContextPara tilingContextPara(
         "Aipp", {{{{1, 100, 100, 3}, {1, 100, 100, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
         {{{{1, 3, 100, 100}, {1, 3, 100, 100}}, ge::DT_FLOAT16, ge::FORMAT_NHWC}},
-        {gert::TilingContextPara::OpAttr(
-            "aipp_config_path",
-            Ops::Cv::AnyValue::CreateFrom<string>(
-                R"({"aipp_mode":"static","input_format":"RGB888_U8","padding":"true","left_padding_size":"10","padding_value":"65506"})"))},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+                                         Ops::Cv::AnyValue::CreateFrom<string>(
+                                             R"({"aipp_mode":"static","input_format":"RGB888_U8","padding":"true",)"
+                                             R"("left_padding_size":"10","padding_value":"65506"})"))},
         &compileInfo);
 
     int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
@@ -1242,6 +1254,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_12)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1307,6 +1320,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_13)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 1,
                      .axSwapSwitch = 0,
@@ -1372,6 +1386,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_14)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1437,6 +1452,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_15)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1502,6 +1518,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_16)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 1,
                      .axSwapSwitch = 0,
@@ -1567,6 +1584,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_17)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1632,6 +1650,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_18)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 1,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 1,
@@ -1697,6 +1716,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_19)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 1,
+        .outputChannelNum = 3,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 1,
@@ -1762,6 +1782,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_20)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 1,
+        .outputChannelNum = 1,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 1,
@@ -1827,6 +1848,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_21)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 1,
+        .outputChannelNum = 1,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 1,
                      .axSwapSwitch = 1,
@@ -1892,6 +1914,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_22)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 1,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -1957,6 +1980,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_23)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 1,
         .cscParam = {.cscSwitch = 1,
                      .rbuvSwapSwitch = 1,
                      .axSwapSwitch = 0,
@@ -2022,6 +2046,7 @@ TEST_F(AippTiling, aipp_tiling_csc_test_24)
         .outputSizeW = 1920,
         .outputSizeH = 1080,
         .srcChannelOffset = 0,
+        .outputChannelNum = 1,
         .cscParam = {.cscSwitch = 0,
                      .rbuvSwapSwitch = 0,
                      .axSwapSwitch = 0,
@@ -2061,6 +2086,185 @@ TEST_F(AippTiling, aipp_tiling_csc_test_24)
                          .padValue = 0.0f}};
     std::vector<size_t> expectWorkspaces = {16777216};
     AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_25: gray场景输出通道数C=2 - 违反C∈{1,3}契约，应被拒绝
+TEST_F(AippTiling, aipp_tiling_gray_invalid_output_channel)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 1080, 1920, 4}, {1, 1080, 1920, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 2, 1080, 1920}, {1, 2, 1080, 1920}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+                                         Ops::Cv::AnyValue::CreateFrom<string>(
+                                             R"({"aipp_mode":"static","input_format":"XRGB8888_U8","csc_switch":true,)"
+                                             R"("matrix_r0c0":76,"matrix_r0c1":150,"matrix_r0c2":30,)"
+                                             R"("matrix_r1c0":0,"matrix_r1c1":0,"matrix_r1c2":0,)"
+                                             R"("matrix_r2c0":0,"matrix_r2c1":0,"matrix_r2c2":0,)"
+                                             R"("output_bias_0":0,"output_bias_1":0,"output_bias_2":0})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_TO_GRAY;
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_26: 动态AIPP输出通道数C=2 - 违反C∈{1,3}契约，应被拒绝
+TEST_F(AippTiling, aipp_tiling_dynamic_invalid_output_channel)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 2, 224, 224}, {1, 2, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(
+                                                                 R"({"aipp_mode":"dynamic","related_input_rank":0,)"
+                                                                 R"("max_src_image_size":150528})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_DYNAMIC_DEFAULT;
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_27: 动态AIPP输出通道数C=3 - 合法，tiling应成功
+TEST_F(AippTiling, aipp_tiling_dynamic_valid_output_channel)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(
+                                                                 R"({"aipp_mode":"dynamic","related_input_rank":0,)"
+                                                                 R"("max_src_image_size":150528})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_DYNAMIC_DEFAULT;
+    Aipp_Kernel::AippTilingData expectTiling = {
+        .imageFormat = 0,
+        .outputFormat = 1,
+        .batchNum = 1,
+        .channelNum = 3,
+        .inputSizeW = 224,
+        .inputSizeH = 224,
+        .outputSizeW = 224,
+        .outputSizeH = 224,
+        .srcChannelOffset = 0,
+        .outputChannelNum = 3,
+        .cscParam = {.cscSwitch = 0,
+                     .rbuvSwapSwitch = 0,
+                     .axSwapSwitch = 0,
+                     .cscMatrix00 = 298,
+                     .cscMatrix01 = 516,
+                     .cscMatrix02 = 0,
+                     .cscMatrix10 = 298,
+                     .cscMatrix11 = -100,
+                     .cscMatrix12 = -208,
+                     .cscMatrix20 = 298,
+                     .cscMatrix21 = 0,
+                     .cscMatrix22 = 409,
+                     .outBias0 = 16,
+                     .outBias1 = 128,
+                     .outBias2 = 128,
+                     .inBias0 = 16,
+                     .inBias1 = 128,
+                     .inBias2 = 128},
+        .cropParam = {.cropSwitch = 0, .cropStartPosH = 0, .cropStartPosW = 0, .cropSizeH = 0, .cropSizeW = 0},
+        .dtcParam = {.dtcPixelMeanChn0 = 0,
+                     .dtcPixelMeanChn1 = 0,
+                     .dtcPixelMeanChn2 = 0,
+                     .dtcPixelMeanChn3 = 0,
+                     .dtcPixelMinChn0 = 0,
+                     .dtcPixelMinChn1 = 0,
+                     .dtcPixelMinChn2 = 0,
+                     .dtcPixelMinChn3 = 0,
+                     .dtcPixelVarReciChn0 = 1,
+                     .dtcPixelVarReciChn1 = 1,
+                     .dtcPixelVarReciChn2 = 1,
+                     .dtcPixelVarReciChn3 = 1},
+        .paddingParam = {.paddingSwitch = 0,
+                         .leftPaddingSize = 0,
+                         .rightPaddingSize = 0,
+                         .topPaddingSize = 0,
+                         .bottomPaddingSize = 0,
+                         .padValue = 0.0f}};
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_28: 静态非gray场景输出通道数C=2 - 非gray必须输出3通道，应被拒绝
+TEST_F(AippTiling, aipp_tiling_nongray_invalid_output_channel)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 2, 224, 224}, {1, 2, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8"})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_29: 整型配置尾随非法字符（src_image_size_w=608junk）- 应被拒绝
+// 输入shape与数值前缀608一致，确保旧实现（接受前缀）可通过全部校验，从而区分新旧行为
+TEST_F(AippTiling, aipp_tiling_rejects_integer_trailing_token)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 64, 608, 3}, {1, 64, 608, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 64, 608}, {1, 3, 64, 608}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"RGB888_U8",)"
+                                                  R"("src_image_size_h":"64","src_image_size_w":"608junk"})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_30: 浮点配置尾随非法字符（min_chn_0=1.0junk）- 应被拒绝
+TEST_F(AippTiling, aipp_tiling_rejects_float_trailing_token)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 64, 64, 3}, {1, 64, 64, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 64, 64}, {1, 3, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(
+                                                                 R"({"aipp_mode":"static","input_format":"RGB888_U8",)"
+                                                                 R"("min_chn_0":"1.0junk"})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_RGB_PASS_THROUGH;
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
+}
+
+// test_31: 动态AIPP缺少必选配置max_src_image_size - 应被拒绝
+// 输出通道数C=3合法，确保唯一失败原因是缺少必选字段；合法对照由aipp_tiling_dynamic_valid_output_channel覆盖
+TEST_F(AippTiling, aipp_tiling_dynamic_missing_max_src_image_size)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    gert::TilingContextPara tilingContextPara(
+        "Aipp", {{{{1, 224, 224, 3}, {1, 224, 224, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}},
+        {{{{1, 3, 224, 224}, {1, 3, 224, 224}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(
+                                                                 R"({"aipp_mode":"dynamic","related_input_rank":0})"))},
+        &compileInfo);
+
+    int64_t expectTilingKey = optiling::AIPP_DYNAMIC_DEFAULT;
+    Aipp_Kernel::AippTilingData expectTiling = {}; // 不检查
+    std::vector<size_t> expectWorkspaces = {16777216};
+    AippExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTiling, expectWorkspaces);
 }
 
 TEST_F(AippTiling, aipp_tiling_invaild_config_path_1)

@@ -87,7 +87,7 @@
     <tr>
       <td>features</td>
       <td>输出</td>
-      <td>处理后的图片。
+      <td>处理后的图片。当输出色域类型为灰度图时，支持的输出通道数C为1或3。当输出色域类型为非灰度图时，支持的输出通道数C为3。
       </td>
       <td>UINT8、FLOAT16</td>
       <td>NCHW、NHWC</td>
@@ -177,26 +177,26 @@
         <td rowspan="3">静态AIPP参数设置</td>
         <td>input_format</td>
         <td>必选属性</td>
-        <td>输入图片类型，目前只支持RGB888_U8、XRGB8888_U8、YUV420SP_U8、YUV400_U8。</td>
+        <td>输入图片类型，仅静态AIPP配置时必选，动态AIPP无需配置。目前只支持RGB888_U8、XRGB8888_U8、YUV420SP_U8、YUV400_U8。</td>
         <td>ENUM</td>
         </tr>
         <tr>
         <td>src_image_size_h</td>
         <td>可选属性</td>
-        <td>输入图像高度，取值范围：[1,4096]；当输入图片类型为YUV420SP_U8时，该值需为偶数。</td>
+        <td>输入图像高度，仅静态AIPP配置时生效，取值范围：[1,4096]；当输入图片类型为YUV420SP_U8时，该值需为偶数。</td>
         <td>INT32</td>
         </tr>
         <tr>
         <td>src_image_size_w</td>
         <td>可选属性</td>
-        <td>输入图像宽度，取值范围：[1,4096]；当输入图片类型为YUV420SP_U8时，该值需为偶数。</td>
+        <td>输入图像宽度，仅静态AIPP配置时生效，取值范围：[1,4096]；当输入图片类型为YUV420SP_U8时，该值需为偶数。</td>
         <td>INT32</td>
         </tr>
         <tr>
         <td rowspan="2">动态AIPP参数设置</td>
         <td>related_input_rank</td>
         <td>可选属性</td>
-        <td>标识对第几个输入进行AIPP处理，例如0表示对第1个输入进行AIPP处理，该值需不小于0。</td>
+        <td>标识对第几个输入进行AIPP处理，仅动态AIPP配置时生效，例如0表示对第1个输入进行AIPP处理，该值需不小于0。</td>
         <td>INT32</td>
         </tr>
         <tr>
@@ -262,38 +262,38 @@
         matrix_r2c0 matrix_r2c1 matrix_r2c2
         </td>
         <td>可选属性</td>
-        <td>3*3 CSC矩阵元素，取值范围：[-32677 ,32676]。</td>
+        <td>3*3 CSC矩阵元素，取值范围：[-32677,32676]。</td>
         <td>INT16</td>
         </tr>
         <tr>
         <td>output_bias_0 output_bias_1 output_bias_2</td>
         <td>可选属性</td>
-        <td>RGB转YUV时的输出偏移，取值范围：[0, 255]。</td>
+        <td>RGB转YUV时的输出偏移，取值范围：[0,255]。</td>
         <td>UINT8</td>
         </tr>
         <tr>
         <td>input_bias_0 input_bias_1 input_bias_2</td>
         <td>可选属性</td>
-        <td>YUV转RGB时的输入偏移，取值范围：[0, 255]。</td>
+        <td>YUV转RGB时的输入偏移，取值范围：[0,255]。</td>
         <td>UINT8 </td>
         </tr>
         <tr>
         <td rowspan="3">DTC参数设置</td>
         <td>mean_chn_0 mean_chn_1 mean_chn_2 mean_chn_3</td>
         <td>可选属性</td>
-        <td>每个通道的均值，取值范围：[0, 255]。</td>
+        <td>每个通道的均值，取值范围：[0,255]。</td>
         <td>UINT8</td>
         </tr>
         <tr>
         <td>min_chn_0 min_chn_1 min_chn_2 min_chn_3</td>
         <td>可选属性</td>
-        <td>每个通道的最小值，取值范围：[0, 255]。</td>
+        <td>每个通道的最小值，取值范围：[0,255]。</td>
         <td>FLOAT16</td>
         </tr>
         <tr>
         <td>var_reci_chn_0 var_reci_chn_1 var_reci_chn_2 var_reci_chn_3</td>
         <td>可选属性</td>
-        <td>每个通道方差的倒数，取值范围：[-65504, 65504]。</td>
+        <td>每个通道方差的倒数，取值范围：[-65504,65504]。</td>
         <td>FLOAT16</td>
         </tr>
         <tr>
@@ -306,13 +306,13 @@
         <tr>
         <td>left_padding_size right_padding_size top_padding_size bottom_padding_size</td>
         <td>可选属性</td>
-        <td>H和W的填充值，静态AIPP配置，取值范围：[0, 32]。</td>
+        <td>H和W的填充值，静态AIPP配置，取值范围：[0,32]。</td>
         <td>INT32</td>
         </tr>
         <tr>
         <td>padding_value</td>
         <td>可选属性</td>
-        <td>上下左右方向上padding的像素取值，静态AIPP配置。取值范围：[0, 255]/[-65504, 65504]。</td>
+        <td>上下左右方向上padding的像素取值，静态AIPP配置。取值范围：[0,255]/[-65504,65504]。</td>
         <td>UINT8/FLOAT16</td>
         </tr>
     </tbody></table>

@@ -45,23 +45,39 @@ __aicore__ inline void AippRgbGray<T, DataType>::Init(const AippTilingData& tili
 template <typename T, typename DataType>
 __simt_vf__ LAUNCH_BOUND(MAX_THREAD_NUM) __aicore__
     void SimtComputeRgb2Gray(__gm__ uint8_t* rgbGM, __gm__ T* grayGM, AippTilingData tD, const __gm__ uint8_t* gmParams,
-                             uint32_t blockIdx, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
+                             uint32_t blockId, uint32_t blockNum, uint64_t batchSize, uint8_t dynamicTilingKey)
 {
     float padValue = tD.paddingParam.padValue;
     uint32_t outputSizeH = tD.outputSizeH;
     uint32_t outputSizeW = tD.outputSizeW;
 
-    for (DataType idx = threadIdx.x + blockIdx * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
+    for (DataType idx = threadIdx.x + blockId * blockDim.x; idx < batchSize; idx += blockNum * blockDim.x) {
         CoordPack<DataType> coord;
         ComputeCoordFromIndex(idx, outputSizeH, outputSizeW, coord);
         if (dynamicTilingKey != 0) {
             UpdateDynamicBatchPara(coord, tD, gmParams);
         }
 
+        bool isPadding = IsPixelInPadding(coord.hIdx, coord.wIdx, tD);
+
+        if (tD.outputChannelNum == OUTPUT_CHANNEL_ONE) {
+            DataType dstIdx;
+            GrayComputeDstIdx(dstIdx, coord, tD);
+            if (isPadding) {
+                AssignPadValue(grayGM[dstIdx], padValue);
+            } else {
+                RgbPack<DataType> srcRgbIdx;
+                RgbComputeSrcIdx(srcRgbIdx, coord, tD, (DataType)tD.srcChannelOffset);
+
+                RgbPack<uint8_t> result;
+                ApplyCscMatrix(result, rgbGM[srcRgbIdx.r], rgbGM[srcRgbIdx.g], rgbGM[srcRgbIdx.b], tD.cscParam);
+                DataConversion(grayGM[dstIdx], result.r, tD.dtcParam, CHANNEL_NUM_0);
+            }
+            continue;
+        }
+
         RgbPack<DataType> dstGrayIdx;
         RgbComputeDstIdx(dstGrayIdx, coord, tD);
-
-        bool isPadding = IsPixelInPadding(coord.hIdx, coord.wIdx, tD);
 
         if (isPadding) {
             AssignPadValue(grayGM[dstGrayIdx.r], padValue);

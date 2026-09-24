@@ -53,11 +53,8 @@ constexpr int64_t MAX_THREAD_NUM = 512;
 constexpr int64_t DCACHE_SIZE = 1024 * 32;
 constexpr uint8_t EVEN_NUMBER_BASE = 2;
 
-constexpr uint8_t CONST_VALUE_ZERO = 0;
-constexpr uint8_t CONST_VALUE_ONE = 1;
 constexpr uint8_t CONST_VALUE_TWO = 2;
 constexpr uint8_t CONST_VALUE_THREE = 3;
-constexpr uint8_t CONST_VALUE_FOUR = 4;
 
 constexpr uint8_t NCHW_FORMAT_INDEX = 1;
 constexpr uint8_t NHWC_FORMAT_INDEX = 2;
@@ -79,6 +76,7 @@ constexpr size_t IMAGE_BATCH_DIM = 0;
 constexpr size_t NHWC_IMAGE_H_DIM = 1;
 constexpr size_t NHWC_IMAGE_W_DIM = 2;
 constexpr size_t NHWC_IMAGE_CHANNEL_DIM = 3;
+constexpr size_t NCHW_IMAGE_C_DIM = 1;
 constexpr size_t NCHW_IMAGE_H_DIM = 2;
 constexpr size_t NCHW_IMAGE_W_DIM = 3;
 
@@ -104,6 +102,7 @@ const string AIPP_MODE_DYNAMIC = "dynamic";
 const string AIPP_INPUT_FORMAT = "input_format";
 const string AIPP_SRC_IMAGE_SIZE_W = "src_image_size_w";
 const string AIPP_SRC_IMAGE_SIZE_H = "src_image_size_h";
+const string AIPP_MAX_SRC_IMAGE_SIZE = "max_src_image_size";
 const string AIPP_RBUV_SWAP_SWITCH = "rbuv_swap_switch";
 const string AIPP_AX_SWAP_SWITCH = "ax_swap_switch";
 const string AIPP_CROP = "crop";
@@ -196,6 +195,7 @@ private:
     void SetCscFormatBias();
     void SetGrayFlag();
     void SwapChannelForCSC();
+    ge::graphStatus CheckOutputChannel();
     ge::graphStatus SetPaddingValue();
     ge::graphStatus CheckPaddingSize();
     ge::graphStatus ValidPaddingValue(float padValue, ge::DataType outputDtype);
@@ -215,7 +215,7 @@ private:
     std::string configStr;
     AippTilingData tilingData;
 
-    int32_t inputImageSize = 1;
+    int64_t inputImageSize = 1;
     bool isGray = false;
 };
 

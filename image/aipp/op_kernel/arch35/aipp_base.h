@@ -220,7 +220,7 @@ __aicore__ inline void AippBase<T, DataType>::BaseInit(const AippTilingData& til
     blockNum_ = GetBlockNum();
     blockIdx_ = GetBlockIdx();
 #endif
-    totalNum_ = tilingData_.batchNum * tilingData_.outputSizeH * tilingData_.outputSizeW;
+    totalNum_ = static_cast<uint64_t>(tilingData_.batchNum) * tilingData_.outputSizeH * tilingData_.outputSizeW;
 }
 
 __aicore__ __attribute__((always_inline)) inline void SetDynamicGrayFlag(const AippTilingData& tD, bool& isGray)
@@ -438,6 +438,14 @@ __simt_callee__ __attribute__((always_inline)) inline void RgbComputeDstIdx(RgbP
 }
 
 template <typename DataType>
+__simt_callee__ __attribute__((always_inline)) inline void GrayComputeDstIdx(DataType& dstIdx,
+                                                                             const CoordPack<DataType>& coord,
+                                                                             const AippTilingData& tD)
+{
+    dstIdx = coord.nIdx * tD.outputSizeH * tD.outputSizeW + coord.hIdx * tD.outputSizeW + coord.wIdx;
+}
+
+template <typename DataType>
 __simt_callee__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(RgbPack<DataType>& srcIdx,
                                                                             const CoordPack<DataType>& coord,
                                                                             const AippTilingData& tD,
@@ -449,6 +457,22 @@ __simt_callee__ __attribute__((always_inline)) inline void RgbComputeSrcIdx(RgbP
                (tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize) * tD.channelNum + offset;
     srcIdx.g = srcIdx.r + 1;
     srcIdx.b = srcIdx.g + 1;
+}
+
+template <typename DataType>
+__simt_callee__ __attribute__((always_inline)) inline void YuvComputeSrcIdx(DataType& srcIdx,
+                                                                            const CoordPack<DataType>& coord,
+                                                                            const AippTilingData& tD, bool isYuv400)
+{
+    if (isYuv400) {
+        srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW +
+                 (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
+                 tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
+    } else {
+        srcIdx = coord.nIdx * tD.inputSizeH * tD.inputSizeW * DIGIT_3 / DIGIT_2 +
+                 (tD.cropParam.cropStartPosH + coord.hIdx - tD.paddingParam.topPaddingSize) * tD.inputSizeW +
+                 tD.cropParam.cropStartPosW + coord.wIdx - tD.paddingParam.leftPaddingSize;
+    }
 }
 
 template <typename DataType>

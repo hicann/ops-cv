@@ -196,16 +196,17 @@ static float GoldenDtc(uint8_t pixelVal, const DtcParam& dtc, int channelIndex)
 }
 
 // 生成 golden 数据，输出为 NCHW fp16 格式
-// golden 大小: batchNum * 3 * outputSizeH * outputSizeW (始终3通道)
-// 计算输出索引（与kernel的RgbComputeDstIdx一致）
-// 始终按3通道计算，NCHW: n*C*H*W + c*H*W + h*W + w, NHWC: n*H*W*C + h*W*C + w*C + c
+// golden 大小: batchNum * outputChannelNum * outputSizeH * outputSizeW
+// 计算输出索引（与kernel的RgbComputeDstIdx/GrayComputeDstIdx一致）
+// NCHW: n*C*H*W + c*H*W + h*W + w, NHWC: n*H*W*C + h*W*C + w*C + c
 static size_t ComputeOutputIdx(uint32_t n, uint32_t c, uint32_t h, uint32_t w, uint32_t H, uint32_t W,
-                               uint8_t outputFormat)
+                               uint32_t channelNum, uint8_t outputFormat)
 {
     if (outputFormat == NCHW_FORMAT_INDEX) {
-        return n * 3 * H * W + c * H * W + h * W + w;
+        return static_cast<size_t>(n) * channelNum * H * W + static_cast<size_t>(c) * H * W + h * W + w;
     } else {
-        return n * H * W * 3 + h * W * 3 + w * 3 + c;
+        return static_cast<size_t>(n) * H * W * channelNum + static_cast<size_t>(h) * W * channelNum +
+               static_cast<size_t>(w) * channelNum + c;
     }
 }
 
@@ -216,7 +217,8 @@ static vector<uint16_t> ComputeGolden(const uint8_t* images, const AippTilingDat
     uint32_t N = tD.batchNum;
     uint32_t H = tD.outputSizeH;
     uint32_t W = tD.outputSizeW;
-    size_t totalPixels = static_cast<size_t>(N) * 3 * H * W;
+    uint32_t C = tD.outputChannelNum;
+    size_t totalPixels = static_cast<size_t>(N) * C * H * W;
     vector<uint16_t> golden(totalPixels, 0);
 
     for (uint32_t n = 0; n < N; n++) {
@@ -238,8 +240,8 @@ static vector<uint16_t> ComputeGolden(const uint8_t* images, const AippTilingDat
                     uint16_t outVal = isFp16Output ?
                                           FloatToFp16(pv) :
                                           static_cast<uint16_t>(max(0, min(255, static_cast<int>(pv + 0.5f))));
-                    for (int c = 0; c < 3; c++) {
-                        size_t idx = ComputeOutputIdx(n, c, h, w, H, W, tD.outputFormat);
+                    for (uint32_t c = 0; c < C; c++) {
+                        size_t idx = ComputeOutputIdx(n, c, h, w, H, W, C, tD.outputFormat);
                         golden[idx] = outVal;
                     }
                     continue;
@@ -307,12 +309,12 @@ static vector<uint16_t> ComputeGolden(const uint8_t* images, const AippTilingDat
                 // Gray: channel 1,2 are 0 (kernel writes DataConversion(0))
                 // Non-gray: all 3 channels from CSC
                 uint8_t chVals[3] = {cscR, isGray ? 0 : cscG, isGray ? 0 : cscB};
-                for (int c = 0; c < 3; c++) {
+                for (uint32_t c = 0; c < C; c++) {
                     float dtcResult = GoldenDtc(chVals[c], tD.dtcParam, c);
                     uint16_t outVal = isFp16Output ?
                                           FloatToFp16(dtcResult) :
                                           static_cast<uint16_t>(max(0, min(255, static_cast<int>(roundf(dtcResult)))));
-                    size_t idx = ComputeOutputIdx(n, c, h, w, H, W, tD.outputFormat);
+                    size_t idx = ComputeOutputIdx(n, c, h, w, H, W, C, tD.outputFormat);
                     golden[idx] = outVal;
                 }
             }
@@ -345,9 +347,7 @@ static void DumpOutputToFile(const std::string& testName, uint8_t* features, con
         return;
     }
 
-    uint32_t C = tD.channelNum;
-    if (C > 3)
-        C = 3;
+    uint32_t C = tD.outputChannelNum;
     uint32_t H = tD.outputSizeH;
     uint32_t W = tD.outputSizeW;
     bool isNchw = (tD.outputFormat == NCHW_FORMAT_INDEX);
@@ -361,7 +361,7 @@ static void DumpOutputToFile(const std::string& testName, uint8_t* features, con
             ofs << "\n# N=" << n << " C=" << c << std::endl;
             for (uint32_t h = 0; h < H; h++) {
                 for (uint32_t w = 0; w < W; w++) {
-                    size_t idx = ComputeOutputIdx(n, c, h, w, H, W, tD.outputFormat);
+                    size_t idx = ComputeOutputIdx(n, c, h, w, H, W, C, tD.outputFormat);
                     if (isFp16Output) {
                         uint16_t* fp16Data = reinterpret_cast<uint16_t*>(features);
                         ofs << Fp16ToFloat(fp16Data[idx]);
@@ -469,21 +469,21 @@ static void RunAippKernelTest(const std::string& testName, const gert::TilingCon
     // 根据tiling结果计算实际输入输出字节数
     size_t inputByteSize = static_cast<size_t>(aippTiling.batchNum * aippTiling.inputSizeH * aippTiling.inputSizeW *
                                                GetBytesPerPixel(aippTiling.imageFormat));
-    // RgbComputeDstIdx始终按3 channel计算输出索引，
-    // gray场景channelNum=1但kernel仍会写3个channel位置，因此输出buffer需按3 channel分配
+    // 输出buffer按tiling data中的真实输出通道数分配：
+    // gray场景C=1时kernel每像素只写1个位置，C=3时写3个位置
     bool isFp16Output = (sizeof(DTYPE_FEATURES) == sizeof(uint16_t));
     size_t outputElementSize = isFp16Output ? sizeof(uint16_t) : sizeof(uint8_t);
-    size_t outputByteSize = static_cast<size_t>(aippTiling.batchNum * 3 * aippTiling.outputSizeH *
-                                                aippTiling.outputSizeW) *
-                            outputElementSize;
+    size_t outputByteSize = static_cast<size_t>(aippTiling.batchNum) * aippTiling.outputChannelNum *
+                            aippTiling.outputSizeH * aippTiling.outputSizeW * outputElementSize;
     size_t paramsByteSize = 1;
 
     cout << "  tilingKey=" << tilingInfo.tilingKey << " imageFormat=" << (int)aippTiling.imageFormat
          << " outputFormat=" << (int)aippTiling.outputFormat << " batchNum=" << aippTiling.batchNum
-         << " channelNum=" << aippTiling.channelNum << " inputSizeW=" << aippTiling.inputSizeW
-         << " inputSizeH=" << aippTiling.inputSizeH << " outputSizeW=" << aippTiling.outputSizeW
-         << " outputSizeH=" << aippTiling.outputSizeH << " inputBytes=" << inputByteSize
-         << " outputBytes=" << outputByteSize << " blockNum=" << tilingInfo.blockNum << endl;
+         << " channelNum=" << aippTiling.channelNum << " outputChannelNum=" << aippTiling.outputChannelNum
+         << " inputSizeW=" << aippTiling.inputSizeW << " inputSizeH=" << aippTiling.inputSizeH
+         << " outputSizeW=" << aippTiling.outputSizeW << " outputSizeH=" << aippTiling.outputSizeH
+         << " inputBytes=" << inputByteSize << " outputBytes=" << outputByteSize << " blockNum=" << tilingInfo.blockNum
+         << endl;
 
     // 分配内存
     uint8_t* images = (uint8_t*)AscendC::GmAlloc(inputByteSize);
@@ -582,7 +582,7 @@ static void RunAippKernelTest(const std::string& testName, const gert::TilingCon
     vector<uint16_t> golden = ComputeGolden(images, aippTiling, isFp16Output);
     uint32_t H = aippTiling.outputSizeH;
     uint32_t W = aippTiling.outputSizeW;
-    size_t totalPixels = static_cast<size_t>(aippTiling.batchNum) * 3 * H * W;
+    size_t totalPixels = static_cast<size_t>(aippTiling.batchNum) * aippTiling.outputChannelNum * H * W;
 
     int mismatchCount = 0;
     int comparedCount = 0;
@@ -618,6 +618,135 @@ static void RunAippKernelTest(const std::string& testName, const gert::TilingCon
     AscendC::GmFree(images);
     AscendC::GmFree(params);
     AscendC::GmFree(features);
+    AscendC::GmFree(workspace);
+    AscendC::GmFree(tiling);
+}
+
+// 动态AIPP gray测试执行函数：params携带运行时CSC参数（灰度矩阵），golden按合并运行时参数后的tilingData计算
+// batch参数全0（dtc varReci=fp16(1.0)），与kernel侧UpdateRealPara/resetRealPara/UpdateDynamicBatchPara语义一致
+static void RunAippDynamicGrayKernelTest(const std::string& testName, const gert::TilingContextPara& tilingContextPara,
+                                         const tagAippDynamicParaHeader& header)
+{
+    TilingInfo tilingInfo;
+    auto tilingRet = ExecuteTiling(tilingContextPara, tilingInfo);
+    ASSERT_EQ(tilingRet, true);
+
+    AippTilingData aippTiling;
+    memcpy(&aippTiling, tilingInfo.tilingData.get(), sizeof(AippTilingData));
+
+    AippTilingData runtimeTiling = aippTiling;
+    runtimeTiling.imageFormat = header.inputFormat;
+    runtimeTiling.batchNum = static_cast<uint32_t>(header.batchNum);
+    runtimeTiling.inputSizeW = static_cast<uint32_t>(header.srcImageSizeW);
+    runtimeTiling.inputSizeH = static_cast<uint32_t>(header.srcImageSizeH);
+    runtimeTiling.cscParam.cscSwitch = header.cscSwitch;
+    runtimeTiling.cscParam.rbuvSwapSwitch = header.rbuvSwapSwitch;
+    runtimeTiling.cscParam.axSwapSwitch = header.axSwapSwitch;
+    runtimeTiling.cscParam.cscMatrix00 = header.cscMatrixR0C0;
+    runtimeTiling.cscParam.cscMatrix01 = header.cscMatrixR0C1;
+    runtimeTiling.cscParam.cscMatrix02 = header.cscMatrixR0C2;
+    runtimeTiling.cscParam.cscMatrix10 = header.cscMatrixR1C0;
+    runtimeTiling.cscParam.cscMatrix11 = header.cscMatrixR1C1;
+    runtimeTiling.cscParam.cscMatrix12 = header.cscMatrixR1C2;
+    runtimeTiling.cscParam.cscMatrix20 = header.cscMatrixR2C0;
+    runtimeTiling.cscParam.cscMatrix21 = header.cscMatrixR2C1;
+    runtimeTiling.cscParam.cscMatrix22 = header.cscMatrixR2C2;
+    runtimeTiling.cscParam.inBias0 = 0;
+    runtimeTiling.cscParam.inBias1 = 0;
+    runtimeTiling.cscParam.inBias2 = 0;
+    runtimeTiling.cscParam.outBias0 = static_cast<int16_t>(header.cscOutputBiasR0);
+    runtimeTiling.cscParam.outBias1 = static_cast<int16_t>(header.cscOutputBiasR1);
+    runtimeTiling.cscParam.outBias2 = static_cast<int16_t>(header.cscOutputBiasR2);
+    runtimeTiling.cropParam = {};
+    runtimeTiling.paddingParam = {};
+    runtimeTiling.dtcParam = {};
+
+    uint32_t batchNum = static_cast<uint32_t>(header.batchNum);
+    size_t paramsByteSize = sizeof(tagAippDynamicParaHeader) + batchNum * sizeof(kAippDynamicBatchPara);
+    size_t inputByteSize = static_cast<size_t>(runtimeTiling.batchNum * runtimeTiling.inputSizeH *
+                                               runtimeTiling.inputSizeW * GetBytesPerPixel(runtimeTiling.imageFormat));
+    bool isFp16Output = (sizeof(DTYPE_FEATURES) == sizeof(uint16_t));
+    size_t outputElementSize = isFp16Output ? sizeof(uint16_t) : sizeof(uint8_t);
+    size_t outputByteSize = static_cast<size_t>(runtimeTiling.batchNum) * runtimeTiling.outputChannelNum *
+                            runtimeTiling.outputSizeH * runtimeTiling.outputSizeW * outputElementSize;
+
+    cout << "  tilingKey=" << tilingInfo.tilingKey << " inputBytes=" << inputByteSize
+         << " outputBytes=" << outputByteSize << " blockNum=" << tilingInfo.blockNum << endl;
+
+    uint8_t* images = (uint8_t*)AscendC::GmAlloc(inputByteSize);
+    uint8_t* features = (uint8_t*)AscendC::GmAlloc(outputByteSize);
+    ASSERT_NE(images, nullptr);
+    ASSERT_NE(features, nullptr);
+
+    uint8_t* params = (uint8_t*)AscendC::GmAlloc(paramsByteSize);
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(tilingInfo.workspaceSizes[0]);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingInfo.tilingDataSize);
+    ASSERT_NE(params, nullptr);
+    ASSERT_NE(workspace, nullptr);
+    ASSERT_NE(tiling, nullptr);
+
+    memset(params, 0, paramsByteSize);
+    tagAippDynamicParaHeader* headerBuf = reinterpret_cast<tagAippDynamicParaHeader*>(params);
+    *headerBuf = header;
+    kAippDynamicBatchPara* batchParas = reinterpret_cast<kAippDynamicBatchPara*>(params +
+                                                                                 sizeof(tagAippDynamicParaHeader));
+    for (uint32_t i = 0; i < batchNum; i++) {
+        batchParas[i].dtcPixelVarReciChn0 = 0x3C00; // fp16(1.0)
+        batchParas[i].dtcPixelVarReciChn1 = 0x3C00;
+        batchParas[i].dtcPixelVarReciChn2 = 0x3C00;
+        batchParas[i].dtcPixelVarReciChn3 = 0x3C00;
+    }
+
+    srand(static_cast<unsigned>(time(nullptr)));
+    for (size_t i = 0; i < inputByteSize; i++) {
+        images[i] = static_cast<uint8_t>(rand() % 256);
+    }
+    memset(features, 0, outputByteSize);
+
+    memcpy(tiling, tilingInfo.tilingData.get(), tilingInfo.tilingDataSize);
+    ICPU_SET_TILING_KEY(tilingInfo.tilingKey);
+
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    uint32_t numBlocks = tilingInfo.blockNum;
+    ICPU_RUN_KF(Aipp, numBlocks, images, params, features, workspace, tiling);
+
+    EXPECT_TRUE(CheckOutputNonZero(features, outputByteSize))
+        << "Output buffer is all zeros, kernel may not have executed correctly";
+
+    vector<uint16_t> golden = ComputeGolden(images, runtimeTiling, isFp16Output);
+    uint32_t H = runtimeTiling.outputSizeH;
+    uint32_t W = runtimeTiling.outputSizeW;
+    size_t totalPixels = static_cast<size_t>(runtimeTiling.batchNum) * runtimeTiling.outputChannelNum * H * W;
+
+    int mismatchCount = 0;
+    float maxDiff = 0.0f;
+    for (size_t i = 0; i < totalPixels; i++) {
+        float kernelVal;
+        float goldenVal;
+        if (isFp16Output) {
+            uint16_t* fp16Data = reinterpret_cast<uint16_t*>(features);
+            kernelVal = Fp16ToFloat(fp16Data[i]);
+            goldenVal = Fp16ToFloat(golden[i]);
+        } else {
+            kernelVal = static_cast<float>(features[i]);
+            goldenVal = static_cast<float>(golden[i]);
+        }
+        float diff = fabsf(kernelVal - goldenVal);
+        if (diff > maxDiff) {
+            maxDiff = diff;
+        }
+        if (diff > 0.1f) {
+            mismatchCount++;
+        }
+    }
+    cout << "  [" << testName << "] Golden compare: mismatches=" << mismatchCount << "/" << totalPixels
+         << " maxDiff=" << maxDiff << endl;
+    EXPECT_EQ(mismatchCount, 0) << testName << ": " << mismatchCount << "/" << totalPixels
+                                << " pixels differ from golden (maxDiff=" << maxDiff << ")";
+
+    AscendC::GmFree(images);
+    AscendC::GmFree(features);
+    AscendC::GmFree(params);
     AscendC::GmFree(workspace);
     AscendC::GmFree(tiling);
 }
@@ -876,4 +1005,103 @@ TEST_F(aipp_kernel_test, test_rgb_to_gray_nhwc_fp16)
         &compileInfo, socVersion);
 
     RunAippKernelTest("test_rgb_to_gray_nhwc_fp16", tilingContextPara);
+}
+
+// RGB-to-Gray, 3通道NCHW输出（兼容C=3的存量用法，kernel保留三通道写入）
+TEST_F(aipp_kernel_test, test_rgb_to_gray_3channel_fp16)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "Aipp",
+        {{{{1, 64, 64, 4}, {1, 64, 64, 4}}, ge::DT_UINT8, ge::FORMAT_NHWC}, {{{1}, {1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+        {{{{1, 3, 64, 64}, {1, 3, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+                                         Ops::Cv::AnyValue::CreateFrom<string>(
+                                             R"({"aipp_mode":"static","input_format":"XRGB8888_U8","csc_switch":true,)"
+                                             R"("matrix_r0c0":76,"matrix_r0c1":150,"matrix_r0c2":30,)"
+                                             R"("matrix_r1c0":0,"matrix_r1c1":0,"matrix_r1c2":0,)"
+                                             R"("matrix_r2c0":0,"matrix_r2c1":0,"matrix_r2c2":0,)"
+                                             R"("output_bias_0":0,"output_bias_1":0,"output_bias_2":0,)"
+                                             R"("ax_swap_switch":true})"))},
+        &compileInfo, socVersion);
+
+    RunAippKernelTest("test_rgb_to_gray_3channel_fp16", tilingContextPara);
+}
+
+// TilingKey=6: YUV420SP-to-Gray with CSC (YUV420SP_U8 -> FP16 NCHW, 1 channel output)
+// 覆盖C=1分支的YUV420SP源索引（nIdx*H*W*3/2跨batch偏移）
+TEST_F(aipp_kernel_test, test_yuv420sp_to_gray_fp16)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "Aipp",
+        {{{{1, 64, 64, 3}, {1, 64, 64, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}, {{{1}, {1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+        {{{{1, 1, 64, 64}, {1, 1, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path",
+                                         Ops::Cv::AnyValue::CreateFrom<string>(
+                                             R"({"aipp_mode":"static","input_format":"YUV420SP_U8","csc_switch":true,)"
+                                             R"("matrix_r0c0":256,"matrix_r0c1":0,"matrix_r0c2":0,)"
+                                             R"("matrix_r1c0":0,"matrix_r1c1":0,"matrix_r1c2":0,)"
+                                             R"("matrix_r2c0":0,"matrix_r2c1":0,"matrix_r2c2":0,)"
+                                             R"("input_bias_0":0,"input_bias_1":0,"input_bias_2":0})"))},
+        &compileInfo, socVersion);
+
+    RunAippKernelTest("test_yuv420sp_to_gray_fp16", tilingContextPara);
+}
+
+// TilingKey=6: YUV400-to-Gray 3通道输出（存量兼容路径，kernel按三通道写入，通道1/2写0）
+TEST_F(aipp_kernel_test, test_yuv400_to_gray_3channel_fp16)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "Aipp",
+        {{{{1, 64, 64, 1}, {1, 64, 64, 1}}, ge::DT_UINT8, ge::FORMAT_NHWC}, {{{1}, {1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+        {{{{1, 3, 64, 64}, {1, 3, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr(
+            "aipp_config_path",
+            Ops::Cv::AnyValue::CreateFrom<string>(R"({"aipp_mode":"static","input_format":"YUV400_U8"})"))},
+        &compileInfo, socVersion);
+
+    RunAippKernelTest("test_yuv400_to_gray_3channel_fp16", tilingContextPara);
+}
+
+// 动态AIPP gray端到端：tiling key=100，运行时下发RGB灰度CSC矩阵，kernel重派发到RGB-to-Gray（C=1单通道写入）
+TEST_F(aipp_kernel_test, test_dynamic_rgb_to_gray_fp16)
+{
+    AippCompileInfo compileInfo = {56, 253952};
+    string socVersion = "Ascend950";
+    gert::TilingContextPara tilingContextPara(
+        "Aipp",
+        {{{{1, 64, 64, 3}, {1, 64, 64, 3}}, ge::DT_UINT8, ge::FORMAT_NHWC}, {{{1}, {1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+        {{{{1, 1, 64, 64}, {1, 1, 64, 64}}, ge::DT_FLOAT16, ge::FORMAT_NCHW}},
+        {gert::TilingContextPara::OpAttr("aipp_config_path", Ops::Cv::AnyValue::CreateFrom<string>(
+                                                                 R"({"aipp_mode":"dynamic","related_input_rank":0,)"
+                                                                 R"("max_src_image_size":12288})"))},
+        &compileInfo, socVersion);
+
+    tagAippDynamicParaHeader header = {};
+    header.inputFormat = IMAGE_FORMAT_MAP.at("RGB888_U8");
+    header.cscSwitch = 1;
+    header.rbuvSwapSwitch = 0;
+    header.axSwapSwitch = 0;
+    header.batchNum = 1;
+    header.srcImageSizeW = 64;
+    header.srcImageSizeH = 64;
+    header.cscMatrixR0C0 = 76;
+    header.cscMatrixR0C1 = 150;
+    header.cscMatrixR0C2 = 30;
+    header.cscMatrixR1C0 = 0;
+    header.cscMatrixR1C1 = 0;
+    header.cscMatrixR1C2 = 0;
+    header.cscMatrixR2C0 = 0;
+    header.cscMatrixR2C1 = 0;
+    header.cscMatrixR2C2 = 0;
+    header.cscOutputBiasR0 = 0;
+    header.cscOutputBiasR1 = 0;
+    header.cscOutputBiasR2 = 0;
+
+    RunAippDynamicGrayKernelTest("test_dynamic_rgb_to_gray_fp16", tilingContextPara, header);
 }
