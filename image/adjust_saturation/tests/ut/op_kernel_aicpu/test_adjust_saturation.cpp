@@ -153,6 +153,34 @@ TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_SHAPE_EXCEPTION)
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
 }
 
+TEST_F(TEST_ADJUST_SATURATION_UT, SCALE_SHAPE_EXCEPTION)
+{
+    float input[kRgbChannelCount] = {kTestInputValue};
+    float delta[kTestBufferElements] = {kTestSaturationFactor};
+    float output[kRgbChannelCount] = {kTestZeroValue};
+
+    vector<vector<int64_t>> shapes = {{1, 1, kRgbChannelCount}, {1, 1}, {1, 1, kRgbChannelCount}};
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<void*> datas = {input, delta, output};
+
+    CREATE_NODEDEF(shapes, data_types, datas);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+
+TEST_F(TEST_ADJUST_SATURATION_UT, OUTPUT_SHAPE_EXCEPTION)
+{
+    float input[kRgbChannelCount] = {kTestInputValue};
+    float delta[kTestBufferElements] = {kTestSaturationFactor};
+    float output[kRgbChannelCount] = {kTestZeroValue};
+
+    vector<vector<int64_t>> shapes = {{1, 1, kRgbChannelCount}, {kScalarDimension}, {kRgbChannelCount, 1, 1}};
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_FLOAT};
+    vector<void*> datas = {input, delta, output};
+
+    CREATE_NODEDEF(shapes, data_types, datas);
+    RUN_KERNEL(node_def, HOST, KERNEL_STATUS_PARAM_INVALID);
+}
+
 TEST_F(TEST_ADJUST_SATURATION_UT, INPUT_LAST_DIM_EXCEPTION)
 {
     float input[kInvalidImageElements] = {kTestInputValue};

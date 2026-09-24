@@ -216,9 +216,20 @@ inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext& ctx)
                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
         return KERNEL_STATUS_PARAM_INVALID;
     }
+    auto outputDims = ctx.Output(0)->GetTensorShape()->GetDimSizes();
+    if (inputDims != outputDims) {
+        KERNEL_LOG_ERROR("The shape of output y [%s] needs to be the same as input images [%s].",
+                         VectorToString(outputDims).c_str(), VectorToString(inputDims).c_str());
+        return KERNEL_STATUS_PARAM_INVALID;
+    }
     if (ctx.Input(1)->GetDataType() != aicpu::DataType::DT_FLOAT) {
         KERNEL_LOG_ERROR("The data type of the input [%s] needs to be [%s].",
                          DTypeStr(ctx.Input(1)->GetDataType()).c_str(), DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
+        return KERNEL_STATUS_PARAM_INVALID;
+    }
+    auto scaleDims = ctx.Input(1)->GetTensorShape()->GetDimSizes();
+    if (scaleDims.size() != 1 || scaleDims[0] != 1) {
+        KERNEL_LOG_ERROR("The shape of scale [%s] needs to be [1].", VectorToString(scaleDims).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
     if (ctx.Input(1)->GetDataSize() != kAdjustSaturationFactorDataSize) {
