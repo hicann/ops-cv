@@ -75,6 +75,10 @@ ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalId
     // 获取shape dim值
     auto nDim = inputShapeX.GetDim(INDEXZERO);
     auto cDim = inputShapeX.GetDim(INDEXONE);
+    OP_CHECK_IF(inputShapeY.GetDim(INDEXZERO) != nDim,
+                OP_LOGE(context, "NMSWithMask: inputy length %ld must equal inputx box count %ld",
+                        inputShapeY.GetDim(INDEXZERO), nDim),
+                return ge::GRAPH_FAILED);
     totalIdx = nDim * cDim;
     if (totalIdx > LIMIT_INPUT_NUM) {
         OP_LOGE(context, "invalid Input");
