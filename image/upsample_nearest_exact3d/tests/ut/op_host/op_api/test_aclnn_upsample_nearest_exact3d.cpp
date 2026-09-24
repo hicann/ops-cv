@@ -122,7 +122,7 @@ TEST_F(l2_upsample_nearest_exact3d_test, case_invalid_dtype_abnormal)
     }
 }
 
-TEST_F(l2_upsample_nearest_exact3d_test, case_shape_0_2_3_4_5_normal)
+TEST_F(l2_upsample_nearest_exact3d_test, case_shape_0_2_3_4_5_abnormal)
 {
     auto self_desc = TensorDesc({0, 2, 3, 4, 5}, ACL_FLOAT, ACL_FORMAT_NCDHW);
     vector<int64_t> output_size = {6, 8, 10};
@@ -137,7 +137,7 @@ TEST_F(l2_upsample_nearest_exact3d_test, case_shape_0_2_3_4_5_normal)
 
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
-    EXPECT_EQ(aclRet, ACL_SUCCESS);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
 
 TEST_F(l2_upsample_nearest_exact3d_test, case_shape_2_0_3_4_5_abnormal)

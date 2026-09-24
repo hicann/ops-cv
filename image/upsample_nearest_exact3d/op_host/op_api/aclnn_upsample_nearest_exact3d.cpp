@@ -106,6 +106,7 @@ static bool CheckShape(const aclTensor* self, const aclIntArray* outputSize, con
 static bool CheckInputElement(const aclTensor* self, const Scales& scale, const aclIntArray* outputSize)
 {
     auto selfShape = self->GetViewShape();
+    int64_t inputN = selfShape.GetDim(DIM_ZERO);
     int64_t outC = selfShape.GetDim(DIM_ONE);
     int64_t inputD = selfShape.GetDim(DIM_TWO);
     int64_t inputH = selfShape.GetDim(DIM_THREE);
@@ -127,7 +128,7 @@ static bool CheckInputElement(const aclTensor* self, const Scales& scale, const 
                      inputD, inputH, inputW, outD, outH, outW),
              return false);
 
-    OP_CHECK(outC > 0,
+    OP_CHECK(inputN > 0 && outC > 0,
              OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Non-empty 5D data tensor expected but got a tensor with sizes %s.",
                      op::ToString(self->GetViewShape()).GetString()),
              return false);
