@@ -112,6 +112,24 @@ ge::graphStatus ValidateAndFill(gert::TilingContext* context, CombinedNonMaxSupp
     OP_CHECK_IF(outputSize <= 0 || outputSize > maxTotal,
                 OP_LOGE(context, "output_size must be in [1, max_total_size]"), return ge::GRAPH_FAILED);
 
+    const gert::StorageShape* scoresOutputStorage = context->GetOutputShape(1);
+    const gert::StorageShape* classesOutputStorage = context->GetOutputShape(2);
+    const gert::StorageShape* validDetectionsOutputStorage = context->GetOutputShape(3);
+    OP_CHECK_NULL_WITH_CONTEXT(context, scoresOutputStorage);
+    OP_CHECK_NULL_WITH_CONTEXT(context, classesOutputStorage);
+    OP_CHECK_NULL_WITH_CONTEXT(context, validDetectionsOutputStorage);
+    const gert::Shape& scoresOutput = scoresOutputStorage->GetStorageShape();
+    const gert::Shape& classesOutput = classesOutputStorage->GetStorageShape();
+    const gert::Shape& validDetectionsOutput = validDetectionsOutputStorage->GetStorageShape();
+    OP_CHECK_IF(
+        scoresOutput.GetDimNum() != 2 || scoresOutput.GetDim(0) != batch || scoresOutput.GetDim(1) != outputSize,
+        OP_LOGE(context, "invalid nmsed_scores output shape"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        classesOutput.GetDimNum() != 2 || classesOutput.GetDim(0) != batch || classesOutput.GetDim(1) != outputSize,
+        OP_LOGE(context, "invalid nmsed_classes output shape"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(validDetectionsOutput.GetDimNum() != 1 || validDetectionsOutput.GetDim(0) != batch,
+                OP_LOGE(context, "invalid valid_detections output shape"), return ge::GRAPH_FAILED);
+
     // A class cannot contribute more than outputSize candidates to the final merge.
     // Preserve its ordered prefix, including the existing deterministic tie break.
     maxPerClass = std::min(maxPerClass, static_cast<int32_t>(std::min(numBoxes, outputSize)));

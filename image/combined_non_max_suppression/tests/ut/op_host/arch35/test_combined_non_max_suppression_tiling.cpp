@@ -37,15 +37,22 @@ gert::StorageShape MakeStorageShape(const std::vector<int64_t>& dims)
 gert::TilingContextPara MakeContext(const std::vector<int64_t>& boxesShape, const std::vector<int64_t>& scoresShape,
                                     const std::vector<int64_t>& outputBoxesShape, int32_t* maxPerClass,
                                     int32_t* maxTotal, float* iouThreshold, float* scoreThreshold,
-                                    CombinedNonMaxSuppressionCompileInfoForTest* compileInfo, bool clipBoxes = true)
+                                    CombinedNonMaxSuppressionCompileInfoForTest* compileInfo, bool clipBoxes = true,
+                                    const std::vector<int64_t>& outputScoresShape = {},
+                                    const std::vector<int64_t>& outputClassesShape = {},
+                                    const std::vector<int64_t>& outputValidShape = {})
 {
     const std::vector<int64_t> outputVectorShape = {outputBoxesShape[0], outputBoxesShape[1]};
     const gert::StorageShape boxes = MakeStorageShape(boxesShape);
     const gert::StorageShape scores = MakeStorageShape(scoresShape);
     const gert::StorageShape scalar = MakeStorageShape({});
     const gert::StorageShape outputBoxes = MakeStorageShape(outputBoxesShape);
-    const gert::StorageShape outputVector = MakeStorageShape(outputVectorShape);
-    const gert::StorageShape outputValid = MakeStorageShape({outputBoxesShape[0]});
+    const gert::StorageShape outputScores = MakeStorageShape(outputScoresShape.empty() ? outputVectorShape :
+                                                                                         outputScoresShape);
+    const gert::StorageShape outputClasses = MakeStorageShape(outputClassesShape.empty() ? outputVectorShape :
+                                                                                           outputClassesShape);
+    const gert::StorageShape outputValid = MakeStorageShape(
+        outputValidShape.empty() ? std::vector<int64_t>{outputBoxesShape[0]} : outputValidShape);
     const std::vector<gert::TilingContextPara::TensorDescription> inputs = {
         {boxes, ge::DT_FLOAT, ge::FORMAT_ND},
         {scores, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -56,8 +63,8 @@ gert::TilingContextPara MakeContext(const std::vector<int64_t>& boxesShape, cons
     };
     const std::vector<gert::TilingContextPara::TensorDescription> outputs = {
         {outputBoxes, ge::DT_FLOAT, ge::FORMAT_ND},
-        {outputVector, ge::DT_FLOAT, ge::FORMAT_ND},
-        {outputVector, ge::DT_FLOAT, ge::FORMAT_ND},
+        {outputScores, ge::DT_FLOAT, ge::FORMAT_ND},
+        {outputClasses, ge::DT_FLOAT, ge::FORMAT_ND},
         {outputValid, ge::DT_INT32, ge::FORMAT_ND},
     };
     return gert::TilingContextPara(
@@ -196,6 +203,42 @@ TEST(CombinedNonMaxSuppressionTiling, AcceptsLargeBoxCounts)
         ASSERT_EQ(info.workspaceSizes.size(), 1U);
         EXPECT_EQ(info.workspaceSizes[0], compileInfo.sysWorkspaceSize + tiling->suppressedOffset + 2 * stride);
     }
+}
+
+TEST(CombinedNonMaxSuppressionTiling, RejectsMismatchedNmsedScoresShape)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    float iouThreshold = 0.5F;
+    float scoreThreshold = 0.0F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
+                               &scoreThreshold, &compileInfo, true, {1, 3}, {1, 4}, {1});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(CombinedNonMaxSuppressionTiling, RejectsMismatchedNmsedClassesShape)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    float iouThreshold = 0.5F;
+    float scoreThreshold = 0.0F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
+                               &scoreThreshold, &compileInfo, true, {1, 4}, {1, 3}, {1});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
+TEST(CombinedNonMaxSuppressionTiling, RejectsMismatchedValidDetectionsShape)
+{
+    int32_t maxPerClass = 2;
+    int32_t maxTotal = 4;
+    float iouThreshold = 0.5F;
+    float scoreThreshold = 0.0F;
+    CombinedNonMaxSuppressionCompileInfoForTest compileInfo;
+    auto context = MakeContext({1, 5, 1, 4}, {1, 5, 2}, {1, 4, 4}, &maxPerClass, &maxTotal, &iouThreshold,
+                               &scoreThreshold, &compileInfo, true, {1, 4}, {1, 4}, {2});
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
 }
 
 TEST(CombinedNonMaxSuppressionTiling, RejectsBoxCountOutsideInt32Range)
