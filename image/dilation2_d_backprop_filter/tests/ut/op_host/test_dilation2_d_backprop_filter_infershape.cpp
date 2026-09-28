@@ -86,3 +86,267 @@ TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershap
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// Test case 3 (issue #1034 legal control): SAME padding, x=(1,3,3,1), filter=(2,2,1),
+// theoretical forward output=(1,3,3,1), legal out_backprop=(1,3,3,1) -> y=(2,2,1)
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_same_legal_out_backprop)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, 3, 3, 1), float32
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 3, 3, 1), float32 (matches theoretical forward output)
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            // y: empty shape (to be inferred = filter shape)
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 4 (issue #1034): SAME padding, out_backprop=(1,1,1,1) mismatches theoretical
+// forward output (1,3,3,1), infershape must fail
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_same_invalid_out_backprop_hw)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, 3, 3, 1), float32
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 1, 1, 1), float32 (H/W mismatch: expected 3x3)
+            {{{1, 1, 1, 1}, {1, 1, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 5: batch mismatch, x.N=2 but out_backprop.N=1 (spatial dims legal), infershape must fail
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_batch_mismatch)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (2, 4, 4, 2), float32
+            {{{2, 4, 4, 2}, {2, 4, 4, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (3, 3, 2), float32
+            {{{3, 3, 2}, {3, 3, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 2, 2, 2), float32 (H/W legal for SAME/stride2, batch mismatched)
+            {{{1, 2, 2, 2}, {1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 2, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 6: CALCULATED padding with pads=[1,1,1,1], x=(1,4,4,1), filter=(2,2,1),
+// theoretical forward output=(1,5,5,1), legal out_backprop=(1,5,5,1) -> y=(2,2,1)
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_calculated_legal_out_backprop)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, 4, 4, 1), float32
+            {{{1, 4, 4, 1}, {1, 4, 4, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 5, 5, 1), float32 (matches theoretical forward output)
+            {{{1, 5, 5, 1}, {1, 5, 5, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode",
+                                                Ops::Cv::AnyValue::CreateFrom<std::string>("CALCULATED")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 7: CALCULATED padding with pads=[1,1,1,1], out_backprop=(1,3,3,1) mismatches
+// theoretical forward output (1,5,5,1), infershape must fail
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_calculated_invalid_out_backprop_hw)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, 4, 4, 1), float32
+            {{{1, 4, 4, 1}, {1, 4, 4, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 3, 3, 1), float32 (H/W mismatch: expected 5x5)
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode",
+                                                Ops::Cv::AnyValue::CreateFrom<std::string>("CALCULATED")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 8: NCHW format, SAME padding, out_backprop=(1,1,1,1) mismatches theoretical
+// forward output (1,1,3,3), infershape must fail
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_nchw_invalid_out_backprop_hw)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, 1, 3, 3), float32 (NCHW)
+            {{{1, 1, 3, 3}, {1, 1, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (1, 2, 2), float32 (C, fH, fW)
+            {{{1, 2, 2}, {1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 1, 1, 1), float32 (H/W mismatch: expected 3x3)
+            {{{1, 1, 1, 1}, {1, 1, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NCHW")),
+        });
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 9: dynamic shape tolerance, x.H is unknown(-1), spatial check is skipped,
+// out_backprop with any positive H/W is accepted -> y=(2,2,1)
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_dynamic_x_hw)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, -1, 3, 1), float32 (H unknown)
+            {{{1, -1, 3, 1}, {1, -1, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 5, 3, 1), float32 (H not derivable, tolerated)
+            {{{1, 5, 3, 1}, {1, 5, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}
+
+// Test case 10: CALCULATED padding with ceil_mode=true, x=(1,5,5,1), filter=(2,2,1),
+// pads=[0,0,0,0], strides=[1,2,2,1], theoretical forward output=(1,3,3,1) (ceil, not floor 2x2),
+// legal out_backprop=(1,3,3,1) -> y=(2,2,1)
+TEST_F(Dilation2DBackpropFilterInfershape, dilation2_d_backprop_filter_infershape_calculated_ceil_legal_out_backprop)
+{
+    gert::InfershapeContextPara infershapeContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            // x: shape (1, 5, 5, 1), float32
+            {{{1, 5, 5, 1}, {1, 5, 5, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // filter: shape (2, 2, 1), float32
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            // out_backprop: shape (1, 3, 3, 1), float32 (matches ceil output 3x3)
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
+        },
+        {
+            gert::InfershapeContextPara::OpAttr("strides",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 2, 1})),
+            gert::InfershapeContextPara::OpAttr("rates",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::InfershapeContextPara::OpAttr("padding_mode",
+                                                Ops::Cv::AnyValue::CreateFrom<std::string>("CALCULATED")),
+            gert::InfershapeContextPara::OpAttr("pads",
+                                                Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::InfershapeContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::InfershapeContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        });
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {2, 2, 1},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

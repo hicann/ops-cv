@@ -21,6 +21,7 @@
 #include "log/log.h"
 #include "exe_graph/runtime/runtime_attrs.h"
 #include "op_common/op_host/util/shape_util.h"
+#include <algorithm>
 #include <string>
 
 using namespace ge;
@@ -34,6 +35,37 @@ static constexpr int64_t RANK_3D = 3;
 static constexpr int64_t UNKNOWN_DIM = -1;
 
 static inline bool BothKnownAndNotEqual(int64_t a, int64_t b) { return a != UNKNOWN_DIM && b != UNKNOWN_DIM && a != b; }
+
+// Compute theoretical forward output spatial dims, consistent with arch35 tiling ComputeOutputDims.
+// out_backprop is the gradient of the forward output, so its H/W must match these dims.
+static void ComputeForwardOutDims(int64_t strideH, int64_t strideW, int64_t rateH, int64_t rateW,
+                                  const std::string& paddingMode, const int64_t* pads, bool ceilMode, int64_t inputH,
+                                  int64_t inputW, int64_t filterH, int64_t filterW, int64_t& outH, int64_t& outW)
+{
+    int64_t windowH = (filterH - 1) * rateH + 1;
+    int64_t windowW = (filterW - 1) * rateW + 1;
+
+    if (paddingMode == "SAME") {
+        outH = (inputH + strideH - 1) / strideH;
+        outW = (inputW + strideW - 1) / strideW;
+    } else if (paddingMode == "CALCULATED") {
+        // pads: [top, bottom, left, right]
+        if (ceilMode) {
+            outH = (inputH - windowH + pads[0] + pads[1] + strideH - 1) / strideH + 1;
+            outW = (inputW - windowW + pads[2] + pads[3] + strideW - 1) / strideW + 1;
+        } else {
+            outH = (inputH - windowH + pads[0] + pads[1]) / strideH + 1;
+            outW = (inputW - windowW + pads[2] + pads[3]) / strideW + 1;
+        }
+    } else { // VALID
+        outH = (inputH - windowH) / strideH + 1;
+        outW = (inputW - windowW) / strideW + 1;
+    }
+
+    // Clamp to non-negative (same as arch35 tiling)
+    outH = std::max(outH, static_cast<int64_t>(0));
+    outW = std::max(outW, static_cast<int64_t>(0));
+}
 
 static ge::graphStatus InferShapeDilation2DBackpropFilter(gert::InferShapeContext* context)
 {
@@ -191,6 +223,83 @@ static ge::graphStatus InferShapeDilation2DBackpropFilter(gert::InferShapeContex
                  ", out_bp.C=" + std::to_string(outBpShape->GetDim(3))),
                 "depth mismatch: x.C, filter.C and out_bp.C must be the same"),
             return GRAPH_FAILED);
+    }
+
+    // Extract spatial strides/rates and validate ranges
+    // NHWC: strides/rates=[1,sH,sW,1]; NCHW: strides/rates=[1,1,sH,sW]
+    int64_t strideH = 0, strideW = 0, rateH = 0, rateW = 0;
+    if (isNCHW) {
+        strideH = stridesData[2];
+        strideW = stridesData[3];
+        rateH = ratesData[2];
+        rateW = ratesData[3];
+    } else {
+        strideH = stridesData[1];
+        strideW = stridesData[2];
+        rateH = ratesData[1];
+        rateW = ratesData[2];
+    }
+    OP_CHECK_IF(strideH < 1 || strideW < 1,
+                OP_LOGE_FOR_INVALID_VALUE(
+                    context->GetNodeName(), "strides",
+                    ("strides spatial=[" + std::to_string(strideH) + ", " + std::to_string(strideW) + "]"), ">= 1"),
+                return GRAPH_FAILED);
+    OP_CHECK_IF(rateH < 1 || rateW < 1,
+                OP_LOGE_FOR_INVALID_VALUE(
+                    context->GetNodeName(), "rates",
+                    ("rates spatial=[" + std::to_string(rateH) + ", " + std::to_string(rateW) + "]"), ">= 1"),
+                return GRAPH_FAILED);
+
+    // Validate out_backprop batch consistency: out_bp.N must be the same as x.N (both known)
+    OP_CHECK_IF(BothKnownAndNotEqual(xShape->GetDim(0), outBpShape->GetDim(0)),
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), "x, out_backprop",
+                                                       ("x.N=" + std::to_string(xShape->GetDim(0)) +
+                                                        ", out_bp.N=" + std::to_string(outBpShape->GetDim(0))),
+                                                       "batch mismatch: out_backprop.N must be the same as x.N"),
+                return GRAPH_FAILED);
+
+    // Validate out_backprop spatial dims against theoretical forward output geometry.
+    // out_backprop is the gradient of the forward output: its H/W must match the dims
+    // derived from x/filter/strides/rates/padding. Only checked when the theoretical
+    // dims are fully derivable (static x/filter spatial dims); dynamic dims (-1) are tolerated.
+    int64_t inputH = 0, inputW = 0, filterH = 0, filterW = 0;
+    if (isNCHW) {
+        inputH = xShape->GetDim(2);
+        inputW = xShape->GetDim(3);
+        filterH = filterShape->GetDim(1);
+        filterW = filterShape->GetDim(2);
+    } else {
+        inputH = xShape->GetDim(1);
+        inputW = xShape->GetDim(2);
+        filterH = filterShape->GetDim(0);
+        filterW = filterShape->GetDim(1);
+    }
+    if (inputH != UNKNOWN_DIM && inputW != UNKNOWN_DIM && filterH != UNKNOWN_DIM && filterW != UNKNOWN_DIM) {
+        // Read pads and ceil_mode attrs (needed by CALCULATED padding)
+        const auto* padsVec = attrs->GetListInt(3);
+        OP_CHECK_NULL_WITH_CONTEXT(context, padsVec);
+        OP_CHECK_IF(padsVec->GetSize() < 4,
+                    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "pads",
+                                              std::to_string(padsVec->GetSize()).c_str(), "4 elements"),
+                    return GRAPH_FAILED);
+        const int64_t* padsData = padsVec->GetData();
+        const bool* ceilModePtr = attrs->GetBool(4);
+        OP_CHECK_NULL_WITH_CONTEXT(context, ceilModePtr);
+        bool ceilMode = *ceilModePtr;
+
+        int64_t expectOutH = 0, expectOutW = 0;
+        ComputeForwardOutDims(strideH, strideW, rateH, rateW, std::string(paddingModePtr), padsData, ceilMode, inputH,
+                              inputW, filterH, filterW, expectOutH, expectOutW);
+        int64_t bpH = isNCHW ? outBpShape->GetDim(2) : outBpShape->GetDim(1);
+        int64_t bpW = isNCHW ? outBpShape->GetDim(3) : outBpShape->GetDim(2);
+        OP_CHECK_IF(BothKnownAndNotEqual(bpH, expectOutH) || BothKnownAndNotEqual(bpW, expectOutW),
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                        context->GetNodeName(), "x, filter, out_backprop",
+                        ("out_bp.H=" + std::to_string(bpH) + ", out_bp.W=" + std::to_string(bpW) +
+                         ", expected H_out=" + std::to_string(expectOutH) + ", W_out=" + std::to_string(expectOutW)),
+                        "spatial mismatch: out_backprop H/W must match forward output dims derived from "
+                        "x/filter/strides/rates/padding"),
+                    return GRAPH_FAILED);
     }
 
     // Output shape = filter shape (SE §5.5)

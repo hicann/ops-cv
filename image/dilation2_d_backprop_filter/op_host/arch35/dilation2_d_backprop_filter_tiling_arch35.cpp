@@ -525,8 +525,9 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
         padInputW = inputW + attrs.padLeft + attrs.padRight;
     }
 
-    // TTK round-1 fix: use out_backprop shape as authoritative outH/outW
-    // (avoid INVALID_TILING when golden/op_tse uses different output dim formula)
+    // Validate out_backprop batch/H/W against theoretical forward output geometry.
+    // out_backprop is the gradient of the forward output: when both sides are known,
+    // its geometry must match the dims derived from x/filter/strides/rates/padding.
     // NHWC: out_bp=[N,Ho,Wo,C]; NCHW: out_bp=[N,C,Ho,Wo]
     int64_t outHActual = 0, outWActual = 0, batchActual = 0;
     if (isNCHW) {
@@ -538,14 +539,38 @@ static ge::graphStatus Dilation2DBackpropFilterTilingFunc(gert::TilingContext* c
         outWActual = outBpShape.GetDim(2);
         batchActual = outBpShape.GetDim(0);
     }
-    if (outHActual <= 0 || outWActual <= 0 || batchActual <= 0) {
-        outH = std::max(outH, static_cast<int64_t>(0));
-        outW = std::max(outW, static_cast<int64_t>(0));
-    } else {
-        outH = outHActual;
-        outW = outWActual;
+    // Batch consistency: fail when both known and mismatched
+    OP_CHECK_IF(batch >= 0 && batchActual > 0 && batchActual != batch,
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                    context->GetNodeName(), "x, out_backprop",
+                    ("x.N=" + std::to_string(batch) + ", out_bp.N=" + std::to_string(batchActual)),
+                    "batch mismatch: out_backprop.N must be the same as x.N"),
+                return ge::GRAPH_FAILED);
+    if (batch < 0 && batchActual > 0) {
+        // Dynamic x.N: adopt actual out_backprop batch
         batch = batchActual;
     }
+    // Spatial consistency: theoretical dims are authoritative when fully derivable (static geometry)
+    if (inputH >= 0 && inputW >= 0 && filterH >= 0 && filterW >= 0) {
+        OP_CHECK_IF((outHActual > 0 && outHActual != outH) || (outWActual > 0 && outWActual != outW),
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                        context->GetNodeName(), "x, filter, out_backprop",
+                        ("out_bp.H=" + std::to_string(outHActual) + ", out_bp.W=" + std::to_string(outWActual) +
+                         ", expected H_out=" + std::to_string(outH) + ", W_out=" + std::to_string(outW)),
+                        "spatial mismatch: out_backprop H/W must match forward output dims derived from "
+                        "x/filter/strides/rates/padding"),
+                    return ge::GRAPH_FAILED);
+    } else {
+        // Dynamic input geometry: adopt actual out_backprop spatial dims when positive
+        if (outHActual > 0) {
+            outH = outHActual;
+        }
+        if (outWActual > 0) {
+            outW = outWActual;
+        }
+    }
+    outH = std::max(outH, static_cast<int64_t>(0));
+    outW = std::max(outW, static_cast<int64_t>(0));
 
     // 7. Compute element counts
     int64_t totalElements = batch * outH * outW * depth;

@@ -98,3 +98,332 @@ TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_same)
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
+
+// Test case 3 (issue #1034 legal control): SAME padding, x=(1,3,3,1), filter=(2,2,1),
+// out_backprop=(1,3,3,1) matches theoretical forward output, tiling must succeed
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_same_legal_out_backprop)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop (legal 3x3)
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // totalElements=9, filterSize=4, needCoreNum=1, perCoreBufElems=0, batch=1, inputH=3, inputW=3, depth=1,
+    // filterH=2, filterW=2, outH=3, outW=3, strideH=1, strideW=1, rateH=1, rateW=1, padTop=0, padLeft=0,
+    // padInputH=3, padInputW=3, isNCHW=0
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "9 4 1 0 1 3 3 1 2 2 3 3 1 1 1 1 0 0 3 3 0 ";
+    // non-deterministic mode (default): workspace = sysWorkspace only (16777216)
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Test case 4 (issue #1034): SAME padding, out_backprop=(1,1,1,1) mismatches theoretical
+// forward output (1,3,3,1), tiling must fail
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_same_invalid_out_backprop_hw)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter
+            {{{1, 1, 1, 1}, {1, 1, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop (illegal 1x1)
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 5: batch mismatch, x.N=2 but out_backprop.N=1 (spatial dims legal), tiling must fail
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_batch_mismatch)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{2, 4, 4, 2}, {2, 4, 4, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{3, 3, 2}, {3, 3, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter
+            {{{1, 2, 2, 2}, {1, 2, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop (batch mismatched)
+        },
+        {
+            {{{3, 3, 2}, {3, 3, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 2, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Test case 6: float32, NCHW, VALID, x=(1,1,3,3), filter=(1,2,2), out_backprop=(1,1,2,2)
+// NCHW spatial extraction/depth check paths, tiling must succeed
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_nchw_valid)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, 1, 3, 3}, {1, 1, 3, 3}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x (NCHW)
+            {{{1, 2, 2}, {1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter (C, fH, fW)
+            {{{1, 1, 2, 2}, {1, 1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop (NCHW)
+        },
+        {
+            {{{1, 2, 2}, {1, 2, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NCHW")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // totalElements=4, filterSize=4, needCoreNum=1, perCoreBufElems=0, batch=1, inputH=3, inputW=3, depth=1,
+    // filterH=2, filterW=2, outH=2, outW=2, strideH=1, strideW=1, rateH=1, rateW=1, padTop=0, padLeft=0,
+    // padInputH=3, padInputW=3, isNCHW=1
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "4 4 1 0 1 3 3 1 2 2 2 2 1 1 1 1 0 0 3 3 1 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Test case 7: float32, NHWC, CALCULATED padding floor mode, x=(1,4,4,1), filter=(2,2,1),
+// pads=[1,1,1,1], strides=[1,1,1,1], out_backprop=(1,5,5,1), tiling must succeed
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_calculated_floor)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, 4, 4, 1}, {1, 4, 4, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter
+            {{{1, 5, 5, 1}, {1, 5, 5, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("CALCULATED")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // totalElements=25, filterSize=4, needCoreNum=1, perCoreBufElems=0, batch=1, inputH=4, inputW=4, depth=1,
+    // filterH=2, filterW=2, outH=5, outW=5, strideH=1, strideW=1, rateH=1, rateW=1, padTop=1, padLeft=1,
+    // padInputH=6, padInputW=6, isNCHW=0
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "25 4 1 0 1 4 4 1 2 2 5 5 1 1 1 1 1 1 6 6 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Test case 8: float32, NHWC, CALCULATED padding ceil mode, x=(1,5,5,1), filter=(2,2,1),
+// pads=[0,0,0,0], strides=[1,2,2,1], out_backprop=(1,3,3,1) (ceil output 3x3, floor would be 2x2)
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_calculated_ceil)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, 5, 5, 1}, {1, 5, 5, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter
+            {{{1, 3, 3, 1}, {1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 2, 2, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("CALCULATED")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(true)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // totalElements=9, filterSize=4, needCoreNum=1, perCoreBufElems=0, batch=1, inputH=5, inputW=5, depth=1,
+    // filterH=2, filterW=2, outH=3, outW=3, strideH=2, strideW=2, rateH=1, rateW=1, padTop=0, padLeft=0,
+    // padInputH=5, padInputW=5, isNCHW=0
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "9 4 1 0 1 5 5 1 2 2 3 3 2 2 1 1 0 0 5 5 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Test case 9: empty tensor, x=(1,0,3,1) with SAME padding, totalElements=0, empty branch
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_empty_tensor)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, 0, 3, 1}, {1, 0, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x (H=0, empty)
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},       // filter
+            {{{1, 0, 3, 1}, {1, 0, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // out_backprop
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("SAME")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // totalElements=0, filterSize=4, needCoreNum=1, perCoreBufElems=0, batch=1, inputH=0, inputW=3, depth=1,
+    // filterH=2, filterW=2, outH=0, outW=3, strideH=1, strideW=1, rateH=1, rateW=1, padTop=0, padLeft=0,
+    // padInputH=0, padInputW=3, isNCHW=0
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "0 4 1 0 1 0 3 1 2 2 0 3 1 1 1 1 0 0 0 3 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Test case 10: dynamic batch, x.N=-1, out_backprop.N=2 (spatial dims legal), tiling adopts
+// out_backprop batch and must succeed
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_dynamic_batch)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{-1, 3, 3, 1}, {-1, 3, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x (N unknown)
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},         // filter
+            {{{2, 2, 2, 1}, {2, 2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},   // out_backprop
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // batch adopts out_backprop.N=2: totalElements=8, filterSize=4, needCoreNum=1, perCoreBufElems=0,
+    // batch=2, inputH=3, inputW=3, depth=1, filterH=2, filterW=2, outH=2, outW=2,
+    // strideH=1, strideW=1, rateH=1, rateW=1, padTop=0, padLeft=0, padInputH=3, padInputW=3, isNCHW=0
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "8 4 1 0 2 3 3 1 2 2 2 2 1 1 1 1 0 0 3 3 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+// Test case 11: dynamic input H, x.H=-1, out_backprop=(1,7,3,1), tiling adopts actual
+// out_backprop spatial dims and must succeed
+TEST_F(Dilation2DBackpropFilterTiling, dilation2_d_backprop_filter_fp32_dynamic_input_hw)
+{
+    struct Dilation2DBackpropFilterCompileInfo {
+    } compileInfo;
+    gert::TilingContextPara tilingContextPara(
+        "Dilation2DBackpropFilter",
+        {
+            {{{1, -1, 3, 1}, {1, -1, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // x (H unknown)
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},         // filter
+            {{{1, 7, 3, 1}, {1, 7, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},   // out_backprop
+        },
+        {
+            {{{2, 2, 1}, {2, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        {
+            gert::TilingContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("rates", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({1, 1, 1, 1})),
+            gert::TilingContextPara::OpAttr("padding_mode", Ops::Cv::AnyValue::CreateFrom<std::string>("VALID")),
+            gert::TilingContextPara::OpAttr("pads", Ops::Cv::AnyValue::CreateFrom<std::vector<int64_t>>({0, 0, 0, 0})),
+            gert::TilingContextPara::OpAttr("ceil_mode", Ops::Cv::AnyValue::CreateFrom<bool>(false)),
+            gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>("NHWC")),
+        },
+        &compileInfo, "Ascend950",
+        64,     // number of cores
+        262144, // ubsize
+        4096);  // max tiling data size
+    // spatial adopts out_backprop H/W=7x3: totalElements=21, filterSize=4, needCoreNum=1, perCoreBufElems=0,
+    // batch=1, inputH=-1, inputW=3, depth=1, filterH=2, filterW=2, outH=7, outW=3,
+    // strideH=1, strideW=1, rateH=1, rateW=1, padTop=0, padLeft=0, padInputH=-1, padInputW=3, isNCHW=0
+    uint64_t expectTilingKey = 1;
+    std::string expectTilingData = "21 4 1 0 1 -1 3 1 2 2 7 3 1 1 1 1 0 0 -1 3 0 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
