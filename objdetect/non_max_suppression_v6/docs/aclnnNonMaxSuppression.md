@@ -52,7 +52,7 @@ aclnnStatus aclnnNonMaxSuppressionGetWorkspaceSize(
   const aclTensor*        boxes,
   const aclTensor*        scores,
   aclIntArray*            maxOutputBoxesPerClass,
-  aclFloatArray*          iouThreshold,
+  const aclFloatArray*    iouThreshold,
   aclFloatArray*          scoreThreshold,
   int32_t                 centerPointBox,
   aclTensor*              selectedIndices,
