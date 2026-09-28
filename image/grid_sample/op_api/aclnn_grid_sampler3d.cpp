@@ -10,6 +10,7 @@
 
 #include "aclnn_grid_sampler3d.h"
 #include "aclnn_kernels/contiguous.h"
+#include "aclnn_kernels/transdata.h"
 #include "grid_sampler3d.h"
 #include "image/grid_sample/op_api/grid_sample.h"
 #include "aclnn_kernels/transpose.h"
@@ -343,9 +344,25 @@ aclnnStatus aclnnGridSampler3DGetWorkspaceSize(const aclTensor* input, const acl
         gridSampler3DOut = l0op::GridSample3D(inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners,
                                               !isSpecialcase, uniqueExecutor.get());
     } else if (regBase) {
+        if (inputFormat == op::Format::FORMAT_NDHWC) {
+            int64_t perm[5] = {0, 4, 1, 2, 3};
+            auto valuePerm = uniqueExecutor->AllocIntArray(perm, 5);
+            inputTensor = l0op::Transpose(inputTensor, valuePerm, uniqueExecutor.get());
+            CHECK_RET(inputTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
         gridSampler3DOut = l0op::GridSample3D(inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners,
                                               false, uniqueExecutor.get());
     } else if (supportAiCpu) {
+        if (inputFormat == op::Format::FORMAT_NDHWC) {
+            int64_t perm[5] = {0, 4, 1, 2, 3};
+            auto valuePerm = uniqueExecutor->AllocIntArray(perm, 5);
+            auto transposed = l0op::Transpose(inputTensor, valuePerm, uniqueExecutor.get());
+            CHECK_RET(transposed != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            inputTensor = l0op::Contiguous(transposed, uniqueExecutor.get());
+            CHECK_RET(inputTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            inputTensor = l0op::ReFormat(inputTensor, op::Format::FORMAT_ND);
+            CHECK_RET(inputTensor != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
         gridSampler3DOut = l0op::GridSampler3D(inputTensor, gridTensor, interpolationMode, paddingMode, alignCorners,
                                                uniqueExecutor.get());
     } else {
