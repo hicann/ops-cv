@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include "exe_graph/runtime/storage_format.h"
@@ -193,6 +194,35 @@ gert::TilingContextPara MakeOutputShapeContractCase(const std::vector<int32_t>& 
         &compileInfo, "Ascend950");
 }
 
+gert::TilingContextPara MakeLargeOutputShapeProbe(std::vector<int32_t>& outputShapeData, int64_t batchSize)
+{
+    static ImageProjectiveTransformCompileInfo compileInfo = {};
+    constexpr int64_t hIn = 4;
+    constexpr int64_t wIn = 4;
+    constexpr int64_t channels = 3;
+    return gert::TilingContextPara(
+        "ImageProjectiveTransform",
+        {{{{batchSize, hIn, wIn, channels}, {batchSize, hIn, wIn, channels}}, ge::DT_FLOAT, ge::FORMAT_NHWC},
+         {{{batchSize, 8}, {batchSize, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{2}, {2}}, ge::DT_INT32, ge::FORMAT_ND, true, outputShapeData.data()}},
+        {{{{batchSize, outputShapeData[0], outputShapeData[1], channels},
+           {batchSize, outputShapeData[0], outputShapeData[1], channels}},
+          ge::DT_FLOAT,
+          ge::FORMAT_NHWC}},
+        {gert::TilingContextPara::OpAttr("interpolation", Ops::Cv::AnyValue::CreateFrom<string>("BILINEAR")),
+         gert::TilingContextPara::OpAttr("fill_mode", Ops::Cv::AnyValue::CreateFrom<string>("CONSTANT"))},
+        &compileInfo, "Ascend950");
+}
+
+void PrintLargeOutputShapeTiling(const char* label, const TilingInfo& info)
+{
+    ASSERT_NE(info.tilingData, nullptr);
+    const auto* data = reinterpret_cast<const ImageProjectiveTransformTilingData*>(info.tilingData.get());
+    std::cout << label << " status=GRAPH_SUCCESS block_dim=" << info.blockNum << " batch=" << data->batchSize
+              << " h_out=" << data->hOut << " w_out=" << data->wOut << " total_pixels=" << data->totalPixels
+              << " spatial_size=" << data->spatialSize << std::endl;
+}
+
 } // namespace
 
 TEST_F(ImageProjectiveTransformTiling, output_shape_zero_preserves_empty_output)
@@ -230,4 +260,48 @@ TEST_F(ImageProjectiveTransformTiling, output_shape_negative_is_rejected)
     std::vector<int32_t> outputShapeData = {-1, 3};
     auto para = MakeOutputShapeContractCase(outputShapeData, {1, -1, 3, 3});
     ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+TEST_F(ImageProjectiveTransformTiling, output_shape_int32_max_single_dimension_is_positive_control)
+{
+    constexpr int64_t batchSize = 3;
+    constexpr int32_t maxDim = std::numeric_limits<int32_t>::max();
+    std::vector<int32_t> outputShapeData = {maxDim, 1};
+    auto context = MakeLargeOutputShapeProbe(outputShapeData, batchSize);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(context, info));
+    PrintLargeOutputShapeTiling("output_shape=[INT32_MAX,1]", info);
+    ASSERT_NE(info.tilingData, nullptr);
+    const auto* data = reinterpret_cast<const ImageProjectiveTransformTilingData*>(info.tilingData.get());
+    EXPECT_EQ(data->hOut, maxDim);
+    EXPECT_EQ(data->wOut, 1);
+    EXPECT_EQ(data->totalPixels, static_cast<int64_t>(batchSize) * maxDim);
+    EXPECT_GT(info.blockNum, 0U);
+}
+
+TEST_F(ImageProjectiveTransformTiling, output_shape_int32_max_product_is_rejected)
+{
+    constexpr int64_t batchSize = 3;
+    constexpr int32_t maxDim = std::numeric_limits<int32_t>::max();
+    std::vector<int32_t> outputShapeData = {maxDim, maxDim};
+    auto context = MakeLargeOutputShapeProbe(outputShapeData, batchSize);
+    TilingInfo info;
+    EXPECT_FALSE(ExecuteTiling(context, info));
+}
+
+TEST_F(ImageProjectiveTransformTiling, output_shape_int32_max_product_with_two_batches_fits_int64)
+{
+    constexpr int64_t batchSize = 2;
+    constexpr int32_t maxDim = std::numeric_limits<int32_t>::max();
+    std::vector<int32_t> outputShapeData = {maxDim, maxDim};
+    auto context = MakeLargeOutputShapeProbe(outputShapeData, batchSize);
+    TilingInfo info;
+    ASSERT_TRUE(ExecuteTiling(context, info));
+    PrintLargeOutputShapeTiling("output_shape=[INT32_MAX,INT32_MAX],batch=2", info);
+    ASSERT_NE(info.tilingData, nullptr);
+    const auto* data = reinterpret_cast<const ImageProjectiveTransformTilingData*>(info.tilingData.get());
+    const int64_t expectedTotal = static_cast<int64_t>(batchSize) * maxDim * maxDim;
+    EXPECT_EQ(data->totalPixels, expectedTotal);
+    EXPECT_GT(data->totalPixels, 0);
+    EXPECT_GT(info.blockNum, 0U);
 }
