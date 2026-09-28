@@ -53,7 +53,7 @@ ge::graphStatus InferShapeForCheckValid(gert::InferShapeContext* context)
     if (rank != 2) {
         return GRAPH_FAILED;
     }
-    if (bboxShape->GetDim(1) != 4) {
+    if (bboxShape->GetDim(1) != 4 && bboxShape->GetDim(1) != ge::UNKNOWN_DIM) {
         return GRAPH_FAILED;
     }
 
