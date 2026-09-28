@@ -80,17 +80,16 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_uint8_case2)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_uint8_noequal_case3)
+TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_uint8_c3)
 {
     int h = 20;
     int w = 20;
-    int h2 = 30;
-    int w2 = 30;
-    int c = 1;
+    int c = 3;
+    int maskC = 1;
 
     gert::StorageShape bkgShape = {{h, w, c}, {h, w, c}};
     gert::StorageShape srcShape = {{h, w, c}, {h, w, c}};
-    gert::StorageShape maskShape = {{h2, w2, c}, {h2, w2, c}};
+    gert::StorageShape maskShape = {{h, w, maskC}, {h, w, maskC}};
     gert::StorageShape outShape = {{h, w, c}, {h, w, c}};
     BackgroundReplaceCompileInfo compileInfo = {40, 196608};
     gert::TilingContextPara tilingContextPara("BackgroundReplace",
@@ -102,22 +101,21 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_uint8_noequal_cas
                                               },
                                               {}, &compileInfo);
     uint64_t expectTilingKey = 4;
-    string expectTilingData = "900 ";
+    string expectTilingData = "400 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
-TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_fp16_noequal_case3)
+TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_fp16_c3)
 {
     int h = 20;
     int w = 20;
-    int h2 = 30;
-    int w2 = 30;
-    int c = 1;
+    int c = 3;
+    int maskC = 1;
 
     gert::StorageShape bkgShape = {{h, w, c}, {h, w, c}};
     gert::StorageShape srcShape = {{h, w, c}, {h, w, c}};
-    gert::StorageShape maskShape = {{h2, w2, c}, {h2, w2, c}};
+    gert::StorageShape maskShape = {{h, w, maskC}, {h, w, maskC}};
     gert::StorageShape outShape = {{h, w, c}, {h, w, c}};
     BackgroundReplaceCompileInfo compileInfo = {40, 196608};
     gert::TilingContextPara tilingContextPara("BackgroundReplace",
@@ -129,7 +127,7 @@ TEST_F(BackgroundReplaceTiling, background_replace_tiling_test_fp16_noequal_case
                                               },
                                               {}, &compileInfo);
     uint64_t expectTilingKey = 3;
-    string expectTilingData = "900 ";
+    string expectTilingData = "400 ";
     std::vector<size_t> expectWorkspaces = {4294967295};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -234,4 +232,80 @@ TEST_F(BackgroundReplaceTiling, background_replace_dtype_contract_rejects_out_mi
     auto para = MakeBackgroundReplaceTilingParaDtypes(4, 2, 3, 4, 2, 1, ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16,
                                                       ge::DT_UINT8);
     ExecuteTestCase(para, ge::GRAPH_FAILED);
+}
+
+static void ExpectShapeContractFailure(const gert::StorageShape& bkgShape, const gert::StorageShape& srcShape,
+                                       const gert::StorageShape& maskShape, const gert::StorageShape& outShape)
+{
+    BackgroundReplaceCompileInfo compileInfo = {40, 196608};
+    gert::TilingContextPara tilingContextPara("BackgroundReplace",
+                                              {{bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {srcShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {maskShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                              {
+                                                  {outShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_shape_contract_accepts_omitted_c1)
+{
+    BackgroundReplaceCompileInfo compileInfo = {40, 196608};
+    gert::StorageShape hwShape = {{20, 20}, {20, 20}};
+    gert::TilingContextPara tilingContextPara("BackgroundReplace",
+                                              {{hwShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {hwShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {hwShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                              {
+                                                  {hwShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
+    uint64_t expectTilingKey = 1;
+    string expectTilingData = "400 ";
+    std::vector<size_t> expectWorkspaces = {4294967295};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_shape_contract_accepts_c3_with_2d_mask)
+{
+    BackgroundReplaceCompileInfo compileInfo = {40, 196608};
+    gert::StorageShape bkgShape = {{20, 20, 3}, {20, 20, 3}};
+    gert::StorageShape maskShape = {{20, 20}, {20, 20}};
+    gert::TilingContextPara tilingContextPara("BackgroundReplace",
+                                              {{bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                               {maskShape, ge::DT_FLOAT16, ge::FORMAT_ND}},
+                                              {
+                                                  {bkgShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo);
+    uint64_t expectTilingKey = 3;
+    string expectTilingData = "400 ";
+    std::vector<size_t> expectWorkspaces = {4294967295};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_shape_contract_rejects_mask_spatial_mismatch)
+{
+    ExpectShapeContractFailure({{20, 20, 3}, {20, 20, 3}}, {{20, 20, 3}, {20, 20, 3}}, {{20, 19, 1}, {20, 19, 1}},
+                               {{20, 20, 3}, {20, 20, 3}});
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_shape_contract_rejects_mask_channel_three)
+{
+    ExpectShapeContractFailure({{20, 20, 3}, {20, 20, 3}}, {{20, 20, 3}, {20, 20, 3}}, {{20, 20, 3}, {20, 20, 3}},
+                               {{20, 20, 3}, {20, 20, 3}});
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_shape_contract_rejects_src_mismatch)
+{
+    ExpectShapeContractFailure({{20, 20, 3}, {20, 20, 3}}, {{20, 19, 3}, {20, 19, 3}}, {{20, 20, 1}, {20, 20, 1}},
+                               {{20, 20, 3}, {20, 20, 3}});
+}
+
+TEST_F(BackgroundReplaceTiling, background_replace_shape_contract_rejects_out_mismatch)
+{
+    ExpectShapeContractFailure({{20, 20, 3}, {20, 20, 3}}, {{20, 20, 3}, {20, 20, 3}}, {{20, 20, 1}, {20, 20, 1}},
+                               {{20, 19, 3}, {20, 19, 3}});
 }

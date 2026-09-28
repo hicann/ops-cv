@@ -29,6 +29,35 @@ static constexpr uint64_t TILING_KEY_HALF_C3 = 3;
 static constexpr uint64_t TILING_KEY_UINT8_C3 = 4;
 
 static constexpr uint32_t ASCEND_310P_BLOCK_DIM = 8;
+static constexpr size_t MIN_HW_RANK = 2;
+static constexpr size_t HWC_RANK = 3;
+static constexpr int64_t CHANNEL_C1 = 1;
+static constexpr int64_t CHANNEL_C3 = 3;
+
+static int64_t GetChannel(const gert::Shape& shape)
+{
+    return shape.GetDimNum() < HWC_RANK ? CHANNEL_C1 : shape.GetDim(2);
+}
+
+static bool IsShapeContractValid(const gert::Shape& bkgShape, const gert::Shape& srcShape, const gert::Shape& maskShape,
+                                 const gert::Shape& outShape)
+{
+    if (bkgShape.GetDimNum() < MIN_HW_RANK || srcShape.GetDimNum() < MIN_HW_RANK ||
+        maskShape.GetDimNum() < MIN_HW_RANK || outShape.GetDimNum() < MIN_HW_RANK) {
+        return false;
+    }
+    if (bkgShape.GetDim(0) != srcShape.GetDim(0) || bkgShape.GetDim(1) != srcShape.GetDim(1) ||
+        bkgShape.GetDim(0) != maskShape.GetDim(0) || bkgShape.GetDim(1) != maskShape.GetDim(1) ||
+        bkgShape.GetDim(0) != outShape.GetDim(0) || bkgShape.GetDim(1) != outShape.GetDim(1)) {
+        return false;
+    }
+    const int64_t bkgChannel = GetChannel(bkgShape);
+    if ((bkgChannel != CHANNEL_C1 && bkgChannel != CHANNEL_C3) || GetChannel(srcShape) != bkgChannel ||
+        GetChannel(outShape) != bkgChannel) {
+        return false;
+    }
+    return GetChannel(maskShape) == CHANNEL_C1;
+}
 
 static ge::graphStatus TilingBackgroundReplace(gert::TilingContext* context)
 {
@@ -39,6 +68,16 @@ static ge::graphStatus TilingBackgroundReplace(gert::TilingContext* context)
     auto outDesc = context->GetOutputDesc(0);
     if (tensorBkg == nullptr || tensorSrc == nullptr || tensorMask == nullptr || outDesc == nullptr) {
         OP_LOGE("BackgroundReplace", "bkg, src, mask or out tensor is null.");
+        return ge::GRAPH_FAILED;
+    }
+    auto bkgShape = context->GetInputShape(0);
+    auto srcShape = context->GetInputShape(1);
+    auto maskShape = context->GetInputShape(2);
+    auto outShape = context->GetOutputShape(0);
+    if (bkgShape == nullptr || srcShape == nullptr || maskShape == nullptr || outShape == nullptr ||
+        !IsShapeContractValid(bkgShape->GetStorageShape(), srcShape->GetStorageShape(), maskShape->GetStorageShape(),
+                              outShape->GetStorageShape())) {
+        OP_LOGE("BackgroundReplace", "bkg, src, mask or out shape is invalid.");
         return ge::GRAPH_FAILED;
     }
     int64_t maskSize = tensorMask->GetShapeSize();
