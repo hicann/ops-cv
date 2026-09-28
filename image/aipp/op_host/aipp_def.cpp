@@ -50,6 +50,7 @@ public:
             .ExtendCfgInfo("opFile.value", "aipp")
             .ExtendCfgInfo("opInterface.value", "Aipp");
         this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("ascend350", aicoreConfig);
     }
 };
 

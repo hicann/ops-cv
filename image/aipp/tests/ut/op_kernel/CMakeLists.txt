@@ -9,10 +9,10 @@
 # -----------------------------------------------------------------------------------------------------------
 
 if (UT_TEST_ALL OR OP_KERNEL_UT)
-    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950")
+    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950" OR "${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend350")
         set(aipp_tiling_files
             ${CMAKE_CURRENT_SOURCE_DIR}/../../../op_host/arch35/aipp_tiling.cpp
         )
-        AddOpTestCase(aipp "Ascend950PR_9599" "-DDTYPE_FEATURES=half" "${aipp_tiling_files}")
+        AddOpTestCase(aipp "Ascend950PR_9599;ascend350_355e" "-DDTYPE_FEATURES=half" "${aipp_tiling_files}")
     endif()
 endif()
