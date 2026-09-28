@@ -69,6 +69,22 @@ static ge::graphStatus GetTotalN(gert::TilingContext* context, uint32_t& totalN)
     return ge::GRAPH_SUCCESS;
 }
 
+static ge::graphStatus ValidateInputDataTypes(gert::TilingContext* context)
+{
+    const auto* bboxesDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, bboxesDesc);
+    const auto* gtboxesDesc = context->GetInputDesc(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesDesc);
+
+    const auto bboxesDtype = bboxesDesc->GetDataType();
+    const auto gtboxesDtype = gtboxesDesc->GetDataType();
+    OP_CHECK_IF(bboxesDtype != gtboxesDtype,
+                OP_LOGE(context, "CIoU: bboxes and gtboxes must have the same dtype, got %d and %d",
+                        static_cast<int32_t>(bboxesDtype), static_cast<int32_t>(gtboxesDtype)),
+                return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 static CIoUAttrs ReadAttrs(gert::TilingContext* context)
 {
     CIoUAttrs ciouAttrs;
@@ -160,6 +176,8 @@ static ge::graphStatus CIoUTilingFunc(gert::TilingContext* context)
 {
     CIoUTilingData* tiling = nullptr;
     uint32_t totalN = 0;
+    OP_CHECK_IF(ValidateInputDataTypes(context) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context, "CIoU: input dtype validation failed"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(InitTilingData(context, tiling) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CIoU: InitTilingData failed"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(GetTotalN(context, totalN) != ge::GRAPH_SUCCESS, OP_LOGE(context, "CIoU: GetTotalN failed"),
