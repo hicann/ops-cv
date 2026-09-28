@@ -29,13 +29,18 @@ static Status ParseParamsNMSWithMask(const ge::Operator& op_src, ge::Operator& o
             json attrs = json::parse(attrs_string.GetString());
             if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
                 for (json& attr : attrs["attribute"]) {
-                    if (attr.value("name", "") != "iou_threshold" || !attr.contains("f")) {
+                    if (attr.value("name", "") != "iou_threshold") {
                         continue;
                     }
-                    std::string iou_threshold_str = attr["f"];
-                    if (StrToFloat(iou_threshold_str, iou_threshold) != SUCCESS) {
-                        OP_LOGE(GetOpName(op_dest).c_str(), "parse iou_threshold failed.");
-                        return FAILED;
+                    if (attr.contains("f")) {
+                        std::string iou_threshold_str = attr["f"];
+                        if (StrToFloat(iou_threshold_str, iou_threshold) != SUCCESS) {
+                            OP_LOGE(GetOpName(op_dest).c_str(), "parse iou_threshold failed.");
+                            return FAILED;
+                        }
+                    } else {
+                        // GE omits the scalar value field when the protobuf value is zero.
+                        iou_threshold = 0.0f;
                     }
                     break;
                 }

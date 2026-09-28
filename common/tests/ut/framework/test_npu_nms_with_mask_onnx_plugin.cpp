@@ -51,6 +51,17 @@ TEST(OnnxNMSWithMaskPluginTest, UseDefaultIouThresholdWhenAttributeMissing)
     EXPECT_FLOAT_EQ(iou_threshold, 0.5f);
 }
 
+TEST(OnnxNMSWithMaskPluginTest, ParseZeroIouThresholdWithoutFField)
+{
+    ge::Operator op_src = CreateSourceOperator(R"({"attribute":[{"name":"iou_threshold","type":1}]})");
+    ge::Operator op_dest = CreateOperator("nms_with_mask");
+    float iou_threshold = -1.0f;
+
+    EXPECT_EQ(domi::ParseParamsNMSWithMask(op_src, op_dest), domi::SUCCESS);
+    EXPECT_EQ(op_dest.GetAttr("iou_threshold", iou_threshold), ge::GRAPH_SUCCESS);
+    EXPECT_FLOAT_EQ(iou_threshold, 0.0f);
+}
+
 TEST(OnnxNMSWithMaskPluginTest, ReturnFailedWhenIouThresholdIsInvalid)
 {
     ge::Operator op_src = CreateSourceOperator(R"({"attribute":[{"name":"iou_threshold","type":1,"f":"bad"}]})");

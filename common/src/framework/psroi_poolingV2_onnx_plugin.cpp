@@ -13,36 +13,56 @@
  * \brief
  */
 
+#include "graph/operator.h"
 #include "nlohmann/json.hpp"
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "register/register.h"
 
 using namespace ge;
 using json = nlohmann::json;
 namespace domi {
 static const size_t ATTR_NUM = 3;
 
-static Status ParseOnnxParamsPSROIPoolingV2(const ge::Operator& op_src, ge::Operator& op_dest)
+static Status ParsePSROIPoolingV2Attributes(const ge::Operator& op_src, ge::Operator& op_dest)
 {
     AscendString attrs_string;
     float spatial_scale = 0;
     int output_dim = 0;
     int group_size = 0;
     int attr_num = 0;
-    if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
-        json attrs = json::parse(attrs_string.GetString());
-        for (json& attr : attrs["attribute"]) {
-            if (attr["name"] == "spatial_scale") {
-                std::string spatial = attr["f"];
-                spatial_scale = atof(spatial.c_str());
-                ++attr_num;
-            } else if (attr["name"] == "output_dim") {
-                output_dim = attr["i"];
-                ++attr_num;
-            } else if (attr["name"] == "group_size") {
-                group_size = attr["i"];
-                ++attr_num;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    const std::string attr_name = attr.value("name", "");
+                    if (attr_name == "spatial_scale") {
+                        if (attr.contains("f")) {
+                            std::string spatial = attr["f"];
+                            if (StrToFloat(spatial, spatial_scale) != SUCCESS) {
+                                OP_LOGE(GetOpName(op_dest).c_str(), "parse spatial_scale failed.");
+                                return FAILED;
+                            }
+                        } else {
+                            spatial_scale = 0.0f;
+                        }
+                        ++attr_num;
+                    } else if (attr_name == "output_dim") {
+                        output_dim = attr.contains("i") ? attr["i"].get<int>() : 0;
+                        ++attr_num;
+                    } else if (attr_name == "group_size") {
+                        group_size = attr.contains("i") ? attr["i"].get<int>() : 0;
+                        ++attr_num;
+                    }
+                }
             }
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
     if (attr_num != ATTR_NUM) {
@@ -52,6 +72,14 @@ static Status ParseOnnxParamsPSROIPoolingV2(const ge::Operator& op_src, ge::Oper
     op_dest.SetAttr("spatial_scale", spatial_scale);
     op_dest.SetAttr("output_dim", output_dim);
     op_dest.SetAttr("group_size", group_size);
+    return SUCCESS;
+}
+
+static Status ParseOnnxParamsPSROIPoolingV2(const ge::Operator& op_src, ge::Operator& op_dest)
+{
+    if (ParsePSROIPoolingV2Attributes(op_src, op_dest) != SUCCESS) {
+        return FAILED;
+    }
 
     if (ChangeFormatFromOnnx(op_dest, 0, ge::FORMAT_NCHW, true) != SUCCESS ||
         ChangeFormatFromOnnx(op_dest, 1, ge::FORMAT_NCHW, true) != SUCCESS ||
