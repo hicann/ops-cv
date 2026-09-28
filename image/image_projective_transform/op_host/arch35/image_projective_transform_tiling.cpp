@@ -72,6 +72,13 @@ static ge::graphStatus CheckInputDtypes(gert::TilingContext* context)
 // that would silently skip the batch-equality check via int32_t overflow.
 static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t imagesN)
 {
+    if (imagesN < ge::UNKNOWN_DIM) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "images.shape[0]",
+                                              std::to_string(imagesN).c_str(),
+                                              "batch dimension must be -1 or a non-negative value");
+        return ge::GRAPH_FAILED;
+    }
+
     auto transformsInput = context->GetInputShape(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, transformsInput);
     auto transformsShape = transformsInput->GetStorageShape();
@@ -86,6 +93,12 @@ static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t im
         return ge::GRAPH_FAILED;
     }
     int64_t transformsN = transformsShape.GetDim(0);
+    if (transformsN < ge::UNKNOWN_DIM) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "transforms.shape[0]",
+                                              std::to_string(transformsN).c_str(),
+                                              "batch dimension must be -1 or a non-negative value");
+        return ge::GRAPH_FAILED;
+    }
     if (imagesN >= 0 && transformsN >= 0 && imagesN != transformsN) {
         OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(context->GetNodeName(), "transforms, images",
                                                (std::to_string(transformsN) + ", " + std::to_string(imagesN)).c_str(),

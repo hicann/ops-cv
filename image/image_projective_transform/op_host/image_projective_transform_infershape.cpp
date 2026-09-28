@@ -48,6 +48,12 @@ static ge::graphStatus ValidateTransforms(gert::InferShapeContext* context, cons
         N = imagesShape->GetDim(0);
     }
     int64_t transformsN = transformsShape->GetDim(0);
+    if (transformsN < ge::UNKNOWN_DIM) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "transforms.shape[0]",
+                                              std::to_string(transformsN).c_str(),
+                                              "batch dimension must be -1 or a non-negative value");
+        return GRAPH_FAILED;
+    }
     // When N is dynamic (-1), skip the batch-equality check; it will be
     // enforced at tiling time when the actual value is known.
     if (N >= 0 && transformsN >= 0 && N != transformsN) {
@@ -110,6 +116,12 @@ static ge::graphStatus InferShapeImageProjectiveTransform(gert::InferShapeContex
     if (!Ops::Base::IsUnknownRank(*imagesShape) && imagesShape->GetDimNum() != 4) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "images", std::to_string(imagesShape->GetDimNum()).c_str(),
                                      "4");
+        return GRAPH_FAILED;
+    }
+    if (!Ops::Base::IsUnknownRank(*imagesShape) && imagesShape->GetDim(0) < ge::UNKNOWN_DIM) {
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "images.shape[0]",
+                                              std::to_string(imagesShape->GetDim(0)).c_str(),
+                                              "batch dimension must be -1 or a non-negative value");
         return GRAPH_FAILED;
     }
 
