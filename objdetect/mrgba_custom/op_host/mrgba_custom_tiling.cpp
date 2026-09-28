@@ -18,10 +18,31 @@
 
 namespace optiling {
 constexpr uint32_t BLOCK_DIM = 8;
+constexpr size_t RGB_RANK = 3;
+constexpr int64_t RGB_CHANNEL = 3;
+
+namespace {
+bool IsMrgbaCustomShapeValid(const gert::Shape& rgbShape, const gert::Shape& alphaShape)
+{
+    if (rgbShape.GetDimNum() != RGB_RANK || rgbShape.GetDim(2) != RGB_CHANNEL) {
+        return false;
+    }
+    if (alphaShape.GetDimNum() < 2) {
+        return false;
+    }
+    return rgbShape.GetDim(0) == alphaShape.GetDim(0) && rgbShape.GetDim(1) == alphaShape.GetDim(1);
+}
+} // namespace
 
 static ge::graphStatus TilingFuncForMrgbaCustom(gert::TilingContext* context)
 {
     if (context == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
+    auto rgbShape = context->GetInputShape(0);
+    auto alphaShape = context->GetInputShape(1);
+    if (rgbShape == nullptr || alphaShape == nullptr ||
+        !IsMrgbaCustomShapeValid(rgbShape->GetStorageShape(), alphaShape->GetStorageShape())) {
         return ge::GRAPH_FAILED;
     }
     TilingDataMrgba tiling;

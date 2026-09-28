@@ -72,3 +72,70 @@ TEST_F(TilingForMrgbaCustom, mrgba_custom_tiling_1)
     uint32_t expectedAlphaLen = 1080 * 1920 * 1;
     EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingDataPtr), expectedAlphaLen);
 }
+
+TEST_F(TilingForMrgbaCustom, mrgba_custom_shape_contract_valid)
+{
+    MrgbaCustomCompileInfo compileInfo = {64, 262144};
+    gert::TilingContextPara tilingContextPara("MrgbaCustom",
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {{{20, 20, 1}, {20, 20, 1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND}}, {},
+                                              &compileInfo);
+
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingInfo.tilingData.get()), 20U * 20U);
+}
+
+TEST_F(TilingForMrgbaCustom, mrgba_custom_shape_contract_accepts_alpha_hw)
+{
+    MrgbaCustomCompileInfo compileInfo = {64, 262144};
+    gert::TilingContextPara tilingContextPara("MrgbaCustom",
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {{{20, 20}, {20, 20}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND}}, {},
+                                              &compileInfo);
+
+    TilingInfo tilingInfo;
+    EXPECT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    EXPECT_EQ(*reinterpret_cast<uint32_t*>(tilingInfo.tilingData.get()), 20U * 20U);
+}
+
+TEST_F(TilingForMrgbaCustom, mrgba_custom_shape_contract_rejects_mismatched_hw)
+{
+    MrgbaCustomCompileInfo compileInfo = {64, 262144};
+    gert::TilingContextPara tilingContextPara("MrgbaCustom",
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {{{20, 19, 1}, {20, 19, 1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND}}, {},
+                                              &compileInfo);
+
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(TilingForMrgbaCustom, mrgba_custom_shape_contract_rejects_invalid_channels)
+{
+    MrgbaCustomCompileInfo compileInfo = {64, 262144};
+    gert::TilingContextPara tilingContextPara("MrgbaCustom",
+                                              {{{{20, 20, 4}, {20, 20, 4}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {{{20, 20, 1}, {20, 20, 1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND}}, {},
+                                              &compileInfo);
+
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
+
+TEST_F(TilingForMrgbaCustom, mrgba_custom_shape_contract_rejects_non_hwc_rgb)
+{
+    MrgbaCustomCompileInfo compileInfo = {64, 262144};
+    gert::TilingContextPara tilingContextPara("MrgbaCustom",
+                                              {{{{400, 3}, {400, 3}}, ge::DT_UINT8, ge::FORMAT_ND},
+                                               {{{20, 20, 1}, {20, 20, 1}}, ge::DT_UINT8, ge::FORMAT_ND}},
+                                              {{{{20, 20, 3}, {20, 20, 3}}, ge::DT_UINT8, ge::FORMAT_ND}}, {},
+                                              &compileInfo);
+
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}
