@@ -29,6 +29,8 @@
 #include "aclnn_kernels/cast.h"
 #include "aclnn_upsample_nearest_1d_backward.h"
 
+#include <cmath>
+
 using namespace op;
 #ifdef __cplusplus
 extern "C" {
@@ -128,8 +130,15 @@ static bool CheckNCDimEqual(const aclTensor* self, const aclTensor* out)
     return true;
 }
 
+static bool CheckScalesFinite(double scales)
+{
+    OP_CHECK(std::isfinite(scales), OP_LOGE(ACLNN_ERR_PARAM_INVALID, "scales [%lf] must be finite.", scales),
+             return false);
+    return true;
+}
+
 static aclnnStatus CheckParams(const aclTensor* gradOutTensor, const aclIntArray* outputSize,
-                               const aclIntArray* inputSize, const aclTensor* out)
+                               const aclIntArray* inputSize, double scales, const aclTensor* out)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(gradOutTensor, outputSize, inputSize, out), ACLNN_ERR_PARAM_NULLPTR);
@@ -145,6 +154,9 @@ static aclnnStatus CheckParams(const aclTensor* gradOutTensor, const aclIntArray
 
     // 5.检查gradOut和gradIn N/C轴的大小是否一致
     CHECK_RET(CheckNCDimEqual(gradOutTensor, out), ACLNN_ERR_PARAM_INVALID);
+
+    // 6. 检查scales是否为有限值,拒绝NaN/Inf
+    CHECK_RET(CheckScalesFinite(scales), ACLNN_ERR_PARAM_INVALID);
 
     return ACLNN_SUCCESS;
 }
@@ -223,7 +235,7 @@ aclnnStatus aclnnUpsampleNearest1dBackwardGetWorkspaceSize(const aclTensor* grad
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
-    auto ret = CheckParams(gradOut, outputSize, inputSize, out);
+    auto ret = CheckParams(gradOut, outputSize, inputSize, scales, out);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     if (gradOut->IsEmpty() || out->IsEmpty()) {

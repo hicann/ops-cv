@@ -8,6 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <limits>
+
 #include "gtest/gtest.h"
 #include "../../../../op_host/op_api/aclnn_upsample_nearest_1d_backward.h"
 #include "op_api_ut_common/tensor_desc.h"
@@ -436,4 +438,42 @@ TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_02
     uint64_t workspaceSize = 0;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
+}
+
+// scales为NaN时拒绝
+TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_026)
+{
+    const double_t scales = std::numeric_limits<double_t>::quiet_NaN();
+    vector<int64_t> output_size = {4};
+    vector<int64_t> input_size = {1, 1, 2};
+
+    auto self_desc = TensorDesc({1, 1, 4}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    auto output_desc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
+
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+}
+
+// scales为+Inf时拒绝
+TEST_F(l2_upsampleNearest1d_backward_test, l2_upsampleNearest1d_backward_test_027)
+{
+    const double_t scales = std::numeric_limits<double_t>::infinity();
+    vector<int64_t> output_size = {4};
+    vector<int64_t> input_size = {1, 1, 2};
+
+    auto self_desc = TensorDesc({1, 1, 4}, ACL_FLOAT, ACL_FORMAT_NCL);
+    auto output_size_desc = IntArrayDesc(output_size);
+    auto input_size_desc = IntArrayDesc(input_size);
+    auto output_desc = TensorDesc({1, 1, 2}, ACL_FLOAT, ACL_FORMAT_NCL);
+
+    auto ut = OP_API_UT(aclnnUpsampleNearest1dBackward, INPUT(self_desc, output_size_desc, input_size_desc, scales),
+                        OUTPUT(output_desc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
