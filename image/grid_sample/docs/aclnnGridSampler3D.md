@@ -236,7 +236,7 @@ aclnnStatus aclnnGridSampler3D(
       <td>插值计算的最终输出结果，对应公式中描述的`output`。</td>
       <td><ul><li>支持空Tensor。</li><li>数据格式和数据类型与input保持一致。</li><li>shape的N轴、C轴与input保持一致，shape的D轴、H轴、W轴与grid保持一致。</li></ul></td>
       <td>FLOAT16、FLOAT32、DOUBLE、BFLOAT16</td>
-      <td>ND</td>
+      <td>NCDHW、NDHWC、ND</td>
       <td>5</td>
       <td>√</td>
     </tr>
