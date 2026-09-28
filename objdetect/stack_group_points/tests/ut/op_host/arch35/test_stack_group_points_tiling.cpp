@@ -79,6 +79,34 @@ TEST_F(StackGroupPointsTiling, stack_group_points_tiling_fp32)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
+// 可表达边界：m*c*nsample=8e18 接近 INT64_MAX 仍应成功（issue #1086 回归）
+TEST_F(StackGroupPointsTiling, stack_group_points_tiling_total_elements_int64_boundary)
+{
+    gert::StorageShape featuresShape = {{1, 2000000000}, {1, 2000000000}};
+    gert::StorageShape fbcShape = {{1}, {1}};
+    gert::StorageShape indicesShape = {{2000000000, 2}, {2000000000, 2}};
+    gert::StorageShape ibcShape = {{1}, {1}};
+    gert::StorageShape yShape = {{2000000000, 2000000000, 2}, {2000000000, 2000000000, 2}};
+
+    StackGroupPointsCompileInfo compileInfo = {0, 0};
+    gert::TilingContextPara tilingContextPara("StackGroupPoints",
+                                              {
+                                                  {featuresShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {fbcShape, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {indicesShape, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {ibcShape, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {yShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", SOC_CORE_NUM, SOC_UB_SIZE,
+                                              TILING_DATA_SIZE);
+    uint64_t expectTilingKey = 0;
+    std::string expectTilingData = "2000000000 2000000000 2 1 1 8000000000000000000 64 ";
+    std::vector<size_t> expectWorkspaces = {16777216};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
 // ===== 边界校验失败用例 =====
 
 // Negative: features C=0, kernel 中 index / nsample % c 会除零
@@ -214,6 +242,31 @@ TEST_F(StackGroupPointsTiling, stack_group_points_tiling_neg_features_not_2d)
     gert::StorageShape indicesShape = {{16, 128}, {16, 128}};
     gert::StorageShape ibcShape = {{1}, {1}};
     gert::StorageShape yShape = {{16, 32, 128}, {16, 32, 128}};
+
+    StackGroupPointsCompileInfo compileInfo = {0, 0};
+    gert::TilingContextPara tilingContextPara("StackGroupPoints",
+                                              {
+                                                  {featuresShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                                  {fbcShape, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {indicesShape, ge::DT_INT32, ge::FORMAT_ND},
+                                                  {ibcShape, ge::DT_INT32, ge::FORMAT_ND},
+                                              },
+                                              {
+                                                  {yShape, ge::DT_FLOAT, ge::FORMAT_ND},
+                                              },
+                                              {}, &compileInfo, "Ascend950", SOC_CORE_NUM, SOC_UB_SIZE,
+                                              TILING_DATA_SIZE);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+}
+
+// Negative: m*c*nsample=1.2e19 超过 INT64_MAX，乘法有符号溢出，tiling 应失败（issue #1086）
+TEST_F(StackGroupPointsTiling, stack_group_points_tiling_neg_total_elements_overflow)
+{
+    gert::StorageShape featuresShape = {{1, 2000000000}, {1, 2000000000}};
+    gert::StorageShape fbcShape = {{1}, {1}};
+    gert::StorageShape indicesShape = {{2000000000, 3}, {2000000000, 3}};
+    gert::StorageShape ibcShape = {{1}, {1}};
+    gert::StorageShape yShape = {{2000000000, 2000000000, 3}, {2000000000, 2000000000, 3}};
 
     StackGroupPointsCompileInfo compileInfo = {0, 0};
     gert::TilingContextPara tilingContextPara("StackGroupPoints",

@@ -13,6 +13,8 @@
  * \brief Tiling implementation for stack_group_points operator
  */
 
+#include <limits>
+
 #include "log/log.h"
 #include "register/op_impl_registry.h"
 #include "register/op_def_registry.h"
@@ -45,6 +47,16 @@ static constexpr int32_t kTilingKeyFp32 = 0;
 static constexpr int32_t kTilingKeyFp16 = 1;
 
 struct StackGroupPointsCompileInfo {};
+
+// ========== CheckedMul（非负 int64 溢出安全乘法，溢出返回 false） ==========
+static bool CheckedMul(int64_t lhs, int64_t rhs, int64_t& result)
+{
+    if (lhs < 0 || rhs < 0 || (lhs != 0 && rhs > std::numeric_limits<int64_t>::max() / lhs)) {
+        return false;
+    }
+    result = lhs * rhs;
+    return true;
+}
 
 // ========== ValidateDtype（SE §2.2 + §2.6） ==========
 static ge::graphStatus ValidateDtype(gert::TilingContext* context)
@@ -242,12 +254,21 @@ static ge::graphStatus StackGroupPointsTilingFunc(gert::TilingContext* context)
                                                        "features_batch_cnt dim0 must equal indices_batch_cnt dim0"),
                 return ge::GRAPH_FAILED);
 
-    int64_t totalElements = m * c * nsample;
-    int64_t perCoreElements = (totalElements + coreNum - 1) / coreNum;
+    // 总元素数乘积需在 int64 内可表示：溢出会产生负 totalElements 写入 tiling，kernel 转uint64后成为巨大循环上界
+    int64_t totalElements = 0;
+    OP_CHECK_IF(
+        !CheckedMul(m, c, totalElements) || !CheckedMul(totalElements, nsample, totalElements),
+        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+            context->GetNodeName(), "features and indices",
+            ("m=" + std::to_string(m) + ", c=" + std::to_string(c) + ", nsample=" + std::to_string(nsample)).c_str(),
+            "total elements m * c * nsample overflows int64_t range"),
+        return ge::GRAPH_FAILED);
+    // 向上取整采用商 + 余数，避免 totalElements 接近 INT64_MAX 时 + coreNum - 1 的边界加法溢出
+    int64_t perCoreElements = totalElements / coreNum + ((totalElements % coreNum != 0) ? 1 : 0);
     if (perCoreElements < PER_CORE_MIN) {
         perCoreElements = PER_CORE_MIN;
     }
-    int64_t needCoreNum = (totalElements + perCoreElements - 1) / perCoreElements;
+    int64_t needCoreNum = totalElements / perCoreElements + ((totalElements % perCoreElements != 0) ? 1 : 0);
     if (needCoreNum > coreNum) {
         needCoreNum = coreNum;
     }
