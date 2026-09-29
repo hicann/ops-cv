@@ -164,7 +164,7 @@ static ge::graphStatus ValidateShape(gert::TilingContext* context, bool isLinear
     auto scalesShape = context->GetOptionalInputShape(kScalesIdx);
     if (scalesShape != nullptr) {
         auto scalesStorageShape = scalesShape->GetStorageShape();
-        OP_CHECK_IF(scalesStorageShape.GetDimNum() > 1,
+        OP_CHECK_IF(scalesStorageShape.GetDimNum() != 1,
                     OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "scales",
                                                  (std::to_string(scalesStorageShape.GetDimNum()) + "D").c_str(), "1D"),
                     return ge::GRAPH_FAILED);

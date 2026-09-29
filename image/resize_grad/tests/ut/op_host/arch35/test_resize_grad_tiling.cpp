@@ -42,14 +42,14 @@ std::vector<gert::TilingContextPara::OpAttr> MakeAttrs(const std::string& mode, 
 {
     return {
         gert::TilingContextPara::OpAttr("coordinate_transformation_mode",
-                                        Ops::Math::AnyValue::CreateFrom<std::string>(ctm)),
-        gert::TilingContextPara::OpAttr("cubic_coeff_a", Ops::Math::AnyValue::CreateFrom<float>(-0.75f)),
-        gert::TilingContextPara::OpAttr("exclude_outside", Ops::Math::AnyValue::CreateFrom<int64_t>(0)),
-        gert::TilingContextPara::OpAttr("extrapolation_value", Ops::Math::AnyValue::CreateFrom<float>(0.0f)),
-        gert::TilingContextPara::OpAttr("mode", Ops::Math::AnyValue::CreateFrom<std::string>(mode)),
+                                        Ops::Cv::AnyValue::CreateFrom<std::string>(ctm)),
+        gert::TilingContextPara::OpAttr("cubic_coeff_a", Ops::Cv::AnyValue::CreateFrom<float>(-0.75f)),
+        gert::TilingContextPara::OpAttr("exclude_outside", Ops::Cv::AnyValue::CreateFrom<int64_t>(0)),
+        gert::TilingContextPara::OpAttr("extrapolation_value", Ops::Cv::AnyValue::CreateFrom<float>(0.0f)),
+        gert::TilingContextPara::OpAttr("mode", Ops::Cv::AnyValue::CreateFrom<std::string>(mode)),
         gert::TilingContextPara::OpAttr("nearest_mode",
-                                        Ops::Math::AnyValue::CreateFrom<std::string>("round_prefer_floor")),
-        gert::TilingContextPara::OpAttr("data_format", Ops::Math::AnyValue::CreateFrom<std::string>(dataFormat)),
+                                        Ops::Cv::AnyValue::CreateFrom<std::string>("round_prefer_floor")),
+        gert::TilingContextPara::OpAttr("data_format", Ops::Cv::AnyValue::CreateFrom<std::string>(dataFormat)),
     };
 }
 } // namespace
@@ -70,7 +70,7 @@ TEST_F(ResizeGradTiling, resize_grad_tiling_cubic_nchw_fp32)
         {
             {{{1, 3, 32, 32}, {1, 3, 32, 32}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
         },
-        MakeAttrs("cubic", "NCHW"), &compileInfo, 64, 262144, 4096);
+        MakeAttrs("cubic", "NCHW"), &compileInfo);
 
     TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
@@ -275,7 +275,7 @@ TEST_F(ResizeGradTiling, resize_grad_tiling_nearest_failed)
         MakeAttrs("nearest", "NCHW"), &compileInfo);
     uint64_t expectTilingKey = 0;
     std::vector<size_t> expectWorkspaces = {};
-    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectWorkspaces);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, "", expectWorkspaces);
 }
 
 TEST_F(ResizeGradTiling, resize_grad_tiling_linear_hwnc_failed)
@@ -297,5 +297,27 @@ TEST_F(ResizeGradTiling, resize_grad_tiling_linear_hwnc_failed)
         MakeAttrs("linear", "HWNC"), &compileInfo);
     uint64_t expectTilingKey = 0;
     std::vector<size_t> expectWorkspaces = {};
-    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectWorkspaces);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, "", expectWorkspaces);
+}
+
+TEST_F(ResizeGradTiling, resize_grad_tiling_linear_scales_rank0_failed)
+{
+    struct ResizeGradCompileInfo compileInfo;
+    int64_t oriData[3] = {1, 3, 64};
+    float scalesData[1] = {2.0f};
+    gert::TilingContextPara tilingContextPara(
+        "ResizeGrad",
+        {
+            {{{1, 3, 1, 128}, {1, 3, 1, 128}}, ge::DT_FLOAT, ge::FORMAT_ND}, // grads
+            {{{4}, {4}}, ge::DT_FLOAT, ge::FORMAT_ND},                       // roi
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND, true, scalesData},       // scales rank-0 标量
+            {{{3}, {3}}, ge::DT_INT64, ge::FORMAT_ND, true, oriData},
+        },
+        {
+            {{{1, 3, 1, 64}, {1, 3, 1, 64}}, ge::DT_FLOAT, ge::FORMAT_ND}, // y
+        },
+        MakeAttrs("linear", "NCHW"), &compileInfo);
+    uint64_t expectTilingKey = 0;
+    std::vector<size_t> expectWorkspaces = {};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, "", expectWorkspaces);
 }
