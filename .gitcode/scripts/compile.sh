@@ -95,7 +95,7 @@ fi
 
 if [ "${GE_ST_RT2}X" == "kirinx90X" ]; then
     if [ "${GIT_TARGET_BRANCH}" = "master" ]; then
-        LOG_DO bash build.sh --pkg --soc=kirinx90 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -j16
+        LOG_DO bash build.sh --pkg --soc=kirinx90 -f "pr_filelist.txt" --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -j16
         DP_ASSERT_EQUAL "$?" "0" "Build ${REPOSITORY_NAME}"
     else
         echo "not need build mobile_station"
@@ -105,7 +105,7 @@ if [ "${GE_ST_RT2}X" == "kirinx90X" ]; then
     fi
 elif  [ "${GE_ST_RT2}X" == "kirinx9030X" ];then
     if [ "${GIT_TARGET_BRANCH}" = "master" ];then
-        LOG_DO bash build.sh --pkg --soc=kirin9030 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -j16
+        LOG_DO bash build.sh --pkg --soc=kirin9030 -f "pr_filelist.txt" --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -j16
         DP_ASSERT_EQUAL "$?" "0" "Build ${REPOSITORY_NAME}"
     else
         echo "not need build mobile_station"
