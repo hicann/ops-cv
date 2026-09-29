@@ -5,8 +5,8 @@
 | 产品 | 是否支持 |
 | :--- | :---: |
 | <term>Ascend 950PR&950DT系列产品</term> | √ |
-| <term>Atlas A3系列产品</term> | × |
-| <term>Atlas A2系列产品</term> | × |
+| <term>Atlas A3系列产品</term> | √ |
+| <term>Atlas A2系列产品</term> | √ |
 | <term>Atlas 200I/500 A2推理产品</term> | × |
 | <term>Atlas推理系列产品</term> | × |
 | <term>Atlas训练系列产品</term> | × |
@@ -62,21 +62,21 @@ x维度同理。fp16输入时中间`exp`及乘加计算在fp32域进行后回cas
 <tr>
 <td>boxes</td>
 <td>输入</td>
-<td>回归偏移量(ty,tx,th,tw)。</td>
+<td>回归偏移量(ty,tx,th,tw)。shape由reversed_box决定：false时为(N,4)，true时为(4,N)。</td>
 <td>FLOAT16、FLOAT</td>
 <td>ND</td>
 </tr>
 <tr>
 <td>anchors</td>
 <td>输入</td>
-<td>锚框坐标(ymin,xmin,ymax,xmax)。</td>
+<td>锚框坐标(ymin,xmin,ymax,xmax)。shape与dtype均与boxes相同，同为(N,4)或(4,N)。</td>
 <td>FLOAT16、FLOAT</td>
 <td>ND</td>
 </tr>
 <tr>
 <td>y</td>
 <td>输出</td>
-<td>解码后的绝对框(ymin,xmin,ymax,xmax)。</td>
+<td>解码后的绝对框(ymin,xmin,ymax,xmax)。shape与dtype均与boxes相同, 同为(N,4)或(4,N)。</td>
 <td>FLOAT16、FLOAT</td>
 <td>ND</td>
 </tr>
@@ -106,8 +106,7 @@ x维度同理。fp16输入时中间`exp`及乘加计算在fp32域进行后回cas
 
 ## 约束说明
 
-- boxes与anchors的shape必须完全一致，无广播。
-- boxes与anchors的dtype必须一致。
+- boxes, anchors, y的shape以及dtype必须完全一致。
 - scales长度必须为4，且各元素必须非零。
 - decode_clip范围为[0.0, 10.0]。
 - 输入仅支持ND数据格式。
