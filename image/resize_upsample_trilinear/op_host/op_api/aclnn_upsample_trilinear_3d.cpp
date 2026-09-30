@@ -292,6 +292,7 @@ static aclnnStatus Run310pNdhwc(const aclTensor* selfContiguous, const aclIntArr
                                                      sizeof(permuteNDHWList) / sizeof(permuteNDHWList[0]));
     CHECK_RET(permuteNDHWCArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNDHWCArray, executor);
+    CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto viewCopyResult = l0op::ViewCopy(result, out, executor);
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
     return ACLNN_SUCCESS;
@@ -316,6 +317,7 @@ static aclnnStatus Run310pNcdhw(const aclTensor* selfContiguous, const aclIntArr
                                                      sizeof(permuteNDHWList) / sizeof(permuteNDHWList[0]));
     CHECK_RET(permuteNCDHWArray != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto result = l0op::Transpose(selfUpsampleTrilinear, permuteNCDHWArray, executor);
+    CHECK_RET(result != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto viewCopyResult = l0op::ViewCopy(result, out, executor);
     CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
     return ACLNN_SUCCESS;
