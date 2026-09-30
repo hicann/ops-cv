@@ -52,7 +52,7 @@ TEST_F(ROIAlignTiling, roi_align_fp32_avg_mode1)
                                               &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 2;
     string expectTilingData = "128 1 4 8 8 17179869188 4575657221408423938 0 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
+    std::vector<size_t> expectWorkspaces = {0};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
@@ -79,7 +79,7 @@ TEST_F(ROIAlignTiling, roi_align_fp16_max_mode0)
                                               &compileInfo, "Ascend950", 64, 262144, 4096);
     uint64_t expectTilingKey = 1;
     string expectTilingData = "128 1 4 8 8 17179869188 4539628424389459970 0 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
+    std::vector<size_t> expectWorkspaces = {0};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 

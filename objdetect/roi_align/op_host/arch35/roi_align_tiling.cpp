@@ -292,11 +292,9 @@ static ge::graphStatus ROIAlignTilingFunc(gert::TilingContext* context)
     context->SetTilingKey(tilingKey);
 
     // Workspace (mandatory GetWorkspaceSizes(1) for system workspace)
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
-    uint64_t sysWorkspaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
     size_t* ws = context->GetWorkspaceSizes(SYS_WORKSPACE_COUNT);
     OP_CHECK_NULL_WITH_CONTEXT(context, ws);
-    ws[0] = static_cast<size_t>(static_cast<int64_t>(sysWorkspaceSize));
+    ws[0] = 0;
 
     // Set local memory size
     OP_CHECK_IF((ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE),

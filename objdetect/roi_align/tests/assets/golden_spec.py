@@ -83,7 +83,13 @@ class RoiAlignKernelSpec:
         v3 = data_flat[:, idx_hl]
         v4 = data_flat[:, idx_hh]
 
-        result = hy * hx * v1 + hy * lx * v2 + ly * hx * v3 + ly * lx * v4
+        v11 = hy * hx
+        v22 = hy * lx * v2
+        v33 = ly * hx
+        v44 = ly * lx
+        r1 = torch.addcmul(v22, v11, v1)
+        r2 = torch.addcmul(r1, v33, v3)
+        result = torch.addcmul(r2, v44, v4)
         result[:, out_of_bounds] = 0.0
         return result
 
@@ -131,24 +137,15 @@ class RoiAlignKernelSpec:
             x2 = torch.tensor(rois_t[n, 3].item(), dtype=features_t.dtype).to(device)
             y2 = torch.tensor(rois_t[n, 4].item(), dtype=features_t.dtype).to(device)
 
-            # @constraint: roi_end_mode 坐标映射
             if roi_end_mode == 0:
                 roi_start_w = x1 * spatial_scale
                 roi_start_h = y1 * spatial_scale
-                roi_end_w = x2 * spatial_scale
-                roi_end_h = y2 * spatial_scale
             elif roi_end_mode == 1:
                 roi_start_w = (
                     x1 + torch.tensor(1.0, dtype=features_t.dtype).to(device)
                 ) * spatial_scale
                 roi_start_h = (
                     y1 + torch.tensor(1.0, dtype=features_t.dtype).to(device)
-                ) * spatial_scale
-                roi_end_w = (
-                    x2 + torch.tensor(1.0, dtype=features_t.dtype).to(device)
-                ) * spatial_scale
-                roi_end_h = (
-                    y2 + torch.tensor(1.0, dtype=features_t.dtype).to(device)
                 ) * spatial_scale
             else:
                 roi_start_w = x1 * spatial_scale - torch.tensor(
@@ -157,15 +154,8 @@ class RoiAlignKernelSpec:
                 roi_start_h = y1 * spatial_scale - torch.tensor(
                     0.5, dtype=features_t.dtype
                 ).to(device)
-                roi_end_w = x2 * spatial_scale - torch.tensor(
-                    0.5, dtype=features_t.dtype
-                ).to(device)
-                roi_end_h = y2 * spatial_scale - torch.tensor(
-                    0.5, dtype=features_t.dtype
-                ).to(device)
-
-            roi_width = roi_end_w - roi_start_w
-            roi_height = roi_end_h - roi_start_h
+            roi_width = torch.addcmul(-x1 * spatial_scale, x2, spatial_scale)
+            roi_height = torch.addcmul(-y1 * spatial_scale, y2, spatial_scale)
 
             # @constraint: roi_end_mode 0/1 时强制 roi_width/height 最小为 1.0（与 torchvision aligned=False 及 kernel 行为一致）
             if roi_end_mode <= 1:
@@ -213,16 +203,11 @@ class RoiAlignKernelSpec:
             ph = torch.arange(pooled_height, dtype=features_t.dtype).to(device)
             pw = torch.arange(pooled_width, dtype=features_t.dtype).to(device)
 
-            yy = (
-                roi_start_h
-                + ph[:, None] * bin_size_h
-                + (iy[None, :] * bin_size_h) / roi_bin_grid_h
-            )
-            xx = (
-                roi_start_w
-                + pw[:, None] * bin_size_w
-                + (ix[None, :] * bin_size_w) / roi_bin_grid_w
-            )
+            yy_tmp = torch.addcmul(roi_start_h, ph[:, None], bin_size_h)
+            yy = yy_tmp + (iy[None, :] * bin_size_h) / roi_bin_grid_h
+
+            xx_tmp = torch.addcmul(roi_start_w, pw[:, None], bin_size_w)
+            xx = xx_tmp + (ix[None, :] * bin_size_w) / roi_bin_grid_w
 
             yy_flat = yy.reshape(-1)
             xx_flat = xx.reshape(-1)
@@ -262,10 +247,11 @@ class RoiAlignKernelSpec:
             (rois, rois_n) — rois modified in-place, rois_n new array if not None
         """
         if rois.size == 0:
-            t = torch.tensor([])
+            t = torch.empty(0, 5)
+            n = torch.empty(0)
             if rois_n is not None:
                 if rois_n.size == 0:
-                    return t.numpy(), t.numpy()
+                    return t.numpy(), n.numpy()
                 else:
                     n_array = np.sort(
                         np.random.choice(
@@ -381,8 +367,12 @@ class RoiAlignKernelSpec:
             features_comp = features_t.to(torch.float32)
             rois_comp = rois_t.to(torch.float32)
         else:
-            features_comp = features_t
-            rois_comp = rois_t
+            if features_t.is_cpu:
+                features_comp = features_t.to(torch.float64)
+                rois_comp = rois_t.to(torch.float64)
+            else:
+                features_comp = features_t
+                rois_comp = rois_t
 
         if pool_mode == "avg":
             # avg 分支：使用 torchvision.ops.roi_align 接口
@@ -574,8 +564,12 @@ class AclnnRoiAlignSpec:
             features_comp = features_t.to(torch.float32)
             rois_comp = rois_t.to(torch.float32)
         else:
-            features_comp = features_t
-            rois_comp = rois_t
+            if features_t.is_cpu:
+                features_comp = features_t.to(torch.float64)
+                rois_comp = rois_t.to(torch.float64)
+            else:
+                features_comp = features_t
+                rois_comp = rois_t
 
         if pool_mode == "avg":
             # avg 分支：使用 torchvision.ops.roi_align 接口
@@ -639,7 +633,7 @@ class AclnnRoiAlignSpec:
         num_rois = rois.shape[0]
         temp_rois = np.zeros((num_rois, 5), dtype=rois.numpy().dtype)
         batch_indices_np = batchIndices.numpy()
-        _, batch_indices_np = RoiAlignKernelSpec._gen_rois(
+        temp_rois, batch_indices_np = RoiAlignKernelSpec._gen_rois(
             feature_shape, spatialScale, temp_rois, batch_indices_np
         )
         rois_np = temp_rois[:, 1:5].copy()
