@@ -52,3 +52,27 @@ TEST_F(l2_roi_pooling_grad_with_arg_max_test, case_FLOAT16)
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
+
+TEST_F(l2_roi_pooling_grad_with_arg_max_test, case_FLOAT_rejects_height_mismatch)
+{
+    auto grad_out_desc = TensorDesc({4, 32, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto argmax_desc = TensorDesc({4, 32, 3, 2}, ACL_INT32, ACL_FORMAT_ND);
+    auto rois_desc = TensorDesc({4, 5}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grad_input_ref_desc = TensorDesc({1, 32, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto ut = OP_API_UT(aclnnRoiPoolingGradWithArgMax,
+                        INPUT(grad_out_desc, grad_input_ref_desc, rois_desc, argmax_desc, 2, 2, 1.0), OUTPUT());
+    uint64_t workspace_size = 0;
+    EXPECT_EQ(ut.TestGetWorkspaceSize(&workspace_size), ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(l2_roi_pooling_grad_with_arg_max_test, case_FLOAT_rejects_width_mismatch)
+{
+    auto grad_out_desc = TensorDesc({4, 32, 2, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto argmax_desc = TensorDesc({4, 32, 2, 3}, ACL_INT32, ACL_FORMAT_ND);
+    auto rois_desc = TensorDesc({4, 5}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grad_input_ref_desc = TensorDesc({1, 32, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto ut = OP_API_UT(aclnnRoiPoolingGradWithArgMax,
+                        INPUT(grad_out_desc, grad_input_ref_desc, rois_desc, argmax_desc, 2, 2, 1.0), OUTPUT());
+    uint64_t workspace_size = 0;
+    EXPECT_EQ(ut.TestGetWorkspaceSize(&workspace_size), ACLNN_ERR_PARAM_INVALID);
+}

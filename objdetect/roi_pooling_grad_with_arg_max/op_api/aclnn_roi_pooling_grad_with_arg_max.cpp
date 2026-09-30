@@ -135,7 +135,7 @@ static bool CheckShape(const aclTensor* gradOutput, const aclTensor* rois, const
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected argmax.shape to be equal to gradOutput.shape but check failed.");
         return false;
     }
-    if (argmax->GetViewShape().GetDim(DIM2) != pooledH && argmax->GetViewShape().GetDim(DIM3) != pooledW) {
+    if (argmax->GetViewShape().GetDim(DIM2) != pooledH || argmax->GetViewShape().GetDim(DIM3) != pooledW) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "Expected argmax dim 2 to be equal to pooledH and dim 3 to be equal to pooledW but check failed.");
         return false;
