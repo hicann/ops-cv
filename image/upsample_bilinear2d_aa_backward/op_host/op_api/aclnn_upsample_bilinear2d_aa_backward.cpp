@@ -15,6 +15,7 @@
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_kernels/cast.h"
+#include "level0/fill.h"
 #include "aclnn_upsample_bilinear2d_aa_backward.h"
 
 #include "aclnn/aclnn_base.h"
@@ -183,6 +184,16 @@ static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclIntArray* o
     return ACLNN_SUCCESS;
 }
 
+static const aclTensor* GetOutTensorWithValueZero(aclTensor* out, aclOpExecutor* executor)
+{
+    aclScalar* scalar = executor->AllocScalar(0);
+    auto valueTensor = executor->ConvertToTensor(scalar, out->GetDataType());
+    auto outputDims = op::ToShapeVector(out->GetViewShape());
+    aclIntArray* dimArray = executor->AllocIntArray(outputDims.data(), outputDims.size());
+    auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
+    return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
+}
+
 aclnnStatus aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize(const aclTensor* gradOutput,
                                                               const aclIntArray* outputSize,
                                                               const aclIntArray* inputSize, bool alignCorners,
@@ -201,8 +212,22 @@ aclnnStatus aclnnUpsampleBilinear2dAABackwardGetWorkspaceSize(const aclTensor* g
     auto ret = CheckParams(gradOutput, outputSize, inputSize, scalesH, scalesW, out);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
-    if (gradOutput->IsEmpty() || out->IsEmpty()) {
+    // An empty out has no elements to write; return success directly.
+    if (out->IsEmpty()) {
         *workspaceSize = 0;
+        uniqueExecutor.ReleaseTo(executor);
+        return ACLNN_SUCCESS;
+    }
+
+    // Empty gradOutput with non-empty out must produce zeros instead of leaving out uninitialized.
+    if (gradOutput->IsEmpty()) {
+        auto fillOut = GetOutTensorWithValueZero(out, uniqueExecutor.get());
+        CHECK_RET(fillOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        auto viewCopyResult = l0op::ViewCopy(fillOut, out, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        *workspaceSize = uniqueExecutor->GetWorkspaceSize();
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
