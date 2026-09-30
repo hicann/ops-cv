@@ -20,6 +20,7 @@
  */
 
 #include <cstring>
+#include <limits>
 #include "log/log.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "register/op_def_registry.h"
@@ -61,11 +62,27 @@ static ge::graphStatus InitTilingData(gert::TilingContext* context, CIoUTilingDa
 
 static ge::graphStatus GetTotalN(gert::TilingContext* context, uint32_t& totalN)
 {
-    const gert::StorageShape* xShape = context->GetInputShape(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
-    OP_CHECK_IF(xShape->GetStorageShape().GetDimNum() < 2, OP_LOGE(context, "CIoU: bboxes rank < 2"),
+    const gert::StorageShape* bboxesShape = context->GetInputShape(0);
+    const gert::StorageShape* gtboxesShape = context->GetInputShape(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, bboxesShape);
+    OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesShape);
+
+    const auto& bboxes = bboxesShape->GetStorageShape();
+    const auto& gtboxes = gtboxesShape->GetStorageShape();
+    OP_CHECK_IF(bboxes.GetDimNum() != 2U || gtboxes.GetDimNum() != 2U,
+                OP_LOGE(context, "CIoU inputs must both be rank 2"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(bboxes.GetDim(0) != 4 || gtboxes.GetDim(0) != 4,
+                OP_LOGE(context, "CIoU input first dimensions must be 4"), return ge::GRAPH_FAILED);
+
+    const int64_t n = bboxes.GetDim(1);
+    const int64_t gtboxesN = gtboxes.GetDim(1);
+    OP_CHECK_IF(n < 0 || gtboxesN < 0 || n != gtboxesN,
+                OP_LOGE(context, "CIoU bboxes and gtboxes second dimensions must match and be non-negative"),
                 return ge::GRAPH_FAILED);
-    totalN = static_cast<uint32_t>(xShape->GetStorageShape().GetDim(1));
+    OP_CHECK_IF(n > static_cast<int64_t>(std::numeric_limits<uint32_t>::max()),
+                OP_LOGE(context, "CIoU bboxes second dimension exceeds uint32 range"), return ge::GRAPH_FAILED);
+
+    totalN = static_cast<uint32_t>(n);
     return ge::GRAPH_SUCCESS;
 }
 
