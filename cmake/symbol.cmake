@@ -176,6 +176,7 @@ function(gen_opgraph_symbol)
                 -Wl,--no-whole-archive
                 -Wl,-Bsymbolic
                 ge_compiler
+                ge_common
                 es_math
                 es_cv
                 unified_dlog

@@ -8,7 +8,7 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
 file(GLOB CURRENT_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
-if(NOT (UT_TEST_ALL OR OP_HOST_UT OR OP_API_UT OR OP_KERNEL_UT))
+if(NOT (UT_TEST_ALL OR OP_HOST_UT OR OP_API_UT OR OP_KERNEL_UT OR OP_GRAPH_UT))
     list(REMOVE_ITEM CURRENT_DIRS ut)
 endif()
 
@@ -21,3 +21,8 @@ endforeach()
 set(SUPPORT_COMPUTE_UNIT "ascend950" "ascend350" "mc62")
 set(SUPPORT_TILING_DIR "arch35" "arch35" "arch35")
 add_all_modules_sources(OPTYPE aipp ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT} TILING_DIR ${SUPPORT_TILING_DIR} DISABLE_IN_OPP TRUE)
+if(TARGET ${OPHOST_NAME}_infer_obj AND TARGET json)
+    add_dependencies(${OPHOST_NAME}_infer_obj json)
+    target_include_directories(${OPHOST_NAME}_infer_obj PRIVATE
+        $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()

@@ -1,10 +1,10 @@
 # ---------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of 
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. 
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ---------------------------------------------------------------------------------------------------------
 
@@ -41,6 +41,9 @@ if(ENABLE_COVERAGE)
   if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
     set(depend_module ${depend_module} ${PKG_NAME}_aicpu_op_kernel_ut)
   endif()
+  if(UT_TEST_ALL OR OP_GRAPH_UT)
+    set(depend_module ${depend_module} ${PKG_NAME}_op_graph_ut)
+  endif()
   message("coverage depend_module is ${depend_module}")
   if(NOT "" STREQUAL "${depend_module}")
     add_custom_target(
@@ -62,6 +65,8 @@ if(ENABLE_COVERAGE)
       set(_ut_type op_api)
     elseif(OP_KERNEL_AICPU_UT AND NOT UT_TEST_ALL)
       set(_ut_type op_kernel_aicpu)
+    elseif(OP_GRAPH_UT AND NOT UT_TEST_ALL)
+      set(_ut_type op_graph)
     else()
       set(_ut_type all)
     endif()

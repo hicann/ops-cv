@@ -281,9 +281,46 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
   endfunction()
 endif()
 
+if(UT_TEST_ALL OR OP_GRAPH_UT)
+  function(add_op_graph_ut_modules OP_GRAPH_MODULE_NAME)
+    if(NOT TARGET ${OP_GRAPH_MODULE_NAME}_cases_obj)
+      add_library(${OP_GRAPH_MODULE_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
+    endif()
+    target_include_directories(
+      ${OP_GRAPH_MODULE_NAME}_cases_obj PRIVATE
+      ${PROJECT_SOURCE_DIR}/tests/ut/common
+      ${JSON_INCLUDE_DIR}
+      ${GTEST_INCLUDE}
+      ${OP_PROTO_INCLUDE}
+      ${PROJECT_SOURCE_DIR}/common/inc
+      ${ASCEND_DIR}/include
+      ${ASCEND_DIR}/include/external
+      ${ASCEND_DIR}/include/exe_graph
+      ${ASCEND_DIR}/include/base/context_builder
+      ${ASCEND_DIR}/include/ge
+    )
+    target_link_libraries(
+      ${OP_GRAPH_MODULE_NAME}_cases_obj PRIVATE
+      $<BUILD_INTERFACE:intf_llt_pub_asan_cxx17>
+      $<BUILD_INTERFACE:dlog_headers>
+      GTest::gtest
+      json
+    )
+    target_compile_options(${OP_GRAPH_MODULE_NAME}_cases_obj PRIVATE -fno-access-control)
+    target_compile_definitions(${OP_GRAPH_MODULE_NAME}_cases_obj PRIVATE LOG_CPP)
+
+    add_library(${OP_GRAPH_MODULE_NAME}_static_lib STATIC)
+    target_link_libraries(
+      ${OP_GRAPH_MODULE_NAME}_static_lib PRIVATE
+      ${OP_GRAPH_MODULE_NAME}_cases_obj
+    )
+  endfunction()
+endif()
+
 if(UT_TEST_ALL
    OR OP_HOST_UT
    OR OP_API_UT
+   OR OP_GRAPH_UT
   )
   function(add_modules_ut_sources)
     set(options OPTION_RESERVED)
@@ -365,6 +402,24 @@ if(UT_TEST_ALL
       endif()
       file(GLOB OPAPI_CASES_SRC ${MODULE_DIR}/test_aclnn_*.cpp ${OPS_CV_DIR}/common/stub/*)
       target_sources(${MODULE_UT_NAME}_cases_obj ${MODULE_MODE} ${OPAPI_CASES_SRC})
+    endif()
+
+    if("${MODULE_UT_NAME}" STREQUAL "${OP_GRAPH_MODULE_NAME}")
+      get_filename_component(UT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+      get_filename_component(TESTS_DIR ${UT_DIR} DIRECTORY)
+      get_filename_component(OP_NAME_DIR ${TESTS_DIR} DIRECTORY)
+      get_filename_component(OP_NAME ${OP_NAME_DIR} NAME)
+      list(FIND ASCEND_OP_NAME ${OP_NAME} INDEX)
+      if(NOT "${ASCEND_OP_NAME}" STREQUAL "" AND INDEX EQUAL -1)
+        return()
+      endif()
+
+      if(NOT TARGET ${MODULE_UT_NAME}_cases_obj)
+        add_library(${MODULE_UT_NAME}_cases_obj OBJECT ${UT_PATH}/empty.cpp)
+      endif()
+      file(GLOB OPGRAPH_CASES_SRC ${MODULE_DIR}/test_*_pass.cpp)
+      file(GLOB OPGRAPH_PASS_SRC ${MODULE_DIR}/../../../op_graph/fusion_pass/*_pass.cpp)
+      target_sources(${MODULE_UT_NAME}_cases_obj ${MODULE_MODE} ${OPGRAPH_CASES_SRC} ${OPGRAPH_PASS_SRC})
     endif()
   endfunction()
 endif()

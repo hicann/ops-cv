@@ -587,6 +587,9 @@ set_ut_mode() {
   if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_KERNEL_AICPU_UT" == "TRUE" ]]; then
     UT_TARGETS+=("${REPOSITORY_NAME}_aicpu_op_kernel_ut")
   fi
+  if [[ "$UT_TEST_ALL" == "TRUE" ]] || [[ "$OP_GRAPH_UT" == "TRUE" ]]; then
+    UT_TARGETS+=("${REPOSITORY_NAME}_op_graph_ut")
+  fi
 }
 process_genop() {
   local opt_name=$1

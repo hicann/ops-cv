@@ -302,9 +302,12 @@ function(add_op_graph_modules)
     else()
       add_library(${OP_GRAPH_NAME}_obj OBJECT)
     endif()
+    add_dependencies(${OP_GRAPH_NAME}_obj json)
     target_include_directories(${OP_GRAPH_NAME}_obj PRIVATE
       ${OP_PROTO_INCLUDE}
       ${PROJECT_SOURCE_DIR}/common/inc
+      ${JSON_INCLUDE_DIR}
+      ${JSON_INSTALL_PATH}/include
       ${ASCEND_DIR}/include
       ${ASCEND_DIR}/include/external
       ${ASCEND_DIR}/include/exe_graph
