@@ -84,7 +84,7 @@
       <td>-</td>
     </tr>
     <tr>
-      <td>delats</td>
+      <td>deltas</td>
       <td>输出</td>
       <td>编码偏移量输出张量。数据类型与anchor_box一致，shape与anchor_box相同。</td>
       <td>FLOAT16、FLOAT</td>
