@@ -138,26 +138,6 @@
   </tr>
   <tr>
     <td>image</td>
-    <td><a href="../../image/paste_sub_img/README.md">paste_sub_img</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>面向图像或特征图 patch 拼接场景的区域累加算子，从源图像按指定矩形子区域提取像素，经坐标缩放与平移量映射到目标画布对应位置执行逐元素累加，适用于图像拼接、超分辨率回填、滑窗推理特征图聚合等场景。</td>
-  </tr>
-  <tr>
-    <td>image</td>
-    <td><a href="../../image/points_in_polygons/README.md">points_in_polygons</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>判断给定二维点是否落在给定四边形内部，输出N×M的二值浮点矩阵，1.0表示在内、0.0表示在外。</td>
-  </tr>
-  <tr>
-    <td>image</td>
     <td><a href="../../image/rasterizer/README.md">rasterizer</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -488,36 +468,6 @@
   </tr>
   <tr>
     <td>objdetect</td>
-    <td><a href="../../objdetect/bounding_box_decode/README.md">bounding_box_decode</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将模型输出的相对于先验框（或锚点）的偏移量与缩放参数，转换为原始图像中真实的绝对边界框坐标。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/rotated_box_decode/README.md">rotated_box_decode</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>旋转目标检测中的框回归解码算子，将网络预测的偏移量叠加到预设锚框上，还原出最终的旋转检测框。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
-    <td><a href="../../objdetect/rotated_box_encode/README.md">rotated_box_encode</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将参考旋转框与ground-truth旋转框之间的几何偏差编码为5通道回归delta目标，用于旋转目标检测训练。</td>
-  </tr>
-  <tr>
-    <td>objdetect</td>
     <td><a href="../../objdetect/batch_multi_class_non_max_suppression/README.md">batch_multi_class_non_max_suppression</a></td>
     <td>&check;</td>
     <td>&check;</td>
@@ -676,25 +626,5 @@
     <td>AI Core</td>
     <td>完成带掩码非极大值抑制计算。</td>
    </tr>
-  <tr>
-    <td>image</td>
-    <td><a href="../../objdetect/check_valid/README.md">check_valid</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>检查给定的边界框（Bounding Boxes）是否位于指定的原始图片有效边界内。</td>
-  </tr>
-  <tr>
-    <td>image</td>
-    <td><a href="../../objdetect/decode_bbox_v2/README.md">decode_bbox_v2</a></td>
-    <td>&check;</td>
-    <td>&check;</td>
-    <td>&cross;</td>
-    <td>&check;</td>
-    <td>AI Core</td>
-    <td>将目标检测回归偏移量（boxes）结合锚框（anchors）解码为绝对坐标框（ymin, xmin, ymax, xmax）。</td>
-  </tr>
 </tbody>
 </table>
