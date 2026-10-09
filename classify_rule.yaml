@@ -74,12 +74,24 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/batch_multi_class_non_max_suppression/tests/
                 - ops/ops-cv/objdetect/blend_images_custom/examples/
                 - ops/ops-cv/objdetect/blend_images_custom/tests/
+                - ops/ops-cv/objdetect/bounding_box_decode/op_host/
+                - ops/ops-cv/objdetect/bounding_box_decode/op_kernel/
+                - ops/ops-cv/objdetect/bounding_box_decode/examples/
+                - ops/ops-cv/objdetect/bounding_box_decode/tests/
+                - ops/ops-cv/objdetect/check_valid/op_host/
+                - ops/ops-cv/objdetect/check_valid/op_kernel/
+                - ops/ops-cv/objdetect/check_valid/examples/
+                - ops/ops-cv/objdetect/check_valid/tests/
                 - ops/ops-cv/objdetect/ciou/examples/
                 - ops/ops-cv/objdetect/ciou/tests/
                 - ops/ops-cv/objdetect/d_io_u_grad/op_host/
                 - ops/ops-cv/objdetect/d_io_u_grad/op_kernel/
                 - ops/ops-cv/objdetect/d_io_u_grad/examples/
                 - ops/ops-cv/objdetect/d_io_u_grad/tests/
+                - ops/ops-cv/objdetect/decode_bbox_v2/op_host/
+                - ops/ops-cv/objdetect/decode_bbox_v2/op_kernel/
+                - ops/ops-cv/objdetect/decode_bbox_v2/examples/
+                - ops/ops-cv/objdetect/decode_bbox_v2/tests/
                 - ops/ops-cv/objdetect/iou_v2/examples/
                 - ops/ops-cv/objdetect/iou_v2/tests/
                 - ops/ops-cv/objdetect/iou3d/op_host/
@@ -112,6 +124,14 @@ objdetect@ops-cv:
                 - ops/ops-cv/objdetect/roi_pooling_with_arg_max/op_kernel/
                 - ops/ops-cv/objdetect/roi_pooling_with_arg_max/examples/
                 - ops/ops-cv/objdetect/roi_pooling_with_arg_max/tests/
+                - ops/ops-cv/objdetect/rotated_box_decode/op_host/
+                - ops/ops-cv/objdetect/rotated_box_decode/op_kernel/
+                - ops/ops-cv/objdetect/rotated_box_decode/examples/
+                - ops/ops-cv/objdetect/rotated_box_decode/tests/
+                - ops/ops-cv/objdetect/rotated_box_encode/op_host/
+                - ops/ops-cv/objdetect/rotated_box_encode/op_kernel/
+                - ops/ops-cv/objdetect/rotated_box_encode/examples/
+                - ops/ops-cv/objdetect/rotated_box_encode/tests/
                 - ops/ops-cv/objdetect/rotated_overlaps/op_host/
                 - ops/ops-cv/objdetect/rotated_overlaps/op_kernel/
                 - ops/ops-cv/objdetect/rotated_overlaps/examples/
