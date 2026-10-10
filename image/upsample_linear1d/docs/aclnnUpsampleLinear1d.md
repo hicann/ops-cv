@@ -36,9 +36,9 @@
     缩放方式分为角对齐和边对齐，角对齐（alignCorners为true）表示按照原始图片左上角像素中心点对齐，边对齐（alignCorners为false）表示按照原始图片左上角顶点及两条边对齐，在计算缩放系数和坐标位置时存在差异。则有以下公式：
 
     $$
-    scale =\begin{cases}
+    scales =\begin{cases}
     (self.dim[2]-1) / (outputSize[0]-1) & alignCorners=true \\
-    1 / scales & alignCorners=false\&scales>0\\
+    1 / scale & alignCorners=false\&scale>0\\
     self.dim[2] / outputSize[0] & alignCorners=false
     \end{cases}
     $$
@@ -47,8 +47,8 @@
 
     $$
     x' =\begin{cases}
-    x * scale & alignCorners=true \\
-    MAX(0,{(x+0.5)*scale-0.5}) & alignCorners=false
+    x * scales & alignCorners=true \\
+    MAX(0,{(x+0.5)*scales-0.5}) & alignCorners=false
     \end{cases}
     $$
 
@@ -73,7 +73,7 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(
   const aclTensor   *self,
   const aclIntArray *outputSize,
   const bool         alignCorners,
-  const double       scales,
+  const double       scale,
   aclTensor         *out,
   uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
@@ -139,16 +139,16 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>输入</td>
       <td>bool类型参数，决定是否对齐角像素点，对应公式中的`alignCorners`。</td>
       <td><ul><li>如果设置为true，则输入和输出张量按其角像素的中心点对齐，保留角像素处的值。</li>
-      <li>如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scales。</li></ul></td>
+      <li>如果设置为false，则输入和输出张量通过其角像素的角点对齐，并且插值使用边缘值填充用于外界边值，使此操作在保持不变时独立于输入大小scale。</li></ul></td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scales（double）</td>
+      <td>scale（double）</td>
       <td>输入</td>
-      <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
+      <td>表示输出out的L维度乘数，对应公式中的`scale`。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -234,7 +234,7 @@ aclnnStatus aclnnUpsampleLinear1d(
     </tr>
     <tr><td>out在L维度上的size与outputSize[0]不一致。</td>
     </tr>
-    <tr><td>self、outputSize、scales不满足约束。</td>
+    <tr><td>self、outputSize、scale不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -284,10 +284,10 @@ aclnnStatus aclnnUpsampleLinear1d(
 ## 约束说明
 
 - 入参`self`和出参`out`的数据格式不为ND或NCL时，输入其他数据格式会默认按照NCL处理。
-- 参数self、outputSize、scales需要满足如下约束：
+- 参数self、outputSize、scale需要满足如下约束：
 
   $$
-  outputSize = floor(self\_L * scales)
+  outputSize = floor(self\_L * scale)
   $$
 
 - 确定性计算：
