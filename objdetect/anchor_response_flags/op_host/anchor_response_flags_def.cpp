@@ -40,15 +40,9 @@ public:
             .AutoContiguous();
 
         // Required attributes (corresponding to REQUIRED_ATTR in REG_OP)
-        this->Attr("featmap_size")
-            .AttrType(REQUIRED)
-            .ListInt();
-        this->Attr("strides")
-            .AttrType(REQUIRED)
-            .ListInt();
-        this->Attr("num_base_anchors")
-            .AttrType(REQUIRED)
-            .Int();
+        this->Attr("featmap_size").AttrType(REQUIRED).ListInt();
+        this->Attr("strides").AttrType(REQUIRED).ListInt();
+        this->Attr("num_base_anchors").AttrType(REQUIRED).Int();
 
         OpAICoreConfig aicoreConfig;
         aicoreConfig.DynamicCompileStaticFlag(true)
@@ -59,6 +53,7 @@ public:
             .PrecisionReduceFlag(true)
             .ExtendCfgInfo("opFile.value", "anchor_response_flags");
         this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("ascend350", aicoreConfig);
     }
 };
 OP_ADD(AnchorResponseFlags);

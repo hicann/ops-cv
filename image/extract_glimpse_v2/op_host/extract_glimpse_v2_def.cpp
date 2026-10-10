@@ -62,6 +62,7 @@ public:
             .PrecisionReduceFlag(false)
             .ExtendCfgInfo("opFile.value", "extract_glimpse_v2");
         this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("ascend350", aicoreConfig);
     }
 };
 

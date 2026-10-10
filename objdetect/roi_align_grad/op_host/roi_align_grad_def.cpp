@@ -75,6 +75,7 @@ public:
             .ExtendCfgInfo("opFile.value", "roi_align_grad_apt")
             .ExtendCfgInfo("opInterface.value", "roi_align_grad");
         this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("ascend350", aicoreConfig);
     }
 };
 OP_ADD(ROIAlignGrad);

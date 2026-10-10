@@ -162,7 +162,8 @@ static ge::graphStatus InferShape4ThreeInterpolate(gert::InferShapeContext* cont
                  ge::GRAPH_SUCCESS),
                 OP_LOGE(context->GetNodeName(), "Cannot get platform info!"), return ge::GRAPH_FAILED);
     OP_LOGI(context->GetNodeName(), "soc version is %s", platformInfo.str_info.short_soc_version.c_str());
-    if (platformInfo.str_info.short_soc_version == "Ascend950") {
+    if (platformInfo.str_info.short_soc_version == "Ascend950" ||
+        platformInfo.str_info.short_soc_version == "Ascend350") {
         return InferShape4ThreeInterpolateSupport(context);
     }
 

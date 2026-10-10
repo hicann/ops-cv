@@ -45,6 +45,7 @@ public:
             .ExtendCfgInfo("opFile.value", "yuv4442_yuv422_apt")
             .ExtendCfgInfo("opInterface.value", "yuv4442_yuv422");
         this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("ascend350", aicoreConfig);
     }
 };
 OP_ADD(YUV4442YUV422);
