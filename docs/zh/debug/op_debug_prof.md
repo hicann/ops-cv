@@ -26,8 +26,11 @@
 
    通过aclGetRecentErrMsg接口（[《Runtime运行时API》](https://hiascend.com/document/redirect/CannCommunityRuntimeApi)）获取aclnn接口调用过程中的异常信息，使用方法如下：
 
-   ```sh
-   printf(aclGetRecentErrMsg());
+   ```cpp
+   const char* errMsg = aclGetRecentErrMsg();
+   if (errMsg != nullptr) {
+       printf("%s", errMsg);
+   }
    ```
 
    打印错误信息样例如下：
