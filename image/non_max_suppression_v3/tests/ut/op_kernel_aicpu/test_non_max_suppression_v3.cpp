@@ -392,6 +392,54 @@ TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, TestNonMaxSuppressionV3_SameScores)
     RUN_KERNEL(node_def, HOST, KERNEL_STATUS_OK);
 }
 
+namespace {
+vector<int32_t> RunScoreOrderingCase(vector<float> scores)
+{
+    vector<float> boxes = {0.0F,  0.0F,  1.0F,  1.0F,  10.0F, 10.0F, 11.0F, 11.0F,
+                           20.0F, 20.0F, 21.0F, 21.0F, 30.0F, 30.0F, 31.0F, 31.0F};
+    int32_t max_output_size = 2;
+    float iou_threshold = 0.5F;
+    float score_threshold = 0.49F;
+    vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_INT32, DT_FLOAT, DT_FLOAT, DT_UINT64};
+    vector<vector<int64_t>> shapes = {{4, 4}, {4}, {}, {}, {}, {-1}};
+    vector<void*> datas = {boxes.data(),   scores.data(),    &max_output_size,
+                           &iou_threshold, &score_threshold, (void*)result_summary};
+    auto node_def = CpuKernelUtils::CpuKernelUtils::CreateNodeDef();
+    NodeDefBuilder(node_def.get(), "NonMaxSuppressionV3", "NonMaxSuppressionV3")
+        .Input({"boxes", data_types[0], shapes[0], datas[0]})
+        .Input({"scores", data_types[1], shapes[1], datas[1]})
+        .Input({"max_output_size", data_types[2], shapes[2], datas[2]})
+        .Input({"iou_threshold", data_types[3], shapes[3], datas[3]})
+        .Input({"score_threshold", data_types[4], shapes[4], datas[4]})
+        .Output({"selected_indices", data_types[5], shapes[5], datas[5]});
+    std::string node_def_str;
+    node_def->SerializeToString(node_def_str);
+    CpuKernelContext context(HOST);
+    if (context.Init(node_def.get()) != KERNEL_STATUS_OK ||
+        CpuKernelRegister::Instance().RunCpuKernel(context) != KERNEL_STATUS_OK || result_summary[2] == 0) {
+        return {};
+    }
+    const auto count = result_summary[3] / sizeof(int32_t);
+    const auto* output = reinterpret_cast<const int32_t*>(result_summary[2]);
+    vector<int32_t> selected(output, output + count);
+    CpuKernelAllocatorUtils::DeleteOutputDataPtr(result_summary[0]);
+    CpuKernelAllocatorUtils::DeleteOutputDataPtr(result_summary[2]);
+    result_summary[0] = 0;
+    result_summary[1] = 0;
+    result_summary[2] = 0;
+    result_summary[3] = 0;
+    return selected;
+}
+} // namespace
+
+TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, TestNonMaxSuppressionV3StrictScoreOrdering)
+{
+    const vector<float> close_scores = {0.5F, 0.500004F, 0.500002F, 0.500003F};
+    const vector<float> equal_scores = {0.5F, 0.5F, 0.5F, 0.5F};
+    EXPECT_EQ(RunScoreOrderingCase(close_scores), (vector<int32_t>{1, 3}));
+    EXPECT_EQ(RunScoreOrderingCase(equal_scores), (vector<int32_t>{0, 1}));
+}
+
 TEST_F(TEST_NON_MAX_SUPPRESSION_V3_UT, TestNonMaxSuppressionV3_OffsetAttr)
 {
     vector<DataType> data_types = {DT_FLOAT, DT_FLOAT, DT_INT32, DT_FLOAT, DT_FLOAT, DT_UINT64};

@@ -197,9 +197,16 @@ uint32_t NonMaxSuppressionV3CpuKernel::DoCompute()
         int suppress_begin_index;
     };
 
-    auto cmp = [](const Candidate bs_i, const Candidate bs_j) {
-        return ((IsValueEqual<T>(bs_i.score, bs_j.score)) && (bs_i.box_index > bs_j.box_index)) ||
-               bs_i.score < bs_j.score;
+    auto cmp = [](const Candidate& bs_i, const Candidate& bs_j) {
+        // NMS requires a strict score-descending order. Use the index only for exact ties;
+        // a tolerance here can make the comparator non-transitive for close scores.
+        if (bs_i.score < bs_j.score) {
+            return true;
+        }
+        if (bs_j.score < bs_i.score) {
+            return false;
+        }
+        return bs_i.box_index > bs_j.box_index;
     };
 
     std::priority_queue<Candidate, std::deque<Candidate>, decltype(cmp)> candidate_priority_queue(cmp);
