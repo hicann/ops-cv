@@ -38,7 +38,7 @@
     $$
     scale =\begin{cases}
     (self.dim[2]-1) / (outputSize[0]-1) & alignCorners=true \\
-    1 / scales & alignCorners=false\&scales>0\\
+    1 / scale & alignCorners=false\&scale>0\\
     self.dim[2] / outputSize[0] & alignCorners=false
     \end{cases}
     $$
@@ -73,7 +73,7 @@ aclnnStatus aclnnUpsampleLinear1dGetWorkspaceSize(
   const aclTensor   *self,
   const aclIntArray *outputSize,
   const bool         alignCorners,
-  const double       scales,
+  const double       scale,
   aclTensor         *out,
   uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
@@ -146,9 +146,9 @@ aclnnStatus aclnnUpsampleLinear1d(
       <td>-</td>
     </tr>
     <tr>
-      <td>scales（double）</td>
+      <td>scale（double）</td>
       <td>输入</td>
-      <td>表示输出out的L维度乘数，对应公式中的`scales`。</td>
+      <td>表示输出out的L维度乘数，对应公式中的`scale`。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -234,7 +234,7 @@ aclnnStatus aclnnUpsampleLinear1d(
     </tr>
     <tr><td>out在L维度上的size与outputSize[0]不一致。</td>
     </tr>
-    <tr><td>self、outputSize、scales不满足约束。</td>
+    <tr><td>self、outputSize、scale不满足约束。</td>
     </tr>
   </tbody></table>
 
@@ -284,10 +284,10 @@ aclnnStatus aclnnUpsampleLinear1d(
 ## 约束说明
 
 - 入参`self`和出参`out`的数据格式不为ND或NCL时，输入其他数据格式会默认按照NCL处理。
-- 参数self、outputSize、scales需要满足如下约束：
+- 参数self、outputSize、scale需要满足如下约束：
 
   $$
-  outputSize = floor(self\_L * scales)
+  outputSize = floor(self\_L * scale)
   $$
 
 - 确定性计算：
