@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+SKIPPED_DEPENDENCIES=()
+
 run_command() {
     local cmd="$*"
     echo "Executing command: $cmd"
@@ -40,6 +42,31 @@ version_ge() {
         fi
     done
     return 0
+}
+
+confirm_install() {
+    local dependency="$1"
+    local reply=""
+
+    while true; do
+        if ! read -r -p "Install ${dependency}? [y/N] " reply; then
+            echo
+            return 1
+        fi
+        echo
+        case "$reply" in
+            [Yy])
+                return 0
+                ;;
+            ""|[Nn])
+                return 1
+                ;;
+            *)
+                echo "Please enter Y or N."
+                reply=""
+                ;;
+        esac
+    done
 }
 
 detect_os() {
@@ -264,10 +291,9 @@ install_pigz() {
         fi
     fi
 
-    read -p "Install pigz? [Y/n] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    if ! confirm_install "pigz"; then
         echo "Skipping pigz installation"
+        SKIPPED_DEPENDENCIES+=("pigz")
         return
     fi
 
@@ -387,10 +413,9 @@ install_googletest() {
             return
         fi
     fi
-    read -p "Install googletest? [Y/n] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    if ! confirm_install "googletest"; then
         echo "Skipping googletest installation"
+        SKIPPED_DEPENDENCIES+=("googletest")
         return
     fi
 
@@ -453,8 +478,14 @@ main() {
     install_pkg_config
     install_googletest
 
-    echo -e "===================================================="
-    echo "All dependencies installed successfully!"
+    echo "===================================================="
+    if [[ ${#SKIPPED_DEPENDENCIES[@]} -eq 0 ]]; then
+        echo "All dependencies installed successfully!"
+    else
+        echo "Dependency installation completed with skipped dependencies:"
+        printf ' - %s\n' "${SKIPPED_DEPENDENCIES[@]}"
+        echo "Install the skipped dependencies before running workflows that require them."
+    fi
     echo "===================================================="
 }
 
