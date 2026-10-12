@@ -31,7 +31,7 @@
   dgrid: (N, H_{out}, W_{out}, 2)
   $$
 
-  其中grad、input、grid、dx、dgrid中的N均相同，grad、input和dx中的C相同，input和dx中的$H_{in}$、$W_{in}$相同，grad、grid和dgrid中的$H_{out}$、$W_{out}$相同，grid最后一维大小为2，表示input像素位置信息为(x, y)。x和y的取值范围归一化到[-1, 1]，(-1, 1)表示左上角坐标，(1, -1)表示右下角坐标。
+  其中grad、input、grid、dx、dgrid中的N均相同，grad、input和dx中的C相同，input和dx中的$H_{in}$、$W_{in}$相同，grad、grid和dgrid中的$H_{out}$、$W_{out}$相同，grid最后一维大小为2，表示input像素位置信息为(x, y)。x和y的取值范围归一化到[-1, 1]，(-1, -1)表示左上角坐标，(1, 1)表示右下角坐标。
 
   1. 坐标反归一化：
      grid中的(x, y)需要先反归一化到input像素坐标(ix, iy)，同时计算梯度乘子`gix_mult`、`giy_mult`（用于后续dgrid计算）：
