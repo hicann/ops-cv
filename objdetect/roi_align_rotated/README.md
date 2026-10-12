@@ -13,7 +13,7 @@
 |  <term>Kirin X90处理器系列产品</term> | √ |
 |  <term>Kirin 9030处理器系列产品</term> | √ |
 
-注：输入布局随芯片不同：<term>Ascend 950PR&950DT系列产品</term>上x为NCHW维度序（format取NCHW或ND，ND按NCHW布局解释）；其余支持的芯片上x为NHWC维度序（format取NHWC或ND，ND按NHWC布局解释）。详见"约束说明"。
+注：数据格式为ND。维度序随芯片不同：<term>Ascend 950PR&950DT系列产品</term>上x为NCHW维度序(N,C,H,W)；其余支持的芯片上x为NHWC维度序(N,H,W,C)。详见"约束说明"。
 
 ## 功能说明
 
@@ -93,9 +93,9 @@
     <tr>
       <td>x</td>
       <td>输入</td>
-      <td>输入特征图，4维。<term>Ascend 950PR&950DT系列产品</term>上为NCHW维度序，shape为(N,C,H,W)，format取NCHW或ND（ND按NCHW维度序解释）；其余支持的芯片上为NHWC维度序，shape为(N,H,W,C)，format取NHWC或ND（ND按NHWC维度序解释）。</td>
+      <td>输入特征图，4维，数据格式为ND。<term>Ascend 950PR&950DT系列产品</term>上为NCHW维度序，shape为(N,C,H,W)；其余支持的芯片上为NHWC维度序，shape为(N,H,W,C)。</td>
       <td>FLOAT32</td>
-      <td>NCHW/NHWC/ND</td>
+      <td>ND</td>
     </tr>
     <tr>
       <td>rois</td>
@@ -107,9 +107,9 @@
     <tr>
       <td>y</td>
       <td>输出</td>
-      <td>输出特征图，format与x一致。<term>Ascend 950PR&950DT系列产品</term>上shape为(R,C,pooled_h,pooled_w)；其余支持的芯片上shape为(R,pooled_h,pooled_w,C)。</td>
+      <td>输出特征图，数据格式为ND，与x一致。<term>Ascend 950PR&950DT系列产品</term>上shape为(R,C,pooled_h,pooled_w)；其余支持的芯片上shape为(R,pooled_h,pooled_w,C)。</td>
       <td>FLOAT32</td>
-      <td>NCHW/NHWC/ND</td>
+      <td>ND</td>
     </tr>
     <tr>
       <td>pooled_h</td>
@@ -157,10 +157,9 @@
 
 ## 约束说明
 
-- 本算子支持的布局由芯片决定：
-  - <term>Ascend 950PR&950DT系列产品</term>：x为NCHW维度序(N,C,H,W)，rois为(R,6)，y为(R,C,pooled_h,pooled_w)；x支持NCHW和ND格式，ND按NCHW维度序解释。
-  - <term>Atlas A2系列产品</term>、<term>Atlas A3系列产品</term>、<term>Kirin X90处理器系列产品</term>、<term>Kirin 9030处理器系列产品</term>：x为NHWC维度序(N,H,W,C)，rois为(6,R)，y为(R,pooled_h,pooled_w,C)；x支持NHWC和ND格式，ND按NHWC维度序解释。
-- <term>Ascend 950PR&950DT系列产品</term>上x的format仅支持NCHW或ND，NHWC输入会报错拒绝。
+- 本算子x、rois、y的数据格式为ND，维度序由芯片决定：
+  - <term>Ascend 950PR&950DT系列产品</term>：x为NCHW维度序(N,C,H,W)，rois为(R,6)，y为(R,C,pooled_h,pooled_w)。
+  - <term>Atlas A2系列产品</term>、<term>Atlas A3系列产品</term>、<term>Kirin X90处理器系列产品</term>、<term>Kirin 9030处理器系列产品</term>：x为NHWC维度序(N,H,W,C)，rois为(6,R)，y为(R,pooled_h,pooled_w,C)。
 - 输入x的shape必须为4维。
 - 输入rois的shape必须为2维；<term>Ascend 950PR&950DT系列产品</term>上R=0时输出空tensor(0,C,pooled_h,pooled_w)，其余支持的芯片要求R≥1。
 - rois取值约束（算子不校验，由调用方保证）：batch_idx∈[0,N)，N为输入x的第0维大小；angle∈[0,π)，单位为弧度；各元素不允许为NaN/Inf。
@@ -171,5 +170,5 @@
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
-| 图模式 | [test_geir_roi_align_rotated](examples/arch35/test_geir_roi_align_rotated.cpp) | 通过[算子IR](./op_graph/roi_align_rotated_proto.h)接口方式调用RoiAlignRotated算子（<term>Ascend 950PR&950DT系列产品</term>：NCHW/ND布局，含format闸门负向用例）。 |
-| 图模式 | [test_geir_roi_align_rotated](examples/test_geir_roi_align_rotated.cpp) | 通过[算子IR](./op_graph/roi_align_rotated_proto.h)接口方式调用RoiAlignRotated算子（<term>Atlas A2系列产品</term>、<term>Atlas A3系列产品</term>、<term>Kirin X90处理器系列产品</term>、<term>Kirin 9030处理器系列产品</term>：NHWC/ND布局，rois为(6,R)转置）。 |
+| 图模式 | [test_geir_roi_align_rotated](examples/arch35/test_geir_roi_align_rotated.cpp) | 通过[算子IR](./op_graph/roi_align_rotated_proto.h)接口方式调用RoiAlignRotated算子（<term>Ascend 950PR&950DT系列产品</term>：ND，x为NCHW维度序，含format闸门负向用例）。 |
+| 图模式 | [test_geir_roi_align_rotated](examples/test_geir_roi_align_rotated.cpp) | 通过[算子IR](./op_graph/roi_align_rotated_proto.h)接口方式调用RoiAlignRotated算子（<term>Atlas A2系列产品</term>、<term>Atlas A3系列产品</term>、<term>Kirin X90处理器系列产品</term>、<term>Kirin 9030处理器系列产品</term>：ND，x为NHWC维度序，rois为(6,R)转置）。 |
