@@ -25,4 +25,6 @@ endforeach()
 set(SUPPORT_COMPUTE_UNIT "ascend950" "ascend350")
 # 设置每种芯片类型对应的tiling文件目录，即采用op_host目录下哪个文件夹下的tiling文件编译
 set(SUPPORT_TILING_DIR "arch35" "arch35")
+# Use correctly rounded division for scale; reciprocal multiplication can differ by 1 ULP.
+add_ops_compile_options(LUT3D OPTIONS --cce-prec-div=true)
 add_all_modules_sources(OPTYPE lut3_d ACLNNTYPE aclnn_exclude COMPUTE_UNIT ${SUPPORT_COMPUTE_UNIT} TILING_DIR ${SUPPORT_TILING_DIR} DISABLE_IN_OPP TRUE)

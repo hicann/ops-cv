@@ -160,8 +160,8 @@ template <typename T, typename INDEX_SIZE_T>
 __simt_vf__ __aicore__ __launch_bounds__(kThreadNum<INDEX_SIZE_T>) inline void OpLut3DSimtKernel(
     INDEX_SIZE_T totalPixels, int32_t lutN, __gm__ T* img, __gm__ T* lutTable, __gm__ float* output)
 {
-    constexpr float INV_255 = 1.0f / 255.0f;
-    const float scale = static_cast<float>(lutN - 1) * INV_255;
+    // With prec-div=true, compute (N-1)/255 with a single FP32 rounding.
+    const float scale = static_cast<float>(lutN - 1) / 255.0f;
     const int32_t lutNsq = lutN * lutN;
     const int32_t lutNMinus1 = lutN - 1;
 
