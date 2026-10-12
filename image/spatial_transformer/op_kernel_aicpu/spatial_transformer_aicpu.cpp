@@ -37,6 +37,12 @@ constexpr float kNumber2 = 2;
 constexpr uint32_t kGridInedxOffset = 2;
 constexpr uint32_t kOutputNum = 1;
 
+bool IsDefaultThetaOnly(const std::vector<int64_t>& theta_valid, const std::vector<float>& theta)
+{
+    return theta_valid.size() == kTotalThetaNumber && theta.size() >= kTotalThetaNumber &&
+           std::all_of(theta_valid.begin(), theta_valid.end(), [](int64_t value) { return value == 1; });
+}
+
 #define STN_COMPUTE_CASE(DTYPE, TYPE, CTX)                                     \
     case (DTYPE): {                                                            \
         if (DoCompute<TYPE>(CTX) != KERNEL_STATUS_OK) {                        \
@@ -94,7 +100,7 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
     input_tensor_ = ctx.Input(0);
     input_theta_ = ctx.Input(1);
     output_tensor_ = ctx.Output(0);
-    if (input_tensor_ == nullptr || input_theta_ == nullptr || output_tensor_ == nullptr) {
+    if (input_tensor_ == nullptr || output_tensor_ == nullptr) {
         KERNEL_LOG_ERROR("Input or output invalid.");
         return KERNEL_STATUS_PARAM_INVALID;
     }
@@ -150,7 +156,6 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
 
     // get and check data type
     input_data_type_ = static_cast<DataType>(input_tensor_->GetDataType());
-    input_theta_type_ = static_cast<DataType>(input_theta_->GetDataType());
     output_data_type_ = static_cast<DataType>(output_tensor_->GetDataType());
     if (input_data_type_ != output_data_type_) {
         KERNEL_LOG_ERROR("Input data type[%s] and output data type[%s] are not same.",
@@ -158,7 +163,18 @@ KernelStatus SpatialTransformerCpuKernel::GetInputAndCheckValid(const CpuKernelC
         return KERNEL_STATUS_PARAM_INVALID;
     }
 
-    return GetAttrs(ctx);
+    input_theta_type_ = input_theta_ == nullptr ? input_data_type_ : static_cast<DataType>(input_theta_->GetDataType());
+
+    KernelStatus attr_status = GetAttrs(ctx);
+    if (attr_status != KERNEL_STATUS_OK) {
+        return attr_status;
+    }
+    if (input_theta_ == nullptr && !IsDefaultThetaOnly(theta_valid_, theta_)) {
+        KERNEL_LOG_ERROR("Input theta is required when use_default_theta does not provide all parameters.");
+        return KERNEL_STATUS_PARAM_INVALID;
+    }
+
+    return KERNEL_STATUS_OK;
 }
 
 KernelStatus SpatialTransformerCpuKernel::GetAttrs(const CpuKernelContext& ctx)
@@ -338,7 +354,7 @@ KernelStatus SpatialTransformerCpuKernel::DoCompute4D()
 {
     KERNEL_LOG_INFO("Enter SpatialTransformerCpuKernel::DoCompute4D.");
     const T* input_data_ptr = reinterpret_cast<T*>(input_tensor_->GetData());
-    const T1* input_theta = reinterpret_cast<T1*>(input_theta_->GetData());
+    const T1* input_theta = input_theta_ == nullptr ? nullptr : reinterpret_cast<T1*>(input_theta_->GetData());
     T* output_data_ptr = reinterpret_cast<T*>(output_tensor_->GetData());
 
     // init ouput_grid and input_grid, [M, 3] * [3, 2] = [M, 2]
@@ -383,7 +399,7 @@ KernelStatus SpatialTransformerCpuKernel::DoCompute5D()
 {
     KERNEL_LOG_INFO("Enter SpatialTransformerCpuKernel::DoCompute5D");
     const T* input_data = reinterpret_cast<T*>(input_tensor_->GetData());
-    const T1* input_theta = reinterpret_cast<T1*>(input_theta_->GetData());
+    const T1* input_theta = input_theta_ == nullptr ? nullptr : reinterpret_cast<T1*>(input_theta_->GetData());
     T* output_data_ptr = reinterpret_cast<T*>(output_tensor_->GetData());
 
     // init ouput_grid and input_grid, [M, 3] * [3, 2] = [M, 2]
@@ -441,7 +457,7 @@ KernelStatus SpatialTransformerCpuKernel::DoCompute5D_C1()
 {
     KERNEL_LOG_INFO("Enter SpatialTransformerCpuKernel::DoCompute5D_C1");
     const T* input_data_ptr = reinterpret_cast<T*>(input_tensor_->GetData());
-    const T1* input_theta = reinterpret_cast<T1*>(input_theta_->GetData());
+    const T1* input_theta = input_theta_ == nullptr ? nullptr : reinterpret_cast<T1*>(input_theta_->GetData());
     T* output_data_ptr = reinterpret_cast<T*>(output_tensor_->GetData());
 
     // init ouput_grid and input_grid, [M, 3] * [3, 2] = [M, 2]

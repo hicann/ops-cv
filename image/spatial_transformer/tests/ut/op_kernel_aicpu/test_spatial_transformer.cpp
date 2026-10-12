@@ -209,6 +209,49 @@ TEST_F(TEST_SPATIAL_TRANSFORMER_UT, 5D_C1_SUCC)
     EXPECT_EQ(compare, true);
 }
 
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, OPTIONAL_THETA_DEFAULT_ONLY_SUCC)
+{
+    constexpr uint64_t input_size = 1 * 1 * 2 * 3;
+    float input[input_size] = {1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F};
+    float output[input_size] = {0.0F};
+
+    auto node_def = CpuKernelUtils::CpuKernelUtils::CreateNodeDef();
+    NodeDefBuilder(node_def.get(), "SpatialTransformer", "SpatialTransformer")
+        .Input({"x", DT_FLOAT, {1, 1, 2, 3}, input, FORMAT_NCHW})
+        .Output({"y", DT_FLOAT, {1, 1, 2, 3}, output, FORMAT_NCHW})
+        .Attr("stn_ori_channel", 1)
+        .Attr("use_default_theta", vector<int64_t>{1, 1, 1, 1, 1, 1})
+        .Attr("default_theta", vector<float>{1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F});
+
+    string node_def_str;
+    node_def->SerializeToString(node_def_str);
+    CpuKernelContext ctx(HOST);
+    EXPECT_EQ(ctx.Init(node_def.get()), KERNEL_STATUS_OK);
+    EXPECT_EQ(ctx.GetInputsSize(), 1U);
+    EXPECT_EQ(CpuKernelRegister::Instance().RunCpuKernel(ctx), KERNEL_STATUS_OK);
+    EXPECT_TRUE(CompareResult(output, input, input_size));
+}
+
+TEST_F(TEST_SPATIAL_TRANSFORMER_UT, OPTIONAL_THETA_REQUIRED_FAIL)
+{
+    float input[6] = {1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F};
+    float output[6] = {0.0F};
+
+    auto node_def = CpuKernelUtils::CpuKernelUtils::CreateNodeDef();
+    NodeDefBuilder(node_def.get(), "SpatialTransformer", "SpatialTransformer")
+        .Input({"x", DT_FLOAT, {1, 1, 2, 3}, input, FORMAT_NCHW})
+        .Output({"y", DT_FLOAT, {1, 1, 2, 3}, output, FORMAT_NCHW})
+        .Attr("stn_ori_channel", 1)
+        .Attr("use_default_theta", vector<int64_t>{1, 0, 1, 0, 1, 1})
+        .Attr("default_theta", vector<float>{1.0F, 0.0F, 0.0F, 0.0F});
+
+    string node_def_str;
+    node_def->SerializeToString(node_def_str);
+    CpuKernelContext ctx(HOST);
+    EXPECT_EQ(ctx.Init(node_def.get()), KERNEL_STATUS_OK);
+    EXPECT_EQ(CpuKernelRegister::Instance().RunCpuKernel(ctx), KERNEL_STATUS_PARAM_INVALID);
+}
+
 TEST_F(TEST_SPATIAL_TRANSFORMER_UT, OUTPUT_FORMAT_MISMATCH_FAIL)
 {
     vector<int64_t> x_shape = {1, 1, 2, 3};
