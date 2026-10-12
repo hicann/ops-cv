@@ -894,3 +894,57 @@ TEST_F(l2_grid_sampler2d_backward_test, ascend910B2_case_float_bilinear_zeros)
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
+
+// 空grid场景：kernel不会写输出，非空输出必须被清零，防止脏内存被当作梯度返回
+TEST_F(l2_grid_sampler2d_backward_test, empty_grid_output_should_be_zeroed)
+{
+    auto gradOutput = TensorDesc({1, 1, 0, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grid = TensorDesc({1, 0, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto inputGrad = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto gridGrad = TensorDesc({1, 0, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    bool alignCorners = false;
+    auto outputMask = BoolArrayDesc(vector<bool>{true, true});
+    auto ut = OP_API_UT(aclnnGridSampler2DBackward, INPUT(gradOutput, input, grid, 0, 0, alignCorners, outputMask),
+                        OUTPUT(inputGrad, gridGrad));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
+// 空grid且只要dx场景：outputMask只开inputGrad，同样需要清零
+TEST_F(l2_grid_sampler2d_backward_test, empty_grid_mask0_only_should_be_zeroed)
+{
+    auto gradOutput = TensorDesc({1, 1, 0, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto input = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grid = TensorDesc({1, 0, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto inputGrad = TensorDesc({1, 1, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto gridGrad = TensorDesc({1, 0, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    bool alignCorners = false;
+    auto outputMask = BoolArrayDesc(vector<bool>{true, false});
+    auto ut = OP_API_UT(aclnnGridSampler2DBackward, INPUT(gradOutput, input, grid, 0, 0, alignCorners, outputMask),
+                        OUTPUT(inputGrad, gridGrad));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
+// 输入C=0场景：inputGrad为空无需处理，但gridGrad非空，必须清零
+TEST_F(l2_grid_sampler2d_backward_test, zero_channel_grid_grad_should_be_zeroed)
+{
+    auto gradOutput = TensorDesc({1, 0, 3, 3}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto input = TensorDesc({1, 0, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grid = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto inputGrad = TensorDesc({1, 0, 5, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto gridGrad = TensorDesc({1, 3, 3, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    bool alignCorners = false;
+    auto outputMask = BoolArrayDesc(vector<bool>{true, true});
+    auto ut = OP_API_UT(aclnnGridSampler2DBackward, INPUT(gradOutput, input, grid, 0, 0, alignCorners, outputMask),
+                        OUTPUT(inputGrad, gridGrad));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
