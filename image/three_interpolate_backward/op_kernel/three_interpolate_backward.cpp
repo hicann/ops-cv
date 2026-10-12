@@ -59,12 +59,12 @@ private:
     uint32_t core_proc_num{0};
     uint32_t core_each_loop_n_cnt{0};
     uint32_t core_last_loop_n_cnt{0};
-    uint32_t data_per_b_ele_size{0};
-    uint32_t data_per_c_move_ele_size{0};
-    uint32_t idx_per_b_ele_size{0};
-    uint32_t weight_per_b_ele_size{0};
-    uint32_t output_per_b_ele_size{0};
-    uint32_t output_per_c_move_ele_size{0};
+    uint64_t data_per_b_ele_size{0};
+    uint64_t data_per_c_move_ele_size{0};
+    uint64_t idx_per_b_ele_size{0};
+    uint64_t weight_per_b_ele_size{0};
+    uint64_t output_per_b_ele_size{0};
+    uint64_t output_per_c_move_ele_size{0};
     uint32_t core_proc_start_batch_idx{0};
     uint32_t core_proc_batch_cnt{0};
 
@@ -86,8 +86,17 @@ __aicore__ inline void KernelThreeInterpolateBackward<dataType, idxType>::CleanO
 {
 #ifndef __CCE_KT_TEST__
     if (GetBlockIdx() == 0) {
-        auto clean_ele_size = tiling_device->bs * tiling_device->c1 * tiling_device->ms * C0;
-        InitOutput<dataType>(this->grad_y_gm, clean_ele_size, 0);
+        // InitOutput 的元素个数是 uint32_t，bs*c1*ms*C0 超过 2^32 时必须分块清零。
+        uint64_t clean_ele_size = static_cast<uint64_t>(tiling_device->bs) * tiling_device->c1 * tiling_device->ms * C0;
+        constexpr uint32_t max_clean_chunk = 0x80000000u;
+        uint64_t clean_offset = 0;
+        while (clean_offset < clean_ele_size) {
+            uint64_t remain = clean_ele_size - clean_offset;
+            uint32_t chunk = remain > static_cast<uint64_t>(max_clean_chunk) ? max_clean_chunk :
+                                                                               static_cast<uint32_t>(remain);
+            InitOutput<dataType>(this->grad_y_gm[clean_offset], chunk, 0);
+            clean_offset += chunk;
+        }
     }
     SyncAll();
 #endif
@@ -115,14 +124,16 @@ __aicore__ inline void KernelThreeInterpolateBackward<dataType, idxType>::Init(
     this->pipe.InitBuffer(this->grad_y_output_queue, BUFFER_NUM,
                           this->tiling_device->grad_y_move_block_size * BLOCK_BYTE_SIZE);
 
-    this->data_per_b_ele_size = this->tiling_device->c1 * C0 * this->tiling_device->ns;
-    this->data_per_c_move_ele_size = this->tiling_device->ns * C0 * this->tiling_device->c_move_num;
+    this->data_per_b_ele_size = static_cast<uint64_t>(this->tiling_device->c1) * C0 * this->tiling_device->ns;
+    this->data_per_c_move_ele_size = static_cast<uint64_t>(this->tiling_device->ns) * C0 *
+                                     this->tiling_device->c_move_num;
 
-    this->idx_per_b_ele_size = this->tiling_device->ns * 3;
-    this->weight_per_b_ele_size = this->tiling_device->ns * 3;
+    this->idx_per_b_ele_size = static_cast<uint64_t>(this->tiling_device->ns) * 3;
+    this->weight_per_b_ele_size = static_cast<uint64_t>(this->tiling_device->ns) * 3;
 
-    this->output_per_b_ele_size = this->tiling_device->c1 * C0 * this->tiling_device->ms;
-    this->output_per_c_move_ele_size = this->tiling_device->ms * C0 * this->tiling_device->c_move_num;
+    this->output_per_b_ele_size = static_cast<uint64_t>(this->tiling_device->c1) * C0 * this->tiling_device->ms;
+    this->output_per_c_move_ele_size = static_cast<uint64_t>(this->tiling_device->ms) * C0 *
+                                       this->tiling_device->c_move_num;
     this->copy_out_dst_stride_block_size = C0 * this->tiling_device->ms * sizeof(dataType) / 32 -
                                            this->copy_out_block_len;
     this->copy_in_each_loop_block_size = C0 * this->core_each_loop_n_cnt * sizeof(dataType) / 32;
@@ -228,12 +239,15 @@ __aicore__ inline void KernelThreeInterpolateBackward<dataType, idxType>::CopyIn
     LocalTensor<idxType> idx_local = idx_input_queue.AllocTensor<idxType>();
     LocalTensor<dataType> weight_local = weight_input_queue.AllocTensor<dataType>();
 
-    auto gard_x_addr_offset = b_idx * this->data_per_b_ele_size + c0_idx * this->data_per_c_move_ele_size +
-                              n0_idx * N0 * C0;
+    uint64_t gard_x_addr_offset = static_cast<uint64_t>(b_idx) * this->data_per_b_ele_size +
+                                  static_cast<uint64_t>(c0_idx) * this->data_per_c_move_ele_size +
+                                  static_cast<uint64_t>(n0_idx) * N0 * C0;
 
-    auto idx_addr_offset = b_idx * this->idx_per_b_ele_size + n0_idx * N0 * static_cast<uint32_t>(3);
+    uint64_t idx_addr_offset = static_cast<uint64_t>(b_idx) * this->idx_per_b_ele_size +
+                               static_cast<uint64_t>(n0_idx) * N0 * 3;
 
-    auto weight_addr_offset = b_idx * this->weight_per_b_ele_size + n0_idx * N0 * static_cast<uint32_t>(3);
+    uint64_t weight_addr_offset = static_cast<uint64_t>(b_idx) * this->weight_per_b_ele_size +
+                                  static_cast<uint64_t>(n0_idx) * N0 * 3;
 
     auto move_c_cnt = (c0_idx != tiling_device->c_move_loop_times - 1) ? tiling_device->c_move_num :
                                                                          tiling_device->c_last_loop_move_num;
@@ -307,7 +321,8 @@ __aicore__ inline void KernelThreeInterpolateBackward<dataType, idxType>::CopyOu
     auto move_c_cnt = (c0_idx != tiling_device->c_move_loop_times - 1) ? tiling_device->c_move_num :
                                                                          tiling_device->c_last_loop_move_num;
 
-    auto grad_y_start_addr_offset = b_idx * this->output_per_b_ele_size + c0_idx * this->output_per_c_move_ele_size;
+    uint64_t grad_y_start_addr_offset = static_cast<uint64_t>(b_idx) * this->output_per_b_ele_size +
+                                        static_cast<uint64_t>(c0_idx) * this->output_per_c_move_ele_size;
 
     DataCopyParams data_copy_params;
     data_copy_params.blockCount = move_c_cnt;
@@ -318,9 +333,12 @@ __aicore__ inline void KernelThreeInterpolateBackward<dataType, idxType>::CopyOu
     SetAtomicAdd<dataType>();
     for (auto n_idx = 0u; n_idx < move_n_cnt; n_idx++) {
         auto idx = static_cast<decltype(n_idx)>(3) * n_idx;
-        auto grad_y_addr_offset_0 = grad_y_start_addr_offset + idx_local.GetValue(idx + 0) * C0;
-        auto grad_y_addr_offset_1 = grad_y_start_addr_offset + idx_local.GetValue(idx + 1) * C0;
-        auto grad_y_addr_offset_2 = grad_y_start_addr_offset + idx_local.GetValue(idx + 2) * C0;
+        uint64_t grad_y_addr_offset_0 = grad_y_start_addr_offset +
+                                        static_cast<uint64_t>(idx_local.GetValue(idx + 0)) * C0;
+        uint64_t grad_y_addr_offset_1 = grad_y_start_addr_offset +
+                                        static_cast<uint64_t>(idx_local.GetValue(idx + 1)) * C0;
+        uint64_t grad_y_addr_offset_2 = grad_y_start_addr_offset +
+                                        static_cast<uint64_t>(idx_local.GetValue(idx + 2)) * C0;
 
         SetFlag<HardEvent::S_V>(EVENT_ID2);
         WaitFlag<HardEvent::S_V>(EVENT_ID2);

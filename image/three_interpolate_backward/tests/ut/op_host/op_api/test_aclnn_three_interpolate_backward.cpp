@@ -139,6 +139,44 @@ TEST_F(three_interpolate_backward_test, weight_dtype_err_test)
     EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
 }
 
+TEST_F(three_interpolate_backward_test, m_zero_invalid_test)
+{
+    auto bs = 1;
+    auto cs = 2;
+    auto ms = 6;
+    auto ns = 5;
+
+    auto grad_x = TensorDesc({bs, cs, ns, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto idx = TensorDesc({bs, ns, THREE_POINT}, ACL_INT32, ACL_FORMAT_ND);
+    auto weight = TensorDesc({bs, ns, THREE_POINT}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grad_y = TensorDesc({bs, cs, ms, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
+
+    auto ut = OP_API_UT(aclnnThreeInterpolateBackward, INPUT(grad_x, idx, weight, 0), OUTPUT(grad_y));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(three_interpolate_backward_test, m_negative_invalid_test)
+{
+    auto bs = 1;
+    auto cs = 2;
+    auto ms = 6;
+    auto ns = 5;
+
+    auto grad_x = TensorDesc({bs, cs, ns, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
+    auto idx = TensorDesc({bs, ns, THREE_POINT}, ACL_INT32, ACL_FORMAT_ND);
+    auto weight = TensorDesc({bs, ns, THREE_POINT}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto grad_y = TensorDesc({bs, cs, ms, 1}, ACL_FLOAT, ACL_FORMAT_NCHW);
+
+    auto ut = OP_API_UT(aclnnThreeInterpolateBackward, INPUT(grad_x, idx, weight, -1), OUTPUT(grad_y));
+
+    uint64_t workspaceSize = 0;
+    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(getWorkspaceResult, ACLNN_ERR_PARAM_INVALID);
+}
+
 TEST_F(three_interpolate_backward_test, hostapi_test_1_2_6_5_fp32)
 {
     auto bs = 1;

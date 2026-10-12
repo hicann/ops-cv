@@ -178,6 +178,19 @@ ge::graphStatus TilingBasicShapeInfo(gert::TilingContext* context, ThreeInterpol
     return ge::GRAPH_SUCCESS;
 }
 
+// 5HD 的 m 来自 grad_y 的 H 维（dim2）。不在 InferShape 拦截，这里拒绝 m<=0。
+ge::graphStatus TilingCheckOutputMs(gert::TilingContext* context)
+{
+    auto shape_ptr = context->GetOutputShape(OUTPUT_GRAD_Y);
+    OP_CHECK_NULL_WITH_CONTEXT(context, shape_ptr);
+    const auto& shape_val = shape_ptr->GetStorageShape();
+    OP_CHECK_IF(shape_val.GetDimNum() <= static_cast<size_t>(DIM::DIM_2),
+                OP_LOGE(context, "grad_y dim num is invalid."), return ge::GRAPH_FAILED);
+    int64_t ms = shape_val.GetDim(static_cast<size_t>(DIM::DIM_2));
+    OP_CHECK_IF(ms <= 0, OP_LOGE(context, "attr m must be > 0."), return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 void SaveTilingDataToBuffer(gert::TilingContext* context, ThreeInterpolateBackwardTilingData& tiling_host)
 {
     tiling_host.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
@@ -238,6 +251,9 @@ static ge::graphStatus Tiling4ThreeInterpolateBackward(gert::TilingContext* cont
 
     const auto& grad_x_format = static_cast<ge::Format>(ge::GetPrimaryFormat(grad_x_desc->GetStorageFormat()));
     OP_CHECK_IF(grad_x_format != ge::FORMAT_NC1HWC0, OP_LOGE(context, "input format invalid, tiling failed."),
+                return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(TilingCheckOutputMs(context) != ge::GRAPH_SUCCESS, OP_LOGE(context, "TilingCheckOutputMs failed."),
                 return ge::GRAPH_FAILED);
 
     auto idx_desc = context->GetInputDesc(INDEX_INPUT_IDX);

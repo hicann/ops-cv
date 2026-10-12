@@ -66,13 +66,19 @@ static bool CheckDtypeValid(const aclTensor* grad_x, const aclTensor* idx, const
 }
 
 static aclnnStatus CheckParams(const aclTensor* grad_x, const aclTensor* idx, const aclTensor* weight,
-                               const aclTensor* grad_y)
+                               const aclTensor* grad_y, int m)
 {
     // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(grad_x, idx, weight, grad_y), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查数据类型是否正确
     CHECK_RET(CheckDtypeValid(grad_x, idx, weight), ACLNN_ERR_PARAM_INVALID);
+
+    // 3. 属性 m 必须大于 0。910B/910_93 不在此处拦截时，m=0 会进入 TransData 并以内部错误返回。
+    if (m <= 0) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "attr m must be > 0.");
+        return ACLNN_ERR_PARAM_INVALID;
+    }
 
     return ACLNN_SUCCESS;
 }
@@ -97,7 +103,7 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor* grad_
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
     // 固定写法，参数检查
-    auto ret = CheckParams(grad_x, idx, weight, grad_y);
+    auto ret = CheckParams(grad_x, idx, weight, grad_y, m);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     if (grad_x->IsEmpty() || idx->IsEmpty() || weight->IsEmpty()) {
