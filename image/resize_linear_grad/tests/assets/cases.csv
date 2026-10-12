@@ -1,0 +1,11 @@
+testcase_name,op_name,input_shapes,input_dtypes,input_formats,output_shapes,output_dtypes,output_formats,attributes,input_data_ranges,precision_tolerances,absolute_precision
+resize_linear_grad_down,resize_linear_grad,"((1, 2, 4), (1, 2, 8))","('float32', 'float32')","('ND', 'ND')","((1, 2, 8),)","('float32',)","('ND',)","{'align_corners': False}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_up_aligncorners,resize_linear_grad,"((1, 2, 8), (1, 2, 3))","('float32', 'float32')","('ND', 'ND')","((1, 2, 3),)","('float32',)","('ND',)","{'align_corners': True}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_nonuniform,resize_linear_grad,"((2, 3, 5), (2, 3, 7))","('float32', 'float32')","('ND', 'ND')","((2, 3, 7),)","('float32',)","('ND',)","{'align_corners': False}","((-5.0, 5.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_dst_one,resize_linear_grad,"((1, 2, 1), (1, 2, 6))","('float32', 'float32')","('ND', 'ND')","((1, 2, 6),)","('float32',)","('ND',)","{'align_corners': False}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_identity,resize_linear_grad,"((1, 2, 5), (1, 2, 5))","('float32', 'float32')","('ND', 'ND')","((1, 2, 5),)","('float32',)","('ND',)","{'align_corners': False}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_up_fp16,resize_linear_grad,"((1, 2, 8), (1, 2, 4))","('float16', 'float16')","('ND', 'ND')","((1, 2, 4),)","('float16',)","('ND',)","{'align_corners': False}","((-2.0, 2.0), (0.0, 0.0))",,
+resize_linear_grad_up_bf16,resize_linear_grad,"((1, 2, 9), (1, 2, 5))","('bfloat16', 'bfloat16')","('ND', 'ND')","((1, 2, 5),)","('bfloat16',)","('ND',)","{'align_corners': True}","((-2.0, 2.0), (0.0, 0.0))",,
+resize_linear_grad_scale_explicit,resize_linear_grad,"((1, 2, 6), (1, 2, 4))","('float32', 'float32')","('ND', 'ND')","((1, 2, 4),)","('float32',)","('ND',)","{'align_corners': False, 'scale': 2.0}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_src_one,resize_linear_grad,"((1, 2, 4), (1, 2, 1))","('float32', 'float32')","('ND', 'ND')","((1, 2, 1),)","('float32',)","('ND',)","{'align_corners': False}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
+resize_linear_grad_copy_scale,resize_linear_grad,"((1, 2, 5), (1, 2, 5))","('float32', 'float32')","('ND', 'ND')","((1, 2, 5),)","('float32',)","('ND',)","{'align_corners': False, 'scale': 2.0}","((-2.0, 2.0), (0.0, 0.0))",,1e-06
