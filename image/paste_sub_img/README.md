@@ -13,9 +13,9 @@
 
 ## 功能说明
 
-PasteSubImg 是一个面向图像或特征图 patch 拼接场景的区域累加算子，计算范式归为 layout_transform。算子从源图像 `patch_img` 中按 `indices` 指定的矩形子区域提取像素，经 `scale` 坐标缩放与 `offsets` 给出的平移量映射到目标画布 `combine_img` 的对应矩形位置，对目标区域内每个像素执行逐元素累加（`combine_img[dst] += patch_img[src]`），目标区域之外的像素保持原值。`combine_img` 以原地方式同时作为输入与输出，适用于图像拼接、超分辨率回填、滑窗推理特征图聚合等需要重叠区域累加的场景。
+PasteSubImg 是一个面向图像或特征图 patch 拼接场景的区域累加算子，计算范式归为 layout_transform。算子从源图像 `patch_img` 中按 `core_area_coord` 指定的矩形子区域提取像素，经 `scale` 坐标缩放与 `patch_coord` 给出的平移量映射到目标画布 `combine_img` 的对应矩形位置，对目标区域内每个像素执行逐元素累加（`combine_img[dst] += patch_img[src]`），目标区域之外的像素保持原值。`combine_img` 以原地方式同时作为输入与输出，适用于图像拼接、超分辨率回填、滑窗推理特征图聚合等需要重叠区域累加的场景。
 
-计算公式如下，其中 `offsets = [px1, py1, px2, py2]`（仅 px1、py1 参与计算），`indices = [cx1, cy1, cx2, cy2]`（右/下边界 exclusive），scale 为坐标缩放因子：
+计算公式如下，其中 `patch_coord = [px1, py1, px2, py2]`（仅 px1、py1 参与计算），`core_area_coord = [cx1, cy1, cx2, cy2]`（右/下边界 exclusive），scale 为坐标缩放因子：
 
 $$
 s_{cy1}=\lfloor cy1 \cdot scale \rfloor,\ s_{cy2}=\lfloor cy2 \cdot scale \rfloor,\ s_{cx1}=\lfloor cx1 \cdot scale \rfloor,\ s_{cx2}=\lfloor cx2 \cdot scale \rfloor
@@ -33,7 +33,7 @@ combine\_img[h, w, c] & \text{otherwise}
 \end{cases}
 $$
 
-其中 $\Delta h = s_{cy2} - s_{cy1}$、$\Delta w = s_{cx2} - s_{cx1}$，C 维完全对齐逐元素相加。
+其中 $\Delta h = s_{cy2} - s_{cy1}$、$\Delta w = s_{cx2} - s_{cx1}$，C 维完全对齐逐元素相加。输出与输入同名（原地写回），公式中将累加结果记作 combine_img_out。
 
 ## 参数说明
 
@@ -63,16 +63,16 @@ $$
 <td>ND</td>
 </tr>
 <tr>
-<td>offsets</td>
+<td>patch_coord</td>
 <td>输入</td>
-<td>目标位置偏移 [px1, py1, px2, py2]，1D (4,)；仅 px1（列偏移）与 py1（行偏移）参与计算，对应公式中 offsets。</td>
+<td>目标画布中的粘贴位置坐标 [px1, py1, px2, py2]，1D (4,)；仅 px1（列偏移）与 py1（行偏移）参与计算，对应公式中 patch_coord。</td>
 <td>INT32</td>
 <td>ND</td>
 </tr>
 <tr>
-<td>indices</td>
+<td>core_area_coord</td>
 <td>输入</td>
-<td>源提取区域 [cx1, cy1, cx2, cy2]，1D (4,)，右/下边界 exclusive；对应公式中 indices。</td>
+<td>源提取区域 [cx1, cy1, cx2, cy2]，1D (4,)，右/下边界 exclusive；对应公式中 core_area_coord。</td>
 <td>INT32</td>
 <td>ND</td>
 </tr>
@@ -84,16 +84,16 @@ $$
 <td>ND</td>
 </tr>
 <tr>
-<td>combine_img_out</td>
+<td>combine_img</td>
 <td>输出</td>
-<td>累加后的画布，与 combine_img 同形同数据类型；aliasing: inplace_with(combine_img)。</td>
+<td>累加后的画布，与输入 combine_img 同名、同形、同数据类型，原地写回；公式中记作 combine_img_out。</td>
 <td>UINT8、FLOAT16、FLOAT</td>
 <td>ND</td>
 </tr>
 <tr>
 <td>scale</td>
-<td>可选属性</td>
-<td>坐标缩放因子，乘到所有坐标值上把坐标空间映射到像素空间；默认 1.0。</td>
+<td>属性</td>
+<td>坐标缩放因子，乘到所有坐标值上把坐标空间映射到像素空间；必填属性，无默认值。</td>
 <td>FLOAT</td>
 <td>-</td>
 </tr>
@@ -103,8 +103,9 @@ $$
 ## 约束说明
 
 - patch_img 与 combine_img 的数据类型必须一致，C 维度必须相同。
-- offsets 与 indices 的 shape 均为 [4]；indices 须满足 cx2 > cx1 且 cy2 > cy1。
-- coord·scale 不越界 patch_img 维度；目标区域 (coord + offsets)·scale 不越界 combine_img 维度。
+- patch_coord 与 core_area_coord 的 shape 均为 [4]；core_area_coord 须满足 cx2 > cx1 且 cy2 > cy1。
+- 源区域须完全位于 `patch_img` 内：`0 ≤ s_cy1 < s_cy2 ≤ H` 且 `0 ≤ s_cx1 < s_cx2 ≤ W`，其中 H、W 为 `patch_img` 的高、宽。
+- 目标区域须完全位于 `combine_img` 内：`d_cy1 ≥ 0`、`d_cy1 + Δh ≤ H_out`、`d_cx1 ≥ 0`、`d_cx1 + Δw ≤ W_out`，其中 H_out、W_out 为 `combine_img` 的高、宽。
 - scale 取值范围为 [0.0, 256.0]，非整数结果截断为 int 索引。
 - 数据布局为 HWC 行优先 ND，不支持 NCHW 等其他布局。
 - combine_img 以原地方式写回，调用前需保证为连续内存。
