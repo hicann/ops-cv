@@ -920,7 +920,7 @@ function(add_ops_compile_options OP_TYPE)
   cmake_parse_arguments(OP_COMPILE "" "OP_TYPE" "COMPUTE_UNIT;OPTIONS" ${ARGN})
   execute_process(
     COMMAND
-      ${ASCEND_PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/util/ascendc_gen_options.py
+      ${ASCEND_PYTHON_EXECUTABLE} ${OPS_CV_DIR}/scripts/util/ascendc_gen_options.py
       ${ASCEND_AUTOGEN_PATH}/${CUSTOM_COMPILE_OPTIONS} ${OP_TYPE} ${OP_COMPILE_COMPUTE_UNIT} ${OP_COMPILE_OPTIONS}
     RESULT_VARIABLE EXEC_RESULT
     OUTPUT_VARIABLE EXEC_INFO
