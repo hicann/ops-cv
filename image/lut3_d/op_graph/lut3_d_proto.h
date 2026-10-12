@@ -32,7 +32,7 @@ namespace ge {
  * The format of the tensor is ND. The value of lut_table_n is limited to 20. \n
 
 *@par Outputs:
-* lut_img: A 3D or 4D Tensor of type uint8 or float32. Has the same shape as "img".
+* lut_img: A 3D or 4D Tensor of type float32. Has the same shape as "img".
 * The format of the tensor is ND. \n
 */
 REG_OP(LUT3D)
