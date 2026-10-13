@@ -26,11 +26,12 @@ namespace ge {
 * @brief Performs the backpropagation of ROI Align Rotated . \n
 
 * @par Inputs:
-* @li x: A tensor of type float32, describing the feature_map.
+* @li x_grad: A float32 upstream-gradient tensor with shape (N, pooled_h, pooled_w, C).
 * @li rois: A tensor of type float32, with shape(n, 6) with each roi decoded as
 *     (batch_index, center_x, center_y, w, h, angle). The angle is in radian.
 
 * @par Attributes:
+* @li y_grad_shape: A required list of four integers [B, H, W, C], specifying the output gradient shape.
 * @li pooled_h: A required int32, specifying the pooled H. Must be greater
 * than 0.
 * @li pooled_w: A required int32, specifying the pooled W. Must be greater
@@ -45,7 +46,7 @@ namespace ge {
     fashion in image space, Otherwise, the angle is counterclockwise. Default: False. \n
 
 * @par Outputs:
-* @li y: A tensor of type float32, describing the result. \n
+* @li y_grad: A float32 tensor with shape y_grad_shape, accumulating gradients for the original feature map. \n
 
 * @par Third-party framework compatibility
 * It has a corresponding operator in MMCV.
