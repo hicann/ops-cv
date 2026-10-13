@@ -115,6 +115,26 @@ TEST_F(GridUnnormalInfershape, grid_unnormal_infershape_empty_tensor)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
+// 确定 rank 时，-3 不是合法动态维
+TEST_F(GridUnnormalInfershape, grid_unnormal_infershape_rejects_invalid_negative_dim)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("align_corners", Ops::Cv::AnyValue::CreateFrom(false)),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "GridUnnormal",
+        {
+            {{{1, -3, 5, 2}, {1, -3, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // grid
+            {{{1, -3, 5, 2}, {1, -3, 5, 2}}, ge::DT_FLOAT, ge::FORMAT_ND}, // assist
+        },
+        {
+            {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}, // diff
+            {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND}, // position
+        },
+        attrs);
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+}
+
 TEST_F(GridUnnormalInfershape, grid_unnormal_infershape_rejects_non_4d_grid)
 {
     std::vector<gert::InfershapeContextPara::OpAttr> attrs = {

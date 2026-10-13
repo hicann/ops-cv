@@ -61,6 +61,12 @@ static ge::graphStatus CheckInputShape(gert::InferShapeContext* context, const g
     for (size_t i = 0; i < gridShape->GetDimNum(); ++i) {
         const int64_t gridDim = gridShape->GetDim(i);
         const int64_t assistDim = assistShape->GetDim(i);
+        OP_CHECK_IF(gridDim < ge::UNKNOWN_DIM || assistDim < ge::UNKNOWN_DIM,
+                    OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                        context->GetNodeName(), "grid and assist",
+                        ("grid dim=" + std::to_string(gridDim) + ", assist dim=" + std::to_string(assistDim)),
+                        "dimensions must be greater than or equal to -1"),
+                    return ge::GRAPH_FAILED);
         OP_CHECK_IF(gridDim != ge::UNKNOWN_DIM && assistDim != ge::UNKNOWN_DIM && gridDim != assistDim,
                     OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
                         context->GetNodeName(), "grid and assist",
