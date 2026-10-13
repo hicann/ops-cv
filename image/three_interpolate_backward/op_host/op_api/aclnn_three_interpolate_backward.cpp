@@ -13,6 +13,7 @@
 #include "aclnn_kernels/transdata.h"
 #include "three_interpolate_backward.h"
 #include "aclnn_kernels/reshape.h"
+#include "level0/fill.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn/aclnn_base.h"
 #include "opdev/common_types.h"
@@ -83,6 +84,17 @@ static aclnnStatus CheckParams(const aclTensor* grad_x, const aclTensor* idx, co
     return ACLNN_SUCCESS;
 }
 
+// n==0 时 kernel 会把非空 grad_y 清零。aclnn 早退不写输出会把未初始化内存当作梯度返回。
+static const aclTensor* GetOutTensorWithValueZero(aclTensor* grad_y, aclOpExecutor* executor)
+{
+    aclScalar* scalar = executor->AllocScalar(0);
+    auto valueTensor = executor->ConvertToTensor(scalar, grad_y->GetDataType());
+    auto gradYDims = op::ToShapeVector(grad_y->GetViewShape());
+    aclIntArray* dimArray = executor->AllocIntArray(gradYDims.data(), gradYDims.size());
+    auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
+    return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
+}
+
 static void CreateGradXReshapeData(const aclTensor* grad_x, FVector<int64_t>& newShapeVector)
 {
     const auto& shape = grad_x->GetViewShape();
@@ -107,8 +119,18 @@ aclnnStatus aclnnThreeInterpolateBackwardGetWorkspaceSize(const aclTensor* grad_
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
     if (grad_x->IsEmpty() || idx->IsEmpty() || weight->IsEmpty()) {
-        // 根据实际支持情况补充
-        *workspaceSize = 0;
+        // 输出为空（如 b==0 或 c==0）时没有元素可写，直接成功。
+        // 输出非空（n==0 且 b,c,m>0）时必须写成全 0，与 kernel 清零语义一致。
+        if (grad_y->IsEmpty()) {
+            *workspaceSize = 0;
+            uniqueExecutor.ReleaseTo(executor);
+            return ACLNN_SUCCESS;
+        }
+        auto fillOut = GetOutTensorWithValueZero(grad_y, uniqueExecutor.get());
+        CHECK_RET(fillOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        auto viewCopyResult = l0op::ViewCopy(fillOut, grad_y, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        *workspaceSize = uniqueExecutor->GetWorkspaceSize();
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
