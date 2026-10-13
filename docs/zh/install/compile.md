@@ -76,7 +76,7 @@
 
     自定义算子包默认安装路径为```${ASCEND_HOME_PATH}/opp/vendors```，\$\{ASCEND\_HOME\_PATH\}已通过环境变量配置，表示CANN toolkit包安装路径，一般为\$\{install\_path\}/cann。
 
-    > 说明：可通过配置--install-path=\$\{install\_path\}参数定义算子包安装目录，在使用自定义算子包前，需执行source \$\{install_path\}/vendors/${vendor_name}/bin/set_env.bash命令，set\_env.bash脚本将自定义算子包安装路径追加到环境变量ASCEND\_CUSTOM\_OPP\_PATH中，使自定义算子包在当前环境中生效。
+    > 说明：可通过配置--install-path=\$\{install\_path\}参数定义算子包安装目录，在使用自定义算子包前，需执行source \$\{install_path\}/vendors/${vendor_name}_cv/bin/set_env.bash命令，set\_env.bash脚本将自定义算子包安装路径追加到环境变量ASCEND\_CUSTOM\_OPP\_PATH中，使自定义算子包在当前环境中生效。
 
 3. **（可选）卸载自定义算子包。**
 
