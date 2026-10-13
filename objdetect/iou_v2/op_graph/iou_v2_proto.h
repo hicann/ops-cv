@@ -23,10 +23,10 @@ namespace ge {
 
 * @par Inputs:
 * Two inputs, including:
-* @li bboxes: Bounding boxes, a 2D Tensor of type float16 or float32 with
+* @li bboxes: Bounding boxes, a 2D Tensor of type float16, float32 or bfloat16 with
 * shape (N, 4). "N" indicates the number of bounding boxes, and the value
 * "4" refers to "x0", "x1", "y0", and "y1".
-* @li gtboxes: Ground-truth boxes, a 2D Tensor of type float16 or float32
+* @li gtboxes: Ground-truth boxes, a 2D Tensor of type float16, float32 or bfloat16
 * with shape (M, 4). It's dtype should be same as bboxes.
 * "M" indicates the number of ground truth boxes, and
 * the value "4" refers to "x0", "x1", "y0", and "y1" . \n
@@ -44,11 +44,12 @@ namespace ge {
 * @li aligned: A bool value, if aligned is true, calculate the ious between each aligned pair of bboxes and gtboxes.
 * default value is false . \n
 * @par Outputs:
-* overlap: A 2D Tensor of type float16 or float32 with shape [M, N] or [M, 1], specifying
+* overlap: A 2D Tensor of type float16, float32 or bfloat16 with shape [M, N] or [M, 1], specifying
 * the IoU or IoF ratio . It's dtype should be same as bboxes. \n
 
 * @attention Constraints:
-* Computation of float16 and float32 data are supported. To avoid overflow, the input
+* Computation of float16, float32 and bfloat16 data is supported.
+* The ascend310p configuration supports only float16 and float32. To avoid overflow, the input
 * length and width are scaled by 0.2 internally.
 */
 REG_OP(IouV2)
