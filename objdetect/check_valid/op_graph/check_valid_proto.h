@@ -27,17 +27,17 @@ namespace ge {
 * Two inputs, including:
 * @li bbox_tensor: Bounding box. A 2D Tensor of type float16 or float32 with shape (N, 4).
 * "N" indicates the number of bounding boxes, the value "4" indicates "x0",
-* "x1", "y0", and "y1".
+* "y0", "x1", and "y1".
 * @li img_metas: Valid boundary value of the image. A 1D Tensor of type float16 or float32
-* with shape (16,) \n
+* with at least three elements (H, W, r) \n
 
 *@par Outputs:
-*valid_tensor: A bool with shape (N, 1), specifying whether an input anchor is
+*valid_tensor: An int8 tensor with shape (N, 1), specifying whether an input anchor is
 * in an image. "1" indicates valid, while "0" indicates invalid . \n
 
 *@attention Constraints:
-* 16 "img_metas" are input. The first three numbers (height, width, ratio) are
-* valid, specifying the valid boundary (heights x ratio, weights x ratio).
+* The first three img_metas elements (height, width, ratio) specify the valid boundary.
+* Additional metadata elements are not used by this operator.
 */
 REG_OP(CheckValid)
     .INPUT(bbox_tensor, TensorType({DT_FLOAT16, DT_FLOAT}))
