@@ -71,12 +71,14 @@ $$
 
 ## 约束说明
 
-- features 和 weight 必须同 dtype（均为 float32 或均为 float16）。
-- idx 可独立选择 int32 或 int64。
-- 所有输入 tensor 必须为连续（contiguous）格式。
-- idx 值必须在 [0, M) 范围内，由调用方保证不越界。
-- 维度上限：B、M、C、N 均不超过 2^32-1，且 N×C 不超过 2^32-1，B×N×3 与 B×M×C 不超过 2^64-1。
-- 支持空 tensor（shape 含 0 维），此时输出为空 tensor，不执行计算。
+- features和weight必须同dtype（均为float32或均为float16），且y的dtype与features一致。
+- idx可独立选择int32或int64。
+- 所有输入tensor必须为连续（contiguous）格式。
+- features、idx、weight均必须为3维tensor；features与idx、weight的B维必须一致，idx与weight的N维必须一致，idx与weight的最后一维必须为3。
+- idx值必须在[0, M)范围内，由调用方保证不越界。
+- 当输出非空（B、N、C均大于0）时，M必须大于0；M=0时idx无合法取值，算子将报错。
+- 维度上限：B、M、C、N均不超过2^32-1，且N×C不超过2^32-1，B×N×3与B×M×C不超过2^64-1。
+- 支持空tensor：当B、N、C中任一为0时，输出为空tensor，不执行计算；features的M维为0但输出非空的场景不支持，算子将报错。
 
 ## 调用说明
 
