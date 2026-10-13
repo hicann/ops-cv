@@ -34,28 +34,30 @@ class NMSWithMask {
 public:
     __aicore__ inline NMSWithMask(){};
 
-    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, const NMSWithMaskTilingData* tilingData);
+    __aicore__ inline void Init(GM_ADDR boxes, GM_ADDR scores, GM_ADDR selectedIndices,
+                                const NMSWithMaskTilingData* tilingData);
     __aicore__ inline void Process();
 
 private:
     __aicore__ inline void CopyIn();
-    __aicore__ inline void IOU(LocalTensor<T>& xLocal, LocalTensor<T>& yLocal, LocalTensor<uint8_t>& zLocal);
+    __aicore__ inline void IOU(LocalTensor<T>& boxesLocal, LocalTensor<T>& scoresLocal,
+                               LocalTensor<uint8_t>& selectedIndicesLocal);
     __aicore__ inline void GatherIdx(LocalTensor<T>& dstLocal, LocalTensor<T>& srcLocal);
     __aicore__ inline void CopyOut();
     __aicore__ inline void Compute();
 
 private:
     TPipe pipe;
-    TQue<QuePosition::VECIN, BUFFER_NUM> inputQueueX;
-    TQue<QuePosition::VECIN, BUFFER_NUM> inputQueueY;
-    TQue<QuePosition::VECOUT, BUFFER_NUM> outputQueueZ;
+    TQue<QuePosition::VECIN, BUFFER_NUM> boxesQueue;
+    TQue<QuePosition::VECIN, BUFFER_NUM> scoresQueue;
+    TQue<QuePosition::VECOUT, BUFFER_NUM> selectedIndicesQueue;
     TBuf<QuePosition::VECCALC> baseBuffer;
     TBuf<QuePosition::VECCALC> areaBuffer;
     TBuf<QuePosition::VECCALC> mathBuffer;
 
-    GlobalTensor<T> inputGMX;
-    GlobalTensor<T> inputGMY;
-    GlobalTensor<uint8_t> outputGMZ;
+    GlobalTensor<T> boxesGm;
+    GlobalTensor<T> scoresGm;
+    GlobalTensor<uint8_t> selectedIndicesGm;
 
     int64_t rawLength;
     int64_t scoresLength;
@@ -70,7 +72,8 @@ private:
 };
 
 template <typename T>
-__aicore__ inline void NMSWithMask<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, const NMSWithMaskTilingData* tilingData)
+__aicore__ inline void NMSWithMask<T>::Init(GM_ADDR boxes, GM_ADDR scores, GM_ADDR selectedIndices,
+                                            const NMSWithMaskTilingData* tilingData)
 {
     rawLength = tilingData->totalLength;
     scoresLength = tilingData->totalLength / BOX_NEED_IDX;
@@ -79,13 +82,13 @@ __aicore__ inline void NMSWithMask<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, con
     iou_threshold = tilingData->iou_threshold;
     scores_threshold = tilingData->scores_threshold;
 
-    inputGMX.SetGlobalBuffer((__gm__ T*)x, AlignintLengh);
-    inputGMY.SetGlobalBuffer((__gm__ T*)y, Align32BoxNum);
-    outputGMZ.SetGlobalBuffer((__gm__ uint8_t*)z, Align32BoxNum); // 一个box对应四个输入
+    boxesGm.SetGlobalBuffer((__gm__ T*)boxes, AlignintLengh);
+    scoresGm.SetGlobalBuffer((__gm__ T*)scores, Align32BoxNum);
+    selectedIndicesGm.SetGlobalBuffer((__gm__ uint8_t*)selectedIndices, Align32BoxNum); // 一个box对应四个输入
 
-    pipe.InitBuffer(inputQueueX, BUFFER_NUM, AlignintLengh * sizeof(T));
-    pipe.InitBuffer(inputQueueY, BUFFER_NUM, Align32BoxNum * sizeof(T));
-    pipe.InitBuffer(outputQueueZ, BUFFER_NUM, Align32BoxNum * sizeof(uint8_t));
+    pipe.InitBuffer(boxesQueue, BUFFER_NUM, AlignintLengh * sizeof(T));
+    pipe.InitBuffer(scoresQueue, BUFFER_NUM, Align32BoxNum * sizeof(T));
+    pipe.InitBuffer(selectedIndicesQueue, BUFFER_NUM, Align32BoxNum * sizeof(uint8_t));
 
     pipe.InitBuffer(mathBuffer, AlignintLengh * sizeof(T));
     pipe.InitBuffer(areaBuffer, Align32BoxNum * sizeof(T));
@@ -99,21 +102,21 @@ __aicore__ inline void NMSWithMask<T>::Init(GM_ADDR x, GM_ADDR y, GM_ADDR z, con
 template <typename T>
 __aicore__ inline void NMSWithMask<T>::CopyIn()
 {
-    AscendC::LocalTensor<T> xLocal = inputQueueX.AllocTensor<T>();
-    AscendC::LocalTensor<T> yLocal = inputQueueY.AllocTensor<T>();
-    AscendC::DataCopy(xLocal, inputGMX[0], rawLength);
-    AscendC::DataCopy(yLocal, inputGMY[0], scoresLength);
-    inputQueueX.EnQue(xLocal);
-    inputQueueY.EnQue(yLocal);
+    AscendC::LocalTensor<T> boxesLocal = boxesQueue.AllocTensor<T>();
+    AscendC::LocalTensor<T> scoresLocal = scoresQueue.AllocTensor<T>();
+    AscendC::DataCopy(boxesLocal, boxesGm[0], rawLength);
+    AscendC::DataCopy(scoresLocal, scoresGm[0], scoresLength);
+    boxesQueue.EnQue(boxesLocal);
+    scoresQueue.EnQue(scoresLocal);
 }
 
 template <typename T>
 __aicore__ inline void NMSWithMask<T>::CopyOut()
 {
-    AscendC::LocalTensor<uint8_t> zLocal = outputQueueZ.DeQue<uint8_t>();
+    AscendC::LocalTensor<uint8_t> selectedIndicesLocal = selectedIndicesQueue.DeQue<uint8_t>();
     AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(scoresLength * sizeof(uint8_t)), 0, 0, 0};
-    AscendC::DataCopyPad(outputGMZ[0], zLocal, copyParams);
-    outputQueueZ.FreeTensor(zLocal);
+    AscendC::DataCopyPad(selectedIndicesGm[0], selectedIndicesLocal, copyParams);
+    selectedIndicesQueue.FreeTensor(selectedIndicesLocal);
 }
 
 template <typename T>
@@ -129,14 +132,15 @@ __aicore__ inline void NMSWithMask<T>::GatherIdx(LocalTensor<T>& dstLocal, Local
 }
 
 template <typename T>
-__aicore__ inline void NMSWithMask<T>::IOU(LocalTensor<T>& xLocal, LocalTensor<T>& yLocal, LocalTensor<uint8_t>& zLocal)
+__aicore__ inline void NMSWithMask<T>::IOU(LocalTensor<T>& boxesLocal, LocalTensor<T>& scoresLocal,
+                                           LocalTensor<uint8_t>& selectedIndicesLocal)
 {
     for (uint32_t i = 0; i < (this->rawLength / BOX_NEED_IDX); i++) { // 初始化全部保留
-        zLocal.SetValue(i, 1);
+        selectedIndicesLocal.SetValue(i, 1);
     }
     LocalTensor<T> areaLocal = areaBuffer.Get<T>();
     LocalTensor<T> mathLocal = mathBuffer.Get<T>();
-    GatherIdx(mathLocal, xLocal); // mathLocal临时存储每个box的四个坐标
+    GatherIdx(mathLocal, boxesLocal); // mathLocal临时存储每个box的四个坐标
 
     Sub(mathLocal, mathLocal[Align32BoxNum * 2], mathLocal, scoresLength);
     Sub(mathLocal[Align32BoxNum], mathLocal[Align32BoxNum * 3], mathLocal[Align32BoxNum], scoresLength);
@@ -145,21 +149,21 @@ __aicore__ inline void NMSWithMask<T>::IOU(LocalTensor<T>& xLocal, LocalTensor<T
     Duplicate(mathLocal, static_cast<T>(0), this->rawLength); // 归零
 
     for (uint32_t i = 0; i < (scoresLength - 1); i++) { // 最后一个框处理不进行处理只最后进行判断
-        if (zLocal.GetValue(i) == 0) {                  // 该框已经被抑制
+        if (selectedIndicesLocal.GetValue(i) == 0) {    // 该框已经被抑制
             continue;
         }
-        if (yLocal.GetValue(i) < scores_threshold) { // 低于分数阈值不保留
+        if (scoresLocal.GetValue(i) < scores_threshold) { // 低于分数阈值不保留
             for (int32_t end = i; end < scoresLength; end++) {
-                zLocal.SetValue(end, 0);
+                selectedIndicesLocal.SetValue(end, 0);
             }
             break;
         }
 
-        GatherIdx(mathLocal, xLocal);
+        GatherIdx(mathLocal, boxesLocal);
 
         LocalTensor<T> baseLocal = baseBuffer.Get<T>();
         for (int idx = 0; idx < BOX_NEED_IDX; idx++) {
-            Duplicate(baseLocal[idx * Align32BoxNum], xLocal.GetValue(i * BOX_NEED_IDX + idx), Align32BoxNum);
+            Duplicate(baseLocal[idx * Align32BoxNum], boxesLocal.GetValue(i * BOX_NEED_IDX + idx), Align32BoxNum);
         }
         // 计算交集
         Max(baseLocal, baseLocal, mathLocal, scoresLength);
@@ -182,7 +186,7 @@ __aicore__ inline void NMSWithMask<T>::IOU(LocalTensor<T>& xLocal, LocalTensor<T
         for (int t = i + 1; t < scoresLength;
              t++) { // And不支持int8和uint8_t类型，转int16，需要额外空间cast两次转换，故采用普通比较赋值
             if (baseLocal.GetValue(t) >= static_cast<T>(iou_threshold)) {
-                zLocal.SetValue(t, static_cast<uint8_t>(0));
+                selectedIndicesLocal.SetValue(t, static_cast<uint8_t>(0));
             }
         }
     }
@@ -191,15 +195,15 @@ __aicore__ inline void NMSWithMask<T>::IOU(LocalTensor<T>& xLocal, LocalTensor<T
 template <typename T>
 __aicore__ inline void NMSWithMask<T>::Compute()
 {
-    AscendC::LocalTensor<T> xLocal = inputQueueX.DeQue<T>();
-    AscendC::LocalTensor<T> yLocal = inputQueueY.DeQue<T>();
-    AscendC::LocalTensor<uint8_t> zLocal = outputQueueZ.AllocTensor<uint8_t>();
+    AscendC::LocalTensor<T> boxesLocal = boxesQueue.DeQue<T>();
+    AscendC::LocalTensor<T> scoresLocal = scoresQueue.DeQue<T>();
+    AscendC::LocalTensor<uint8_t> selectedIndicesLocal = selectedIndicesQueue.AllocTensor<uint8_t>();
 
-    IOU(xLocal, yLocal, zLocal);
+    IOU(boxesLocal, scoresLocal, selectedIndicesLocal);
 
-    outputQueueZ.EnQue<uint8_t>(zLocal);
-    inputQueueX.FreeTensor(xLocal);
-    inputQueueY.FreeTensor(yLocal);
+    selectedIndicesQueue.EnQue<uint8_t>(selectedIndicesLocal);
+    boxesQueue.FreeTensor(boxesLocal);
+    scoresQueue.FreeTensor(scoresLocal);
 }
 
 template <typename T>
@@ -207,7 +211,7 @@ __aicore__ inline void NMSWithMask<T>::Process()
 {
     // 增加输入只有一个的判断
     if (rawLength <= BOX_NEED_IDX) {
-        outputGMZ.SetValue(0, static_cast<uint8_t>(1));
+        selectedIndicesGm.SetValue(0, static_cast<uint8_t>(1));
     } else {
         CopyIn();
         Compute();

@@ -1,21 +1,11 @@
 /**
- * This file is part of the OpenBOAT project at Harbin Institute of Technology (HIT)
- * and is contributed to the CANN Open Software.
- *
- * Copyright (c) 2025 AISS Group, Harbin Institute of Technology (HIT).
- * All Rights Reserved.
- *
- * Authors (accounts):
- * - Shi Xiangyang <@shi-xiangyang225>
- * - Su Tonghua <@sutonghua>
- *
- * This program is free software: you can redistribute it and/or modify it.
- * Licensed under the CANN Open Software License Agreement Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * See the LICENSE file at the root of the repository for the full text of the License.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include <iostream>
@@ -101,10 +91,10 @@ int main()
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
 
     // 2. 构造输入与输出，需要根据API的接口自定义构造
-    aclTensor* selfX = nullptr;
-    void* selfXDeviceAddr = nullptr;
-    std::vector<int64_t> selfXShape = {21, 4};
-    std::vector<float> selfXHostData = {
+    aclTensor* boxes = nullptr;
+    void* boxesDeviceAddr = nullptr;
+    std::vector<int64_t> boxesShape = {21, 4};
+    std::vector<float> boxesHostData = {
         // 第 0 组
         10.0f,
         10.0f,
@@ -211,22 +201,23 @@ int main()
         2.0f,
         2.0f,
     };
-    ret = CreateAclTensor(selfXHostData, selfXShape, &selfXDeviceAddr, aclDataType::ACL_FLOAT, &selfX);
+    ret = CreateAclTensor(boxesHostData, boxesShape, &boxesDeviceAddr, aclDataType::ACL_FLOAT, &boxes);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
-    aclTensor* selfY = nullptr;
-    void* selfYDeviceAddr = nullptr;
-    std::vector<int64_t> selfYShape = {21};
-    std::vector<float> selfYHostData = {0.99f, 0.98f, 0.97f, 0.96f, 0.95f, 0.94f, 0.93f, 0.92f, 0.91f, 0.90f, 0.89f,
-                                        0.88f, 0.87f, 0.86f, 0.85f, 0.84f, 0.83f, 0.82f, 0.81f, 0.80f, 0.80f};
-    ret = CreateAclTensor(selfYHostData, selfYShape, &selfYDeviceAddr, aclDataType::ACL_FLOAT, &selfY);
+    aclTensor* scores = nullptr;
+    void* scoresDeviceAddr = nullptr;
+    std::vector<int64_t> scoresShape = {21};
+    std::vector<float> scoresHostData = {0.99f, 0.98f, 0.97f, 0.96f, 0.95f, 0.94f, 0.93f, 0.92f, 0.91f, 0.90f, 0.89f,
+                                         0.88f, 0.87f, 0.86f, 0.85f, 0.84f, 0.83f, 0.82f, 0.81f, 0.80f, 0.80f};
+    ret = CreateAclTensor(scoresHostData, scoresShape, &scoresDeviceAddr, aclDataType::ACL_FLOAT, &scores);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
-    aclTensor* out = nullptr;
-    void* outDeviceAddr = nullptr;
-    std::vector<int64_t> outShape = {21};
-    std::vector<uint8_t> outHostData(21, 1);
-    ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_UINT8, &out);
+    aclTensor* selectedIndices = nullptr;
+    void* selectedIndicesDeviceAddr = nullptr;
+    std::vector<int64_t> selectedIndicesShape = {21};
+    std::vector<uint8_t> selectedIndicesHostData(21, 1);
+    ret = CreateAclTensor(selectedIndicesHostData, selectedIndicesShape, &selectedIndicesDeviceAddr,
+                          aclDataType::ACL_UINT8, &selectedIndices);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
 
     // 3. 调用CANN算子库API，需要修改为具体的Api名称
@@ -234,11 +225,11 @@ int main()
     aclOpExecutor* executor;
 
     double iou_threshold = 0.1;
-    double socres_threshold = 0.1;
+    double scores_threshold = 0.1;
 
     // 4. 调用aclnnNMSWithMask第一段接口
-    ret = aclnnNMSWithMaskGetWorkspaceSize(selfX, selfY, iou_threshold, socres_threshold, out, &workspaceSize,
-                                           &executor);
+    ret = aclnnNMSWithMaskGetWorkspaceSize(boxes, scores, iou_threshold, scores_threshold, selectedIndices,
+                                           &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnNMSWithMaskGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
 
     // 根据第一段接口计算出的workspaceSize申请device内存
@@ -257,17 +248,17 @@ int main()
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
 
     // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
-    PrintOutResult(outShape, &outDeviceAddr);
+    PrintOutResult(selectedIndicesShape, &selectedIndicesDeviceAddr);
 
     // 7. 释放aclTensor，需要根据具体API的接口定义修改
-    aclDestroyTensor(selfX);
-    aclDestroyTensor(selfY);
-    aclDestroyTensor(out);
+    aclDestroyTensor(boxes);
+    aclDestroyTensor(scores);
+    aclDestroyTensor(selectedIndices);
 
     // 8. 释放device资源
-    aclrtFree(selfXDeviceAddr);
-    aclrtFree(selfYDeviceAddr);
-    aclrtFree(outDeviceAddr);
+    aclrtFree(boxesDeviceAddr);
+    aclrtFree(scoresDeviceAddr);
+    aclrtFree(selectedIndicesDeviceAddr);
     if (workspaceSize > static_cast<uint64_t>(0)) {
         aclrtFree(workspaceAddr);
     }

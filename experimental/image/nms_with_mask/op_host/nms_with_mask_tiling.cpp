@@ -54,30 +54,31 @@ static ge::graphStatus GetPlatformInfo(gert::TilingContext* context, uint64_t& u
 ge::graphStatus GetShapeAttrsInfo(gert::TilingContext* context, int64_t& totalIdx, ge::DataType& dataType)
 {
     // 获取输入shape信息
-    auto inputX = context->GetInputShape(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, inputX);
+    auto boxes = context->GetInputShape(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, boxes);
     // 如果输入shape 是标量 转换为{1}，否则保持原 shape 不变
-    auto inputShapeX = EnsureNotScalar(inputX->GetStorageShape());
-    auto inputY = context->GetInputShape(1);
-    OP_CHECK_NULL_WITH_CONTEXT(context, inputY);
-    auto inputShapeY = EnsureNotScalar(inputY->GetStorageShape());
-    auto outZ = context->GetOutputShape(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, outZ);
-    auto outShapeZ = EnsureNotScalar(outZ->GetStorageShape());
+    auto boxesShape = EnsureNotScalar(boxes->GetStorageShape());
+    auto scores = context->GetInputShape(1);
+    OP_CHECK_NULL_WITH_CONTEXT(context, scores);
+    auto scoresShape = EnsureNotScalar(scores->GetStorageShape());
+    auto selectedIndices = context->GetOutputShape(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, selectedIndices);
+    auto selectedIndicesShape = EnsureNotScalar(selectedIndices->GetStorageShape());
 
     // shape校验
-    OP_CHECK_IF(inputShapeX.GetDimNum() != DIMS_LIMIT_0 || inputShapeY.GetDimNum() != DIMS_LIMIT_1 ||
-                    outShapeZ.GetDimNum() != DIMS_LIMIT_1,
-                OP_LOGE(context, "NMSWithMask: inputx,inputy,outputz shape dim = %zu, %zu, %zu, should be equal 2,1,1",
-                        inputShapeX.GetDimNum(), inputShapeY.GetDimNum(), outShapeZ.GetDimNum()),
+    OP_CHECK_IF(boxesShape.GetDimNum() != DIMS_LIMIT_0 || scoresShape.GetDimNum() != DIMS_LIMIT_1 ||
+                    selectedIndicesShape.GetDimNum() != DIMS_LIMIT_1,
+                OP_LOGE(context,
+                        "NMSWithMask: boxes, scores, selected_indices shape dim = %zu, %zu, %zu, should be equal 2,1,1",
+                        boxesShape.GetDimNum(), scoresShape.GetDimNum(), selectedIndicesShape.GetDimNum()),
                 return ge::GRAPH_FAILED);
 
     // 获取shape dim值
-    auto nDim = inputShapeX.GetDim(INDEXZERO);
-    auto cDim = inputShapeX.GetDim(INDEXONE);
-    OP_CHECK_IF(inputShapeY.GetDim(INDEXZERO) != nDim,
-                OP_LOGE(context, "NMSWithMask: inputy length %ld must equal inputx box count %ld",
-                        inputShapeY.GetDim(INDEXZERO), nDim),
+    auto nDim = boxesShape.GetDim(INDEXZERO);
+    auto cDim = boxesShape.GetDim(INDEXONE);
+    OP_CHECK_IF(scoresShape.GetDim(INDEXZERO) != nDim,
+                OP_LOGE(context, "NMSWithMask: scores length %ld must equal boxes count %ld",
+                        scoresShape.GetDim(INDEXZERO), nDim),
                 return ge::GRAPH_FAILED);
     totalIdx = nDim * cDim;
     if (totalIdx > LIMIT_INPUT_NUM) {

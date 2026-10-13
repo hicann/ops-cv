@@ -9,13 +9,14 @@
 ## 功能说明
 
 - 算子功能：对候选框执行非极大值抑制（NMS），输出候选框保留掩码，支持IOU阈值、置信度阈值过滤。
-- 输入坐标格式为 <x1,y1,x2,y2>（左下角和右上角坐标），在代码中以一维数组形式存储（[N,4] 维度展开为长度N*4的一维数据）。
+- 输入坐标格式为 <x1,y1,x2,y2>（左下角和右上角坐标）。boxes 为二维张量，shape 为 [N, 4]，按 ND 连续存放，每个框对应 4 个坐标；scores 与 selected_indices 为一维张量，shape 为 [N]。
 - 计算公式：
-  - 输入节点：
-    - x (shape[N,4], FLOAT32) - 候选框坐标（x1,y1,x2,y2）
-    - y (shape[N], FLOAT32)   - 候选框置信度
-    - iou_threshold (shape[1], FLOAT32) - IOU过滤阈值
-    - scores_threshold (shape[1], FLOAT32) - 置信度过滤阈值
+  - 输入：
+    - boxes (shape[N,4], FLOAT32) - 候选框坐标（x1,y1,x2,y2）
+    - scores (shape[N], FLOAT32) - 候选框置信度
+  - 属性：
+    - iou_threshold (FLOAT, 可选，默认 0.1) - IOU过滤阈值
+    - scores_threshold (FLOAT, 可选，默认 0.1) - 置信度过滤阈值
 
   - 计算节点：
     - Step1: 置信度降序排序索引idx_sorted（该算子默认已降序排序，需用户自行保证）
@@ -25,8 +26,8 @@
     - Step5：将IOU高于iou_threshold的后续框标记为过滤（临时掩码置0）；
     - 重复步骤Step3-Step5直至所有框处理完成。
 
-  - 输出节点：
-    - z (shape[N], UINT8) - 候选框保留掩码
+  - 输出：
+    - selected_indices (shape[N], UINT8) - 候选框保留掩码
 
 ## 参数说明
 
@@ -47,37 +48,37 @@
     </tr></thead>
   <tbody>
     <tr>
-      <td>x</td>
+      <td>boxes</td>
       <td>输入</td>
-      <td>候选框坐标（左下和右上）[N,4]。</td>
+      <td>候选框坐标（左下和右上），shape 为 [N,4]。</td>
       <td>FLOAT32</td>
       <td>ND</td>
     </tr>
     <tr>
-      <td>y</td>
+      <td>scores</td>
       <td>输入</td>
-      <td>置信度。</td>
+      <td>候选框置信度，shape 为 [N]，长度须等于框数 N。</td>
       <td>FLOAT32</td>
       <td>ND</td>
     </tr>
     <tr>
       <td>iou_threshold</td>
-      <td>输入</td>
+      <td>属性（可选，默认 0.1）</td>
       <td>IOU阈值。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
+      <td>Float</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>scores_threshold</td>
-      <td>输入</td>
+      <td>属性（可选，默认 0.1）</td>
       <td>置信度阈值。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
+      <td>Float</td>
+      <td>-</td>
     </tr>
     <tr>
-      <td>z</td>
+      <td>selected_indices</td>
       <td>输出</td>
-      <td>选中候选框对应掩码。</td>
+      <td>选中候选框对应掩码，shape 为 [N]。</td>
       <td>UINT8</td>
       <td>ND</td>
     </tr>
