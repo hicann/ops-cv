@@ -103,13 +103,13 @@
       其中：
 
       $$
-      W_{out} = min(round(x'),  W_{in} - 1)\\
-      W_{out} = max(round(x'),  0)
+      x_{in} = min(round(x'),  W_{in} - 1)\\
+      x_{in} = max(round(x'),  0)
       $$
 
       $$
-      H_{out} = min(round(y'),  H_{in} - 1)\\
-      H_{out} = max(round(y'),  0)
+      y_{in} = min(round(y'),  H_{in} - 1)\\
+      y_{in} = max(round(y'),  0)
       $$
 
     - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。
