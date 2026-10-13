@@ -41,21 +41,21 @@
     - alignCorners=true，表示特征值位于像素中心。
 
       $$
-      x' = (grid\_x + 1) / 2 * (W_{in} - 1)
+      x = (grid_x + 1) / 2 * (W_{in} - 1)
       $$
 
       $$
-      y' = (grid\_y +1) / 2 * (H_{in} - 1)
+      y = (grid_y +1) / 2 * (H_{in} - 1)
       $$
 
     - alignCorners=false，表示特征值位于像素的角点。
 
       $$
-      x' = ((grid\_x +1) * W_{in} - 1) / 2
+      x = ((grid_x +1) * W_{in} - 1) / 2
       $$
 
       $$
-      y' = ((grid\_y +1) * H_{in} - 1) / 2
+      y = ((grid_y +1) * H_{in} - 1) / 2
       $$
 
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -69,23 +69,23 @@
     - interpolationMode=0，表示取(x, y)周围四个坐标的加权平均值。
 
       $$
-      output(N, C, H_{out}, W_{out}) = \sum_{i=0}^{1}\sum_{j=0}^{1}{w(i, j)} * {f(x', y')}
+      output(grad_y, grad_x) = \sum_{i=0}^{1}\sum_{j=0}^{1}{w(i, j)} * {f(x_i, y_j)}
       $$
 
       其中：
-      - $f(x', y')$是原图像在$(x', y')$的像素值。
+      - $f(x_i, y_j)$是原图像在$(x_i, y_j)$的像素值，$(x_i, y_j)$是(x, y)周围的四个坐标。
       - $w(i, j)$是双线性插值周边4个点的权重，计算公式为：
 
         $$
           w(i) = \begin{cases}
-          1 - |x'_i - x_i| & |x'_i - x_i| < 1 \\
+          1 - |x_i - x| & |x_i - x| < 1 \\
           0 & otherwise
           \end{cases}
         $$
 
         $$
           w(j) = \begin{cases}
-          1 - |y'_j - y_j| & |y'_j - y_j| < 1 \\
+          1 - |y_j - y| & |y_j - y| < 1 \\
           0 & otherwise
           \end{cases}
         $$
@@ -97,30 +97,29 @@
     - interpolationMode=1，表示取input中距离(x, y)最近的坐标值。
 
       $$
-      output(N, C, H_{out}, W_{out}) = input(N, C, H_{in}, W_{in})
+      output(grad_y, grad_x) = input(y_{in}, x_{in})
       $$
 
       其中：
 
       $$
-      x_{in} = min(round(x'),  W_{in} - 1)\\
-      x_{in} = max(round(x'),  0)
+      x_{in} = min(round(x),  W_{in} - 1)\\
+      x_{in} = max(x_{in},  0)
       $$
 
       $$
-      y_{in} = min(round(y'),  H_{in} - 1)\\
-      y_{in} = max(round(y'),  0)
+      y_{in} = min(round(y),  H_{in} - 1)\\
+      y_{in} = max(y_{in},  0)
       $$
 
     - interpolationMode=2，表示取(x, y)周围十六个坐标的加权平均值。
 
       $$
-      {output(N, C, H_{out}, W_{out})}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(x', y')}
+      {output(grad_y, grad_x)}=\sum_{i=0}^{3}\sum_{j=0}^{3}{W(i, j)}*{f(x_i, y_j)}
       $$
 
       其中：
-      - i和j是$W(i, j)$的索引变量。
-      - $f(x', y')$是原图像在$(x', y')$的像素值。
+      - $f(x_i, y_j)$是原图像在$(x, y)$的像素值，$(x_i, y_j)$是(x, y)周围的十六个坐标。
       - $W(i, j)$是双三次插值的权重，定义为：
 
         $$
@@ -133,7 +132,7 @@
 
         其中：
         - $a=-0.75$
-        - $d = |(x_i, y_j) - (x'_i, y'_j)|$
+        - $d = |(x_i, y_j) - (x, y)|$
 
 ## 函数原型
 

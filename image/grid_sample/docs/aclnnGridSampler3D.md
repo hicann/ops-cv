@@ -42,29 +42,29 @@
     - alignCorners=true，表示特征值位于像素中心。
 
       $$
-      x' = (grid\_x + 1) / 2 * (W_{in} - 1)
+      x = (grid_x + 1) / 2 * (W_{in} - 1)
       $$
 
       $$
-      y' = (grid\_y +1) / 2 * (H_{in} - 1)
+      y = (grid_y +1) / 2 * (H_{in} - 1)
       $$
 
       $$
-      z' = (grid\_z +1) / 2 * (D_{in} - 1)
+      z = (grid_z +1) / 2 * (D_{in} - 1)
       $$
 
     - alignCorners=false，表示特征值位于像素的角点。
 
       $$
-      x' = ((grid\_x +1) * W_{in} - 1) / 2
+      x = ((grid_x +1) * W_{in} - 1) / 2
       $$
 
       $$
-      y' = ((grid\_y +1) * H_{in} - 1) / 2
+      y = ((grid_y +1) * H_{in} - 1) / 2
       $$
 
       $$
-      z' = ((grid\_z +1) * D_{in} - 1) / 2
+      z = ((grid_z +1) * D_{in} - 1) / 2
       $$
 
   - 对于超出范围的坐标，会根据paddingMode进行不同处理：
@@ -75,30 +75,30 @@
     - interpolationMode="bilinear"，表示取input中(x, y, z)周围八个坐标的加权平均值。
 
       $$
-      {output(N, C, D_{out}, H_{out}, W_{out})} = \sum_{i=0}^{1}\sum_{j=0}^{1}\sum_{k=0}^{1}{w(i, j, k)} * {f(x', y', z')}
+      {output(grad_z, grad_y, grad_x)} = \sum_{i=0}^{1}\sum_{j=0}^{1}\sum_{k=0}^{1}{w(i, j, k)} * {f(x_i, y_j, z_k)}
       $$
 
       其中：
-      - $f(x', y', z')$是原图像在$(x', y', z')$的像素值。
+      - $f(x, y, z)$是原图像在$(x, y, z)$的像素值,$(x, y, z)$是(x, y, z)周围的八个坐标。
       - $w(i, j, k)$是双线性插值周边8个点的权重，计算公式为：
 
         $$
           w(i) = \begin{cases}
-          1 - |x'_i - x_i| & |x'_i - x_i| < 1 \\
+          1 - |x_i - x| & |x_i - x| < 1 \\
           0 & otherwise
           \end{cases}
         $$
 
         $$
           w(j) = \begin{cases}
-          1 - |y'_j - y_j| & |y'_j - y_j| < 1 \\
+          1 - |y_j - y| & |y_j - y| < 1 \\
           0 & otherwise
           \end{cases}
         $$
 
         $$
           w(k) = \begin{cases}
-          1 - |z'_k - z_k| & |z'_k - z_k| < 1 \\
+          1 - |z_k - z| & |z_k - z| < 1 \\
           0 & otherwise
           \end{cases}
         $$
@@ -110,24 +110,24 @@
     - interpolationMode="nearest"，表示取input中距离(x, y, z)最近的坐标值。
 
       $$
-      output(N, C, D_{out}, H_{out}, W_{out}) = input(N, C, D_{in}, H_{in}, W_{in})
+      output(grad_z, grad_y, grad_x) = input(z_{in}, y_{in}, x_{in})
       $$
 
       其中：
 
       $$
-      W_{out} = min(round(x'),  W_{in} - 1)\\
-      W_{out} = max(round(x'),  0)
+      x_{in} = min(round(x),  W_{in} - 1)\\
+      x_{in} = max(x_{in},  0)
       $$
 
       $$
-      H_{out} = min(round(y'),  H_{in} - 1)\\
-      H_{out} = max(round(y'),  0)
+      y_{in} = min(round(y),  H_{in} - 1)\\
+      y_{in} = max(y_{in},  0)
       $$
 
       $$
-      D_{out} = min(round(z'),  D_{in} - 1)\\
-      D_{out} = max(round(z'),  0)
+      z_{in} = min(round(z),  D_{in} - 1)\\
+      z_{in} = max(z_{in},  0)
       $$
 
 ## 函数原型
