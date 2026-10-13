@@ -25,11 +25,11 @@ namespace ge {
 *@brief Returns x1 + x2.
 *@par Inputs:
 *Two inputs, including:
-* @li x1: A NCHW or NHWC Tensor. Must be one of the following types: float32.
-* @li x2: A NCHW or NHWC Tensor. Must be one of the following types: float32. \n
+* @li x1: A NCHW or NHWC Tensor. Must be float32 or int32.
+* @li x2: A NCHW or NHWC Tensor. Must be float32 or int32. \n
 
 *@par Outputs:
-*y: A NCHW or NHWC Tensor. Must be one of the following types: float32.
+*y: A NCHW or NHWC Tensor. Must be float32 or int32.
 *@par Third-party framework compatibility
 *Compatible with the TensorFlow operator Add.
 */
