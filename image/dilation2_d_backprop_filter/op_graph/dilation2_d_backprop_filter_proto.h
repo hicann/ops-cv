@@ -26,7 +26,7 @@ namespace ge {
 * @brief Performs Dilation2DBackpropFilter on the input.
 
 * @par Inputs:
-* @li x: A tensor of shape is 4d, format is support NHWC.
+* @li x: A tensor of shape is 4d, format is "NHWC" (default) or "NCHW", determined by the "data_format" attribute.
 * @li filter: A tensor of shape is 3d, the type is same with x, and the c dimension is same with x.
 * @li out_backprop: Has the same type and format as input x and the c dimension is same with x. \n
 
