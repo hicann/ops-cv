@@ -186,6 +186,16 @@ static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclTensor* roi
     return ACLNN_SUCCESS;
 }
 
+static const aclTensor* GetOutTensorWithValueZero(const aclTensor* gradInput, aclOpExecutor* executor)
+{
+    aclScalar* scalar = executor->AllocScalar(0);
+    auto valueTensor = executor->ConvertToTensor(scalar, gradInput->GetDataType());
+    auto gradInputDims = op::ToShapeVector(gradInput->GetViewShape());
+    aclIntArray* dimArray = executor->AllocIntArray(gradInputDims.data(), gradInputDims.size());
+    auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
+    return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
+}
+
 aclnnStatus aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* gradInputRef,
                                                           const aclTensor* rois, const aclTensor* argmax,
                                                           int64_t pooledH, int64_t pooledW, double spatialScale,
@@ -204,9 +214,20 @@ aclnnStatus aclnnRoiPoolingGradWithArgMaxGetWorkspaceSize(const aclTensor* gradO
     auto ret = CheckParams(gradOutput, rois, argmax, gradInputRef, pooledH, pooledW, spatialScale);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
+    // gradOutput 为空时无梯度可累加；若输出非空则写回全 0，与 kernel InitOutput(0) 语义一致
     if (gradOutput->IsEmpty()) {
-        // 根据实际支持情况补充
-        *workspaceSize = 0;
+        if (gradInputRef->IsEmpty()) {
+            *workspaceSize = 0;
+            uniqueExecutor.ReleaseTo(executor);
+            return ACLNN_SUCCESS;
+        }
+        auto fillOut = GetOutTensorWithValueZero(gradInputRef, uniqueExecutor.get());
+        CHECK_RET(fillOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        auto viewCopyResult = l0op::ViewCopy(fillOut, gradInputRef, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        *workspaceSize = uniqueExecutor->GetWorkspaceSize();
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
