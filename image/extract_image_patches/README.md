@@ -20,12 +20,13 @@
 对于 NHWC 格式输入 `x` 形状为 `[N, H, W, C]`，输出 `y` 形状为 `[N, out_h, out_w, C * kH * kW]`：
 
 $$
-y[n, i, j, c \cdot kH \cdot kW + p \cdot kW + q] = x[n, i \cdot stride_h + p \cdot rate_h - pad_h, j \cdot stride_w + q \cdot rate_w - pad_w, c]
+y[n, i, j, (p \cdot kW + q) \cdot C + c] = x[n, i \cdot stride_h + p \cdot rate_h - pad_h, j \cdot stride_w + q \cdot rate_w - pad_w, c]
 $$
 
 其中：
 
 - `kH = ksizes[H]`，`kW = ksizes[W]`：patch 高/宽。
+- 展平顺序为 patch 行、patch 列、通道（`p`、`q`、`c`），其中 `0 <= c < C`。
 - `stride_h = strides[H]`，`stride_w = strides[W]`：滑动步长。
 - `rate_h = rates[H]`，`rate_w = rates[W]`：扩张率（dilation）。
 - `pad_h/pad_w`：由padding模式（SAME/VALID）决定的padding量。
