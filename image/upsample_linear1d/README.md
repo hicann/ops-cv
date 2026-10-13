@@ -25,7 +25,8 @@
 
     $$
     scale =\begin{cases}
-    (self.dim[2]-1) / (outputSize[0]-1) & alignCorners=true \\
+    (self.dim[2]-1) / (outputSize[0]-1) & alignCorners=true\&outputSize[0]>1 \\
+    0 & alignCorners=true\&outputSize[0]=1 \\
     1 / scales & alignCorners=false\&scales>0\\
     self.dim[2] / outputSize[0] & alignCorners=false
     \end{cases}
