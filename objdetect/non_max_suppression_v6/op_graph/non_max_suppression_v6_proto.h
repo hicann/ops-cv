@@ -41,8 +41,8 @@ of box corners and the coordinates can be provided as normalized
  Mostly used for Pytorch models. \n
 
 *@par Outputs:
-*@li selected_indices: A 2-D integer tensor of shape [M] representing the
-selected indices from the boxes tensor, where M <= max_output_size. \n
+*@li selected_indices: A 2-D int32 tensor of shape [M, 3]. Each row contains
+(batch_index, class_index, box_index). M is bounded by max_output_size * num_batches * num_classes. \n
 
 *@attention Constraints:
 *Input boxes and  scores must be float16, float type . \n
