@@ -104,8 +104,24 @@ __aicore__ inline void NMSWithMask<T>::CopyIn()
 {
     AscendC::LocalTensor<T> boxesLocal = boxesQueue.AllocTensor<T>();
     AscendC::LocalTensor<T> scoresLocal = scoresQueue.AllocTensor<T>();
-    AscendC::DataCopy(boxesLocal, boxesGm[0], rawLength);
-    AscendC::DataCopy(scoresLocal, scoresGm[0], scoresLength);
+    // DataCopy 要求 32 字节对齐，N=2 时 scores 只有 8 字节，分数进不了 UB。
+    // rightPadding 只补到 32 字节边界，不能按整个 buffer 长度去补。
+    constexpr uint32_t alignEle = 32 / sizeof(T);
+    if (rawLength > 0) {
+        uint32_t boxCount = static_cast<uint32_t>(rawLength);
+        uint32_t boxPad = (alignEle - (boxCount % alignEle)) % alignEle;
+        AscendC::DataCopyExtParams boxParams{1, boxCount * static_cast<uint32_t>(sizeof(T)), 0, 0, 0};
+        AscendC::DataCopyPadExtParams<T> boxPadParams{boxPad > 0, 0, static_cast<uint8_t>(boxPad), static_cast<T>(0)};
+        AscendC::DataCopyPad(boxesLocal, boxesGm[0], boxParams, boxPadParams);
+    }
+    if (scoresLength > 0) {
+        uint32_t scoreCount = static_cast<uint32_t>(scoresLength);
+        uint32_t scorePad = (alignEle - (scoreCount % alignEle)) % alignEle;
+        AscendC::DataCopyExtParams scoreParams{1, scoreCount * static_cast<uint32_t>(sizeof(T)), 0, 0, 0};
+        AscendC::DataCopyPadExtParams<T> scorePadParams{scorePad > 0, 0, static_cast<uint8_t>(scorePad),
+                                                        static_cast<T>(0)};
+        AscendC::DataCopyPad(scoresLocal, scoresGm[0], scoreParams, scorePadParams);
+    }
     boxesQueue.EnQue(boxesLocal);
     scoresQueue.EnQue(scoresLocal);
 }
@@ -148,8 +164,8 @@ __aicore__ inline void NMSWithMask<T>::IOU(LocalTensor<T>& boxesLocal, LocalTens
 
     Duplicate(mathLocal, static_cast<T>(0), this->rawLength); // 归零
 
-    for (uint32_t i = 0; i < (scoresLength - 1); i++) { // 最后一个框处理不进行处理只最后进行判断
-        if (selectedIndicesLocal.GetValue(i) == 0) {    // 该框已经被抑制
+    for (uint32_t i = 0; i < static_cast<uint32_t>(scoresLength); i++) {
+        if (selectedIndicesLocal.GetValue(i) == 0) { // 该框已经被抑制
             continue;
         }
         if (scoresLocal.GetValue(i) < scores_threshold) { // 低于分数阈值不保留
@@ -209,9 +225,13 @@ __aicore__ inline void NMSWithMask<T>::Compute()
 template <typename T>
 __aicore__ inline void NMSWithMask<T>::Process()
 {
-    // 增加输入只有一个的判断
+    // 单框不进入 IOU，仍按 scores_threshold 决定是否保留
     if (rawLength <= BOX_NEED_IDX) {
-        selectedIndicesGm.SetValue(0, static_cast<uint8_t>(1));
+        uint8_t keep = 1;
+        if (rawLength == BOX_NEED_IDX && scoresGm.GetValue(0) < scores_threshold) {
+            keep = 0;
+        }
+        selectedIndicesGm.SetValue(0, keep);
     } else {
         CopyIn();
         Compute();
