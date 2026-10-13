@@ -11,8 +11,8 @@
 # -----------------------------------------------------------------------------------------------------------
 
 import torch
-import torch_npu
 import ascend_ops
+
 
 def test_upsample_nearest3d_operator():
     supported_dtypes = {torch.float16, torch.bfloat16, torch.float}
@@ -21,13 +21,19 @@ def test_upsample_nearest3d_operator():
         x = torch.randn(1, 3, 8, 20, 45).to(data_type)
         print(f"Tensor x = {x}")
         size = (16, 40, 90)
-        if data_type == torch.float :
-            cpu_result = torch.nn.functional.interpolate(x, size=size, mode='nearest')
-        else :
-            cpu_result = torch.nn.functional.interpolate(x.float(), size=size, mode='nearest').to(data_type)
+        if data_type == torch.float:
+            cpu_result = torch.nn.functional.interpolate(x, size=size, mode="nearest")
+        else:
+            cpu_result = torch.nn.functional.interpolate(
+                x.float(), size=size, mode="nearest"
+            ).to(data_type)
         print(f"cpu: upsamplenearest3d(x, size) = {cpu_result}")
         x_npu = x.npu()
         npu_result = ascend_ops.ops.upsample_nearest3d(x_npu, size).cpu()
-        print(f"[OK] torch.ops.ascend_ops.upsample_nearest3d<{data_type}> successfully!")
+        print(
+            f"[OK] torch.ops.ascend_ops.upsample_nearest3d<{data_type}> successfully!"
+        )
         print(f"npu: upsamplenearest3d(x, size) = {npu_result}")
-        print(f"compare CPU Result vs NPU Result: {torch.allclose(cpu_result, npu_result)}\n\n")
+        is_close = torch.allclose(cpu_result, npu_result)
+        print(f"compare CPU Result vs NPU Result: {is_close}\n\n")
+        assert is_close, f"upsample_nearest3d mismatch for dtype {data_type}"
