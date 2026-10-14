@@ -21,7 +21,7 @@ namespace ge {
  * @par Inputs:
  * @li images: A Tensor of type float16 or float. The last dimension must be 3.
  *     RGB images to adjust. At least 3-D.
- * @li scale: A Tensor of type float. A float scale to add to the saturation. \n
+ * @li scale: A Tensor of type float. A float scale factor to multiply the saturation. \n
  *
  * @par Outputs:
  * y: A Tensor. Has the same type and shape as images. Adjusted image(s). \n
