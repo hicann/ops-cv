@@ -48,6 +48,10 @@ static bool GetOutputSizeValue(const gert::InferShapeContext* context, const ger
     OP_LOGD(context->GetNodeName(), "get output size length %u", output_size_num);
     output_size_info.output_size_h = static_cast<int64_t>(output_size_value[0]);
     output_size_info.output_size_w = static_cast<int64_t>(output_size_value[1]);
+    OP_CHECK_IF(output_size_info.output_size_h <= 0 || output_size_info.output_size_w <= 0,
+                OP_LOGE(context->GetNodeName(), "The values of output_size must be greater than 0, but got [%ld, %ld].",
+                        output_size_info.output_size_h, output_size_info.output_size_w),
+                return false);
 
     return true;
 }
