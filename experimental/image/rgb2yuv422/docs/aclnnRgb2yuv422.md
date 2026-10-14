@@ -61,8 +61,8 @@ $$
 ```cpp
 aclnnStatus aclnnRgb2yuv422GetWorkspaceSize(
     const aclTensor* x,
-    const char* dataFormat,
-    const aclTensor* y,
+    char *dataFormatOptional,
+    const aclTensor* out,
     uint64_t* workspaceSize,
     aclOpExecutor** executor
 );
@@ -84,8 +84,8 @@ aclnnStatus aclnnRgb2yuv422(
 | 参数名 | 输入/输出 | 描述 | 使用说明 | 数据类型 | 数据格式 | 维度 | 非连续Tensor |
 |--------|----------|------|----------|----------|----------|------|-------------|
 | x | 输入 | RGB 图像张量 | NHWC: [..., H, W, 3]; NCHW: [..., 3, H, W] | uint8, float16, float32 | ND | ≥3 | 支持 |
-| dataFormat | 输入 | 数据格式 | "NHWC" 或 "NCHW" | const char* | - | - | - |
-| y | 输出 | YUV422 输出张量 | NHWC: [..., H, W, 2]; NCHW: [..., 2, H, W] | 与输入一致 | ND | ≥3 | - |
+| dataFormatOptional | 可选输入 | 数据格式 | "NHWC" 或 "NCHW"(默认"NHWC") | char* | - | - | - |
+| out | 输出 | YUV422 输出张量 | NHWC: [..., H, W, 2]; NCHW: [..., 2, H, W] | 与输入一致 | ND | ≥3 | - |
 | workspaceSize | 输出 | workspace 大小 | 返回0 | uint64_t* | - | - | - |
 | executor | 输出 | op 执行器 | - | - | - | - | - |
 
@@ -94,7 +94,7 @@ aclnnStatus aclnnRgb2yuv422(
 | 错误码 | 触发条件 |
 |--------|---------|
 | ACLNN_SUCCESS | 正常执行 |
-| ACLNN_ERR_PARAM_NULLPTR | x 或 y 为空指针 |
+| ACLNN_ERR_PARAM_NULLPTR | x 或 out 为空指针 |
 | ACLNN_ERR_PARAM_INVALID | dtype 不在支持列表中、data_format 不为 NHWC/NCHW、通道维不等于3、rank < 3 |
 
 ## 约束说明
@@ -116,7 +116,8 @@ aclFormat format = ACL_FORMAT_ND;
 
 uint64_t workspaceSize = 0;
 aclOpExecutor* executor = nullptr;
-aclnnRgb2yuv422GetWorkspaceSize(x, "NHWC", y, &workspaceSize, &executor);
+char dataFormatOptional[] = "NHWC";
+aclnnRgb2yuv422GetWorkspaceSize(x, dataFormatOptional, out, &workspaceSize, &executor);
 
 void* workspaceAddr = nullptr;
 if (workspaceSize > 0) {
