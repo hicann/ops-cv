@@ -16,6 +16,7 @@
 #include "col2im.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/contiguous.h"
+#include "level0/fill.h"
 #include "level0/squeeze.h"
 #include "level0/unsqueeze.h"
 #include "aclnn_kernels/transdata.h"
@@ -225,6 +226,20 @@ static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclIntArray* i
     return ACLNN_SUCCESS;
 }
 
+static const aclTensor* GetOutTensorWithValueZero(const aclTensor* out, aclOpExecutor* executor)
+{
+    aclScalar* scalar = executor->AllocScalar(0);
+    CHECK_RET(scalar != nullptr, nullptr);
+    auto valueTensor = executor->ConvertToTensor(scalar, out->GetDataType());
+    CHECK_RET(valueTensor != nullptr, nullptr);
+    auto outDims = op::ToShapeVector(out->GetViewShape());
+    aclIntArray* dimArray = executor->AllocIntArray(outDims.data(), outDims.size());
+    CHECK_RET(dimArray != nullptr, nullptr);
+    auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
+    CHECK_RET(dimTensor != nullptr, nullptr);
+    return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
+}
+
 aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclIntArray* inputSize,
                                                 const aclIntArray* kernelSize, const aclIntArray* dilation,
                                                 const aclIntArray* padding, const aclIntArray* stride, aclTensor* out,
@@ -242,9 +257,20 @@ aclnnStatus aclnnIm2colBackwardGetWorkspaceSize(const aclTensor* gradOutput, con
     auto ret = CheckParams(gradOutput, inputSize, kernelSize, dilation, padding, stride, out);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
+    // An empty gradOutput contributes no values. Explicitly zero a non-empty output instead of leaving it unwritten.
     if (gradOutput->IsEmpty()) {
-        // 根据实际支持情况补充
-        *workspaceSize = 0;
+        if (out->IsEmpty()) {
+            *workspaceSize = 0;
+            uniqueExecutor.ReleaseTo(executor);
+            return ACLNN_SUCCESS;
+        }
+        auto fillOut = GetOutTensorWithValueZero(out, uniqueExecutor.get());
+        CHECK_RET(fillOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        auto viewCopyResult = l0op::ViewCopy(fillOut, out, uniqueExecutor.get());
+        CHECK_RET(viewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        *workspaceSize = uniqueExecutor->GetWorkspaceSize();
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }

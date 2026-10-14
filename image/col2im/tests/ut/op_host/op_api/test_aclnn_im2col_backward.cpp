@@ -51,6 +51,28 @@ TEST_F(l2_im2col_backward_test, case_null_tensor)
     // ut.TestPrecision();
 }
 
+TEST_F(l2_im2col_backward_test, case_empty_grad_output_non_empty_out)
+{
+    auto tensor_desc = TensorDesc({1, 9, 0}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto out_desc = TensorDesc({1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    vector<int64_t> input = {2, 2};
+    vector<int64_t> kernel = {3, 3};
+    vector<int64_t> dilation = {1, 1};
+    vector<int64_t> padding = {0, 0};
+    vector<int64_t> stride = {1, 1};
+    auto input_desc = IntArrayDesc(input);
+    auto kernel_desc = IntArrayDesc(kernel);
+    auto dilation_desc = IntArrayDesc(dilation);
+    auto padding_desc = IntArrayDesc(padding);
+    auto stride_desc = IntArrayDesc(stride);
+    auto ut = OP_API_UT(aclnnIm2colBackward,
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
 TEST_F(l2_im2col_backward_test, case_FLOAT)
 {
     auto tensor_desc = TensorDesc({1, 60, 56}, ACL_FLOAT, ACL_FORMAT_ND);
