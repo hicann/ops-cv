@@ -35,7 +35,7 @@
   其中，
 
   $$
-  [i = i^*(r,j)]  = \begin{cases} 1, & i^*(r,j) \geq 1 \\ 0, & otherwise \end{cases}
+  [i = i^*(r,j)]  = \begin{cases} 1, & i = i^*(r,j) \\ 0, & otherwise \end{cases}
   $$
 
   判决函数`[i = i^*(r,j)]`表示i节点是否被候选区域r的第j个输出节点选为最大值输出

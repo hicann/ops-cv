@@ -174,7 +174,7 @@
 * x的shape是4维（NCHW）。
 * rois的shape第二维是5。
 * pooled_h、pooled_w、spatial_scale_h、spatial_scale_w大于0。
-* x、argmax、rois的shape[0]相等。
+* x.shape[0] 表示输入 batch 数；y、argmax 的 shape[0] 等于 rois.shape[0]（num_rois）。
 * rois.shape[0]、x.shape[0]小于等于1024。
 * x.shape[1]等于pool_channel。
 * x.shape[1]为16的倍数。
