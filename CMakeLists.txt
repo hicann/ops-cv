@@ -131,6 +131,8 @@ include(cmake/intf_pub_linux.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/ut.cmake)
 init_tf_plugin_modules()
 
+include(cmake/config/aicpu_builtin_package_manifest.cmake)
+
 include(version.cmake)
 check_cann_pkg_build_deps("ops_cv")
 add_cann_version_info_targets()

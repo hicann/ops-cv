@@ -356,24 +356,56 @@ function(gen_aicpu_op_def_symbol)
 endfunction()
 
 function(gen_aicpu_json_symbol enable_built_in)
-  gen_aicpu_op_def_symbol()
+  get_property(ALL_AICPU_JSON_FILES GLOBAL PROPERTY AICPU_JSON_FILES)
+  get_property(ALL_AICPU_OP_DEF_FILES GLOBAL PROPERTY AICPU_OP_DEF_FILES)
+  if(NOT ALL_AICPU_OP_DEF_FILES AND NOT ALL_AICPU_JSON_FILES)
+    message(STATUS "No aicpu opdef/json files to merge, skipping.")
+    return()
+  endif()
+
   set(MERGED_JSON ${CMAKE_BINARY_DIR}/cust_aicpu_kernel.json)
   if(enable_built_in)
     set(MERGED_JSON ${CMAKE_BINARY_DIR}/aicpu_cv.json)
   endif()
 
-  set(cmd python3 "${CMAKE_SOURCE_DIR}/scripts/kernel/binary_script/parser_ini.py" "${ASCEND_AUTOGEN_PATH}/aicpu_kernel.ini" "${MERGED_JSON}")
-  message("cmd: ${cmd}")
+  set(INPUT_JSONS "")
+  if(ALL_AICPU_OP_DEF_FILES)
+    gen_aicpu_op_def_symbol()
+    set(OPDEF_JSON ${CMAKE_BINARY_DIR}/aicpu_opdef_kernel.json)
+    if(enable_built_in)
+      set(OPDEF_JSON ${CMAKE_BINARY_DIR}/aicpu_cv_opdef_kernel.json)
+    endif()
+
+    set(cmd python3 "${CMAKE_SOURCE_DIR}/scripts/kernel/binary_script/parser_ini.py" "${ASCEND_AUTOGEN_PATH}/aicpu_kernel.ini" "${OPDEF_JSON}")
+    message("cmd: ${cmd}")
+
+    execute_process(
+        COMMAND ${cmd}
+        WORKING_DIRECTORY ${ASCEND_AUTOGEN_PATH}
+        OUTPUT_VARIABLE result
+        ERROR_VARIABLE error
+        RESULT_VARIABLE code
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+ 		message("convert ini to json finish.")
+    if(NOT code EQUAL 0)
+      message(FATAL_ERROR "parser_ini.py failed with code ${code}: ${error}")
+    endif()
+    list(APPEND INPUT_JSONS ${OPDEF_JSON})
+  endif()
+
+  if(ALL_AICPU_JSON_FILES)
+    list(APPEND INPUT_JSONS ${ALL_AICPU_JSON_FILES})
+  endif()
 
   execute_process(
-      COMMAND ${cmd}
-      WORKING_DIRECTORY ${ASCEND_AUTOGEN_PATH}
-      OUTPUT_VARIABLE result
-      ERROR_VARIABLE error
-      RESULT_VARIABLE code
-      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND bash "${CMAKE_SOURCE_DIR}/scripts/util/merge_aicpu_info_json.sh" "${CMAKE_SOURCE_DIR}" "${MERGED_JSON}" ${INPUT_JSONS}
+      RESULT_VARIABLE merge_code
   )
- 	message("convert ini to json finish.")
+  message("merge aicpu json finish, code: ${merge_code}")
+  if(NOT merge_code EQUAL 0)
+    message(FATAL_ERROR "merge_aicpu_info_json.sh failed with code ${merge_code}; aicpu json ${MERGED_JSON} is incomplete and will not be installed")
+  endif()
 
   install(
       FILES ${MERGED_JSON}
@@ -577,6 +609,11 @@ function(gen_norm_symbol)
   gen_onnx_plugin_symbol()
 
   gen_tf_plugin_symbol()
+
+  if(NOT DISABLE_AICPU AND ENABLE_PACKAGE)
+    gen_aicpu_json_symbol(TRUE)
+    gen_aicpu_kernel_symbol(TRUE)
+  endif()
 endfunction()
 
 function(gen_cust_symbol)

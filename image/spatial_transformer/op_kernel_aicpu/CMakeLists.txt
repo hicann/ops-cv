@@ -13,17 +13,21 @@ if (BUILD_WITH_INSTALLED_DEPENDENCY_CANN_PKG)
     set(CMAKE_CXX_COMPILER ${ASCEND_DIR}/toolkit/toolchain/hcc/bin/aarch64-target-linux-gnu-g++)
   endif()
 
-  # aicpu op_def
-  file(GLOB_RECURSE OP_DEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/*_aicpu_def.cpp)
-  set_property(GLOBAL APPEND PROPERTY AICPU_OP_DEF_FILES ${OP_DEF_FILE})
+  check_aicpu_builtin_pkg_allowed(spatial_transformer)
 
-  # aicpu cust kernel
-  file(GLOB AICPU_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*_aicpu.cpp)
-  message(STATUS "[spatial_transformer] Found aicpu sources: ${AICPU_SRC}, ascend dir: ${ASCEND_DIR}, ophsot name: ${OPHOST_NAME}")
+  if (ENABLE_CUSTOM OR _AICPU_BUILTIN_PKG_ALLOWED)
+    # aicpu op_def
+    file(GLOB_RECURSE OP_DEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/*_aicpu_def.cpp)
+    set_property(GLOBAL APPEND PROPERTY AICPU_OP_DEF_FILES ${OP_DEF_FILE})
 
-  set(OBJ_NAME spatial_transformer_cust_obj)
-  add_aicpu_cust_kernel_modules(${OBJ_NAME})
-  target_sources(${OBJ_NAME} PRIVATE ${AICPU_SRC})
+    # aicpu cust kernel
+    file(GLOB AICPU_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*_aicpu.cpp)
+    message(STATUS "[spatial_transformer] Found aicpu sources: ${AICPU_SRC}, ascend dir: ${ASCEND_DIR}, ophsot name: ${OPHOST_NAME}")
+
+    set(OBJ_NAME spatial_transformer_cust_obj)
+    add_aicpu_cust_kernel_modules(${OBJ_NAME})
+    target_sources(${OBJ_NAME} PRIVATE ${AICPU_SRC})
+  endif()
 endif()
 
 if(UT_TEST_ALL OR OP_KERNEL_AICPU_UT)
