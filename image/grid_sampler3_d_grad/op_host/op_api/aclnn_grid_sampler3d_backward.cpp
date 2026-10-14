@@ -16,6 +16,7 @@
 #include "opdev/shape_utils.h"
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
+#include "level0/fill.h"
 #include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/transpose.h"
@@ -202,6 +203,19 @@ static bool CheckTranspose(const aclTensor* input, int64_t channel)
     return true;
 }
 
+// 空tensor场景kernel不会写输出，用Fill生成全0值tensor，再ViewCopy到输出上（参考roi_align_v2_backward同款处理）
+static const aclTensor* GetOutTensorWithValueZero(aclTensor* output, aclOpExecutor* executor)
+{
+    aclScalar* scalar = executor->AllocScalar(0);
+    CHECK_RET(scalar != nullptr, nullptr);
+    auto valueTensor = executor->ConvertToTensor(scalar, output->GetDataType());
+    auto outputDims = op::ToShapeVector(output->GetViewShape());
+    aclIntArray* dimArray = executor->AllocIntArray(outputDims.data(), outputDims.size());
+    CHECK_RET(dimArray != nullptr, nullptr);
+    auto dimTensor = executor->ConvertToTensor(dimArray, op::DataType::DT_INT64);
+    return l0op::Fill(dimTensor, valueTensor, dimArray, executor);
+}
+
 aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(const aclTensor* gradOutput, const aclTensor* input,
                                                        const aclTensor* grid, int64_t interpolationMode,
                                                        int64_t paddingMode, bool alignCorners,
@@ -227,11 +241,25 @@ aclnnStatus aclnnGridSampler3DBackwardGetWorkspaceSize(const aclTensor* gradOutp
     auto ret = CheckParams(gradOutput, input, grid, interpolationMode, paddingMode, inputGrad, gridGrad, outputMask);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
-    // GridSampler3DGrad算子的空tensor在kernel中支持
+    // GridSampler3DGrad算子的空tensor场景kernel不会写任何输出（空grid时copyTimes=0），
+    // 非空输出必须显式清零，否则调用方预分配的未初始化内存会被当作梯度返回（脏内存伪梯度）
     if (gradOutput->IsEmpty() || input->IsEmpty() || grid->IsEmpty() ||
         ((*outputMask)[0] == false && (*outputMask)[1] == false)) {
-        // 根据实际支持情况补充
-        *workspaceSize = 0;
+        // inputGrad非空时清零
+        if ((*outputMask)[0] && !inputGrad->IsEmpty()) {
+            auto fillDx = GetOutTensorWithValueZero(inputGrad, uniqueExecutor.get());
+            CHECK_RET(fillDx != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            auto dxCopyResult = l0op::ViewCopy(fillDx, inputGrad, uniqueExecutor.get());
+            CHECK_RET(dxCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
+        // gridGrad非空时清零
+        if ((*outputMask)[1] && !gridGrad->IsEmpty()) {
+            auto fillDgrid = GetOutTensorWithValueZero(gridGrad, uniqueExecutor.get());
+            CHECK_RET(fillDgrid != nullptr, ACLNN_ERR_INNER_NULLPTR);
+            auto dgridCopyResult = l0op::ViewCopy(fillDgrid, gridGrad, uniqueExecutor.get());
+            CHECK_RET(dgridCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
+        *workspaceSize = uniqueExecutor->GetWorkspaceSize();
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }

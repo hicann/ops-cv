@@ -326,3 +326,90 @@ TEST_F(l2_grid_sampler3d_backward_test, padding_mode_3)
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
+
+// 空grid场景（grid/gradOutput的D=0，input非空）：早退分支不写任何输出，
+// 非空的inputGrad/gridGrad必须被清零，防止脏内存被当作梯度返回
+TEST_F(l2_grid_sampler3d_backward_test, empty_grid_output_should_be_zeroed)
+{
+    auto gradOutputDesc = TensorDesc({2, 2, 0, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto inputDesc = TensorDesc({2, 2, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridDesc = TensorDesc({2, 0, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto inputGradDesc = TensorDesc({2, 2, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridGradDesc = TensorDesc({2, 0, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
+// 空grid且只要dx场景：outputMask只开inputGrad，非空inputGrad同样需要清零
+TEST_F(l2_grid_sampler3d_backward_test, empty_grid_mask0_only_should_be_zeroed)
+{
+    auto gradOutputDesc = TensorDesc({2, 2, 0, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto inputDesc = TensorDesc({2, 2, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridDesc = TensorDesc({2, 0, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto inputGradDesc = TensorDesc({2, 2, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridGradDesc = TensorDesc({2, 0, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, false});
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
+// 空grid且只要dgrid场景：outputMask只开gridGrad，此组合下gridGrad为空不触发清零，
+// 但inputGrad非空且mask[0]为false，验证早退分支不误写mask关闭的输出
+TEST_F(l2_grid_sampler3d_backward_test, empty_grid_mask1_only_should_be_zeroed)
+{
+    auto gradOutputDesc = TensorDesc({2, 2, 0, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto inputDesc = TensorDesc({2, 2, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridDesc = TensorDesc({2, 0, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto inputGradDesc = TensorDesc({2, 2, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridGradDesc = TensorDesc({2, 0, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto outputMaskDesc = BoolArrayDesc(vector<bool>{false, true});
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
+// 输入C=0场景：input/gradOutput/inputGrad为空无需处理，但grid/gridGrad非空，必须清零
+TEST_F(l2_grid_sampler3d_backward_test, zero_channel_grid_grad_should_be_zeroed)
+{
+    auto gradOutputDesc = TensorDesc({2, 0, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto inputDesc = TensorDesc({2, 0, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridDesc = TensorDesc({2, 4, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto inputGradDesc = TensorDesc({2, 0, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridGradDesc = TensorDesc({2, 4, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto outputMaskDesc = BoolArrayDesc(vector<bool>{true, true});
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
+
+// 输入C=0且只要dgrid场景：outputMask只开gridGrad，非空gridGrad同样需要清零
+TEST_F(l2_grid_sampler3d_backward_test, zero_channel_mask1_only_should_be_zeroed)
+{
+    auto gradOutputDesc = TensorDesc({2, 0, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto inputDesc = TensorDesc({2, 0, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridDesc = TensorDesc({2, 4, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto inputGradDesc = TensorDesc({2, 0, 4, 4, 4}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridGradDesc = TensorDesc({2, 4, 4, 4, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto outputMaskDesc = BoolArrayDesc(vector<bool>{false, true});
+    auto ut = OP_API_UT(aclnnGridSampler3DBackward,
+                        INPUT(gradOutputDesc, inputDesc, gridDesc, 0, 0, false, outputMaskDesc),
+                        OUTPUT(inputGradDesc, gridGradDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+}
