@@ -27,8 +27,9 @@ namespace ge {
 
 * @par Inputs:
 * @li x_grad: A float32 upstream-gradient tensor with shape (N, pooled_h, pooled_w, C).
-* @li rois: A tensor of type float32, with shape(n, 6) with each roi decoded as
-*     (batch_index, center_x, center_y, w, h, angle). The angle is in radian.
+* @li rois: A tensor of type float32, with shape (6, N). The 6 fields are stored
+*     along dimension 0 as (batch_index, center_x, center_y, w, h, angle), and N
+*     is the number of ROIs. The angle is in radian.
 
 * @par Attributes:
 * @li y_grad_shape: A required list of four integers [B, H, W, C], specifying the output gradient shape.
