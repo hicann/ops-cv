@@ -27,7 +27,8 @@ namespace ge {
 * @li rois: ROI position. A 2D Tensor of float32 or float16 with shape (N, 5). "N" indicates the number of ROIs,
 * the value "5" indicates the indexes of images where the ROIs are located,
 * "x0", "y0", "x1", and "y1".
-* @li rois_n: An optional input of type int32, specifying the number of valid ROIs. This parameter is reserved . \n
+* @li rois_n: Optional INT32 input with shape (N), where N equals the number of ROIs.
+* Each element is the corresponding ROI batch index and overrides the index in `rois`. \n
 
 * @par Attributes:
 * @li spatial_scale: A required attribute of type float32, specifying the scaling ratio of "features" to the original
