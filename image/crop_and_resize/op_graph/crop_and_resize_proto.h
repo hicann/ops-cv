@@ -41,9 +41,9 @@ int32 values in [0, batch).
 *@par Attributes:
 *@li extrapolation_value: An optional float. Defaults to 0. Value used for
 extrapolation, when applicable.
-*@li method: An optional string from: '"bilinear", "nearest"'. Defaults to
-"bilinear". Currently two sampling methods are supported: Bilinear and
-NearestNeighbor . \n
+*@li method: An optional string from: '"bilinear", "nearest", "bilinear_v2"'. Defaults to
+"bilinear". Bilinear, NearestNeighbor, and bilinear_v2 sampling methods are
+supported. \n
 
 *@par Outputs:
 * y: A Tensor. Must be one of the following types: float16, float. The format must be NHWC. \n
