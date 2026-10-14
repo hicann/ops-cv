@@ -32,6 +32,8 @@
  *   说明：idx 值域 [0, m) 为调用方契约，算子不做运行时值校验（与竞品/Ascend 老实现一致）
  */
 
+#include <cstdint>
+
 #include "log/log.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "util/math_util.h"
@@ -100,14 +102,16 @@ ge::graphStatus Tiling4ThreeInterpolateBackwardRegbase(gert::TilingContext* cont
     int32_t c = static_cast<int32_t>(grad_x_shape.GetDim(IDX_DIM1));
     int32_t n = static_cast<int32_t>(grad_x_shape.GetDim(IDX_DIM2));
 
-    // 3. 获取属性 m 并校验 m > 0
+    // 3. 获取属性 m 并校验 m 范围（必须在 int64 -> int32 窄化前校验，
+    //    否则 m = 2^32+1 等值会回绕为 1 等正数，绕过 m<=0 检查）
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-    int32_t m = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(0)));
-    OP_CHECK_IF(m <= 0,
-                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "m", std::to_string(m).c_str(),
-                                                      "attr m must be > 0"),
+    int64_t mRaw = *(attrs->GetAttrPointer<int64_t>(0));
+    OP_CHECK_IF(mRaw <= 0 || mRaw > INT32_MAX,
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "m", std::to_string(mRaw).c_str(),
+                                                      "attr m must be in (0, INT32_MAX]"),
                 return ge::GRAPH_FAILED);
+    int32_t m = static_cast<int32_t>(mRaw);
 
     // 4. 校验 idx/weight shape：dimNum==3、idx shape == weight shape、idx == (B, N, 3)
     auto idx_shape_input = context->GetInputShape(1);
@@ -149,6 +153,10 @@ ge::graphStatus Tiling4ThreeInterpolateBackwardRegbase(gert::TilingContext* cont
     //    避免 CeilDiv(0,0) 除零，needCoreNum=1 早退（kernel 无工作项直接返回）。
     //    注意：b,c>0 且 n==0 时 totalElements=b*c>0 走正常路径（行清零仍须执行，grad_y 全零正确）
     int64_t totalElements = static_cast<int64_t>(b) * c;
+    // MODE_LARGE 场景判定：b*c-1 > UINT32_MAX 时 bcIdx 超出 uint32 快除解码范围，
+    // 切到 64 位解码的 MODE_LARGE kernel
+    uint64_t schMode = (totalElements - 1 > static_cast<int64_t>(UINT32_MAX)) ? THREE_INTERPOLATE_BACKWARD_MODE_LARGE :
+                                                                                THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT;
     int32_t needCoreNum = 1;
     if (totalElements > 0) {
         int64_t perCoreElements = Ops::Base::CeilDiv(totalElements, coreNum);
@@ -177,8 +185,8 @@ ge::graphStatus Tiling4ThreeInterpolateBackwardRegbase(gert::TilingContext* cont
 
     // 8. 设置 BlockDim 和 TilingKey
     context->SetBlockDim(needCoreNum);
-    // TilingKey 不枚举 dtype，使用 DTYPE_ 宏自动实例化
-    context->SetTilingKey(GET_TPL_TILING_KEY(THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT));
+    // TilingKey 不枚举 dtype，使用 DTYPE_ 宏自动实例化；schMode 按范围选 MODE_DEFAULT/MODE_LARGE
+    context->SetTilingKey(GET_TPL_TILING_KEY(schMode));
 
     // 9. 设置 UB 大小（SIMT 模式：UB - DCache - Static）
     OP_CHECK_IF((ubSize <= DCACHE_SIZE + STATIC_UB_ESTIMATE),

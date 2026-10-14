@@ -15,7 +15,11 @@
  * \brief Tiling key declare for three_interpolate_backward operator
  *
  * TilingKey 不枚举 dtype，使用 DTYPE_ 宏自动实例化（DTYPE_GRAD_X + DTYPE_IDX）。
- * 只有一种场景模式 MODE_DEFAULT = 0。
+ * 场景模式：
+ *   - MODE_DEFAULT = 0：常规范围（b*c-1 <= UINT32_MAX），
+ *     bcIdx 用 Simt::UintDiv<uint32_t> magic 快除解码（性能最优，保持原有逻辑不变）
+ *   - MODE_LARGE = 1：超大范围（b*c > 2^32），bcIdx 用 64 位原生除法解码
+ *     （正确性优先，仅极端场景命中）
  * 框架为 4 种 dtype 组合（FP32+INT32、FP32+INT64、FP16+INT32、FP16+INT64）自动生成独立 kernel binary。
  */
 
@@ -24,17 +28,20 @@
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
-// 场景模式：只有默认模式
+// 场景模式
 #define THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT 0
+#define THREE_INTERPOLATE_BACKWARD_MODE_LARGE 1
 
 // 声明模板参数列表：仅 schMode 一个参数
 ASCENDC_TPL_ARGS_DECL(ThreeInterpolateBackward,
-                      ASCENDC_TPL_UINT_DECL(schMode, 1, ASCENDC_TPL_UI_LIST, THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT));
+                      ASCENDC_TPL_UINT_DECL(schMode, 1, ASCENDC_TPL_UI_LIST, THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT,
+                                            THREE_INTERPOLATE_BACKWARD_MODE_LARGE));
 
 // 声明 kernel 实例
 ASCENDC_TPL_SEL(ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_KERNEL_TYPE_SEL(ASCENDC_TPL_AIV_ONLY),
                                      ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST,
-                                                          THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT),
+                                                          THREE_INTERPOLATE_BACKWARD_MODE_DEFAULT,
+                                                          THREE_INTERPOLATE_BACKWARD_MODE_LARGE),
                                      ASCENDC_TPL_TILING_STRUCT_SEL(ThreeInterpolateBackwardTilingData)));
 
 #endif // THREE_INTERPOLATE_BACKWARD_TILING_KEY_H_

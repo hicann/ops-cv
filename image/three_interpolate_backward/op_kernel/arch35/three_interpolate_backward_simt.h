@@ -83,6 +83,9 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpThreeInterpol
     const uint32_t cU32 = static_cast<uint32_t>(c);
 
     // 2. Grid-Stride 循环：工作项为 (b,c) 行，共 b*c 个
+    //    本函数为 MODE_DEFAULT 路径：tiling 保证 b*c-1 <= UINT32_MAX 且 m <= INT32_MAX，
+    //    bcIdx 可安全窄化为 uint32 并用 Simt::UintDiv<uint32_t> magic 快除解码；
+    //    超界场景由 MODE_LARGE 路径（64 位解码）承接
     int64_t bcSize = static_cast<int64_t>(b) * c;
     uint64_t tid = static_cast<uint64_t>(blockIdx.x * blockDim.x + threadIdx.x);
     uint64_t stride = static_cast<uint64_t>(blockDim.x * gridDim.x);
@@ -134,6 +137,64 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpThreeInterpol
 }
 
 /*!
+ * \brief SIMT VF 函数（MODE_LARGE）：超大范围场景的确定性行私有累加
+ *
+ * 与 OpThreeInterpolateBackwardSimtDet 算法完全一致（行私有清零 + k 外 n 内串行累加 +
+ * 两步舍入），差异仅在 bcIdx 解码位宽：
+ *   - bcIdx 用 64 位原生除法解码（b*c 可超过 2^32），不依赖 32 位 magic/shift 快除
+ * 性能说明：64 位除法为软件模拟，逐行一次；该路径仅极端大 shape 命中，
+ * 常规 shape 仍走 MODE_DEFAULT 的 magic 快除路径，性能不受影响。
+ */
+template <typename T, typename IDX_T>
+__simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpThreeInterpolateBackwardSimtDetLarge(
+    int32_t b, int32_t c, int32_t n, int32_t m, __gm__ T* grad_x_gm, __gm__ IDX_T* idx_gm, __gm__ T* weight_gm,
+    __gm__ T* grad_y_gm)
+{
+    const uint64_t cU64 = static_cast<uint64_t>(static_cast<uint32_t>(c));
+    const uint64_t mU64 = static_cast<uint64_t>(static_cast<uint32_t>(m));
+    const uint64_t nU64 = static_cast<uint64_t>(static_cast<uint32_t>(n));
+
+    // Grid-Stride 循环：工作项为 (b,c) 行，共 b*c 个（b,c 均 <= INT32_MAX，b*c 不溢出 int64）
+    int64_t bcSize = static_cast<int64_t>(b) * c;
+    uint64_t tid = static_cast<uint64_t>(blockIdx.x * blockDim.x + threadIdx.x);
+    uint64_t stride = static_cast<uint64_t>(blockDim.x * gridDim.x);
+
+    for (uint64_t bcIdx = tid; bcIdx < static_cast<uint64_t>(bcSize); bcIdx += stride) {
+        // 64 位解码 (bIdx, cIdx)：bcIdx = bIdx * c + cIdx
+        uint64_t bIdx = bcIdx / cU64;
+        uint64_t cIdx = bcIdx - bIdx * cU64;
+
+        // 行基址：grad_y[bIdx, cIdx, :]（本线程独占该行）
+        uint64_t gradYBase = (bIdx * cU64 + cIdx) * mU64;
+
+        // 行私有清零（同行内程序序保证后续累加可见）
+        for (int32_t j = 0; j < m; j++) {
+            grad_y_gm[gradYBase + static_cast<uint64_t>(j)] = static_cast<T>(0);
+        }
+
+        // 串行累加：k 外层（i=0,1,2）、n 内层升序（顺序与 MODE_DEFAULT 一致）
+        for (int32_t k = 0; k < 3; k++) {
+            for (int32_t ni = 0; ni < n; ni++) {
+                uint64_t idxWeightOffset = bIdx * nU64 * 3 + static_cast<uint64_t>(ni) * 3 + k;
+                IDX_T jRaw = idx_gm[idxWeightOffset];
+                uint64_t j = static_cast<uint64_t>(static_cast<int64_t>(jRaw));
+                T w = weight_gm[idxWeightOffset];
+
+                uint64_t gradXOffset = (bIdx * cU64 + cIdx) * nU64 + static_cast<uint64_t>(ni);
+                T g = grad_x_gm[gradXOffset];
+
+                // 两步舍入（与 golden 原生 dtype 运算逐位一致，禁止合并成一步 float FMA，
+                // volatile 防止编译器 FMA 收缩，原因同 MODE_DEFAULT 路径）
+                volatile T prod = static_cast<T>(static_cast<float>(g) * static_cast<float>(w));
+                uint64_t gradYOffset = gradYBase + j;
+                grad_y_gm[gradYOffset] = static_cast<T>(static_cast<float>(grad_y_gm[gradYOffset]) +
+                                                        static_cast<float>(prod));
+            }
+        }
+    }
+}
+
+/*!
  * \brief Process 入口函数：统一确定性路径（单次 asc_vf_call）
  *
  * 原 m==1/m>1 两路分支已被统一 kernel 取代：
@@ -142,7 +203,7 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpThreeInterpol
  *
  * workspace 参数保留不用（tiling 仍无条件分配 sysWorkspace）。
  */
-template <typename T, typename IDX_T>
+template <uint32_t schMode, typename T, typename IDX_T>
 __aicore__ inline void Process(GM_ADDR grad_x, GM_ADDR idx, GM_ADDR weight, GM_ADDR grad_y, GM_ADDR workspace,
                                const ThreeInterpolateBackwardTilingData* tilingData)
 {
@@ -157,6 +218,13 @@ __aicore__ inline void Process(GM_ADDR grad_x, GM_ADDR idx, GM_ADDR weight, GM_A
     int32_t c = tilingData->c;
     int32_t n = tilingData->n;
     int32_t m = tilingData->m;
+
+    if constexpr (schMode == THREE_INTERPOLATE_BACKWARD_MODE_LARGE) {
+        // MODE_LARGE：b*c > 2^32，64 位解码，无需 magic/shift 预计算
+        asc_vf_call<OpThreeInterpolateBackwardSimtDetLarge<T, IDX_T>>(dim3(THREAD_NUM), b, c, n, m, grad_x_gm, idx_gm,
+                                                                      weight_gm, grad_y_gm);
+        return;
+    }
 
     // 1. 预计算 UintDiv magic/shift（device 端 scalar，禁止在 host/tiling 侧调用）
     //    仅需 c 的解码参数（bcIdx → (bIdx, cIdx)），UB 布局 [0]=magicC, [1]=shiftC

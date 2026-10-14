@@ -34,5 +34,7 @@ __global__ __aicore__ void three_interpolate_backward(GM_ADDR grad_x, GM_ADDR id
     GET_TILING_DATA_WITH_STRUCT(ThreeInterpolateBackwardTilingData, tilingData, tiling);
 
     // DTYPE_ 宏自动实例化 4 种 dtype 组合，无需 if-constexpr 分支
-    NsThreeInterpolateBackward::Process<DTYPE_GRAD_X, DTYPE_IDX>(grad_x, idx, weight, grad_y, workspace, &tilingData);
+    // schMode 模板参数区分 MODE_DEFAULT（magic 快除）/ MODE_LARGE（64 位解码）
+    NsThreeInterpolateBackward::Process<schMode, DTYPE_GRAD_X, DTYPE_IDX>(grad_x, idx, weight, grad_y, workspace,
+                                                                          &tilingData);
 }
