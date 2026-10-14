@@ -185,3 +185,21 @@ TEST_F(TilingForRotatedFeatureAlignGrad, rotated_feature_align_grad_tiling_fail_
     TilingInfo tilingInfo;
     EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
+
+// 每一维都可表示为 int32，但 N*H*W 不可表示为 int64 时必须拒绝。
+TEST_F(TilingForRotatedFeatureAlignGrad, rotated_feature_align_grad_tiling_fail_nhw_overflow)
+{
+    struct RotatedFeatureAlignGradCompileInfo {
+    } compileInfo;
+    constexpr int64_t kMaxDim = 2147483647LL;
+    gert::TilingContextPara tilingContextPara(
+        "RotatedFeatureAlignGrad",
+        {{{{kMaxDim, kMaxDim, 3, 1}, {kMaxDim, kMaxDim, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{kMaxDim, kMaxDim, 3, 5}, {kMaxDim, kMaxDim, 3, 5}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {{{{kMaxDim, kMaxDim, 3, 1}, {kMaxDim, kMaxDim, 3, 1}}, ge::DT_FLOAT, ge::FORMAT_ND}},
+        {gert::TilingContextPara::OpAttr("spatial_scale", Ops::Cv::AnyValue::CreateFrom<float>(0.25f)),
+         gert::TilingContextPara::OpAttr("points", Ops::Cv::AnyValue::CreateFrom<int64_t>(1))},
+        {1, 1}, {1}, &compileInfo, "Ascend950", 64, 262144, 4096);
+    TilingInfo tilingInfo;
+    EXPECT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
+}

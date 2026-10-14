@@ -23,6 +23,7 @@
 #include "objdetect/rotated_feature_align_grad/op_kernel/rotated_feature_align_grad_tiling_key.h"
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <string>
 
 namespace optiling {
@@ -194,6 +195,18 @@ static bool HasZeroDimension(const gert::Shape& s)
     return false;
 }
 
+static bool CheckedMultiply(int64_t lhs, int64_t rhs, int64_t& result)
+{
+    constexpr int64_t maxValue = std::numeric_limits<int64_t>::max();
+    constexpr int64_t minValue = std::numeric_limits<int64_t>::min();
+    if ((lhs > 0 && rhs > 0 && lhs > maxValue / rhs) || (lhs > 0 && rhs < 0 && rhs < minValue / lhs) ||
+        (lhs < 0 && rhs > 0 && lhs < minValue / rhs) || (lhs < 0 && rhs < 0 && lhs < maxValue / rhs)) {
+        return false;
+    }
+    result = lhs * rhs;
+    return true;
+}
+
 static void DumpTilingData(gert::TilingContext* context, const RotatedFeatureAlignGradTilingData* tiling)
 {
     OP_LOGD(context,
@@ -204,7 +217,12 @@ static void DumpTilingData(gert::TilingContext* context, const RotatedFeatureAli
 static ge::graphStatus FillTilingData(gert::TilingContext* context, int32_t N, int32_t H, int32_t W, int32_t C,
                                       float spatial_scale, int32_t points, int64_t maxCoreNum)
 {
-    int64_t totalNHW = static_cast<int64_t>(N) * H * W;
+    int64_t nh = 0;
+    int64_t totalNHW = 0;
+    if (!CheckedMultiply(N, H, nh) || !CheckedMultiply(nh, W, totalNHW)) {
+        OP_LOGE(context, "RotatedFeatureAlignGrad: N*H*W overflows int64, N=%d H=%d W=%d", N, H, W);
+        return ge::GRAPH_FAILED;
+    }
     int32_t needCoreNum = 0;
     if (totalNHW > 0) {
         int64_t needCore = (totalNHW + PER_CORE_MIN_NHW - 1) / PER_CORE_MIN_NHW;
