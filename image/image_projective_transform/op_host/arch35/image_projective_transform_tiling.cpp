@@ -29,6 +29,15 @@ constexpr uint32_t DCACHE_SIZE = 128 * 1024;
 constexpr uint32_t STATIC_UB_ESTIMATE = 0;
 constexpr int32_t INTERP_BILINEAR = 0;
 constexpr int32_t INTERP_NEAREST = 1;
+// v2.0 fill_mode encoding written to TilingData (MDE v2.0 §3.4).
+// 0=CONSTANT keeps memset_s zero-init equivalent to the default mode.
+constexpr int32_t FILL_CONSTANT = 0;
+constexpr int32_t FILL_NEAREST = 1;
+constexpr int32_t FILL_REFLECT = 2;
+constexpr int32_t FILL_WRAP = 3;
+// Attr indices, matching the declaration order in image_projective_transform_def.cpp.
+constexpr size_t IDX_INTERP_ATTR = 0;
+constexpr size_t IDX_FILL_MODE_ATTR = 1;
 
 struct ImageProjectiveTransformCompileInfo {};
 
@@ -36,15 +45,14 @@ static const std::set<ge::DataType> SUPPORTED_DTYPES = {ge::DT_FLOAT16, ge::DT_F
 
 static ge::graphStatus CheckInputDtypes(gert::TilingContext* context)
 {
-    auto imagesDesc = context->GetInputDesc(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, imagesDesc);
-    auto imagesDtype = imagesDesc->GetDataType();
-    if (SUPPORTED_DTYPES.count(imagesDtype) == 0) {
-        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "images", Ops::Base::ToString(imagesDtype).c_str(),
+    auto inputDesc = context->GetInputDesc(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, inputDesc);
+    auto inputDtype = inputDesc->GetDataType();
+    if (SUPPORTED_DTYPES.count(inputDtype) == 0) {
+        OP_LOGE_FOR_INVALID_DTYPE(context->GetNodeName(), "images", Ops::Base::ToString(inputDtype).c_str(),
                                   "float16, float, uint8 and int32");
         return ge::GRAPH_FAILED;
     }
-
     auto transformsDesc = context->GetInputDesc(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, transformsDesc);
     auto transformsDtype = transformsDesc->GetDataType();
@@ -53,7 +61,6 @@ static ge::graphStatus CheckInputDtypes(gert::TilingContext* context)
                                   "float");
         return ge::GRAPH_FAILED;
     }
-
     auto outputShapeDesc = context->GetInputDesc(2);
     OP_CHECK_NULL_WITH_CONTEXT(context, outputShapeDesc);
     auto outputShapeDtype = outputShapeDesc->GetDataType();
@@ -62,15 +69,15 @@ static ge::graphStatus CheckInputDtypes(gert::TilingContext* context)
                                   "int32");
         return ge::GRAPH_FAILED;
     }
-
     return ge::GRAPH_SUCCESS;
 }
 
-// Validate that transforms is 2-D (N, 8) with N matching images batch, and
-// output_shape is 1-D with exactly 2 elements. infershape performs the same
-// checks but may not run in all graph modes; tiling is the guaranteed gate.
+// Validate that transforms is 2-D (transformsN, 8) with transformsN in {1, N}
+// (v2.0: 1 broadcasts a single transform to all batches), and output_shape is
+// 1-D with exactly 2 elements. infershape performs the same checks but may not
+// run in all graph modes; tiling is the guaranteed gate.
 // imagesN is passed as int64_t to avoid truncating huge batch sizes (>INT32_MAX)
-// that would silently skip the batch-equality check via int32_t overflow.
+// that would silently skip the batch check via int32_t overflow.
 static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t imagesN)
 {
     if (imagesN < ge::UNKNOWN_DIM) {
@@ -79,7 +86,6 @@ static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t im
                                               "batch dimension must be -1 or a non-negative value");
         return ge::GRAPH_FAILED;
     }
-
     auto transformsInput = context->GetInputShape(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, transformsInput);
     auto transformsShape = transformsInput->GetStorageShape();
@@ -100,10 +106,12 @@ static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t im
                                               "batch dimension must be -1 or a non-negative value");
         return ge::GRAPH_FAILED;
     }
-    if (imagesN >= 0 && transformsN >= 0 && imagesN != transformsN) {
+    // SE v2.0 §5.2-B.2 S5a/S5b/S5c: transformsN must be 1 (broadcast) or imagesN.
+    // Runs before the empty-tensor early return, so S5c (M>1, M!=N, N==0) fails here.
+    if (imagesN >= 0 && transformsN >= 0 && transformsN != 1 && transformsN != imagesN) {
         OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(context->GetNodeName(), "transforms, images",
                                                (std::to_string(transformsN) + ", " + std::to_string(imagesN)).c_str(),
-                                               "transforms.shape[0] must equal images.shape[0]");
+                                               "Input transform should be num_images x 8 or 1 x 8");
         return ge::GRAPH_FAILED;
     }
 
@@ -122,35 +130,6 @@ static ge::graphStatus CheckInputShapes(gert::TilingContext* context, int64_t im
                                               "output_shape must have exactly 2 elements [H, W]");
         return ge::GRAPH_FAILED;
     }
-    return ge::GRAPH_SUCCESS;
-}
-
-static ge::graphStatus CheckAttrs(gert::TilingContext* context)
-{
-    const gert::RuntimeAttrs* attrs = context->GetAttrs();
-    if (attrs == nullptr) {
-        return ge::GRAPH_SUCCESS;
-    }
-
-    const char* interpStr = attrs->GetStr(0);
-    if (interpStr != nullptr) {
-        std::string interpVal(interpStr);
-        if (interpVal != "BILINEAR" && interpVal != "NEAREST") {
-            OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "interpolation", interpVal.c_str(),
-                                      "BILINEAR or NEAREST");
-            return ge::GRAPH_FAILED;
-        }
-    }
-
-    const char* fillModeStr = attrs->GetStr(1);
-    if (fillModeStr != nullptr) {
-        std::string fillModeVal(fillModeStr);
-        if (fillModeVal != "CONSTANT") {
-            OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "fill_mode", fillModeVal.c_str(), "CONSTANT");
-            return ge::GRAPH_FAILED;
-        }
-    }
-
     return ge::GRAPH_SUCCESS;
 }
 
@@ -213,19 +192,56 @@ static ge::graphStatus ResolveOutputShape(gert::TilingContext* context, int32_t 
     return ge::GRAPH_SUCCESS;
 }
 
-static int32_t ParseInterpMode(gert::TilingContext* context)
+static ge::graphStatus ParseInterpMode(gert::TilingContext* context, int32_t& interpMode)
 {
+    interpMode = INTERP_BILINEAR;
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
     if (attrs != nullptr) {
-        const char* interpStr = attrs->GetStr(0);
+        const char* interpStr = attrs->GetStr(IDX_INTERP_ATTR);
         if (interpStr != nullptr) {
             std::string interpStrVal(interpStr);
             if (interpStrVal == "NEAREST") {
-                return INTERP_NEAREST;
+                interpMode = INTERP_NEAREST;
+            } else if (interpStrVal != "BILINEAR") {
+                OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "interpolation", interpStrVal.c_str(),
+                                          "BILINEAR or NEAREST");
+                return ge::GRAPH_FAILED;
             }
         }
     }
-    return INTERP_BILINEAR;
+    return ge::GRAPH_SUCCESS;
+}
+
+// v2.0 (MDE §3.4 / SE §5.2-A.5): parse fill_mode attr[1] into the TilingData
+// encoding. Case-sensitive whitelist; invalid values must fail explicitly --
+// silently degrading to CONSTANT is forbidden. Absent attr (OPTIONAL default)
+// or absent attrs block means CONSTANT, matching the legacy behavior.
+static ge::graphStatus ParseFillMode(gert::TilingContext* context, int32_t& fillMode)
+{
+    fillMode = FILL_CONSTANT;
+    const gert::RuntimeAttrs* attrs = context->GetAttrs();
+    if (attrs == nullptr) {
+        return ge::GRAPH_SUCCESS;
+    }
+    const char* fillModeStr = attrs->GetStr(IDX_FILL_MODE_ATTR);
+    if (fillModeStr == nullptr) {
+        return ge::GRAPH_SUCCESS;
+    }
+    std::string fillModeVal(fillModeStr);
+    if (fillModeVal == "CONSTANT") {
+        fillMode = FILL_CONSTANT;
+    } else if (fillModeVal == "NEAREST") {
+        fillMode = FILL_NEAREST;
+    } else if (fillModeVal == "REFLECT") {
+        fillMode = FILL_REFLECT;
+    } else if (fillModeVal == "WRAP") {
+        fillMode = FILL_WRAP;
+    } else {
+        OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "fill_mode", fillModeVal.c_str(),
+                                  "CONSTANT, NEAREST, REFLECT or WRAP");
+        return ge::GRAPH_FAILED;
+    }
+    return ge::GRAPH_SUCCESS;
 }
 
 static int32_t ComputeNeedCoreNum(int64_t totalPixels, int64_t coreNum)
@@ -246,7 +262,6 @@ static bool CheckedMultiply(int64_t lhs, int64_t rhs, int64_t& result)
         result = 0;
         return true;
     }
-
     constexpr int64_t maxInt64 = std::numeric_limits<int64_t>::max();
     constexpr int64_t minInt64 = std::numeric_limits<int64_t>::min();
     if (lhs > 0) {
@@ -256,14 +271,13 @@ static bool CheckedMultiply(int64_t lhs, int64_t rhs, int64_t& result)
     } else if ((rhs > 0 && lhs < minInt64 / rhs) || (rhs < 0 && lhs < maxInt64 / rhs)) {
         return false;
     }
-
     result = lhs * rhs;
     return true;
 }
 
 static ge::graphStatus PopulateTilingData(gert::TilingContext* context, int32_t needCoreNum, int64_t totalPixels,
                                           int64_t spatialSize, int32_t N, int32_t HIn, int32_t WIn, int32_t HOut,
-                                          int32_t WOut, int32_t C)
+                                          int32_t WOut, int32_t C, int32_t fillMode, int32_t oneTransFlag)
 {
     auto* tiling = context->GetTilingData<ImageProjectiveTransformTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
@@ -281,6 +295,8 @@ static ge::graphStatus PopulateTilingData(gert::TilingContext* context, int32_t 
     tiling->wOut = WOut;
     tiling->channels = C;
     tiling->spatialSize = spatialSize;
+    tiling->fillMode = fillMode;
+    tiling->oneTransFlag = oneTransFlag;
     return ge::GRAPH_SUCCESS;
 }
 
@@ -306,29 +322,6 @@ static ge::graphStatus SetWorkspaceAndMemory(gert::TilingContext* context, uint6
     return ge::GRAPH_SUCCESS;
 }
 
-// Parse images shape, validate dims, and check transforms/output_shape.
-// Returns N, HIn, WIn, C via output parameters.
-static ge::graphStatus ParseAndValidateInputs(gert::TilingContext* context, int32_t& N, int32_t& HIn, int32_t& WIn,
-                                              int32_t& C)
-{
-    auto imagesInput = context->GetInputShape(0);
-    OP_CHECK_NULL_WITH_CONTEXT(context, imagesInput);
-    auto imagesShape = imagesInput->GetStorageShape();
-
-    if (imagesShape.GetDimNum() != 4) {
-        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "images", std::to_string(imagesShape.GetDimNum()).c_str(),
-                                     "4");
-        return ge::GRAPH_FAILED;
-    }
-
-    N = static_cast<int32_t>(imagesShape.GetDim(0));
-    HIn = static_cast<int32_t>(imagesShape.GetDim(1));
-    WIn = static_cast<int32_t>(imagesShape.GetDim(2));
-    C = static_cast<int32_t>(imagesShape.GetDim(3));
-
-    return CheckInputShapes(context, imagesShape.GetDim(0));
-}
-
 static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* context)
 {
     uint64_t ubSize = 0;
@@ -341,17 +334,29 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
         return ge::GRAPH_FAILED;
     }
 
-    if (CheckAttrs(context) != ge::GRAPH_SUCCESS) {
+    auto imagesInput = context->GetInputShape(0);
+    OP_CHECK_NULL_WITH_CONTEXT(context, imagesInput);
+    auto imagesShape = imagesInput->GetStorageShape();
+
+    if (imagesShape.GetDimNum() != 4) {
+        OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "images", std::to_string(imagesShape.GetDimNum()).c_str(),
+                                     "4");
         return ge::GRAPH_FAILED;
     }
 
-    int32_t N = 0;
-    int32_t HIn = 0;
-    int32_t WIn = 0;
-    int32_t C = 0;
-    if (ParseAndValidateInputs(context, N, HIn, WIn, C) != ge::GRAPH_SUCCESS) {
+    int32_t N = static_cast<int32_t>(imagesShape.GetDim(0));
+    int32_t HIn = static_cast<int32_t>(imagesShape.GetDim(1));
+    int32_t WIn = static_cast<int32_t>(imagesShape.GetDim(2));
+    int32_t C = static_cast<int32_t>(imagesShape.GetDim(3));
+
+    if (CheckInputShapes(context, imagesShape.GetDim(0)) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
+
+    // v2.0 (MDE §3.5): non-null guaranteed by CheckInputShapes above.
+    // oneTransFlag follows the actual transformsN; kernel only obeys the flag.
+    int64_t transformsN = context->GetInputShape(1)->GetStorageShape().GetDim(0);
+    int32_t oneTransFlag = (transformsN == 1) ? 1 : 0;
 
     int32_t HOut = 0;
     int32_t WOut = 0;
@@ -359,7 +364,17 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
         return ge::GRAPH_FAILED;
     }
 
-    int32_t interpMode = ParseInterpMode(context);
+    int32_t interpMode = INTERP_BILINEAR;
+    if (ParseInterpMode(context, interpMode) != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
+
+    // v2.0 (SE §5.2-A.5): invalid fill_mode must fail before the empty-tensor
+    // early return so empty inputs cannot bypass attribute validation.
+    int32_t fillMode = FILL_CONSTANT;
+    if (ParseFillMode(context, fillMode) != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
 
     int64_t spatialSize = 0;
     if (!CheckedMultiply(static_cast<int64_t>(HOut), static_cast<int64_t>(WOut), spatialSize)) {
@@ -367,7 +382,6 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
                                               "HOut * WOut must fit in int64_t");
         return ge::GRAPH_FAILED;
     }
-
     int64_t totalPixels = 0;
     if (!CheckedMultiply(static_cast<int64_t>(N), spatialSize, totalPixels)) {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "output_shape", "product overflow",
@@ -377,15 +391,31 @@ static ge::graphStatus ImageProjectiveTransformTilingFunc(gert::TilingContext* c
 
     int32_t needCoreNum = ComputeNeedCoreNum(totalPixels, coreNum);
 
-    if (PopulateTilingData(context, needCoreNum, totalPixels, spatialSize, N, HIn, WIn, HOut, WOut, C) !=
-        ge::GRAPH_SUCCESS) {
-        return ge::GRAPH_FAILED;
+    // v68 A-class fix (SE §5.2-B.2 S4a/S4b): the empty-tensor path must still
+    // produce a COMPLETE tiling output (tiling data + tiling key + workspace +
+    // block dim). The previous early return only called SetBlockDim(1), leaving
+    // the tiling buffer empty ("Tiling data is empty") and the tiling key unset,
+    // so the bin/dyn launch chains failed with NO_OUTPUT (cst never launches the
+    // kernel and was unaffected). The kernel keeps its totalPixels<=0 early
+    // return, so the empty (0,H,W,C) output is produced without any computation.
+    if (totalPixels == 0) {
+        if (PopulateTilingData(context, needCoreNum, totalPixels, spatialSize, N, HIn, WIn, HOut, WOut, C, fillMode,
+                               oneTransFlag) != ge::GRAPH_SUCCESS) {
+            return ge::GRAPH_FAILED;
+        }
+        context->SetBlockDim(1);
+        if (SetWorkspaceAndMemory(context, ubSize) != ge::GRAPH_SUCCESS) {
+            return ge::GRAPH_FAILED;
+        }
+        uint64_t emptyTilingKeyVal = (interpMode == INTERP_NEAREST) ? static_cast<uint64_t>(IPT_TPL_NEAREST) :
+                                                                      static_cast<uint64_t>(IPT_TPL_BILINEAR);
+        context->SetTilingKey(GET_TPL_TILING_KEY(emptyTilingKeyVal));
+        return ge::GRAPH_SUCCESS;
     }
 
-    if (totalPixels == 0) {
-        context->SetBlockDim(1);
-        context->SetTilingKey(GET_TPL_TILING_KEY(static_cast<uint64_t>(interpMode)));
-        return ge::GRAPH_SUCCESS;
+    if (PopulateTilingData(context, needCoreNum, totalPixels, spatialSize, N, HIn, WIn, HOut, WOut, C, fillMode,
+                           oneTransFlag) != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
     }
 
     context->SetBlockDim(needCoreNum);

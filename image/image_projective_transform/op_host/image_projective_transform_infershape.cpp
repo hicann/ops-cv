@@ -11,9 +11,10 @@
 
 #include <string>
 
+#include "exe_graph/runtime/runtime_attrs.h"
 #include "log/log.h"
-#include "register/op_impl_registry.h"
 #include "op_common/op_host/util/shape_util.h"
+#include "register/op_impl_registry.h"
 
 using namespace ge;
 
@@ -25,6 +26,9 @@ static constexpr int64_t IDX_TRANSFORMED = 0;
 static constexpr int64_t TRANSFORMS_LAST_DIM = 8;
 static constexpr int64_t OUTPUT_SHAPE_DIM = 1;
 static constexpr int64_t OUTPUT_SHAPE_SIZE = 2;
+static constexpr int64_t TRANSFORMS_BROADCAST_N = 1;
+// Attr indices, matching the declaration order in image_projective_transform_def.cpp.
+static constexpr size_t IDX_FILL_MODE_ATTR = 1;
 
 static ge::graphStatus ValidateTransforms(gert::InferShapeContext* context, const gert::Shape* imagesShape, int64_t& N)
 {
@@ -54,15 +58,38 @@ static ge::graphStatus ValidateTransforms(gert::InferShapeContext* context, cons
                                               "batch dimension must be -1 or a non-negative value");
         return GRAPH_FAILED;
     }
-    // When N is dynamic (-1), skip the batch-equality check; it will be
-    // enforced at tiling time when the actual value is known.
-    if (N >= 0 && transformsN >= 0 && N != transformsN) {
+    // SE v2.0 §5.2-B.2: transformsN must be 1 (broadcast) or N (per-batch).
+    // When either dim is dynamic (-1), skip the check; it will be enforced at
+    // tiling time when the actual values are known (S6 layered validation).
+    if (N >= 0 && transformsN >= 0 && transformsN != TRANSFORMS_BROADCAST_N && transformsN != N) {
         OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(context->GetNodeName(), "transforms, images",
                                                (std::to_string(transformsN) + ", " + std::to_string(N)).c_str(),
-                                               "transforms.shape[0] must equal images.shape[0]");
+                                               "Input transform should be num_images x 8 or 1 x 8");
         return GRAPH_FAILED;
     }
     return GRAPH_SUCCESS;
+}
+
+// v2.0 (MDE §7.4 / SE §5.2-A.5): fill_mode value-domain check, dual-site with
+// tiling ParseFillMode (tiling remains the guaranteed gate). Case-sensitive
+// whitelist; invalid values fail explicitly, silent degradation is forbidden.
+static ge::graphStatus ValidateFillMode(gert::InferShapeContext* context)
+{
+    const gert::RuntimeAttrs* attrs = context->GetAttrs();
+    if (attrs == nullptr) {
+        return GRAPH_SUCCESS;
+    }
+    const char* fillModeStr = attrs->GetStr(IDX_FILL_MODE_ATTR);
+    if (fillModeStr == nullptr) {
+        return GRAPH_SUCCESS;
+    }
+    std::string fillModeVal(fillModeStr);
+    if (fillModeVal == "CONSTANT" || fillModeVal == "NEAREST" || fillModeVal == "REFLECT" || fillModeVal == "WRAP") {
+        return GRAPH_SUCCESS;
+    }
+    OP_LOGE_FOR_INVALID_VALUE(context->GetNodeName(), "fill_mode", fillModeVal.c_str(),
+                              "CONSTANT, NEAREST, REFLECT or WRAP");
+    return GRAPH_FAILED;
 }
 
 static ge::graphStatus ValidateOutputShape(gert::InferShapeContext* context)
@@ -84,18 +111,28 @@ static ge::graphStatus ValidateOutputShape(gert::InferShapeContext* context)
                                               "output_shape must have exactly 2 elements [H, W]");
         return GRAPH_FAILED;
     }
+    return GRAPH_SUCCESS;
+}
 
+// Validate readable constants independently of the descriptor rank. Unknown
+// output_shape rank must not bypass the non-negative value check.
+static ge::graphStatus ResolveOutputShape(gert::InferShapeContext* context, int64_t& HOut, int64_t& WOut)
+{
     const gert::Tensor* outputShapeTensor = context->GetInputTensor(IDX_OUTPUT_SHAPE);
-    if (outputShapeTensor != nullptr) {
-        const int32_t* outputShapeData = outputShapeTensor->GetData<int32_t>();
-        if (outputShapeData != nullptr && outputShapeTensor->GetShapeSize() >= OUTPUT_SHAPE_SIZE &&
-            (outputShapeData[0] < 0 || outputShapeData[1] < 0)) {
-            const std::string outputShapeValue = "[" + std::to_string(outputShapeData[0]) + ", " +
-                                                 std::to_string(outputShapeData[1]) + "]";
-            OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "output_shape", outputShapeValue.c_str(),
-                                                  "output_shape values must be non-negative");
-            return GRAPH_FAILED;
-        }
+    if (outputShapeTensor == nullptr) {
+        return GRAPH_SUCCESS;
+    }
+    const int32_t* outputShapeData = outputShapeTensor->GetData<int32_t>();
+    if (outputShapeData == nullptr || outputShapeTensor->GetShapeSize() < OUTPUT_SHAPE_SIZE) {
+        return GRAPH_SUCCESS;
+    }
+    HOut = static_cast<int64_t>(outputShapeData[0]);
+    WOut = static_cast<int64_t>(outputShapeData[1]);
+    if (HOut < 0 || WOut < 0) {
+        const std::string outputShapeValue = "[" + std::to_string(HOut) + ", " + std::to_string(WOut) + "]";
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "output_shape", outputShapeValue.c_str(),
+                                              "output_shape values must be non-negative");
+        return GRAPH_FAILED;
     }
     return GRAPH_SUCCESS;
 }
@@ -106,56 +143,55 @@ static ge::graphStatus InferShapeImageProjectiveTransform(gert::InferShapeContex
 
     const gert::Shape* imagesShape = context->GetInputShape(IDX_IMAGES);
     OP_CHECK_NULL_WITH_CONTEXT(context, imagesShape);
-    const gert::Shape* transformsShape = context->GetInputShape(IDX_TRANSFORMS);
-    OP_CHECK_NULL_WITH_CONTEXT(context, transformsShape);
-    const gert::Shape* outputShapeInputShape = context->GetInputShape(IDX_OUTPUT_SHAPE);
-    OP_CHECK_NULL_WITH_CONTEXT(context, outputShapeInputShape);
-    gert::Shape* outShape = context->GetOutputShape(IDX_TRANSFORMED);
-    OP_CHECK_NULL_WITH_CONTEXT(context, outShape);
 
-    if (!Ops::Base::IsUnknownRank(*imagesShape) && imagesShape->GetDimNum() != 4) {
+    const bool imagesUnknownRank = Ops::Base::IsUnknownRank(*imagesShape);
+    if (!imagesUnknownRank && imagesShape->GetDimNum() != 4) {
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "images", std::to_string(imagesShape->GetDimNum()).c_str(),
                                      "4");
         return GRAPH_FAILED;
     }
-    if (!Ops::Base::IsUnknownRank(*imagesShape) && imagesShape->GetDim(0) < ge::UNKNOWN_DIM) {
+
+    if (!imagesUnknownRank && imagesShape->GetDim(0) < ge::UNKNOWN_DIM) {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "images.shape[0]",
                                               std::to_string(imagesShape->GetDim(0)).c_str(),
                                               "batch dimension must be -1 or a non-negative value");
         return GRAPH_FAILED;
     }
 
-    int64_t N = ge::UNKNOWN_DIM;
+    int64_t N = imagesUnknownRank ? ge::UNKNOWN_DIM : imagesShape->GetDim(0);
     if (ValidateTransforms(context, imagesShape, N) != GRAPH_SUCCESS) {
+        return GRAPH_FAILED;
+    }
+    if (ValidateFillMode(context) != GRAPH_SUCCESS) {
         return GRAPH_FAILED;
     }
     if (ValidateOutputShape(context) != GRAPH_SUCCESS) {
         return GRAPH_FAILED;
     }
 
-    if (Ops::Base::IsUnknownRank(*imagesShape) || Ops::Base::IsUnknownRank(*transformsShape) ||
-        Ops::Base::IsUnknownRank(*outputShapeInputShape)) {
-        Ops::Base::SetUnknownRank(*outShape);
-        return GRAPH_SUCCESS;
-    }
+    gert::Shape* outShape = context->GetOutputShape(IDX_TRANSFORMED);
+    OP_CHECK_NULL_WITH_CONTEXT(context, outShape);
 
-    int64_t C = imagesShape->GetDim(3);
+    const auto* imagesDesc = context->GetInputDesc(IDX_IMAGES);
+    OP_CHECK_NULL_WITH_CONTEXT(context, imagesDesc);
+    const auto format = ge::GetPrimaryFormat(imagesDesc->GetOriginFormat());
+    OP_CHECK_IF(format != ge::FORMAT_NCHW && format != ge::FORMAT_NHWC,
+                OP_LOGE(context, "images format must be NCHW or NHWC"), return GRAPH_FAILED);
+    const int64_t cIndex = format == ge::FORMAT_NHWC ? 3 : 1;
+    const int64_t hIndex = format == ge::FORMAT_NHWC ? 1 : 2;
+    const int64_t wIndex = format == ge::FORMAT_NHWC ? 2 : 3;
+    const int64_t C = imagesUnknownRank ? ge::UNKNOWN_DIM : imagesShape->GetDim(cIndex);
     int64_t HOut = ge::UNKNOWN_DIM;
     int64_t WOut = ge::UNKNOWN_DIM;
-    const gert::Tensor* outputShapeTensor = context->GetInputTensor(IDX_OUTPUT_SHAPE);
-    if (outputShapeTensor != nullptr) {
-        const int32_t* outputShapeData = outputShapeTensor->GetData<int32_t>();
-        if (outputShapeData != nullptr && outputShapeTensor->GetShapeSize() >= 2) {
-            HOut = static_cast<int64_t>(outputShapeData[0]);
-            WOut = static_cast<int64_t>(outputShapeData[1]);
-        }
+    if (ResolveOutputShape(context, HOut, WOut) != GRAPH_SUCCESS) {
+        return GRAPH_FAILED;
     }
 
     outShape->SetDimNum(4);
     outShape->SetDim(0, N);
-    outShape->SetDim(1, HOut);
-    outShape->SetDim(2, WOut);
-    outShape->SetDim(3, C);
+    outShape->SetDim(hIndex, HOut);
+    outShape->SetDim(wIndex, WOut);
+    outShape->SetDim(cIndex, C);
 
     OP_LOGD(context->GetNodeName(), "End InferShapeImageProjectiveTransform");
     return GRAPH_SUCCESS;

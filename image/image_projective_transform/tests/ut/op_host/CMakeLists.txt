@@ -12,7 +12,18 @@
 if(UT_TEST_ALL OR OP_HOST_UT)
     add_modules_ut_sources(UT_NAME ${OP_INFERSHAPE_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950")
+    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950" OR "${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend350")
+        set(IMAGE_PROJECTIVE_TRANSFORM_UT_SOC "Ascend950")
+        if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend350")
+            set(IMAGE_PROJECTIVE_TRANSFORM_UT_SOC "Ascend350")
+        endif()
         add_modules_ut_sources(UT_NAME ${OP_TILING_MODULE_NAME} MODE PRIVATE DIR ${CMAKE_CURRENT_SOURCE_DIR}/arch35)
+        if(TARGET ${OP_TILING_MODULE_NAME}_cases_obj)
+            # The shared UT object target may be created in another operator's
+            # directory. A target definition also works for full-repository UT;
+            # only this operator's two tests consume the uniquely named macro.
+            target_compile_definitions(${OP_TILING_MODULE_NAME}_cases_obj PRIVATE
+                "IMAGE_PROJECTIVE_TRANSFORM_UT_SOC=\"${IMAGE_PROJECTIVE_TRANSFORM_UT_SOC}\"")
+        endif()
     endif()
 endif()

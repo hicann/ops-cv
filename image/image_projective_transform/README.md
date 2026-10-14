@@ -93,7 +93,7 @@
     <tr>
       <td>transforms</td>
       <td>输入</td>
-      <td>射影变换矩阵参数，shape为(N, 8)，每行包含8个变换参数[a0, a1, a2, a3, a4, a5, a6, a7]。</td>
+      <td>射影变换矩阵参数，shape为(N, 8)或(1, 8)；后一种将同一变换广播至所有图像。每行包含8个变换参数[a0, a1, a2, a3, a4, a5, a6, a7]。</td>
       <td>FLOAT</td>
       <td>ND</td>
     </tr>
@@ -114,7 +114,7 @@
     <tr>
       <td>fill_mode</td>
       <td>属性（可选）</td>
-      <td>填充模式，默认值为"CONSTANT"。</td>
+      <td>填充模式，支持"CONSTANT"、"NEAREST"、"REFLECT"和"WRAP"，默认值为"CONSTANT"。</td>
       <td>String</td>
       <td>-</td>
     </tr>
@@ -130,10 +130,13 @@
 ## 约束说明
 
 - images输入必须为4维（NHWC格式）。
-- transforms输入必须为2维，shape为(N, 8)，数据类型为FLOAT。
+- transforms输入必须为2维，shape为(M, 8)，M必须为1或images的批次数N，数据类型为FLOAT。N为0时允许M为0或1。
 - output_shape输入必须为1维，shape为(2,)，数据类型为INT32。
 - output_shape的两个元素[height, width]决定了输出transformed_images的中间两维(HOut, WOut)，即transformed_images.shape[1]=output_shape[0]，transformed_images.shape[2]=output_shape[1]。当output_shape某元素为0时，表示输出为空tensor，算子直接返回，不进行计算。
-- fill_mode当前仅支持"CONSTANT"模式，填充值为0。
+- output_shape的已知长度必须恰好为2，可读常量height和width必须非负；0保留为空输出，负值报错。
+- fill_mode区分大小写："CONSTANT"越界填0，"NEAREST"限制到边缘坐标，"REFLECT"按边缘重复镜像，"WRAP"按周期重映射。非法fill_mode或interpolation报错，空输出也不绕过检查。
+- InferShape允许未知rank和部分动态维，尽量保留已知的N/C及常量H/W；无可读output_shape常量时输出H/W为-1。InferShape按images的origin format推导NCHW/NHWC维位置；实际AI Core kernel仍只支持NHWC。
+- Tiling优先采用可读output_shape数据，其次采用非负的输出storage H/W（含0）；两者不可用时保留输入H/W回退。batch小于动态哨兵-1或空间乘积超出int64范围时报错。
 
 ## 调用说明
 
