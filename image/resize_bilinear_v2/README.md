@@ -64,6 +64,34 @@
       <td>ND</td>
     </tr>
     <tr>
+      <td>align_corners</td>
+      <td>可选属性</td>
+      <td>为true时对齐输入和输出图像四角像素的中心；默认为false。</td>
+      <td>BOOL</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>half_pixel_centers</td>
+      <td>可选属性</td>
+      <td>为true时按半像素中心坐标进行采样；不能与align_corners同时为true，默认为false。</td>
+      <td>BOOL</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>dtype</td>
+      <td>可选属性</td>
+      <td>指定输出y的数据类型，支持FLOAT32、FLOAT16、BFLOAT16；默认为FLOAT32。</td>
+      <td>TYPE</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>scales</td>
+      <td>可选属性</td>
+      <td>指定H、W方向的缩放系数，默认值为[0.0, 0.0]，表示根据size计算缩放比例。</td>
+      <td>LIST_FLOAT</td>
+      <td>-</td>
+    </tr>
+    <tr>
       <td>y</td>
       <td>输出</td>
       <td>双线性插值调整后图像，对应公式中y。</td>
@@ -74,7 +102,8 @@
 
 ## 约束说明
 
-无
+- `align_corners`和`half_pixel_centers`不能同时为true。
+- `scales`设置时应提供H、W两个缩放系数；默认值为`[0.0, 0.0]`。
 
 ## 调用说明
 
