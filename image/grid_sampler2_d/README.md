@@ -75,7 +75,7 @@
       <td>输入</td>
       <td>采样网格，shape为(N, H<sub>out</sub>, W<sub>out</sub>, 2)，数据类型必须与x一致。</td>
       <td>FLOAT16、FLOAT32</td>
-      <td>NHWC</td>
+      <td>ND</td>
     </tr>
     <tr>
       <td>interpolation_mode</td>
