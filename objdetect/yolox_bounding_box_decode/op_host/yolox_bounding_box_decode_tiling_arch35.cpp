@@ -26,6 +26,7 @@
 #include "objdetect/yolox_bounding_box_decode/op_kernel/arch35/yolox_bounding_box_decode_tiling_key.h"
 
 #include <string>
+#include <limits>
 
 namespace optiling {
 
@@ -118,8 +119,14 @@ static ge::graphStatus ValidateShape(gert::TilingContext* context, int64_t& boxC
                                           std::to_string(bboxesStorage.GetDim(BBOXES_LAST_DIM_INDEX)).c_str(), "4"),
                 return ge::GRAPH_FAILED);
 
-    boxNum = priorsStorage.GetDim(0);            // N
-    boxCount = bboxesStorage.GetDim(0) * boxNum; // B * N（空 tensor 时 boxCount=0）
+    boxNum = priorsStorage.GetDim(0); // N
+    const int64_t batch = bboxesStorage.GetDim(0);
+    OP_CHECK_IF(batch < 0 || boxNum < 0,
+                OP_LOGE_WITHOUT_REPORT(context->GetNodeName(), "shape dimensions must be non-negative"),
+                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(batch != 0 && boxNum > (std::numeric_limits<int64_t>::max() / batch),
+                OP_LOGE_WITHOUT_REPORT(context->GetNodeName(), "B * N overflows int64_t"), return ge::GRAPH_FAILED);
+    boxCount = batch * boxNum; // B * N（空 tensor 时 boxCount=0）
     return ge::GRAPH_SUCCESS;
 }
 
@@ -140,11 +147,11 @@ static ge::graphStatus ComputeTiling(gert::TilingContext* context, YoloxBounding
 {
     tiling->boxCount = boxCount;
     tiling->boxNum = boxNum;
-    int64_t perCoreBoxes = (boxCount + coreNum - 1) / coreNum;
+    int64_t perCoreBoxes = boxCount / coreNum + ((boxCount % coreNum) != 0 ? 1 : 0);
     if (perCoreBoxes < PER_CORE_MIN) {
         perCoreBoxes = PER_CORE_MIN;
     }
-    int64_t needCoreNum = (boxCount + perCoreBoxes - 1) / perCoreBoxes;
+    int64_t needCoreNum = boxCount / perCoreBoxes + ((boxCount % perCoreBoxes) != 0 ? 1 : 0);
     if (needCoreNum > coreNum) { // 上限保护
         needCoreNum = coreNum;
     }
