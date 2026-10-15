@@ -172,7 +172,7 @@ static aclnnStatus CheckParams(const aclTensor* selfRef, const aclTensor* out, c
 {
     // 错误码等DFX方案细化后刷新，错误日志在check接口内打印
     // 1. 检查参数是否为空指针
-    CHECK_RET(CheckNotNull(selfRef, out), ACLNN_ERR_INNER_NULLPTR);
+    CHECK_RET(CheckNotNull(selfRef, out), ACLNN_ERR_PARAM_NULLPTR);
 
     // 2. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
     CHECK_RET(CheckDtypeValid(selfRef), ACLNN_ERR_PARAM_INVALID);
