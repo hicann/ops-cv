@@ -74,9 +74,15 @@ private:
     __aicore__ inline void ComputeAndCopyOut(int32_t progress)
     {
         Duplicate<T>(outputLocal, 0, BYTE_SIZE);
-        for (int32_t index = progress * actCore * BYTE_SIZE + GetBlockIdx() * BYTE_SIZE;
-             index < progress * actCore * BYTE_SIZE + GetBlockIdx() * BYTE_SIZE + BYTE_SIZE; ++index) {
-            if (index > this->standard) {
+        const int64_t blockStart = static_cast<int64_t>(progress) * actCore * BYTE_SIZE + GetBlockIdx() * BYTE_SIZE;
+        const int64_t validElements = this->standard - blockStart;
+        if (validElements <= 0) {
+            return;
+        }
+        const int32_t copyElements = validElements < BYTE_SIZE ? static_cast<int32_t>(validElements) : BYTE_SIZE;
+        for (int32_t offset = 0; offset < copyElements; ++offset) {
+            const int64_t index = blockStart + offset;
+            if (index >= this->standard) {
                 continue;
             }
             int sample_idx = index % this->nsample;
@@ -117,8 +123,12 @@ private:
 #if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))
         if (g_coreType == AIV) {
 #endif
-            DataCopy(outputGm[progress * this->actCore * BYTE_SIZE + GetBlockIdx() * BYTE_SIZE], outputLocal[0],
-                     BYTE_SIZE);
+            if (copyElements == BYTE_SIZE) {
+                DataCopy(outputGm[blockStart], outputLocal[0], BYTE_SIZE);
+            } else {
+                DataCopyExtParams copyParams{1, static_cast<uint32_t>(copyElements * sizeof(T)), 0, 0, 0};
+                DataCopyPad(outputGm[blockStart], outputLocal[0], copyParams);
+            }
             PipeBarrier<PIPE_ALL>();
             ;
 #if !(defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113))

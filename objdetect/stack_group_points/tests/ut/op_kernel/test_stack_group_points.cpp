@@ -8,14 +8,15 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <algorithm>
 #include <array>
+#include <cstring>
 #include <vector>
 #include "gtest/gtest.h"
 
 #ifdef __CCE_KT_TEST__
 #include "tikicpulib.h"
 #include "data_utils.h"
-#include "string.h"
 #include <iostream>
 #include <string>
 #endif
@@ -80,6 +81,56 @@ TEST_F(StackGroupPointsTest, test_case_fp32)
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(stack_group_points, block_dim, features, features_batch_cnt, indices, indices_batch_cnt, y, workspace,
                 tiling);
+
+    AscendC::GmFree((void*)features);
+    AscendC::GmFree((void*)features_batch_cnt);
+    AscendC::GmFree((void*)indices);
+    AscendC::GmFree((void*)indices_batch_cnt);
+    AscendC::GmFree((void*)y);
+    AscendC::GmFree((void*)tiling);
+    AscendC::GmFree((void*)workspace);
+}
+
+TEST_F(StackGroupPointsTest, test_case_fp32_output_tail_guard)
+{
+    constexpr size_t kInputBytes = 32;
+    constexpr size_t kOutputElements = 16;
+    uint8_t* features = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* indices = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* features_batch_cnt = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* indices_batch_cnt = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(kOutputElements * sizeof(float));
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 1024 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(StackGroupPointsTilingData));
+
+    ASSERT_NE(features, nullptr);
+    ASSERT_NE(indices, nullptr);
+    ASSERT_NE(features_batch_cnt, nullptr);
+    ASSERT_NE(indices_batch_cnt, nullptr);
+    ASSERT_NE(y, nullptr);
+    ASSERT_NE(workspace, nullptr);
+    ASSERT_NE(tiling, nullptr);
+
+    std::memset(features, 0, kInputBytes);
+    std::memset(indices, 0, kInputBytes);
+    std::memset(features_batch_cnt, 0, kInputBytes);
+    std::memset(indices_batch_cnt, 0, kInputBytes);
+    std::fill_n(reinterpret_cast<float*>(y), kOutputElements, 12345.0f);
+    *reinterpret_cast<float*>(features) = 7.0f;
+    *reinterpret_cast<int32_t*>(features_batch_cnt) = 1;
+    *reinterpret_cast<int32_t*>(indices_batch_cnt) = 1;
+
+    // Tiling fields follow StackGroupPointsTilingData serialization order.
+    const std::array<int64_t, 14> tilingValues = {1, 1, 1, 1, 0, 32, 32, 32, 32, 1, 32, 1, 1, 48};
+    std::memcpy(tiling, tilingValues.data(), sizeof(tilingValues));
+
+    ICPU_SET_TILING_KEY(1);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(stack_group_points, 1, features, features_batch_cnt, indices, indices_batch_cnt, y, workspace, tiling);
+
+    const float* output = reinterpret_cast<const float*>(y);
+    EXPECT_FLOAT_EQ(output[0], 7.0f);
+    EXPECT_FLOAT_EQ(output[1], 12345.0f);
 
     AscendC::GmFree((void*)features);
     AscendC::GmFree((void*)features_batch_cnt);
