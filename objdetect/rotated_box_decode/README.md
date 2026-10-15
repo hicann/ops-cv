@@ -24,18 +24,18 @@ RotatedBoxDecode 是旋转目标检测中的框回归解码算子，将网络预
 5. **解角度**：`θ_t = atan(tan(θ_a) + Δt)`（度↔弧度转换，tan 空间加法抗 180° 周期）
 6. **中心转角点**：由 `(cx, cy, w, h)` 还原 `(lx', ly', rx', ry')`，角度透传
 
-计算公式如下，其中 `Δ = deltas / weight`（weight 五元 `[wx, wy, ww, wh, wt]`），角度在 tan 空间相加再 atan，输出主值区间 `[-90°, 90°)`，宽高 `max(·, 1)` 夹下限防止退化：
+计算公式如下，其中 `Δ = deltas / weight`（weight 五元 `[wx, wy, ww, wh, wt]`，按通道对应相除），角度在 tan 空间相加再 atan，输出主值区间 `[-90°, 90°)`，宽高 `max(·, 1)` 夹下限防止退化：
 
 $$
 \begin{aligned}
 a_w &= \max(rx - lx,\ 1),\quad a_h = \max(ry - ly,\ 1) \\
 a_{cx} &= lx + a_w / 2,\quad a_{cy} = ly + a_h / 2 \\
-\Delta' &= \Delta / \text{weight} \\
-t_{cx} &= a_{cx} + \Delta'x \cdot a_w \\
-t_{cy} &= a_{cy} + \Delta'y \cdot a_h \\
-t_w    &= e^{\Delta'w} \cdot a_w \\
-t_h    &= e^{\Delta'h} \cdot a_h \\
-\theta_t &= \arctan\big(\tan(\theta_a) + \Delta't\big) \\
+\Delta &= \text{deltas} / \text{weight} \\
+t_{cx} &= a_{cx} + \Delta x \cdot a_w \\
+t_{cy} &= a_{cy} + \Delta y \cdot a_h \\
+t_w    &= e^{\Delta w} \cdot a_w \\
+t_h    &= e^{\Delta h} \cdot a_h \\
+\theta_t &= \arctan\big(\tan(\theta_a) + \Delta t\big) \\
 lx' &= t_{cx} - t_w/2,\quad rx' = t_{cx} + t_w/2 \\
 ly' &= t_{cy} - t_h/2,\quad ry' = t_{cy} + t_h/2
 \end{aligned}
