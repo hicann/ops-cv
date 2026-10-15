@@ -59,6 +59,8 @@ public:
             .DynamicShapeSupportFlag(true)
             .ExtendCfgInfo("opFile.value", "resize_nearest_neighbor_v2_apt");
         this->AICore().AddConfig("ascend950", aicoreConfig);
+        this->AICore().AddConfig("ascend960dt", aicoreConfig);
+        this->AICore().AddConfig("ascend960pr", aicoreConfig);
         this->AICore().AddConfig("mc62", aicoreConfig);
     }
 };

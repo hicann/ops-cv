@@ -482,6 +482,12 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       # standardize socVersion
       string(REPLACE "ascend" "Ascend" socVersion "${oriSocVersion}")
 
+      # skip duplicated targets: op with DEPENDENCIES may be processed twice
+      # (dependent-ops path via add_dependent_ops, then main traversal)
+      if(TARGET ${opName}_${socVersion}_tiling_tmp)
+        continue()
+      endif()
+
       # add tiling tmp so: ${opName}_${socVersion}_tiling_tmp.so
       add_library(${opName}_${socVersion}_tiling_tmp SHARED ${tilingSrc} $<TARGET_OBJECTS:${COMMON_NAME}_obj>
                   $<$<TARGET_EXISTS:opbase_util_objs>:$<TARGET_OBJECTS:opbase_util_objs>>

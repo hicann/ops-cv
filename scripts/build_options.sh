@@ -318,7 +318,7 @@ usage() {
   echo "                     Example: --ccache=off to disable ccache"
   echo "    --ops Compile specified operator, use snake name, like: --ops=grid_sample,iou_v2, use ',' to separate different operator"
   echo "    --soc Compile binary with specified Ascend SoC, like: --soc=ascend910b"
-  echo "    --soc supported parameters must only in [ascend031 ascend035 ascend310b ascend310p ascend610lite ascend630 ascend910_93 ascend950 ascend910b ascend910 mc62 kirinx90 kirin9030], A3(--soc=ascend910_93)"
+  echo "    --soc supported parameters must only in [ascend031 ascend035 ascend310b ascend310p ascend610lite ascend630 ascend910_93 ascend950 ascend960dt ascend960pr ascend910b ascend910 mc62 kirinx90 kirin9030], A3(--soc=ascend910_93)"
   echo "    --vendor_name Specify the custom operator package vendor name, like: --vendor_name=customize, default to customize-cv"
   echo "    --aicpu build aicpu task"
   echo "    --opgraph build op_graph_cv.so"
