@@ -34,7 +34,7 @@ class AnchorResponseFlagsKernelSpec:
             gt_bboxes: numpy array, shape (N, 4), dtype float16/float32
                        Ground truth bounding box coordinates in [x1, y1, x2, y2] format.
             featmap_size: list of 2 ints, [feat_h, feat_w]
-            strides: list of 2 ints, [stride_h, stride_w]
+            strides: list of 2 ints, [stride_w, stride_h]
             num_base_anchors: int, number of base anchors per grid position
             **kwargs: {input,output}_{dtypes,ori_shapes,formats,ori_formats},
                       full_soc_version, short_soc_version, testcase_name
@@ -43,7 +43,7 @@ class AnchorResponseFlagsKernelSpec:
             List containing one output tensor, shape (feat_h * feat_w * num_base_anchors,), dtype uint8
         """
         feat_h, feat_w = featmap_size
-        stride_h, stride_w = strides
+        stride_w, stride_h = strides
 
         if stride_h == 0 or stride_w == 0:
             raise ZeroDivisionError("strides must not contain 0")
@@ -63,8 +63,8 @@ class AnchorResponseFlagsKernelSpec:
         cx = torch.nan_to_num(cx, nan=0.0, posinf=0.0, neginf=0.0)
         cy = torch.nan_to_num(cy, nan=0.0, posinf=0.0, neginf=0.0)
 
-        raw_gx = torch.floor(cx / float(stride_h))
-        raw_gy = torch.floor(cy / float(stride_w))
+        raw_gx = torch.floor(cx / float(stride_w))
+        raw_gy = torch.floor(cy / float(stride_h))
 
         grid_x = torch.clamp(raw_gx, min=0.0, max=float(feat_w - 1)).to(torch.int64)
         grid_y = torch.clamp(raw_gy, min=0.0, max=float(feat_h - 1)).to(torch.int64)
@@ -85,7 +85,7 @@ class AnchorResponseFlagsKernelSpec:
             self, gt_bboxes, *, featmap_size, strides, num_base_anchors, **kwargs
         ):
             self.feat_h, self.feat_w = featmap_size
-            self.stride_h, self.stride_w = strides
+            self.stride_w, self.stride_h = strides
             self.num_base_anchors = num_base_anchors
             self.total_anchors = self.feat_h * self.feat_w * self.num_base_anchors
             self.N = gt_bboxes.shape[0]
@@ -104,8 +104,8 @@ class AnchorResponseFlagsKernelSpec:
             cx = torch.nan_to_num(cx, nan=0.0, posinf=0.0, neginf=0.0)
             cy = torch.nan_to_num(cy, nan=0.0, posinf=0.0, neginf=0.0)
 
-            raw_gx = torch.floor(cx / float(self.stride_h))
-            raw_gy = torch.floor(cy / float(self.stride_w))
+            raw_gx = torch.floor(cx / float(self.stride_w))
+            raw_gy = torch.floor(cy / float(self.stride_h))
 
             grid_x = torch.clamp(raw_gx, min=0.0, max=float(self.feat_w - 1)).to(
                 torch.int64

@@ -35,7 +35,7 @@ namespace ge {
  *
  *@par Attributes:
  * @li featmap_size: ListInt, required. Feature map size [feat_h, feat_w].
- * @li strides: ListInt, required. Strides [stride_h, stride_w].
+ * @li strides: ListInt, required. Strides [stride_w, stride_h].
  * @li num_base_anchors: Int, required. Number of base anchors per grid position.
  *
  *@par Third-party framework compatibility

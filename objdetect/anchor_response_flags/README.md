@@ -26,11 +26,11 @@ cy_i = (y1_i + y2_i) \times 0.5
 $$
 
 $$
-grid\_x_i = \lfloor cx_i / stride\_h \rfloor
+grid\_x_i = \lfloor cx_i / stride\_w \rfloor
 $$
 
 $$
-grid\_y_i = \lfloor cy_i / stride\_w \rfloor
+grid\_y_i = \lfloor cy_i / stride\_h \rfloor
 $$
 
 $$
@@ -87,7 +87,7 @@ $$
     <tr>
       <td>strides</td>
       <td>属性</td>
-      <td>步长，长度为2的列表[stride_h, stride_w]，值必须为正整数。</td>
+      <td>步长，长度为2的列表[stride_w, stride_h]，值必须为正整数。x 方向步长在前，y 方向步长在后。</td>
       <td>ListInt</td>
       <td>-</td>
     </tr>
