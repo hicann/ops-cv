@@ -1,8 +1,6 @@
 <!-- npu="950" id7 -->
 # aclnnRgb2yuv422
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/experimental/image/rgb2yuv422)
-
 ## 产品支持情况
 
 <!-- npu="950" id1 -->

@@ -1,7 +1,5 @@
 # aclnnMrgbaCustom
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/objdetect/mrgba_custom)
-
 ## 产品支持情况
 
 <!-- npu="950" id1 -->

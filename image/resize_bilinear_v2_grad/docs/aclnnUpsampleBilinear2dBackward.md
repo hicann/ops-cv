@@ -1,7 +1,5 @@
 # aclnnUpsampleBilinear2dBackward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/resize_bilinear_v2_grad)
-
 ## 产品支持情况
 
 <!-- npu="950" id1 -->

@@ -127,5 +127,3 @@
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_upsample_nearest](examples/test_aclnn_upsample_nearest.cpp) | 通过[aclnnUpsampleNearestExact1d](docs/aclnnUpsampleNearestExact1d.md)接口方式调用UpsampleNearest算子。 |
 | aclnn接口  | [test_aclnn_upsample_nearest_exact2d](examples/test_aclnn_upsample_nearest_exact2d.cpp) | 通过[aclnnUpsampleNearestExact2d](docs/aclnnUpsampleNearestExact2d.md)接口方式调用UpsampleNearest算子。 |
-| aclnn接口  | [test_aclnn_upsample_nearest_exact1d_uint8](examples/test_aclnn_upsample_nearest_exact1d_uint8.cpp) | 通过[aclnnUpsampleNearestExact1d](docs/aclnnUpsampleNearestExact1d.md)接口方式调用UpsampleNearest算子，输入/输出数据类型为UINT8。 |
-| aclnn接口  | [test_aclnn_upsample_nearest_exact2d_uint8](examples/test_aclnn_upsample_nearest_exact2d_uint8.cpp) | 通过[aclnnUpsampleNearestExact2d](docs/aclnnUpsampleNearestExact2d.md)接口方式调用UpsampleNearest算子，输入/输出数据类型为UINT8。 |

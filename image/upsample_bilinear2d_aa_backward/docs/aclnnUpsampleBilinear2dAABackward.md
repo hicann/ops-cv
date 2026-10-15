@@ -1,7 +1,5 @@
 # aclnnUpsampleBilinear2dAABackward
 
-[📄 查看源码](https://gitcode.com/cann/ops-cv/tree/master/image/upsample_bilinear2d_aa_backward)
-
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
