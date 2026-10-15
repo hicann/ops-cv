@@ -89,8 +89,10 @@ if [ "${GIT_TARGET_BRANCH}x" = "masterx" ]; then
     elif [ "${GE_ST_RT2}X" == "classifyX" ]; then
         cd "${WORKSPACE}/CI/cann/pipeline/bin/common"
         python3 count_files.py "${WORKSPACE}/classify_rule.yaml" ops-cv "${WORKSPACE}" "${WORKSPACE}"
+    elif [ "${ut_type}X" == "kernelX" ]; then
+        LOG_DO sh build.sh -u --cov --opkernel -f "pr_filelist.txt" -j16 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH}
     else
-        LOG_DO sh build.sh -u --cov -f "pr_filelist.txt" -j16 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH}
+        LOG_DO sh build.sh -u --cov --asan --ophost --opapi --opgraph -f "pr_filelist.txt" -j16 --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH}
     fi
 else
     LOG_DO sh build.sh -u --ophost --cann_3rd_lib_path=${ASCEND_3RD_LIB_PATH} -f "pr_filelist.txt" -j16

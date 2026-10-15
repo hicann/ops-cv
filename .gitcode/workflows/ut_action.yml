@@ -48,6 +48,7 @@ jobs:
           export WORKSPACE=${{ steps.process_checkout.outputs.path }}
           cd ${{ steps.process_checkout.outputs.path }}
           export GE_ST_RT2=${{ inputs.ge_st_rt2 }}
+          export ut_type=${{ inputs.ut_type }}
           export GIT_TARGET_BRANCH=${{ env.TARGET_BRANCH }}
           bash ut.sh
       -
