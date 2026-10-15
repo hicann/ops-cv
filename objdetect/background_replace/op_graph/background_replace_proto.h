@@ -9,23 +9,24 @@
  */
 
 /*!
- * \file mgrba_custom_proto.h
+ * \file background_replace_proto.h
  * \brief
  */
-#ifndef OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_
-#define OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_
+#ifndef OPS_OP_PROTO_INC_BACKGROUND_REPLACE_H_
+#define OPS_OP_PROTO_INC_BACKGROUND_REPLACE_H_
 
 #include "graph/operator_reg.h"
 namespace ge {
 /**
- * @brief Give transparency to the image.
+ * @brief Replaces the background using out = bkg * (1 - mask) + src * mask.
  *
  * @par Inputs:
- * @li rgb: A tensor of the type DT_UINT8.
- * @li alpha:A tensor of the type DT_UINT8.
+ * @li bkg: An ND background image tensor of type uint8 or float16, with HWC shape.
+ * @li src: An ND source image tensor with the same dtype and shape as bkg.
+ * @li mask: An ND float16 mask tensor with HWC shape and one channel.
  *
  * @par Outputs:
- * @li dst: A tensor of the type DT_UINT8.
+ * @li out: The blended image tensor, with the same dtype and shape as bkg.
  */
 REG_OP(BackgroundReplace)
     .INPUT(bkg, TensorType({DT_UINT8, DT_FLOAT16}))
@@ -34,4 +35,4 @@ REG_OP(BackgroundReplace)
     .OUTPUT(out, TensorType({DT_UINT8, DT_FLOAT16}))
     .OP_END_FACTORY_REG(BackgroundReplace)
 } // namespace ge
-#endif // OPS_BUILT_IN_OP_PROTO_INC_NN_DETECT_OPS_H_
+#endif // OPS_OP_PROTO_INC_BACKGROUND_REPLACE_H_
