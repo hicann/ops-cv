@@ -56,6 +56,34 @@ TEST(Lut3DInferShape, RejectsMismatchedImageAndLutDtypes)
     ExecuteTestCase(context, ge::GRAPH_FAILED);
 }
 
+TEST(Lut3DInferShape, PreservesZeroImageDimensionForEmptyTensor)
+{
+    gert::InfershapeContextPara context("LUT3D",
+                                        {
+                                            {{{2, 0, 3}, {2, 0, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                            {{{8, 8, 8, 3}, {8, 8, 8, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                        },
+                                        {
+                                            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                        });
+
+    ExecuteTestCase(context, ge::GRAPH_SUCCESS, {{2, 0, 3}});
+}
+
+TEST(Lut3DInferShape, RejectsNegativeKnownImageDimension)
+{
+    gert::InfershapeContextPara context("LUT3D",
+                                        {
+                                            {{{2, -4, 3}, {2, -4, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                            {{{8, 8, 8, 3}, {8, 8, 8, 3}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                        },
+                                        {
+                                            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+                                        });
+
+    ExecuteTestCase(context, ge::GRAPH_FAILED);
+}
+
 TEST(Lut3DInferShape, RejectsConflictingKnownLutDimensionsAroundUnknownDimension)
 {
     gert::InfershapeContextPara context("LUT3D",

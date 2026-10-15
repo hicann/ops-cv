@@ -57,6 +57,12 @@ static ge::graphStatus InferShapeLut3D(gert::InferShapeContext* context)
     if (!imgUnknownRank) {
         OP_CHECK_IF(imgDimNum != 3 && imgDimNum != 4,
                     OP_LOGE(context, "The dims of img must be 3 or 4, but got %zu", imgDimNum), return GRAPH_FAILED);
+        for (size_t i = 0; i < imgDimNum; ++i) {
+            const int64_t imgDim = imgShape->GetDim(i);
+            OP_CHECK_IF(imgDim < 0 && imgDim != ge::UNKNOWN_DIM,
+                        OP_LOGE(context, "img dim[%zu] must be non-negative or UNKNOWN_DIM, but got %ld", i, imgDim),
+                        return GRAPH_FAILED);
+        }
         const int64_t imgChannel = imgShape->GetDim(imgDimNum - 1);
         OP_CHECK_IF(imgChannel != ge::UNKNOWN_DIM && imgChannel != 3, OP_LOGE(context, "img last dim must be 3"),
                     return GRAPH_FAILED);

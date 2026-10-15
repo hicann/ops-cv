@@ -93,6 +93,15 @@ static ge::graphStatus ValidateShapes(gert::TilingContext* context, int64_t& tot
         OP_LOGE_FOR_INVALID_SHAPEDIM(context->GetNodeName(), "img", std::to_string(imgDimNum).c_str(), "3 or 4");
         return ge::GRAPH_FAILED;
     }
+    for (int64_t i = 0; i < imgDimNum; ++i) {
+        const int64_t imgDim = imgShape.GetDim(i);
+        if (imgDim < 0 && imgDim != ge::UNKNOWN_DIM) {
+            OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "img dimension",
+                                                  std::to_string(imgDim).c_str(),
+                                                  "must be non-negative or UNKNOWN_DIM");
+            return ge::GRAPH_FAILED;
+        }
+    }
     if (imgShape.GetDim(imgDimNum - 1) != 3) {
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "img last dim",
                                               std::to_string(imgShape.GetDim(imgDimNum - 1)).c_str(),
