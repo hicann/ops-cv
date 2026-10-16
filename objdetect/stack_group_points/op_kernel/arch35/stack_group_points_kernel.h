@@ -56,12 +56,11 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpStackGroupPoi
             }
         }
 
-        int32_t featuresBatchStartIdx = 0;
-        int32_t featuresBatchEndIdx = featuresBatchCnt[0];
+        int64_t featuresBatchStartIdx = 0;
         for (int32_t k = 0; k < bsIdx; k++) {
             featuresBatchStartIdx += featuresBatchCnt[k];
-            featuresBatchEndIdx = featuresBatchStartIdx + featuresBatchCnt[k + 1];
         }
+        const int32_t featuresBatchLocalCnt = featuresBatchCnt[bsIdx];
 
         int64_t tmpCin = ptIdx * nsample + sampleIdx;
         int32_t cin = 0;
@@ -70,9 +69,8 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpStackGroupPoi
         }
 
         T result = static_cast<T>(0);
-        if (cin < featuresBatchEndIdx) {
-            int64_t inIdx = static_cast<int64_t>(cin) * c + cIdx;
-            int64_t fsIdx = inIdx + static_cast<int64_t>(featuresBatchStartIdx) * c;
+        if (cin >= 0 && cin < featuresBatchLocalCnt) {
+            int64_t fsIdx = (featuresBatchStartIdx + static_cast<int64_t>(cin)) * c + cIdx;
             if (fsIdx >= 0 && fsIdx < featLen) {
                 result = features[fsIdx];
             }

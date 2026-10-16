@@ -35,17 +35,15 @@ def stack_group_points_forward(
                 pt_cnt += indices_batch_cnt[k]
                 bs_idx = k
         features_batch_start_idx = 0
-        features_batch_end_idx = features_batch_cnt[0]
         for k in range(bs_idx):
             features_batch_start_idx += features_batch_cnt[k]
-            features_batch_end_idx = (
-                features_batch_start_idx + features_batch_cnt[k + 1]
-            )
-        cur_features = cur_features[features_batch_start_idx * c:]
-        cur_idx = cur_idx[pt_idx * nsample + sample_idx]
+        cur_features = cur_features[features_batch_start_idx * c :]
+        cur_idx = int(cur_idx[pt_idx * nsample + sample_idx])
         in_idx = cur_idx * c + c_idx
         out_idx = pt_idx * c * nsample + c_idx * nsample + sample_idx
-        if in_idx < features_batch_end_idx * c and in_idx < len(cur_features):
+        if 0 <= cur_idx < int(features_batch_cnt[bs_idx]) and in_idx < len(
+            cur_features
+        ):
             output[out_idx] = cur_features[in_idx]
     return output.view(m, c, nsample)
 

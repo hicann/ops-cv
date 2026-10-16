@@ -98,25 +98,22 @@ private:
                     pt_cnt += pt_tmp;
                 }
             }
-            int features_batch_start_idx = 0;
-            int features_batch_end_idx = *features_batch_cntGm.GetPhyAddr(0);
+            int64_t features_batch_start_idx = 0;
             for (int k = 0; k < bs_idx; k++) {
                 features_batch_start_idx += *features_batch_cntGm.GetPhyAddr(k);
-                int fbc_tmp = k + 1;
-                int fbc_cnt = *features_batch_cntGm.GetPhyAddr(fbc_tmp);
-                features_batch_end_idx = features_batch_start_idx + fbc_cnt;
             }
+            int32_t features_batch_local_cnt = *features_batch_cntGm.GetPhyAddr(bs_idx);
             int tmp_cin = pt_idx * this->nsample + sample_idx;
             int cin = 0;
             if (tmp_cin < this->m * this->nsample) {
                 cin = *indicesGm.GetPhyAddr(tmp_cin);
             }
-            int in_idx = cin * this->c + c_idx;
-            if (in_idx < features_batch_end_idx * this->c &&
-                in_idx < this->n * this->c - features_batch_start_idx * this->c) {
-                int fs_idx = in_idx + features_batch_start_idx * this->c;
-                T result = *featuresGm.GetPhyAddr(fs_idx);
-                outputLocal.SetValue(index - progress * actCore * BYTE_SIZE - GetBlockIdx() * BYTE_SIZE, result);
+            if (cin >= 0 && cin < features_batch_local_cnt) {
+                int64_t fs_idx = (features_batch_start_idx + static_cast<int64_t>(cin)) * this->c + c_idx;
+                if (fs_idx >= 0 && fs_idx < this->n * this->c) {
+                    T result = *featuresGm.GetPhyAddr(fs_idx);
+                    outputLocal.SetValue(index - progress * actCore * BYTE_SIZE - GetBlockIdx() * BYTE_SIZE, result);
+                }
             }
         }
         PipeBarrier<PIPE_ALL>();

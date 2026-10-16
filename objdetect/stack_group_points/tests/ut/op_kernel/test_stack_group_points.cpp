@@ -91,6 +91,62 @@ TEST_F(StackGroupPointsTest, test_case_fp32)
     AscendC::GmFree((void*)workspace);
 }
 
+TEST_F(StackGroupPointsTest, test_case_fp32_batch_local_index_bounds)
+{
+    constexpr size_t kInputBytes = 32;
+    constexpr size_t kOutputElements = 16;
+    uint8_t* features = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* indices = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* features_batch_cnt = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* indices_batch_cnt = (uint8_t*)AscendC::GmAlloc(kInputBytes);
+    uint8_t* y = (uint8_t*)AscendC::GmAlloc(kOutputElements * sizeof(float));
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16 * 1024 * 1024);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(StackGroupPointsTilingData));
+
+    ASSERT_NE(features, nullptr);
+    ASSERT_NE(indices, nullptr);
+    ASSERT_NE(features_batch_cnt, nullptr);
+    ASSERT_NE(indices_batch_cnt, nullptr);
+    ASSERT_NE(y, nullptr);
+    ASSERT_NE(workspace, nullptr);
+    ASSERT_NE(tiling, nullptr);
+
+    std::memset(features, 0, kInputBytes);
+    std::memset(indices, 0, kInputBytes);
+    std::memset(features_batch_cnt, 0, kInputBytes);
+    std::memset(indices_batch_cnt, 0, kInputBytes);
+    std::fill_n(reinterpret_cast<float*>(y), kOutputElements, 0.0f);
+    const std::array<float, 6> featureValues = {10.0f, 11.0f, 20.0f, 21.0f, 30.0f, 31.0f};
+    const std::array<int32_t, 3> indexValues = {0, 2, 1};
+    const std::array<int32_t, 3> featureBatchCounts = {2, 2, 2};
+    const std::array<int32_t, 3> indexBatchCounts = {1, 1, 1};
+    std::memcpy(features, featureValues.data(), sizeof(featureValues));
+    std::memcpy(indices, indexValues.data(), sizeof(indexValues));
+    std::memcpy(features_batch_cnt, featureBatchCounts.data(), sizeof(featureBatchCounts));
+    std::memcpy(indices_batch_cnt, indexBatchCounts.data(), sizeof(indexBatchCounts));
+
+    // Tiling fields follow StackGroupPointsTilingData serialization order.
+    const std::array<int64_t, 14> tilingValues = {3, 3, 1, 1, 0, 32, 32, 32, 32, 1, 32, 6, 3, 48};
+    std::memcpy(tiling, tilingValues.data(), sizeof(tilingValues));
+
+    ICPU_SET_TILING_KEY(1);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(stack_group_points, 1, features, features_batch_cnt, indices, indices_batch_cnt, y, workspace, tiling);
+
+    const float* output = reinterpret_cast<const float*>(y);
+    EXPECT_FLOAT_EQ(output[0], 10.0f);
+    EXPECT_FLOAT_EQ(output[1], 0.0f);
+    EXPECT_FLOAT_EQ(output[2], 31.0f);
+
+    AscendC::GmFree((void*)features);
+    AscendC::GmFree((void*)features_batch_cnt);
+    AscendC::GmFree((void*)indices);
+    AscendC::GmFree((void*)indices_batch_cnt);
+    AscendC::GmFree((void*)y);
+    AscendC::GmFree((void*)tiling);
+    AscendC::GmFree((void*)workspace);
+}
+
 TEST_F(StackGroupPointsTest, test_case_fp32_output_tail_guard)
 {
     constexpr size_t kInputBytes = 32;
