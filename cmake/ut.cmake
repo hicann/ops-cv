@@ -532,6 +532,22 @@ if(UT_TEST_ALL OR OP_KERNEL_UT)
       set(gen_tiling_so_path ${CMAKE_CURRENT_BINARY_DIR}/lib${opName}_${socVersion}_tiling_tmp.so)
       set(gen_tiling_head_tag ${opName}_${socVersion}_gen_head)
       set(gen_cmd bash "${gen_tiling_head_file}" "${OP_TYPE}" "${opName}" "${gen_tiling_so_path}")
+      if(ENABLE_ASAN)
+        execute_process(
+          COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libasan.so
+          OUTPUT_VARIABLE tiling_asan_runtime
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+          RESULT_VARIABLE tiling_asan_result
+        )
+        if(NOT tiling_asan_result EQUAL 0 OR NOT EXISTS "${tiling_asan_runtime}")
+          message(FATAL_ERROR "Cannot locate ASan runtime for tiling header generation")
+        endif()
+        set(gen_cmd
+            ${CMAKE_COMMAND} -E env
+            "LD_PRELOAD=${tiling_asan_runtime}:$ENV{LD_PRELOAD}"
+            "ASAN_OPTIONS=$ENV{ASAN_OPTIONS}:detect_leaks=0"
+            ${gen_cmd})
+      endif()
       if(CUSTOM_TILING_DATA_KEYS)
         list(APPEND gen_cmd "${CUSTOM_TILING_DATA_KEYS}")
       endif()
