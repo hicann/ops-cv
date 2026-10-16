@@ -91,10 +91,6 @@ static bool ComputeCoordBudget(int64_t px1, int64_t py1, int64_t cx1, int64_t cy
     int64_t activeW = sCx2 - sCx1;
     int64_t activeC = patchC;
 
-    sCy1 = std::max(sCy1, static_cast<int64_t>(0));
-    sCx1 = std::max(sCx1, static_cast<int64_t>(0));
-    dCy1 = std::max(dCy1, static_cast<int64_t>(0));
-    dCx1 = std::max(dCx1, static_cast<int64_t>(0));
     activeH = std::max(std::min({activeH, patchH - sCy1, combineH - dCy1}), static_cast<int64_t>(0));
     activeW = std::max(std::min({activeW, patchW - sCx1, combineW - dCx1}), static_cast<int64_t>(0));
 
@@ -285,6 +281,9 @@ static ge::graphStatus PasteSubImgTilingFunc(gert::TilingContext* context)
     int64_t cx1 = coreAreaCoordArr[0], cy1 = coreAreaCoordArr[1], cx2 = coreAreaCoordArr[2], cy2 = coreAreaCoordArr[3];
     OP_CHECK_IF(cx2 <= cx1 || cy2 <= cy1, OP_LOGE(context, "core_area_coord must satisfy cx2>cx1 and cy2>cy1"),
                 return ge::GRAPH_FAILED);
+
+    OP_CHECK_IF(cx1 < 0 || cy1 < 0 || cx1 + px1 < 0 || cy1 + py1 < 0,
+                OP_LOGE(context, "source and destination coordinates must be non-negative"), return ge::GRAPH_FAILED);
 
     int64_t patchH = patchSS.GetDim(DIM_H);
     int64_t patchW = patchSS.GetDim(DIM_W);
