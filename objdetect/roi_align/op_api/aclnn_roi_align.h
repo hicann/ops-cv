@@ -27,7 +27,7 @@ extern "C" {
  *
  * @param [in] self: npu device侧的aclTensor，数据类型支持FLOAT16、FLOAT32，支持非连续的Tensor，数据格式支持NCHW。
  * @param [in] rois: npu device侧的aclTensor，数据类型支持FLOAT16、FLOAT32，支持非连续的Tensor，数据格式支持ND。
- * @param [in] batchIndices: npu device侧的aclTensor，数据类型支持INT64，支持非连续的Tensor，数据格式支持ND。
+ * @param [in] batchIndices: npu device侧的aclTensor，数据类型支持INT32，支持非连续的Tensor，数据格式支持ND。
  * @param [in] out: npu
  * device侧的aclTensor，数据类型支持FLOAT16、FLOAT32，和self一致，支持非连续的Tensor，数据格式支持NCHW。
  * @param [in] mode: host侧的string类型，池化模式，支持"avg"或"max"。
