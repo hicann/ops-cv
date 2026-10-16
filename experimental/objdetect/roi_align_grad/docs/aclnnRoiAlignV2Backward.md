@@ -159,7 +159,7 @@ aclnnStatus aclnnRoiAlignV2Backward(
       <td class="tg-0pky">-</td>
     </tr>
     <tr>
-      <td class="tg-0pky">out（aclTensor*）</td>
+      <td class="tg-0pky">gradInput（aclTensor*）</td>
       <td class="tg-0pky">输出</td>
       <td class="tg-0pky">反向传播的输出。</td>
       <td class="tg-0pky">必须与gradOutput、boxes数据类型一致。</td>
