@@ -66,7 +66,7 @@ TEST_F(DeformableRoiPoolInfershape, deformable_roi_pool_infershape_static)
         {
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
-        attrs);
+        attrs, {1, 1, 0}, {1});
     std::vector<std::vector<int64_t>> expectOutputShape = {
         {16, 256, 14, 14},
     };

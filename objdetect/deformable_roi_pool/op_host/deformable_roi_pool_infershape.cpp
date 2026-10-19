@@ -66,7 +66,7 @@ static ge::graphStatus InferShapeDeformableRoiPool(gert::InferShapeContext* cont
     OP_CHECK_NULL_WITH_CONTEXT(context, xShape);
     const gert::Shape* roisShape = context->GetInputShape(IDX_ROIS);
     OP_CHECK_NULL_WITH_CONTEXT(context, roisShape);
-    const gert::Shape* offsetShape = context->GetInputShape(IDX_OFFSET);
+    const gert::Shape* offsetShape = context->GetOptionalInputShape(IDX_OFFSET);
     OP_LOGI(context->GetNodeName(), "[DRP_INFERSHAPE2_TRACE] ENTER x=%s, rois=%s, offset=%s",
             ShapeToTraceString(xShape).c_str(), ShapeToTraceString(roisShape).c_str(),
             ShapeToTraceString(offsetShape).c_str());
