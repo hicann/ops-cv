@@ -56,9 +56,9 @@ y维度（y1、y2）同理，裁剪上界为H-1。裁剪上界取最后有效像
 </thead>
 <tbody>
 <tr>
-<td>anchor_box</td>
+<td>rois</td>
 <td>输入</td>
-<td>锚框坐标(x1,y1,x2,y2)，对应公式中anchor_box。</td>
+<td>锚框坐标(x1,y1,x2,y2)，对应公式中的anchor_box。</td>
 <td>FLOAT16、FLOAT</td>
 <td>ND</td>
 </tr>
@@ -70,9 +70,9 @@ y维度（y1、y2）同理，裁剪上界为H-1。裁剪上界取最后有效像
 <td>ND</td>
 </tr>
 <tr>
-<td>boxes</td>
+<td>bboxes</td>
 <td>输出</td>
-<td>解码后的绝对框(x1,y1,x2,y2)，对应公式中boxes。</td>
+<td>解码后的绝对框(x1,y1,x2,y2)，对应公式中的boxes。</td>
 <td>FLOAT16、FLOAT</td>
 <td>ND</td>
 </tr>

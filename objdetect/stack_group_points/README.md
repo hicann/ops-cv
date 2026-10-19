@@ -68,9 +68,9 @@
       <td>ND</td>
     </tr>
     <tr>
-      <td>out</td>
+      <td>y</td>
       <td>输出</td>
-      <td>输出点云特征。</td>
+      <td>输出点云特征，对应公式中的out。</td>
       <td>FLOAT、FLOAT16</td>
       <td>ND</td>
     </tr>
