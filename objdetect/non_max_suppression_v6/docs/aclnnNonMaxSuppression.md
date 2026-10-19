@@ -39,7 +39,7 @@
     即当交集面积超过右式阈值时，候选框被抑制。
 
     - **iouThreshold**（`aclFloatArray*`）：取值范围`[0, 1]`，控制NMS抑制强度。值越大，保留的框越多。
-    - **scoreThreshold**（`aclFloatArray*`）：取值范围`[0, 1]`，最终输出时过滤低分框，分数≤`scoreThreshold`的框填充`-1`表示无效。
+    - **scoreThreshold**（`aclFloatArray*`）：一般浮点标量阈值，最终输出时过滤低分框，分数≤`scoreThreshold`的框填充`-1`表示无效。常见场景使用`[0, 1]`区间的概率分数，不作为接口硬性约束。
 
 ## 函数原型
 
@@ -136,7 +136,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td class="tg-0lax">scoreThreshold（aclFloatArray*）</td>
       <td class="tg-0lax">输入</td>
       <td class="tg-0lax">表示根据得分决定何时移除框的阈值。</td>
-      <td class="tg-0lax">取值范围[0, 1]。</td>
+      <td class="tg-0lax">一般浮点标量。常见场景使用[0, 1]概率分数，不作为接口硬性约束。</td>
       <td class="tg-0lax">FLOAT</td>
       <td class="tg-0lax">-</td>
       <td class="tg-0lax">-</td>
@@ -235,7 +235,7 @@ aclnnStatus aclnnNonMaxSuppression(
       <td>每个batch的框数量（spatial_dimension）超过50000。</td>
     </tr>
     <tr>
-      <td>iouThreshold、scoreThreshold、centerPointBox、maxOutputBoxesPerClass数值不在支持的范围内。</td>
+      <td>iouThreshold、centerPointBox、maxOutputBoxesPerClass数值不在支持的范围内。</td>
     </tr>
   </tbody>
   </table>
