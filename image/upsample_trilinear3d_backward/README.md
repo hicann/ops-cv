@@ -137,10 +137,24 @@
       <td>-</td>
     </tr>
     <tr>
-      <td>scales</td>
+      <td>scale_d</td>
       <td>可选属性</td>
-      <td><ul><li>指定沿每个维度的缩放数组，包含3个元素：scale_depth, scale_height, scale_width，对应公式中的`scales_d`、`scales_h`、`scales_w`。</li><li>默认值为空。</li></ul></td>
-      <td>LISTFLOAT</td>
+      <td>表示depth维度的缩放系数，对应公式中的`scales_d`。</td>
+      <td>FLOAT32</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>scale_h</td>
+      <td>可选属性</td>
+      <td>表示height维度的缩放系数，对应公式中的`scales_h`。</td>
+      <td>FLOAT32</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>scale_w</td>
+      <td>可选属性</td>
+      <td>表示width维度的缩放系数，对应公式中的`scales_w`。</td>
+      <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
@@ -153,7 +167,7 @@
     <tr>
       <td>y</td>
       <td>输出</td>
-      <td>表示反向计算的输出张量，对应公式中的`gradInput`。数据类型和数据格式与入参`grad_output`的数据类型和数据格式保持一致。shape依赖`input_size`和`output_size/scales`。</td>
+      <td>表示反向计算的输出张量，对应公式中的`gradInput`。数据类型和数据格式与入参`grad_output`的数据类型和数据格式保持一致；shape由`input_size`指定。</td>
       <td>FLOAT32、FLOAT16、DOUBLE</td>
       <td>NCDHW</td>
     </tr>
