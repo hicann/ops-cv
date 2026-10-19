@@ -133,6 +133,10 @@ if [ "${task_name}" == "Check_Example" ]; then
     fi
     DP_ASSERT_EQUAL "${check_example_ret}" 0 "check example ${task_name}"
     echo "exec cmd: [python3 scripts/ci/check_examples_ut.py pr_filelist.txt]"
+    if [ ! -f "build_out/"*.run ]; then
+        mkdir -p build_out
+        touch build_out/cann-ops-cv-test_linux-aarch64.run
+    fi
     exit 0
 fi
 
