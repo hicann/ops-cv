@@ -24,7 +24,9 @@
 
     $$
     scale\_d =\begin{cases}
-    (self.dim[2]-1) / (outputSize[0]-1) & alignCorners=true \\
+    1 & outputSize[0] = self.dim[2] \\
+    (self.dim[2]-1) / (outputSize[0]-1) & alignCorners=true\&outputSize[0]>1 \\
+    0 & alignCorners=true\&outputSize[0]=1 \\
     1 / scales\_d & alignCorners=false\&scales\_d>0\\
     self.dim[2] / outputSize[0] & alignCorners=false
     \end{cases}
@@ -32,7 +34,9 @@
 
     $$
     scale\_h =\begin{cases}
-    (self.dim[3]-1) / (outputSize[1]-1) & alignCorners=true \\
+    1 & outputSize[1] = self.dim[3] \\
+    (self.dim[3]-1) / (outputSize[1]-1) & alignCorners=true\&outputSize[1]>1 \\
+    0 & alignCorners=true\&outputSize[1]=1 \\
     1 / scales\_h & alignCorners=false\&scales\_h>0\\
     self.dim[3] / outputSize[1] & alignCorners=false
     \end{cases}
@@ -40,7 +44,9 @@
 
     $$
     scale\_w =\begin{cases}
-    (self.dim[4]-1) / (outputSize[2]-1) & alignCorners=true \\
+    1 & outputSize[2] = self.dim[4] \\
+    (self.dim[4]-1) / (outputSize[2]-1) & alignCorners=true\&outputSize[2]>1 \\
+    0 & alignCorners=true\&outputSize[2]=1 \\
     1 / scales\_w & alignCorners=false\&scales\_w>0\\
     self.dim[4] / outputSize[2] & alignCorners=false
     \end{cases}
