@@ -34,7 +34,7 @@ namespace ge {
 * @li strides: A required list of 4 ints, specifying the stride of the sliding window. The strides of the N and C
 dimension are 1.
 * @li rates: A required list of 4 ints, the rates of the N and C dimensions are 1.
-* @li padding_mode: A optional string. Defaults to "SAME", it support SAME and VALID.
+* @li padding_mode: A optional string. Defaults to "SAME", it support SAME, VALID and CALCULATED.
 * @li pads: A optional list of 4 ints.
 * @li ceil_mode: An optional bool. Defaults to "false". Use ceil or floor to calculate the output size when
 padding_mode is "CALCULATED".
