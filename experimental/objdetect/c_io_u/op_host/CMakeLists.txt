@@ -10,4 +10,6 @@
 # NOTE: Portions of this code were AI-generated and have been
 # technically reviewed for functional accuracy and security
 
-add_modules_sources(OPTYPE c_io_u ACLNNTYPE aclnn)
+# Hand-written op_api (aclnn_c_io_u.*) exposes atanSubFlag; exclude opbuild stubs to avoid
+# duplicate aclnnCIoU / aclnnCIoUGetWorkspaceSize symbols.
+add_modules_sources(OPTYPE c_io_u ACLNNTYPE aclnn_exclude)
