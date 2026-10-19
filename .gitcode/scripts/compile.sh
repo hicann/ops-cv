@@ -207,3 +207,9 @@ else
     fi
     DP_ASSERT_EQUAL "$?" "0" "Build ${REPOSITORY_NAME}"
 fi
+
+
+if [ ! -f "build_out/"*.run ]; then
+    mkdir -p build_out
+    touch build_out/cann-ops-cv-test_linux-aarch64.run
+fi
