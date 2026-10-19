@@ -284,3 +284,91 @@ TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_featmap_s
     };
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
+
+// Test case 12: strides with negative element, must be rejected
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_negative_strides)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{-1, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+// Test case 13: strides with zero element, must be rejected
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_zero_strides)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{60, 60})),
+        gert::InfershapeContextPara::OpAttr("strides", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{0, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(9))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{100, 4}, {100, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+// Test case 14: strides element exceeds INT32_MAX (2^32 narrows to 0 in tiling, issue repro), must be rejected
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_strides_exceeds_int32)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::InfershapeContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{4294967296, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(1))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{1, 4}, {1, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, {});
+}
+
+// Test case 15: strides element equals INT32_MAX (upper boundary), should succeed
+TEST_F(AnchorResponseFlagsInfershape, anchor_response_flags_infershape_strides_int32_max)
+{
+    std::vector<gert::InfershapeContextPara::OpAttr> attrs = {
+        gert::InfershapeContextPara::OpAttr("featmap_size", Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2, 2})),
+        gert::InfershapeContextPara::OpAttr("strides",
+                                            Ops::Cv::AnyValue::CreateFrom(std::vector<int64_t>{2147483647, 2})),
+        gert::InfershapeContextPara::OpAttr("num_base_anchors", Ops::Cv::AnyValue::CreateFrom(int64_t(1))),
+    };
+    gert::InfershapeContextPara infershapeContextPara(
+        "AnchorResponseFlags",
+        {
+            {{{1, 4}, {1, 4}}, ge::DT_FLOAT, ge::FORMAT_ND}, // gt_bboxes input
+        },
+        {
+            {{{}, {}}, ge::DT_UINT8, ge::FORMAT_ND}, // flags output (shape to be inferred)
+        },
+        attrs);
+    // Expected output shape: 2 * 2 * 1 = 4
+    std::vector<std::vector<int64_t>> expectOutputShape = {
+        {4},
+    };
+    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+}

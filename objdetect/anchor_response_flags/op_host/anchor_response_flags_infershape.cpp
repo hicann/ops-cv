@@ -50,8 +50,9 @@ static ge::graphStatus InferShapeAnchorResponseFlags(gert::InferShapeContext* co
     OP_CHECK_IF(stridesAttr->GetSize() != 2, OP_LOGE(context, "strides must have exactly 2 elements"),
                 return GRAPH_FAILED);
     auto stridesData = stridesAttr->GetData();
-    OP_CHECK_IF(stridesData[0] <= 0 || stridesData[1] <= 0, OP_LOGE(context, "strides must be positive"),
-                return GRAPH_FAILED);
+    OP_CHECK_IF(stridesData[0] <= 0 || stridesData[0] > std::numeric_limits<int32_t>::max() || stridesData[1] <= 0 ||
+                    stridesData[1] > std::numeric_limits<int32_t>::max(),
+                OP_LOGE(context, "strides elements must be in [1, INT32_MAX]"), return GRAPH_FAILED);
 
     auto numBaseAnchorsPtr = attrs->GetInt(2);
     OP_CHECK_NULL_WITH_CONTEXT(context, numBaseAnchorsPtr);
