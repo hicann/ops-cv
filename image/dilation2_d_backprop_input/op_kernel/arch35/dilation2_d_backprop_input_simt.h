@@ -12,7 +12,9 @@
  * \file dilation2_d_backprop_input_simt.h
  * \brief SIMT kernel: SAME padding uses replicate (clamp to edge) + Phase 2.5 edge scan
  *        VALID/CALCULATED: skip OOB positions (no replicate)
- *        Auto-detect: when window > input, enable edge scan for SAME padding
+ *        Edge scan (SAME only) enumerates exact clamped-argmax candidates per element
+ *        Phase 2 accumulates contributions in ascending (hOut, wOut) order, matching the
+ *        TF CPU scatter order bit-exactly (fp32 summation order matters).
  */
 
 #ifndef DILATION2_D_BACKPROP_INPUT_SIMT_H_
@@ -129,7 +131,68 @@ __simt_callee__ inline void FindArgmaxReplicate(int64_t hBeg, int64_t wBeg, int6
     }
 }
 
-// Phase 2 accumulation + edge scan for clamped argmax.
+template <typename T, uint32_t schMode>
+__simt_callee__ inline float ScanClampedContributions(int64_t b, int64_t hIn, int64_t wIn, int64_t d, int64_t depth,
+                                                      int64_t outputH, int64_t outputW, int64_t strideH,
+                                                      int64_t strideW, int64_t padTop, int64_t padLeft,
+                                                      __gm__ T* outBackpropGm, __gm__ int64_t* argmaxWorkspace,
+                                                      int64_t inIdx, int64_t hOutMax, int64_t wOutMax)
+{
+    float clampedSum = 0.0f;
+    int64_t hOutBeg = 0;
+    int64_t hOutEnd = -1;
+    int64_t wOutBeg = 0;
+    int64_t wOutEnd = -1;
+    if (hIn == 0 && wIn == 0) {
+        // hBeg <= 0 && wBeg <= 0 (at least one strictly negative)
+        int64_t hBound = padTop / strideH;
+        int64_t wBound = padLeft / strideW;
+        hOutEnd = (hBound < outputH - 1) ? hBound : (outputH - 1);
+        wOutEnd = (wBound < outputW - 1) ? wBound : (outputW - 1);
+    } else if (hIn == 0) {
+        // clamped via hBeg < 0 with wBeg == wIn: unique wOut, hOut in [0, hOutMax)
+        int64_t numW = wIn + padLeft;
+        if (numW % strideW == 0) {
+            int64_t wOut = numW / strideW;
+            if (wOut < outputW) {
+                wOutBeg = wOut;
+                wOutEnd = wOut;
+                hOutEnd = hOutMax - 1;
+            }
+        }
+    } else {
+        // hIn > 0 && wIn == 0, clamped via wBeg < 0 with hBeg == hIn: unique hOut, wOut in [0, wOutMax)
+        int64_t numH = hIn + padTop;
+        if (numH % strideH == 0) {
+            int64_t hOut = numH / strideH;
+            if (hOut < outputH) {
+                hOutBeg = hOut;
+                hOutEnd = hOut;
+                wOutEnd = wOutMax - 1;
+            }
+        }
+    }
+    int64_t outIdxBase;
+    if constexpr (schMode == 0) {
+        outIdxBase = b * outputH * outputW * depth + d;
+    } else {
+        outIdxBase = b * depth * outputH * outputW + d * outputH * outputW;
+    }
+    int64_t rowStride = (schMode == 0) ? outputW * depth : outputW;
+    int64_t colStride = (schMode == 0) ? depth : 1;
+    for (int64_t hOut = hOutBeg; hOut <= hOutEnd; hOut++) {
+        int64_t outIdx = outIdxBase + hOut * rowStride + wOutBeg * colStride;
+        for (int64_t wOut = wOutBeg; wOut <= wOutEnd; wOut++) {
+            int64_t argmaxVal = argmaxWorkspace[outIdx];
+            if (argmaxVal < -1 && (-argmaxVal - CLAMPED_ARGMAX_OFFSET) == inIdx) {
+                clampedSum += static_cast<float>(outBackpropGm[outIdx]);
+            }
+            outIdx += colStride;
+        }
+    }
+    return clampedSum;
+}
+
 template <typename T, uint32_t schMode>
 __simt_callee__ inline float AccumulateWithEdgeScan(int64_t b, int64_t hIn, int64_t wIn, int64_t d, int64_t inputH,
                                                     int64_t inputW, int64_t depth, int64_t outputH, int64_t outputW,
@@ -139,12 +202,21 @@ __simt_callee__ inline float AccumulateWithEdgeScan(int64_t b, int64_t hIn, int6
                                                     int64_t inIdx, bool needEdgeScan, int64_t hOutMax, int64_t wOutMax)
 {
     float sum = 0.0f;
-    for (int64_t fh = 0; fh < filterH; fh++) {
+    if (needEdgeScan && hIn == 0) {
+        sum += ScanClampedContributions<T, schMode>(b, hIn, wIn, d, depth, outputH, outputW, strideH, strideW, padTop,
+                                                    padLeft, outBackpropGm, argmaxWorkspace, inIdx, hOutMax, wOutMax);
+    }
+    for (int64_t fh = filterH - 1; fh >= 0; fh--) {
         int64_t numH = hIn + padTop - fh * rateH;
         if (numH >= 0 && numH % strideH == 0) {
             int64_t hOut = numH / strideH;
             if (hOut < outputH) {
-                for (int64_t fw = 0; fw < filterW; fw++) {
+                if (fh == 0 && needEdgeScan && hIn > 0 && wIn == 0) {
+                    sum += ScanClampedContributions<T, schMode>(b, hIn, wIn, d, depth, outputH, outputW, strideH,
+                                                                strideW, padTop, padLeft, outBackpropGm,
+                                                                argmaxWorkspace, inIdx, hOutMax, wOutMax);
+                }
+                for (int64_t fw = filterW - 1; fw >= 0; fw--) {
                     int64_t numW = wIn + padLeft - fw * rateW;
                     if (numW >= 0 && numW % strideW == 0) {
                         int64_t wOut = numW / strideW;
@@ -161,28 +233,6 @@ __simt_callee__ inline float AccumulateWithEdgeScan(int64_t b, int64_t hIn, int6
                         }
                     }
                 }
-            }
-        }
-    }
-    if (needEdgeScan && (hIn == 0 || hIn == inputH - 1 || wIn == 0 || wIn == inputW - 1)) {
-        int64_t outIdxBase;
-        if constexpr (schMode == 0) {
-            outIdxBase = b * outputH * outputW * depth + d;
-        } else {
-            outIdxBase = b * depth * outputH * outputW + d * outputH * outputW;
-        }
-        int64_t rowStride = (schMode == 0) ? outputW * depth : outputW;
-        for (int64_t hOut = 0; hOut < outputH; hOut++) {
-            int64_t wOutEnd = (hOut < hOutMax) ? outputW : wOutMax;
-            if (wOutEnd <= 0)
-                break;
-            int64_t outIdx = outIdxBase + hOut * rowStride;
-            for (int64_t wOut = 0; wOut < wOutEnd; wOut++) {
-                int64_t argmaxVal = argmaxWorkspace[outIdx];
-                if (argmaxVal < -1 && (-argmaxVal - CLAMPED_ARGMAX_OFFSET) == inIdx) {
-                    sum += static_cast<float>(outBackpropGm[outIdx]);
-                }
-                outIdx += (schMode == 0) ? depth : 1;
             }
         }
     }
@@ -258,7 +308,7 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void Phase2Accumulat
     int64_t padLeft, __ubuf__ uint64_t* uintdivUb, __gm__ T* outBackpropGm, __gm__ int64_t* argmaxWorkspace,
     __gm__ T* inBackpropGm, int32_t paddingMode)
 {
-    bool needEdgeScan = (padTop > 0 || padLeft > 0);
+    bool needEdgeScan = (paddingMode == PADDING_MODE_SAME) && (padTop > 0 || padLeft > 0);
     int64_t hOutMax = needEdgeScan ? ((padTop > 0) ? (padTop + strideH - 1) / strideH : 0) : 0;
     int64_t wOutMax = needEdgeScan ? ((padLeft > 0) ? (padLeft + strideW - 1) / strideW : 0) : 0;
     hOutMax = (hOutMax < outputH) ? hOutMax : outputH;
