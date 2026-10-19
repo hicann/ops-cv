@@ -186,7 +186,7 @@
     <tr>
       <td>barycentric</td>
       <td>输出</td>
-      <td>表示屏幕中每个像素点基于最小深度的面片，求解得到的重心坐标透视矫正插值的输出张量，对应公式描述中的`barycentric`，size为2。</td>
+      <td>表示屏幕中每个像素点基于最小深度的面片，求解得到的重心坐标透视矫正插值的输出张量，对应公式描述中的`barycentric`，shape为(height, width, 3)，最后一维对应三个顶点的透视矫正重心坐标。</td>
       <td>FLOAT32</td>
       <td>ND</td>
     </tr>
