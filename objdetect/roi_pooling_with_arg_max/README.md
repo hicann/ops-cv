@@ -134,14 +134,14 @@
     <tr>
       <td>spatial_scale_h</td>
       <td>属性</td>
-      <td>输入坐标的高映射到ROI坐标的缩放比例。</td>
+      <td>将ROI坐标映射到输入特征图坐标时，高度方向的缩放比例。</td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
     <tr>
       <td>spatial_scale_w</td>
       <td>属性</td>
-      <td>输入坐标的宽映射到ROI坐标的缩放比例。</td>
+      <td>将ROI坐标映射到输入特征图坐标时，宽度方向的缩放比例。</td>
       <td>FLOAT32</td>
       <td>-</td>
     </tr>
