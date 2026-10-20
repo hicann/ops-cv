@@ -26,10 +26,10 @@ namespace ge {
  *@par Attributes:
  * @li scales: optional, listfloat. Default value is [1.0,1.0,1.0,1.0].
  * @li decode_clip: optional, float, threahold of decode process. Default value is 0.0
- * @li reversed_boxes: optional, bool. Default value is false.
+ * @li reversed_box: optional, bool. Default value is false.
  *
  *@par Outputs:
- * y: A Tensor. Must have the same type as box_predictions. Supported format list ["ND"].
+ * y: A Tensor. Must have the same type as boxes. Supported format list ["ND"].
  */
 REG_OP(DecodeBboxV2)
     .INPUT(boxes, TensorType({DT_FLOAT16, DT_FLOAT}))
