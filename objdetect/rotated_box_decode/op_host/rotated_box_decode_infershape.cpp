@@ -44,7 +44,6 @@
 #include "register/op_impl_registry.h"             // IMPL_OP_INFERSHAPE macro
 #include "exe_graph/runtime/infer_shape_context.h" // InferShapeContext, gert::Shape
 #include "op_common/log/log.h"                     // OP_CHECK_NULL_WITH_CONTEXT macro
-#include "graph/operator_reg.h"                    // COMMON_INFER_FUNC_REG (V1 InferShape)
 
 using namespace ge;
 
@@ -135,46 +134,5 @@ static ge::graphStatus InferShape4RotatedBoxDecode(gert::InferShapeContext* cont
 //   for the RotatedBoxDecode operator type.
 //   To create FooBar: change RotatedBoxDecode → FooBar.
 IMPL_OP_INFERSHAPE(RotatedBoxDecode).InferShape(InferShape4RotatedBoxDecode);
-
-// ---------------------------------------------------------------------------
-// V1 InferShapeAndType — legacy ge::Operator-based shape inference.
-//
-// The V1 path (ge::Operator::InferShapeAndType) does NOT bridge to the V2
-// gert callback above.  When no V1 InferShapeFunc is registered, the ge
-// framework falls back to a default that copies input[0]'s shape to the
-// output but always returns GRAPH_SUCCESS, making it impossible to reject
-// mismatched shapes.  Registering this V1 function gives the V1 path the
-// same shape-compatibility validation as the V2 path.
-//
-// Signature: graphStatus func(ge::Operator &op)  (per COMMON_INFER_FUNC_REG)
-// ---------------------------------------------------------------------------
-static ge::graphStatus InferShapeAndTypeForRotatedBoxDecode(ge::Operator& op)
-{
-    const ge::TensorDesc anchor_desc = op.GetInputDesc("anchor_box");
-    const ge::TensorDesc deltas_desc = op.GetInputDesc("deltas");
-    const ge::Shape anchor_shape = anchor_desc.GetShape();
-    const ge::Shape deltas_shape = deltas_desc.GetShape();
-
-    // Reject when both inputs have known, differing shapes.
-    // Unknown-rank shapes ({-2}) cannot be validated and are accepted.
-    const bool anchor_unknown = (anchor_shape.GetDims() == ge::UNKNOWN_RANK);
-    const bool deltas_unknown = (deltas_shape.GetDims() == ge::UNKNOWN_RANK);
-    if (!anchor_unknown && !deltas_unknown && anchor_shape.GetDims() != deltas_shape.GetDims()) {
-        return ge::GRAPH_FAILED;
-    }
-
-    // Output y: same shape and dtype as anchor_box.
-    ge::TensorDesc output_desc = op.GetOutputDesc("y");
-    output_desc.SetShape(anchor_shape);
-    output_desc.SetOriginShape(anchor_shape);
-    output_desc.SetDataType(anchor_desc.GetDataType());
-    op.UpdateOutputDesc("y", output_desc);
-
-    return ge::GRAPH_SUCCESS;
-}
-
-// COMMON_INFER_FUNC_REG registers a V1 InferShapeFunc for ge::Operator::
-// InferShapeAndType().  To create FooBar: change RotatedBoxDecode → FooBar.
-COMMON_INFER_FUNC_REG(RotatedBoxDecode, InferShapeAndTypeForRotatedBoxDecode);
 
 } // namespace ops
