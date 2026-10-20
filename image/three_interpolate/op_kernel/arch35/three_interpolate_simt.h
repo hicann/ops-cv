@@ -76,10 +76,21 @@ __simt_vf__ __aicore__ __launch_bounds__(THREAD_NUM) inline void OpThreeInterpol
         T f1 = features[featuresBatchOffset + static_cast<uint64_t>(safeI1) * cs + cIdx];
         T f2 = features[featuresBatchOffset + static_cast<uint64_t>(safeI2) * cs + cIdx];
 
-        // Use float32 accumulator to reduce precision loss for float16 inputs.
-        // For float32 inputs, static_cast<float> is a no-op, so behavior is identical.
-        float acc = static_cast<float>(w0) * static_cast<float>(f0) + static_cast<float>(w1) * static_cast<float>(f1) +
-                    static_cast<float>(w2) * static_cast<float>(f2);
+        // 两步舍入：golden 在 fp32 中分步计算（每个 w*f 乘积独立舍入，再按
+        // ((p0+p1)+p2) 逐级求和），最后一次性 cast 回 T，禁止合并成 FMA。
+        // fp16 输入时乘积在 fp32 中精确可表示，数值行为不变；fp32 输入时恢复
+        // 与 golden 逐位一致。
+        // ⚠️ volatile 中间变量（issue #35 根因修复）：ccec 会把单一表达式
+        // "w0*f0 + w1*f1 + w2*f2" 收缩为 fma 链（如 fma(w1,f1,w0*f0)），消除
+        // 乘积的中间舍入，与 golden 的分步 mul-then-add 产生系统性 1~2 ULP 偏差
+        // （ThreeInterpolate_L0_005 用例误差恒为 2^-18=3.814697e-06，FMA 链仿真
+        // 与 ttk-compare.log 完全吻合；backward 算子同类修复已设备实证）。
+        // volatile 强制乘积先舍入落盘再读回，编译器无法跨过 volatile 做 FMA 收缩；
+        // 后续两次纯加法无乘法可融合，不会被收缩。
+        volatile float p0 = static_cast<float>(w0) * static_cast<float>(f0);
+        volatile float p1 = static_cast<float>(w1) * static_cast<float>(f1);
+        volatile float p2 = static_cast<float>(w2) * static_cast<float>(f2);
+        float acc = (p0 + p1) + p2; // 舍入顺序与 golden 的 ((w0*f0 + w1*f1) + w2*f2) 一致
         y[index] = static_cast<T>(acc);
     }
 }
