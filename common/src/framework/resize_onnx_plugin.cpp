@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -8,12 +8,19 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
 #include "op_cv_proto_extend.h"
+#include "register/register.h"
 #include "resize_nearest_neighbor_v2_proto.h"
+#include "stub_ops.h"
 
 using namespace ge;
 namespace domi {
+using json = nlohmann::json;
+
 int INPUT_SIZES_IS_FOUR = 4;
 int INPUT_SIZES_IS_THREE = 3;
 int INPUT_SIZES_IS_TWO = 2;
@@ -34,44 +41,90 @@ static ge::Operator CreateSliceForResize(const std::string& ori_name, ge::Operat
         .set_input_size(data_size);
 }
 
-static Status ParseParamsResize(const Message* op_src, Operator& op_dst)
+static std::string AscendStringToStd(const ge::AscendString& value)
 {
-    const ge::onnx::NodeProto* node = reinterpret_cast<const ge::onnx::NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dst).c_str(), "Dynamic cast op_src to NodeProto failed.");
+    return (value.GetString() == nullptr) ? "" : value.GetString();
+}
+
+// Prefer framework-provided ONNX input name list (attr "input"); fallback to
+// GetInputsSize placeholders.
+static void ResolveResizeInputs(const ge::Operator& op_src, int& input_size, std::string& input_roi,
+                                std::string& input_scales)
+{
+    input_roi.clear();
+    input_scales.clear();
+    std::vector<ge::AscendString> onnx_inputs;
+    if (op_src.GetAttr("input", onnx_inputs) == ge::GRAPH_SUCCESS && !onnx_inputs.empty()) {
+        input_size = static_cast<int>(onnx_inputs.size());
+        if (input_size > 1) {
+            input_roi = AscendStringToStd(onnx_inputs[1]);
+        }
+        if (input_size > INPUT_SIZES_IS_TWO) {
+            input_scales = AscendStringToStd(onnx_inputs[INPUT_SIZES_IS_TWO]);
+        }
+        if (input_size == INPUT_SIZES_IS_FOUR && AscendStringToStd(onnx_inputs[INPUT_SIZES_IS_THREE]).empty()) {
+            input_size = INPUT_SIZES_IS_THREE;
+        }
+        return;
+    }
+
+    input_size = static_cast<int>(op_src.GetInputsSize());
+    if (input_size >= INPUT_SIZES_IS_TWO) {
+        input_roi = "roi";
+    }
+    if (input_size >= INPUT_SIZES_IS_THREE) {
+        input_scales = "scales";
+    }
+}
+
+static Status ParseParamsResize(const ge::Operator& op_src, ge::Operator& op_dst)
+{
+    std::string coordinate_transformation_mode_value = "half_pixel";
+    std::string mode_value = "nearest";
+
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    const std::string name = attr.value("name", "");
+                    if (name == "coordinate_transformation_mode" && attr.contains("s")) {
+                        coordinate_transformation_mode_value = attr["s"];
+                    } else if (name == "mode" && attr.contains("s")) {
+                        mode_value = attr["s"];
+                    } else if (name == "antialias" && attr.value("type", -1) == ATTR_TYPE_INT) {
+                        // GE omits i when antialias is 0. The attribute is unsupported whether the value is present.
+                        OP_LOGW(GetOpName(op_dst).c_str(), "Current antialias unsupported; expected type: int.");
+                    } else if (name == "axes" && attr.contains("ints")) {
+                        OP_LOGW(GetOpName(op_dst).c_str(), "Current axes unsupported; expected type: ints.");
+                    } else if (name == "keep_aspect_ratio_policy" && attr.contains("s")) {
+                        OP_LOGW(GetOpName(op_dst).c_str(), "Current keep_aspect_ratio_policy unsupported; expected "
+                                                           "type: string.");
+                    }
+                }
+            }
+        }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dst).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dst).c_str(), "get unknown exception, please check compile info json.");
         return FAILED;
     }
 
-    std::string coordinate_transformation_mode_value = "half_pixel";
-    std::string mode_value = "nearest";
-    for (auto attr : node->attribute()) {
-        if (attr.name() == "coordinate_transformation_mode" && attr.type() == ge::onnx::AttributeProto::STRING) {
-            coordinate_transformation_mode_value = attr.s();
-        } else if (attr.name() == "mode" && attr.type() == ge::onnx::AttributeProto::STRING) {
-            mode_value = attr.s();
-        } else if (attr.name() == "antialias" && attr.type() == ge::onnx::AttributeProto::INT) {
-            OP_LOGW(GetOpName(op_dst).c_str(), "Current antialias unsupported; expected type: int.");
-        } else if (attr.name() == "axes" && attr.type() == ge::onnx::AttributeProto::INTS) {
-            OP_LOGW(GetOpName(op_dst).c_str(), "Current axes unsupported; expected type: ints.");
-        } else if (attr.name() == "keep_aspect_ratio_policy" && attr.type() == ge::onnx::AttributeProto::STRING) {
-            OP_LOGW(GetOpName(op_dst).c_str(), "Current keep_aspect_ratio_policy unsupported; expected type: string.");
-        }
-    }
-
-    if (node->input_size() < INPUT_SIZES_IS_THREE) {
+    int input_size = 0;
+    std::string input_roi;
+    std::string input_scales;
+    ResolveResizeInputs(op_src, input_size, input_roi, input_scales);
+    if (input_size < INPUT_SIZES_IS_THREE) {
         OP_LOGE(GetOpName(op_dst).c_str(), "Input size is less than 3, cannot access input_roi and input_scales.");
         return FAILED;
     }
 
-    auto input_roi = node->input(1);
     op_dst.SetAttr("input_roi", input_roi);
-    auto input_scales = node->input(INPUT_SIZES_IS_TWO);
     op_dst.SetAttr("input_scales", input_scales);
-    op_dst.SetAttr("name", node->name());
-    int input_size = node->input_size();
-    if (input_size == INPUT_SIZES_IS_FOUR && node->input(INPUT_SIZES_IS_THREE).empty()) {
-        input_size = INPUT_SIZES_IS_THREE;
-    }
+    op_dst.SetAttr("name", GetOpName(op_src));
     op_dst.SetAttr("input_size", input_size);
     op_dst.SetAttr("coordinate_transformation_mode", coordinate_transformation_mode_value);
     op_dst.SetAttr("mode", mode_value);
@@ -245,22 +298,32 @@ static Status ParseOpToGraphResize(const Operator& op, Graph& graph)
     return SUCCESS;
 }
 
-static Status ParseParamsResizeV10(const Message* op_src, Operator& op_dst)
+static Status ParseParamsResizeV10(const ge::Operator& op_src, ge::Operator& op_dst)
 {
-    const ge::onnx::NodeProto* node = reinterpret_cast<const ge::onnx::NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dst).c_str(), "Dynamic cast op_src to NodeProto failed.");
+    std::string mode_value = "nearest";
+
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    if (attr.value("name", "") == "mode" && attr.contains("s")) {
+                        mode_value = attr["s"];
+                    }
+                }
+            }
+        }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dst).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dst).c_str(), "get unknown exception, please check compile info json.");
         return FAILED;
     }
 
-    std::string mode_value = "nearest";
-    for (auto attr : node->attribute()) {
-        if (attr.name() == "mode" && attr.type() == ge::onnx::AttributeProto::STRING) {
-            mode_value = attr.s();
-        }
-    }
     op_dst.SetAttr("mode", mode_value);
-    op_dst.SetAttr("name", node->name());
+    op_dst.SetAttr("name", GetOpName(op_src));
     op_dst.DynamicInputRegister("x", INPUT_SIZES_IS_TWO);
     op_dst.DynamicOutputRegister("y", 1);
     op_dst.SetAttr("original_type", "ai.onnx::10::Resize");
@@ -359,14 +422,14 @@ REGISTER_CUSTOM_OP("PartitionedCall")
                    ge::AscendString("ai.onnx::13::Resize"), ge::AscendString("ai.onnx::14::Resize"),
                    ge::AscendString("ai.onnx::15::Resize"), ge::AscendString("ai.onnx::16::Resize"),
                    ge::AscendString("ai.onnx::17::Resize"), ge::AscendString("ai.onnx::18::Resize")})
-    .ParseParamsFn(ParseParamsResize)
+    .ParseParamsByOperatorFn(ParseParamsResize)
     .ParseOpToGraphFn(ParseOpToGraphResize)
     .ImplyType(ImplyType::TVM);
 
 REGISTER_CUSTOM_OP("PartitionedCall")
     .FrameworkType(ONNX)
     .OriginOpType({ge::AscendString("ai.onnx::10::Resize")})
-    .ParseParamsFn(ParseParamsResizeV10)
+    .ParseParamsByOperatorFn(ParseParamsResizeV10)
     .ParseOpToGraphFn(ParseOpToGraphResizeV10)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

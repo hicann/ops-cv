@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -8,43 +8,68 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
+#include "register/register.h"
 #include "roi_align_proto.h"
+#include "stub_ops.h"
 
 using namespace std;
 using namespace ge;
 using ge::Operator;
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
-static Status OpRoiAlignUpdateInfo(const Message* op_src, ge::Operator& op_dest)
+static Status OpRoiAlignUpdateInfo(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
     int output_height_value = 1;
     int output_width_value = 1;
     int sampling_ratio_value = 0;
     float spatial_scale_value = 1.0;
 
-    for (auto attr : node->attribute()) {
-        if (attr.name() == "output_height" && attr.type() == ge::onnx::AttributeProto::INT) {
-            output_height_value = attr.i();
-        } else if (attr.name() == "output_width") {
-            output_width_value = attr.i();
-        } else if (attr.name() == "sampling_ratio") {
-            sampling_ratio_value = attr.i();
-        } else if (attr.name() == "spatial_scale") {
-            spatial_scale_value = attr.f();
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    // GE omits the scalar value field when the protobuf value is zero.
+                    // Match name/type; a missing i/f means 0, and only a fully absent attr keeps its default.
+                    const std::string name = attr.value("name", "");
+                    const int type = attr.value("type", -1);
+                    if (name == "output_height" && type == ATTR_TYPE_INT) {
+                        output_height_value = attr.contains("i") ? static_cast<int>(attr["i"].get<int64_t>()) : 0;
+                    } else if (name == "output_width" && type == ATTR_TYPE_INT) {
+                        output_width_value = attr.contains("i") ? static_cast<int>(attr["i"].get<int64_t>()) : 0;
+                    } else if (name == "sampling_ratio" && type == ATTR_TYPE_INT) {
+                        sampling_ratio_value = attr.contains("i") ? static_cast<int>(attr["i"].get<int64_t>()) : 0;
+                    } else if (name == "spatial_scale" && type == ATTR_TYPE_FLOAT) {
+                        if (!attr.contains("f")) {
+                            spatial_scale_value = 0.0f;
+                        } else {
+                            std::string spatial_scale_str = attr["f"];
+                            if (StrToFloat(spatial_scale_str, spatial_scale_value) != SUCCESS) {
+                                OP_LOGE(GetOpName(op_dest).c_str(), "parse spatial_scale failed.");
+                                return FAILED;
+                            }
+                        }
+                    }
+                }
+            }
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
-    int input_size = node->input_size();
-    op_dest.SetAttr("name", node->name());
+    int input_size = static_cast<int>(op_src.GetInputsSize());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("pooled_height", output_height_value);
     op_dest.SetAttr("pooled_width", output_width_value);
     op_dest.SetAttr("sample_num", sampling_ratio_value);
@@ -54,7 +79,7 @@ static Status OpRoiAlignUpdateInfo(const Message* op_src, ge::Operator& op_dest)
     return SUCCESS;
 }
 
-static Status ParseParamsRoiAlign(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsRoiAlign(const ge::Operator& op_src, ge::Operator& op_dest)
 {
     if (OpRoiAlignUpdateInfo(op_src, op_dest) != SUCCESS) {
         return FAILED;
@@ -66,25 +91,35 @@ static Status ParseParamsRoiAlign(const Message* op_src, ge::Operator& op_dest)
     return SUCCESS;
 }
 
-static Status ParseParamsRoiAlignV16(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsRoiAlignV16(const ge::Operator& op_src, ge::Operator& op_dest)
 {
     if (OpRoiAlignUpdateInfo(op_src, op_dest) != SUCCESS) {
         return FAILED;
     }
 
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
+    int default_roi_end_mode_value = 2;
+
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    if (attr.value("name", "") == "coordinate_transformation_mode" && attr.contains("s") &&
+                        attr["s"].get<std::string>() == "output_half_pixel") {
+                        default_roi_end_mode_value = 0;
+                    }
+                }
+            }
+        }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
         return FAILED;
     }
 
-    int default_roi_end_mode_value = 2;
-    for (auto attr : node->attribute()) {
-        if (attr.name() == "coordinate_transformation_mode" && attr.type() == ge::onnx::AttributeProto::STRING &&
-            attr.s() == "output_half_pixel") {
-            default_roi_end_mode_value = 0;
-        }
-    }
     op_dest.SetAttr("roi_end_mode", default_roi_end_mode_value);
     op_dest.SetAttr("original_type", ge::AscendString("ai.onnx::16::RoiAlign"));
     return SUCCESS;
@@ -150,7 +185,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
                    ge::AscendString("ai.onnx::10::RoiAlign"), ge::AscendString("ai.onnx::11::RoiAlign"),
                    ge::AscendString("ai.onnx::12::RoiAlign"), ge::AscendString("ai.onnx::13::RoiAlign"),
                    ge::AscendString("ai.onnx::14::RoiAlign"), ge::AscendString("ai.onnx::15::RoiAlign")})
-    .ParseParamsFn(ParseParamsRoiAlign)
+    .ParseParamsByOperatorFn(ParseParamsRoiAlign)
     .ParseOpToGraphFn(ParseOpToGraphRoiAlign)
     .ImplyType(ImplyType::TVM);
 
@@ -158,7 +193,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
     .FrameworkType(ONNX)
     .OriginOpType({ge::AscendString("ai.onnx::16::RoiAlign"), ge::AscendString("ai.onnx::17::RoiAlign"),
                    ge::AscendString("ai.onnx::18::RoiAlign")})
-    .ParseParamsFn(ParseParamsRoiAlignV16)
+    .ParseParamsByOperatorFn(ParseParamsRoiAlignV16)
     .ParseOpToGraphFn(ParseOpToGraphRoiAlign)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

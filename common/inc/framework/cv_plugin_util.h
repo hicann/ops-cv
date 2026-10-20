@@ -19,6 +19,11 @@
 #include "register/register.h"
 
 namespace domi {
+// ONNX AttributeProto.AttributeType (FLOAT=1, INT=2). Shared by ONNX plugins parsing
+// GE "attribute" JSON so callers do not re-define the same magic numbers.
+constexpr int ATTR_TYPE_FLOAT = 1;
+constexpr int ATTR_TYPE_INT = 2;
+
 inline Status StrToFloat(const std::string& value, float& result)
 {
     try {
@@ -67,6 +72,26 @@ inline Status ChangeFormatFromOnnx(ge::Operator& op, const int idx, ge::Format f
         }
     }
     return SUCCESS;
+}
+
+template <typename T>
+inline ge::Tensor Vec2Tensor(std::vector<T>& vals, const std::vector<int64_t>& dims, ge::DataType dtype,
+                             ge::Format format = ge::FORMAT_ND)
+{
+    ge::Shape shape(dims);
+    ge::TensorDesc desc(shape, format, dtype);
+    ge::Tensor tensor(desc, reinterpret_cast<uint8_t*>(vals.data()), vals.size() * sizeof(T));
+    return tensor;
+}
+
+template <typename T>
+inline ge::Tensor CreateScalar(T val, ge::DataType dtype, ge::Format format = ge::FORMAT_ND)
+{
+    std::vector<int64_t> dims_scalar = {};
+    ge::Shape shape(dims_scalar);
+    ge::TensorDesc desc(shape, format, dtype);
+    ge::Tensor tensor(desc, reinterpret_cast<uint8_t*>(&val), sizeof(T));
+    return tensor;
 }
 } // namespace domi
 

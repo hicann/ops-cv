@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,22 +12,21 @@
  * \file npu_nms_v4_onnx_plugin.cpp
  * \brief
  */
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
 #include "op_cv_proto_extend.h"
+#include "register/register.h"
+#include "stub_ops.h"
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
-static Status ParseParamsNmsV4(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsNmsV4(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
-    int op_input_size = node->input_size();
-    int op_output_size = node->output_size();
+    int op_input_size = static_cast<int>(op_src.GetInputsSize());
+    int op_output_size = static_cast<int>(op_src.GetOutputsSize());
     op_dest.DynamicInputRegister("x", op_input_size);
     op_dest.DynamicOutputRegister("y", op_output_size);
 
@@ -36,19 +35,35 @@ static Status ParseParamsNmsV4(const Message* op_src, ge::Operator& op_dest)
     bool pad_to_max_output_size = false;
     int max_output_size = 0;
 
-    for (const auto& attr : node->attribute()) {
-        if (attr.name() == "pad_to_max_output_size" && attr.type() == ge::onnx::AttributeProto::INT) {
-            if (attr.i() == 1) {
-                pad_to_max_output_size = true;
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    // GE omits i when the int value is zero. Match name/type; only a fully absent attr keeps its
+                    // default.
+                    const std::string name = attr.value("name", "");
+                    const int type = attr.value("type", -1);
+                    if (name == "pad_to_max_output_size" && type == ATTR_TYPE_INT) {
+                        pad_to_max_output_size = attr.contains("i") && (attr["i"].get<int64_t>() != 0);
+                    } else if (name == "max_output_size" && type == ATTR_TYPE_INT) {
+                        max_output_size = attr.contains("i") ? static_cast<int>(attr["i"].get<int64_t>()) : 0;
+                    }
+                }
             }
-        } else if (attr.name() == "max_output_size" && attr.type() == ge::onnx::AttributeProto::INT) {
-            max_output_size = attr.i();
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
     ge::Tensor scalar_const_value = CreateScalar(max_output_size, ge::DT_INT32);
 
-    op_dest.SetAttr("name", node->name());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("pad_to_max_output_size", pad_to_max_output_size);
     op_dest.SetAttr("max_output_size", scalar_const_value);
 
@@ -87,7 +102,7 @@ static Status ParseOpToGraphNmsV4(const ge::Operator& op, ge::Graph& graph)
                                    .set_attr_pad_to_max_output_size(pad_to_max_output_size);
 
     std::vector<ge::Operator> inputs{data0, data1, data2, data3};
-    std::vector<std::pair<ge::Operator, std::vector<size_t> > > outputs;
+    std::vector<std::pair<ge::Operator, std::vector<size_t>>> outputs;
     outputs.emplace_back(NonMaxSuppressionV4, std::vector<std::size_t>{0});
     outputs.emplace_back(NonMaxSuppressionV4, std::vector<std::size_t>{1});
     graph.SetInputs(inputs).SetOutputs(outputs);
@@ -103,7 +118,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
                    ge::AscendString("ai.onnx::14::NPUNmsV4"), ge::AscendString("ai.onnx::15::NPUNmsV4"),
                    ge::AscendString("ai.onnx::16::NPUNmsV4"), ge::AscendString("ai.onnx::17::NPUNmsV4"),
                    ge::AscendString("ai.onnx::18::NPUNmsV4")})
-    .ParseParamsFn(ParseParamsNmsV4)
+    .ParseParamsByOperatorFn(ParseParamsNmsV4)
     .ParseOpToGraphFn(ParseOpToGraphNmsV4)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

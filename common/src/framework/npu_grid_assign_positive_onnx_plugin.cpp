@@ -13,25 +13,24 @@
  * \brief onnx plugin for custom operator npu_grid_assign_positive
  */
 
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
 #include "op_cv_proto_extend.h"
+#include "register/register.h"
+#include "stub_ops.h"
 
 using namespace std;
 using namespace ge;
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
-static Status ParseParamsNpuGridAssignPositive(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsNpuGridAssignPositive(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
-    int input_size = node->input_size();
-    int output_size = node->output_size();
+    int input_size = static_cast<int>(op_src.GetInputsSize());
+    int output_size = static_cast<int>(op_src.GetOutputsSize());
     op_dest.DynamicInputRegister("x", input_size);
     op_dest.DynamicOutputRegister("y", output_size);
 
@@ -40,19 +39,53 @@ static Status ParseParamsNpuGridAssignPositive(const Message* op_src, ge::Operat
     bool gt_max_assign_all = true;
     int num_gts = 128;
 
-    for (const auto& attr : node->attribute()) {
-        if (attr.name() == "pos_iou_thr" && attr.type() == ge::onnx::AttributeProto::FLOAT) {
-            pos_iou_thr = attr.f();
-        } else if (attr.name() == "min_pos_iou" && attr.type() == ge::onnx::AttributeProto::FLOAT) {
-            min_pos_iou = attr.f();
-        } else if (attr.name() == "gt_max_assign_all" && attr.type() == ge::onnx::AttributeProto::INT) {
-            gt_max_assign_all = (attr.i() == 1);
-        } else if (attr.name() == "num_gts" && attr.type() == ge::onnx::AttributeProto::INT) {
-            num_gts = attr.i();
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    // GE omits the scalar value field when the protobuf value is zero.
+                    // Match name/type; a missing i/f means 0, and only a fully absent attr keeps its default.
+                    const std::string name = attr.value("name", "");
+                    const int type = attr.value("type", -1);
+                    if (name == "pos_iou_thr" && type == ATTR_TYPE_FLOAT) {
+                        if (!attr.contains("f")) {
+                            pos_iou_thr = 0.0f;
+                        } else {
+                            std::string pos_iou_thr_str = attr["f"];
+                            if (StrToFloat(pos_iou_thr_str, pos_iou_thr) != SUCCESS) {
+                                OP_LOGE(GetOpName(op_dest).c_str(), "parse pos_iou_thr failed.");
+                                return FAILED;
+                            }
+                        }
+                    } else if (name == "min_pos_iou" && type == ATTR_TYPE_FLOAT) {
+                        if (!attr.contains("f")) {
+                            min_pos_iou = 0.0f;
+                        } else {
+                            std::string min_pos_iou_str = attr["f"];
+                            if (StrToFloat(min_pos_iou_str, min_pos_iou) != SUCCESS) {
+                                OP_LOGE(GetOpName(op_dest).c_str(), "parse min_pos_iou failed.");
+                                return FAILED;
+                            }
+                        }
+                    } else if (name == "gt_max_assign_all" && type == ATTR_TYPE_INT) {
+                        gt_max_assign_all = attr.contains("i") && (attr["i"].get<int64_t>() != 0);
+                    } else if (name == "num_gts" && type == ATTR_TYPE_INT) {
+                        num_gts = attr.contains("i") ? static_cast<int>(attr["i"].get<int64_t>()) : 0;
+                    }
+                }
+            }
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
-    op_dest.SetAttr("name", node->name());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("pos_iou_thr", pos_iou_thr);
     op_dest.SetAttr("min_pos_iou", min_pos_iou);
     op_dest.SetAttr("gt_max_assign_all", gt_max_assign_all);
@@ -131,7 +164,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
          ge::AscendString("ai.onnx::14::NPUGridAssignPositive"), ge::AscendString("ai.onnx::15::NPUGridAssignPositive"),
          ge::AscendString("ai.onnx::16::NPUGridAssignPositive"), ge::AscendString("ai.onnx::17::NPUGridAssignPositive"),
          ge::AscendString("ai.onnx::18::NPUGridAssignPositive")})
-    .ParseParamsFn(ParseParamsNpuGridAssignPositive)
+    .ParseParamsByOperatorFn(ParseParamsNpuGridAssignPositive)
     .ParseOpToGraphFn(ParseOpToGraphNpuGridAssignPositive)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

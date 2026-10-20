@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -8,22 +8,21 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
 #include "op_cv_proto_extend.h"
+#include "register/register.h"
+#include "stub_ops.h"
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
-static Status ParseParamsNpuGiou(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsNpuGiou(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
-    int input_size = node->input_size();
-    int output_size = node->output_size();
+    int input_size = static_cast<int>(op_src.GetInputsSize());
+    int output_size = static_cast<int>(op_src.GetOutputsSize());
     op_dest.DynamicInputRegister("x", input_size);
     op_dest.DynamicOutputRegister("y", output_size);
 
@@ -31,17 +30,35 @@ static Status ParseParamsNpuGiou(const Message* op_src, ge::Operator& op_dest)
     bool is_cross = false;
     std::string mode = "iou";
 
-    for (const auto& attr : node->attribute()) {
-        if (attr.name() == "trans" && attr.type() == ge::onnx::AttributeProto::INT) {
-            trans = (attr.i() == 1);
-        } else if (attr.name() == "is_cross" && attr.type() == ge::onnx::AttributeProto::INT) {
-            is_cross = (attr.i() == 1);
-        } else if (attr.name() == "mode" && attr.type() == ge::onnx::AttributeProto::INT && attr.i() == 1) {
-            mode = "iof";
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    // GE omits i when the int value is zero. Match name/type; only a fully absent attr keeps its
+                    // default.
+                    const std::string name = attr.value("name", "");
+                    const int type = attr.value("type", -1);
+                    if (name == "trans" && type == ATTR_TYPE_INT) {
+                        trans = attr.contains("i") && (attr["i"].get<int64_t>() != 0);
+                    } else if (name == "is_cross" && type == ATTR_TYPE_INT) {
+                        is_cross = attr.contains("i") && (attr["i"].get<int64_t>() != 0);
+                    } else if (name == "mode" && type == ATTR_TYPE_INT) {
+                        mode = (attr.contains("i") && attr["i"].get<int64_t>() == 1) ? "iof" : "iou";
+                    }
+                }
+            }
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
-    op_dest.SetAttr("name", node->name());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("trans", trans);
     op_dest.SetAttr("is_cross", is_cross);
     op_dest.SetAttr("mode", mode);
@@ -106,7 +123,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
                    ge::AscendString("ai.onnx::14::NPUGiou"), ge::AscendString("ai.onnx::15::NPUGiou"),
                    ge::AscendString("ai.onnx::16::NPUGiou"), ge::AscendString("ai.onnx::17::NPUGiou"),
                    ge::AscendString("ai.onnx::18::NPUGiou")})
-    .ParseParamsFn(ParseParamsNpuGiou)
+    .ParseParamsByOperatorFn(ParseParamsNpuGiou)
     .ParseOpToGraphFn(ParseOpToGraphNpuGiou)
     .ImplyType(ImplyType::TVM);
 } // namespace domi

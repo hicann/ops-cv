@@ -13,33 +13,56 @@
  * \brief onnx plugin for NMSRotated
  */
 
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
 #include "op_cv_proto_extend.h"
+#include "register/register.h"
+#include "stub_ops.h"
 
 using namespace std;
 using namespace ge;
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
 static const int INPUT_NUM_WITHOUT_LABELS = 2;
 static const int INPUT_NUM_WITH_LABELS = 3;
 
-static Status ParseParamsNMSRotatedCall(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsNMSRotatedCall(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
     float iou_threshold = 0;
     int required_attr_num = 0;
-    for (const auto& attr : node->attribute()) {
-        if (attr.name() == "iou_threshold" && attr.type() == ge::onnx::AttributeProto::FLOAT) {
-            iou_threshold = attr.f();
-            required_attr_num++;
+
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    // GE omits f when the float value is zero. Count the attr once name/type match.
+                    if (attr.value("name", "") == "iou_threshold" && attr.value("type", -1) == ATTR_TYPE_FLOAT) {
+                        if (!attr.contains("f")) {
+                            iou_threshold = 0.0f;
+                        } else {
+                            std::string iou_threshold_str = attr["f"];
+                            if (StrToFloat(iou_threshold_str, iou_threshold) != SUCCESS) {
+                                OP_LOGE(GetOpName(op_dest).c_str(), "parse iou_threshold failed.");
+                                return FAILED;
+                            }
+                        }
+                        required_attr_num++;
+                    }
+                }
+            }
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
     if (required_attr_num != 1) {
@@ -49,13 +72,13 @@ static Status ParseParamsNMSRotatedCall(const Message* op_src, ge::Operator& op_
 
     op_dest.SetAttr("iou_threshold", iou_threshold);
 
-    int input_size = node->input_size();
-    int output_size = node->output_size();
+    int input_size = static_cast<int>(op_src.GetInputsSize());
+    int output_size = static_cast<int>(op_src.GetOutputsSize());
     op_dest.DynamicInputRegister("x", input_size);
     op_dest.DynamicOutputRegister("y", output_size);
 
     op_dest.SetAttr("N", input_size);
-    op_dest.SetAttr("name", node->name());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("original_type", "ai.onnx::11::NMSRotated");
 
     return SUCCESS;
@@ -129,7 +152,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
                    ge::AscendString("ai.onnx::14::NMSRotated"), ge::AscendString("ai.onnx::15::NMSRotated"),
                    ge::AscendString("ai.onnx::16::NMSRotated"), ge::AscendString("ai.onnx::17::NMSRotated"),
                    ge::AscendString("ai.onnx::18::NMSRotated")})
-    .ParseParamsFn(ParseParamsNMSRotatedCall)
+    .ParseParamsByOperatorFn(ParseParamsNMSRotatedCall)
     .ParseOpToGraphFn(ParseOpToGraphNMSRotated)
     .ImplyType(ImplyType::AI_CPU);
 } // namespace domi

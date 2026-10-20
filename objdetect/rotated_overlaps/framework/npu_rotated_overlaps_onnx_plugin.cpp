@@ -13,37 +13,51 @@
  * \brief onnx plugin for custom operator npu_rotated_overlaps
  */
 
-#include "onnx_common.h"
+#include "cv_plugin_util.h"
+#include "graph/graph.h"
+#include "graph/operator.h"
+#include "nlohmann/json.hpp"
+#include "register/register.h"
 #include "rotated_overlaps_proto.h"
+#include "stub_ops.h"
 
 using namespace std;
 using namespace ge;
 
 namespace domi {
-using NodeProto = ge::onnx::NodeProto;
+using json = nlohmann::json;
 
-static Status ParseParamsNpuRotatedOverlaps(const Message* op_src, ge::Operator& op_dest)
+static Status ParseParamsNpuRotatedOverlaps(const ge::Operator& op_src, ge::Operator& op_dest)
 {
-    const NodeProto* node = dynamic_cast<const NodeProto*>(op_src);
-    if (node == nullptr) {
-        OP_LOGE(GetOpName(op_dest).c_str(), "Dynamic cast op_src to NodeProto failed.");
-        return FAILED;
-    }
-
-    int input_size = node->input_size();
-    int output_size = node->output_size();
+    int input_size = static_cast<int>(op_src.GetInputsSize());
+    int output_size = static_cast<int>(op_src.GetOutputsSize());
     op_dest.DynamicInputRegister("x", input_size);
     op_dest.DynamicOutputRegister("y", output_size);
 
     bool trans = false;
 
-    for (const auto& attr : node->attribute()) {
-        if (attr.name() == "trans" && attr.type() == ge::onnx::AttributeProto::INT) {
-            trans = (attr.i() == 1);
+    ge::AscendString attrs_string;
+    try {
+        if (op_src.GetAttr("attribute", attrs_string) == ge::GRAPH_SUCCESS) {
+            json attrs = json::parse(attrs_string.GetString());
+            if (attrs.contains("attribute") && attrs["attribute"].is_array()) {
+                for (json& attr : attrs["attribute"]) {
+                    // GE omits i when trans is 0. Match name/type; only a fully absent attr keeps the default.
+                    if (attr.value("name", "") == "trans" && attr.value("type", -1) == ATTR_TYPE_INT) {
+                        trans = attr.contains("i") && (attr["i"].get<int64_t>() != 0);
+                    }
+                }
+            }
         }
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "JSON parse error: %s", e.what());
+        return FAILED;
+    } catch (...) {
+        OP_LOGE(GetOpName(op_dest).c_str(), "get unknown exception, please check compile info json.");
+        return FAILED;
     }
 
-    op_dest.SetAttr("name", node->name());
+    op_dest.SetAttr("name", GetOpName(op_src));
     op_dest.SetAttr("trans", trans);
     op_dest.SetAttr("original_type", "npu::1::NPURotatedOverlaps");
     return SUCCESS;
@@ -101,7 +115,7 @@ REGISTER_CUSTOM_OP("PartitionedCall")
          ge::AscendString("ai.onnx::14::NPURotatedOverlaps"), ge::AscendString("ai.onnx::15::NPURotatedOverlaps"),
          ge::AscendString("ai.onnx::16::NPURotatedOverlaps"), ge::AscendString("ai.onnx::17::NPURotatedOverlaps"),
          ge::AscendString("ai.onnx::18::NPURotatedOverlaps")})
-    .ParseParamsFn(ParseParamsNpuRotatedOverlaps)
+    .ParseParamsByOperatorFn(ParseParamsNpuRotatedOverlaps)
     .ParseOpToGraphFn(ParseOpToGraphNpuRotatedOverlaps)
     .ImplyType(ImplyType::TVM);
 } // namespace domi
