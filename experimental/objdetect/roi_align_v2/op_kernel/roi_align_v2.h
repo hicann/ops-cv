@@ -1,24 +1,17 @@
 /**
- * This file is part of the OpenBOAT project at Harbin Institute of Technology (HIT)
- * and is contributed to the CANN Open Software.
- *
  * Copyright (c) 2025 AISS Group, Harbin Institute of Technology (HIT).
  * All Rights Reserved.
  *
- # Authors (accounts):
- # - Liu Jun <@kbryantttt>
- # - Tu Yuanhang <@TuYHAAAAAA>
- # - Zhou Jianhua<@LePenseur>
- # - Liang Yanglin <@liang-yanglin>
- # - Su Tonghua <@sutonghua>
+ * Contributed from the OpenBOAT project at Harbin Institute of Technology (HIT).
+ * Authors (accounts): Liu Jun <@kbryantttt>, Tu Yuanhang <@TuYHAAAAAA>,
+ * Zhou Jianhua <@LePenseur>, Liang Yanglin <@liang-yanglin>, Su Tonghua <@sutonghua>.
  *
- * This program is free software: you can redistribute it and/or modify it.
- * Licensed under the CANN Open Software License Agreement Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * See the LICENSE file at the root of the repository for the full text of the License.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+ * This program is free software; you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 /*!
@@ -50,6 +43,7 @@ public:
 
 private:
     __aicore__ inline void ProcessOneROI(uint32_t roiIdx);
+    __aicore__ inline int32_t CeilToInt(float value);
     __aicore__ inline float BilinearInterpolate(AscendC::LocalTensor<T>& featureLocal, float y, float x, int32_t featW,
                                                 int32_t featH);
 
@@ -126,6 +120,15 @@ __aicore__ inline void RoiAlignV2<T>::Process()
 }
 
 template <typename T>
+__aicore__ inline int32_t RoiAlignV2<T>::CeilToInt(float value)
+{
+    // ROI 尺寸已在调用前钳制为正数；用整数部分和小数部分判断向上取整，
+    // 避免用近似常数加法漏掉接近整数边界的合法 float32 值。
+    int32_t integerPart = static_cast<int32_t>(value);
+    return integerPart + (value > static_cast<float>(integerPart) ? 1 : 0);
+}
+
+template <typename T>
 __aicore__ inline void RoiAlignV2<T>::ProcessOneROI(uint32_t roiIdx)
 {
     // Step 1: Load ROI coordinates
@@ -166,10 +169,8 @@ __aicore__ inline void RoiAlignV2<T>::ProcessOneROI(uint32_t roiIdx)
 
     // Determine sampling grid size
     int32_t samplingRatio = this->samplingRatio;
-    int32_t grid_h = samplingRatio > 0 ? samplingRatio :
-                                         static_cast<int32_t>((roi_h / static_cast<float>(outH)) + 0.99f);
-    int32_t grid_w = samplingRatio > 0 ? samplingRatio :
-                                         static_cast<int32_t>((roi_w / static_cast<float>(outW)) + 0.99f);
+    int32_t grid_h = samplingRatio > 0 ? samplingRatio : CeilToInt(roi_h / static_cast<float>(outH));
+    int32_t grid_w = samplingRatio > 0 ? samplingRatio : CeilToInt(roi_w / static_cast<float>(outW));
 
     if (grid_h < 1)
         grid_h = 1;
