@@ -29,7 +29,9 @@ image normalization (by subtracting the mean value or multiplying a factor), ima
 *@li params: A optional Tensor. Dynamic AIPP configuration parameters of type uint8. \n
 
 *@par Attributes:
-*aipp_config_path: A required string, specifying the path of the AIPP configuration file. \n
+*aipp_config_path: An optional string, specifying the path of the AIPP configuration file, default value is
+*"./aipp.cfg". Note that the default value does not mean the configuration file can be absent: the file content
+*and availability still comply with the existing AIPP constraints. \n
 
 *@par Outputs:
 *features: The AIPP-processed output tensor of type float16.
