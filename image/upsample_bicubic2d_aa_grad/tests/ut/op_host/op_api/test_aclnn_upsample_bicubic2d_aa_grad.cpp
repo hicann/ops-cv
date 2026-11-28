@@ -243,3 +243,22 @@ TEST_F(l2_upsample_bicubic2d_aa_grad_test, l2_upsample_bicubic2d_aa_grad_test_dt
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
+
+// ND 格式默认按 NCHW 处理：out 的 N/C 必须与 gradOutput 一致，不一致返回 161002
+TEST_F(l2_upsample_bicubic2d_aa_grad_test, l2_upsample_bicubic2d_aa_grad_test_nd_nc_mismatch)
+{
+    auto gradOutput_desc = TensorDesc({2, 1, 4, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto out_desc = TensorDesc({1, 1, 8, 8}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto output_size_desc = IntArrayDesc(vector<int64_t>{4, 4});
+    auto input_size_desc = IntArrayDesc(vector<int64_t>{2, 1, 8, 8});
+    bool align_corners = false;
+    const double_t scales_h = 0.0;
+    const double_t scales_w = 0.0;
+
+    auto ut = OP_API_UT(aclnnUpsampleBicubic2dAAGrad,
+                        INPUT(gradOutput_desc, output_size_desc, input_size_desc, align_corners, scales_h, scales_w),
+                        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}

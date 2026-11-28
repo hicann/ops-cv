@@ -218,8 +218,9 @@ static aclnnStatus CheckParams(const aclTensor* gradOutput, const aclIntArray* o
     // 4. 检查shape是否支持
     CHECK_RET(CheckShape(gradOutput, out, outputSize, inputSize), ACLNN_ERR_PARAM_INVALID);
 
-    // 5.检查gradOutput和out N/C轴的大小是否一致
-    if (gradOutput->GetStorageFormat() == op::Format::FORMAT_NCHW) {
+    // 5.检查gradOutput和out N/C轴的大小是否一致；ND 按资料默认按 NCHW 处理
+    if (gradOutput->GetStorageFormat() == op::Format::FORMAT_NCHW ||
+        gradOutput->GetStorageFormat() == op::Format::FORMAT_ND) {
         OP_CHECK(
             gradOutput->GetViewShape().GetDim(0) == out->GetViewShape().GetDim(0) &&
                 gradOutput->GetViewShape().GetDim(1) == out->GetViewShape().GetDim(1),
