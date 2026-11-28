@@ -16,6 +16,7 @@
  */
 
 #include <cmath>
+#include <new>
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
@@ -157,7 +158,7 @@ int main()
     graph.SetInputs({boxes, scores}).SetOutputs({nms});
 
     std::map<AscendString, AscendString> buildOptions;
-    ge::Session* session = new Session(buildOptions);
+    ge::Session* session = new (std::nothrow) Session(buildOptions);
     if (session == nullptr) {
         ge::GEFinalize();
         return FAILED;
