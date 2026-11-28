@@ -9,6 +9,7 @@
  */
 
 #include <iostream>
+#include <new>
 #include <fstream>
 #include <cstring>
 #include <cstdint>
@@ -239,7 +240,7 @@ int main(int argc, char* argv[])
 
     // 创建会话并添加图
     std::map<AscendString, AscendString> build_options = {};
-    ge::Session* session = new Session(build_options);
+    ge::Session* session = new (std::nothrow) Session(build_options);
     if (session == nullptr) {
         LOG_PRINT("ERROR: Failed to create session\n");
         ge::GEFinalize();
