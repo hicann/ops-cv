@@ -9,6 +9,7 @@
  */
 
 #include <chrono>
+#include <new>
 #include <iostream>
 #include <fstream>
 #include <string.h>
@@ -159,7 +160,7 @@ int main(int argc, char* argv[])
     }
 
     map<AscendString, AscendString> buildOptions = {};
-    ge::Session* session = new Session(buildOptions);
+    ge::Session* session = new (std::nothrow) Session(buildOptions);
     if (session == nullptr) {
         printf("%s - ERROR - [GEIR]: Create session failed\n", GetTime().c_str());
         GEFinalize();
