@@ -160,7 +160,9 @@ static ge::graphStatus Rgb2yuv422TilingFunc(gert::TilingContext* context)
                 return ge::GRAPH_FAILED);
 
     int64_t totalRows = outerDims * H;
-    int64_t pairsPerRow = (W + 1) / 2;
+    // Compute ceil(W / 2) without overflowing when the documented large-width
+    // path receives INT64_MAX (the largest legal odd width).
+    int64_t pairsPerRow = (W > 0) ? (W / 2 + W % 2) : 0;
 
     if (totalRows <= 0 || W <= 0) {
         return FillTilingData(context, 1, 0, 0, W, outerDims, pairsPerRow, ubSize, Rgb2yuv422_TPL_SCH_MODE_0);
