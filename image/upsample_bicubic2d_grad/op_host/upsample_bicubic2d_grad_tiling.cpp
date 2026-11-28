@@ -328,7 +328,7 @@ bool UpsampleBicubic2dGradTiling::GetTilingData(const gert::TilingContext* conte
         !GetClearTilingData(),
         OP_LOGE_WITHOUT_REPORT(context->GetNodeName(),
                                "get clear tiling data failed; propagate the first error reported by the failing stage"),
-        return ge::GRAPH_FAILED);
+        return false);
     return GetMMTilingData(context);
 }
 
