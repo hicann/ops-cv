@@ -95,6 +95,7 @@ constexpr int64_t kPermutationNum = 4;
 const std::vector<int64_t> kHwnc2NchwPermutation = {2, 3, 0, 1};
 constexpr size_t kSizesNumLinear = 1;
 constexpr size_t kSizesNumCubic = 2;
+constexpr int kDecimalBase = 10;
 const std::string kModeLinear = "linear";
 const std::string kModeCubic = "cubic";
 const std::string kDataFormatNchw = "NCHW";
@@ -120,7 +121,7 @@ static NpuArch GetNpuArch()
         OP_LOGW(kPassName.c_str(), "call rtGetSocSpec failed.");
         return NpuArch::DAV_RESV;
     }
-    return static_cast<NpuArch>(std::strtoul(npuArchValStr, nullptr, 10));
+    return static_cast<NpuArch>(std::strtoul(npuArchValStr, nullptr, kDecimalBase));
 }
 
 static bool IsSupportResizeDSoc()
