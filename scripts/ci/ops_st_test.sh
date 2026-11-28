@@ -238,7 +238,7 @@ download_ops_test_kit() {
 
 find_op_code_path() {
     local op_name="$1"
-    local code_path=$(find "${framework_path}" -type d -name "${op_name}" -not -path "*/build/*" -not -path "*/.git/*" -not -path "*/build_out/*" | head -1)
+    local code_path=$(find "${framework_path}" -type d -name "${op_name}" -not -path "*/build/*" -not -path "*/.git/*" -not -path "*/build_out/*" -not -path "*/third_party/*" -not -path "*/st/*" -not -path "*/examples/*" | head -1)
 
     if [[ -z "${code_path}" ]]; then
         return 1
@@ -262,7 +262,7 @@ find_test_cases() {
 
     local st_path
     if [[ -n "${case_path}" ]]; then
-        st_path="${case_path}/${op_type}/${op_name}/"
+        st_path="${case_path}/${op_type}/${op_name}"
     else
         st_path="${framework_path}/${op_type}/${op_name}/tests/st"
     fi
@@ -291,7 +291,7 @@ find_test_cases() {
 
     # 第一步：查找通用用例（st/ttk_kernel_*.csv 等）
     for prefix in "${search_prefixes[@]}"; do
-        local csv_files=$(find "${st_path}" -maxdepth 1 -name "${prefix}_*.csv" -type f 2>/dev/null)
+        local csv_files=$(find "${st_path}" -maxdepth 1 -name "${prefix}_*.csv" -type f ! -name "*_result.csv" 2>/dev/null)
         for csv_file in ${csv_files}; do
             local test_type="${prefix#ttk_}"
             test_case_files+=("${test_type}:${csv_file}")
@@ -299,18 +299,35 @@ find_test_cases() {
     done
 
     # 第二步：查找架构专用用例（st/arch35/ 或 st/arch22/）
+    local arch_dirs=()
     if [[ -n "${arch}" ]]; then
-        local arch_path="${st_path}/${arch}"
-        if [[ -d "${arch_path}" ]]; then
-            for prefix in "${search_prefixes[@]}"; do
-                local csv_files=$(find "${arch_path}" -maxdepth 1 -name "${prefix}_*.csv" -type f 2>/dev/null)
-                for csv_file in ${csv_files}; do
-                    local test_type="${prefix#ttk_}"
-                    test_case_files+=("${test_type}:${csv_file}")
-                done
-            done
-        fi
+        arch_dirs+=("${st_path}/${arch}")
     fi
+    # --case_path 时用例目录由调用方提供，csv 本身不带 arch 字段，
+    # 其下所有 archNN/ 子目录都是合法用例来源
+    if [[ -n "${case_path}" ]]; then
+        local d
+        for d in "${st_path}"/arch[0-9]*; do
+            [[ -d "${d}" ]] || continue
+            [[ "${d}" == "${st_path}/${arch}" ]] && continue
+            arch_dirs+=("${d}")
+        done
+    fi
+
+    local arch_path
+    for arch_path in "${arch_dirs[@]}"; do
+        [[ -d "${arch_path}" ]] || continue
+        if [[ -n "${arch}" && "$(basename "${arch_path}")" != "${arch}" ]]; then
+            echo "[WARNING] ${op_name}: 用例目录 $(basename "${arch_path}") 与当前 arch ${arch} 不一致，按 --case_path 照常执行" >&2
+        fi
+        for prefix in "${search_prefixes[@]}"; do
+            local csv_files=$(find "${arch_path}" -maxdepth 1 -name "${prefix}_*.csv" -type f ! -name "*_result.csv" 2>/dev/null)
+            for csv_file in ${csv_files}; do
+                local test_type="${prefix#ttk_}"
+                test_case_files+=("${test_type}:${csv_file}")
+            done
+        done
+    done
 
     echo "${test_case_files[*]}"
 }
