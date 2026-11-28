@@ -154,10 +154,19 @@ static bool CheckArray(const aclTensor* gradOutput, const aclIntArray* inputSize
     }
     size_t numL = gradOutput->GetViewShape().GetDimNum() == NO_NEED_SQUEEZE ? gradOutput->GetViewShape().GetDim(2) :
                                                                               gradOutput->GetViewShape().GetDim(1);
-    size_t numL0 = ((*inputSize)[0] + (*padding)[0] * 2 - (*dilation)[0] * ((*kernelSize)[0] - 1) - 1 + (*stride)[0]) /
-                   (*stride)[0];
-    size_t numL1 = ((*inputSize)[1] + (*padding)[1] * 2 - (*dilation)[1] * ((*kernelSize)[1] - 1) - 1 + (*stride)[1]) /
-                   (*stride)[1];
+    const int64_t windowNumeratorH = (*inputSize)[0] + (*padding)[0] * 2 - (*dilation)[0] * ((*kernelSize)[0] - 1) - 1 +
+                                     (*stride)[0];
+    const int64_t windowNumeratorW = (*inputSize)[1] + (*padding)[1] * 2 - (*dilation)[1] * ((*kernelSize)[1] - 1) - 1 +
+                                     (*stride)[1];
+    // Reject negative window counts before integer division can round them to zero.
+    if (windowNumeratorH < 0 || windowNumeratorW < 0) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "Sliding window count must be nonnegative in each spatial dimension, but got numerators (%ld, %ld).",
+                windowNumeratorH, windowNumeratorW);
+        return false;
+    }
+    size_t numL0 = windowNumeratorH / (*stride)[0];
+    size_t numL1 = windowNumeratorW / (*stride)[1];
     size_t numL0L1 = numL0 * numL1;
     if (numL != numL0L1) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Expected gradOutput.shape[-1] should be %zu, but current is %zu.", numL0L1,

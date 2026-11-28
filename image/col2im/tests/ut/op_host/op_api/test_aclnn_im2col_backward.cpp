@@ -73,6 +73,23 @@ TEST_F(l2_im2col_backward_test, case_empty_grad_output_non_empty_out)
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 }
 
+TEST_F(l2_im2col_backward_test, case_negative_sliding_window_counts)
+{
+    // Each axis gives (4 - (6 - 1) - 1 + 1) / 1 = -1 sliding windows.
+    auto tensor_desc = TensorDesc({1, 72, 1}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto out_desc = TensorDesc({1, 2, 4, 4}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto input_desc = IntArrayDesc(vector<int64_t>{4, 4});
+    auto kernel_desc = IntArrayDesc(vector<int64_t>{6, 6});
+    auto dilation_desc = IntArrayDesc(vector<int64_t>{1, 1});
+    auto padding_desc = IntArrayDesc(vector<int64_t>{0, 0});
+    auto stride_desc = IntArrayDesc(vector<int64_t>{1, 1});
+    auto ut = OP_API_UT(aclnnIm2colBackward,
+                        INPUT(tensor_desc, input_desc, kernel_desc, dilation_desc, padding_desc, stride_desc),
+                        OUTPUT(out_desc));
+    uint64_t workspace_size = 0;
+    EXPECT_EQ(ut.TestGetWorkspaceSize(&workspace_size), ACLNN_ERR_PARAM_INVALID);
+}
+
 TEST_F(l2_im2col_backward_test, case_FLOAT)
 {
     auto tensor_desc = TensorDesc({1, 60, 56}, ACL_FLOAT, ACL_FORMAT_ND);
