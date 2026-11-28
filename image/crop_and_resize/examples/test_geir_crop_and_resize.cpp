@@ -9,6 +9,7 @@
  */
 
 #include <ctime>
+#include <new>
 #include <iostream>
 #include <cstring>
 #include <cstdint>
@@ -216,7 +217,7 @@ int main(int argc, char* argv[])
     printf("%s - INFO - [XIR]: Initialize ge using ge global options success\n", GetTime().c_str());
 
     std::map<AscendString, AscendString> build_options = {};
-    ge::Session* session = new Session(build_options);
+    ge::Session* session = new (std::nothrow) Session(build_options);
     if (session == nullptr) {
         printf("%s - INFO - [XIR]: Create ir session using build options failed\n", GetTime().c_str());
         GEFinalize();
