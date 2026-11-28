@@ -169,23 +169,22 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtLoopHO
 
     T2 prevOutH = static_cast<T2>(-1);
     T2 prevOutD = static_cast<T2>(-1);
+    T2 prevNc = static_cast<T2>(-1);
     T2 i0 = 0, i1 = 0;
     float w0 = 0.0f, w1 = 0.0f;
     T2 addr0 = 0, addr1 = 0;
 
     for (T2 idx = static_cast<T2>(threadIdx.x); idx < blkProcessNum; idx += stride) {
-        if (outH != prevOutH || outD != prevOutD) {
+        if (outH != prevOutH || outD != prevOutD || nc != prevNc) {
             if (outH != prevOutH) {
                 ComputeLinearIndexAndWeight(ComputeSourceIndex(scaleH, outH, alignCorners), lenSrcH - 1, i0, i1, w0,
                                             w1);
                 prevOutH = outH;
             }
-            // (i0 - outH) can be negative when upscaled; use signed arithmetic.
-            int64_t delta = (static_cast<int64_t>(i0) - static_cast<int64_t>(outH)) * static_cast<int64_t>(lenSrcW);
-            addr0 = yGmIdx + static_cast<T2>(delta);
-            addr1 = addr0 + static_cast<T2>((static_cast<int64_t>(i1) - static_cast<int64_t>(i0)) *
-                                            static_cast<int64_t>(lenSrcW));
+            addr0 = nc * lenSrcDhw + outD * lenSrcHw + i0 * lenSrcW + outW;
+            addr1 = nc * lenSrcDhw + outD * lenSrcHw + i1 * lenSrcW + outW;
             prevOutD = outD;
+            prevNc = nc;
         }
         ComputeSingleAxisFused<T1, T2, 1>(inputGm, outputGm, yGmIdx, addr0, addr1, w0, w1);
 
@@ -216,10 +215,9 @@ __simt_callee__ __aicore__ __attribute__((always_inline)) inline void SimtLoopWO
         T2 i0 = 0, i1 = 0;
         float w0 = 0.0f, w1 = 0.0f;
         ComputeLinearIndexAndWeight(ComputeSourceIndex(scaleW, outW, alignCorners), lenSrcW - 1, i0, i1, w0, w1);
-        // (i0 - outW) can be negative when upscaled; use signed arithmetic.
-        int64_t delta0 = static_cast<int64_t>(i0) - static_cast<int64_t>(outW);
-        T2 addr0 = yGmIdx + static_cast<T2>(delta0);
-        T2 addr1 = addr0 + static_cast<T2>(static_cast<int64_t>(i1) - static_cast<int64_t>(i0));
+        T2 inputRow = nc * lenSrcDhw + outD * lenSrcHw + outH * lenSrcW;
+        T2 addr0 = inputRow + i0;
+        T2 addr1 = inputRow + i1;
         ComputeSingleAxisFused<T1, T2, 2>(inputGm, outputGm, yGmIdx, addr0, addr1, w0, w1);
 
         yGmIdx += stride;
