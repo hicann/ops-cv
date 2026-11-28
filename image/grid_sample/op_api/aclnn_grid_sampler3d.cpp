@@ -115,6 +115,15 @@ static bool CheckFormatValid(const aclTensor* input, const aclTensor* out)
         return false;
     }
 
+    // FORMAT_ND and FORMAT_NCDHW are the same 5D contiguous layout for this op:
+    // CheckShape and CheckAndTranspose branch only on NDHWC, and NCDHW/ND share
+    // one transpose perm. Only a NDHWC vs non-NDHWC pair is a real mismatch.
+    if ((inputFormat == op::Format::FORMAT_NDHWC) != (outFormat == op::Format::FORMAT_NDHWC)) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input and out formats must be the same, but got input [%s] and out [%s]",
+                op::ToString(inputFormat).GetString(), op::ToString(outFormat).GetString());
+        return false;
+    }
+
     return true;
 }
 } // namespace

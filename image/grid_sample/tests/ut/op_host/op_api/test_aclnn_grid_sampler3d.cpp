@@ -333,6 +333,30 @@ TEST_F(l2_grid_sampler3d_test, ascend950_NDHWC_nearest)
     SetPlatformSocVersion(SocVersion::ASCEND910B);
 }
 
+// NDHWC input with NCDHW out is a cross-equivalence-class pair and must be rejected
+TEST_F(l2_grid_sampler3d_test, output_format_must_match_input_format)
+{
+    auto inputDesc = TensorDesc({2, 1, 3, 3, 1}, ACL_FLOAT, ACL_FORMAT_NDHWC);
+    auto gridDesc = TensorDesc({2, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto outDesc = TensorDesc({2, 1, 2, 2, 1}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto ut = OP_API_UT(aclnnGridSampler3D, INPUT(inputDesc, gridDesc, 0, 0, false), OUTPUT(outDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
+// ND and NCDHW are the same 5D contiguous layout for this op, the pair must stay accepted
+TEST_F(l2_grid_sampler3d_test, output_format_nd_matches_ncdhw_input)
+{
+    auto inputDesc = TensorDesc({2, 1, 1, 3, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW);
+    auto gridDesc = TensorDesc({2, 1, 2, 2, 3}, ACL_FLOAT, ACL_FORMAT_NCDHW).ValueRange(-1, 1);
+    auto outDesc = TensorDesc({2, 1, 1, 2, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    auto ut = OP_API_UT(aclnnGridSampler3D, INPUT(inputDesc, gridDesc, 0, 0, false), OUTPUT(outDesc));
+    uint64_t workspaceSize = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspaceSize);
+    EXPECT_EQ(aclRet, ACL_SUCCESS);
+}
+
 // NDHWC double, aicpu branch transposes NDHWC to contiguous NCDHW and reformat to ND
 // NOTE: aicpu task registration result differs between environments (see dtype_double);
 // the transpose/contiguous/reformat lines are fully executed in both cases.
