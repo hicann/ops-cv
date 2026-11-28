@@ -59,14 +59,16 @@ static graphStatus Verify4BlendFaceBgPartTwo(Operator& op)
     Shape accFaceShape = accFaceDesc.GetShape();
     size_t rank = accFaceShape.GetDimNum();
     if (rank != kExpectRank) {
-        OP_LOGE("BlendFaceBgPartTwo", "acc_face rank must be 3 (H,W,C), got rank=%zu", rank);
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON("BlendFaceBgPartTwo", "acc_face", std::to_string(rank).c_str(),
+                                                 "acc_face rank must be 3 (H,W,C)");
         return GRAPH_FAILED;
     }
 
     // ---- 3) 空 tensor 拦截（任意 dim==0） ----
     for (size_t d = 0; d < rank; ++d) {
         if (accFaceShape.GetDim(d) == 0) {
-            OP_LOGE("BlendFaceBgPartTwo", "acc_face dim[%zu]=0, empty tensor is not supported", d);
+            OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON("BlendFaceBgPartTwo", "acc_face", std::to_string(d).c_str(),
+                                                     "acc_face dim=0, empty tensor is not supported");
             return GRAPH_FAILED;
         }
     }
@@ -80,14 +82,20 @@ static graphStatus Verify4BlendFaceBgPartTwo(Operator& op)
     const char* otherNames[] = {"acc_mask", "max_mask", "bg_img"};
     for (size_t i = 0; i < 3; ++i) {
         if (otherShapes[i]->GetDimNum() != rank) {
-            OP_LOGE("BlendFaceBgPartTwo", "%s rank=%zu must equal acc_face rank=%zu", otherNames[i],
-                    otherShapes[i]->GetDimNum(), rank);
+            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                "BlendFaceBgPartTwo", otherNames[i],
+                (std::to_string(otherShapes[i]->GetDimNum()) + ", " + std::to_string(rank)).c_str(),
+                "rank must equal acc_face");
             return GRAPH_FAILED;
         }
         for (size_t d = 0; d < rank; ++d) {
             if (otherShapes[i]->GetDim(d) != accFaceShape.GetDim(d)) {
-                OP_LOGE("BlendFaceBgPartTwo", "%s dim[%zu]=%ld must equal acc_face dim[%zu]=%ld", otherNames[i], d,
-                        otherShapes[i]->GetDim(d), d, accFaceShape.GetDim(d));
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                    "BlendFaceBgPartTwo", otherNames[i],
+                    (std::to_string(d) + ", " + std::to_string(otherShapes[i]->GetDim(d)) + ", " + std::to_string(d) +
+                     ", " + std::to_string(accFaceShape.GetDim(d)))
+                        .c_str(),
+                    "dim must equal acc_face");
                 return GRAPH_FAILED;
             }
         }

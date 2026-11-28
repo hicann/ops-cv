@@ -44,17 +44,22 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
     }
 
     // 输入必须为 rank-3（[B, 7, N] / [B, 7, K]）
-    OP_CHECK_IF(bboxesShape->GetDimNum() != 3 || gtboxesShape->GetDimNum() != 3,
-                OP_LOGE(context, "Iou3D: bboxes/gtboxes must be rank-3, got %zu/%zu", bboxesShape->GetDimNum(),
-                        gtboxesShape->GetDimNum()),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        bboxesShape->GetDimNum() != 3 || gtboxesShape->GetDimNum() != 3,
+        OP_LOGE_FOR_INVALID_SHAPESIZE_WITH_REASON(
+            context->GetNodeName(), "gtboxes",
+            (std::to_string(bboxesShape->GetDimNum()) + ", " + std::to_string(gtboxesShape->GetDimNum())).c_str(),
+            "bboxes/gtboxes must be rank-3"),
+        return ge::GRAPH_FAILED);
 
     // channel 维度必须为 7（7-DoF）
     const int64_t bboxesChannel = bboxesShape->GetDim(1);
     const int64_t gtboxesChannel = gtboxesShape->GetDim(1);
     OP_CHECK_IF((bboxesChannel >= 0 && bboxesChannel != 7) || (gtboxesChannel >= 0 && gtboxesChannel != 7),
-                OP_LOGE(context, "Iou3D: channel dimension must be 7, got bboxes=%ld, gtboxes=%ld", bboxesChannel,
-                        gtboxesChannel),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "gtboxes",
+                    (std::to_string(bboxesChannel) + ", " + std::to_string(gtboxesChannel)).c_str(),
+                    "channel dimension must be 7"),
                 return ge::GRAPH_FAILED);
 
     const int64_t batch = bboxesShape->GetDim(0); // B
@@ -65,14 +70,19 @@ static ge::graphStatus InferShape4Iou3D(gert::InferShapeContext* context)
     const int64_t gtboxesBatch = gtboxesShape->GetDim(0);
     OP_CHECK_IF(
         batch >= 0 && gtboxesBatch >= 0 && batch != gtboxesBatch,
-        OP_LOGE(context, "Iou3D: batch dimension must be consistent, got bboxes=%ld, gtboxes=%ld", batch, gtboxesBatch),
+        OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "gtboxes",
+                                              (std::to_string(batch) + ", " + std::to_string(gtboxesBatch)).c_str(),
+                                              "batch dimension must be consistent"),
         return ge::GRAPH_FAILED);
 
     // 具体维度必须非负；仅保留 -1 作为动态维。其他负值不能传播到输出 shape。
     OP_CHECK_IF((batch < 0 && batch != ge::UNKNOWN_DIM) || (gtboxesBatch < 0 && gtboxesBatch != ge::UNKNOWN_DIM) ||
                     (numN < 0 && numN != ge::UNKNOWN_DIM) || (numK < 0 && numK != ge::UNKNOWN_DIM),
-                OP_LOGE(context, "Iou3D: B/N/K must be non-negative or UNKNOWN_DIM, got B=%ld/%ld, N=%ld, K=%ld", batch,
-                        gtboxesBatch, numN, numK),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "input",
+                                                      (std::to_string(batch) + ", " + std::to_string(gtboxesBatch) +
+                                                       ", " + std::to_string(numN) + ", " + std::to_string(numK))
+                                                          .c_str(),
+                                                      "B/N/K must be non-negative or UNKNOWN_DIM"),
                 return ge::GRAPH_FAILED);
 
     // D5 对标 mmcv：移除 K≤2000 上限（mmcv 无 K 限制）。逐对计算的 UB/Sort32 缓冲仅按
@@ -97,12 +107,12 @@ static ge::graphStatus InferShapeAndTypeForIou3D(ge::Operator& op)
     const ge::TensorDesc gtboxesDesc = op.GetInputDesc("gtboxes");
 
     if (bboxesDesc.GetDataType() != ge::DT_FLOAT || gtboxesDesc.GetDataType() != ge::DT_FLOAT) {
-        OP_LOGE("Iou3D", "bboxes and gtboxes must both be float32");
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON("Iou3D", "gtboxes", "bboxes and gtboxes must both be float32");
         return ge::GRAPH_FAILED;
     }
 
     if (bboxesDesc.GetFormat() != ge::FORMAT_ND || gtboxesDesc.GetFormat() != ge::FORMAT_ND) {
-        OP_LOGE("Iou3D", "bboxes and gtboxes must both use ND format");
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON("Iou3D", "gtboxes", "bboxes and gtboxes must both use ND format");
         return ge::GRAPH_FAILED;
     }
 
@@ -125,17 +135,18 @@ static ge::graphStatus InferShapeAndTypeForIou3D(ge::Operator& op)
     const std::vector<int64_t> bboxesDims = bboxesShape.GetDims();
     const std::vector<int64_t> gtboxesDims = gtboxesShape.GetDims();
     if (bboxesDims.size() != 3U || gtboxesDims.size() != 3U) {
-        OP_LOGE("Iou3D", "bboxes and gtboxes must both be rank-3");
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON("Iou3D", "gtboxes", "bboxes and gtboxes must both be rank-3");
         return ge::GRAPH_FAILED;
     }
 
     if ((bboxesDims[1] >= 0 && bboxesDims[1] != 7) || (gtboxesDims[1] >= 0 && gtboxesDims[1] != 7)) {
-        OP_LOGE("Iou3D", "channel dimension must be 7");
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON("Iou3D", "input", "channel dimension must be 7");
         return ge::GRAPH_FAILED;
     }
 
     if (bboxesDims[0] >= 0 && gtboxesDims[0] >= 0 && bboxesDims[0] != gtboxesDims[0]) {
-        OP_LOGE("Iou3D", "bboxes and gtboxes must have the same batch dimension");
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON("Iou3D", "gtboxes",
+                                                 "bboxes and gtboxes must have the same batch dimension");
         return ge::GRAPH_FAILED;
     }
 
@@ -144,7 +155,7 @@ static ge::graphStatus InferShapeAndTypeForIou3D(ge::Operator& op)
         (gtboxesDims[0] < 0 && gtboxesDims[0] != ge::UNKNOWN_DIM) ||
         (bboxesDims[2] < 0 && bboxesDims[2] != ge::UNKNOWN_DIM) ||
         (gtboxesDims[2] < 0 && gtboxesDims[2] != ge::UNKNOWN_DIM)) {
-        OP_LOGE("Iou3D", "B/N/K must be non-negative or UNKNOWN_DIM");
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON("Iou3D", "input", "B/N/K must be non-negative or UNKNOWN_DIM");
         return ge::GRAPH_FAILED;
     }
 

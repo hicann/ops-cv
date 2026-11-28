@@ -100,10 +100,14 @@ static ge::graphStatus InferShape4Col2ImV2(gert::InferShapeContext* context)
                 return ge::GRAPH_FAILED);
 
     // output_size and kernel_size must be rank-1 tensors with two elements.
-    OP_CHECK_IF(ValidateSizeShape(context, outputSizeShape, "output_size") != ge::GRAPH_SUCCESS,
-                OP_LOGE(context->GetNodeName(), "Invalid output_size shape"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(ValidateSizeShape(context, kernelSizeShape, "kernel_size") != ge::GRAPH_SUCCESS,
-                OP_LOGE(context->GetNodeName(), "Invalid kernel_size shape"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        ValidateSizeShape(context, outputSizeShape, "output_size") != ge::GRAPH_SUCCESS,
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "output_size", "Invalid output_size shape"),
+        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        ValidateSizeShape(context, kernelSizeShape, "kernel_size") != ge::GRAPH_SUCCESS,
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "kernel_size", "Invalid kernel_size shape"),
+        return ge::GRAPH_FAILED);
 
     // 4. 读取 const tensor 值
     int64_t outH = 0;

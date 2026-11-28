@@ -52,30 +52,48 @@ static ge::graphStatus InferShapeIMGWarpResize(gert::InferShapeContext* context)
     }
 
     // Validate img is 5D [N, 4, C, H, W]
-    OP_CHECK_IF(imgShape->GetDimNum() != 5, OP_LOGE(context, "img must be 5D, got %zu dims", imgShape->GetDimNum()),
+    OP_CHECK_IF(imgShape->GetDimNum() != 5,
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "img",
+                                                      std::to_string(imgShape->GetDimNum()).c_str(), "img must be 5D"),
                 return GRAPH_FAILED);
     // Validate warp_index is 4D [N, 2, H, W]
     OP_CHECK_IF(warpIndexShape->GetDimNum() != 4,
-                OP_LOGE(context, "warp_index must be 4D, got %zu dims", warpIndexShape->GetDimNum()),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "warp_index",
+                                                      std::to_string(warpIndexShape->GetDimNum()).c_str(),
+                                                      "warp_index must be 4D"),
                 return GRAPH_FAILED);
 
     // Validate img.shape[1] == 4 (four corners), skip when -1
-    OP_CHECK_IF(imgShape->GetDim(1) != UNKNOWN_DIM && imgShape->GetDim(1) != 4,
-                OP_LOGE(context, "img.shape[1] must be 4, got %ld", imgShape->GetDim(1)), return GRAPH_FAILED);
+    OP_CHECK_IF(
+        imgShape->GetDim(1) != UNKNOWN_DIM && imgShape->GetDim(1) != 4,
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "img",
+                                                 std::to_string(imgShape->GetDim(1)).c_str(), "img.shape[1] must be 4"),
+        return GRAPH_FAILED);
     // Validate warp_index.shape[1] == 2 (x, y coordinates), skip when -1
     OP_CHECK_IF(warpIndexShape->GetDim(1) != UNKNOWN_DIM && warpIndexShape->GetDim(1) != 2,
-                OP_LOGE(context, "warp_index.shape[1] must be 2, got %ld", warpIndexShape->GetDim(1)),
+                OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "warp_index",
+                                                         std::to_string(warpIndexShape->GetDim(1)).c_str(),
+                                                         "warp_index.shape[1] must be 2"),
                 return GRAPH_FAILED);
 
     // Validate N/H/W consistency between img and warp_index, skip when either is -1
     OP_CHECK_IF(BothKnownAndNotEqual(imgShape->GetDim(0), warpIndexShape->GetDim(0)),
-                OP_LOGE(context, "N mismatch: img=%ld, warp_index=%ld", imgShape->GetDim(0), warpIndexShape->GetDim(0)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    (std::to_string(imgShape->GetDim(0)) + ", " + std::to_string(warpIndexShape->GetDim(0))).c_str(),
+                    "N mismatch"),
                 return GRAPH_FAILED);
     OP_CHECK_IF(BothKnownAndNotEqual(imgShape->GetDim(3), warpIndexShape->GetDim(2)),
-                OP_LOGE(context, "H mismatch: img=%ld, warp_index=%ld", imgShape->GetDim(3), warpIndexShape->GetDim(2)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    (std::to_string(imgShape->GetDim(3)) + ", " + std::to_string(warpIndexShape->GetDim(2))).c_str(),
+                    "H mismatch"),
                 return GRAPH_FAILED);
     OP_CHECK_IF(BothKnownAndNotEqual(imgShape->GetDim(4), warpIndexShape->GetDim(3)),
-                OP_LOGE(context, "W mismatch: img=%ld, warp_index=%ld", imgShape->GetDim(4), warpIndexShape->GetDim(3)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    (std::to_string(imgShape->GetDim(4)) + ", " + std::to_string(warpIndexShape->GetDim(3))).c_str(),
+                    "W mismatch"),
                 return GRAPH_FAILED);
 
     // Validate img N/C/H/W are positive when known (skip -1 unknown dim), aligning the

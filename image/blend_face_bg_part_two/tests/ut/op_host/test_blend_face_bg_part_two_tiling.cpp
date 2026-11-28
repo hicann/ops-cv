@@ -29,7 +29,7 @@
 #include <gtest/gtest.h>
 #include "tiling_context_faker.h"
 #include "tiling_case_executor.h"
-#include "blend_face_bg_part_two_tiling_data.h"
+#include "../../../op_kernel/arch35/blend_face_bg_part_two_tiling_data.h"
 
 namespace BlendFaceBgPartTwoUT {
 using namespace std;
@@ -42,7 +42,6 @@ static const std::string OP_NAME = "BlendFaceBgPartTwo";
 static constexpr int64_t ELEM_ALIGN_FACTOR = 512;   // blockFormer 元素对齐因子
 static constexpr int64_t FP32_ALIGN_ELEM = 256 / 4; // ubFormer 对齐（256B → 64 fp32 元素）
 static constexpr uint64_t KEY_DOUBLE_BUFFER = 1UL;  // 数据量足够 → 双缓冲
-static constexpr uint64_t KEY_SINGLE_BUFFER = 0UL;  // 空 Tensor → 单缓冲
 
 static inline int64_t CeilDiv(int64_t a, int64_t b) { return (b == 0) ? 0 : (a + b - 1) / b; }
 
@@ -61,8 +60,8 @@ static gert::TilingContextPara MakePara(const std::initializer_list<int64_t>& sh
          {s, ge::DT_FLOAT, ge::FORMAT_ND},
          {s, bgImgDtype, ge::FORMAT_ND}}); // bg_img dtype 可变（DT_FLOAT / DT_UINT8）
     std::vector<gert::TilingContextPara::TensorDescription> outputs({{s, ge::DT_FLOAT, ge::FORMAT_ND}});
-    std::vector<gert::TilingContextPara::OpAttr> attrs({{"epsilon", Ops::Math::AnyValue::CreateFrom<float>(epsilon)}});
-    return gert::TilingContextPara(OP_NAME, inputs, outputs, attrs, &g_compileInfo, coreNum, ubSize, 4096);
+    std::vector<gert::TilingContextPara::OpAttr> attrs({{"epsilon", Ops::Cv::AnyValue::CreateFrom<float>(epsilon)}});
+    return gert::TilingContextPara(OP_NAME, inputs, outputs, attrs, &g_compileInfo, "Ascend950", coreNum, ubSize, 4096);
 }
 
 // 运行 tiling 并把 raw tiling data 还原为结构体
@@ -179,21 +178,12 @@ TEST_F(BlendFaceBgPartTwoTiling, tiling_ub_multi_loop_small_ub)
     EXPECT_GT(t->ubLoopOfFormerBlock, 1); // 需要多次 UB 循环
 }
 
-// case 5：空 Tensor（dim0=0）→ 单缓冲 TilingKey，单核零操作路径
+// case 5：空 Tensor（dim0=0）→ 按实现逻辑（0.2 节空 tensor 拦截，任意 dim==0 即拒绝）tiling 返回失败
 TEST_F(BlendFaceBgPartTwoTiling, tiling_empty_tensor)
 {
     auto para = MakePara({0, 4, 3}, 1.0e-12f, 64, 262144); // dim0 = 0
     TilingInfo info;
-    ASSERT_TRUE(ExecuteTiling(para, info));
-    EXPECT_EQ(info.tilingKey, static_cast<int64_t>(KEY_SINGLE_BUFFER));
-    const auto* t = AsTilingData(info);
-    ASSERT_NE(t, nullptr);
-    EXPECT_EQ(t->dim0, 0);
-    EXPECT_EQ(t->coreNum, 1);
-    EXPECT_EQ(t->blockFormer, 0);
-    EXPECT_EQ(t->blockNum, 1);
-    EXPECT_EQ(t->ubFormer, 0);
-    EXPECT_EQ(static_cast<int64_t>(info.blockNum), 1);
+    EXPECT_FALSE(ExecuteTiling(para, info));
 }
 
 // case 6：workspace slot 声明为 0（即使无 workspace 也须声明 1 个 slot，值为 0）
@@ -265,15 +255,7 @@ TEST_F(BlendFaceBgPartTwoTiling, tiling_uint8_empty_tensor)
 {
     auto para = MakePara({0, 4, 3}, 1.0e-12f, 64, 262144, ge::DT_UINT8); // dim0 = 0
     TilingInfo info;
-    ASSERT_TRUE(ExecuteTiling(para, info));
-    EXPECT_EQ(info.tilingKey, static_cast<int64_t>(KEY_SINGLE_BUFFER));
-    const auto* t = AsTilingData(info);
-    ASSERT_NE(t, nullptr);
-    EXPECT_EQ(t->dim0, 0);
-    EXPECT_EQ(t->coreNum, 1);
-    EXPECT_EQ(t->blockFormer, 0);
-    EXPECT_EQ(t->blockNum, 1);
-    EXPECT_EQ(t->ubFormer, 0);
+    EXPECT_FALSE(ExecuteTiling(para, info));
 }
 
 // case 11：bg_img=uint8 非对齐尾块，验证首/尾 block 计算与 bufferDivisor=34

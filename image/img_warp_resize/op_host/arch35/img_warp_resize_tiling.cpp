@@ -55,15 +55,24 @@ static ge::graphStatus ValidateAndExtractDims(gert::TilingContext* context, int6
     auto imgShape = context->GetInputShape(0)->GetStorageShape();       // [N, 4, C, H, W]
     auto warpIndexShape = context->GetInputShape(1)->GetStorageShape(); // [N, 2, H, W]
 
-    OP_CHECK_IF(imgShape.GetDimNum() != 5, OP_LOGE(context, "img must be 5D, got %zu dims", imgShape.GetDimNum()),
+    OP_CHECK_IF(imgShape.GetDimNum() != 5,
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "img",
+                                                      std::to_string(imgShape.GetDimNum()).c_str(), "img must be 5D"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(warpIndexShape.GetDimNum() != 4,
-                OP_LOGE(context, "warp_index must be 4D, got %zu dims", warpIndexShape.GetDimNum()),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "warp_index",
+                                                      std::to_string(warpIndexShape.GetDimNum()).c_str(),
+                                                      "warp_index must be 4D"),
                 return ge::GRAPH_FAILED);
-    OP_CHECK_IF(imgShape.GetDim(1) != 4, OP_LOGE(context, "img.shape[1] must be 4, got %ld", imgShape.GetDim(1)),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        imgShape.GetDim(1) != 4,
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "img",
+                                                 std::to_string(imgShape.GetDim(1)).c_str(), "img.shape[1] must be 4"),
+        return ge::GRAPH_FAILED);
     OP_CHECK_IF(warpIndexShape.GetDim(1) != 2,
-                OP_LOGE(context, "warp_index.shape[1] must be 2, got %ld", warpIndexShape.GetDim(1)),
+                OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "warp_index",
+                                                         std::to_string(warpIndexShape.GetDim(1)).c_str(),
+                                                         "warp_index.shape[1] must be 2"),
                 return ge::GRAPH_FAILED);
 
     N = imgShape.GetDim(0);
@@ -73,17 +82,28 @@ static ge::graphStatus ValidateAndExtractDims(gert::TilingContext* context, int6
 
     // Validate N/H/W consistency
     OP_CHECK_IF(warpIndexShape.GetDim(0) != N,
-                OP_LOGE(context, "N mismatch: img=%ld, warp_index=%ld", N, warpIndexShape.GetDim(0)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    (std::to_string(N) + ", " + std::to_string(warpIndexShape.GetDim(0))).c_str(), "N mismatch"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(warpIndexShape.GetDim(2) != H,
-                OP_LOGE(context, "H mismatch: img=%ld, warp_index=%ld", H, warpIndexShape.GetDim(2)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    (std::to_string(H) + ", " + std::to_string(warpIndexShape.GetDim(2))).c_str(), "H mismatch"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(warpIndexShape.GetDim(3) != W,
-                OP_LOGE(context, "W mismatch: img=%ld, warp_index=%ld", W, warpIndexShape.GetDim(3)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    (std::to_string(W) + ", " + std::to_string(warpIndexShape.GetDim(3))).c_str(), "W mismatch"),
                 return ge::GRAPH_FAILED);
     // Validate no zero dimensions
     OP_CHECK_IF(N <= 0 || C <= 0 || H <= 0 || W <= 0,
-                OP_LOGE(context, "0 or negative dim: N=%ld C=%ld H=%ld W=%ld", N, C, H, W), return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_SHAPESIZE_WITH_REASON(
+                    context->GetNodeName(), "input",
+                    (std::to_string(N) + ", " + std::to_string(C) + ", " + std::to_string(H) + ", " + std::to_string(W))
+                        .c_str(),
+                    "0 or negative dim N C H W"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -95,11 +115,15 @@ static ge::graphStatus ValidateDtypes(gert::TilingContext* context)
     OP_CHECK_NULL_WITH_CONTEXT(context, warpIndexDesc);
     ge::DataType imgDtype = imgDesc->GetDataType();
     OP_CHECK_IF(imgDtype != ge::DT_FLOAT16 && imgDtype != ge::DT_FLOAT,
-                OP_LOGE(context, "img.dtype must be float16 or float32, got %d", static_cast<int32_t>(imgDtype)),
+                OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), "img",
+                                                      std::to_string(static_cast<int32_t>(imgDtype)).c_str(),
+                                                      "img.dtype must be float16 or float32"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(warpIndexDesc->GetDataType() != ge::DT_FLOAT,
-                OP_LOGE(context, "warp_index.dtype must be float32, got %d",
-                        static_cast<int32_t>(warpIndexDesc->GetDataType())),
+                OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(
+                    context->GetNodeName(), "warp_index",
+                    std::to_string(static_cast<int32_t>(warpIndexDesc->GetDataType())).c_str(),
+                    "warp_index.dtype must be float32"),
                 return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }

@@ -30,8 +30,11 @@ static ge::graphStatus InferDataType4Iou3D(gert::InferDataTypeContext* context)
     const auto bboxesDtype = context->GetInputDataType(0);
     const auto gtboxesDtype = context->GetInputDataType(1);
     OP_CHECK_IF(bboxesDtype != ge::DT_FLOAT || gtboxesDtype != ge::DT_FLOAT,
-                OP_LOGE(context, "Iou3D: bboxes/gtboxes must both be float32, got %d/%d", static_cast<int>(bboxesDtype),
-                        static_cast<int>(gtboxesDtype)),
+                OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), "gtboxes",
+                                                      (std::to_string(static_cast<int>(bboxesDtype)) + ", " +
+                                                       std::to_string(static_cast<int>(gtboxesDtype)))
+                                                          .c_str(),
+                                                      "bboxes/gtboxes must both be float32"),
                 return ge::GRAPH_FAILED);
     context->SetOutputDataType(0, ge::DT_FLOAT);
     return ge::GRAPH_SUCCESS;

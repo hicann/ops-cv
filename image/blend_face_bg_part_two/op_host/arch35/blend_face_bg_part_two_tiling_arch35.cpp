@@ -112,31 +112,34 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
             ge::DataType dt = desc->GetDataType();
             if (i < 3) {
                 OP_CHECK_IF(dt != ge::DT_FLOAT,
-                            OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s dtype must be FLOAT, got=%d",
-                                    kDtypeNames[i], static_cast<int>(dt)),
+                            OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), kDtypeNames[i],
+                                                                  std::to_string(static_cast<int>(dt)).c_str(),
+                                                                  "dtype must be FLOAT"),
                             return ge::GRAPH_FAILED);
             } else {
-                OP_CHECK_IF(
-                    dt != ge::DT_FLOAT && dt != ge::DT_UINT8,
-                    OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s dtype must be FLOAT or UINT8, got=%d",
-                            kDtypeNames[i], static_cast<int>(dt)),
-                    return ge::GRAPH_FAILED);
+                OP_CHECK_IF(dt != ge::DT_FLOAT && dt != ge::DT_UINT8,
+                            OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), kDtypeNames[i],
+                                                                  std::to_string(static_cast<int>(dt)).c_str(),
+                                                                  "dtype must be FLOAT or UINT8"),
+                            return ge::GRAPH_FAILED);
             }
         }
     }
 
     // 0.1) rank=3 校验
     OP_CHECK_IF(accFaceOrigin.GetDimNum() != kExpectRank,
-                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: acc_face rank must be 3 (H,W,C), got rank=%zu",
-                        accFaceOrigin.GetDimNum()),
+                OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "acc_face",
+                                                         std::to_string(accFaceOrigin.GetDimNum()).c_str(),
+                                                         "acc_face rank must be 3 (H,W,C)"),
                 return ge::GRAPH_FAILED);
 
     // 0.2) 空 tensor 拦截（逐维检查 origin shape，任意 dim==0 即拒绝）
     for (size_t d = 0; d < accFaceOrigin.GetDimNum(); ++d) {
-        OP_CHECK_IF(accFaceOrigin.GetDim(d) == 0,
-                    OP_LOGE(context->GetNodeName(),
-                            "BlendFaceBgPartTwo: acc_face origin dim[%zu]=0, empty tensor is not supported", d),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            accFaceOrigin.GetDim(d) == 0,
+            OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "acc_face", std::to_string(d).c_str(),
+                                                     "acc_face origin dim=0, empty tensor is not supported"),
+            return ge::GRAPH_FAILED);
     }
 
     // 0.3) 四输入 shape 一致性校验（逐维比较 origin shape，防框架 storage shape 归一化绕过）
@@ -147,16 +150,21 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
             auto otherShape = context->GetInputShape(kOtherIdxes[i]);
             OP_CHECK_NULL_WITH_CONTEXT(context, otherShape);
             const auto& otherOrigin = otherShape->GetOriginShape();
-            OP_CHECK_IF(
-                otherOrigin.GetDimNum() != accFaceOrigin.GetDimNum(),
-                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: %s origin rank=%zu must equal acc_face rank=%zu",
-                        kOtherNames[i], otherOrigin.GetDimNum(), accFaceOrigin.GetDimNum()),
-                return ge::GRAPH_FAILED);
+            OP_CHECK_IF(otherOrigin.GetDimNum() != accFaceOrigin.GetDimNum(),
+                        OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                            context->GetNodeName(), kOtherNames[i],
+                            (std::to_string(otherOrigin.GetDimNum()) + ", " + std::to_string(accFaceOrigin.GetDimNum()))
+                                .c_str(),
+                            "origin rank must equal acc_face"),
+                        return ge::GRAPH_FAILED);
             for (size_t d = 0; d < accFaceOrigin.GetDimNum(); ++d) {
                 OP_CHECK_IF(otherOrigin.GetDim(d) != accFaceOrigin.GetDim(d),
-                            OP_LOGE(context->GetNodeName(),
-                                    "BlendFaceBgPartTwo: %s origin dim[%zu]=%ld must equal acc_face dim[%zu]=%ld",
-                                    kOtherNames[i], d, otherOrigin.GetDim(d), d, accFaceOrigin.GetDim(d)),
+                            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                                context->GetNodeName(), kOtherNames[i],
+                                (std::to_string(d) + ", " + std::to_string(otherOrigin.GetDim(d)) + ", " +
+                                 std::to_string(d) + ", " + std::to_string(accFaceOrigin.GetDim(d)))
+                                    .c_str(),
+                                "origin dim must equal acc_face"),
                             return ge::GRAPH_FAILED);
             }
         }
@@ -186,7 +194,8 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
     // 2.2) epsilon 值域校验（必须 >= 0）
     float epsilonVal = GetEpsilonAttr(context);
     OP_CHECK_IF(epsilonVal < 0.0f,
-                OP_LOGE(context->GetNodeName(), "BlendFaceBgPartTwo: epsilon must be >= 0, got=%f", epsilonVal),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "epsilon",
+                                                      std::to_string(epsilonVal).c_str(), "epsilon must be >= 0"),
                 return ge::GRAPH_FAILED);
 
     // 3) workspace（即使为 0 也须声明 slot）
@@ -207,7 +216,10 @@ static ge::graphStatus BlendFaceBgPartTwoTilingFunc(gert::TilingContext* context
         coreNum = 1;
     }
     int64_t blockFormer = CeilAlign(CeilDiv(dim0, coreNum), ELEM_ALIGN_FACTOR);
-    OP_CHECK_IF(blockFormer <= 0, OP_LOGE(context, "blockFormer=%ld invalid", blockFormer), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(blockFormer <= 0,
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context->GetNodeName(), "blockFormer",
+                                                      std::to_string(blockFormer).c_str(), "blockFormer invalid"),
+                return ge::GRAPH_FAILED);
     int64_t blockNum = CeilDiv(dim0, blockFormer);
 
     // 6) UB 切分（256B 对齐，bufferDivisor 按 bg dtype：KEY_FP32=40 / KEY_UINT8=34 bytes/元素）

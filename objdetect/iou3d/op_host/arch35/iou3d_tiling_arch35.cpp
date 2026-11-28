@@ -72,10 +72,12 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t* batch
     const auto& gShape = gtboxes->GetStorageShape();
 
     // rank-3 校验
-    OP_CHECK_IF(
-        bShape.GetDimNum() != 3 || gShape.GetDimNum() != 3,
-        OP_LOGE(context, "Iou3D: bboxes/gtboxes must be rank-3, got %zu/%zu", bShape.GetDimNum(), gShape.GetDimNum()),
-        return ge::GRAPH_FAILED);
+    OP_CHECK_IF(bShape.GetDimNum() != 3 || gShape.GetDimNum() != 3,
+                OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(
+                    context->GetNodeName(), "bboxes, gtboxes",
+                    (std::to_string(bShape.GetDimNum()) + ", " + std::to_string(gShape.GetDimNum())).c_str(),
+                    "bboxes/gtboxes must be rank-3"),
+                return ge::GRAPH_FAILED);
 
     *batch = bShape.GetDim(0);
     *numN = bShape.GetDim(2);
@@ -86,18 +88,25 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t* batch
                 OP_LOGE(context, "Iou3D: B/N/K must be non-negative, got %ld/%ld/%ld", *batch, *numN, *numK),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(*batch > MAX_TILING_DIM || *numN > MAX_TILING_DIM || *numK > MAX_TILING_DIM,
-                OP_LOGE(context, "Iou3D: B/N/K exceed uint32 tiling range, got %ld/%ld/%ld", *batch, *numN, *numK),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "input",
+                    (std::to_string(*batch) + ", " + std::to_string(*numN) + ", " + std::to_string(*numK)).c_str(),
+                    "B/N/K exceed uint32 tiling range"),
                 return ge::GRAPH_FAILED);
 
     // channel==7 校验
     OP_CHECK_IF(bShape.GetDim(1) != IOU3D_DOF || gShape.GetDim(1) != IOU3D_DOF,
-                OP_LOGE(context, "Iou3D: channel dim must be 7 (7-DoF), got bboxes=%ld, gtboxes=%ld", bShape.GetDim(1),
-                        gShape.GetDim(1)),
+                OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(
+                    context->GetNodeName(), "bboxes, gtboxes",
+                    (std::to_string(bShape.GetDim(1)) + ", " + std::to_string(gShape.GetDim(1))).c_str(),
+                    "channel dim must be 7 (7-DoF)"),
                 return ge::GRAPH_FAILED);
     // 同 batch 校验
     OP_CHECK_IF(bShape.GetDim(0) != gShape.GetDim(0),
-                OP_LOGE(context, "Iou3D: bboxes/gtboxes must share batch B, got %ld vs %ld", bShape.GetDim(0),
-                        gShape.GetDim(0)),
+                OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(
+                    context->GetNodeName(), "gtboxes",
+                    (std::to_string(bShape.GetDim(0)) + ", " + std::to_string(gShape.GetDim(0))).c_str(),
+                    "bboxes/gtboxes must share batch B"),
                 return ge::GRAPH_FAILED);
     // D5 对标 mmcv：移除 K≤2000 上限（mmcv 无 K 限制）。多核切分按 totalPairs=B*N*K（int64）均分，
     //   UB 批处理按固定 tileLen(256) 分批，Sort32 固定 32 元素（有效顶点 <=16），均与 K 无耦合，任意 K 成立。
@@ -108,15 +117,22 @@ static ge::graphStatus GetShapeInfo(gert::TilingContext* context, int64_t* batch
     auto gtboxesDesc = context->GetInputDesc(1);
     OP_CHECK_NULL_WITH_CONTEXT(context, bboxesDesc);
     OP_CHECK_NULL_WITH_CONTEXT(context, gtboxesDesc);
-    OP_CHECK_IF(bboxesDesc->GetDataType() != ge::DT_FLOAT || gtboxesDesc->GetDataType() != ge::DT_FLOAT,
-                OP_LOGE(context, "Iou3D: bboxes/gtboxes must both be float32, got dtype=%d/%d",
-                        static_cast<int>(bboxesDesc->GetDataType()), static_cast<int>(gtboxesDesc->GetDataType())),
-                return ge::GRAPH_FAILED);
     OP_CHECK_IF(
-        bboxesDesc->GetStorageFormat() != ge::FORMAT_ND || gtboxesDesc->GetStorageFormat() != ge::FORMAT_ND,
-        OP_LOGE(context, "Iou3D: bboxes/gtboxes must both use ND storage format, got %d/%d",
-                static_cast<int>(bboxesDesc->GetStorageFormat()), static_cast<int>(gtboxesDesc->GetStorageFormat())),
+        bboxesDesc->GetDataType() != ge::DT_FLOAT || gtboxesDesc->GetDataType() != ge::DT_FLOAT,
+        OP_LOGE_FOR_INVALID_DTYPE_WITH_REASON(context->GetNodeName(), "gtboxes",
+                                              (std::to_string(static_cast<int>(bboxesDesc->GetDataType())) + ", " +
+                                               std::to_string(static_cast<int>(gtboxesDesc->GetDataType())))
+                                                  .c_str(),
+                                              "bboxes/gtboxes must both be float32"),
         return ge::GRAPH_FAILED);
+    OP_CHECK_IF(bboxesDesc->GetStorageFormat() != ge::FORMAT_ND || gtboxesDesc->GetStorageFormat() != ge::FORMAT_ND,
+                OP_LOGE_FOR_INVALID_FORMAT_WITH_REASON(
+                    context->GetNodeName(), "gtboxes",
+                    (std::to_string(static_cast<int>(bboxesDesc->GetStorageFormat())) + ", " +
+                     std::to_string(static_cast<int>(gtboxesDesc->GetStorageFormat())))
+                        .c_str(),
+                    "bboxes/gtboxes must both use ND storage format"),
+                return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }

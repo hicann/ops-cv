@@ -70,7 +70,9 @@ static ge::graphStatus InferShapeDeformableRoiPoolGrad(gert::InferShapeContext* 
 
     OP_CHECK_IF(
         gradShape->GetDimNum() != NCHW_RANK || xShape->GetDimNum() != NCHW_RANK || roisShape->GetDimNum() != ROIS_RANK,
-        OP_LOGE(context, "grad/x/rois rank must be 4/4/2"), return ge::GRAPH_FAILED);
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "grad/x/rois",
+                                                 "grad/x/rois rank must be 4/4/2"),
+        return ge::GRAPH_FAILED);
 
     auto validDim = [kMaxInt32](int64_t dim, bool allowZero) {
         return dim == ge::UNKNOWN_DIM || ((allowZero ? dim >= 0 : dim > 0) && dim <= kMaxInt32);
@@ -81,9 +83,11 @@ static ge::graphStatus InferShapeDeformableRoiPoolGrad(gert::InferShapeContext* 
         OP_CHECK_IF(!validDim(xShape->GetDim(i), i == DIM_N),
                     OP_LOGE(context, "x dimension is outside the supported int32 range"), return ge::GRAPH_FAILED);
     }
-    OP_CHECK_IF(!validDim(roisShape->GetDim(DIM_N), true) ||
-                    (roisShape->GetDim(DIM_C) != ge::UNKNOWN_DIM && roisShape->GetDim(DIM_C) != ROI_FIELD_NUM),
-                OP_LOGE(context, "rois shape must be [grad.N, 5]"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        !validDim(roisShape->GetDim(DIM_N), true) ||
+            (roisShape->GetDim(DIM_C) != ge::UNKNOWN_DIM && roisShape->GetDim(DIM_C) != ROI_FIELD_NUM),
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "rois", "rois shape must be [grad.N, 5]"),
+        return ge::GRAPH_FAILED);
     OP_CHECK_IF(gradShape->GetDim(DIM_N) != ge::UNKNOWN_DIM && roisShape->GetDim(DIM_N) != ge::UNKNOWN_DIM &&
                     gradShape->GetDim(DIM_N) != roisShape->GetDim(DIM_N),
                 OP_LOGE(context, "grad.N must equal rois.N"), return ge::GRAPH_FAILED);
@@ -107,7 +111,9 @@ static ge::graphStatus InferShapeDeformableRoiPoolGrad(gert::InferShapeContext* 
                 OP_LOGE(context, "output_size elements must be in [1, INT32_MAX]"), return ge::GRAPH_FAILED);
     OP_CHECK_IF((gradShape->GetDim(DIM_H) != ge::UNKNOWN_DIM && gradShape->GetDim(DIM_H) != outputSizeData[0]) ||
                     (gradShape->GetDim(DIM_W) != ge::UNKNOWN_DIM && gradShape->GetDim(DIM_W) != outputSizeData[1]),
-                OP_LOGE(context, "output_size must equal grad spatial shape"), return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "input",
+                                                         "output_size must equal grad spatial shape"),
+                return ge::GRAPH_FAILED);
 
     const float* spatialScale = attrs->GetFloat(1);
     const int64_t* samplingRatio = attrs->GetInt(2);
@@ -125,7 +131,9 @@ static ge::graphStatus InferShapeDeformableRoiPoolGrad(gert::InferShapeContext* 
     const bool emptyOffset = offsetShape == nullptr || offsetShape->GetDimNum() == 0 ||
                              (offsetShape->GetDimNum() == 1 && offsetShape->GetDim(0) == 0);
     if (!emptyOffset) {
-        OP_CHECK_IF(offsetShape->GetDimNum() != NCHW_RANK, OP_LOGE(context, "non-empty offset rank must be 4"),
+        OP_CHECK_IF(offsetShape->GetDimNum() != NCHW_RANK,
+                    OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "non-empty offset",
+                                                             "non-empty offset rank must be 4"),
                     return ge::GRAPH_FAILED);
         const bool mismatch = (offsetShape->GetDim(DIM_N) != ge::UNKNOWN_DIM &&
                                gradShape->GetDim(DIM_N) != ge::UNKNOWN_DIM &&
@@ -136,7 +144,9 @@ static ge::graphStatus InferShapeDeformableRoiPoolGrad(gert::InferShapeContext* 
                                offsetShape->GetDim(DIM_H) != outputSizeData[0]) ||
                               (offsetShape->GetDim(DIM_W) != ge::UNKNOWN_DIM &&
                                offsetShape->GetDim(DIM_W) != outputSizeData[1]);
-        OP_CHECK_IF(mismatch, OP_LOGE(context, "offset shape must be [grad.N, 2, grad.pH, grad.pW]"),
+        OP_CHECK_IF(mismatch,
+                    OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "offset",
+                                                             "offset shape must be [grad.N, 2, grad.pH, grad.pW]"),
                     return ge::GRAPH_FAILED);
         *gradOffsetShape = *offsetShape;
     } else {

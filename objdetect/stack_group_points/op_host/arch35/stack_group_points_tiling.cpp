@@ -383,7 +383,7 @@ static ge::graphStatus StackGroupPointsTilingFunc(gert::TilingContext* context)
     auto tiling = context->GetTilingData<StackGroupPointsTilingData>();
     OP_CHECK_NULL_WITH_CONTEXT(context, tiling);
     OP_CHECK_IF(memset_s(tiling, sizeof(StackGroupPointsTilingData), 0, sizeof(StackGroupPointsTilingData)) != EOK,
-                OP_LOGE(context, "memset_s failed"), return ge::GRAPH_FAILED);
+                OP_LOGE(context->GetNodeName(), "memset_s failed"), return ge::GRAPH_FAILED);
     FillTilingData(tiling, m, c, nsample, b, n, totalElements, needCoreNum, (n == 0) ? 1 : 0);
     OP_LOGD(context, "StackGroupPointsTilingData: zeroFill=%ld", tiling->zeroFill);
 

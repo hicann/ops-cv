@@ -43,14 +43,20 @@ static ge::graphStatus CheckInputShapeConsistent(gert::InferShapeContext* contex
     const gert::Shape* other = context->GetInputShape(inputIdx);
     OP_CHECK_NULL_WITH_CONTEXT(context, other);
     OP_CHECK_IF(other->GetDimNum() != accFaceShape.GetDimNum(),
-                OP_LOGE(context->GetNodeName(), "%s rank=%zu must equal acc_face rank=%zu", inputName,
-                        other->GetDimNum(), accFaceShape.GetDimNum()),
+                OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(
+                    context->GetNodeName(), inputName,
+                    (std::to_string(other->GetDimNum()) + ", " + std::to_string(accFaceShape.GetDimNum())).c_str(),
+                    "rank must equal acc_face"),
                 return GRAPH_FAILED);
     for (size_t d = 0; d < accFaceShape.GetDimNum(); ++d) {
-        OP_CHECK_IF(other->GetDim(d) != accFaceShape.GetDim(d),
-                    OP_LOGE(context->GetNodeName(), "%s dim[%zu]=%ld must equal acc_face dim[%zu]=%ld", inputName, d,
-                            other->GetDim(d), d, accFaceShape.GetDim(d)),
-                    return GRAPH_FAILED);
+        OP_CHECK_IF(
+            other->GetDim(d) != accFaceShape.GetDim(d),
+            OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(context->GetNodeName(), inputName,
+                                                   (std::to_string(d) + ", " + std::to_string(other->GetDim(d)) + ", " +
+                                                    std::to_string(d) + ", " + std::to_string(accFaceShape.GetDim(d)))
+                                                       .c_str(),
+                                                   "dim must equal acc_face"),
+            return GRAPH_FAILED);
     }
     return GRAPH_SUCCESS;
 }
@@ -75,15 +81,19 @@ static ge::graphStatus InferShape4BlendFaceBgPartTwo(gert::InferShapeContext* co
 
     // 校验 rank=3（H,W,C）：rank!=3 为非法输入
     const size_t rank = accFaceShape->GetDimNum();
-    OP_CHECK_IF(rank != kExpectRank,
-                OP_LOGE(context->GetNodeName(), "acc_face rank must be 3 (H,W,C), got rank=%zu", rank),
-                return GRAPH_FAILED);
+    OP_CHECK_IF(
+        rank != kExpectRank,
+        OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "acc_face", std::to_string(rank).c_str(),
+                                                 "acc_face rank must be 3 (H,W,C)"),
+        return GRAPH_FAILED);
 
     // 校验不含空维度：任意 dim==0 为非法空 tensor（spec: 空 tensor 均为算子拒绝的非法输入）
     for (size_t d = 0; d < rank; ++d) {
-        OP_CHECK_IF(accFaceShape->GetDim(d) == 0,
-                    OP_LOGE(context->GetNodeName(), "acc_face dim[%zu]=0, empty tensor is not supported", d),
-                    return GRAPH_FAILED);
+        OP_CHECK_IF(
+            accFaceShape->GetDim(d) == 0,
+            OP_LOGE_FOR_INVALID_SHAPEDIM_WITH_REASON(context->GetNodeName(), "acc_face", std::to_string(d).c_str(),
+                                                     "acc_face dim=0, empty tensor is not supported"),
+            return GRAPH_FAILED);
     }
 
     // 校验其余三输入与 acc_face 的 shape 完全一致（Tiling 仅按 acc_face 尺寸切分并为全部 GM

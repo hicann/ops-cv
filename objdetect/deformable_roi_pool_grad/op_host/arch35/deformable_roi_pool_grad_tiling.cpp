@@ -83,14 +83,18 @@ static ge::graphStatus ValidateShapes(gert::TilingContext* context, bool hasOffs
     const auto& x = xShape->GetStorageShape();
     const auto& rois = roisShape->GetStorageShape();
     OP_CHECK_IF(grad.GetDimNum() != NCHW_RANK || x.GetDimNum() != NCHW_RANK || rois.GetDimNum() != ROIS_RANK,
-                OP_LOGE(context, "grad/x/rois rank must be 4/4/2"), return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "grad/x/rois",
+                                                         "grad/x/rois rank must be 4/4/2"),
+                return ge::GRAPH_FAILED);
     OP_CHECK_IF(!IsInt32Dimension(grad.GetDim(DIM_N), true) || !IsInt32Dimension(grad.GetDim(DIM_C)) ||
                     !IsInt32Dimension(grad.GetDim(DIM_H)) || !IsInt32Dimension(grad.GetDim(DIM_W)) ||
                     !IsInt32Dimension(x.GetDim(DIM_N), true) || !IsInt32Dimension(x.GetDim(DIM_C)) ||
                     !IsInt32Dimension(x.GetDim(DIM_H)) || !IsInt32Dimension(x.GetDim(DIM_W)),
                 OP_LOGE(context, "grad/x dimensions are outside the supported int32 range"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(rois.GetDim(DIM_N) != grad.GetDim(DIM_N) || rois.GetDim(DIM_C) != ROI_FIELD_NUM,
-                OP_LOGE(context, "rois shape must be [grad.N, 5]"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        rois.GetDim(DIM_N) != grad.GetDim(DIM_N) || rois.GetDim(DIM_C) != ROI_FIELD_NUM,
+        OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "rois", "rois shape must be [grad.N, 5]"),
+        return ge::GRAPH_FAILED);
     OP_CHECK_IF(grad.GetDim(DIM_C) != x.GetDim(DIM_C), OP_LOGE(context, "grad.C must equal x.C"),
                 return ge::GRAPH_FAILED);
     OP_CHECK_IF(x.GetDim(DIM_H) > std::numeric_limits<int32_t>::max() / x.GetDim(DIM_W),
@@ -203,7 +207,9 @@ static ge::graphStatus DeformableRoiPoolGradTilingFunc(gert::TilingContext* cont
     OP_CHECK_NULL_WITH_CONTEXT(context, outputSizeData);
     OP_CHECK_IF(!IsInt32Dimension(outputSizeData[0]) || !IsInt32Dimension(outputSizeData[1]) ||
                     outputSizeData[0] != pH || outputSizeData[1] != pW,
-                OP_LOGE(context, "output_size must be positive and equal grad spatial shape"), return ge::GRAPH_FAILED);
+                OP_LOGE_FOR_INVALID_ARGUMENT_WITH_REASON(context->GetNodeName(), "input",
+                                                         "output_size must be positive and equal grad spatial shape"),
+                return ge::GRAPH_FAILED);
     int32_t pooledHeight = static_cast<int32_t>(outputSizeData[0]);
     int32_t pooledWidth = static_cast<int32_t>(outputSizeData[1]);
     const float* spatialScalePtr = attrs->GetFloat(1);
@@ -272,10 +278,11 @@ static ge::graphStatus DeformableRoiPoolGradTilingFunc(gert::TilingContext* cont
                                           0;
     constexpr int64_t wsGradOffsetStride = 0;
     const int64_t userWorkspaceSize = wsGradInputStride * typeSize;
-    OP_CHECK_IF(userWorkspaceSize > MAX_USER_WORKSPACE_BYTES,
-                OP_LOGE(context, "grad_input workspace too large: %lld bytes, exceeds %lld workspace limit",
-                        static_cast<long long>(userWorkspaceSize), static_cast<long long>(MAX_USER_WORKSPACE_BYTES)),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        userWorkspaceSize > MAX_USER_WORKSPACE_BYTES,
+        OP_LOGE(context->GetNodeName(), "grad_input workspace too large: %lld bytes, exceeds %lld workspace limit",
+                static_cast<long long>(userWorkspaceSize), static_cast<long long>(MAX_USER_WORKSPACE_BYTES)),
+        return ge::GRAPH_FAILED);
     const int64_t wsGradInputBaseElems = wsGradInputStride;
     const int64_t wsGradOffsetBaseElems = wsGradInputStride;
 
